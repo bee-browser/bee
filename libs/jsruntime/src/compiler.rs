@@ -350,8 +350,14 @@ impl<'a> Compiler<'a> {
             CompileCommand::LoopStart => unsafe {
                 bridge::compiler_peer_loop_start(self.peer);
             },
-            CompileCommand::ContinueIfTruthy => unsafe {
-                bridge::compiler_peer_continue_if_truthy(self.peer);
+            CompileCommand::LoopInit => unsafe {
+                bridge::compiler_peer_loop_init(self.peer);
+            },
+            CompileCommand::LoopTest => unsafe {
+                bridge::compiler_peer_loop_test(self.peer);
+            },
+            CompileCommand::LoopNext => unsafe {
+                bridge::compiler_peer_loop_next(self.peer);
             },
             CompileCommand::LoopEnd => unsafe {
                 bridge::compiler_peer_loop_end(self.peer);

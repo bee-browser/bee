@@ -10,331 +10,367 @@ pub static DISALLOWED: Set<u16> = phf_set! {
     // State(43)
     //   [EmptyStatement -> SEMICOLON .]*
     43u16,
-    // State(710)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement]*
-    710u16,
-    // State(938)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
-    938u16,
-    // State(1133)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In RPAREN Statement]*
-    1133u16,
-    // State(1151)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . SEMICOLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . Expression_In SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement]*
-    1151u16,
-    // State(1162)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON . Expression_In RPAREN Statement]*
-    1162u16,
-    // State(1369)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
-    1369u16,
-    // State(1387)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
-    1387u16,
-    // State(1398)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
-    1398u16,
-    // State(1537)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement]*
-    1537u16,
-    // State(1543)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement]*
-    1543u16,
-    // State(1563)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . Expression_In RPAREN Statement]*
-    1563u16,
-    // State(1576)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . Expression_In RPAREN Statement]*
-    1576u16,
-    // State(1696)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
-    1696u16,
-    // State(1702)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
-    1702u16,
-    // State(1714)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
-    1714u16,
-    // State(1727)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
-    1727u16,
-    // State(1846)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . Expression_In RPAREN Statement]*
-    1846u16,
-    // State(1855)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement]*
-    1855u16,
-    // State(1886)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
-    1886u16,
-    // State(1908)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
-    1908u16,
-    // State(1968)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
-    1968u16,
-    // State(1973)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
-    1973u16,
-    // State(2145)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement]*
-    2145u16,
-    // State(2173)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
-    2173u16,
-    // State(2177)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . SEMICOLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . Expression_In SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
-    2177u16,
-    // State(2183)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON . Expression_In RPAREN Statement_Return]*
-    2183u16,
-    // State(2198)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2198u16,
-    // State(2202)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
-    2202u16,
-    // State(2208)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2208u16,
-    // State(2248)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
-    2248u16,
-    // State(2580)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
-    2580u16,
-    // State(2583)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
-    2583u16,
-    // State(2584)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
-    2584u16,
-    // State(2592)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
-    2592u16,
-    // State(2605)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2605u16,
-    // State(2608)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
-    2608u16,
-    // State(2609)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2609u16,
-    // State(2617)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2617u16,
-    // State(3021)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
-    3021u16,
-    // State(3025)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
-    3025u16,
-    // State(3053)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    3053u16,
-    // State(3057)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    3057u16,
-    // State(3319)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3319u16,
-    // State(3384)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
-    3384u16,
-    // State(3417)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    3417u16,
-    // State(3523)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3523u16,
-    // State(3606)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3606u16,
-    // State(3628)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3628u16,
-    // State(3639)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3639u16,
-    // State(3749)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3749u16,
-    // State(3771)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3771u16,
-    // State(3782)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3782u16,
-    // State(3827)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3827u16,
-    // State(3833)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3833u16,
-    // State(3847)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3847u16,
-    // State(3860)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3860u16,
-    // State(3926)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3926u16,
-    // State(3932)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3932u16,
-    // State(3946)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3946u16,
-    // State(3959)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3959u16,
-    // State(4002)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    4002u16,
-    // State(4007)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    4007u16,
-    // State(4063)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    4063u16,
-    // State(4068)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    4068u16,
-    // State(4111)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    4111u16,
-    // State(4155)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    4155u16,
+    // State(1078)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    1078u16,
+    // State(1289)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    1289u16,
+    // State(1440)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    1440u16,
+    // State(1458)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    1458u16,
+    // State(1588)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    1588u16,
+    // State(1606)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    1606u16,
+    // State(1731)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    1731u16,
+    // State(1737)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    1737u16,
+    // State(1767)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    1767u16,
+    // State(1861)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    1861u16,
+    // State(1867)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    1867u16,
+    // State(1889)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    1889u16,
+    // State(2067)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    2067u16,
+    // State(2078)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2078u16,
+    // State(2096)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    2096u16,
+    // State(2113)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    2113u16,
+    // State(2165)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    2165u16,
+    // State(2176)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2176u16,
+    // State(2482)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    2482u16,
+    // State(2488)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2488u16,
+    // State(2506)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    2506u16,
+    // State(2510)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    2510u16,
+    // State(2527)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    2527u16,
+    // State(2531)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    2531u16,
+    // State(2569)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    2569u16,
+    // State(2573)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2573u16,
+    // State(2937)
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2937u16,
+    // State(2953)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2953u16,
+    // State(2956)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    2956u16,
+    // State(2962)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    2962u16,
+    // State(2979)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2979u16,
+    // State(2982)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    2982u16,
+    // State(2988)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    2988u16,
+    // State(3026)
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3026u16,
+    // State(3302)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    3302u16,
+    // State(3310)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3310u16,
+    // State(3331)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    3331u16,
+    // State(3339)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3339u16,
+    // State(3496)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    3496u16,
+    // State(3549)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    3549u16,
+    // State(3553)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3553u16,
+    // State(3576)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    3576u16,
+    // State(3580)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3580u16,
+    // State(3640)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    3640u16,
+    // State(3699)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    3699u16,
+    // State(3721)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    3721u16,
+    // State(3764)
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3764u16,
+    // State(3785)
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3785u16,
+    // State(3829)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    3829u16,
+    // State(3851)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    3851u16,
+    // State(3900)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3900u16,
+    // State(3906)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    3906u16,
+    // State(3930)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    3930u16,
+    // State(4000)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4000u16,
+    // State(4006)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_INIT_ -> (empty) .]*
+    4006u16,
+    // State(4030)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    4030u16,
+    // State(4075)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    4075u16,
+    // State(4086)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4086u16,
+    // State(4148)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    4148u16,
+    // State(4159)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4159u16,
+    // State(4188)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    4188u16,
+    // State(4192)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4192u16,
+    // State(4234)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    4234u16,
+    // State(4238)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4238u16,
+    // State(4266)
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4266u16,
+    // State(4297)
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4297u16,
 };
 
 pub static DO_WHILES: Set<u16> = phf_set! {
-    // State(2137)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
-    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
-    2137u16,
-    // State(2229)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
-    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
-    2229u16,
-    // State(3376)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
-    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
-    3376u16,
-    // State(3406)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
-    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
-    3406u16,
-    // State(4103)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
-    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
-    4103u16,
-    // State(4144)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
-    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
-    4144u16,
+    // State(2047)
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN . _LOOP_TEST_ SEMICOLON]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2047u16,
+    // State(2138)
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    2138u16,
+    // State(3295)
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN . _LOOP_TEST_ SEMICOLON]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3295u16,
+    // State(3321)
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    3321u16,
+    // State(4059)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . _LOOP_TEST_ SEMICOLON]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4059u16,
+    // State(4129)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
+    //   [_LOOP_TEST_ -> (empty) .]*
+    4129u16,
 };

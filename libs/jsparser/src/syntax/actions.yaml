@@ -273,7 +273,7 @@
 - rule: IterationStatement -> WhileStatement
   action: nop
 - rule: IterationStatement -> ForStatement
-  action: undefined
+  action: nop
 - rule: IterationStatement -> ForInOfStatement
   action: undefined
 - rule: SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
@@ -557,97 +557,103 @@
   action: process_nullish_coalescing_assignment
 - rule: >-
     DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In
-    RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+    RPAREN _LOOP_TEST_ SEMICOLON
   action: process_do_while_statement
 - rule: >-
-    WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN
-    _CONTINUE_IF_TRUTHY_ Statement
+    WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_
+    Statement
   action: process_while_statement
 - rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
-    Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON
+    ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
     RPAREN Statement
-  action: undefined
+  action: process_for_statement_no_init_test_next
 - rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In
+    ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression
+    SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement
+  action: process_for_statement_no_test_next
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
+    Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+  action: process_for_statement_no_init_next
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression
+    SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+  action: process_for_statement_no_next
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
+    Expression_In RPAREN _LOOP_NEXT_ Statement
+  action: process_for_statement_no_init_test
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression
+    SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+  action: process_for_statement_no_test
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
+    Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_
+    Statement
+  action: process_for_statement_no_init
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression
+    SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In
+    RPAREN _LOOP_NEXT_ Statement
+  action: process_for_statement
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList
+    SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement
+  action: process_for_statement_vars_no_test_next
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList
+    SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+  action: process_for_statement_vars_no_next
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList
+    SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+  action: process_for_statement_vars_no_test
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList
+    SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In
+    RPAREN _LOOP_NEXT_ Statement
+  action: process_for_statement_vars
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_
     SEMICOLON RPAREN Statement
+  action: process_for_statement_decl_no_test_next
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_
+    Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+  action: process_for_statement_decl_no_next
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_
+    SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+  action: process_for_statement_decl_no_test
+- rule: >-
+    ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_
+    Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_
+    Statement
+  action: process_for_statement_decl
+- rule: >-
+    ForInOfStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    LeftHandSideExpression IN Expression_In RPAREN Statement
   action: undefined
 - rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON
-    Expression_In SEMICOLON RPAREN Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
-    Expression_In RPAREN Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON
-    Expression_In RPAREN Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In
-    SEMICOLON Expression_In RPAREN Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON
-    Expression_In SEMICOLON Expression_In RPAREN Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON
+    ForInOfStatement -> FOR _LOOP_START_ LPAREN VAR ForBinding IN Expression_In
     RPAREN Statement
   action: undefined
 - rule: >-
-    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON
-    Expression_In SEMICOLON RPAREN Statement
+    ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration IN Expression_In
+    RPAREN Statement
   action: undefined
 - rule: >-
-    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON
-    Expression_In RPAREN Statement
+    ForInOfStatement -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET])
+    LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement
   action: undefined
 - rule: >-
-    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON
-    Expression_In SEMICOLON Expression_In RPAREN Statement
-  action: undefined
-- rule: ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN
-    Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN
-    Statement
-  action: undefined
-- rule: >-
-    ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON
-    Expression_In RPAREN Statement
-  action: undefined
-- rule: >-
-    ForInOfStatement -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression IN
-    Expression_In RPAREN Statement
-  action: undefined
-- rule: >-
-    ForInOfStatement -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN
-    Statement
-  action: undefined
-- rule: >-
-    ForInOfStatement -> FOR LPAREN ForDeclaration IN Expression_In RPAREN
-    Statement
-  action: undefined
-- rule: >-
-    ForInOfStatement -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF
+    ForInOfStatement -> FOR _LOOP_START_ LPAREN VAR ForBinding OF
     AssignmentExpression_In RPAREN Statement
   action: undefined
 - rule: >-
-    ForInOfStatement -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In
-    RPAREN Statement
-  action: undefined
-- rule: >-
-    ForInOfStatement -> FOR LPAREN ForDeclaration OF AssignmentExpression_In
-    RPAREN Statement
+    ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration OF
+    AssignmentExpression_In RPAREN Statement
   action: undefined
 - rule: CaseBlock -> LBRACE RBRACE
   action: undefined
@@ -955,7 +961,7 @@
 - rule: IterationStatement_Await -> WhileStatement_Await
   action: nop
 - rule: IterationStatement_Await -> ForStatement_Await
-  action: undefined
+  action: nop
 - rule: IterationStatement_Await -> ForInOfStatement_Await
   action: undefined
 - rule: >-
@@ -1010,12 +1016,16 @@
   action: undefined
 - rule: _LOOP_START_ -> (empty)
   action: process_loop_start
-- rule: _CONTINUE_IF_TRUTHY_ -> (empty)
-  action: process_continue_if_truthy
+- rule: _LOOP_TEST_ -> (empty)
+  action: process_loop_test
 - rule: Expression -> AssignmentExpression
   action: nop
 - rule: Expression -> Expression COMMA AssignmentExpression
   action: undefined
+- rule: _LOOP_INIT_ -> (empty)
+  action: process_loop_init
+- rule: _LOOP_NEXT_ -> (empty)
+  action: process_loop_next
 - rule: VariableDeclarationList -> VariableDeclaration
   action: undefined
 - rule: VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
@@ -1238,113 +1248,122 @@
   action: undefined
 - rule: >-
     DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN
-    Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+    Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN
-    _CONTINUE_IF_TRUTHY_ Statement_Await
+    _LOOP_TEST_ Statement_Await
   action: process_while_statement
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
-    Statement_Await
-  action: undefined
-- rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
     SEMICOLON RPAREN Statement_Await
-  action: undefined
+  action: process_for_statement_no_init_test_next
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    Expression_In_Await SEMICOLON RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await
+  action: process_for_statement_no_test_next
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON
-    Expression_In_Await SEMICOLON RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
+    Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+  action: process_for_statement_no_init_next
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
-    Expression_In_Await RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON
+    _LOOP_TEST_ RPAREN Statement_Await
+  action: process_for_statement_no_next
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON
-    SEMICOLON Expression_In_Await RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
+    SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+  action: process_for_statement_no_init_test
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN
+    _LOOP_NEXT_ Statement_Await
+  action: process_for_statement_no_test
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON
-    Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
+    Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN
+    _LOOP_NEXT_ Statement_Await
+  action: process_for_statement_no_init
 - rule: >-
-    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON
-    SEMICOLON RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON
+    _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+  action: process_for_statement
 - rule: >-
-    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON
-    Expression_In_Await SEMICOLON RPAREN Statement_Await
-  action: undefined
-- rule: >-
-    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON
-    SEMICOLON Expression_In_Await RPAREN Statement_Await
-  action: undefined
-- rule: >-
-    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON
-    Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-  action: undefined
-- rule: >-
-    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN
     Statement_Await
-  action: undefined
+  action: process_for_statement_vars_no_test_next
 - rule: >-
-    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await
-    Expression_In_Await SEMICOLON RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await
+    SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+  action: process_for_statement_vars_no_next
 - rule: >-
-    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON
-    Expression_In_Await RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON
+    Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+  action: process_for_statement_vars_no_test
 - rule: >-
-    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await
-    Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-  action: undefined
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await
+    SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+  action: process_for_statement_vars
 - rule: >-
-    ForInOfStatement_Await -> FOR LPAREN (?![LET LBRACK])
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await
+    _LOOP_INIT_ SEMICOLON RPAREN Statement_Await
+  action: process_for_statement_decl_no_test_next
+- rule: >-
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await
+    _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+  action: process_for_statement_decl_no_next
+- rule: >-
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await
+    _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+  action: process_for_statement_decl_no_test
+- rule: >-
+    ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await
+    _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await
+    RPAREN _LOOP_NEXT_ Statement_Await
+  action: process_for_statement_decl
+- rule: >-
+    ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
     LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await
   action: undefined
 - rule: >-
-    ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await IN
+    ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await IN
     Expression_In_Await RPAREN Statement_Await
   action: undefined
 - rule: >-
-    ForInOfStatement_Await -> FOR LPAREN ForDeclaration_Await IN
+    ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN ForDeclaration_Await IN
     Expression_In_Await RPAREN Statement_Await
   action: undefined
 - rule: >-
-    ForInOfStatement_Await -> FOR LPAREN (?![ASYNC OF, LET])
+    ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET])
     LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN
     Statement_Await
   action: undefined
 - rule: >-
-    ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await OF
+    ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF
     AssignmentExpression_In_Await RPAREN Statement_Await
   action: undefined
 - rule: >-
-    ForInOfStatement_Await -> FOR LPAREN ForDeclaration_Await OF
+    ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN ForDeclaration_Await OF
     AssignmentExpression_In_Await RPAREN Statement_Await
   action: undefined
 - rule: >-
-    ForInOfStatement_Await -> FOR AWAIT LPAREN (?![LET])
+    ForInOfStatement_Await -> FOR AWAIT _LOOP_START_ LPAREN (?![LET])
     LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN
     Statement_Await
   action: undefined
 - rule: >-
-    ForInOfStatement_Await -> FOR AWAIT LPAREN VAR ForBinding_Await OF
-    AssignmentExpression_In_Await RPAREN Statement_Await
+    ForInOfStatement_Await -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Await
+    OF AssignmentExpression_In_Await RPAREN Statement_Await
   action: undefined
 - rule: >-
-    ForInOfStatement_Await -> FOR AWAIT LPAREN ForDeclaration_Await OF
-    AssignmentExpression_In_Await RPAREN Statement_Await
+    ForInOfStatement_Await -> FOR AWAIT _LOOP_START_ LPAREN ForDeclaration_Await
+    OF AssignmentExpression_In_Await RPAREN Statement_Await
   action: undefined
 - rule: CaseBlock_Await -> LBRACE RBRACE
   action: undefined
@@ -2792,7 +2811,7 @@
 - rule: IterationStatement_Return -> WhileStatement_Return
   action: nop
 - rule: IterationStatement_Return -> ForStatement_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Return -> ForInOfStatement_Return
   action: undefined
 - rule: >-
@@ -3183,98 +3202,106 @@
   action: process_bitwise_xor
 - rule: >-
     DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN
-    Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+    Expression_In RPAREN _LOOP_TEST_ SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN
-    _CONTINUE_IF_TRUTHY_ Statement_Return
+    _LOOP_TEST_ Statement_Return
   action: process_while_statement
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
-    RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
     SEMICOLON RPAREN Statement_Return
-  action: undefined
+  action: process_for_statement_no_init_test_next
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In
-    SEMICOLON RPAREN Statement_Return
-  action: undefined
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression
+    SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+  action: process_for_statement_no_test_next
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON
-    Expression_In SEMICOLON RPAREN Statement_Return
-  action: undefined
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
+    Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+  action: process_for_statement_no_init_next
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
-    Expression_In RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON
-    SEMICOLON Expression_In RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In
-    SEMICOLON Expression_In RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON
-    Expression_In SEMICOLON Expression_In RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON
-    SEMICOLON RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON
-    Expression_In SEMICOLON RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON
-    SEMICOLON Expression_In RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON
-    Expression_In SEMICOLON Expression_In RPAREN Statement_Return
-  action: undefined
-- rule: >-
-    ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression
+    SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN
     Statement_Return
-  action: undefined
+  action: process_for_statement_no_next
 - rule: >-
-    ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON
-    RPAREN Statement_Return
-  action: undefined
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
+    SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+  action: process_for_statement_no_init_test
 - rule: >-
-    ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In
-    RPAREN Statement_Return
-  action: undefined
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression
+    SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_
+    Statement_Return
+  action: process_for_statement_no_test
 - rule: >-
-    ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON
-    Expression_In RPAREN Statement_Return
-  action: undefined
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON
+    Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_
+    Statement_Return
+  action: process_for_statement_no_init
 - rule: >-
-    ForInOfStatement_Return -> FOR LPAREN (?![LET LBRACK])
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression
+    SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In
+    RPAREN _LOOP_NEXT_ Statement_Return
+  action: process_for_statement
+- rule: >-
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList
+    SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+  action: process_for_statement_vars_no_test_next
+- rule: >-
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList
+    SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN
+    Statement_Return
+  action: process_for_statement_vars_no_next
+- rule: >-
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList
+    SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_
+    Statement_Return
+  action: process_for_statement_vars_no_test
+- rule: >-
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList
+    SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In
+    RPAREN _LOOP_NEXT_ Statement_Return
+  action: process_for_statement_vars
+- rule: >-
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration
+    _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+  action: process_for_statement_decl_no_test_next
+- rule: >-
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration
+    _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+  action: process_for_statement_decl_no_next
+- rule: >-
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration
+    _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+  action: process_for_statement_decl_no_test
+- rule: >-
+    ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration
+    _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN
+    _LOOP_NEXT_ Statement_Return
+  action: process_for_statement_decl
+- rule: >-
+    ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
     LeftHandSideExpression IN Expression_In RPAREN Statement_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN
-    Statement_Return
+    ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding IN
+    Expression_In RPAREN Statement_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Return -> FOR LPAREN ForDeclaration IN Expression_In RPAREN
-    Statement_Return
+    ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN ForDeclaration IN
+    Expression_In RPAREN Statement_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Return -> FOR LPAREN (?![ASYNC OF, LET])
+    ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET])
     LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF
+    ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding OF
     AssignmentExpression_In RPAREN Statement_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Return -> FOR LPAREN ForDeclaration OF
+    ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN ForDeclaration OF
     AssignmentExpression_In RPAREN Statement_Return
   action: undefined
 - rule: CaseBlock_Return -> LBRACE RBRACE
@@ -3360,7 +3387,7 @@
 - rule: IterationStatement_Yield_Return -> WhileStatement_Yield_Return
   action: nop
 - rule: IterationStatement_Yield_Return -> ForStatement_Yield_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
   action: undefined
 - rule: >-
@@ -3423,7 +3450,7 @@
 - rule: IterationStatement_Await_Return -> WhileStatement_Await_Return
   action: nop
 - rule: IterationStatement_Await_Return -> ForStatement_Await_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Await_Return -> ForInOfStatement_Await_Return
   action: undefined
 - rule: >-
@@ -3528,7 +3555,7 @@
 - rule: IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return
   action: nop
 - rule: IterationStatement_Yield_Await_Return -> ForStatement_Yield_Await_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return
   action: undefined
 - rule: >-
@@ -3745,105 +3772,118 @@
   action: undefined
 - rule: >-
     DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return
-    WHILE LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+    WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield
-    RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return
+    RPAREN _LOOP_TEST_ Statement_Yield_Return
   action: process_while_statement
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
-    RPAREN Statement_Yield_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
     SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
-  action: undefined
+  action: process_for_statement_no_init_test_next
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield
-    SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
-    Expression_In_Yield RPAREN Statement_Yield_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield
-    SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN
     Statement_Yield_Return
-  action: undefined
+  action: process_for_statement_no_test_next
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield
-    SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN
     Statement_Yield_Return
-  action: undefined
+  action: process_for_statement_no_init_next
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield
-    SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
-  action: undefined
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON
+    _LOOP_TEST_ RPAREN Statement_Yield_Return
+  action: process_for_statement_no_next
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield
-    SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield
-    SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield
-    SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_
     Statement_Yield_Return
-  action: undefined
+  action: process_for_statement_no_init_test
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON
-    RPAREN Statement_Yield_Return
-  action: undefined
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN
+    _LOOP_NEXT_ Statement_Yield_Return
+  action: process_for_statement_no_test
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield
-    Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
-  action: undefined
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield
+    RPAREN _LOOP_NEXT_ Statement_Yield_Return
+  action: process_for_statement_no_init
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON
-    Expression_In_Yield RPAREN Statement_Yield_Return
-  action: undefined
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON
+    _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+  action: process_for_statement
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield
-    Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN
     Statement_Yield_Return
-  action: undefined
+  action: process_for_statement_vars_no_test_next
 - rule: >-
-    ForInOfStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK])
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield
+    SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
+  action: process_for_statement_vars_no_next
+- rule: >-
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON
+    Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+  action: process_for_statement_vars_no_test
+- rule: >-
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield
+    SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_
+    Statement_Yield_Return
+  action: process_for_statement_vars
+- rule: >-
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return
+  action: process_for_statement_decl_no_test_next
+- rule: >-
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON
+    _LOOP_TEST_ RPAREN Statement_Yield_Return
+  action: process_for_statement_decl_no_next
+- rule: >-
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN
+    _LOOP_NEXT_ Statement_Yield_Return
+  action: process_for_statement_decl_no_test
+- rule: >-
+    ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON
+    _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+  action: process_for_statement_decl
+- rule: >-
+    ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
     LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN
     Statement_Yield_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield IN
-    Expression_In_Yield RPAREN Statement_Yield_Return
+    ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR
+    ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN
-    Expression_In_Yield RPAREN Statement_Yield_Return
+    ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN
+    ForDeclaration_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Return -> FOR LPAREN (?![ASYNC OF, LET])
+    ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET])
     LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN
     Statement_Yield_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield OF
-    AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
+    ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR
+    ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN
+    Statement_Yield_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield OF
-    AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
+    ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN
+    ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN
+    Statement_Yield_Return
   action: undefined
 - rule: CaseBlock_Yield_Return -> LBRACE RBRACE
   action: undefined
@@ -3879,118 +3919,133 @@
   action: undefined
 - rule: >-
     DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return
-    WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+    WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await
-    RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await_Return
+    RPAREN _LOOP_TEST_ Statement_Await_Return
   action: process_while_statement
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
-    RPAREN Statement_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
     SEMICOLON SEMICOLON RPAREN Statement_Await_Return
-  action: undefined
+  action: process_for_statement_no_init_test_next
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await
-    SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
-    Expression_In_Await RPAREN Statement_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await
-    SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    Expression_In_Await SEMICOLON Expression_In_Await RPAREN
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN
     Statement_Await_Return
-  action: undefined
+  action: process_for_statement_no_test_next
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await
-    SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN
     Statement_Await_Return
-  action: undefined
+  action: process_for_statement_no_init_next
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await
-    SEMICOLON SEMICOLON RPAREN Statement_Await_Return
-  action: undefined
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON
+    _LOOP_TEST_ RPAREN Statement_Await_Return
+  action: process_for_statement_no_next
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await
-    SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await
-    SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await
-    SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_
     Statement_Await_Return
-  action: undefined
+  action: process_for_statement_no_init_test
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON
-    RPAREN Statement_Await_Return
-  action: undefined
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN
+    _LOOP_NEXT_ Statement_Await_Return
+  action: process_for_statement_no_test
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await
-    Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
-  action: undefined
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await
+    RPAREN _LOOP_NEXT_ Statement_Await_Return
+  action: process_for_statement_no_init
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON
-    Expression_In_Await RPAREN Statement_Await_Return
-  action: undefined
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON
+    _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+  action: process_for_statement
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await
-    Expression_In_Await SEMICOLON Expression_In_Await RPAREN
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN
     Statement_Await_Return
-  action: undefined
+  action: process_for_statement_vars_no_test_next
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR LPAREN (?![LET LBRACK])
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await
+    SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
+  action: process_for_statement_vars_no_next
+- rule: >-
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON
+    Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+  action: process_for_statement_vars_no_test
+- rule: >-
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await
+    SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_
+    Statement_Await_Return
+  action: process_for_statement_vars
+- rule: >-
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return
+  action: process_for_statement_decl_no_test_next
+- rule: >-
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON
+    _LOOP_TEST_ RPAREN Statement_Await_Return
+  action: process_for_statement_decl_no_next
+- rule: >-
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN
+    _LOOP_NEXT_ Statement_Await_Return
+  action: process_for_statement_decl_no_test
+- rule: >-
+    ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON
+    _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+  action: process_for_statement_decl
+- rule: >-
+    ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
     LeftHandSideExpression_Await IN Expression_In_Await RPAREN
     Statement_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN
-    Expression_In_Await RPAREN Statement_Await_Return
+    ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    ForBinding_Await IN Expression_In_Await RPAREN Statement_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await IN
-    Expression_In_Await RPAREN Statement_Await_Return
+    ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN
+    ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR LPAREN (?![ASYNC OF, LET])
+    ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET])
     LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN
     Statement_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF
-    AssignmentExpression_In_Await RPAREN Statement_Await_Return
+    ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    ForBinding_Await OF AssignmentExpression_In_Await RPAREN
+    Statement_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await OF
-    AssignmentExpression_In_Await RPAREN Statement_Await_Return
+    ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN
+    ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN
+    Statement_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET])
+    ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN (?![LET])
     LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN
     Statement_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF
-    AssignmentExpression_In_Await RPAREN Statement_Await_Return
+    ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR
+    ForBinding_Await OF AssignmentExpression_In_Await RPAREN
+    Statement_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Await OF
-    AssignmentExpression_In_Await RPAREN Statement_Await_Return
+    ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN
+    ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN
+    Statement_Await_Return
   action: undefined
 - rule: CaseBlock_Await_Return -> LBRACE RBRACE
   action: undefined
@@ -4142,125 +4197,137 @@
 - rule: >-
     DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_
     Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN
-    _CONTINUE_IF_TRUTHY_ SEMICOLON
+    _LOOP_TEST_ SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN
-    Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_
-    Statement_Yield_Await_Return
+    Expression_In_Yield_Await RPAREN _LOOP_TEST_ Statement_Yield_Await_Return
   action: process_while_statement
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    SEMICOLON RPAREN Statement_Yield_Await_Return
-  action: undefined
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
+  action: process_for_statement_no_init_test_next
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK])
-    Expression_Yield_Await SEMICOLON SEMICOLON RPAREN
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN
     Statement_Yield_Await_Return
-  action: undefined
+  action: process_for_statement_no_test_next
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK])
-    Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN
     Statement_Yield_Await_Return
-  action: undefined
+  action: process_for_statement_no_init_next
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-  action: undefined
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await
+    SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+  action: process_for_statement_no_next
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK])
-    Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_
     Statement_Yield_Await_Return
-  action: undefined
+  action: process_for_statement_no_init_test
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
-    Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON
+    Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+  action: process_for_statement_no_test
+- rule: >-
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_
+    Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+  action: process_for_statement_no_init
+- rule: >-
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK])
+    Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await
+    SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_
     Statement_Yield_Await_Return
-  action: undefined
+  action: process_for_statement
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK])
-    Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON
-    Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN VAR
-    VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN
     Statement_Yield_Await_Return
-  action: undefined
+  action: process_for_statement_vars_no_test_next
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN VAR
-    VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await
-    SEMICOLON RPAREN Statement_Yield_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN VAR
-    VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON
-    Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN VAR
-    VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await
-    SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await
-    SEMICOLON RPAREN Statement_Yield_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await
-    Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await
-    SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-  action: undefined
-- rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await
-    Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_
+    Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN
     Statement_Yield_Await_Return
-  action: undefined
+  action: process_for_statement_vars_no_next
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK])
-    LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON
+    Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+  action: process_for_statement_vars_no_test
+- rule: >-
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_
+    Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await
+    RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+  action: process_for_statement_vars
+- rule: >-
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON RPAREN
     Statement_Yield_Await_Return
-  action: undefined
+  action: process_for_statement_decl_no_test_next
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await
-    IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-  action: undefined
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await
+    SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+  action: process_for_statement_decl_no_next
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await
-    IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-  action: undefined
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON
+    Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+  action: process_for_statement_decl_no_test
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![ASYNC OF, LET])
-    LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await
+    ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN
+    LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await
+    SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_
+    Statement_Yield_Await_Return
+  action: process_for_statement_decl
+- rule: >-
+    ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET
+    LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await
     RPAREN Statement_Yield_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await
-    OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR
+    ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN
+    Statement_Yield_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await
-    OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN
+    ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN
+    Statement_Yield_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET])
-    LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await
-    RPAREN Statement_Yield_Await_Return
+    ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF,
+    LET]) LeftHandSideExpression_Yield_Await OF
+    AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR
+    ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR
     ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN
     Statement_Yield_Await_Return
   action: undefined
 - rule: >-
-    ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN
+    ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN
+    ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN
+    Statement_Yield_Await_Return
+  action: undefined
+- rule: >-
+    ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN
+    (?![LET]) LeftHandSideExpression_Yield_Await OF
+    AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+  action: undefined
+- rule: >-
+    ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR
+    ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN
+    Statement_Yield_Await_Return
+  action: undefined
+- rule: >-
+    ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN
     ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN
     Statement_Yield_Await_Return
   action: undefined

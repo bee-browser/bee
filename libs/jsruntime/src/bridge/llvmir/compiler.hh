@@ -109,7 +109,9 @@ class Compiler {
   void IfElseStatement();
   void IfStatement();
   void LoopStart();
-  void ContinueIfTruthy();
+  void LoopInit();
+  void LoopTest();
+  void LoopNext();
   void LoopEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);

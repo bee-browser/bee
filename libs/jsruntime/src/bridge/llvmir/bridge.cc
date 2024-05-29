@@ -338,8 +338,16 @@ void compiler_peer_loop_start(Compiler* self) {
   self->LoopStart();
 }
 
-void compiler_peer_continue_if_truthy(Compiler* self) {
-  self->ContinueIfTruthy();
+void compiler_peer_loop_init(Compiler* self) {
+  self->LoopInit();
+}
+
+void compiler_peer_loop_test(Compiler* self) {
+  self->LoopTest();
+}
+
+void compiler_peer_loop_next(Compiler* self) {
+  self->LoopNext();
 }
 
 void compiler_peer_loop_end(Compiler* self) {

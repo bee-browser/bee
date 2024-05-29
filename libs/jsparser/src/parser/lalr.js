@@ -47,7 +47,7 @@ function isAutoSemicolonDoWhile(state) {
   for (const item of state.kernel_items) {
     // ';' at the end of a do-white statement.
     if (item.startsWith('[DoWhileStatement')) {
-      if (item.endsWith(' RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*')) {
+      if (item.endsWith(' RPAREN . _LOOP_TEST_ SEMICOLON]*')) {
         return true;
       }
     }

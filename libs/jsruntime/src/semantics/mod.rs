@@ -108,6 +108,7 @@ impl<'r> Analyzer<'r> {
             Node::IfStatement => self.handle_if_statement(),
             Node::DoWhileStatement => self.handle_do_while_statement(),
             Node::WhileStatement => self.handle_while_statement(),
+            Node::ForStatement => self.handle_for_statement(),
             Node::ReturnStatement(n) => self.handle_return_statement(n),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
@@ -122,7 +123,9 @@ impl<'r> Analyzer<'r> {
             Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
             Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
             Node::LoopStart => self.handle_loop_start(),
-            Node::ContinueIfTruthy => self.handle_continue_if_truthy(),
+            Node::LoopInit => self.handle_loop_init(),
+            Node::LoopTest => self.handle_loop_test(),
+            Node::LoopNext => self.handle_loop_next(),
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
@@ -271,17 +274,24 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_do_while_statement(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::LoopEnd);
+        self.scope_manager.pop();
+        let context = self.context_stack.last_mut().unwrap();
+        context.end_scope(false);
+        context.put_command(CompileCommand::LoopEnd);
     }
 
     fn handle_while_statement(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::LoopEnd);
+        self.scope_manager.pop();
+        let context = self.context_stack.last_mut().unwrap();
+        context.end_scope(false);
+        context.put_command(CompileCommand::LoopEnd);
+    }
+
+    fn handle_for_statement(&mut self) {
+        self.scope_manager.pop();
+        let context = self.context_stack.last_mut().unwrap();
+        context.end_scope(false);
+        context.put_command(CompileCommand::LoopEnd);
     }
 
     fn handle_return_statement(&mut self, n: u32) {
@@ -388,17 +398,32 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_loop_start(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::LoopStart);
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::LoopStart);
+        // TODO: should create a new scope only for the case of for-let/const statement.
+        context.start_scope();
+        self.scope_manager.push(ScopeKind::Block);
     }
 
-    fn handle_continue_if_truthy(&mut self) {
+    fn handle_loop_init(&mut self) {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_command(CompileCommand::ContinueIfTruthy);
+            .put_command(CompileCommand::LoopInit);
+    }
+
+    fn handle_loop_test(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::LoopTest);
+    }
+
+    fn handle_loop_next(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::LoopNext);
     }
 
     fn handle_start_block_scope(&mut self) {
@@ -843,7 +868,9 @@ pub enum CompileCommand {
 
     // loop
     LoopStart,
-    ContinueIfTruthy,
+    LoopInit,
+    LoopTest,
+    LoopNext,
     LoopEnd,
 
     Return(u32),

@@ -631,3 +631,23 @@ fn test_eval_do_while_statement() {
 fn test_eval_while_statement() {
     eval!("let i = 0; while (i < 2) { i++ } print(i)", 2);
 }
+
+#[test]
+fn test_eval_for_statement() {
+    eval!("let i = 0; for (let j = 0; j < 2; ++j) { i = j } print(i)", 1);
+}
+
+#[test]
+fn test_eval_for_statement_no_init() {
+    eval!("let i = 0; for (; i < 2; ++i) {} print(i)", 2);
+}
+
+#[test]
+fn test_eval_for_statement_no_next() {
+    eval!("let i = 0; for (let j = 0; j < 2; ) { i = j; ++j } print(i)", 1);
+}
+
+#[test]
+fn test_eval_for_statement_no_init_next() {
+    eval!("let i = 0; for (; i < 2; ) { ++i } print(i)", 2);
+}

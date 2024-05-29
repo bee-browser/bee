@@ -175,6 +175,8 @@ class Transpiler {
           modifyDoWhileStatement,
           modifyWhileStatement,
           expandOptionals,
+          modifyForStatement,
+          modifyForInOfStatement,
           expandParameterizedRules,
           modifyBlock,
           translateRules,
@@ -600,7 +602,9 @@ function addActions(rules) {
     '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
     '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
     '_LOOP_START_',
-    '_CONTINUE_IF_TRUTHY_',
+    '_LOOP_INIT_',
+    '_LOOP_TEST_',
+    '_LOOP_NEXT_',
   ];
 
   for (const action of ACTIONS) {
@@ -774,7 +778,7 @@ function modifyDoWhileStatement(rules) {
     },
     {
       term: '`)`',
-      action: '_CONTINUE_IF_TRUTHY_',
+      action: '_LOOP_TEST_',
       insertBefore: false,
     },
   ];
@@ -799,7 +803,7 @@ function modifyWhileStatement(rules) {
     },
     {
       term: '`)`',
-      action: '_CONTINUE_IF_TRUTHY_',
+      action: '_LOOP_TEST_',
       insertBefore: false,
     },
   ];
@@ -823,7 +827,10 @@ function modifyTargetsInProduction(production, targets) {
 }
 
 function modifyTargetInProduction(production, target) {
-  const [head, tail] = production.split(target.term);
+  const [head, tail] = production.split(target.term).map((term) => term.trim());
+  if (tail === undefined) {
+    return production;
+  }
   let terms;
   if (target.insertBefore) {
     terms = [head, target.action, target.term, tail];
@@ -874,6 +881,81 @@ function expandOptionals(rules) {
     });
   }
   return expanded;
+}
+
+function modifyForStatement(rules) {
+  // DO NOT CHANGE THE ORDER OF ELEMENTS IN THE TARGETS.
+  const TARGETS = [
+    {
+      term: '`;` Expression[+In, ?Yield, ?Await] `)`',
+      action: '_LOOP_NEXT_',
+      insertBefore: false,
+    },
+    {
+      term: '`;` Expression[+In, ?Yield, ?Await] `;`',
+      action: '_LOOP_TEST_',
+      insertBefore: false,
+    },
+    {
+      term: 'LexicalDeclaration[~In, ?Yield, ?Await] Expression[+In, ?Yield, ?Await] `;`',
+      action: '_LOOP_TEST_',
+      insertBefore: false,
+    },
+    {
+      term: '[lookahead != `let` `[`] Expression[~In, ?Yield, ?Await] `;`',
+      action: '_LOOP_INIT_',
+      insertBefore: false,
+    },
+    {
+      term: '`var` VariableDeclarationList[~In, ?Yield, ?Await] `;`',
+      action: '_LOOP_INIT_',
+      insertBefore: false,
+    },
+    {
+      term: 'LexicalDeclaration[~In, ?Yield, ?Await]',
+      action: '_LOOP_INIT_',
+      insertBefore: false,
+    },
+    {
+      term: '`(`',
+      action: '_LOOP_START_',
+      insertBefore: true,
+    },
+  ];
+
+  log.debug('Modifying ForStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'ForStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+
+  for (let i = 0; i < rule.values.length; ++i) {
+    rule.values[i] = modifyTargetsInProduction(rule.values[i], TARGETS);
+  }
+
+  return rules;
+}
+
+function modifyForInOfStatement(rules) {
+  // TODO: Add targets.
+  // At this point, _LOOP_START_ is inserted in order to avoid shift/reduce conflicts.
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_LOOP_START_',
+      insertBefore: true,
+    },
+  ];
+
+  log.debug('Modifying ForInOfStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'ForInOfStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+
+  for (let i = 0; i < rule.values.length; ++i) {
+    rule.values[i] = modifyTargetsInProduction(rule.values[i], TARGETS);
+  }
+
+  return rules;
 }
 
 function expandParameterizedRules(rules) {

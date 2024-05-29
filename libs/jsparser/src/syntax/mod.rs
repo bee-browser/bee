@@ -126,6 +126,7 @@ pub enum Node<'s> {
     IfStatement,
     DoWhileStatement,
     WhileStatement,
+    ForStatement,
     ReturnStatement(u32),
     FormalParameter,
     FormalParameters(u32),
@@ -142,7 +143,9 @@ pub enum Node<'s> {
     TruthyShortCircuitAssignment,
     NullishShortCircuitAssignment,
     LoopStart,
-    ContinueIfTruthy,
+    LoopInit,
+    LoopTest,
+    LoopNext,
     StartBlockScope,
     EndBlockScope,
 }
@@ -471,9 +474,21 @@ where
         Ok(())
     }
 
-    // _CONTINUE_IF_TRUTHY_
-    fn process_continue_if_truthy(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ContinueIfTruthy);
+    // _LOOP_INIT_
+    fn process_loop_init(&mut self) -> Result<(),  Error> {
+        self.enqueue(Node::LoopInit);
+        Ok(())
+    }
+
+    // _LOOP_TEST_
+    fn process_loop_test(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopTest);
+        Ok(())
+    }
+
+    // _LOOP_NEXT_
+    fn process_loop_next(&mut self) -> Result<(),  Error> {
+        self.enqueue(Node::LoopNext);
         Ok(())
     }
 
@@ -1517,8 +1532,7 @@ where
     // 14.7.2 The do-while Statement
 
     // DoWhileStatement[Yield, Await, Return] :
-    //   `do` Statement[?Yield, ?Await, ?Return] `while` `(` Expression[+In, ?Yield, ?Await] `)`
-    //   `;`
+    //   do Statement[?Yield, ?Await, ?Return] while ( Expression[+In, ?Yield, ?Await] ) ;
     fn process_do_while_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::DoWhileStatement);
         self.replace(7, Detail::Statement);
@@ -1532,6 +1546,125 @@ where
     fn process_while_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::WhileStatement);
         self.replace(5, Detail::Statement);
+        Ok(())
+    }
+
+    // 14.7.4 The for Statement
+
+    // ForStatement[Yield, Await, Return] :
+    //   for (
+    //   [lookahead ≠ let [] Expression[~In, ?Yield, ?Await]opt ;
+    //   Expression[+In, ?Yield, ?Await]opt ;
+    //   Expression[+In, ?Yield, ?Await]opt )
+    //   Statement[?Yield, ?Await, ?Return]
+
+    fn process_for_statement_no_init_test_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(6, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_no_test_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(7, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_no_init_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(7, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_no_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(8, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_no_init_test(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(7, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_no_test(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(8, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_no_init(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(8, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(9, Detail::Statement);
+        Ok(())
+    }
+
+    // ForStatement[Yield, Await, Return] :
+    //   for (
+    //   var VariableDeclarationList[~In, ?Yield, ?Await] ;
+    //   Expression[+In, ?Yield, ?Await]opt ;
+    //   Expression[+In, ?Yield, ?Await]opt )
+    //   Statement[?Yield, ?Await, ?Return]
+
+    fn process_for_statement_vars_no_test_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(8, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_vars_no_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(9, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_vars_no_test(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(9, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_vars(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(10, Detail::Statement);
+        Ok(())
+    }
+
+    // ForStatement[Yield, Await, Return] :
+    //   for (
+    //   LexicalDeclaration[~In, ?Yield, ?Await]
+    //   Expression[+In, ?Yield, ?Await]opt ;
+    //   Expression[+In, ?Yield, ?Await]opt )
+    //   Statement[?Yield, ?Await, ?Return]
+
+    fn process_for_statement_decl_no_test_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(6, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_decl_no_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(7, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_decl_no_test(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(7, Detail::Statement);
+        Ok(())
+    }
+
+    fn process_for_statement_decl(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ForStatement);
+        self.replace(8, Detail::Statement);
         Ok(())
     }
 
