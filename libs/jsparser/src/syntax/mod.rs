@@ -475,7 +475,7 @@ where
     }
 
     // _LOOP_INIT_
-    fn process_loop_init(&mut self) -> Result<(),  Error> {
+    fn process_loop_init(&mut self) -> Result<(), Error> {
         self.enqueue(Node::LoopInit);
         Ok(())
     }
@@ -487,7 +487,7 @@ where
     }
 
     // _LOOP_NEXT_
-    fn process_loop_next(&mut self) -> Result<(),  Error> {
+    fn process_loop_next(&mut self) -> Result<(), Error> {
         self.enqueue(Node::LoopNext);
         Ok(())
     }

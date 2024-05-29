@@ -634,7 +634,10 @@ fn test_eval_while_statement() {
 
 #[test]
 fn test_eval_for_statement() {
-    eval!("let i = 0; for (let j = 0; j < 2; ++j) { i = j } print(i)", 1);
+    eval!(
+        "let i = 0; for (let j = 0; j < 2; ++j) { i = j } print(i)",
+        1
+    );
 }
 
 #[test]
@@ -644,7 +647,10 @@ fn test_eval_for_statement_no_init() {
 
 #[test]
 fn test_eval_for_statement_no_next() {
-    eval!("let i = 0; for (let j = 0; j < 2; ) { i = j; ++j } print(i)", 1);
+    eval!(
+        "let i = 0; for (let j = 0; j < 2; ) { i = j; ++j } print(i)",
+        1
+    );
 }
 
 #[test]
