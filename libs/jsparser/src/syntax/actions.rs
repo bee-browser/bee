@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2106] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2110] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -68,7 +68,7 @@ where
         // Statement -> IfStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> BreakableStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> ContinueStatement
         Action::Undefined,
         // Statement -> BreakStatement
@@ -127,7 +127,7 @@ where
         // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement -> IterationStatement
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement -> SwitchStatement
         Action::Undefined,
         // ContinueStatement -> CONTINUE SEMICOLON
@@ -257,7 +257,7 @@ where
         // Statement_Await -> IfStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> BreakableStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> ContinueStatement_Await
         Action::Undefined,
         // Statement_Await -> BreakStatement_Await
@@ -289,11 +289,11 @@ where
         // _ELSE_BLOCK_ -> (empty)
         Action::Invoke(Self::process_else_block, "process_else_block"),
         // IterationStatement -> DoWhileStatement
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement -> WhileStatement
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement -> ForStatement
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement -> ForInOfStatement
         Action::Undefined,
         // SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
@@ -506,7 +506,7 @@ where
         // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Await -> IterationStatement_Await
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Await -> SwitchStatement_Await
         Action::Undefined,
         // ContinueStatement_Await -> CONTINUE SEMICOLON
@@ -565,53 +565,101 @@ where
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
         ),
-        // DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
+        // DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON
+        Action::Invoke(
+            Self::process_do_while_statement,
+            "process_do_while_statement",
+        ),
+        // WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ Statement
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
+        // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement
+        Action::Invoke(
+            Self::process_for_statement_no_init_test_next,
+            "process_for_statement_no_init_test_next",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement
+        Action::Invoke(
+            Self::process_for_statement_no_test_next,
+            "process_for_statement_no_test_next",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+        Action::Invoke(
+            Self::process_for_statement_no_init_next,
+            "process_for_statement_no_init_next",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+        Action::Invoke(
+            Self::process_for_statement_no_next,
+            "process_for_statement_no_next",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+        Action::Invoke(
+            Self::process_for_statement_no_init_test,
+            "process_for_statement_no_init_test",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+        Action::Invoke(
+            Self::process_for_statement_no_test,
+            "process_for_statement_no_test",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
+        Action::Invoke(
+            Self::process_for_statement_no_init,
+            "process_for_statement_no_init",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
+        Action::Invoke(Self::process_for_statement, "process_for_statement"),
+        // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test_next,
+            "process_for_statement_vars_no_test_next",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+        Action::Invoke(
+            Self::process_for_statement_vars_no_next,
+            "process_for_statement_vars_no_next",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test,
+            "process_for_statement_vars_no_test",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
+        Action::Invoke(
+            Self::process_for_statement_vars,
+            "process_for_statement_vars",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test_next,
+            "process_for_statement_decl_no_test_next",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+        Action::Invoke(
+            Self::process_for_statement_decl_no_next,
+            "process_for_statement_decl_no_next",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test,
+            "process_for_statement_decl_no_test",
+        ),
+        // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
+        Action::Invoke(
+            Self::process_for_statement_decl,
+            "process_for_statement_decl",
+        ),
+        // ForInOfStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement
         Action::Undefined,
-        // WhileStatement -> WHILE LPAREN Expression_In RPAREN Statement
+        // ForInOfStatement -> FOR _LOOP_START_ LPAREN VAR ForBinding IN Expression_In RPAREN Statement
         Action::Undefined,
-        // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement
+        // ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration IN Expression_In RPAREN Statement
         Action::Undefined,
-        // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement
+        // ForInOfStatement -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement
         Action::Undefined,
-        // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement
+        // ForInOfStatement -> FOR _LOOP_START_ LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement
         Action::Undefined,
-        // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForInOfStatement -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForInOfStatement -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForInOfStatement -> FOR LPAREN ForDeclaration IN Expression_In RPAREN Statement
-        Action::Undefined,
-        // ForInOfStatement -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement
-        Action::Undefined,
-        // ForInOfStatement -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement
-        Action::Undefined,
-        // ForInOfStatement -> FOR LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement
+        // ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement
         Action::Undefined,
         // CaseBlock -> LBRACE RBRACE
         Action::Undefined,
@@ -941,11 +989,11 @@ where
         // Expression_In_Await -> Expression_In_Await COMMA AssignmentExpression_In_Await
         Action::Undefined,
         // IterationStatement_Await -> DoWhileStatement_Await
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Await -> WhileStatement_Await
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Await -> ForStatement_Await
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Await -> ForInOfStatement_Await
         Action::Undefined,
         // SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await
@@ -992,10 +1040,18 @@ where
         Action::Nop,
         // LeftHandSideExpression -> OptionalExpression
         Action::Undefined,
+        // _LOOP_START_ -> (empty)
+        Action::Invoke(Self::process_loop_start, "process_loop_start"),
+        // _LOOP_TEST_ -> (empty)
+        Action::Invoke(Self::process_loop_test, "process_loop_test"),
         // Expression -> AssignmentExpression
         Action::Nop,
         // Expression -> Expression COMMA AssignmentExpression
         Action::Undefined,
+        // _LOOP_INIT_ -> (empty)
+        Action::Invoke(Self::process_loop_init, "process_loop_init"),
+        // _LOOP_NEXT_ -> (empty)
+        Action::Invoke(Self::process_loop_next, "process_loop_next"),
         // VariableDeclarationList -> VariableDeclaration
         Action::Undefined,
         // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
@@ -1235,59 +1291,107 @@ where
         Action::Nop,
         // StatementList_Await -> StatementList_Await StatementListItem_Await
         Action::Undefined,
-        // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
+        // DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+        Action::Invoke(
+            Self::process_do_while_statement,
+            "process_do_while_statement",
+        ),
+        // WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _LOOP_TEST_ Statement_Await
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_no_init_test_next,
+            "process_for_statement_no_init_test_next",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_no_test_next,
+            "process_for_statement_no_test_next",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_no_init_next,
+            "process_for_statement_no_init_next",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_no_next,
+            "process_for_statement_no_next",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_no_init_test,
+            "process_for_statement_no_init_test",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_no_test,
+            "process_for_statement_no_test",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_no_init,
+            "process_for_statement_no_init",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+        Action::Invoke(Self::process_for_statement, "process_for_statement"),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test_next,
+            "process_for_statement_vars_no_test_next",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_vars_no_next,
+            "process_for_statement_vars_no_next",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test,
+            "process_for_statement_vars_no_test",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_vars,
+            "process_for_statement_vars",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test_next,
+            "process_for_statement_decl_no_test_next",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_decl_no_next,
+            "process_for_statement_decl_no_next",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test,
+            "process_for_statement_decl_no_test",
+        ),
+        // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+        Action::Invoke(
+            Self::process_for_statement_decl,
+            "process_for_statement_decl",
+        ),
+        // ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
+        // ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await
+        // ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await
+        // ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await
+        // ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await
+        // ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await
+        // ForInOfStatement_Await -> FOR AWAIT _LOOP_START_ LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await
+        // ForInOfStatement_Await -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
-        Action::Undefined,
-        // ForInOfStatement_Await -> FOR AWAIT LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
+        // ForInOfStatement_Await -> FOR AWAIT _LOOP_START_ LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
         Action::Undefined,
         // CaseBlock_Await -> LBRACE RBRACE
         Action::Undefined,
@@ -2121,7 +2225,7 @@ where
         // Statement_Return -> IfStatement_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> BreakableStatement_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> ContinueStatement
         Action::Undefined,
         // Statement_Return -> BreakStatement
@@ -2408,7 +2512,7 @@ where
         // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Return -> IterationStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Return -> SwitchStatement_Return
         Action::Undefined,
         // ReturnStatement -> RETURN SEMICOLON
@@ -2479,7 +2583,7 @@ where
         // Statement_Yield_Return -> IfStatement_Yield_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> BreakableStatement_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> ContinueStatement_Yield
         Action::Undefined,
         // Statement_Yield_Return -> BreakStatement_Yield
@@ -2513,7 +2617,7 @@ where
         // Statement_Await_Return -> IfStatement_Await_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> BreakableStatement_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> ContinueStatement_Await
         Action::Undefined,
         // Statement_Await_Return -> BreakStatement_Await
@@ -2581,7 +2685,7 @@ where
         // Statement_Yield_Await_Return -> IfStatement_Yield_Await_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> BreakableStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> ContinueStatement_Yield_Await
         Action::Undefined,
         // Statement_Yield_Await_Return -> BreakStatement_Yield_Await
@@ -2703,11 +2807,11 @@ where
         // Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // IterationStatement_Return -> DoWhileStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Return -> WhileStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Return -> ForStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Return -> ForInOfStatement_Return
         Action::Undefined,
         // SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN CaseBlock_Return
@@ -2769,7 +2873,7 @@ where
         // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
         Action::Undefined,
         // ContinueStatement_Yield -> CONTINUE SEMICOLON
@@ -2823,7 +2927,7 @@ where
         // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Await_Return -> IterationStatement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Await_Return -> SwitchStatement_Await_Return
         Action::Undefined,
         // ReturnStatement_Await -> RETURN SEMICOLON
@@ -2890,7 +2994,7 @@ where
         // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
         Action::Undefined,
         // ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
@@ -3006,53 +3110,101 @@ where
         Action::Nop,
         // BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
         Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
-        // DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON
+        // DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON
+        Action::Invoke(
+            Self::process_do_while_statement,
+            "process_do_while_statement",
+        ),
+        // WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ Statement_Return
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_test_next,
+            "process_for_statement_no_init_test_next",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_no_test_next,
+            "process_for_statement_no_test_next",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_next,
+            "process_for_statement_no_init_next",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_no_next,
+            "process_for_statement_no_next",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_test,
+            "process_for_statement_no_init_test",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_no_test,
+            "process_for_statement_no_test",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init,
+            "process_for_statement_no_init",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+        Action::Invoke(Self::process_for_statement, "process_for_statement"),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test_next,
+            "process_for_statement_vars_no_test_next",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_next,
+            "process_for_statement_vars_no_next",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test,
+            "process_for_statement_vars_no_test",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_vars,
+            "process_for_statement_vars",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test_next,
+            "process_for_statement_decl_no_test_next",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_next,
+            "process_for_statement_decl_no_next",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test,
+            "process_for_statement_decl_no_test",
+        ),
+        // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+        Action::Invoke(
+            Self::process_for_statement_decl,
+            "process_for_statement_decl",
+        ),
+        // ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return
         Action::Undefined,
-        // WhileStatement_Return -> WHILE LPAREN Expression_In RPAREN Statement_Return
+        // ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding IN Expression_In RPAREN Statement_Return
         Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return
+        // ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN ForDeclaration IN Expression_In RPAREN Statement_Return
         Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement_Return
+        // ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return
         Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return
+        // ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement_Return
         Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForInOfStatement_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForInOfStatement_Return -> FOR LPAREN ForDeclaration IN Expression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForInOfStatement_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement_Return
-        Action::Undefined,
-        // ForInOfStatement_Return -> FOR LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return
+        // ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return
         Action::Undefined,
         // CaseBlock_Return -> LBRACE RBRACE
         Action::Undefined,
@@ -3124,11 +3276,11 @@ where
         // Expression_In_Yield -> Expression_In_Yield COMMA AssignmentExpression_In_Yield
         Action::Undefined,
         // IterationStatement_Yield_Return -> DoWhileStatement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Yield_Return -> WhileStatement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Yield_Return -> ForStatement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
         Action::Undefined,
         // SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN CaseBlock_Yield_Return
@@ -3178,11 +3330,11 @@ where
         // Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Await_Return -> WhileStatement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Await_Return -> ForStatement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Await_Return -> ForInOfStatement_Await_Return
         Action::Undefined,
         // SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await_Return
@@ -3253,11 +3405,11 @@ where
         // Expression_In_Yield_Await -> Expression_In_Yield_Await COMMA AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Yield_Await_Return -> ForStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return
         Action::Undefined,
         // SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return
@@ -3468,53 +3620,101 @@ where
         Action::Undefined,
         // VariableDeclaration_In_Yield -> BindingPattern_Yield Initializer_In_Yield
         Action::Undefined,
-        // DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON
+        // DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON
+        Action::Invoke(
+            Self::process_do_while_statement,
+            "process_do_while_statement",
+        ),
+        // WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ Statement_Yield_Return
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_test_next,
+            "process_for_statement_no_init_test_next",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_no_test_next,
+            "process_for_statement_no_test_next",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_next,
+            "process_for_statement_no_init_next",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_no_next,
+            "process_for_statement_no_next",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_test,
+            "process_for_statement_no_init_test",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_no_test,
+            "process_for_statement_no_test",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init,
+            "process_for_statement_no_init",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+        Action::Invoke(Self::process_for_statement, "process_for_statement"),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test_next,
+            "process_for_statement_vars_no_test_next",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_next,
+            "process_for_statement_vars_no_next",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test,
+            "process_for_statement_vars_no_test",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_vars,
+            "process_for_statement_vars",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test_next,
+            "process_for_statement_decl_no_test_next",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_next,
+            "process_for_statement_decl_no_next",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test,
+            "process_for_statement_decl_no_test",
+        ),
+        // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+        Action::Invoke(
+            Self::process_for_statement_decl,
+            "process_for_statement_decl",
+        ),
+        // ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
-        // WhileStatement_Yield_Return -> WHILE LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
+        // ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
+        // ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
+        // ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
+        // ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
+        // ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
         // CaseBlock_Yield_Return -> LBRACE RBRACE
         Action::Undefined,
@@ -3548,59 +3748,107 @@ where
         ),
         // LexicalBinding_In_Yield -> BindingPattern_Yield Initializer_In_Yield
         Action::Undefined,
-        // DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
+        // DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+        Action::Invoke(
+            Self::process_do_while_statement,
+            "process_do_while_statement",
+        ),
+        // WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _LOOP_TEST_ Statement_Await_Return
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_test_next,
+            "process_for_statement_no_init_test_next",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_test_next,
+            "process_for_statement_no_test_next",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_next,
+            "process_for_statement_no_init_next",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_next,
+            "process_for_statement_no_next",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_test,
+            "process_for_statement_no_init_test",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_test,
+            "process_for_statement_no_test",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init,
+            "process_for_statement_no_init",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+        Action::Invoke(Self::process_for_statement, "process_for_statement"),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test_next,
+            "process_for_statement_vars_no_test_next",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_next,
+            "process_for_statement_vars_no_next",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test,
+            "process_for_statement_vars_no_test",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_vars,
+            "process_for_statement_vars",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test_next,
+            "process_for_statement_decl_no_test_next",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_next,
+            "process_for_statement_decl_no_next",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test,
+            "process_for_statement_decl_no_test",
+        ),
+        // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_decl,
+            "process_for_statement_decl",
+        ),
+        // ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // WhileStatement_Await_Return -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await_Return
+        // ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return
+        // ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return
+        // ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
+        // ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
+        // ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
+        // ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
+        // ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
+        // ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
         // CaseBlock_Await_Return -> LBRACE RBRACE
         Action::Undefined,
@@ -3716,59 +3964,107 @@ where
         Action::Undefined,
         // VariableDeclaration_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
-        // DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
+        // DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON
+        Action::Invoke(
+            Self::process_do_while_statement,
+            "process_do_while_statement",
+        ),
+        // WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ Statement_Yield_Await_Return
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_test_next,
+            "process_for_statement_no_init_test_next",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_test_next,
+            "process_for_statement_no_test_next",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_next,
+            "process_for_statement_no_init_next",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_next,
+            "process_for_statement_no_next",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init_test,
+            "process_for_statement_no_init_test",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_test,
+            "process_for_statement_no_test",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_no_init,
+            "process_for_statement_no_init",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+        Action::Invoke(Self::process_for_statement, "process_for_statement"),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test_next,
+            "process_for_statement_vars_no_test_next",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_next,
+            "process_for_statement_vars_no_next",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_vars_no_test,
+            "process_for_statement_vars_no_test",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_vars,
+            "process_for_statement_vars",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test_next,
+            "process_for_statement_decl_no_test_next",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_next,
+            "process_for_statement_decl_no_next",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_decl_no_test,
+            "process_for_statement_decl_no_test",
+        ),
+        // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+        Action::Invoke(
+            Self::process_for_statement_decl,
+            "process_for_statement_decl",
+        ),
+        // ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // WhileStatement_Yield_Await_Return -> WHILE LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+        // ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
+        // ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
+        // ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
+        // ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
+        // ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+        // ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+        // ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
-        // ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+        // ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
         // CaseBlock_Yield_Await_Return -> LBRACE RBRACE
         Action::Undefined,

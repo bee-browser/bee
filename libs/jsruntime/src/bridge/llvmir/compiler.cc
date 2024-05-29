@@ -526,7 +526,7 @@ void Compiler::ConditionalTernary() {
 
 // 13.15.2 Runtime Semantics: Evaluation
 void Compiler::Assignment() {
-  auto item = PopItem();
+  auto item = Dereference();
   auto ref = PopReference();
 
   auto* binding_ptr = CreateGetBindingPtr(ref.locator);
@@ -914,6 +914,87 @@ void Compiler::IfStatement() {
   builder_->CreateCondBr(cond_value, then_head_block, block);
 
   builder_->SetInsertPoint(block);
+}
+
+void Compiler::LoopStart() {
+  auto* loop_start = llvm::BasicBlock::Create(*context_, "ls", function_);
+
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(loop_start);
+
+  PushBlock(loop_start);
+}
+
+void Compiler::LoopInit() {
+  // Discard the evaluation result and the previous loop_start block.
+  Discard();
+  PopBlock();
+
+  // Create a new loop_start block.
+  auto* loop_start = llvm::BasicBlock::Create(*context_, "ls", function_);
+
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(loop_start);
+
+  PushBlock(loop_start);
+}
+
+void Compiler::LoopTest() {
+  auto cond = Dereference();
+  auto* truthy = CreateToBoolean(cond);
+  auto* loop_test = builder_->GetInsertBlock();
+  PushBoolean(truthy);
+  PushBlock(loop_test);
+
+  // Blocks will be connected in LoopEnd().
+
+  auto* loop_body = llvm::BasicBlock::Create(*context_, "lb", function_);
+  PushBlock(loop_body);
+
+  builder_->SetInsertPoint(loop_body);
+}
+
+void Compiler::LoopNext() {
+  // Discard the evaluation result.
+  Discard();
+
+  PopBlock();  // Discard loop_body
+  auto* loop_test = PopBlock();
+  auto* truthy = PopBoolean();
+  auto* loop_start = PopBlock();
+
+  // The current block contains the `next` expression.  We re-interpret it as the last block of the
+  // `for` statement.
+  builder_->CreateBr(loop_start);
+  auto* loop_next = builder_->GetInsertBlock();
+
+  // Create a new block for the *actual* body of the `for` statement.
+  auto* loop_body = llvm::BasicBlock::Create(*context_, "lb", function_);
+  builder_->SetInsertPoint(loop_body);
+
+  // Push `loop_next` as the block for the beginning of the iteration so that we can create a
+  // branch from the last block of the statement body to the block for the `next` expression.
+  PushBlock(loop_next);
+  PushBoolean(truthy);
+  PushBlock(loop_test);
+  PushBlock(loop_body);
+}
+
+void Compiler::LoopEnd() {
+  auto* loop_body = PopBlock();
+  auto* loop_test = PopBlock();
+  auto* truthy = PopBoolean();
+  // `loop_start` is not the block for the block for the beginning of the iteration if the
+  // _LOOP_NEXT_ action exists in the production rule.  See LoopNext() for details.
+  auto* loop_start = PopBlock();
+
+  builder_->CreateBr(loop_start);
+
+  auto* loop_end = llvm::BasicBlock::Create(*context_, "le", function_);
+  builder_->SetInsertPoint(loop_test);
+  builder_->CreateCondBr(truthy, loop_body, loop_end);
+
+  builder_->SetInsertPoint(loop_end);
 }
 
 void Compiler::StartFunction(const char* name) {

@@ -9849,6 +9849,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement
     - type: token
       data: WHILE
@@ -9858,6 +9860,8 @@
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Return
@@ -9865,6 +9869,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement_Return
     - type: token
       data: WHILE
@@ -9874,6 +9880,8 @@
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Await
@@ -9881,6 +9889,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement_Await
     - type: token
       data: WHILE
@@ -9890,6 +9900,8 @@
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Await_Return
@@ -9897,6 +9909,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement_Await_Return
     - type: token
       data: WHILE
@@ -9906,6 +9920,8 @@
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Yield
@@ -9913,6 +9929,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement_Yield
     - type: token
       data: WHILE
@@ -9922,6 +9940,8 @@
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Yield_Return
@@ -9929,6 +9949,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement_Yield_Return
     - type: token
       data: WHILE
@@ -9938,6 +9960,8 @@
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Yield_Await
@@ -9945,6 +9969,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement_Yield_Await
     - type: token
       data: WHILE
@@ -9954,6 +9980,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Yield_Await_Return
@@ -9961,6 +9989,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement_Yield_Await_Return
     - type: token
       data: WHILE
@@ -9970,96 +10000,128 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: SEMICOLON
 - name: WhileStatement
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Statement
 - name: WhileStatement_Return
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Statement_Return
 - name: WhileStatement_Await
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Statement_Await
 - name: WhileStatement_Await_Return
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Statement_Await_Return
 - name: WhileStatement_Yield
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Statement_Yield
 - name: WhileStatement_Yield_Return
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Statement_Yield_Return
 - name: WhileStatement_Yield_Await
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Statement_Yield_Await
 - name: WhileStatement_Yield_Await_Return
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -10067,11 +10129,15 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
       data: Statement_Yield_Await_Return
 - name: ForStatement
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10092,50 +10158,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
     - type: non-terminal
-      data: Expression
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10149,7 +10173,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10160,52 +10184,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
     - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: non-terminal
-      data: Expression
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10221,7 +10201,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -10230,6 +10210,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10243,11 +10225,13 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -10256,150 +10240,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement
-- name: ForStatement_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10412,58 +10254,20 @@
       data: SEMICOLON
     - type: token
       data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: non-terminal
-      data: Expression
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
     - type: non-terminal
       data: Expression_In
     - type: token
-      data: SEMICOLON
-    - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10477,27 +10281,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -10505,35 +10289,15 @@
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
     - type: non-terminal
-      data: Expression
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10549,15 +10313,21 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
       data: Expression_In
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10571,37 +10341,27 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In
     - type: token
       data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Expression_In
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -10611,37 +10371,19 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
+      data: Statement
+- name: ForStatement
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Return
-- name: ForStatement_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -10651,11 +10393,179 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
       data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement
+- name: ForStatement
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: SEMICOLON
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -10664,10 +10574,22 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
     - type: non-terminal
-      data: LexicalDeclaration
+      data: Expression
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10678,12 +10600,194 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
     - type: non-terminal
       data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10694,14 +10798,24 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: token
+      data: VAR
     - type: non-terminal
-      data: LexicalDeclaration
+      data: VariableDeclarationList
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -10710,24 +10824,152 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: token
+      data: VAR
     - type: non-terminal
-      data: LexicalDeclaration
+      data: VariableDeclarationList
+    - type: token
+      data: SEMICOLON
     - type: non-terminal
-      data: Expression_In
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: non-terminal
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Return
+- name: ForStatement_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
     - type: non-terminal
       data: Statement_Return
 - name: ForStatement_Await
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10748,50 +10990,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
     - type: non-terminal
-      data: Expression_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10805,7 +11005,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Await
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10816,52 +11016,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: non-terminal
-      data: Expression_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10877,7 +11033,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Await
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -10886,6 +11042,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -10899,11 +11057,13 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Await
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -10912,150 +11072,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Await
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Await
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await
-- name: ForStatement_Await_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11068,58 +11086,20 @@
       data: SEMICOLON
     - type: token
       data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: non-terminal
-      data: Expression_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Await
     - type: token
-      data: SEMICOLON
-    - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11133,27 +11113,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -11161,35 +11121,15 @@
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
     - type: non-terminal
-      data: Expression_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11205,15 +11145,21 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11227,37 +11173,27 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -11267,37 +11203,19 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Await
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
+      data: Statement_Await
+- name: ForStatement_Await
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Await_Return
-- name: ForStatement_Await_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -11307,11 +11225,179 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
       data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: SEMICOLON
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -11320,10 +11406,22 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
     - type: non-terminal
-      data: LexicalDeclaration_Await
+      data: Expression_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11334,12 +11432,194 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Await
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11350,14 +11630,24 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: token
+      data: VAR
     - type: non-terminal
-      data: LexicalDeclaration_Await
+      data: VariableDeclarationList_Await
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -11366,24 +11656,152 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: token
+      data: VAR
     - type: non-terminal
-      data: LexicalDeclaration_Await
+      data: VariableDeclarationList_Await
+    - type: token
+      data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Await
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Await_Return
+- name: ForStatement_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
     - type: non-terminal
       data: Statement_Await_Return
 - name: ForStatement_Yield
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11404,50 +11822,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
     - type: non-terminal
-      data: Expression_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11461,7 +11837,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11472,52 +11848,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: non-terminal
-      data: Expression_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11533,7 +11865,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -11542,6 +11874,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11555,11 +11889,13 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -11568,150 +11904,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Yield
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Yield
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield
-- name: ForStatement_Yield_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11724,58 +11918,20 @@
       data: SEMICOLON
     - type: token
       data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: non-terminal
-      data: Expression_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
-      data: SEMICOLON
-    - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11789,27 +11945,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -11817,35 +11953,15 @@
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
     - type: non-terminal
-      data: Expression_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11861,15 +11977,21 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -11883,37 +12005,27 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -11923,37 +12035,19 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
+      data: Statement_Yield
+- name: ForStatement_Yield
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Yield
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Return
-- name: ForStatement_Yield_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -11963,11 +12057,179 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
       data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: SEMICOLON
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -11976,10 +12238,22 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
     - type: non-terminal
-      data: LexicalDeclaration_Yield
+      data: Expression_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11990,12 +12264,194 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12006,14 +12462,24 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: token
+      data: VAR
     - type: non-terminal
-      data: LexicalDeclaration_Yield
+      data: VariableDeclarationList_Yield
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -12022,24 +12488,152 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: token
+      data: VAR
     - type: non-terminal
-      data: LexicalDeclaration_Yield
+      data: VariableDeclarationList_Yield
+    - type: token
+      data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Return
+- name: ForStatement_Yield_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
     - type: non-terminal
       data: Statement_Yield_Return
 - name: ForStatement_Yield_Await
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12060,50 +12654,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
     - type: non-terminal
-      data: Expression_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12117,7 +12669,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield_Await
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12128,52 +12680,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: non-terminal
-      data: Expression_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12189,7 +12697,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield_Await
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -12198,6 +12706,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12211,11 +12721,13 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield_Await
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -12224,150 +12736,8 @@
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
-    - type: non-terminal
-      data: VariableDeclarationList_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield_Await
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield_Await
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await
-- name: ForStatement_Yield_Await_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12380,58 +12750,20 @@
       data: SEMICOLON
     - type: token
       data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: non-terminal
-      data: Expression_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
-      data: SEMICOLON
-    - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12445,27 +12777,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
-  production:
-    - type: token
-      data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
-    - type: token
-      data: SEMICOLON
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12473,35 +12785,15 @@
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: lookahead
-      data:
-        type: exclude
-        data:
-          - - LET
-            - LBRACK
     - type: non-terminal
-      data: Expression_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12517,15 +12809,21 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12539,37 +12837,27 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -12579,37 +12867,19 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield_Await
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
       data: RPAREN
     - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
   production:
     - type: token
       data: FOR
-    - type: token
-      data: LPAREN
-    - type: token
-      data: VAR
     - type: non-terminal
-      data: VariableDeclarationList_Yield_Await
-    - type: token
-      data: SEMICOLON
-    - type: token
-      data: SEMICOLON
-    - type: non-terminal
-      data: Expression_In_Yield_Await
-    - type: token
-      data: RPAREN
-    - type: non-terminal
-      data: Statement_Yield_Await_Return
-- name: ForStatement_Yield_Await_Return
-  production:
-    - type: token
-      data: FOR
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -12619,11 +12889,179 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
       data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: SEMICOLON
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -12632,10 +13070,22 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
     - type: non-terminal
-      data: LexicalDeclaration_Yield_Await
+      data: Expression_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12646,12 +13096,194 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
-    - type: non-terminal
-      data: LexicalDeclaration_Yield_Await
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: lookahead
+      data:
+        type: exclude
+        data:
+          - - LET
+            - LBRACK
+    - type: non-terminal
+      data: Expression_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12662,14 +13294,24 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: token
+      data: VAR
     - type: non-terminal
-      data: LexicalDeclaration_Yield_Await
+      data: VariableDeclarationList_Yield_Await
     - type: token
       data: SEMICOLON
     - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
       data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
     - type: token
       data: RPAREN
     - type: non-terminal
@@ -12678,24 +13320,152 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
+    - type: token
+      data: VAR
     - type: non-terminal
-      data: LexicalDeclaration_Yield_Await
+      data: VariableDeclarationList_Yield_Await
+    - type: token
+      data: SEMICOLON
     - type: non-terminal
-      data: Expression_In_Yield_Await
+      data: _LOOP_INIT_
     - type: token
       data: SEMICOLON
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: token
+      data: VAR
+    - type: non-terminal
+      data: VariableDeclarationList_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
+    - type: non-terminal
+      data: Statement_Yield_Await_Return
+- name: ForStatement_Yield_Await_Return
+  production:
+    - type: token
+      data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
+    - type: token
+      data: LPAREN
+    - type: non-terminal
+      data: LexicalDeclaration_Yield_Await
+    - type: non-terminal
+      data: _LOOP_INIT_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+    - type: non-terminal
+      data: _LOOP_TEST_
+    - type: non-terminal
+      data: Expression_In_Yield_Await
+    - type: token
+      data: RPAREN
+    - type: non-terminal
+      data: _LOOP_NEXT_
     - type: non-terminal
       data: Statement_Yield_Await_Return
 - name: ForInOfStatement
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12718,6 +13488,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -12736,6 +13508,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -12752,6 +13526,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12775,6 +13551,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -12793,6 +13571,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -12809,6 +13589,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12831,6 +13613,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -12849,6 +13633,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -12865,6 +13651,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12888,6 +13676,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -12906,6 +13696,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -12922,6 +13714,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -12944,6 +13738,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -12962,6 +13758,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -12978,6 +13776,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13001,6 +13801,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13019,6 +13821,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13037,6 +13841,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13060,6 +13866,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13080,6 +13888,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13096,6 +13906,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13118,6 +13930,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13136,6 +13950,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13152,6 +13968,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13175,6 +13993,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13193,6 +14013,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13211,6 +14033,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13234,6 +14058,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13254,6 +14080,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13270,6 +14098,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13292,6 +14122,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13310,6 +14142,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13326,6 +14160,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13349,6 +14185,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13367,6 +14205,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13383,6 +14223,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13405,6 +14247,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13423,6 +14267,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13439,6 +14285,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13462,6 +14310,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13480,6 +14330,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13496,6 +14348,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13518,6 +14372,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13536,6 +14392,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13552,6 +14410,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13575,6 +14435,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13593,6 +14455,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13611,6 +14475,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13634,6 +14500,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13654,6 +14522,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13670,6 +14540,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13692,6 +14564,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13710,6 +14584,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13726,6 +14602,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13749,6 +14627,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13767,6 +14647,8 @@
   production:
     - type: token
       data: FOR
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -13785,6 +14667,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: lookahead
@@ -13808,6 +14692,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: token
@@ -13828,6 +14714,8 @@
       data: FOR
     - type: token
       data: AWAIT
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -19079,6 +19967,18 @@
   production:
     - type: empty
 - name: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
+  production:
+    - type: empty
+- name: _LOOP_START_
+  production:
+    - type: empty
+- name: _LOOP_INIT_
+  production:
+    - type: empty
+- name: _LOOP_TEST_
+  production:
+    - type: empty
+- name: _LOOP_NEXT_
   production:
     - type: empty
 - name: NullLiteral

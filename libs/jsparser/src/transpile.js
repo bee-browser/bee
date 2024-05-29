@@ -172,7 +172,11 @@ class Transpiler {
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
           modifyFunctionExpression,
+          modifyDoWhileStatement,
+          modifyWhileStatement,
           expandOptionals,
+          modifyForStatement,
+          modifyForInOfStatement,
           expandParameterizedRules,
           modifyBlock,
           translateRules,
@@ -597,6 +601,10 @@ function addActions(rules) {
     '_FALSY_SHORT_CIRCUIT_ASSIGNMENT_',
     '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
     '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
+    '_LOOP_START_',
+    '_LOOP_INIT_',
+    '_LOOP_TEST_',
+    '_LOOP_NEXT_',
   ];
 
   for (const action of ACTIONS) {
@@ -759,6 +767,79 @@ function modifyFunctionExpression(rules) {
   return rules;
 }
 
+// CAUTION: You MUST update `isAutoSemicolonDoWhile()` in parser/lalr.js when you change the
+// production rule of `DoWhileStatement`.
+function modifyDoWhileStatement(rules) {
+  const TARGETS = [
+    {
+      term: '`do`',
+      action: '_LOOP_START_',
+      insertBefore: false,
+    },
+    {
+      term: '`)`',
+      action: '_LOOP_TEST_',
+      insertBefore: false,
+    },
+  ];
+
+  log.debug('Modifying WhileStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'DoWhileStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 1);
+
+  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
+
+  return rules;
+}
+
+function modifyWhileStatement(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_LOOP_START_',
+      insertBefore: true,
+    },
+    {
+      term: '`)`',
+      action: '_LOOP_TEST_',
+      insertBefore: false,
+    },
+  ];
+
+  log.debug('Modifying WhileStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'WhileStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 1);
+
+  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
+
+  return rules;
+}
+
+function modifyTargetsInProduction(production, targets) {
+  for (const target of targets) {
+    production = modifyTargetInProduction(production, target);
+  }
+  return production;
+}
+
+function modifyTargetInProduction(production, target) {
+  const [head, tail] = production.split(target.term).map((term) => term.trim());
+  if (tail === undefined) {
+    return production;
+  }
+  let terms;
+  if (target.insertBefore) {
+    terms = [head, target.action, target.term, tail];
+  } else {
+    terms = [head, target.term, target.action, tail];
+  }
+  return terms.filter((term) => term !== '').join(' ');
+}
+
 function expandOptionals(rules) {
   log.debug('Expanding optionals...');
   const expanded = [];
@@ -800,6 +881,85 @@ function expandOptionals(rules) {
     });
   }
   return expanded;
+}
+
+function modifyForStatement(rules) {
+  // DO NOT CHANGE THE ORDER OF ELEMENTS IN THE TARGETS.
+  const TARGETS = [
+    {
+      term: '`;` Expression[+In, ?Yield, ?Await] `)`',
+      action: '_LOOP_NEXT_',
+      insertBefore: false,
+    },
+    {
+      term: '`;` Expression[+In, ?Yield, ?Await] `;`',
+      action: '_LOOP_TEST_',
+      insertBefore: false,
+    },
+    {
+      term: 'LexicalDeclaration[~In, ?Yield, ?Await] Expression[+In, ?Yield, ?Await] `;`',
+      action: '_LOOP_TEST_',
+      insertBefore: false,
+    },
+    {
+      term: '[lookahead != `let` `[`] Expression[~In, ?Yield, ?Await] `;`',
+      action: '_LOOP_INIT_',
+      insertBefore: false,
+    },
+    {
+      term: '`var` VariableDeclarationList[~In, ?Yield, ?Await] `;`',
+      action: '_LOOP_INIT_',
+      insertBefore: false,
+    },
+    {
+      term: 'LexicalDeclaration[~In, ?Yield, ?Await]',
+      action: '_LOOP_INIT_',
+      insertBefore: false,
+    },
+    // NOTE: Inserting _BLOCK_SCOPE_ before LexicalDeclaration[~In, ?Yield, ?Await] in order to
+    // create a new lexical scope causes shift/reduce conflicts.  Other similar methods also cause
+    // conflicts.  Eventually, we decided to always create a new lexical scope in the action for
+    // _LOOP_START_.  See also comments in `jsruntime::semantics::Analyzer::handle_loop_start()`.
+    {
+      term: '`(`',
+      action: '_LOOP_START_',
+      insertBefore: true,
+    },
+  ];
+
+  log.debug('Modifying ForStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'ForStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+
+  for (let i = 0; i < rule.values.length; ++i) {
+    rule.values[i] = modifyTargetsInProduction(rule.values[i], TARGETS);
+  }
+
+  return rules;
+}
+
+function modifyForInOfStatement(rules) {
+  // TODO: Add targets.
+  // At this point, _LOOP_START_ is inserted in order to avoid shift/reduce conflicts.
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_LOOP_START_',
+      insertBefore: true,
+    },
+  ];
+
+  log.debug('Modifying ForInOfStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'ForInOfStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+
+  for (let i = 0; i < rule.values.length; ++i) {
+    rule.values[i] = modifyTargetsInProduction(rule.values[i], TARGETS);
+  }
+
+  return rules;
 }
 
 function expandParameterizedRules(rules) {
