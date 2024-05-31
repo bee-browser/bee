@@ -926,8 +926,6 @@ void Compiler::LoopStart() {
 }
 
 void Compiler::LoopInit() {
-  // Discard the evaluation result and the previous loop_start block.
-  Discard();
   PopBlock();
 
   // Create a new loop_start block.

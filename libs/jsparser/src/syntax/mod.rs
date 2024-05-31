@@ -143,7 +143,9 @@ pub enum Node<'s> {
     TruthyShortCircuitAssignment,
     NullishShortCircuitAssignment,
     LoopStart,
-    LoopInit,
+    LoopInitExpression,
+    LoopInitVarDeclaration,
+    LoopInitLexicalDeclaration,
     LoopTest,
     LoopNext,
     StartBlockScope,
@@ -474,9 +476,21 @@ where
         Ok(())
     }
 
-    // _LOOP_INIT_
-    fn process_loop_init(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::LoopInit);
+    // _LOOP_INIT_EXPRESSION_
+    fn process_loop_init_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopInitExpression);
+        Ok(())
+    }
+
+    // _LOOP_INIT_VAR_DECLARATION_
+    fn process_loop_init_var_declaration(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopInitVarDeclaration);
+        Ok(())
+    }
+
+    // _LOOP_INIT_LEXICAL_DECLARATION_
+    fn process_loop_init_lexical_declaration(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopInitLexicalDeclaration);
         Ok(())
     }
 

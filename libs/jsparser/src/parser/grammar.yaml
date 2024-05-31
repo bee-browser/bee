@@ -10173,7 +10173,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10225,7 +10225,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10281,7 +10281,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -10341,7 +10341,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10371,7 +10371,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10393,7 +10393,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10419,7 +10419,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -10445,7 +10445,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10471,7 +10471,7 @@
     - type: non-terminal
       data: LexicalDeclaration
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10489,7 +10489,7 @@
     - type: non-terminal
       data: LexicalDeclaration
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10511,7 +10511,7 @@
     - type: non-terminal
       data: LexicalDeclaration
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -10533,7 +10533,7 @@
     - type: non-terminal
       data: LexicalDeclaration
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10589,7 +10589,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10641,7 +10641,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10697,7 +10697,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -10757,7 +10757,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10787,7 +10787,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10809,7 +10809,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10835,7 +10835,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -10861,7 +10861,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10887,7 +10887,7 @@
     - type: non-terminal
       data: LexicalDeclaration
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -10905,7 +10905,7 @@
     - type: non-terminal
       data: LexicalDeclaration
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -10927,7 +10927,7 @@
     - type: non-terminal
       data: LexicalDeclaration
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -10949,7 +10949,7 @@
     - type: non-terminal
       data: LexicalDeclaration
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -11005,7 +11005,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11057,7 +11057,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11113,7 +11113,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -11173,7 +11173,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11203,7 +11203,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11225,7 +11225,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11251,7 +11251,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -11277,7 +11277,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11303,7 +11303,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11321,7 +11321,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11343,7 +11343,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -11365,7 +11365,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11421,7 +11421,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11473,7 +11473,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11529,7 +11529,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -11589,7 +11589,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11619,7 +11619,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11641,7 +11641,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11667,7 +11667,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -11693,7 +11693,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11719,7 +11719,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11737,7 +11737,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11759,7 +11759,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -11781,7 +11781,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -11837,7 +11837,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -11889,7 +11889,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -11945,7 +11945,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12005,7 +12005,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12035,7 +12035,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12057,7 +12057,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12083,7 +12083,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12109,7 +12109,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12135,7 +12135,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12153,7 +12153,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12175,7 +12175,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12197,7 +12197,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12253,7 +12253,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12305,7 +12305,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12361,7 +12361,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12421,7 +12421,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12451,7 +12451,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12473,7 +12473,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12499,7 +12499,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12525,7 +12525,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12551,7 +12551,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12569,7 +12569,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12591,7 +12591,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12613,7 +12613,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -12669,7 +12669,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12721,7 +12721,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -12777,7 +12777,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12837,7 +12837,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -12867,7 +12867,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12889,7 +12889,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -12915,7 +12915,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -12941,7 +12941,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -12967,7 +12967,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -12985,7 +12985,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -13007,7 +13007,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -13029,7 +13029,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -13085,7 +13085,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -13137,7 +13137,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -13193,7 +13193,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -13253,7 +13253,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_EXPRESSION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -13283,7 +13283,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -13305,7 +13305,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -13331,7 +13331,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -13357,7 +13357,7 @@
     - type: token
       data: SEMICOLON
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_VAR_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -13383,7 +13383,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: token
@@ -13401,7 +13401,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -13423,7 +13423,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: token
       data: SEMICOLON
     - type: non-terminal
@@ -13445,7 +13445,7 @@
     - type: non-terminal
       data: LexicalDeclaration_Yield_Await
     - type: non-terminal
-      data: _LOOP_INIT_
+      data: _LOOP_INIT_LEXICAL_DECLARATION_
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -19972,7 +19972,13 @@
 - name: _LOOP_START_
   production:
     - type: empty
-- name: _LOOP_INIT_
+- name: _LOOP_INIT_EXPRESSION_
+  production:
+    - type: empty
+- name: _LOOP_INIT_VAR_DECLARATION_
+  production:
+    - type: empty
+- name: _LOOP_INIT_LEXICAL_DECLARATION_
   production:
     - type: empty
 - name: _LOOP_TEST_

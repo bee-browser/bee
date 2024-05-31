@@ -76,22 +76,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement -> FOR . _LOOP_START_ LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR . _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
     //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::Div,
     // State(17)
@@ -616,22 +616,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await -> FOR . _LOOP_START_ LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR . _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::Div,
     // State(155)
@@ -1232,22 +1232,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement -> FOR _LOOP_START_ . LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR _LOOP_START_ . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
     //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(313)
     //   [GeneratorDeclaration -> FUNCTION MUL . BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -1866,22 +1866,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ . LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(480)
     //   [GeneratorDeclaration_Await -> FUNCTION MUL . BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -2708,22 +2708,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN . ForDeclaration OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
     //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(708)
     //   [GeneratorDeclaration -> FUNCTION MUL BindingIdentifier . LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -3481,22 +3481,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN . ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(911)
     //   [GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await . LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -4137,10 +4137,10 @@ pub static TABLE: [Goal; 4371] = [
     // State(1079)
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN VAR . ForBinding IN Expression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN VAR . ForBinding OF AssignmentExpression_In RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(1080)
     //   [AssignmentExpression -> ArrowFunction .]*
@@ -4192,10 +4192,10 @@ pub static TABLE: [Goal; 4371] = [
     Goal::Div,
     // State(1092)
     //   [Expression -> Expression . COMMA AssignmentExpression]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(1093)
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration . IN Expression_In RPAREN Statement]*
@@ -4216,11 +4216,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
     // State(1095)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_INIT_LEXICAL_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(1096)
     //   [LogicalANDExpression -> LogicalANDExpression . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression]*
@@ -4355,22 +4355,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR . _LOOP_START_ LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR . _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::Div,
     // State(1131)
@@ -4535,22 +4535,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR . _LOOP_START_ LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::Div,
     // State(1178)
@@ -4950,10 +4950,10 @@ pub static TABLE: [Goal; 4371] = [
     // State(1290)
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR . ForBinding_Await IN Expression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR . ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(1291)
     //   [AssignmentExpression_Await -> ArrowFunction_Await .]*
@@ -5005,10 +5005,10 @@ pub static TABLE: [Goal; 4371] = [
     Goal::Div,
     // State(1303)
     //   [Expression_Await -> Expression_Await . COMMA AssignmentExpression_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(1304)
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN ForDeclaration_Await . IN Expression_In_Await RPAREN Statement_Await]*
@@ -5029,11 +5029,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
     // State(1306)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_INIT_LEXICAL_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(1307)
     //   [LogicalANDExpression_Await -> LogicalANDExpression_Await . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Await]*
@@ -5532,10 +5532,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList -> VariableDeclaration .]*
     Goal::Div,
     // State(1446)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [VariableDeclarationList -> VariableDeclarationList . COMMA VariableDeclaration]*
     Goal::Div,
     // State(1447)
@@ -5573,11 +5573,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [Expression -> Expression COMMA . AssignmentExpression]*
     Goal::RegExp,
     // State(1458)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_INIT_EXPRESSION_ -> (empty) .]*
     Goal::RegExp,
     // State(1459)
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration IN . Expression_In RPAREN Statement]*
@@ -5620,10 +5620,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression -> LeftHandSideExpression .]*
     Goal::Div,
     // State(1469)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ . SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(1470)
     //   [LogicalANDExpression -> LogicalANDExpression AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression]*
@@ -5727,22 +5727,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ . LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(1499)
     //   [IfStatement_Return -> IF LPAREN . Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return]*
@@ -5819,22 +5819,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ . LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(1520)
     //   [IfStatement_Await_Return -> IF LPAREN . Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return]*
@@ -6084,10 +6084,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await . OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     Goal::Div,
     // State(1593)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [VariableDeclarationList_Await -> VariableDeclarationList_Await . COMMA VariableDeclaration_Await]*
     Goal::Div,
     // State(1594)
@@ -6128,11 +6128,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [Expression_Await -> Expression_Await COMMA . AssignmentExpression_Await]*
     Goal::RegExp,
     // State(1606)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_INIT_EXPRESSION_ -> (empty) .]*
     Goal::RegExp,
     // State(1607)
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN ForDeclaration_Await IN . Expression_In_Await RPAREN Statement_Await]*
@@ -6175,10 +6175,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await .]*
     Goal::Div,
     // State(1617)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ . SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(1618)
     //   [LogicalANDExpression_Await -> LogicalANDExpression_Await AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Await]*
@@ -6596,11 +6596,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList -> VariableDeclarationList COMMA . VariableDeclaration]*
     Goal::Div,
     // State(1737)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [_LOOP_INIT_VAR_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(1738)
     //   [ConciseBody -> LBRACE . FunctionBody RBRACE]*
@@ -6706,10 +6706,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [Expression -> Expression COMMA AssignmentExpression .]*
     Goal::Div,
     // State(1757)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(1758)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -6741,13 +6741,13 @@ pub static TABLE: [Goal; 4371] = [
     //   [AssignmentExpression -> LeftHandSideExpression AssignmentOperator AssignmentExpression .]*
     Goal::Div,
     // State(1767)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(1768)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(1769)
     //   [LogicalANDExpression -> LogicalANDExpression AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression]*
@@ -6849,22 +6849,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN . ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(1793)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -6931,22 +6931,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN . ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(1810)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -7136,11 +7136,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA . VariableDeclaration_Await]*
     Goal::Div,
     // State(1867)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [_LOOP_INIT_VAR_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(1868)
     //   [ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody .]*
@@ -7202,10 +7202,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [Expression_Await -> Expression_Await COMMA AssignmentExpression_Await .]*
     Goal::Div,
     // State(1879)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(1880)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -7237,13 +7237,13 @@ pub static TABLE: [Goal; 4371] = [
     //   [AssignmentExpression_Await -> LeftHandSideExpression_Await AssignmentOperator AssignmentExpression_Await .]*
     Goal::Div,
     // State(1889)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(1890)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(1891)
     //   [LogicalANDExpression_Await -> LogicalANDExpression_Await AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression_Await]*
@@ -7902,10 +7902,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration .]*
     Goal::Div,
     // State(2061)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(2062)
     //   [ConciseBody -> LBRACE FunctionBody . RBRACE]*
@@ -7934,13 +7934,13 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await .]*
     Goal::Div,
     // State(2067)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(2068)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(2069)
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration IN Expression_In RPAREN . Statement]*
@@ -7964,15 +7964,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [AssignmentExpression -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression .]*
     Goal::Div,
     // State(2076)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN . Statement]*
     Goal::RegExp,
     // State(2077)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(2078)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(2079)
@@ -8045,17 +8045,17 @@ pub static TABLE: [Goal; 4371] = [
     // State(2097)
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR . ForBinding IN Expression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR . ForBinding OF AssignmentExpression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(2098)
     //   [Expression -> Expression . COMMA AssignmentExpression]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(2099)
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN ForDeclaration . IN Expression_In RPAREN Statement_Return]*
@@ -8076,11 +8076,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
     // State(2101)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_INIT_LEXICAL_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(2102)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN . _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return]*
@@ -8129,17 +8129,17 @@ pub static TABLE: [Goal; 4371] = [
     // State(2114)
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . ForBinding_Await IN Expression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(2115)
     //   [Expression_Await -> Expression_Await . COMMA AssignmentExpression_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(2116)
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Await . IN Expression_In_Await RPAREN Statement_Await_Return]*
@@ -8160,11 +8160,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
     // State(2118)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_INIT_LEXICAL_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(2119)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN . _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return]*
@@ -8313,23 +8313,23 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await .]*
     Goal::Div,
     // State(2163)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(2164)
     //   [BitwiseORExpression_Await -> BitwiseORExpression_Await . BIT_OR BitwiseXORExpression_Await]*
     //   [CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Await .]*
     Goal::Div,
     // State(2165)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(2166)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(2167)
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN . Statement_Await]*
@@ -8353,15 +8353,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [AssignmentExpression_Await -> LeftHandSideExpression_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await .]*
     Goal::Div,
     // State(2174)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN . Statement_Await]*
     Goal::RegExp,
     // State(2175)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(2176)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(2177)
@@ -9285,22 +9285,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::Div,
     // State(2416)
@@ -9524,13 +9524,13 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN . Statement]*
     Goal::RegExp,
     // State(2482)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(2483)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(2484)
     //   [ConciseBody -> LBRACE FunctionBody RBRACE .]*
@@ -9539,15 +9539,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE .]*
     Goal::Div,
     // State(2486)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN . Statement]*
     Goal::RegExp,
     // State(2487)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(2488)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(2489)
@@ -9563,15 +9563,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement .]*
     Goal::RegExp,
     // State(2493)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement .]*
     Goal::RegExp,
     // State(2494)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(2495)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(2496)
     //   [ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON . _ELSE_BLOCK_ AssignmentExpression]*
@@ -9622,18 +9622,18 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding . OF AssignmentExpression_In RPAREN Statement_Return]*
     Goal::Div,
     // State(2509)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [VariableDeclarationList -> VariableDeclarationList . COMMA VariableDeclaration]*
     Goal::Div,
     // State(2510)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_INIT_EXPRESSION_ -> (empty) .]*
     Goal::RegExp,
     // State(2511)
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN ForDeclaration IN . Expression_In RPAREN Statement_Return]*
@@ -9658,10 +9658,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression -> LeftHandSideExpression .]*
     Goal::Div,
     // State(2516)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ . SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(2517)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ . Statement_Return ELSE _ELSE_BLOCK_ Statement_Return]*
@@ -9714,18 +9714,18 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await . OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::Div,
     // State(2530)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [VariableDeclarationList_Await -> VariableDeclarationList_Await . COMMA VariableDeclaration_Await]*
     Goal::Div,
     // State(2531)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_INIT_EXPRESSION_ -> (empty) .]*
     Goal::RegExp,
     // State(2532)
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Await IN . Expression_In_Await RPAREN Statement_Await_Return]*
@@ -9750,10 +9750,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await .]*
     Goal::Div,
     // State(2537)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ . SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(2538)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ . Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return]*
@@ -9864,24 +9864,24 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await]*
     Goal::RegExp,
     // State(2569)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(2570)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(2571)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN . Statement_Await]*
     Goal::RegExp,
     // State(2572)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(2573)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(2574)
@@ -9897,15 +9897,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
     // State(2578)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await .]*
     Goal::RegExp,
     // State(2579)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(2580)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(2581)
     //   [ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON . _ELSE_BLOCK_ AssignmentExpression_Await]*
@@ -10430,22 +10430,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::Div,
     // State(2721)
@@ -11091,22 +11091,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(2896)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL . BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -11238,37 +11238,37 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement .]*
     Goal::RegExp,
     // State(2935)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN . Statement]*
     Goal::RegExp,
     // State(2936)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(2937)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(2938)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement .]*
     Goal::RegExp,
     // State(2939)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(2940)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(2941)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement]*
     Goal::RegExp,
     // State(2942)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement]*
     Goal::RegExp,
     // State(2943)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(2944)
     //   [ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ . AssignmentExpression]*
@@ -11312,17 +11312,17 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding OF . AssignmentExpression_In RPAREN Statement_Return]*
     Goal::RegExp,
     // State(2956)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [_LOOP_INIT_VAR_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(2957)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(2958)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -11339,13 +11339,13 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In . RPAREN Statement_Return]*
     Goal::Div,
     // State(2962)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(2963)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(2964)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return . ELSE _ELSE_BLOCK_ Statement_Return]*
@@ -11414,17 +11414,17 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
     // State(2982)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [_LOOP_INIT_VAR_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(2983)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(2984)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -11441,13 +11441,13 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
     // State(2988)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(2989)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(2990)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return . ELSE _ELSE_BLOCK_ Statement_Await_Return]*
@@ -11566,37 +11566,37 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
     // State(3024)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN . Statement_Await]*
     Goal::RegExp,
     // State(3025)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(3026)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(3027)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await .]*
     Goal::RegExp,
     // State(3028)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3029)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(3030)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
     Goal::RegExp,
     // State(3031)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await]*
     Goal::RegExp,
     // State(3032)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(3033)
     //   [ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ . AssignmentExpression_Await]*
@@ -12094,22 +12094,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(3163)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL . BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -12412,22 +12412,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(3253)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield . LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -12530,34 +12530,34 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement]*
     Goal::RegExp,
     // State(3284)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement .]*
     Goal::RegExp,
     // State(3285)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3286)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement]*
     Goal::RegExp,
     // State(3287)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement]*
     Goal::RegExp,
     // State(3288)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement]*
     Goal::RegExp,
     // State(3289)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(3290)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement .]*
     Goal::RegExp,
     // State(3291)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement .]*
     Goal::RegExp,
     // State(3292)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3293)
@@ -12589,19 +12589,19 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding OF AssignmentExpression_In . RPAREN Statement_Return]*
     Goal::Div,
     // State(3301)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(3302)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(3303)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(3304)
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN ForDeclaration IN Expression_In RPAREN . Statement_Return]*
@@ -12616,15 +12616,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(3308)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(3309)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(3310)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(3311)
@@ -12695,19 +12695,19 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
     // State(3330)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(3331)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(3332)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(3333)
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN . Statement_Await_Return]*
@@ -12722,15 +12722,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
     // State(3337)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
     // State(3338)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(3339)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(3340)
@@ -12817,34 +12817,34 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
     Goal::RegExp,
     // State(3365)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await .]*
     Goal::RegExp,
     // State(3366)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3367)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::RegExp,
     // State(3368)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
     Goal::RegExp,
     // State(3369)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await]*
     Goal::RegExp,
     // State(3370)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(3371)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
     Goal::RegExp,
     // State(3372)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await .]*
     Goal::RegExp,
     // State(3373)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3374)
@@ -13078,22 +13078,22 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(3443)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await . LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -13288,10 +13288,10 @@ pub static TABLE: [Goal; 4371] = [
     // State(3497)
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(3498)
     //   [BindingIdentifier_Yield -> YIELD .]*
@@ -13351,10 +13351,10 @@ pub static TABLE: [Goal; 4371] = [
     Goal::Div,
     // State(3511)
     //   [Expression_Yield -> Expression_Yield . COMMA AssignmentExpression_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(3512)
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield . IN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -13375,11 +13375,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
     // State(3514)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield . _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_INIT_LEXICAL_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(3515)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield]*
@@ -13461,27 +13461,27 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement .]*
     Goal::RegExp,
     // State(3536)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement]*
     Goal::RegExp,
     // State(3537)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement]*
     Goal::RegExp,
     // State(3538)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement]*
     Goal::Div,
     // State(3539)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement .]*
     Goal::RegExp,
     // State(3540)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement .]*
     Goal::RegExp,
     // State(3541)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3542)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement]*
     Goal::RegExp,
     // State(3543)
     //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ . SEMICOLON]*
@@ -13503,24 +13503,24 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(3549)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(3550)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In . SEMICOLON _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In . SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(3551)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(3552)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(3553)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(3554)
@@ -13536,15 +13536,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(3558)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(3559)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3560)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(3561)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ . Statement_Return]*
@@ -13596,24 +13596,24 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
     // State(3576)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(3577)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await . SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(3578)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
     // State(3579)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(3580)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(3581)
@@ -13629,15 +13629,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
     // State(3585)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
     // State(3586)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3587)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(3588)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ . Statement_Await_Return]*
@@ -13685,27 +13685,27 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
     Goal::RegExp,
     // State(3602)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
     Goal::RegExp,
     // State(3603)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await]*
     Goal::RegExp,
     // State(3604)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await]*
     Goal::Div,
     // State(3605)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
     Goal::RegExp,
     // State(3606)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await .]*
     Goal::RegExp,
     // State(3607)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3608)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
     Goal::RegExp,
     // State(3609)
     //   [ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMICOLON .]*
@@ -13829,10 +13829,10 @@ pub static TABLE: [Goal; 4371] = [
     // State(3641)
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(3642)
     //   [BindingIdentifier_Yield_Await -> YIELD .]*
@@ -13892,10 +13892,10 @@ pub static TABLE: [Goal; 4371] = [
     Goal::Div,
     // State(3655)
     //   [Expression_Yield_Await -> Expression_Yield_Await . COMMA AssignmentExpression_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(3656)
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield_Await . IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -13916,11 +13916,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
     // State(3658)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await . _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await . _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await . _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_INIT_LEXICAL_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(3659)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await]*
@@ -14091,10 +14091,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield . OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
     // State(3704)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield . SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield . SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield . COMMA VariableDeclaration_Yield]*
     Goal::Div,
     // State(3705)
@@ -14157,11 +14157,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [Expression_Yield -> Expression_Yield COMMA . AssignmentExpression_Yield]*
     Goal::RegExp,
     // State(3721)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_INIT_EXPRESSION_ -> (empty) .]*
     Goal::RegExp,
     // State(3722)
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield IN . Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -14204,10 +14204,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield .]*
     Goal::Div,
     // State(3732)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ . SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ . SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(3733)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield]*
@@ -14274,20 +14274,20 @@ pub static TABLE: [Goal; 4371] = [
     //   [WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(3751)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement .]*
     Goal::RegExp,
     // State(3752)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement .]*
     Goal::RegExp,
     // State(3753)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3754)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement]*
     Goal::RegExp,
     // State(3755)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement .]*
     Goal::RegExp,
     // State(3756)
     //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON .]*
@@ -14309,37 +14309,37 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(3762)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(3763)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(3764)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON . _LOOP_TEST_ RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON . _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(3765)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(3766)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3767)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(3768)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
     Goal::RegExp,
     // State(3769)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(3770)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(3771)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return .]*
@@ -14380,37 +14380,37 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
     // State(3783)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
     // State(3784)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(3785)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON . _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(3786)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
     // State(3787)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3788)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(3789)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
     Goal::RegExp,
     // State(3790)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await_Return]*
     Goal::RegExp,
     // State(3791)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(3792)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return .]*
@@ -14429,20 +14429,20 @@ pub static TABLE: [Goal; 4371] = [
     //   [FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
     // State(3797)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
     Goal::RegExp,
     // State(3798)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await .]*
     Goal::RegExp,
     // State(3799)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3800)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
     Goal::RegExp,
     // State(3801)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
     Goal::RegExp,
     // State(3802)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await . RPAREN LBRACE AsyncGeneratorBody RBRACE]*
@@ -14558,10 +14558,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield_Await . OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
     // State(3834)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await . COMMA VariableDeclaration_Yield_Await]*
     Goal::Div,
     // State(3835)
@@ -14624,11 +14624,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [Expression_Yield_Await -> Expression_Yield_Await COMMA . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
     // State(3851)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_INIT_EXPRESSION_ -> (empty) .]*
     Goal::RegExp,
     // State(3852)
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield_Await IN . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -14671,10 +14671,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await .]*
     Goal::Div,
     // State(3862)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ . SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ . SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ . SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(3863)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await]*
@@ -14823,11 +14823,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA . VariableDeclaration_Yield]*
     Goal::Div,
     // State(3906)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [_LOOP_INIT_VAR_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(3907)
     //   [YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield .]*
@@ -14900,10 +14900,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [Expression_Yield -> Expression_Yield COMMA AssignmentExpression_Yield .]*
     Goal::Div,
     // State(3920)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(3921)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
@@ -14935,13 +14935,13 @@ pub static TABLE: [Goal; 4371] = [
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield AssignmentOperator AssignmentExpression_Yield .]*
     Goal::Div,
     // State(3930)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(3931)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(3932)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression_Yield]*
@@ -15025,43 +15025,43 @@ pub static TABLE: [Goal; 4371] = [
     //   [WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ . Statement_Yield_Return]*
     Goal::RegExp,
     // State(3951)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement]*
     Goal::RegExp,
     // State(3952)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement .]*
     Goal::RegExp,
     // State(3953)
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
     Goal::RegExp,
     // State(3954)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(3955)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3956)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::RegExp,
     // State(3957)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
     Goal::RegExp,
     // State(3958)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(3959)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(3960)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
     Goal::RegExp,
     // State(3961)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(3962)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3963)
@@ -15071,41 +15071,41 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
     Goal::RegExp,
     // State(3965)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
     // State(3966)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3967)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ . Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::RegExp,
     // State(3968)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
     Goal::RegExp,
     // State(3969)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await_Return]*
     Goal::RegExp,
     // State(3970)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(3971)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
     Goal::RegExp,
     // State(3972)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return .]*
     Goal::RegExp,
     // State(3973)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(3974)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await]*
     Goal::RegExp,
     // State(3975)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
     Goal::RegExp,
     // State(3976)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
@@ -15205,11 +15205,11 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA . VariableDeclaration_Yield_Await]*
     Goal::Div,
     // State(4006)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [_LOOP_INIT_ -> (empty) .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [_LOOP_INIT_VAR_DECLARATION_ -> (empty) .]*
     Goal::RegExp,
     // State(4007)
     //   [YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield_Await .]*
@@ -15282,10 +15282,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [Expression_Yield_Await -> Expression_Yield_Await COMMA AssignmentExpression_Yield_Await .]*
     Goal::Div,
     // State(4020)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4021)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
@@ -15317,13 +15317,13 @@ pub static TABLE: [Goal; 4371] = [
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator AssignmentExpression_Yield_Await .]*
     Goal::Div,
     // State(4030)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4031)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4032)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression_Yield_Await]*
@@ -15481,23 +15481,23 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield .]*
     Goal::Div,
     // State(4073)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(4074)
     //   [BitwiseORExpression_Yield -> BitwiseORExpression_Yield . BIT_OR BitwiseXORExpression_Yield]*
     //   [CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield .]*
     Goal::Div,
     // State(4075)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(4076)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(4077)
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield IN Expression_In_Yield RPAREN . Statement_Yield_Return]*
@@ -15521,15 +15521,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield .]*
     Goal::Div,
     // State(4084)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4085)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(4086)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(4087)
@@ -15591,62 +15591,62 @@ pub static TABLE: [Goal; 4371] = [
     //   [WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4103)
-    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement .]*
+    //   [ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement .]*
     Goal::RegExp,
     // State(4104)
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
     Goal::RegExp,
     // State(4105)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
     Goal::RegExp,
     // State(4106)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(4107)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In . RPAREN _LOOP_NEXT_ Statement_Return]*
     Goal::Div,
     // State(4108)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
     Goal::RegExp,
     // State(4109)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(4110)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4111)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
     Goal::RegExp,
     // State(4112)
     //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
     Goal::RegExp,
     // State(4113)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
     Goal::RegExp,
     // State(4114)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Await_Return]*
     Goal::RegExp,
     // State(4115)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await . RPAREN _LOOP_NEXT_ Statement_Await_Return]*
     Goal::Div,
     // State(4116)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
     Goal::RegExp,
     // State(4117)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return .]*
     Goal::RegExp,
     // State(4118)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4119)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
     Goal::RegExp,
     // State(4120)
-    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
+    //   [ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await .]*
     Goal::RegExp,
     // State(4121)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
@@ -15732,23 +15732,23 @@ pub static TABLE: [Goal; 4371] = [
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await .]*
     Goal::Div,
     // State(4146)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ . SEMICOLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ . SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ . Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4147)
     //   [BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await . BIT_OR BitwiseXORExpression_Yield_Await]*
     //   [CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await .]*
     Goal::Div,
     // State(4148)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4149)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4150)
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
@@ -15772,15 +15772,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await .]*
     Goal::Div,
     // State(4157)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4158)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4159)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(4160)
@@ -15880,24 +15880,24 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4188)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(4189)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield . SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(4190)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4191)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(4192)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(4193)
@@ -15913,15 +15913,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4197)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4198)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4199)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(4200)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON . _ELSE_BLOCK_ AssignmentExpression_Yield]*
@@ -15956,36 +15956,36 @@ pub static TABLE: [Goal; 4371] = [
     //   [CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE .]*
     Goal::RegExp,
     // State(4209)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
     Goal::RegExp,
     // State(4210)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(4211)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN . _LOOP_NEXT_ Statement_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4212)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
     Goal::RegExp,
     // State(4213)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
     Goal::RegExp,
     // State(4214)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
     Goal::RegExp,
     // State(4215)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return .]*
     Goal::RegExp,
     // State(4216)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN . _LOOP_NEXT_ Statement_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4217)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
     Goal::RegExp,
     // State(4218)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
     Goal::RegExp,
     // State(4219)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
@@ -16035,24 +16035,24 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4234)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4235)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await . SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4236)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4237)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4238)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(4239)
@@ -16068,15 +16068,15 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4243)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4244)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4245)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4246)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON . _ELSE_BLOCK_ AssignmentExpression_Yield_Await]*
@@ -16139,37 +16139,37 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4264)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4265)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(4266)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON . _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(4267)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4268)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4269)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(4270)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4271)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4272)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(4273)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ . AssignmentExpression_Yield]*
@@ -16191,16 +16191,16 @@ pub static TABLE: [Goal; 4371] = [
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE .]*
     Goal::RegExp,
     // State(4279)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
     Goal::RegExp,
     // State(4280)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
     Goal::RegExp,
     // State(4281)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ . Statement_Await_Return]*
     Goal::RegExp,
     // State(4282)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
     Goal::RegExp,
     // State(4283)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
@@ -16240,37 +16240,37 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4295)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4296)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4297)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON . _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_TEST_ -> (empty) .]*
     Goal::RegExp,
     // State(4298)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4299)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4300)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4301)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4302)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4303)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4304)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ . AssignmentExpression_Yield_Await]*
@@ -16298,34 +16298,34 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4312)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4313)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4314)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ . Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::RegExp,
     // State(4315)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4316)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4317)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(4318)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4319)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4320)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4321)
@@ -16335,10 +16335,10 @@ pub static TABLE: [Goal; 4371] = [
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
     // State(4323)
-    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
+    //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
     Goal::RegExp,
     // State(4324)
-    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return .]*
     Goal::RegExp,
     // State(4325)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
@@ -16350,34 +16350,34 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4328)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4329)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4330)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ . Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4331)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4332)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4333)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4334)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4335)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4336)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4337)
@@ -16390,102 +16390,102 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4340)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4341)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4342)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield . RPAREN _LOOP_NEXT_ Statement_Yield_Return]*
     Goal::Div,
     // State(4343)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4344)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4345)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4346)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4347)
     //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4348)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4349)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4350)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await . RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return]*
     Goal::Div,
     // State(4351)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4352)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4353)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4354)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4355)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4356)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4357)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN . _LOOP_NEXT_ Statement_Yield_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4358)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4359)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4360)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4361)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4362)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN . _LOOP_NEXT_ Statement_Yield_Await_Return]*
     //   [_LOOP_NEXT_ -> (empty) .]*
     Goal::RegExp,
     // State(4363)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4364)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4365)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
     Goal::RegExp,
     // State(4366)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4367)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
     // State(4368)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
     // State(4369)
-    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
     Goal::RegExp,
     // State(4370)
-    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
 ];
