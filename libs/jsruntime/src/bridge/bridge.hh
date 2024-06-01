@@ -159,7 +159,11 @@ void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
 void compiler_peer_block(Compiler* self);
 void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);
-void compiler_peer_loop_start(Compiler* self);
+void compiler_peer_loop_start(Compiler* self,
+    bool has_init,
+    bool has_test,
+    bool has_next,
+    bool posttest);
 void compiler_peer_loop_init(Compiler* self);
 void compiler_peer_loop_test(Compiler* self);
 void compiler_peer_loop_next(Compiler* self);

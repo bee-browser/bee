@@ -657,3 +657,8 @@ fn test_eval_for_statement_no_next() {
 fn test_eval_for_statement_no_init_next() {
     eval!("let i = 0; for (; i < 2; ) { ++i } print(i)", 2);
 }
+
+#[test]
+fn test_eval_for_statement_init_expression() {
+    eval!("let i; for (i = 0; i < 2; ++i) {} print(i)", 2);
+}

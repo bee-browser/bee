@@ -602,7 +602,9 @@ function addActions(rules) {
     '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
     '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
     '_LOOP_START_',
-    '_LOOP_INIT_',
+    '_LOOP_INIT_EXPRESSION_',
+    '_LOOP_INIT_VAR_DECLARATION_',
+    '_LOOP_INIT_LEXICAL_DECLARATION_',
     '_LOOP_TEST_',
     '_LOOP_NEXT_',
   ];
@@ -903,17 +905,17 @@ function modifyForStatement(rules) {
     },
     {
       term: '[lookahead != `let` `[`] Expression[~In, ?Yield, ?Await] `;`',
-      action: '_LOOP_INIT_',
+      action: '_LOOP_INIT_EXPRESSION_',
       insertBefore: false,
     },
     {
       term: '`var` VariableDeclarationList[~In, ?Yield, ?Await] `;`',
-      action: '_LOOP_INIT_',
+      action: '_LOOP_INIT_VAR_DECLARATION_',
       insertBefore: false,
     },
     {
       term: 'LexicalDeclaration[~In, ?Yield, ?Await]',
-      action: '_LOOP_INIT_',
+      action: '_LOOP_INIT_LEXICAL_DECLARATION_',
       insertBefore: false,
     },
     // NOTE: Inserting _BLOCK_SCOPE_ before LexicalDeclaration[~In, ?Yield, ?Await] in order to
