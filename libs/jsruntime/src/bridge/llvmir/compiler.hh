@@ -108,7 +108,7 @@ class Compiler {
   void Block();
   void IfElseStatement();
   void IfStatement();
-  void LoopStart();
+  void LoopStart(bool has_init, bool has_test, bool has_next, bool posttest);
   void LoopInit();
   void LoopTest();
   void LoopNext();

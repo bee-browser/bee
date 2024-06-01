@@ -334,8 +334,12 @@ void compiler_peer_if_statement(Compiler* self) {
   self->IfStatement();
 }
 
-void compiler_peer_loop_start(Compiler* self) {
-  self->LoopStart();
+void compiler_peer_loop_start(Compiler* self,
+    bool has_init,
+    bool has_test,
+    bool has_next,
+    bool posttest) {
+  self->LoopStart(has_init, has_test, has_next, posttest);
 }
 
 void compiler_peer_loop_init(Compiler* self) {

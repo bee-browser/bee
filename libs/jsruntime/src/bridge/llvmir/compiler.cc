@@ -442,7 +442,6 @@ void Compiler::BitwiseOr() {
 
 void Compiler::ConditionalTernary() {
   auto* else_tail_block = builder_->GetInsertBlock();
-  auto* func = else_tail_block->getParent();
 
   auto else_item = Dereference();
 
@@ -459,7 +458,7 @@ void Compiler::ConditionalTernary() {
   auto* cond_value = PopValue();
   builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
 
-  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", function_);
 
   if (then_item.type == else_item.type) {
     builder_->SetInsertPoint(then_tail_block);
@@ -849,8 +848,7 @@ void Compiler::Block() {
 
   // Push a newly created block.
   // This will be used in ConditionalExpression() in order to build a branch instruction.
-  auto* func = current_block->getParent();
-  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", function_);
   PushBlock(block);
 
   builder_->SetInsertPoint(block);
@@ -858,14 +856,13 @@ void Compiler::Block() {
 
 void Compiler::IfElseStatement() {
   auto* else_tail_block = builder_->GetInsertBlock();
-  auto* func = else_tail_block->getParent();
 
   llvm::BasicBlock* block = nullptr;
 
   if (else_tail_block->getTerminator() != nullptr) {
     // We should not append any instructions after a terminator instruction such as `ret`.
   } else {
-    block = llvm::BasicBlock::Create(*context_, "bl", func);
+    block = llvm::BasicBlock::Create(*context_, "bl", function_);
     builder_->CreateBr(block);
   }
 
@@ -876,7 +873,7 @@ void Compiler::IfElseStatement() {
     // We should not append any instructions after a terminator instruction such as `ret`.
   } else {
     if (block == nullptr) {
-      block = llvm::BasicBlock::Create(*context_, "bl", func);
+      block = llvm::BasicBlock::Create(*context_, "bl", function_);
     }
     builder_->SetInsertPoint(then_tail_block);
     builder_->CreateBr(block);
@@ -896,9 +893,8 @@ void Compiler::IfElseStatement() {
 
 void Compiler::IfStatement() {
   auto* then_tail_block = builder_->GetInsertBlock();
-  auto* func = then_tail_block->getParent();
 
-  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", function_);
 
   if (then_tail_block->getTerminator() != nullptr) {
     // We should not append any instructions after a terminator instruction such as `ret`.
@@ -916,85 +912,127 @@ void Compiler::IfStatement() {
   builder_->SetInsertPoint(block);
 }
 
-void Compiler::LoopStart() {
-  auto* loop_start = llvm::BasicBlock::Create(*context_, "ls", function_);
+void Compiler::LoopStart(bool has_init, bool has_test, bool has_next, bool posttest) {
+  auto* loop_init = has_init ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
+  llvm::BasicBlock* loop_test;
+  llvm::BasicBlock* loop_body;
+  if (posttest) {
+    loop_body = llvm::BasicBlock::Create(*context_, "", function_);
+    loop_test = loop_body;
+  } else {
+    loop_test = has_test ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
+    loop_body = llvm::BasicBlock::Create(*context_, "", function_);
+  }
+  auto* loop_next = has_next ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
+  auto* loop_end = llvm::BasicBlock::Create(*context_, "", function_);
 
-  builder_->CreateBr(loop_start);
-  builder_->SetInsertPoint(loop_start);
+  llvm::BasicBlock* next_block = loop_body;
 
-  PushBlock(loop_start);
+  // for LoopEnd
+  // insert point
+  PushBlock(loop_end);
+  // jump to
+  if (posttest) {
+    PushBlock(nullptr);
+  } else if (has_next) {
+    PushBlock(loop_next);
+  } else if (has_test) {
+    PushBlock(loop_test);
+  } else {
+    PushBlock(loop_body);
+  }
+
+  // for LoopNext
+  if (has_next) {
+    // insert point
+    PushBlock(loop_body);
+    // jump to
+    if (has_test) {
+      PushBlock(loop_test);
+    } else {
+      PushBlock(loop_body);
+    }
+    next_block = loop_next;
+  }
+
+  // for LoopTest
+  if (has_test) {
+    // insert point
+    if (has_next) {
+      PushBlock(loop_next);
+    } else {
+      PushBlock(posttest ? loop_end : loop_body);
+    }
+    // else block
+    PushBlock(loop_end);
+    // then block
+    PushBlock(loop_body);
+    next_block = posttest ? loop_body : loop_test;
+  }
+
+  // for LoopInit
+  if (has_init) {
+    if (has_test) {
+      // insert point
+      PushBlock(loop_test);
+      // jump to
+      PushBlock(loop_test);
+    } else if (has_next) {
+      // insert point
+      PushBlock(loop_next);
+      // jump to
+      PushBlock(loop_body);
+    } else {
+      // insert point
+      PushBlock(loop_body);
+      // jump to
+      PushBlock(loop_body);
+    }
+    next_block = loop_init;
+  }
+
+  builder_->CreateBr(next_block);
+  builder_->SetInsertPoint(next_block);
 }
 
 void Compiler::LoopInit() {
-  // Discard the evaluation result and the previous loop_start block.
-  Discard();
-  PopBlock();
+  auto* next_block = PopBlock();
+  auto* insert_point = PopBlock();
 
-  // Create a new loop_start block.
-  auto* loop_start = llvm::BasicBlock::Create(*context_, "ls", function_);
-
-  builder_->CreateBr(loop_start);
-  builder_->SetInsertPoint(loop_start);
-
-  PushBlock(loop_start);
+  builder_->CreateBr(next_block);
+  builder_->SetInsertPoint(insert_point);
 }
 
 void Compiler::LoopTest() {
   auto cond = Dereference();
+  auto* then_block = PopBlock();
+  auto* else_block = PopBlock();
+  auto* insert_point = PopBlock();
+
   auto* truthy = CreateToBoolean(cond);
-  auto* loop_test = builder_->GetInsertBlock();
-  PushBoolean(truthy);
-  PushBlock(loop_test);
-
-  // Blocks will be connected in LoopEnd().
-
-  auto* loop_body = llvm::BasicBlock::Create(*context_, "lb", function_);
-  PushBlock(loop_body);
-
-  builder_->SetInsertPoint(loop_body);
+  builder_->CreateCondBr(truthy, then_block, else_block);
+  builder_->SetInsertPoint(insert_point);
 }
 
 void Compiler::LoopNext() {
   // Discard the evaluation result.
   Discard();
+  auto* next_block = PopBlock();
+  auto* insert_point = PopBlock();
 
-  PopBlock();  // Discard loop_body
-  auto* loop_test = PopBlock();
-  auto* truthy = PopBoolean();
-  auto* loop_start = PopBlock();
-
-  // The current block contains the `next` expression.  We re-interpret it as the last block of the
-  // `for` statement.
-  builder_->CreateBr(loop_start);
-  auto* loop_next = builder_->GetInsertBlock();
-
-  // Create a new block for the *actual* body of the `for` statement.
-  auto* loop_body = llvm::BasicBlock::Create(*context_, "lb", function_);
-  builder_->SetInsertPoint(loop_body);
-
-  // Push `loop_next` as the block for the beginning of the iteration so that we can create a
-  // branch from the last block of the statement body to the block for the `next` expression.
-  PushBlock(loop_next);
-  PushBoolean(truthy);
-  PushBlock(loop_test);
-  PushBlock(loop_body);
+  builder_->CreateBr(next_block);
+  builder_->SetInsertPoint(insert_point);
 }
 
 void Compiler::LoopEnd() {
-  auto* loop_body = PopBlock();
-  auto* loop_test = PopBlock();
-  auto* truthy = PopBoolean();
-  // `loop_start` is not the block for the block for the beginning of the iteration if the
-  // _LOOP_NEXT_ action exists in the production rule.  See LoopNext() for details.
-  auto* loop_start = PopBlock();
+  auto* next_block = PopBlock();
+  auto* end_block = PopBlock();
 
-  builder_->CreateBr(loop_start);
+  if (next_block != nullptr) {
+    builder_->CreateBr(next_block);
+  }
 
-  auto* loop_end = llvm::BasicBlock::Create(*context_, "le", function_);
-  builder_->SetInsertPoint(loop_test);
-  builder_->CreateCondBr(truthy, loop_body, loop_end);
-
-  builder_->SetInsertPoint(loop_end);
+  builder_->SetInsertPoint(end_block);
 }
 
 void Compiler::StartFunction(const char* name) {

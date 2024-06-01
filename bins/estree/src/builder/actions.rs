@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -549,7 +549,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
@@ -559,52 +559,52 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
     // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
     // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
+    // ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -990,7 +990,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
     Some((Builder::nop, "nop")),
     // Expression -> Expression COMMA AssignmentExpression
     Some((Builder::sequence_expression, "sequence_expression")),
-    // _LOOP_INIT_ -> (empty)
+    // _LOOP_INIT_EXPRESSION_ -> (empty)
     Some((Builder::nop, "nop")),
     // _LOOP_NEXT_ -> (empty)
     Some((Builder::nop, "nop")),
@@ -998,10 +998,14 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
+    // _LOOP_INIT_VAR_DECLARATION_ -> (empty)
+    Some((Builder::nop, "nop")),
     // LexicalDeclaration -> LET BindingList SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // LexicalDeclaration -> CONST BindingList SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
+    // _LOOP_INIT_LEXICAL_DECLARATION_ -> (empty)
+    Some((Builder::nop, "nop")),
     // ForBinding -> BindingIdentifier
     Some((Builder::for_binding, "for_binding")),
     // ForBinding -> BindingPattern
@@ -1248,7 +1252,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
@@ -1258,52 +1262,52 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
     // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
     // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
+    // ForStatement_Await -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Await -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -3127,7 +3131,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
@@ -3137,52 +3141,52 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
     // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
     // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ RPAREN Statement_Return
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
+    // ForStatement_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement_Return
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -3655,7 +3659,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
@@ -3665,52 +3669,52 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
     // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
     // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield SEMICOLON _LOOP_TEST_ Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -3774,7 +3778,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
@@ -3784,52 +3788,52 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
     // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
     // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
+    // ForStatement_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Await SEMICOLON _LOOP_TEST_ Expression_In_Await RPAREN _LOOP_NEXT_ Statement_Await_Return
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -4002,7 +4006,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
@@ -4012,52 +4016,52 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2110] = [
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
     // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
     // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON _LOOP_INIT_EXPRESSION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON _LOOP_INIT_VAR_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ SEMICOLON Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN LexicalDeclaration_Yield_Await _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In_Yield_Await SEMICOLON _LOOP_TEST_ Expression_In_Yield_Await RPAREN _LOOP_NEXT_ Statement_Yield_Await_Return
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Yield_Await_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::for_in_statement, "for_in_statement")),

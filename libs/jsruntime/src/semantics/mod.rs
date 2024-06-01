@@ -2,6 +2,7 @@ mod scope;
 
 use jsparser::syntax::AssignmentOperator;
 use jsparser::syntax::BinaryOperator;
+use jsparser::syntax::LoopFlags;
 use jsparser::syntax::Node;
 use jsparser::syntax::NodeHandler;
 use jsparser::syntax::UnaryOperator;
@@ -122,8 +123,10 @@ impl<'r> Analyzer<'r> {
             Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
             Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
             Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
-            Node::LoopStart => self.handle_loop_start(),
-            Node::LoopInit => self.handle_loop_init(),
+            Node::LoopStart(flags) => self.handle_loop_start(flags),
+            Node::LoopInitExpression => self.handle_loop_init_expression(),
+            Node::LoopInitVarDeclaration => self.handle_loop_init_var_declaration(),
+            Node::LoopInitLexicalDeclaration => self.handle_loop_init_lexical_declaration(),
             Node::LoopTest => self.handle_loop_test(),
             Node::LoopNext => self.handle_loop_next(),
             Node::StartBlockScope => self.handle_start_block_scope(),
@@ -388,44 +391,47 @@ impl<'r> Analyzer<'r> {
             .put_command(CompileCommand::NullishShortCircuitAssignment);
     }
 
-    fn handle_loop_start(&mut self) {
-        let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::LoopStart);
-        // NOTE: This doesn't follow the specification, but we create a new lexical scope for the
-        // iteration statement.  This is needed for the for-let/const statements, but not for
-        // others.  We believe that this change does not compromise conformance to the
-        // specification and does not cause security problems.
-        context.start_scope();
+    fn handle_loop_start(&mut self, flags: LoopFlags) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_loop_start(flags);
         self.scope_manager.push(ScopeKind::Block);
     }
 
-    fn handle_loop_init(&mut self) {
+    fn handle_loop_init_expression(&mut self) {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_command(CompileCommand::LoopInit);
+            .process_loop_init_expression();
+    }
+
+    fn handle_loop_init_var_declaration(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_loop_init_declaration();
+    }
+
+    fn handle_loop_init_lexical_declaration(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_loop_init_declaration();
     }
 
     fn handle_loop_test(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::LoopTest);
+        self.context_stack.last_mut().unwrap().process_loop_test();
     }
 
     fn handle_loop_next(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::LoopNext);
+        self.context_stack.last_mut().unwrap().process_loop_next();
     }
 
     fn handle_loop_end(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
         self.scope_manager.pop();
-        let context = self.context_stack.last_mut().unwrap();
-        context.end_scope(false);
-        context.put_command(CompileCommand::LoopEnd);
+        self.context_stack.last_mut().unwrap().process_loop_end();
     }
 
     fn handle_start_block_scope(&mut self) {
@@ -711,6 +717,38 @@ impl FunctionContext {
         self.commands.push(CompileCommand::Function(func_id));
     }
 
+    fn process_loop_start(&mut self, flags: LoopFlags) {
+        self.put_command(CompileCommand::LoopStart(flags));
+        // NOTE: This doesn't follow the specification, but we create a new lexical scope for the
+        // iteration statement.  This is needed for the for-let/const statements, but not for
+        // others.  We believe that this change does not compromise conformance to the
+        // specification and does not cause security problems.
+        self.start_scope();
+    }
+
+    fn process_loop_init_expression(&mut self) {
+        // Discard the evaluation result of the expression like as ExpressionStatement.
+        self.put_command(CompileCommand::Discard);
+        self.put_command(CompileCommand::LoopInit);
+    }
+
+    fn process_loop_init_declaration(&mut self) {
+        self.put_command(CompileCommand::LoopInit);
+    }
+
+    fn process_loop_test(&mut self) {
+        self.put_command(CompileCommand::LoopTest);
+    }
+
+    fn process_loop_next(&mut self) {
+        self.put_command(CompileCommand::LoopNext);
+    }
+
+    fn process_loop_end(&mut self) {
+        self.end_scope(false);
+        self.put_command(CompileCommand::LoopEnd);
+    }
+
     fn start_scope(&mut self) {
         // Push `Nop` as a placeholder.
         // It will be replaced with `AllocateBindings(n)` in `end_scope()`.
@@ -869,7 +907,7 @@ pub enum CompileCommand {
     IfStatement,
 
     // loop
-    LoopStart,
+    LoopStart(LoopFlags),
     LoopInit,
     LoopTest,
     LoopNext,
