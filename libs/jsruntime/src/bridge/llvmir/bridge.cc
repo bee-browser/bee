@@ -376,6 +376,10 @@ void compiler_peer_release_bindings(Compiler* self, uint16_t n) {
   self->ReleaseBindings(n);
 }
 
+void compiler_peer_break(Compiler* self) {
+  self->Break();
+}
+
 void compiler_peer_return(Compiler* self, size_t n) {
   self->Return(n);
 }

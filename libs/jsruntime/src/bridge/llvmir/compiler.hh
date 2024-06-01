@@ -117,6 +117,7 @@ class Compiler {
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
+  void Break();
   void Return(size_t n);
   void Discard();
 
@@ -171,6 +172,10 @@ class Compiler {
           return false;
       }
     }
+  };
+
+  struct LoopContext {
+    llvm::BasicBlock* end;
   };
 
   inline void PushUndefined() {
@@ -571,6 +576,7 @@ class Compiler {
   uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;
+  std::vector<LoopContext> loop_stack_;
   std::unordered_map<std::string, llvm::Function*> functions_;
 
   // for optimization

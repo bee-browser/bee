@@ -646,11 +646,8 @@ fn test_eval_for_statement_no_init() {
 }
 
 #[test]
-fn test_eval_for_statement_no_next() {
-    eval!(
-        "let i = 0; for (let j = 0; j < 2; ) { i = j; ++j } print(i)",
-        1
-    );
+fn test_eval_for_statement_no_test() {
+    eval!("let i; for (i = 0; ; ++i) { if (i > 2) break } print(i)", 3);
 }
 
 #[test]
@@ -659,6 +656,24 @@ fn test_eval_for_statement_no_init_next() {
 }
 
 #[test]
-fn test_eval_for_statement_init_expression() {
-    eval!("let i; for (i = 0; i < 2; ++i) {} print(i)", 2);
+fn test_eval_for_statement_no_init_test() {
+    eval!("let i = 0; for (; ; ++i) { if (i > 2) break } print(i)", 3);
+}
+
+#[test]
+fn test_eval_for_statement_no_test_next() {
+    eval!(
+        "let i; for (i = 0; ; ) { if (i > 2) break; ++i } print(i)",
+        3
+    );
+}
+
+#[test]
+fn test_eval_for_statement_no_init_test_next() {
+    eval!("let i = 0; for (;;) { if (i > 2) break; ++i } print(i)", 3);
+}
+
+#[test]
+fn test_eval_deadcode_after_break() {
+    eval!("let i = 0; for (;;) { break; i = 1 } print(i)", 0);
 }

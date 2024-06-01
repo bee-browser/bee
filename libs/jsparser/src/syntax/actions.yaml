@@ -45,7 +45,7 @@
 - rule: Statement -> ContinueStatement
   action: undefined
 - rule: Statement -> BreakStatement
-  action: undefined
+  action: process_statement
 - rule: Statement -> WithStatement
   action: undefined
 - rule: Statement -> LabelledStatement
@@ -115,7 +115,7 @@
     SEMICOLON
   action: undefined
 - rule: BreakStatement -> BREAK SEMICOLON
-  action: undefined
+  action: process_break_statement
 - rule: >-
     BreakStatement -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier
     SEMICOLON
@@ -239,7 +239,7 @@
 - rule: Statement_Await -> ContinueStatement_Await
   action: undefined
 - rule: Statement_Await -> BreakStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await -> WithStatement_Await
   action: undefined
 - rule: Statement_Await -> LabelledStatement_Await
@@ -500,7 +500,7 @@
     LabelIdentifier_Await SEMICOLON
   action: undefined
 - rule: BreakStatement_Await -> BREAK SEMICOLON
-  action: undefined
+  action: process_break_statement
 - rule: >-
     BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Await SEMICOLON
@@ -2183,7 +2183,7 @@
 - rule: Statement_Return -> ContinueStatement
   action: undefined
 - rule: Statement_Return -> BreakStatement
-  action: undefined
+  action: process_statement
 - rule: Statement_Return -> ReturnStatement
   action: process_statement
 - rule: Statement_Return -> WithStatement_Return
@@ -2580,7 +2580,7 @@
 - rule: Statement_Yield_Return -> ContinueStatement_Yield
   action: undefined
 - rule: Statement_Yield_Return -> BreakStatement_Yield
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Return -> ReturnStatement_Yield
   action: process_statement
 - rule: Statement_Yield_Return -> WithStatement_Yield_Return
@@ -2614,7 +2614,7 @@
 - rule: Statement_Await_Return -> ContinueStatement_Await
   action: undefined
 - rule: Statement_Await_Return -> BreakStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await_Return -> ReturnStatement_Await
   action: process_statement
 - rule: Statement_Await_Return -> WithStatement_Await_Return
@@ -2687,7 +2687,7 @@
 - rule: Statement_Yield_Await_Return -> ContinueStatement_Yield_Await
   action: undefined
 - rule: Statement_Yield_Await_Return -> BreakStatement_Yield_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> ReturnStatement_Yield_Await
   action: process_statement
 - rule: Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return
@@ -2913,7 +2913,7 @@
     LabelIdentifier_Yield SEMICOLON
   action: undefined
 - rule: BreakStatement_Yield -> BREAK SEMICOLON
-  action: undefined
+  action: process_break_statement
 - rule: >-
     BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield SEMICOLON
@@ -3077,7 +3077,7 @@
     LabelIdentifier_Yield_Await SEMICOLON
   action: undefined
 - rule: BreakStatement_Yield_Await -> BREAK SEMICOLON
-  action: undefined
+  action: process_break_statement
 - rule: >-
     BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield_Await SEMICOLON

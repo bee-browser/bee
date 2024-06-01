@@ -1,4 +1,5 @@
 #include "compiler.hh"
+#include <llvm/IR/Value.h>
 
 #include <cstdint>
 #include <cstdlib>
@@ -993,6 +994,8 @@ void Compiler::LoopStart(bool has_init, bool has_test, bool has_next, bool postt
 
   builder_->CreateBr(next_block);
   builder_->SetInsertPoint(next_block);
+
+  loop_stack_.push_back({loop_end});
 }
 
 void Compiler::LoopInit() {
@@ -1033,6 +1036,8 @@ void Compiler::LoopEnd() {
   }
 
   builder_->SetInsertPoint(end_block);
+
+  loop_stack_.pop_back();
 }
 
 void Compiler::StartFunction(const char* name) {
@@ -1097,6 +1102,29 @@ void Compiler::ReleaseBindings(uint16_t n) {
     }
   }
   allocated_bindings_ -= n;
+}
+
+void Compiler::Break() {
+  assert(!loop_stack_.empty());
+  auto* loop_end = loop_stack_.back().end;
+
+  builder_->CreateBr(loop_end);
+
+  // FIXME: Handle dead code in the proper way.
+  //
+  // We insert a **unreachable** basic block for dead code in order to avoid the following
+  // validation error: "Terminator found in the middle of a basic block!"
+  //
+  // IRBuilder accepts inserting instructions after a terminator instruction in a basic block.
+  // It's our responsibility to avoid a malformed basic block.  We think that it's not a good
+  // direction to check the existence of a terminator instruction in a basic block before
+  // insertion in efficiency and maintainability points of view.  Instead, we create an
+  // **unreachable** basic block for dead code.  Eventually, this basic block was removed in the
+  // optimization passes.
+  //
+  // At this point, we don't know whether this is a common method or not...
+  auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
+  builder_->SetInsertPoint(dummy);
 }
 
 void Compiler::Return(size_t n) {

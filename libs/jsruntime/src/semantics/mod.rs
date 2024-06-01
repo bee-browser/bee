@@ -110,6 +110,7 @@ impl<'r> Analyzer<'r> {
             Node::DoWhileStatement => self.handle_do_while_statement(),
             Node::WhileStatement => self.handle_while_statement(),
             Node::ForStatement => self.handle_for_statement(),
+            Node::BreakStatement => self.handle_break_statement(),
             Node::ReturnStatement(n) => self.handle_return_statement(n),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
@@ -286,6 +287,13 @@ impl<'r> Analyzer<'r> {
 
     fn handle_for_statement(&mut self) {
         self.handle_loop_end();
+    }
+
+    fn handle_break_statement(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::Break);
     }
 
     fn handle_return_statement(&mut self, n: u32) {
@@ -913,6 +921,7 @@ pub enum CompileCommand {
     LoopNext,
     LoopEnd,
 
+    Break,
     Return(u32),
 
     Discard,

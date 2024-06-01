@@ -370,6 +370,9 @@ impl<'a> Compiler<'a> {
             CompileCommand::LoopEnd => unsafe {
                 bridge::compiler_peer_loop_end(self.peer);
             },
+            CompileCommand::Break => unsafe {
+                bridge::compiler_peer_break(self.peer);
+            },
             CompileCommand::Return(n) => unsafe {
                 bridge::compiler_peer_return(self.peer, *n as usize);
             },

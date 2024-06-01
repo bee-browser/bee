@@ -72,7 +72,7 @@ where
         // Statement -> ContinueStatement
         Action::Undefined,
         // Statement -> BreakStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> WithStatement
         Action::Undefined,
         // Statement -> LabelledStatement
@@ -135,7 +135,7 @@ where
         // ContinueStatement -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
         Action::Undefined,
         // BreakStatement -> BREAK SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_break_statement, "process_break_statement"),
         // BreakStatement -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
         Action::Undefined,
         // WithStatement -> WITH LPAREN Expression_In RPAREN Statement
@@ -261,7 +261,7 @@ where
         // Statement_Await -> ContinueStatement_Await
         Action::Undefined,
         // Statement_Await -> BreakStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> WithStatement_Await
         Action::Undefined,
         // Statement_Await -> LabelledStatement_Await
@@ -514,7 +514,7 @@ where
         // ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
         Action::Undefined,
         // BreakStatement_Await -> BREAK SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_break_statement, "process_break_statement"),
         // BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
         Action::Undefined,
         // WithStatement_Await -> WITH LPAREN Expression_In_Await RPAREN Statement_Await
@@ -2242,7 +2242,7 @@ where
         // Statement_Return -> ContinueStatement
         Action::Undefined,
         // Statement_Return -> BreakStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> ReturnStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> WithStatement_Return
@@ -2600,7 +2600,7 @@ where
         // Statement_Yield_Return -> ContinueStatement_Yield
         Action::Undefined,
         // Statement_Yield_Return -> BreakStatement_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> ReturnStatement_Yield
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> WithStatement_Yield_Return
@@ -2634,7 +2634,7 @@ where
         // Statement_Await_Return -> ContinueStatement_Await
         Action::Undefined,
         // Statement_Await_Return -> BreakStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> ReturnStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> WithStatement_Await_Return
@@ -2702,7 +2702,7 @@ where
         // Statement_Yield_Await_Return -> ContinueStatement_Yield_Await
         Action::Undefined,
         // Statement_Yield_Await_Return -> BreakStatement_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> ReturnStatement_Yield_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return
@@ -2894,7 +2894,7 @@ where
         // ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
         Action::Undefined,
         // BreakStatement_Yield -> BREAK SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_break_statement, "process_break_statement"),
         // BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
         Action::Undefined,
         // ReturnStatement_Yield -> RETURN SEMICOLON
@@ -3015,7 +3015,7 @@ where
         // ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
         Action::Undefined,
         // BreakStatement_Yield_Await -> BREAK SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_break_statement, "process_break_statement"),
         // BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
         Action::Undefined,
         // ReturnStatement_Yield_Await -> RETURN SEMICOLON

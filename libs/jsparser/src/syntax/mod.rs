@@ -134,6 +134,7 @@ pub enum Node<'s> {
     DoWhileStatement,
     WhileStatement,
     ForStatement,
+    BreakStatement,
     ReturnStatement(u32),
     FormalParameter,
     FormalParameters(u32),
@@ -1722,6 +1723,15 @@ where
         self.enqueue(Node::ForStatement);
         self.replace(8, Detail::Statement);
         self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT);
+        Ok(())
+    }
+
+    // 14.9 The break Statement
+
+    // BreakStatement[Yield, Await] : break ;
+    fn process_break_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::BreakStatement);
+        self.replace(2, Detail::Statement);
         Ok(())
     }
 
