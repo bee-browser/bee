@@ -2,6 +2,7 @@ mod scope;
 
 use jsparser::syntax::AssignmentOperator;
 use jsparser::syntax::BinaryOperator;
+use jsparser::syntax::LoopFlags;
 use jsparser::syntax::Node;
 use jsparser::syntax::NodeHandler;
 use jsparser::syntax::UnaryOperator;
@@ -122,7 +123,7 @@ impl<'r> Analyzer<'r> {
             Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
             Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
             Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
-            Node::LoopStart => self.handle_loop_start(),
+            Node::LoopStart(flags) => self.handle_loop_start(flags),
             Node::LoopInitExpression => self.handle_loop_init_expression(),
             Node::LoopInitVarDeclaration => self.handle_loop_init_var_declaration(),
             Node::LoopInitLexicalDeclaration => self.handle_loop_init_lexical_declaration(),
@@ -390,21 +391,33 @@ impl<'r> Analyzer<'r> {
             .put_command(CompileCommand::NullishShortCircuitAssignment);
     }
 
-    fn handle_loop_start(&mut self) {
-        self.context_stack.last_mut().unwrap().process_loop_start();
+    fn handle_loop_start(&mut self, flags: LoopFlags) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_loop_start(flags);
         self.scope_manager.push(ScopeKind::Block);
     }
 
     fn handle_loop_init_expression(&mut self) {
-        self.context_stack.last_mut().unwrap().process_loop_init_expression();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_loop_init_expression();
     }
 
     fn handle_loop_init_var_declaration(&mut self) {
-        self.context_stack.last_mut().unwrap().process_loop_init_declaration();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_loop_init_declaration();
     }
 
     fn handle_loop_init_lexical_declaration(&mut self) {
-        self.context_stack.last_mut().unwrap().process_loop_init_declaration();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_loop_init_declaration();
     }
 
     fn handle_loop_test(&mut self) {
@@ -704,8 +717,8 @@ impl FunctionContext {
         self.commands.push(CompileCommand::Function(func_id));
     }
 
-    fn process_loop_start(&mut self) {
-        self.put_command(CompileCommand::LoopStart);
+    fn process_loop_start(&mut self, flags: LoopFlags) {
+        self.put_command(CompileCommand::LoopStart(flags));
         // NOTE: This doesn't follow the specification, but we create a new lexical scope for the
         // iteration statement.  This is needed for the for-let/const statements, but not for
         // others.  We believe that this change does not compromise conformance to the
@@ -894,7 +907,7 @@ pub enum CompileCommand {
     IfStatement,
 
     // loop
-    LoopStart,
+    LoopStart(LoopFlags),
     LoopInit,
     LoopTest,
     LoopNext,

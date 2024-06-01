@@ -1,5 +1,6 @@
 use std::ffi::CStr;
 
+use jsparser::syntax::LoopFlags;
 use jsparser::Error;
 use jsparser::Parser;
 use jsparser::Processor;
@@ -347,8 +348,15 @@ impl<'a> Compiler<'a> {
             CompileCommand::IfStatement => unsafe {
                 bridge::compiler_peer_if_statement(self.peer);
             },
-            CompileCommand::LoopStart => unsafe {
-                bridge::compiler_peer_loop_start(self.peer);
+            // TODO: rewrite using if and break
+            CompileCommand::LoopStart(flags) => unsafe {
+                bridge::compiler_peer_loop_start(
+                    self.peer,
+                    flags.contains(LoopFlags::HAS_INIT),
+                    flags.contains(LoopFlags::HAS_TEST),
+                    flags.contains(LoopFlags::HAS_NEXT),
+                    flags.contains(LoopFlags::POSTTEST),
+                );
             },
             CompileCommand::LoopInit => unsafe {
                 bridge::compiler_peer_loop_init(self.peer);
