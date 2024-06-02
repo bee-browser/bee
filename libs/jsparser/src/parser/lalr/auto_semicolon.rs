@@ -349,28 +349,22 @@ pub static DISALLOWED: Set<u16> = phf_set! {
 };
 
 pub static DO_WHILES: Set<u16> = phf_set! {
-    // State(2047)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
-    2047u16,
-    // State(2138)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
-    2138u16,
-    // State(3295)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
-    3295u16,
-    // State(3321)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
-    3321u16,
-    // State(4059)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
-    4059u16,
-    // State(4129)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
-    4129u16,
+    // State(2476)
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
+    2476u16,
+    // State(2552)
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
+    2552u16,
+    // State(3543)
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
+    3543u16,
+    // State(3567)
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
+    3567u16,
+    // State(4182)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN . SEMICOLON]*
+    4182u16,
+    // State(4225)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await RPAREN . SEMICOLON]*
+    4225u16,
 };

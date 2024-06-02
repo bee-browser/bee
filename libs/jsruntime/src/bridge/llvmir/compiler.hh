@@ -108,15 +108,20 @@ class Compiler {
   void Block();
   void IfElseStatement();
   void IfStatement();
-  void LoopStart(bool has_init, bool has_test, bool has_next, bool posttest);
+  void DoWhileLoop();
+  void WhileLoop();
+  void ForLoop(bool has_init, bool has_test, bool has_next);
   void LoopInit();
   void LoopTest();
   void LoopNext();
+  void LoopBody();
   void LoopEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
+  void Continue();
+  void Break();
   void Return(size_t n);
   void Discard();
 
@@ -171,6 +176,11 @@ class Compiler {
           return false;
       }
     }
+  };
+
+  struct LoopContext {
+    llvm::BasicBlock* loop_continue;
+    llvm::BasicBlock* loop_break;
   };
 
   inline void PushUndefined() {
@@ -571,6 +581,7 @@ class Compiler {
   uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;
+  std::vector<LoopContext> loop_stack_;
   std::unordered_map<std::string, llvm::Function*> functions_;
 
   // for optimization

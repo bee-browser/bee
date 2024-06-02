@@ -43,9 +43,9 @@
 - rule: Statement -> BreakableStatement
   action: process_statement
 - rule: Statement -> ContinueStatement
-  action: undefined
+  action: process_statement
 - rule: Statement -> BreakStatement
-  action: undefined
+  action: process_statement
 - rule: Statement -> WithStatement
   action: undefined
 - rule: Statement -> LabelledStatement
@@ -109,13 +109,13 @@
 - rule: BreakableStatement -> SwitchStatement
   action: undefined
 - rule: ContinueStatement -> CONTINUE SEMICOLON
-  action: undefined
+  action: process_continue_statement
 - rule: >-
     ContinueStatement -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier
     SEMICOLON
   action: undefined
 - rule: BreakStatement -> BREAK SEMICOLON
-  action: undefined
+  action: process_break_statement
 - rule: >-
     BreakStatement -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier
     SEMICOLON
@@ -237,9 +237,9 @@
 - rule: Statement_Await -> BreakableStatement_Await
   action: process_statement
 - rule: Statement_Await -> ContinueStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await -> BreakStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await -> WithStatement_Await
   action: undefined
 - rule: Statement_Await -> LabelledStatement_Await
@@ -494,13 +494,13 @@
 - rule: BreakableStatement_Await -> SwitchStatement_Await
   action: undefined
 - rule: ContinueStatement_Await -> CONTINUE SEMICOLON
-  action: undefined
+  action: process_continue_statement
 - rule: >-
     ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Await SEMICOLON
   action: undefined
 - rule: BreakStatement_Await -> BREAK SEMICOLON
-  action: undefined
+  action: process_break_statement
 - rule: >-
     BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Await SEMICOLON
@@ -556,8 +556,8 @@
     _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
   action: process_nullish_coalescing_assignment
 - rule: >-
-    DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In
-    RPAREN _LOOP_TEST_ SEMICOLON
+    DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN
+    Expression_In RPAREN SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_
@@ -1022,6 +1022,8 @@
   action: undefined
 - rule: _LOOP_START_ -> (empty)
   action: process_loop_start
+- rule: _LOOP_BODY_ -> (empty)
+  action: process_loop_body
 - rule: _LOOP_TEST_ -> (empty)
   action: process_loop_test
 - rule: Expression -> AssignmentExpression
@@ -1257,8 +1259,8 @@
 - rule: StatementList_Await -> StatementList_Await StatementListItem_Await
   action: undefined
 - rule: >-
-    DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN
-    Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+    DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE
+    LPAREN Expression_In_Await RPAREN SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN
@@ -2181,9 +2183,9 @@
 - rule: Statement_Return -> BreakableStatement_Return
   action: process_statement
 - rule: Statement_Return -> ContinueStatement
-  action: undefined
+  action: process_statement
 - rule: Statement_Return -> BreakStatement
-  action: undefined
+  action: process_statement
 - rule: Statement_Return -> ReturnStatement
   action: process_statement
 - rule: Statement_Return -> WithStatement_Return
@@ -2578,9 +2580,9 @@
 - rule: Statement_Yield_Return -> BreakableStatement_Yield_Return
   action: process_statement
 - rule: Statement_Yield_Return -> ContinueStatement_Yield
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Return -> BreakStatement_Yield
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Return -> ReturnStatement_Yield
   action: process_statement
 - rule: Statement_Yield_Return -> WithStatement_Yield_Return
@@ -2612,9 +2614,9 @@
 - rule: Statement_Await_Return -> BreakableStatement_Await_Return
   action: process_statement
 - rule: Statement_Await_Return -> ContinueStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await_Return -> BreakStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await_Return -> ReturnStatement_Await
   action: process_statement
 - rule: Statement_Await_Return -> WithStatement_Await_Return
@@ -2685,9 +2687,9 @@
 - rule: Statement_Yield_Await_Return -> BreakableStatement_Yield_Await_Return
   action: process_statement
 - rule: Statement_Yield_Await_Return -> ContinueStatement_Yield_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> BreakStatement_Yield_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> ReturnStatement_Yield_Await
   action: process_statement
 - rule: Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return
@@ -2907,13 +2909,13 @@
 - rule: BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
   action: undefined
 - rule: ContinueStatement_Yield -> CONTINUE SEMICOLON
-  action: undefined
+  action: process_continue_statement
 - rule: >-
     ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield SEMICOLON
   action: undefined
 - rule: BreakStatement_Yield -> BREAK SEMICOLON
-  action: undefined
+  action: process_break_statement
 - rule: >-
     BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield SEMICOLON
@@ -3071,13 +3073,13 @@
 - rule: BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
   action: undefined
 - rule: ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
-  action: undefined
+  action: process_continue_statement
 - rule: >-
     ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield_Await SEMICOLON
   action: undefined
 - rule: BreakStatement_Yield_Await -> BREAK SEMICOLON
-  action: undefined
+  action: process_break_statement
 - rule: >-
     BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield_Await SEMICOLON
@@ -3215,8 +3217,8 @@
 - rule: BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
   action: process_bitwise_xor
 - rule: >-
-    DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN
-    Expression_In RPAREN _LOOP_TEST_ SEMICOLON
+    DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_
+    WHILE LPAREN Expression_In RPAREN SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN
@@ -3788,7 +3790,7 @@
   action: undefined
 - rule: >-
     DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return
-    WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON
+    _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield
@@ -3938,7 +3940,7 @@
   action: undefined
 - rule: >-
     DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return
-    WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+    _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await
@@ -4218,8 +4220,8 @@
   action: undefined
 - rule: >-
     DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_
-    Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN
-    _LOOP_TEST_ SEMICOLON
+    Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN
+    Expression_In_Yield_Await RPAREN SEMICOLON
   action: process_do_while_statement
 - rule: >-
     WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN

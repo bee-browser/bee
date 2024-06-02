@@ -29,7 +29,6 @@ pub struct Processor<'s, H> {
     handler: H,
     location: Location,
     stack: Vec<Syntax>,
-    loop_stack: Vec<LoopContext>,
     nodes: Vec<Node<'s>>,
     tokens: Vec<Token<'s>>,
     strict_mode: bool,
@@ -94,11 +93,6 @@ enum BindingElementKind {
     SingleNameBinding(Symbol),
 }
 
-#[derive(Debug)]
-struct LoopContext {
-    start_index: usize,
-}
-
 /// Represents a node in a stream of ordered nodes visited in a depth-first tree traversal on an
 /// AST for a JavaScript program.
 ///
@@ -133,7 +127,9 @@ pub enum Node<'s> {
     IfStatement,
     DoWhileStatement,
     WhileStatement,
-    ForStatement,
+    ForStatement(LoopFlags),
+    ContinueStatement,
+    BreakStatement,
     ReturnStatement(u32),
     FormalParameter,
     FormalParameters(u32),
@@ -149,12 +145,13 @@ pub enum Node<'s> {
     FalsyShortCircuitAssignment,
     TruthyShortCircuitAssignment,
     NullishShortCircuitAssignment,
-    LoopStart(LoopFlags),
+    LoopStart,
     LoopInitExpression,
     LoopInitVarDeclaration,
     LoopInitLexicalDeclaration,
     LoopTest,
     LoopNext,
+    LoopBody,
     StartBlockScope,
     EndBlockScope,
 }
@@ -324,7 +321,6 @@ bitflags! {
         const HAS_INIT = 0b0001;
         const HAS_TEST = 0b0010;
         const HAS_NEXT = 0b0100;
-        const POSTTEST = 0b1000;
     }
 }
 
@@ -333,7 +329,6 @@ where
     H: NodeHandler<'s>,
 {
     const INITIAL_STACK_CAPACITY: usize = 64;
-    const INITIAL_LOOP_STACK_CAPACITY: usize = 8;
     const INITIAL_QUEUE_CAPACITY: usize = 128;
     const INITIAL_TOKENS_CAPACITY: usize = 1024;
 
@@ -342,7 +337,6 @@ where
             handler,
             location: Default::default(),
             stack: Vec::with_capacity(Self::INITIAL_STACK_CAPACITY),
-            loop_stack: Vec::with_capacity(Self::INITIAL_LOOP_STACK_CAPACITY),
             nodes: Vec::with_capacity(Self::INITIAL_QUEUE_CAPACITY),
             tokens: Vec::with_capacity(Self::INITIAL_TOKENS_CAPACITY),
             strict_mode: false,
@@ -491,8 +485,7 @@ where
 
     // _LOOP_START_
     fn process_loop_start(&mut self) -> Result<(), Error> {
-        let start_index = self.enqueue(Node::LoopStart(LoopFlags::empty())); // placeholder
-        self.loop_stack.push(LoopContext { start_index });
+        self.enqueue(Node::LoopStart);
         Ok(())
     }
 
@@ -523,6 +516,12 @@ where
     // _LOOP_NEXT_
     fn process_loop_next(&mut self) -> Result<(), Error> {
         self.enqueue(Node::LoopNext);
+        Ok(())
+    }
+
+    // _LOOP_BODY_
+    fn process_loop_body(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopBody);
         Ok(())
     }
 
@@ -1570,7 +1569,6 @@ where
     fn process_do_while_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::DoWhileStatement);
         self.replace(7, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_TEST | LoopFlags::POSTTEST);
         Ok(())
     }
 
@@ -1581,7 +1579,6 @@ where
     fn process_while_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::WhileStatement);
         self.replace(5, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_TEST);
         Ok(())
     }
 
@@ -1595,63 +1592,58 @@ where
     //   Statement[?Yield, ?Await, ?Return]
 
     fn process_for_statement_no_init_test_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(LoopFlags::empty()));
         self.replace(6, Detail::Statement);
-        self.update_loop_start(LoopFlags::empty());
         Ok(())
     }
 
-    fn update_loop_start(&mut self, flags: LoopFlags) {
-        let LoopContext { start_index } = self.loop_stack.pop().unwrap();
-        self.nodes[start_index] = Node::LoopStart(flags);
-    }
-
     fn process_for_statement_no_test_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(LoopFlags::HAS_INIT));
         self.replace(7, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT);
         Ok(())
     }
 
     fn process_for_statement_no_init_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(LoopFlags::HAS_TEST));
         self.replace(7, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_TEST);
         Ok(())
     }
 
     fn process_for_statement_no_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_TEST,
+        ));
         self.replace(8, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_TEST);
         Ok(())
     }
 
     fn process_for_statement_no_init_test(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(LoopFlags::HAS_NEXT));
         self.replace(7, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_NEXT);
         Ok(())
     }
 
     fn process_for_statement_no_test(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT,
+        ));
         self.replace(8, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT);
         Ok(())
     }
 
     fn process_for_statement_no_init(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT,
+        ));
         self.replace(8, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT);
         Ok(())
     }
 
     fn process_for_statement(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT,
+        ));
         self.replace(9, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT);
         Ok(())
     }
 
@@ -1663,30 +1655,32 @@ where
     //   Statement[?Yield, ?Await, ?Return]
 
     fn process_for_statement_vars_no_test_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(LoopFlags::HAS_INIT));
         self.replace(8, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT);
         Ok(())
     }
 
     fn process_for_statement_vars_no_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_TEST,
+        ));
         self.replace(9, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_TEST);
         Ok(())
     }
 
     fn process_for_statement_vars_no_test(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT,
+        ));
         self.replace(9, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT);
         Ok(())
     }
 
     fn process_for_statement_vars(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT,
+        ));
         self.replace(10, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT);
         Ok(())
     }
 
@@ -1698,30 +1692,50 @@ where
     //   Statement[?Yield, ?Await, ?Return]
 
     fn process_for_statement_decl_no_test_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(LoopFlags::HAS_INIT));
         self.replace(6, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT);
         Ok(())
     }
 
     fn process_for_statement_decl_no_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_TEST,
+        ));
         self.replace(7, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_TEST);
         Ok(())
     }
 
     fn process_for_statement_decl_no_test(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT,
+        ));
         self.replace(7, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT);
         Ok(())
     }
 
     fn process_for_statement_decl(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ForStatement);
+        self.enqueue(Node::ForStatement(
+            LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT,
+        ));
         self.replace(8, Detail::Statement);
-        self.update_loop_start(LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT);
+        Ok(())
+    }
+
+    // 14.8 The continue Statement
+
+    // ContinueStatement[Yield, Await] : continue ;
+    fn process_continue_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ContinueStatement);
+        self.replace(2, Detail::Statement);
+        Ok(())
+    }
+
+    // 14.9 The break Statement
+
+    // BreakStatement[Yield, Await] : break ;
+    fn process_break_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::BreakStatement);
+        self.replace(2, Detail::Statement);
         Ok(())
     }
 
