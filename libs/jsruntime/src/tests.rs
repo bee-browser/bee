@@ -674,6 +674,24 @@ fn test_eval_for_statement_no_init_test_next() {
 }
 
 #[test]
+fn test_eval_continue() {
+    eval!("let i = 0; for (; i < 2; ++i) { continue } print(i)", 2);
+}
+
+#[test]
+fn test_eval_deadcode_after_continue() {
+    eval!(
+        "let i = 0; for (; i < 2; ++i) { continue; i = 1 } print(i)",
+        2
+    );
+}
+
+#[test]
+fn test_eval_break() {
+    eval!("let i = 0; for (;;) { break } print(0)", 0);
+}
+
+#[test]
 fn test_eval_deadcode_after_break() {
     eval!("let i = 0; for (;;) { break; i = 1 } print(i)", 0);
 }

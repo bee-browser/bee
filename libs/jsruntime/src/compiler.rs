@@ -348,14 +348,19 @@ impl<'a> Compiler<'a> {
             CompileCommand::IfStatement => unsafe {
                 bridge::compiler_peer_if_statement(self.peer);
             },
+            CompileCommand::DoWhileLoop => unsafe {
+                bridge::compiler_peer_do_while_loop(self.peer);
+            },
+            CompileCommand::WhileLoop => unsafe {
+                bridge::compiler_peer_while_loop(self.peer);
+            },
             // TODO: rewrite using if and break
-            CompileCommand::LoopStart(flags) => unsafe {
-                bridge::compiler_peer_loop_start(
+            CompileCommand::ForLoop(flags) => unsafe {
+                bridge::compiler_peer_for_loop(
                     self.peer,
                     flags.contains(LoopFlags::HAS_INIT),
                     flags.contains(LoopFlags::HAS_TEST),
                     flags.contains(LoopFlags::HAS_NEXT),
-                    flags.contains(LoopFlags::POSTTEST),
                 );
             },
             CompileCommand::LoopInit => unsafe {
@@ -367,8 +372,14 @@ impl<'a> Compiler<'a> {
             CompileCommand::LoopNext => unsafe {
                 bridge::compiler_peer_loop_next(self.peer);
             },
+            CompileCommand::LoopBody => unsafe {
+                bridge::compiler_peer_loop_body(self.peer);
+            },
             CompileCommand::LoopEnd => unsafe {
                 bridge::compiler_peer_loop_end(self.peer);
+            },
+            CompileCommand::Continue => unsafe {
+                bridge::compiler_peer_continue(self.peer);
             },
             CompileCommand::Break => unsafe {
                 bridge::compiler_peer_break(self.peer);

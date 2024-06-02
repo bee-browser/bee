@@ -607,6 +607,7 @@ function addActions(rules) {
     '_LOOP_INIT_LEXICAL_DECLARATION_',
     '_LOOP_TEST_',
     '_LOOP_NEXT_',
+    '_LOOP_BODY_',
   ];
 
   for (const action of ACTIONS) {
@@ -779,9 +780,9 @@ function modifyDoWhileStatement(rules) {
       insertBefore: false,
     },
     {
-      term: '`)`',
-      action: '_LOOP_TEST_',
-      insertBefore: false,
+      term: '`while`',
+      action: '_LOOP_BODY_',
+      insertBefore: true,
     },
   ];
 

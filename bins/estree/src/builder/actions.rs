@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -540,7 +540,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
     Some((Builder::assignment_expression, "assignment_expression")),
-    // DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON
+    // DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ Statement
     Some((Builder::while_statement, "while_statement")),
@@ -984,6 +984,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
     Some((Builder::nop, "nop")),
     // _LOOP_START_ -> (empty)
     Some((Builder::nop, "nop")),
+    // _LOOP_BODY_ -> (empty)
+    Some((Builder::nop, "nop")),
     // _LOOP_TEST_ -> (empty)
     Some((Builder::nop, "nop")),
     // Expression -> AssignmentExpression
@@ -1243,7 +1245,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
     Some((Builder::create_list, "create_list")),
     // StatementList_Await -> StatementList_Await StatementListItem_Await
     Some((Builder::append_to_list, "append_to_list")),
-    // DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+    // DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _LOOP_TEST_ Statement_Await
     Some((Builder::while_statement, "while_statement")),
@@ -3122,7 +3124,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
     Some((Builder::nop, "nop")),
     // BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
     Some((Builder::binary_expression, "binary_expression")),
-    // DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON
+    // DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ Statement_Return
     Some((Builder::while_statement, "while_statement")),
@@ -3650,7 +3652,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
-    // DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON
+    // DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ Statement_Yield_Return
     Some((Builder::while_statement, "while_statement")),
@@ -3769,7 +3771,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
-    // DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+    // DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _LOOP_TEST_ Statement_Await_Return
     Some((Builder::while_statement, "while_statement")),
@@ -3997,7 +3999,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2112] = [
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
-    // DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON
+    // DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ Statement_Yield_Await_Return
     Some((Builder::while_statement, "while_statement")),

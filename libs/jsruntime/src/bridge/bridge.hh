@@ -159,19 +159,19 @@ void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
 void compiler_peer_block(Compiler* self);
 void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);
-void compiler_peer_loop_start(Compiler* self,
-    bool has_init,
-    bool has_test,
-    bool has_next,
-    bool posttest);
+void compiler_peer_do_while_loop(Compiler* self);
+void compiler_peer_while_loop(Compiler* self);
+void compiler_peer_for_loop(Compiler* self, bool has_init, bool has_test, bool has_next);
 void compiler_peer_loop_init(Compiler* self);
 void compiler_peer_loop_test(Compiler* self);
 void compiler_peer_loop_next(Compiler* self);
+void compiler_peer_loop_body(Compiler* self);
 void compiler_peer_loop_end(Compiler* self);
 void compiler_peer_start_function(Compiler* self, const char* name);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue);
 void compiler_peer_release_bindings(Compiler* self, uint16_t n);
+void compiler_peer_continue(Compiler* self);
 void compiler_peer_break(Compiler* self);
 void compiler_peer_return(Compiler* self, size_t n);
 void compiler_peer_discard(Compiler* self);

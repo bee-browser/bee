@@ -63,7 +63,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [UnaryExpression -> DELETE . UnaryExpression]*
     Goal::RegExp,
     // State(14)
-    //   [DoWhileStatement -> DO . _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement -> DO . _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(15)
@@ -594,7 +594,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [UnaryExpression_Await -> DELETE . UnaryExpression_Await]*
     Goal::RegExp,
     // State(152)
-    //   [DoWhileStatement_Await -> DO . _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Await -> DO . _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(153)
@@ -1223,7 +1223,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [UnaryExpression -> DELETE UnaryExpression .]*
     Goal::TemplateTail,
     // State(311)
-    //   [DoWhileStatement -> DO _LOOP_START_ . Statement WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement -> DO _LOOP_START_ . Statement _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::RegExp,
     // State(312)
     //   [ForInOfStatement -> FOR _LOOP_START_ . LPAREN VAR ForBinding IN Expression_In RPAREN Statement]*
@@ -1815,7 +1815,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [UnaryExpression_Await -> DELETE UnaryExpression_Await .]*
     Goal::TemplateTail,
     // State(468)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ . Statement_Await WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ . Statement_Await _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::RegExp,
     // State(469)
     //   [AsyncFunctionDeclaration_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -2699,7 +2699,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
     // State(706)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement . WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement . _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON]*
+    //   [_LOOP_BODY_ -> (empty) .]*
     Goal::Div,
     // State(707)
     //   [ForInOfStatement -> FOR _LOOP_START_ LPAREN . VAR ForBinding IN Expression_In RPAREN Statement]*
@@ -3389,7 +3390,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
     // State(888)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await . WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await . _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
+    //   [_LOOP_BODY_ -> (empty) .]*
     Goal::Div,
     // State(889)
     //   [AsyncArrowFunction_In_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
@@ -4104,7 +4106,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [BindingList_In -> BindingList_In COMMA LexicalBinding_In .]*
     Goal::Div,
     // State(1074)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE . LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ . WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::Div,
     // State(1075)
     //   [AsyncArrowFunction -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
@@ -4345,7 +4347,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [WithStatement -> WITH LPAREN Expression_In RPAREN . Statement]*
     Goal::RegExp,
     // State(1129)
-    //   [DoWhileStatement_Return -> DO . _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Return -> DO . _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(1130)
@@ -4522,7 +4524,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In .]*
     Goal::TemplateTail,
     // State(1176)
-    //   [DoWhileStatement_Await_Return -> DO . _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Await_Return -> DO . _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(1177)
@@ -4867,7 +4869,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [BindingList_In_Await -> BindingList_In_Await COMMA LexicalBinding_In_Await .]*
     Goal::Div,
     // State(1271)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE . LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ . WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::Div,
     // State(1272)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -5474,8 +5476,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK .]*
     Goal::Div,
     // State(1431)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN . Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE . LPAREN Expression_In RPAREN SEMICOLON]*
+    Goal::Div,
     // State(1432)
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody]*
@@ -5718,7 +5720,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [WithStatement -> WITH LPAREN Expression_In RPAREN Statement .]*
     Goal::RegExp,
     // State(1497)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ . Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ . Statement_Return _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::RegExp,
     // State(1498)
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ . LPAREN VAR ForBinding IN Expression_In RPAREN Statement_Return]*
@@ -5804,7 +5806,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [OptionalChain -> OptionalChain LBRACK Expression_In RBRACK .]*
     Goal::TemplateTail,
     // State(1517)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ . Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ . Statement_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::RegExp,
     // State(1518)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT . _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -5977,8 +5979,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [ArrayBindingPattern_Await -> LBRACK Elision BindingRestElement_Await RBRACK .]*
     Goal::Div,
     // State(1563)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN . Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE . LPAREN Expression_In_Await RPAREN SEMICOLON]*
+    Goal::Div,
     // State(1564)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN . FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [FormalParameters_Await -> (empty) .]*
@@ -6544,9 +6546,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement . RBRACK]*
     Goal::Div,
     // State(1721)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In . RPAREN _LOOP_TEST_ SEMICOLON]*
-    //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    Goal::Div,
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN . Expression_In RPAREN SEMICOLON]*
+    Goal::RegExp,
     // State(1722)
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody]*
     Goal::RegExp,
@@ -6840,7 +6841,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ . Statement]*
     Goal::RegExp,
     // State(1791)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return . WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return . _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON]*
+    //   [_LOOP_BODY_ -> (empty) .]*
     Goal::Div,
     // State(1792)
     //   [ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN . VAR ForBinding IN Expression_In RPAREN Statement_Return]*
@@ -6917,7 +6919,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TEMPLATE_MIDDLE Expression_In .]*
     Goal::TemplateTail,
     // State(1807)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return . WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return . _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
+    //   [_LOOP_BODY_ -> (empty) .]*
     Goal::Div,
     // State(1808)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ . LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -7041,9 +7044,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA Elision BindingRestElement_Await . RBRACK]*
     Goal::Div,
     // State(1838)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await . RPAREN _LOOP_TEST_ SEMICOLON]*
-    //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    Goal::Div,
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN . Expression_In_Await RPAREN SEMICOLON]*
+    Goal::RegExp,
     // State(1839)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
@@ -7854,8 +7856,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK .]*
     Goal::Div,
     // State(2047)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN Expression_In . RPAREN SEMICOLON]*
+    //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::Div,
     // State(2048)
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody .]*
@@ -8034,7 +8036,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ Statement .]*
     Goal::RegExp,
     // State(2095)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE . LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ . WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::Div,
     // State(2096)
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Return]*
@@ -8113,7 +8115,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [WithStatement_Return -> WITH LPAREN Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(2111)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE . LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ . WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::Div,
     // State(2112)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN . VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -8230,8 +8232,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA Elision BindingRestElement_Await RBRACK .]*
     Goal::Div,
     // State(2138)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN Expression_In_Await . RPAREN SEMICOLON]*
+    //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::Div,
     // State(2139)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
@@ -9275,7 +9277,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) . LabelIdentifier_Yield SEMICOLON]*
     Goal::Div,
     // State(2414)
-    //   [DoWhileStatement_Yield_Return -> DO . _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Yield_Return -> DO . _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(2415)
@@ -9505,7 +9507,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
     // State(2476)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ . SEMICOLON]*
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
     Goal::Div,
     // State(2477)
     //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement]*
@@ -9606,8 +9608,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [CaseBlock -> LBRACE DefaultClause CaseClauses RBRACE .]*
     Goal::RegExp,
     // State(2505)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN . Expression_In RPAREN _LOOP_TEST_ SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE . LPAREN Expression_In RPAREN SEMICOLON]*
+    Goal::Div,
     // State(2506)
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In RPAREN _LOOP_NEXT_ Statement_Return]*
@@ -9689,8 +9691,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
     // State(2523)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN . Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE . LPAREN Expression_In_Await RPAREN SEMICOLON]*
+    Goal::Div,
     // State(2524)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR . ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::Div,
@@ -9809,7 +9811,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
     // State(2552)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ . SEMICOLON]*
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
     Goal::Div,
     // State(2553)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE . AsyncFunctionBody RBRACE]*
@@ -10417,7 +10419,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) . LabelIdentifier_Yield_Await SEMICOLON]*
     Goal::Div,
     // State(2719)
-    //   [DoWhileStatement_Yield_Await_Return -> DO . _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO . _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(2720)
@@ -11082,7 +11084,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [ContinueStatement_Yield -> CONTINUE . SEMICOLON]*
     Goal::Div,
     // State(2894)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ . Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ . Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON]*
     Goal::RegExp,
     // State(2895)
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ . LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -11219,7 +11221,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
     // State(2929)
-    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON .]*
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON .]*
     Goal::RegExp,
     // State(2930)
     //   [ForStatement -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement .]*
@@ -11290,9 +11292,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE .]*
     Goal::RegExp,
     // State(2950)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In . RPAREN _LOOP_TEST_ SEMICOLON]*
-    //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    Goal::Div,
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN . Expression_In RPAREN SEMICOLON]*
+    Goal::RegExp,
     // State(2951)
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
@@ -11383,9 +11384,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ . Statement_Return]*
     Goal::RegExp,
     // State(2973)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await . RPAREN _LOOP_TEST_ SEMICOLON]*
-    //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    Goal::Div,
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE LPAREN . Expression_In_Await RPAREN SEMICOLON]*
+    Goal::RegExp,
     // State(2974)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Await . OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::Div,
@@ -11510,7 +11510,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
     // State(3007)
-    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON .]*
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON .]*
     Goal::RegExp,
     // State(3008)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
@@ -12079,7 +12079,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [ContinueStatement_Yield_Await -> CONTINUE . SEMICOLON]*
     Goal::Div,
     // State(3160)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ . Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ . Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
     Goal::RegExp,
     // State(3161)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT . _LOOP_START_ LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -12403,7 +12403,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
     // State(3251)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return . WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return . _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON]*
+    //   [_LOOP_BODY_ -> (empty) .]*
     Goal::Div,
     // State(3252)
     //   [ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN . VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -12567,8 +12568,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
     // State(3295)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN Expression_In . RPAREN SEMICOLON]*
+    //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::Div,
     // State(3296)
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return .]*
@@ -12664,8 +12665,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ Statement_Return .]*
     Goal::RegExp,
     // State(3321)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Await . RPAREN SEMICOLON]*
+    //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::Div,
     // State(3322)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -13064,7 +13065,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
     // State(3440)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return . WHILE LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return . _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
+    //   [_LOOP_BODY_ -> (empty) .]*
     Goal::Div,
     // State(3441)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ . LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -13255,7 +13257,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [BindingList_In_Yield -> BindingList_In_Yield COMMA LexicalBinding_In_Yield .]*
     Goal::Div,
     // State(3492)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE . LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ . WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON]*
     Goal::Div,
     // State(3493)
     //   [AsyncArrowFunction_Yield -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
@@ -13484,7 +13486,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ . Statement]*
     Goal::RegExp,
     // State(3543)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ . SEMICOLON]*
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
     Goal::Div,
     // State(3544)
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ . Statement_Return]*
@@ -13568,7 +13570,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [CaseBlock_Return -> LBRACE DefaultClause_Return CaseClauses_Return RBRACE .]*
     Goal::RegExp,
     // State(3567)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ . SEMICOLON]*
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
     Goal::Div,
     // State(3568)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
@@ -13791,7 +13793,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [BindingList_In_Yield_Await -> BindingList_In_Yield_Await COMMA LexicalBinding_In_Yield_Await .]*
     Goal::Div,
     // State(3635)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE . LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ . WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
     Goal::Div,
     // State(3636)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN . VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -14036,8 +14038,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
     // State(3690)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN . Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE . LPAREN Expression_In_Yield RPAREN SEMICOLON]*
+    Goal::Div,
     // State(3691)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody]*
@@ -14290,7 +14292,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [ForStatement -> FOR _LOOP_START_ LPAREN LexicalDeclaration _LOOP_INIT_LEXICAL_DECLARATION_ Expression_In SEMICOLON _LOOP_TEST_ Expression_In RPAREN _LOOP_NEXT_ Statement .]*
     Goal::RegExp,
     // State(3756)
-    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON .]*
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON .]*
     Goal::RegExp,
     // State(3757)
     //   [ForStatement_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN _LOOP_NEXT_ Statement_Return .]*
@@ -14352,7 +14354,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return CaseClauses_Return RBRACE .]*
     Goal::RegExp,
     // State(3774)
-    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON .]*
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON .]*
     Goal::RegExp,
     // State(3775)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
@@ -14488,8 +14490,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
     // State(3815)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN . Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE . LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
+    Goal::Div,
     // State(3816)
     //   [ForDeclaration_Yield_Await -> CONST . ForBinding_Yield_Await]*
     Goal::Div,
@@ -14771,9 +14773,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
     // State(3890)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield . RPAREN _LOOP_TEST_ SEMICOLON]*
-    //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    Goal::Div,
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN . Expression_In_Yield RPAREN SEMICOLON]*
+    Goal::RegExp,
     // State(3891)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody]*
     Goal::RegExp,
@@ -15138,9 +15139,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
     // State(3985)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await . RPAREN _LOOP_TEST_ SEMICOLON]*
-    //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    Goal::Div,
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN . Expression_In_Yield_Await RPAREN SEMICOLON]*
+    Goal::RegExp,
     // State(3986)
     //   [ForBinding_Yield_Await -> BindingIdentifier_Yield_Await .]*
     Goal::Div,
@@ -15433,8 +15433,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
     // State(4059)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield . RPAREN SEMICOLON]*
+    //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     Goal::Div,
     // State(4060)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody .]*
@@ -15675,8 +15675,8 @@ pub static TABLE: [Goal; 4371] = [
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
     // State(4129)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . _LOOP_TEST_ SEMICOLON]*
-    //   [_LOOP_TEST_ -> (empty) .]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await . RPAREN SEMICOLON]*
+    //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     Goal::Div,
     // State(4130)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Yield_Await OF . AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -15861,7 +15861,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
     // State(4182)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ . SEMICOLON]*
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN . SEMICOLON]*
     Goal::Div,
     // State(4183)
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ . Statement_Yield_Return]*
@@ -16007,7 +16007,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
     // State(4225)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ . SEMICOLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await RPAREN . SEMICOLON]*
     Goal::Div,
     // State(4226)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
@@ -16120,7 +16120,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
     // State(4258)
-    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON .]*
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON .]*
     Goal::RegExp,
     // State(4259)
     //   [ForStatement_Yield_Return -> FOR _LOOP_START_ LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN _LOOP_NEXT_ Statement_Yield_Return .]*
@@ -16212,7 +16212,7 @@ pub static TABLE: [Goal; 4371] = [
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
     // State(4286)
-    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON .]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON .]*
     Goal::RegExp,
     // State(4287)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*

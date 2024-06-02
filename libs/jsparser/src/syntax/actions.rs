@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2112] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2113] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -70,7 +70,7 @@ where
         // Statement -> BreakableStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> ContinueStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> BreakStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> WithStatement
@@ -131,7 +131,10 @@ where
         // BreakableStatement -> SwitchStatement
         Action::Undefined,
         // ContinueStatement -> CONTINUE SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_continue_statement,
+            "process_continue_statement",
+        ),
         // ContinueStatement -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
         Action::Undefined,
         // BreakStatement -> BREAK SEMICOLON
@@ -259,7 +262,7 @@ where
         // Statement_Await -> BreakableStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> ContinueStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> BreakStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> WithStatement_Await
@@ -510,7 +513,10 @@ where
         // BreakableStatement_Await -> SwitchStatement_Await
         Action::Undefined,
         // ContinueStatement_Await -> CONTINUE SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_continue_statement,
+            "process_continue_statement",
+        ),
         // ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
         Action::Undefined,
         // BreakStatement_Await -> BREAK SEMICOLON
@@ -565,7 +571,7 @@ where
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
         ),
-        // DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON
+        // DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON
         Action::Invoke(
             Self::process_do_while_statement,
             "process_do_while_statement",
@@ -1042,6 +1048,8 @@ where
         Action::Undefined,
         // _LOOP_START_ -> (empty)
         Action::Invoke(Self::process_loop_start, "process_loop_start"),
+        // _LOOP_BODY_ -> (empty)
+        Action::Invoke(Self::process_loop_body, "process_loop_body"),
         // _LOOP_TEST_ -> (empty)
         Action::Invoke(Self::process_loop_test, "process_loop_test"),
         // Expression -> AssignmentExpression
@@ -1304,7 +1312,7 @@ where
         Action::Nop,
         // StatementList_Await -> StatementList_Await StatementListItem_Await
         Action::Undefined,
-        // DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+        // DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
         Action::Invoke(
             Self::process_do_while_statement,
             "process_do_while_statement",
@@ -2240,7 +2248,7 @@ where
         // Statement_Return -> BreakableStatement_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> ContinueStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> BreakStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> ReturnStatement
@@ -2598,7 +2606,7 @@ where
         // Statement_Yield_Return -> BreakableStatement_Yield_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> ContinueStatement_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> BreakStatement_Yield
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> ReturnStatement_Yield
@@ -2632,7 +2640,7 @@ where
         // Statement_Await_Return -> BreakableStatement_Await_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> ContinueStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> BreakStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> ReturnStatement_Await
@@ -2700,7 +2708,7 @@ where
         // Statement_Yield_Await_Return -> BreakableStatement_Yield_Await_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> ContinueStatement_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> BreakStatement_Yield_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> ReturnStatement_Yield_Await
@@ -2890,7 +2898,10 @@ where
         // BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
         Action::Undefined,
         // ContinueStatement_Yield -> CONTINUE SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_continue_statement,
+            "process_continue_statement",
+        ),
         // ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
         Action::Undefined,
         // BreakStatement_Yield -> BREAK SEMICOLON
@@ -3011,7 +3022,10 @@ where
         // BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
         Action::Undefined,
         // ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_continue_statement,
+            "process_continue_statement",
+        ),
         // ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
         Action::Undefined,
         // BreakStatement_Yield_Await -> BREAK SEMICOLON
@@ -3123,7 +3137,7 @@ where
         Action::Nop,
         // BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
         Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
-        // DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _LOOP_TEST_ SEMICOLON
+        // DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN SEMICOLON
         Action::Invoke(
             Self::process_do_while_statement,
             "process_do_while_statement",
@@ -3633,7 +3647,7 @@ where
         Action::Undefined,
         // VariableDeclaration_In_Yield -> BindingPattern_Yield Initializer_In_Yield
         Action::Undefined,
-        // DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON
+        // DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON
         Action::Invoke(
             Self::process_do_while_statement,
             "process_do_while_statement",
@@ -3761,7 +3775,7 @@ where
         ),
         // LexicalBinding_In_Yield -> BindingPattern_Yield Initializer_In_Yield
         Action::Undefined,
-        // DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+        // DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
         Action::Invoke(
             Self::process_do_while_statement,
             "process_do_while_statement",
@@ -3977,7 +3991,7 @@ where
         Action::Undefined,
         // VariableDeclaration_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
-        // DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON
+        // DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
         Action::Invoke(
             Self::process_do_while_statement,
             "process_do_while_statement",

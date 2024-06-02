@@ -913,29 +913,70 @@ void Compiler::IfStatement() {
   builder_->SetInsertPoint(block);
 }
 
-void Compiler::LoopStart(bool has_init, bool has_test, bool has_next, bool posttest) {
+void Compiler::DoWhileLoop() {
+  auto* loop_body = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* loop_test = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* loop_end = llvm::BasicBlock::Create(*context_, "", function_);
+
+  auto* loop_start = loop_body;
+  auto* loop_continue = loop_test;
+  auto* loop_break = loop_end;
+
+  // For LoopTest()
+  PushBlock(loop_end);   // SetInsertPoint()
+  PushBlock(loop_end);   // then_block for CreateCondBr()
+  PushBlock(loop_body);  // else_block for CreateCondBr()
+
+  // For LoopBody()
+  PushBlock(loop_test);  // SetInsertPoint()
+  PushBlock(loop_test);  // CreateBr()
+
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(loop_start);
+
+  loop_stack_.push_back({loop_continue, loop_break});
+}
+
+void Compiler::WhileLoop() {
+  auto* loop_test = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* loop_body = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* loop_end = llvm::BasicBlock::Create(*context_, "", function_);
+
+  auto* loop_start = loop_test;
+  auto* loop_continue = loop_test;
+  auto* loop_break = loop_end;
+
+  // For LoopBody()
+  PushBlock(loop_end);   // SetInsertPoint()
+  PushBlock(loop_test);  // CreateBr()
+
+  // For LoopTest()
+  PushBlock(loop_body);  // SetInsertPoint()
+  PushBlock(loop_end);   // then_block for CreateCondBr()
+  PushBlock(loop_body);  // else_block for CreateCondBr()
+
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(loop_start);
+
+  loop_stack_.push_back({loop_continue, loop_break});
+}
+
+void Compiler::ForLoop(bool has_init, bool has_test, bool has_next) {
   auto* loop_init = has_init ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
-  llvm::BasicBlock* loop_test;
-  llvm::BasicBlock* loop_body;
-  if (posttest) {
-    loop_body = llvm::BasicBlock::Create(*context_, "", function_);
-    loop_test = loop_body;
-  } else {
-    loop_test = has_test ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
-    loop_body = llvm::BasicBlock::Create(*context_, "", function_);
-  }
+  auto* loop_test = has_test ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
+  auto* loop_body = llvm::BasicBlock::Create(*context_, "", function_);
   auto* loop_next = has_next ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
   auto* loop_end = llvm::BasicBlock::Create(*context_, "", function_);
 
-  llvm::BasicBlock* next_block = loop_body;
+  auto* loop_start = loop_body;
+  auto* loop_continue = loop_body;
+  auto* loop_break = loop_end;
+  auto* insert_point = loop_body;
 
-  // for LoopEnd
-  // insert point
-  PushBlock(loop_end);
-  // jump to
-  if (posttest) {
-    PushBlock(nullptr);
-  } else if (has_next) {
+  // For LoopBody()
+  PushBlock(loop_end);  // SetInsertPoint()
+  // CreateBr()
+  if (has_next) {
     PushBlock(loop_next);
   } else if (has_test) {
     PushBlock(loop_test);
@@ -943,59 +984,56 @@ void Compiler::LoopStart(bool has_init, bool has_test, bool has_next, bool postt
     PushBlock(loop_body);
   }
 
-  // for LoopNext
+  // For LoopNext()
   if (has_next) {
-    // insert point
-    PushBlock(loop_body);
-    // jump to
+    PushBlock(loop_body);  // SetInsertPoint()
+    // CreateBr()
     if (has_test) {
       PushBlock(loop_test);
     } else {
       PushBlock(loop_body);
     }
-    next_block = loop_next;
+    loop_continue = loop_next;
+    insert_point = loop_next;
   }
 
-  // for LoopTest
+  // For LoopTest()
   if (has_test) {
-    // insert point
+    // SetInsertPoint()
     if (has_next) {
       PushBlock(loop_next);
     } else {
-      PushBlock(posttest ? loop_end : loop_body);
+      PushBlock(loop_body);
     }
-    // else block
-    PushBlock(loop_end);
-    // then block
-    PushBlock(loop_body);
-    next_block = posttest ? loop_body : loop_test;
+    PushBlock(loop_end);   // then_block for CreateCondBr()
+    PushBlock(loop_body);  // else_block for CreateCondBr()
+    loop_start = loop_test;
+    if (!has_next) {
+      loop_continue = loop_test;
+    }
+    insert_point = loop_test;
   }
 
-  // for LoopInit
+  // for LoopInit()
   if (has_init) {
     if (has_test) {
-      // insert point
-      PushBlock(loop_test);
-      // jump to
-      PushBlock(loop_test);
+      PushBlock(loop_test);  // SetInsertPoint()
+      PushBlock(loop_test);  // CreateBr()
     } else if (has_next) {
-      // insert point
-      PushBlock(loop_next);
-      // jump to
-      PushBlock(loop_body);
+      PushBlock(loop_next);  // SetInsertPoint()
+      PushBlock(loop_body);  // CreateBr()
     } else {
-      // insert point
-      PushBlock(loop_body);
-      // jump to
-      PushBlock(loop_body);
+      PushBlock(loop_body);  // SetInsertPoint()
+      PushBlock(loop_body);  // CreateBr()
     }
-    next_block = loop_init;
+    loop_start = loop_init;
+    insert_point = loop_init;
   }
 
-  builder_->CreateBr(next_block);
-  builder_->SetInsertPoint(next_block);
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(insert_point);
 
-  loop_stack_.push_back({loop_end});
+  loop_stack_.push_back({loop_continue, loop_break});
 }
 
 void Compiler::LoopInit() {
@@ -1027,16 +1065,15 @@ void Compiler::LoopNext() {
   builder_->SetInsertPoint(insert_point);
 }
 
-void Compiler::LoopEnd() {
+void Compiler::LoopBody() {
   auto* next_block = PopBlock();
-  auto* end_block = PopBlock();
+  auto* insert_point = PopBlock();
 
-  if (next_block != nullptr) {
-    builder_->CreateBr(next_block);
-  }
+  builder_->CreateBr(next_block);
+  builder_->SetInsertPoint(insert_point);
+}
 
-  builder_->SetInsertPoint(end_block);
-
+void Compiler::LoopEnd() {
   loop_stack_.pop_back();
 }
 
@@ -1104,11 +1141,22 @@ void Compiler::ReleaseBindings(uint16_t n) {
   allocated_bindings_ -= n;
 }
 
+void Compiler::Continue() {
+  assert(!loop_stack_.empty());
+  auto* loop_continue = loop_stack_.back().loop_continue;
+
+  builder_->CreateBr(loop_continue);
+
+  // FIXME: See the comment in Break().
+  auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
+  builder_->SetInsertPoint(dummy);
+}
+
 void Compiler::Break() {
   assert(!loop_stack_.empty());
-  auto* loop_end = loop_stack_.back().end;
+  auto* loop_break = loop_stack_.back().loop_break;
 
-  builder_->CreateBr(loop_end);
+  builder_->CreateBr(loop_break);
 
   // FIXME: Handle dead code in the proper way.
   //
