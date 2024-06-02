@@ -522,7 +522,7 @@
     _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
   action: assignment_expression
 - rule: >-
-    DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _LOOP_TEST_
+    DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN Expression_In RPAREN
     SEMICOLON
   action: do_while_statement
 - rule: WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_ Statement
@@ -952,6 +952,8 @@
   action: nop
 - rule: _LOOP_START_ -> (empty)
   action: nop
+- rule: _LOOP_BODY_ -> (empty)
+  action: nop
 - rule: _LOOP_TEST_ -> (empty)
   action: nop
 - rule: Expression -> AssignmentExpression
@@ -1177,8 +1179,8 @@
 - rule: StatementList_Await -> StatementList_Await StatementListItem_Await
   action: append_to_list
 - rule: >-
-    DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await
-    RPAREN _LOOP_TEST_ SEMICOLON
+    DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE LPAREN
+    Expression_In_Await RPAREN SEMICOLON
   action: do_while_statement
 - rule: >-
     WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _LOOP_TEST_
@@ -2944,8 +2946,8 @@
 - rule: BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
   action: binary_expression
 - rule: >-
-    DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN
-    _LOOP_TEST_ SEMICOLON
+    DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return _LOOP_BODY_ WHILE LPAREN
+    Expression_In RPAREN SEMICOLON
   action: do_while_statement
 - rule: >-
     WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _LOOP_TEST_
@@ -3452,8 +3454,8 @@
 - rule: VariableDeclaration_In_Yield -> BindingPattern_Yield Initializer_In_Yield
   action: variable_declarator_init
 - rule: >-
-    DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN
-    Expression_In_Yield RPAREN _LOOP_TEST_ SEMICOLON
+    DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return _LOOP_BODY_ WHILE
+    LPAREN Expression_In_Yield RPAREN SEMICOLON
   action: do_while_statement
 - rule: >-
     WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _LOOP_TEST_
@@ -3586,8 +3588,8 @@
 - rule: LexicalBinding_In_Yield -> BindingPattern_Yield Initializer_In_Yield
   action: variable_declarator_init
 - rule: >-
-    DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN
-    Expression_In_Await RPAREN _LOOP_TEST_ SEMICOLON
+    DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return _LOOP_BODY_ WHILE
+    LPAREN Expression_In_Await RPAREN SEMICOLON
   action: do_while_statement
 - rule: >-
     WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _LOOP_TEST_
@@ -3814,8 +3816,8 @@
 - rule: VariableDeclaration_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
   action: variable_declarator_init
 - rule: >-
-    DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE
-    LPAREN Expression_In_Yield_Await RPAREN _LOOP_TEST_ SEMICOLON
+    DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return _LOOP_BODY_
+    WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
   action: do_while_statement
 - rule: >-
     WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN

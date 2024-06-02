@@ -334,12 +334,16 @@ void compiler_peer_if_statement(Compiler* self) {
   self->IfStatement();
 }
 
-void compiler_peer_loop_start(Compiler* self,
-    bool has_init,
-    bool has_test,
-    bool has_next,
-    bool posttest) {
-  self->LoopStart(has_init, has_test, has_next, posttest);
+void compiler_peer_do_while_loop(Compiler* self) {
+  self->DoWhileLoop();
+}
+
+void compiler_peer_while_loop(Compiler* self) {
+  self->WhileLoop();
+}
+
+void compiler_peer_for_loop(Compiler* self, bool has_init, bool has_test, bool has_next) {
+  self->ForLoop(has_init, has_test, has_next);
 }
 
 void compiler_peer_loop_init(Compiler* self) {
@@ -352,6 +356,10 @@ void compiler_peer_loop_test(Compiler* self) {
 
 void compiler_peer_loop_next(Compiler* self) {
   self->LoopNext();
+}
+
+void compiler_peer_loop_body(Compiler* self) {
+  self->LoopBody();
 }
 
 void compiler_peer_loop_end(Compiler* self) {
@@ -374,6 +382,14 @@ void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue) 
 void compiler_peer_release_bindings(Compiler* self, uint16_t n) {
   assert(n > 0);
   self->ReleaseBindings(n);
+}
+
+void compiler_peer_continue(Compiler* self) {
+  self->Continue();
+}
+
+void compiler_peer_break(Compiler* self) {
+  self->Break();
 }
 
 void compiler_peer_return(Compiler* self, size_t n) {

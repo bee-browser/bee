@@ -109,7 +109,9 @@ impl<'r> Analyzer<'r> {
             Node::IfStatement => self.handle_if_statement(),
             Node::DoWhileStatement => self.handle_do_while_statement(),
             Node::WhileStatement => self.handle_while_statement(),
-            Node::ForStatement => self.handle_for_statement(),
+            Node::ForStatement(flags) => self.handle_for_statement(flags),
+            Node::ContinueStatement => self.handle_continue_statement(),
+            Node::BreakStatement => self.handle_break_statement(),
             Node::ReturnStatement(n) => self.handle_return_statement(n),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
@@ -123,12 +125,13 @@ impl<'r> Analyzer<'r> {
             Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
             Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
             Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
-            Node::LoopStart(flags) => self.handle_loop_start(flags),
+            Node::LoopStart => self.handle_loop_start(),
             Node::LoopInitExpression => self.handle_loop_init_expression(),
             Node::LoopInitVarDeclaration => self.handle_loop_init_var_declaration(),
             Node::LoopInitLexicalDeclaration => self.handle_loop_init_lexical_declaration(),
             Node::LoopTest => self.handle_loop_test(),
             Node::LoopNext => self.handle_loop_next(),
+            Node::LoopBody => self.handle_loop_body(),
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
@@ -277,15 +280,44 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_do_while_statement(&mut self) {
-        self.handle_loop_end();
+        // See handle_loop_start() for the reason why we always pop the lexical scope here.
+        self.scope_manager.pop();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_do_while_statement();
     }
 
     fn handle_while_statement(&mut self) {
-        self.handle_loop_end();
+        // See handle_loop_start() for the reason why we always pop the lexical scope here.
+        self.scope_manager.pop();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_while_statement();
     }
 
-    fn handle_for_statement(&mut self) {
-        self.handle_loop_end();
+    fn handle_for_statement(&mut self, flags: LoopFlags) {
+        // See handle_loop_start() for the reason why we always pop the lexical scope here.
+        self.scope_manager.pop();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_for_statement(flags);
+    }
+
+    fn handle_continue_statement(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::Continue);
+    }
+
+    fn handle_break_statement(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::Break);
     }
 
     fn handle_return_statement(&mut self, n: u32) {
@@ -391,11 +423,8 @@ impl<'r> Analyzer<'r> {
             .put_command(CompileCommand::NullishShortCircuitAssignment);
     }
 
-    fn handle_loop_start(&mut self, flags: LoopFlags) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .process_loop_start(flags);
+    fn handle_loop_start(&mut self) {
+        self.context_stack.last_mut().unwrap().process_loop_start();
         self.scope_manager.push(ScopeKind::Block);
     }
 
@@ -428,10 +457,8 @@ impl<'r> Analyzer<'r> {
         self.context_stack.last_mut().unwrap().process_loop_next();
     }
 
-    fn handle_loop_end(&mut self) {
-        // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_manager.pop();
-        self.context_stack.last_mut().unwrap().process_loop_end();
+    fn handle_loop_body(&mut self) {
+        self.context_stack.last_mut().unwrap().process_loop_body();
     }
 
     fn handle_start_block_scope(&mut self) {
@@ -613,6 +640,7 @@ struct FunctionContext {
     pending_lexical_bindings: Vec<usize>,
     formal_parameters: Vec<Symbol>,
     scope_stack: Vec<Scope>,
+    loop_stack: Vec<LoopContext>,
     nargs_stack: Vec<(usize, u16)>,
     max_bindings: usize,
     func_index: u32,
@@ -717,8 +745,11 @@ impl FunctionContext {
         self.commands.push(CompileCommand::Function(func_id));
     }
 
-    fn process_loop_start(&mut self, flags: LoopFlags) {
-        self.put_command(CompileCommand::LoopStart(flags));
+    fn process_loop_start(&mut self) {
+        // Push `Nop` as a placeholder.
+        // It will be replaced with an appropriate command in process_loop_end().
+        let start_index = self.put_command(CompileCommand::Nop);
+        self.loop_stack.push(LoopContext { start_index });
         // NOTE: This doesn't follow the specification, but we create a new lexical scope for the
         // iteration statement.  This is needed for the for-let/const statements, but not for
         // others.  We believe that this change does not compromise conformance to the
@@ -744,9 +775,30 @@ impl FunctionContext {
         self.put_command(CompileCommand::LoopNext);
     }
 
-    fn process_loop_end(&mut self) {
+    fn process_loop_body(&mut self) {
+        self.put_command(CompileCommand::LoopBody);
+    }
+
+    fn process_loop_end(&mut self, command: CompileCommand) {
         self.end_scope(false);
         self.put_command(CompileCommand::LoopEnd);
+        let LoopContext { start_index } = self.loop_stack.pop().unwrap();
+        self.commands[start_index] = command;
+    }
+
+    fn process_do_while_statement(&mut self) {
+        self.put_command(CompileCommand::LoopTest);
+        self.process_loop_end(CompileCommand::DoWhileLoop);
+    }
+
+    fn process_while_statement(&mut self) {
+        self.put_command(CompileCommand::LoopBody);
+        self.process_loop_end(CompileCommand::WhileLoop);
+    }
+
+    fn process_for_statement(&mut self, flags: LoopFlags) {
+        self.put_command(CompileCommand::LoopBody);
+        self.process_loop_end(CompileCommand::ForLoop(flags));
     }
 
     fn start_scope(&mut self) {
@@ -786,6 +838,10 @@ struct Scope {
     command_base_index: usize,
     num_bindings: usize,
     max_child_bindings: usize,
+}
+
+struct LoopContext {
+    start_index: usize,
 }
 
 #[derive(Debug, PartialEq)]
@@ -907,12 +963,17 @@ pub enum CompileCommand {
     IfStatement,
 
     // loop
-    LoopStart(LoopFlags),
+    WhileLoop,
+    DoWhileLoop,
+    ForLoop(LoopFlags),
     LoopInit,
     LoopTest,
     LoopNext,
+    LoopBody,
     LoopEnd,
 
+    Continue,
+    Break,
     Return(u32),
 
     Discard,
