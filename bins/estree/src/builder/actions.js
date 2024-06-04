@@ -1,5 +1,12 @@
+// TODO: This is a clone of //libs/jsparser/src/syntax/actions.js.
+//
+// The builder module will be completely re-implemented once we finish to implement the
+// jsparser::syntax module.  In the meanwhile, we have to maintain this script when the
+// original script is updated.
+
 'use strict';
 
+import { assert } from 'https://deno.land/std@0.224.0/testing/asserts.ts';
 import * as fs from 'https://deno.land/std@0.224.0/fs/mod.ts';
 import * as log from 'https://deno.land/std@0.224.0/log/mod.ts';
 import * as yaml from 'https://deno.land/std@0.224.0/yaml/mod.ts';
@@ -46,10 +53,13 @@ async function main(args, options) {
     };
   });
 
+  // A map from a rule to the index of the rule in the `actions` list.
+  // Special terms in the rule are ignored.
   const indexMap = new Map();
   for (let i = 0; i < actions.length; ++i) {
     const entry = actions[i];
-    indexMap.set(entry.rule, i);
+    const key = removeSpecialTermsFromRule(entry.rule);
+    indexMap.set(key, i);
   }
 
   if (args.actionsYaml && await fs.exists(args.actionsYaml)) {
@@ -57,10 +67,12 @@ async function main(args, options) {
     const actionsYaml = await Deno.readTextFile(args.actionsYaml);
     const current = yaml.parse(actionsYaml);
     for (const entry of current) {
-      if (indexMap.has(entry.rule)) {
-        actions[indexMap.get(entry.rule)].action = entry.action;
+      const key = removeSpecialTermsFromRule(entry.rule);
+      if (indexMap.has(key)) {
+        const i = indexMap.get(key);
+        actions[i].action = entry.action;
         if (entry.note) {
-          actions[indexMap.get(entry.rule)].note = entry.note;
+          actions[i].note = entry.note;
         }
       } else {
         log.warn(`${entry.rule} was removed`);
@@ -73,4 +85,17 @@ async function main(args, options) {
   }
 
   console.log(yaml.stringify(actions, YAML_OPTIONS).trim());
+}
+
+// Remove special terms in a given rule.
+// Special terms are inserted by transpile.js and not contained in the original rule.
+function removeSpecialTermsFromRule(rule) {
+  let terms = rule.split(' ').filter((term) => !term.startsWith('_'));
+  assert(terms.length > 0);
+  if (terms[0] === '->') {
+    // It's a rule for a special term.  So, there is no original rule.
+    // Just return the given rule.
+    return rule;
+  }
+  return terms.join(' ');
 }
