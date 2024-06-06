@@ -1673,7 +1673,7 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
   auto* merge_block = llvm::BasicBlock::Create(*context_, "bb", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Boolean));
+  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Number));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
@@ -1699,7 +1699,7 @@ llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::V
   auto* merge_block = llvm::BasicBlock::Create(*context_, "bb", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Boolean));
+  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Function));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
