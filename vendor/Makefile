@@ -3,13 +3,16 @@ LLVM_LINK_MAX_RAM_USAGE := $(shell deno eval -p '10 * 1024 * 1024 * 1024')
 DEFAULT_LLVM_PARALLEL_LINK_JOBS := \
   $(shell deno eval -p 'Math.floor(Deno.systemMemoryInfo().total / $(LLVM_LINK_MAX_RAM_USAGE))')
 
+# TODO: Is there any way to manage versions of packages installed by `cargo install`?
+ADDR2LINE_VERSION := 0.23.0
+
 .PHONY: install
 install: addr2line llvm
 
 .PHONY: addr2line
 addr2line:
 	@mkdir -p bin
-	@cargo install --root=. --example=addr2line addr2line
+	@cargo install --root=. --bin=addr2line --features=bin addr2line@$(ADDR2LINE_VERSION)
 
 .PHONY: llvm
 # See //vendor/src/llvm/llvm-project/llvm/docs/GettingStarted.rst
