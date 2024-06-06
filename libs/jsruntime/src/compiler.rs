@@ -378,6 +378,18 @@ impl<'a> Compiler<'a> {
             CompileCommand::LoopEnd => unsafe {
                 bridge::compiler_peer_loop_end(self.peer);
             },
+            CompileCommand::CaseBlock(n) => unsafe {
+                if *n == 0 {
+                    // Discard the `switchValue`.
+                    bridge::compiler_peer_discard(self.peer);
+                } else {
+                    // TODO: refactoring
+                    bridge::compiler_peer_case_block(self.peer);
+                }
+            },
+            CompileCommand::Switch(n) => unsafe {
+                bridge::compiler_peer_switch(self.peer, *n);
+            },
             CompileCommand::Continue => unsafe {
                 bridge::compiler_peer_continue(self.peer);
             },

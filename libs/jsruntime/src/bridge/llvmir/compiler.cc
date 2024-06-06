@@ -1077,6 +1077,29 @@ void Compiler::LoopEnd() {
   loop_stack_.pop_back();
 }
 
+void Compiler::CaseBlock() {
+  auto* end_block = llvm::BasicBlock::Create(*context_);
+  PushBlock(end_block);
+  Swap();
+  auto item = Dereference();
+  stack_.push_back(item);
+  stack_.push_back(item);  // Dup for test on CaseClause
+
+  auto* start_block = llvm::BasicBlock::Create(*context_, "", function_);
+  builder_->CreateBr(start_block);
+  builder_->SetInsertPoint(start_block);
+}
+
+void Compiler::Switch(uint32_t n) {
+  UNUSED(n);
+
+  PopItem();
+  auto* end_block = PopBlock();
+  end_block->insertInto(function_);
+  builder_->CreateBr(end_block);
+  builder_->SetInsertPoint(end_block);
+}
+
 void Compiler::StartFunction(const char* name) {
   const auto& found = functions_.find(name);
   if (found != functions_.end()) {

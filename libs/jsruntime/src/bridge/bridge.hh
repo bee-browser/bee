@@ -167,6 +167,8 @@ void compiler_peer_loop_test(Compiler* self);
 void compiler_peer_loop_next(Compiler* self);
 void compiler_peer_loop_body(Compiler* self);
 void compiler_peer_loop_end(Compiler* self);
+void compiler_peer_case_block(Compiler* self);
+void compiler_peer_switch(Compiler* self, uint32_t n);
 void compiler_peer_start_function(Compiler* self, const char* name);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue);

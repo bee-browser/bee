@@ -715,3 +715,13 @@ fn test_eval_break() {
 fn test_eval_deadcode_after_break() {
     eval!("let i = 0; for (;;) { break; i = 1 } print(i)", 0);
 }
+
+#[test]
+fn test_eval_switch_statement_empty() {
+    eval!("let i = 0; switch (i) {} print(i)", 0);
+}
+
+#[test]
+fn test_eval_switch_statement_single_case_fall_through() {
+    eval!("let i = 0; switch (i) { case 0: i = 1 } print(i)", 1);
+}

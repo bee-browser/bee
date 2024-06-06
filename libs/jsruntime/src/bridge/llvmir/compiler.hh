@@ -116,6 +116,8 @@ class Compiler {
   void LoopNext();
   void LoopBody();
   void LoopEnd();
+  void CaseBlock();
+  void Switch(uint32_t n);
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);

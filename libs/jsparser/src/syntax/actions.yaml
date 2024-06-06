@@ -107,7 +107,7 @@
 - rule: BreakableStatement -> IterationStatement
   action: nop
 - rule: BreakableStatement -> SwitchStatement
-  action: undefined
+  action: nop
 - rule: ContinueStatement -> CONTINUE SEMICOLON
   action: process_continue_statement
 - rule: >-
@@ -276,8 +276,8 @@
   action: nop
 - rule: IterationStatement -> ForInOfStatement
   action: undefined
-- rule: SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
-  action: undefined
+- rule: SwitchStatement -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock
+  action: process_switch_statement
 - rule: LabelIdentifier -> Identifier
   action: process_label_identifier
 - rule: LabelIdentifier -> YIELD
@@ -492,7 +492,7 @@
 - rule: BreakableStatement_Await -> IterationStatement_Await
   action: nop
 - rule: BreakableStatement_Await -> SwitchStatement_Await
-  action: undefined
+  action: nop
 - rule: ContinueStatement_Await -> CONTINUE SEMICOLON
   action: process_continue_statement
 - rule: >-
@@ -661,18 +661,20 @@
     ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration OF
     AssignmentExpression_In RPAREN Statement
   action: undefined
+- rule: _CASE_BLOCK_ -> (empty)
+  action: process_case_block
 - rule: CaseBlock -> LBRACE RBRACE
-  action: undefined
+  action: process_case_block_empty
 - rule: CaseBlock -> LBRACE CaseClauses RBRACE
-  action: undefined
+  action: process_case_block_cases
 - rule: CaseBlock -> LBRACE DefaultClause RBRACE
-  action: undefined
+  action: process_case_block_default
 - rule: CaseBlock -> LBRACE CaseClauses DefaultClause RBRACE
-  action: undefined
+  action: process_case_block_cases_default
 - rule: CaseBlock -> LBRACE DefaultClause CaseClauses RBRACE
-  action: undefined
+  action: process_case_block_default_cases
 - rule: CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE
-  action: undefined
+  action: process_case_block_cases_default_cases
 - rule: Identifier -> IdentifierNameButNotReservedWord
   action: process_identifier
 - rule: CatchParameter -> BindingIdentifier
@@ -972,8 +974,8 @@
   action: undefined
 - rule: >-
     SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN
-    CaseBlock_Await
-  action: undefined
+    _CASE_BLOCK_ CaseBlock_Await
+  action: process_switch_statement
 - rule: LabelIdentifier_Await -> Identifier
   action: process_label_identifier_except_for_await
 - rule: LabelIdentifier_Await -> YIELD
@@ -1055,13 +1057,13 @@
 - rule: ForDeclaration -> CONST ForBinding
   action: undefined
 - rule: CaseClauses -> CaseClause
-  action: undefined
+  action: process_case_clauses_head
 - rule: CaseClauses -> CaseClauses CaseClause
-  action: undefined
-- rule: DefaultClause -> DEFAULT COLON
-  action: undefined
-- rule: DefaultClause -> DEFAULT COLON StatementList
-  action: undefined
+  action: process_case_clauses
+- rule: DefaultClause -> DEFAULT COLON _DEFAULT_SELECTOR_
+  action: process_default_clause_empty
+- rule: DefaultClause -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList
+  action: process_default_clause
 - rule: IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
   action: nop
 - rule: IdentifierNameButNotReservedWord -> LET
@@ -1382,19 +1384,19 @@
     OF AssignmentExpression_In_Await RPAREN Statement_Await
   action: undefined
 - rule: CaseBlock_Await -> LBRACE RBRACE
-  action: undefined
+  action: process_case_block_empty
 - rule: CaseBlock_Await -> LBRACE CaseClauses_Await RBRACE
-  action: undefined
+  action: process_case_block_cases
 - rule: CaseBlock_Await -> LBRACE DefaultClause_Await RBRACE
-  action: undefined
+  action: process_case_block_default
 - rule: CaseBlock_Await -> LBRACE CaseClauses_Await DefaultClause_Await RBRACE
-  action: undefined
+  action: process_case_block_cases_default
 - rule: CaseBlock_Await -> LBRACE DefaultClause_Await CaseClauses_Await RBRACE
-  action: undefined
+  action: process_case_block_default_cases
 - rule: >-
     CaseBlock_Await -> LBRACE CaseClauses_Await DefaultClause_Await
     CaseClauses_Await RBRACE
-  action: undefined
+  action: process_case_block_cases_default_cases
 - rule: CatchParameter_Await -> BindingIdentifier_Await
   action: undefined
 - rule: CatchParameter_Await -> BindingPattern_Await
@@ -1503,10 +1505,12 @@
   action: process_binding_list_head
 - rule: BindingList -> BindingList COMMA LexicalBinding
   action: process_binding_list_item
-- rule: CaseClause -> CASE Expression_In COLON
-  action: undefined
-- rule: CaseClause -> CASE Expression_In COLON StatementList
-  action: undefined
+- rule: CaseClause -> CASE Expression_In COLON _CASE_SELECTOR_
+  action: process_case_clause_empty
+- rule: CaseClause -> CASE Expression_In COLON _CASE_SELECTOR_ StatementList
+  action: process_case_clause
+- rule: _DEFAULT_SELECTOR_ -> (empty)
+  action: process_default_selector
 - rule: BindingRestElement -> ELLIPSIS BindingIdentifier
   action: undefined
 - rule: BindingRestElement -> ELLIPSIS BindingPattern
@@ -1700,13 +1704,13 @@
 - rule: ForDeclaration_Await -> CONST ForBinding_Await
   action: undefined
 - rule: CaseClauses_Await -> CaseClause_Await
-  action: undefined
+  action: process_case_clauses_head
 - rule: CaseClauses_Await -> CaseClauses_Await CaseClause_Await
-  action: undefined
-- rule: DefaultClause_Await -> DEFAULT COLON
-  action: undefined
-- rule: DefaultClause_Await -> DEFAULT COLON StatementList_Await
-  action: undefined
+  action: process_case_clauses
+- rule: DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_
+  action: process_default_clause_empty
+- rule: DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Await
+  action: process_default_clause
 - rule: BindingRestProperty -> ELLIPSIS BindingIdentifier
   action: undefined
 - rule: BindingPropertyList -> BindingProperty
@@ -1834,6 +1838,8 @@
   action: process_lexical_binding_identifier_with_initializer
 - rule: LexicalBinding -> BindingPattern Initializer
   action: undefined
+- rule: _CASE_SELECTOR_ -> (empty)
+  action: process_case_selector
 - rule: BindingElement -> SingleNameBinding
   action: process_binding_element
 - rule: BindingElement -> BindingPattern
@@ -2084,10 +2090,12 @@
   action: process_binding_list_head
 - rule: BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await
   action: process_binding_list_item
-- rule: CaseClause_Await -> CASE Expression_In_Await COLON
-  action: undefined
-- rule: CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
-  action: undefined
+- rule: CaseClause_Await -> CASE Expression_In_Await COLON _CASE_SELECTOR_
+  action: process_case_clause_empty
+- rule: >-
+    CaseClause_Await -> CASE Expression_In_Await COLON _CASE_SELECTOR_
+    StatementList_Await
+  action: process_case_clause
 - rule: BindingProperty -> SingleNameBinding
   action: undefined
 - rule: BindingProperty -> PropertyName COLON BindingElement
@@ -2508,7 +2516,7 @@
 - rule: BreakableStatement_Return -> IterationStatement_Return
   action: nop
 - rule: BreakableStatement_Return -> SwitchStatement_Return
-  action: undefined
+  action: nop
 - rule: ReturnStatement -> RETURN SEMICOLON
   action: process_return_statement
 - rule: >-
@@ -2831,9 +2839,9 @@
 - rule: IterationStatement_Return -> ForInOfStatement_Return
   action: undefined
 - rule: >-
-    SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN
+    SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_
     CaseBlock_Return
-  action: undefined
+  action: process_switch_statement
 - rule: LabelledItem_Return -> Statement_Return
   action: undefined
 - rule: LabelledItem_Return -> FunctionDeclaration
@@ -2907,7 +2915,7 @@
 - rule: BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
   action: nop
 - rule: BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
-  action: undefined
+  action: nop
 - rule: ContinueStatement_Yield -> CONTINUE SEMICOLON
   action: process_continue_statement
 - rule: >-
@@ -2973,7 +2981,7 @@
 - rule: BreakableStatement_Await_Return -> IterationStatement_Await_Return
   action: nop
 - rule: BreakableStatement_Await_Return -> SwitchStatement_Await_Return
-  action: undefined
+  action: nop
 - rule: ReturnStatement_Await -> RETURN SEMICOLON
   action: process_return_statement
 - rule: >-
@@ -3071,7 +3079,7 @@
     IterationStatement_Yield_Await_Return
   action: nop
 - rule: BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
-  action: undefined
+  action: nop
 - rule: ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
   action: process_continue_statement
 - rule: >-
@@ -3323,19 +3331,19 @@
     AssignmentExpression_In RPAREN Statement_Return
   action: undefined
 - rule: CaseBlock_Return -> LBRACE RBRACE
-  action: undefined
+  action: process_case_block_empty
 - rule: CaseBlock_Return -> LBRACE CaseClauses_Return RBRACE
-  action: undefined
+  action: process_case_block_cases
 - rule: CaseBlock_Return -> LBRACE DefaultClause_Return RBRACE
-  action: undefined
+  action: process_case_block_default
 - rule: CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return RBRACE
-  action: undefined
+  action: process_case_block_cases_default
 - rule: CaseBlock_Return -> LBRACE DefaultClause_Return CaseClauses_Return RBRACE
-  action: undefined
+  action: process_case_block_default_cases
 - rule: >-
     CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return
     CaseClauses_Return RBRACE
-  action: undefined
+  action: process_case_block_cases_default_cases
 - rule: PropertyName_Yield -> LiteralPropertyName
   action: undefined
 - rule: PropertyName_Yield -> ComputedPropertyName_Yield
@@ -3410,8 +3418,8 @@
   action: undefined
 - rule: >-
     SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN
-    CaseBlock_Yield_Return
-  action: undefined
+    _CASE_BLOCK_ CaseBlock_Yield_Return
+  action: process_switch_statement
 - rule: LabelIdentifier_Yield -> Identifier
   action: process_label_identifier_except_for_yield
 - rule: LabelIdentifier_Yield -> AWAIT
@@ -3473,8 +3481,8 @@
   action: undefined
 - rule: >-
     SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN
-    CaseBlock_Await_Return
-  action: undefined
+    _CASE_BLOCK_ CaseBlock_Await_Return
+  action: process_switch_statement
 - rule: LabelledItem_Await_Return -> Statement_Await_Return
   action: undefined
 - rule: LabelledItem_Await_Return -> FunctionDeclaration_Await
@@ -3578,8 +3586,8 @@
   action: undefined
 - rule: >-
     SwitchStatement_Yield_Await_Return -> SWITCH LPAREN
-    Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return
-  action: undefined
+    Expression_In_Yield_Await RPAREN _CASE_BLOCK_ CaseBlock_Yield_Await_Return
+  action: process_switch_statement
 - rule: LabelIdentifier_Yield_Await -> Identifier
   action: process_label_identifier_except_for_yield_await
 - rule: LabelledItem_Yield_Await_Return -> Statement_Yield_Await_Return
@@ -3683,13 +3691,15 @@
 - rule: BitwiseANDExpression -> BitwiseANDExpression BIT_AND EqualityExpression
   action: process_bitwise_and
 - rule: CaseClauses_Return -> CaseClause_Return
-  action: undefined
+  action: process_case_clauses_head
 - rule: CaseClauses_Return -> CaseClauses_Return CaseClause_Return
-  action: undefined
-- rule: DefaultClause_Return -> DEFAULT COLON
-  action: undefined
-- rule: DefaultClause_Return -> DEFAULT COLON StatementList_Return
-  action: undefined
+  action: process_case_clauses
+- rule: DefaultClause_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+  action: process_default_clause_empty
+- rule: >-
+    DefaultClause_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+    StatementList_Return
+  action: process_default_clause
 - rule: ComputedPropertyName_Yield -> LBRACK AssignmentExpression_In_Yield RBRACK
   action: undefined
 - rule: LogicalORExpression_In_Yield -> LogicalANDExpression_In_Yield
@@ -3907,23 +3917,23 @@
     Statement_Yield_Return
   action: undefined
 - rule: CaseBlock_Yield_Return -> LBRACE RBRACE
-  action: undefined
+  action: process_case_block_empty
 - rule: CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return RBRACE
-  action: undefined
+  action: process_case_block_cases
 - rule: CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return RBRACE
-  action: undefined
+  action: process_case_block_default
 - rule: >-
     CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return
     DefaultClause_Yield_Return RBRACE
-  action: undefined
+  action: process_case_block_cases_default
 - rule: >-
     CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return
     CaseClauses_Yield_Return RBRACE
-  action: undefined
+  action: process_case_block_default_cases
 - rule: >-
     CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return
     DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE
-  action: undefined
+  action: process_case_block_cases_default_cases
 - rule: CatchParameter_Yield -> BindingIdentifier_Yield
   action: undefined
 - rule: CatchParameter_Yield -> BindingPattern_Yield
@@ -4072,23 +4082,23 @@
     Statement_Await_Return
   action: undefined
 - rule: CaseBlock_Await_Return -> LBRACE RBRACE
-  action: undefined
+  action: process_case_block_empty
 - rule: CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_cases
 - rule: CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_default
 - rule: >-
     CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return
     DefaultClause_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_cases_default
 - rule: >-
     CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return
     CaseClauses_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_default_cases
 - rule: >-
     CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return
     DefaultClause_Await_Return CaseClauses_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_cases_default_cases
 - rule: >-
     ComputedPropertyName_Yield_Await -> LBRACK
     AssignmentExpression_In_Yield_Await RBRACK
@@ -4359,25 +4369,25 @@
     Statement_Yield_Await_Return
   action: undefined
 - rule: CaseBlock_Yield_Await_Return -> LBRACE RBRACE
-  action: undefined
+  action: process_case_block_empty
 - rule: CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_cases
 - rule: >-
     CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return
     RBRACE
-  action: undefined
+  action: process_case_block_default
 - rule: >-
     CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return
     DefaultClause_Yield_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_cases_default
 - rule: >-
     CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return
     CaseClauses_Yield_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_default_cases
 - rule: >-
     CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return
     DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE
-  action: undefined
+  action: process_case_block_cases_default_cases
 - rule: CatchParameter_Yield_Await -> BindingIdentifier_Yield_Await
   action: undefined
 - rule: CatchParameter_Yield_Await -> BindingPattern_Yield_Await
@@ -4430,10 +4440,12 @@
   action: process_strict_equality
 - rule: EqualityExpression -> EqualityExpression NE_STRICT RelationalExpression
   action: process_strict_inequality
-- rule: CaseClause_Return -> CASE Expression_In COLON
-  action: undefined
-- rule: CaseClause_Return -> CASE Expression_In COLON StatementList_Return
-  action: undefined
+- rule: CaseClause_Return -> CASE Expression_In COLON _CASE_SELECTOR_
+  action: process_case_clause_empty
+- rule: >-
+    CaseClause_Return -> CASE Expression_In COLON _CASE_SELECTOR_
+    StatementList_Return
+  action: process_case_clause
 - rule: LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
   action: nop
 - rule: >-
@@ -4519,25 +4531,29 @@
 - rule: ForDeclaration_Yield -> CONST ForBinding_Yield
   action: undefined
 - rule: CaseClauses_Yield_Return -> CaseClause_Yield_Return
-  action: undefined
+  action: process_case_clauses_head
 - rule: CaseClauses_Yield_Return -> CaseClauses_Yield_Return CaseClause_Yield_Return
-  action: undefined
-- rule: DefaultClause_Yield_Return -> DEFAULT COLON
-  action: undefined
-- rule: DefaultClause_Yield_Return -> DEFAULT COLON StatementList_Yield_Return
-  action: undefined
+  action: process_case_clauses
+- rule: DefaultClause_Yield_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+  action: process_default_clause_empty
+- rule: >-
+    DefaultClause_Yield_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+    StatementList_Yield_Return
+  action: process_default_clause
 - rule: ClassElementList_Yield -> ClassElement_Yield
   action: undefined
 - rule: ClassElementList_Yield -> ClassElementList_Yield ClassElement_Yield
   action: undefined
 - rule: CaseClauses_Await_Return -> CaseClause_Await_Return
-  action: undefined
+  action: process_case_clauses_head
 - rule: CaseClauses_Await_Return -> CaseClauses_Await_Return CaseClause_Await_Return
-  action: undefined
-- rule: DefaultClause_Await_Return -> DEFAULT COLON
-  action: undefined
-- rule: DefaultClause_Await_Return -> DEFAULT COLON StatementList_Await_Return
-  action: undefined
+  action: process_case_clauses
+- rule: DefaultClause_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+  action: process_default_clause_empty
+- rule: >-
+    DefaultClause_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+    StatementList_Await_Return
+  action: process_default_clause
 - rule: LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
   action: nop
 - rule: >-
@@ -4627,17 +4643,17 @@
 - rule: ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await
   action: undefined
 - rule: CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
-  action: undefined
+  action: process_case_clauses_head
 - rule: >-
     CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return
     CaseClause_Yield_Await_Return
-  action: undefined
-- rule: DefaultClause_Yield_Await_Return -> DEFAULT COLON
-  action: undefined
+  action: process_case_clauses
+- rule: DefaultClause_Yield_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+  action: process_default_clause_empty
 - rule: >-
-    DefaultClause_Yield_Await_Return -> DEFAULT COLON
+    DefaultClause_Yield_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
     StatementList_Yield_Await_Return
-  action: undefined
+  action: process_default_clause
 - rule: ClassElementList_Yield_Await -> ClassElement_Yield_Await
   action: undefined
 - rule: >-
@@ -4758,12 +4774,12 @@
   action: process_binding_list_head
 - rule: BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield
   action: process_binding_list_item
-- rule: CaseClause_Yield_Return -> CASE Expression_In_Yield COLON
-  action: undefined
+- rule: CaseClause_Yield_Return -> CASE Expression_In_Yield COLON _CASE_SELECTOR_
+  action: process_case_clause_empty
 - rule: >-
-    CaseClause_Yield_Return -> CASE Expression_In_Yield COLON
+    CaseClause_Yield_Return -> CASE Expression_In_Yield COLON _CASE_SELECTOR_
     StatementList_Yield_Return
-  action: undefined
+  action: process_case_clause
 - rule: ClassElement_Yield -> MethodDefinition_Yield
   action: undefined
 - rule: ClassElement_Yield -> STATIC MethodDefinition_Yield
@@ -4776,12 +4792,12 @@
   action: undefined
 - rule: ClassElement_Yield -> SEMICOLON
   action: undefined
-- rule: CaseClause_Await_Return -> CASE Expression_In_Await COLON
-  action: undefined
+- rule: CaseClause_Await_Return -> CASE Expression_In_Await COLON _CASE_SELECTOR_
+  action: process_case_clause_empty
 - rule: >-
-    CaseClause_Await_Return -> CASE Expression_In_Await COLON
+    CaseClause_Await_Return -> CASE Expression_In_Await COLON _CASE_SELECTOR_
     StatementList_Await_Return
-  action: undefined
+  action: process_case_clause
 - rule: BitwiseXORExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await
   action: nop
 - rule: >-
@@ -4873,12 +4889,14 @@
     BindingList_Yield_Await -> BindingList_Yield_Await COMMA
     LexicalBinding_Yield_Await
   action: process_binding_list_item
-- rule: CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
-  action: undefined
 - rule: >-
     CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
-    StatementList_Yield_Await_Return
-  action: undefined
+    _CASE_SELECTOR_
+  action: process_case_clause_empty
+- rule: >-
+    CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
+    _CASE_SELECTOR_ StatementList_Yield_Await_Return
+  action: process_case_clause
 - rule: ClassElement_Yield_Await -> MethodDefinition_Yield_Await
   action: undefined
 - rule: ClassElement_Yield_Await -> STATIC MethodDefinition_Yield_Await

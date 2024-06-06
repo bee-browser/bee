@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2113] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2116] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -129,7 +129,7 @@ where
         // BreakableStatement -> IterationStatement
         Action::Nop,
         // BreakableStatement -> SwitchStatement
-        Action::Undefined,
+        Action::Nop,
         // ContinueStatement -> CONTINUE SEMICOLON
         Action::Invoke(
             Self::process_continue_statement,
@@ -299,8 +299,8 @@ where
         Action::Nop,
         // IterationStatement -> ForInOfStatement
         Action::Undefined,
-        // SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
-        Action::Undefined,
+        // SwitchStatement -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock
+        Action::Invoke(Self::process_switch_statement, "process_switch_statement"),
         // LabelIdentifier -> Identifier
         Action::Invoke(Self::process_label_identifier, "process_label_identifier"),
         // LabelIdentifier -> YIELD
@@ -511,7 +511,7 @@ where
         // BreakableStatement_Await -> IterationStatement_Await
         Action::Nop,
         // BreakableStatement_Await -> SwitchStatement_Await
-        Action::Undefined,
+        Action::Nop,
         // ContinueStatement_Await -> CONTINUE SEMICOLON
         Action::Invoke(
             Self::process_continue_statement,
@@ -667,18 +667,32 @@ where
         Action::Undefined,
         // ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement
         Action::Undefined,
+        // _CASE_BLOCK_ -> (empty)
+        Action::Invoke(Self::process_case_block, "process_case_block"),
         // CaseBlock -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_empty, "process_case_block_empty"),
         // CaseBlock -> LBRACE CaseClauses RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_cases, "process_case_block_cases"),
         // CaseBlock -> LBRACE DefaultClause RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default,
+            "process_case_block_default",
+        ),
         // CaseBlock -> LBRACE CaseClauses DefaultClause RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default,
+            "process_case_block_cases_default",
+        ),
         // CaseBlock -> LBRACE DefaultClause CaseClauses RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default_cases,
+            "process_case_block_default_cases",
+        ),
         // CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default_cases,
+            "process_case_block_cases_default_cases",
+        ),
         // Identifier -> IdentifierNameButNotReservedWord
         Action::Invoke(Self::process_identifier, "process_identifier"),
         // CatchParameter -> BindingIdentifier
@@ -1002,8 +1016,8 @@ where
         Action::Nop,
         // IterationStatement_Await -> ForInOfStatement_Await
         Action::Undefined,
-        // SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await
-        Action::Undefined,
+        // SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN _CASE_BLOCK_ CaseBlock_Await
+        Action::Invoke(Self::process_switch_statement, "process_switch_statement"),
         // LabelIdentifier_Await -> Identifier
         Action::Invoke(
             Self::process_label_identifier_except_for_await,
@@ -1090,13 +1104,16 @@ where
         // ForDeclaration -> CONST ForBinding
         Action::Undefined,
         // CaseClauses -> CaseClause
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses_head, "process_case_clauses_head"),
         // CaseClauses -> CaseClauses CaseClause
-        Action::Undefined,
-        // DefaultClause -> DEFAULT COLON
-        Action::Undefined,
-        // DefaultClause -> DEFAULT COLON StatementList
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses, "process_case_clauses"),
+        // DefaultClause -> DEFAULT COLON _DEFAULT_SELECTOR_
+        Action::Invoke(
+            Self::process_default_clause_empty,
+            "process_default_clause_empty",
+        ),
+        // DefaultClause -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList
+        Action::Invoke(Self::process_default_clause, "process_default_clause"),
         // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
         Action::Nop,
         // IdentifierNameButNotReservedWord -> LET
@@ -1415,17 +1432,29 @@ where
         // ForInOfStatement_Await -> FOR AWAIT _LOOP_START_ LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await
         Action::Undefined,
         // CaseBlock_Await -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_empty, "process_case_block_empty"),
         // CaseBlock_Await -> LBRACE CaseClauses_Await RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_cases, "process_case_block_cases"),
         // CaseBlock_Await -> LBRACE DefaultClause_Await RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default,
+            "process_case_block_default",
+        ),
         // CaseBlock_Await -> LBRACE CaseClauses_Await DefaultClause_Await RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default,
+            "process_case_block_cases_default",
+        ),
         // CaseBlock_Await -> LBRACE DefaultClause_Await CaseClauses_Await RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default_cases,
+            "process_case_block_default_cases",
+        ),
         // CaseBlock_Await -> LBRACE CaseClauses_Await DefaultClause_Await CaseClauses_Await RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default_cases,
+            "process_case_block_cases_default_cases",
+        ),
         // CatchParameter_Await -> BindingIdentifier_Await
         Action::Undefined,
         // CatchParameter_Await -> BindingPattern_Await
@@ -1535,10 +1564,12 @@ where
         Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList -> BindingList COMMA LexicalBinding
         Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
-        // CaseClause -> CASE Expression_In COLON
-        Action::Undefined,
-        // CaseClause -> CASE Expression_In COLON StatementList
-        Action::Undefined,
+        // CaseClause -> CASE Expression_In COLON _CASE_SELECTOR_
+        Action::Invoke(Self::process_case_clause_empty, "process_case_clause_empty"),
+        // CaseClause -> CASE Expression_In COLON _CASE_SELECTOR_ StatementList
+        Action::Invoke(Self::process_case_clause, "process_case_clause"),
+        // _DEFAULT_SELECTOR_ -> (empty)
+        Action::Invoke(Self::process_default_selector, "process_default_selector"),
         // BindingRestElement -> ELLIPSIS BindingIdentifier
         Action::Undefined,
         // BindingRestElement -> ELLIPSIS BindingPattern
@@ -1745,13 +1776,16 @@ where
         // ForDeclaration_Await -> CONST ForBinding_Await
         Action::Undefined,
         // CaseClauses_Await -> CaseClause_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses_head, "process_case_clauses_head"),
         // CaseClauses_Await -> CaseClauses_Await CaseClause_Await
-        Action::Undefined,
-        // DefaultClause_Await -> DEFAULT COLON
-        Action::Undefined,
-        // DefaultClause_Await -> DEFAULT COLON StatementList_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses, "process_case_clauses"),
+        // DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_
+        Action::Invoke(
+            Self::process_default_clause_empty,
+            "process_default_clause_empty",
+        ),
+        // DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Await
+        Action::Invoke(Self::process_default_clause, "process_default_clause"),
         // BindingRestProperty -> ELLIPSIS BindingIdentifier
         Action::Undefined,
         // BindingPropertyList -> BindingProperty
@@ -1887,6 +1921,8 @@ where
         ),
         // LexicalBinding -> BindingPattern Initializer
         Action::Undefined,
+        // _CASE_SELECTOR_ -> (empty)
+        Action::Invoke(Self::process_case_selector, "process_case_selector"),
         // BindingElement -> SingleNameBinding
         Action::Invoke(Self::process_binding_element, "process_binding_element"),
         // BindingElement -> BindingPattern
@@ -2137,10 +2173,10 @@ where
         Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await
         Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
-        // CaseClause_Await -> CASE Expression_In_Await COLON
-        Action::Undefined,
-        // CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
-        Action::Undefined,
+        // CaseClause_Await -> CASE Expression_In_Await COLON _CASE_SELECTOR_
+        Action::Invoke(Self::process_case_clause_empty, "process_case_clause_empty"),
+        // CaseClause_Await -> CASE Expression_In_Await COLON _CASE_SELECTOR_ StatementList_Await
+        Action::Invoke(Self::process_case_clause, "process_case_clause"),
         // BindingProperty -> SingleNameBinding
         Action::Undefined,
         // BindingProperty -> PropertyName COLON BindingElement
@@ -2535,7 +2571,7 @@ where
         // BreakableStatement_Return -> IterationStatement_Return
         Action::Nop,
         // BreakableStatement_Return -> SwitchStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // ReturnStatement -> RETURN SEMICOLON
         Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
@@ -2835,8 +2871,8 @@ where
         Action::Nop,
         // IterationStatement_Return -> ForInOfStatement_Return
         Action::Undefined,
-        // SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN CaseBlock_Return
-        Action::Undefined,
+        // SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock_Return
+        Action::Invoke(Self::process_switch_statement, "process_switch_statement"),
         // LabelledItem_Return -> Statement_Return
         Action::Undefined,
         // LabelledItem_Return -> FunctionDeclaration
@@ -2896,7 +2932,7 @@ where
         // BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
         Action::Nop,
         // BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // ContinueStatement_Yield -> CONTINUE SEMICOLON
         Action::Invoke(
             Self::process_continue_statement,
@@ -2953,7 +2989,7 @@ where
         // BreakableStatement_Await_Return -> IterationStatement_Await_Return
         Action::Nop,
         // BreakableStatement_Await_Return -> SwitchStatement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // ReturnStatement_Await -> RETURN SEMICOLON
         Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
@@ -3020,7 +3056,7 @@ where
         // BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
         Action::Nop,
         // BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
         Action::Invoke(
             Self::process_continue_statement,
@@ -3234,17 +3270,29 @@ where
         // ForInOfStatement_Return -> FOR _LOOP_START_ LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return
         Action::Undefined,
         // CaseBlock_Return -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_empty, "process_case_block_empty"),
         // CaseBlock_Return -> LBRACE CaseClauses_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_cases, "process_case_block_cases"),
         // CaseBlock_Return -> LBRACE DefaultClause_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default,
+            "process_case_block_default",
+        ),
         // CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default,
+            "process_case_block_cases_default",
+        ),
         // CaseBlock_Return -> LBRACE DefaultClause_Return CaseClauses_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default_cases,
+            "process_case_block_default_cases",
+        ),
         // CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return CaseClauses_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default_cases,
+            "process_case_block_cases_default_cases",
+        ),
         // PropertyName_Yield -> LiteralPropertyName
         Action::Undefined,
         // PropertyName_Yield -> ComputedPropertyName_Yield
@@ -3310,8 +3358,8 @@ where
         Action::Nop,
         // IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
         Action::Undefined,
-        // SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN CaseBlock_Yield_Return
-        Action::Undefined,
+        // SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN _CASE_BLOCK_ CaseBlock_Yield_Return
+        Action::Invoke(Self::process_switch_statement, "process_switch_statement"),
         // LabelIdentifier_Yield -> Identifier
         Action::Invoke(
             Self::process_label_identifier_except_for_yield,
@@ -3364,8 +3412,8 @@ where
         Action::Nop,
         // IterationStatement_Await_Return -> ForInOfStatement_Await_Return
         Action::Undefined,
-        // SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await_Return
-        Action::Undefined,
+        // SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN _CASE_BLOCK_ CaseBlock_Await_Return
+        Action::Invoke(Self::process_switch_statement, "process_switch_statement"),
         // LabelledItem_Await_Return -> Statement_Await_Return
         Action::Undefined,
         // LabelledItem_Await_Return -> FunctionDeclaration_Await
@@ -3439,8 +3487,8 @@ where
         Action::Nop,
         // IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return
         Action::Undefined,
-        // SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return
-        Action::Undefined,
+        // SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN _CASE_BLOCK_ CaseBlock_Yield_Await_Return
+        Action::Invoke(Self::process_switch_statement, "process_switch_statement"),
         // LabelIdentifier_Yield_Await -> Identifier
         Action::Invoke(
             Self::process_label_identifier_except_for_yield_await,
@@ -3538,13 +3586,16 @@ where
         // BitwiseANDExpression -> BitwiseANDExpression BIT_AND EqualityExpression
         Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // CaseClauses_Return -> CaseClause_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses_head, "process_case_clauses_head"),
         // CaseClauses_Return -> CaseClauses_Return CaseClause_Return
-        Action::Undefined,
-        // DefaultClause_Return -> DEFAULT COLON
-        Action::Undefined,
-        // DefaultClause_Return -> DEFAULT COLON StatementList_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses, "process_case_clauses"),
+        // DefaultClause_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+        Action::Invoke(
+            Self::process_default_clause_empty,
+            "process_default_clause_empty",
+        ),
+        // DefaultClause_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Return
+        Action::Invoke(Self::process_default_clause, "process_default_clause"),
         // ComputedPropertyName_Yield -> LBRACK AssignmentExpression_In_Yield RBRACK
         Action::Undefined,
         // LogicalORExpression_In_Yield -> LogicalANDExpression_In_Yield
@@ -3744,17 +3795,29 @@ where
         // ForInOfStatement_Yield_Return -> FOR _LOOP_START_ LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
         // CaseBlock_Yield_Return -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_empty, "process_case_block_empty"),
         // CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_cases, "process_case_block_cases"),
         // CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default,
+            "process_case_block_default",
+        ),
         // CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return DefaultClause_Yield_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default,
+            "process_case_block_cases_default",
+        ),
         // CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default_cases,
+            "process_case_block_default_cases",
+        ),
         // CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default_cases,
+            "process_case_block_cases_default_cases",
+        ),
         // CatchParameter_Yield -> BindingIdentifier_Yield
         Action::Undefined,
         // CatchParameter_Yield -> BindingPattern_Yield
@@ -3878,17 +3941,29 @@ where
         // ForInOfStatement_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
         // CaseBlock_Await_Return -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_empty, "process_case_block_empty"),
         // CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_cases, "process_case_block_cases"),
         // CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default,
+            "process_case_block_default",
+        ),
         // CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return DefaultClause_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default,
+            "process_case_block_cases_default",
+        ),
         // CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return CaseClauses_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default_cases,
+            "process_case_block_default_cases",
+        ),
         // CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return DefaultClause_Await_Return CaseClauses_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default_cases,
+            "process_case_block_cases_default_cases",
+        ),
         // ComputedPropertyName_Yield_Await -> LBRACK AssignmentExpression_In_Yield_Await RBRACK
         Action::Undefined,
         // LogicalORExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await
@@ -4094,17 +4169,29 @@ where
         // ForInOfStatement_Yield_Await_Return -> FOR AWAIT _LOOP_START_ LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
         // CaseBlock_Yield_Await_Return -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_empty, "process_case_block_empty"),
         // CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_case_block_cases, "process_case_block_cases"),
         // CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default,
+            "process_case_block_default",
+        ),
         // CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return DefaultClause_Yield_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default,
+            "process_case_block_cases_default",
+        ),
         // CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_default_cases,
+            "process_case_block_default_cases",
+        ),
         // CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_case_block_cases_default_cases,
+            "process_case_block_cases_default_cases",
+        ),
         // CatchParameter_Yield_Await -> BindingIdentifier_Yield_Await
         Action::Undefined,
         // CatchParameter_Yield_Await -> BindingPattern_Yield_Await
@@ -4159,10 +4246,10 @@ where
         Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression -> EqualityExpression NE_STRICT RelationalExpression
         Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
-        // CaseClause_Return -> CASE Expression_In COLON
-        Action::Undefined,
-        // CaseClause_Return -> CASE Expression_In COLON StatementList_Return
-        Action::Undefined,
+        // CaseClause_Return -> CASE Expression_In COLON _CASE_SELECTOR_
+        Action::Invoke(Self::process_case_clause_empty, "process_case_clause_empty"),
+        // CaseClause_Return -> CASE Expression_In COLON _CASE_SELECTOR_ StatementList_Return
+        Action::Invoke(Self::process_case_clause, "process_case_clause"),
         // LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
         Action::Nop,
         // LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield
@@ -4248,25 +4335,31 @@ where
         // ForDeclaration_Yield -> CONST ForBinding_Yield
         Action::Undefined,
         // CaseClauses_Yield_Return -> CaseClause_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses_head, "process_case_clauses_head"),
         // CaseClauses_Yield_Return -> CaseClauses_Yield_Return CaseClause_Yield_Return
-        Action::Undefined,
-        // DefaultClause_Yield_Return -> DEFAULT COLON
-        Action::Undefined,
-        // DefaultClause_Yield_Return -> DEFAULT COLON StatementList_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses, "process_case_clauses"),
+        // DefaultClause_Yield_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+        Action::Invoke(
+            Self::process_default_clause_empty,
+            "process_default_clause_empty",
+        ),
+        // DefaultClause_Yield_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Yield_Return
+        Action::Invoke(Self::process_default_clause, "process_default_clause"),
         // ClassElementList_Yield -> ClassElement_Yield
         Action::Undefined,
         // ClassElementList_Yield -> ClassElementList_Yield ClassElement_Yield
         Action::Undefined,
         // CaseClauses_Await_Return -> CaseClause_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses_head, "process_case_clauses_head"),
         // CaseClauses_Await_Return -> CaseClauses_Await_Return CaseClause_Await_Return
-        Action::Undefined,
-        // DefaultClause_Await_Return -> DEFAULT COLON
-        Action::Undefined,
-        // DefaultClause_Await_Return -> DEFAULT COLON StatementList_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses, "process_case_clauses"),
+        // DefaultClause_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+        Action::Invoke(
+            Self::process_default_clause_empty,
+            "process_default_clause_empty",
+        ),
+        // DefaultClause_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Await_Return
+        Action::Invoke(Self::process_default_clause, "process_default_clause"),
         // LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
         Action::Nop,
         // LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await
@@ -4352,13 +4445,16 @@ where
         // ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await
         Action::Undefined,
         // CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses_head, "process_case_clauses_head"),
         // CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return CaseClause_Yield_Await_Return
-        Action::Undefined,
-        // DefaultClause_Yield_Await_Return -> DEFAULT COLON
-        Action::Undefined,
-        // DefaultClause_Yield_Await_Return -> DEFAULT COLON StatementList_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_case_clauses, "process_case_clauses"),
+        // DefaultClause_Yield_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+        Action::Invoke(
+            Self::process_default_clause_empty,
+            "process_default_clause_empty",
+        ),
+        // DefaultClause_Yield_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Yield_Await_Return
+        Action::Invoke(Self::process_default_clause, "process_default_clause"),
         // ClassElementList_Yield_Await -> ClassElement_Yield_Await
         Action::Undefined,
         // ClassElementList_Yield_Await -> ClassElementList_Yield_Await ClassElement_Yield_Await
@@ -4481,10 +4577,10 @@ where
         Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield
         Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
-        // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON
-        Action::Undefined,
-        // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON StatementList_Yield_Return
-        Action::Undefined,
+        // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON _CASE_SELECTOR_
+        Action::Invoke(Self::process_case_clause_empty, "process_case_clause_empty"),
+        // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON _CASE_SELECTOR_ StatementList_Yield_Return
+        Action::Invoke(Self::process_case_clause, "process_case_clause"),
         // ClassElement_Yield -> MethodDefinition_Yield
         Action::Undefined,
         // ClassElement_Yield -> STATIC MethodDefinition_Yield
@@ -4497,10 +4593,10 @@ where
         Action::Undefined,
         // ClassElement_Yield -> SEMICOLON
         Action::Undefined,
-        // CaseClause_Await_Return -> CASE Expression_In_Await COLON
-        Action::Undefined,
-        // CaseClause_Await_Return -> CASE Expression_In_Await COLON StatementList_Await_Return
-        Action::Undefined,
+        // CaseClause_Await_Return -> CASE Expression_In_Await COLON _CASE_SELECTOR_
+        Action::Invoke(Self::process_case_clause_empty, "process_case_clause_empty"),
+        // CaseClause_Await_Return -> CASE Expression_In_Await COLON _CASE_SELECTOR_ StatementList_Await_Return
+        Action::Invoke(Self::process_case_clause, "process_case_clause"),
         // BitwiseXORExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await
         Action::Nop,
         // BitwiseXORExpression_In_Yield_Await -> BitwiseXORExpression_In_Yield_Await BIT_XOR BitwiseANDExpression_In_Yield_Await
@@ -4578,10 +4674,10 @@ where
         Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_Yield_Await -> BindingList_Yield_Await COMMA LexicalBinding_Yield_Await
         Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
-        // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
-        Action::Undefined,
-        // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON StatementList_Yield_Await_Return
-        Action::Undefined,
+        // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON _CASE_SELECTOR_
+        Action::Invoke(Self::process_case_clause_empty, "process_case_clause_empty"),
+        // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON _CASE_SELECTOR_ StatementList_Yield_Await_Return
+        Action::Invoke(Self::process_case_clause, "process_case_clause"),
         // ClassElement_Yield_Await -> MethodDefinition_Yield_Await
         Action::Undefined,
         // ClassElement_Yield_Await -> STATIC MethodDefinition_Yield_Await

@@ -113,6 +113,12 @@ impl<'r> Analyzer<'r> {
             Node::ContinueStatement => self.handle_continue_statement(),
             Node::BreakStatement => self.handle_break_statement(),
             Node::ReturnStatement(n) => self.handle_return_statement(n),
+            Node::SwitchStatement => self.handle_switch_statement(),
+            Node::CaseBlock => self.handle_case_block(),
+            Node::CaseSelector => self.handle_case_selector(),
+            Node::CaseClause(has_statement) => self.handle_case_clause(has_statement),
+            Node::DefaultSelector => self.handle_default_selector(),
+            Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
@@ -325,6 +331,30 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(CompileCommand::Return(n));
+    }
+
+    fn handle_switch_statement(&mut self) {
+        self.context_stack.last_mut().unwrap().process_switch_statement();
+    }
+
+    fn handle_case_block(&mut self) {
+        self.context_stack.last_mut().unwrap().process_case_block();
+    }
+
+    fn handle_case_selector(&mut self) {
+        self.context_stack.last_mut().unwrap().process_case_selector();
+    }
+
+    fn handle_case_clause(&mut self, has_statement: bool) {
+        self.context_stack.last_mut().unwrap().process_case_clause(has_statement);
+    }
+
+    fn handle_default_selector(&mut self) {
+        self.context_stack.last_mut().unwrap().process_default_selector();
+    }
+
+    fn handle_default_clause(&mut self, has_statement: bool) {
+        self.context_stack.last_mut().unwrap().process_default_clause(has_statement);
     }
 
     fn handle_formal_parameter(&mut self) {
@@ -641,6 +671,7 @@ struct FunctionContext {
     formal_parameters: Vec<Symbol>,
     scope_stack: Vec<Scope>,
     loop_stack: Vec<LoopContext>,
+    switch_stack: Vec<SwitchContext>,
     nargs_stack: Vec<(usize, u16)>,
     max_bindings: usize,
     func_index: u32,
@@ -801,6 +832,57 @@ impl FunctionContext {
         self.process_loop_end(CompileCommand::ForLoop(flags));
     }
 
+    fn process_case_block(&mut self) {
+        let case_block_index = self.put_command(CompileCommand::CaseBlock(0));
+        self.switch_stack.push(SwitchContext {
+            case_block_index,
+            ..Default::default()
+        });
+    }
+
+    fn process_case_selector(&mut self) {
+        self.put_command(CompileCommand::StrictEquality);
+        self.put_command(CompileCommand::Truthy);
+        self.put_command(CompileCommand::Then);
+    }
+
+    fn process_case_clause(&mut self, _has_statement: bool) {
+        self.put_command(CompileCommand::IfStatement);
+        self.switch_stack.last_mut().unwrap().num_case_clauses += 1;
+    }
+
+    fn process_default_selector(&mut self) {
+        // TODO: jump to the statement block of the default clause
+    }
+
+    fn process_default_clause(&mut self, _has_statement: bool) {
+        self.switch_stack.last_mut().unwrap().has_default_clause = true;
+    }
+
+    fn process_switch_statement(&mut self) {
+        let context = self.switch_stack.pop().unwrap();
+
+        // TODO: the compilation should fail if the following condition is unmet.
+        assert!(context.num_case_clauses <= u32::MAX as usize - 1);
+        let n = context.num_case_clauses as u32;
+
+        if n == 0 && !context.has_default_clause {
+            // empty case block
+            // Discard the `switchValue`.
+            self.put_command(CompileCommand::Discard);
+            return;
+        }
+
+        self.commands[context.case_block_index] = CompileCommand::CaseBlock(n);
+
+        let n = if context.has_default_clause {
+            n + 1
+        } else {
+            n
+        };
+        self.put_command(CompileCommand::Switch(n));
+    }
+
     fn start_scope(&mut self) {
         // Push `Nop` as a placeholder.
         // It will be replaced with `AllocateBindings(n)` in `end_scope()`.
@@ -842,6 +924,13 @@ struct Scope {
 
 struct LoopContext {
     start_index: usize,
+}
+
+#[derive(Default)]
+struct SwitchContext {
+    case_block_index: usize,
+    num_case_clauses: usize,
+    has_default_clause: bool,
 }
 
 #[derive(Debug, PartialEq)]
@@ -971,6 +1060,10 @@ pub enum CompileCommand {
     LoopNext,
     LoopBody,
     LoopEnd,
+
+    // switch
+    CaseBlock(u32),
+    Switch(u32),
 
     Continue,
     Break,

@@ -366,6 +366,14 @@ void compiler_peer_loop_end(Compiler* self) {
   self->LoopEnd();
 }
 
+void compiler_peer_case_block(Compiler* self) {
+  self->CaseBlock();
+}
+
+void compiler_peer_switch(Compiler* self, uint32_t n) {
+  self->Switch(n);
+}
+
 void compiler_peer_start_function(Compiler* self, const char* name) {
   self->StartFunction(name);
 }
