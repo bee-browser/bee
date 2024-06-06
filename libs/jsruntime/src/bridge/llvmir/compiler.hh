@@ -180,11 +180,6 @@ class Compiler {
     }
   };
 
-  struct LoopContext {
-    llvm::BasicBlock* loop_continue;
-    llvm::BasicBlock* loop_break;
-  };
-
   inline void PushUndefined() {
     stack_.push_back(Item(Item::Undefined));
   }
@@ -583,7 +578,8 @@ class Compiler {
   uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;
-  std::vector<LoopContext> loop_stack_;
+  std::vector<llvm::BasicBlock*> break_stack_;
+  std::vector<llvm::BasicBlock*> continue_stack_;
   std::unordered_map<std::string, llvm::Function*> functions_;
 
   // for optimization

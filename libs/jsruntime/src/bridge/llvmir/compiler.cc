@@ -934,7 +934,8 @@ void Compiler::DoWhileLoop() {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(loop_start);
 
-  loop_stack_.push_back({loop_continue, loop_break});
+  break_stack_.push_back(loop_break);
+  continue_stack_.push_back(loop_continue);
 }
 
 void Compiler::WhileLoop() {
@@ -958,7 +959,8 @@ void Compiler::WhileLoop() {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(loop_start);
 
-  loop_stack_.push_back({loop_continue, loop_break});
+  break_stack_.push_back(loop_break);
+  continue_stack_.push_back(loop_continue);
 }
 
 void Compiler::ForLoop(bool has_init, bool has_test, bool has_next) {
@@ -1033,7 +1035,8 @@ void Compiler::ForLoop(bool has_init, bool has_test, bool has_next) {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(insert_point);
 
-  loop_stack_.push_back({loop_continue, loop_break});
+  break_stack_.push_back(loop_break);
+  continue_stack_.push_back(loop_continue);
 }
 
 void Compiler::LoopInit() {
@@ -1074,13 +1077,11 @@ void Compiler::LoopBody() {
 }
 
 void Compiler::LoopEnd() {
-  loop_stack_.pop_back();
+  break_stack_.pop_back();
+  continue_stack_.pop_back();
 }
 
 void Compiler::CaseBlock() {
-  auto* end_block = llvm::BasicBlock::Create(*context_);
-  PushBlock(end_block);
-  Swap();
   auto item = Dereference();
   stack_.push_back(item);
   stack_.push_back(item);  // Dup for test on CaseClause
@@ -1088,13 +1089,18 @@ void Compiler::CaseBlock() {
   auto* start_block = llvm::BasicBlock::Create(*context_, "", function_);
   builder_->CreateBr(start_block);
   builder_->SetInsertPoint(start_block);
+
+  auto* end_block = llvm::BasicBlock::Create(*context_);
+  break_stack_.push_back(end_block);
 }
 
 void Compiler::Switch(uint32_t n) {
   UNUSED(n);
 
+  auto* end_block = break_stack_.back();
+  break_stack_.pop_back();
+
   PopItem();
-  auto* end_block = PopBlock();
   end_block->insertInto(function_);
   builder_->CreateBr(end_block);
   builder_->SetInsertPoint(end_block);
@@ -1165,8 +1171,8 @@ void Compiler::ReleaseBindings(uint16_t n) {
 }
 
 void Compiler::Continue() {
-  assert(!loop_stack_.empty());
-  auto* loop_continue = loop_stack_.back().loop_continue;
+  assert(!continue_stack_.empty());
+  auto* loop_continue = continue_stack_.back();
 
   builder_->CreateBr(loop_continue);
 
@@ -1176,8 +1182,8 @@ void Compiler::Continue() {
 }
 
 void Compiler::Break() {
-  assert(!loop_stack_.empty());
-  auto* loop_break = loop_stack_.back().loop_break;
+  assert(!break_stack_.empty());
+  auto* loop_break = break_stack_.back();
 
   builder_->CreateBr(loop_break);
 

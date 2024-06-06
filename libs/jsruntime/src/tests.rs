@@ -725,3 +725,8 @@ fn test_eval_switch_statement_empty() {
 fn test_eval_switch_statement_single_case_fall_through() {
     eval!("let i = 0; switch (i) { case 0: i = 1 } print(i)", 1);
 }
+
+#[test]
+fn test_eval_switch_statement_single_case_break() {
+    eval!("let i = 0; switch (i) { case 0: i = 1; break } print(i)", 1);
+}
