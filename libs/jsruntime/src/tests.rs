@@ -270,11 +270,17 @@ fn test_eval_strict_equality_inequality(op: &str) {
             if op == "===" {
                 eval!(format!("print({} === {})", $lhs, $rhs), true);
                 eval!(format!("let a = {}; print(a === {})", $lhs, $rhs), true);
-                eval!(format!("let a = {}, b = {}; print(a === b)", $lhs, $rhs), true);
+                eval!(
+                    format!("let a = {}, b = {}; print(a === b)", $lhs, $rhs),
+                    true
+                );
             } else {
                 eval!(format!("print({} !== {})", $lhs, $rhs), false);
                 eval!(format!("let a = {}; print(a !== {})", $lhs, $rhs), false);
-                eval!(format!("let a = {}, b = {}; print(a !== b)", $lhs, $rhs), false);
+                eval!(
+                    format!("let a = {}, b = {}; print(a !== b)", $lhs, $rhs),
+                    false
+                );
             }
         };
     }
@@ -284,11 +290,17 @@ fn test_eval_strict_equality_inequality(op: &str) {
             if op == "===" {
                 eval!(format!("print({} === {})", $lhs, $rhs), false);
                 eval!(format!("let a = {}; print(a === {})", $lhs, $rhs), false);
-                eval!(format!("let a = {}, b = {}; print(a === b)", $lhs, $rhs), false);
+                eval!(
+                    format!("let a = {}, b = {}; print(a === b)", $lhs, $rhs),
+                    false
+                );
             } else {
                 eval!(format!("print({} !== {})", $lhs, $rhs), true);
                 eval!(format!("let a = {}; print(a !== {})", $lhs, $rhs), true);
-                eval!(format!("let a = {}, b = {}; print(a !== b)", $lhs, $rhs), true);
+                eval!(
+                    format!("let a = {}, b = {}; print(a !== b)", $lhs, $rhs),
+                    true
+                );
             }
         };
     }
