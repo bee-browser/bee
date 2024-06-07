@@ -1,4 +1,5 @@
-use super::*;
+use jsruntime::Runtime;
+use jsruntime::Value;
 
 macro_rules! eval {
     ($src:expr, $expected:expr) => {
@@ -15,63 +16,63 @@ macro_rules! eval {
 }
 
 #[test]
-fn test_eval_undefined() {
+fn eval_undefined() {
     eval!("print(undefined)", Value::UNDEFINED);
 }
 
 #[test]
-fn test_eval_null() {
+fn eval_null() {
     eval!("print(null)", Value::NULL);
 }
 
 #[test]
-fn test_eval_boolean() {
+fn eval_boolean() {
     eval!("print(true)", true);
     eval!("print(false)", false);
 }
 
 #[test]
-fn test_eval_number() {
+fn eval_number() {
     eval!("print(1)", 1.);
     eval!("print(NaN)", f64::NAN);
     eval!("print(Infinity)", f64::INFINITY);
 }
 
 #[test]
-fn test_eval_addition_expression() {
+fn eval_addition_expression() {
     eval!("print(1 + 2)", 3.);
 }
 
 #[test]
-fn test_eval_subtraction_expression() {
+fn eval_subtraction_expression() {
     eval!("print(2 - 1)", 1.);
     eval!("print(1 - 2)", -1.);
 }
 
 #[test]
-fn test_eval_multiplication_expression() {
+fn eval_multiplication_expression() {
     eval!("print(2 * 3)", 6.);
 }
 
 #[test]
-fn test_eval_division_expression() {
+fn eval_division_expression() {
     eval!("print(4 / 2)", 2.);
     eval!("print(1 / 3)", 1. / 3.);
 }
 
 #[test]
-fn test_eval_remainder_expression() {
+fn eval_remainder_expression() {
     eval!("print(1 % 3)", 1.);
     eval!("print(1.2 % 3.4)", 1.2 % 3.4);
 }
 
 #[test]
-fn test_eval_group_expression() {
+fn eval_group_expression() {
     eval!("print(2 * (3 + 4))", 14.);
 }
 
 #[test]
-fn test_eval_left_shift() {
+fn eval_left_shift() {
     eval!("print(NaN << 1)", 0);
     eval!("print(Infinity << 1)", 0);
     eval!("print(-Infinity << 0)", 0);
@@ -84,7 +85,7 @@ fn test_eval_left_shift() {
 }
 
 #[test]
-fn test_eval_signed_right_shift() {
+fn eval_signed_right_shift() {
     eval!("print(NaN >> 1)", 0);
     eval!("print(Infinity >> 1)", 0);
     eval!("print(-Infinity >> 0)", 0);
@@ -97,7 +98,7 @@ fn test_eval_signed_right_shift() {
 }
 
 #[test]
-fn test_eval_unsigned_right_shift() {
+fn eval_unsigned_right_shift() {
     eval!("print(NaN >>> 1)", 0);
     eval!("print(Infinity >>> 1)", 0);
     eval!("print(-Infinity >>> 0)", 0);
@@ -110,35 +111,35 @@ fn test_eval_unsigned_right_shift() {
 }
 
 #[test]
-fn test_eval_postfix_increment() {
+fn eval_postfix_increment() {
     eval!("let a = 0; print(a++)", 0);
     eval!("let a = 0; a++; print(a)", 1);
     //TODO: eval!("print(0++)", reference_error!());
 }
 
 #[test]
-fn test_eval_postfix_decrement() {
+fn eval_postfix_decrement() {
     eval!("let a = 0; print(a--)", 0);
     eval!("let a = 0; a--; print(a)", -1);
     //TODO: eval!("print(0--)", reference_error!());
 }
 
 #[test]
-fn test_eval_prefix_increment() {
+fn eval_prefix_increment() {
     eval!("let a = 0; print(++a)", 1);
     eval!("let a = 0; ++a; print(a)", 1);
     //TODO: eval!("print(++0)", reference_error!());
 }
 
 #[test]
-fn test_eval_prefix_decrement() {
+fn eval_prefix_decrement() {
     eval!("let a = 0; print(--a)", -1);
     eval!("let a = 0; --a; print(a)", -1);
     //TODO: eval!("print(--0)", reference_error!());
 }
 
 #[test]
-fn test_eval_void() {
+fn eval_void() {
     eval!("print(void undefined)", Value::UNDEFINED);
     eval!("print(void null)", Value::UNDEFINED);
     eval!("print(void true)", Value::UNDEFINED);
@@ -151,7 +152,7 @@ fn test_eval_void() {
 }
 
 #[test]
-fn test_eval_unary_plus() {
+fn eval_unary_plus() {
     eval!("print(+undefined)", f64::NAN);
     eval!("print(+null)", 0);
     eval!("print(+true)", 1);
@@ -164,7 +165,7 @@ fn test_eval_unary_plus() {
 }
 
 #[test]
-fn test_eval_unary_minus() {
+fn eval_unary_minus() {
     eval!("print(-undefined)", f64::NAN);
     eval!("print(-null)", -0.);
     eval!("print(-true)", -1);
@@ -177,7 +178,7 @@ fn test_eval_unary_minus() {
 }
 
 #[test]
-fn test_eval_bitwise_not() {
+fn eval_bitwise_not() {
     eval!("print(~undefined)", -1);
     eval!("print(~null)", -1);
     eval!("print(~true)", -2);
@@ -190,7 +191,7 @@ fn test_eval_bitwise_not() {
 }
 
 #[test]
-fn test_eval_logical_not() {
+fn eval_logical_not() {
     eval!("print(!undefined)", true);
     eval!("print(!null)", true);
     eval!("print(!true)", false);
@@ -203,16 +204,16 @@ fn test_eval_logical_not() {
 }
 
 #[test]
-fn test_eval_equality() {
-    test_eval_equality_inequality("==");
+fn eval_equality() {
+    eval_equality_inequality("==");
 }
 
 #[test]
-fn test_eval_inequality() {
-    test_eval_equality_inequality("!=");
+fn eval_inequality() {
+    eval_equality_inequality("!=");
 }
 
-fn test_eval_equality_inequality(op: &str) {
+fn eval_equality_inequality(op: &str) {
     macro_rules! eval_equality {
         ($lhs:literal, $rhs:literal) => {
             if op == "==" {
@@ -255,16 +256,16 @@ fn test_eval_equality_inequality(op: &str) {
 }
 
 #[test]
-fn test_eval_strict_equality() {
-    test_eval_strict_equality_inequality("===");
+fn eval_strict_equality() {
+    eval_strict_equality_inequality("===");
 }
 
 #[test]
-fn test_eval_strict_inequality() {
-    test_eval_strict_equality_inequality("!==");
+fn eval_strict_inequality() {
+    eval_strict_equality_inequality("!==");
 }
 
-fn test_eval_strict_equality_inequality(op: &str) {
+fn eval_strict_equality_inequality(op: &str) {
     macro_rules! eval_strict_equality {
         ($lhs:literal, $rhs:literal) => {
             if op == "===" {
@@ -346,28 +347,28 @@ fn test_eval_strict_equality_inequality(op: &str) {
 }
 
 #[test]
-fn test_eval_bitewise_and() {
+fn eval_bitewise_and() {
     eval!("print(0 & 0)", 0);
     eval!("print(0 & 1)", 0);
     eval!("print(1 & 1)", 1);
 }
 
 #[test]
-fn test_eval_bitewise_xor() {
+fn eval_bitewise_xor() {
     eval!("print(0 ^ 0)", 0);
     eval!("print(0 ^ 1)", 1);
     eval!("print(1 ^ 1)", 0);
 }
 
 #[test]
-fn test_eval_bitewise_or() {
+fn eval_bitewise_or() {
     eval!("print(0 | 0)", 0);
     eval!("print(0 | 1)", 1);
     eval!("print(1 | 1)", 1);
 }
 
 #[test]
-fn test_eval_logical_and() {
+fn eval_logical_and() {
     eval!("print(true && true)", true);
     eval!("print(true && false)", false);
     eval!("print(false && true)", false);
@@ -380,7 +381,7 @@ fn test_eval_logical_and() {
 }
 
 #[test]
-fn test_eval_logical_or() {
+fn eval_logical_or() {
     eval!("print(true || true)", true);
     eval!("print(true || false)", true);
     eval!("print(false || true)", true);
@@ -393,7 +394,7 @@ fn test_eval_logical_or() {
 }
 
 #[test]
-fn test_eval_nullish_coalescing() {
+fn eval_nullish_coalescing() {
     eval!("print(undefined ?? 1)", 1);
     eval!("print(null ?? 1)", 1);
     eval!("print(0 ?? 1)", 0);
@@ -402,7 +403,7 @@ fn test_eval_nullish_coalescing() {
 }
 
 #[test]
-fn test_eval_to_numeric() {
+fn eval_to_numeric() {
     eval!("print(undefined + 0)", f64::NAN);
     eval!("print(null + 0)", 0.);
     eval!("print(false + 0)", 0.);
@@ -410,35 +411,35 @@ fn test_eval_to_numeric() {
 }
 
 #[test]
-fn test_eval_call_with_no_argument() {
+fn eval_call_with_no_argument() {
     eval!("function a() { return 1 } print(a())", 1);
 }
 
 #[test]
-fn test_eval_call_with_no_argument_hoistable_declaration() {
+fn eval_call_with_no_argument_hoistable_declaration() {
     eval!("print(a()); function a() { return 1 }", 1.);
 }
 
 #[test]
-fn test_eval_const_declaration() {
+fn eval_const_declaration() {
     eval!("const a = 1, b = 2; print(a);", 1.);
     eval!("const a = 1, b = 2; print(b);", 2.);
 }
 
 #[test]
-fn test_eval_let_declaration() {
+fn eval_let_declaration() {
     eval!("let a; print(a);", Value::UNDEFINED);
     eval!("let a, b = 2; a = 1; print(a);", 1.);
     eval!("let a, b = 2; a = 1; print(b);", 2.);
 }
 
 #[test]
-fn test_eval_arithmetic_operations_with_variables() {
+fn eval_arithmetic_operations_with_variables() {
     eval!("const a = 1, b = 2, c = 3; print(a + b * c);", 7.);
 }
 
 #[test]
-fn test_eval_conditional_expression() {
+fn eval_conditional_expression() {
     eval!("print(1 > 0 ? 2 : 3)", 2.);
     eval!("print(1 < 0 ? 2 : 3)", 3.);
     eval!("print(1 > 0 ? true : false)", true);
@@ -448,73 +449,73 @@ fn test_eval_conditional_expression() {
 }
 
 #[test]
-fn test_eval_multiplication_assignment() {
+fn eval_multiplication_assignment() {
     eval!("let a = 2; print(a *= 2)", 4);
     eval!("let a = 2; a *= 2; print(a)", 4);
 }
 
 #[test]
-fn test_eval_division_assignment() {
+fn eval_division_assignment() {
     eval!("let a = 2; print(a /= 2)", 1);
     eval!("let a = 2; a /= 2; print(a)", 1);
 }
 
 #[test]
-fn test_eval_remainder_assignment() {
+fn eval_remainder_assignment() {
     eval!("let a = 2; print(a %= 7)", 2);
     eval!("let a = 2; a %= 7; print(a)", 2);
 }
 
 #[test]
-fn test_eval_addition_assignment() {
+fn eval_addition_assignment() {
     eval!("let a = 2; print(a += 2)", 4);
     eval!("let a = 2; a += 2; print(a)", 4);
 }
 
 #[test]
-fn test_eval_subtraction_assignment() {
+fn eval_subtraction_assignment() {
     eval!("let a = 2; print(a -= 2)", 0);
     eval!("let a = 2; a -= 2; print(a)", 0);
 }
 
 #[test]
-fn test_eval_left_shift_assignment() {
+fn eval_left_shift_assignment() {
     eval!("let a = 2; print(a <<= 2)", 8);
     eval!("let a = 2; a <<= 2; print(a)", 8);
 }
 
 #[test]
-fn test_eval_signed_right_shift_assignment() {
+fn eval_signed_right_shift_assignment() {
     eval!("let a = 4; print(a >>= 1)", 2);
     eval!("let a = 4; a >>= 1; print(a)", 2);
 }
 
 #[test]
-fn test_eval_unsigned_right_shift_assignment() {
+fn eval_unsigned_right_shift_assignment() {
     eval!("let a = 4; print(a >>>= 1)", 2);
     eval!("let a = 4; a >>>= 1; print(a)", 2);
 }
 
 #[test]
-fn test_eval_bitwise_and_assignment() {
+fn eval_bitwise_and_assignment() {
     eval!("let a = 4; print(a &= 1)", 0);
     eval!("let a = 4; a &= 1; print(a)", 0);
 }
 
 #[test]
-fn test_eval_bitwise_xor_assignment() {
+fn eval_bitwise_xor_assignment() {
     eval!("let a = 4; print(a ^= 5)", 1);
     eval!("let a = 4; a ^= 5; print(a)", 1);
 }
 
 #[test]
-fn test_eval_bitwise_or_assignment() {
+fn eval_bitwise_or_assignment() {
     eval!("let a = 4; print(a |= 1)", 5);
     eval!("let a = 4; a |= 1; print(a)", 5);
 }
 
 #[test]
-fn test_eval_logical_and_assignment() {
+fn eval_logical_and_assignment() {
     eval!("let a = 0; print(a &&= 1)", 0);
     eval!("let a = 0; a &&= 1; print(a)", 0);
     eval!("let a = 4; print(a &&= 1)", 1);
@@ -522,7 +523,7 @@ fn test_eval_logical_and_assignment() {
 }
 
 #[test]
-fn test_eval_logical_or_assignment() {
+fn eval_logical_or_assignment() {
     eval!("let a = 0; print(a ||= 1)", 1);
     eval!("let a = 0; a ||= 1; print(a)", 1);
     eval!("let a = 4; print(a ||= 1)", 4);
@@ -530,7 +531,7 @@ fn test_eval_logical_or_assignment() {
 }
 
 #[test]
-fn test_eval_nullish_coalescing_assignment() {
+fn eval_nullish_coalescing_assignment() {
     eval!("let a = null; print(a ??= 1)", 1);
     eval!("let a = null; a ??= 1; print(a)", 1);
     eval!("let a = 0; print(a ??= 1)", 0);
@@ -538,12 +539,12 @@ fn test_eval_nullish_coalescing_assignment() {
 }
 
 #[test]
-fn test_eval_nested_conditional_expression() {
+fn eval_nested_conditional_expression() {
     eval!("print(1 > 0 ? 1 > 0 ? 2 : 3 : 1 > 0 ? 4 : 5)", 2.);
 }
 
 #[test]
-fn test_eval_conditional_expression_mixed_types() {
+fn eval_conditional_expression_mixed_types() {
     eval!("print(true ? 2.0 : false)", 2.);
     eval!("print(false ? 2.0 : false)", false);
     eval!("print(true ? 2.0 : undefined)", 2.);
@@ -551,13 +552,13 @@ fn test_eval_conditional_expression_mixed_types() {
 }
 
 #[test]
-fn test_eval_if_statement() {
+fn eval_if_statement() {
     eval!("let a = 1; if (true) { a = 2; } print(a);", 2.);
     eval!("let a = 1; if (false) { a = 2; } print(a);", 1.);
 }
 
 #[test]
-fn test_eval_if_else_statement() {
+fn eval_if_else_statement() {
     eval!(
         "let a = 1; if (true) { a = 2; } else { a = 3; } print(a);",
         2.
@@ -569,18 +570,18 @@ fn test_eval_if_else_statement() {
 }
 
 #[test]
-fn test_eval_block_statement() {
+fn eval_block_statement() {
     eval!("let a = 1; { let a = 2; } print(a);", 1.);
     eval!("let a = 1; { a = 2; } print(a);", 2.);
 }
 
 #[test]
-fn test_eval_return_statement_in_block() {
+fn eval_return_statement_in_block() {
     eval!("print(a()); function a() { let a = 1; { return a; } }", 1.);
 }
 
 #[test]
-fn test_eval_terminated_basic_block() {
+fn eval_terminated_basic_block() {
     eval!(
         "print(a()); function a() { if (1) { return 1; } return 2; }",
         1.
@@ -588,12 +589,12 @@ fn test_eval_terminated_basic_block() {
 }
 
 #[test]
-fn test_eval_function_single_name_binding() {
+fn eval_function_single_name_binding() {
     eval!("print(a(1)); function a(x) { return x; }", 1.);
 }
 
 #[test]
-fn test_eval_call_other_function() {
+fn eval_call_other_function() {
     eval!(
         "print(a()); function a() { return b() } function b() { return 1 }",
         1.
@@ -601,7 +602,7 @@ fn test_eval_call_other_function() {
 }
 
 #[test]
-fn test_eval_nested_function() {
+fn eval_nested_function() {
     eval!(
         "print(a()); function a() { return b(); function b() { return 1 } }",
         1.
@@ -609,7 +610,7 @@ fn test_eval_nested_function() {
 }
 
 #[test]
-fn test_eval_argument_in_outer_function() {
+fn eval_argument_in_outer_function() {
     eval!(
         "print(a(1)); function a(x) { return b(); function b() { return x } }",
         1.
@@ -617,7 +618,7 @@ fn test_eval_argument_in_outer_function() {
 }
 
 #[test]
-fn test_eval_fibonacci() {
+fn eval_fibonacci() {
     eval!(
         "print(fib(10)); \
          function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); }",
@@ -626,34 +627,34 @@ fn test_eval_fibonacci() {
 }
 
 #[test]
-fn test_eval_function_expression() {
+fn eval_function_expression() {
     eval!("const a = function x() { return 1 }; print(a())", 1);
 }
 
 #[test]
-fn test_eval_anonymous_function_expression() {
+fn eval_anonymous_function_expression() {
     eval!("const a = function() { return 1 }; print(a())", 1);
 }
 
 #[test]
-fn test_eval_iife() {
+fn eval_iife() {
     // IIFE: Immediately Invoked Function Expression
     eval!("print((function() { return 1 })())", 1);
     eval!("print((function x() { return 1 })())", 1);
 }
 
 #[test]
-fn test_eval_do_while_statement() {
+fn eval_do_while_statement() {
     eval!("let i = 0; do { i++ } while (i < 2); print(i)", 2);
 }
 
 #[test]
-fn test_eval_while_statement() {
+fn eval_while_statement() {
     eval!("let i = 0; while (i < 2) { i++ } print(i)", 2);
 }
 
 #[test]
-fn test_eval_for_statement() {
+fn eval_for_statement() {
     eval!(
         "let i = 0; for (let j = 0; j < 2; ++j) { i = j } print(i)",
         1
@@ -661,27 +662,27 @@ fn test_eval_for_statement() {
 }
 
 #[test]
-fn test_eval_for_statement_no_init() {
+fn eval_for_statement_no_init() {
     eval!("let i = 0; for (; i < 2; ++i) {} print(i)", 2);
 }
 
 #[test]
-fn test_eval_for_statement_no_test() {
+fn eval_for_statement_no_test() {
     eval!("let i; for (i = 0; ; ++i) { if (i > 2) break } print(i)", 3);
 }
 
 #[test]
-fn test_eval_for_statement_no_init_next() {
+fn eval_for_statement_no_init_next() {
     eval!("let i = 0; for (; i < 2; ) { ++i } print(i)", 2);
 }
 
 #[test]
-fn test_eval_for_statement_no_init_test() {
+fn eval_for_statement_no_init_test() {
     eval!("let i = 0; for (; ; ++i) { if (i > 2) break } print(i)", 3);
 }
 
 #[test]
-fn test_eval_for_statement_no_test_next() {
+fn eval_for_statement_no_test_next() {
     eval!(
         "let i; for (i = 0; ; ) { if (i > 2) break; ++i } print(i)",
         3
@@ -689,17 +690,17 @@ fn test_eval_for_statement_no_test_next() {
 }
 
 #[test]
-fn test_eval_for_statement_no_init_test_next() {
+fn eval_for_statement_no_init_test_next() {
     eval!("let i = 0; for (;;) { if (i > 2) break; ++i } print(i)", 3);
 }
 
 #[test]
-fn test_eval_continue() {
+fn eval_continue() {
     eval!("let i = 0; for (; i < 2; ++i) { continue } print(i)", 2);
 }
 
 #[test]
-fn test_eval_deadcode_after_continue() {
+fn eval_deadcode_after_continue() {
     eval!(
         "let i = 0; for (; i < 2; ++i) { continue; i = 1 } print(i)",
         2
@@ -707,26 +708,26 @@ fn test_eval_deadcode_after_continue() {
 }
 
 #[test]
-fn test_eval_break() {
+fn eval_break() {
     eval!("let i = 0; for (;;) { break } print(0)", 0);
 }
 
 #[test]
-fn test_eval_deadcode_after_break() {
+fn eval_deadcode_after_break() {
     eval!("let i = 0; for (;;) { break; i = 1 } print(i)", 0);
 }
 
 #[test]
-fn test_eval_switch_statement_empty() {
+fn eval_switch_statement_empty() {
     eval!("let i = 0; switch (i) {} print(i)", 0);
 }
 
 #[test]
-fn test_eval_switch_statement_single_case_fall_through() {
+fn eval_switch_statement_single_case_fall_through() {
     eval!("let i = 0; switch (i) { case 0: i = 1 } print(i)", 1);
 }
 
 #[test]
-fn test_eval_switch_statement_single_case_break() {
+fn eval_switch_statement_single_case_break() {
     eval!("let i = 0; switch (i) { case 0: i = 1; break } print(i)", 1);
 }
