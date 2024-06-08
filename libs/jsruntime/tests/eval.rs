@@ -13,6 +13,10 @@ macro_rules! eval {
         let module = runtime.compile_script($src.as_ref(), true).unwrap();
         runtime.eval(module);
     };
+    (file: $filename:literal, $expected:expr) => {
+        let src = include_str!($filename);
+        eval!(src, $expected);
+    };
 }
 
 #[test]
@@ -719,15 +723,25 @@ fn eval_deadcode_after_break() {
 
 #[test]
 fn eval_switch_statement_empty() {
-    eval!("let i = 0; switch (i) {} print(i)", 0);
+    eval!(file: "switch_statement_empty.js", 0);
 }
 
 #[test]
 fn eval_switch_statement_single_case_fall_through() {
-    eval!("let i = 0; switch (i) { case 0: i = 1 } print(i)", 1);
+    eval!(file: "switch_statement_single_case_fall_through.js", 1);
 }
 
 #[test]
 fn eval_switch_statement_single_case_break() {
-    eval!("let i = 0; switch (i) { case 0: i = 1; break } print(i)", 1);
+    eval!(file: "switch_statement_single_case_break.js", 1);
+}
+
+#[test]
+fn eval_switch_statement_cases_fall_through() {
+    eval!(file: "switch_statement_cases_fall_through.js", 2);
+}
+
+#[test]
+fn eval_switch_statement_cases_break() {
+    eval!(file: "switch_statement_cases_break.js", 1);
 }

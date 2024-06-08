@@ -117,6 +117,7 @@ class Compiler {
   void LoopBody();
   void LoopEnd();
   void CaseBlock();
+  void CaseClause(bool has_statement);
   void Switch(uint32_t n);
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
@@ -158,12 +159,21 @@ class Compiler {
       struct Reference reference;
       llvm::BasicBlock* block;
     };
+#ifdef BEE_BUILD_DEBUG
+    const char* label = nullptr;
+#endif
 
     explicit Item(Type type) : type(type), value(nullptr) {}
     explicit Item(llvm::Function* func) : type(Item::Function), func(func) {}
     Item(Type type, llvm::Value* value) : type(type), value(value) {}
     Item(uint32_t symbol, Locator locator) : type(Item::Reference), reference(symbol, locator) {}
     explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
+
+    inline void SetLabel(const char* label) {
+#ifdef BEE_BUILD_DEBUG
+      this->label = label;
+#endif
+    }
 
     inline bool IsValue() const {
       switch (type) {
@@ -212,8 +222,10 @@ class Compiler {
     stack_.push_back(Item(Item::Argv, value));
   }
 
-  inline void PushBlock(llvm::BasicBlock* block) {
-    stack_.push_back(Item(block));
+  inline void PushBlock(llvm::BasicBlock* block, const char* label) {
+    Item item(block);
+    item.SetLabel(label);
+    stack_.push_back(item);
   }
 
   void Swap() {

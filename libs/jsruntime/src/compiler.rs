@@ -379,13 +379,12 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_loop_end(self.peer);
             },
             CompileCommand::CaseBlock(n) => unsafe {
-                if *n == 0 {
-                    // Discard the `switchValue`.
-                    bridge::compiler_peer_discard(self.peer);
-                } else {
-                    // TODO: refactoring
-                    bridge::compiler_peer_case_block(self.peer);
-                }
+                debug_assert!(*n > 0);
+                // TODO: refactoring
+                bridge::compiler_peer_case_block(self.peer);
+            },
+            CompileCommand::CaseClause(has_statement) => unsafe {
+                bridge::compiler_peer_case_clause(self.peer, *has_statement);
             },
             CompileCommand::Switch(n) => unsafe {
                 bridge::compiler_peer_switch(self.peer, *n);
@@ -400,8 +399,12 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_return(self.peer, *n as usize);
             },
             CompileCommand::Discard => unsafe {
+                // TODO: the stack should be managed in the Rust side.
                 bridge::compiler_peer_discard(self.peer);
             },
+        }
+        unsafe {
+            bridge::compiler_peer_dump_stack(self.peer);
         }
     }
 }

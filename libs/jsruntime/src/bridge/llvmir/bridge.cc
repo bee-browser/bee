@@ -370,6 +370,10 @@ void compiler_peer_case_block(Compiler* self) {
   self->CaseBlock();
 }
 
+void compiler_peer_case_clause(Compiler* self, bool has_statement) {
+  self->CaseClause(has_statement);
+}
+
 void compiler_peer_switch(Compiler* self, uint32_t n) {
   self->Switch(n);
 }

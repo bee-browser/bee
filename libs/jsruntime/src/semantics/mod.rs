@@ -842,12 +842,11 @@ impl FunctionContext {
 
     fn process_case_selector(&mut self) {
         self.put_command(CompileCommand::StrictEquality);
-        self.put_command(CompileCommand::Truthy);
         self.put_command(CompileCommand::Then);
     }
 
-    fn process_case_clause(&mut self, _has_statement: bool) {
-        self.put_command(CompileCommand::IfStatement);
+    fn process_case_clause(&mut self, has_statement: bool) {
+        self.put_command(CompileCommand::CaseClause(has_statement));
         self.switch_stack.last_mut().unwrap().num_case_clauses += 1;
     }
 
@@ -869,7 +868,7 @@ impl FunctionContext {
         if n == 0 && !context.has_default_clause {
             // empty case block
             // Discard the `switchValue`.
-            self.put_command(CompileCommand::Discard);
+            self.commands[context.case_block_index] = CompileCommand::Discard;
             return;
         }
 
@@ -1063,6 +1062,7 @@ pub enum CompileCommand {
 
     // switch
     CaseBlock(u32),
+    CaseClause(bool),
     Switch(u32),
 
     Continue,

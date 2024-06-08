@@ -168,6 +168,7 @@ void compiler_peer_loop_next(Compiler* self);
 void compiler_peer_loop_body(Compiler* self);
 void compiler_peer_loop_end(Compiler* self);
 void compiler_peer_case_block(Compiler* self);
+void compiler_peer_case_clause(Compiler* self, bool has_statement);
 void compiler_peer_switch(Compiler* self, uint32_t n);
 void compiler_peer_start_function(Compiler* self, const char* name);
 void compiler_peer_end_function(Compiler* self, bool optimize);
