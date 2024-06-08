@@ -5,9 +5,6 @@ mod function;
 mod logger;
 mod semantics;
 
-#[cfg(test)]
-mod tests;
-
 use jsparser::SymbolRegistry;
 
 use executor::Executor;

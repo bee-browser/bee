@@ -15107,6 +15107,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _CASE_BLOCK_
+    - type: non-terminal
       data: CaseBlock
 - name: SwitchStatement_Return
   production:
@@ -15118,6 +15120,8 @@
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CASE_BLOCK_
     - type: non-terminal
       data: CaseBlock_Return
 - name: SwitchStatement_Await
@@ -15131,6 +15135,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _CASE_BLOCK_
+    - type: non-terminal
       data: CaseBlock_Await
 - name: SwitchStatement_Await_Return
   production:
@@ -15142,6 +15148,8 @@
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CASE_BLOCK_
     - type: non-terminal
       data: CaseBlock_Await_Return
 - name: SwitchStatement_Yield
@@ -15155,6 +15163,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _CASE_BLOCK_
+    - type: non-terminal
       data: CaseBlock_Yield
 - name: SwitchStatement_Yield_Return
   production:
@@ -15166,6 +15176,8 @@
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CASE_BLOCK_
     - type: non-terminal
       data: CaseBlock_Yield_Return
 - name: SwitchStatement_Yield_Await
@@ -15179,6 +15191,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _CASE_BLOCK_
+    - type: non-terminal
       data: CaseBlock_Yield_Await
 - name: SwitchStatement_Yield_Await_Return
   production:
@@ -15190,6 +15204,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CASE_BLOCK_
     - type: non-terminal
       data: CaseBlock_Yield_Await_Return
 - name: CaseBlock
@@ -15712,6 +15728,8 @@
       data: Expression_In
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
 - name: CaseClause
   production:
     - type: token
@@ -15721,6 +15739,8 @@
     - type: token
       data: COLON
     - type: non-terminal
+      data: _CASE_SELECTOR_
+    - type: non-terminal
       data: StatementList
 - name: CaseClause_Return
   production:
@@ -15730,6 +15750,8 @@
       data: Expression_In
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
 - name: CaseClause_Return
   production:
     - type: token
@@ -15738,6 +15760,8 @@
       data: Expression_In
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
     - type: non-terminal
       data: StatementList_Return
 - name: CaseClause_Await
@@ -15748,6 +15772,8 @@
       data: Expression_In_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
 - name: CaseClause_Await
   production:
     - type: token
@@ -15756,6 +15782,8 @@
       data: Expression_In_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
     - type: non-terminal
       data: StatementList_Await
 - name: CaseClause_Await_Return
@@ -15766,6 +15794,8 @@
       data: Expression_In_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
 - name: CaseClause_Await_Return
   production:
     - type: token
@@ -15774,6 +15804,8 @@
       data: Expression_In_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
     - type: non-terminal
       data: StatementList_Await_Return
 - name: CaseClause_Yield
@@ -15784,6 +15816,8 @@
       data: Expression_In_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
 - name: CaseClause_Yield
   production:
     - type: token
@@ -15792,6 +15826,8 @@
       data: Expression_In_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
     - type: non-terminal
       data: StatementList_Yield
 - name: CaseClause_Yield_Return
@@ -15802,6 +15838,8 @@
       data: Expression_In_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
 - name: CaseClause_Yield_Return
   production:
     - type: token
@@ -15810,6 +15848,8 @@
       data: Expression_In_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
     - type: non-terminal
       data: StatementList_Yield_Return
 - name: CaseClause_Yield_Await
@@ -15820,6 +15860,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
 - name: CaseClause_Yield_Await
   production:
     - type: token
@@ -15828,6 +15870,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
     - type: non-terminal
       data: StatementList_Yield_Await
 - name: CaseClause_Yield_Await_Return
@@ -15838,6 +15882,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
 - name: CaseClause_Yield_Await_Return
   production:
     - type: token
@@ -15846,6 +15892,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _CASE_SELECTOR_
     - type: non-terminal
       data: StatementList_Yield_Await_Return
 - name: DefaultClause
@@ -15854,12 +15902,16 @@
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
 - name: DefaultClause
   production:
     - type: token
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
     - type: non-terminal
       data: StatementList
 - name: DefaultClause_Return
@@ -15868,12 +15920,16 @@
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
 - name: DefaultClause_Return
   production:
     - type: token
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
     - type: non-terminal
       data: StatementList_Return
 - name: DefaultClause_Await
@@ -15882,12 +15938,16 @@
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
 - name: DefaultClause_Await
   production:
     - type: token
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
     - type: non-terminal
       data: StatementList_Await
 - name: DefaultClause_Await_Return
@@ -15896,12 +15956,16 @@
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
 - name: DefaultClause_Await_Return
   production:
     - type: token
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
     - type: non-terminal
       data: StatementList_Await_Return
 - name: DefaultClause_Yield
@@ -15910,12 +15974,16 @@
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
 - name: DefaultClause_Yield
   production:
     - type: token
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
     - type: non-terminal
       data: StatementList_Yield
 - name: DefaultClause_Yield_Return
@@ -15924,12 +15992,16 @@
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
 - name: DefaultClause_Yield_Return
   production:
     - type: token
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
     - type: non-terminal
       data: StatementList_Yield_Return
 - name: DefaultClause_Yield_Await
@@ -15938,12 +16010,16 @@
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
 - name: DefaultClause_Yield_Await
   production:
     - type: token
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
     - type: non-terminal
       data: StatementList_Yield_Await
 - name: DefaultClause_Yield_Await_Return
@@ -15952,12 +16028,16 @@
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
 - name: DefaultClause_Yield_Await_Return
   production:
     - type: token
       data: DEFAULT
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _DEFAULT_SELECTOR_
     - type: non-terminal
       data: StatementList_Yield_Await_Return
 - name: LabelledStatement
@@ -19988,6 +20068,15 @@
   production:
     - type: empty
 - name: _LOOP_BODY_
+  production:
+    - type: empty
+- name: _CASE_BLOCK_
+  production:
+    - type: empty
+- name: _CASE_SELECTOR_
+  production:
+    - type: empty
+- name: _DEFAULT_SELECTOR_
   production:
     - type: empty
 - name: NullLiteral

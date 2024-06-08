@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -268,7 +268,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::nop, "nop")),
     // IterationStatement -> ForInOfStatement
     Some((Builder::nop, "nop")),
-    // SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
+    // SwitchStatement -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock
     Some((Builder::switch_statement, "switch_statement")),
     // LabelIdentifier -> Identifier
     Some((Builder::nop, "nop")),
@@ -618,6 +618,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::for_of_statement_vars, "for_of_statement_vars")),
     // ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement
     Some((Builder::for_of_statement, "for_of_statement")),
+    // _CASE_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
     // CaseBlock -> LBRACE RBRACE
     Some((Builder::empty_list_block, "empty_list_block")),
     // CaseBlock -> LBRACE CaseClauses RBRACE
@@ -935,7 +937,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::nop, "nop")),
     // IterationStatement_Await -> ForInOfStatement_Await
     Some((Builder::nop, "nop")),
-    // SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await
+    // SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN _CASE_BLOCK_ CaseBlock_Await
     Some((Builder::switch_statement, "switch_statement")),
     // LabelIdentifier_Await -> Identifier
     Some((Builder::nop, "nop")),
@@ -1020,12 +1022,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // CaseClauses -> CaseClauses CaseClause
     Some((Builder::append_to_list, "append_to_list")),
-    // DefaultClause -> DEFAULT COLON
+    // DefaultClause -> DEFAULT COLON _DEFAULT_SELECTOR_
     Some((
         Builder::switch_case_default_no_consequent,
         "switch_case_default_no_consequent",
     )),
-    // DefaultClause -> DEFAULT COLON StatementList
+    // DefaultClause -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList
     Some((Builder::switch_case_default, "switch_case_default")),
     // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
     Some((Builder::nop, "nop")),
@@ -1471,13 +1473,15 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // BindingList -> BindingList COMMA LexicalBinding
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // CaseClause -> CASE Expression_In COLON
+    // CaseClause -> CASE Expression_In COLON _CASE_SELECTOR_
     Some((
         Builder::switch_case_no_consequent,
         "switch_case_no_consequent",
     )),
-    // CaseClause -> CASE Expression_In COLON StatementList
+    // CaseClause -> CASE Expression_In COLON _CASE_SELECTOR_ StatementList
     Some((Builder::switch_case, "switch_case")),
+    // _DEFAULT_SELECTOR_ -> (empty)
+    Some((Builder::nop, "nop")),
     // BindingRestElement -> ELLIPSIS BindingIdentifier
     Some((Builder::rest_element, "rest_element")),
     // BindingRestElement -> ELLIPSIS BindingPattern
@@ -1690,12 +1694,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // CaseClauses_Await -> CaseClauses_Await CaseClause_Await
     Some((Builder::append_to_list, "append_to_list")),
-    // DefaultClause_Await -> DEFAULT COLON
+    // DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_
     Some((
         Builder::switch_case_default_no_consequent,
         "switch_case_default_no_consequent",
     )),
-    // DefaultClause_Await -> DEFAULT COLON StatementList_Await
+    // DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Await
     Some((Builder::switch_case_default, "switch_case_default")),
     // BindingRestProperty -> ELLIPSIS BindingIdentifier
     Some((Builder::rest_element, "rest_element")),
@@ -1850,6 +1854,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
+    // _CASE_SELECTOR_ -> (empty)
+    Some((Builder::nop, "nop")),
     // BindingElement -> SingleNameBinding
     Some((Builder::either_left, "either_left")),
     // BindingElement -> BindingPattern
@@ -2085,12 +2091,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // CaseClause_Await -> CASE Expression_In_Await COLON
+    // CaseClause_Await -> CASE Expression_In_Await COLON _CASE_SELECTOR_
     Some((
         Builder::switch_case_no_consequent,
         "switch_case_no_consequent",
     )),
-    // CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
+    // CaseClause_Await -> CASE Expression_In_Await COLON _CASE_SELECTOR_ StatementList_Await
     Some((Builder::switch_case, "switch_case")),
     // BindingProperty -> SingleNameBinding
     Some((Builder::either_right, "either_right")),
@@ -2801,7 +2807,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::nop, "nop")),
     // IterationStatement_Return -> ForInOfStatement_Return
     Some((Builder::nop, "nop")),
-    // SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN CaseBlock_Return
+    // SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock_Return
     Some((Builder::switch_statement, "switch_statement")),
     // LabelledItem_Return -> Statement_Return
     Some((Builder::nop, "nop")),
@@ -3291,7 +3297,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::nop, "nop")),
     // IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
     Some((Builder::nop, "nop")),
-    // SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN CaseBlock_Yield_Return
+    // SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN _CASE_BLOCK_ CaseBlock_Yield_Return
     Some((Builder::switch_statement, "switch_statement")),
     // LabelIdentifier_Yield -> Identifier
     Some((Builder::nop, "nop")),
@@ -3348,7 +3354,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::nop, "nop")),
     // IterationStatement_Await_Return -> ForInOfStatement_Await_Return
     Some((Builder::nop, "nop")),
-    // SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await_Return
+    // SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN _CASE_BLOCK_ CaseBlock_Await_Return
     Some((Builder::switch_statement, "switch_statement")),
     // LabelledItem_Await_Return -> Statement_Await_Return
     Some((Builder::nop, "nop")),
@@ -3426,7 +3432,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::nop, "nop")),
     // IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return
     Some((Builder::nop, "nop")),
-    // SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return
+    // SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN _CASE_BLOCK_ CaseBlock_Yield_Await_Return
     Some((Builder::switch_statement, "switch_statement")),
     // LabelIdentifier_Yield_Await -> Identifier
     Some((Builder::nop, "nop")),
@@ -3525,12 +3531,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // CaseClauses_Return -> CaseClauses_Return CaseClause_Return
     Some((Builder::append_to_list, "append_to_list")),
-    // DefaultClause_Return -> DEFAULT COLON
+    // DefaultClause_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
     Some((
         Builder::switch_case_default_no_consequent,
         "switch_case_default_no_consequent",
     )),
-    // DefaultClause_Return -> DEFAULT COLON StatementList_Return
+    // DefaultClause_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Return
     Some((Builder::switch_case_default, "switch_case_default")),
     // ComputedPropertyName_Yield -> LBRACK AssignmentExpression_In_Yield RBRACK
     Some((Builder::computed_property_name, "computed_property_name")),
@@ -4155,12 +4161,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::binary_expression, "binary_expression")),
     // EqualityExpression -> EqualityExpression NE_STRICT RelationalExpression
     Some((Builder::binary_expression, "binary_expression")),
-    // CaseClause_Return -> CASE Expression_In COLON
+    // CaseClause_Return -> CASE Expression_In COLON _CASE_SELECTOR_
     Some((
         Builder::switch_case_no_consequent,
         "switch_case_no_consequent",
     )),
-    // CaseClause_Return -> CASE Expression_In COLON StatementList_Return
+    // CaseClause_Return -> CASE Expression_In COLON _CASE_SELECTOR_ StatementList_Return
     Some((Builder::switch_case, "switch_case")),
     // LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
     Some((Builder::nop, "nop")),
@@ -4244,12 +4250,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // CaseClauses_Yield_Return -> CaseClauses_Yield_Return CaseClause_Yield_Return
     Some((Builder::append_to_list, "append_to_list")),
-    // DefaultClause_Yield_Return -> DEFAULT COLON
+    // DefaultClause_Yield_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
     Some((
         Builder::switch_case_default_no_consequent,
         "switch_case_default_no_consequent",
     )),
-    // DefaultClause_Yield_Return -> DEFAULT COLON StatementList_Yield_Return
+    // DefaultClause_Yield_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Yield_Return
     Some((Builder::switch_case_default, "switch_case_default")),
     // ClassElementList_Yield -> ClassElement_Yield
     Some((Builder::class_element_list, "class_element_list")),
@@ -4262,12 +4268,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // CaseClauses_Await_Return -> CaseClauses_Await_Return CaseClause_Await_Return
     Some((Builder::append_to_list, "append_to_list")),
-    // DefaultClause_Await_Return -> DEFAULT COLON
+    // DefaultClause_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
     Some((
         Builder::switch_case_default_no_consequent,
         "switch_case_default_no_consequent",
     )),
-    // DefaultClause_Await_Return -> DEFAULT COLON StatementList_Await_Return
+    // DefaultClause_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Await_Return
     Some((Builder::switch_case_default, "switch_case_default")),
     // LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
     Some((Builder::nop, "nop")),
@@ -4351,12 +4357,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return CaseClause_Yield_Await_Return
     Some((Builder::append_to_list, "append_to_list")),
-    // DefaultClause_Yield_Await_Return -> DEFAULT COLON
+    // DefaultClause_Yield_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
     Some((
         Builder::switch_case_default_no_consequent,
         "switch_case_default_no_consequent",
     )),
-    // DefaultClause_Yield_Await_Return -> DEFAULT COLON StatementList_Yield_Await_Return
+    // DefaultClause_Yield_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Yield_Await_Return
     Some((Builder::switch_case_default, "switch_case_default")),
     // ClassElementList_Yield_Await -> ClassElement_Yield_Await
     Some((Builder::class_element_list, "class_element_list")),
@@ -4474,12 +4480,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON
+    // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON _CASE_SELECTOR_
     Some((
         Builder::switch_case_no_consequent,
         "switch_case_no_consequent",
     )),
-    // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON StatementList_Yield_Return
+    // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON _CASE_SELECTOR_ StatementList_Yield_Return
     Some((Builder::switch_case, "switch_case")),
     // ClassElement_Yield -> MethodDefinition_Yield
     Some((Builder::create_nullable, "create_nullable")),
@@ -4502,12 +4508,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_nullable, "create_nullable")),
     // ClassElement_Yield -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
-    // CaseClause_Await_Return -> CASE Expression_In_Await COLON
+    // CaseClause_Await_Return -> CASE Expression_In_Await COLON _CASE_SELECTOR_
     Some((
         Builder::switch_case_no_consequent,
         "switch_case_no_consequent",
     )),
-    // CaseClause_Await_Return -> CASE Expression_In_Await COLON StatementList_Await_Return
+    // CaseClause_Await_Return -> CASE Expression_In_Await COLON _CASE_SELECTOR_ StatementList_Await_Return
     Some((Builder::switch_case, "switch_case")),
     // BitwiseXORExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await
     Some((Builder::nop, "nop")),
@@ -4586,12 +4592,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2113] = [
     Some((Builder::create_list, "create_list")),
     // BindingList_Yield_Await -> BindingList_Yield_Await COMMA LexicalBinding_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
+    // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON _CASE_SELECTOR_
     Some((
         Builder::switch_case_no_consequent,
         "switch_case_no_consequent",
     )),
-    // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON StatementList_Yield_Await_Return
+    // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON _CASE_SELECTOR_ StatementList_Yield_Await_Return
     Some((Builder::switch_case, "switch_case")),
     // ClassElement_Yield_Await -> MethodDefinition_Yield_Await
     Some((Builder::create_nullable, "create_nullable")),

@@ -174,6 +174,9 @@ class Transpiler {
           modifyFunctionExpression,
           modifyDoWhileStatement,
           modifyWhileStatement,
+          modifySwitchStatement,
+          modifyCaseClause,
+          modifyDefaultClause,
           expandOptionals,
           modifyForStatement,
           modifyForInOfStatement,
@@ -608,6 +611,9 @@ function addActions(rules) {
     '_LOOP_TEST_',
     '_LOOP_NEXT_',
     '_LOOP_BODY_',
+    '_CASE_BLOCK_',
+    '_CASE_SELECTOR_',
+    '_DEFAULT_SELECTOR_',
   ];
 
   for (const action of ACTIONS) {
@@ -814,6 +820,66 @@ function modifyWhileStatement(rules) {
   log.debug('Modifying WhileStatement...');
 
   const rule = rules.find((rule) => rule.name === 'WhileStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 1);
+
+  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
+
+  return rules;
+}
+
+function modifySwitchStatement(rules) {
+  const TARGETS = [
+    {
+      term: '`)`',
+      action: '_CASE_BLOCK_',
+      insertBefore: false,
+    },
+  ];
+
+  log.debug('Modifying SwitchStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'SwitchStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 1);
+
+  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
+
+  return rules;
+}
+
+function modifyCaseClause(rules) {
+  const TARGETS = [
+    {
+      term: '`:`',
+      action: '_CASE_SELECTOR_',
+      insertBefore: false,
+    },
+  ];
+
+  log.debug('Modifying CaseClause...');
+
+  const rule = rules.find((rule) => rule.name === 'CaseClause[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 1);
+
+  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
+
+  return rules;
+}
+
+function modifyDefaultClause(rules) {
+  const TARGETS = [
+    {
+      term: '`:`',
+      action: '_DEFAULT_SELECTOR_',
+      insertBefore: false,
+    },
+  ];
+
+  log.debug('Modifying DefaultClause...');
+
+  const rule = rules.find((rule) => rule.name === 'DefaultClause[Yield, Await, Return]');
   assert(rule !== undefined);
   assert(rule.values.length === 1);
 

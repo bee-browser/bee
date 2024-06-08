@@ -116,6 +116,10 @@ class Compiler {
   void LoopNext();
   void LoopBody();
   void LoopEnd();
+  void CaseBlock(uint32_t n);
+  void CaseClause(bool has_statement);
+  void DefaultClause(bool has_statement);
+  void Switch(uint32_t n, uint32_t default_index);
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
@@ -156,12 +160,21 @@ class Compiler {
       struct Reference reference;
       llvm::BasicBlock* block;
     };
+#ifdef BEE_BUILD_DEBUG
+    const char* label = nullptr;
+#endif
 
     explicit Item(Type type) : type(type), value(nullptr) {}
     explicit Item(llvm::Function* func) : type(Item::Function), func(func) {}
     Item(Type type, llvm::Value* value) : type(type), value(value) {}
     Item(uint32_t symbol, Locator locator) : type(Item::Reference), reference(symbol, locator) {}
     explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
+
+    inline void SetLabel(const char* label) {
+#ifdef BEE_BUILD_DEBUG
+      this->label = label;
+#endif
+    }
 
     inline bool IsValue() const {
       switch (type) {
@@ -176,11 +189,6 @@ class Compiler {
           return false;
       }
     }
-  };
-
-  struct LoopContext {
-    llvm::BasicBlock* loop_continue;
-    llvm::BasicBlock* loop_break;
   };
 
   inline void PushUndefined() {
@@ -215,8 +223,10 @@ class Compiler {
     stack_.push_back(Item(Item::Argv, value));
   }
 
-  inline void PushBlock(llvm::BasicBlock* block) {
-    stack_.push_back(Item(block));
+  inline void PushBlock(llvm::BasicBlock* block, const char* label) {
+    Item item(block);
+    item.SetLabel(label);
+    stack_.push_back(item);
   }
 
   void Swap() {
@@ -581,7 +591,8 @@ class Compiler {
   uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;
-  std::vector<LoopContext> loop_stack_;
+  std::vector<llvm::BasicBlock*> break_stack_;
+  std::vector<llvm::BasicBlock*> continue_stack_;
   std::unordered_map<std::string, llvm::Function*> functions_;
 
   // for optimization

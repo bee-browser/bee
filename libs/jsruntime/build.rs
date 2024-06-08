@@ -21,6 +21,7 @@ static LLVMIR_SOURCE_FILES: &[&str] = &[
 ];
 
 fn main() {
+    let profile = std::env::var("PROFILE").unwrap();
     let out_dir = PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
 
     // Generate bindings for Rust.
@@ -47,6 +48,9 @@ fn main() {
     let mut build = build.cpp(true).files(cc_files).include(&out_dir);
     for flag in llvm_config.cxxflags().iter() {
         build = build.flag(flag);
+    }
+    if profile == "debug" {
+        build.define("BEE_BUILD_DEBUG", "1");
     }
     build.compile("llvmir");
 

@@ -366,6 +366,22 @@ void compiler_peer_loop_end(Compiler* self) {
   self->LoopEnd();
 }
 
+void compiler_peer_case_block(Compiler* self, uint32_t n) {
+  self->CaseBlock(n);
+}
+
+void compiler_peer_case_clause(Compiler* self, bool has_statement) {
+  self->CaseClause(has_statement);
+}
+
+void compiler_peer_default_clause(Compiler* self, bool has_statement) {
+  self->DefaultClause(has_statement);
+}
+
+void compiler_peer_switch(Compiler* self, uint32_t n, uint32_t default_index) {
+  self->Switch(n, default_index);
+}
+
 void compiler_peer_start_function(Compiler* self, const char* name) {
   self->StartFunction(name);
 }
