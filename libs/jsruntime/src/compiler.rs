@@ -408,11 +408,11 @@ impl<'a> Compiler<'a> {
             },
         }
 
-        if cfg!(debug_assertions) {
-            if std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP_STACK").is_some() {
-                unsafe {
-                    bridge::compiler_peer_dump_stack(self.peer);
-                }
+        if cfg!(debug_assertions)
+            && std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP_STACK").is_some()
+        {
+            unsafe {
+                bridge::compiler_peer_dump_stack(self.peer);
             }
         }
     }

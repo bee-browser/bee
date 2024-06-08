@@ -1143,7 +1143,7 @@ void Compiler::Switch(uint32_t n, uint32_t default_index) {
   // The blocks has been stored in the stack in reverse order.
   auto* fallback_block = end_block;
   llvm::BasicBlock* default_block = nullptr;
-  for (auto i = n - 1; ; --i) {
+  for (auto i = n - 1;; --i) {
     auto* block = PopBlock();
     if (block->getTerminator() == nullptr) {
       builder_->SetInsertPoint(block);

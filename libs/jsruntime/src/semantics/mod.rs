@@ -334,7 +334,10 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_switch_statement(&mut self) {
-        self.context_stack.last_mut().unwrap().process_switch_statement();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_switch_statement();
     }
 
     fn handle_case_block(&mut self) {
@@ -342,19 +345,31 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_case_selector(&mut self) {
-        self.context_stack.last_mut().unwrap().process_case_selector();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_case_selector();
     }
 
     fn handle_case_clause(&mut self, has_statement: bool) {
-        self.context_stack.last_mut().unwrap().process_case_clause(has_statement);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_case_clause(has_statement);
     }
 
     fn handle_default_selector(&mut self) {
-        self.context_stack.last_mut().unwrap().process_default_selector();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_default_selector();
     }
 
     fn handle_default_clause(&mut self, has_statement: bool) {
-        self.context_stack.last_mut().unwrap().process_default_clause(has_statement);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_default_clause(has_statement);
     }
 
     fn handle_formal_parameter(&mut self) {
