@@ -847,39 +847,38 @@ impl FunctionContext {
 
     fn process_case_clause(&mut self, has_statement: bool) {
         self.put_command(CompileCommand::CaseClause(has_statement));
-        self.switch_stack.last_mut().unwrap().num_case_clauses += 1;
+        self.switch_stack.last_mut().unwrap().num_clauses += 1;
     }
 
     fn process_default_selector(&mut self) {
-        // TODO: jump to the statement block of the default clause
+        self.put_command(CompileCommand::Discard);
+        // TODO: refactoring
+        self.put_command(CompileCommand::Then);
     }
 
-    fn process_default_clause(&mut self, _has_statement: bool) {
-        self.switch_stack.last_mut().unwrap().has_default_clause = true;
+    fn process_default_clause(&mut self, has_statement: bool) {
+        self.put_command(CompileCommand::DefaultClause(has_statement));
+        let context = self.switch_stack.last_mut().unwrap();
+        context.default_index = Some(context.num_clauses);
+        context.num_clauses += 1;
     }
 
     fn process_switch_statement(&mut self) {
         let context = self.switch_stack.pop().unwrap();
 
         // TODO: the compilation should fail if the following condition is unmet.
-        assert!(context.num_case_clauses <= u32::MAX as usize - 1);
-        let n = context.num_case_clauses as u32;
+        assert!(context.num_clauses <= u32::MAX as usize);
+        let n = context.num_clauses as u32;
 
-        if n == 0 && !context.has_default_clause {
+        if n == 0 {
             // empty case block
             // Discard the `switchValue`.
             self.commands[context.case_block_index] = CompileCommand::Discard;
-            return;
-        }
-
-        self.commands[context.case_block_index] = CompileCommand::CaseBlock(n);
-
-        let n = if context.has_default_clause {
-            n + 1
         } else {
-            n
-        };
-        self.put_command(CompileCommand::Switch(n));
+            self.commands[context.case_block_index] = CompileCommand::CaseBlock(n);
+            let default_index = context.default_index.map(|i| i as u32);
+            self.put_command(CompileCommand::Switch(n, default_index));
+        }
     }
 
     fn start_scope(&mut self) {
@@ -928,8 +927,8 @@ struct LoopContext {
 #[derive(Default)]
 struct SwitchContext {
     case_block_index: usize,
-    num_case_clauses: usize,
-    has_default_clause: bool,
+    num_clauses: usize,
+    default_index: Option<usize>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -1063,7 +1062,8 @@ pub enum CompileCommand {
     // switch
     CaseBlock(u32),
     CaseClause(bool),
-    Switch(u32),
+    DefaultClause(bool),
+    Switch(u32, Option<u32>),
 
     Continue,
     Break,

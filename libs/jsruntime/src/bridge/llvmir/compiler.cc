@@ -1074,7 +1074,9 @@ void Compiler::LoopEnd() {
   continue_stack_.pop_back();
 }
 
-void Compiler::CaseBlock() {
+void Compiler::CaseBlock(uint32_t n) {
+  UNUSED(n);
+
   auto item = Dereference();
   item.SetLabel("switch-value");
   stack_.push_back(item);
@@ -1107,7 +1109,24 @@ void Compiler::CaseClause(bool has_statement) {
   Duplicate();
 }
 
-void Compiler::Switch(uint32_t n) {
+void Compiler::DefaultClause(bool has_statement) {
+  UNUSED(has_statement);
+
+  auto* default_clause_statement = builder_->GetInsertBlock();
+
+  auto* default_clause_br = PopBlock();
+  auto* case_block = PopBlock();
+
+  builder_->SetInsertPoint(case_block);
+
+  PushBlock(default_clause_br, "default-clause-br");
+  Swap();
+  PushBlock(default_clause_statement, "default-clause-statement");
+  Swap();
+  Duplicate();
+}
+
+void Compiler::Switch(uint32_t n, uint32_t default_index) {
   auto* end_block = break_stack_.back();
   break_stack_.pop_back();
 
@@ -1117,18 +1136,35 @@ void Compiler::Switch(uint32_t n) {
 
   // Connect the tail block of the case selection block sequence to the end block.
   end_block->insertInto(function_);
-  builder_->CreateBr(end_block);
+
+  auto* case_block = builder_->GetInsertBlock();
 
   // Connect statement blocks of case/default clauses.
   // The blocks has been stored in the stack in reverse order.
   auto* fallback_block = end_block;
-  for (uint32_t i = 0; i < n; ++i) {
+  llvm::BasicBlock* default_block = nullptr;
+  for (auto i = n - 1; ; --i) {
     auto* block = PopBlock();
     if (block->getTerminator() == nullptr) {
       builder_->SetInsertPoint(block);
       builder_->CreateBr(fallback_block);
     }
     fallback_block = block;
+    if (i == default_index) {
+      default_block = PopBlock();
+    }
+    if (i == 0) {
+      break;
+    }
+  }
+
+  // Create an unconditional jump to the statement of the default clause if it exists.
+  // Otherwise, jump to the end block.
+  builder_->SetInsertPoint(case_block);
+  if (default_block != nullptr) {
+    builder_->CreateBr(default_block);
+  } else {
+    builder_->CreateBr(end_block);
   }
 
   builder_->SetInsertPoint(end_block);

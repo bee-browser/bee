@@ -116,9 +116,10 @@ class Compiler {
   void LoopNext();
   void LoopBody();
   void LoopEnd();
-  void CaseBlock();
+  void CaseBlock(uint32_t n);
   void CaseClause(bool has_statement);
-  void Switch(uint32_t n);
+  void DefaultClause(bool has_statement);
+  void Switch(uint32_t n, uint32_t default_index);
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);

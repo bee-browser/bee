@@ -745,3 +745,43 @@ fn eval_switch_statement_cases_fall_through() {
 fn eval_switch_statement_cases_break() {
     eval!(file: "switch_statement_cases_break.js", 1);
 }
+
+#[test]
+fn eval_switch_statement_default_fall_through() {
+    eval!(file: "switch_statement_default_fall_through.js", 1);
+}
+
+#[test]
+fn eval_switch_statement_default_break() {
+    eval!(file: "switch_statement_default_break.js", 1);
+}
+
+#[test]
+fn eval_switch_statement_cases_default_fall_through() {
+    eval!(file: "switch_statement_cases_default_fall_through.js", 3);
+}
+
+#[test]
+fn eval_switch_statement_cases_default_break() {
+    eval!(file: "switch_statement_cases_default_break.js", 2);
+}
+
+#[test]
+fn eval_switch_statement_default_cases_fall_through() {
+    eval!(file: "switch_statement_default_cases_fall_through.js", 3);
+}
+
+#[test]
+fn eval_switch_statement_default_cases_break() {
+    eval!(file: "switch_statement_default_cases_break.js", 1);
+}
+
+#[test]
+fn eval_switch_statement_cases_default_cases_fall_through() {
+    eval!(file: "switch_statement_cases_default_cases_fall_through.js", 3);
+}
+
+#[test]
+fn eval_switch_statement_cases_default_cases_break() {
+    eval!(file: "switch_statement_cases_default_cases_break.js", 2);
+}
