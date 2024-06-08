@@ -378,6 +378,21 @@ impl<'a> Compiler<'a> {
             CompileCommand::LoopEnd => unsafe {
                 bridge::compiler_peer_loop_end(self.peer);
             },
+            CompileCommand::CaseBlock(n) => unsafe {
+                debug_assert!(*n > 0);
+                // TODO: refactoring
+                bridge::compiler_peer_case_block(self.peer, *n);
+            },
+            CompileCommand::CaseClause(has_statement) => unsafe {
+                bridge::compiler_peer_case_clause(self.peer, *has_statement);
+            },
+            CompileCommand::DefaultClause(has_statement) => unsafe {
+                bridge::compiler_peer_default_clause(self.peer, *has_statement);
+            },
+            CompileCommand::Switch(n, default_index) => unsafe {
+                let i = default_index.unwrap_or(*n);
+                bridge::compiler_peer_switch(self.peer, *n, i);
+            },
             CompileCommand::Continue => unsafe {
                 bridge::compiler_peer_continue(self.peer);
             },
@@ -388,8 +403,17 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_return(self.peer, *n as usize);
             },
             CompileCommand::Discard => unsafe {
+                // TODO: the stack should be managed in the Rust side.
                 bridge::compiler_peer_discard(self.peer);
             },
+        }
+
+        if cfg!(debug_assertions)
+            && std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP_STACK").is_some()
+        {
+            unsafe {
+                bridge::compiler_peer_dump_stack(self.peer);
+            }
         }
     }
 }

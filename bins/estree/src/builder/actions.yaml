@@ -262,7 +262,7 @@
   action: nop
 - rule: IterationStatement -> ForInOfStatement
   action: nop
-- rule: SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
+- rule: SwitchStatement -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock
   action: switch_statement
 - rule: LabelIdentifier -> Identifier
   action: nop
@@ -611,6 +611,8 @@
     ForInOfStatement -> FOR _LOOP_START_ LPAREN ForDeclaration OF AssignmentExpression_In RPAREN
     Statement
   action: for_of_statement
+- rule: _CASE_BLOCK_ -> (empty)
+  action: nop
 - rule: CaseBlock -> LBRACE RBRACE
   action: empty_list_block
 - rule: CaseBlock -> LBRACE CaseClauses RBRACE
@@ -906,7 +908,7 @@
   action: nop
 - rule: IterationStatement_Await -> ForInOfStatement_Await
   action: nop
-- rule: SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await
+- rule: SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN _CASE_BLOCK_ CaseBlock_Await
   action: switch_statement
 - rule: LabelIdentifier_Await -> Identifier
   action: nop
@@ -988,9 +990,9 @@
   action: create_list
 - rule: CaseClauses -> CaseClauses CaseClause
   action: append_to_list
-- rule: DefaultClause -> DEFAULT COLON
+- rule: DefaultClause -> DEFAULT COLON _DEFAULT_SELECTOR_
   action: switch_case_default_no_consequent
-- rule: DefaultClause -> DEFAULT COLON StatementList
+- rule: DefaultClause -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList
   action: switch_case_default
 - rule: IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
   action: nop
@@ -1403,10 +1405,12 @@
   action: create_list
 - rule: BindingList -> BindingList COMMA LexicalBinding
   action: append_to_csv_list
-- rule: CaseClause -> CASE Expression_In COLON
+- rule: CaseClause -> CASE Expression_In COLON _CASE_SELECTOR_
   action: switch_case_no_consequent
-- rule: CaseClause -> CASE Expression_In COLON StatementList
+- rule: CaseClause -> CASE Expression_In COLON _CASE_SELECTOR_ StatementList
   action: switch_case
+- rule: _DEFAULT_SELECTOR_ -> (empty)
+  action: nop
 - rule: BindingRestElement -> ELLIPSIS BindingIdentifier
   action: rest_element
 - rule: BindingRestElement -> ELLIPSIS BindingPattern
@@ -1595,9 +1599,9 @@
   action: create_list
 - rule: CaseClauses_Await -> CaseClauses_Await CaseClause_Await
   action: append_to_list
-- rule: DefaultClause_Await -> DEFAULT COLON
+- rule: DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_
   action: switch_case_default_no_consequent
-- rule: DefaultClause_Await -> DEFAULT COLON StatementList_Await
+- rule: DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Await
   action: switch_case_default
 - rule: BindingRestProperty -> ELLIPSIS BindingIdentifier
   action: rest_element
@@ -1715,6 +1719,8 @@
   action: variable_declarator_init
 - rule: LexicalBinding -> BindingPattern Initializer
   action: variable_declarator_init
+- rule: _CASE_SELECTOR_ -> (empty)
+  action: nop
 - rule: BindingElement -> SingleNameBinding
   action: either_left
 - rule: BindingElement -> BindingPattern
@@ -1948,9 +1954,9 @@
   action: create_list
 - rule: BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await
   action: append_to_csv_list
-- rule: CaseClause_Await -> CASE Expression_In_Await COLON
+- rule: CaseClause_Await -> CASE Expression_In_Await COLON _CASE_SELECTOR_
   action: switch_case_no_consequent
-- rule: CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
+- rule: CaseClause_Await -> CASE Expression_In_Await COLON _CASE_SELECTOR_ StatementList_Await
   action: switch_case
 - rule: BindingProperty -> SingleNameBinding
   action: either_right
@@ -2630,7 +2636,7 @@
   action: nop
 - rule: IterationStatement_Return -> ForInOfStatement_Return
   action: nop
-- rule: SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN CaseBlock_Return
+- rule: SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock_Return
   action: switch_statement
 - rule: LabelledItem_Return -> Statement_Return
   action: nop
@@ -3120,7 +3126,9 @@
   action: nop
 - rule: IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
   action: nop
-- rule: SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN CaseBlock_Yield_Return
+- rule: >-
+    SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN _CASE_BLOCK_
+    CaseBlock_Yield_Return
   action: switch_statement
 - rule: LabelIdentifier_Yield -> Identifier
   action: nop
@@ -3177,7 +3185,9 @@
   action: nop
 - rule: IterationStatement_Await_Return -> ForInOfStatement_Await_Return
   action: nop
-- rule: SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await_Return
+- rule: >-
+    SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN _CASE_BLOCK_
+    CaseBlock_Await_Return
   action: switch_statement
 - rule: LabelledItem_Await_Return -> Statement_Await_Return
   action: nop
@@ -3259,7 +3269,7 @@
   action: nop
 - rule: >-
     SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN
-    CaseBlock_Yield_Await_Return
+    _CASE_BLOCK_ CaseBlock_Yield_Await_Return
   action: switch_statement
 - rule: LabelIdentifier_Yield_Await -> Identifier
   action: nop
@@ -3357,9 +3367,9 @@
   action: create_list
 - rule: CaseClauses_Return -> CaseClauses_Return CaseClause_Return
   action: append_to_list
-- rule: DefaultClause_Return -> DEFAULT COLON
+- rule: DefaultClause_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
   action: switch_case_default_no_consequent
-- rule: DefaultClause_Return -> DEFAULT COLON StatementList_Return
+- rule: DefaultClause_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Return
   action: switch_case_default
 - rule: ComputedPropertyName_Yield -> LBRACK AssignmentExpression_In_Yield RBRACK
   action: computed_property_name
@@ -3999,9 +4009,9 @@
   action: binary_expression
 - rule: EqualityExpression -> EqualityExpression NE_STRICT RelationalExpression
   action: binary_expression
-- rule: CaseClause_Return -> CASE Expression_In COLON
+- rule: CaseClause_Return -> CASE Expression_In COLON _CASE_SELECTOR_
   action: switch_case_no_consequent
-- rule: CaseClause_Return -> CASE Expression_In COLON StatementList_Return
+- rule: CaseClause_Return -> CASE Expression_In COLON _CASE_SELECTOR_ StatementList_Return
   action: switch_case
 - rule: LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
   action: nop
@@ -4085,9 +4095,9 @@
   action: create_list
 - rule: CaseClauses_Yield_Return -> CaseClauses_Yield_Return CaseClause_Yield_Return
   action: append_to_list
-- rule: DefaultClause_Yield_Return -> DEFAULT COLON
+- rule: DefaultClause_Yield_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
   action: switch_case_default_no_consequent
-- rule: DefaultClause_Yield_Return -> DEFAULT COLON StatementList_Yield_Return
+- rule: DefaultClause_Yield_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Yield_Return
   action: switch_case_default
 - rule: ClassElementList_Yield -> ClassElement_Yield
   action: class_element_list
@@ -4097,9 +4107,9 @@
   action: create_list
 - rule: CaseClauses_Await_Return -> CaseClauses_Await_Return CaseClause_Await_Return
   action: append_to_list
-- rule: DefaultClause_Await_Return -> DEFAULT COLON
+- rule: DefaultClause_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
   action: switch_case_default_no_consequent
-- rule: DefaultClause_Await_Return -> DEFAULT COLON StatementList_Await_Return
+- rule: DefaultClause_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Await_Return
   action: switch_case_default
 - rule: LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
   action: nop
@@ -4187,9 +4197,11 @@
   action: create_list
 - rule: CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return CaseClause_Yield_Await_Return
   action: append_to_list
-- rule: DefaultClause_Yield_Await_Return -> DEFAULT COLON
+- rule: DefaultClause_Yield_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
   action: switch_case_default_no_consequent
-- rule: DefaultClause_Yield_Await_Return -> DEFAULT COLON StatementList_Yield_Await_Return
+- rule: >-
+    DefaultClause_Yield_Await_Return -> DEFAULT COLON _DEFAULT_SELECTOR_
+    StatementList_Yield_Await_Return
   action: switch_case_default
 - rule: ClassElementList_Yield_Await -> ClassElement_Yield_Await
   action: class_element_list
@@ -4305,9 +4317,11 @@
   action: create_list
 - rule: BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield
   action: append_to_csv_list
-- rule: CaseClause_Yield_Return -> CASE Expression_In_Yield COLON
+- rule: CaseClause_Yield_Return -> CASE Expression_In_Yield COLON _CASE_SELECTOR_
   action: switch_case_no_consequent
-- rule: CaseClause_Yield_Return -> CASE Expression_In_Yield COLON StatementList_Yield_Return
+- rule: >-
+    CaseClause_Yield_Return -> CASE Expression_In_Yield COLON _CASE_SELECTOR_
+    StatementList_Yield_Return
   action: switch_case
 - rule: ClassElement_Yield -> MethodDefinition_Yield
   action: create_nullable
@@ -4321,9 +4335,11 @@
   action: create_nullable
 - rule: ClassElement_Yield -> SEMICOLON
   action: class_element_semicolon
-- rule: CaseClause_Await_Return -> CASE Expression_In_Await COLON
+- rule: CaseClause_Await_Return -> CASE Expression_In_Await COLON _CASE_SELECTOR_
   action: switch_case_no_consequent
-- rule: CaseClause_Await_Return -> CASE Expression_In_Await COLON StatementList_Await_Return
+- rule: >-
+    CaseClause_Await_Return -> CASE Expression_In_Await COLON _CASE_SELECTOR_
+    StatementList_Await_Return
   action: switch_case
 - rule: BitwiseXORExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await
   action: nop
@@ -4399,10 +4415,10 @@
   action: create_list
 - rule: BindingList_Yield_Await -> BindingList_Yield_Await COMMA LexicalBinding_Yield_Await
   action: append_to_csv_list
-- rule: CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
+- rule: CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON _CASE_SELECTOR_
   action: switch_case_no_consequent
 - rule: >-
-    CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
+    CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON _CASE_SELECTOR_
     StatementList_Yield_Await_Return
   action: switch_case
 - rule: ClassElement_Yield_Await -> MethodDefinition_Yield_Await

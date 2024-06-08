@@ -68,6 +68,10 @@ enum Detail {
     ConstDeclaration(#[allow(unused)] SmallVec<[Symbol; 4]>), // TODO: SS
     SingleNameBinding(Symbol, bool),
     BindingElement(BindingElement),
+    CaseBlock,
+    CaseClause,
+    CaseClauseList,
+    DefaultClause,
     Statement,
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
@@ -131,6 +135,12 @@ pub enum Node<'s> {
     ContinueStatement,
     BreakStatement,
     ReturnStatement(u32),
+    SwitchStatement,
+    CaseBlock,
+    CaseSelector,
+    CaseClause(bool),
+    DefaultSelector,
+    DefaultClause(bool),
     FormalParameter,
     FormalParameters(u32),
     FunctionContext,
@@ -1752,6 +1762,118 @@ where
     fn process_return_value_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ReturnStatement(1));
         self.replace(3, Detail::Statement);
+        Ok(())
+    }
+
+    // 14.12 The switch Statement
+
+    // SwitchStatement[Yield, Await, Return] :
+    //   switch ( Expression[+In, ?Yield, ?Await] ) CaseBlock[?Yield, ?Await, ?Return]
+    fn process_switch_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::EndBlockScope); // See process_case_block().
+        self.enqueue(Node::SwitchStatement);
+        self.replace(5, Detail::Statement);
+        Ok(())
+    }
+
+    // _CASE_BLOCK_
+    fn process_case_block(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::StartBlockScope);
+        self.enqueue(Node::CaseBlock);
+        Ok(())
+    }
+
+    // CaseBlock[Yield, Await, Return] : { }
+    fn process_case_block_empty(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::CaseBlock);
+        Ok(())
+    }
+
+    // CaseBlock[Yield, Await, Return] : { CaseClauses[?Yield, ?Await, ?Return] }
+    fn process_case_block_cases(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::CaseBlock);
+        Ok(())
+    }
+
+    // CaseBlock[Yield, Await, Return] : { DefaultClause[?Yield, ?Await, ?Return] }
+    fn process_case_block_default(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::CaseBlock);
+        Ok(())
+    }
+
+    // CaseBlock[Yield, Await, Return] :
+    //   { CaseClauses[?Yield, ?Await, ?Return] DefaultClause[?Yield, ?Await, ?Return] }
+    fn process_case_block_cases_default(&mut self) -> Result<(), Error> {
+        self.replace(4, Detail::CaseBlock);
+        Ok(())
+    }
+
+    // CaseBlock[Yield, Await, Return] :
+    //   { DefaultClause[?Yield, ?Await, ?Return] CaseClauses[?Yield, ?Await, ?Return] }
+    fn process_case_block_default_cases(&mut self) -> Result<(), Error> {
+        self.replace(4, Detail::CaseBlock);
+        Ok(())
+    }
+
+    // CaseBlock[Yield, Await, Return] :
+    //   { CaseClauses[?Yield, ?Await, ?Return] DefaultClause[?Yield, ?Await, ?Return]
+    //   CaseClauses[?Yield, ?Await, ?Return] }
+    fn process_case_block_cases_default_cases(&mut self) -> Result<(), Error> {
+        self.replace(5, Detail::CaseBlock);
+        Ok(())
+    }
+
+    // CaseClauses[Yield, Await, Return] : CaseClause[?Yield, ?Await, ?Return]
+    fn process_case_clauses_head(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::CaseClauseList);
+        Ok(())
+    }
+
+    // CaseClauses[Yield, Await, Return] :
+    //   CaseClauses[?Yield, ?Await, ?Return] CaseClause[?Yield, ?Await, ?Return]
+    fn process_case_clauses(&mut self) -> Result<(), Error> {
+        self.pop();
+        Ok(())
+    }
+
+    // _CASE_SELECTOR_
+    fn process_case_selector(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CaseSelector);
+        Ok(())
+    }
+
+    // CaseClause[Yield, Await, Return] : case Expression[+In, ?Yield, ?Await] :
+    fn process_case_clause_empty(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CaseClause(false));
+        self.replace(3, Detail::CaseClause);
+        Ok(())
+    }
+
+    // CaseClause[Yield, Await, Return] :
+    //   case Expression[+In, ?Yield, ?Await] : StatementList[?Yield, ?Await, ?Return]
+    fn process_case_clause(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CaseClause(true));
+        self.replace(4, Detail::CaseClause);
+        Ok(())
+    }
+
+    // _DEFAULT_SELECTOR_
+    fn process_default_selector(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::DefaultSelector);
+        Ok(())
+    }
+
+    // DefaultClause[Yield, Await, Return] : default :
+    fn process_default_clause_empty(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::DefaultClause(false));
+        self.replace(2, Detail::DefaultClause);
+        Ok(())
+    }
+
+    // DefaultClause[Yield, Await, Return] : default : StatementList[?Yield, ?Await, ?Return]
+    fn process_default_clause(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::DefaultClause(true));
+        self.replace(3, Detail::DefaultClause);
         Ok(())
     }
 
