@@ -1591,10 +1591,8 @@ llvm::Value* Compiler::CreateIsNonNullish(const Item& item) {
 }
 
 llvm::Value* Compiler::CreateIsNonNullish(llvm::Value* value_ptr) {
-  constexpr uint8_t kNullish = ValueKind::Null | ValueKind::Undefined;
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* nullish = builder_->CreateAnd(kind, builder_->getInt8(kNullish));
-  return builder_->CreateICmpEQ(nullish, builder_->getInt8(0));
+  return builder_->CreateICmpUGT(kind, builder_->getInt8(ValueKind::Null));
 }
 
 // 7.1.2 ToBoolean ( argument )

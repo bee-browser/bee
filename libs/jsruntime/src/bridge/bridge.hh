@@ -24,14 +24,14 @@ struct Locator {
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
-// The value for each kind is a bit flag so that we can quickly check a category such as
-// "null or undefined".
 enum ValueKind : uint8_t {
-  Undefined = 0x01,
-  Null = 0x02,
-  Boolean = 0x04,
-  Number = 0x08,
-  Function = 0x10,
+  // DO NOT CHANGE THE ORDER OF THE FOLLOWING ENUM VARIANTS.
+  // Some operations heavily rely on the order.
+  Undefined = 0,
+  Null,
+  Boolean,
+  Number,
+  Function,
 };
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
