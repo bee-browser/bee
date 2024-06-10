@@ -42,6 +42,8 @@ llvm::StructType* TypeHolder::CreateBindingType() {
         builder_.getInt8Ty(),
         // reserved
         builder_.getInt16Ty(),
+        // symbol
+        builder_.getInt32Ty(),
         // holder
         builder_.getInt64Ty(),
     });

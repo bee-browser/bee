@@ -419,12 +419,16 @@ class Compiler {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 1);
   }
 
-  inline llvm::Value* CreateGetSymbolPtrOfBinding(llvm::Value* binding_ptr) {
+  inline llvm::Value* CreateGetReservedPtrOfBinding(llvm::Value* binding_ptr) {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 2);
   }
 
-  inline llvm::Value* CreateGetValueHolderPtrOfBinding(llvm::Value* binding_ptr) {
+  inline llvm::Value* CreateGetSymbolPtrOfBinding(llvm::Value* binding_ptr) {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 3);
+  }
+
+  inline llvm::Value* CreateGetValueHolderPtrOfBinding(llvm::Value* binding_ptr) {
+    return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 4);
   }
 
   inline void CreateStoreValueKindToBinding(ValueKind value, llvm::Value* binding_ptr) {
