@@ -666,6 +666,7 @@ void Compiler::BitwiseOrAssignment() {
 }
 
 void Compiler::Bindings(uint16_t n) {
+  max_bindings_ = n;
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
   bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
@@ -1180,23 +1181,38 @@ void Compiler::StartFunction(const char* name) {
     function_ = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
     functions_[name] = function_;
   }
+
   prologue_ = llvm::BasicBlock::Create(*context_, "prologue", function_);
   body_ = llvm::BasicBlock::Create(*context_, "body", function_);
+  epilogue_ = llvm::BasicBlock::Create(*context_, "epilogue", function_);
 
   exec_context_ = function_->getArg(0);
   outer_scope_ = function_->getArg(1);
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
 
+  builder_->SetInsertPoint(prologue_);
+  return_value_ = builder_->CreateAlloca(types_->CreateValueType(), builder_->getInt32(1));
+  CreateStoreUndefinedToValue(return_value_);
+
   // Switch the insertion point.
   builder_->SetInsertPoint(body_);
 }
 
 void Compiler::EndFunction(bool optimize) {
-  auto* backup = builder_->GetInsertBlock();
+  builder_->CreateBr(epilogue_);
+
   builder_->SetInsertPoint(prologue_);
   builder_->CreateBr(body_);
-  builder_->SetInsertPoint(backup);
+
+  builder_->SetInsertPoint(epilogue_);
+  for (uint16_t i = 0; i < max_bindings_; ++i) {
+    // TODO: CG
+    auto* binding_ptr = CreateGetBindingPtrOfScope(function_scope_, i);
+    CreateStoreFlagsToBinding(0, binding_ptr);
+  }
+  auto* ret = builder_->CreateLoad(types_->CreateValueType(), return_value_);
+  builder_->CreateRet(ret);
 
   // DumpStack();
   // assert(stack_.empty());
@@ -1237,42 +1253,32 @@ void Compiler::ReleaseBindings(uint16_t n) {
 void Compiler::Continue() {
   assert(!continue_stack_.empty());
   auto* loop_continue = continue_stack_.back();
-
   builder_->CreateBr(loop_continue);
-
   CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Break() {
   assert(!break_stack_.empty());
   auto* loop_break = break_stack_.back();
-
   builder_->CreateBr(loop_break);
-
   CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Return(size_t n) {
-  Item item(Item::Undefined);
   if (n > 0) {
-    item = Dereference();
+    assert(n == 1);
+    auto item = Dereference();
+    CreateStoreItemToValue(item, return_value_);
   }
-  auto* value = ToAny(item);
-  auto* ret = builder_->CreateLoad(types_->CreateValueType(), value);
-  auto backup = allocated_bindings_;
-  ReleaseBindings(backup);  // release all bindings
-  allocated_bindings_ = backup;
-  builder_->CreateRet(ret);
+  builder_->CreateBr(epilogue_);
+  CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Throw() {
   auto item = Dereference();
-  auto* value = ToAny(item);  // TODO: ThrowCompletion
-  auto* ret = builder_->CreateLoad(types_->CreateValueType(), value);
-  auto backup = allocated_bindings_;
-  ReleaseBindings(backup);  // release all bindings
-  allocated_bindings_ = backup;
-  builder_->CreateRet(ret);
+  CreateStoreItemToValue(item, return_value_);
+  builder_->CreateBr(epilogue_);
+  CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Discard() {

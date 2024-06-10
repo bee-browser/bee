@@ -603,14 +603,17 @@ class Compiler {
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* prologue_ = nullptr;
   llvm::BasicBlock* body_ = nullptr;
+  llvm::BasicBlock* epilogue_ = nullptr;
   llvm::Value* exec_context_ = nullptr;
   llvm::Value* outer_scope_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
+  llvm::Value* return_value_ = nullptr;
   llvm::Type* bindings_type_ = nullptr;
   llvm::StructType* function_scope_type_ = nullptr;
   llvm::Value* function_scope_ = nullptr;
   llvm::Value* bindings_ = nullptr;
+  uint16_t max_bindings_ = 0;
   uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;
