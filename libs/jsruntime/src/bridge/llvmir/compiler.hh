@@ -432,7 +432,7 @@ class Compiler {
   }
 
   inline void CreateStoreValueKindToBinding(ValueKind value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(builder_->getInt8(value), binding_ptr);
+    CreateStoreValueKindToBinding(builder_->getInt8(static_cast<uint8_t>(value)), binding_ptr);
   }
 
   inline void CreateStoreValueKindToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
@@ -535,7 +535,7 @@ class Compiler {
   }
 
   inline void CreateStoreValueKindToValue(ValueKind value, llvm::Value* value_ptr) {
-    CreateStoreValueKindToValue(builder_->getInt8(value), value_ptr);
+    CreateStoreValueKindToValue(builder_->getInt8(static_cast<uint8_t>(value)), value_ptr);
   }
 
   inline void CreateStoreValueKindToValue(llvm::Value* value, llvm::Value* value_ptr) {

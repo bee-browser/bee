@@ -6,7 +6,7 @@
 struct Value;
 typedef Value (*FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv);
 
-enum LocatorKind : uint8_t {
+enum class LocatorKind : uint8_t {
   None,
   Argument,
   Local,
@@ -24,7 +24,7 @@ struct Locator {
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
-enum ValueKind : uint8_t {
+enum class ValueKind : uint8_t {
   // DO NOT CHANGE THE ORDER OF THE FOLLOWING ENUM VARIANTS.
   // Some operations heavily rely on the order.
   Undefined = 0,
