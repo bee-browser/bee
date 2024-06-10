@@ -127,6 +127,7 @@ class Compiler {
   void Continue();
   void Break();
   void Return(size_t n);
+  void Throw();
   void Discard();
 
   void DumpStack();
@@ -575,6 +576,24 @@ class Compiler {
   }
 
   void CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr);
+
+  // FIXME: Handle dead code in the proper way.
+  //
+  // We insert a **unreachable** basic block for dead code in order to avoid the following
+  // validation error: "Terminator found in the middle of a basic block!"
+  //
+  // IRBuilder accepts inserting instructions after a terminator instruction in a basic block.
+  // It's our responsibility to avoid a malformed basic block.  We think that it's not a good
+  // direction to check the existence of a terminator instruction in a basic block before
+  // insertion in efficiency and maintainability points of view.  Instead, we create an
+  // **unreachable** basic block for dead code.  Eventually, this basic block was removed in the
+  // optimization passes.
+  //
+  // At this point, we don't know whether this is a common method or not...
+  inline void CreateDeadcodeBasicBlock() {
+    auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
+    builder_->SetInsertPoint(dummy);
+  }
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;

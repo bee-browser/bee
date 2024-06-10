@@ -1240,9 +1240,7 @@ void Compiler::Continue() {
 
   builder_->CreateBr(loop_continue);
 
-  // FIXME: See the comment in Break().
-  auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
-  builder_->SetInsertPoint(dummy);
+  CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Break() {
@@ -1251,21 +1249,7 @@ void Compiler::Break() {
 
   builder_->CreateBr(loop_break);
 
-  // FIXME: Handle dead code in the proper way.
-  //
-  // We insert a **unreachable** basic block for dead code in order to avoid the following
-  // validation error: "Terminator found in the middle of a basic block!"
-  //
-  // IRBuilder accepts inserting instructions after a terminator instruction in a basic block.
-  // It's our responsibility to avoid a malformed basic block.  We think that it's not a good
-  // direction to check the existence of a terminator instruction in a basic block before
-  // insertion in efficiency and maintainability points of view.  Instead, we create an
-  // **unreachable** basic block for dead code.  Eventually, this basic block was removed in the
-  // optimization passes.
-  //
-  // At this point, we don't know whether this is a common method or not...
-  auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
-  builder_->SetInsertPoint(dummy);
+  CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Return(size_t n) {
@@ -1274,6 +1258,16 @@ void Compiler::Return(size_t n) {
     item = Dereference();
   }
   auto* value = ToAny(item);
+  auto* ret = builder_->CreateLoad(types_->CreateValueType(), value);
+  auto backup = allocated_bindings_;
+  ReleaseBindings(backup);  // release all bindings
+  allocated_bindings_ = backup;
+  builder_->CreateRet(ret);
+}
+
+void Compiler::Throw() {
+  auto item = Dereference();
+  auto* value = ToAny(item);  // TODO: ThrowCompletion
   auto* ret = builder_->CreateLoad(types_->CreateValueType(), value);
   auto backup = allocated_bindings_;
   ReleaseBindings(backup);  // release all bindings

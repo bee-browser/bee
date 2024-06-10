@@ -51,7 +51,7 @@
 - rule: Statement -> LabelledStatement
   action: undefined
 - rule: Statement -> ThrowStatement
-  action: undefined
+  action: process_statement
 - rule: Statement -> TryStatement
   action: undefined
 - rule: Statement -> DebuggerStatement
@@ -125,7 +125,7 @@
 - rule: LabelledStatement -> LabelIdentifier COLON LabelledItem
   action: undefined
 - rule: ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
-  action: undefined
+  action: process_throw_statement
 - rule: TryStatement -> TRY Block Catch
   action: undefined
 - rule: TryStatement -> TRY Block Finally
@@ -245,7 +245,7 @@
 - rule: Statement_Await -> LabelledStatement_Await
   action: undefined
 - rule: Statement_Await -> ThrowStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await -> TryStatement_Await
   action: undefined
 - rule: Statement_Await -> DebuggerStatement
@@ -514,7 +514,7 @@
 - rule: >-
     ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Await SEMICOLON
-  action: undefined
+  action: process_throw_statement
 - rule: TryStatement_Await -> TRY Block_Await Catch_Await
   action: undefined
 - rule: TryStatement_Await -> TRY Block_Await Finally_Await
@@ -2201,7 +2201,7 @@
 - rule: Statement_Return -> LabelledStatement_Return
   action: undefined
 - rule: Statement_Return -> ThrowStatement
-  action: undefined
+  action: process_statement
 - rule: Statement_Return -> TryStatement_Return
   action: undefined
 - rule: Statement_Return -> DebuggerStatement
@@ -2598,7 +2598,7 @@
 - rule: Statement_Yield_Return -> LabelledStatement_Yield_Return
   action: undefined
 - rule: Statement_Yield_Return -> ThrowStatement_Yield
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Return -> TryStatement_Yield_Return
   action: undefined
 - rule: Statement_Yield_Return -> DebuggerStatement
@@ -2632,7 +2632,7 @@
 - rule: Statement_Await_Return -> LabelledStatement_Await_Return
   action: undefined
 - rule: Statement_Await_Return -> ThrowStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await_Return -> TryStatement_Await_Return
   action: undefined
 - rule: Statement_Await_Return -> DebuggerStatement
@@ -2705,7 +2705,7 @@
 - rule: Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return
   action: undefined
 - rule: Statement_Yield_Await_Return -> ThrowStatement_Yield_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> TryStatement_Yield_Await_Return
   action: undefined
 - rule: Statement_Yield_Await_Return -> DebuggerStatement
@@ -2945,7 +2945,7 @@
 - rule: >-
     ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Yield SEMICOLON
-  action: undefined
+  action: process_throw_statement
 - rule: TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
   action: undefined
 - rule: TryStatement_Yield_Return -> TRY Block_Yield_Return Finally_Yield_Return
@@ -3109,7 +3109,7 @@
 - rule: >-
     ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Yield_Await SEMICOLON
-  action: undefined
+  action: process_throw_statement
 - rule: >-
     TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return
     Catch_Yield_Await_Return

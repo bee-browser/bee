@@ -141,6 +141,7 @@ pub enum Node<'s> {
     CaseClause(bool),
     DefaultSelector,
     DefaultClause(bool),
+    ThrowStatement,
     FormalParameter,
     FormalParameters(u32),
     FunctionContext,
@@ -1874,6 +1875,16 @@ where
     fn process_default_clause(&mut self) -> Result<(), Error> {
         self.enqueue(Node::DefaultClause(true));
         self.replace(3, Detail::DefaultClause);
+        Ok(())
+    }
+
+    // 14.14 The throw Statement
+
+    // ThrowStatement[Yield, Await] :
+    //   throw [no LineTerminator here] Expression[+In, ?Yield, ?Await] ;
+    fn process_throw_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ThrowStatement);
+        self.replace(2, Detail::Statement);
         Ok(())
     }
 

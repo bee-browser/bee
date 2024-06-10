@@ -78,7 +78,7 @@ where
         // Statement -> LabelledStatement
         Action::Undefined,
         // Statement -> ThrowStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> TryStatement
         Action::Undefined,
         // Statement -> DebuggerStatement
@@ -146,7 +146,7 @@ where
         // LabelledStatement -> LabelIdentifier COLON LabelledItem
         Action::Undefined,
         // ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
         // TryStatement -> TRY Block Catch
         Action::Undefined,
         // TryStatement -> TRY Block Finally
@@ -270,7 +270,7 @@ where
         // Statement_Await -> LabelledStatement_Await
         Action::Undefined,
         // Statement_Await -> ThrowStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> TryStatement_Await
         Action::Undefined,
         // Statement_Await -> DebuggerStatement
@@ -528,7 +528,7 @@ where
         // LabelledStatement_Await -> LabelIdentifier_Await COLON LabelledItem_Await
         Action::Undefined,
         // ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
         // TryStatement_Await -> TRY Block_Await Catch_Await
         Action::Undefined,
         // TryStatement_Await -> TRY Block_Await Finally_Await
@@ -2294,7 +2294,7 @@ where
         // Statement_Return -> LabelledStatement_Return
         Action::Undefined,
         // Statement_Return -> ThrowStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> TryStatement_Return
         Action::Undefined,
         // Statement_Return -> DebuggerStatement
@@ -2652,7 +2652,7 @@ where
         // Statement_Yield_Return -> LabelledStatement_Yield_Return
         Action::Undefined,
         // Statement_Yield_Return -> ThrowStatement_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> TryStatement_Yield_Return
         Action::Undefined,
         // Statement_Yield_Return -> DebuggerStatement
@@ -2686,7 +2686,7 @@ where
         // Statement_Await_Return -> LabelledStatement_Await_Return
         Action::Undefined,
         // Statement_Await_Return -> ThrowStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> TryStatement_Await_Return
         Action::Undefined,
         // Statement_Await_Return -> DebuggerStatement
@@ -2754,7 +2754,7 @@ where
         // Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return
         Action::Undefined,
         // Statement_Yield_Await_Return -> ThrowStatement_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> TryStatement_Yield_Await_Return
         Action::Undefined,
         // Statement_Yield_Await_Return -> DebuggerStatement
@@ -2956,7 +2956,7 @@ where
         // LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return
         Action::Undefined,
         // ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
         // TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
         Action::Undefined,
         // TryStatement_Yield_Return -> TRY Block_Yield_Return Finally_Yield_Return
@@ -3080,7 +3080,7 @@ where
         // LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON LabelledItem_Yield_Await_Return
         Action::Undefined,
         // ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
         // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return
         Action::Undefined,
         // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Finally_Yield_Await_Return

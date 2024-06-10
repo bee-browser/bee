@@ -402,6 +402,9 @@ impl<'a> Compiler<'a> {
             CompileCommand::Return(n) => unsafe {
                 bridge::compiler_peer_return(self.peer, *n as usize);
             },
+            CompileCommand::Throw => unsafe {
+                bridge::compiler_peer_throw(self.peer);
+            },
             CompileCommand::Discard => unsafe {
                 // TODO: the stack should be managed in the Rust side.
                 bridge::compiler_peer_discard(self.peer);

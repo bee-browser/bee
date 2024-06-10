@@ -178,6 +178,7 @@ void compiler_peer_release_bindings(Compiler* self, uint16_t n);
 void compiler_peer_continue(Compiler* self);
 void compiler_peer_break(Compiler* self);
 void compiler_peer_return(Compiler* self, size_t n);
+void compiler_peer_throw(Compiler* self);
 void compiler_peer_discard(Compiler* self);
 void compiler_peer_dump_stack(Compiler* self);
 
