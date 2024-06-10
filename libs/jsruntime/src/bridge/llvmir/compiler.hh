@@ -418,16 +418,20 @@ class Compiler {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 1);
   }
 
-  inline llvm::Value* CreateGetSymbolPtrOfBinding(llvm::Value* binding_ptr) {
+  inline llvm::Value* CreateGetReservedPtrOfBinding(llvm::Value* binding_ptr) {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 2);
   }
 
-  inline llvm::Value* CreateGetValueHolderPtrOfBinding(llvm::Value* binding_ptr) {
+  inline llvm::Value* CreateGetSymbolPtrOfBinding(llvm::Value* binding_ptr) {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 3);
   }
 
+  inline llvm::Value* CreateGetValueHolderPtrOfBinding(llvm::Value* binding_ptr) {
+    return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 4);
+  }
+
   inline void CreateStoreValueKindToBinding(ValueKind value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(builder_->getInt8(value), binding_ptr);
+    CreateStoreValueKindToBinding(builder_->getInt16(value), binding_ptr);
   }
 
   inline void CreateStoreValueKindToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
@@ -507,7 +511,7 @@ class Compiler {
 
   inline llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueKindPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getInt8Ty(), ptr);
+    return builder_->CreateLoad(builder_->getInt16Ty(), ptr);
   }
 
   inline llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
@@ -530,7 +534,7 @@ class Compiler {
   }
 
   inline void CreateStoreValueKindToValue(ValueKind value, llvm::Value* value_ptr) {
-    CreateStoreValueKindToValue(builder_->getInt8(value), value_ptr);
+    CreateStoreValueKindToValue(builder_->getInt16(value), value_ptr);
   }
 
   inline void CreateStoreValueKindToValue(llvm::Value* value, llvm::Value* value_ptr) {
