@@ -24,7 +24,7 @@ llvm::StructType* TypeHolder::CreateValueType() {
     value_type_ = llvm::StructType::create(context_, "Value");
     value_type_->setBody({
         // kind
-        builder_.getInt16Ty(),
+        builder_.getInt8Ty(),
         // holder
         builder_.getInt64Ty(),
     });
@@ -37,13 +37,11 @@ llvm::StructType* TypeHolder::CreateBindingType() {
     binding_type_ = llvm::StructType::create(context_, "Binding");
     binding_type_->setBody({
         // kind
-        builder_.getInt16Ty(),
+        builder_.getInt8Ty(),
         // flags
         builder_.getInt8Ty(),
         // reserved
-        builder_.getInt8Ty(),
-        // symbol
-        builder_.getInt32Ty(),
+        builder_.getInt16Ty(),
         // holder
         builder_.getInt64Ty(),
     });

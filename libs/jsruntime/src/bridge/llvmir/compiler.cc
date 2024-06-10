@@ -1591,10 +1591,10 @@ llvm::Value* Compiler::CreateIsNonNullish(const Item& item) {
 }
 
 llvm::Value* Compiler::CreateIsNonNullish(llvm::Value* value_ptr) {
-  constexpr uint16_t kNullish = ValueKind::Null | ValueKind::Undefined;
+  constexpr uint8_t kNullish = ValueKind::Null | ValueKind::Undefined;
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* nullish = builder_->CreateAnd(kind, builder_->getInt16(kNullish));
-  return builder_->CreateICmpEQ(nullish, builder_->getInt16(0));
+  auto* nullish = builder_->CreateAnd(kind, builder_->getInt8(kNullish));
+  return builder_->CreateICmpEQ(nullish, builder_->getInt8(0));
 }
 
 // 7.1.2 ToBoolean ( argument )
@@ -1731,12 +1731,12 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
 
 llvm::Value* Compiler::CreateIsUndefined(llvm::Value* value_ptr) {
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  return builder_->CreateICmpEQ(kind, builder_->getInt16(ValueKind::Undefined));
+  return builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Undefined));
 }
 
 llvm::Value* Compiler::CreateIsNull(llvm::Value* value_ptr) {
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  return builder_->CreateICmpEQ(kind, builder_->getInt16(ValueKind::Null));
+  return builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Null));
 }
 
 llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value) {
@@ -1745,7 +1745,7 @@ llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Va
   auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt16(ValueKind::Boolean));
+  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Boolean));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
@@ -1771,7 +1771,7 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
   auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt16(ValueKind::Number));
+  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Number));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
@@ -1797,7 +1797,7 @@ llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::V
   auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt16(ValueKind::Function));
+  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Function));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);

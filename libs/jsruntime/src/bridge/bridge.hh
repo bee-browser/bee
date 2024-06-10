@@ -26,7 +26,7 @@ static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
 // The value for each kind is a bit flag so that we can quickly check a category such as
 // "null or undefined".
-enum ValueKind : uint16_t {
+enum ValueKind : uint8_t {
   Undefined = 0x01,
   Null = 0x02,
   Boolean = 0x04,
@@ -34,7 +34,7 @@ enum ValueKind : uint16_t {
   Function = 0x10,
 };
 
-static_assert(sizeof(ValueKind) == sizeof(uint16_t), "size mismatched");
+static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
 
 union ValueHolder {
   uintptr_t opaque;
@@ -47,7 +47,7 @@ static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
 
 struct Value {
   ValueKind kind;
-  // uint8_t padding[6];
+  // uint8_t padding[7];
   ValueHolder holder;
 };
 
@@ -57,7 +57,7 @@ static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 struct Binding {
   ValueKind kind;
   uint8_t flags;
-  uint8_t reserved;
+  uint16_t reserved;
   uint32_t symbol;
   ValueHolder holder;
 };
