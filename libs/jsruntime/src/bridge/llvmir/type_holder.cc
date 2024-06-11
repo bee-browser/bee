@@ -42,6 +42,8 @@ llvm::StructType* TypeHolder::CreateBindingType() {
         builder_.getInt8Ty(),
         // reserved
         builder_.getInt16Ty(),
+        // symbol
+        builder_.getInt32Ty(),
         // holder
         builder_.getInt64Ty(),
     });
@@ -52,8 +54,8 @@ llvm::StructType* TypeHolder::CreateBindingType() {
 llvm::FunctionType* TypeHolder::CreateFunctionType() {
   if (function_type_ == nullptr) {
     function_type_ = llvm::FunctionType::get(
-        // no value returned
-        CreateValueType(),
+        // status code
+        builder_.getInt32Ty(),
         {
             // runtime (pointer to the runtime)
             builder_.getPtrTy(),
@@ -62,6 +64,8 @@ llvm::FunctionType* TypeHolder::CreateFunctionType() {
             // argc
             GetWordType(),
             // argv (pointer to a list of bindings)
+            builder_.getPtrTy(),
+            // return value (pointer to a value)
             builder_.getPtrTy(),
         },
         false);

@@ -666,6 +666,7 @@ void Compiler::BitwiseOrAssignment() {
 }
 
 void Compiler::Bindings(uint16_t n) {
+  max_bindings_ = n;
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
   bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
@@ -751,6 +752,7 @@ void Compiler::Call(uint16_t argc) {
   } else {
     argv = llvm::Constant::getNullValue(builder_->getPtrTy());
   }
+  auto* ret = CreateAllocaInEntryBlock(types_->CreateValueType());
   llvm::Value* scope = function_scope_;
   auto item = Dereference(nullptr, &scope);
   llvm::Value* func;
@@ -763,14 +765,10 @@ void Compiler::Call(uint16_t argc) {
     func = CreateLoadFunctionFromValue(item.value);
   }
   auto* prototype = types_->CreateFunctionType();
-  auto* ret =
-      builder_->CreateCall(prototype, func, {exec_context_, scope, types_->GetWord(argc), argv});
-  auto* value_ptr = CreateAllocaInEntryBlock(types_->CreateValueType());
-  auto* kind = CreateExtractValueKindFromValue(ret);
-  CreateStoreValueKindToValue(kind, value_ptr);
-  auto* holder = CreateExtractValueHolderFromValue(ret);
-  CreateStoreValueHolderToValue(holder, value_ptr);
-  PushAny(value_ptr);
+  auto* status = builder_->CreateCall(
+      prototype, func, {exec_context_, scope, types_->GetWord(argc), argv, ret});
+  UNUSED(status);  // TODO: exception
+  PushAny(ret);
 }
 
 void Compiler::Truthy() {
@@ -1180,23 +1178,41 @@ void Compiler::StartFunction(const char* name) {
     function_ = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
     functions_[name] = function_;
   }
+
   prologue_ = llvm::BasicBlock::Create(*context_, "prologue", function_);
   body_ = llvm::BasicBlock::Create(*context_, "body", function_);
+  epilogue_ = llvm::BasicBlock::Create(*context_, "epilogue", function_);
 
   exec_context_ = function_->getArg(0);
   outer_scope_ = function_->getArg(1);
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
+  ret_ = function_->getArg(4);
+
+  builder_->SetInsertPoint(prologue_);
+  status_ = builder_->CreateAlloca(builder_->getInt32Ty(), builder_->getInt32(1));
+  builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
+  CreateStoreUndefinedToValue(ret_);
 
   // Switch the insertion point.
   builder_->SetInsertPoint(body_);
 }
 
 void Compiler::EndFunction(bool optimize) {
-  auto* backup = builder_->GetInsertBlock();
+  builder_->CreateBr(epilogue_);
+
   builder_->SetInsertPoint(prologue_);
   builder_->CreateBr(body_);
-  builder_->SetInsertPoint(backup);
+
+  builder_->SetInsertPoint(epilogue_);
+  for (uint16_t i = 0; i < max_bindings_; ++i) {
+    // TODO: CG
+    auto* binding_ptr = CreateGetBindingPtrOfScope(function_scope_, i);
+    CreateStoreFlagsToBinding(0, binding_ptr);
+  }
+
+  auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_);
+  builder_->CreateRet(status);
 
   // DumpStack();
   // assert(stack_.empty());
@@ -1237,48 +1253,33 @@ void Compiler::ReleaseBindings(uint16_t n) {
 void Compiler::Continue() {
   assert(!continue_stack_.empty());
   auto* loop_continue = continue_stack_.back();
-
   builder_->CreateBr(loop_continue);
-
-  // FIXME: See the comment in Break().
-  auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
-  builder_->SetInsertPoint(dummy);
+  CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Break() {
   assert(!break_stack_.empty());
   auto* loop_break = break_stack_.back();
-
   builder_->CreateBr(loop_break);
-
-  // FIXME: Handle dead code in the proper way.
-  //
-  // We insert a **unreachable** basic block for dead code in order to avoid the following
-  // validation error: "Terminator found in the middle of a basic block!"
-  //
-  // IRBuilder accepts inserting instructions after a terminator instruction in a basic block.
-  // It's our responsibility to avoid a malformed basic block.  We think that it's not a good
-  // direction to check the existence of a terminator instruction in a basic block before
-  // insertion in efficiency and maintainability points of view.  Instead, we create an
-  // **unreachable** basic block for dead code.  Eventually, this basic block was removed in the
-  // optimization passes.
-  //
-  // At this point, we don't know whether this is a common method or not...
-  auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
-  builder_->SetInsertPoint(dummy);
+  CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Return(size_t n) {
-  Item item(Item::Undefined);
   if (n > 0) {
-    item = Dereference();
+    assert(n == 1);
+    auto item = Dereference();
+    CreateStoreItemToValue(item, ret_);
   }
-  auto* value = ToAny(item);
-  auto* ret = builder_->CreateLoad(types_->CreateValueType(), value);
-  auto backup = allocated_bindings_;
-  ReleaseBindings(backup);  // release all bindings
-  allocated_bindings_ = backup;
-  builder_->CreateRet(ret);
+  builder_->CreateBr(epilogue_);
+  CreateDeadcodeBasicBlock();
+}
+
+void Compiler::Throw() {
+  auto item = Dereference();
+  CreateStoreItemToValue(item, ret_);
+  builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Exception)), status_);
+  builder_->CreateBr(epilogue_);
+  CreateDeadcodeBasicBlock();
 }
 
 void Compiler::Discard() {
@@ -1591,10 +1592,8 @@ llvm::Value* Compiler::CreateIsNonNullish(const Item& item) {
 }
 
 llvm::Value* Compiler::CreateIsNonNullish(llvm::Value* value_ptr) {
-  constexpr uint8_t kNullish = ValueKind::Null | ValueKind::Undefined;
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* nullish = builder_->CreateAnd(kind, builder_->getInt8(kNullish));
-  return builder_->CreateICmpEQ(nullish, builder_->getInt8(0));
+  return builder_->CreateICmpUGT(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Null)));
 }
 
 // 7.1.2 ToBoolean ( argument )
@@ -1731,12 +1730,13 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
 
 llvm::Value* Compiler::CreateIsUndefined(llvm::Value* value_ptr) {
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  return builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Undefined));
+  return builder_->CreateICmpEQ(
+      kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Undefined)));
 }
 
 llvm::Value* Compiler::CreateIsNull(llvm::Value* value_ptr) {
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  return builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Null));
+  return builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Null)));
 }
 
 llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value) {
@@ -1745,7 +1745,8 @@ llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Va
   auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Boolean));
+  auto* cond =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Boolean)));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
@@ -1771,7 +1772,8 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
   auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Number));
+  auto* cond =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Number)));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
@@ -1797,7 +1799,8 @@ llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::V
   auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Function));
+  auto* cond =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Function)));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
