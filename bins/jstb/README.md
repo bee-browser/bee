@@ -5,8 +5,10 @@
 ## Usage
 
 ```shell
-jstb eval 'print(1)'
+jstb run program.js
 
 # or
-echo 'print(1)' | jstb eval
+cat program.js | jstb run
 ```
+
+All commands can be shown by `jstb -h`.
