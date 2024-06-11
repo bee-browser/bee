@@ -91,6 +91,14 @@ impl Value {
             holder: ValueHolder { function },
         }
     }
+
+    pub fn into_result(self, status: Status) -> Result<Value, Value> {
+        match status {
+            Status_Normal => Ok(self),
+            Status_Exception => Err(self),
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl From<()> for Value {
@@ -142,6 +150,45 @@ impl std::fmt::Debug for Value {
                 ValueKind_Function => write!(f, "function({:?})", self.holder.function.unwrap()),
                 _ => unreachable!(),
             }
+        }
+    }
+}
+
+pub trait ReturnValue {
+    fn status(&self) -> Status;
+    fn value(&self) -> Value;
+}
+
+impl<T> ReturnValue for T
+where
+    T: Clone + Into<Value>,
+{
+    fn status(&self) -> Status {
+        Status_Normal
+    }
+
+    fn value(&self) -> Value {
+        self.clone().into()
+    }
+}
+
+impl<T, E> ReturnValue for Result<T, E>
+where
+    T: Clone + Into<Value>,
+    E: Clone + Into<Value>,
+{
+    fn status(&self) -> Status {
+        if self.is_ok() {
+            Status_Normal
+        } else {
+            Status_Exception
+        }
+    }
+
+    fn value(&self) -> Value {
+        match self {
+            Ok(v) => v.clone().into(),
+            Err(err) => err.clone().into(),
         }
     }
 }

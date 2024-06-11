@@ -1,3 +1,4 @@
+use assert_matches::assert_matches;
 use jsruntime::Runtime;
 use jsruntime::Value;
 
@@ -11,11 +12,26 @@ macro_rules! eval {
             assert_eq!(actual, expected);
         });
         let module = runtime.compile_script($src.as_ref(), true).unwrap();
-        runtime.eval(module);
+        assert_matches!(runtime.eval(module), Ok(_));
     };
     (file: $filename:literal, $expected:expr) => {
         let src = include_str!($filename);
         eval!(src, $expected);
+    };
+    ($src:expr, throws: $expected:expr) => {
+        Runtime::initialize();
+        let mut runtime = Runtime::new();
+        let module = runtime.compile_script($src.as_ref(), true).unwrap();
+        assert_matches!(runtime.eval(module), Err(v) => {
+            // Some cases including `f64::NAN` fail in `assert_eq!()`.
+            let actual = format!("{:?}", v);
+            let expected = format!("{:?}", Value::from($expected));
+            assert_eq!(actual, expected);
+        });
+    };
+    (file: $filename:literal, throws: $expected:expr) => {
+        let src = include_str!($filename);
+        eval!(src, throws: $expected);
     };
 }
 
@@ -784,4 +800,29 @@ fn eval_switch_statement_cases_default_cases_fall_through() {
 #[test]
 fn eval_switch_statement_cases_default_cases_break() {
     eval!(file: "switch_statement_cases_default_cases_break.js", 2);
+}
+
+#[test]
+fn eval_throw_undefined() {
+    eval!(file: "throw_undefined.js", throws: Value::UNDEFINED);
+}
+
+#[test]
+fn eval_throw_null() {
+    eval!(file: "throw_null.js", throws: Value::NULL);
+}
+
+#[test]
+fn eval_throw_true() {
+    eval!(file: "throw_true.js", throws: true);
+}
+
+#[test]
+fn eval_throw_false() {
+    eval!(file: "throw_false.js", throws: false);
+}
+
+#[test]
+fn eval_throw_number() {
+    eval!(file: "throw_number.js", throws: 1);
 }

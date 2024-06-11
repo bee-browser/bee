@@ -608,7 +608,8 @@ class Compiler {
   llvm::Value* outer_scope_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
-  llvm::Value* return_value_ = nullptr;
+  llvm::Value* ret_ = nullptr;
+  llvm::Value* status_ = nullptr;
   llvm::Type* bindings_type_ = nullptr;
   llvm::StructType* function_scope_type_ = nullptr;
   llvm::Value* function_scope_ = nullptr;

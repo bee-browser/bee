@@ -3,8 +3,10 @@
 #include <cstddef>
 #include <cstdint>
 
+enum class Status;
 struct Value;
-typedef Value (*FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv);
+typedef Status (
+    *FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv, Value* ret);
 
 enum class LocatorKind : uint8_t {
   None,
@@ -23,6 +25,13 @@ struct Locator {
 };
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
+
+enum class Status : int32_t {
+  Normal = 0,
+  Exception,
+};
+
+static_assert(sizeof(Status) == sizeof(int32_t), "size mismatched");
 
 enum class ValueKind : uint8_t {
   // DO NOT CHANGE THE ORDER OF THE FOLLOWING ENUM VARIANTS.

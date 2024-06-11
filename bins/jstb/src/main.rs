@@ -59,15 +59,18 @@ fn main() -> Result<()> {
             let source = read_source(args.source.as_ref())?;
             let module = runtime.compile_script(&source, !args.no_optimize).unwrap();
             module.print(false); // to STDOUT
+            Ok(())
         }
         Command::Run(args) => {
             let source = read_source(args.source.as_ref())?;
             // Always perform optimization.
             let module = runtime.compile_script(&source, true).unwrap();
-            runtime.eval(module);
+            match runtime.eval(module) {
+                Ok(_) => Ok(()),
+                Err(v) => anyhow::bail!("Uncaught {v:?}"),
+            }
         }
     }
-    Ok(())
 }
 
 fn read_source(file: Option<&PathBuf>) -> Result<String> {

@@ -752,6 +752,7 @@ void Compiler::Call(uint16_t argc) {
   } else {
     argv = llvm::Constant::getNullValue(builder_->getPtrTy());
   }
+  auto* ret = CreateAllocaInEntryBlock(types_->CreateValueType());
   llvm::Value* scope = function_scope_;
   auto item = Dereference(nullptr, &scope);
   llvm::Value* func;
@@ -764,14 +765,10 @@ void Compiler::Call(uint16_t argc) {
     func = CreateLoadFunctionFromValue(item.value);
   }
   auto* prototype = types_->CreateFunctionType();
-  auto* ret =
-      builder_->CreateCall(prototype, func, {exec_context_, scope, types_->GetWord(argc), argv});
-  auto* value_ptr = CreateAllocaInEntryBlock(types_->CreateValueType());
-  auto* kind = CreateExtractValueKindFromValue(ret);
-  CreateStoreValueKindToValue(kind, value_ptr);
-  auto* holder = CreateExtractValueHolderFromValue(ret);
-  CreateStoreValueHolderToValue(holder, value_ptr);
-  PushAny(value_ptr);
+  auto* status = builder_->CreateCall(
+      prototype, func, {exec_context_, scope, types_->GetWord(argc), argv, ret});
+  UNUSED(status);  // TODO: exception
+  PushAny(ret);
 }
 
 void Compiler::Truthy() {
@@ -1190,10 +1187,12 @@ void Compiler::StartFunction(const char* name) {
   outer_scope_ = function_->getArg(1);
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
+  ret_ = function_->getArg(4);
 
   builder_->SetInsertPoint(prologue_);
-  return_value_ = builder_->CreateAlloca(types_->CreateValueType(), builder_->getInt32(1));
-  CreateStoreUndefinedToValue(return_value_);
+  status_ = builder_->CreateAlloca(builder_->getInt32Ty(), builder_->getInt32(1));
+  builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
+  CreateStoreUndefinedToValue(ret_);
 
   // Switch the insertion point.
   builder_->SetInsertPoint(body_);
@@ -1211,8 +1210,9 @@ void Compiler::EndFunction(bool optimize) {
     auto* binding_ptr = CreateGetBindingPtrOfScope(function_scope_, i);
     CreateStoreFlagsToBinding(0, binding_ptr);
   }
-  auto* ret = builder_->CreateLoad(types_->CreateValueType(), return_value_);
-  builder_->CreateRet(ret);
+
+  auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_);
+  builder_->CreateRet(status);
 
   // DumpStack();
   // assert(stack_.empty());
@@ -1268,7 +1268,7 @@ void Compiler::Return(size_t n) {
   if (n > 0) {
     assert(n == 1);
     auto item = Dereference();
-    CreateStoreItemToValue(item, return_value_);
+    CreateStoreItemToValue(item, ret_);
   }
   builder_->CreateBr(epilogue_);
   CreateDeadcodeBasicBlock();
@@ -1276,7 +1276,8 @@ void Compiler::Return(size_t n) {
 
 void Compiler::Throw() {
   auto item = Dereference();
-  CreateStoreItemToValue(item, return_value_);
+  CreateStoreItemToValue(item, ret_);
+  builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Exception)), status_);
   builder_->CreateBr(epilogue_);
   CreateDeadcodeBasicBlock();
 }

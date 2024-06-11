@@ -17,6 +17,7 @@ cc = { version = "1.0.99", features = ["parallel"] }
 duct = "0.13.7"
 
 [dev-dependencies]
+assert_matches = "1.5.0"
 criterion = "0.5.1"
 
 [[bench]]
