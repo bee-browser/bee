@@ -29,7 +29,7 @@ cat | cargo run -rqp estree -- serve | jj -p
 
 The server can accept requests like below:
 
-```json
+```jsonc
 {
   "sourceType": "script",  // "script" or "module".
   "source": "1"            // A source text to be parsed.
@@ -38,7 +38,7 @@ The server can accept requests like below:
 
 and output responses like below:
 
-```json
+```jsonc
 {
   // The ESTree representation of the JavaScript program.
   "program": {
