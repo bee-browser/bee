@@ -127,6 +127,7 @@ class Compiler {
   void Continue();
   void Break();
   void Return(size_t n);
+  void Throw();
   void Discard();
 
   void DumpStack();
@@ -418,16 +419,20 @@ class Compiler {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 1);
   }
 
-  inline llvm::Value* CreateGetSymbolPtrOfBinding(llvm::Value* binding_ptr) {
+  inline llvm::Value* CreateGetReservedPtrOfBinding(llvm::Value* binding_ptr) {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 2);
   }
 
-  inline llvm::Value* CreateGetValueHolderPtrOfBinding(llvm::Value* binding_ptr) {
+  inline llvm::Value* CreateGetSymbolPtrOfBinding(llvm::Value* binding_ptr) {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 3);
   }
 
+  inline llvm::Value* CreateGetValueHolderPtrOfBinding(llvm::Value* binding_ptr) {
+    return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 4);
+  }
+
   inline void CreateStoreValueKindToBinding(ValueKind value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(builder_->getInt8(value), binding_ptr);
+    CreateStoreValueKindToBinding(builder_->getInt8(static_cast<uint8_t>(value)), binding_ptr);
   }
 
   inline void CreateStoreValueKindToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
@@ -530,7 +535,7 @@ class Compiler {
   }
 
   inline void CreateStoreValueKindToValue(ValueKind value, llvm::Value* value_ptr) {
-    CreateStoreValueKindToValue(builder_->getInt8(value), value_ptr);
+    CreateStoreValueKindToValue(builder_->getInt8(static_cast<uint8_t>(value)), value_ptr);
   }
 
   inline void CreateStoreValueKindToValue(llvm::Value* value, llvm::Value* value_ptr) {
@@ -572,6 +577,24 @@ class Compiler {
 
   void CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr);
 
+  // FIXME: Handle dead code in the proper way.
+  //
+  // We insert a **unreachable** basic block for dead code in order to avoid the following
+  // validation error: "Terminator found in the middle of a basic block!"
+  //
+  // IRBuilder accepts inserting instructions after a terminator instruction in a basic block.
+  // It's our responsibility to avoid a malformed basic block.  We think that it's not a good
+  // direction to check the existence of a terminator instruction in a basic block before
+  // insertion in efficiency and maintainability points of view.  Instead, we create an
+  // **unreachable** basic block for dead code.  Eventually, this basic block was removed in the
+  // optimization passes.
+  //
+  // At this point, we don't know whether this is a common method or not...
+  inline void CreateDeadcodeBasicBlock() {
+    auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
+    builder_->SetInsertPoint(dummy);
+  }
+
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
@@ -580,14 +603,18 @@ class Compiler {
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* prologue_ = nullptr;
   llvm::BasicBlock* body_ = nullptr;
+  llvm::BasicBlock* epilogue_ = nullptr;
   llvm::Value* exec_context_ = nullptr;
   llvm::Value* outer_scope_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
+  llvm::Value* ret_ = nullptr;
+  llvm::Value* status_ = nullptr;
   llvm::Type* bindings_type_ = nullptr;
   llvm::StructType* function_scope_type_ = nullptr;
   llvm::Value* function_scope_ = nullptr;
   llvm::Value* bindings_ = nullptr;
+  uint16_t max_bindings_ = 0;
   uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;

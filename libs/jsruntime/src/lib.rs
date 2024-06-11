@@ -11,6 +11,8 @@ use executor::Executor;
 use function::FunctionId;
 use function::FunctionRegistry;
 
+use bridge::ReturnValue;
+use bridge::Status;
 pub use bridge::Value;
 
 pub struct Runtime {
@@ -37,7 +39,7 @@ impl Runtime {
     pub fn with_host_function<F, R>(self, name: &str, func: F) -> Self
     where
         F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
-        R: Into<Value>,
+        R: Clone + ReturnValue,
     {
         self.with_host_function_internal(name, wrap(func))
     }
@@ -55,11 +57,12 @@ impl Runtime {
         self
     }
 
-    pub fn eval(&mut self, module: Module) {
+    pub fn eval(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "eval");
         self.executor.register_module(module);
         let func = self.function_registry.get_native_mut(0);
-        match self.executor.get_native_func(&func.name) {
+        let mut ret = Value::UNDEFINED;
+        let status = match self.executor.get_native_func(&func.name) {
             Some(main) => unsafe {
                 main(
                     // exec_context
@@ -70,10 +73,13 @@ impl Runtime {
                     0,
                     // argv
                     std::ptr::null_mut(),
-                );
+                    // ret
+                    &mut ret as *mut Value,
+                )
             },
             None => unreachable!(),
-        }
+        };
+        ret.into_result(status)
     }
 }
 
@@ -105,15 +111,20 @@ impl Drop for Module {
 
 // See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 
-type HostFn =
-    unsafe extern "C" fn(*mut std::ffi::c_void, *mut std::ffi::c_void, usize, *mut Value) -> Value;
+type HostFn = unsafe extern "C" fn(
+    *mut std::ffi::c_void,
+    *mut std::ffi::c_void,
+    usize,
+    *mut Value,
+    *mut Value,
+) -> Status;
 
 // This function generates a wrapper function for each `host_func` at compile time.
 #[inline(always)]
 fn wrap<F, R>(host_func: F) -> HostFn
 where
     F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
-    R: Into<Value>,
+    R: Clone + ReturnValue,
 {
     debug_assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
     std::mem::forget(host_func);
@@ -125,15 +136,19 @@ unsafe extern "C" fn wrapper<F, R>(
     outer_scope: *mut std::ffi::c_void,
     argc: usize,
     argv: *mut Value,
-) -> Value
+    ret: *mut Value,
+) -> Status
 where
     F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
-    R: Into<Value>,
+    R: Clone + ReturnValue,
 {
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
     let runtime = &mut *(exec_context as *mut Runtime);
     let _ = outer_scope;
     let args = std::slice::from_raw_parts(argv as *const Value, argc);
-    host_fn(runtime, args).into()
+    // TODO: the return value is copied twice.  that's inefficient.
+    let retval = host_fn(runtime, args);
+    *ret = retval.value();
+    retval.status()
 }

@@ -1001,6 +1001,7 @@ dependencies = [
 name = "jsruntime"
 version = "0.0.0"
 dependencies = [
+ "assert_matches",
  "base",
  "bindgen",
  "bitflags",

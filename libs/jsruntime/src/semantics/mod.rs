@@ -119,6 +119,7 @@ impl<'r> Analyzer<'r> {
             Node::CaseClause(has_statement) => self.handle_case_clause(has_statement),
             Node::DefaultSelector => self.handle_default_selector(),
             Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
+            Node::ThrowStatement => self.handle_throw_statement(),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
@@ -370,6 +371,13 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_default_clause(has_statement);
+    }
+
+    fn handle_throw_statement(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_throw_statement();
     }
 
     fn handle_formal_parameter(&mut self) {
@@ -896,6 +904,10 @@ impl FunctionContext {
         }
     }
 
+    fn process_throw_statement(&mut self) {
+        self.put_command(CompileCommand::Throw);
+    }
+
     fn start_scope(&mut self) {
         // Push `Nop` as a placeholder.
         // It will be replaced with `AllocateBindings(n)` in `end_scope()`.
@@ -1083,6 +1095,7 @@ pub enum CompileCommand {
     Continue,
     Break,
     Return(u32),
+    Throw,
 
     Discard,
 }

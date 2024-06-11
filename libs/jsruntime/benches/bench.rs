@@ -19,7 +19,7 @@ fn fib(c: &mut Criterion) {
                 b.iter(|| {
                     let mut runtime = Runtime::new();
                     let module = runtime.compile_script($src, true).unwrap();
-                    runtime.eval(module);
+                    runtime.eval(module).unwrap();
                 })
             });
         };

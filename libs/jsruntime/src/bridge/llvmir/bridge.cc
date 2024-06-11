@@ -412,6 +412,10 @@ void compiler_peer_return(Compiler* self, size_t n) {
   self->Return(n);
 }
 
+void compiler_peer_throw(Compiler* self) {
+  self->Throw();
+}
+
 void compiler_peer_discard(Compiler* self) {
   self->Discard();
 }
