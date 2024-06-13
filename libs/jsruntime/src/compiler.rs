@@ -136,6 +136,9 @@ impl<'a> Compiler<'a> {
                 assert_ne!(*locator, Locator::NONE);
                 bridge::compiler_peer_reference(self.peer, symbol.id(), *locator);
             },
+            CompileCommand::Exception => unsafe {
+                bridge::compiler_peer_exception(self.peer);
+            },
             CompileCommand::Bindings(n) => unsafe {
                 bridge::compiler_peer_bindings(self.peer, *n);
             },
@@ -392,6 +395,18 @@ impl<'a> Compiler<'a> {
             CompileCommand::Switch(n, default_index) => unsafe {
                 let i = default_index.unwrap_or(*n);
                 bridge::compiler_peer_switch(self.peer, *n, i);
+            },
+            CompileCommand::Try => unsafe {
+                bridge::compiler_peer_try(self.peer);
+            },
+            CompileCommand::Catch(nominal) => unsafe {
+                bridge::compiler_peer_catch(self.peer, *nominal);
+            },
+            CompileCommand::Finally(nominal) => unsafe {
+                bridge::compiler_peer_finally(self.peer, *nominal);
+            },
+            CompileCommand::TryEnd => unsafe {
+                bridge::compiler_peer_try_end(self.peer);
             },
             CompileCommand::Continue => unsafe {
                 bridge::compiler_peer_continue(self.peer);

@@ -118,11 +118,11 @@
   action: labeled_statement
 - rule: ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
   action: throw_statement
-- rule: TryStatement -> TRY Block Catch
+- rule: TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_
   action: try_catch_statement
-- rule: TryStatement -> TRY Block Finally
+- rule: TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally
   action: try_finally_statement
-- rule: TryStatement -> TRY Block Catch Finally
+- rule: TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_ Finally
   action: try_catch_finally_statement
 - rule: DebuggerStatement -> DEBUGGER SEMICOLON
   action: debugger_statement
@@ -274,10 +274,16 @@
   action: nop
 - rule: LabelledItem -> FunctionDeclaration
   action: nop
+- rule: _TRY_BLOCK_ -> (empty)
+  action: nop
+- rule: _CATCH_BLOCK_ -> (empty)
+  action: nop
 - rule: Catch -> CATCH LPAREN CatchParameter RPAREN Block
   action: catch_clause
 - rule: Catch -> CATCH Block
   action: catch_clause_no_param
+- rule: _FINALLY_BLOCK_ -> (empty)
+  action: nop
 - rule: Finally -> FINALLY Block
   action: finally_clause
 - rule: >-
@@ -485,11 +491,13 @@
   action: labeled_statement
 - rule: ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
   action: throw_statement
-- rule: TryStatement_Await -> TRY Block_Await Catch_Await
+- rule: TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await _FINALLY_BLOCK_
   action: try_catch_statement
-- rule: TryStatement_Await -> TRY Block_Await Finally_Await
+- rule: TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Await
   action: try_finally_statement
-- rule: TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
+- rule: >-
+    TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await _FINALLY_BLOCK_
+    Finally_Await
   action: try_catch_finally_statement
 - rule: _BLOCK_SCOPE_ -> (empty)
   action: nop
@@ -2344,11 +2352,15 @@
   action: with_statement
 - rule: LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
   action: labeled_statement
-- rule: TryStatement_Return -> TRY Block_Return Catch_Return
+- rule: TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_
   action: try_catch_statement
-- rule: TryStatement_Return -> TRY Block_Return Finally_Return
+- rule: >-
+    TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ _FINALLY_BLOCK_
+    Finally_Return
   action: try_finally_statement
-- rule: TryStatement_Return -> TRY Block_Return Catch_Return Finally_Return
+- rule: >-
+    TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_
+    Finally_Return
   action: try_catch_finally_statement
 - rule: BindingRestProperty_Yield -> ELLIPSIS BindingIdentifier_Yield
   action: rest_element
@@ -2724,11 +2736,17 @@
   action: labeled_statement
 - rule: ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
   action: throw_statement
-- rule: TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
+- rule: >-
+    TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_
+    Catch_Yield_Return _FINALLY_BLOCK_
   action: try_catch_statement
-- rule: TryStatement_Yield_Return -> TRY Block_Yield_Return Finally_Yield_Return
+- rule: >-
+    TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_ _FINALLY_BLOCK_
+    Finally_Yield_Return
   action: try_finally_statement
-- rule: TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return Finally_Yield_Return
+- rule: >-
+    TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_
+    Catch_Yield_Return _FINALLY_BLOCK_ Finally_Yield_Return
   action: try_catch_finally_statement
 - rule: HoistableDeclaration_Yield -> FunctionDeclaration_Yield
   action: nop
@@ -2766,11 +2784,17 @@
   action: with_statement
 - rule: LabelledStatement_Await_Return -> LabelIdentifier_Await COLON LabelledItem_Await_Return
   action: labeled_statement
-- rule: TryStatement_Await_Return -> TRY Block_Await_Return Catch_Await_Return
+- rule: >-
+    TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_
+    Catch_Await_Return _FINALLY_BLOCK_
   action: try_catch_statement
-- rule: TryStatement_Await_Return -> TRY Block_Await_Return Finally_Await_Return
+- rule: >-
+    TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ _FINALLY_BLOCK_
+    Finally_Await_Return
   action: try_finally_statement
-- rule: TryStatement_Await_Return -> TRY Block_Await_Return Catch_Await_Return Finally_Await_Return
+- rule: >-
+    TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_
+    Catch_Await_Return _FINALLY_BLOCK_ Finally_Await_Return
   action: try_catch_finally_statement
 - rule: BindingProperty_Yield_Await -> SingleNameBinding_Yield_Await
   action: either_right
@@ -2865,13 +2889,17 @@
     ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await
     SEMICOLON
   action: throw_statement
-- rule: TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return
+- rule: >-
+    TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_
+    Catch_Yield_Await_Return _FINALLY_BLOCK_
   action: try_catch_statement
-- rule: TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Finally_Yield_Await_Return
+- rule: >-
+    TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_
+    _FINALLY_BLOCK_ Finally_Yield_Await_Return
   action: try_finally_statement
 - rule: >-
-    TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return
-    Finally_Yield_Await_Return
+    TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_
+    Catch_Yield_Await_Return _FINALLY_BLOCK_ Finally_Yield_Await_Return
   action: try_catch_finally_statement
 - rule: HoistableDeclaration_Yield_Await -> FunctionDeclaration_Yield_Await
   action: nop
