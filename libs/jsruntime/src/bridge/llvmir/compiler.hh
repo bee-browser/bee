@@ -44,6 +44,7 @@ class Compiler {
   void Number(double value);
   void Function(uint32_t func_id, const char* name);
   void Reference(uint32_t symbol, Locator locator);
+  void Exception();
   void PostfixIncrement();
   void PostfixDecrement();
   void PrefixIncrement();
@@ -120,6 +121,10 @@ class Compiler {
   void CaseClause(bool has_statement);
   void DefaultClause(bool has_statement);
   void Switch(uint32_t n, uint32_t default_index);
+  void Try();
+  void Catch(bool nominal);
+  void Finally(bool nominal);
+  void TryEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
@@ -296,6 +301,14 @@ class Compiler {
     assert(item.type == Item::Block);
     auto* block = item.block;
     stack_.pop_back();
+    return block;
+  }
+
+  inline llvm::BasicBlock* PeekBlock() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    assert(item.type == Item::Block);
+    auto* block = item.block;
     return block;
   }
 
@@ -595,6 +608,8 @@ class Compiler {
     builder_->SetInsertPoint(dummy);
   }
 
+  // TODO: separate variables that must be reset in EndFunction() from others.
+
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
@@ -620,6 +635,8 @@ class Compiler {
   std::vector<Item> stack_;
   std::vector<llvm::BasicBlock*> break_stack_;
   std::vector<llvm::BasicBlock*> continue_stack_;
+  std::vector<llvm::BasicBlock*> catch_stack_;
+
   std::unordered_map<std::string, llvm::Function*> functions_;
 
   // for optimization

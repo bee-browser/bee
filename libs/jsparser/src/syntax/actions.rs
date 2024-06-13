@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2116] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2119] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -80,7 +80,7 @@ where
         // Statement -> ThrowStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> TryStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> DebuggerStatement
         Action::Undefined,
         // Declaration -> HoistableDeclaration
@@ -147,12 +147,18 @@ where
         Action::Undefined,
         // ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
         Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
-        // TryStatement -> TRY Block Catch
-        Action::Undefined,
-        // TryStatement -> TRY Block Finally
-        Action::Undefined,
-        // TryStatement -> TRY Block Catch Finally
-        Action::Undefined,
+        // TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_
+        Action::Invoke(
+            Self::process_try_statement_no_finally,
+            "process_try_statement_no_finally",
+        ),
+        // TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally
+        Action::Invoke(
+            Self::process_try_statement_no_catch,
+            "process_try_statement_no_catch",
+        ),
+        // TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_ Finally
+        Action::Invoke(Self::process_try_statement, "process_try_statement"),
         // DebuggerStatement -> DEBUGGER SEMICOLON
         Action::Undefined,
         // HoistableDeclaration -> FunctionDeclaration
@@ -272,7 +278,7 @@ where
         // Statement_Await -> ThrowStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> TryStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> DebuggerStatement
         Action::Undefined,
         // Block -> LBRACE RBRACE
@@ -317,12 +323,21 @@ where
         Action::Undefined,
         // LabelledItem -> FunctionDeclaration
         Action::Undefined,
+        // _TRY_BLOCK_ -> (empty)
+        Action::Invoke(Self::process_try_block, "process_try_block"),
+        // _CATCH_BLOCK_ -> (empty)
+        Action::Invoke(Self::process_catch_block, "process_catch_block"),
         // Catch -> CATCH LPAREN CatchParameter RPAREN Block
-        Action::Undefined,
+        Action::Invoke(Self::process_catch, "process_catch"),
         // Catch -> CATCH Block
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_catch_no_parameter,
+            "process_catch_no_parameter",
+        ),
+        // _FINALLY_BLOCK_ -> (empty)
+        Action::Invoke(Self::process_finally_block, "process_finally_block"),
         // Finally -> FINALLY Block
-        Action::Undefined,
+        Action::Invoke(Self::process_finally, "process_finally"),
         // FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::process_function_declaration,
@@ -529,12 +544,18 @@ where
         Action::Undefined,
         // ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
         Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
-        // TryStatement_Await -> TRY Block_Await Catch_Await
-        Action::Undefined,
-        // TryStatement_Await -> TRY Block_Await Finally_Await
-        Action::Undefined,
-        // TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
-        Action::Undefined,
+        // TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await _FINALLY_BLOCK_
+        Action::Invoke(
+            Self::process_try_statement_no_finally,
+            "process_try_statement_no_finally",
+        ),
+        // TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Await
+        Action::Invoke(
+            Self::process_try_statement_no_catch,
+            "process_try_statement_no_catch",
+        ),
+        // TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await _FINALLY_BLOCK_ Finally_Await
+        Action::Invoke(Self::process_try_statement, "process_try_statement"),
         // _BLOCK_SCOPE_ -> (empty)
         Action::Invoke(Self::process_block_scope, "process_block_scope"),
         // VariableDeclaration_In -> BindingIdentifier
@@ -696,7 +717,7 @@ where
         // Identifier -> IdentifierNameButNotReservedWord
         Action::Invoke(Self::process_identifier, "process_identifier"),
         // CatchParameter -> BindingIdentifier
-        Action::Undefined,
+        Action::Invoke(Self::process_catch_parameter, "process_catch_parameter"),
         // CatchParameter -> BindingPattern
         Action::Undefined,
         // _FUNCTION_CONTEXT_ -> (empty)
@@ -1030,11 +1051,14 @@ where
         // LabelledItem_Await -> FunctionDeclaration_Await
         Action::Undefined,
         // Catch_Await -> CATCH LPAREN CatchParameter_Await RPAREN Block_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Await -> CATCH Block_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_catch_no_parameter,
+            "process_catch_no_parameter",
+        ),
         // Finally_Await -> FINALLY Block_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_finally, "process_finally"),
         // Initializer_In -> ASSIGN AssignmentExpression_In
         Action::Invoke(Self::process_initializer, "process_initializer"),
         // BindingPattern -> ObjectBindingPattern
@@ -1456,7 +1480,7 @@ where
             "process_case_block_cases_default_cases",
         ),
         // CatchParameter_Await -> BindingIdentifier_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_catch_parameter, "process_catch_parameter"),
         // CatchParameter_Await -> BindingPattern_Await
         Action::Undefined,
         // ObjectBindingPattern -> LBRACE RBRACE
@@ -2296,7 +2320,7 @@ where
         // Statement_Return -> ThrowStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> TryStatement_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> DebuggerStatement
         Action::Undefined,
         // ObjectBindingPattern_Yield -> LBRACE RBRACE
@@ -2583,12 +2607,18 @@ where
         Action::Undefined,
         // LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
         Action::Undefined,
-        // TryStatement_Return -> TRY Block_Return Catch_Return
-        Action::Undefined,
-        // TryStatement_Return -> TRY Block_Return Finally_Return
-        Action::Undefined,
-        // TryStatement_Return -> TRY Block_Return Catch_Return Finally_Return
-        Action::Undefined,
+        // TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_
+        Action::Invoke(
+            Self::process_try_statement_no_finally,
+            "process_try_statement_no_finally",
+        ),
+        // TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Return
+        Action::Invoke(
+            Self::process_try_statement_no_catch,
+            "process_try_statement_no_catch",
+        ),
+        // TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_ Finally_Return
+        Action::Invoke(Self::process_try_statement, "process_try_statement"),
         // BindingRestProperty_Yield -> ELLIPSIS BindingIdentifier_Yield
         Action::Undefined,
         // BindingPropertyList_Yield -> BindingProperty_Yield
@@ -2654,7 +2684,7 @@ where
         // Statement_Yield_Return -> ThrowStatement_Yield
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> TryStatement_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> DebuggerStatement
         Action::Undefined,
         // Declaration_Yield -> HoistableDeclaration_Yield
@@ -2688,7 +2718,7 @@ where
         // Statement_Await_Return -> ThrowStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> TryStatement_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> DebuggerStatement
         Action::Undefined,
         // BindingRestProperty_Yield_Await -> ELLIPSIS BindingIdentifier_Yield_Await
@@ -2756,7 +2786,7 @@ where
         // Statement_Yield_Await_Return -> ThrowStatement_Yield_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> TryStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> DebuggerStatement
         Action::Undefined,
         // Declaration_Yield_Await -> HoistableDeclaration_Yield_Await
@@ -2878,11 +2908,14 @@ where
         // LabelledItem_Return -> FunctionDeclaration
         Action::Undefined,
         // Catch_Return -> CATCH LPAREN CatchParameter RPAREN Block_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Return -> CATCH Block_Return
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_catch_no_parameter,
+            "process_catch_no_parameter",
+        ),
         // Finally_Return -> FINALLY Block_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_finally, "process_finally"),
         // BindingProperty_Yield -> SingleNameBinding_Yield
         Action::Undefined,
         // BindingProperty_Yield -> PropertyName_Yield COLON BindingElement_Yield
@@ -2957,12 +2990,18 @@ where
         Action::Undefined,
         // ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
         Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
-        // TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
-        Action::Undefined,
-        // TryStatement_Yield_Return -> TRY Block_Yield_Return Finally_Yield_Return
-        Action::Undefined,
-        // TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return Finally_Yield_Return
-        Action::Undefined,
+        // TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_ Catch_Yield_Return _FINALLY_BLOCK_
+        Action::Invoke(
+            Self::process_try_statement_no_finally,
+            "process_try_statement_no_finally",
+        ),
+        // TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Yield_Return
+        Action::Invoke(
+            Self::process_try_statement_no_catch,
+            "process_try_statement_no_catch",
+        ),
+        // TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_ Catch_Yield_Return _FINALLY_BLOCK_ Finally_Yield_Return
+        Action::Invoke(Self::process_try_statement, "process_try_statement"),
         // HoistableDeclaration_Yield -> FunctionDeclaration_Yield
         Action::Invoke(
             Self::process_hoistable_declaration,
@@ -3001,12 +3040,18 @@ where
         Action::Undefined,
         // LabelledStatement_Await_Return -> LabelIdentifier_Await COLON LabelledItem_Await_Return
         Action::Undefined,
-        // TryStatement_Await_Return -> TRY Block_Await_Return Catch_Await_Return
-        Action::Undefined,
-        // TryStatement_Await_Return -> TRY Block_Await_Return Finally_Await_Return
-        Action::Undefined,
-        // TryStatement_Await_Return -> TRY Block_Await_Return Catch_Await_Return Finally_Await_Return
-        Action::Undefined,
+        // TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_
+        Action::Invoke(
+            Self::process_try_statement_no_finally,
+            "process_try_statement_no_finally",
+        ),
+        // TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Await_Return
+        Action::Invoke(
+            Self::process_try_statement_no_catch,
+            "process_try_statement_no_catch",
+        ),
+        // TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_ Finally_Await_Return
+        Action::Invoke(Self::process_try_statement, "process_try_statement"),
         // BindingProperty_Yield_Await -> SingleNameBinding_Yield_Await
         Action::Undefined,
         // BindingProperty_Yield_Await -> PropertyName_Yield_Await COLON BindingElement_Yield_Await
@@ -3081,12 +3126,18 @@ where
         Action::Undefined,
         // ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
         Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
-        // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return
-        Action::Undefined,
-        // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Finally_Yield_Await_Return
-        Action::Undefined,
-        // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return Finally_Yield_Await_Return
-        Action::Undefined,
+        // TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_ Catch_Yield_Await_Return _FINALLY_BLOCK_
+        Action::Invoke(
+            Self::process_try_statement_no_finally,
+            "process_try_statement_no_finally",
+        ),
+        // TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Yield_Await_Return
+        Action::Invoke(
+            Self::process_try_statement_no_catch,
+            "process_try_statement_no_catch",
+        ),
+        // TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_ Catch_Yield_Await_Return _FINALLY_BLOCK_ Finally_Yield_Await_Return
+        Action::Invoke(Self::process_try_statement, "process_try_statement"),
         // HoistableDeclaration_Yield_Await -> FunctionDeclaration_Yield_Await
         Action::Invoke(
             Self::process_hoistable_declaration,
@@ -3372,11 +3423,14 @@ where
         // LabelledItem_Yield_Return -> FunctionDeclaration_Yield
         Action::Undefined,
         // Catch_Yield_Return -> CATCH LPAREN CatchParameter_Yield RPAREN Block_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Yield_Return -> CATCH Block_Yield_Return
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_catch_no_parameter,
+            "process_catch_no_parameter",
+        ),
         // Finally_Yield_Return -> FINALLY Block_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_finally, "process_finally"),
         // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::process_function_declaration,
@@ -3419,11 +3473,14 @@ where
         // LabelledItem_Await_Return -> FunctionDeclaration_Await
         Action::Undefined,
         // Catch_Await_Return -> CATCH LPAREN CatchParameter_Await RPAREN Block_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Await_Return -> CATCH Block_Await_Return
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_catch_no_parameter,
+            "process_catch_no_parameter",
+        ),
         // Finally_Await_Return -> FINALLY Block_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_finally, "process_finally"),
         // PropertyName_Yield_Await -> LiteralPropertyName
         Action::Undefined,
         // PropertyName_Yield_Await -> ComputedPropertyName_Yield_Await
@@ -3499,11 +3556,14 @@ where
         // LabelledItem_Yield_Await_Return -> FunctionDeclaration_Yield_Await
         Action::Undefined,
         // Catch_Yield_Await_Return -> CATCH LPAREN CatchParameter_Yield_Await RPAREN Block_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Yield_Await_Return -> CATCH Block_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_catch_no_parameter,
+            "process_catch_no_parameter",
+        ),
         // Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_finally, "process_finally"),
         // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::process_function_declaration,
@@ -3819,7 +3879,7 @@ where
             "process_case_block_cases_default_cases",
         ),
         // CatchParameter_Yield -> BindingIdentifier_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_catch_parameter, "process_catch_parameter"),
         // CatchParameter_Yield -> BindingPattern_Yield
         Action::Undefined,
         // ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield
@@ -4193,7 +4253,7 @@ where
             "process_case_block_cases_default_cases",
         ),
         // CatchParameter_Yield_Await -> BindingIdentifier_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_catch_parameter, "process_catch_parameter"),
         // CatchParameter_Yield_Await -> BindingPattern_Yield_Await
         Action::Undefined,
         // ClassHeritage_Yield_Await -> EXTENDS LeftHandSideExpression_Yield_Await

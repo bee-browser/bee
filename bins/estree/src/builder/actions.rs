@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -125,11 +125,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
     Some((Builder::labeled_statement, "labeled_statement")),
     // ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
-    // TryStatement -> TRY Block Catch
+    // TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_
     Some((Builder::try_catch_statement, "try_catch_statement")),
-    // TryStatement -> TRY Block Finally
+    // TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally
     Some((Builder::try_finally_statement, "try_finally_statement")),
-    // TryStatement -> TRY Block Catch Finally
+    // TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_ Finally
     Some((
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
@@ -280,10 +280,16 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
     Some((Builder::nop, "nop")),
     // LabelledItem -> FunctionDeclaration
     Some((Builder::nop, "nop")),
+    // _TRY_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
+    // _CATCH_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
     // Catch -> CATCH LPAREN CatchParameter RPAREN Block
     Some((Builder::catch_clause, "catch_clause")),
     // Catch -> CATCH Block
     Some((Builder::catch_clause_no_param, "catch_clause_no_param")),
+    // _FINALLY_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
     // Finally -> FINALLY Block
     Some((Builder::finally_clause, "finally_clause")),
     // FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
@@ -501,11 +507,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
     Some((Builder::labeled_statement, "labeled_statement")),
     // ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
-    // TryStatement_Await -> TRY Block_Await Catch_Await
+    // TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await _FINALLY_BLOCK_
     Some((Builder::try_catch_statement, "try_catch_statement")),
-    // TryStatement_Await -> TRY Block_Await Finally_Await
+    // TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Await
     Some((Builder::try_finally_statement, "try_finally_statement")),
-    // TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
+    // TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await _FINALLY_BLOCK_ Finally_Await
     Some((
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
@@ -2534,11 +2540,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
     Some((Builder::with_statement, "with_statement")),
     // LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
     Some((Builder::labeled_statement, "labeled_statement")),
-    // TryStatement_Return -> TRY Block_Return Catch_Return
+    // TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_
     Some((Builder::try_catch_statement, "try_catch_statement")),
-    // TryStatement_Return -> TRY Block_Return Finally_Return
+    // TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Return
     Some((Builder::try_finally_statement, "try_finally_statement")),
-    // TryStatement_Return -> TRY Block_Return Catch_Return Finally_Return
+    // TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_ Finally_Return
     Some((
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
@@ -2902,11 +2908,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
     Some((Builder::labeled_statement, "labeled_statement")),
     // ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
-    // TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
+    // TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_ Catch_Yield_Return _FINALLY_BLOCK_
     Some((Builder::try_catch_statement, "try_catch_statement")),
-    // TryStatement_Yield_Return -> TRY Block_Yield_Return Finally_Yield_Return
+    // TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Yield_Return
     Some((Builder::try_finally_statement, "try_finally_statement")),
-    // TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return Finally_Yield_Return
+    // TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_ Catch_Yield_Return _FINALLY_BLOCK_ Finally_Yield_Return
     Some((
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
@@ -2946,11 +2952,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
     Some((Builder::with_statement, "with_statement")),
     // LabelledStatement_Await_Return -> LabelIdentifier_Await COLON LabelledItem_Await_Return
     Some((Builder::labeled_statement, "labeled_statement")),
-    // TryStatement_Await_Return -> TRY Block_Await_Return Catch_Await_Return
+    // TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_
     Some((Builder::try_catch_statement, "try_catch_statement")),
-    // TryStatement_Await_Return -> TRY Block_Await_Return Finally_Await_Return
+    // TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Await_Return
     Some((Builder::try_finally_statement, "try_finally_statement")),
-    // TryStatement_Await_Return -> TRY Block_Await_Return Catch_Await_Return Finally_Await_Return
+    // TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_ Finally_Await_Return
     Some((
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
@@ -3038,11 +3044,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2116] = [
     Some((Builder::labeled_statement, "labeled_statement")),
     // ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
-    // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return
+    // TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_ Catch_Yield_Await_Return _FINALLY_BLOCK_
     Some((Builder::try_catch_statement, "try_catch_statement")),
-    // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Finally_Yield_Await_Return
+    // TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Yield_Await_Return
     Some((Builder::try_finally_statement, "try_finally_statement")),
-    // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return Finally_Yield_Await_Return
+    // TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_ Catch_Yield_Await_Return _FINALLY_BLOCK_ Finally_Yield_Await_Return
     Some((
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",

@@ -81,7 +81,7 @@ impl<'r> Analyzer<'r> {
             Node::LabelIdentifier(symbol) => self.handle_label_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
-            Node::Arguments => (),
+            Node::Arguments => (), // nop
             Node::CallExpression => self.handle_call_expression(),
             Node::UpdateExpression(op) => self.handle_operator(op),
             Node::UnaryExpression(op) => self.handle_operator(op),
@@ -98,12 +98,12 @@ impl<'r> Analyzer<'r> {
                 self.handle_conditional_assignment()
             }
             Node::AssignmentExpression(op) => self.handle_operator(op),
-            Node::BlockStatement => (),
+            Node::BlockStatement => (), // nop
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
             Node::LetDeclaration(n) => self.handle_let_declaration(n),
             Node::ConstDeclaration(n) => self.handle_const_declaration(n),
             Node::BindingElement(init) => self.handle_binding_element(init),
-            Node::EmptyStatement => (),
+            Node::EmptyStatement => (), // nop
             Node::ExpressionStatement => self.handle_expression_statement(),
             Node::IfElseStatement => self.handle_if_else_statement(),
             Node::IfStatement => self.handle_if_statement(),
@@ -120,6 +120,13 @@ impl<'r> Analyzer<'r> {
             Node::DefaultSelector => self.handle_default_selector(),
             Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
             Node::ThrowStatement => self.handle_throw_statement(),
+            Node::TryStatement => self.handle_try_statement(),
+            Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
+            Node::FinallyClause => self.handle_finally_clause(),
+            Node::TryBlock => self.handle_try_block(),
+            Node::CatchBlock => self.handle_catch_block(),
+            Node::FinallyBlock => self.handle_finally_block(),
+            Node::CatchParameter => self.handle_catch_parameter(),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
@@ -378,6 +385,46 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_throw_statement();
+    }
+
+    fn handle_try_statement(&mut self) {
+        self.context_stack.last_mut().unwrap().process_try_end();
+    }
+
+    fn handle_catch_clause(&mut self, has_parameter: bool) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_catch_clause(has_parameter);
+    }
+
+    fn handle_finally_clause(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_finally_clause();
+    }
+
+    fn handle_try_block(&mut self) {
+        self.context_stack.last_mut().unwrap().process_try_block();
+    }
+
+    fn handle_catch_block(&mut self) {
+        self.context_stack.last_mut().unwrap().process_catch_block();
+    }
+
+    fn handle_finally_block(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_finally_block();
+    }
+
+    fn handle_catch_parameter(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_catch_parameter();
     }
 
     fn handle_formal_parameter(&mut self) {
@@ -695,6 +742,7 @@ struct FunctionContext {
     scope_stack: Vec<Scope>,
     loop_stack: Vec<LoopContext>,
     switch_stack: Vec<SwitchContext>,
+    try_stack: Vec<TryContext>,
     nargs_stack: Vec<(usize, u16)>,
     max_bindings: usize,
     func_index: u32,
@@ -908,6 +956,55 @@ impl FunctionContext {
         self.put_command(CompileCommand::Throw);
     }
 
+    fn process_try_block(&mut self) {
+        self.put_command(CompileCommand::Try);
+        self.try_stack.push(Default::default());
+    }
+
+    fn process_catch_block(&mut self) {
+        // Push a *nominal* `Catch` command.
+        // It will be replaced with a *substantial* `Catch` command in `process_catch_clause()`
+        // if a catch clause exists.
+        let index = self.put_command(CompileCommand::Catch(true));
+        self.try_stack.last_mut().unwrap().catch_index = index;
+        // In the specification, a new lexical scope is created only when the catch parameter
+        // exists, but we always create a scope here for simplicity.  In our processing model,
+        // the catch and finally clauses are always created even if there is no corresponding
+        // node in the AST.
+        self.start_scope();
+    }
+
+    fn process_catch_clause(&mut self, _has_parameter: bool) {
+        let index = self.try_stack.last().unwrap().catch_index;
+        self.commands[index] = CompileCommand::Catch(false); // substantial
+    }
+
+    fn process_finally_block(&mut self) {
+        // Remove the scope created for the catch clause.
+        self.end_scope(false);
+        // Push a *nominal* `Finally` command.
+        // It will be replaced with a *substantial* `Finally` command in `process_finally_clause()`
+        // if a finally clause exists.
+        let index = self.put_command(CompileCommand::Finally(true));
+        self.try_stack.last_mut().unwrap().finally_index = index;
+    }
+
+    fn process_finally_clause(&mut self) {
+        let index = self.try_stack.last().unwrap().finally_index;
+        self.commands[index] = CompileCommand::Finally(false); // substantial
+    }
+
+    fn process_try_end(&mut self) {
+        self.put_command(CompileCommand::TryEnd);
+        self.try_stack.pop();
+    }
+
+    fn process_catch_parameter(&mut self) {
+        self.put_command(CompileCommand::Exception);
+        self.put_lexical_binding(true);
+        self.process_mutable_bindings(1);
+    }
+
     fn start_scope(&mut self) {
         // Push `Nop` as a placeholder.
         // It will be replaced with `AllocateBindings(n)` in `end_scope()`.
@@ -958,6 +1055,12 @@ struct SwitchContext {
     default_index: Option<usize>,
 }
 
+#[derive(Default)]
+struct TryContext {
+    catch_index: usize,
+    finally_index: usize,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
     Nop,
@@ -967,8 +1070,9 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Function(FunctionId),
-
     Reference(Symbol, Locator),
+    Exception,
+
     Bindings(u16),
     MutableBinding,
     ImmutableBinding,
@@ -1091,6 +1195,12 @@ pub enum CompileCommand {
     CaseClause(bool),
     DefaultClause(bool),
     Switch(u32, Option<u32>),
+
+    // try, catch, finally
+    Try,
+    Catch(bool),
+    Finally(bool),
+    TryEnd,
 
     Continue,
     Break,

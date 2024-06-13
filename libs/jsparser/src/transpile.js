@@ -177,6 +177,7 @@ class Transpiler {
           modifySwitchStatement,
           modifyCaseClause,
           modifyDefaultClause,
+          modifyTryStatement,
           expandOptionals,
           modifyForStatement,
           modifyForInOfStatement,
@@ -614,6 +615,9 @@ function addActions(rules) {
     '_CASE_BLOCK_',
     '_CASE_SELECTOR_',
     '_DEFAULT_SELECTOR_',
+    '_TRY_BLOCK_',
+    '_CATCH_BLOCK_',
+    '_FINALLY_BLOCK_',
   ];
 
   for (const action of ACTIONS) {
@@ -752,27 +756,20 @@ function modifyFunctionExpression(rules) {
   // The action will be inserted before the token.
   const TARGETS = [
     {
-      token: '`(`',
+      term: '`(`',
       action: '_FUNCTION_CONTEXT_',
+      insertBefore: true,
     },
     {
-      token: '`{`',
+      term: '`{`',
       action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
     },
   ];
-
   log.debug('Modifying FunctionExpression...');
-
   const rule = rules.find((rule) => rule.name === 'FunctionExpression');
   assert(rule !== undefined);
-
-  for (let i = 0; i < rule.values.length; ++i) {
-    for (const target of TARGETS) {
-      const [head, tail] = rule.values[i].split(target.token);
-      rule.values[i] = [head, target.action, target.token, tail].join(' ');
-    }
-  }
-
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
@@ -791,15 +788,10 @@ function modifyDoWhileStatement(rules) {
       insertBefore: true,
     },
   ];
-
   log.debug('Modifying WhileStatement...');
-
   const rule = rules.find((rule) => rule.name === 'DoWhileStatement[Yield, Await, Return]');
   assert(rule !== undefined);
-  assert(rule.values.length === 1);
-
-  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
-
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
@@ -816,15 +808,10 @@ function modifyWhileStatement(rules) {
       insertBefore: false,
     },
   ];
-
   log.debug('Modifying WhileStatement...');
-
   const rule = rules.find((rule) => rule.name === 'WhileStatement[Yield, Await, Return]');
   assert(rule !== undefined);
-  assert(rule.values.length === 1);
-
-  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
-
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
@@ -836,15 +823,10 @@ function modifySwitchStatement(rules) {
       insertBefore: false,
     },
   ];
-
   log.debug('Modifying SwitchStatement...');
-
   const rule = rules.find((rule) => rule.name === 'SwitchStatement[Yield, Await, Return]');
   assert(rule !== undefined);
-  assert(rule.values.length === 1);
-
-  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
-
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
@@ -856,15 +838,10 @@ function modifyCaseClause(rules) {
       insertBefore: false,
     },
   ];
-
   log.debug('Modifying CaseClause...');
-
   const rule = rules.find((rule) => rule.name === 'CaseClause[Yield, Await, Return]');
   assert(rule !== undefined);
-  assert(rule.values.length === 1);
-
-  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
-
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
@@ -876,16 +853,54 @@ function modifyDefaultClause(rules) {
       insertBefore: false,
     },
   ];
-
   log.debug('Modifying DefaultClause...');
-
   const rule = rules.find((rule) => rule.name === 'DefaultClause[Yield, Await, Return]');
   assert(rule !== undefined);
-  assert(rule.values.length === 1);
-
-  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
-
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
+}
+
+function modifyTryStatement(rules) {
+  const TARGETS = [
+    {
+      term: 'Block[?Yield, ?Await, ?Return]',
+      action: '_TRY_BLOCK_',
+      insertBefore: true,
+    },
+    {
+      term: 'Catch[?Yield, ?Await, ?Return]',
+      action: '_CATCH_BLOCK_',
+      insertBefore: true,
+    },
+    {
+      term: 'Finally[?Yield, ?Await, ?Return]',
+      action: '_FINALLY_BLOCK_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying TryStatement...');
+  const rule = rules.find((rule) => rule.name === 'TryStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 3);
+  modifyTargetsInRule(rule, TARGETS);
+  // special cases
+  assert(!rule.values[0].includes('Finally[?Yield, ?Await, ?Return]'));
+  rule.values[0] = modifyTargetInProduction(rule.values[0], {
+    term: 'Catch[?Yield, ?Await, ?Return]',
+    action: '_FINALLY_BLOCK_',
+    insertBefore: false,
+  });
+  assert(!rule.values[1].includes('Catch[?Yield, ?Await, ?Return]'));
+  rule.values[1] = modifyTargetInProduction(rule.values[1], {
+    term: 'Block[?Yield, ?Await, ?Return]',
+    action: '_CATCH_BLOCK_',
+    insertBefore: false,
+  });
+  return rules;
+}
+
+function modifyTargetsInRule(rule, targets) {
+  rule.values = rule.values.map((value) => modifyTargetsInProduction(value, targets));
 }
 
 function modifyTargetsInProduction(production, targets) {
@@ -995,16 +1010,10 @@ function modifyForStatement(rules) {
       insertBefore: true,
     },
   ];
-
   log.debug('Modifying ForStatement...');
-
   const rule = rules.find((rule) => rule.name === 'ForStatement[Yield, Await, Return]');
   assert(rule !== undefined);
-
-  for (let i = 0; i < rule.values.length; ++i) {
-    rule.values[i] = modifyTargetsInProduction(rule.values[i], TARGETS);
-  }
-
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
@@ -1018,16 +1027,10 @@ function modifyForInOfStatement(rules) {
       insertBefore: true,
     },
   ];
-
   log.debug('Modifying ForInOfStatement...');
-
   const rule = rules.find((rule) => rule.name === 'ForInOfStatement[Yield, Await, Return]');
   assert(rule !== undefined);
-
-  for (let i = 0; i < rule.values.length; ++i) {
-    rule.values[i] = modifyTargetsInProduction(rule.values[i], TARGETS);
-  }
-
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
