@@ -53,7 +53,7 @@
 - rule: Statement -> ThrowStatement
   action: process_statement
 - rule: Statement -> TryStatement
-  action: undefined
+  action: process_statement
 - rule: Statement -> DebuggerStatement
   action: undefined
 - rule: Declaration -> HoistableDeclaration
@@ -126,12 +126,14 @@
   action: undefined
 - rule: ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
   action: process_throw_statement
-- rule: TryStatement -> TRY Block Catch
-  action: undefined
-- rule: TryStatement -> TRY Block Finally
-  action: undefined
-- rule: TryStatement -> TRY Block Catch Finally
-  action: undefined
+- rule: TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_
+  action: process_try_statement_no_finally
+- rule: TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally
+  action: process_try_statement_no_catch
+- rule: >-
+    TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_
+    Finally
+  action: process_try_statement
 - rule: DebuggerStatement -> DEBUGGER SEMICOLON
   action: undefined
 - rule: HoistableDeclaration -> FunctionDeclaration
@@ -247,7 +249,7 @@
 - rule: Statement_Await -> ThrowStatement_Await
   action: process_statement
 - rule: Statement_Await -> TryStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await -> DebuggerStatement
   action: undefined
 - rule: Block -> LBRACE RBRACE
@@ -288,12 +290,18 @@
   action: undefined
 - rule: LabelledItem -> FunctionDeclaration
   action: undefined
+- rule: _TRY_BLOCK_ -> (empty)
+  action: process_try_block
+- rule: _CATCH_BLOCK_ -> (empty)
+  action: process_catch_block
 - rule: Catch -> CATCH LPAREN CatchParameter RPAREN Block
-  action: undefined
+  action: process_catch
 - rule: Catch -> CATCH Block
-  action: undefined
+  action: process_catch_no_parameter
+- rule: _FINALLY_BLOCK_ -> (empty)
+  action: process_finally_block
 - rule: Finally -> FINALLY Block
-  action: undefined
+  action: process_finally
 - rule: >-
     FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN
     FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
@@ -515,12 +523,18 @@
     ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Await SEMICOLON
   action: process_throw_statement
-- rule: TryStatement_Await -> TRY Block_Await Catch_Await
-  action: undefined
-- rule: TryStatement_Await -> TRY Block_Await Finally_Await
-  action: undefined
-- rule: TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
-  action: undefined
+- rule: >-
+    TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await
+    _FINALLY_BLOCK_
+  action: process_try_statement_no_finally
+- rule: >-
+    TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_
+    _FINALLY_BLOCK_ Finally_Await
+  action: process_try_statement_no_catch
+- rule: >-
+    TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await
+    _FINALLY_BLOCK_ Finally_Await
+  action: process_try_statement
 - rule: _BLOCK_SCOPE_ -> (empty)
   action: process_block_scope
 - rule: VariableDeclaration_In -> BindingIdentifier
@@ -678,7 +692,7 @@
 - rule: Identifier -> IdentifierNameButNotReservedWord
   action: process_identifier
 - rule: CatchParameter -> BindingIdentifier
-  action: undefined
+  action: nop
 - rule: CatchParameter -> BindingPattern
   action: undefined
 - rule: _FUNCTION_CONTEXT_ -> (empty)
@@ -985,11 +999,11 @@
 - rule: LabelledItem_Await -> FunctionDeclaration_Await
   action: undefined
 - rule: Catch_Await -> CATCH LPAREN CatchParameter_Await RPAREN Block_Await
-  action: undefined
+  action: process_catch
 - rule: Catch_Await -> CATCH Block_Await
-  action: undefined
+  action: process_catch_no_parameter
 - rule: Finally_Await -> FINALLY Block_Await
-  action: undefined
+  action: process_finally
 - rule: Initializer_In -> ASSIGN AssignmentExpression_In
   action: process_initializer
 - rule: BindingPattern -> ObjectBindingPattern
@@ -1398,7 +1412,7 @@
     CaseClauses_Await RBRACE
   action: process_case_block_cases_default_cases
 - rule: CatchParameter_Await -> BindingIdentifier_Await
-  action: undefined
+  action: nop
 - rule: CatchParameter_Await -> BindingPattern_Await
   action: undefined
 - rule: ObjectBindingPattern -> LBRACE RBRACE
@@ -2203,7 +2217,7 @@
 - rule: Statement_Return -> ThrowStatement
   action: process_statement
 - rule: Statement_Return -> TryStatement_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Return -> DebuggerStatement
   action: undefined
 - rule: ObjectBindingPattern_Yield -> LBRACE RBRACE
@@ -2527,12 +2541,18 @@
   action: undefined
 - rule: LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
   action: undefined
-- rule: TryStatement_Return -> TRY Block_Return Catch_Return
-  action: undefined
-- rule: TryStatement_Return -> TRY Block_Return Finally_Return
-  action: undefined
-- rule: TryStatement_Return -> TRY Block_Return Catch_Return Finally_Return
-  action: undefined
+- rule: >-
+    TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_
+    Catch_Return _FINALLY_BLOCK_
+  action: process_try_statement_no_finally
+- rule: >-
+    TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_
+    _FINALLY_BLOCK_ Finally_Return
+  action: process_try_statement_no_catch
+- rule: >-
+    TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_
+    Catch_Return _FINALLY_BLOCK_ Finally_Return
+  action: process_try_statement
 - rule: BindingRestProperty_Yield -> ELLIPSIS BindingIdentifier_Yield
   action: undefined
 - rule: BindingPropertyList_Yield -> BindingProperty_Yield
@@ -2600,7 +2620,7 @@
 - rule: Statement_Yield_Return -> ThrowStatement_Yield
   action: process_statement
 - rule: Statement_Yield_Return -> TryStatement_Yield_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Return -> DebuggerStatement
   action: undefined
 - rule: Declaration_Yield -> HoistableDeclaration_Yield
@@ -2634,7 +2654,7 @@
 - rule: Statement_Await_Return -> ThrowStatement_Await
   action: process_statement
 - rule: Statement_Await_Return -> TryStatement_Await_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Await_Return -> DebuggerStatement
   action: undefined
 - rule: BindingRestProperty_Yield_Await -> ELLIPSIS BindingIdentifier_Yield_Await
@@ -2707,7 +2727,7 @@
 - rule: Statement_Yield_Await_Return -> ThrowStatement_Yield_Await
   action: process_statement
 - rule: Statement_Yield_Await_Return -> TryStatement_Yield_Await_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> DebuggerStatement
   action: undefined
 - rule: Declaration_Yield_Await -> HoistableDeclaration_Yield_Await
@@ -2847,11 +2867,11 @@
 - rule: LabelledItem_Return -> FunctionDeclaration
   action: undefined
 - rule: Catch_Return -> CATCH LPAREN CatchParameter RPAREN Block_Return
-  action: undefined
+  action: process_catch
 - rule: Catch_Return -> CATCH Block_Return
-  action: undefined
+  action: process_catch_no_parameter
 - rule: Finally_Return -> FINALLY Block_Return
-  action: undefined
+  action: process_finally
 - rule: BindingProperty_Yield -> SingleNameBinding_Yield
   action: undefined
 - rule: BindingProperty_Yield -> PropertyName_Yield COLON BindingElement_Yield
@@ -2946,14 +2966,18 @@
     ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Yield SEMICOLON
   action: process_throw_statement
-- rule: TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
-  action: undefined
-- rule: TryStatement_Yield_Return -> TRY Block_Yield_Return Finally_Yield_Return
-  action: undefined
 - rule: >-
-    TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
-    Finally_Yield_Return
-  action: undefined
+    TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return
+    _CATCH_BLOCK_ Catch_Yield_Return _FINALLY_BLOCK_
+  action: process_try_statement_no_finally
+- rule: >-
+    TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return
+    _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Yield_Return
+  action: process_try_statement_no_catch
+- rule: >-
+    TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return
+    _CATCH_BLOCK_ Catch_Yield_Return _FINALLY_BLOCK_ Finally_Yield_Return
+  action: process_try_statement
 - rule: HoistableDeclaration_Yield -> FunctionDeclaration_Yield
   action: process_hoistable_declaration
 - rule: HoistableDeclaration_Yield -> GeneratorDeclaration_Yield
@@ -2996,14 +3020,18 @@
     LabelledStatement_Await_Return -> LabelIdentifier_Await COLON
     LabelledItem_Await_Return
   action: undefined
-- rule: TryStatement_Await_Return -> TRY Block_Await_Return Catch_Await_Return
-  action: undefined
-- rule: TryStatement_Await_Return -> TRY Block_Await_Return Finally_Await_Return
-  action: undefined
 - rule: >-
-    TryStatement_Await_Return -> TRY Block_Await_Return Catch_Await_Return
-    Finally_Await_Return
-  action: undefined
+    TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return
+    _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_
+  action: process_try_statement_no_finally
+- rule: >-
+    TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return
+    _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Await_Return
+  action: process_try_statement_no_catch
+- rule: >-
+    TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return
+    _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_ Finally_Await_Return
+  action: process_try_statement
 - rule: BindingProperty_Yield_Await -> SingleNameBinding_Yield_Await
   action: undefined
 - rule: >-
@@ -3111,17 +3139,18 @@
     Expression_In_Yield_Await SEMICOLON
   action: process_throw_statement
 - rule: >-
-    TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return
-    Catch_Yield_Await_Return
-  action: undefined
+    TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return
+    _CATCH_BLOCK_ Catch_Yield_Await_Return _FINALLY_BLOCK_
+  action: process_try_statement_no_finally
 - rule: >-
-    TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return
+    TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return
+    _CATCH_BLOCK_ _FINALLY_BLOCK_ Finally_Yield_Await_Return
+  action: process_try_statement_no_catch
+- rule: >-
+    TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return
+    _CATCH_BLOCK_ Catch_Yield_Await_Return _FINALLY_BLOCK_
     Finally_Yield_Await_Return
-  action: undefined
-- rule: >-
-    TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return
-    Catch_Yield_Await_Return Finally_Yield_Await_Return
-  action: undefined
+  action: process_try_statement
 - rule: HoistableDeclaration_Yield_Await -> FunctionDeclaration_Yield_Await
   action: process_hoistable_declaration
 - rule: HoistableDeclaration_Yield_Await -> GeneratorDeclaration_Yield_Await
@@ -3431,11 +3460,11 @@
 - rule: >-
     Catch_Yield_Return -> CATCH LPAREN CatchParameter_Yield RPAREN
     Block_Yield_Return
-  action: undefined
+  action: process_catch
 - rule: Catch_Yield_Return -> CATCH Block_Yield_Return
-  action: undefined
+  action: process_catch_no_parameter
 - rule: Finally_Yield_Return -> FINALLY Block_Yield_Return
-  action: undefined
+  action: process_finally
 - rule: >-
     FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield
     _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_
@@ -3490,11 +3519,11 @@
 - rule: >-
     Catch_Await_Return -> CATCH LPAREN CatchParameter_Await RPAREN
     Block_Await_Return
-  action: undefined
+  action: process_catch
 - rule: Catch_Await_Return -> CATCH Block_Await_Return
-  action: undefined
+  action: process_catch_no_parameter
 - rule: Finally_Await_Return -> FINALLY Block_Await_Return
-  action: undefined
+  action: process_finally
 - rule: PropertyName_Yield_Await -> LiteralPropertyName
   action: undefined
 - rule: PropertyName_Yield_Await -> ComputedPropertyName_Yield_Await
@@ -3597,11 +3626,11 @@
 - rule: >-
     Catch_Yield_Await_Return -> CATCH LPAREN CatchParameter_Yield_Await RPAREN
     Block_Yield_Await_Return
-  action: undefined
+  action: process_catch
 - rule: Catch_Yield_Await_Return -> CATCH Block_Yield_Await_Return
-  action: undefined
+  action: process_catch_no_parameter
 - rule: Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return
-  action: undefined
+  action: process_finally
 - rule: >-
     FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await
     _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_
@@ -3935,7 +3964,7 @@
     DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE
   action: process_case_block_cases_default_cases
 - rule: CatchParameter_Yield -> BindingIdentifier_Yield
-  action: undefined
+  action: nop
 - rule: CatchParameter_Yield -> BindingPattern_Yield
   action: undefined
 - rule: ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield
@@ -4389,7 +4418,7 @@
     DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE
   action: process_case_block_cases_default_cases
 - rule: CatchParameter_Yield_Await -> BindingIdentifier_Yield_Await
-  action: undefined
+  action: nop
 - rule: CatchParameter_Yield_Await -> BindingPattern_Yield_Await
   action: undefined
 - rule: ClassHeritage_Yield_Await -> EXTENDS LeftHandSideExpression_Yield_Await

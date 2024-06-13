@@ -16213,15 +16213,27 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
 - name: TryStatement
   production:
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block
+    - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally
 - name: TryStatement
@@ -16229,9 +16241,15 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally
 - name: TryStatement_Return
@@ -16239,15 +16257,27 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Return
+    - type: non-terminal
+      data: _CATCH_BLOCK_
     - type: non-terminal
       data: Catch_Return
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
 - name: TryStatement_Return
   production:
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Return
+    - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Return
 - name: TryStatement_Return
@@ -16255,9 +16285,15 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Return
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch_Return
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Return
 - name: TryStatement_Await
@@ -16265,15 +16301,27 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Await
+    - type: non-terminal
+      data: _CATCH_BLOCK_
     - type: non-terminal
       data: Catch_Await
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
 - name: TryStatement_Await
   production:
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Await
+    - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Await
 - name: TryStatement_Await
@@ -16281,9 +16329,15 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Await
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch_Await
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Await
 - name: TryStatement_Await_Return
@@ -16291,15 +16345,27 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Await_Return
+    - type: non-terminal
+      data: _CATCH_BLOCK_
     - type: non-terminal
       data: Catch_Await_Return
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
 - name: TryStatement_Await_Return
   production:
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Await_Return
+    - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Await_Return
 - name: TryStatement_Await_Return
@@ -16307,9 +16373,15 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Await_Return
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch_Await_Return
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Await_Return
 - name: TryStatement_Yield
@@ -16317,15 +16389,27 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield
+    - type: non-terminal
+      data: _CATCH_BLOCK_
     - type: non-terminal
       data: Catch_Yield
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
 - name: TryStatement_Yield
   production:
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield
+    - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Yield
 - name: TryStatement_Yield
@@ -16333,9 +16417,15 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch_Yield
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Yield
 - name: TryStatement_Yield_Return
@@ -16343,15 +16433,27 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Return
+    - type: non-terminal
+      data: _CATCH_BLOCK_
     - type: non-terminal
       data: Catch_Yield_Return
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
 - name: TryStatement_Yield_Return
   production:
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Return
+    - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Yield_Return
 - name: TryStatement_Yield_Return
@@ -16359,9 +16461,15 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Return
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch_Yield_Return
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Yield_Return
 - name: TryStatement_Yield_Await
@@ -16369,15 +16477,27 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Await
+    - type: non-terminal
+      data: _CATCH_BLOCK_
     - type: non-terminal
       data: Catch_Yield_Await
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
 - name: TryStatement_Yield_Await
   production:
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Await
+    - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Yield_Await
 - name: TryStatement_Yield_Await
@@ -16385,9 +16505,15 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Await
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch_Yield_Await
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Yield_Await
 - name: TryStatement_Yield_Await_Return
@@ -16395,15 +16521,27 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Await_Return
+    - type: non-terminal
+      data: _CATCH_BLOCK_
     - type: non-terminal
       data: Catch_Yield_Await_Return
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
 - name: TryStatement_Yield_Await_Return
   production:
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Await_Return
+    - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Yield_Await_Return
 - name: TryStatement_Yield_Await_Return
@@ -16411,9 +16549,15 @@
     - type: token
       data: TRY
     - type: non-terminal
+      data: _TRY_BLOCK_
+    - type: non-terminal
       data: Block_Yield_Await_Return
     - type: non-terminal
+      data: _CATCH_BLOCK_
+    - type: non-terminal
       data: Catch_Yield_Await_Return
+    - type: non-terminal
+      data: _FINALLY_BLOCK_
     - type: non-terminal
       data: Finally_Yield_Await_Return
 - name: Catch
@@ -20077,6 +20221,15 @@
   production:
     - type: empty
 - name: _DEFAULT_SELECTOR_
+  production:
+    - type: empty
+- name: _TRY_BLOCK_
+  production:
+    - type: empty
+- name: _CATCH_BLOCK_
+  production:
+    - type: empty
+- name: _FINALLY_BLOCK_
   production:
     - type: empty
 - name: NullLiteral

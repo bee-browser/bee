@@ -393,6 +393,18 @@ impl<'a> Compiler<'a> {
                 let i = default_index.unwrap_or(*n);
                 bridge::compiler_peer_switch(self.peer, *n, i);
             },
+            CompileCommand::Try => unsafe {
+                bridge::compiler_peer_try(self.peer);
+            },
+            CompileCommand::Catch => unsafe {
+                bridge::compiler_peer_catch(self.peer);
+            },
+            CompileCommand::Finally => unsafe {
+                bridge::compiler_peer_finally(self.peer);
+            },
+            CompileCommand::TryEnd => unsafe {
+                bridge::compiler_peer_try_end(self.peer);
+            },
             CompileCommand::Continue => unsafe {
                 bridge::compiler_peer_continue(self.peer);
             },

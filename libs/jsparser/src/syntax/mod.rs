@@ -72,6 +72,8 @@ enum Detail {
     CaseClause,
     CaseClauseList,
     DefaultClause,
+    CatchClause,
+    FinallyClause,
     Statement,
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
@@ -142,6 +144,12 @@ pub enum Node<'s> {
     DefaultSelector,
     DefaultClause(bool),
     ThrowStatement,
+    TryStatement,
+    CatchClause(bool),
+    FinallyClause,
+    TryBlock,
+    CatchBlock,
+    FinallyBlock,
     FormalParameter,
     FormalParameters(u32),
     FunctionContext,
@@ -1885,6 +1893,75 @@ where
     fn process_throw_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ThrowStatement);
         self.replace(2, Detail::Statement);
+        Ok(())
+    }
+
+    // 14.15 The try Statement
+
+    // TryStatement[Yield, Await, Return] :
+    //   try Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]
+    fn process_try_statement_no_finally(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::TryStatement);
+        self.replace(3, Detail::Statement);
+        Ok(())
+    }
+
+    // TryStatement[Yield, Await, Return] :
+    //   try Block[?Yield, ?Await, ?Return] Finally[?Yield, ?Await, ?Return]
+    fn process_try_statement_no_catch(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::TryStatement);
+        self.replace(3, Detail::Statement);
+        Ok(())
+    }
+
+    // TryStatement[Yield, Await, Return] :
+    //   try Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]
+    //   Finally[?Yield, ?Await, ?Return]
+    fn process_try_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::TryStatement);
+        self.replace(4, Detail::Statement);
+        Ok(())
+    }
+
+    // Catch[Yield, Await, Return] :
+    //   catch ( CatchParameter[?Yield, ?Await] ) Block[?Yield, ?Await, ?Return]
+    fn process_catch(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CatchClause(true));
+        self.replace(5, Detail::CatchClause);
+        Ok(())
+    }
+
+    // Catch[Yield, Await, Return] :
+    //   catch Block[?Yield, ?Await, ?Return]
+    fn process_catch_no_parameter(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CatchClause(false));
+        self.replace(2, Detail::CatchClause);
+        Ok(())
+    }
+
+    // Finally[Yield, Await, Return] :
+    //   finally Block[?Yield, ?Await, ?Return]
+    fn process_finally(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FinallyClause);
+        self.replace(2, Detail::FinallyClause);
+        Ok(())
+    }
+
+    // _TRY_BLOCK_
+    fn process_try_block(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::TryBlock);
+        Ok(())
+    }
+
+    // _CATCH_BLOCK_
+    fn process_catch_block(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CatchBlock);
+        Ok(())
+    }
+
+    // _FINALLY_BLOCK_
+    fn process_finally_block(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FinallyBlock);
         Ok(())
     }
 

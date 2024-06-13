@@ -382,6 +382,22 @@ void compiler_peer_switch(Compiler* self, uint32_t n, uint32_t default_index) {
   self->Switch(n, default_index);
 }
 
+void compiler_peer_try(Compiler* self) {
+  self->Try();
+}
+
+void compiler_peer_catch(Compiler* self) {
+  self->Catch();
+}
+
+void compiler_peer_finally(Compiler* self) {
+  self->Finally();
+}
+
+void compiler_peer_try_end(Compiler* self) {
+  self->TryEnd();
+}
+
 void compiler_peer_start_function(Compiler* self, const char* name) {
   self->StartFunction(name);
 }

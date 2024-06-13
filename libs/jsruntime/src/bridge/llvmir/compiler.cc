@@ -1168,6 +1168,56 @@ void Compiler::Switch(uint32_t n, uint32_t default_index) {
   builder_->SetInsertPoint(end_block);
 }
 
+void Compiler::Try() {
+  auto* try_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* catch_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* finally_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
+
+  // Jump from the end of previous block to the beginning of the try block.
+  builder_->CreateBr(try_block);
+
+  builder_->SetInsertPoint(try_block);
+
+  PushBlock(end_block, "try-end");
+  PushBlock(finally_block, "finally");
+  PushBlock(catch_block, "catch");
+
+  catch_stack_.push_back(catch_block);
+}
+
+void Compiler::Catch() {
+  auto* catch_block = PopBlock();
+  auto* finally_block = PeekBlock();
+
+  // Jump from the end of the try block to the beginning of the finally block.
+  builder_->CreateBr(finally_block);
+
+  builder_->SetInsertPoint(catch_block);
+  // Reset the status to Status::Normal.
+  builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
+
+  catch_stack_.pop_back();
+}
+
+void Compiler::Finally() {
+  auto* finally_block = PopBlock();
+
+  // TODO: check status
+  builder_->CreateBr(finally_block);
+
+  builder_->SetInsertPoint(finally_block);
+}
+
+void Compiler::TryEnd() {
+  auto* end_block = PopBlock();
+
+  // Jump from the end of the finally block to the beginning of the try-end block.
+  builder_->CreateBr(end_block);
+
+  builder_->SetInsertPoint(end_block);
+}
+
 void Compiler::StartFunction(const char* name) {
   const auto& found = functions_.find(name);
   if (found != functions_.end()) {
@@ -1188,6 +1238,7 @@ void Compiler::StartFunction(const char* name) {
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
   ret_ = function_->getArg(4);
+  catch_stack_.push_back(epilogue_);
 
   builder_->SetInsertPoint(prologue_);
   status_ = builder_->CreateAlloca(builder_->getInt32Ty(), builder_->getInt32(1));
@@ -1215,7 +1266,18 @@ void Compiler::EndFunction(bool optimize) {
   builder_->CreateRet(status);
 
   // DumpStack();
-  // assert(stack_.empty());
+
+  assert(stack_.empty());
+  stack_.clear();
+
+  assert(break_stack_.empty());
+  break_stack_.clear();
+
+  assert(continue_stack_.empty());
+  continue_stack_.clear();
+
+  assert(catch_stack_.size() == 1);
+  catch_stack_.clear();
 
   if (llvm::verifyFunction(*function_, &llvm::errs())) {
     llvm::errs() << "<broken-function>\n";
@@ -1278,7 +1340,8 @@ void Compiler::Throw() {
   auto item = Dereference();
   CreateStoreItemToValue(item, ret_);
   builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Exception)), status_);
-  builder_->CreateBr(epilogue_);
+  auto* catch_block = catch_stack_.back();
+  builder_->CreateBr(catch_block);
   CreateDeadcodeBasicBlock();
 }
 

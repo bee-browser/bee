@@ -120,6 +120,12 @@ impl<'r> Analyzer<'r> {
             Node::DefaultSelector => self.handle_default_selector(),
             Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
             Node::ThrowStatement => self.handle_throw_statement(),
+            Node::TryStatement => self.handle_try_statement(),
+            Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
+            Node::FinallyClause => self.handle_finally_clause(),
+            Node::TryBlock => self.handle_try_block(),
+            Node::CatchBlock => self.handle_catch_block(),
+            Node::FinallyBlock => self.handle_finally_block(),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
@@ -378,6 +384,33 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_throw_statement();
+    }
+
+    fn handle_try_statement(&mut self) {
+        self.context_stack.last_mut().unwrap().process_try_end();
+    }
+
+    fn handle_catch_clause(&mut self, _has_parameter: bool) {
+        // TODO
+    }
+
+    fn handle_finally_clause(&mut self) {
+        // TODO
+    }
+
+    fn handle_try_block(&mut self) {
+        self.context_stack.last_mut().unwrap().process_try_block();
+    }
+
+    fn handle_catch_block(&mut self) {
+        self.context_stack.last_mut().unwrap().process_catch_block();
+    }
+
+    fn handle_finally_block(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_finally_block();
     }
 
     fn handle_formal_parameter(&mut self) {
@@ -908,6 +941,22 @@ impl FunctionContext {
         self.put_command(CompileCommand::Throw);
     }
 
+    fn process_try_block(&mut self) {
+        self.put_command(CompileCommand::Try);
+    }
+
+    fn process_catch_block(&mut self) {
+        self.put_command(CompileCommand::Catch);
+    }
+
+    fn process_finally_block(&mut self) {
+        self.put_command(CompileCommand::Finally);
+    }
+
+    fn process_try_end(&mut self) {
+        self.put_command(CompileCommand::TryEnd);
+    }
+
     fn start_scope(&mut self) {
         // Push `Nop` as a placeholder.
         // It will be replaced with `AllocateBindings(n)` in `end_scope()`.
@@ -1091,6 +1140,12 @@ pub enum CompileCommand {
     CaseClause(bool),
     DefaultClause(bool),
     Switch(u32, Option<u32>),
+
+    // try, catch, finally
+    Try,
+    Catch,
+    Finally,
+    TryEnd,
 
     Continue,
     Break,
