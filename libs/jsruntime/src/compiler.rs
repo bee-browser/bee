@@ -399,11 +399,11 @@ impl<'a> Compiler<'a> {
             CompileCommand::Try => unsafe {
                 bridge::compiler_peer_try(self.peer);
             },
-            CompileCommand::Catch => unsafe {
-                bridge::compiler_peer_catch(self.peer);
+            CompileCommand::Catch(nominal) => unsafe {
+                bridge::compiler_peer_catch(self.peer, *nominal);
             },
-            CompileCommand::Finally => unsafe {
-                bridge::compiler_peer_finally(self.peer);
+            CompileCommand::Finally(nominal) => unsafe {
+                bridge::compiler_peer_finally(self.peer, *nominal);
             },
             CompileCommand::TryEnd => unsafe {
                 bridge::compiler_peer_try_end(self.peer);

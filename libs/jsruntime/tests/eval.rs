@@ -2,6 +2,8 @@ use assert_matches::assert_matches;
 use jsruntime::Runtime;
 use jsruntime::Value;
 
+logging::init!();
+
 macro_rules! eval {
     ($src:expr, $expected:expr) => {
         Runtime::initialize();
@@ -835,4 +837,49 @@ fn eval_try_catch_no_parameter() {
 #[test]
 fn eval_try_catch() {
     eval!(file: "try_catch.js", 2);
+}
+
+#[test]
+fn eval_try_catch_throw() {
+    eval!(file: "try_catch_throw.js", throws: 2);
+}
+
+#[test]
+fn eval_try_finally() {
+    eval!(file: "try_finally.js", throws: 1);
+}
+
+#[test]
+fn eval_try_finally_throw() {
+    eval!(file: "try_finally_throw.js", throws: 2);
+}
+
+#[test]
+fn eval_try_catch_finally() {
+    eval!(file: "try_catch_finally.js", 3);
+}
+
+#[test]
+fn eval_try_catch_throw_finally() {
+    eval!(file: "try_catch_throw_finally.js", throws: 2);
+}
+
+#[test]
+fn eval_try_catch_finally_throw() {
+    eval!(file: "try_catch_finally_throw.js", throws: 3);
+}
+
+#[test]
+fn eval_try_catch_throw_finally_throw() {
+    eval!(file: "try_catch_throw_finally_throw.js", throws: 3);
+}
+
+#[test]
+fn eval_try_nested() {
+    eval!(file: "try_nested.js", 11);
+}
+
+#[test]
+fn eval_try_call_throw() {
+    eval!(file: "try_call_throw.js", 1);
 }

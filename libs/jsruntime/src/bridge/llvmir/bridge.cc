@@ -390,12 +390,12 @@ void compiler_peer_try(Compiler* self) {
   self->Try();
 }
 
-void compiler_peer_catch(Compiler* self) {
-  self->Catch();
+void compiler_peer_catch(Compiler* self, bool nominal) {
+  self->Catch(nominal);
 }
 
-void compiler_peer_finally(Compiler* self) {
-  self->Finally();
+void compiler_peer_finally(Compiler* self, bool nominal) {
+  self->Finally(nominal);
 }
 
 void compiler_peer_try_end(Compiler* self) {

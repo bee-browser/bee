@@ -122,8 +122,8 @@ class Compiler {
   void DefaultClause(bool has_statement);
   void Switch(uint32_t n, uint32_t default_index);
   void Try();
-  void Catch();
-  void Finally();
+  void Catch(bool nominal);
+  void Finally(bool nominal);
   void TryEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);

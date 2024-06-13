@@ -121,8 +121,8 @@ impl<'r> Analyzer<'r> {
             Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
             Node::ThrowStatement => self.handle_throw_statement(),
             Node::TryStatement => self.handle_try_statement(),
-            Node::CatchClause(_has_parameter) => (), // nop
-            Node::FinallyClause => (),               // nop
+            Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
+            Node::FinallyClause => self.handle_finally_clause(),
             Node::TryBlock => self.handle_try_block(),
             Node::CatchBlock => self.handle_catch_block(),
             Node::FinallyBlock => self.handle_finally_block(),
@@ -389,6 +389,20 @@ impl<'r> Analyzer<'r> {
 
     fn handle_try_statement(&mut self) {
         self.context_stack.last_mut().unwrap().process_try_end();
+    }
+
+    fn handle_catch_clause(&mut self, has_parameter: bool) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_catch_clause(has_parameter);
+    }
+
+    fn handle_finally_clause(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_finally_clause();
     }
 
     fn handle_try_block(&mut self) {
@@ -728,6 +742,7 @@ struct FunctionContext {
     scope_stack: Vec<Scope>,
     loop_stack: Vec<LoopContext>,
     switch_stack: Vec<SwitchContext>,
+    try_stack: Vec<TryContext>,
     nargs_stack: Vec<(usize, u16)>,
     max_bindings: usize,
     func_index: u32,
@@ -943,10 +958,15 @@ impl FunctionContext {
 
     fn process_try_block(&mut self) {
         self.put_command(CompileCommand::Try);
+        self.try_stack.push(Default::default());
     }
 
     fn process_catch_block(&mut self) {
-        self.put_command(CompileCommand::Catch);
+        // Push a *nominal* `Catch` command.
+        // It will be replaced with a *substantial* `Catch` command in `process_catch_clause()`
+        // if a catch clause exists.
+        let index = self.put_command(CompileCommand::Catch(true));
+        self.try_stack.last_mut().unwrap().catch_index = index;
         // In the specification, a new lexical scope is created only when the catch parameter
         // exists, but we always create a scope here for simplicity.  In our processing model,
         // the catch and finally clauses are always created even if there is no corresponding
@@ -954,14 +974,29 @@ impl FunctionContext {
         self.start_scope();
     }
 
+    fn process_catch_clause(&mut self, _has_parameter: bool) {
+        let index = self.try_stack.last().unwrap().catch_index;
+        self.commands[index] = CompileCommand::Catch(false); // substantial
+    }
+
     fn process_finally_block(&mut self) {
         // Remove the scope created for the catch clause.
         self.end_scope(false);
-        self.put_command(CompileCommand::Finally);
+        // Push a *nominal* `Finally` command.
+        // It will be replaced with a *substantial* `Finally` command in `process_finally_clause()`
+        // if a finally clause exists.
+        let index = self.put_command(CompileCommand::Finally(true));
+        self.try_stack.last_mut().unwrap().finally_index = index;
+    }
+
+    fn process_finally_clause(&mut self) {
+        let index = self.try_stack.last().unwrap().finally_index;
+        self.commands[index] = CompileCommand::Finally(false); // substantial
     }
 
     fn process_try_end(&mut self) {
         self.put_command(CompileCommand::TryEnd);
+        self.try_stack.pop();
     }
 
     fn process_catch_parameter(&mut self) {
@@ -1018,6 +1053,12 @@ struct SwitchContext {
     case_block_index: usize,
     num_clauses: usize,
     default_index: Option<usize>,
+}
+
+#[derive(Default)]
+struct TryContext {
+    catch_index: usize,
+    finally_index: usize,
 }
 
 #[derive(Debug, PartialEq)]
@@ -1157,8 +1198,8 @@ pub enum CompileCommand {
 
     // try, catch, finally
     Try,
-    Catch,
-    Finally,
+    Catch(bool),
+    Finally(bool),
     TryEnd,
 
     Continue,

@@ -772,7 +772,24 @@ void Compiler::Call(uint16_t argc) {
   auto* prototype = types_->CreateFunctionType();
   auto* status = builder_->CreateCall(
       prototype, func, {exec_context_, scope, types_->GetWord(argc), argv, ret});
-  UNUSED(status);  // TODO: exception
+
+  // Handle an exception if it's thrown.
+  auto* is_exception =
+      builder_->CreateICmpEQ(status, builder_->getInt32(static_cast<int32_t>(Status::Exception)));
+  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
+  builder_->CreateCondBr(is_exception, then_block, else_block);
+
+  builder_->SetInsertPoint(then_block);
+  // Store the exception.
+  builder_->CreateStore(status, status_);
+  builder_->CreateMemCpy(
+      ret_, llvm::MaybeAlign(), ret, llvm::MaybeAlign(), builder_->getInt32(sizeof(Value)));
+  assert(!catch_stack_.empty());
+  auto* catch_block = catch_stack_.back();
+  builder_->CreateBr(catch_block);
+
+  builder_->SetInsertPoint(else_block);
   PushAny(ret);
 }
 
@@ -1191,7 +1208,7 @@ void Compiler::Try() {
   catch_stack_.push_back(catch_block);
 }
 
-void Compiler::Catch() {
+void Compiler::Catch(bool nominal) {
   auto* catch_block = PopBlock();
   auto* finally_block = PeekBlock();
 
@@ -1199,26 +1216,40 @@ void Compiler::Catch() {
   builder_->CreateBr(finally_block);
 
   builder_->SetInsertPoint(catch_block);
-  // Reset the status to Status::Normal.
-  builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
+
+  if (!nominal) {
+    // TODO: Reset the status to Status::Normal.
+    builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
+  }
 
   catch_stack_.pop_back();
+  catch_stack_.push_back(finally_block);
 }
 
-void Compiler::Finally() {
+void Compiler::Finally(bool nominal) {
+  UNUSED(nominal);
+
   auto* finally_block = PopBlock();
 
-  // TODO: check status
+  // Jump from the end of the catch block to the beginning of the finally block.
   builder_->CreateBr(finally_block);
 
   builder_->SetInsertPoint(finally_block);
+
+  catch_stack_.pop_back();
 }
 
 void Compiler::TryEnd() {
   auto* end_block = PopBlock();
 
-  // Jump from the end of the finally block to the beginning of the try-end block.
-  builder_->CreateBr(end_block);
+  // Jump from the end of the finally block to the beginning of the outer catch block if there is
+  // an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
+  auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_);
+  auto* has_uncaught_exception =
+      builder_->CreateICmpEQ(status, builder_->getInt32(static_cast<int32_t>(Status::Exception)));
+  assert(!catch_stack_.empty());
+  auto* catch_block = catch_stack_.back();
+  builder_->CreateCondBr(has_uncaught_exception, catch_block, end_block);
 
   builder_->SetInsertPoint(end_block);
 }
