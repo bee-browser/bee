@@ -118,6 +118,11 @@ void Compiler::Reference(uint32_t symbol, Locator locator) {
   PushReference(symbol, locator);
 }
 
+void Compiler::Exception() {
+  // TODO: Should we check status_ at runtime?
+  PushAny(ret_);
+}
+
 // 13.4.2.1 Runtime Semantics: Evaluation
 void Compiler::PostfixIncrement() {
   IncrDecr('$', '+');

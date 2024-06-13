@@ -136,6 +136,9 @@ impl<'a> Compiler<'a> {
                 assert_ne!(*locator, Locator::NONE);
                 bridge::compiler_peer_reference(self.peer, symbol.id(), *locator);
             },
+            CompileCommand::Exception => unsafe {
+                bridge::compiler_peer_exception(self.peer);
+            },
             CompileCommand::Bindings(n) => unsafe {
                 bridge::compiler_peer_bindings(self.peer, *n);
             },

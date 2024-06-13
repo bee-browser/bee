@@ -831,3 +831,8 @@ fn eval_throw_number() {
 fn eval_try_catch_no_parameter() {
     eval!(file: "try_catch_no_parameter.js", 2);
 }
+
+#[test]
+fn eval_try_catch() {
+    eval!(file: "try_catch.js", 2);
+}

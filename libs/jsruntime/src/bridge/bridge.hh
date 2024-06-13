@@ -104,6 +104,7 @@ void compiler_peer_boolean(Compiler* self, bool value);
 void compiler_peer_number(Compiler* self, double value);
 void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name);
 void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator);
+void compiler_peer_exception(Compiler* self);
 void compiler_peer_postfix_increment(Compiler* self);
 void compiler_peer_postfix_decrement(Compiler* self);
 void compiler_peer_prefix_increment(Compiler* self);

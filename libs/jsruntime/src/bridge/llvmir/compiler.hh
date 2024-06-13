@@ -44,6 +44,7 @@ class Compiler {
   void Number(double value);
   void Function(uint32_t func_id, const char* name);
   void Reference(uint32_t symbol, Locator locator);
+  void Exception();
   void PostfixIncrement();
   void PostfixDecrement();
   void PrefixIncrement();

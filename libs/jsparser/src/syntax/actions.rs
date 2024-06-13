@@ -717,7 +717,7 @@ where
         // Identifier -> IdentifierNameButNotReservedWord
         Action::Invoke(Self::process_identifier, "process_identifier"),
         // CatchParameter -> BindingIdentifier
-        Action::Nop,
+        Action::Invoke(Self::process_catch_parameter, "process_catch_parameter"),
         // CatchParameter -> BindingPattern
         Action::Undefined,
         // _FUNCTION_CONTEXT_ -> (empty)
@@ -1480,7 +1480,7 @@ where
             "process_case_block_cases_default_cases",
         ),
         // CatchParameter_Await -> BindingIdentifier_Await
-        Action::Nop,
+        Action::Invoke(Self::process_catch_parameter, "process_catch_parameter"),
         // CatchParameter_Await -> BindingPattern_Await
         Action::Undefined,
         // ObjectBindingPattern -> LBRACE RBRACE
@@ -3879,7 +3879,7 @@ where
             "process_case_block_cases_default_cases",
         ),
         // CatchParameter_Yield -> BindingIdentifier_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_catch_parameter, "process_catch_parameter"),
         // CatchParameter_Yield -> BindingPattern_Yield
         Action::Undefined,
         // ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield
@@ -4253,7 +4253,7 @@ where
             "process_case_block_cases_default_cases",
         ),
         // CatchParameter_Yield_Await -> BindingIdentifier_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_catch_parameter, "process_catch_parameter"),
         // CatchParameter_Yield_Await -> BindingPattern_Yield_Await
         Action::Undefined,
         // ClassHeritage_Yield_Await -> EXTENDS LeftHandSideExpression_Yield_Await

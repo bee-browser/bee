@@ -81,7 +81,7 @@ impl<'r> Analyzer<'r> {
             Node::LabelIdentifier(symbol) => self.handle_label_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
-            Node::Arguments => (),
+            Node::Arguments => (), // nop
             Node::CallExpression => self.handle_call_expression(),
             Node::UpdateExpression(op) => self.handle_operator(op),
             Node::UnaryExpression(op) => self.handle_operator(op),
@@ -98,12 +98,12 @@ impl<'r> Analyzer<'r> {
                 self.handle_conditional_assignment()
             }
             Node::AssignmentExpression(op) => self.handle_operator(op),
-            Node::BlockStatement => (),
+            Node::BlockStatement => (), // nop
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
             Node::LetDeclaration(n) => self.handle_let_declaration(n),
             Node::ConstDeclaration(n) => self.handle_const_declaration(n),
             Node::BindingElement(init) => self.handle_binding_element(init),
-            Node::EmptyStatement => (),
+            Node::EmptyStatement => (), // nop
             Node::ExpressionStatement => self.handle_expression_statement(),
             Node::IfElseStatement => self.handle_if_else_statement(),
             Node::IfStatement => self.handle_if_statement(),
@@ -121,11 +121,12 @@ impl<'r> Analyzer<'r> {
             Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
             Node::ThrowStatement => self.handle_throw_statement(),
             Node::TryStatement => self.handle_try_statement(),
-            Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
-            Node::FinallyClause => self.handle_finally_clause(),
+            Node::CatchClause(_has_parameter) => (), // nop
+            Node::FinallyClause => (),               // nop
             Node::TryBlock => self.handle_try_block(),
             Node::CatchBlock => self.handle_catch_block(),
             Node::FinallyBlock => self.handle_finally_block(),
+            Node::CatchParameter => self.handle_catch_parameter(),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
@@ -390,14 +391,6 @@ impl<'r> Analyzer<'r> {
         self.context_stack.last_mut().unwrap().process_try_end();
     }
 
-    fn handle_catch_clause(&mut self, _has_parameter: bool) {
-        // TODO
-    }
-
-    fn handle_finally_clause(&mut self) {
-        // TODO
-    }
-
     fn handle_try_block(&mut self) {
         self.context_stack.last_mut().unwrap().process_try_block();
     }
@@ -411,6 +404,13 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_finally_block();
+    }
+
+    fn handle_catch_parameter(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_catch_parameter();
     }
 
     fn handle_formal_parameter(&mut self) {
@@ -947,14 +947,27 @@ impl FunctionContext {
 
     fn process_catch_block(&mut self) {
         self.put_command(CompileCommand::Catch);
+        // In the specification, a new lexical scope is created only when the catch parameter
+        // exists, but we always create a scope here for simplicity.  In our processing model,
+        // the catch and finally clauses are always created even if there is no corresponding
+        // node in the AST.
+        self.start_scope();
     }
 
     fn process_finally_block(&mut self) {
+        // Remove the scope created for the catch clause.
+        self.end_scope(false);
         self.put_command(CompileCommand::Finally);
     }
 
     fn process_try_end(&mut self) {
         self.put_command(CompileCommand::TryEnd);
+    }
+
+    fn process_catch_parameter(&mut self) {
+        self.put_command(CompileCommand::Exception);
+        self.put_lexical_binding(true);
+        self.process_mutable_bindings(1);
     }
 
     fn start_scope(&mut self) {
@@ -1016,8 +1029,9 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Function(FunctionId),
-
     Reference(Symbol, Locator),
+    Exception,
+
     Bindings(u16),
     MutableBinding,
     ImmutableBinding,

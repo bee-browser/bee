@@ -78,6 +78,10 @@ void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator) {
   self->Reference(symbol, locator);
 }
 
+void compiler_peer_exception(Compiler* self) {
+  self->Exception();
+}
+
 void compiler_peer_postfix_increment(Compiler* self) {
   self->PostfixIncrement();
 }

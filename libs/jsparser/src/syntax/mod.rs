@@ -147,6 +147,7 @@ pub enum Node<'s> {
     TryStatement,
     CatchClause(bool),
     FinallyClause,
+    CatchParameter,
     TryBlock,
     CatchBlock,
     FinallyBlock,
@@ -1946,6 +1947,16 @@ where
         self.replace(2, Detail::FinallyClause);
         Ok(())
     }
+
+    // CatchParameter[Yield, Await] :
+    //   BindingIdentifier[?Yield, ?Await]
+    fn process_catch_parameter(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CatchParameter);
+        Ok(())
+    }
+
+    // CatchParameter[Yield, Await] :
+    //   BindingPattern[?Yield, ?Await]
 
     // _TRY_BLOCK_
     fn process_try_block(&mut self) -> Result<(), Error> {

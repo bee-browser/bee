@@ -692,7 +692,7 @@
 - rule: Identifier -> IdentifierNameButNotReservedWord
   action: process_identifier
 - rule: CatchParameter -> BindingIdentifier
-  action: nop
+  action: process_catch_parameter
 - rule: CatchParameter -> BindingPattern
   action: undefined
 - rule: _FUNCTION_CONTEXT_ -> (empty)
@@ -1412,7 +1412,7 @@
     CaseClauses_Await RBRACE
   action: process_case_block_cases_default_cases
 - rule: CatchParameter_Await -> BindingIdentifier_Await
-  action: nop
+  action: process_catch_parameter
 - rule: CatchParameter_Await -> BindingPattern_Await
   action: undefined
 - rule: ObjectBindingPattern -> LBRACE RBRACE
@@ -3964,7 +3964,7 @@
     DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE
   action: process_case_block_cases_default_cases
 - rule: CatchParameter_Yield -> BindingIdentifier_Yield
-  action: nop
+  action: process_catch_parameter
 - rule: CatchParameter_Yield -> BindingPattern_Yield
   action: undefined
 - rule: ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield
@@ -4418,7 +4418,7 @@
     DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE
   action: process_case_block_cases_default_cases
 - rule: CatchParameter_Yield_Await -> BindingIdentifier_Yield_Await
-  action: nop
+  action: process_catch_parameter
 - rule: CatchParameter_Yield_Await -> BindingPattern_Yield_Await
   action: undefined
 - rule: ClassHeritage_Yield_Await -> EXTENDS LeftHandSideExpression_Yield_Await
