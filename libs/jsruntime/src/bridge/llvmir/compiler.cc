@@ -1433,7 +1433,7 @@ void Compiler::DumpStack() {
         llvm::errs() << "block: " << item.block;
         break;
     }
-#ifdef BEE_BUILD_DEBUG
+#if defined(BEE_BUILD_DEBUG)
     if (item.label != nullptr) {
       llvm::errs() << " [" << item.label << "]";
     }

@@ -1,3 +1,6 @@
+PROJ_DIR := $(realpath ../../..)
+TOOLS_BIN := $(PROJ_DIR)/tools/bin
+
 ASSETS_DIR := assets
 
 JS_FILES := $(wildcard src/*.js)
@@ -16,10 +19,12 @@ all: codegen
 .PHONY: codegen
 codegen: $(ASSETS_FILES)
 
+# It's necessary to allow reading entries outside this folder so that deno can read dependencies
+# from DENO_DIR.
 # TODO: minify the file
 $(BUNDLE_JS): $(JS_FILES)
 	@echo 'Generating $(abspath $@)...'
-	deno bundle src/main.js $@
+	@deno run --allow-env --allow-read $(TOOLS_BIN)/deno_emit.js src/main.js >$@
 
 # TODO: minify the file
 $(BUNDLE_CSS): $(CSS_FILES)
