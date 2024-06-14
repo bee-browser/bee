@@ -21,6 +21,7 @@
 #pragma GCC diagnostic pop
 
 #include "../bridge.hh"
+#include "macros.hh"
 #include "type_holder.hh"
 
 class TypeHolder;
@@ -179,6 +180,8 @@ class Compiler {
     inline void SetLabel(const char* label) {
 #ifdef BEE_BUILD_DEBUG
       this->label = label;
+#else
+      UNUSED(label);
 #endif
     }
 
