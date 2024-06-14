@@ -167,7 +167,7 @@ class Compiler {
       struct Reference reference;
       llvm::BasicBlock* block;
     };
-#ifdef BEE_BUILD_DEBUG
+#if defined(BEE_BUILD_DEBUG)
     const char* label = nullptr;
 #endif
 
@@ -178,7 +178,7 @@ class Compiler {
     explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
 
     inline void SetLabel(const char* label) {
-#ifdef BEE_BUILD_DEBUG
+#if defined(BEE_BUILD_DEBUG)
       this->label = label;
 #else
       UNUSED(label);
