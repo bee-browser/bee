@@ -2,8 +2,6 @@ use std::ffi::CString;
 
 use jsparser::Symbol;
 
-use crate::bridge::FuncPtr;
-
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FunctionId(u32);
 
@@ -92,7 +90,6 @@ impl FunctionRegistry {
         self.native_functions.push(NativeFunction {
             formal_parameters,
             name,
-            func: None,
         });
         FunctionId::native(value as u32)
     }
@@ -116,11 +113,11 @@ impl FunctionRegistry {
 pub struct NativeFunction {
     // [[FormalParameters]]
     // TODO: Vec<BindingElement>
-    pub formal_parameters: Vec<Symbol>,
+    #[allow(unused)]
+    formal_parameters: Vec<Symbol>,
 
     // [[ECMAScriptCode]]
     pub name: CString,
-    pub func: FuncPtr,
 }
 
 pub struct HostFunction {
