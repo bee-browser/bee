@@ -28,7 +28,7 @@ clean:
 # TODO: minify the file
 $(BUNDLE_JS): $(JS_FILES) | $(ASSETS_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@deno run --allow-env --allow-read $(TOOLS_BIN)/deno_emit.js src/main.js >$@
+	@deno run --allow-env --allow-net='deno.land' --allow-read $(TOOLS_BIN)/deno_emit.js src/main.js >$@
 
 # TODO: minify the file
 $(BUNDLE_CSS): $(CSS_FILES) | $(ASSETS_DIR)
