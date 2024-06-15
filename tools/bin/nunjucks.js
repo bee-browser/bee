@@ -2,7 +2,7 @@
 
 import * as fs from '@std/fs';
 import * as path from '@std/path';
-import * as cases from '@luca/cases';
+import * as changeCase from 'change-case';
 import nunjucks from 'nunjucks';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { PROJ_DIR } from '../lib/consts.js';
@@ -47,7 +47,7 @@ Custom @data:
     Relatie path to the template file from the project root.
 
 Helpers:
-  * jsr:@luca/cases
+  * npm:change-case
 
 Examples:
   The following commands output the same result:
@@ -79,8 +79,8 @@ async function run(args, options) {
 }
 
 function registerHelpers(env) {
-  for (var name in cases) {
-    env.addFilter(name, cases[name]);
+  for (var name in changeCase) {
+    env.addFilter(name, changeCase[name]);
   }
 }
 

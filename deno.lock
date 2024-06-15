@@ -3,20 +3,44 @@
   "packages": {
     "specifiers": {
       "jsr:@deno/cache-dir@0.8": "jsr:@deno/cache-dir@0.8.0",
+      "jsr:@deno/emit@^0.41.0": "jsr:@deno/emit@0.41.0",
       "jsr:@std/assert@^0.218.2": "jsr:@std/assert@0.218.2",
+      "jsr:@std/assert@^0.223.0": "jsr:@std/assert@0.223.0",
       "jsr:@std/assert@^0.226.0": "jsr:@std/assert@0.226.0",
       "jsr:@std/bytes@^0.218.2": "jsr:@std/bytes@0.218.2",
+      "jsr:@std/bytes@^1.0.0-rc.3": "jsr:@std/bytes@1.0.0",
+      "jsr:@std/collections@^1.0.0-rc.1": "jsr:@std/collections@1.0.0-rc.1",
+      "jsr:@std/encoding@^0.224.3": "jsr:@std/encoding@0.224.3",
       "jsr:@std/fmt@^0.218.2": "jsr:@std/fmt@0.218.2",
+      "jsr:@std/fmt@^0.225.4": "jsr:@std/fmt@0.225.4",
       "jsr:@std/fs@^0.218.2": "jsr:@std/fs@0.218.2",
+      "jsr:@std/fs@^0.229.2": "jsr:@std/fs@0.229.3",
+      "jsr:@std/fs@^0.229.3": "jsr:@std/fs@0.229.3",
+      "jsr:@std/internal@^1.0.0": "jsr:@std/internal@1.0.0",
       "jsr:@std/io@^0.218.2": "jsr:@std/io@0.218.2",
+      "jsr:@std/io@^0.224.1": "jsr:@std/io@0.224.1",
+      "jsr:@std/json@^0.224.1": "jsr:@std/json@0.224.1",
+      "jsr:@std/log@^0.224.2": "jsr:@std/log@0.224.2",
+      "jsr:@std/path@1.0.0-rc.1": "jsr:@std/path@1.0.0-rc.1",
       "jsr:@std/path@^0.218.2": "jsr:@std/path@0.218.2",
+      "jsr:@std/path@^0.223.0": "jsr:@std/path@0.223.0",
       "jsr:@std/path@^0.225.2": "jsr:@std/path@0.225.2",
+      "jsr:@std/streams@^0.224.1": "jsr:@std/streams@0.224.4",
+      "jsr:@std/streams@^0.224.4": "jsr:@std/streams@0.224.4",
+      "jsr:@std/toml@^0.224.1": "jsr:@std/toml@0.224.1",
+      "jsr:@std/yaml@^0.224.1": "jsr:@std/yaml@0.224.1",
       "npm:acorn@8.11.3": "npm:acorn@8.11.3",
+      "npm:acorn@^8.12.0": "npm:acorn@8.12.0",
+      "npm:change-case@^5.4.4": "npm:change-case@5.4.4",
       "npm:deep-diff@1.0.2": "npm:deep-diff@1.0.2",
+      "npm:deep-diff@^1.0.2": "npm:deep-diff@1.0.2",
       "npm:handlebars@4.7.8": "npm:handlebars@4.7.8",
+      "npm:handlebars@^4.7.8": "npm:handlebars@4.7.8",
       "npm:nunjucks@3.2.4": "npm:nunjucks@3.2.4",
+      "npm:nunjucks@^3.2.4": "npm:nunjucks@3.2.4",
       "npm:ora@^7.0.1": "npm:ora@7.0.1",
-      "npm:test262-stream@1.4.0": "npm:test262-stream@1.4.0"
+      "npm:test262-stream@1.4.0": "npm:test262-stream@1.4.0",
+      "npm:test262-stream@^1.4.0": "npm:test262-stream@1.4.0"
     },
     "jsr": {
       "@deno/cache-dir@0.8.0": {
@@ -28,20 +52,54 @@
           "jsr:@std/path@^0.218.2"
         ]
       },
+      "@deno/emit@0.41.0": {
+        "integrity": "174a2db3ae0bfa62a7c30bfabd740143ad60ea88880dbe6e8bb16b7baaeb519c",
+        "dependencies": [
+          "jsr:@deno/cache-dir@0.8",
+          "jsr:@std/path@^0.223.0"
+        ]
+      },
       "@std/assert@0.218.2": {
         "integrity": "7f0a5a1a8cf86607cd6c2c030584096e1ffad27fc9271429a8cb48cfbdee5eaf"
       },
+      "@std/assert@0.223.0": {
+        "integrity": "eb8d6d879d76e1cc431205bd346ed4d88dc051c6366365b1af47034b0670be24"
+      },
       "@std/assert@0.226.0": {
-        "integrity": "0dfb5f7c7723c18cec118e080fec76ce15b4c31154b15ad2bd74822603ef75b3"
+        "integrity": "0dfb5f7c7723c18cec118e080fec76ce15b4c31154b15ad2bd74822603ef75b3",
+        "dependencies": [
+          "jsr:@std/internal@^1.0.0"
+        ]
       },
       "@std/bytes@0.218.2": {
         "integrity": "91fe54b232dcca73856b79a817247f4a651dbb60d51baafafb6408c137241670"
       },
+      "@std/bytes@1.0.0": {
+        "integrity": "9392e72af80adccaa1197912fa19990ed091cb98d5c9c4344b0c301b22d7c632"
+      },
+      "@std/collections@1.0.0-rc.1": {
+        "integrity": "e69fa667e4bede8f1013be9fb48915e564707a2b054848ca4a4da1f3f10251d9"
+      },
+      "@std/encoding@0.224.3": {
+        "integrity": "5e861b6d81be5359fad4155e591acf17c0207b595112d1840998bb9f476dbdaf"
+      },
       "@std/fmt@0.218.2": {
         "integrity": "99526449d2505aa758b6cbef81e7dd471d8b28ec0dcb1491d122b284c548788a"
       },
+      "@std/fmt@0.225.4": {
+        "integrity": "584c681cf422b70e28959b57e59012823609c087384cbf12d05f67814797fda3"
+      },
       "@std/fs@0.218.2": {
         "integrity": "dd9431453f7282e8c577cc22c9e6d036055a9a980b5549f887d6012969fabcca"
+      },
+      "@std/fs@0.229.3": {
+        "integrity": "783bca21f24da92e04c3893c9e79653227ab016c48e96b3078377ebd5222e6eb",
+        "dependencies": [
+          "jsr:@std/path@1.0.0-rc.1"
+        ]
+      },
+      "@std/internal@1.0.0": {
+        "integrity": "ac6a6dfebf838582c4b4f61a6907374e27e05bedb6ce276e0f1608fe84e7cd9a"
       },
       "@std/io@0.218.2": {
         "integrity": "c64fbfa087b7c9d4d386c5672f291f607d88cb7d44fc299c20c713e345f2785f",
@@ -50,10 +108,36 @@
           "jsr:@std/bytes@^0.218.2"
         ]
       },
+      "@std/io@0.224.1": {
+        "integrity": "73de242551a5c0965eb33e36b1fc7df4834ffbc836a1a643a410ccd11253d6be",
+        "dependencies": [
+          "jsr:@std/bytes@^1.0.0-rc.3"
+        ]
+      },
+      "@std/json@0.224.1": {
+        "integrity": "2a18a8000707190e467f94b2732f6f88a3094db823765d8c58925bb5efeac29a",
+        "dependencies": [
+          "jsr:@std/streams@^0.224.1"
+        ]
+      },
+      "@std/log@0.224.2": {
+        "integrity": "354fa2a93678e34e2c4b0238ac30a71a75ef645bde59742dc57ae4fce2cce46e",
+        "dependencies": [
+          "jsr:@std/fmt@^0.225.4",
+          "jsr:@std/fs@^0.229.2",
+          "jsr:@std/io@^0.224.1"
+        ]
+      },
       "@std/path@0.218.2": {
         "integrity": "b568fd923d9e53ad76d17c513e7310bda8e755a3e825e6289a0ce536404e2662",
         "dependencies": [
           "jsr:@std/assert@^0.218.2"
+        ]
+      },
+      "@std/path@0.223.0": {
+        "integrity": "593963402d7e6597f5a6e620931661053572c982fc014000459edc1f93cc3989",
+        "dependencies": [
+          "jsr:@std/assert@^0.223.0"
         ]
       },
       "@std/path@0.225.2": {
@@ -61,6 +145,25 @@
         "dependencies": [
           "jsr:@std/assert@^0.226.0"
         ]
+      },
+      "@std/path@1.0.0-rc.1": {
+        "integrity": "b8c00ae2f19106a6bb7cbf1ab9be52aa70de1605daeb2dbdc4f87a7cbaf10ff6"
+      },
+      "@std/streams@0.224.4": {
+        "integrity": "0601626fbab009b4b4a7407009b4af2fe8e3edcd67630ac66ba7f23542b0d7e1",
+        "dependencies": [
+          "jsr:@std/bytes@^1.0.0-rc.3",
+          "jsr:@std/io@^0.224.1"
+        ]
+      },
+      "@std/toml@0.224.1": {
+        "integrity": "c364b9ca3b18207223c4e2a1f652ef2970ff80967f7575ddf89b6b0565a17148",
+        "dependencies": [
+          "jsr:@std/collections@^1.0.0-rc.1"
+        ]
+      },
+      "@std/yaml@0.224.1": {
+        "integrity": "cbb444acccce7ea34b9ef6678bff84c18eba89b790e52dd098def8dae313f0b2"
       }
     },
     "npm": {
@@ -70,6 +173,10 @@
       },
       "acorn@8.11.3": {
         "integrity": "sha512-Y9rRfJG5jcKOE0CLisYbojUjIrIEE7AGMzA/Sm4BslANhbS+cDMpgBdcPT91oJ7OuJ9hYJBx59RjbhxVnrF8Xg==",
+        "dependencies": {}
+      },
+      "acorn@8.12.0": {
+        "integrity": "sha512-RTvkC4w+KNXrM39/lWCUaG0IbRkWdCv7W/IOW9oU6SawyxulvkQy5HQPVTKxEjczcUvapcrw3cFx/60VN/NRNw==",
         "dependencies": {}
       },
       "ansi-regex@6.0.1": {
@@ -107,6 +214,10 @@
       },
       "chalk@5.3.0": {
         "integrity": "sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==",
+        "dependencies": {}
+      },
+      "change-case@5.4.4": {
+        "integrity": "sha512-HRQyTk2/YPEkt9TnUPbOpr64Uw3KOicFWPVBb+xiHvd6eBx/qPr9xqfBFDT8P2vWsvvz4jbEkfDe71W3VyNu2w==",
         "dependencies": {}
       },
       "cli-cursor@4.0.0": {
@@ -856,7 +967,26 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/path@^0.225.2"
+      "jsr:@deno/emit@^0.41.0",
+      "jsr:@std/assert@^0.226.0",
+      "jsr:@std/csv@^0.224.3",
+      "jsr:@std/encoding@^0.224.3",
+      "jsr:@std/fs@^0.229.3",
+      "jsr:@std/io@^0.224.1",
+      "jsr:@std/json@^0.224.1",
+      "jsr:@std/log@^0.224.2",
+      "jsr:@std/path@^0.225.2",
+      "jsr:@std/streams@^0.224.4",
+      "jsr:@std/toml@^0.224.1",
+      "jsr:@std/yaml@^0.224.1",
+      "jsr:@zip-js/zip-js@^2.7.45",
+      "npm:acorn@^8.12.0",
+      "npm:change-case@^5.4.4",
+      "npm:deep-diff@^1.0.2",
+      "npm:handlebars@^4.7.8",
+      "npm:nunjucks@^3.2.4",
+      "npm:ora@^7.0.1",
+      "npm:test262-stream@^1.4.0"
     ]
   }
 }

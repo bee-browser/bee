@@ -2,7 +2,7 @@
 
 import * as path from '@std/path';
 import * as yaml from '@std/yaml';
-import { pascalCase } from '@luca/cases';
+import { pascalCase } from 'change-case';
 import { Command } from '@cliffy/command';
 import Handlebars from 'handlebars';
 import * as log from '../../../../tools/lib/log.js';
@@ -213,12 +213,12 @@ function render(spec, modes, ids, token, run, arrow) {
       }
       return render(spec, modes, ids, targetToken, snippet.code, arrow.charAt(0) + arrow);
     }
-    if (ref in ids) {
-      log.debug(`${arrow} using ${ref} in the mode`);
-      return render(spec, modes, ids, targetToken, ids[ref].run, arrow);
+    if (ids[ref] === undefined) {
+      log.error('Invalid reference: ${ref}');
+      Deno.exit(1);
     }
-    log.error('Invalid reference: ${ref}');
-    Deno.exit(1);
+    log.debug(`${arrow} using ${ref} in the mode`);
+    return render(spec, modes, ids, targetToken, ids[ref].run, arrow);
   });
   const template = hbs.compile(run.trim(), {
     noEscape: true,
@@ -230,7 +230,7 @@ function render(spec, modes, ids, token, run, arrow) {
   }
   return template({
     tag_name,
-    TagName: pascalCase(tag_name),
+    TagName: tag_name !== undefined ? pascalCase(tag_name) : undefined,
   });
 }
 

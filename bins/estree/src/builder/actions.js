@@ -9,6 +9,7 @@
 import { assert } from '@std/assert';
 import * as fs from '@std/fs';
 import * as log from '@std/log';
+import * as path from '@std/path';
 import * as yaml from '@std/yaml';
 import { parseCommand } from '../../../../tools/lib/cli.js';
 import { setup } from '../../../../tools/lib/log.js';

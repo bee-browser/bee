@@ -2,7 +2,7 @@
 
 import { assert } from '@std/assert';
 import * as path from '@std/path';
-import { constantCase } from '@luca/cases';
+import { constantCase } from 'change-case';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
 const baseDir = new URL('.', import.meta.url).pathname;

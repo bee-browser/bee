@@ -2,7 +2,7 @@
 
 import * as fs from '@std/fs';
 import * as path from '@std/path';
-import * as cases from '@luca/cases';
+import * as changeCase from 'change-case';
 import Handlebars from 'handlebars';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { PROJ_DIR } from '../lib/consts.js';
@@ -58,7 +58,7 @@ Custom @data:
 Helpers:
   * json as JSON.stringify
   * padStart, padEnd
-  * jsr:@luca/cases
+  * npm:change-case
   * escapeForRust
   * escapeUnicodeForRust
 `.trim();
@@ -102,9 +102,11 @@ function registerHelpers() {
 
   Handlebars.registerHelper('json', JSON.stringify);
 
-  for (var name in cases) {
-    Handlebars.registerHelper(name, cases[name]);
+  for (var name in changeCase) {
+    Handlebars.registerHelper(name, changeCase[name]);
   }
+  Handlebars.registerHelper('lowerCase', (str) => str.toLowerCase());
+  Handlebars.registerHelper('upperCase', (str) => str.toUpperCase());
 
   Handlebars.registerHelper('escapeForRust', (str) => {
     const CHARMAP = {

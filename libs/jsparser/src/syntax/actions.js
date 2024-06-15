@@ -12,7 +12,7 @@ const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
 const DOC = `
 Usage:
-  ${PROGNAME} <lalr.json> [<actions.yaml>]
+  ${PROGNAME} [options] <lalr.json> [<actions.yaml>]
   ${PROGNAME} -h | --help
 
 Options:

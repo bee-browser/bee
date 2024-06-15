@@ -5,7 +5,7 @@
 import { assert, assertEquals, assertExists, unreachable } from '@std/assert';
 import * as log from '@std/log';
 import * as yaml from '@std/yaml';
-import { constantCase } from '@luca/cases';
+import { constantCase } from 'change-case';
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { setup } from '../../../tools/lib/log.js';
 

@@ -1,7 +1,7 @@
 'use strict';
 
 import * as path from '@std/path';
-import { snakeCase } from '@luca/cases';
+import { snakeCase } from 'change-case';
 
 const datFile = Deno.args[0];
 const name = snakeCase(path.basename(datFile, '.dat'));

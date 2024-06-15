@@ -1,7 +1,7 @@
 'use strict';
 
 import * as path from '@std/path';
-import { pascalCase } from '@luca/cases';
+import { pascalCase } from 'change-case';
 
 const testFile = Deno.args[0];
 const name = path.basename(testFile, '.test');

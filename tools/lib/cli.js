@@ -1,7 +1,7 @@
 'use strict';
 
 import { readAll } from '@std/io';
-import { camelCase } from '@luca/cases';
+import { camelCase } from 'change-case';
 import { default as docopt } from 'docopt';
 
 export async function parseCommand({ doc, conv, init }) {
