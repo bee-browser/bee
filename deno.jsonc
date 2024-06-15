@@ -41,5 +41,10 @@
     "puppeteer": "https://deno.land/x/puppeteer@16.2.0/mod.ts",
     "servest": "https://deno.land/x/servest@v1.3.4/mod.ts",
     "test262-stream": "npm:test262-stream@^1.4.0"
+  },
+  // See https://github.com/hasundue/molt?tab=readme-ov-file#moltcli
+  "tasks": {
+    "update": "deno run --allow-env --allow-read --allow-write --allow-run='git,deno' --allow-net='deno.land,jsr.io,registry.npmjs.org' jsr:@molt/cli deno.jsonc",
+    "update:commit": "deno task -q update --commit --pre-commit=fmt,lint"
   }
 }
