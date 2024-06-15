@@ -12,7 +12,6 @@
     ]
   },
   // TODO: no package for cliffy in jsr.io.
-  // TODO: ora@8.0.1 does not work w/ deno.
   // TODO: servest was deprecated...
   // TODO: npm:puppeteer work with deno, but warning messages are shown.
   //       See https://github.com/denoland/deno/issues/19507.
@@ -38,7 +37,7 @@
     "docopt": "https://deno.land/x/docopt@v1.0.7/mod.ts",
     "handlebars": "npm:handlebars@^4.7.8",
     "nunjucks": "npm:nunjucks@^3.2.4",
-    "ora": "npm:ora@^7.0.1",
+    "ora": "npm:ora@^8.0.1",
     "puppeteer": "https://deno.land/x/puppeteer@16.2.0/mod.ts",
     "servest": "https://deno.land/x/servest@v1.3.4/mod.ts",
     "test262-stream": "npm:test262-stream@^1.4.0"
