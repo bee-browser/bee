@@ -1,8 +1,8 @@
 'use strict';
 
-import * as fs from 'https://deno.land/std@0.224.0/fs/mod.ts';
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import { bundle } from "https://deno.land/x/emit@0.40.0/mod.ts";
+import * as fs from '@std/fs';
+import * as path from '@std/path';
+import { bundle } from '@deno/emit';
 import { parseCommand, readAllText } from '../lib/cli.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));

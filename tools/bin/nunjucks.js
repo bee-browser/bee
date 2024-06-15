@@ -1,9 +1,9 @@
 'use strict';
 
-import * as fs from 'https://deno.land/std@0.224.0/fs/mod.ts';
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
-import nunjucks from 'npm:nunjucks@3.2.4';
+import * as fs from '@std/fs';
+import * as path from '@std/path';
+import * as changeCase from 'change-case';
+import nunjucks from 'nunjucks';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { PROJ_DIR } from '../lib/consts.js';
 
@@ -47,7 +47,7 @@ Custom @data:
     Relatie path to the template file from the project root.
 
 Helpers:
-  * https://deno.land/x/case/mod.ts
+  * npm:change-case
 
 Examples:
   The following commands output the same result:

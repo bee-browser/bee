@@ -1,10 +1,8 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-
-import deepDiff from 'npm:deep-diff@1.0.2';
-import ora from 'npm:ora@^7.0.1'; // 8.0.1 does not work w/ deno
-
+import * as path from '@std/path';
+import deepDiff from 'deep-diff';
+import ora from 'ora';
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { Acorn, ESTree, showDiffs } from './helpers.js';
 

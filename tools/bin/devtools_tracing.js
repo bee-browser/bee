@@ -1,7 +1,7 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import * as base64 from 'https://deno.land/x/base64@v0.2.1/mod.ts';
+import * as path from '@std/path';
+import { encodeBase64Url } from '@std/encoding/base64url';
 import { parseCommand } from '../lib/cli.js';
 import * as chrome_devtools from '../lib/chrome_devtools.js';
 
@@ -57,7 +57,7 @@ const { options, args } = await parseCommand({
             return path.toFileUrl(path.resolve(value));
           }
         } else {
-          const html = base64.fromUint8Array(await Deno.readAll(Deno.stdin));
+          const html = encodeBase64Url(await Deno.readAll(Deno.stdin));
           return `data:text/html;charset=utf-8;base64,${html}`;
         }
       default:

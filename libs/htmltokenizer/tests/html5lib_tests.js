@@ -1,7 +1,7 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import { pascalCase } from 'https://deno.land/x/case/mod.ts';
+import * as path from '@std/path';
+import { pascalCase } from 'change-case';
 
 const testFile = Deno.args[0];
 const name = path.basename(testFile, '.test');

@@ -1,9 +1,7 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-
-import ora from 'npm:ora@^7.0.1'; // 8.0.1 does not work w/ deno
-
+import * as path from '@std/path';
+import ora from 'ora';
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { showDiffs } from './helpers.js';
 

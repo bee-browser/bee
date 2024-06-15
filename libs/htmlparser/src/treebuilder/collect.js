@@ -1,8 +1,10 @@
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import * as yaml from 'https://deno.land/std@0.224.0/yaml/mod.ts';
-import { pascalCase } from 'https://deno.land/x/case@2.2.0/mod.ts';
-import { Command } from 'https://deno.land/x/cliffy@v1.0.0-rc.4/command/mod.ts';
-import Handlebars from 'npm:handlebars@4.7.8';
+'use strict';
+
+import * as path from '@std/path';
+import * as yaml from '@std/yaml';
+import { pascalCase } from 'change-case';
+import { Command } from '@cliffy/command';
+import Handlebars from 'handlebars';
 import * as log from '../../../../tools/lib/log.js';
 
 const PROGNAME = path.basename(Deno.mainModule);
@@ -211,12 +213,12 @@ function render(spec, modes, ids, token, run, arrow) {
       }
       return render(spec, modes, ids, targetToken, snippet.code, arrow.charAt(0) + arrow);
     }
-    if (ref in ids) {
-      log.debug(`${arrow} using ${ref} in the mode`);
-      return render(spec, modes, ids, targetToken, ids[ref].run, arrow);
+    if (ids[ref] === undefined) {
+      log.error('Invalid reference: ${ref}');
+      Deno.exit(1);
     }
-    log.error('Invalid reference: ${ref}');
-    Deno.exit(1);
+    log.debug(`${arrow} using ${ref} in the mode`);
+    return render(spec, modes, ids, targetToken, ids[ref].run, arrow);
   });
   const template = hbs.compile(run.trim(), {
     noEscape: true,
@@ -228,7 +230,7 @@ function render(spec, modes, ids, token, run, arrow) {
   }
   return template({
     tag_name,
-    TagName: pascalCase(tag_name),
+    TagName: tag_name !== undefined ? pascalCase(tag_name) : undefined,
   });
 }
 

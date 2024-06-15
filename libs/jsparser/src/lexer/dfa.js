@@ -1,6 +1,6 @@
 'use strict';
 
-import { assert } from 'https://deno.land/std@0.224.0/testing/asserts.ts';
+import { assert } from '@std/assert';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
 const spec = JSON.parse(await readAllText(Deno.stdin));
