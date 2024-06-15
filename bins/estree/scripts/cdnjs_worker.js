@@ -1,7 +1,6 @@
 'use strict';
 
-import deepDiff from 'npm:deep-diff@1.0.2';
-
+import deepDiff from 'deep-diff';
 import { Acorn, ESTree } from './helpers.js';
 
 // TODO: remove

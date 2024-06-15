@@ -2,15 +2,10 @@
 
 'use strict';
 
-import {
-  assert,
-  assertEquals,
-  assertExists,
-  unreachable,
-} from 'https://deno.land/std@0.224.0/testing/asserts.ts';
-import * as log from 'https://deno.land/std@0.224.0/log/mod.ts';
-import * as yaml from 'https://deno.land/std@0.224.0/yaml/mod.ts';
-import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
+import { assert, assertEquals, assertExists, unreachable } from '@std/assert';
+import * as log from '@std/log';
+import * as yaml from '@std/yaml';
+import { constantCase } from '@luca/cases';
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { setup } from '../../../tools/lib/log.js';
 
@@ -72,16 +67,16 @@ function convertTokenNames(rules) {
       switch (term.type) {
         case 'token':
         case 'disallow':
-          term.data = changeCase.constantCase(term.data);
+          term.data = constantCase(term.data);
           break;
         case 'lookahead':
           term.data.data = term.data.data.map((patterns) => {
             return patterns.map((pattern) => {
               if (pattern.startsWith('(!')) {
                 let token = pattern.substring(2, pattern.length - 1);
-                return `(!${changeCase.constantCase(token)})`;
+                return `(!${constantCase(token)})`;
               }
-              return changeCase.constantCase(pattern);
+              return constantCase(pattern);
             });
           });
           break;

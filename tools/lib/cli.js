@@ -1,6 +1,8 @@
-import { readAll } from 'https://deno.land/std@0.224.0/io/read_all.ts';
-import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
-import { default as docopt } from 'https://deno.land/x/docopt@v1.0.7/mod.ts';
+'use strict';
+
+import { readAll } from '@std/io';
+import { camelCase } from '@luca/cases';
+import { default as docopt } from 'docopt';
 
 export async function parseCommand({ doc, conv, init }) {
   try {
@@ -10,9 +12,9 @@ export async function parseCommand({ doc, conv, init }) {
     let args = {};
     for (const [name, value] of Object.entries(raw)) {
       if (name.startsWith('--')) {
-        options[changeCase.camelCase(name.slice(2))] = conv ? await conv(name, value) : value;
+        options[camelCase(name.slice(2))] = conv ? await conv(name, value) : value;
       } else if (name.startsWith('<')) {
-        args[changeCase.camelCase(name.slice(1, -1))] = conv ? await conv(name, value) : value;
+        args[camelCase(name.slice(1, -1))] = conv ? await conv(name, value) : value;
       } else if (value) {
         cmds.push(name);
       }

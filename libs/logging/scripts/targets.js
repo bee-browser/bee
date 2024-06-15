@@ -1,10 +1,9 @@
 'use strict';
 
-import * as fs from 'https://deno.land/std@0.224.0/fs/mod.ts';
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import * as toml from 'https://deno.land/std@0.224.0/toml/mod.ts';
-import * as yaml from 'https://deno.land/std@0.224.0/yaml/mod.ts';
-
+import * as fs from '@std/fs';
+import * as path from '@std/path';
+import * as toml from '@std/toml';
+import * as yaml from '@std/yaml';
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { PROJ_DIR } from '../../../tools/lib/consts.js';
 
