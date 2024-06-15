@@ -1,8 +1,8 @@
 'use strict';
 
-import { assert } from 'https://deno.land/std@0.224.0/testing/asserts.ts';
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
+import { assert } from '@std/assert';
+import * as path from '@std/path';
+import { constantCase } from 'change-case';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
 const baseDir = new URL('.', import.meta.url).pathname;
@@ -14,7 +14,7 @@ const tokens = JSON.parse(
 
 const tokenIndexMap = {};
 for (let i = 0; i < tokens.length; ++i) {
-  tokenIndexMap[changeCase.constantCase(tokens[i])] = i;
+  tokenIndexMap[constantCase(tokens[i])] = i;
 }
 tokenIndexMap['$'] = tokens.length;
 

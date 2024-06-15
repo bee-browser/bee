@@ -8,12 +8,12 @@ use super::SymbolRegistry;
 
 impl SymbolRegistry {
     {%- for symbol in data %}
-    pub const {{ symbol | upperCase }}: Symbol = Symbol({{ loop.index0 + 1 }});
+    pub const {{ symbol | upper }}: Symbol = Symbol({{ loop.index0 + 1 }});
     {%- endfor %}
 
     pub(super) fn register_builtin_symbols(&mut self) {
         {%- for symbol in data %}
-        self.register_builtin_symbol(Self::{{ symbol | upperCase }}, "{{ symbol }}");
+        self.register_builtin_symbol(Self::{{ symbol | upper }}, "{{ symbol }}");
         {%- endfor %}
     }
 

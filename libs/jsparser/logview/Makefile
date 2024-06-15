@@ -24,7 +24,7 @@ codegen: $(ASSETS_FILES)
 # TODO: minify the file
 $(BUNDLE_JS): $(JS_FILES)
 	@echo 'Generating $(abspath $@)...'
-	@deno run --allow-env --allow-read $(TOOLS_BIN)/deno_emit.js src/main.js >$@
+	@deno run --allow-env --allow-net='jsr.io' --allow-read --allow-write $(TOOLS_BIN)/deno_emit.js src/main.js >$@
 
 # TODO: minify the file
 $(BUNDLE_CSS): $(CSS_FILES)

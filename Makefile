@@ -114,9 +114,7 @@ update-deps-crates:
 
 .PHONY: update-deps-deno
 update-deps-deno:
-	@find -name '*.js' -not -path './vendor/*' | \
-	  xargs deno run --allow-net --allow-read --allow-write \
-	    https://raw.githubusercontent.com/masnagam/deno-udd/fix-issue-86/main.ts
+	@deno task update
 
 .PHONY: update-devcontainer
 update-devcontainer:

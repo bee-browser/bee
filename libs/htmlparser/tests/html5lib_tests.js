@@ -1,7 +1,7 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import { snakeCase } from 'https://deno.land/x/case/mod.ts';
+import * as path from '@std/path';
+import { snakeCase } from 'change-case';
 
 const datFile = Deno.args[0];
 const name = snakeCase(path.basename(datFile, '.dat'));

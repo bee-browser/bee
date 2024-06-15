@@ -1,9 +1,9 @@
 'use strict';
 
-import * as fs from 'https://deno.land/std@0.224.0/fs/mod.ts';
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
-import Handlebars from 'npm:handlebars@4.7.8';
+import * as fs from '@std/fs';
+import * as path from '@std/path';
+import * as changeCase from 'change-case';
+import Handlebars from 'handlebars';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { PROJ_DIR } from '../lib/consts.js';
 
@@ -58,7 +58,7 @@ Custom @data:
 Helpers:
   * json as JSON.stringify
   * padStart, padEnd
-  * https://deno.land/x/case/mod.ts
+  * npm:change-case
   * escapeForRust
   * escapeUnicodeForRust
 `.trim();
@@ -105,6 +105,8 @@ function registerHelpers() {
   for (var name in changeCase) {
     Handlebars.registerHelper(name, changeCase[name]);
   }
+  Handlebars.registerHelper('lowerCase', (str) => str.toLowerCase());
+  Handlebars.registerHelper('upperCase', (str) => str.toUpperCase());
 
   Handlebars.registerHelper('escapeForRust', (str) => {
     const CHARMAP = {

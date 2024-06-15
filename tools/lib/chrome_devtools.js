@@ -1,10 +1,7 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
-// npm:puppeteer work with deno, but warning messages are shown.
-// See https://github.com/denoland/deno/issues/19507
-//import puppeteer from 'npm:puppeteer@21.3.6';
-import { default as puppeteer } from 'https://deno.land/x/puppeteer@16.2.0/mod.ts';
+import * as path from '@std/path';
+import { default as puppeteer } from 'puppeteer';
 import { RESOURCES_DIR } from './consts.js';
 
 const DEFAULT_LINUX_EXECUTABLE = '/opt/google/chrome/google-chrome';

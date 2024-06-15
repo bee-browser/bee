@@ -1,10 +1,9 @@
 'use strict';
 
-import { assertNotEquals, unreachable } from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { JsonParseStream } from 'https://deno.land/std@0.224.0/json/mod.ts';
-import { TextLineStream } from 'https://deno.land/std@0.224.0/streams/mod.ts';
-
-import * as acorn from 'npm:acorn@8.11.3';
+import { assertNotEquals, unreachable } from '@std/assert';
+import { JsonParseStream } from '@std/json';
+import { TextLineStream } from '@std/streams';
+import * as acorn from 'acorn';
 
 export class Acorn {
   static parse(source, sourceType) {
