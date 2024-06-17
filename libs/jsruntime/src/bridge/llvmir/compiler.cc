@@ -1348,14 +1348,26 @@ void Compiler::ReleaseBindings(uint16_t n) {
   allocated_bindings_ -= n;
 }
 
-void Compiler::Continue() {
+void Compiler::LabelStart(uint32_t symbol) {
+  UNUSED(symbol);
+  // TODO
+}
+
+void Compiler::LabelEnd(uint32_t symbol) {
+  UNUSED(symbol);
+  // TODO
+}
+
+void Compiler::Continue(uint32_t symbol) {
+  UNUSED(symbol);  // TODO
   assert(!continue_stack_.empty());
   auto* loop_continue = continue_stack_.back();
   builder_->CreateBr(loop_continue);
   CreateDeadcodeBasicBlock();
 }
 
-void Compiler::Break() {
+void Compiler::Break(uint32_t symbol) {
+  UNUSED(symbol);  // TODO
   assert(!break_stack_.empty());
   auto* loop_break = break_stack_.back();
   builder_->CreateBr(loop_break);

@@ -172,6 +172,7 @@ class Transpiler {
           modifySwitchStatement,
           modifyCaseClause,
           modifyDefaultClause,
+          modifyLabelledStatement,
           modifyTryStatement,
           expandOptionals,
           modifyForStatement,
@@ -610,6 +611,7 @@ function addActions(rules) {
     '_CASE_BLOCK_',
     '_CASE_SELECTOR_',
     '_DEFAULT_SELECTOR_',
+    '_LABEL_',
     '_TRY_BLOCK_',
     '_CATCH_BLOCK_',
     '_FINALLY_BLOCK_',
@@ -850,6 +852,21 @@ function modifyDefaultClause(rules) {
   ];
   log.debug('Modifying DefaultClause...');
   const rule = rules.find((rule) => rule.name === 'DefaultClause[Yield, Await, Return]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyLabelledStatement(rules) {
+  const TARGETS = [
+    {
+      term: '`:`',
+      action: '_LABEL_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying LabelledStatement...');
+  const rule = rules.find((rule) => rule.name === 'LabelledStatement[Yield, Await, Return]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;

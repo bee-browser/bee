@@ -16,6 +16,17 @@ use super::SyntaxHandler;
 use super::Token;
 use super::TokenKind;
 
+const MAX_ITERATION_STATEMENT_DEPTH: usize = u16::MAX as usize;
+const MAX_SWITCH_STATEMENT_DEPTH: usize = u16::MAX as usize;
+
+macro_rules! ensure {
+    ($cond:expr) => {
+        if !$cond {
+            return Err(Error::SyntaxError);
+        }
+    };
+}
+
 pub trait NodeHandler<'s> {
     type Artifact;
 
@@ -31,6 +42,15 @@ pub struct Processor<'s, H> {
     stack: Vec<Syntax>,
     nodes: Vec<Node<'s>>,
     tokens: Vec<Token<'s>>,
+
+    label_stack: Vec<Label>,
+
+    // It's enough to track an *outermost* iteration/switch statement for conformance with the
+    // specification, but it cannot be implemented easily.  Instead, we simply count the nesting
+    // level of iteration/switch statements.
+    iteration_statement_depth: usize,
+    switch_statement_depth: usize,
+
     strict_mode: bool,
     module: bool,
 }
@@ -49,7 +69,7 @@ enum Detail {
     Identifier(Symbol),
     IdentifierReference(#[allow(unused)] Symbol), // TODO: SS
     BindingIdentifier(Symbol),
-    LabelIdentifier(#[allow(unused)] Symbol), // TODO: SS
+    LabelIdentifier(Symbol),
     CpeaaplExpression,
     CpeaaplFormalParameters,
     CpeaaplEmpty,
@@ -74,11 +94,35 @@ enum Detail {
     DefaultClause,
     CatchClause,
     FinallyClause,
-    Statement,
+    BlockStatement,
+    //VariableStatement,
+    EmptyStatement,
+    ExpressionStatement,
+    IfStatement,
+    DoWhileStatement,
+    WhileStatement,
+    ForStatement,
+    //ForInStatement,
+    //ForOfStatement,
+    SwitchStatement,
+    ContinueStatement,
+    BreakStatement,
+    ReturnStatement,
+    //WithStatement,
+    LabelledStatement(LabelledItem),
+    ThrowStatement,
+    TryStatement,
+    //DebuggerStatement,
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
     StatementList,
     CoverCallExpressionAndAsyncArrowHead,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum LabelledItem {
+    IterationStatement,
+    OtherStatement,
 }
 
 #[derive(Debug)]
@@ -111,7 +155,6 @@ pub enum Node<'s> {
     String(Vec<u16>, &'s str),
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
-    LabelIdentifier(Symbol),
     ArgumentListHead(bool, bool),
     ArgumentListItem(bool),
     Arguments,
@@ -134,8 +177,8 @@ pub enum Node<'s> {
     DoWhileStatement,
     WhileStatement,
     ForStatement(LoopFlags),
-    ContinueStatement,
-    BreakStatement,
+    ContinueStatement(Symbol),
+    BreakStatement(Symbol),
     ReturnStatement(u32),
     SwitchStatement,
     CaseBlock,
@@ -143,6 +186,8 @@ pub enum Node<'s> {
     CaseClause(bool),
     DefaultSelector,
     DefaultClause(bool),
+    LabelledStatement(Symbol),
+    Label(Symbol),
     ThrowStatement,
     TryStatement,
     CatchClause(bool),
@@ -351,6 +396,7 @@ where
     const INITIAL_STACK_CAPACITY: usize = 64;
     const INITIAL_QUEUE_CAPACITY: usize = 128;
     const INITIAL_TOKENS_CAPACITY: usize = 1024;
+    const INITIAL_LABEL_STACK_CAPACITY: usize = 8;
 
     pub fn new(handler: H, module: bool) -> Self {
         Self {
@@ -359,31 +405,38 @@ where
             stack: Vec::with_capacity(Self::INITIAL_STACK_CAPACITY),
             nodes: Vec::with_capacity(Self::INITIAL_QUEUE_CAPACITY),
             tokens: Vec::with_capacity(Self::INITIAL_TOKENS_CAPACITY),
+            label_stack: Vec::with_capacity(Self::INITIAL_LABEL_STACK_CAPACITY),
+            iteration_statement_depth: 0,
+            switch_statement_depth: 0,
             strict_mode: false,
             module,
         }
     }
 
-    #[inline(always)]
-    fn top(&mut self) -> &Syntax {
-        let len = self.stack.len();
-        debug_assert!(len >= 1);
-        &self.stack[len - 1]
+    fn top(&self) -> &Syntax {
+        self.nth(0)
     }
 
-    #[inline(always)]
     fn top_mut(&mut self) -> &mut Syntax {
-        let len = self.stack.len();
-        debug_assert!(len >= 1);
-        &mut self.stack[len - 1]
+        self.nth_mut(0)
     }
 
-    #[inline(always)]
+    fn nth(&self, n: usize) -> &Syntax {
+        let len = self.stack.len();
+        debug_assert!(len > n);
+        &self.stack[len - n - 1]
+    }
+
+    fn nth_mut(&mut self, n: usize) -> &mut Syntax {
+        let len = self.stack.len();
+        debug_assert!(len > n);
+        &mut self.stack[len - n - 1]
+    }
+
     fn push(&mut self, syntax: Syntax) {
         self.stack.push(syntax);
     }
 
-    #[inline(always)]
     fn pop(&mut self) -> Syntax {
         self.stack.pop().unwrap()
     }
@@ -503,48 +556,6 @@ where
         Ok(())
     }
 
-    // _LOOP_START_
-    fn process_loop_start(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::LoopStart);
-        Ok(())
-    }
-
-    // _LOOP_INIT_EXPRESSION_
-    fn process_loop_init_expression(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::LoopInitExpression);
-        Ok(())
-    }
-
-    // _LOOP_INIT_VAR_DECLARATION_
-    fn process_loop_init_var_declaration(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::LoopInitVarDeclaration);
-        Ok(())
-    }
-
-    // _LOOP_INIT_LEXICAL_DECLARATION_
-    fn process_loop_init_lexical_declaration(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::LoopInitLexicalDeclaration);
-        Ok(())
-    }
-
-    // _LOOP_TEST_
-    fn process_loop_test(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::LoopTest);
-        Ok(())
-    }
-
-    // _LOOP_NEXT_
-    fn process_loop_next(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::LoopNext);
-        Ok(())
-    }
-
-    // _LOOP_BODY_
-    fn process_loop_body(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::LoopBody);
-        Ok(())
-    }
-
     // 13.1 Identifiers
 
     // IdentifierReference : Identifier
@@ -562,22 +573,16 @@ where
 
     // IdentifierReference : yield
     fn process_identifier_reference_only_in_non_strict(&mut self) -> Result<(), Error> {
-        if self.strict_mode {
-            // 13.1.1 Static Semantics: Early Errors
-            Err(Error::SyntaxError)
-        } else {
-            self.process_identifier_reference()
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!self.strict_mode);
+        self.process_identifier_reference()
     }
 
     // IdentifierReference : await
     fn process_identifier_reference_only_in_script(&mut self) -> Result<(), Error> {
-        if self.module {
-            // 13.1.1 Static Semantics: Early Errors
-            Err(Error::SyntaxError)
-        } else {
-            self.process_identifier_reference()
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!self.module);
+        self.process_identifier_reference()
     }
 
     // IdentifierReference_Await : Identifier
@@ -586,11 +591,9 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::AWAIT => Err(Error::SyntaxError),
-            _ => self.process_identifier_reference(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(symbol, SymbolRegistry::AWAIT));
+        self.process_identifier_reference()
     }
 
     // IdentifierReference_Yield : Identifier
@@ -599,11 +602,9 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::YIELD => Err(Error::SyntaxError),
-            _ => self.process_identifier_reference(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(symbol, SymbolRegistry::YIELD));
+        self.process_identifier_reference()
     }
 
     // IdentifierReference_Yield_Await : Identifier
@@ -612,11 +613,12 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::YIELD | SymbolRegistry::AWAIT => Err(Error::SyntaxError),
-            _ => self.process_identifier_reference(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(
+            symbol,
+            SymbolRegistry::YIELD | SymbolRegistry::AWAIT
+        ));
+        self.process_identifier_reference()
     }
 
     // BindingIdentifier : yield
@@ -641,33 +643,25 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::ARGUMENTS | SymbolRegistry::EVAL if self.strict_mode => {
-                Err(Error::SyntaxError)
-            }
-            _ => self.process_binding_identifier(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(
+            !matches!(symbol, SymbolRegistry::ARGUMENTS | SymbolRegistry::EVAL if self.strict_mode)
+        );
+        self.process_binding_identifier()
     }
 
     // BindingIdentifier : yield
     fn process_binding_identifier_only_in_non_strict(&mut self) -> Result<(), Error> {
-        if self.strict_mode {
-            // 13.1.1 Static Semantics: Early Errors
-            Err(Error::SyntaxError)
-        } else {
-            self.process_binding_identifier()
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!self.strict_mode);
+        self.process_binding_identifier()
     }
 
     // BindingIdentifier : await
     fn process_binding_identifier_only_in_script(&mut self) -> Result<(), Error> {
-        if self.module {
-            // 13.1.1 Static Semantics: Early Errors
-            Err(Error::SyntaxError)
-        } else {
-            self.process_binding_identifier()
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!self.module);
+        self.process_binding_identifier()
     }
 
     // BindingIdentifier_Await : Identifier
@@ -676,11 +670,9 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::AWAIT => Err(Error::SyntaxError),
-            _ => self.process_binding_identifier(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(symbol, SymbolRegistry::AWAIT));
+        self.process_binding_identifier()
     }
 
     // BindingIdentifier_Yield : Identifier
@@ -689,11 +681,9 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::YIELD => Err(Error::SyntaxError),
-            _ => self.process_binding_identifier(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(symbol, SymbolRegistry::YIELD));
+        self.process_binding_identifier()
     }
 
     // BindingIdentifier_Yield_Await : Identifier
@@ -702,11 +692,12 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::YIELD | SymbolRegistry::AWAIT => Err(Error::SyntaxError),
-            _ => self.process_binding_identifier(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(
+            symbol,
+            SymbolRegistry::YIELD | SymbolRegistry::AWAIT
+        ));
+        self.process_binding_identifier()
     }
 
     // LabelIdentifier : Identifier
@@ -717,29 +708,22 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        self.enqueue(Node::LabelIdentifier(symbol));
         self.replace(1, Detail::LabelIdentifier(symbol));
         Ok(())
     }
 
     // LabelIdentifier : yield
     fn process_label_identifier_only_in_non_strict(&mut self) -> Result<(), Error> {
-        if self.strict_mode {
-            // 13.1.1 Static Semantics: Early Errors
-            Err(Error::SyntaxError)
-        } else {
-            self.process_label_identifier()
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!self.strict_mode);
+        self.process_label_identifier()
     }
 
     // LabelIdentifier : await
     fn process_label_identifier_only_in_script(&mut self) -> Result<(), Error> {
-        if self.module {
-            // 13.1.1 Static Semantics: Early Errors
-            Err(Error::SyntaxError)
-        } else {
-            self.process_label_identifier()
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!self.module);
+        self.process_label_identifier()
     }
 
     // LabelIdentifier_Await : Identifier
@@ -748,11 +732,9 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::AWAIT => Err(Error::SyntaxError),
-            _ => self.process_label_identifier(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(symbol, SymbolRegistry::AWAIT));
+        self.process_label_identifier()
     }
 
     // LabelIdentifier_Yield : Identifier
@@ -761,11 +743,9 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::YIELD => Err(Error::SyntaxError),
-            _ => self.process_label_identifier(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(symbol, SymbolRegistry::YIELD));
+        self.process_label_identifier()
     }
 
     // LabelIdentifier_Yield_Await : Identifier
@@ -774,11 +754,12 @@ where
             Detail::Identifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::YIELD | SymbolRegistry::AWAIT => Err(Error::SyntaxError),
-            _ => self.process_label_identifier(),
-        }
+        // 13.1.1 Static Semantics: Early Errors
+        ensure!(!matches!(
+            symbol,
+            SymbolRegistry::YIELD | SymbolRegistry::AWAIT
+        ));
+        self.process_label_identifier()
     }
 
     // Identifier : IdentifierName but not ReservedWord
@@ -1337,12 +1318,20 @@ where
         Ok(())
     }
 
+    // BreakableStatement[Yield, Await, Return] :
+    //   IterationStatement[?Yield, ?Await, ?Return]
+    //   SwitchStatement[?Yield, ?Await, ?Return]
+    fn process_breakable_statement(&mut self) -> Result<(), Error> {
+        // TODO
+        Ok(())
+    }
+
     // 14.2 Block
 
     // BlockStatement[Yield, Await, Return] : Block[?Yield, ?Await, ?Return]
     fn process_block_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::BlockStatement);
-        self.replace(1, Detail::Statement);
+        self.replace(1, Detail::BlockStatement);
         Ok(())
     }
 
@@ -1399,9 +1388,7 @@ where
             _ => unreachable!(),
         };
         // 14.3.1.1 Static Semantics: Early Errors
-        if !has_initializer {
-            return Err(Error::SyntaxError);
-        }
+        ensure!(has_initializer);
         self.enqueue(Node::ConstDeclaration(bound_names.len() as u32));
         self.replace(3, Detail::ConstDeclaration(bound_names));
         Ok(())
@@ -1430,9 +1417,7 @@ where
             Detail::BindingList(ref mut list) => {
                 for name in decl.bound_names.into_iter() {
                     // 14.3.1.1 Static Semantics: Early Errors
-                    if list.bound_names.contains(&name) {
-                        return Err(Error::SyntaxError);
-                    }
+                    ensure!(!list.bound_names.contains(&name));
                     list.bound_names.push(name);
                 }
                 if !decl.has_initializer {
@@ -1452,9 +1437,7 @@ where
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
-        if symbol == SymbolRegistry::LET {
-            return Err(Error::SyntaxError);
-        }
+        ensure!(symbol != SymbolRegistry::LET);
 
         const HAS_INITIALIZER: bool = false;
         self.enqueue(Node::LexicalBinding(HAS_INITIALIZER));
@@ -1478,9 +1461,7 @@ where
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
-        if symbol == SymbolRegistry::LET {
-            return Err(Error::SyntaxError);
-        }
+        ensure!(symbol != SymbolRegistry::LET);
 
         const HAS_INITIALIZER: bool = true;
         self.enqueue(Node::LexicalBinding(HAS_INITIALIZER));
@@ -1542,7 +1523,7 @@ where
         //self.check_token(TokenKind::Semicolon);
         let node_index = self.enqueue(Node::EmptyStatement);
         let syntax = self.top_mut();
-        syntax.detail = Detail::Statement;
+        syntax.detail = Detail::EmptyStatement;
         syntax.nodes_range = node_index..(node_index + 1);
         Ok(())
     }
@@ -1554,7 +1535,7 @@ where
     //   Expression[+In, ?Yield, ?Await] ;
     fn process_expression_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ExpressionStatement);
-        self.replace(2, Detail::Statement);
+        self.replace(2, Detail::ExpressionStatement);
         Ok(())
     }
 
@@ -1566,7 +1547,7 @@ where
     fn process_if_else_statement(&mut self) -> Result<(), Error> {
         // TODO: 14.6.1 Static Semantics: Early Errors
         self.enqueue(Node::IfElseStatement);
-        self.replace(7, Detail::Statement);
+        self.replace(7, Detail::IfStatement);
         Ok(())
     }
 
@@ -1576,11 +1557,66 @@ where
     fn process_if_statement(&mut self) -> Result<(), Error> {
         // TODO: 14.6.1 Static Semantics: Early Errors
         self.enqueue(Node::IfStatement);
-        self.replace(5, Detail::Statement);
+        self.replace(5, Detail::IfStatement);
         Ok(())
     }
 
     // 14.7 Iteration Statements
+
+    // _LOOP_START_
+    fn process_loop_start(&mut self) -> Result<(), Error> {
+        ensure!(self.iteration_statement_depth < MAX_ITERATION_STATEMENT_DEPTH);
+        self.iteration_statement_depth += 1;
+        self.enqueue(Node::LoopStart);
+        Ok(())
+    }
+
+    // _LOOP_INIT_EXPRESSION_
+    fn process_loop_init_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopInitExpression);
+        Ok(())
+    }
+
+    // _LOOP_INIT_VAR_DECLARATION_
+    fn process_loop_init_var_declaration(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopInitVarDeclaration);
+        Ok(())
+    }
+
+    // _LOOP_INIT_LEXICAL_DECLARATION_
+    fn process_loop_init_lexical_declaration(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopInitLexicalDeclaration);
+        Ok(())
+    }
+
+    // _LOOP_TEST_
+    fn process_loop_test(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopTest);
+        Ok(())
+    }
+
+    // _LOOP_NEXT_
+    fn process_loop_next(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopNext);
+        Ok(())
+    }
+
+    // _LOOP_BODY_
+    fn process_loop_body(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopBody);
+        Ok(())
+    }
+
+    // IterationStatement[Yield, Await, Return] :
+    //   DoWhileStatement[?Yield, ?Await, ?Return]
+    //   WhileStatement[?Yield, ?Await, ?Return]
+    //   ForStatement[?Yield, ?Await, ?Return]
+    //   ForInOfStatement[?Yield, ?Await, ?Return]
+    fn process_iteration_statement(&mut self) -> Result<(), Error> {
+        assert!(self.iteration_statement_depth > 0);
+        self.iteration_statement_depth -= 1;
+        Ok(())
+    }
 
     // 14.7.2 The do-while Statement
 
@@ -1588,7 +1624,7 @@ where
     //   do Statement[?Yield, ?Await, ?Return] while ( Expression[+In, ?Yield, ?Await] ) ;
     fn process_do_while_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::DoWhileStatement);
-        self.replace(7, Detail::Statement);
+        self.replace(7, Detail::DoWhileStatement);
         Ok(())
     }
 
@@ -1598,7 +1634,7 @@ where
     //   while ( Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
     fn process_while_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::WhileStatement);
-        self.replace(5, Detail::Statement);
+        self.replace(5, Detail::WhileStatement);
         Ok(())
     }
 
@@ -1613,19 +1649,19 @@ where
 
     fn process_for_statement_no_init_test_next(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ForStatement(LoopFlags::empty()));
-        self.replace(6, Detail::Statement);
+        self.replace(6, Detail::ForStatement);
         Ok(())
     }
 
     fn process_for_statement_no_test_next(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ForStatement(LoopFlags::HAS_INIT));
-        self.replace(7, Detail::Statement);
+        self.replace(7, Detail::ForStatement);
         Ok(())
     }
 
     fn process_for_statement_no_init_next(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ForStatement(LoopFlags::HAS_TEST));
-        self.replace(7, Detail::Statement);
+        self.replace(7, Detail::ForStatement);
         Ok(())
     }
 
@@ -1633,13 +1669,13 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_TEST,
         ));
-        self.replace(8, Detail::Statement);
+        self.replace(8, Detail::ForStatement);
         Ok(())
     }
 
     fn process_for_statement_no_init_test(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ForStatement(LoopFlags::HAS_NEXT));
-        self.replace(7, Detail::Statement);
+        self.replace(7, Detail::ForStatement);
         Ok(())
     }
 
@@ -1647,7 +1683,7 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT,
         ));
-        self.replace(8, Detail::Statement);
+        self.replace(8, Detail::ForStatement);
         Ok(())
     }
 
@@ -1655,7 +1691,7 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT,
         ));
-        self.replace(8, Detail::Statement);
+        self.replace(8, Detail::ForStatement);
         Ok(())
     }
 
@@ -1663,7 +1699,7 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT,
         ));
-        self.replace(9, Detail::Statement);
+        self.replace(9, Detail::ForStatement);
         Ok(())
     }
 
@@ -1676,7 +1712,7 @@ where
 
     fn process_for_statement_vars_no_test_next(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ForStatement(LoopFlags::HAS_INIT));
-        self.replace(8, Detail::Statement);
+        self.replace(8, Detail::ForStatement);
         Ok(())
     }
 
@@ -1684,7 +1720,7 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_TEST,
         ));
-        self.replace(9, Detail::Statement);
+        self.replace(9, Detail::ForStatement);
         Ok(())
     }
 
@@ -1692,7 +1728,7 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT,
         ));
-        self.replace(9, Detail::Statement);
+        self.replace(9, Detail::ForStatement);
         Ok(())
     }
 
@@ -1700,7 +1736,7 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT,
         ));
-        self.replace(10, Detail::Statement);
+        self.replace(10, Detail::ForStatement);
         Ok(())
     }
 
@@ -1713,7 +1749,7 @@ where
 
     fn process_for_statement_decl_no_test_next(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ForStatement(LoopFlags::HAS_INIT));
-        self.replace(6, Detail::Statement);
+        self.replace(6, Detail::ForStatement);
         Ok(())
     }
 
@@ -1721,7 +1757,7 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_TEST,
         ));
-        self.replace(7, Detail::Statement);
+        self.replace(7, Detail::ForStatement);
         Ok(())
     }
 
@@ -1729,7 +1765,7 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_NEXT,
         ));
-        self.replace(7, Detail::Statement);
+        self.replace(7, Detail::ForStatement);
         Ok(())
     }
 
@@ -1737,25 +1773,120 @@ where
         self.enqueue(Node::ForStatement(
             LoopFlags::HAS_INIT | LoopFlags::HAS_TEST | LoopFlags::HAS_NEXT,
         ));
-        self.replace(8, Detail::Statement);
+        self.replace(8, Detail::ForStatement);
         Ok(())
     }
 
     // 14.8 The continue Statement
 
-    // ContinueStatement[Yield, Await] : continue ;
+    fn is_within_iteration_statement(&self) -> bool {
+        self.iteration_statement_depth > 0
+    }
+
+    // ContinueStatement[Yield, Await] :
+    //   continue ;
     fn process_continue_statement(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ContinueStatement);
-        self.replace(2, Detail::Statement);
+        // 14.8.1 Static Semantics: Early Errors
+        // The ContinueStatement is allowed only inside an IterationStatement.
+        //
+        // TODO: set details of the error like this:
+        // Illegal continue statement: no surrounding iteration statement
+        ensure!(self.is_within_iteration_statement());
+
+        self.enqueue(Node::ContinueStatement(Symbol::NONE));
+        self.replace(2, Detail::ContinueStatement);
+        Ok(())
+    }
+
+    // ContinueStatement[Yield, Await] :
+    //   continue [no LineTerminator here] LabelIdentifier[?Yield, ?Await] ;
+    fn process_continue_statement_with_label(&mut self) -> Result<(), Error> {
+        // 14.8.1 Static Semantics: Early Errors
+        // The ContinueStatement is allowed only inside an IterationStatement.
+        //
+        // TODO: set details of the error like this:
+        // Illegal continue statement: no surrounding iteration statement
+        ensure!(self.is_within_iteration_statement());
+
+        let symbol = match self.nth(1).detail {
+            Detail::LabelIdentifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+
+        // NOTE: It seems not to be described in the specification but it's a syntax error in major
+        // implementations when the label is not contained in the label set.
+        match self
+            .label_stack
+            .iter_mut()
+            .rev()
+            .find(|label| label.symbol == symbol)
+        {
+            Some(label) => label.num_continue_statements += 1,
+            None => return Err(Error::SyntaxError),
+        };
+
+        // NOTE: It seems not to be described in the specification but it's a syntax error in major
+        // implementations when the label does not denote an IterationStatement.
+
+        self.enqueue(Node::ContinueStatement(symbol));
+        self.replace(3, Detail::ContinueStatement);
         Ok(())
     }
 
     // 14.9 The break Statement
 
-    // BreakStatement[Yield, Await] : break ;
+    fn is_within_breakable_statement(&self) -> bool {
+        self.iteration_statement_depth > 0 || self.switch_statement_depth > 0
+    }
+
+    // BreakStatement[Yield, Await] :
+    //   break ;
     fn process_break_statement(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::BreakStatement);
-        self.replace(2, Detail::Statement);
+        // 14.9.1 Static Semantics: Early Errors
+        // The BreakStatement is allowed only inside an IterationStatement or a SwitchStatement.
+        //
+        // TODO: set details of the syntax error like this:
+        // Illegal break statement
+        ensure!(self.is_within_breakable_statement());
+
+        self.enqueue(Node::BreakStatement(Symbol::NONE));
+        self.replace(2, Detail::BreakStatement);
+        Ok(())
+    }
+
+    // BreakStatement[Yield, Await] :
+    //   break [no LineTerminator here] LabelIdentifier[?Yield, ?Await] ;
+    fn process_break_statement_with_label(&mut self) -> Result<(), Error> {
+        // 14.9.1 Static Semantics: Early Errors
+        // The BreakStatement is allowed only inside an IterationStatement or a SwitchStatement.
+        //
+        // TODO: set details of the syntax error like this:
+        // Illegal break statement
+        ensure!(self.is_within_breakable_statement());
+
+        let symbol = match self.nth(1).detail {
+            Detail::LabelIdentifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+
+        // NOTE: It seems not to be described in the specification but it's a syntax error in major
+        // implementations when the label is not contained in the label set.
+        match self
+            .label_stack
+            .iter_mut()
+            .rev()
+            .find(|label| label.symbol == symbol)
+        {
+            Some(label) => label.num_break_statements += 1,
+            None => return Err(Error::SyntaxError),
+        }
+
+        // NOTE: It seems not to be described in the specification but it's a syntax error in major
+        // implementations when the label does not denote an IterationStatement or a
+        // SwitchStatement.
+
+        self.enqueue(Node::BreakStatement(symbol));
+        self.replace(3, Detail::BreakStatement);
         Ok(())
     }
 
@@ -1764,14 +1895,14 @@ where
     // ReturnStatement[Yield, Await] : return ;
     fn process_return_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ReturnStatement(0));
-        self.replace(2, Detail::Statement);
+        self.replace(2, Detail::ReturnStatement);
         Ok(())
     }
 
     // ReturnStatement[Yield, Await] : return [no LineTerminator here] Expression[+In, ?Yield, ?Await] ;
     fn process_return_value_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ReturnStatement(1));
-        self.replace(3, Detail::Statement);
+        self.replace(3, Detail::ReturnStatement);
         Ok(())
     }
 
@@ -1780,14 +1911,18 @@ where
     // SwitchStatement[Yield, Await, Return] :
     //   switch ( Expression[+In, ?Yield, ?Await] ) CaseBlock[?Yield, ?Await, ?Return]
     fn process_switch_statement(&mut self) -> Result<(), Error> {
+        assert!(self.switch_statement_depth > 0);
+        self.switch_statement_depth -= 1;
         self.enqueue(Node::EndBlockScope); // See process_case_block().
         self.enqueue(Node::SwitchStatement);
-        self.replace(5, Detail::Statement);
+        self.replace(5, Detail::SwitchStatement);
         Ok(())
     }
 
     // _CASE_BLOCK_
     fn process_case_block(&mut self) -> Result<(), Error> {
+        ensure!(self.switch_statement_depth < MAX_SWITCH_STATEMENT_DEPTH);
+        self.switch_statement_depth += 1;
         self.enqueue(Node::StartBlockScope);
         self.enqueue(Node::CaseBlock);
         Ok(())
@@ -1887,13 +2022,57 @@ where
         Ok(())
     }
 
+    // 14.13 Labelled Statements
+
+    // LabelledStatement[Yield, Await, Return] :
+    //   LabelIdentifier[?Yield, ?Await] : LabelledItem[?Yield, ?Await, ?Return]
+    fn process_labelled_statement(&mut self) -> Result<(), Error> {
+        let labelled_item = match self.top().detail {
+            Detail::DoWhileStatement | Detail::WhileStatement | Detail::ForStatement => {
+                LabelledItem::IterationStatement
+            }
+            Detail::LabelledStatement(labelled_item) => labelled_item,
+            _ => LabelledItem::OtherStatement,
+        };
+
+        let label = self.label_stack.pop().unwrap();
+
+        // It seems not to be described in the specification but it's a syntax error in major
+        // implementations when the label does not denote an iteration statement.
+        ensure!(
+            label.num_continue_statements == 0
+                || matches!(labelled_item, LabelledItem::IterationStatement)
+        );
+
+        // TODO: unused label (num_continue_statements == 0 && num_break_statements == 0) should be
+        // removed in the semantics analysis phase.  We can add a variable for this to
+        // Node::LabelledStatement.
+        self.enqueue(Node::LabelledStatement(label.symbol));
+        self.replace(3, Detail::LabelledStatement(labelled_item));
+        Ok(())
+    }
+
+    // _LABEL_
+    fn process_label(&mut self) -> Result<(), Error> {
+        let symbol = match self.nth(1).detail {
+            Detail::LabelIdentifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::Label(symbol));
+        self.label_stack.push(Label {
+            symbol,
+            ..Default::default()
+        });
+        Ok(())
+    }
+
     // 14.14 The throw Statement
 
     // ThrowStatement[Yield, Await] :
     //   throw [no LineTerminator here] Expression[+In, ?Yield, ?Await] ;
     fn process_throw_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ThrowStatement);
-        self.replace(2, Detail::Statement);
+        self.replace(2, Detail::ThrowStatement);
         Ok(())
     }
 
@@ -1903,7 +2082,7 @@ where
     //   try Block[?Yield, ?Await, ?Return] Catch[?Yield, ?Await, ?Return]
     fn process_try_statement_no_finally(&mut self) -> Result<(), Error> {
         self.enqueue(Node::TryStatement);
-        self.replace(3, Detail::Statement);
+        self.replace(3, Detail::TryStatement);
         Ok(())
     }
 
@@ -1911,7 +2090,7 @@ where
     //   try Block[?Yield, ?Await, ?Return] Finally[?Yield, ?Await, ?Return]
     fn process_try_statement_no_catch(&mut self) -> Result<(), Error> {
         self.enqueue(Node::TryStatement);
-        self.replace(3, Detail::Statement);
+        self.replace(3, Detail::TryStatement);
         Ok(())
     }
 
@@ -1920,7 +2099,7 @@ where
     //   Finally[?Yield, ?Await, ?Return]
     fn process_try_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::TryStatement);
-        self.replace(4, Detail::Statement);
+        self.replace(4, Detail::TryStatement);
         Ok(())
     }
 
@@ -2031,9 +2210,8 @@ where
         match self.top_mut().detail {
             Detail::FormalParameters(ref mut dest) => {
                 for name in bound_names.into_iter() {
-                    if dest.contains(&name) {
-                        return Err(Error::SyntaxError);
-                    }
+                    // 15.1.1 Static Semantics: Early Errors
+                    ensure!(!dest.contains(&name));
                     dest.push(name);
                 }
             }
@@ -2176,4 +2354,11 @@ enum Action<'s, H> {
     Undefined,
     Nop,
     Invoke(fn(&mut Processor<'s, H>) -> Result<(), Error>, &'static str),
+}
+
+#[derive(Default)]
+struct Label {
+    symbol: Symbol,
+    num_continue_statements: usize,
+    num_break_statements: usize,
 }

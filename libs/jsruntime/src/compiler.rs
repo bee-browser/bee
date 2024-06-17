@@ -408,11 +408,17 @@ impl<'a> Compiler<'a> {
             CompileCommand::TryEnd => unsafe {
                 bridge::compiler_peer_try_end(self.peer);
             },
-            CompileCommand::Continue => unsafe {
-                bridge::compiler_peer_continue(self.peer);
+            CompileCommand::LabelStart(symbol) => unsafe {
+                bridge::compiler_peer_label_start(self.peer, symbol.id());
             },
-            CompileCommand::Break => unsafe {
-                bridge::compiler_peer_break(self.peer);
+            CompileCommand::LabelEnd(symbol) => unsafe {
+                bridge::compiler_peer_label_end(self.peer, symbol.id());
+            },
+            CompileCommand::Continue(symbol) => unsafe {
+                bridge::compiler_peer_continue(self.peer, symbol.id());
+            },
+            CompileCommand::Break(symbol) => unsafe {
+                bridge::compiler_peer_break(self.peer, symbol.id());
             },
             CompileCommand::Return(n) => unsafe {
                 bridge::compiler_peer_return(self.peer, *n as usize);

@@ -78,7 +78,6 @@ impl<'r> Analyzer<'r> {
             Node::String(value, ..) => self.handle_string(value),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
-            Node::LabelIdentifier(symbol) => self.handle_label_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
             Node::Arguments => (), // nop
@@ -110,8 +109,8 @@ impl<'r> Analyzer<'r> {
             Node::DoWhileStatement => self.handle_do_while_statement(),
             Node::WhileStatement => self.handle_while_statement(),
             Node::ForStatement(flags) => self.handle_for_statement(flags),
-            Node::ContinueStatement => self.handle_continue_statement(),
-            Node::BreakStatement => self.handle_break_statement(),
+            Node::ContinueStatement(symbol) => self.handle_continue_statement(symbol),
+            Node::BreakStatement(symbol) => self.handle_break_statement(symbol),
             Node::ReturnStatement(n) => self.handle_return_statement(n),
             Node::SwitchStatement => self.handle_switch_statement(),
             Node::CaseBlock => self.handle_case_block(),
@@ -119,6 +118,8 @@ impl<'r> Analyzer<'r> {
             Node::CaseClause(has_statement) => self.handle_case_clause(has_statement),
             Node::DefaultSelector => self.handle_default_selector(),
             Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
+            Node::LabelledStatement(symbol) => self.handle_labelled_statement(symbol),
+            Node::Label(symbol) => self.handle_label(symbol),
             Node::ThrowStatement => self.handle_throw_statement(),
             Node::TryStatement => self.handle_try_statement(),
             Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
@@ -202,10 +203,6 @@ impl<'r> Analyzer<'r> {
             self.scope_manager
                 .add_binding(symbol, BindingKind::FormalParameter(i));
         }
-    }
-
-    fn handle_label_identifier(&mut self, _symbol: Symbol) {
-        // TODO
     }
 
     fn handle_argument_list_head(&mut self, empty: bool, spread: bool) {
@@ -320,18 +317,18 @@ impl<'r> Analyzer<'r> {
             .process_for_statement(flags);
     }
 
-    fn handle_continue_statement(&mut self) {
+    fn handle_continue_statement(&mut self, symbol: Symbol) {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_command(CompileCommand::Continue);
+            .put_command(CompileCommand::Continue(symbol));
     }
 
-    fn handle_break_statement(&mut self) {
+    fn handle_break_statement(&mut self, symbol: Symbol) {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_command(CompileCommand::Break);
+            .put_command(CompileCommand::Break(symbol));
     }
 
     fn handle_return_statement(&mut self, n: u32) {
@@ -378,6 +375,17 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_default_clause(has_statement);
+    }
+
+    fn handle_labelled_statement(&mut self, symbol: Symbol) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_labelled_statement(symbol);
+    }
+
+    fn handle_label(&mut self, symbol: Symbol) {
+        self.context_stack.last_mut().unwrap().process_label(symbol);
     }
 
     fn handle_throw_statement(&mut self) {
@@ -952,6 +960,14 @@ impl FunctionContext {
         }
     }
 
+    fn process_label(&mut self, symbol: Symbol) {
+        self.put_command(CompileCommand::LabelStart(symbol));
+    }
+
+    fn process_labelled_statement(&mut self, symbol: Symbol) {
+        self.put_command(CompileCommand::LabelEnd(symbol));
+    }
+
     fn process_throw_statement(&mut self) {
         self.put_command(CompileCommand::Throw);
     }
@@ -1196,14 +1212,18 @@ pub enum CompileCommand {
     DefaultClause(bool),
     Switch(u32, Option<u32>),
 
+    // label
+    LabelStart(Symbol),
+    LabelEnd(Symbol),
+
     // try, catch, finally
     Try,
     Catch(bool),
     Finally(bool),
     TryEnd,
 
-    Continue,
-    Break,
+    Continue(Symbol),
+    Break(Symbol),
     Return(u32),
     Throw,
 

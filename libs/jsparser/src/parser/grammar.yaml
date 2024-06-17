@@ -16047,6 +16047,8 @@
     - type: token
       data: COLON
     - type: non-terminal
+      data: _LABEL_
+    - type: non-terminal
       data: LabelledItem
 - name: LabelledStatement_Return
   production:
@@ -16054,6 +16056,8 @@
       data: LabelIdentifier
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _LABEL_
     - type: non-terminal
       data: LabelledItem_Return
 - name: LabelledStatement_Await
@@ -16063,6 +16067,8 @@
     - type: token
       data: COLON
     - type: non-terminal
+      data: _LABEL_
+    - type: non-terminal
       data: LabelledItem_Await
 - name: LabelledStatement_Await_Return
   production:
@@ -16070,6 +16076,8 @@
       data: LabelIdentifier_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _LABEL_
     - type: non-terminal
       data: LabelledItem_Await_Return
 - name: LabelledStatement_Yield
@@ -16079,6 +16087,8 @@
     - type: token
       data: COLON
     - type: non-terminal
+      data: _LABEL_
+    - type: non-terminal
       data: LabelledItem_Yield
 - name: LabelledStatement_Yield_Return
   production:
@@ -16086,6 +16096,8 @@
       data: LabelIdentifier_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _LABEL_
     - type: non-terminal
       data: LabelledItem_Yield_Return
 - name: LabelledStatement_Yield_Await
@@ -16095,6 +16107,8 @@
     - type: token
       data: COLON
     - type: non-terminal
+      data: _LABEL_
+    - type: non-terminal
       data: LabelledItem_Yield_Await
 - name: LabelledStatement_Yield_Await_Return
   production:
@@ -16102,6 +16116,8 @@
       data: LabelIdentifier_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _LABEL_
     - type: non-terminal
       data: LabelledItem_Yield_Await_Return
 - name: LabelledItem
@@ -20221,6 +20237,9 @@
   production:
     - type: empty
 - name: _DEFAULT_SELECTOR_
+  production:
+    - type: empty
+- name: _LABEL_
   production:
     - type: empty
 - name: _TRY_BLOCK_

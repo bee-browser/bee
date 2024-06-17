@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2120] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -121,7 +121,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
     Some((Builder::labeled_break_statement, "labeled_break_statement")),
     // WithStatement -> WITH LPAREN Expression_In RPAREN Statement
     Some((Builder::with_statement, "with_statement")),
-    // LabelledStatement -> LabelIdentifier COLON LabelledItem
+    // LabelledStatement -> LabelIdentifier COLON _LABEL_ LabelledItem
     Some((Builder::labeled_statement, "labeled_statement")),
     // ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
@@ -276,6 +276,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
     Some((Builder::identifier, "identifier")),
     // LabelIdentifier -> AWAIT
     Some((Builder::identifier, "identifier")),
+    // _LABEL_ -> (empty)
+    Some((Builder::nop, "nop")),
     // LabelledItem -> Statement
     Some((Builder::nop, "nop")),
     // LabelledItem -> FunctionDeclaration
@@ -503,7 +505,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
     Some((Builder::labeled_break_statement, "labeled_break_statement")),
     // WithStatement_Await -> WITH LPAREN Expression_In_Await RPAREN Statement_Await
     Some((Builder::with_statement, "with_statement")),
-    // LabelledStatement_Await -> LabelIdentifier_Await COLON LabelledItem_Await
+    // LabelledStatement_Await -> LabelIdentifier_Await COLON _LABEL_ LabelledItem_Await
     Some((Builder::labeled_statement, "labeled_statement")),
     // ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
@@ -2538,7 +2540,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
     Some((Builder::return_statement, "return_statement")),
     // WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
     Some((Builder::with_statement, "with_statement")),
-    // LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
+    // LabelledStatement_Return -> LabelIdentifier COLON _LABEL_ LabelledItem_Return
     Some((Builder::labeled_statement, "labeled_statement")),
     // TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_
     Some((Builder::try_catch_statement, "try_catch_statement")),
@@ -2904,7 +2906,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
     Some((Builder::return_statement, "return_statement")),
     // WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::with_statement, "with_statement")),
-    // LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return
+    // LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON _LABEL_ LabelledItem_Yield_Return
     Some((Builder::labeled_statement, "labeled_statement")),
     // ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
@@ -2950,7 +2952,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
     Some((Builder::return_statement, "return_statement")),
     // WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::with_statement, "with_statement")),
-    // LabelledStatement_Await_Return -> LabelIdentifier_Await COLON LabelledItem_Await_Return
+    // LabelledStatement_Await_Return -> LabelIdentifier_Await COLON _LABEL_ LabelledItem_Await_Return
     Some((Builder::labeled_statement, "labeled_statement")),
     // TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_
     Some((Builder::try_catch_statement, "try_catch_statement")),
@@ -3040,7 +3042,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2119] = [
     Some((Builder::return_statement, "return_statement")),
     // WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::with_statement, "with_statement")),
-    // LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON LabelledItem_Yield_Await_Return
+    // LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON _LABEL_ LabelledItem_Yield_Await_Return
     Some((Builder::labeled_statement, "labeled_statement")),
     // ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),

@@ -130,8 +130,10 @@ class Compiler {
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
-  void Continue();
-  void Break();
+  void LabelStart(uint32_t symbol);
+  void LabelEnd(uint32_t symbol);
+  void Continue(uint32_t symbol);
+  void Break(uint32_t symbol);
   void Return(size_t n);
   void Throw();
   void Discard();
