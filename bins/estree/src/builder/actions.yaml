@@ -114,7 +114,7 @@
   action: labeled_break_statement
 - rule: WithStatement -> WITH LPAREN Expression_In RPAREN Statement
   action: with_statement
-- rule: LabelledStatement -> LabelIdentifier COLON LabelledItem
+- rule: LabelledStatement -> LabelIdentifier COLON _LABEL_ LabelledItem
   action: labeled_statement
 - rule: ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
   action: throw_statement
@@ -270,6 +270,8 @@
   action: identifier
 - rule: LabelIdentifier -> AWAIT
   action: identifier
+- rule: _LABEL_ -> (empty)
+  action: nop
 - rule: LabelledItem -> Statement
   action: nop
 - rule: LabelledItem -> FunctionDeclaration
@@ -487,7 +489,7 @@
   action: labeled_break_statement
 - rule: WithStatement_Await -> WITH LPAREN Expression_In_Await RPAREN Statement_Await
   action: with_statement
-- rule: LabelledStatement_Await -> LabelIdentifier_Await COLON LabelledItem_Await
+- rule: LabelledStatement_Await -> LabelIdentifier_Await COLON _LABEL_ LabelledItem_Await
   action: labeled_statement
 - rule: ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
   action: throw_statement
@@ -2350,7 +2352,7 @@
   action: return_statement
 - rule: WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
   action: with_statement
-- rule: LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
+- rule: LabelledStatement_Return -> LabelIdentifier COLON _LABEL_ LabelledItem_Return
   action: labeled_statement
 - rule: TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_
   action: try_catch_statement
@@ -2732,7 +2734,7 @@
   action: return_statement
 - rule: WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
   action: with_statement
-- rule: LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return
+- rule: LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON _LABEL_ LabelledItem_Yield_Return
   action: labeled_statement
 - rule: ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
   action: throw_statement
@@ -2782,7 +2784,7 @@
   action: return_statement
 - rule: WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN Statement_Await_Return
   action: with_statement
-- rule: LabelledStatement_Await_Return -> LabelIdentifier_Await COLON LabelledItem_Await_Return
+- rule: LabelledStatement_Await_Return -> LabelIdentifier_Await COLON _LABEL_ LabelledItem_Await_Return
   action: labeled_statement
 - rule: >-
     TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_
@@ -2882,7 +2884,7 @@
     Statement_Yield_Await_Return
   action: with_statement
 - rule: >-
-    LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON
+    LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON _LABEL_
     LabelledItem_Yield_Await_Return
   action: labeled_statement
 - rule: >-

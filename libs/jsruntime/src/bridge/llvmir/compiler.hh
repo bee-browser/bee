@@ -130,8 +130,10 @@ class Compiler {
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
-  void Continue();
-  void Break();
+  void LabelStart(uint32_t symbol, bool is_iteration_statement);
+  void LabelEnd(uint32_t symbol, bool is_iteration_statement);
+  void Continue(uint32_t symbol);
+  void Break(uint32_t symbol);
   void Return(size_t n);
   void Throw();
   void Discard();
@@ -198,6 +200,11 @@ class Compiler {
           return false;
       }
     }
+  };
+
+  struct BlockItem {
+    llvm::BasicBlock* block;
+    uint32_t symbol;
   };
 
   inline void PushUndefined() {
@@ -613,6 +620,9 @@ class Compiler {
 
   // TODO: separate variables that must be reset in EndFunction() from others.
 
+  llvm::BasicBlock* FindBlockBySymbol(const std::vector<BlockItem>& stack, uint32_t symbol) const;
+  void SetBlockForLabelsInContinueStack(llvm::BasicBlock* block);
+
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
@@ -636,8 +646,8 @@ class Compiler {
   uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;
-  std::vector<llvm::BasicBlock*> break_stack_;
-  std::vector<llvm::BasicBlock*> continue_stack_;
+  std::vector<BlockItem> break_stack_;
+  std::vector<BlockItem> continue_stack_;
   std::vector<llvm::BasicBlock*> catch_stack_;
 
   std::unordered_map<std::string, llvm::Function*> functions_;

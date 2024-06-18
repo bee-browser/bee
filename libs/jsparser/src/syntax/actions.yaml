@@ -49,7 +49,7 @@
 - rule: Statement -> WithStatement
   action: undefined
 - rule: Statement -> LabelledStatement
-  action: undefined
+  action: process_statement
 - rule: Statement -> ThrowStatement
   action: process_statement
 - rule: Statement -> TryStatement
@@ -105,25 +105,25 @@
     (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement -> IterationStatement
-  action: nop
+  action: process_breakable_statement
 - rule: BreakableStatement -> SwitchStatement
-  action: nop
+  action: process_breakable_statement
 - rule: ContinueStatement -> CONTINUE SEMICOLON
   action: process_continue_statement
 - rule: >-
     ContinueStatement -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier
     SEMICOLON
-  action: undefined
+  action: process_continue_statement_with_label
 - rule: BreakStatement -> BREAK SEMICOLON
   action: process_break_statement
 - rule: >-
     BreakStatement -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier
     SEMICOLON
-  action: undefined
+  action: process_break_statement_with_label
 - rule: WithStatement -> WITH LPAREN Expression_In RPAREN Statement
   action: undefined
-- rule: LabelledStatement -> LabelIdentifier COLON LabelledItem
-  action: undefined
+- rule: LabelledStatement -> LabelIdentifier COLON _LABEL_ LabelledItem
+  action: process_labelled_statement
 - rule: ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
   action: process_throw_statement
 - rule: TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_
@@ -245,7 +245,7 @@
 - rule: Statement_Await -> WithStatement_Await
   action: undefined
 - rule: Statement_Await -> LabelledStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await -> ThrowStatement_Await
   action: process_statement
 - rule: Statement_Await -> TryStatement_Await
@@ -271,11 +271,11 @@
 - rule: _ELSE_BLOCK_ -> (empty)
   action: process_else_block
 - rule: IterationStatement -> DoWhileStatement
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement -> WhileStatement
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement -> ForStatement
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement -> ForInOfStatement
   action: undefined
 - rule: SwitchStatement -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock
@@ -286,10 +286,13 @@
   action: process_label_identifier_only_in_non_strict
 - rule: LabelIdentifier -> AWAIT
   action: process_label_identifier_only_in_script
+- rule: _LABEL_ -> (empty)
+  action: process_label
 - rule: LabelledItem -> Statement
-  action: undefined
+  action: nop
 - rule: LabelledItem -> FunctionDeclaration
-  action: undefined
+  action: syntax_error
+  todo: B.3.1
 - rule: _TRY_BLOCK_ -> (empty)
   action: process_try_block
 - rule: _CATCH_BLOCK_ -> (empty)
@@ -498,27 +501,29 @@
     Statement_Await (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement_Await -> IterationStatement_Await
-  action: nop
+  action: process_breakable_statement
 - rule: BreakableStatement_Await -> SwitchStatement_Await
-  action: nop
+  action: process_breakable_statement
 - rule: ContinueStatement_Await -> CONTINUE SEMICOLON
   action: process_continue_statement
 - rule: >-
     ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Await SEMICOLON
-  action: undefined
+  action: process_continue_statement_with_label
 - rule: BreakStatement_Await -> BREAK SEMICOLON
   action: process_break_statement
 - rule: >-
     BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Await SEMICOLON
-  action: undefined
+  action: process_break_statement_with_label
 - rule: >-
     WithStatement_Await -> WITH LPAREN Expression_In_Await RPAREN
     Statement_Await
   action: undefined
-- rule: LabelledStatement_Await -> LabelIdentifier_Await COLON LabelledItem_Await
-  action: undefined
+- rule: >-
+    LabelledStatement_Await -> LabelIdentifier_Await COLON _LABEL_
+    LabelledItem_Await
+  action: process_labelled_statement
 - rule: >-
     ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Await SEMICOLON
@@ -979,11 +984,11 @@
     AssignmentExpression_In_Await
   action: undefined
 - rule: IterationStatement_Await -> DoWhileStatement_Await
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Await -> WhileStatement_Await
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Await -> ForStatement_Await
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Await -> ForInOfStatement_Await
   action: undefined
 - rule: >-
@@ -995,9 +1000,10 @@
 - rule: LabelIdentifier_Await -> YIELD
   action: process_label_identifier
 - rule: LabelledItem_Await -> Statement_Await
-  action: undefined
+  action: nop
 - rule: LabelledItem_Await -> FunctionDeclaration_Await
-  action: undefined
+  action: syntax_error
+  todo: B.3.1
 - rule: Catch_Await -> CATCH LPAREN CatchParameter_Await RPAREN Block_Await
   action: process_catch
 - rule: Catch_Await -> CATCH Block_Await
@@ -2213,7 +2219,7 @@
 - rule: Statement_Return -> WithStatement_Return
   action: undefined
 - rule: Statement_Return -> LabelledStatement_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Return -> ThrowStatement
   action: process_statement
 - rule: Statement_Return -> TryStatement_Return
@@ -2528,9 +2534,9 @@
     Statement_Return (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement_Return -> IterationStatement_Return
-  action: nop
+  action: process_breakable_statement
 - rule: BreakableStatement_Return -> SwitchStatement_Return
-  action: nop
+  action: process_breakable_statement
 - rule: ReturnStatement -> RETURN SEMICOLON
   action: process_return_statement
 - rule: >-
@@ -2539,8 +2545,10 @@
   action: process_return_value_statement
 - rule: WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
   action: undefined
-- rule: LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
-  action: undefined
+- rule: >-
+    LabelledStatement_Return -> LabelIdentifier COLON _LABEL_
+    LabelledItem_Return
+  action: process_labelled_statement
 - rule: >-
     TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_
     Catch_Return _FINALLY_BLOCK_
@@ -2616,7 +2624,7 @@
 - rule: Statement_Yield_Return -> WithStatement_Yield_Return
   action: undefined
 - rule: Statement_Yield_Return -> LabelledStatement_Yield_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Return -> ThrowStatement_Yield
   action: process_statement
 - rule: Statement_Yield_Return -> TryStatement_Yield_Return
@@ -2650,7 +2658,7 @@
 - rule: Statement_Await_Return -> WithStatement_Await_Return
   action: undefined
 - rule: Statement_Await_Return -> LabelledStatement_Await_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Await_Return -> ThrowStatement_Await
   action: process_statement
 - rule: Statement_Await_Return -> TryStatement_Await_Return
@@ -2723,7 +2731,7 @@
 - rule: Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return
   action: undefined
 - rule: Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> ThrowStatement_Yield_Await
   action: process_statement
 - rule: Statement_Yield_Await_Return -> TryStatement_Yield_Await_Return
@@ -2851,11 +2859,11 @@
 - rule: Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
   action: process_block
 - rule: IterationStatement_Return -> DoWhileStatement_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Return -> WhileStatement_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Return -> ForStatement_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Return -> ForInOfStatement_Return
   action: undefined
 - rule: >-
@@ -2863,9 +2871,10 @@
     CaseBlock_Return
   action: process_switch_statement
 - rule: LabelledItem_Return -> Statement_Return
-  action: undefined
+  action: nop
 - rule: LabelledItem_Return -> FunctionDeclaration
-  action: undefined
+  action: syntax_error
+  todo: B.3.1
 - rule: Catch_Return -> CATCH LPAREN CatchParameter RPAREN Block_Return
   action: process_catch
 - rule: Catch_Return -> CATCH Block_Return
@@ -2933,21 +2942,21 @@
     _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
-  action: nop
+  action: process_breakable_statement
 - rule: BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
-  action: nop
+  action: process_breakable_statement
 - rule: ContinueStatement_Yield -> CONTINUE SEMICOLON
   action: process_continue_statement
 - rule: >-
     ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield SEMICOLON
-  action: undefined
+  action: process_continue_statement_with_label
 - rule: BreakStatement_Yield -> BREAK SEMICOLON
   action: process_break_statement
 - rule: >-
     BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield SEMICOLON
-  action: undefined
+  action: process_break_statement_with_label
 - rule: ReturnStatement_Yield -> RETURN SEMICOLON
   action: process_return_statement
 - rule: >-
@@ -2959,9 +2968,9 @@
     Statement_Yield_Return
   action: undefined
 - rule: >-
-    LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON
+    LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON _LABEL_
     LabelledItem_Yield_Return
-  action: undefined
+  action: process_labelled_statement
 - rule: >-
     ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Yield SEMICOLON
@@ -3003,9 +3012,9 @@
     _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement_Await_Return -> IterationStatement_Await_Return
-  action: nop
+  action: process_breakable_statement
 - rule: BreakableStatement_Await_Return -> SwitchStatement_Await_Return
-  action: nop
+  action: process_breakable_statement
 - rule: ReturnStatement_Await -> RETURN SEMICOLON
   action: process_return_statement
 - rule: >-
@@ -3017,9 +3026,9 @@
     Statement_Await_Return
   action: undefined
 - rule: >-
-    LabelledStatement_Await_Return -> LabelIdentifier_Await COLON
+    LabelledStatement_Await_Return -> LabelIdentifier_Await COLON _LABEL_
     LabelledItem_Await_Return
-  action: undefined
+  action: process_labelled_statement
 - rule: >-
     TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return
     _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_
@@ -3105,21 +3114,21 @@
 - rule: >-
     BreakableStatement_Yield_Await_Return ->
     IterationStatement_Yield_Await_Return
-  action: nop
+  action: process_breakable_statement
 - rule: BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
-  action: nop
+  action: process_breakable_statement
 - rule: ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
   action: process_continue_statement
 - rule: >-
     ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield_Await SEMICOLON
-  action: undefined
+  action: process_continue_statement_with_label
 - rule: BreakStatement_Yield_Await -> BREAK SEMICOLON
   action: process_break_statement
 - rule: >-
     BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE)
     LabelIdentifier_Yield_Await SEMICOLON
-  action: undefined
+  action: process_break_statement_with_label
 - rule: ReturnStatement_Yield_Await -> RETURN SEMICOLON
   action: process_return_statement
 - rule: >-
@@ -3132,8 +3141,8 @@
   action: undefined
 - rule: >-
     LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON
-    LabelledItem_Yield_Await_Return
-  action: undefined
+    _LABEL_ LabelledItem_Yield_Await_Return
+  action: process_labelled_statement
 - rule: >-
     ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Yield_Await SEMICOLON
@@ -3438,11 +3447,11 @@
     AssignmentExpression_In_Yield
   action: undefined
 - rule: IterationStatement_Yield_Return -> DoWhileStatement_Yield_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Yield_Return -> WhileStatement_Yield_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Yield_Return -> ForStatement_Yield_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
   action: undefined
 - rule: >-
@@ -3454,9 +3463,10 @@
 - rule: LabelIdentifier_Yield -> AWAIT
   action: process_label_identifier
 - rule: LabelledItem_Yield_Return -> Statement_Yield_Return
-  action: undefined
+  action: nop
 - rule: LabelledItem_Yield_Return -> FunctionDeclaration_Yield
-  action: undefined
+  action: syntax_error
+  todo: B.3.1
 - rule: >-
     Catch_Yield_Return -> CATCH LPAREN CatchParameter_Yield RPAREN
     Block_Yield_Return
@@ -3501,11 +3511,11 @@
 - rule: Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
   action: process_block
 - rule: IterationStatement_Await_Return -> DoWhileStatement_Await_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Await_Return -> WhileStatement_Await_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Await_Return -> ForStatement_Await_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Await_Return -> ForInOfStatement_Await_Return
   action: undefined
 - rule: >-
@@ -3513,9 +3523,10 @@
     _CASE_BLOCK_ CaseBlock_Await_Return
   action: process_switch_statement
 - rule: LabelledItem_Await_Return -> Statement_Await_Return
-  action: undefined
+  action: nop
 - rule: LabelledItem_Await_Return -> FunctionDeclaration_Await
-  action: undefined
+  action: syntax_error
+  todo: B.3.1
 - rule: >-
     Catch_Await_Return -> CATCH LPAREN CatchParameter_Await RPAREN
     Block_Await_Return
@@ -3606,11 +3617,11 @@
     AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Yield_Await_Return -> ForStatement_Yield_Await_Return
-  action: nop
+  action: process_iteration_statement
 - rule: IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return
   action: undefined
 - rule: >-
@@ -3620,9 +3631,10 @@
 - rule: LabelIdentifier_Yield_Await -> Identifier
   action: process_label_identifier_except_for_yield_await
 - rule: LabelledItem_Yield_Await_Return -> Statement_Yield_Await_Return
-  action: undefined
+  action: nop
 - rule: LabelledItem_Yield_Await_Return -> FunctionDeclaration_Yield_Await
-  action: undefined
+  action: syntax_error
+  todo: B.3.1
 - rule: >-
     Catch_Yield_Await_Return -> CATCH LPAREN CatchParameter_Yield_Await RPAREN
     Block_Yield_Await_Return
