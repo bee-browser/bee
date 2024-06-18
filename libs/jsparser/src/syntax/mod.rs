@@ -2042,8 +2042,8 @@ where
         // implementations when the label does not denote an iteration statement.
         ensure!(label.num_continue_statements == 0 || is_iteration_statement);
 
-        // TODO: unused label (num_continue_statements == 0 && num_break_statements == 0) should be
-        // removed in the semantics analysis phase.  We can add a variable for this to
+        // TODO: unused label (num_continue_statements == 0 && num_break_statements == 0) may be
+        // able to be removed in the semantics analysis phase.  We can add a variable for this to
         // Node::LabelledStatement.
         self.enqueue(Node::LabelledStatement(label.symbol, is_iteration_statement));
         self.replace(3, Detail::LabelledStatement(labelled_item));
@@ -2357,6 +2357,8 @@ enum Action<'s, H> {
 #[derive(Default)]
 struct Label {
     symbol: Symbol,
+    // TODO: The current implementation does not work with `eval(continue label)`.  The script
+    // inside `eval()` will be evaluated at runtime.
     num_continue_statements: usize,
     num_break_statements: usize,
 }
