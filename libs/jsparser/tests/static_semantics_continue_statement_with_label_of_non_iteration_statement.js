@@ -1,0 +1,5 @@
+for (;;) {
+  label: {
+    continue label;
+  }
+}

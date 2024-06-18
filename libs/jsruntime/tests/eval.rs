@@ -805,6 +805,41 @@ fn eval_switch_statement_cases_default_cases_break() {
 }
 
 #[test]
+fn eval_labelled_statement_continue_do_while() {
+    eval!(file: "labelled_statement_continue_do_while.js", 2);
+}
+
+#[test]
+fn eval_labelled_statement_continue_while() {
+    eval!(file: "labelled_statement_continue_while.js", 2);
+}
+
+#[test]
+fn eval_labelled_statement_continue_for() {
+    eval!(file: "labelled_statement_continue_for.js", 2);
+}
+
+#[test]
+fn eval_labelled_statement_continue_nested() {
+    eval!(file: "labelled_statement_continue_nested.js", 2);
+}
+
+#[test]
+fn eval_labelled_statement_break_iteration() {
+    eval!(file: "labelled_statement_break_iteration.js", 0);
+}
+
+#[test]
+fn eval_labelled_statement_break_switch() {
+    eval!(file: "labelled_statement_break_switch.js", 1);
+}
+
+#[test]
+fn eval_labelled_statement_break_nested() {
+    eval!(file: "labelled_statement_break_nested.js", 0);
+}
+
+#[test]
 fn eval_throw_undefined() {
     eval!(file: "throw_undefined.js", throws: Value::UNDEFINED);
 }

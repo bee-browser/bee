@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2119] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2120] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -76,7 +76,7 @@ where
         // Statement -> WithStatement
         Action::Undefined,
         // Statement -> LabelledStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> ThrowStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> TryStatement
@@ -127,24 +127,39 @@ where
         // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement -> IterationStatement
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // BreakableStatement -> SwitchStatement
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // ContinueStatement -> CONTINUE SEMICOLON
         Action::Invoke(
             Self::process_continue_statement,
             "process_continue_statement",
         ),
         // ContinueStatement -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_continue_statement_with_label,
+            "process_continue_statement_with_label",
+        ),
         // BreakStatement -> BREAK SEMICOLON
         Action::Invoke(Self::process_break_statement, "process_break_statement"),
         // BreakStatement -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_break_statement_with_label,
+            "process_break_statement_with_label",
+        ),
         // WithStatement -> WITH LPAREN Expression_In RPAREN Statement
         Action::Undefined,
-        // LabelledStatement -> LabelIdentifier COLON LabelledItem
-        Action::Undefined,
+        // LabelledStatement -> LabelIdentifier COLON _LABEL_ LabelledItem
+        Action::Invoke(
+            Self::process_labelled_statement,
+            "process_labelled_statement",
+        ),
         // ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
         Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
         // TryStatement -> TRY _TRY_BLOCK_ Block _CATCH_BLOCK_ Catch _FINALLY_BLOCK_
@@ -274,7 +289,7 @@ where
         // Statement_Await -> WithStatement_Await
         Action::Undefined,
         // Statement_Await -> LabelledStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> ThrowStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> TryStatement_Await
@@ -298,11 +313,20 @@ where
         // _ELSE_BLOCK_ -> (empty)
         Action::Invoke(Self::process_else_block, "process_else_block"),
         // IterationStatement -> DoWhileStatement
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement -> WhileStatement
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement -> ForStatement
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement -> ForInOfStatement
         Action::Undefined,
         // SwitchStatement -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock
@@ -319,10 +343,12 @@ where
             Self::process_label_identifier_only_in_script,
             "process_label_identifier_only_in_script",
         ),
+        // _LABEL_ -> (empty)
+        Action::Invoke(Self::process_label, "process_label"),
         // LabelledItem -> Statement
-        Action::Undefined,
+        Action::Nop,
         // LabelledItem -> FunctionDeclaration
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // _TRY_BLOCK_ -> (empty)
         Action::Invoke(Self::process_try_block, "process_try_block"),
         // _CATCH_BLOCK_ -> (empty)
@@ -524,24 +550,39 @@ where
         // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Await -> IterationStatement_Await
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // BreakableStatement_Await -> SwitchStatement_Await
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // ContinueStatement_Await -> CONTINUE SEMICOLON
         Action::Invoke(
             Self::process_continue_statement,
             "process_continue_statement",
         ),
         // ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_continue_statement_with_label,
+            "process_continue_statement_with_label",
+        ),
         // BreakStatement_Await -> BREAK SEMICOLON
         Action::Invoke(Self::process_break_statement, "process_break_statement"),
         // BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_break_statement_with_label,
+            "process_break_statement_with_label",
+        ),
         // WithStatement_Await -> WITH LPAREN Expression_In_Await RPAREN Statement_Await
         Action::Undefined,
-        // LabelledStatement_Await -> LabelIdentifier_Await COLON LabelledItem_Await
-        Action::Undefined,
+        // LabelledStatement_Await -> LabelIdentifier_Await COLON _LABEL_ LabelledItem_Await
+        Action::Invoke(
+            Self::process_labelled_statement,
+            "process_labelled_statement",
+        ),
         // ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
         Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
         // TryStatement_Await -> TRY _TRY_BLOCK_ Block_Await _CATCH_BLOCK_ Catch_Await _FINALLY_BLOCK_
@@ -1030,11 +1071,20 @@ where
         // Expression_In_Await -> Expression_In_Await COMMA AssignmentExpression_In_Await
         Action::Undefined,
         // IterationStatement_Await -> DoWhileStatement_Await
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Await -> WhileStatement_Await
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Await -> ForStatement_Await
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Await -> ForInOfStatement_Await
         Action::Undefined,
         // SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN _CASE_BLOCK_ CaseBlock_Await
@@ -1047,9 +1097,9 @@ where
         // LabelIdentifier_Await -> YIELD
         Action::Invoke(Self::process_label_identifier, "process_label_identifier"),
         // LabelledItem_Await -> Statement_Await
-        Action::Undefined,
+        Action::Nop,
         // LabelledItem_Await -> FunctionDeclaration_Await
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // Catch_Await -> CATCH LPAREN CatchParameter_Await RPAREN Block_Await
         Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Await -> CATCH Block_Await
@@ -2316,7 +2366,7 @@ where
         // Statement_Return -> WithStatement_Return
         Action::Undefined,
         // Statement_Return -> LabelledStatement_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> ThrowStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> TryStatement_Return
@@ -2593,9 +2643,15 @@ where
         // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Return -> IterationStatement_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // BreakableStatement_Return -> SwitchStatement_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // ReturnStatement -> RETURN SEMICOLON
         Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
@@ -2605,8 +2661,11 @@ where
         ),
         // WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
         Action::Undefined,
-        // LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
-        Action::Undefined,
+        // LabelledStatement_Return -> LabelIdentifier COLON _LABEL_ LabelledItem_Return
+        Action::Invoke(
+            Self::process_labelled_statement,
+            "process_labelled_statement",
+        ),
         // TryStatement_Return -> TRY _TRY_BLOCK_ Block_Return _CATCH_BLOCK_ Catch_Return _FINALLY_BLOCK_
         Action::Invoke(
             Self::process_try_statement_no_finally,
@@ -2680,7 +2739,7 @@ where
         // Statement_Yield_Return -> WithStatement_Yield_Return
         Action::Undefined,
         // Statement_Yield_Return -> LabelledStatement_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> ThrowStatement_Yield
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> TryStatement_Yield_Return
@@ -2714,7 +2773,7 @@ where
         // Statement_Await_Return -> WithStatement_Await_Return
         Action::Undefined,
         // Statement_Await_Return -> LabelledStatement_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> ThrowStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> TryStatement_Await_Return
@@ -2782,7 +2841,7 @@ where
         // Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return
         Action::Undefined,
         // Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> ThrowStatement_Yield_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> TryStatement_Yield_Await_Return
@@ -2894,19 +2953,28 @@ where
         // Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // IterationStatement_Return -> DoWhileStatement_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Return -> WhileStatement_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Return -> ForStatement_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Return -> ForInOfStatement_Return
         Action::Undefined,
         // SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN _CASE_BLOCK_ CaseBlock_Return
         Action::Invoke(Self::process_switch_statement, "process_switch_statement"),
         // LabelledItem_Return -> Statement_Return
-        Action::Undefined,
+        Action::Nop,
         // LabelledItem_Return -> FunctionDeclaration
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // Catch_Return -> CATCH LPAREN CatchParameter RPAREN Block_Return
         Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Return -> CATCH Block_Return
@@ -2963,20 +3031,32 @@ where
         // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // ContinueStatement_Yield -> CONTINUE SEMICOLON
         Action::Invoke(
             Self::process_continue_statement,
             "process_continue_statement",
         ),
         // ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_continue_statement_with_label,
+            "process_continue_statement_with_label",
+        ),
         // BreakStatement_Yield -> BREAK SEMICOLON
         Action::Invoke(Self::process_break_statement, "process_break_statement"),
         // BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_break_statement_with_label,
+            "process_break_statement_with_label",
+        ),
         // ReturnStatement_Yield -> RETURN SEMICOLON
         Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement_Yield -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
@@ -2986,8 +3066,11 @@ where
         ),
         // WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
-        // LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return
-        Action::Undefined,
+        // LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON _LABEL_ LabelledItem_Yield_Return
+        Action::Invoke(
+            Self::process_labelled_statement,
+            "process_labelled_statement",
+        ),
         // ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
         Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
         // TryStatement_Yield_Return -> TRY _TRY_BLOCK_ Block_Yield_Return _CATCH_BLOCK_ Catch_Yield_Return _FINALLY_BLOCK_
@@ -3026,9 +3109,15 @@ where
         // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Await_Return -> IterationStatement_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // BreakableStatement_Await_Return -> SwitchStatement_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // ReturnStatement_Await -> RETURN SEMICOLON
         Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
@@ -3038,8 +3127,11 @@ where
         ),
         // WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
-        // LabelledStatement_Await_Return -> LabelIdentifier_Await COLON LabelledItem_Await_Return
-        Action::Undefined,
+        // LabelledStatement_Await_Return -> LabelIdentifier_Await COLON _LABEL_ LabelledItem_Await_Return
+        Action::Invoke(
+            Self::process_labelled_statement,
+            "process_labelled_statement",
+        ),
         // TryStatement_Await_Return -> TRY _TRY_BLOCK_ Block_Await_Return _CATCH_BLOCK_ Catch_Await_Return _FINALLY_BLOCK_
         Action::Invoke(
             Self::process_try_statement_no_finally,
@@ -3099,20 +3191,32 @@ where
         // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_breakable_statement,
+            "process_breakable_statement",
+        ),
         // ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
         Action::Invoke(
             Self::process_continue_statement,
             "process_continue_statement",
         ),
         // ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_continue_statement_with_label,
+            "process_continue_statement_with_label",
+        ),
         // BreakStatement_Yield_Await -> BREAK SEMICOLON
         Action::Invoke(Self::process_break_statement, "process_break_statement"),
         // BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_break_statement_with_label,
+            "process_break_statement_with_label",
+        ),
         // ReturnStatement_Yield_Await -> RETURN SEMICOLON
         Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
@@ -3122,8 +3226,11 @@ where
         ),
         // WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
-        // LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON LabelledItem_Yield_Await_Return
-        Action::Undefined,
+        // LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON _LABEL_ LabelledItem_Yield_Await_Return
+        Action::Invoke(
+            Self::process_labelled_statement,
+            "process_labelled_statement",
+        ),
         // ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
         Action::Invoke(Self::process_throw_statement, "process_throw_statement"),
         // TryStatement_Yield_Await_Return -> TRY _TRY_BLOCK_ Block_Yield_Await_Return _CATCH_BLOCK_ Catch_Yield_Await_Return _FINALLY_BLOCK_
@@ -3402,11 +3509,20 @@ where
         // Expression_In_Yield -> Expression_In_Yield COMMA AssignmentExpression_In_Yield
         Action::Undefined,
         // IterationStatement_Yield_Return -> DoWhileStatement_Yield_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Yield_Return -> WhileStatement_Yield_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Yield_Return -> ForStatement_Yield_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
         Action::Undefined,
         // SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN _CASE_BLOCK_ CaseBlock_Yield_Return
@@ -3419,9 +3535,9 @@ where
         // LabelIdentifier_Yield -> AWAIT
         Action::Invoke(Self::process_label_identifier, "process_label_identifier"),
         // LabelledItem_Yield_Return -> Statement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // LabelledItem_Yield_Return -> FunctionDeclaration_Yield
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // Catch_Yield_Return -> CATCH LPAREN CatchParameter_Yield RPAREN Block_Yield_Return
         Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Yield_Return -> CATCH Block_Yield_Return
@@ -3459,19 +3575,28 @@ where
         // Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Await_Return -> WhileStatement_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Await_Return -> ForStatement_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Await_Return -> ForInOfStatement_Await_Return
         Action::Undefined,
         // SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN _CASE_BLOCK_ CaseBlock_Await_Return
         Action::Invoke(Self::process_switch_statement, "process_switch_statement"),
         // LabelledItem_Await_Return -> Statement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // LabelledItem_Await_Return -> FunctionDeclaration_Await
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // Catch_Await_Return -> CATCH LPAREN CatchParameter_Await RPAREN Block_Await_Return
         Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Await_Return -> CATCH Block_Await_Return
@@ -3537,11 +3662,20 @@ where
         // Expression_In_Yield_Await -> Expression_In_Yield_Await COMMA AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Yield_Await_Return -> ForStatement_Yield_Await_Return
-        Action::Nop,
+        Action::Invoke(
+            Self::process_iteration_statement,
+            "process_iteration_statement",
+        ),
         // IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return
         Action::Undefined,
         // SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN _CASE_BLOCK_ CaseBlock_Yield_Await_Return
@@ -3552,9 +3686,9 @@ where
             "process_label_identifier_except_for_yield_await",
         ),
         // LabelledItem_Yield_Await_Return -> Statement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // LabelledItem_Yield_Await_Return -> FunctionDeclaration_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // Catch_Yield_Await_Return -> CATCH LPAREN CatchParameter_Yield_Await RPAREN Block_Yield_Await_Return
         Action::Invoke(Self::process_catch, "process_catch"),
         // Catch_Yield_Await_Return -> CATCH Block_Yield_Await_Return
