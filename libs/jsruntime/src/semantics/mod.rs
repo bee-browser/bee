@@ -118,7 +118,9 @@ impl<'r> Analyzer<'r> {
             Node::CaseClause(has_statement) => self.handle_case_clause(has_statement),
             Node::DefaultSelector => self.handle_default_selector(),
             Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
-            Node::LabelledStatement(symbol) => self.handle_labelled_statement(symbol),
+            Node::LabelledStatement(symbol, is_iteration_statement) => {
+                self.handle_labelled_statement(symbol, is_iteration_statement)
+            }
             Node::Label(symbol) => self.handle_label(symbol),
             Node::ThrowStatement => self.handle_throw_statement(),
             Node::TryStatement => self.handle_try_statement(),
@@ -377,11 +379,11 @@ impl<'r> Analyzer<'r> {
             .process_default_clause(has_statement);
     }
 
-    fn handle_labelled_statement(&mut self, symbol: Symbol) {
+    fn handle_labelled_statement(&mut self, symbol: Symbol, is_iteration_statement: bool) {
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_labelled_statement(symbol);
+            .process_labelled_statement(symbol, is_iteration_statement);
     }
 
     fn handle_label(&mut self, symbol: Symbol) {
@@ -750,6 +752,7 @@ struct FunctionContext {
     scope_stack: Vec<Scope>,
     loop_stack: Vec<LoopContext>,
     switch_stack: Vec<SwitchContext>,
+    label_stack: Vec<LabelContext>,
     try_stack: Vec<TryContext>,
     nargs_stack: Vec<(usize, u16)>,
     max_bindings: usize,
@@ -961,11 +964,18 @@ impl FunctionContext {
     }
 
     fn process_label(&mut self, symbol: Symbol) {
-        self.put_command(CompileCommand::LabelStart(symbol));
+        // Push `Nop` as a placeholder.
+        // It will be replaced with `CompileCommand::LabelStart(..)` in
+        // `process_labelled_statement()`.
+        let start_index = self.put_command(CompileCommand::Nop);
+        self.label_stack.push(LabelContext { start_index, symbol });
     }
 
-    fn process_labelled_statement(&mut self, symbol: Symbol) {
-        self.put_command(CompileCommand::LabelEnd(symbol));
+    fn process_labelled_statement(&mut self, symbol: Symbol, is_iteration_statement: bool) {
+        let label = self.label_stack.pop().unwrap();
+        debug_assert_eq!(label.symbol, symbol);
+        self.commands[label.start_index] = CompileCommand::LabelStart(symbol, is_iteration_statement);
+        self.put_command(CompileCommand::LabelEnd(symbol, is_iteration_statement));
     }
 
     fn process_throw_statement(&mut self) {
@@ -1069,6 +1079,12 @@ struct SwitchContext {
     case_block_index: usize,
     num_clauses: usize,
     default_index: Option<usize>,
+}
+
+#[derive(Default)]
+struct LabelContext {
+    start_index: usize,
+    symbol: Symbol,
 }
 
 #[derive(Default)]
@@ -1213,8 +1229,8 @@ pub enum CompileCommand {
     Switch(u32, Option<u32>),
 
     // label
-    LabelStart(Symbol),
-    LabelEnd(Symbol),
+    LabelStart(Symbol, bool),
+    LabelEnd(Symbol, bool),
 
     // try, catch, finally
     Try,

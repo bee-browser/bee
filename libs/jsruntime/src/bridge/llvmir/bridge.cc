@@ -420,12 +420,12 @@ void compiler_peer_release_bindings(Compiler* self, uint16_t n) {
   self->ReleaseBindings(n);
 }
 
-void compiler_peer_label_start(Compiler* self, uint32_t symbol) {
-  self->LabelStart(symbol);
+void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement) {
+  self->LabelStart(symbol, is_iteration_statement);
 }
 
-void compiler_peer_label_end(Compiler* self, uint32_t symbol) {
-  self->LabelEnd(symbol);
+void compiler_peer_label_end(Compiler* self, uint32_t symbol, bool is_iteration_statement) {
+  self->LabelEnd(symbol, is_iteration_statement);
 }
 
 void compiler_peer_continue(Compiler* self, uint32_t symbol) {

@@ -954,8 +954,10 @@ void Compiler::DoWhileLoop() {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(loop_start);
 
+  SetBlockForLabelsInContinueStack(loop_continue);
+
   break_stack_.push_back({loop_break, 0});
-  continue_stack_.push_back(loop_continue);
+  continue_stack_.push_back({loop_continue, 0});
 }
 
 void Compiler::WhileLoop() {
@@ -979,8 +981,10 @@ void Compiler::WhileLoop() {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(loop_start);
 
+  SetBlockForLabelsInContinueStack(loop_continue);
+
   break_stack_.push_back({loop_break, 0});
-  continue_stack_.push_back(loop_continue);
+  continue_stack_.push_back({loop_continue, 0});
 }
 
 void Compiler::ForLoop(bool has_init, bool has_test, bool has_next) {
@@ -1048,8 +1052,10 @@ void Compiler::ForLoop(bool has_init, bool has_test, bool has_next) {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(insert_point);
 
+  SetBlockForLabelsInContinueStack(loop_continue);
+
   break_stack_.push_back({loop_break, 0});
-  continue_stack_.push_back(loop_continue);
+  continue_stack_.push_back({loop_continue, 0});
 }
 
 void Compiler::LoopInit() {
@@ -1348,7 +1354,7 @@ void Compiler::ReleaseBindings(uint16_t n) {
   allocated_bindings_ -= n;
 }
 
-void Compiler::LabelStart(uint32_t symbol) {
+void Compiler::LabelStart(uint32_t symbol, bool is_iteration_statement) {
   assert(symbol != 0);
   auto* start_block = llvm::BasicBlock::Create(*context_);
   auto* end_block = llvm::BasicBlock::Create(*context_);
@@ -1356,23 +1362,35 @@ void Compiler::LabelStart(uint32_t symbol) {
   builder_->CreateBr(start_block);
   builder_->SetInsertPoint(start_block);
   break_stack_.push_back({end_block, symbol});
+  if (is_iteration_statement) {
+    // The `block` member variable will be updated in the method to handle the loop start of the
+    // labeled iteration statement.
+    continue_stack_.push_back({nullptr, symbol});
+  }
 }
 
-void Compiler::LabelEnd(uint32_t symbol) {
+void Compiler::LabelEnd(uint32_t symbol, bool is_iteration_statement) {
   assert(symbol != 0);
   assert(break_stack_.back().symbol == symbol);
   auto* end_block = break_stack_.back().block;
-  break_stack_.pop_back();
   end_block->insertInto(function_);
   builder_->CreateBr(end_block);
   builder_->SetInsertPoint(end_block);
+  break_stack_.pop_back();
+  if (is_iteration_statement) {
+    continue_stack_.pop_back();
+  }
 }
 
 void Compiler::Continue(uint32_t symbol) {
-  UNUSED(symbol);  // TODO
-  assert(!continue_stack_.empty());
-  auto* loop_continue = continue_stack_.back();
-  builder_->CreateBr(loop_continue);
+  llvm::BasicBlock* target_block = nullptr;
+  if (symbol == 0) {
+    target_block = continue_stack_.back().block;
+  } else {
+    target_block = FindBlockBySymbol(continue_stack_, symbol);
+  }
+  assert(target_block != nullptr);
+  builder_->CreateBr(target_block);
   CreateDeadcodeBasicBlock();
 }
 
@@ -1954,4 +1972,16 @@ llvm::BasicBlock* Compiler::FindBlockBySymbol(const std::vector<BlockItem>& stac
   }
   assert(false);  // never reach here
   return nullptr;
+}
+
+void Compiler::SetBlockForLabelsInContinueStack(llvm::BasicBlock* block) {
+  assert(block != nullptr);
+  for (auto it = continue_stack_.rbegin(); it != continue_stack_.rend(); ++it) {
+    if (it->symbol == 0) {
+      assert(it->block != nullptr);
+      return;
+    }
+    assert(it->block == nullptr);
+    it->block = block;
+  }
 }

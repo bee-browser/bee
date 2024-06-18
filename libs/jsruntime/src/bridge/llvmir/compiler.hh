@@ -130,8 +130,8 @@ class Compiler {
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
-  void LabelStart(uint32_t symbol);
-  void LabelEnd(uint32_t symbol);
+  void LabelStart(uint32_t symbol, bool is_iteration_statement);
+  void LabelEnd(uint32_t symbol, bool is_iteration_statement);
   void Continue(uint32_t symbol);
   void Break(uint32_t symbol);
   void Return(size_t n);
@@ -621,6 +621,7 @@ class Compiler {
   // TODO: separate variables that must be reset in EndFunction() from others.
 
   llvm::BasicBlock* FindBlockBySymbol(const std::vector<BlockItem>& stack, uint32_t symbol) const;
+  void SetBlockForLabelsInContinueStack(llvm::BasicBlock* block);
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
@@ -646,7 +647,7 @@ class Compiler {
 
   std::vector<Item> stack_;
   std::vector<BlockItem> break_stack_;
-  std::vector<llvm::BasicBlock*> continue_stack_;
+  std::vector<BlockItem> continue_stack_;
   std::vector<llvm::BasicBlock*> catch_stack_;
 
   std::unordered_map<std::string, llvm::Function*> functions_;

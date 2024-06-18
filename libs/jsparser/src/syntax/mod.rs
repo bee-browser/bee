@@ -186,7 +186,7 @@ pub enum Node<'s> {
     CaseClause(bool),
     DefaultSelector,
     DefaultClause(bool),
-    LabelledStatement(Symbol),
+    LabelledStatement(Symbol, bool),
     Label(Symbol),
     ThrowStatement,
     TryStatement,
@@ -2034,20 +2034,18 @@ where
             Detail::LabelledStatement(labelled_item) => labelled_item,
             _ => LabelledItem::OtherStatement,
         };
+        let is_iteration_statement = matches!(labelled_item, LabelledItem::IterationStatement);
 
         let label = self.label_stack.pop().unwrap();
 
         // It seems not to be described in the specification but it's a syntax error in major
         // implementations when the label does not denote an iteration statement.
-        ensure!(
-            label.num_continue_statements == 0
-                || matches!(labelled_item, LabelledItem::IterationStatement)
-        );
+        ensure!(label.num_continue_statements == 0 || is_iteration_statement);
 
         // TODO: unused label (num_continue_statements == 0 && num_break_statements == 0) should be
         // removed in the semantics analysis phase.  We can add a variable for this to
         // Node::LabelledStatement.
-        self.enqueue(Node::LabelledStatement(label.symbol));
+        self.enqueue(Node::LabelledStatement(label.symbol, is_iteration_statement));
         self.replace(3, Detail::LabelledStatement(labelled_item));
         Ok(())
     }

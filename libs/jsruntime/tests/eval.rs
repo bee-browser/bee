@@ -805,6 +805,11 @@ fn eval_switch_statement_cases_default_cases_break() {
 }
 
 #[test]
+fn eval_labelled_statement_continue() {
+    eval!(file: "labelled_statement_continue.js", 2);
+}
+
+#[test]
 fn eval_labelled_statement_break_iteration() {
     eval!(file: "labelled_statement_break_iteration.js", 0);
 }
