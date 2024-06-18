@@ -1,9 +1,10 @@
 let i = 0;
 outer:
-for (;;) {
+nested:
+{
   inner:
   for (;;) {
-    break outer;
+    break nested;
   }
   i = 1;
 }
