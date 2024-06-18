@@ -202,6 +202,11 @@ class Compiler {
     }
   };
 
+  struct BlockItem {
+    llvm::BasicBlock* block;
+    uint32_t symbol;
+  };
+
   inline void PushUndefined() {
     stack_.push_back(Item(Item::Undefined));
   }
@@ -615,6 +620,8 @@ class Compiler {
 
   // TODO: separate variables that must be reset in EndFunction() from others.
 
+  llvm::BasicBlock* FindBlockBySymbol(const std::vector<BlockItem>& stack, uint32_t symbol) const;
+
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
@@ -638,7 +645,7 @@ class Compiler {
   uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;
-  std::vector<llvm::BasicBlock*> break_stack_;
+  std::vector<BlockItem> break_stack_;
   std::vector<llvm::BasicBlock*> continue_stack_;
   std::vector<llvm::BasicBlock*> catch_stack_;
 

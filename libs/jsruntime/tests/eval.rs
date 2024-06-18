@@ -805,6 +805,16 @@ fn eval_switch_statement_cases_default_cases_break() {
 }
 
 #[test]
+fn eval_labelled_statement_break_iteration() {
+    eval!(file: "labelled_statement_break_iteration.js", 0);
+}
+
+#[test]
+fn eval_labelled_statement_break_switch() {
+    eval!(file: "labelled_statement_break_switch.js", 1);
+}
+
+#[test]
 fn eval_throw_undefined() {
     eval!(file: "throw_undefined.js", throws: Value::UNDEFINED);
 }

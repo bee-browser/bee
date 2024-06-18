@@ -954,7 +954,7 @@ void Compiler::DoWhileLoop() {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(loop_start);
 
-  break_stack_.push_back(loop_break);
+  break_stack_.push_back({loop_break, 0});
   continue_stack_.push_back(loop_continue);
 }
 
@@ -979,7 +979,7 @@ void Compiler::WhileLoop() {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(loop_start);
 
-  break_stack_.push_back(loop_break);
+  break_stack_.push_back({loop_break, 0});
   continue_stack_.push_back(loop_continue);
 }
 
@@ -1048,7 +1048,7 @@ void Compiler::ForLoop(bool has_init, bool has_test, bool has_next) {
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(insert_point);
 
-  break_stack_.push_back(loop_break);
+  break_stack_.push_back({loop_break, 0});
   continue_stack_.push_back(loop_continue);
 }
 
@@ -1107,7 +1107,7 @@ void Compiler::CaseBlock(uint32_t n) {
   builder_->SetInsertPoint(start_block);
 
   auto* end_block = llvm::BasicBlock::Create(*context_);
-  break_stack_.push_back(end_block);
+  break_stack_.push_back({end_block, 0});
 }
 
 void Compiler::CaseClause(bool has_statement) {
@@ -1147,7 +1147,7 @@ void Compiler::DefaultClause(bool has_statement) {
 }
 
 void Compiler::Switch(uint32_t n, uint32_t default_index) {
-  auto* end_block = break_stack_.back();
+  auto* end_block = break_stack_.back().block;
   break_stack_.pop_back();
 
   // Discard the switch-values
@@ -1349,13 +1349,23 @@ void Compiler::ReleaseBindings(uint16_t n) {
 }
 
 void Compiler::LabelStart(uint32_t symbol) {
-  UNUSED(symbol);
-  // TODO
+  assert(symbol != 0);
+  auto* start_block = llvm::BasicBlock::Create(*context_);
+  auto* end_block = llvm::BasicBlock::Create(*context_);
+  start_block->insertInto(function_);
+  builder_->CreateBr(start_block);
+  builder_->SetInsertPoint(start_block);
+  break_stack_.push_back({end_block, symbol});
 }
 
 void Compiler::LabelEnd(uint32_t symbol) {
-  UNUSED(symbol);
-  // TODO
+  assert(symbol != 0);
+  assert(break_stack_.back().symbol == symbol);
+  auto* end_block = break_stack_.back().block;
+  break_stack_.pop_back();
+  end_block->insertInto(function_);
+  builder_->CreateBr(end_block);
+  builder_->SetInsertPoint(end_block);
 }
 
 void Compiler::Continue(uint32_t symbol) {
@@ -1367,10 +1377,14 @@ void Compiler::Continue(uint32_t symbol) {
 }
 
 void Compiler::Break(uint32_t symbol) {
-  UNUSED(symbol);  // TODO
-  assert(!break_stack_.empty());
-  auto* loop_break = break_stack_.back();
-  builder_->CreateBr(loop_break);
+  llvm::BasicBlock* target_block = nullptr;
+  if (symbol == 0) {
+    target_block = break_stack_.back().block;
+  } else {
+    target_block = FindBlockBySymbol(break_stack_, symbol);
+  }
+  assert(target_block != nullptr);
+  builder_->CreateBr(target_block);
   CreateDeadcodeBasicBlock();
 }
 
@@ -1929,4 +1943,15 @@ llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::V
   phi->addIncoming(else_value, else_block);
 
   return phi;
+}
+
+llvm::BasicBlock* Compiler::FindBlockBySymbol(const std::vector<BlockItem>& stack, uint32_t symbol) const {
+  assert(!break_stack_.empty());
+  for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+    if (it->symbol == symbol) {
+      return it->block;
+    }
+  }
+  assert(false);  // never reach here
+  return nullptr;
 }
