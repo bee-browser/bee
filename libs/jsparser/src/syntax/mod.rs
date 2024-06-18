@@ -2045,7 +2045,10 @@ where
         // TODO: unused label (num_continue_statements == 0 && num_break_statements == 0) may be
         // able to be removed in the semantics analysis phase.  We can add a variable for this to
         // Node::LabelledStatement.
-        self.enqueue(Node::LabelledStatement(label.symbol, is_iteration_statement));
+        self.enqueue(Node::LabelledStatement(
+            label.symbol,
+            is_iteration_statement,
+        ));
         self.replace(3, Detail::LabelledStatement(labelled_item));
         Ok(())
     }

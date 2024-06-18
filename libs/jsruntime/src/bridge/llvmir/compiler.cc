@@ -1963,7 +1963,8 @@ llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::V
   return phi;
 }
 
-llvm::BasicBlock* Compiler::FindBlockBySymbol(const std::vector<BlockItem>& stack, uint32_t symbol) const {
+llvm::BasicBlock* Compiler::FindBlockBySymbol(const std::vector<BlockItem>& stack,
+    uint32_t symbol) const {
   assert(!break_stack_.empty());
   for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
     if (it->symbol == symbol) {

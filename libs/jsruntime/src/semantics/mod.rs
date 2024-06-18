@@ -968,13 +968,17 @@ impl FunctionContext {
         // It will be replaced with `CompileCommand::LabelStart(..)` in
         // `process_labelled_statement()`.
         let start_index = self.put_command(CompileCommand::Nop);
-        self.label_stack.push(LabelContext { start_index, symbol });
+        self.label_stack.push(LabelContext {
+            start_index,
+            symbol,
+        });
     }
 
     fn process_labelled_statement(&mut self, symbol: Symbol, is_iteration_statement: bool) {
         let label = self.label_stack.pop().unwrap();
         debug_assert_eq!(label.symbol, symbol);
-        self.commands[label.start_index] = CompileCommand::LabelStart(symbol, is_iteration_statement);
+        self.commands[label.start_index] =
+            CompileCommand::LabelStart(symbol, is_iteration_statement);
         self.put_command(CompileCommand::LabelEnd(symbol, is_iteration_statement));
     }
 
