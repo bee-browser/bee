@@ -14,6 +14,11 @@ test:
 codegen: src/charref/trie.rs
 	@$(MAKE) -s -C tests codegen
 
+.PHONY: clean
+clean:
+	@rm -f src/charref/trie.rs src/charref/trie.codegen.json
+	@$(MAKE) -s -C tests clean
+
 src/charref/trie.rs: src/charref/trie.codegen.json src/charref/trie.rs.hbs
 	@echo 'Generating $@'...
 	@deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape src/charref/trie.rs.hbs $< | \

@@ -22,12 +22,9 @@ DEPS := $(addprefix src/,$(addsuffix .test.yaml.d,$(LAYOUT_TEST_SRC_NAMES)))
 
 .PHONY: clean
 clean:
-	@rm -f html/*.html html/*.js html/*.json
-	@rm -f src/*.json src/*.jsonl src/*.yaml src/*.yaml.d
-
-.PHONY: tests
-tests: clean
-	@$(MAKE) -s -j $(shell nproc) codegen
+	@rm -f *.dom.json *.test.json *.test.yaml *.test.yaml.d *.scenario.jsonl
+	@rm -f html/*.test.html html/index.json html/index.html html/tests.js
+	@rm -f layout_tests.json layout_tests.rs
 
 .PHONY: codegen
 codegen: codegen-html codegen-rust

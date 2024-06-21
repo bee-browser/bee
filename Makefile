@@ -3,24 +3,26 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
 
-BUILD_TARGETS = $(addprefix build-,\
-  webui \
-)
-
-CLEAN_TARGETS = $(addprefix clean-,\
-  webui \
-)
-
-# The order must be determined by dependencies between packages.
-CODEGEN_TARGETS = $(addprefix codegen-,\
+CODEGEN_PATHS := \
   libs/logging \
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
   libs/jsruntime \
   libs/layout \
-  bins/estree \
+  bins/estree
+
+BUILD_TARGETS := $(addprefix build-,\
+  webui \
 )
+
+CLEAN_TARGETS := $(addprefix clean-,\
+  $(CODEGEN_PATHS) \
+  webui \
+)
+
+# The order must be determined by dependencies between packages.
+CODEGEN_TARGETS := $(addprefix codegen-,$(CODEGEN_PATHS))
 
 .PHONY: all
 all: build

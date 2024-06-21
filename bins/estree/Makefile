@@ -8,3 +8,7 @@ test: codegen
 .PHONY: codegen
 codegen:
 	@$(MAKE) -s -C src codegen
+
+.PHONY: clean
+clean:
+	@$(MAKE) -s -C src clean

@@ -16,4 +16,4 @@
 /src/parser/lalr/lexical_goal.rs
 /src/parser/lalr/non_terminals.rs
 /src/symbol/builtins.rs
-/src/symbol/actions.rs
+/src/syntax/actions.rs

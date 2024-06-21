@@ -10,6 +10,11 @@ DEPS := spec.yaml collect.js
 codegen: $(SRCS)
 	@$(MAKE) -s -C tags codegen
 
+.PHONY: clean
+clean:
+	@rm -f $(SRCS)
+	@$(MAKE) -s -C tags clean
+
 null.rs: null.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read collect.js rules -s spec.yaml nul nul | \

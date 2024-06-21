@@ -11,6 +11,10 @@ all:
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
+.PHONY: clean
+clean:
+	@rm -f $(CODEGEN_TARGETS)
+
 src/targets.rs: FORCE
 	@echo 'Updating $(abspath $@) if any of logging.yaml files changes...'
 	@deno run -q --allow-read=$(PROJ_DIR) scripts/targets.js | \

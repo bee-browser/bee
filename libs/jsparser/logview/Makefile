@@ -17,6 +17,10 @@ all: codegen
 .PHONY: codegen
 codegen: $(ASSETS_FILES)
 
+.PHONY: clean
+clean:
+	@rm -fr assets
+
 # It's necessary to allow reading entries outside this folder so that deno can read dependencies
 # from DENO_DIR.
 # TODO: minify the file

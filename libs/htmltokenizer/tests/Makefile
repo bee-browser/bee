@@ -21,3 +21,7 @@ $(foreach NAME,$(NAMES),$(eval $(call html5lib_tests,$(NAME))))
 
 .PHONY: codegen
 codegen: $(SRCS)
+
+.PHONY: clean
+clean:
+	@rm -f $(SRCS)

@@ -9,6 +9,10 @@ CODEGEN_TARGETS := actions.rs
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
+.PHONY: clean
+clean:
+	@rm -f $(CODEGEN_TARGETS)
+
 actions.rs: actions.yaml actions.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | yq -o=json | \
