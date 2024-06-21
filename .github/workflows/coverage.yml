@@ -29,6 +29,9 @@ jobs:
     steps:
       # Remove packages in order to avoid "No space left on device" error in `make coverage`.
       - uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          # google-chrome-stable is needed for `make codegen`.
+          large-packages: false
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
