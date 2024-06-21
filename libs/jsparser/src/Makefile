@@ -4,11 +4,6 @@ TRANSPILE_ARGS ?=
 PROJ_DIR := $(realpath ../../..)
 ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
 
-ECMA262_VERSION := es2023
-ifneq ($(shell git -C $(ECMA262_DIR) describe),$(ECMA262_VERSION))
-  $(error ECMA-262 specification version must be $(ECMA262_VERSION))
-endif
-
 # targets
 
 .PHONY: all
