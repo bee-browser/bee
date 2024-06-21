@@ -11,6 +11,10 @@ test:
 codegen:
 	@$(MAKE) -s -C src/bridge codegen
 
+.PHONY: clean
+clean:
+	@$(MAKE) -s -C src/bridge clean
+
 .PHONY: bench
 bench:
 	cargo bench

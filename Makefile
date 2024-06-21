@@ -3,24 +3,26 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
 
-BUILD_TARGETS = $(addprefix build-,\
-  webui \
-)
-
-CLEAN_TARGETS = $(addprefix clean-,\
-  webui \
-)
-
-# The order must be determined by dependencies between packages.
-CODEGEN_TARGETS = $(addprefix codegen-,\
+CODEGEN_PATHS := \
   libs/logging \
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
   libs/jsruntime \
   libs/layout \
-  bins/estree \
+  bins/estree
+
+BUILD_TARGETS := $(addprefix build-,\
+  webui \
 )
+
+CLEAN_TARGETS := $(addprefix clean-,\
+  $(CODEGEN_PATHS) \
+  webui \
+)
+
+# The order must be determined by dependencies between packages.
+CODEGEN_TARGETS := $(addprefix codegen-,$(CODEGEN_PATHS))
 
 .PHONY: all
 all: build
@@ -81,6 +83,7 @@ bench:
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
+	@bash libs/logging/scripts/loggergen.sh --rm
 	cargo clean --profile=dev
 	cargo clean --profile=profiling
 	cargo clean --profile=release
@@ -98,11 +101,12 @@ release-test:
 	cargo nextest run --release --all-features
 
 .PHONE: codegen
-codegen: $(CODEGEN_TARGETS)
+codegen:
+	@bash libs/logging/scripts/loggergen.sh
+	@$(MAKE) -s codegen-modules
 
-.PHONY: loggergen
-loggergen:
-	@sh libs/logging/scripts/loggergen.sh
+.PHONY: codegen-modules
+codegen-modules: $(CODEGEN_TARGETS)
 
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno

@@ -8,6 +8,10 @@ SRCS := tags.rs svgattrs.rs
 .PHONY: codegen
 codegen: $(SRCS)
 
+.PHONY: clean
+clean:
+	@rm -f $(SRCS)
+
 %.rs: %.yaml %.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \

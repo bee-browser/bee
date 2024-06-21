@@ -25,8 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
           persist-credentials: false
+          submodules: recursive
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
@@ -35,6 +35,8 @@ jobs:
       - name: Install LLVM
         run: |
           sh -x tools/bin/github_actions_install_llvm.sh
+      - name: Codegen
+        run: make codegen
       - uses: bencherdev/bencher@main
       - name: Benchmark tests (push)
         if: ${{ github.event_name == 'push' }}

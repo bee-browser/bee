@@ -1,4 +1,4 @@
-/target
+/target/
 /vendor/.crates2.json
 /vendor/.crates.toml
 /vendor/bin
@@ -12,3 +12,7 @@ cobertura.xml
 flamegraph.svg
 perf.data
 perf.data.old
+
+# TODO: Should be specified with absolute paths in .gitignore file in each module folder for
+# safety.  Because we may need to add the `logger` module for different purposes in the future.
+logger.rs

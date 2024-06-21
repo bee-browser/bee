@@ -1,0 +1,3 @@
+/src/charref/trie.codegen.json
+/src/charref/trie.rs
+/tests/html5lib_tests_*.rs

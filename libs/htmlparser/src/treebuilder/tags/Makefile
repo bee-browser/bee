@@ -13,6 +13,10 @@ DEPS := $(SPEC_YAML) $(COLLECT_JS)
 .PHONY: codegen
 codegen: $(SRCS)
 
+.PHONY: clean
+clean:
+	@rm -f $(SRCS)
+
 mod.rs: mod.rs.hbs tags.txt
 	@echo 'Generating $(abspath $@)...'
 	@echo -n $(TAGS) | jq -Rsc 'split(" ")' | \

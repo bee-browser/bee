@@ -37,6 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
           submodules: recursive
       - uses: dtolnay/rust-toolchain@master
         with:
@@ -50,6 +51,8 @@ jobs:
       - name: Install LLVM
         run: |
           sh -x tools/bin/github_actions_install_llvm.sh
+      - name: Codegen
+        run: make codegen
       - name: Check
         run: make check
       - name: Build

@@ -4,6 +4,18 @@ BASE_DIR=$(cd $(dirname $0); pwd)
 PROJ_DIR=$(cd $BASE_DIR/../../..; pwd)
 TOOLS_BIN=$PROJ_DIR/tools/bin
 
+OP='codegen'
+
+for OPT in "$@"
+do
+  case $OPT in
+    '--rm')
+      OP='rm'
+      shift
+      ;;
+  esac
+done
+
 deno run -q --allow-read=$PROJ_DIR $BASE_DIR/targets.js | \
   jq -c '.targets[]' | \
   while read -r JSON
@@ -13,6 +25,13 @@ deno run -q --allow-read=$PROJ_DIR $BASE_DIR/targets.js | \
     then
       continue
     fi
+
+    if [ "$OP" = 'rm' ]
+    then
+      rm -f $LOGGER_RS
+      continue
+    fi
+
     echo "$JSON" | \
       deno run -q \
         --allow-read=$BASE_DIR/logger.rs.hbs \
