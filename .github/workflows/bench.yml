@@ -17,6 +17,9 @@ on:
     paths-ignore:
       - '**.md'
 
+env:
+  DENO_DIR: /tmp/deno
+
 jobs:
   bench:
     # Skip if this workflow is triggered by dependabot.
@@ -32,6 +35,9 @@ jobs:
           toolchain: stable
           components: 'clippy, rustfmt'
       - uses: Swatinem/rust-cache@v2
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
       - name: Install LLVM
         run: |
           sh -x tools/bin/github_actions_install_llvm.sh
