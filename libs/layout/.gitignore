@@ -1,2 +1,11 @@
-/target
-Cargo.lock
+/tests/*.dom.json
+/tests/*.test.json
+/tests/*.test.yaml
+/tests/*.test.yaml.d
+/tests/*.scenario.jsonl
+/tests/html/*.test.html
+/tests/html/index.json
+/tests/html/index.html
+/tests/html/tests.js
+/tests/layout_tests.json
+/tests/layout_tests.rs

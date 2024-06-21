@@ -31,6 +31,10 @@ Then:
 # Run again if some of third-party packages have been updated.
 make vendor
 
+# Run once before building.
+# Run again if some of input files of generated source files have been updated.
+make codegen
+
 # Run tests.
 make test
 

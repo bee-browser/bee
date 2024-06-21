@@ -1,0 +1,10 @@
+/src/localnames/tags.rs
+/src/localnames/svgattrs.rs
+/src/treebuilder/comment.rs
+/src/treebuilder/doctype.rs
+/src/treebuilder/eof.rs
+/src/treebuilder/null.rs
+/src/treebuilder/text.rs
+/src/treebuilder/whitespace.rs
+/src/treebuilder/tags/*.rs
+/tests/html5lib_tests_*.rs
