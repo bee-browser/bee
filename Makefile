@@ -83,7 +83,7 @@ bench:
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
-	@sh libs/logging/scripts/loggergen.sh --rm
+	@bash libs/logging/scripts/loggergen.sh --rm
 	cargo clean --profile=dev
 	cargo clean --profile=profiling
 	cargo clean --profile=release
@@ -102,7 +102,7 @@ release-test:
 
 .PHONE: codegen
 codegen:
-	@sh libs/logging/scripts/loggergen.sh
+	@bash libs/logging/scripts/loggergen.sh
 	@$(MAKE) -s codegen-modules
 
 .PHONY: codegen-modules
