@@ -83,6 +83,7 @@ bench:
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
+	@sh libs/logging/scripts/loggergen.sh --rm
 	cargo clean --profile=dev
 	cargo clean --profile=profiling
 	cargo clean --profile=release
@@ -100,11 +101,12 @@ release-test:
 	cargo nextest run --release --all-features
 
 .PHONE: codegen
-codegen: $(CODEGEN_TARGETS)
-
-.PHONY: loggergen
-loggergen:
+codegen:
 	@sh libs/logging/scripts/loggergen.sh
+	@$(MAKE) -s codegen-modules
+
+.PHONY: codegen-modules
+codegen-modules: $(CODEGEN_TARGETS)
 
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno
