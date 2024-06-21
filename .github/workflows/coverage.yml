@@ -43,6 +43,8 @@ jobs:
       - name: Install LLVM
         run: |
           sh -x tools/bin/github_actions_install_llvm.sh
+      - name: Codegen
+        run: make codegen
       - name: Generate code coverage
         run: |
           make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json' TEST262_ARGS=''
