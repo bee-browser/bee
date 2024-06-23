@@ -100,6 +100,7 @@ release-build: $(BUILD_TARGETS)
 release-test:
 	cargo nextest run --release --all-features
 
+# TODO: `make -j $(nproc) codegen` does not work properly...
 .PHONE: codegen
 codegen:
 	@bash libs/logging/scripts/loggergen.sh

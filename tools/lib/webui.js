@@ -4,7 +4,6 @@ import * as log from '@std/log';
 import * as path from '@std/path';
 import * as servest from 'servest';
 import { PROJ_DIR, WORKERS_DIR } from './consts.js';
-import { scrape } from './chrome_devtools.js';
 import { LayoutBuilder } from './layout_builder.js';
 
 const NAVIGATION_JS = path.join(WORKERS_DIR, 'navigation.js');
