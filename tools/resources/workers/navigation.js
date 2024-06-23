@@ -7,7 +7,7 @@ import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
 
 const TOOLS_DIR = path.resolve(path.dirname(path.fromFileUrl(import.meta.url)), '..', '..');
 const TEXT_TO_DOT_MATRIX = path.join(TOOLS_DIR, 'bin', 'text_to_dot_matrix.js');
-const DOM_SCRAPER = path.join(TOOLS_DIR, 'bin', 'scrape_dom.js');
+const DOM_SCRAPER = path.join(TOOLS_DIR, 'bin', 'scrape_dom.sh');
 const LAYOUT_BUILDER = path.join(TOOLS_DIR, 'bin', 'build_layout.js');
 
 self.onmessage = async ({ data }) => {
@@ -35,9 +35,9 @@ async function scrape({ uri, width, height }) {
   if (uri.startsWith('text:')) {
     const text = uri.slice(5);
     commands.push(`deno run -qA ${TEXT_TO_DOT_MATRIX} ${JSON.stringify(text)}`);
-    commands.push(`deno run -qA ${DOM_SCRAPER} --viewport=${width}x${height}`);
+    commands.push(`sh ${DOM_SCRAPER} --viewport ${width}x${height}`);
   } else {
-    commands.push(`deno run -qA ${DOM_SCRAPER} --viewport=${width}x${height} ${uri}`);
+    commands.push(`sh ${DOM_SCRAPER} --viewport ${width}x${height} ${uri}`);
   }
 
   const script = commands.join(' | ');
@@ -103,9 +103,9 @@ function buildScript({ uri, width, height, layouter }) {
   if (uri.startsWith('text:')) {
     const text = uri.slice(5);
     commands.push(`deno run -qA ${TEXT_TO_DOT_MATRIX} ${JSON.stringify(text)}`);
-    commands.push(`deno run -qA ${DOM_SCRAPER} --viewport=${width}x${height}`);
+    commands.push(`sh ${DOM_SCRAPER} --viewport ${width}x${height}`);
   } else {
-    commands.push(`deno run -qA ${DOM_SCRAPER} --viewport=${width}x${height} ${uri}`);
+    commands.push(`sh ${DOM_SCRAPER} --viewport ${width}x${height} ${uri}`);
   }
   commands.push(LAYOUT_BUILDER);
   commands.push(layouter);

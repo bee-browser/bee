@@ -67,7 +67,7 @@ layout_tests.json: $(LAYOUT_TEST_EXPECTED_FILES)
 .PRECIOUS: %.dom.json
 %.dom.json: html/%.test.html
 	@echo 'Generating $(abspath $@)...'
-	@deno run -qA $(TOOLS_BIN)/scrape_dom.js --viewport=$(LAYOUT_TEST_VIEWPORT_SIZE) $< >$@
+	@sh $(TOOLS_BIN)/scrape_dom.sh --viewport $(LAYOUT_TEST_VIEWPORT_SIZE) $< >$@
 
 .PRECIOUS: html/%.test.html
 html/%.test.html: %.test.json html/test.html.hbs

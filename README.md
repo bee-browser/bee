@@ -23,6 +23,7 @@ Install the following software:
 * [Nextest]
 * [jq]
 * [yq]
+* [Docker CLI]
 
 Then:
 
@@ -82,6 +83,7 @@ shall be dual licensed as above, without any additional terms or conditions.
 [Nextest]: https://github.com/nextest-rs/nextest
 [jq]: https://jqlang.github.io/jq/
 [yq]: https://mikefarah.gitbook.io/yq/
+[Docker CLI]: https://docs.docker.com/reference/cli/docker/
 [cargo-llvm-cov]: https://github.com/taiki-e/cargo-llvm-cov
 [flamegraph]: https://github.com/flamegraph-rs/flamegraph
 [hyperfine]: https://github.com/sharkdp/hyperfine
