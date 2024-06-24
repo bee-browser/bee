@@ -415,7 +415,7 @@
   action: conditional_expression
 - rule: >-
     ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
-    ConciseBody_In
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
@@ -864,6 +864,8 @@
   action: create_list
 - rule: ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
   action: arrow_parameters
+- rule: _ANONYMOUS_FUNCTION_SIGNATURE_ -> (empty)
+  action: nop
 - rule: 'ConciseBody_In -> (?![LBRACE]) ExpressionBody_In'
   action: convert_to_expression
 - rule: ConciseBody_In -> LBRACE FunctionBody RBRACE
@@ -946,7 +948,9 @@
     ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_
     AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In
   action: conditional_expression
-- rule: ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
+- rule: >-
+    ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
@@ -1711,7 +1715,9 @@
     ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_
     AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression
   action: conditional_expression
-- rule: ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
+- rule: >-
+    ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
@@ -2262,7 +2268,9 @@
     ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_
     AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_Await
   action: conditional_expression
-- rule: ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
+- rule: >-
+    ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
@@ -2684,7 +2692,7 @@
   action: yield_expression_delegate
 - rule: >-
     ArrowFunction_In_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
-    ConciseBody_In
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
@@ -2825,7 +2833,7 @@
   action: yield_expression_delegate
 - rule: >-
     ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
-    ConciseBody_In
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
@@ -4531,7 +4539,9 @@
   action: yield_expression
 - rule: YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield
   action: yield_expression_delegate
-- rule: ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
+- rule: >-
+    ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield
@@ -4624,7 +4634,7 @@
   action: yield_expression_delegate
 - rule: >-
     ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
-    ConciseBody
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)

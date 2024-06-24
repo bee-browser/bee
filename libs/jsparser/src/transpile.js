@@ -167,6 +167,7 @@ class Transpiler {
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
           modifyFunctionExpression,
+          modifyArrowFunction,
           modifyDoWhileStatement,
           modifyWhileStatement,
           modifySwitchStatement,
@@ -592,6 +593,7 @@ function addActions(rules) {
   const ACTIONS = [
     '_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
+    '_ANONYMOUS_FUNCTION_SIGNATURE_',
     '_ELSE_BLOCK_',
     '_THEN_BLOCK_',
     '_BLOCK_SCOPE_',
@@ -765,6 +767,22 @@ function modifyFunctionExpression(rules) {
   ];
   log.debug('Modifying FunctionExpression...');
   const rule = rules.find((rule) => rule.name === 'FunctionExpression');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyArrowFunction(rules) {
+  const TARGETS = [
+    // _FUNCION_CONTEXT_ will be inserted in the syntax module.
+    {
+      term: '`=>`',
+      action: '_ANONYMOUS_FUNCTION_SIGNATURE_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying ArrowFunction...');
+  const rule = rules.find((rule) => rule.name === 'ArrowFunction[In, Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;

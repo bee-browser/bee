@@ -134,6 +134,7 @@ impl<'r> Analyzer<'r> {
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::FunctionExpression(named) => self.handle_function_expression(named),
+            Node::ArrowFunction => self.handle_arrow_function(),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
@@ -476,6 +477,22 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_function_expression(self.functions[func_index].id, named);
+    }
+
+    fn handle_arrow_function(&mut self) {
+        self.scope_manager.pop();
+
+        let mut context = self.context_stack.pop().unwrap();
+        context.end_scope(true);
+        // TODO: remaining references must be handled as var bindings w/ undefined value.
+        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
+        let func_index = context.func_index as usize;
+        self.functions[func_index].commands = context.commands;
+
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_function_expression(self.functions[func_index].id, false);
     }
 
     fn handle_then_block(&mut self) {

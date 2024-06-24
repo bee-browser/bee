@@ -115,6 +115,7 @@ enum Detail {
     //DebuggerStatement,
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
+    ConciseBody,
     StatementList,
     CoverCallExpressionAndAsyncArrowHead,
 }
@@ -202,6 +203,7 @@ pub enum Node<'s> {
     FunctionSignature(Symbol),
     FunctionDeclaration,
     FunctionExpression(bool),
+    ArrowFunction,
     ThenBlock,
     ElseBlock,
     FalsyShortCircuit,
@@ -517,6 +519,12 @@ where
             _ => unreachable!(),
         };
         self.enqueue(Node::FunctionSignature(func_name));
+        Ok(())
+    }
+
+    // _ANONYMOUS_FUNCTION_SIGNATURE_
+    fn process_anonymous_function_signature(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FunctionSignature(Symbol::NONE));
         Ok(())
     }
 
@@ -2262,7 +2270,8 @@ where
         Ok(())
     }
 
-    // FunctionStatementList[Yield, Await] : [empty]
+    // FunctionStatementList[Yield, Await] :
+    //   [empty]
     fn process_function_statement_list_empty(&mut self) -> Result<(), Error> {
         let node_index = self.nodes.len();
         let token_index = self.tokens.len();
@@ -2272,6 +2281,53 @@ where
             nodes_range: node_index..node_index,
             tokens_range: token_index..token_index,
         });
+        Ok(())
+    }
+
+    // 15.3 Arrow Function Definitions
+
+    // ArrowFunction[In, Yield, Await] :
+    //   ArrowParameters[?Yield, ?Await] [no LineTerminator here] => ConciseBody[?In]
+    fn process_arrow_function(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ArrowFunction);
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
+
+    // ArrowParameters[Yield, Await] :
+    //   BindingIdentifier[?Yield, ?Await]
+    fn process_arrow_parameters_binding_identifier(&mut self) -> Result<(), Error> {
+        let i = self.enqueue(Node::FunctionContext);
+        debug_assert!(i > 0);
+        self.nodes.swap(i - 1, i); // swap BindingIdentifier and FunctionContext.
+        self.enqueue(Node::FormalParameter);
+        self.enqueue(Node::FormalParameters(1));
+        let bound_names = match self.top().detail {
+            Detail::BindingIdentifier(symbol) => smallvec![symbol],
+            _ => unreachable!(),
+        };
+        self.replace(1, Detail::FormalParameters(bound_names));
+        Ok(())
+    }
+
+    // ArrowParameters[Yield, Await] :
+    //   CoverParenthesizedExpressionAndArrowParameterList[?Yield, ?Await]
+    fn process_arrow_parameters_cpeaapl(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    // ConciseBody[In] :
+    //   [lookahead ≠ {] ExpressionBody[?In, ~Await]
+    fn process_concise_body_expression_body(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ReturnStatement(1));
+        self.replace(1, Detail::ConciseBody); // expression
+        Ok(())
+    }
+
+    // ConciseBody[In] :
+    //   { FunctionBody[~Yield, ~Await] }
+    fn process_concise_body_function_body(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::ConciseBody); // function body
         Ok(())
     }
 

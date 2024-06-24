@@ -203,7 +203,7 @@
 - rule: AssignmentExpression_In_Await -> ConditionalExpression_In_Await
   action: nop
 - rule: AssignmentExpression_In_Await -> ArrowFunction_In_Await
-  action: undefined
+  action: nop
 - rule: AssignmentExpression_In_Await -> AsyncArrowFunction_In_Await
   action: undefined
 - rule: >-
@@ -439,8 +439,8 @@
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE)
-    ARROW ConciseBody_In
-  action: undefined
+    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
+  action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -551,7 +551,7 @@
 - rule: AssignmentExpression_In -> ConditionalExpression_In
   action: nop
 - rule: AssignmentExpression_In -> ArrowFunction_In
-  action: undefined
+  action: nop
 - rule: AssignmentExpression_In -> AsyncArrowFunction_In
   action: undefined
 - rule: >-
@@ -926,15 +926,17 @@
 - rule: ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
   action: nop
 - rule: ArrowParameters_Await -> BindingIdentifier_Await
-  action: undefined
+  action: process_arrow_parameters_binding_identifier
 - rule: >-
     ArrowParameters_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Await
-  action: undefined
+  action: process_arrow_parameters_cpeaapl
+- rule: _ANONYMOUS_FUNCTION_SIGNATURE_ -> (empty)
+  action: process_anonymous_function_signature
 - rule: 'ConciseBody_In -> (?![LBRACE]) ExpressionBody_In'
-  action: undefined
+  action: process_concise_body_expression_body
 - rule: ConciseBody_In -> LBRACE FunctionBody RBRACE
-  action: undefined
+  action: process_concise_body_function_body
 - rule: AsyncArrowBindingIdentifier -> BindingIdentifier_Await
   action: undefined
 - rule: 'AsyncConciseBody_In -> (?![LBRACE]) ExpressionBody_In_Await'
@@ -1025,8 +1027,8 @@
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
-    ConciseBody_In
-  action: undefined
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
+  action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -1219,9 +1221,9 @@
     Expression_In_Await COMMA ELLIPSIS BindingPattern_Await RPAREN
   action: process_cpeaapl_formal_parameters_with_rest_pattern
 - rule: ExpressionBody_In -> AssignmentExpression_In
-  action: undefined
+  action: nop
 - rule: ExpressionBody_In_Await -> AssignmentExpression_In_Await
-  action: undefined
+  action: nop
 - rule: MemberExpression_Await -> PrimaryExpression_Await
   action: nop
 - rule: >-
@@ -1460,9 +1462,9 @@
 - rule: ShortCircuitExpression_In -> CoalesceExpression_In
   action: nop
 - rule: ArrowParameters -> BindingIdentifier
-  action: undefined
+  action: process_arrow_parameters_binding_identifier
 - rule: ArrowParameters -> CoverParenthesizedExpressionAndArrowParameterList
-  action: undefined
+  action: process_arrow_parameters_cpeaapl
 - rule: CoverCallExpressionAndAsyncArrowHead -> MemberExpression Arguments
   action: process_cover_call_expression_and_async_arrow_head
 - rule: NewExpression -> MemberExpression
@@ -1494,7 +1496,7 @@
 - rule: AssignmentExpression -> ConditionalExpression
   action: nop
 - rule: AssignmentExpression -> ArrowFunction
-  action: undefined
+  action: nop
 - rule: AssignmentExpression -> AsyncArrowFunction
   action: undefined
 - rule: AssignmentExpression -> LeftHandSideExpression ASSIGN AssignmentExpression
@@ -1839,8 +1841,8 @@
   action: process_conditional_expression
 - rule: >-
     ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
-    ConciseBody
-  action: undefined
+    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
+  action: process_arrow_function
 - rule: >-
     AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -2077,7 +2079,7 @@
 - rule: AssignmentExpression_Await -> ConditionalExpression_Await
   action: nop
 - rule: AssignmentExpression_Await -> ArrowFunction_Await
-  action: undefined
+  action: nop
 - rule: AssignmentExpression_Await -> AsyncArrowFunction_Await
   action: undefined
 - rule: >-
@@ -2187,9 +2189,9 @@
 - rule: ShortCircuitExpression -> CoalesceExpression
   action: nop
 - rule: 'ConciseBody -> (?![LBRACE]) ExpressionBody'
-  action: undefined
+  action: process_concise_body_expression_body
 - rule: ConciseBody -> LBRACE FunctionBody RBRACE
-  action: undefined
+  action: process_concise_body_function_body
 - rule: 'AsyncConciseBody -> (?![LBRACE]) ExpressionBody_Await'
   action: undefined
 - rule: AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
@@ -2446,8 +2448,8 @@
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE)
-    ARROW ConciseBody
-  action: undefined
+    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
+  action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -2520,9 +2522,9 @@
     BitwiseORExpression
   action: process_nullish_coalescing
 - rule: ExpressionBody -> AssignmentExpression
-  action: undefined
+  action: nop
 - rule: ExpressionBody_Await -> AssignmentExpression_Await
-  action: undefined
+  action: nop
 - rule: BlockStatement_Return -> Block_Return
   action: process_block_statement
 - rule: >-
@@ -2580,7 +2582,7 @@
 - rule: AssignmentExpression_In_Yield -> YieldExpression_In
   action: undefined
 - rule: AssignmentExpression_In_Yield -> ArrowFunction_In_Yield
-  action: undefined
+  action: nop
 - rule: AssignmentExpression_In_Yield -> AsyncArrowFunction_In_Yield
   action: undefined
 - rule: >-
@@ -2684,7 +2686,7 @@
 - rule: AssignmentExpression_In_Yield_Await -> YieldExpression_In_Await
   action: undefined
 - rule: AssignmentExpression_In_Yield_Await -> ArrowFunction_In_Yield_Await
-  action: undefined
+  action: nop
 - rule: AssignmentExpression_In_Yield_Await -> AsyncArrowFunction_In_Yield_Await
   action: undefined
 - rule: >-
@@ -2908,8 +2910,8 @@
   action: undefined
 - rule: >-
     ArrowFunction_In_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE)
-    ARROW ConciseBody_In
-  action: undefined
+    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
+  action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -3073,8 +3075,9 @@
   action: undefined
 - rule: >-
     ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
-  action: undefined
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_
+    ConciseBody_In
+  action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -3391,11 +3394,11 @@
 - rule: ShortCircuitExpression_In_Yield -> CoalesceExpression_In_Yield
   action: nop
 - rule: ArrowParameters_Yield -> BindingIdentifier_Yield
-  action: undefined
+  action: process_arrow_parameters_binding_identifier
 - rule: >-
     ArrowParameters_Yield ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield
-  action: undefined
+  action: process_arrow_parameters_cpeaapl
 - rule: AsyncArrowBindingIdentifier_Yield -> BindingIdentifier_Yield_Await
   action: undefined
 - rule: >-
@@ -3544,11 +3547,11 @@
 - rule: ShortCircuitExpression_In_Yield_Await -> CoalesceExpression_In_Yield_Await
   action: nop
 - rule: ArrowParameters_Yield_Await -> BindingIdentifier_Yield_Await
-  action: undefined
+  action: process_arrow_parameters_binding_identifier
 - rule: >-
     ArrowParameters_Yield_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
-  action: undefined
+  action: process_arrow_parameters_cpeaapl
 - rule: >-
     CoverCallExpressionAndAsyncArrowHead_Yield_Await ->
     MemberExpression_Yield_Await Arguments_Yield_Await
@@ -4782,7 +4785,7 @@
 - rule: AssignmentExpression_Yield -> YieldExpression
   action: undefined
 - rule: AssignmentExpression_Yield -> ArrowFunction_Yield
-  action: undefined
+  action: nop
 - rule: AssignmentExpression_Yield -> AsyncArrowFunction_Yield
   action: undefined
 - rule: >-
@@ -4890,7 +4893,7 @@
 - rule: AssignmentExpression_Yield_Await -> YieldExpression_Await
   action: undefined
 - rule: AssignmentExpression_Yield_Await -> ArrowFunction_Yield_Await
-  action: undefined
+  action: nop
 - rule: AssignmentExpression_Yield_Await -> AsyncArrowFunction_Yield_Await
   action: undefined
 - rule: >-
@@ -5047,8 +5050,8 @@
   action: undefined
 - rule: >-
     ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE)
-    ARROW ConciseBody
-  action: undefined
+    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
+  action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -5156,8 +5159,8 @@
   action: undefined
 - rule: >-
     ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
-  action: undefined
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
+  action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
