@@ -13,7 +13,7 @@ logging = { path = "../logging" }
 
 [build-dependencies]
 bindgen = "0.69.4"
-cc = { version = "1.0.99", features = ["parallel"] }
+cc = { version = "1.0.100", features = ["parallel"] }
 duct = "0.13.7"
 
 [dev-dependencies]
