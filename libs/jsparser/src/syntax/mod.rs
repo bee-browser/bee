@@ -454,6 +454,14 @@ where
         syntax.tokens_range.end = tokens_end;
     }
 
+    fn update_ends(&mut self) {
+        let nodes_end = self.nodes.len();
+        let tokens_end = self.tokens.len();
+        let syntax = self.top_mut();
+        syntax.nodes_range.end = nodes_end;
+        syntax.tokens_range.end = tokens_end;
+    }
+
     #[inline(always)]
     fn enqueue(&mut self, event: Node<'s>) -> usize {
         let index = self.nodes.len();
@@ -1366,8 +1374,7 @@ where
     //   StatementList[?Yield, ?Await, ?Return] StatementListItem[?Yield, ?Await, ?Return]
     fn process_statement_list_item(&mut self) -> Result<(), Error> {
         self.pop();
-        self.top_mut().nodes_range.end = self.nodes.len();
-        self.top_mut().tokens_range.end = self.tokens.len();
+        self.update_ends();
         Ok(())
     }
 
@@ -1431,10 +1438,11 @@ where
                 if !decl.has_initializer {
                     list.has_initializer = false;
                 }
-                Ok(())
             }
             _ => unreachable!(),
         }
+        self.update_ends();
+        Ok(())
     }
 
     // LexicalBinding[In, Yield, Await] : BindingIdentifier[?Yield, ?Await]
@@ -1986,6 +1994,7 @@ where
     //   CaseClauses[?Yield, ?Await, ?Return] CaseClause[?Yield, ?Await, ?Return]
     fn process_case_clauses(&mut self) -> Result<(), Error> {
         self.pop();
+        self.update_ends();
         Ok(())
     }
 
@@ -2194,6 +2203,7 @@ where
             _ => unreachable!(),
         };
         self.enqueue(Node::FormalParameters(n as u32));
+        self.update_ends();
         Ok(())
     }
 
@@ -2205,6 +2215,7 @@ where
             _ => unreachable!(),
         };
         self.enqueue(Node::FormalParameters(n as u32));
+        self.update_ends();
         Ok(())
     }
 
@@ -2226,6 +2237,7 @@ where
             }
             _ => unreachable!(),
         }
+        self.update_ends();
         Ok(())
     }
 
@@ -2333,10 +2345,14 @@ where
 
     // 16.1 Scripts
 
+    // Script :
+    //   [empty]
     fn process_empty_script(&mut self) -> Result<(), Error> {
         Ok(())
     }
 
+    // Script :
+    //   ScriptBody
     fn process_script(&mut self) -> Result<(), Error> {
         self.pop();
         Ok(())
