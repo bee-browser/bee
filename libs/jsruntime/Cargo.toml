@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 base = { path = "../base" }
-bitflags = "2.5.0"
+bitflags = "2.6.0"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
 
