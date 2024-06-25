@@ -9,7 +9,7 @@ publish = false
 location = []
 
 [dependencies]
-bitflags = "2.5.0"
+bitflags = "2.6.0"
 indexmap = "2.2.6"
 logging = { path = "../../libs/logging" }
 phf = { version = "0.11.2", features = ["macros"] }

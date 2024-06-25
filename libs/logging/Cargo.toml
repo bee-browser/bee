@@ -6,7 +6,7 @@ authors = ["Bee project contributors"]
 publish = false
 
 [dependencies]
-bitflags = "2.5.0"
+bitflags = "2.6.0"
 chrono = { version = "0.4.38", default-features = false, features = ["clock"] }
 ctor = "0.2.8"
 is-terminal = "0.4.12"
