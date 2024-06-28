@@ -430,6 +430,10 @@ impl<'a> Compiler<'a> {
                 // TODO: the stack should be managed in the Rust side.
                 bridge::compiler_peer_discard(self.peer);
             },
+            CompileCommand::Swap => unsafe {
+                // TODO: the stack should be managed in the Rust side.
+                bridge::compiler_peer_swap(self.peer);
+            },
         }
 
         if cfg!(debug_assertions)

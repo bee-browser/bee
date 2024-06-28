@@ -574,6 +574,11 @@ fn eval_conditional_expression_mixed_types() {
 }
 
 #[test]
+fn eval_comma_operator() {
+    eval!(file: "comma_operator.js", 2);
+}
+
+#[test]
 fn eval_if_statement() {
     eval!("let a = 1; if (true) { a = 2; } print(a);", 2.);
     eval!("let a = 1; if (false) { a = 2; } print(a);", 1.);
@@ -703,6 +708,11 @@ fn eval_arrow_function_function_body() {
 #[test]
 fn eval_arrow_function_function_body_iife() {
     eval!(file: "arrow_function_function_body_iife.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_multiple_parameters() {
+    eval!(file: "arrow_function_multiple_parameters.js", 3);
 }
 
 #[test]

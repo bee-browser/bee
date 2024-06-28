@@ -449,7 +449,7 @@
 - rule: Expression_In -> AssignmentExpression_In
   action: nop
 - rule: Expression_In -> Expression_In COMMA AssignmentExpression_In
-  action: undefined
+  action: process_comma_operator
 - rule: _THEN_BLOCK_ -> (empty)
   action: process_then_block
 - rule: _ELSE_BLOCK_ -> (empty)
@@ -1504,7 +1504,7 @@
 - rule: Expression -> AssignmentExpression
   action: nop
 - rule: Expression -> Expression COMMA AssignmentExpression
-  action: undefined
+  action: process_comma_operator
 - rule: _LOOP_INIT_EXPRESSION_ -> (empty)
   action: process_loop_init_expression
 - rule: _LOOP_NEXT_ -> (empty)
@@ -2104,7 +2104,7 @@
 - rule: Expression_Await -> AssignmentExpression_Await
   action: nop
 - rule: Expression_Await -> Expression_Await COMMA AssignmentExpression_Await
-  action: undefined
+  action: process_comma_operator
 - rule: VariableDeclarationList_Await -> VariableDeclaration_Await
   action: undefined
 - rule: >-
@@ -4998,7 +4998,7 @@
 - rule: Expression_Yield -> AssignmentExpression_Yield
   action: nop
 - rule: Expression_Yield -> Expression_Yield COMMA AssignmentExpression_Yield
-  action: undefined
+  action: process_comma_operator
 - rule: VariableDeclarationList_Yield -> VariableDeclaration_Yield
   action: undefined
 - rule: >-

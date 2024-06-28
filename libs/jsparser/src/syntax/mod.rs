@@ -171,6 +171,7 @@ pub enum Node<'s> {
     LogicalExpression(LogicalOperator),
     ConditionalExpression,
     AssignmentExpression(AssignmentOperator),
+    SequenceExpression,
     BlockStatement,
     LexicalBinding(bool),
     LetDeclaration(u32),
@@ -1332,6 +1333,16 @@ where
     fn process_nullish_coalescing_assignment(&mut self) -> Result<(), Error> {
         // TODO: 13.15.1 Static Semantics: Early Errors
         self.process_assignment_expression(AssignmentOperator::NullishCoalescingAssignment)
+    }
+
+    // 13.16 Comma Operator ( , )
+
+    // Expression[In, Yield, Await] :
+    //   Expression[?In, ?Yield, ?Await] , AssignmentExpression[?In, ?Yield, ?Await]
+    fn process_comma_operator(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::SequenceExpression);
+        self.replace(3, Detail::Expression);
+        Ok(())
     }
 
     // 14 ECMAScript Language: Statements and Declarations

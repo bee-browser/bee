@@ -448,6 +448,10 @@ void compiler_peer_discard(Compiler* self) {
   self->Discard();
 }
 
+void compiler_peer_swap(Compiler* self) {
+  self->Swap();
+}
+
 void compiler_peer_dump_stack(Compiler* self) {
   self->DumpStack();
 }

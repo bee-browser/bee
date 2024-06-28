@@ -137,6 +137,7 @@ class Compiler {
   void Return(size_t n);
   void Throw();
   void Discard();
+  void Swap();
 
   void DumpStack();
 
@@ -243,14 +244,6 @@ class Compiler {
     Item item(block);
     item.SetLabel(label);
     stack_.push_back(item);
-  }
-
-  void Swap() {
-    assert(stack_.size() >= 2);
-    auto i = stack_.size() - 1;
-    Item item = stack_[i];
-    stack_[i] = stack_[i - 1];
-    stack_[i - 1] = item;
   }
 
   inline Item PopItem() {

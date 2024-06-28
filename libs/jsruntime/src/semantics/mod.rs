@@ -97,6 +97,7 @@ impl<'r> Analyzer<'r> {
                 self.handle_conditional_assignment()
             }
             Node::AssignmentExpression(op) => self.handle_operator(op),
+            Node::SequenceExpression => self.handle_sequence_expression(),
             Node::BlockStatement => (), // nop
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
             Node::LetDeclaration(n) => self.handle_let_declaration(n),
@@ -231,6 +232,10 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(op.into());
+    }
+
+    fn handle_sequence_expression(&mut self) {
+        self.context_stack.last_mut().unwrap().process_sequence_expression();
     }
 
     fn handle_conditional_expression(&mut self) {
@@ -841,6 +846,11 @@ impl FunctionContext {
         // TODO: type info
     }
 
+    fn process_sequence_expression(&mut self) {
+        self.put_command(CompileCommand::Swap);
+        self.put_command(CompileCommand::Discard);
+    }
+
     fn process_mutable_bindings(&mut self, n: u32) {
         debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
         for i in self.pending_lexical_bindings.iter().cloned() {
@@ -1265,6 +1275,7 @@ pub enum CompileCommand {
     Throw,
 
     Discard,
+    Swap,
 }
 
 impl From<UpdateOperator> for CompileCommand {

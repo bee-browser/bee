@@ -1430,6 +1430,14 @@ void Compiler::Discard() {
   PopItem();
 }
 
+void Compiler::Swap() {
+  assert(stack_.size() >= 2);
+  auto i = stack_.size() - 1;
+  Item item = stack_[i];
+  stack_[i] = stack_[i - 1];
+  stack_[i - 1] = item;
+}
+
 void Compiler::DumpStack() {
   llvm::errs() << "<llvm-ir:compiler-stack>\n";
   for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {

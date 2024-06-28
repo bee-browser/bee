@@ -196,6 +196,7 @@ void compiler_peer_break(Compiler* self, uint32_t symbol);
 void compiler_peer_return(Compiler* self, size_t n);
 void compiler_peer_throw(Compiler* self);
 void compiler_peer_discard(Compiler* self);
+void compiler_peer_swap(Compiler* self);
 void compiler_peer_dump_stack(Compiler* self);
 
 // Execution
