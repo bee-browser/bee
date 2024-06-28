@@ -489,7 +489,12 @@ where
             ?goal_symbol,
         );
         let src = self.src(syntax.source_range.clone());
-        Parser::new(src, Refinery::new(self, syntax.source_range.start), goal_symbol).parse()
+        Parser::new(
+            src,
+            Refinery::new(self, syntax.source_range.start),
+            goal_symbol,
+        )
+        .parse()
     }
 
     fn make_symbol(&mut self, token_index: usize) -> Symbol {
@@ -2333,6 +2338,7 @@ where
     // ArrowFunction[In, Yield, Await] :
     //   ArrowParameters[?Yield, ?Await] [no LineTerminator here] => ConciseBody[?In]
     fn process_arrow_function(&mut self) -> Result<(), Error> {
+        // TODO: 15.3.1 Static Semantics: Early Errors
         self.enqueue(Node::ArrowFunction);
         self.replace(3, Detail::Expression);
         Ok(())
@@ -2519,7 +2525,10 @@ struct Refinery<'s, 'p, H> {
 
 impl<'s, 'p, H> Refinery<'s, 'p, H> {
     fn new(processor: &'p mut Processor<'s, H>, location_offset: usize) -> Self {
-        Self { processor, location_offset }
+        Self {
+            processor,
+            location_offset,
+        }
     }
 }
 

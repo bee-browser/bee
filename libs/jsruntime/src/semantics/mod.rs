@@ -235,7 +235,10 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_sequence_expression(&mut self) {
-        self.context_stack.last_mut().unwrap().process_sequence_expression();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_sequence_expression();
     }
 
     fn handle_conditional_expression(&mut self) {
@@ -485,6 +488,10 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_arrow_function(&mut self) {
+        // TODO: An ArrowFunction does not define local bindings for arguments, super, this, or
+        // new.target.  Any reference to arguments, super, this, or new.target within an
+        // ArrowFunction must resolve to a binding in a lexically enclosing environment.
+
         self.scope_manager.pop();
 
         let mut context = self.context_stack.pop().unwrap();
