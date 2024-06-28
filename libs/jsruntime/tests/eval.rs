@@ -716,6 +716,16 @@ fn eval_arrow_function_multiple_parameters() {
 }
 
 #[test]
+fn eval_arrow_function_trailing_comma() {
+    eval!(file: "arrow_function_trailing_comma.js", 3);
+}
+
+#[test]
+fn eval_arrow_function_empty_parameter_list() {
+    eval!(file: "arrow_function_empty_parameter_list.js", 1);
+}
+
+#[test]
 fn eval_do_while_statement() {
     eval!("let i = 0; do { i++ } while (i < 2); print(i)", 2);
 }
