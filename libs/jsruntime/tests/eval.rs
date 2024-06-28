@@ -686,6 +686,26 @@ fn eval_arrow_function_binding_identifier_function_body_iife() {
 }
 
 #[test]
+fn eval_arrow_function_expression_body() {
+    eval!(file: "arrow_function_expression_body.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_expression_body_iife() {
+    eval!(file: "arrow_function_expression_body_iife.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_function_body() {
+    eval!(file: "arrow_function_function_body.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_function_body_iife() {
+    eval!(file: "arrow_function_function_body_iife.js", 1);
+}
+
+#[test]
 fn eval_do_while_statement() {
     eval!("let i = 0; do { i++ } while (i < 2); print(i)", 2);
 }

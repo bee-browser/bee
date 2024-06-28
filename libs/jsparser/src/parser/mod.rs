@@ -47,7 +47,7 @@ where
         Self::new(src, handler, GoalSymbol::Module)
     }
 
-    fn new(src: &'s str, handler: H, goal_symbol: GoalSymbol) -> Self {
+    pub(crate) fn new(src: &'s str, handler: H, goal_symbol: GoalSymbol) -> Self {
         Self {
             handler,
             goal_symbol,
@@ -63,6 +63,7 @@ where
 
     pub fn parse(&mut self) -> Result<H::Artifact, Error> {
         self.handler.start();
+        self.handler.source(self.lexer.src());
         self.push_state(self.goal_symbol.start_state_id());
         self.push_block_context();
         let mut token = self.next_token()?;
@@ -394,7 +395,11 @@ pub trait SyntaxHandler<'s> {
     type Error: std::fmt::Debug + std::fmt::Display;
 
     /// Called before parsing.
-    fn start(&mut self);
+    fn start(&mut self) {}
+
+    /// Called once just after `start()` is called.
+    #[allow(unused_variables)]
+    fn source(&mut self, src: &'s str) {}
 
     /// Called when the accept state has been reached.
     fn accept(&mut self) -> Result<Self::Artifact, Self::Error>;
@@ -408,7 +413,6 @@ pub trait SyntaxHandler<'s> {
     /// Called before calling other methods in order to inform the location in the source text
     /// where the event occurs.
     #[allow(unused_variables)]
-    #[inline(always)]
     fn location(&mut self, location: &Location) {}
 }
 

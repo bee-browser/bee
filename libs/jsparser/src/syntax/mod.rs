@@ -7,6 +7,9 @@ use bitflags::bitflags;
 use smallvec::smallvec;
 use smallvec::SmallVec;
 
+use crate::parser::GoalSymbol;
+use crate::Parser;
+
 use super::Error;
 use super::Location;
 use super::ProductionRule;
@@ -38,6 +41,7 @@ pub trait NodeHandler<'s> {
 
 pub struct Processor<'s, H> {
     handler: H,
+    source: &'s str,
     location: Location,
     stack: Vec<Syntax>,
     nodes: Vec<Node<'s>>,
@@ -60,6 +64,7 @@ struct Syntax {
     detail: Detail,
     nodes_range: Range<usize>,
     tokens_range: Range<usize>,
+    source_range: Range<usize>,
 }
 
 #[derive(Debug)]
@@ -403,6 +408,7 @@ where
     pub fn new(handler: H, module: bool) -> Self {
         Self {
             handler,
+            source: "",
             location: Default::default(),
             stack: Vec::with_capacity(Self::INITIAL_STACK_CAPACITY),
             nodes: Vec::with_capacity(Self::INITIAL_QUEUE_CAPACITY),
@@ -445,6 +451,7 @@ where
 
     fn replace(&mut self, n: usize, detail: Detail) {
         debug_assert!(n > 0);
+        let source_end = self.top().source_range.end;
         let nodes_end = self.nodes.len();
         let tokens_end = self.tokens.len();
         self.stack.truncate(self.stack.len() - (n - 1));
@@ -452,27 +459,45 @@ where
         syntax.detail = detail;
         syntax.nodes_range.end = nodes_end;
         syntax.tokens_range.end = tokens_end;
+        syntax.source_range.end = source_end;
     }
 
     fn update_ends(&mut self) {
+        let source_end = self.top().source_range.end;
         let nodes_end = self.nodes.len();
         let tokens_end = self.tokens.len();
         let syntax = self.top_mut();
         syntax.nodes_range.end = nodes_end;
         syntax.tokens_range.end = tokens_end;
+        syntax.source_range.end = source_end;
     }
 
-    #[inline(always)]
     fn enqueue(&mut self, event: Node<'s>) -> usize {
         let index = self.nodes.len();
         self.nodes.push(event);
         index
     }
 
-    #[inline(always)]
+    fn refine(&mut self, syntax: &Syntax, goal_symbol: GoalSymbol) -> Result<(), Error> {
+        logger::debug!(
+            event = "refine",
+            ?syntax.detail,
+            ?syntax.tokens_range,
+            ?syntax.nodes_range,
+            ?syntax.source_range,
+            ?goal_symbol,
+        );
+        let src = self.src(syntax.source_range.clone());
+        Parser::new(src, Refinery::new(self, syntax.source_range.start), goal_symbol).parse()
+    }
+
     fn make_symbol(&mut self, token_index: usize) -> Symbol {
         let lexeme = self.tokens[token_index].lexeme;
         self.handler.symbol_registry_mut().intern_str(lexeme)
+    }
+
+    fn src(&self, range: Range<usize>) -> &'s str {
+        &self.source[range]
     }
 }
 
@@ -778,9 +803,9 @@ where
         self.process_label_identifier()
     }
 
-    // Identifier : IdentifierName but not ReservedWord
+    // Identifier :
+    //   IdentifierName but not ReservedWord
     fn process_identifier(&mut self) -> Result<(), Error> {
-        self.pop(); // Token
         let token_index = self.tokens.len() - 1;
         let symbol = self.make_symbol(token_index);
         match symbol {
@@ -799,12 +824,7 @@ where
             }
             SymbolRegistry::AWAIT if self.module => Err(Error::SyntaxError),
             _ => {
-                let node_index = self.nodes.len();
-                self.push(Syntax {
-                    detail: Detail::Identifier(symbol),
-                    nodes_range: node_index..node_index,
-                    tokens_range: token_index..(token_index + 1),
-                });
+                self.top_mut().detail = Detail::Identifier(symbol);
                 Ok(())
             }
         }
@@ -895,7 +915,6 @@ where
     // 13.2.3 Literals
 
     fn process_literal(&mut self) -> Result<(), Error> {
-        self.pop(); // Token
         let token_index = self.tokens.len() - 1;
         let token = &self.tokens[token_index];
         let node_index = match token.kind {
@@ -914,11 +933,9 @@ where
             }
             _ => unreachable!(),
         };
-        self.push(Syntax {
-            detail: Detail::Literal,
-            nodes_range: node_index..(node_index + 1),
-            tokens_range: token_index..(token_index + 1),
-        });
+        let syntax = self.top_mut();
+        syntax.detail = Detail::Literal;
+        syntax.nodes_range = node_index..(node_index + 1);
         Ok(())
     }
 
@@ -2184,7 +2201,8 @@ where
 
     // 15.1 Parameter Lists
 
-    // FormalParameters[Yield, Await] : [empty]
+    // FormalParameters[Yield, Await] :
+    //   [empty]
     fn process_formal_parameters_empty(&mut self) -> Result<(), Error> {
         let node_index = self.enqueue(Node::FormalParameters(0));
         let token_index = self.tokens.len();
@@ -2192,11 +2210,13 @@ where
             detail: Detail::FormalParameters(smallvec![]),
             nodes_range: node_index..(node_index + 1),
             tokens_range: token_index..token_index,
+            source_range: self.location.offset..self.location.offset,
         });
         Ok(())
     }
 
-    // FormalParameters[Yield, Await] : FormalParameterList[?Yield, ?Await]
+    // FormalParameters[Yield, Await] :
+    //   FormalParameterList[?Yield, ?Await]
     fn process_formal_parameters_list(&mut self) -> Result<(), Error> {
         let n = match self.top().detail {
             Detail::FormalParameters(ref bound_names) => bound_names.len(),
@@ -2292,6 +2312,7 @@ where
             detail: Detail::StatementList,
             nodes_range: node_index..node_index,
             tokens_range: token_index..token_index,
+            source_range: self.location.offset..self.location.offset,
         });
         Ok(())
     }
@@ -2324,7 +2345,43 @@ where
 
     // ArrowParameters[Yield, Await] :
     //   CoverParenthesizedExpressionAndArrowParameterList[?Yield, ?Await]
+
     fn process_arrow_parameters_cpeaapl(&mut self) -> Result<(), Error> {
+        self.refine_arrow_parameters(GoalSymbol::ArrowFormalParameters)
+    }
+
+    fn process_arrow_parameters_cpeaapl_yield(&mut self) -> Result<(), Error> {
+        self.refine_arrow_parameters(GoalSymbol::ArrowFormalParameters_Yield)
+    }
+
+    fn process_arrow_parameters_cpeaapl_await(&mut self) -> Result<(), Error> {
+        self.refine_arrow_parameters(GoalSymbol::ArrowFormalParameters_Await)
+    }
+
+    fn process_arrow_parameters_cpeaapl_yield_await(&mut self) -> Result<(), Error> {
+        self.refine_arrow_parameters(GoalSymbol::ArrowFormalParameters_Yield_Await)
+    }
+
+    fn refine_arrow_parameters(&mut self, goal_symbol: GoalSymbol) -> Result<(), Error> {
+        let syntax = self.pop();
+        self.tokens.truncate(syntax.tokens_range.start);
+        self.nodes.truncate(syntax.nodes_range.start);
+        self.enqueue(Node::FunctionContext);
+        self.refine(&syntax, goal_symbol)
+    }
+
+    // ArrowFormalParameters[Yield, Await] :
+    //   ( UniqueFormalParameters[?Yield, ?Await] )
+    fn process_arrow_formal_parameters(&mut self) -> Result<(), Error> {
+        let rparen = self.pop();
+        let formal_parameters = self.pop();
+        let tokens_end = self.tokens.len();
+        let nodes_end = self.nodes.len();
+        let syntax = self.top_mut();
+        syntax.detail = formal_parameters.detail;
+        syntax.tokens_range.end = tokens_end;
+        syntax.nodes_range.end = nodes_end;
+        syntax.source_range.end = rparen.source_range.end;
         Ok(())
     }
 
@@ -2371,6 +2428,11 @@ where
         self.handler.start();
     }
 
+    fn source(&mut self, src: &'s str) {
+        logger::debug!(event = "source");
+        self.source = src;
+    }
+
     fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
         logger::debug!(event = "accept");
         let nodes = std::mem::take(&mut self.nodes);
@@ -2398,6 +2460,7 @@ where
             detail: Detail::Token(token_index),
             nodes_range: node_index..node_index,
             tokens_range: token_index..(token_index + 1),
+            source_range: self.location.offset..(self.location.offset + token.lexeme.len()),
         });
 
         Ok(())
@@ -2436,4 +2499,44 @@ struct Label {
     // inside `eval()` will be evaluated at runtime.
     num_continue_statements: usize,
     num_break_statements: usize,
+}
+
+struct Refinery<'s, 'p, H> {
+    processor: &'p mut Processor<'s, H>,
+    location_offset: usize,
+}
+
+impl<'s, 'p, H> Refinery<'s, 'p, H> {
+    fn new(processor: &'p mut Processor<'s, H>, location_offset: usize) -> Self {
+        Self { processor, location_offset }
+    }
+}
+
+impl<'s, 'p, H> SyntaxHandler<'s> for Refinery<'s, 'p, H>
+where
+    H: NodeHandler<'s>,
+{
+    type Artifact = ();
+    type Error = Error;
+
+    fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+        Ok(())
+    }
+
+    fn shift(&mut self, token: &Token<'s>) -> Result<(), Self::Error> {
+        self.processor.shift(token)
+    }
+
+    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error> {
+        self.processor.reduce(rule)
+    }
+
+    fn location(&mut self, location: &Location) {
+        let mut location = location.clone();
+        // `Processor` never uses `line` and `column`.
+        location.offset += self.location_offset;
+        // TODO: calculate `line` and `column` if we support showing the line and column number in
+        // the error message.
+        self.processor.location(&location);
+    }
 }
