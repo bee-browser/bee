@@ -16,13 +16,11 @@ fn htmlparser_benchmark(c: &mut Criterion) {
         .join("bee-browser")
         .join("rust-html-parser-benchmark")
         .join("data");
-    for entry in data_dir.read_dir().expect("read_dir call failed") {
-        if let Ok(entry) = entry {
-            let filepath = entry.path();
-            match filepath.extension() {
-                Some(ext) if ext == "html" => run_bench(c, &filepath),
-                _ => (),
-            }
+    for entry in data_dir.read_dir().expect("read_dir call failed").flatten() {
+        let filepath = entry.path();
+        match filepath.extension() {
+            Some(ext) if ext == "html" => run_bench(c, &filepath),
+            _ => (),
         }
     }
 }
