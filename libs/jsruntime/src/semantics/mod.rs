@@ -646,7 +646,7 @@ impl<'r> Analyzer<'r> {
         let context = self.context_stack.last_mut().unwrap();
 
         // Register `undefined`.
-        let symbol = SymbolRegistry::UNDEFINED;
+        let symbol = Symbol::UNDEFINED;
         // The locator will be computed in `resolve_locators()`.
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         context.put_lexical_binding(false);
@@ -661,7 +661,7 @@ impl<'r> Analyzer<'r> {
         });
 
         // Register `Infinity`.
-        let symbol = SymbolRegistry::INFINITY;
+        let symbol = Symbol::INFINITY;
         // The locator will be computed in `resolve_locators()`.
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         context.put_number(f64::INFINITY);
@@ -677,7 +677,7 @@ impl<'r> Analyzer<'r> {
         });
 
         // Register `NaN`.
-        let symbol = SymbolRegistry::NAN;
+        let symbol = Symbol::NAN;
         // The locator will be computed in `resolve_locators()`.
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         context.put_number(f64::NAN);

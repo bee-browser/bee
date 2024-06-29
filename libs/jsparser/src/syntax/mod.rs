@@ -639,7 +639,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(symbol, SymbolRegistry::AWAIT));
+        ensure!(!matches!(symbol, Symbol::AWAIT));
         self.process_identifier_reference()
     }
 
@@ -650,7 +650,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(symbol, SymbolRegistry::YIELD));
+        ensure!(!matches!(symbol, Symbol::YIELD));
         self.process_identifier_reference()
     }
 
@@ -661,10 +661,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(
-            symbol,
-            SymbolRegistry::YIELD | SymbolRegistry::AWAIT
-        ));
+        ensure!(!matches!(symbol, Symbol::YIELD | Symbol::AWAIT));
         self.process_identifier_reference()
     }
 
@@ -691,9 +688,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(
-            !matches!(symbol, SymbolRegistry::ARGUMENTS | SymbolRegistry::EVAL if self.strict_mode)
-        );
+        ensure!(!matches!(symbol, Symbol::ARGUMENTS | Symbol::EVAL if self.strict_mode));
         self.process_binding_identifier()
     }
 
@@ -718,7 +713,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(symbol, SymbolRegistry::AWAIT));
+        ensure!(!matches!(symbol, Symbol::AWAIT));
         self.process_binding_identifier()
     }
 
@@ -729,7 +724,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(symbol, SymbolRegistry::YIELD));
+        ensure!(!matches!(symbol, Symbol::YIELD));
         self.process_binding_identifier()
     }
 
@@ -740,10 +735,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(
-            symbol,
-            SymbolRegistry::YIELD | SymbolRegistry::AWAIT
-        ));
+        ensure!(!matches!(symbol, Symbol::YIELD | Symbol::AWAIT));
         self.process_binding_identifier()
     }
 
@@ -780,7 +772,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(symbol, SymbolRegistry::AWAIT));
+        ensure!(!matches!(symbol, Symbol::AWAIT));
         self.process_label_identifier()
     }
 
@@ -791,7 +783,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(symbol, SymbolRegistry::YIELD));
+        ensure!(!matches!(symbol, Symbol::YIELD));
         self.process_label_identifier()
     }
 
@@ -802,10 +794,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(!matches!(
-            symbol,
-            SymbolRegistry::YIELD | SymbolRegistry::AWAIT
-        ));
+        ensure!(!matches!(symbol, Symbol::YIELD | Symbol::AWAIT));
         self.process_label_identifier()
     }
 
@@ -816,19 +805,19 @@ where
         let symbol = self.make_symbol(token_index);
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolRegistry::IMPLEMENTS
-            | SymbolRegistry::LET
-            | SymbolRegistry::PACKAGE
-            | SymbolRegistry::PRIVATE
-            | SymbolRegistry::PROTECTED
-            | SymbolRegistry::PUBLIC
-            | SymbolRegistry::STATIC
-            | SymbolRegistry::YIELD
+            Symbol::IMPLEMENTS
+            | Symbol::LET
+            | Symbol::PACKAGE
+            | Symbol::PRIVATE
+            | Symbol::PROTECTED
+            | Symbol::PUBLIC
+            | Symbol::STATIC
+            | Symbol::YIELD
                 if self.strict_mode =>
             {
                 Err(Error::SyntaxError)
             }
-            SymbolRegistry::AWAIT if self.module => Err(Error::SyntaxError),
+            Symbol::AWAIT if self.module => Err(Error::SyntaxError),
             _ => {
                 self.top_mut().detail = Detail::Identifier(symbol);
                 Ok(())
@@ -1486,7 +1475,7 @@ where
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
-        ensure!(symbol != SymbolRegistry::LET);
+        ensure!(!matches!(symbol, Symbol::LET));
 
         const HAS_INITIALIZER: bool = false;
         self.enqueue(Node::LexicalBinding(HAS_INITIALIZER));
@@ -1510,7 +1499,7 @@ where
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
-        ensure!(symbol != SymbolRegistry::LET);
+        ensure!(!matches!(symbol, Symbol::LET));
 
         const HAS_INITIALIZER: bool = true;
         self.enqueue(Node::LexicalBinding(HAS_INITIALIZER));

@@ -6,14 +6,16 @@
 use super::Symbol;
 use super::SymbolRegistry;
 
-impl SymbolRegistry {
+impl Symbol {
     {%- for symbol in data %}
-    pub const {{ symbol | upper }}: Symbol = Symbol({{ loop.index0 + 1 }});
+    pub const {{ symbol | upper }}: Self = Self({{ loop.index0 + 1 }});
     {%- endfor %}
+}
 
+impl SymbolRegistry {
     pub(super) fn register_builtin_symbols(&mut self) {
         {%- for symbol in data %}
-        self.register_builtin_symbol(Self::{{ symbol | upper }}, "{{ symbol }}");
+        self.register_builtin_symbol(Symbol::{{ symbol | upper }}, "{{ symbol }}");
         {%- endfor %}
     }
 
