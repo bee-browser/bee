@@ -1,3 +1,6 @@
+// Tests contained in this file are not exhaustive.
+// We use tc39/test262 for that purpose eventually.
+
 use assert_matches::assert_matches;
 use jsruntime::Runtime;
 use jsruntime::Value;
