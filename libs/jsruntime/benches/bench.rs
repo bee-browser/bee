@@ -11,7 +11,7 @@ fn fib(c: &mut Criterion) {
     const FIB24: &str = include_str!("dataset/fib24.js");
     const FIB32: &str = include_str!("dataset/fib32.js");
 
-    let mut group = c.benchmark_group("fib");
+    let mut group = c.benchmark_group("jsruntime/fib");
 
     macro_rules! fib {
         ($label:literal, $src:expr) => {

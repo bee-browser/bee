@@ -28,7 +28,7 @@ fn htmlparser_benchmark(c: &mut Criterion) {
 fn run_bench(c: &mut Criterion, filepath: &Path) {
     let html = std::fs::read_to_string(filepath).expect("cannot read file");
     let data: Vec<u16> = html.encode_utf16().collect();
-    let test_name = format!("parse/{}", filepath.file_name().unwrap().to_str().unwrap());
+    let test_name = format!("htmlparser/parse/{}", filepath.file_name().unwrap().to_str().unwrap());
     c.bench_function(&test_name, |b| {
         b.iter(|| {
             let mut parser = Parser::new(NullBuilder::new());
