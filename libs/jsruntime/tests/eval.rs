@@ -1,3 +1,6 @@
+// Tests contained in this file are not exhaustive.
+// We use tc39/test262 for that purpose eventually.
+
 use assert_matches::assert_matches;
 use jsruntime::Runtime;
 use jsruntime::Value;
@@ -574,6 +577,11 @@ fn eval_conditional_expression_mixed_types() {
 }
 
 #[test]
+fn eval_comma_operator() {
+    eval!(file: "comma_operator.js", 2);
+}
+
+#[test]
 fn eval_if_statement() {
     eval!("let a = 1; if (true) { a = 2; } print(a);", 2.);
     eval!("let a = 1; if (false) { a = 2; } print(a);", 1.);
@@ -663,6 +671,61 @@ fn eval_iife() {
     // IIFE: Immediately Invoked Function Expression
     eval!("print((function() { return 1 })())", 1);
     eval!("print((function x() { return 1 })())", 1);
+}
+
+#[test]
+fn eval_arrow_function_binding_identifier_expression_body() {
+    eval!(file: "arrow_function_binding_identifier_expression_body.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_binding_identifier_expression_body_iife() {
+    eval!(file: "arrow_function_binding_identifier_expression_body_iife.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_binding_identifier_function_body() {
+    eval!(file: "arrow_function_binding_identifier_function_body.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_binding_identifier_function_body_iife() {
+    eval!(file: "arrow_function_binding_identifier_function_body_iife.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_expression_body() {
+    eval!(file: "arrow_function_expression_body.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_expression_body_iife() {
+    eval!(file: "arrow_function_expression_body_iife.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_function_body() {
+    eval!(file: "arrow_function_function_body.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_function_body_iife() {
+    eval!(file: "arrow_function_function_body_iife.js", 1);
+}
+
+#[test]
+fn eval_arrow_function_multiple_parameters() {
+    eval!(file: "arrow_function_multiple_parameters.js", 3);
+}
+
+#[test]
+fn eval_arrow_function_trailing_comma() {
+    eval!(file: "arrow_function_trailing_comma.js", 3);
+}
+
+#[test]
+fn eval_arrow_function_empty_parameter_list() {
+    eval!(file: "arrow_function_empty_parameter_list.js", 1);
 }
 
 #[test]

@@ -29,7 +29,14 @@ CODEGEN_TARGETS := \
 #
 # The following variable holds true goal symbols (Script and Module) and others which are used for
 # refinements of permissive production rules.
-GOAL_SYMBOLS := Script Module #ArrowFormalParameters
+GOAL_SYMBOLS := \
+  Script \
+  Module \
+  ArrowFormalParameters \
+  ArrowFormalParameters_Yield \
+  ArrowFormalParameters_Await \
+  ArrowFormalParameters_Yield_Await
+
 
 # targets
 

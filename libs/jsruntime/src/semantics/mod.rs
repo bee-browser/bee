@@ -97,6 +97,7 @@ impl<'r> Analyzer<'r> {
                 self.handle_conditional_assignment()
             }
             Node::AssignmentExpression(op) => self.handle_operator(op),
+            Node::SequenceExpression => self.handle_sequence_expression(),
             Node::BlockStatement => (), // nop
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
             Node::LetDeclaration(n) => self.handle_let_declaration(n),
@@ -134,6 +135,7 @@ impl<'r> Analyzer<'r> {
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::FunctionExpression(named) => self.handle_function_expression(named),
+            Node::ArrowFunction => self.handle_arrow_function(),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
@@ -230,6 +232,13 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(op.into());
+    }
+
+    fn handle_sequence_expression(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_sequence_expression();
     }
 
     fn handle_conditional_expression(&mut self) {
@@ -476,6 +485,26 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_function_expression(self.functions[func_index].id, named);
+    }
+
+    fn handle_arrow_function(&mut self) {
+        // TODO: An ArrowFunction does not define local bindings for arguments, super, this, or
+        // new.target.  Any reference to arguments, super, this, or new.target within an
+        // ArrowFunction must resolve to a binding in a lexically enclosing environment.
+
+        self.scope_manager.pop();
+
+        let mut context = self.context_stack.pop().unwrap();
+        context.end_scope(true);
+        // TODO: remaining references must be handled as var bindings w/ undefined value.
+        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
+        let func_index = context.func_index as usize;
+        self.functions[func_index].commands = context.commands;
+
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_function_expression(self.functions[func_index].id, false);
     }
 
     fn handle_then_block(&mut self) {
@@ -822,6 +851,11 @@ impl FunctionContext {
         let command_index = self.put_command(CompileCommand::Nop);
         self.pending_lexical_bindings.push(command_index);
         // TODO: type info
+    }
+
+    fn process_sequence_expression(&mut self) {
+        self.put_command(CompileCommand::Swap);
+        self.put_command(CompileCommand::Discard);
     }
 
     fn process_mutable_bindings(&mut self, n: u32) {
@@ -1248,6 +1282,7 @@ pub enum CompileCommand {
     Throw,
 
     Discard,
+    Swap,
 }
 
 impl From<UpdateOperator> for CompileCommand {

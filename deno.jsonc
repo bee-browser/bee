@@ -1,4 +1,9 @@
 {
+  "exclude": [
+    "target/",
+    "vendor/"
+  ],
+
   "fmt": {
     "lineWidth": 99,
     "singleQuote": true,
@@ -7,8 +12,8 @@
       "**/*.js"
     ],
     "exclude": [
-      "target/*",
-      "vendor/*"
+      "libs/jsparser/tests/",
+      "libs/jsruntime/tests/",
     ]
   },
   // TODO: no package for cliffy in jsr.io.

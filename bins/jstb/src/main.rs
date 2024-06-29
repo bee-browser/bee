@@ -57,14 +57,20 @@ fn main() -> Result<()> {
     match cl.command {
         Command::Compile(args) => {
             let source = read_source(args.source.as_ref())?;
-            let module = runtime.compile_script(&source, !args.no_optimize).unwrap();
+            let module = match runtime.compile_script(&source, !args.no_optimize) {
+                Some(module) => module,
+                None => anyhow::bail!("Failed to parse"),
+            };
             module.print(false); // to STDOUT
             Ok(())
         }
         Command::Run(args) => {
             let source = read_source(args.source.as_ref())?;
             // Always perform optimization.
-            let module = runtime.compile_script(&source, true).unwrap();
+            let module = match runtime.compile_script(&source, true) {
+                Some(module) => module,
+                None => anyhow::bail!("Failed to parse"),
+            };
             match runtime.eval(module) {
                 Ok(_) => Ok(()),
                 Err(v) => anyhow::bail!("Uncaught {v:?}"),
