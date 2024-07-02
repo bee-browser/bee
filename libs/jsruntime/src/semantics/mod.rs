@@ -180,9 +180,8 @@ impl<'r> Analyzer<'r> {
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         self.references.push(Reference {
             symbol,
-            func_index: context.func_index,
             scope_ref: self.scope_manager.current(),
-            command_index,
+            command_locator: (context.func_index, command_index),
         });
     }
 
@@ -194,10 +193,9 @@ impl<'r> Analyzer<'r> {
                 context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
             self.scope_manager.add_binding(symbol, BindingKind::Mutable);
             self.references.push(Reference {
-                func_index: context.func_index,
-                scope_ref: self.scope_manager.current(),
-                command_index,
                 symbol,
+                scope_ref: self.scope_manager.current(),
+                command_locator: (context.func_index, command_index),
             })
         } else {
             // TODO: the compilation should fail if the following condition is unmet.
@@ -461,7 +459,7 @@ impl<'r> Analyzer<'r> {
         context.end_scope(true);
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        let func_index = context.func_index as usize;
+        let func_index = context.func_index;
         self.functions[func_index].commands = context.commands;
 
         self.context_stack
@@ -478,7 +476,7 @@ impl<'r> Analyzer<'r> {
         context.end_scope(true);
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        let func_index = context.func_index as usize;
+        let func_index = context.func_index;
         self.functions[func_index].commands = context.commands;
 
         self.context_stack
@@ -498,7 +496,7 @@ impl<'r> Analyzer<'r> {
         context.end_scope(true);
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        let func_index = context.func_index as usize;
+        let func_index = context.func_index;
         self.functions[func_index].commands = context.commands;
 
         self.context_stack
@@ -613,7 +611,7 @@ impl<'r> Analyzer<'r> {
     fn handle_function_context(&mut self) {
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
-        let func_index = self.functions.len() as u32;
+        let func_index = self.functions.len();
         let mut context = FunctionContext {
             func_index,
             commands: vec![CompileCommand::Nop],
@@ -635,9 +633,9 @@ impl<'r> Analyzer<'r> {
         let id = self
             .function_registry
             .create_native_function(context.formal_parameters.clone());
-        let i = context.func_index as usize;
-        self.functions[i].symbol = symbol;
-        self.functions[i].id = id;
+        let func_index = context.func_index;
+        self.functions[func_index].symbol = symbol;
+        self.functions[func_index].id = id;
         context.in_body = true;
     }
 
@@ -655,9 +653,8 @@ impl<'r> Analyzer<'r> {
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            func_index: context.func_index,
             scope_ref: self.scope_manager.current(),
-            command_index,
+            command_locator: (context.func_index, command_index),
         });
 
         // Register `Infinity`.
@@ -671,9 +668,8 @@ impl<'r> Analyzer<'r> {
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            func_index: context.func_index,
             scope_ref: self.scope_manager.current(),
-            command_index,
+            command_locator: (context.func_index, command_index),
         });
 
         // Register `NaN`.
@@ -687,9 +683,8 @@ impl<'r> Analyzer<'r> {
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            func_index: context.func_index,
             scope_ref: self.scope_manager.current(),
-            command_index,
+            command_locator: (context.func_index, command_index),
         });
     }
 
@@ -707,9 +702,8 @@ impl<'r> Analyzer<'r> {
                 .add_binding(symbol, BindingKind::Immutable);
             self.references.push(Reference {
                 symbol,
-                func_index: context.func_index,
                 scope_ref: self.scope_manager.current(),
-                command_index,
+                command_locator: (context.func_index, command_index),
             });
         }
     }
@@ -718,7 +712,8 @@ impl<'r> Analyzer<'r> {
         for reference in self.references.iter() {
             let locator = self.scope_manager.compute_locator(reference);
             logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
-            self.functions[reference.func_index as usize].commands[reference.command_index] =
+            let (func_index, command_index) = reference.command_locator;
+            self.functions[func_index].commands[command_index] =
                 CompileCommand::Reference(reference.symbol, locator);
         }
     }
@@ -754,7 +749,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         context.commands.push(CompileCommand::Return(0));
-        self.functions[context.func_index as usize].commands = context.commands;
+        self.functions[context.func_index].commands = context.commands;
         self.resolve_locators();
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
@@ -773,19 +768,50 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
     }
 }
 
+/// Holds analysis states of a function.
+///
+/// This type uses a stack for each data type, instead of using a single stack that holds an
+/// enumerate type having a variant for the each data type.  This way make it possible to easily
+/// and efficiently access to particular elements in a stack for a data type.  While on the other
+/// hand, this way is inefficient in memory usage points of view.
 #[derive(Default)]
 struct FunctionContext {
+    /// A buffer to store [`CompileCommand`]s while analyzing.
+    ///
+    /// Some of commands stored in the buffer will work as placeholders and will be updated later.
     commands: Vec<CompileCommand>,
+
+    /// A list of indexes of commands that have to be updated while analyzing.
     pending_lexical_bindings: Vec<usize>,
+
+    /// A list of symbols in the formal parameters of this function.
     formal_parameters: Vec<Symbol>,
+
+    /// A stack to hold [`Scope`]s.
     scope_stack: Vec<Scope>,
+
+    /// A stack to hold [`LoopContext`]s.
     loop_stack: Vec<LoopContext>,
+
+    /// A stack to hold [`SwitchContext`]s.
     switch_stack: Vec<SwitchContext>,
+
+    /// A stack to hold [`LabelContext`]s.
     label_stack: Vec<LabelContext>,
+
+    /// A stack to hold [`TryContext`]s.
     try_stack: Vec<TryContext>,
+
+    /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<(usize, u16)>,
+
+    /// A variable to hold the current maximum number of bindings in this function.
     max_bindings: usize,
-    func_index: u32,
+
+    /// The index of this function in [`Analyzer::functions`].
+    func_index: usize,
+
+    /// `false` while analyzing formal parameters, `true` while analyzing the function body.
     in_body: bool,
 }
 
@@ -1365,10 +1391,22 @@ impl From<AssignmentOperator> for CompileCommand {
 
 #[derive(Debug)]
 struct Reference {
+    /// The symbol used in this reference.
     symbol: Symbol,
-    func_index: u32,
+
+    /// The reference to the current (function or block) scope when this reference happens.
     scope_ref: ScopeRef,
-    command_index: usize,
+
+    /// Indicates a location of the [`CompileCommand::Reference`] command for this reference.
+    ///
+    /// This is a tuple of two indexes.  The first one is the index of a function where this
+    /// reference happens.  The second one is the index of the command in
+    /// [`FunctionContext::commands`].
+    ///
+    /// This variable is used to update the locator field in the command once the locator is
+    /// resolved.  When a function uses free variables, locators of the free variables are resolved
+    /// outside the function scope of the function.
+    command_locator: (usize, usize),
 }
 
 #[cfg(test)]
