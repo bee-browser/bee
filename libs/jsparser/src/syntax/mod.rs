@@ -827,7 +827,8 @@ where
 
     // 13.2 Primary Expression
 
-    // PrimaryExpression[Yield, Await] : IdentifierReference[?Yield, ?Await]
+    // PrimaryExpression[Yield, Await] :
+    //   IdentifierReference[?Yield, ?Await]
     fn process_primary_expression_identifier_reference(&mut self) -> Result<(), Error> {
         self.top_mut().detail = Detail::Expression;
         Ok(())
@@ -868,7 +869,8 @@ where
         Ok(())
     }
 
-    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] : ( )
+    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
+    //   ( )
     fn process_cpeaapl_empty(&mut self) -> Result<(), Error> {
         // TODO: supplemental syntax
         self.replace(2, Detail::CpeaaplEmpty);
@@ -936,7 +938,8 @@ where
 
     // 13.2.5 Object Initializer
 
-    // Initializer[In, Yield, Await] : = AssignmentExpression[?In, ?Yield, ?Await]
+    // Initializer[In, Yield, Await] :
+    //   = AssignmentExpression[?In, ?Yield, ?Await]
     fn process_initializer(&mut self) -> Result<(), Error> {
         self.replace(2, Detail::Initializer);
         Ok(())
@@ -944,14 +947,16 @@ where
 
     // 13.3 Left-Hand-Side Expressions
 
-    // CallExpression[Yield, Await] : CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
+    // CallExpression[Yield, Await] :
+    //   CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
     fn process_call_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::CallExpression);
         self.replace(1, Detail::Expression);
         Ok(())
     }
 
-    // Arguments[Yield, Await] : ( )
+    // Arguments[Yield, Await] :
+    //   ( )
     fn process_arguments_empty(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ArgumentListHead(true, false));
         self.enqueue(Node::Arguments);
@@ -959,21 +964,24 @@ where
         Ok(())
     }
 
-    // Arguments[Yield, Await] : ( ArgumentList[?Yield, ?Await] )
+    // Arguments[Yield, Await] :
+    //   ( ArgumentList[?Yield, ?Await] )
     fn process_arguments(&mut self) -> Result<(), Error> {
         self.enqueue(Node::Arguments);
         self.replace(3, Detail::Arguments);
         Ok(())
     }
 
-    // Arguments[Yield, Await] : ( ArgumentList[?Yield, ?Await] , )
+    // Arguments[Yield, Await] :
+    //   ( ArgumentList[?Yield, ?Await] , )
     fn process_arguments_with_comma(&mut self) -> Result<(), Error> {
         self.enqueue(Node::Arguments);
         self.replace(4, Detail::Arguments);
         Ok(())
     }
 
-    // ArgumentList[Yield, Await] : AssignmentExpression[+In, ?Yield, ?Await]
+    // ArgumentList[Yield, Await] :
+    //   AssignmentExpression[+In, ?Yield, ?Await]
     fn process_argument_list_head(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ArgumentListHead(false, false));
         self.replace(1, Detail::ArgumentList);
@@ -1358,6 +1366,8 @@ where
 
     // BreakableStatement[Yield, Await, Return] :
     //   IterationStatement[?Yield, ?Await, ?Return]
+    //
+    // BreakableStatement[Yield, Await, Return] :
     //   SwitchStatement[?Yield, ?Await, ?Return]
     fn process_breakable_statement(&mut self) -> Result<(), Error> {
         // TODO
@@ -1366,27 +1376,31 @@ where
 
     // 14.2 Block
 
-    // BlockStatement[Yield, Await, Return] : Block[?Yield, ?Await, ?Return]
+    // BlockStatement[Yield, Await, Return] :
+    //   Block[?Yield, ?Await, ?Return]
     fn process_block_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::BlockStatement);
         self.replace(1, Detail::BlockStatement);
         Ok(())
     }
 
-    // Block[Yield, Await, Return] : { }
+    // Block[Yield, Await, Return] :
+    //   { }
     fn process_empty_block(&mut self) -> Result<(), Error> {
         self.replace(2, Detail::Block);
         Ok(())
     }
 
-    // Block[Yield, Await, Return] : { StatementList[?Yield, ?Await, ?Return] }
+    // Block[Yield, Await, Return] :
+    //   { StatementList[?Yield, ?Await, ?Return] }
     fn process_block(&mut self) -> Result<(), Error> {
         self.enqueue(Node::EndBlockScope);
         self.replace(3, Detail::Block);
         Ok(())
     }
 
-    // StatementList[Yield, Await, Return] : StatementListItem[?Yield, ?Await, ?Return]
+    // StatementList[Yield, Await, Return] :
+    //   StatementListItem[?Yield, ?Await, ?Return]
     fn process_statement_list_head(&mut self) -> Result<(), Error> {
         self.top_mut().detail = Detail::StatementList;
         Ok(())
@@ -1402,7 +1416,8 @@ where
 
     // 14.3.1 Let and Const Declarations
 
-    // LexicalDeclaration[In, Yield, Await] : let BindingList[?In, ?Yield, ?Await] ;
+    // LexicalDeclaration[In, Yield, Await] :
+    //   let BindingList[?In, ?Yield, ?Await] ;
     fn process_let_declaration(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
         let bound_names = match self.stack[index].detail {
@@ -1414,7 +1429,8 @@ where
         Ok(())
     }
 
-    // LexicalDeclaration[In, Yield, Await] : const BindingList[?In, ?Yield, ?Await] ;
+    // LexicalDeclaration[In, Yield, Await] :
+    //   const BindingList[?In, ?Yield, ?Await] ;
     fn process_const_declaration(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
         let (bound_names, has_initializer) = match self.stack[index].detail {
@@ -1431,7 +1447,8 @@ where
         Ok(())
     }
 
-    // BindingList[In, Yield, Await] : LexicalBinding[?In, ?Yield, ?Await]
+    // BindingList[In, Yield, Await] :
+    //   LexicalBinding[?In, ?Yield, ?Await]
     fn process_binding_list_head(&mut self) -> Result<(), Error> {
         let mut syntax = self.pop();
         syntax.detail = Detail::BindingList(match syntax.detail {
@@ -1467,7 +1484,8 @@ where
         Ok(())
     }
 
-    // LexicalBinding[In, Yield, Await] : BindingIdentifier[?Yield, ?Await]
+    // LexicalBinding[In, Yield, Await] :
+    //   BindingIdentifier[?Yield, ?Await]
     fn process_lexical_binding_identifier(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::BindingIdentifier(symbol) => symbol,
@@ -1516,7 +1534,8 @@ where
 
     // 14.3.3 Destructuring Binding Patterns
 
-    // BindingElement[Yield, Await] : SingleNameBinding[?Yield, ?Await]
+    // BindingElement[Yield, Await] :
+    //   SingleNameBinding[?Yield, ?Await]
     fn process_binding_element(&mut self) -> Result<(), Error> {
         let (symbol, has_initializer) = match self.top().detail {
             Detail::SingleNameBinding(symbol, has_initializer) => (symbol, has_initializer),
@@ -1533,7 +1552,8 @@ where
         Ok(())
     }
 
-    // SingleNameBinding[Yield, Await] : BindingIdentifier[?Yield, ?Await]
+    // SingleNameBinding[Yield, Await] :
+    //   BindingIdentifier[?Yield, ?Await]
     fn process_single_name_binding(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::BindingIdentifier(symbol) => symbol,
@@ -1556,7 +1576,8 @@ where
 
     // 14.4 Empty Statement
 
-    // EmptyStatement : ;
+    // EmptyStatement :
+    //   ;
     fn process_empty_statement(&mut self) -> Result<(), Error> {
         //self.check_token(TokenKind::Semicolon);
         let node_index = self.enqueue(Node::EmptyStatement);
@@ -1647,8 +1668,14 @@ where
 
     // IterationStatement[Yield, Await, Return] :
     //   DoWhileStatement[?Yield, ?Await, ?Return]
+    //
+    // IterationStatement[Yield, Await, Return] :
     //   WhileStatement[?Yield, ?Await, ?Return]
+    //
+    // IterationStatement[Yield, Await, Return] :
     //   ForStatement[?Yield, ?Await, ?Return]
+    //
+    // IterationStatement[Yield, Await, Return] :
     //   ForInOfStatement[?Yield, ?Await, ?Return]
     fn process_iteration_statement(&mut self) -> Result<(), Error> {
         assert!(self.iteration_statement_depth > 0);
@@ -1930,14 +1957,16 @@ where
 
     // 14.10 The return Statement
 
-    // ReturnStatement[Yield, Await] : return ;
+    // ReturnStatement[Yield, Await] :
+    //   return ;
     fn process_return_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ReturnStatement(0));
         self.replace(2, Detail::ReturnStatement);
         Ok(())
     }
 
-    // ReturnStatement[Yield, Await] : return [no LineTerminator here] Expression[+In, ?Yield, ?Await] ;
+    // ReturnStatement[Yield, Await] :
+    //   return [no LineTerminator here] Expression[+In, ?Yield, ?Await] ;
     fn process_return_value_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ReturnStatement(1));
         self.replace(3, Detail::ReturnStatement);
@@ -1966,19 +1995,22 @@ where
         Ok(())
     }
 
-    // CaseBlock[Yield, Await, Return] : { }
+    // CaseBlock[Yield, Await, Return] :
+    //   { }
     fn process_case_block_empty(&mut self) -> Result<(), Error> {
         self.replace(2, Detail::CaseBlock);
         Ok(())
     }
 
-    // CaseBlock[Yield, Await, Return] : { CaseClauses[?Yield, ?Await, ?Return] }
+    // CaseBlock[Yield, Await, Return] :
+    //   { CaseClauses[?Yield, ?Await, ?Return] }
     fn process_case_block_cases(&mut self) -> Result<(), Error> {
         self.replace(3, Detail::CaseBlock);
         Ok(())
     }
 
-    // CaseBlock[Yield, Await, Return] : { DefaultClause[?Yield, ?Await, ?Return] }
+    // CaseBlock[Yield, Await, Return] :
+    //   { DefaultClause[?Yield, ?Await, ?Return] }
     fn process_case_block_default(&mut self) -> Result<(), Error> {
         self.replace(3, Detail::CaseBlock);
         Ok(())
@@ -2006,7 +2038,8 @@ where
         Ok(())
     }
 
-    // CaseClauses[Yield, Await, Return] : CaseClause[?Yield, ?Await, ?Return]
+    // CaseClauses[Yield, Await, Return] :
+    //   CaseClause[?Yield, ?Await, ?Return]
     fn process_case_clauses_head(&mut self) -> Result<(), Error> {
         self.replace(1, Detail::CaseClauseList);
         Ok(())
@@ -2026,7 +2059,8 @@ where
         Ok(())
     }
 
-    // CaseClause[Yield, Await, Return] : case Expression[+In, ?Yield, ?Await] :
+    // CaseClause[Yield, Await, Return] :
+    //   case Expression[+In, ?Yield, ?Await] :
     fn process_case_clause_empty(&mut self) -> Result<(), Error> {
         self.enqueue(Node::CaseClause(false));
         self.replace(3, Detail::CaseClause);
@@ -2047,14 +2081,16 @@ where
         Ok(())
     }
 
-    // DefaultClause[Yield, Await, Return] : default :
+    // DefaultClause[Yield, Await, Return] :
+    //   default :
     fn process_default_clause_empty(&mut self) -> Result<(), Error> {
         self.enqueue(Node::DefaultClause(false));
         self.replace(2, Detail::DefaultClause);
         Ok(())
     }
 
-    // DefaultClause[Yield, Await, Return] : default : StatementList[?Yield, ?Await, ?Return]
+    // DefaultClause[Yield, Await, Return] :
+    //   default : StatementList[?Yield, ?Await, ?Return]
     fn process_default_clause(&mut self) -> Result<(), Error> {
         self.enqueue(Node::DefaultClause(true));
         self.replace(3, Detail::DefaultClause);
@@ -2232,7 +2268,8 @@ where
         Ok(())
     }
 
-    // FormalParameters[Yield, Await] : FormalParameterList[?Yield, ?Await] ,
+    // FormalParameters[Yield, Await] :
+    //   FormalParameterList[?Yield, ?Await] ,
     fn process_formal_parameters_list_with_comma(&mut self) -> Result<(), Error> {
         self.pop();
         let n = match self.top().detail {
@@ -2266,7 +2303,8 @@ where
         Ok(())
     }
 
-    // FormalParameter[Yield, Await] : BindingElement[?Yield, ?Await]
+    // FormalParameter[Yield, Await] :
+    //    BindingElement[?Yield, ?Await]
     fn process_formal_parameter(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FormalParameter);
         let bound_names = match self.top().detail {
