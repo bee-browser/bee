@@ -21,27 +21,48 @@ use scope::ScopeKind;
 use scope::ScopeManager;
 use scope::ScopeRef;
 
+/// A type representing a JavaScript program after the semantic analysis.
 pub struct Program {
     pub functions: Vec<FunctionRecipe>,
 }
 
+/// A type representing a JavaScript function after the semantic analysis.
 pub struct FunctionRecipe {
     pub symbol: Symbol,
     pub id: FunctionId,
     pub commands: Vec<CompileCommand>,
 }
 
+/// A semantic analyzer.
+///
+/// A semantic analyzer analyzes semantics of a JavaScript program.
 pub struct Analyzer<'r> {
+    /// A mutable reference to a symbol registry.
     symbol_registry: &'r mut SymbolRegistry,
+
+    /// A mutable reference to a function registry.
     function_registry: &'r mut FunctionRegistry,
+
+    /// A stack to keep the analysis data for outer JavaScript functions when analyzing nested
+    /// JavaScript functions.
     context_stack: Vec<FunctionContext>,
+
+    /// A list of [`FunctionRecipe`]s.
     functions: Vec<FunctionRecipe>,
+
+    /// A scope manager used for building the scope tree of the JavaScript program.
     scope_manager: ScopeManager,
+
+    /// Holds references in a JavaScript program.
+    ///
+    /// All of the references are resolved in [`Analyzer::accept()`] at once.
     references: Vec<Reference>,
+
     use_global_bindings: bool,
 }
 
 impl<'r> Analyzer<'r> {
+    /// Creates a semantic analyzer.
     pub fn new(
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
@@ -69,6 +90,7 @@ impl<'r> Analyzer<'r> {
         self.use_global_bindings = true;
     }
 
+    /// Handles an AST node coming from a parser.
     fn handle_node(&mut self, node: Node<'_>) {
         logger::debug!(event = "handle_node", ?node);
         match node {
@@ -768,7 +790,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
     }
 }
 
-/// Holds analysis states of a function.
+/// A type representing analysis states of a JavaScript function.
 ///
 /// This type uses a stack for each data type, instead of using a single stack that holds an
 /// enumerate type having a variant for the each data type.  This way make it possible to easily
@@ -816,7 +838,6 @@ struct FunctionContext {
 }
 
 impl FunctionContext {
-    #[inline(always)]
     fn put_command(&mut self, command: CompileCommand) -> usize {
         let index = self.commands.len();
         self.commands.push(command);
@@ -1157,6 +1178,7 @@ struct TryContext {
     finally_index: usize,
 }
 
+/// A compile command.
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
     Nop,
@@ -1389,9 +1411,10 @@ impl From<AssignmentOperator> for CompileCommand {
     }
 }
 
+/// A type representing information needed for resolving a reference to a symbol.
 #[derive(Debug)]
 struct Reference {
-    /// The symbol used in this reference.
+    /// The symbol referred in this reference.
     symbol: Symbol,
 
     /// The reference to the current (function or block) scope when this reference happens.

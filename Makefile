@@ -127,7 +127,7 @@ update-devcontainer:
 
 .PHONY: doc
 doc:
-	cargo doc --workspace --all-features
+	cargo doc --workspace --all-features --document-private-items
 
 .PHONY: format
 format: format-rust format-cxx format-js
