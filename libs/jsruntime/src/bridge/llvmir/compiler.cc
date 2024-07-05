@@ -676,8 +676,16 @@ void Compiler::Bindings(uint16_t n) {
   builder_->SetInsertPoint(prologue_);
   bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
-  function_scope_type_->setBody(
-      {builder_->getPtrTy(), types_->GetWordType(), builder_->getPtrTy(), bindings_type_});
+  function_scope_type_->setBody({
+      // outer scope
+      builder_->getPtrTy(),
+      // argc
+      types_->GetWordType(),
+      // argv
+      builder_->getPtrTy(),
+      // bindings[]
+      bindings_type_,
+  });
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
   CreateStoreOuterScopeToScope(outer_scope_, function_scope_);
   CreateStoreArgcToScope(argc_, function_scope_);
@@ -1517,9 +1525,9 @@ Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope)
             scope_ptr = CreateGetScope(item.reference.locator);
             argv = CreateLoadArgvFromScope(scope_ptr);
           }
-          auto* arg = builder_->CreateConstInBoundsGEP1_32(
+          auto* value_ptr = builder_->CreateConstInBoundsGEP1_32(
               types_->CreateValueType(), argv, item.reference.locator.index);
-          return Item(Item::Any, arg);
+          return Item(Item::Any, value_ptr);
         }
         case LocatorKind::Local: {
           auto* scope_ptr = function_scope_;
@@ -1528,18 +1536,16 @@ Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope)
             scope_ptr = CreateGetScope(item.reference.locator);
             bindings_ptr = CreateGetBindingsPtrOfScope(scope_ptr);
           }
-          auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(
+          // The `Binding` type has a layout compatible with the `Value` type.
+          auto* value_ptr = builder_->CreateConstInBoundsGEP2_32(
               bindings_type_, bindings_ptr, 0, item.reference.locator.index);
-          auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
-          builder_->CreateMemCpy(value, llvm::MaybeAlign(), binding_ptr, llvm::MaybeAlign(),
-              builder_->getInt32(sizeof(Value)));
           if (ref != nullptr) {
             *ref = item.reference;
           }
           if (scope != nullptr) {
             *scope = scope_ptr;
           }
-          return Item(Item::Any, value);
+          return Item(Item::Any, value_ptr);
         }
       }
       // fall through
@@ -1597,6 +1603,11 @@ void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
   PushNumber(onum);
 }
 
+// TODO(perf): If this method causes a performance issue, we can improve this method using an array
+// of static links (a lexical scope chain).  This is a well-known technique and the array is called
+// a *display*.  The maximum depth of lexical scope chains in a JavaScript program can be computed
+// at compile-time.  This means that we can define a global *display* array for each JavaScript
+// program, which can hold any lexical scope chain in the JavaScript program.
 llvm::Value* Compiler::CreateGetScope(const Locator& locator) {
   auto* scope_ptr = function_scope_;
   if (locator.offset > 0) {
