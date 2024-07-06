@@ -1,33 +1,41 @@
 use std::ffi::CString;
 
+/// The identifier of a function.
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FunctionId(u32);
 
 impl FunctionId {
     const HOST_BIT: u32 = 0x80000000;
     const VALUE_MASK: u32 = !Self::HOST_BIT;
-    const MAX: u32 = Self::VALUE_MASK;
+    const MAX_INDEX: usize = Self::VALUE_MASK as usize;
+
+    pub const MAIN: Self = Self::native(0);
 
     #[inline(always)]
-    pub fn native(value: u32) -> Self {
-        debug_assert!(value <= Self::MAX);
-        Self(value)
-    }
-
-    #[inline(always)]
-    pub fn host(value: u32) -> Self {
-        debug_assert!(value <= Self::MAX);
-        Self(value | Self::HOST_BIT)
-    }
-
-    #[inline(always)]
-    pub fn value(&self) -> u32 {
-        self.0 & Self::VALUE_MASK
-    }
-
-    #[inline(always)]
-    pub fn is_native(&self) -> bool {
+    pub const fn is_native(&self) -> bool {
         (self.0 & Self::HOST_BIT) == 0
+    }
+
+    #[inline(always)]
+    pub const fn is_host(&self) -> bool {
+        (self.0 & Self::HOST_BIT) != 0
+    }
+
+    #[inline(always)]
+    const fn native(index: usize) -> Self {
+        debug_assert!(index <= Self::MAX_INDEX);
+        Self(index as u32)
+    }
+
+    #[inline(always)]
+    const fn host(index: usize) -> Self {
+        debug_assert!(index <= Self::MAX_INDEX);
+        Self(index as u32 | Self::HOST_BIT)
+    }
+
+    #[inline(always)]
+    const fn index(&self) -> usize {
+        (self.0 & Self::VALUE_MASK) as usize
     }
 }
 
@@ -45,10 +53,11 @@ impl From<FunctionId> for u32 {
 
 impl std::fmt::Debug for FunctionId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let index = self.index();
         if self.is_native() {
-            write!(f, "FunctionId::Native({})", self.value())
+            write!(f, "FunctionId::Native({index})")
         } else {
-            write!(f, "FunctionId::Host({})", self.value())
+            write!(f, "FunctionId::Host({index})")
         }
     }
 }
@@ -66,43 +75,43 @@ impl FunctionRegistry {
         }
     }
 
-    pub fn get_native(&self, func_id: u32) -> &NativeFunction {
-        let func_id = func_id as usize;
-        &self.native_functions[func_id]
+    pub fn get_native(&self, id: FunctionId) -> &NativeFunction {
+        debug_assert!(id.is_native());
+        &self.native_functions[id.index()]
     }
 
-    pub fn get_native_mut(&mut self, func_id: u32) -> &mut NativeFunction {
-        let func_id = func_id as usize;
-        &mut self.native_functions[func_id]
+    pub fn get_native_mut(&mut self, id: FunctionId) -> &mut NativeFunction {
+        debug_assert!(id.is_native());
+        &mut self.native_functions[id.index()]
     }
 
-    pub fn get_host(&self, func_id: u32) -> &HostFunction {
-        let func_id = func_id as usize;
-        &self.host_functions[func_id]
+    pub fn get_host(&self, id: FunctionId) -> &HostFunction {
+        debug_assert!(id.is_host());
+        &self.host_functions[id.index()]
     }
 
     pub fn create_native_function(&mut self) -> FunctionId {
-        let value = self.native_functions.len();
-        debug_assert!(value <= FunctionId::MAX as usize);
-        let name = CString::new(format!("fn{value}")).unwrap();
+        let index = self.native_functions.len();
+        assert!(index <= FunctionId::MAX_INDEX);
+        let name = CString::new(format!("fn{index}")).unwrap();
         self.native_functions.push(NativeFunction {
             name,
         });
-        FunctionId::native(value as u32)
+        FunctionId::native(index)
     }
 
     pub fn register_host_function(&mut self, name: &str) -> FunctionId {
-        let value = self.host_functions.len();
-        debug_assert!(value <= FunctionId::MAX as usize);
+        let index = self.host_functions.len();
+        assert!(index <= FunctionId::MAX_INDEX);
         let name = CString::new(name).unwrap();
         self.host_functions.push(HostFunction { name });
-        FunctionId::host(value as u32)
+        FunctionId::host(index)
     }
 
     pub fn enumerate_host_function(&self) -> impl Iterator<Item = (FunctionId, &HostFunction)> {
-        self.host_functions.iter().enumerate().map(|(i, func)| {
-            debug_assert!(i <= FunctionId::MAX as usize);
-            (FunctionId::host(i as u32), func)
+        self.host_functions.iter().enumerate().map(|(index, func)| {
+            debug_assert!(index <= FunctionId::MAX_INDEX);
+            (FunctionId::host(index), func)
         })
     }
 }
@@ -123,6 +132,6 @@ mod tests {
     #[test]
     fn test_function_id_max() {
         // TODO: checking at compile time is better.
-        assert_eq!(FunctionId::MAX, FunctionId::HOST_BIT - 1);
+        assert_eq!(FunctionId::MAX_INDEX, (FunctionId::HOST_BIT - 1) as usize);
     }
 }

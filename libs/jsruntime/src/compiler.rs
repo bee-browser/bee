@@ -90,7 +90,7 @@ impl<'a> Compiler<'a> {
 
     fn start_function(&self, symbol: Symbol, func_id: FunctionId) {
         logger::debug!(event = "start_function", ?symbol, ?func_id);
-        let native = self.function_registry.get_native(func_id.value());
+        let native = self.function_registry.get_native(func_id);
         unsafe {
             bridge::compiler_peer_start_function(self.peer, native.name.as_ptr());
         }
@@ -123,13 +123,14 @@ impl<'a> Compiler<'a> {
                 unimplemented!("string literal");
             }
             CompileCommand::Function(func_id) => {
+                let func_id = *func_id;
                 let name = if func_id.is_native() {
-                    &self.function_registry.get_native(func_id.value()).name
+                    &self.function_registry.get_native(func_id).name
                 } else {
-                    &self.function_registry.get_host(func_id.value()).name
+                    &self.function_registry.get_host(func_id).name
                 };
                 unsafe {
-                    bridge::compiler_peer_function(self.peer, (*func_id).into(), name.as_ptr());
+                    bridge::compiler_peer_function(self.peer, func_id.into(), name.as_ptr());
                 }
             }
             CompileCommand::Reference(symbol, locator) => unsafe {

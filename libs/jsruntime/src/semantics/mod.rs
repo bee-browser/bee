@@ -644,7 +644,7 @@ impl<'r> Analyzer<'r> {
         // Push a placeholder data which will be filled later.
         self.functions.push(FunctionRecipe {
             symbol: Symbol::NONE,
-            id: FunctionId::native(0),
+            id: FunctionId::MAIN,
             commands: vec![],
         });
         self.scope_manager.push(ScopeKind::Function);

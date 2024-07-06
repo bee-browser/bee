@@ -60,9 +60,9 @@ impl Runtime {
     pub fn eval(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "eval");
         self.executor.register_module(module);
-        let func = self.function_registry.get_native_mut(0);
+        let main = self.function_registry.get_native_mut(FunctionId::MAIN);
         let mut ret = Value::UNDEFINED;
-        let status = match self.executor.get_native_func(&func.name) {
+        let status = match self.executor.get_native_func(&main.name) {
             Some(main) => unsafe {
                 main(
                     // exec_context
