@@ -1,7 +1,5 @@
 use std::ffi::CString;
 
-use jsparser::Symbol;
-
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FunctionId(u32);
 
@@ -83,12 +81,11 @@ impl FunctionRegistry {
         &self.host_functions[func_id]
     }
 
-    pub fn create_native_function(&mut self, formal_parameters: Vec<Symbol>) -> FunctionId {
+    pub fn create_native_function(&mut self) -> FunctionId {
         let value = self.native_functions.len();
         debug_assert!(value <= FunctionId::MAX as usize);
         let name = CString::new(format!("fn{value}")).unwrap();
         self.native_functions.push(NativeFunction {
-            formal_parameters,
             name,
         });
         FunctionId::native(value as u32)
@@ -111,11 +108,6 @@ impl FunctionRegistry {
 }
 
 pub struct NativeFunction {
-    // [[FormalParameters]]
-    // TODO: Vec<BindingElement>
-    #[allow(unused)]
-    formal_parameters: Vec<Symbol>,
-
     // [[ECMAScriptCode]]
     pub name: CString,
 }

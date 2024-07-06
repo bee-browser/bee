@@ -67,7 +67,7 @@ impl<'r> Analyzer<'r> {
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
     ) -> Self {
-        let id = function_registry.create_native_function(vec![]);
+        let id = function_registry.create_native_function();
         Self {
             symbol_registry,
             function_registry,
@@ -652,9 +652,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
         let context = self.context_stack.last_mut().unwrap();
-        let id = self
-            .function_registry
-            .create_native_function(context.formal_parameters.clone());
+        let id = self.function_registry.create_native_function();
         let func_index = context.func_index;
         self.functions[func_index].symbol = symbol;
         self.functions[func_index].id = id;
