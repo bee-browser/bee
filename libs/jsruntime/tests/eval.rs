@@ -16,8 +16,9 @@ macro_rules! eval {
             let expected = format!("{:?}", Value::from($expected));
             assert_eq!(actual, expected);
         });
-        let module = runtime.compile_script($src.as_ref(), true).unwrap();
-        assert_matches!(runtime.eval(module), Ok(_));
+        let program = runtime.parse_script($src.as_ref()).unwrap();
+        let module = runtime.compile(&program, true).unwrap();
+        assert_matches!(runtime.evaluate(module), Ok(_));
     };
     (file: $filename:literal, $expected:expr) => {
         let src = include_str!($filename);
@@ -26,8 +27,9 @@ macro_rules! eval {
     ($src:expr, throws: $expected:expr) => {
         Runtime::initialize();
         let mut runtime = Runtime::new();
-        let module = runtime.compile_script($src.as_ref(), true).unwrap();
-        assert_matches!(runtime.eval(module), Err(v) => {
+        let program = runtime.parse_script($src.as_ref()).unwrap();
+        let module = runtime.compile(&program, true).unwrap();
+        assert_matches!(runtime.evaluate(module), Err(v) => {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
             let actual = format!("{:?}", v);
             let expected = format!("{:?}", Value::from($expected));

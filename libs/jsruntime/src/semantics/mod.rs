@@ -8,6 +8,8 @@ use jsparser::syntax::NodeHandler;
 use jsparser::syntax::UnaryOperator;
 use jsparser::syntax::UpdateOperator;
 use jsparser::Error;
+use jsparser::Parser;
+use jsparser::Processor;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -15,15 +17,34 @@ use super::bridge::Locator;
 use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;
-
+use super::Runtime;
 use scope::BindingKind;
 use scope::ScopeKind;
-use scope::ScopeManager;
 use scope::ScopeRef;
+use scope::ScopeTree;
+use scope::ScopeTreeBuilder;
+
+impl Runtime {
+    /// Parses a given source text as a script.
+    pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
+        logger::debug!(event = "parse", source_kind = "script");
+        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &mut self.function_registry);
+        analyzer.use_global_bindings();
+        let processor = Processor::new(analyzer, false);
+        Parser::for_script(source, processor).parse()
+    }
+}
 
 /// A type representing a JavaScript program after the semantic analysis.
 pub struct Program {
     pub functions: Vec<FunctionRecipe>,
+    scope_tree: ScopeTree,
+}
+
+impl Program {
+    pub fn print_scope_tree(&self) {
+        self.scope_tree.print();
+    }
 }
 
 /// A type representing a JavaScript function after the semantic analysis.
@@ -36,7 +57,7 @@ pub struct FunctionRecipe {
 /// A semantic analyzer.
 ///
 /// A semantic analyzer analyzes semantics of a JavaScript program.
-pub struct Analyzer<'r> {
+struct Analyzer<'r> {
     /// A mutable reference to a symbol registry.
     symbol_registry: &'r mut SymbolRegistry,
 
@@ -50,8 +71,8 @@ pub struct Analyzer<'r> {
     /// A list of [`FunctionRecipe`]s.
     functions: Vec<FunctionRecipe>,
 
-    /// A scope manager used for building the scope tree of the JavaScript program.
-    scope_manager: ScopeManager,
+    /// A scope tree builder used for building the scope tree of the JavaScript program.
+    scope_tree_builder: ScopeTreeBuilder,
 
     /// Holds references in a JavaScript program.
     ///
@@ -80,7 +101,7 @@ impl<'r> Analyzer<'r> {
                 id,
                 commands: vec![],
             }],
-            scope_manager: Default::default(),
+            scope_tree_builder: Default::default(),
             references: vec![],
             use_global_bindings: false,
         }
@@ -202,7 +223,7 @@ impl<'r> Analyzer<'r> {
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         self.references.push(Reference {
             symbol,
-            scope_ref: self.scope_manager.current(),
+            scope_ref: self.scope_tree_builder.current(),
             command_locator: (context.func_index, command_index),
         });
     }
@@ -213,10 +234,11 @@ impl<'r> Analyzer<'r> {
             // The locator will be updated later.
             let command_index =
                 context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
-            self.scope_manager.add_binding(symbol, BindingKind::Mutable);
+            self.scope_tree_builder
+                .add_binding(symbol, BindingKind::Mutable);
             self.references.push(Reference {
                 symbol,
-                scope_ref: self.scope_manager.current(),
+                scope_ref: self.scope_tree_builder.current(),
                 command_locator: (context.func_index, command_index),
             })
         } else {
@@ -224,7 +246,7 @@ impl<'r> Analyzer<'r> {
             assert!(context.formal_parameters.len() < u16::MAX as usize);
             let i = context.formal_parameters.len();
             context.formal_parameters.push(symbol);
-            self.scope_manager
+            self.scope_tree_builder
                 .add_binding(symbol, BindingKind::FormalParameter(i));
         }
     }
@@ -289,7 +311,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_const_declaration(&mut self, n: u32) {
-        self.scope_manager.set_immutable(n);
+        self.scope_tree_builder.set_immutable(n);
         self.context_stack
             .last_mut()
             .unwrap()
@@ -323,7 +345,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_do_while_statement(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -332,7 +354,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_while_statement(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -341,7 +363,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_for_statement(&mut self, flags: LoopFlags) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -475,7 +497,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_function_declaration(&mut self) {
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
 
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope(true);
@@ -492,7 +514,7 @@ impl<'r> Analyzer<'r> {
 
     // TODO: reduce code clone took from handle_function_declaration().
     fn handle_function_expression(&mut self, named: bool) {
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
 
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope(true);
@@ -512,7 +534,7 @@ impl<'r> Analyzer<'r> {
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a binding in a lexically enclosing environment.
 
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
 
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope(true);
@@ -584,7 +606,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_loop_start(&mut self) {
         self.context_stack.last_mut().unwrap().process_loop_start();
-        self.scope_manager.push(ScopeKind::Block);
+        self.scope_tree_builder.push(ScopeKind::Block);
     }
 
     fn handle_loop_init_expression(&mut self) {
@@ -622,11 +644,11 @@ impl<'r> Analyzer<'r> {
 
     fn handle_start_block_scope(&mut self) {
         self.context_stack.last_mut().unwrap().start_scope();
-        self.scope_manager.push(ScopeKind::Block);
+        self.scope_tree_builder.push(ScopeKind::Block);
     }
 
     fn handle_end_block_scope(&mut self) {
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
         self.context_stack.last_mut().unwrap().end_scope(false);
     }
 
@@ -647,7 +669,7 @@ impl<'r> Analyzer<'r> {
             id: FunctionId::MAIN,
             commands: vec![],
         });
-        self.scope_manager.push(ScopeKind::Function);
+        self.scope_tree_builder.push(ScopeKind::Function);
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
@@ -669,11 +691,11 @@ impl<'r> Analyzer<'r> {
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
-        self.scope_manager
+        self.scope_tree_builder
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            scope_ref: self.scope_manager.current(),
+            scope_ref: self.scope_tree_builder.current(),
             command_locator: (context.func_index, command_index),
         });
 
@@ -684,11 +706,11 @@ impl<'r> Analyzer<'r> {
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_manager
+        self.scope_tree_builder
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            scope_ref: self.scope_manager.current(),
+            scope_ref: self.scope_tree_builder.current(),
             command_locator: (context.func_index, command_index),
         });
 
@@ -699,11 +721,11 @@ impl<'r> Analyzer<'r> {
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_manager
+        self.scope_tree_builder
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            scope_ref: self.scope_manager.current(),
+            scope_ref: self.scope_tree_builder.current(),
             command_locator: (context.func_index, command_index),
         });
     }
@@ -718,19 +740,19 @@ impl<'r> Analyzer<'r> {
             let command_index =
                 context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
             context.process_function_declaration(func_id);
-            self.scope_manager
+            self.scope_tree_builder
                 .add_binding(symbol, BindingKind::Immutable);
             self.references.push(Reference {
                 symbol,
-                scope_ref: self.scope_manager.current(),
+                scope_ref: self.scope_tree_builder.current(),
                 command_locator: (context.func_index, command_index),
             });
         }
     }
 
-    fn resolve_locators(&mut self) {
+    fn resolve_locators(&mut self, scope_tree: &ScopeTree) {
         for reference in self.references.iter() {
-            let locator = self.scope_manager.compute_locator(reference);
+            let locator = scope_tree.compute_locator(reference);
             logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
             let (func_index, command_index) = reference.command_locator;
             self.functions[func_index].commands[command_index] =
@@ -749,7 +771,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         // It will be replaced with `Bindings(n)` in `accept()`.
         context.commands.push(CompileCommand::Nop);
         context.start_scope();
-        self.scope_manager.push(ScopeKind::Function);
+        self.scope_tree_builder.push(ScopeKind::Function);
 
         if self.use_global_bindings {
             self.put_global_bindings();
@@ -762,17 +784,19 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         logger::debug!(event = "accept");
         let mut context = self.context_stack.pop().unwrap();
 
-        self.scope_manager.pop();
-        //self.scope_manager.dump(ScopeRef(1));
+        self.scope_tree_builder.pop();
+        let scope_tree = self.scope_tree_builder.build();
+
         context.end_scope(true);
 
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         context.commands.push(CompileCommand::Return(0));
         self.functions[context.func_index].commands = context.commands;
-        self.resolve_locators();
+        self.resolve_locators(&scope_tree);
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
+            scope_tree,
         })
     }
 
@@ -1129,8 +1153,10 @@ impl FunctionContext {
         let scope = self.scope_stack.pop().unwrap();
 
         // TODO: the compilation should fail if the following conditions are unmet.
-        assert!(scope.num_bindings <= ScopeManager::MAX_LOCAL_BINDINGS);
-        assert!(scope.num_bindings + scope.max_child_bindings <= ScopeManager::MAX_LOCAL_BINDINGS);
+        assert!(scope.num_bindings <= ScopeTreeBuilder::MAX_LOCAL_BINDINGS);
+        assert!(
+            scope.num_bindings + scope.max_child_bindings <= ScopeTreeBuilder::MAX_LOCAL_BINDINGS
+        );
 
         let n = scope.num_bindings as u16;
         if n > 0 {

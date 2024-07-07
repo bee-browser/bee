@@ -1,9 +1,6 @@
 use std::ffi::CStr;
 
 use jsparser::syntax::LoopFlags;
-use jsparser::Error;
-use jsparser::Parser;
-use jsparser::Processor;
 use jsparser::Symbol;
 
 use crate::bridge;
@@ -11,17 +8,14 @@ use crate::bridge::Locator;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
-use crate::semantics::Analyzer;
 use crate::semantics::CompileCommand;
 use crate::Module;
+use crate::Program;
 use crate::Runtime;
 
 impl Runtime {
-    pub fn compile_script(&mut self, source: &str, optimize: bool) -> Option<Module> {
-        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &mut self.function_registry);
-        analyzer.use_global_bindings();
-        let processor = Processor::new(analyzer, false);
-        let program = Parser::for_script(source, processor).parse().ok()?;
+    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
+        logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
         let mut compiler = Compiler::new(&self.function_registry);
@@ -36,9 +30,12 @@ impl Runtime {
             }
             compiler.end_function(optimize);
         }
-        compiler.end_compile().ok()
+        Ok(compiler.end_compile())
     }
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum CompileError {}
 
 struct Compiler<'a> {
     peer: *mut bridge::Compiler,
@@ -60,10 +57,10 @@ impl<'a> Compiler<'a> {
         }
     }
 
-    fn end_compile(&self) -> Result<Module, Error> {
+    fn end_compile(&self) -> Module {
         logger::debug!(event = "end_compile");
         let peer = unsafe { bridge::compiler_peer_end(self.peer) };
-        Ok(Module { peer })
+        Module { peer }
     }
 
     fn set_data_layout(&self, data_layout: &CStr) {

@@ -9,58 +9,11 @@ impl ScopeRef {
     pub const NONE: Self = Self(0);
 }
 
-pub struct ScopeManager {
+pub struct ScopeTree {
     scopes: Vec<Scope>,
-    current: ScopeRef,
-    depth: u32,
 }
 
-impl ScopeManager {
-    pub const MAX_LOCAL_BINDINGS: usize = 0x1000;
-
-    #[inline(always)]
-    pub fn current(&self) -> ScopeRef {
-        self.current
-    }
-
-    pub fn push(&mut self, kind: ScopeKind) {
-        let index = self.scopes.len();
-        self.scopes.push(Scope {
-            outer: self.current,
-            bindings: vec![],
-            depth: self.depth,
-            kind,
-        });
-        self.current = ScopeRef(index);
-        self.depth += 1;
-    }
-
-    pub fn pop(&mut self) {
-        let scope = &mut self.scopes[self.current.0];
-        scope
-            .bindings
-            .sort_unstable_by_key(|binding| binding.symbol);
-        self.current = scope.outer;
-        self.depth -= 1;
-    }
-
-    pub fn add_binding(&mut self, symbol: Symbol, kind: BindingKind) {
-        self.scopes[self.current.0]
-            .bindings
-            .push(Binding { symbol, kind });
-    }
-
-    pub fn set_immutable(&mut self, n: u32) {
-        for binding in self.scopes[self.current.0]
-            .bindings
-            .iter_mut()
-            .rev()
-            .take(n as usize)
-        {
-            binding.kind = BindingKind::Immutable;
-        }
-    }
-
+impl ScopeTree {
     pub fn compute_locator(&self, reference: &Reference) -> Locator {
         let symbol = reference.symbol;
         let mut offset = 0;
@@ -113,18 +66,73 @@ impl ScopeManager {
     }
 
     #[allow(unused)]
-    pub fn dump(&self, root: ScopeRef) {
-        eprintln!("{}", self.scopes[root.0]);
-        for scope in self.scopes[root.0 + 1..].iter() {
-            if scope.outer == ScopeRef::NONE {
-                break;
-            }
-            eprintln!("{scope}");
+    pub fn print(&self) {
+        for scope in self.scopes[1..].iter() {
+            println!("{scope}");
         }
     }
 }
 
-impl Default for ScopeManager {
+pub struct ScopeTreeBuilder {
+    scopes: Vec<Scope>,
+    current: ScopeRef,
+    depth: u32,
+}
+
+impl ScopeTreeBuilder {
+    pub const MAX_LOCAL_BINDINGS: usize = 0x1000;
+
+    #[inline(always)]
+    pub fn current(&self) -> ScopeRef {
+        self.current
+    }
+
+    pub fn push(&mut self, kind: ScopeKind) {
+        let index = self.scopes.len();
+        self.scopes.push(Scope {
+            outer: self.current,
+            bindings: vec![],
+            depth: self.depth,
+            kind,
+        });
+        self.current = ScopeRef(index);
+        self.depth += 1;
+    }
+
+    pub fn pop(&mut self) {
+        let scope = &mut self.scopes[self.current.0];
+        scope
+            .bindings
+            .sort_unstable_by_key(|binding| binding.symbol);
+        self.current = scope.outer;
+        self.depth -= 1;
+    }
+
+    pub fn add_binding(&mut self, symbol: Symbol, kind: BindingKind) {
+        self.scopes[self.current.0]
+            .bindings
+            .push(Binding { symbol, kind });
+    }
+
+    pub fn set_immutable(&mut self, n: u32) {
+        for binding in self.scopes[self.current.0]
+            .bindings
+            .iter_mut()
+            .rev()
+            .take(n as usize)
+        {
+            binding.kind = BindingKind::Immutable;
+        }
+    }
+
+    pub fn build(&mut self) -> ScopeTree {
+        ScopeTree {
+            scopes: std::mem::take(&mut self.scopes),
+        }
+    }
+}
+
+impl Default for ScopeTreeBuilder {
     fn default() -> Self {
         Self {
             scopes: vec![Scope::NONE],

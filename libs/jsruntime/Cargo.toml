@@ -10,6 +10,7 @@ base = { path = "../base" }
 bitflags = "2.6.0"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
+thiserror = "1.0.61"
 
 [build-dependencies]
 bindgen = "0.69.4"

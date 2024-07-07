@@ -94,9 +94,7 @@ impl FunctionRegistry {
         let index = self.native_functions.len();
         assert!(index <= FunctionId::MAX_INDEX);
         let name = CString::new(format!("fn{index}")).unwrap();
-        self.native_functions.push(NativeFunction {
-            name,
-        });
+        self.native_functions.push(NativeFunction { name });
         FunctionId::native(index)
     }
 

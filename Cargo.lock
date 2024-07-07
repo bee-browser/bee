@@ -1010,6 +1010,7 @@ dependencies = [
  "duct",
  "jsparser",
  "logging",
+ "thiserror",
 ]
 
 [[package]]

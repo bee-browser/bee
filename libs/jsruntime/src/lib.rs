@@ -7,13 +7,15 @@ mod semantics;
 
 use jsparser::SymbolRegistry;
 
+use bridge::ReturnValue;
+use bridge::Status;
 use executor::Executor;
 use function::FunctionId;
 use function::FunctionRegistry;
 
-use bridge::ReturnValue;
-use bridge::Status;
 pub use bridge::Value;
+pub use compiler::CompileError;
+pub use semantics::Program;
 
 pub struct Runtime {
     symbol_registry: SymbolRegistry,
@@ -57,8 +59,8 @@ impl Runtime {
         self
     }
 
-    pub fn eval(&mut self, module: Module) -> Result<Value, Value> {
-        logger::debug!(event = "eval");
+    pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
+        logger::debug!(event = "evaluate");
         self.executor.register_module(module);
         let main = self.function_registry.get_native_mut(FunctionId::MAIN);
         let mut ret = Value::UNDEFINED;
