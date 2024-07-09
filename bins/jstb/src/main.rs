@@ -70,7 +70,7 @@ fn main() -> Result<()> {
         Command::Parse(args) => {
             let source = read_source(args.source.as_ref())?;
             let program = runtime.parse_script(&source)?;
-            program.print_scope_tree();
+            program.print();
             Ok(())
         }
         Command::Compile(args) => {

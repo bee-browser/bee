@@ -3,10 +3,57 @@ use super::Reference;
 use super::Symbol;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ScopeRef(usize);
+pub struct ScopeRef(u32);
 
 impl ScopeRef {
-    pub const NONE: Self = Self(0);
+    pub const NONE: Self = Self::new(0);
+
+    const fn new(index: u32) -> Self {
+        Self(index)
+    }
+
+    fn checked_new(index: usize) -> Option<Self> {
+        if index > u32::MAX as usize {
+            crate::logger::error!(err = "too large", index);
+            return None;
+        }
+        Some(Self::new(index as u32))
+    }
+
+    fn index(&self) -> usize {
+        self.0 as usize
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BindingRef(u32, u32);
+
+impl BindingRef {
+    pub const NONE: Self = Self::new(0, 0);
+
+    const fn new(scope_index: u32, binding_index: u32) -> Self {
+        Self(scope_index, binding_index)
+    }
+
+    fn checked_new(scope_ref: ScopeRef, index: usize) -> Option<Self> {
+        if index > u32::MAX as usize {
+            crate::logger::error!(err = "too large", index);
+            return None;
+        }
+        Some(Self::new(scope_ref.0, index as u32))
+    }
+
+    fn scope_ref(&self) -> ScopeRef {
+        ScopeRef::new(self.0)
+    }
+
+    fn scope_index(&self) -> usize {
+        self.0 as usize
+    }
+
+    fn binding_index(&self) -> usize {
+        self.1 as usize
+    }
 }
 
 pub struct ScopeTree {
@@ -14,57 +61,6 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
-    pub fn compute_locator(&self, reference: &Reference) -> Locator {
-        let symbol = reference.symbol;
-        let mut offset = 0;
-        let mut scope_ref = reference.scope_ref;
-        loop {
-            let scope = &self.scopes[scope_ref.0];
-            match scope
-                .bindings
-                .binary_search_by_key(&symbol, |binding| binding.symbol)
-            {
-                Ok(index) => match scope.bindings[index].kind {
-                    BindingKind::FormalParameter(index) => {
-                        // TODO: the compilation should fail if `None` is returned.
-                        return Locator::checked_argument(offset, index).unwrap();
-                    }
-                    _ => {
-                        let base = self.compute_offset(scope_ref);
-                        // TODO: the compilation should fail if `None` is returned.
-                        return Locator::checked_local(offset, base + index).unwrap();
-                    }
-                },
-                Err(_) => {
-                    scope_ref = scope.outer;
-                    if scope_ref == ScopeRef::NONE {
-                        panic!("{reference:?}");
-                    }
-                    if matches!(scope.kind, ScopeKind::Function) {
-                        offset += 1;
-                    }
-                }
-            }
-        }
-    }
-
-    fn compute_offset(&self, scope_ref: ScopeRef) -> usize {
-        let mut scope = &self.scopes[scope_ref.0];
-        if matches!(scope.kind, ScopeKind::Function) {
-            return 0;
-        }
-        let mut offset = 0;
-        scope = &self.scopes[scope.outer.0];
-        loop {
-            offset += scope.bindings.len();
-            if matches!(scope.kind, ScopeKind::Function) {
-                return offset;
-            }
-            debug_assert_ne!(scope.outer, ScopeRef::NONE);
-            scope = &self.scopes[scope.outer.0];
-        }
-    }
-
     #[allow(unused)]
     pub fn print(&self) {
         for scope in self.scopes[1..].iter() {
@@ -95,12 +91,13 @@ impl ScopeTreeBuilder {
             depth: self.depth,
             kind,
         });
-        self.current = ScopeRef(index);
+        // TODO: should return an error
+        self.current = ScopeRef::checked_new(index).unwrap();
         self.depth += 1;
     }
 
     pub fn pop(&mut self) {
-        let scope = &mut self.scopes[self.current.0];
+        let scope = &mut self.scopes[self.current.index()];
         scope
             .bindings
             .sort_unstable_by_key(|binding| binding.symbol);
@@ -109,19 +106,84 @@ impl ScopeTreeBuilder {
     }
 
     pub fn add_binding(&mut self, symbol: Symbol, kind: BindingKind) {
-        self.scopes[self.current.0]
+        self.scopes[self.current.index()]
             .bindings
-            .push(Binding { symbol, kind });
+            .push(Binding {
+                symbol,
+                kind,
+                closed_over: false,
+            });
     }
 
     pub fn set_immutable(&mut self, n: u32) {
-        for binding in self.scopes[self.current.0]
+        for binding in self.scopes[self.current.index()]
             .bindings
             .iter_mut()
             .rev()
             .take(n as usize)
         {
             binding.kind = BindingKind::Immutable;
+        }
+    }
+
+    pub fn set_closed_over(&mut self, binding_ref: BindingRef) {
+        self.scopes[binding_ref.scope_index()].bindings[binding_ref.binding_index()].closed_over = true;
+    }
+
+    pub fn resolve_reference(&self, reference: &Reference) -> BindingRef {
+        let symbol = reference.symbol;
+        let mut scope_ref = reference.scope_ref;
+        loop {
+            let scope = &self.scopes[scope_ref.index()];
+            match scope
+                .bindings
+                .binary_search_by_key(&symbol, |binding| binding.symbol)
+            {
+                Ok(index) => {
+                    // TODO: should return an error
+                    return BindingRef::checked_new(scope_ref, index).unwrap();
+                }
+                Err(_) => {
+                    scope_ref = scope.outer;
+                    if scope_ref == ScopeRef::NONE {
+                        panic!("{reference:?}");
+                    }
+                    if matches!(scope.kind, ScopeKind::Function) {
+                        return BindingRef::NONE;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn compute_locator(&self, binding_ref: BindingRef, offset: usize) -> Locator {
+        match self.scopes[binding_ref.scope_index()].bindings[binding_ref.binding_index()].kind {
+            BindingKind::FormalParameter(index) => {
+                // TODO: the compilation should fail if `None` is returned.
+                Locator::checked_argument(offset, index).unwrap()
+            }
+            _ => {
+                let base = self.compute_offset(binding_ref.scope_ref());
+                // TODO: the compilation should fail if `None` is returned.
+                Locator::checked_local(offset, base + binding_ref.binding_index()).unwrap()
+            }
+        }
+    }
+
+    fn compute_offset(&self, scope_ref: ScopeRef) -> usize {
+        let mut scope = &self.scopes[scope_ref.index()];
+        if matches!(scope.kind, ScopeKind::Function) {
+            return 0;
+        }
+        let mut offset = 0;
+        scope = &self.scopes[scope.outer.index()];
+        loop {
+            offset += scope.bindings.len();
+            if matches!(scope.kind, ScopeKind::Function) {
+                return offset;
+            }
+            debug_assert_ne!(scope.outer, ScopeRef::NONE);
+            scope = &self.scopes[scope.outer.index()];
         }
     }
 
@@ -181,15 +243,20 @@ impl std::fmt::Display for Scope {
 struct Binding {
     symbol: Symbol,
     kind: BindingKind,
+    closed_over: bool,
 }
 
 impl std::fmt::Display for Binding {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind {
-            BindingKind::FormalParameter(index) => write!(f, "{index}:{:?}", self.symbol),
-            BindingKind::Mutable => write!(f, "M:{:?}", self.symbol),
-            BindingKind::Immutable => write!(f, "I:{:?}", self.symbol),
+            BindingKind::FormalParameter(index) => write!(f, "{index}:{:?}", self.symbol)?,
+            BindingKind::Mutable => write!(f, "M:{:?}", self.symbol)?,
+            BindingKind::Immutable => write!(f, "I:{:?}", self.symbol)?,
         }
+        if self.closed_over {
+            write!(f, "*")?;
+        }
+        Ok(())
     }
 }
 

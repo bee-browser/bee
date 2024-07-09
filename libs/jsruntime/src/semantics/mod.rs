@@ -19,6 +19,7 @@ use super::FunctionId;
 use super::FunctionRegistry;
 use super::Runtime;
 use scope::BindingKind;
+use scope::BindingRef;
 use scope::ScopeKind;
 use scope::ScopeRef;
 use scope::ScopeTree;
@@ -42,16 +43,45 @@ pub struct Program {
 }
 
 impl Program {
-    pub fn print_scope_tree(&self) {
+    pub fn print(&self) {
+        for func in self.functions.iter() {
+            func.print();
+        }
         self.scope_tree.print();
     }
 }
 
 /// A type representing a JavaScript function after the semantic analysis.
 pub struct FunctionRecipe {
+    /// TODO: remove?
     pub symbol: Symbol,
+
+    /// The function ID of the function.
     pub id: FunctionId,
+
+    /// A list of [`CompileCommand`]s generated from the function definition.
     pub commands: Vec<CompileCommand>,
+
+    /// A list of open bindings of the function.
+    pub open_bindings: Vec<OpenBinding>,
+}
+
+impl FunctionRecipe {
+    pub fn print(&self) {
+        println!("function: {:?}", self.id);
+        println!(" commands:");
+        for command in self.commands.iter() {
+            println!("  {command:?}");
+        }
+        println!(" open_bindings:");
+        for open_binding in self.open_bindings.iter() {
+            println!("  {:?}", open_binding.symbol);
+        }
+    }
+}
+
+pub struct OpenBinding {
+    pub symbol: Symbol,
 }
 
 /// A semantic analyzer.
@@ -74,11 +104,6 @@ struct Analyzer<'r> {
     /// A scope tree builder used for building the scope tree of the JavaScript program.
     scope_tree_builder: ScopeTreeBuilder,
 
-    /// Holds references in a JavaScript program.
-    ///
-    /// All of the references are resolved in [`Analyzer::accept()`] at once.
-    references: Vec<Reference>,
-
     use_global_bindings: bool,
 }
 
@@ -100,9 +125,9 @@ impl<'r> Analyzer<'r> {
                 symbol: Symbol::NONE,
                 id,
                 commands: vec![],
+                open_bindings: vec![],
             }],
             scope_tree_builder: Default::default(),
-            references: vec![],
             use_global_bindings: false,
         }
     }
@@ -218,37 +243,12 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
-        let context = self.context_stack.last_mut().unwrap();
-        // The locator will be updated later.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
-        self.references.push(Reference {
-            symbol,
-            scope_ref: self.scope_tree_builder.current(),
-            command_locator: (context.func_index, command_index),
-        });
+        let scope_ref = self.scope_tree_builder.current();
+        self.context_stack.last_mut().unwrap().process_identifier_reference(symbol, scope_ref);
     }
 
     fn handle_binding_identifier(&mut self, symbol: Symbol) {
-        let context = self.context_stack.last_mut().unwrap();
-        if context.in_body {
-            // The locator will be updated later.
-            let command_index =
-                context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
-            self.scope_tree_builder
-                .add_binding(symbol, BindingKind::Mutable);
-            self.references.push(Reference {
-                symbol,
-                scope_ref: self.scope_tree_builder.current(),
-                command_locator: (context.func_index, command_index),
-            })
-        } else {
-            // TODO: the compilation should fail if the following condition is unmet.
-            assert!(context.formal_parameters.len() < u16::MAX as usize);
-            let i = context.formal_parameters.len();
-            context.formal_parameters.push(symbol);
-            self.scope_tree_builder
-                .add_binding(symbol, BindingKind::FormalParameter(i));
-        }
+        self.context_stack.last_mut().unwrap().process_binding_identifier(symbol, &mut self.scope_tree_builder);
     }
 
     fn handle_argument_list_head(&mut self, empty: bool, spread: bool) {
@@ -501,10 +501,14 @@ impl<'r> Analyzer<'r> {
 
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope(true);
-        // TODO: remaining references must be handled as var bindings w/ undefined value.
+
+        self.resolve_references(&mut context);
+
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         let func_index = context.func_index;
         self.functions[func_index].commands = context.commands;
+        self.functions[func_index].open_bindings = context.open_bindings;
+        // TODO: closure
 
         self.context_stack
             .last_mut()
@@ -518,10 +522,14 @@ impl<'r> Analyzer<'r> {
 
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope(true);
-        // TODO: remaining references must be handled as var bindings w/ undefined value.
+
+        self.resolve_references(&mut context);
+
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         let func_index = context.func_index;
         self.functions[func_index].commands = context.commands;
+        self.functions[func_index].open_bindings = context.open_bindings;
+        // TODO: closure
 
         self.context_stack
             .last_mut()
@@ -538,10 +546,14 @@ impl<'r> Analyzer<'r> {
 
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope(true);
-        // TODO: remaining references must be handled as var bindings w/ undefined value.
+
+        self.resolve_references(&mut context);
+
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         let func_index = context.func_index;
         self.functions[func_index].commands = context.commands;
+        self.functions[func_index].open_bindings = context.open_bindings;
+        // TODO: closure
 
         self.context_stack
             .last_mut()
@@ -668,6 +680,7 @@ impl<'r> Analyzer<'r> {
             symbol: Symbol::NONE,
             id: FunctionId::MAIN,
             commands: vec![],
+            open_bindings: vec![],
         });
         self.scope_tree_builder.push(ScopeKind::Function);
     }
@@ -687,46 +700,49 @@ impl<'r> Analyzer<'r> {
 
         // Register `undefined`.
         let symbol = Symbol::UNDEFINED;
-        // The locator will be computed in `resolve_locators()`.
+        // The locator will be computed in `resolve_references()`.
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_binding(symbol, BindingKind::Immutable);
-        self.references.push(Reference {
+        context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             command_locator: (context.func_index, command_index),
+            offset: 0,
         });
 
         // Register `Infinity`.
         let symbol = Symbol::INFINITY;
-        // The locator will be computed in `resolve_locators()`.
+        // The locator will be computed in `resolve_references()`.
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_binding(symbol, BindingKind::Immutable);
-        self.references.push(Reference {
+        context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             command_locator: (context.func_index, command_index),
+            offset: 0,
         });
 
         // Register `NaN`.
         let symbol = Symbol::NAN;
-        // The locator will be computed in `resolve_locators()`.
+        // The locator will be computed in `resolve_references()`.
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_binding(symbol, BindingKind::Immutable);
-        self.references.push(Reference {
+        context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             command_locator: (context.func_index, command_index),
+            offset: 0,
         });
     }
 
@@ -736,27 +752,52 @@ impl<'r> Analyzer<'r> {
 
         for (func_id, host_func) in self.function_registry.enumerate_host_function() {
             let symbol = self.symbol_registry.intern_cstr(&host_func.name);
-            // The locator will be computed in `resolve_locators()`.
+            // The locator will be computed in `resolve_references()`.
             let command_index =
                 context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
             context.process_function_declaration(func_id);
             self.scope_tree_builder
                 .add_binding(symbol, BindingKind::Immutable);
-            self.references.push(Reference {
+            context.references.push(Reference {
                 symbol,
                 scope_ref: self.scope_tree_builder.current(),
                 command_locator: (context.func_index, command_index),
+                offset: 0,
             });
         }
     }
 
-    fn resolve_locators(&mut self, scope_tree: &ScopeTree) {
-        for reference in self.references.iter() {
-            let locator = scope_tree.compute_locator(reference);
-            logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
-            let (func_index, command_index) = reference.command_locator;
-            self.functions[func_index].commands[command_index] =
-                CompileCommand::Reference(reference.symbol, locator);
+    // TODO: refactoring
+    fn resolve_references(&mut self, context: &mut FunctionContext) {
+        for reference in context.references.iter() {
+            match self.scope_tree_builder.resolve_reference(reference) {
+                BindingRef::NONE => {
+                    // this is a reference to an open binding.
+                    logger::debug!(event = "resolve-locator", ?reference.symbol, locator = "None");
+                    context.open_bindings.push(OpenBinding {
+                        symbol: reference.symbol,
+                    });
+                    self.context_stack.last_mut().unwrap().references.push(Reference {
+                        symbol: reference.symbol,
+                        scope_ref: self.scope_tree_builder.current(),
+                        command_locator: reference.command_locator,
+                        offset: reference.offset + 1,
+                    })
+                }
+                binding_ref => {
+                    let locator = self.scope_tree_builder.compute_locator(binding_ref, reference.offset);
+                    logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
+                    let (func_index, command_index) = reference.command_locator;
+                    if func_index == context.func_index {
+                        context.commands[command_index] = CompileCommand::Reference(reference.symbol, locator);
+                    } else {
+                        self.functions[func_index].commands[command_index] = CompileCommand::Reference(reference.symbol, locator);
+                    }
+                    if reference.offset > 0 {
+                        self.scope_tree_builder.set_closed_over(binding_ref);
+                    }
+                }
+            }
         }
     }
 }
@@ -782,21 +823,22 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
-        let mut context = self.context_stack.pop().unwrap();
-
         self.scope_tree_builder.pop();
-        let scope_tree = self.scope_tree_builder.build();
 
+        let mut context = self.context_stack.pop().unwrap();
         context.end_scope(true);
 
-        // TODO: remaining references must be handled as var bindings w/ undefined value.
+        self.resolve_references(&mut context);
+        debug_assert!(context.open_bindings.is_empty());
+
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         context.commands.push(CompileCommand::Return(0));
         self.functions[context.func_index].commands = context.commands;
-        self.resolve_locators(&scope_tree);
+        self.functions[context.func_index].open_bindings = context.open_bindings;
+
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
-            scope_tree,
+            scope_tree: self.scope_tree_builder.build(),
         })
     }
 
@@ -825,10 +867,20 @@ struct FunctionContext {
     /// Some of commands stored in the buffer will work as placeholders and will be updated later.
     commands: Vec<CompileCommand>,
 
+    /// Holds references in the function.
+    ///
+    /// All the references will be resolved at the end of the function definition in order to
+    /// compute the memory layout of local variables on the stack because the computation has to be
+    /// performed after all variable declarations are processed.
+    references: Vec<Reference>,
+
+    /// A list of open bindings of the function.
+    open_bindings: Vec<OpenBinding>,
+
     /// A list of indexes of commands that have to be updated while analyzing.
     pending_lexical_bindings: Vec<usize>,
 
-    /// A list of symbols in the formal parameters of this function.
+    /// A list of symbols in the formal parameters of the function.
     formal_parameters: Vec<Symbol>,
 
     /// A stack to hold [`Scope`]s.
@@ -849,10 +901,10 @@ struct FunctionContext {
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<(usize, u16)>,
 
-    /// A variable to hold the current maximum number of bindings in this function.
+    /// A variable to hold the current maximum number of bindings in the function.
     max_bindings: usize,
 
-    /// The index of this function in [`Analyzer::functions`].
+    /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
 
     /// `false` while analyzing formal parameters, `true` while analyzing the function body.
@@ -920,6 +972,38 @@ impl FunctionContext {
         let command_index = self.put_command(CompileCommand::Nop);
         self.pending_lexical_bindings.push(command_index);
         // TODO: type info
+    }
+
+    fn process_identifier_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
+        // The locator will be updated later.
+        let command_index = self.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        self.references.push(Reference {
+            symbol,
+            scope_ref,
+            command_locator: (self.func_index, command_index),
+            offset: 0,
+        });
+    }
+
+    fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
+        if self.in_body {
+            // The locator will be updated later.
+            let command_index =
+                self.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+            self.references.push(Reference {
+                symbol,
+                scope_ref: builder.current(),
+                command_locator: (self.func_index, command_index),
+                offset: 0,
+            });
+            builder.add_binding(symbol, BindingKind::Mutable);
+        } else {
+            // TODO: the compilation should fail if the following condition is unmet.
+            assert!(self.formal_parameters.len() < u16::MAX as usize);
+            let i = self.formal_parameters.len();
+            self.formal_parameters.push(symbol);
+            builder.add_binding(symbol, BindingKind::FormalParameter(i));
+        }
     }
 
     fn process_sequence_expression(&mut self) {
@@ -1454,6 +1538,8 @@ struct Reference {
     /// resolved.  When a function uses free variables, locators of the free variables are resolved
     /// outside the function scope of the function.
     command_locator: (usize, usize),
+
+    offset: usize,
 }
 
 #[cfg(test)]

@@ -651,11 +651,7 @@ fn eval_argument_in_outer_function() {
 
 #[test]
 fn eval_fibonacci() {
-    eval!(
-        "print(fib(10)); \
-         function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); }",
-        55.
-    );
+    eval!(file: "fibonacci.js", 55);
 }
 
 #[test]
