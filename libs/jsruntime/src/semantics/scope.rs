@@ -106,13 +106,11 @@ impl ScopeTreeBuilder {
     }
 
     pub fn add_binding(&mut self, symbol: Symbol, kind: BindingKind) {
-        self.scopes[self.current.index()]
-            .bindings
-            .push(Binding {
-                symbol,
-                kind,
-                closed_over: false,
-            });
+        self.scopes[self.current.index()].bindings.push(Binding {
+            symbol,
+            kind,
+            closed_over: false,
+        });
     }
 
     pub fn set_immutable(&mut self, n: u32) {
@@ -127,7 +125,8 @@ impl ScopeTreeBuilder {
     }
 
     pub fn set_closed_over(&mut self, binding_ref: BindingRef) {
-        self.scopes[binding_ref.scope_index()].bindings[binding_ref.binding_index()].closed_over = true;
+        self.scopes[binding_ref.scope_index()].bindings[binding_ref.binding_index()].closed_over =
+            true;
     }
 
     pub fn resolve_reference(&self, reference: &Reference) -> BindingRef {

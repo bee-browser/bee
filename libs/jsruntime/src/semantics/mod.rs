@@ -244,11 +244,17 @@ impl<'r> Analyzer<'r> {
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
         let scope_ref = self.scope_tree_builder.current();
-        self.context_stack.last_mut().unwrap().process_identifier_reference(symbol, scope_ref);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_identifier_reference(symbol, scope_ref);
     }
 
     fn handle_binding_identifier(&mut self, symbol: Symbol) {
-        self.context_stack.last_mut().unwrap().process_binding_identifier(symbol, &mut self.scope_tree_builder);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_binding_identifier(symbol, &mut self.scope_tree_builder);
     }
 
     fn handle_argument_list_head(&mut self, empty: bool, spread: bool) {
@@ -777,23 +783,31 @@ impl<'r> Analyzer<'r> {
                     context.open_bindings.push(OpenBinding {
                         symbol: reference.symbol,
                     });
-                    self.context_stack.last_mut().unwrap().references.push(Reference {
-                        symbol: reference.symbol,
-                        scope_ref: self.scope_tree_builder.current(),
-                        command_locator: reference.command_locator,
-                        offset: reference.offset + 1,
-                    })
+                    self.context_stack
+                        .last_mut()
+                        .unwrap()
+                        .references
+                        .push(Reference {
+                            symbol: reference.symbol,
+                            // The reference of a scope enclosing the function currently being
+                            // analyzed.
+                            scope_ref: self.scope_tree_builder.current(),
+                            command_locator: reference.command_locator,
+                            offset: reference.offset + 1,
+                        })
                 }
                 binding_ref => {
-                    let locator = self.scope_tree_builder.compute_locator(binding_ref, reference.offset);
+                    let locator = self
+                        .scope_tree_builder
+                        .compute_locator(binding_ref, reference.offset);
                     logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
                     let (func_index, command_index) = reference.command_locator;
                     if func_index == context.func_index {
-                        context.commands[command_index] = CompileCommand::Reference(reference.symbol, locator);
+                        context.commands[command_index] =
+                            CompileCommand::Reference(reference.symbol, locator);
                     } else {
-                        self.functions[func_index].commands[command_index] = CompileCommand::Reference(reference.symbol, locator);
-                    }
-                    if reference.offset > 0 {
+                        self.functions[func_index].commands[command_index] =
+                            CompileCommand::Reference(reference.symbol, locator);
                         self.scope_tree_builder.set_closed_over(binding_ref);
                     }
                 }
@@ -988,8 +1002,7 @@ impl FunctionContext {
     fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
         if self.in_body {
             // The locator will be updated later.
-            let command_index =
-                self.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+            let command_index = self.put_command(CompileCommand::Reference(symbol, Locator::NONE));
             self.references.push(Reference {
                 symbol,
                 scope_ref: builder.current(),
@@ -1522,13 +1535,14 @@ impl From<AssignmentOperator> for CompileCommand {
 /// A type representing information needed for resolving a reference to a symbol.
 #[derive(Debug)]
 struct Reference {
-    /// The symbol referred in this reference.
+    /// The symbol referred.
     symbol: Symbol,
 
-    /// The reference to the current (function or block) scope when this reference happens.
+    /// The reference to a (function or block) scope where the symbol is referred.
     scope_ref: ScopeRef,
 
-    /// Indicates a location of the [`CompileCommand::Reference`] command for this reference.
+    /// Indicates a location of the [`CompileCommand::Reference`] command generated for this
+    /// reference.
     ///
     /// This is a tuple of two indexes.  The first one is the index of a function where this
     /// reference happens.  The second one is the index of the command in
