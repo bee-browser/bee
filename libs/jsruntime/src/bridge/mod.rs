@@ -148,6 +148,11 @@ impl std::fmt::Debug for Value {
                 ValueKind_Boolean => write!(f, "false"),
                 ValueKind_Number => write!(f, "{}", self.holder.number),
                 ValueKind_Function => write!(f, "function({:?})", self.holder.function.unwrap()),
+                ValueKind_Closure => write!(
+                    f,
+                    "closure(lambda@{:?})",
+                    (*self.holder.closure).lambda.unwrap()
+                ),
                 _ => unreachable!(),
             }
         }

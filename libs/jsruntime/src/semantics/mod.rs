@@ -20,7 +20,6 @@ use super::FunctionRegistry;
 use super::Runtime;
 use scope::BindingKind;
 use scope::BindingRef;
-use scope::ScopeKind;
 use scope::ScopeRef;
 use scope::ScopeTree;
 use scope::ScopeTreeBuilder;
@@ -269,7 +268,10 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_call_expression(&mut self) {
-        self.context_stack.last_mut().unwrap().put_call();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_call_expression();
     }
 
     fn handle_operator<T>(&mut self, op: T)
@@ -624,7 +626,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_loop_start(&mut self) {
         self.context_stack.last_mut().unwrap().process_loop_start();
-        self.scope_tree_builder.push(ScopeKind::Block);
+        self.scope_tree_builder.push_block();
     }
 
     fn handle_loop_init_expression(&mut self) {
@@ -662,7 +664,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_start_block_scope(&mut self) {
         self.context_stack.last_mut().unwrap().start_scope();
-        self.scope_tree_builder.push(ScopeKind::Block);
+        self.scope_tree_builder.push_block();
     }
 
     fn handle_end_block_scope(&mut self) {
@@ -688,7 +690,7 @@ impl<'r> Analyzer<'r> {
             commands: vec![],
             open_bindings: vec![],
         });
-        self.scope_tree_builder.push(ScopeKind::Function);
+        self.scope_tree_builder.push_function();
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
@@ -773,43 +775,53 @@ impl<'r> Analyzer<'r> {
         }
     }
 
-    // TODO: refactoring
     fn resolve_references(&mut self, context: &mut FunctionContext) {
-        for reference in context.references.iter() {
-            match self.scope_tree_builder.resolve_reference(reference) {
-                BindingRef::NONE => {
-                    // this is a reference to an open binding.
-                    logger::debug!(event = "resolve-locator", ?reference.symbol, locator = "None");
-                    context.open_bindings.push(OpenBinding {
+        for reference in std::mem::take(&mut context.captures).iter() {
+            self.resolve_reference(context, reference);
+        }
+        for reference in std::mem::take(&mut context.references).iter() {
+            self.resolve_reference(context, reference);
+        }
+    }
+
+    // TODO: refactoring
+    fn resolve_reference(&mut self, context: &mut FunctionContext, reference: &Reference) {
+        match self.scope_tree_builder.resolve_reference(reference) {
+            BindingRef::NONE => {
+                // this is a reference to an open binding.
+                logger::debug!(event = "resolve-locator", ?reference.symbol, locator = "None");
+                context.open_bindings.push(OpenBinding {
+                    symbol: reference.symbol,
+                });
+                self.context_stack
+                    .last_mut()
+                    .unwrap()
+                    .captures
+                    .push(Reference {
                         symbol: reference.symbol,
+                        // The reference of a scope enclosing the function currently being
+                        // analyzed.
+                        scope_ref: self.scope_tree_builder.current(),
+                        command_locator: reference.command_locator,
+                        offset: reference.offset + 1,
                     });
-                    self.context_stack
-                        .last_mut()
-                        .unwrap()
-                        .references
-                        .push(Reference {
-                            symbol: reference.symbol,
-                            // The reference of a scope enclosing the function currently being
-                            // analyzed.
-                            scope_ref: self.scope_tree_builder.current(),
-                            command_locator: reference.command_locator,
-                            offset: reference.offset + 1,
-                        })
-                }
-                binding_ref => {
-                    let locator = self
-                        .scope_tree_builder
-                        .compute_locator(binding_ref, reference.offset);
-                    logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
-                    let (func_index, command_index) = reference.command_locator;
-                    if func_index == context.func_index {
-                        context.commands[command_index] =
-                            CompileCommand::Reference(reference.symbol, locator);
-                    } else {
-                        self.functions[func_index].commands[command_index] =
-                            CompileCommand::Reference(reference.symbol, locator);
-                        self.scope_tree_builder.set_closed_over(binding_ref);
+            }
+            binding_ref => {
+                let locator = self
+                    .scope_tree_builder
+                    .compute_locator(binding_ref, reference.offset);
+                logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
+                let (func_index, command_index) = reference.command_locator;
+                if func_index == context.func_index {
+                    context.commands[command_index] =
+                        CompileCommand::Reference(reference.symbol, locator);
+                    if self.scope_tree_builder.is_captured(binding_ref) {
+                        // TODO: add a compile command to capture the binding.
                     }
+                } else {
+                    self.functions[func_index].commands[command_index] =
+                        CompileCommand::Reference(reference.symbol, locator);
+                    self.scope_tree_builder.set_captured(binding_ref);
                 }
             }
         }
@@ -826,7 +838,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         // It will be replaced with `Bindings(n)` in `accept()`.
         context.commands.push(CompileCommand::Nop);
         context.start_scope();
-        self.scope_tree_builder.push(ScopeKind::Function);
+        self.scope_tree_builder.push_function();
 
         if self.use_global_bindings {
             self.put_global_bindings();
@@ -887,6 +899,8 @@ struct FunctionContext {
     /// compute the memory layout of local variables on the stack because the computation has to be
     /// performed after all variable declarations are processed.
     references: Vec<Reference>,
+
+    captures: Vec<Reference>,
 
     /// A list of open bindings of the function.
     open_bindings: Vec<OpenBinding>,
@@ -971,7 +985,7 @@ impl FunctionContext {
         self.nargs_stack.last_mut().unwrap().1 += 1;
     }
 
-    fn put_call(&mut self) {
+    fn process_call_expression(&mut self) {
         let (index, nargs) = self.nargs_stack.pop().unwrap();
         self.commands[index] = CompileCommand::Arguments(nargs);
         self.commands.push(CompileCommand::Call(nargs));
@@ -1046,6 +1060,9 @@ impl FunctionContext {
 
     fn process_function_declaration(&mut self, func_id: FunctionId) {
         self.commands.push(CompileCommand::Function(func_id));
+        // TODO: capture free variables
+        // TODO: create an environment holding the captured free variables
+        // TODO: create a closure w/ the function and the environment
         self.commands.push(CompileCommand::DeclareFunction);
         self.scope_stack.last_mut().unwrap().num_bindings += 1;
     }
@@ -1056,6 +1073,9 @@ impl FunctionContext {
             self.put_command(CompileCommand::Discard);
         }
         self.commands.push(CompileCommand::Function(func_id));
+        // TODO: capture free variables
+        // TODO: create an environment holding the captured free variables
+        // TODO: create a closure w/ the function and the environment
     }
 
     fn process_loop_start(&mut self) {

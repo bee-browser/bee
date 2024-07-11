@@ -5,6 +5,7 @@
 
 enum class Status;
 struct Value;
+struct Closure;
 typedef Status (
     *FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv, Value* ret);
 
@@ -41,6 +42,7 @@ enum class ValueKind : uint8_t {
   Boolean,
   Number,
   Function,
+  Closure,
 };
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
@@ -50,6 +52,8 @@ union ValueHolder {
   bool boolean;
   double number;
   FuncPtr function;
+  // TODO: GCCellRef
+  Closure* closure;
 };
 
 static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
@@ -77,6 +81,19 @@ struct Binding {
 #define BINDING_STRICT 0x08
 
 static_assert(sizeof(Binding) == sizeof(uint64_t) * 2, "size mismatched");
+
+// TODO: GCCell
+struct Capture {
+  Binding* target;
+  Binding binding;
+};
+
+// TODO: GCCell
+struct Closure {
+  FuncPtr lambda;
+  uint16_t num_captures;
+  Capture* captures[];
+};
 
 #include "runtime.hh"
 
