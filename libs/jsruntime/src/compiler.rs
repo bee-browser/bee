@@ -8,7 +8,9 @@ use crate::bridge::Locator;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
+use crate::semantics::BindingRef;
 use crate::semantics::CompileCommand;
+use crate::semantics::ScopeTree;
 use crate::Module;
 use crate::Program;
 use crate::Runtime;
@@ -18,7 +20,7 @@ impl Runtime {
         logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(&self.function_registry);
+        let mut compiler = Compiler::new(&self.function_registry, &program.scope_tree);
         compiler.start_compile();
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
@@ -37,16 +39,18 @@ impl Runtime {
 #[derive(Debug, thiserror::Error)]
 pub enum CompileError {}
 
-struct Compiler<'a> {
+struct Compiler<'a, 'b> {
     peer: *mut bridge::Compiler,
     function_registry: &'a FunctionRegistry,
+    scope_tree: &'b ScopeTree,
 }
 
-impl<'a> Compiler<'a> {
-    pub fn new(function_registry: &'a FunctionRegistry) -> Self {
+impl<'a, 'b> Compiler<'a, 'b> {
+    pub fn new(function_registry: &'a FunctionRegistry, scope_tree: &'b ScopeTree) -> Self {
         Self {
             peer: unsafe { bridge::compiler_peer_new() },
             function_registry,
+            scope_tree,
         }
     }
 
@@ -130,9 +134,15 @@ impl<'a> Compiler<'a> {
                     bridge::compiler_peer_function(self.peer, func_id.into(), name.as_ptr());
                 }
             }
-            CompileCommand::Reference(symbol, locator) => unsafe {
-                assert_ne!(*locator, Locator::NONE);
-                bridge::compiler_peer_reference(self.peer, symbol.id(), *locator);
+            CompileCommand::Reference(binding_ref, offset) => {
+                let binding_ref = *binding_ref;
+                assert_ne!(binding_ref, BindingRef::NONE);
+                let symbol = self.scope_tree.get_symbol(binding_ref);
+                let locator = self.scope_tree.compute_locator(binding_ref, *offset);
+                assert_ne!(locator, Locator::NONE);
+                unsafe {
+                    bridge::compiler_peer_reference(self.peer, symbol.id(), locator);
+                }
             },
             CompileCommand::Exception => unsafe {
                 bridge::compiler_peer_exception(self.peer);
@@ -444,7 +454,7 @@ impl<'a> Compiler<'a> {
     }
 }
 
-impl<'a> Drop for Compiler<'a> {
+impl<'a, 'b> Drop for Compiler<'a, 'b> {
     fn drop(&mut self) {
         unsafe {
             bridge::compiler_peer_delete(self.peer);

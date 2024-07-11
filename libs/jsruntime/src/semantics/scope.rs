@@ -33,7 +33,7 @@ pub struct BindingRef(u16, u16);
 impl BindingRef {
     pub const NONE: Self = Self::new(0, 0);
 
-    const fn new(scope_index: u16, binding_index: u16) -> Self {
+    pub const fn new(scope_index: u16, binding_index: u16) -> Self {
         Self(scope_index, binding_index)
     }
 
@@ -63,6 +63,46 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
+    pub fn get_symbol(&self, binding_ref: BindingRef) -> Symbol {
+        let scope = &self.scopes[binding_ref.scope_index()];
+        debug_assert!(scope.is_sorted());
+        scope.bindings[binding_ref.binding_index()].symbol
+    }
+
+    pub fn compute_locator(&self, binding_ref: BindingRef, offset: usize) -> Locator {
+        let scope = &self.scopes[binding_ref.scope_index()];
+        debug_assert!(scope.is_sorted());
+        match scope.bindings[binding_ref.binding_index()].kind {
+            BindingKind::FormalParameter(index) => {
+                // TODO: the compilation should fail if `None` is returned.
+                Locator::checked_argument(offset, index).unwrap()
+            }
+            _ => {
+                let base = self.compute_offset(binding_ref.scope_ref());
+                // TODO: the compilation should fail if `None` is returned.
+                Locator::checked_local(offset, base + binding_ref.binding_index()).unwrap()
+            }
+        }
+    }
+
+    fn compute_offset(&self, scope_ref: ScopeRef) -> usize {
+        let mut scope = &self.scopes[scope_ref.index()];
+        debug_assert!(scope.is_sorted());
+        if scope.is_function() {
+            return 0;
+        }
+        let mut offset = 0;
+        scope = &self.scopes[scope.outer.index()];
+        loop {
+            offset += scope.bindings.len();
+            if scope.is_function() {
+                return offset;
+            }
+            debug_assert_ne!(scope.outer, ScopeRef::NONE);
+            scope = &self.scopes[scope.outer.index()];
+        }
+    }
+
     #[allow(unused)]
     pub fn print(&self) {
         for scope in self.scopes[1..].iter() {
@@ -170,40 +210,6 @@ impl ScopeTreeBuilder {
                     }
                 }
             }
-        }
-    }
-
-    pub fn compute_locator(&self, binding_ref: BindingRef, offset: usize) -> Locator {
-        let scope = &self.scopes[binding_ref.scope_index()];
-        debug_assert!(scope.is_sorted());
-        match scope.bindings[binding_ref.binding_index()].kind {
-            BindingKind::FormalParameter(index) => {
-                // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_argument(offset, index).unwrap()
-            }
-            _ => {
-                let base = self.compute_offset(binding_ref.scope_ref());
-                // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_local(offset, base + binding_ref.binding_index()).unwrap()
-            }
-        }
-    }
-
-    fn compute_offset(&self, scope_ref: ScopeRef) -> usize {
-        let mut scope = &self.scopes[scope_ref.index()];
-        debug_assert!(scope.is_sorted());
-        if scope.is_function() {
-            return 0;
-        }
-        let mut offset = 0;
-        scope = &self.scopes[scope.outer.index()];
-        loop {
-            offset += scope.bindings.len();
-            if scope.is_function() {
-                return offset;
-            }
-            debug_assert_ne!(scope.outer, ScopeRef::NONE);
-            scope = &self.scopes[scope.outer.index()];
         }
     }
 

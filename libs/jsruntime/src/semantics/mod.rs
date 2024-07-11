@@ -19,10 +19,11 @@ use super::FunctionId;
 use super::FunctionRegistry;
 use super::Runtime;
 use scope::BindingKind;
-use scope::BindingRef;
 use scope::ScopeRef;
-use scope::ScopeTree;
 use scope::ScopeTreeBuilder;
+
+pub use scope::BindingRef;
+pub use scope::ScopeTree;
 
 impl Runtime {
     /// Parses a given source text as a script.
@@ -38,7 +39,7 @@ impl Runtime {
 /// A type representing a JavaScript program after the semantic analysis.
 pub struct Program {
     pub functions: Vec<FunctionRecipe>,
-    scope_tree: ScopeTree,
+    pub scope_tree: ScopeTree,
 }
 
 impl Program {
@@ -709,7 +710,7 @@ impl<'r> Analyzer<'r> {
         // Register `undefined`.
         let symbol = Symbol::UNDEFINED;
         // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
@@ -724,7 +725,7 @@ impl<'r> Analyzer<'r> {
         // Register `Infinity`.
         let symbol = Symbol::INFINITY;
         // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
@@ -740,7 +741,7 @@ impl<'r> Analyzer<'r> {
         // Register `NaN`.
         let symbol = Symbol::NAN;
         // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
@@ -761,8 +762,7 @@ impl<'r> Analyzer<'r> {
         for (func_id, host_func) in self.function_registry.enumerate_host_function() {
             let symbol = self.symbol_registry.intern_cstr(&host_func.name);
             // The locator will be computed in `resolve_references()`.
-            let command_index =
-                context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+            let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
             context.process_function_declaration(func_id);
             self.scope_tree_builder
                 .add_binding(symbol, BindingKind::Immutable);
@@ -789,7 +789,7 @@ impl<'r> Analyzer<'r> {
         match self.scope_tree_builder.resolve_reference(reference) {
             BindingRef::NONE => {
                 // this is a reference to an open binding.
-                logger::debug!(event = "resolve-locator", ?reference.symbol, locator = "None");
+                logger::debug!(event = "resolve-locator", ?reference.symbol, reference.offset, binding_ref = ?BindingRef::NONE);
                 context.open_bindings.push(OpenBinding {
                     symbol: reference.symbol,
                 });
@@ -807,20 +807,17 @@ impl<'r> Analyzer<'r> {
                     });
             }
             binding_ref => {
-                let locator = self
-                    .scope_tree_builder
-                    .compute_locator(binding_ref, reference.offset);
-                logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
+                logger::debug!(event = "resolve-reference", ?reference.symbol, reference.offset, ?binding_ref);
                 let (func_index, command_index) = reference.command_locator;
                 if func_index == context.func_index {
                     context.commands[command_index] =
-                        CompileCommand::Reference(reference.symbol, locator);
+                        CompileCommand::Reference(binding_ref, reference.offset);
                     if self.scope_tree_builder.is_captured(binding_ref) {
                         // TODO: add a compile command to capture the binding.
                     }
                 } else {
                     self.functions[func_index].commands[command_index] =
-                        CompileCommand::Reference(reference.symbol, locator);
+                        CompileCommand::Reference(binding_ref, reference.offset);
                     self.scope_tree_builder.set_captured(binding_ref);
                 }
             }
@@ -1004,7 +1001,7 @@ impl FunctionContext {
 
     fn process_identifier_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
         // The locator will be updated later.
-        let command_index = self.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         self.references.push(Reference {
             symbol,
             scope_ref,
@@ -1016,7 +1013,7 @@ impl FunctionContext {
     fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
         if self.in_body {
             // The locator will be updated later.
-            let command_index = self.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
             self.references.push(Reference {
                 symbol,
                 scope_ref: builder.current(),
@@ -1329,7 +1326,7 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Function(FunctionId),
-    Reference(Symbol, Locator),
+    Reference(BindingRef, usize),
     Exception,
 
     Bindings(u16),
@@ -1474,6 +1471,10 @@ pub enum CompileCommand {
     Swap,
 }
 
+impl CompileCommand {
+    const REFERENCE_PLACEHOLDER: Self = Self::Reference(BindingRef::NONE, 0);
+}
+
 impl From<UpdateOperator> for CompileCommand {
     fn from(value: UpdateOperator) -> Self {
         match value {
@@ -1583,39 +1584,30 @@ mod tests {
 
     use super::*;
 
-    macro_rules! symbol {
-        ($symbol_registry:expr, $name:literal) => {
-            $symbol_registry.lookup($name.encode_utf16().collect::<Vec<u16>>().as_slice())
-        };
-    }
-
-    macro_rules! local {
-        ($index:expr) => {
-            local!(0, $index)
-        };
-        ($func:expr, $index:expr) => {
-            Locator::local($func, $index)
+    macro_rules! binding_ref {
+        ($scope_index:expr, $binding_index:expr) => {
+            BindingRef::new($scope_index, $binding_index)
         };
     }
 
     #[test]
     fn test_lexical_declarations() {
-        test("let a, b = 2; const c = 3, d = 4;", |reg, program| {
+        test("let a, b = 2; const c = 3, d = 4;", |_reg, program| {
             assert_eq!(
                 program.functions[0].commands,
                 [
                     CompileCommand::Bindings(4),
                     CompileCommand::AllocateBindings(4, true),
-                    CompileCommand::Reference(symbol!(reg, "a"), local!(0)),
+                    CompileCommand::Reference(binding_ref!(1, 0), 0),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), local!(1)),
+                    CompileCommand::Reference(binding_ref!(1, 1), 0),
                     CompileCommand::Number(2.0),
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "c"), local!(2)),
+                    CompileCommand::Reference(binding_ref!(1, 2), 0),
                     CompileCommand::Number(3.0),
                     CompileCommand::ImmutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "d"), local!(3)),
+                    CompileCommand::Reference(binding_ref!(1, 3), 0),
                     CompileCommand::Number(4.0),
                     CompileCommand::ImmutableBinding,
                     CompileCommand::ReleaseBindings(4),
@@ -1627,25 +1619,25 @@ mod tests {
 
     #[test]
     fn test_lexical_declarations_in_scopes() {
-        test("let a; { let a; } { let a, b; }", |reg, program| {
+        test("let a; { let a; } { let a, b; }", |_reg, program| {
             assert_eq!(
                 program.functions[0].commands,
                 [
                     CompileCommand::Bindings(3),
                     CompileCommand::AllocateBindings(1, true),
-                    CompileCommand::Reference(symbol!(reg, "a"), local!(0)),
+                    CompileCommand::Reference(binding_ref!(1, 0), 0),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
                     CompileCommand::AllocateBindings(1, false),
-                    CompileCommand::Reference(symbol!(reg, "a"), local!(1)),
+                    CompileCommand::Reference(binding_ref!(2, 0), 0),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
                     CompileCommand::ReleaseBindings(1),
                     CompileCommand::AllocateBindings(2, false),
-                    CompileCommand::Reference(symbol!(reg, "a"), local!(1)),
+                    CompileCommand::Reference(binding_ref!(3, 0), 0),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), local!(2)),
+                    CompileCommand::Reference(binding_ref!(3, 1), 0),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
                     CompileCommand::ReleaseBindings(2),
