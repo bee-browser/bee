@@ -114,6 +114,43 @@ void Compiler::Function(uint32_t func_id, const char* name) {
   PushFunction(func);
 }
 
+void Compiler::Closure(bool prologue, uint16_t num_captures) {
+  assert(num_captures > 0);
+  assert(stack_.size() >= 1 + static_cast<size_t>(num_captures));
+
+  llvm::BasicBlock* backup;
+  if (prologue) {
+    backup = builder_->GetInsertBlock();
+    builder_->SetInsertPoint(prologue_);
+  }
+
+  auto* lambda = PopFunction();
+  auto* closure_ptr = CreateCallRuntimeCreateClosure(lambda, num_captures);
+
+  auto* captures = CreateLoadCapturesFromClosure(closure_ptr);
+  for (uint16_t i = 0; i < num_captures; ++i) {
+    auto* capture_ptr = PopCapture();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, i);
+    builder_->CreateStore(capture_ptr, ptr);
+  }
+
+  PushClosure(closure_ptr);
+
+  if (prologue) {
+    builder_->SetInsertPoint(backup);
+  }
+}
+
+llvm::Value* Compiler::CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr) {
+  auto* func = types_->CreateRuntimeCreateCapture();
+  return builder_->CreateCall(func, {exec_context_, binding_ptr});
+}
+
+llvm::Value* Compiler::CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures) {
+  auto* func = types_->CreateRuntimeCreateClosure();
+  return builder_->CreateCall(func, {exec_context_, lambda, builder_->getInt16(num_captures)});
+}
+
 void Compiler::Reference(uint32_t symbol, Locator locator) {
   PushReference(symbol, locator);
 }
@@ -677,8 +714,6 @@ void Compiler::Bindings(uint16_t n) {
   bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
   function_scope_type_->setBody({
-      // outer scope
-      builder_->getPtrTy(),
       // argc
       types_->GetWordType(),
       // argv
@@ -687,7 +722,6 @@ void Compiler::Bindings(uint16_t n) {
       bindings_type_,
   });
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
-  CreateStoreOuterScopeToScope(outer_scope_, function_scope_);
   CreateStoreArgcToScope(argc_, function_scope_);
   CreateStoreArgvToScope(argv_, function_scope_);
   bindings_ = CreateGetBindingsPtrOfScope(function_scope_);
@@ -743,6 +777,25 @@ void Compiler::DeclareFunction() {
   builder_->SetInsertPoint(backup);
 }
 
+void Compiler::DeclareClosure() {
+  static constexpr uint8_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+
+  auto* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(prologue_);
+
+  auto item = Dereference();
+  auto ref = PopReference();
+
+  assert(ref.locator.offset == 0);
+
+  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
+  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
+  CreateStoreItemToBinding(item, binding_ptr);
+
+  builder_->SetInsertPoint(backup);
+}
+
 void Compiler::Arguments(uint16_t argc) {
   assert(argc > 0);
   auto* argv = CreateAllocaInEntryBlock(types_->CreateValueType(), argc);
@@ -765,21 +818,79 @@ void Compiler::Call(uint16_t argc) {
   } else {
     argv = llvm::Constant::getNullValue(builder_->getPtrTy());
   }
+
   auto* ret = CreateAllocaInEntryBlock(types_->CreateValueType());
-  llvm::Value* scope = function_scope_;
-  auto item = Dereference(nullptr, &scope);
-  llvm::Value* func;
-  if (item.type == Item::Function) {
-    func = item.value;  // IIFE
-  } else {
-    assert(item.type == Item::Any);
-    auto* kind = CreateLoadValueKindFromValue(item.value);
-    UNUSED(kind);  // TODO: check kind
-    func = CreateLoadFunctionFromValue(item.value);
+
+  auto item = Dereference();
+  llvm::Value* lambda;
+  llvm::Value* caps;
+  switch (item.type) {
+    case Item::Function: {
+      // IIFE
+      lambda = item.value;
+      caps = llvm::Constant::getNullValue(builder_->getPtrTy());
+      break;
+    }
+    case Item::Closure: {
+      // IIFE
+      auto* closure_ptr = item.value;
+      lambda = CreateLoadLambdaFromClosure(closure_ptr);
+      caps = CreateLoadCapturesFromClosure(closure_ptr);
+      break;
+    }
+    case Item::Any: {
+      auto* lambda_ptr = builder_->CreateAlloca(builder_->getPtrTy(), builder_->getInt32(1));
+      auto* caps_ptr = builder_->CreateAlloca(builder_->getPtrTy(), builder_->getInt32(1));
+      auto* kind = CreateLoadValueKindFromValue(item.value);
+      auto* func_block = llvm::BasicBlock::Create(*context_, "", function_);
+      auto* closure_block = llvm::BasicBlock::Create(*context_, "", function_);
+      auto* error_block = llvm::BasicBlock::Create(*context_, "", function_);
+      auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
+      // switch (kind) {
+      auto* inst = builder_->CreateSwitch(kind, error_block);
+      inst->addCase(builder_->getInt8(static_cast<uint8_t>(ValueKind::Function)), func_block);
+      inst->addCase(builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)), closure_block);
+      // case ValueKind::Function:
+      {
+        builder_->SetInsertPoint(func_block);
+        auto* lambda_tmp = CreateLoadFunctionFromValue(item.value);
+        builder_->CreateStore(lambda_tmp, lambda_ptr);
+        auto* caps_tmp = llvm::Constant::getNullValue(builder_->getPtrTy());
+        builder_->CreateStore(caps_tmp, caps_ptr);
+        builder_->CreateBr(end_block);
+      }
+      // case ValueKind::Closure:
+      {
+        builder_->SetInsertPoint(closure_block);
+        auto* closure_ptr = CreateLoadClosureFromValue(item.value);
+        auto* lambda_tmp = CreateLoadLambdaFromClosure(closure_ptr);
+        builder_->CreateStore(lambda_tmp, lambda_ptr);
+        auto* caps_tmp = CreateLoadCapturesFromClosure(closure_ptr);
+        builder_->CreateStore(caps_tmp, caps_ptr);
+        builder_->CreateBr(end_block);
+      }
+      // default:
+      {
+        builder_->SetInsertPoint(error_block);
+        // TODO: TypeError
+        PushNumber(builder_->getInt32(1));
+        Throw();
+        builder_->CreateBr(end_block);
+      }
+      // }
+      builder_->SetInsertPoint(end_block);
+      lambda = builder_->CreateLoad(builder_->getPtrTy(), lambda_ptr);
+      caps = builder_->CreateLoad(builder_->getPtrTy(), caps_ptr);
+      break;
+    }
+    default:
+      assert(false);
+      return;
   }
+
   auto* prototype = types_->CreateFunctionType();
   auto* status = builder_->CreateCall(
-      prototype, func, {exec_context_, scope, types_->GetWord(argc), argv, ret});
+      prototype, lambda, {exec_context_, caps, types_->GetWord(argc), argv, ret});
 
   // Handle an exception if it's thrown.
   auto* is_exception =
@@ -1284,7 +1395,7 @@ void Compiler::StartFunction(const char* name) {
   epilogue_ = llvm::BasicBlock::Create(*context_, "epilogue", function_);
 
   exec_context_ = function_->getArg(0);
-  outer_scope_ = function_->getArg(1);
+  caps_ = function_->getArg(1);
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
   ret_ = function_->getArg(4);
@@ -1360,6 +1471,73 @@ void Compiler::ReleaseBindings(uint16_t n) {
     }
   }
   allocated_bindings_ -= n;
+}
+
+void Compiler::CreateCapture(Locator locator, bool prologue) {
+  assert(locator.kind == LocatorKind::Local);
+
+  llvm::BasicBlock* backup;
+  if (prologue) {
+    backup = builder_->GetInsertBlock();
+    builder_->SetInsertPoint(prologue_);
+  }
+
+  auto key = *reinterpret_cast<uint32_t*>(&locator);
+  assert(captures_.find(key) == captures_.end());
+  auto* binding_ptr = CreateGetBindingPtr(locator);
+  auto* capture_ptr = CreateCallRuntimeCreateCapture(binding_ptr);
+  captures_[key] = capture_ptr;
+
+  if (prologue) {
+    builder_->SetInsertPoint(backup);
+  }
+}
+
+void Compiler::CaptureBinding(bool prologue) {
+  llvm::BasicBlock* backup;
+  if (prologue) {
+    backup = builder_->GetInsertBlock();
+    builder_->SetInsertPoint(prologue_);
+  }
+
+  auto ref = PopReference();
+  switch (ref.locator.kind) {
+    case LocatorKind::Local: {
+      auto key = *reinterpret_cast<uint32_t*>(&ref.locator);
+      assert(captures_.find(key) != captures_.end());
+      auto* capture_ptr = captures_[key];
+      PushCapture(capture_ptr);
+      break;
+    }
+    case LocatorKind::Capture: {
+      auto* capture_ptr = builder_->CreateConstInBoundsGEP1_32(
+          types_->CreateCaptureType(), caps_, ref.locator.index);
+      PushCapture(capture_ptr);
+      break;
+    }
+    default:
+      assert(false);
+      break;
+  }
+
+  if (prologue) {
+    builder_->SetInsertPoint(backup);
+  }
+}
+
+void Compiler::EscapeBinding(Locator locator) {
+  assert(locator.kind == LocatorKind::Local);
+  auto key = *reinterpret_cast<uint32_t*>(&locator);
+  assert(captures_.find(key) != captures_.end());
+  auto* capture_ptr = captures_[key];
+  auto* escaped_ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
+  auto* binding_ptr = CreateGetBindingPtr(locator);
+  CreateStoreTargetToCapture(escaped_ptr, capture_ptr);
+  auto* binding = CreateLoadBinding(binding_ptr);
+  CreateStoreEscapedToCapture(binding, capture_ptr);
+  // The value of `locator.index` may be reused for another local binding.
+  // The element identified by `locator.index` is removed from `captures_` here.
+  captures_.erase(key);
 }
 
 void Compiler::LabelStart(uint32_t symbol, bool is_iteration_statement) {
@@ -1466,6 +1644,9 @@ void Compiler::DumpStack() {
       case Item::Function:
         llvm::errs() << "function: " << item.func;
         break;
+      case Item::Closure:
+        llvm::errs() << "closure: " << item.value;
+        break;
       case Item::Any:
         llvm::errs() << "any: " << item.value;
         break;
@@ -1481,6 +1662,9 @@ void Compiler::DumpStack() {
           case LocatorKind::Local:
             llvm::errs() << " locator=local(";
             break;
+          case LocatorKind::Capture:
+            llvm::errs() << " locator=capture(";
+            break;
         }
         // static_cast<uint16_t>() is needed for printing uint8_t values.
         llvm::errs() << static_cast<uint16_t>(item.reference.locator.offset) << ", "
@@ -1491,6 +1675,9 @@ void Compiler::DumpStack() {
         break;
       case Item::Block:
         llvm::errs() << "block: " << item.block;
+        break;
+      case Item::Capture:
+        llvm::errs() << "capture: " << item.value;
         break;
     }
 #if defined(BEE_BUILD_DEBUG)
@@ -1503,7 +1690,7 @@ void Compiler::DumpStack() {
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
 }
 
-Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope) {
+Compiler::Item Compiler::Dereference(struct Reference* ref) {
   const auto item = PopItem();
   switch (item.type) {
     case Item::Undefined:
@@ -1511,6 +1698,7 @@ Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope)
     case Item::Boolean:
     case Item::Number:
     case Item::Function:
+    case Item::Closure:
     case Item::Any:
       return item;
     case Item::Reference:
@@ -1519,32 +1707,24 @@ Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope)
           assert(false);
           return Item(Item::Undefined);
         case LocatorKind::Argument: {
-          auto* scope_ptr = function_scope_;
-          auto* argv = argv_;
-          if (item.reference.locator.offset > 0) {
-            scope_ptr = CreateGetScope(item.reference.locator);
-            argv = CreateLoadArgvFromScope(scope_ptr);
-          }
           auto* value_ptr = builder_->CreateConstInBoundsGEP1_32(
-              types_->CreateValueType(), argv, item.reference.locator.index);
+              types_->CreateValueType(), argv_, item.reference.locator.index);
           return Item(Item::Any, value_ptr);
         }
         case LocatorKind::Local: {
-          auto* scope_ptr = function_scope_;
-          auto* bindings_ptr = bindings_;
-          if (item.reference.locator.offset > 0) {
-            scope_ptr = CreateGetScope(item.reference.locator);
-            bindings_ptr = CreateGetBindingsPtrOfScope(scope_ptr);
-          }
           // The `Binding` type has a layout compatible with the `Value` type.
           auto* value_ptr = builder_->CreateConstInBoundsGEP2_32(
-              bindings_type_, bindings_ptr, 0, item.reference.locator.index);
+              bindings_type_, bindings_, 0, item.reference.locator.index);
           if (ref != nullptr) {
             *ref = item.reference;
           }
-          if (scope != nullptr) {
-            *scope = scope_ptr;
-          }
+          return Item(Item::Any, value_ptr);
+        }
+        case LocatorKind::Capture: {
+          auto* capture_ptr_ptr = builder_->CreateConstInBoundsGEP1_32(
+              builder_->getPtrTy(), caps_, item.reference.locator.index);
+          auto* capture_ptr = builder_->CreateLoad(builder_->getPtrTy(), capture_ptr_ptr);
+          auto* value_ptr = CreateLoadTargetFromCapture(capture_ptr);
           return Item(Item::Any, value_ptr);
         }
       }
@@ -1603,22 +1783,6 @@ void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
   PushNumber(onum);
 }
 
-// TODO(perf): If this method causes a performance issue, we can improve this method using an array
-// of static links (a lexical scope chain).  This is a well-known technique and the array is called
-// a *display*.  The maximum depth of lexical scope chains in a JavaScript program can be computed
-// at compile-time.  This means that we can define a global *display* array for each JavaScript
-// program, which can hold any lexical scope chain in the JavaScript program.
-llvm::Value* Compiler::CreateGetScope(const Locator& locator) {
-  auto* scope_ptr = function_scope_;
-  if (locator.offset > 0) {
-    scope_ptr = outer_scope_;
-    for (size_t i = 1; i < locator.offset; ++i) {
-      scope_ptr = CreateLoadOuterScopeFromScope(scope_ptr);
-    }
-  }
-  return scope_ptr;
-}
-
 void Compiler::CreateStoreItemToBinding(const Item& item, llvm::Value* binding_ptr) {
   switch (item.type) {
     case Item::Undefined:
@@ -1635,6 +1799,9 @@ void Compiler::CreateStoreItemToBinding(const Item& item, llvm::Value* binding_p
       break;
     case Item::Function:
       CreateStoreFunctionToBinding(item.value, binding_ptr);
+      break;
+    case Item::Closure:
+      CreateStoreClosureToBinding(item.value, binding_ptr);
       break;
     case Item::Any:
       CreateStoreValueToBinding(item.value, binding_ptr);

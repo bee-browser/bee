@@ -8,8 +8,8 @@ use crate::bridge::Locator;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
-use crate::semantics::BindingRef;
 use crate::semantics::CompileCommand;
+use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::Module;
 use crate::Program;
@@ -134,15 +134,13 @@ impl<'a, 'b> Compiler<'a, 'b> {
                     bridge::compiler_peer_function(self.peer, func_id.into(), name.as_ptr());
                 }
             }
-            CompileCommand::Reference(binding_ref, offset) => {
-                let binding_ref = *binding_ref;
-                assert_ne!(binding_ref, BindingRef::NONE);
-                let symbol = self.scope_tree.get_symbol(binding_ref);
-                let locator = self.scope_tree.compute_locator(binding_ref, *offset);
-                assert_ne!(locator, Locator::NONE);
-                unsafe {
-                    bridge::compiler_peer_reference(self.peer, symbol.id(), locator);
-                }
+            CompileCommand::Closure(prologue, n) => unsafe {
+                debug_assert!(*n > 0);
+                bridge::compiler_peer_closure(self.peer, *prologue, *n);
+            },
+            CompileCommand::Reference(symbol, locator) => unsafe {
+                debug_assert_ne!(*locator, Locator::NONE);
+                bridge::compiler_peer_reference(self.peer, symbol.id(), *locator);
             },
             CompileCommand::Exception => unsafe {
                 bridge::compiler_peer_exception(self.peer);
@@ -159,6 +157,9 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::DeclareFunction => unsafe {
                 bridge::compiler_peer_declare_function(self.peer);
             },
+            CompileCommand::DeclareClosure => unsafe {
+                bridge::compiler_peer_declare_closure(self.peer);
+            },
             CompileCommand::Arguments(nargs) => unsafe {
                 if *nargs > 0 {
                     bridge::compiler_peer_arguments(self.peer, *nargs);
@@ -170,20 +171,48 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Call(nargs) => unsafe {
                 bridge::compiler_peer_call(self.peer, *nargs);
             },
-            CompileCommand::AllocateBindings(n, prologue) => {
-                debug_assert!(*n > 0);
-                unsafe {
-                    bridge::compiler_peer_allocate_bindings(self.peer, *n, *prologue);
+            CompileCommand::AllocateBindings(scope_ref) => {
+                let scope_ref = *scope_ref;
+                debug_assert_ne!(scope_ref, ScopeRef::NONE);
+                let scope = self.scope_tree.scope(scope_ref);
+                let n = scope.bindings.len();
+                let prologue = scope.is_function();
+                if n > 0 {
+                    unsafe {
+                        bridge::compiler_peer_allocate_bindings(self.peer, n as u16, prologue);
+                    }
+                }
+                for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
+                    if binding.captured {
+                        let locator = self.scope_tree.compute_locator(binding_ref, 0);
+                        unsafe {
+                            bridge::compiler_peer_create_capture(self.peer, locator, prologue);
+                        }
+                    }
                 }
             }
-            CompileCommand::ReleaseBindings(n) => {
-                debug_assert!(*n > 0);
-                unsafe {
-                    // `runtime_pop_scope()` call will not be added if the basic block already has
-                    // a terminator instruction.
-                    bridge::compiler_peer_release_bindings(self.peer, *n);
+            CompileCommand::ReleaseBindings(scope_ref) => {
+                let scope_ref = *scope_ref;
+                debug_assert_ne!(scope_ref, ScopeRef::NONE);
+                for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
+                    if binding.captured {
+                        let locator = self.scope_tree.compute_locator(binding_ref, 0);
+                        unsafe {
+                            bridge::compiler_peer_escape_binding(self.peer, locator);
+                        }
+                    }
+                }
+                let scope = self.scope_tree.scope(scope_ref);
+                let n = scope.bindings.len();
+                if n > 0 {
+                    unsafe {
+                        bridge::compiler_peer_release_bindings(self.peer, n as u16);
+                    }
                 }
             }
+            CompileCommand::CaptureBinding(prologue) => unsafe {
+                bridge::compiler_peer_capture_binding(self.peer, *prologue);
+            },
             CompileCommand::PostfixIncrement => unsafe {
                 bridge::compiler_peer_postfix_increment(self.peer);
             },

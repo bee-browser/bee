@@ -33,3 +33,15 @@ functions:
       - name: b
         type: '&Value'
     ret: bool
+  - name: create_capture
+    args:
+      - name: target
+        type: '&mut Binding'
+    ret: '&mut Capture'
+  - name: create_closure
+    args:
+      - name: lambda
+        type: 'FuncPtr'
+      - name: num_captures
+        type: 'u16'
+    ret: '&mut Closure'

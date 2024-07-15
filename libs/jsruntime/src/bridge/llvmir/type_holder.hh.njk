@@ -23,6 +23,8 @@ class TypeHolder {
   llvm::Value* GetWord(size_t value);
   llvm::StructType* CreateValueType();
   llvm::StructType* CreateBindingType();
+  llvm::StructType* CreateCaptureType();
+  llvm::StructType* CreateClosureType();
   llvm::FunctionType* CreateFunctionType();
   {%- for function in data.functions %}
   llvm::Function* CreateRuntime{{ function.name | pascalCase }}();
@@ -34,6 +36,8 @@ class TypeHolder {
   llvm::IRBuilder<>& builder_;
   llvm::StructType* value_type_ = nullptr;
   llvm::StructType* binding_type_ = nullptr;
+  llvm::StructType* capture_type_ = nullptr;
+  llvm::StructType* closure_type_ = nullptr;
   llvm::FunctionType* function_type_ = nullptr;
   {%- for function in data.functions %}
   llvm::Function* runtime_{{ function.name }}_ = nullptr;

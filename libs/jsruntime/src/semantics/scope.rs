@@ -10,7 +10,7 @@ pub struct ScopeRef(u16);
 impl ScopeRef {
     pub const NONE: Self = Self::new(0);
 
-    const fn new(index: u16) -> Self {
+    pub const fn new(index: u16) -> Self {
         Self(index)
     }
 
@@ -63,15 +63,28 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
+    pub fn scope(&self, scope_ref: ScopeRef) -> &Scope {
+        &self.scopes[scope_ref.index()]
+    }
+
+    pub fn iter_bindings(
+        &self,
+        scope_ref: ScopeRef,
+    ) -> impl Iterator<Item = (BindingRef, &Binding)> {
+        self.scopes[scope_ref.index()]
+            .bindings
+            .iter()
+            .enumerate()
+            .map(move |(index, binding)| (BindingRef::new(scope_ref.0, index as u16), binding))
+    }
+
     pub fn get_symbol(&self, binding_ref: BindingRef) -> Symbol {
         let scope = &self.scopes[binding_ref.scope_index()];
-        debug_assert!(scope.is_sorted());
         scope.bindings[binding_ref.binding_index()].symbol
     }
 
     pub fn compute_locator(&self, binding_ref: BindingRef, offset: usize) -> Locator {
         let scope = &self.scopes[binding_ref.scope_index()];
-        debug_assert!(scope.is_sorted());
         match scope.bindings[binding_ref.binding_index()].kind {
             BindingKind::FormalParameter(index) => {
                 // TODO: the compilation should fail if `None` is returned.
@@ -87,7 +100,6 @@ impl ScopeTree {
 
     fn compute_offset(&self, scope_ref: ScopeRef) -> usize {
         let mut scope = &self.scopes[scope_ref.index()];
-        debug_assert!(scope.is_sorted());
         if scope.is_function() {
             return 0;
         }
@@ -105,8 +117,8 @@ impl ScopeTree {
 
     #[allow(unused)]
     pub fn print(&self) {
-        for scope in self.scopes[1..].iter() {
-            println!("{scope}");
+        for (index, scope) in self.scopes.iter().enumerate().skip(1) {
+            println!("{}", ScopePrinter { index, scope });
         }
     }
 }
@@ -125,15 +137,15 @@ impl ScopeTreeBuilder {
         self.current
     }
 
-    pub fn push_function(&mut self) {
-        self.push(ScopeFlags::FUNCTION);
+    pub fn push_function(&mut self) -> ScopeRef {
+        self.push(ScopeFlags::FUNCTION)
     }
 
-    pub fn push_block(&mut self) {
-        self.push(ScopeFlags::empty());
+    pub fn push_block(&mut self) -> ScopeRef {
+        self.push(ScopeFlags::empty())
     }
 
-    fn push(&mut self, flags: ScopeFlags) {
+    fn push(&mut self, flags: ScopeFlags) -> ScopeRef {
         let index = self.scopes.len();
         self.scopes.push(Scope {
             bindings: vec![],
@@ -144,6 +156,7 @@ impl ScopeTreeBuilder {
         // TODO: should return an error
         self.current = ScopeRef::checked_new(index).unwrap();
         self.depth += 1;
+        self.current
     }
 
     pub fn pop(&mut self) {
@@ -172,12 +185,6 @@ impl ScopeTreeBuilder {
         for binding in scope.bindings.iter_mut().rev().take(n as usize) {
             binding.kind = BindingKind::Immutable;
         }
-    }
-
-    pub fn is_captured(&self, binding_ref: BindingRef) -> bool {
-        let scope = &self.scopes[binding_ref.scope_index()];
-        debug_assert!(scope.is_sorted());
-        scope.bindings[binding_ref.binding_index()].captured
     }
 
     pub fn set_captured(&mut self, binding_ref: BindingRef) {
@@ -213,6 +220,38 @@ impl ScopeTreeBuilder {
         }
     }
 
+    pub fn compute_locator(&self, binding_ref: BindingRef, offset: usize) -> Locator {
+        let scope = &self.scopes[binding_ref.scope_index()];
+        match scope.bindings[binding_ref.binding_index()].kind {
+            BindingKind::FormalParameter(index) => {
+                // TODO: the compilation should fail if `None` is returned.
+                Locator::checked_argument(offset, index).unwrap()
+            }
+            _ => {
+                let base = self.compute_offset(binding_ref.scope_ref());
+                // TODO: the compilation should fail if `None` is returned.
+                Locator::checked_local(offset, base + binding_ref.binding_index()).unwrap()
+            }
+        }
+    }
+
+    fn compute_offset(&self, scope_ref: ScopeRef) -> usize {
+        let mut scope = &self.scopes[scope_ref.index()];
+        if scope.is_function() {
+            return 0;
+        }
+        let mut offset = 0;
+        scope = &self.scopes[scope.outer.index()];
+        loop {
+            offset += scope.bindings.len();
+            if scope.is_function() {
+                return offset;
+            }
+            debug_assert_ne!(scope.outer, ScopeRef::NONE);
+            scope = &self.scopes[scope.outer.index()];
+        }
+    }
+
     pub fn build(&mut self) -> ScopeTree {
         ScopeTree {
             scopes: std::mem::take(&mut self.scopes),
@@ -231,7 +270,7 @@ impl Default for ScopeTreeBuilder {
 }
 
 pub struct Scope {
-    bindings: Vec<Binding>,
+    pub bindings: Vec<Binding>,
     outer: ScopeRef,
     depth: u16,
     flags: ScopeFlags,
@@ -245,7 +284,7 @@ impl Scope {
         flags: ScopeFlags::empty(),
     };
 
-    fn is_function(&self) -> bool {
+    pub fn is_function(&self) -> bool {
         self.flags.contains(ScopeFlags::FUNCTION)
     }
 
@@ -254,18 +293,23 @@ impl Scope {
     }
 }
 
-impl std::fmt::Display for Scope {
+struct ScopePrinter<'a> {
+    index: usize,
+    scope: &'a Scope,
+}
+
+impl<'a> std::fmt::Display for ScopePrinter<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:indent$}", "", indent = self.depth as usize)?;
-        if !self.is_sorted() {
+        write!(f, "{:indent$}", "", indent = self.scope.depth as usize)?;
+        if !self.scope.is_sorted() {
             write!(f, "*")?;
         }
-        if self.is_function() {
-            write!(f, "function:")?;
+        if self.scope.is_function() {
+            write!(f, "function({}):", self.index)?;
         } else {
-            write!(f, "block:")?;
+            write!(f, "block({}):", self.index)?;
         }
-        for binding in self.bindings.iter() {
+        for binding in self.scope.bindings.iter() {
             write!(f, " {binding}")?;
         }
         Ok(())
@@ -280,10 +324,10 @@ bitflags! {
 }
 
 #[derive(Debug)]
-struct Binding {
-    symbol: Symbol,
+pub struct Binding {
+    pub symbol: Symbol,
     kind: BindingKind,
-    captured: bool,
+    pub captured: bool,
 }
 
 impl std::fmt::Display for Binding {

@@ -728,76 +728,67 @@ fn eval_arrow_function_empty_parameter_list() {
 
 #[test]
 fn eval_do_while_statement() {
-    eval!("let i = 0; do { i++ } while (i < 2); print(i)", 2);
+    eval!(file: "do_while_statement.js", 2);
 }
 
 #[test]
 fn eval_while_statement() {
-    eval!("let i = 0; while (i < 2) { i++ } print(i)", 2);
+    eval!(file: "while_statement.js", 2);
 }
 
 #[test]
 fn eval_for_statement() {
-    eval!(
-        "let i = 0; for (let j = 0; j < 2; ++j) { i = j } print(i)",
-        1
-    );
+    eval!(file: "for_statement.js", 1);
 }
 
 #[test]
 fn eval_for_statement_no_init() {
-    eval!("let i = 0; for (; i < 2; ++i) {} print(i)", 2);
+    eval!(file: "for_statement_no_init.js", 2);
 }
 
 #[test]
 fn eval_for_statement_no_test() {
-    eval!("let i; for (i = 0; ; ++i) { if (i > 2) break } print(i)", 3);
+    eval!(file: "for_statement_no_test.js", 3);
 }
 
 #[test]
 fn eval_for_statement_no_init_next() {
-    eval!("let i = 0; for (; i < 2; ) { ++i } print(i)", 2);
+    eval!(file: "for_statement_no_init_next.js", 2);
 }
 
 #[test]
 fn eval_for_statement_no_init_test() {
-    eval!("let i = 0; for (; ; ++i) { if (i > 2) break } print(i)", 3);
+    eval!(file: "for_statement_no_init_test.js", 3);
 }
 
 #[test]
 fn eval_for_statement_no_test_next() {
-    eval!(
-        "let i; for (i = 0; ; ) { if (i > 2) break; ++i } print(i)",
-        3
-    );
+    eval!(file: "for_statement_no_test_next.js", 3);
 }
 
 #[test]
 fn eval_for_statement_no_init_test_next() {
-    eval!("let i = 0; for (;;) { if (i > 2) break; ++i } print(i)", 3);
+    eval!(file: "for_statement_no_init_test_next.js", 3);
 }
 
 #[test]
 fn eval_continue() {
-    eval!("let i = 0; for (; i < 2; ++i) { continue } print(i)", 2);
+    eval!(file: "continue.js", 2);
 }
 
 #[test]
 fn eval_deadcode_after_continue() {
-    eval!(
-        "let i = 0; for (; i < 2; ++i) { continue; i = 1 } print(i)",
-        2
-    );
+    eval!(file: "deadcode_after_continue.js", 2);
 }
 
 #[test]
 fn eval_break() {
-    eval!("let i = 0; for (;;) { break } print(0)", 0);
+    eval!(file: "break.js", 0);
 }
 
 #[test]
 fn eval_deadcode_after_break() {
-    eval!("let i = 0; for (;;) { break; i = 1 } print(i)", 0);
+    eval!(file: "deadcode_after_break.js", 0);
 }
 
 #[test]

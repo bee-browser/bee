@@ -51,21 +51,49 @@ llvm::StructType* TypeHolder::CreateBindingType() {
   return binding_type_;
 }
 
+llvm::StructType* TypeHolder::CreateCaptureType() {
+  if (capture_type_ == nullptr) {
+    capture_type_ = llvm::StructType::create(context_, "Capture");
+    capture_type_->setBody({
+        // target
+        builder_.getPtrTy(),
+        // escaped
+        CreateBindingType(),
+    });
+  }
+  return capture_type_;
+}
+
+llvm::StructType* TypeHolder::CreateClosureType() {
+  if (closure_type_ == nullptr) {
+    closure_type_ = llvm::StructType::create(context_, "Closure");
+    closure_type_->setBody({
+        // lambda
+        builder_.getPtrTy(),
+        // num_captures
+        builder_.getInt16Ty(),
+        // captures
+        builder_.getPtrTy(),
+    });
+  }
+  return closure_type_;
+}
+
 llvm::FunctionType* TypeHolder::CreateFunctionType() {
   if (function_type_ == nullptr) {
     function_type_ = llvm::FunctionType::get(
         // status code
         builder_.getInt32Ty(),
         {
-            // runtime (pointer to the runtime)
+            // ctx (pointer to the exec context)
             builder_.getPtrTy(),
-            // outer (pointer to the outer function scope)
+            // caps (pointer to a list captures)
             builder_.getPtrTy(),
             // argc
             GetWordType(),
             // argv (pointer to a list of bindings)
             builder_.getPtrTy(),
-            // return value (pointer to a value)
+            // ret (pointer to a return value)
             builder_.getPtrTy(),
         },
         false);

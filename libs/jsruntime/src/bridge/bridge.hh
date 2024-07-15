@@ -6,13 +6,13 @@
 enum class Status;
 struct Value;
 struct Closure;
-typedef Status (
-    *FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv, Value* ret);
+typedef Status (*FuncPtr)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
 
 enum class LocatorKind : uint8_t {
   None,
   Argument,
   Local,
+  Capture,
 };
 
 static_assert(sizeof(LocatorKind) == sizeof(uint8_t), "size mismatched");
@@ -52,7 +52,7 @@ union ValueHolder {
   bool boolean;
   double number;
   FuncPtr function;
-  // TODO: GCCellRef
+  // TODO: GcCellRef
   Closure* closure;
 };
 
@@ -82,17 +82,18 @@ struct Binding {
 
 static_assert(sizeof(Binding) == sizeof(uint64_t) * 2, "size mismatched");
 
-// TODO: GCCell
+// TODO: GcCell
 struct Capture {
   Binding* target;
-  Binding binding;
+  Binding escaped;
 };
 
-// TODO: GCCell
+// TODO: GcCell
 struct Closure {
   FuncPtr lambda;
   uint16_t num_captures;
-  Capture* captures[];
+  Capture** captures;
+  // `Capture* storage[num_captures]` is placed here if it's not empty.
 };
 
 #include "runtime.hh"
@@ -120,6 +121,7 @@ void compiler_peer_null(Compiler* self);
 void compiler_peer_boolean(Compiler* self, bool value);
 void compiler_peer_number(Compiler* self, double value);
 void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name);
+void compiler_peer_closure(Compiler* self, bool prologue, uint16_t num_captures);
 void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator);
 void compiler_peer_exception(Compiler* self);
 void compiler_peer_postfix_increment(Compiler* self);
@@ -173,6 +175,7 @@ void compiler_peer_bindings(Compiler* self, uint16_t n);
 void compiler_peer_declare_immutable(Compiler* self);
 void compiler_peer_declare_mutable(Compiler* self);
 void compiler_peer_declare_function(Compiler* self);
+void compiler_peer_declare_closure(Compiler* self);
 void compiler_peer_arguments(Compiler* self, uint16_t argc);
 void compiler_peer_argument(Compiler* self, uint16_t index);
 void compiler_peer_call(Compiler* self, uint16_t argc);
@@ -206,6 +209,9 @@ void compiler_peer_start_function(Compiler* self, const char* name);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue);
 void compiler_peer_release_bindings(Compiler* self, uint16_t n);
+void compiler_peer_create_capture(Compiler* self, Locator locator, bool prologue);
+void compiler_peer_capture_binding(Compiler* self, bool prologue);
+void compiler_peer_escape_binding(Compiler* self, Locator locator);
 void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement);
 void compiler_peer_label_end(Compiler* self, uint32_t symbol, bool is_iteration_statement);
 void compiler_peer_continue(Compiler* self, uint32_t symbol);

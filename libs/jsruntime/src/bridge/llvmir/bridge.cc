@@ -74,6 +74,10 @@ void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name) 
   self->Function(func_id, name);
 }
 
+void compiler_peer_closure(Compiler* self, bool prologue, uint16_t num_captures) {
+  self->Closure(prologue, num_captures);
+}
+
 void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator) {
   self->Reference(symbol, locator);
 }
@@ -286,6 +290,10 @@ void compiler_peer_declare_function(Compiler* self) {
   self->DeclareFunction();
 }
 
+void compiler_peer_declare_closure(Compiler* self) {
+  self->DeclareClosure();
+}
+
 void compiler_peer_arguments(Compiler* self, uint16_t argc) {
   self->Arguments(argc);
 }
@@ -418,6 +426,18 @@ void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue) 
 void compiler_peer_release_bindings(Compiler* self, uint16_t n) {
   assert(n > 0);
   self->ReleaseBindings(n);
+}
+
+void compiler_peer_create_capture(Compiler* self, Locator locator, bool prologue) {
+  self->CreateCapture(locator, prologue);
+}
+
+void compiler_peer_capture_binding(Compiler* self, bool prologue) {
+  self->CaptureBinding(prologue);
+}
+
+void compiler_peer_escape_binding(Compiler* self, Locator locator) {
+  self->EscapeBinding(locator);
 }
 
 void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement) {

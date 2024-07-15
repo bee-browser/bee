@@ -44,6 +44,7 @@ class Compiler {
   void Boolean(bool value);
   void Number(double value);
   void Function(uint32_t func_id, const char* name);
+  void Closure(bool prologue, uint16_t num_captures);
   void Reference(uint32_t symbol, Locator locator);
   void Exception();
   void PostfixIncrement();
@@ -97,6 +98,7 @@ class Compiler {
   void DeclareImmutable();
   void DeclareMutable();
   void DeclareFunction();
+  void DeclareClosure();
   void Arguments(uint16_t argc);
   void Argument(uint16_t index);
   void Call(uint16_t argc);
@@ -130,6 +132,9 @@ class Compiler {
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
+  void CreateCapture(Locator locator, bool prologue);
+  void CaptureBinding(bool prologue);
+  void EscapeBinding(Locator locator);
   void LabelStart(uint32_t symbol, bool is_iteration_statement);
   void LabelEnd(uint32_t symbol, bool is_iteration_statement);
   void Continue(uint32_t symbol);
@@ -159,10 +164,12 @@ class Compiler {
       Boolean,
       Number,
       Function,
+      Closure,
       Any,  // undefined, boolean, number or object.
       Reference,
       Argv,
       Block,
+      Capture,
     } type;
     union {
       llvm::Value* value;
@@ -195,6 +202,7 @@ class Compiler {
         case Item::Boolean:
         case Item::Number:
         case Item::Function:
+        case Item::Closure:
         case Item::Any:
           return true;
         default:
@@ -228,6 +236,10 @@ class Compiler {
     stack_.push_back(Item(Item::Function, func));
   }
 
+  inline void PushClosure(llvm::Value* value) {
+    stack_.push_back(Item(Item::Closure, value));
+  }
+
   inline void PushAny(llvm::Value* value) {
     stack_.push_back(Item(Item::Any, value));
   }
@@ -244,6 +256,10 @@ class Compiler {
     Item item(block);
     item.SetLabel(label);
     stack_.push_back(item);
+  }
+
+  inline void PushCapture(llvm::Value* value) {
+    stack_.push_back(Item(Item::Capture, value));
   }
 
   inline Item PopItem() {
@@ -315,13 +331,22 @@ class Compiler {
     return block;
   }
 
+  inline llvm::Value* PopCapture() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    assert(item.type == Item::Capture);
+    auto* capture_ptr = item.value;
+    stack_.pop_back();
+    return capture_ptr;
+  }
+
   inline void Duplicate() {
     assert(!stack_.empty());
     const auto& item = stack_.back();
     stack_.push_back(item);
   }
 
-  Item Dereference(struct Reference* ref = nullptr, llvm::Value** scope = nullptr);
+  Item Dereference(struct Reference* ref = nullptr);
   void IncrDecr(char pos, char op);
   void NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y);
   llvm::Value* ToNumeric(const Item& item);
@@ -350,6 +375,9 @@ class Compiler {
   llvm::Value* CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value);
   llvm::Value* CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::Value* value);
 
+  llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr);
+  llvm::Value* CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures);
+
   // Naming convention for field accessors:
   //
   //   CreateGet<field>PtrOf<type>(ptr)
@@ -369,22 +397,16 @@ class Compiler {
 
   // function scope
 
-  llvm::Value* CreateGetScope(const Locator& locator);
-
-  inline llvm::Value* CreateGetOuterScopePtrOfScope(llvm::Value* scope_ptr) {
+  inline llvm::Value* CreateGetArgcPtrOfScope(llvm::Value* scope_ptr) {
     return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 0);
   }
 
-  inline llvm::Value* CreateGetArgcPtrOfScope(llvm::Value* scope_ptr) {
+  inline llvm::Value* CreateGetArgvPtrOfScope(llvm::Value* scope_ptr) {
     return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 1);
   }
 
-  inline llvm::Value* CreateGetArgvPtrOfScope(llvm::Value* scope_ptr) {
-    return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 2);
-  }
-
   inline llvm::Value* CreateGetBindingsPtrOfScope(llvm::Value* scope_ptr) {
-    return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 3);
+    return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 2);
   }
 
   inline llvm::Value* CreateGetBindingPtrOfScope(llvm::Value* scope_ptr, uint16_t index) {
@@ -392,19 +414,9 @@ class Compiler {
     return builder_->CreateConstInBoundsGEP2_32(bindings_type_, ptr, 0, index);
   }
 
-  inline llvm::Value* CreateLoadOuterScopeFromScope(llvm::Value* scope_ptr) {
-    auto* ptr = CreateGetOuterScopePtrOfScope(scope_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
-  }
-
   inline llvm::Value* CreateLoadArgvFromScope(llvm::Value* scope_ptr) {
     auto* ptr = CreateGetArgvPtrOfScope(scope_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr);
-  }
-
-  inline void CreateStoreOuterScopeToScope(llvm::Value* value, llvm::Value* scope_ptr) {
-    auto* ptr = CreateGetOuterScopePtrOfScope(scope_ptr);
-    builder_->CreateStore(value, ptr);
   }
 
   inline void CreateStoreArgcToScope(llvm::Value* value, llvm::Value* scope_ptr) {
@@ -420,11 +432,7 @@ class Compiler {
   // bindings
 
   inline llvm::Value* CreateGetBindingPtr(const Locator& locator) {
-    if (locator.offset == 0) {
-      return builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, locator.index);
-    }
-    auto* scope_ptr = CreateGetScope(locator);
-    return CreateGetBindingPtrOfScope(scope_ptr, locator.index);
+    return builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, locator.index);
   }
 
   inline llvm::Value* CreateGetValueKindPtrOfBinding(llvm::Value* binding_ptr) {
@@ -445,6 +453,10 @@ class Compiler {
 
   inline llvm::Value* CreateGetValueHolderPtrOfBinding(llvm::Value* binding_ptr) {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 4);
+  }
+
+  inline llvm::Value* CreateLoadBinding(llvm::Value* binding_ptr) {
+    return builder_->CreateLoad(types_->CreateBindingType(), binding_ptr);
   }
 
   inline void CreateStoreValueKindToBinding(ValueKind value, llvm::Value* binding_ptr) {
@@ -498,6 +510,11 @@ class Compiler {
     CreateStoreValueHolderToBinding(value, binding_ptr);
   }
 
+  inline void CreateStoreClosureToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
+    CreateStoreValueKindToBinding(ValueKind::Closure, binding_ptr);
+    CreateStoreValueHolderToBinding(value, binding_ptr);
+  }
+
   inline void CreateStoreValueToBinding(llvm::Value* value_ptr, llvm::Value* binding_ptr) {
     auto* value = CreateLoadValue(value_ptr);
     auto* kind = CreateExtractValueKindFromValue(value);
@@ -542,6 +559,11 @@ class Compiler {
   }
 
   inline llvm::Value* CreateLoadFunctionFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+  }
+
+  inline llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr);
   }
@@ -591,7 +613,66 @@ class Compiler {
     CreateStoreValueHolderToValue(value, value_ptr);
   }
 
+  inline void CreateStoreClosureToValue(llvm::Value* value, llvm::Value* value_ptr) {
+    CreateStoreValueKindToValue(ValueKind::Closure, value_ptr);
+    CreateStoreValueHolderToValue(value, value_ptr);
+  }
+
   void CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr);
+
+  // capture
+
+  inline llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
+    return builder_->CreateStructGEP(types_->CreateCaptureType(), capture_ptr, 0);
+  }
+
+  inline llvm::Value* CreateGetEscapedPtrOfCapture(llvm::Value* capture_ptr) {
+    return builder_->CreateStructGEP(types_->CreateCaptureType(), capture_ptr, 1);
+  }
+
+  inline llvm::Value* CreateLoadTargetFromCapture(llvm::Value* capture_ptr) {
+    auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+  }
+
+  inline void CreateStoreTargetToCapture(llvm::Value* binding_ptr, llvm::Value* capture_ptr) {
+    auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
+    builder_->CreateStore(binding_ptr, ptr);
+  }
+
+  inline void CreateStoreEscapedToCapture(llvm::Value* binding, llvm::Value* capture_ptr) {
+    auto* ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
+    builder_->CreateStore(binding, ptr);
+  }
+
+  // closure
+
+  inline llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
+    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 0);
+  }
+
+  inline llvm::Value* CreateGetNumCapturesPtrOfClosure(llvm::Value* closure_ptr) {
+    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 1);
+  }
+
+  inline llvm::Value* CreateGetCapturesPtrOfClosure(llvm::Value* closure_ptr) {
+    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 2);
+  }
+
+  inline llvm::Value* CreateLoadLambdaFromClosure(llvm::Value* closure_ptr) {
+    auto* ptr = CreateGetLambdaPtrOfClosure(closure_ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+  }
+
+  inline llvm::Value* CreateLoadNumCapturesFromClosure(llvm::Value* closure_ptr) {
+    auto* ptr = CreateGetNumCapturesPtrOfClosure(closure_ptr);
+    return builder_->CreateLoad(builder_->getInt16Ty(), ptr);
+  }
+
+  inline llvm::Value* CreateLoadCapturesFromClosure(llvm::Value* closure_ptr) {
+    auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+  }
 
   // FIXME: Handle dead code in the proper way.
   //
@@ -626,7 +707,7 @@ class Compiler {
   llvm::BasicBlock* body_ = nullptr;
   llvm::BasicBlock* epilogue_ = nullptr;
   llvm::Value* exec_context_ = nullptr;
-  llvm::Value* outer_scope_ = nullptr;
+  llvm::Value* caps_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
   llvm::Value* ret_ = nullptr;
@@ -642,6 +723,7 @@ class Compiler {
   std::vector<BlockItem> break_stack_;
   std::vector<BlockItem> continue_stack_;
   std::vector<llvm::BasicBlock*> catch_stack_;
+  std::unordered_map<uint32_t, llvm::Value*> captures_;
 
   std::unordered_map<std::string, llvm::Function*> functions_;
 

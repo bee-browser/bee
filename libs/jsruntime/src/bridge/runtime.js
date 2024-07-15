@@ -68,15 +68,19 @@ function makeLLVMIRType(type) {
       return 'builder_.getInt32Ty()';
     case 'f64':
       return 'builder_.getDoubleTy()';
+    case '&mut Binding':
+    case '&mut Capture':
+    case '&mut Closure':
     case '&Value':
     case '&mut Value':
+    case 'FuncPtr':
     case 'opaque':
       return 'builder_.getPtrTy()';
     case undefined:
       return 'builder_.getVoidTy()';
     default:
       log.error(`unsupported type: ${type}`);
-      return;
+      return '';
   }
 }
 
@@ -92,16 +96,24 @@ function makeCType(type) {
       return 'uint32_t';
     case 'f64':
       return 'double';
+    case '&mut Binding':
+      return 'Binding*';
+    case '&mut Capture':
+      return 'Capture*';
+    case '&mut Closure':
+      return 'Closure*';
     case '&Value':
       return 'const Value*';
     case '&mut Value':
       return 'Value*';
+    case 'FuncPtr':
+      return 'FuncPtr';
     case 'opaque':
       return 'uintptr_t';
     case undefined:
       return 'void';
     default:
       log.error(`unsupported type: ${type}`);
-      return;
+      return '';
   }
 }
