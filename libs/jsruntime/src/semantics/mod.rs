@@ -1688,7 +1688,7 @@ mod tests {
 
     macro_rules! locator {
         (local: $index:expr) => {
-            Locator::local($index, 0)
+            Locator::local(0, $index)
         };
     }
 
