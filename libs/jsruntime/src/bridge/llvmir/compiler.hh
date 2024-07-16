@@ -716,7 +716,7 @@ class Compiler {
   // optimization passes.
   //
   // At this point, we don't know whether this is a common method or not...
-  inline void CreateDeadcodeBasicBlock() {
+  inline void CreateBasicBlockForDeadcode() {
     auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
     builder_->SetInsertPoint(dummy);
   }

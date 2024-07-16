@@ -1589,7 +1589,7 @@ void Compiler::Continue(uint32_t symbol) {
   }
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
-  CreateDeadcodeBasicBlock();
+  CreateBasicBlockForDeadcode();
 }
 
 void Compiler::Break(uint32_t symbol) {
@@ -1601,7 +1601,7 @@ void Compiler::Break(uint32_t symbol) {
   }
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
-  CreateDeadcodeBasicBlock();
+  CreateBasicBlockForDeadcode();
 }
 
 void Compiler::Return(size_t n) {
@@ -1611,7 +1611,7 @@ void Compiler::Return(size_t n) {
     CreateStoreItemToValue(item, ret_);
   }
   builder_->CreateBr(epilogue_);
-  CreateDeadcodeBasicBlock();
+  CreateBasicBlockForDeadcode();
 }
 
 void Compiler::Throw() {
@@ -1620,7 +1620,7 @@ void Compiler::Throw() {
   builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Exception)), status_);
   auto* catch_block = catch_stack_.back();
   builder_->CreateBr(catch_block);
-  CreateDeadcodeBasicBlock();
+  CreateBasicBlockForDeadcode();
 }
 
 void Compiler::Discard() {
