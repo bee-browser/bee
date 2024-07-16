@@ -130,8 +130,7 @@ void Compiler::Closure(bool prologue, uint16_t num_captures) {
   auto* captures = CreateLoadCapturesFromClosure(closure_ptr);
   for (uint16_t i = 0; i < num_captures; ++i) {
     auto* capture_ptr = PopCapture();
-    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, i);
-    builder_->CreateStore(capture_ptr, ptr);
+    CreateStoreCapturePtrToCaptures(capture_ptr, captures, i);
   }
 
   PushClosure(closure_ptr);
@@ -1474,7 +1473,7 @@ void Compiler::ReleaseBindings(uint16_t n) {
 }
 
 void Compiler::CreateCapture(Locator locator, bool prologue) {
-  assert(locator.kind == LocatorKind::Local);
+  assert(locator.kind != LocatorKind::Capture);
 
   llvm::BasicBlock* backup;
   if (prologue) {
@@ -1482,10 +1481,23 @@ void Compiler::CreateCapture(Locator locator, bool prologue) {
     builder_->SetInsertPoint(prologue_);
   }
 
+  llvm::Value* binding_ptr;
+  switch (locator.kind) {
+    case LocatorKind::Argument:
+      binding_ptr = CreateGetBindingPtrOfArgv(locator.index);
+      break;
+    case LocatorKind::Local:
+      binding_ptr = CreateGetBindingPtr(locator);
+      break;
+    default:
+      assert(false);
+      return;
+  }
+
+  auto* capture_ptr = CreateCallRuntimeCreateCapture(binding_ptr);
+
   auto key = *reinterpret_cast<uint32_t*>(&locator);
   assert(captures_.find(key) == captures_.end());
-  auto* binding_ptr = CreateGetBindingPtr(locator);
-  auto* capture_ptr = CreateCallRuntimeCreateCapture(binding_ptr);
   captures_[key] = capture_ptr;
 
   if (prologue) {
@@ -1500,25 +1512,25 @@ void Compiler::CaptureBinding(bool prologue) {
     builder_->SetInsertPoint(prologue_);
   }
 
+  llvm::Value* capture_ptr;
   auto ref = PopReference();
   switch (ref.locator.kind) {
+    case LocatorKind::Argument:
     case LocatorKind::Local: {
       auto key = *reinterpret_cast<uint32_t*>(&ref.locator);
       assert(captures_.find(key) != captures_.end());
-      auto* capture_ptr = captures_[key];
-      PushCapture(capture_ptr);
+      capture_ptr = captures_[key];
       break;
     }
-    case LocatorKind::Capture: {
-      auto* capture_ptr = builder_->CreateConstInBoundsGEP1_32(
-          types_->CreateCaptureType(), caps_, ref.locator.index);
-      PushCapture(capture_ptr);
+    case LocatorKind::Capture:
+      capture_ptr = CreateLoadCapturePtrFromCaptures(caps_, ref.locator.index);
       break;
-    }
     default:
       assert(false);
-      break;
+      return;
   }
+
+  PushCapture(capture_ptr);
 
   if (prologue) {
     builder_->SetInsertPoint(backup);
@@ -1526,7 +1538,7 @@ void Compiler::CaptureBinding(bool prologue) {
 }
 
 void Compiler::EscapeBinding(Locator locator) {
-  assert(locator.kind == LocatorKind::Local);
+  assert(locator.kind != LocatorKind::Capture);
   auto key = *reinterpret_cast<uint32_t*>(&locator);
   assert(captures_.find(key) != captures_.end());
   auto* capture_ptr = captures_[key];
@@ -1704,26 +1716,23 @@ Compiler::Item Compiler::Dereference(struct Reference* ref) {
     case Item::Reference:
       switch (item.reference.locator.kind) {
         case LocatorKind::None:
+          // never reach here
           assert(false);
           return Item(Item::Undefined);
         case LocatorKind::Argument: {
-          auto* value_ptr = builder_->CreateConstInBoundsGEP1_32(
-              types_->CreateValueType(), argv_, item.reference.locator.index);
+          auto* value_ptr = CreateGetValuePtrOfArgv(item.reference.locator.index);
           return Item(Item::Any, value_ptr);
         }
         case LocatorKind::Local: {
           // The `Binding` type has a layout compatible with the `Value` type.
-          auto* value_ptr = builder_->CreateConstInBoundsGEP2_32(
-              bindings_type_, bindings_, 0, item.reference.locator.index);
+          auto* value_ptr = CreateGetBindingPtr(item.reference.locator);
           if (ref != nullptr) {
             *ref = item.reference;
           }
           return Item(Item::Any, value_ptr);
         }
         case LocatorKind::Capture: {
-          auto* capture_ptr_ptr = builder_->CreateConstInBoundsGEP1_32(
-              builder_->getPtrTy(), caps_, item.reference.locator.index);
-          auto* capture_ptr = builder_->CreateLoad(builder_->getPtrTy(), capture_ptr_ptr);
+          auto* capture_ptr = CreateLoadCapturePtrFromCaptures(caps_, item.reference.locator.index);
           auto* value_ptr = CreateLoadTargetFromCapture(capture_ptr);
           return Item(Item::Any, value_ptr);
         }

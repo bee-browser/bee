@@ -429,6 +429,32 @@ class Compiler {
     builder_->CreateStore(value, ptr);
   }
 
+  // captures
+
+  inline llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, index);
+  }
+
+  inline llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
+    auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+  }
+
+  inline void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr, llvm::Value* captures, uint16_t index) {
+    auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
+    builder_->CreateStore(capture_ptr, ptr);
+  }
+
+  // argv
+
+  inline llvm::Value* CreateGetBindingPtrOfArgv(uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateBindingType(), argv_, index);
+  }
+
+  inline llvm::Value* CreateGetValuePtrOfArgv(uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv_, index);
+  }
+
   // bindings
 
   inline llvm::Value* CreateGetBindingPtr(const Locator& locator) {

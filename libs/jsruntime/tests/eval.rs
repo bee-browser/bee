@@ -642,11 +642,8 @@ fn eval_nested_function() {
 }
 
 #[test]
-fn eval_argument_in_outer_function() {
-    eval!(
-        "print(a(1)); function a(x) { return b(); function b() { return x } }",
-        1.
-    );
+fn eval_argument_of_enclosing_function() {
+    eval!(file: "argument_of_enclosing_function.js", 1);
 }
 
 #[test]
