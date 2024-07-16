@@ -967,3 +967,13 @@ fn eval_try_nested() {
 fn eval_try_call_throw() {
     eval!(file: "try_call_throw.js", 1);
 }
+
+#[test]
+fn eval_closure_escape() {
+    eval!(file: "closure_escape.js", 1);
+}
+
+#[test]
+fn eval_closure_nested() {
+    eval!(file: "closure_nested.js", 1);
+}
