@@ -1543,8 +1543,8 @@ void Compiler::EscapeBinding(Locator locator) {
   assert(captures_.find(key) != captures_.end());
   auto* capture_ptr = captures_[key];
   auto* escaped_ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
-  auto* binding_ptr = CreateGetBindingPtr(locator);
   CreateStoreTargetToCapture(escaped_ptr, capture_ptr);
+  auto* binding_ptr = CreateGetBindingPtr(locator);
   auto* binding = CreateLoadBinding(binding_ptr);
   CreateStoreEscapedToCapture(binding, capture_ptr);
   // The value of `locator.index` may be reused for another local binding.
