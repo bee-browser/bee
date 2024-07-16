@@ -1732,7 +1732,8 @@ Compiler::Item Compiler::Dereference(struct Reference* ref) {
           return Item(Item::Any, value_ptr);
         }
         case LocatorKind::Capture: {
-          auto* capture_ptr = CreateLoadCapturePtrFromCaptures(caps_, item.reference.locator.index);
+          auto* capture_ptr =
+              CreateLoadCapturePtrFromCaptures(caps_, item.reference.locator.index);
           auto* value_ptr = CreateLoadTargetFromCapture(capture_ptr);
           return Item(Item::Any, value_ptr);
         }

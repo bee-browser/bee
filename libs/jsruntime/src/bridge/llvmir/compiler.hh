@@ -440,7 +440,9 @@ class Compiler {
     return builder_->CreateLoad(builder_->getPtrTy(), ptr);
   }
 
-  inline void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr, llvm::Value* captures, uint16_t index) {
+  inline void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
+      llvm::Value* captures,
+      uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
     builder_->CreateStore(capture_ptr, ptr);
   }
