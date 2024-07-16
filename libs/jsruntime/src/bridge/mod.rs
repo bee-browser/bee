@@ -161,13 +161,38 @@ impl std::fmt::Debug for Value {
                 ValueKind_Function => write!(f, "function({:?})", self.holder.function.unwrap()),
                 ValueKind_Closure => {
                     let lambda = (*self.holder.closure).lambda.unwrap();
+                    write!(f, "closure({lambda:?}, [")?;
                     let len = (*self.holder.closure).num_captures as usize;
                     let data = (*self.holder.closure).captures;
-                    let captures = std::slice::from_raw_parts_mut(data, len);
-                    write!(f, "closure({lambda:?}, {captures:?})")
+                    let mut captures = std::slice::from_raw_parts_mut(data, len)
+                        .iter()
+                        .map(|capture| capture.as_ref().unwrap());
+                    if let Some(capture) = captures.next() {
+                        write!(f, "{capture:?}")?;
+                        for capture in captures {
+                            write!(f, ", {capture:?}")?;
+                        }
+                    }
+                    write!(f, "])")
                 }
                 _ => unreachable!(),
             }
+        }
+    }
+}
+
+impl Capture {
+    fn is_escaped(&self) -> bool {
+        self.target as *const Binding == &self.escaped
+    }
+}
+
+impl std::fmt::Debug for Capture {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_escaped() {
+            write!(f, "capture(escaped: {:?})", self.target)
+        } else {
+            write!(f, "capture(onstack: {:?})", self.target)
         }
     }
 }
