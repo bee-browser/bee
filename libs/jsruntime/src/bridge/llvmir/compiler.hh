@@ -374,6 +374,7 @@ class Compiler {
   llvm::Value* CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value);
   llvm::Value* CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value);
   llvm::Value* CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::Value* value);
+  llvm::Value* CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value);
 
   llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr);
   llvm::Value* CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures);

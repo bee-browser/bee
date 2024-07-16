@@ -1839,6 +1839,9 @@ void Compiler::CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr) 
     case Item::Function:
       CreateStoreFunctionToValue(item.value, value_ptr);
       break;
+    case Item::Closure:
+      CreateStoreClosureToValue(item.value, value_ptr);
+      break;
     case Item::Any:
       builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
           builder_->getInt32(sizeof(Value)));
@@ -1861,6 +1864,7 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
     case Item::Number:
       return item.value;
     case Item::Function:
+    case Item::Closure:
       return llvm::ConstantFP::getNaN(builder_->getDoubleTy());
     case Item::Any:
       return ToNumeric(item.value);
@@ -1920,6 +1924,7 @@ llvm::Value* Compiler::CreateIsNonNullish(const Item& item) {
     case Item::Boolean:
     case Item::Number:
     case Item::Function:
+    case Item::Closure:
       return builder_->getTrue();
     case Item::Any:
       return CreateIsNonNullish(item.value);
@@ -1949,6 +1954,7 @@ llvm::Value* Compiler::CreateToBoolean(const Item& item) {
       return builder_->CreateFCmpUNE(
           item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
     case Item::Function:
+    case Item::Closure:
       return builder_->getTrue();
     case Item::Any:
       return CreateToBoolean(item.value);
@@ -2032,6 +2038,7 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(const Item& lhs, const Item& rhs) {
     case Item::Number:
       return builder_->CreateFCmpOEQ(lhs.value, rhs.value);
     case Item::Function:
+    case Item::Closure:
       return builder_->CreateICmpEQ(lhs.value, rhs.value);
     default:
       // never reach here.
@@ -2052,6 +2059,8 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* value_ptr, const Item&
       return CreateIsSameNumberValue(value_ptr, item.value);
     case Item::Function:
       return CreateIsSameFunctionValue(value_ptr, item.value);
+    case Item::Closure:
+      return CreateIsSameClosureValue(value_ptr, item.value);
     case Item::Any:
       return CreateIsStrictlyEqual(value_ptr, item.value);
     default:
@@ -2140,6 +2149,33 @@ llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::V
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
       builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Function)));
+  builder_->CreateCondBr(cond, then_block, else_block);
+
+  builder_->SetInsertPoint(then_block);
+  auto* func_ptr = CreateLoadFunctionFromValue(value_ptr);
+  auto* then_value = builder_->CreateICmpEQ(func_ptr, value);
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(else_block);
+  auto* else_value = builder_->getFalse();
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(merge_block);
+  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+  phi->addIncoming(then_value, then_block);
+  phi->addIncoming(else_value, else_block);
+
+  return phi;
+}
+
+llvm::Value* Compiler::CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value) {
+  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
+
+  auto* kind = CreateLoadValueKindFromValue(value_ptr);
+  auto* cond =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);

@@ -237,6 +237,7 @@ unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
         ValueKind_Number if value.holder.number.is_nan() => false,
         ValueKind_Number => true,
         ValueKind_Function => true,
+        ValueKind_Closure => true,
         _ => unreachable!(),
     }
 }
@@ -252,6 +253,7 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
         ValueKind_Boolean => 0.0,
         ValueKind_Number => value.holder.number,
         ValueKind_Function => f64::NAN,
+        ValueKind_Closure => f64::NAN,
         _ => unreachable!(),
     }
 }
@@ -356,6 +358,7 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
         ValueKind_Boolean => x.holder.boolean == y.holder.boolean,
         ValueKind_Number => x.holder.number == y.holder.number,
         ValueKind_Function => x.holder.function == y.holder.function,
+        ValueKind_Closure => x.holder.closure == y.holder.closure,
         _ => unreachable!(),
     }
 }
