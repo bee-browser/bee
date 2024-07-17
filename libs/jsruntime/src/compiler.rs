@@ -172,6 +172,7 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 bridge::compiler_peer_call(self.peer, *nargs);
             },
             CompileCommand::AllocateBindings(scope_ref) => {
+                // TODO(issue#234)
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
                 let scope = self.scope_tree.scope(scope_ref);
@@ -192,6 +193,7 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 }
             }
             CompileCommand::ReleaseBindings(scope_ref) => {
+                // TODO(issue#234)
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
                 for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {

@@ -118,6 +118,7 @@ void Compiler::Closure(bool prologue, uint16_t num_captures) {
   assert(num_captures > 0);
   assert(stack_.size() >= 1 + static_cast<size_t>(num_captures));
 
+  // TODO(issue#234)
   llvm::BasicBlock* backup;
   if (prologue) {
     backup = builder_->GetInsertBlock();
@@ -135,6 +136,7 @@ void Compiler::Closure(bool prologue, uint16_t num_captures) {
 
   PushClosure(closure_ptr);
 
+  // TODO(issue#234)
   if (prologue) {
     builder_->SetInsertPoint(backup);
   }
@@ -1467,6 +1469,7 @@ void Compiler::ReleaseBindings(uint16_t n) {
 void Compiler::CreateCapture(Locator locator, bool prologue) {
   assert(locator.kind != LocatorKind::Capture);
 
+  // TODO(issue#234)
   llvm::BasicBlock* backup;
   if (prologue) {
     backup = builder_->GetInsertBlock();
@@ -1492,12 +1495,14 @@ void Compiler::CreateCapture(Locator locator, bool prologue) {
   assert(captures_.find(key) == captures_.end());
   captures_[key] = capture_ptr;
 
+  // TODO(issue#234)
   if (prologue) {
     builder_->SetInsertPoint(backup);
   }
 }
 
 void Compiler::CaptureBinding(bool prologue) {
+  // TODO(issue#234)
   llvm::BasicBlock* backup;
   if (prologue) {
     backup = builder_->GetInsertBlock();
@@ -1524,6 +1529,7 @@ void Compiler::CaptureBinding(bool prologue) {
 
   PushCapture(capture_ptr);
 
+  // TODO(issue#234)
   if (prologue) {
     builder_->SetInsertPoint(backup);
   }
@@ -1581,6 +1587,7 @@ void Compiler::Continue(uint32_t symbol) {
   }
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
+  // TODO(issue#234)
   CreateBasicBlockForDeadcode();
 }
 
@@ -1593,6 +1600,7 @@ void Compiler::Break(uint32_t symbol) {
   }
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
+  // TODO(issue#234)
   CreateBasicBlockForDeadcode();
 }
 
@@ -1603,6 +1611,7 @@ void Compiler::Return(size_t n) {
     CreateStoreItemToValue(item, ret_);
   }
   builder_->CreateBr(epilogue_);
+  // TODO(issue#234)
   CreateBasicBlockForDeadcode();
 }
 
@@ -1612,6 +1621,7 @@ void Compiler::Throw() {
   builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Exception)), status_);
   auto* catch_block = catch_stack_.back();
   builder_->CreateBr(catch_block);
+  // TODO(issue#234)
   CreateBasicBlockForDeadcode();
 }
 

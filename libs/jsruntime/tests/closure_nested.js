@@ -1,4 +1,4 @@
-// TODO(234): replace with the following code:
+// TODO(issue#234): replace with the following code:
 //
 // let middle = outer();
 // let inner = middle();
