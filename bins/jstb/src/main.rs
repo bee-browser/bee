@@ -32,6 +32,14 @@ enum Command {
 
 #[derive(clap::Args)]
 struct Parse {
+    /// Prints the functions.
+    #[arg(long)]
+    print_functions: bool,
+
+    /// Prints the scope tree.
+    #[arg(long)]
+    print_scope_tree: bool,
+
     /// The source file of the JavaScript program to parse.
     ///
     /// Reads the source text from STDIN if this argument is not specified.
@@ -70,7 +78,14 @@ fn main() -> Result<()> {
         Command::Parse(args) => {
             let source = read_source(args.source.as_ref())?;
             let program = runtime.parse_script(&source)?;
-            program.print();
+            if args.print_functions {
+                println!("### functions");
+                program.print_functions("");
+            }
+            if args.print_scope_tree {
+                println!("### scope tree");
+                program.print_scope_tree("");
+            }
             Ok(())
         }
         Command::Compile(args) => {

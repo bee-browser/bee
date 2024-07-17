@@ -116,9 +116,9 @@ impl ScopeTree {
     }
 
     #[allow(unused)]
-    pub fn print(&self) {
+    pub fn print(&self, indent: &str) {
         for (index, scope) in self.scopes.iter().enumerate().skip(1) {
-            println!("{}", ScopePrinter { index, scope });
+            println!("{indent}{}", ScopePrinter { index, scope });
         }
     }
 }

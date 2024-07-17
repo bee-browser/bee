@@ -45,11 +45,14 @@ pub struct Program {
 }
 
 impl Program {
-    pub fn print(&self) {
+    pub fn print_functions(&self, indent: &str) {
         for func in self.functions.iter() {
-            func.print();
+            func.print(indent);
         }
-        self.scope_tree.print();
+    }
+
+    pub fn print_scope_tree(&self, indent: &str) {
+        self.scope_tree.print(indent);
     }
 }
 
@@ -69,15 +72,19 @@ pub struct FunctionRecipe {
 }
 
 impl FunctionRecipe {
-    pub fn print(&self) {
-        println!("function: {:?}", self.id);
-        println!(" commands:");
-        for command in self.commands.iter() {
-            println!("  {command:?}");
+    pub fn print(&self, indent: &str) {
+        println!("{indent}function: {:?}", self.id);
+        if !self.commands.is_empty() {
+            println!("{indent} commands:");
+            for command in self.commands.iter() {
+                println!("{indent}  {command:?}");
+            }
         }
-        println!(" captures:");
-        for capture in self.captures.iter() {
-            println!("  {capture:?}");
+        if !self.captures.is_empty() {
+            println!("{indent} captures:");
+            for capture in self.captures.iter() {
+                println!("{indent}  {capture:?}");
+            }
         }
     }
 }
