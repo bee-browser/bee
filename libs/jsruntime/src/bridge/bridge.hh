@@ -8,19 +8,18 @@ struct Value;
 struct Closure;
 typedef Status (*FuncPtr)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
 
-enum class LocatorKind : uint8_t {
+enum class LocatorKind : uint16_t {
   None,
   Argument,
   Local,
   Capture,
 };
 
-static_assert(sizeof(LocatorKind) == sizeof(uint8_t), "size mismatched");
+static_assert(sizeof(LocatorKind) == sizeof(uint16_t), "size mismatched");
 
 // TODO: Changing the order of member variables causes performance regression in fib(41).
 // However, we don't know the exact reason at this point.  Deeper investigation is needed.
 struct Locator {
-  uint8_t offset = 0;
   LocatorKind kind = LocatorKind::None;
   uint16_t index = 0;
 };

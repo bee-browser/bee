@@ -874,7 +874,7 @@ impl<'r> Analyzer<'r> {
             return;
         }
 
-        let locator = self.scope_tree_builder.compute_locator(binding_ref, 0);
+        let locator = self.scope_tree_builder.compute_locator(binding_ref);
         match reference.from {
             ReferenceFrom::Command(command_index) => {
                 context.commands[command_index] =
@@ -1695,7 +1695,7 @@ mod tests {
 
     macro_rules! locator {
         (local: $index:expr) => {
-            Locator::local(0, $index)
+            Locator::local($index)
         };
     }
 

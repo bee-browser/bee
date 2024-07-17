@@ -735,8 +735,6 @@ void Compiler::DeclareImmutable() {
   auto item = PopItem();
   auto ref = PopReference();
 
-  assert(ref.locator.offset == 0);
-
   auto* binding_ptr = CreateGetBindingPtr(ref.locator);
   CreateStoreFlagsToBinding(FLAGS, binding_ptr);
   CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
@@ -748,8 +746,6 @@ void Compiler::DeclareMutable() {
 
   auto item = Dereference();
   auto ref = PopReference();
-
-  assert(ref.locator.offset == 0);
 
   auto* binding_ptr = CreateGetBindingPtr(ref.locator);
   CreateStoreFlagsToBinding(FLAGS, binding_ptr);
@@ -765,8 +761,6 @@ void Compiler::DeclareFunction() {
 
   auto item = Dereference();
   auto ref = PopReference();
-
-  assert(ref.locator.offset == 0);
 
   auto* binding_ptr = CreateGetBindingPtr(ref.locator);
   CreateStoreFlagsToBinding(FLAGS, binding_ptr);
@@ -784,8 +778,6 @@ void Compiler::DeclareClosure() {
 
   auto item = Dereference();
   auto ref = PopReference();
-
-  assert(ref.locator.offset == 0);
 
   auto* binding_ptr = CreateGetBindingPtr(ref.locator);
   CreateStoreFlagsToBinding(FLAGS, binding_ptr);
@@ -1678,9 +1670,8 @@ void Compiler::DumpStack() {
             llvm::errs() << " locator=capture(";
             break;
         }
-        // static_cast<uint16_t>() is needed for printing uint8_t values.
-        llvm::errs() << static_cast<uint16_t>(item.reference.locator.offset) << ", "
-                     << item.reference.locator.index << ")";
+        llvm::errs() << item.reference.locator.index;
+        llvm::errs() << ")";
         break;
       case Item::Argv:
         llvm::errs() << "argv: " << item.value;

@@ -83,17 +83,17 @@ impl ScopeTree {
         scope.bindings[binding_ref.binding_index()].symbol
     }
 
-    pub fn compute_locator(&self, binding_ref: BindingRef, offset: usize) -> Locator {
+    pub fn compute_locator(&self, binding_ref: BindingRef) -> Locator {
         let scope = &self.scopes[binding_ref.scope_index()];
         match scope.bindings[binding_ref.binding_index()].kind {
             BindingKind::FormalParameter(index) => {
                 // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_argument(offset, index).unwrap()
+                Locator::checked_argument(index).unwrap()
             }
             _ => {
                 let base = self.compute_offset(binding_ref.scope_ref());
                 // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_local(offset, base + binding_ref.binding_index()).unwrap()
+                Locator::checked_local(base + binding_ref.binding_index()).unwrap()
             }
         }
     }
@@ -220,17 +220,17 @@ impl ScopeTreeBuilder {
         }
     }
 
-    pub fn compute_locator(&self, binding_ref: BindingRef, offset: usize) -> Locator {
+    pub fn compute_locator(&self, binding_ref: BindingRef) -> Locator {
         let scope = &self.scopes[binding_ref.scope_index()];
         match scope.bindings[binding_ref.binding_index()].kind {
             BindingKind::FormalParameter(index) => {
                 // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_argument(offset, index).unwrap()
+                Locator::checked_argument(index).unwrap()
             }
             _ => {
                 let base = self.compute_offset(binding_ref.scope_ref());
                 // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_local(offset, base + binding_ref.binding_index()).unwrap()
+                Locator::checked_local(base + binding_ref.binding_index()).unwrap()
             }
         }
     }

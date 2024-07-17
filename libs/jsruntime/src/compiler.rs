@@ -184,7 +184,7 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 }
                 for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
                     if binding.captured {
-                        let locator = self.scope_tree.compute_locator(binding_ref, 0);
+                        let locator = self.scope_tree.compute_locator(binding_ref);
                         unsafe {
                             bridge::compiler_peer_create_capture(self.peer, locator, prologue);
                         }
@@ -196,7 +196,7 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
                 for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
                     if binding.captured {
-                        let locator = self.scope_tree.compute_locator(binding_ref, 0);
+                        let locator = self.scope_tree.compute_locator(binding_ref);
                         unsafe {
                             bridge::compiler_peer_escape_binding(self.peer, locator);
                         }
