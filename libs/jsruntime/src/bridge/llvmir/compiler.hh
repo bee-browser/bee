@@ -397,36 +397,13 @@ class Compiler {
 
   // function scope
 
-  inline llvm::Value* CreateGetArgcPtrOfScope(llvm::Value* scope_ptr) {
-    return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 0);
-  }
-
-  inline llvm::Value* CreateGetArgvPtrOfScope(llvm::Value* scope_ptr) {
-    return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 1);
-  }
-
   inline llvm::Value* CreateGetBindingsPtrOfScope(llvm::Value* scope_ptr) {
-    return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 2);
+    return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 0);
   }
 
   inline llvm::Value* CreateGetBindingPtrOfScope(llvm::Value* scope_ptr, uint16_t index) {
     auto* ptr = CreateGetBindingsPtrOfScope(scope_ptr);
     return builder_->CreateConstInBoundsGEP2_32(bindings_type_, ptr, 0, index);
-  }
-
-  inline llvm::Value* CreateLoadArgvFromScope(llvm::Value* scope_ptr) {
-    auto* ptr = CreateGetArgvPtrOfScope(scope_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
-  }
-
-  inline void CreateStoreArgcToScope(llvm::Value* value, llvm::Value* scope_ptr) {
-    auto* ptr = CreateGetArgcPtrOfScope(scope_ptr);
-    builder_->CreateStore(value, ptr);
-  }
-
-  inline void CreateStoreArgvToScope(llvm::Value* value, llvm::Value* scope_ptr) {
-    auto* ptr = CreateGetArgvPtrOfScope(scope_ptr);
-    builder_->CreateStore(value, ptr);
   }
 
   // captures

@@ -714,16 +714,10 @@ void Compiler::Bindings(uint16_t n) {
   bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
   function_scope_type_->setBody({
-      // argc
-      types_->GetWordType(),
-      // argv
-      builder_->getPtrTy(),
       // bindings[]
       bindings_type_,
   });
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
-  CreateStoreArgcToScope(argc_, function_scope_);
-  CreateStoreArgvToScope(argv_, function_scope_);
   bindings_ = CreateGetBindingsPtrOfScope(function_scope_);
   builder_->CreateMemSet(bindings_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)),
       llvm::MaybeAlign());
