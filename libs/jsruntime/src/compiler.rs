@@ -134,9 +134,9 @@ impl<'a, 'b> Compiler<'a, 'b> {
                     bridge::compiler_peer_function(self.peer, func_id.into(), name.as_ptr());
                 }
             }
-            CompileCommand::Closure(prologue, n) => unsafe {
-                debug_assert!(*n > 0);
-                bridge::compiler_peer_closure(self.peer, *prologue, *n);
+            CompileCommand::Closure(prologue, num_captures) => unsafe {
+                // `*num_captures` may be 0.
+                bridge::compiler_peer_closure(self.peer, *prologue, *num_captures);
             },
             CompileCommand::Reference(symbol, locator) => unsafe {
                 debug_assert_ne!(*locator, Locator::NONE);

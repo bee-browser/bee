@@ -115,7 +115,6 @@ void Compiler::Function(uint32_t func_id, const char* name) {
 }
 
 void Compiler::Closure(bool prologue, uint16_t num_captures) {
-  assert(num_captures > 0);
   assert(stack_.size() >= 1 + static_cast<size_t>(num_captures));
 
   // TODO(issue#234)

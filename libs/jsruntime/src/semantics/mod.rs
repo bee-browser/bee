@@ -542,17 +542,14 @@ impl<'r> Analyzer<'r> {
         func.commands = context.commands;
         func.captures = context.captures.into_values().collect();
 
-        if func.captures.is_empty() {
-            self.context_stack
-                .last_mut()
-                .unwrap()
-                .process_function_declaration(func.id);
-        } else {
-            self.context_stack
-                .last_mut()
-                .unwrap()
-                .process_closure_declaration(self.scope_tree_builder.current(), func);
-        }
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_closure_declaration(
+                self.scope_tree_builder.current(),
+                func.id,
+                &func.captures,
+            );
     }
 
     // TODO: reduce code clone took from handle_function_declaration().
@@ -570,17 +567,15 @@ impl<'r> Analyzer<'r> {
         func.commands = context.commands;
         func.captures = context.captures.into_values().collect();
 
-        if func.captures.is_empty() {
-            self.context_stack
-                .last_mut()
-                .unwrap()
-                .process_function_expression(func.id, named);
-        } else {
-            self.context_stack
-                .last_mut()
-                .unwrap()
-                .process_closure_expression(self.scope_tree_builder.current(), func, named);
-        }
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_closure_expression(
+                self.scope_tree_builder.current(),
+                func.id,
+                &func.captures,
+                named,
+            );
     }
 
     fn handle_arrow_function(&mut self) {
@@ -601,17 +596,15 @@ impl<'r> Analyzer<'r> {
         func.commands = context.commands;
         func.captures = context.captures.into_values().collect();
 
-        if func.captures.is_empty() {
-            self.context_stack
-                .last_mut()
-                .unwrap()
-                .process_function_expression(func.id, false);
-        } else {
-            self.context_stack
-                .last_mut()
-                .unwrap()
-                .process_closure_expression(self.scope_tree_builder.current(), func, false);
-        }
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_closure_expression(
+                self.scope_tree_builder.current(),
+                func.id,
+                &func.captures,
+                false,
+            );
     }
 
     fn handle_then_block(&mut self) {
@@ -815,7 +808,7 @@ impl<'r> Analyzer<'r> {
             let symbol = self.symbol_registry.intern_cstr(&host_func.name);
             // The locator will be computed in `resolve_references()`.
             let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-            context.process_function_declaration(func_id);
+            context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
             self.scope_tree_builder
                 .add_binding(symbol, BindingKind::Immutable);
             context.references.push(Reference {
@@ -1115,15 +1108,13 @@ impl FunctionContext {
         self.pending_lexical_bindings.clear();
     }
 
-    fn process_function_declaration(&mut self, func_id: FunctionId) {
-        self.commands.push(CompileCommand::Function(func_id));
-        self.commands.push(CompileCommand::DeclareFunction);
-        self.scope_stack.last_mut().unwrap().num_bindings += 1;
-    }
-
-    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, func: &FunctionRecipe) {
-        debug_assert!(!func.captures.is_empty());
-        for capture in func.captures.iter().rev() {
+    fn process_closure_declaration(
+        &mut self,
+        scope_ref: ScopeRef,
+        func_id: FunctionId,
+        captures: &[Capture],
+    ) {
+        for capture in captures.iter().rev() {
             // `capture.target` has not been resolved at this point...
             let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
             self.references.push(Reference {
@@ -1133,32 +1124,25 @@ impl FunctionContext {
             });
             self.commands.push(CompileCommand::CaptureBinding(true));
         }
-        self.commands.push(CompileCommand::Function(func.id));
+        self.commands.push(CompileCommand::Function(func_id));
         self.commands
-            .push(CompileCommand::Closure(true, func.captures.len() as u16));
+            .push(CompileCommand::Closure(true, captures.len() as u16));
         self.commands.push(CompileCommand::DeclareClosure);
         self.scope_stack.last_mut().unwrap().num_bindings += 1;
-    }
-
-    fn process_function_expression(&mut self, func_id: FunctionId, named: bool) {
-        if named {
-            // Remove the BindingIdentifier of the function.
-            self.put_command(CompileCommand::Discard);
-        }
-        self.commands.push(CompileCommand::Function(func_id));
     }
 
     fn process_closure_expression(
         &mut self,
         scope_ref: ScopeRef,
-        func: &FunctionRecipe,
+        func_id: FunctionId,
+        captures: &[Capture],
         named: bool,
     ) {
         if named {
             // Remove the BindingIdentifier of the function.
             self.put_command(CompileCommand::Discard);
         }
-        for capture in func.captures.iter().rev() {
+        for capture in captures.iter().rev() {
             // `capture.target` has not been resolved at this point...
             let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
             self.references.push(Reference {
@@ -1168,9 +1152,9 @@ impl FunctionContext {
             });
             self.commands.push(CompileCommand::CaptureBinding(false));
         }
-        self.commands.push(CompileCommand::Function(func.id));
+        self.commands.push(CompileCommand::Function(func_id));
         self.commands
-            .push(CompileCommand::Closure(false, func.captures.len() as u16));
+            .push(CompileCommand::Closure(false, captures.len() as u16));
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {

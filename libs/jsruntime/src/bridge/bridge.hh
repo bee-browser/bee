@@ -91,6 +91,9 @@ struct Capture {
 struct Closure {
   FuncPtr lambda;
   uint16_t num_captures;
+  // Using the following definition instead of `Capture* captures[]`, we can avoid accessing the
+  // `num_captures` field and comparison and conditional branch instructions that are needed for
+  // checking whether `captures` is empty or not.
   Capture** captures;
   // `Capture* storage[num_captures]` is placed here if it's not empty.
 };
