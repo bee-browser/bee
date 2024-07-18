@@ -647,6 +647,11 @@ fn eval_argument_of_enclosing_function() {
 }
 
 #[test]
+fn eval_argument_assignment() {
+    eval!(file: "argument_assignment.js", 2);
+}
+
+#[test]
 fn eval_fibonacci() {
     eval!(file: "fibonacci.js", 55);
 }
@@ -976,4 +981,9 @@ fn eval_closure_escape() {
 #[test]
 fn eval_closure_nested() {
     eval!(file: "closure_nested.js", 1);
+}
+
+#[test]
+fn eval_closure_assignment() {
+    eval!(file: "closure_assignment.js", 2);
 }

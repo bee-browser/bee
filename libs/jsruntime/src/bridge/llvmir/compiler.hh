@@ -378,6 +378,9 @@ class Compiler {
   llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr);
   llvm::Value* CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures);
 
+  llvm::Value* CreateGetBindingPtr(Locator locator);
+  llvm::Value* CreateGetValuePtr(Locator locator);
+
   // Naming convention for field accessors:
   //
   //   CreateGet<field>PtrOf<type>(ptr)
@@ -406,7 +409,37 @@ class Compiler {
     return builder_->CreateConstInBoundsGEP2_32(bindings_type_, ptr, 0, index);
   }
 
+  // arguments
+
+  inline llvm::Value* CreateGetArgumentBindingPtr(uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateBindingType(), argv_, index);
+  }
+
+  inline llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv_, index);
+  }
+
+  // locals
+
+  inline llvm::Value* CreateGetLocalBindingPtr(uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateBindingType(), bindings_, index);
+  }
+
+  inline llvm::Value* CreateGetLocalValuePtr(uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), bindings_, index);
+  }
+
   // captures
+
+  inline llvm::Value* CreateGetCaptureBindingPtr(uint16_t index) {
+    auto* ptr = CreateLoadCapturePtrFromCaptures(caps_, index);
+    return CreateLoadTargetFromCapture(ptr);
+  }
+
+  inline llvm::Value* CreateGetCaptureValuePtr(uint16_t index) {
+    auto* ptr = CreateLoadCapturePtrFromCaptures(caps_, index);
+    return CreateLoadTargetFromCapture(ptr);
+  }
 
   inline llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
     return builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, index);
@@ -424,21 +457,7 @@ class Compiler {
     builder_->CreateStore(capture_ptr, ptr);
   }
 
-  // argv
-
-  inline llvm::Value* CreateGetBindingPtrOfArgv(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateBindingType(), argv_, index);
-  }
-
-  inline llvm::Value* CreateGetValuePtrOfArgv(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv_, index);
-  }
-
-  // bindings
-
-  inline llvm::Value* CreateGetBindingPtr(const Locator& locator) {
-    return builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, locator.index);
-  }
+  // binding
 
   inline llvm::Value* CreateGetValueKindPtrOfBinding(llvm::Value* binding_ptr) {
     return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 0);

@@ -141,16 +141,6 @@ void Compiler::Closure(bool prologue, uint16_t num_captures) {
   }
 }
 
-llvm::Value* Compiler::CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr) {
-  auto* func = types_->CreateRuntimeCreateCapture();
-  return builder_->CreateCall(func, {exec_context_, binding_ptr});
-}
-
-llvm::Value* Compiler::CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures) {
-  auto* func = types_->CreateRuntimeCreateClosure();
-  return builder_->CreateCall(func, {exec_context_, lambda, builder_->getInt16(num_captures)});
-}
-
 void Compiler::Reference(uint32_t symbol, Locator locator) {
   PushReference(symbol, locator);
 }
@@ -729,8 +719,9 @@ void Compiler::DeclareImmutable() {
 
   auto item = PopItem();
   auto ref = PopReference();
+  assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  auto* binding_ptr = CreateGetLocalBindingPtr(ref.locator.index);
   CreateStoreFlagsToBinding(FLAGS, binding_ptr);
   CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
   CreateStoreItemToBinding(item, binding_ptr);
@@ -741,8 +732,9 @@ void Compiler::DeclareMutable() {
 
   auto item = Dereference();
   auto ref = PopReference();
+  assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  auto* binding_ptr = CreateGetLocalBindingPtr(ref.locator.index);
   CreateStoreFlagsToBinding(FLAGS, binding_ptr);
   CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
   CreateStoreItemToBinding(item, binding_ptr);
@@ -756,8 +748,9 @@ void Compiler::DeclareFunction() {
 
   auto item = Dereference();
   auto ref = PopReference();
+  assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  auto* binding_ptr = CreateGetLocalBindingPtr(ref.locator.index);
   CreateStoreFlagsToBinding(FLAGS, binding_ptr);
   CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
   CreateStoreItemToBinding(item, binding_ptr);
@@ -773,8 +766,9 @@ void Compiler::DeclareClosure() {
 
   auto item = Dereference();
   auto ref = PopReference();
+  assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  auto* binding_ptr = CreateGetLocalBindingPtr(ref.locator.index);
   CreateStoreFlagsToBinding(FLAGS, binding_ptr);
   CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
   CreateStoreItemToBinding(item, binding_ptr);
@@ -1391,7 +1385,7 @@ void Compiler::EndFunction(bool optimize) {
   builder_->SetInsertPoint(epilogue_);
   for (uint16_t i = 0; i < max_bindings_; ++i) {
     // TODO: CG
-    auto* binding_ptr = CreateGetBindingPtrOfScope(function_scope_, i);
+    auto* binding_ptr = CreateGetLocalBindingPtr(i);
     CreateStoreFlagsToBinding(0, binding_ptr);
   }
 
@@ -1437,7 +1431,7 @@ void Compiler::ReleaseBindings(uint16_t n) {
     auto start = allocated_bindings_ - n;
     while (start < allocated_bindings_) {
       // TODO: CG
-      auto* binding_ptr = CreateGetBindingPtrOfScope(function_scope_, start);
+      auto* binding_ptr = CreateGetLocalBindingPtr(start);
       CreateStoreFlagsToBinding(0, binding_ptr);
       start++;
     }
@@ -1458,10 +1452,10 @@ void Compiler::CreateCapture(Locator locator, bool prologue) {
   llvm::Value* binding_ptr;
   switch (locator.kind) {
     case LocatorKind::Argument:
-      binding_ptr = CreateGetBindingPtrOfArgv(locator.index);
+      binding_ptr = CreateGetArgumentBindingPtr(locator.index);
       break;
     case LocatorKind::Local:
-      binding_ptr = CreateGetBindingPtr(locator);
+      binding_ptr = CreateGetLocalBindingPtr(locator.index);
       break;
     default:
       assert(false);
@@ -1693,32 +1687,13 @@ Compiler::Item Compiler::Dereference(struct Reference* ref) {
     case Item::Closure:
     case Item::Any:
       return item;
-    case Item::Reference:
-      switch (item.reference.locator.kind) {
-        case LocatorKind::None:
-          // never reach here
-          assert(false);
-          return Item(Item::Undefined);
-        case LocatorKind::Argument: {
-          auto* value_ptr = CreateGetValuePtrOfArgv(item.reference.locator.index);
-          return Item(Item::Any, value_ptr);
-        }
-        case LocatorKind::Local: {
-          // The `Binding` type has a layout compatible with the `Value` type.
-          auto* value_ptr = CreateGetBindingPtr(item.reference.locator);
-          if (ref != nullptr) {
-            *ref = item.reference;
-          }
-          return Item(Item::Any, value_ptr);
-        }
-        case LocatorKind::Capture: {
-          auto* capture_ptr =
-              CreateLoadCapturePtrFromCaptures(caps_, item.reference.locator.index);
-          auto* value_ptr = CreateLoadTargetFromCapture(capture_ptr);
-          return Item(Item::Any, value_ptr);
-        }
+    case Item::Reference: {
+      if (ref != nullptr) {
+        *ref = item.reference;
       }
-      // fall through
+      auto* value_ptr = CreateGetValuePtr(item.reference.locator);
+      return Item(Item::Any, value_ptr);
+    }
     default:
       // never reach here
       assert(false);
@@ -2138,6 +2113,46 @@ llvm::Value* Compiler::CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Va
   phi->addIncoming(else_value, else_block);
 
   return phi;
+}
+
+llvm::Value* Compiler::CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr) {
+  auto* func = types_->CreateRuntimeCreateCapture();
+  return builder_->CreateCall(func, {exec_context_, binding_ptr});
+}
+
+llvm::Value* Compiler::CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures) {
+  auto* func = types_->CreateRuntimeCreateClosure();
+  return builder_->CreateCall(func, {exec_context_, lambda, builder_->getInt16(num_captures)});
+}
+
+llvm::Value* Compiler::CreateGetBindingPtr(Locator locator) {
+  switch (locator.kind) {
+    case LocatorKind::Argument:
+      return CreateGetArgumentBindingPtr(locator.index);
+    case LocatorKind::Local:
+      return CreateGetLocalBindingPtr(locator.index);
+    case LocatorKind::Capture:
+      return CreateGetCaptureBindingPtr(locator.index);
+    default:
+      // never reach here
+      assert(false);
+      return nullptr;
+  }
+}
+
+llvm::Value* Compiler::CreateGetValuePtr(Locator locator) {
+  switch (locator.kind) {
+    case LocatorKind::Argument:
+      return CreateGetArgumentValuePtr(locator.index);
+    case LocatorKind::Local:
+      return CreateGetLocalValuePtr(locator.index);
+    case LocatorKind::Capture:
+      return CreateGetCaptureValuePtr(locator.index);
+    default:
+      // never reach here
+      assert(false);
+      return nullptr;
+  }
 }
 
 llvm::BasicBlock* Compiler::FindBlockBySymbol(const std::vector<BlockItem>& stack,
