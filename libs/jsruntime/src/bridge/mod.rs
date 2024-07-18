@@ -385,7 +385,7 @@ unsafe extern "C" fn runtime_create_capture(context: usize, target: *mut Binding
 
 unsafe extern "C" fn runtime_create_closure(
     context: usize,
-    lambda: FuncPtr,
+    lambda: Lambda,
     num_captures: u16,
 ) -> *mut Closure {
     const BASE_LAYOUT: std::alloc::Layout = unsafe {

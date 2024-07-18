@@ -73,7 +73,7 @@ function makeLLVMIRType(type) {
     case '&mut Closure':
     case '&Value':
     case '&mut Value':
-    case 'FuncPtr':
+    case 'Lambda':
     case 'opaque':
       return 'builder_.getPtrTy()';
     case undefined:
@@ -106,8 +106,8 @@ function makeCType(type) {
       return 'const Value*';
     case '&mut Value':
       return 'Value*';
-    case 'FuncPtr':
-      return 'FuncPtr';
+    case 'Lambda':
+      return 'Lambda';
     case 'opaque':
       return 'uintptr_t';
     case undefined:

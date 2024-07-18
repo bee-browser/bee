@@ -6,7 +6,7 @@
 enum class Status;
 struct Value;
 struct Closure;
-typedef Status (*FuncPtr)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
+typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
 
 enum class LocatorKind : uint16_t {
   None,
@@ -49,7 +49,7 @@ union ValueHolder {
   uintptr_t opaque;
   bool boolean;
   double number;
-  FuncPtr function;
+  Lambda function;
   // TODO: GcCellRef
   Closure* closure;
 };
@@ -88,7 +88,7 @@ struct Capture {
 
 // TODO: GcCell
 struct Closure {
-  FuncPtr lambda;
+  Lambda lambda;
   uint16_t num_captures;
   // Using the following definition instead of `Capture* captures[]`, we can avoid accessing the
   // `num_captures` field and comparison and conditional branch instructions that are needed for
@@ -229,8 +229,8 @@ class Executor;
 Executor* executor_peer_new();
 void executor_peer_delete(Executor* self);
 void executor_peer_register_runtime(Executor* self, const Runtime* runtime);
-void executor_peer_register_host_function(Executor* self, const char* name, FuncPtr func);
+void executor_peer_register_host_function(Executor* self, const char* name, Lambda func);
 void executor_peer_register_module(Executor* self, Module* mod);
 const char* executor_peer_get_data_layout(const Executor* self);
 const char* executor_peer_get_target_triple(const Executor* self);
-FuncPtr executor_peer_get_native_func(Executor* self, const char* name);
+Lambda executor_peer_get_native_function(Executor* self, const char* name);

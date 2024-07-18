@@ -80,11 +80,6 @@ impl FunctionRegistry {
         &self.native_functions[id.index()]
     }
 
-    pub fn get_native_mut(&mut self, id: FunctionId) -> &mut NativeFunction {
-        debug_assert!(id.is_native());
-        &mut self.native_functions[id.index()]
-    }
-
     pub fn get_host(&self, id: FunctionId) -> &HostFunction {
         debug_assert!(id.is_host());
         &self.host_functions[id.index()]

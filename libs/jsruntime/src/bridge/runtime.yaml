@@ -41,7 +41,7 @@ functions:
   - name: create_closure
     args:
       - name: lambda
-        type: 'FuncPtr'
+        type: 'Lambda'
       - name: num_captures
         type: 'u16'
     ret: '&mut Closure'

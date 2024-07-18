@@ -65,14 +65,14 @@ impl Runtime {
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "evaluate");
         self.executor.register_module(module);
-        let main = self.function_registry.get_native_mut(FunctionId::MAIN);
+        let main = self.function_registry.get_native(FunctionId::MAIN);
         let mut ret = Value::UNDEFINED;
-        let status = match self.executor.get_native_func(&main.name) {
+        let status = match self.executor.get_native_function(&main.name) {
             Some(main) => unsafe {
                 main(
-                    // exec_context
+                    // ctx
                     self as *mut Self as *mut std::ffi::c_void,
-                    // outer_scope
+                    // caps
                     std::ptr::null_mut(),
                     // argc
                     0,
