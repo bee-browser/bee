@@ -373,7 +373,6 @@ class Compiler {
   llvm::Value* CreateIsNull(llvm::Value* value_ptr);
   llvm::Value* CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value);
   llvm::Value* CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value);
-  llvm::Value* CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::Value* value);
   llvm::Value* CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value);
 
   llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr);
@@ -534,11 +533,6 @@ class Compiler {
     CreateStoreValueHolderToBinding(value, binding_ptr);
   }
 
-  inline void CreateStoreFunctionToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(ValueKind::Function, binding_ptr);
-    CreateStoreValueHolderToBinding(value, binding_ptr);
-  }
-
   inline void CreateStoreClosureToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
     CreateStoreValueKindToBinding(ValueKind::Closure, binding_ptr);
     CreateStoreValueHolderToBinding(value, binding_ptr);
@@ -634,11 +628,6 @@ class Compiler {
 
   inline void CreateStoreNumberToValue(llvm::Value* value, llvm::Value* value_ptr) {
     CreateStoreValueKindToValue(ValueKind::Number, value_ptr);
-    CreateStoreValueHolderToValue(value, value_ptr);
-  }
-
-  inline void CreateStoreFunctionToValue(llvm::Value* value, llvm::Value* value_ptr) {
-    CreateStoreValueKindToValue(ValueKind::Function, value_ptr);
     CreateStoreValueHolderToValue(value, value_ptr);
   }
 

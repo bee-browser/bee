@@ -40,7 +40,6 @@ enum class ValueKind : uint8_t {
   Null,
   Boolean,
   Number,
-  Function,
   Closure,
 };
 

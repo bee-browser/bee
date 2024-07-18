@@ -817,12 +817,6 @@ void Compiler::Call(uint16_t argc) {
   llvm::Value* lambda;
   llvm::Value* caps;
   switch (item.type) {
-    case Item::Function: {
-      // IIFE
-      lambda = item.value;
-      caps = llvm::Constant::getNullValue(builder_->getPtrTy());
-      break;
-    }
     case Item::Closure: {
       // IIFE
       auto* closure_ptr = item.value;
@@ -834,26 +828,16 @@ void Compiler::Call(uint16_t argc) {
       auto* lambda_ptr = builder_->CreateAlloca(builder_->getPtrTy(), builder_->getInt32(1));
       auto* caps_ptr = builder_->CreateAlloca(builder_->getPtrTy(), builder_->getInt32(1));
       auto* kind = CreateLoadValueKindFromValue(item.value);
-      auto* func_block = llvm::BasicBlock::Create(*context_, "", function_);
-      auto* closure_block = llvm::BasicBlock::Create(*context_, "", function_);
-      auto* error_block = llvm::BasicBlock::Create(*context_, "", function_);
+      auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
+      auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
       auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
-      // switch (kind) {
-      auto* inst = builder_->CreateSwitch(kind, error_block);
-      inst->addCase(builder_->getInt8(static_cast<uint8_t>(ValueKind::Function)), func_block);
-      inst->addCase(builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)), closure_block);
-      // case ValueKind::Function:
+      // if (value.kind == ValueKind::Closure)
+      auto* is_closure = builder_->CreateICmpEQ(
+          kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)));
+      builder_->CreateCondBr(is_closure, then_block, else_block);
+      // {
       {
-        builder_->SetInsertPoint(func_block);
-        auto* lambda_tmp = CreateLoadFunctionFromValue(item.value);
-        builder_->CreateStore(lambda_tmp, lambda_ptr);
-        auto* caps_tmp = llvm::Constant::getNullValue(builder_->getPtrTy());
-        builder_->CreateStore(caps_tmp, caps_ptr);
-        builder_->CreateBr(end_block);
-      }
-      // case ValueKind::Closure:
-      {
-        builder_->SetInsertPoint(closure_block);
+        builder_->SetInsertPoint(then_block);
         auto* closure_ptr = CreateLoadClosureFromValue(item.value);
         auto* lambda_tmp = CreateLoadLambdaFromClosure(closure_ptr);
         builder_->CreateStore(lambda_tmp, lambda_ptr);
@@ -861,9 +845,9 @@ void Compiler::Call(uint16_t argc) {
         builder_->CreateStore(caps_tmp, caps_ptr);
         builder_->CreateBr(end_block);
       }
-      // default:
+      // } else {
       {
-        builder_->SetInsertPoint(error_block);
+        builder_->SetInsertPoint(else_block);
         // TODO: TypeError
         PushNumber(builder_->getInt32(1));
         Throw();
@@ -876,7 +860,9 @@ void Compiler::Call(uint16_t argc) {
       break;
     }
     default:
-      assert(false);
+      // TODO: TypeError
+      PushNumber(builder_->getInt32(1));
+      Throw();
       return;
   }
 
@@ -1807,9 +1793,6 @@ void Compiler::CreateStoreItemToBinding(const Item& item, llvm::Value* binding_p
     case Item::Number:
       CreateStoreNumberToBinding(item.value, binding_ptr);
       break;
-    case Item::Function:
-      CreateStoreFunctionToBinding(item.value, binding_ptr);
-      break;
     case Item::Closure:
       CreateStoreClosureToBinding(item.value, binding_ptr);
       break;
@@ -1835,9 +1818,6 @@ void Compiler::CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr) 
       break;
     case Item::Number:
       CreateStoreNumberToValue(item.value, value_ptr);
-      break;
-    case Item::Function:
-      CreateStoreFunctionToValue(item.value, value_ptr);
       break;
     case Item::Closure:
       CreateStoreClosureToValue(item.value, value_ptr);
@@ -2057,8 +2037,6 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* value_ptr, const Item&
       return CreateIsSameBooleanValue(value_ptr, item.value);
     case Item::Number:
       return CreateIsSameNumberValue(value_ptr, item.value);
-    case Item::Function:
-      return CreateIsSameFunctionValue(value_ptr, item.value);
     case Item::Closure:
       return CreateIsSameClosureValue(value_ptr, item.value);
     case Item::Any:
@@ -2127,33 +2105,6 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
   builder_->SetInsertPoint(then_block);
   auto* number = CreateLoadNumberFromValue(value_ptr);
   auto* then_value = builder_->CreateFCmpOEQ(number, value);
-  builder_->CreateBr(merge_block);
-
-  builder_->SetInsertPoint(else_block);
-  auto* else_value = builder_->getFalse();
-  builder_->CreateBr(merge_block);
-
-  builder_->SetInsertPoint(merge_block);
-  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
-  phi->addIncoming(then_value, then_block);
-  phi->addIncoming(else_value, else_block);
-
-  return phi;
-}
-
-llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
-
-  auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond =
-      builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Function)));
-  builder_->CreateCondBr(cond, then_block, else_block);
-
-  builder_->SetInsertPoint(then_block);
-  auto* func_ptr = CreateLoadFunctionFromValue(value_ptr);
-  auto* then_value = builder_->CreateICmpEQ(func_ptr, value);
   builder_->CreateBr(merge_block);
 
   builder_->SetInsertPoint(else_block);

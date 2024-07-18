@@ -86,13 +86,6 @@ impl Value {
         }
     }
 
-    pub const fn function(function: FuncPtr) -> Self {
-        Self {
-            kind: ValueKind_Function,
-            holder: ValueHolder { function },
-        }
-    }
-
     pub fn into_result(self, status: Status) -> Result<Value, Value> {
         match status {
             Status_Normal => Ok(self),
@@ -132,12 +125,6 @@ impl From<u32> for Value {
     }
 }
 
-impl From<FuncPtr> for Value {
-    fn from(value: FuncPtr) -> Self {
-        Self::function(value)
-    }
-}
-
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // `unsafe` is needed for accessing the `holder` field.
@@ -148,7 +135,6 @@ impl std::fmt::Debug for Value {
                 ValueKind_Boolean if self.holder.boolean => write!(f, "true"),
                 ValueKind_Boolean => write!(f, "false"),
                 ValueKind_Number => write!(f, "{}", self.holder.number),
-                ValueKind_Function => write!(f, "function({:?})", self.holder.function.unwrap()),
                 ValueKind_Closure => {
                     let lambda = (*self.holder.closure).lambda.unwrap();
                     write!(f, "closure({lambda:?}, [")?;
@@ -251,7 +237,6 @@ unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
         ValueKind_Number if value.holder.number == 0.0 => false,
         ValueKind_Number if value.holder.number.is_nan() => false,
         ValueKind_Number => true,
-        ValueKind_Function => true,
         ValueKind_Closure => true,
         _ => unreachable!(),
     }
@@ -267,7 +252,6 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
         ValueKind_Boolean if value.holder.boolean => 1.0,
         ValueKind_Boolean => 0.0,
         ValueKind_Number => value.holder.number,
-        ValueKind_Function => f64::NAN,
         ValueKind_Closure => f64::NAN,
         _ => unreachable!(),
     }
@@ -372,7 +356,6 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
         ValueKind_Null => true,
         ValueKind_Boolean => x.holder.boolean == y.holder.boolean,
         ValueKind_Number => x.holder.number == y.holder.number,
-        ValueKind_Function => x.holder.function == y.holder.function,
         ValueKind_Closure => x.holder.closure == y.holder.closure,
         _ => unreachable!(),
     }
