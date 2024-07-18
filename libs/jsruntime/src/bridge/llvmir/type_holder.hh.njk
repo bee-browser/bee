@@ -25,7 +25,7 @@ class TypeHolder {
   llvm::StructType* CreateBindingType();
   llvm::StructType* CreateCaptureType();
   llvm::StructType* CreateClosureType();
-  llvm::FunctionType* CreateFunctionType();
+  llvm::FunctionType* CreateLambdaType();
   {%- for function in data.functions %}
   llvm::Function* CreateRuntime{{ function.name | pascalCase }}();
   {%- endfor %}
@@ -38,7 +38,7 @@ class TypeHolder {
   llvm::StructType* binding_type_ = nullptr;
   llvm::StructType* capture_type_ = nullptr;
   llvm::StructType* closure_type_ = nullptr;
-  llvm::FunctionType* function_type_ = nullptr;
+  llvm::FunctionType* lambda_type_ = nullptr;
   {%- for function in data.functions %}
   llvm::Function* runtime_{{ function.name }}_ = nullptr;
   {%- endfor %}

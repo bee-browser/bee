@@ -49,8 +49,7 @@ union ValueHolder {
   uintptr_t opaque;
   bool boolean;
   double number;
-  Lambda function;
-  // TODO: GcCellRef
+  // TODO(issue#237): GcCellRef
   Closure* closure;
 };
 
@@ -80,22 +79,36 @@ struct Binding {
 
 static_assert(sizeof(Binding) == sizeof(uint64_t) * 2, "size mismatched");
 
-// TODO: GcCell
+// TODO(issue#237): GcCell
 struct Capture {
   Binding* target;
   Binding escaped;
 };
 
-// TODO: GcCell
+static_assert(sizeof(Capture) == sizeof(uint64_t) * 3, "size mismatched");
+
+// TODO(issue#237): GcCell
 struct Closure {
+  // A pointer to a function compiled from a JavaScript function.
   Lambda lambda;
+
+  // The number of elements in `storage[]`.
+  //
+  // Usually, this field does not used in the compiled function, but we add this field here for
+  // debugging purposes.  If we need to reduce the heap memory usage and `Closure`s dominant, we
+  // can remove this field.
   uint16_t num_captures;
+  // uint8_t padding[6];
+
   // Using the following definition instead of `Capture* captures[]`, we can avoid accessing the
   // `num_captures` field and comparison and conditional branch instructions that are needed for
   // checking whether `captures` is empty or not.
   Capture** captures;
+
   // `Capture* storage[num_captures]` is placed here if it's not empty.
 };
+
+static_assert(sizeof(Closure) == sizeof(uint64_t) * 3, "size mismatched");
 
 #include "runtime.hh"
 

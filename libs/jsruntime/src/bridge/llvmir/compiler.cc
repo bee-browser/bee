@@ -108,7 +108,7 @@ void Compiler::Function(uint32_t func_id, const char* name) {
     PushFunction(found->second);
     return;
   }
-  auto* prototype = types_->CreateFunctionType();
+  auto* prototype = types_->CreateLambdaType();
   auto* func = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
   functions_[name] = func;
   PushFunction(func);
@@ -866,7 +866,7 @@ void Compiler::Call(uint16_t argc) {
       return;
   }
 
-  auto* prototype = types_->CreateFunctionType();
+  auto* prototype = types_->CreateLambdaType();
   auto* status = builder_->CreateCall(
       prototype, lambda, {exec_context_, caps, types_->GetWord(argc), argv, ret});
 
@@ -1363,7 +1363,7 @@ void Compiler::StartFunction(const char* name) {
     function_ = found->second;
   } else {
     // Create a function.
-    auto* prototype = types_->CreateFunctionType();
+    auto* prototype = types_->CreateLambdaType();
     function_ = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
     functions_[name] = function_;
   }

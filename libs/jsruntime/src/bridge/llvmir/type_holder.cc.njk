@@ -79,15 +79,15 @@ llvm::StructType* TypeHolder::CreateClosureType() {
   return closure_type_;
 }
 
-llvm::FunctionType* TypeHolder::CreateFunctionType() {
-  if (function_type_ == nullptr) {
-    function_type_ = llvm::FunctionType::get(
+llvm::FunctionType* TypeHolder::CreateLambdaType() {
+  if (lambda_type_ == nullptr) {
+    lambda_type_ = llvm::FunctionType::get(
         // status code
         builder_.getInt32Ty(),
         {
             // ctx (pointer to the exec context)
             builder_.getPtrTy(),
-            // caps (pointer to a list captures)
+            // caps (pointer to a list of captures)
             builder_.getPtrTy(),
             // argc
             GetWordType(),
@@ -98,7 +98,7 @@ llvm::FunctionType* TypeHolder::CreateFunctionType() {
         },
         false);
   }
-  return function_type_;
+  return lambda_type_;
 }
 {%- for function in data.functions %}
 

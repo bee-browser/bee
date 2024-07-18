@@ -8,6 +8,7 @@ publish = false
 [dependencies]
 base = { path = "../base" }
 bitflags = "2.6.0"
+# TODO(issue#237): replace `bumpalo` with `jsgc = { path = "../jsgc" }`
 bumpalo = "3.16.0"
 indexmap = "2.2.6"
 jsparser = { path = "../jsparser", features = ["location"] }
