@@ -24,7 +24,9 @@ jobs:
   bench:
     # Skip if this workflow is triggered by dependabot.
     if: ${{ github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
+    # a temporal fix for llvm/llvm-project#99502
+    #runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:

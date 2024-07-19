@@ -24,7 +24,9 @@ jobs:
   coverage:
     # Skip if this workflow is triggered by dependabot.
     if: ${{ github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
+    # a temporal fix for llvm/llvm-project#99502
+    #runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
       # Remove packages in order to avoid "No space left on device" error in `make coverage`.
