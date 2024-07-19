@@ -698,18 +698,17 @@ void Compiler::BitwiseOrAssignment() {
 }
 
 void Compiler::Bindings(uint16_t n) {
-  max_bindings_ = n;
+  max_locals_ = n;
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
-  bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
   function_scope_type_->setBody({
       // bindings[]
-      bindings_type_,
+      llvm::ArrayType::get(types_->CreateBindingType(), n),
   });
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
-  bindings_ = CreateGetBindingsPtrOfScope(function_scope_);
-  builder_->CreateMemSet(bindings_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)),
+  locals_ = CreateGetBindingsPtrOfScope(function_scope_);
+  builder_->CreateMemSet(locals_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)),
       llvm::MaybeAlign());
   builder_->SetInsertPoint(backup);
 }
@@ -1383,7 +1382,7 @@ void Compiler::EndFunction(bool optimize) {
   builder_->CreateBr(body_);
 
   builder_->SetInsertPoint(epilogue_);
-  for (uint16_t i = 0; i < max_bindings_; ++i) {
+  for (uint16_t i = 0; i < max_locals_; ++i) {
     // TODO: CG
     auto* binding_ptr = CreateGetLocalBindingPtr(i);
     CreateStoreFlagsToBinding(0, binding_ptr);
@@ -1420,23 +1419,23 @@ void Compiler::EndFunction(bool optimize) {
 
 void Compiler::AllocateBindings(uint16_t n, bool prologue) {
   UNUSED(prologue);
-  assert(static_cast<size_t>(allocated_bindings_) + static_cast<size_t>(n) <
+  assert(static_cast<size_t>(allocated_locals_) + static_cast<size_t>(n) <
       std::numeric_limits<uint16_t>::max());
-  allocated_bindings_ += n;
+  allocated_locals_ += n;
 }
 
 void Compiler::ReleaseBindings(uint16_t n) {
-  assert(allocated_bindings_ >= n);
+  assert(allocated_locals_ >= n);
   if (builder_->GetInsertBlock()->getTerminator() == nullptr) {
-    auto start = allocated_bindings_ - n;
-    while (start < allocated_bindings_) {
+    auto start = allocated_locals_ - n;
+    while (start < allocated_locals_) {
       // TODO: CG
       auto* binding_ptr = CreateGetLocalBindingPtr(start);
       CreateStoreFlagsToBinding(0, binding_ptr);
       start++;
     }
   }
-  allocated_bindings_ -= n;
+  allocated_locals_ -= n;
 }
 
 void Compiler::CreateCapture(Locator locator, bool prologue) {

@@ -404,11 +404,6 @@ class Compiler {
     return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 0);
   }
 
-  inline llvm::Value* CreateGetBindingPtrOfScope(llvm::Value* scope_ptr, uint16_t index) {
-    auto* ptr = CreateGetBindingsPtrOfScope(scope_ptr);
-    return builder_->CreateConstInBoundsGEP2_32(bindings_type_, ptr, 0, index);
-  }
-
   // arguments
 
   inline llvm::Value* CreateGetArgumentBindingPtr(uint16_t index) {
@@ -422,11 +417,11 @@ class Compiler {
   // locals
 
   inline llvm::Value* CreateGetLocalBindingPtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateBindingType(), bindings_, index);
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateBindingType(), locals_, index);
   }
 
   inline llvm::Value* CreateGetLocalValuePtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), bindings_, index);
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), locals_, index);
   }
 
   // captures
@@ -726,12 +721,11 @@ class Compiler {
   llvm::Value* argv_ = nullptr;
   llvm::Value* ret_ = nullptr;
   llvm::Value* status_ = nullptr;
-  llvm::Type* bindings_type_ = nullptr;
   llvm::StructType* function_scope_type_ = nullptr;
   llvm::Value* function_scope_ = nullptr;
-  llvm::Value* bindings_ = nullptr;
-  uint16_t max_bindings_ = 0;
-  uint16_t allocated_bindings_ = 0;
+  llvm::Value* locals_ = nullptr;
+  uint16_t max_locals_ = 0;
+  uint16_t allocated_locals_ = 0;
 
   std::vector<Item> stack_;
   std::vector<BlockItem> break_stack_;
