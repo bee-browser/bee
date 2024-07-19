@@ -32,10 +32,10 @@ llvm::StructType* TypeHolder::CreateValueType() {
   return value_type_;
 }
 
-llvm::StructType* TypeHolder::CreateBindingType() {
-  if (binding_type_ == nullptr) {
-    binding_type_ = llvm::StructType::create(context_, "Binding");
-    binding_type_->setBody({
+llvm::StructType* TypeHolder::CreateVariableType() {
+  if (variable_type_ == nullptr) {
+    variable_type_ = llvm::StructType::create(context_, "Variable");
+    variable_type_->setBody({
         // kind
         builder_.getInt8Ty(),
         // flags
@@ -48,7 +48,7 @@ llvm::StructType* TypeHolder::CreateBindingType() {
         builder_.getInt64Ty(),
     });
   }
-  return binding_type_;
+  return variable_type_;
 }
 
 llvm::StructType* TypeHolder::CreateCaptureType() {
@@ -58,7 +58,7 @@ llvm::StructType* TypeHolder::CreateCaptureType() {
         // target
         builder_.getPtrTy(),
         // escaped
-        CreateBindingType(),
+        CreateVariableType(),
     });
   }
   return capture_type_;
@@ -91,7 +91,7 @@ llvm::FunctionType* TypeHolder::CreateLambdaType() {
             builder_.getPtrTy(),
             // argc
             GetWordType(),
-            // argv (pointer to a list of bindings)
+            // argv (pointer to a list of variables)
             builder_.getPtrTy(),
             // ret (pointer to a return value)
             builder_.getPtrTy(),

@@ -64,7 +64,7 @@ struct Value {
 static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 
 // Can be copied as Value.
-struct Binding {
+struct Variable {
   ValueKind kind;
   uint8_t flags;
   uint16_t reserved;
@@ -72,17 +72,17 @@ struct Binding {
   ValueHolder holder;
 };
 
-#define BINDING_INITIALIZED 0x01
-#define BINDING_DELETABLE 0x02
-#define BINDING_MUTABLE 0x04
-#define BINDING_STRICT 0x08
+#define VARIABLE_INITIALIZED 0x01
+#define VARIABLE_DELETABLE 0x02
+#define VARIABLE_MUTABLE 0x04
+#define VARIABLE_STRICT 0x08
 
-static_assert(sizeof(Binding) == sizeof(uint64_t) * 2, "size mismatched");
+static_assert(sizeof(Variable) == sizeof(uint64_t) * 2, "size mismatched");
 
 // TODO(issue#237): GcCell
 struct Capture {
-  Binding* target;
-  Binding escaped;
+  Variable* target;
+  Variable escaped;
 };
 
 static_assert(sizeof(Capture) == sizeof(uint64_t) * 3, "size mismatched");

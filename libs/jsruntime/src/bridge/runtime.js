@@ -68,7 +68,7 @@ function makeLLVMIRType(type) {
       return 'builder_.getInt32Ty()';
     case 'f64':
       return 'builder_.getDoubleTy()';
-    case '&mut Binding':
+    case '&mut Variable':
     case '&mut Capture':
     case '&mut Closure':
     case '&Value':
@@ -96,8 +96,8 @@ function makeCType(type) {
       return 'uint32_t';
     case 'f64':
       return 'double';
-    case '&mut Binding':
-      return 'Binding*';
+    case '&mut Variable':
+      return 'Variable*';
     case '&mut Capture':
       return 'Capture*';
     case '&mut Closure':

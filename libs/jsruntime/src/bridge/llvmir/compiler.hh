@@ -375,10 +375,10 @@ class Compiler {
   llvm::Value* CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value);
   llvm::Value* CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value);
 
-  llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr);
+  llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* variable_ptr);
   llvm::Value* CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures);
 
-  llvm::Value* CreateGetBindingPtr(Locator locator);
+  llvm::Value* CreateGetVariablePtr(Locator locator);
   llvm::Value* CreateGetValuePtr(Locator locator);
 
   // Naming convention for field accessors:
@@ -400,14 +400,14 @@ class Compiler {
 
   // function scope
 
-  inline llvm::Value* CreateGetBindingsPtrOfScope(llvm::Value* scope_ptr) {
+  inline llvm::Value* CreateGetVariablesPtrOfScope(llvm::Value* scope_ptr) {
     return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 0);
   }
 
   // arguments
 
-  inline llvm::Value* CreateGetArgumentBindingPtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateBindingType(), argv_, index);
+  inline llvm::Value* CreateGetArgumentVariablePtr(uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateVariableType(), argv_, index);
   }
 
   inline llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
@@ -416,8 +416,8 @@ class Compiler {
 
   // locals
 
-  inline llvm::Value* CreateGetLocalBindingPtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateBindingType(), locals_, index);
+  inline llvm::Value* CreateGetLocalVariablePtr(uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateVariableType(), locals_, index);
   }
 
   inline llvm::Value* CreateGetLocalValuePtr(uint16_t index) {
@@ -426,7 +426,7 @@ class Compiler {
 
   // captures
 
-  inline llvm::Value* CreateGetCaptureBindingPtr(uint16_t index) {
+  inline llvm::Value* CreateGetCaptureVariablePtr(uint16_t index) {
     auto* ptr = CreateLoadCapturePtrFromCaptures(caps_, index);
     return CreateLoadTargetFromCapture(ptr);
   }
@@ -452,92 +452,92 @@ class Compiler {
     builder_->CreateStore(capture_ptr, ptr);
   }
 
-  // binding
+  // variable
 
-  inline llvm::Value* CreateGetValueKindPtrOfBinding(llvm::Value* binding_ptr) {
-    return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 0);
+  inline llvm::Value* CreateGetValueKindPtrOfVariable(llvm::Value* variable_ptr) {
+    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 0);
   }
 
-  inline llvm::Value* CreateGetFlagsPtrOfBinding(llvm::Value* binding_ptr) {
-    return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 1);
+  inline llvm::Value* CreateGetFlagsPtrOfVariable(llvm::Value* variable_ptr) {
+    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 1);
   }
 
-  inline llvm::Value* CreateGetReservedPtrOfBinding(llvm::Value* binding_ptr) {
-    return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 2);
+  inline llvm::Value* CreateGetReservedPtrOfVariable(llvm::Value* variable_ptr) {
+    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 2);
   }
 
-  inline llvm::Value* CreateGetSymbolPtrOfBinding(llvm::Value* binding_ptr) {
-    return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 3);
+  inline llvm::Value* CreateGetSymbolPtrOfVariable(llvm::Value* variable_ptr) {
+    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 3);
   }
 
-  inline llvm::Value* CreateGetValueHolderPtrOfBinding(llvm::Value* binding_ptr) {
-    return builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 4);
+  inline llvm::Value* CreateGetValueHolderPtrOfVariable(llvm::Value* variable_ptr) {
+    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 4);
   }
 
-  inline llvm::Value* CreateLoadBinding(llvm::Value* binding_ptr) {
-    return builder_->CreateLoad(types_->CreateBindingType(), binding_ptr);
+  inline llvm::Value* CreateLoadVariable(llvm::Value* variable_ptr) {
+    return builder_->CreateLoad(types_->CreateVariableType(), variable_ptr);
   }
 
-  inline void CreateStoreValueKindToBinding(ValueKind value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(builder_->getInt8(static_cast<uint8_t>(value)), binding_ptr);
+  inline void CreateStoreValueKindToVariable(ValueKind value, llvm::Value* variable_ptr) {
+    CreateStoreValueKindToVariable(builder_->getInt8(static_cast<uint8_t>(value)), variable_ptr);
   }
 
-  inline void CreateStoreValueKindToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
-    auto* ptr = CreateGetValueKindPtrOfBinding(binding_ptr);
+  inline void CreateStoreValueKindToVariable(llvm::Value* value, llvm::Value* variable_ptr) {
+    auto* ptr = CreateGetValueKindPtrOfVariable(variable_ptr);
     builder_->CreateStore(value, ptr);
   }
 
-  inline void CreateStoreFlagsToBinding(uint8_t value, llvm::Value* binding_ptr) {
-    auto* ptr = CreateGetFlagsPtrOfBinding(binding_ptr);
+  inline void CreateStoreFlagsToVariable(uint8_t value, llvm::Value* variable_ptr) {
+    auto* ptr = CreateGetFlagsPtrOfVariable(variable_ptr);
     builder_->CreateStore(builder_->getInt8(value), ptr);
   }
 
-  inline void CreateStoreSymbolToBinding(uint32_t value, llvm::Value* binding_ptr) {
-    auto* ptr = CreateGetSymbolPtrOfBinding(binding_ptr);
+  inline void CreateStoreSymbolToVariable(uint32_t value, llvm::Value* variable_ptr) {
+    auto* ptr = CreateGetSymbolPtrOfVariable(variable_ptr);
     builder_->CreateStore(builder_->getInt32(value), ptr);
   }
 
-  inline void CreateStoreValueHolderToBinding(llvm::Value* holder, llvm::Value* binding_ptr) {
-    auto* ptr = CreateGetValueHolderPtrOfBinding(binding_ptr);
+  inline void CreateStoreValueHolderToVariable(llvm::Value* holder, llvm::Value* variable_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfVariable(variable_ptr);
     builder_->CreateStore(holder, ptr);
   }
 
-  inline void CreateStoreUndefinedToBinding(llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(ValueKind::Undefined, binding_ptr);
+  inline void CreateStoreUndefinedToVariable(llvm::Value* variable_ptr) {
+    CreateStoreValueKindToVariable(ValueKind::Undefined, variable_ptr);
     // zeroinitializer can be used in optimization by filling the holder with zero.
-    CreateStoreValueHolderToBinding(builder_->getInt64(0), binding_ptr);
+    CreateStoreValueHolderToVariable(builder_->getInt64(0), variable_ptr);
   }
 
-  inline void CreateStoreNullToBinding(llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(ValueKind::Null, binding_ptr);
+  inline void CreateStoreNullToVariable(llvm::Value* variable_ptr) {
+    CreateStoreValueKindToVariable(ValueKind::Null, variable_ptr);
     // zeroinitializer can be used in optimization by filling the holder with zero.
-    CreateStoreValueHolderToBinding(builder_->getInt64(0), binding_ptr);
+    CreateStoreValueHolderToVariable(builder_->getInt64(0), variable_ptr);
   }
 
-  inline void CreateStoreBooleanToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(ValueKind::Boolean, binding_ptr);
-    CreateStoreValueHolderToBinding(value, binding_ptr);
+  inline void CreateStoreBooleanToVariable(llvm::Value* value, llvm::Value* variable_ptr) {
+    CreateStoreValueKindToVariable(ValueKind::Boolean, variable_ptr);
+    CreateStoreValueHolderToVariable(value, variable_ptr);
   }
 
-  inline void CreateStoreNumberToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(ValueKind::Number, binding_ptr);
-    CreateStoreValueHolderToBinding(value, binding_ptr);
+  inline void CreateStoreNumberToVariable(llvm::Value* value, llvm::Value* variable_ptr) {
+    CreateStoreValueKindToVariable(ValueKind::Number, variable_ptr);
+    CreateStoreValueHolderToVariable(value, variable_ptr);
   }
 
-  inline void CreateStoreClosureToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(ValueKind::Closure, binding_ptr);
-    CreateStoreValueHolderToBinding(value, binding_ptr);
+  inline void CreateStoreClosureToVariable(llvm::Value* value, llvm::Value* variable_ptr) {
+    CreateStoreValueKindToVariable(ValueKind::Closure, variable_ptr);
+    CreateStoreValueHolderToVariable(value, variable_ptr);
   }
 
-  inline void CreateStoreValueToBinding(llvm::Value* value_ptr, llvm::Value* binding_ptr) {
+  inline void CreateStoreValueToVariable(llvm::Value* value_ptr, llvm::Value* variable_ptr) {
     auto* value = CreateLoadValue(value_ptr);
     auto* kind = CreateExtractValueKindFromValue(value);
     auto* holder = CreateExtractValueHolderFromValue(value);
-    CreateStoreValueKindToBinding(kind, binding_ptr);
-    CreateStoreValueHolderToBinding(holder, binding_ptr);
+    CreateStoreValueKindToVariable(kind, variable_ptr);
+    CreateStoreValueHolderToVariable(holder, variable_ptr);
   }
 
-  void CreateStoreItemToBinding(const Item& item, llvm::Value* binding_ptr);
+  void CreateStoreItemToVariable(const Item& item, llvm::Value* variable_ptr);
 
   // value
 
@@ -644,14 +644,14 @@ class Compiler {
     return builder_->CreateLoad(builder_->getPtrTy(), ptr);
   }
 
-  inline void CreateStoreTargetToCapture(llvm::Value* binding_ptr, llvm::Value* capture_ptr) {
+  inline void CreateStoreTargetToCapture(llvm::Value* variable_ptr, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
-    builder_->CreateStore(binding_ptr, ptr);
+    builder_->CreateStore(variable_ptr, ptr);
   }
 
-  inline void CreateStoreEscapedToCapture(llvm::Value* binding, llvm::Value* capture_ptr) {
+  inline void CreateStoreEscapedToCapture(llvm::Value* variable, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
-    builder_->CreateStore(binding, ptr);
+    builder_->CreateStore(variable, ptr);
   }
 
   // closure

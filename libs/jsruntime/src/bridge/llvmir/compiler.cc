@@ -561,11 +561,11 @@ void Compiler::Assignment() {
   auto item = Dereference();
   auto ref = PopReference();
 
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  auto* variable_ptr = CreateGetVariablePtr(ref.locator);
   // TODO: check the mutable flag
-  // auto* flags_ptr = CreateGetFlagsPtr(binding_ptr);
+  // auto* flags_ptr = CreateGetFlagsPtr(variable_ptr);
 
-  CreateStoreItemToBinding(item, binding_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 
   stack_.push_back(item);
 }
@@ -704,44 +704,44 @@ void Compiler::Bindings(uint16_t n) {
   // TODO: remove FunctionScope
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
   function_scope_type_->setBody({
-      // bindings[]
-      llvm::ArrayType::get(types_->CreateBindingType(), n),
+      // variables[]
+      llvm::ArrayType::get(types_->CreateVariableType(), n),
   });
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
-  locals_ = CreateGetBindingsPtrOfScope(function_scope_);
+  locals_ = CreateGetVariablesPtrOfScope(function_scope_);
   builder_->CreateMemSet(
-      locals_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)), llvm::MaybeAlign());
+      locals_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Variable)), llvm::MaybeAlign());
   builder_->SetInsertPoint(backup);
 }
 
 void Compiler::DeclareImmutable() {
-  static constexpr uint8_t FLAGS = BINDING_INITIALIZED;
+  static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED;
 
   auto item = PopItem();
   auto ref = PopReference();
   assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* binding_ptr = CreateGetLocalBindingPtr(ref.locator.index);
-  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
-  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
-  CreateStoreItemToBinding(item, binding_ptr);
+  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  CreateStoreFlagsToVariable(FLAGS, variable_ptr);
+  CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 }
 
 void Compiler::DeclareMutable() {
-  static constexpr uint8_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+  static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
   auto item = Dereference();
   auto ref = PopReference();
   assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* binding_ptr = CreateGetLocalBindingPtr(ref.locator.index);
-  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
-  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
-  CreateStoreItemToBinding(item, binding_ptr);
+  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  CreateStoreFlagsToVariable(FLAGS, variable_ptr);
+  CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 }
 
 void Compiler::DeclareFunction() {
-  static constexpr uint8_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+  static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
@@ -750,16 +750,16 @@ void Compiler::DeclareFunction() {
   auto ref = PopReference();
   assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* binding_ptr = CreateGetLocalBindingPtr(ref.locator.index);
-  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
-  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
-  CreateStoreItemToBinding(item, binding_ptr);
+  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  CreateStoreFlagsToVariable(FLAGS, variable_ptr);
+  CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 
   builder_->SetInsertPoint(backup);
 }
 
 void Compiler::DeclareClosure() {
-  static constexpr uint8_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+  static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
@@ -768,10 +768,10 @@ void Compiler::DeclareClosure() {
   auto ref = PopReference();
   assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* binding_ptr = CreateGetLocalBindingPtr(ref.locator.index);
-  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
-  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
-  CreateStoreItemToBinding(item, binding_ptr);
+  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  CreateStoreFlagsToVariable(FLAGS, variable_ptr);
+  CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 
   builder_->SetInsertPoint(backup);
 }
@@ -1385,8 +1385,8 @@ void Compiler::EndFunction(bool optimize) {
   builder_->SetInsertPoint(epilogue_);
   for (uint16_t i = 0; i < max_locals_; ++i) {
     // TODO: CG
-    auto* binding_ptr = CreateGetLocalBindingPtr(i);
-    CreateStoreFlagsToBinding(0, binding_ptr);
+    auto* variable_ptr = CreateGetLocalVariablePtr(i);
+    CreateStoreFlagsToVariable(0, variable_ptr);
   }
 
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_);
@@ -1431,8 +1431,8 @@ void Compiler::ReleaseBindings(uint16_t n) {
     auto start = allocated_locals_ - n;
     while (start < allocated_locals_) {
       // TODO: CG
-      auto* binding_ptr = CreateGetLocalBindingPtr(start);
-      CreateStoreFlagsToBinding(0, binding_ptr);
+      auto* variable_ptr = CreateGetLocalVariablePtr(start);
+      CreateStoreFlagsToVariable(0, variable_ptr);
       start++;
     }
   }
@@ -1449,20 +1449,20 @@ void Compiler::CreateCapture(Locator locator, bool prologue) {
     builder_->SetInsertPoint(prologue_);
   }
 
-  llvm::Value* binding_ptr;
+  llvm::Value* variable_ptr;
   switch (locator.kind) {
     case LocatorKind::Argument:
-      binding_ptr = CreateGetArgumentBindingPtr(locator.index);
+      variable_ptr = CreateGetArgumentVariablePtr(locator.index);
       break;
     case LocatorKind::Local:
-      binding_ptr = CreateGetLocalBindingPtr(locator.index);
+      variable_ptr = CreateGetLocalVariablePtr(locator.index);
       break;
     default:
       assert(false);
       return;
   }
 
-  auto* capture_ptr = CreateCallRuntimeCreateCapture(binding_ptr);
+  auto* capture_ptr = CreateCallRuntimeCreateCapture(variable_ptr);
 
   auto key = *reinterpret_cast<uint32_t*>(&locator);
   assert(captures_.find(key) == captures_.end());
@@ -1515,10 +1515,10 @@ void Compiler::EscapeBinding(Locator locator) {
   auto* capture_ptr = captures_[key];
   auto* escaped_ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
   CreateStoreTargetToCapture(escaped_ptr, capture_ptr);
-  auto* binding_ptr = CreateGetBindingPtr(locator);
-  auto* binding = CreateLoadBinding(binding_ptr);
-  CreateStoreEscapedToCapture(binding, capture_ptr);
-  // The value of `locator.index` may be reused for another local binding.
+  auto* variable_ptr = CreateGetVariablePtr(locator);
+  auto* variable = CreateLoadVariable(variable_ptr);
+  CreateStoreEscapedToCapture(variable, capture_ptr);
+  // The value of `locator.index` may be reused for another local variable.
   // The element identified by `locator.index` is removed from `captures_` here.
   captures_.erase(key);
 }
@@ -1748,25 +1748,25 @@ void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
   PushNumber(onum);
 }
 
-void Compiler::CreateStoreItemToBinding(const Item& item, llvm::Value* binding_ptr) {
+void Compiler::CreateStoreItemToVariable(const Item& item, llvm::Value* variable_ptr) {
   switch (item.type) {
     case Item::Undefined:
-      CreateStoreUndefinedToBinding(binding_ptr);
+      CreateStoreUndefinedToVariable(variable_ptr);
       break;
     case Item::Null:
-      CreateStoreNullToBinding(binding_ptr);
+      CreateStoreNullToVariable(variable_ptr);
       break;
     case Item::Boolean:
-      CreateStoreBooleanToBinding(item.value, binding_ptr);
+      CreateStoreBooleanToVariable(item.value, variable_ptr);
       break;
     case Item::Number:
-      CreateStoreNumberToBinding(item.value, binding_ptr);
+      CreateStoreNumberToVariable(item.value, variable_ptr);
       break;
     case Item::Closure:
-      CreateStoreClosureToBinding(item.value, binding_ptr);
+      CreateStoreClosureToVariable(item.value, variable_ptr);
       break;
     case Item::Any:
-      CreateStoreValueToBinding(item.value, binding_ptr);
+      CreateStoreValueToVariable(item.value, variable_ptr);
       break;
     default:
       assert(false);
@@ -2115,9 +2115,9 @@ llvm::Value* Compiler::CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Va
   return phi;
 }
 
-llvm::Value* Compiler::CreateCallRuntimeCreateCapture(llvm::Value* binding_ptr) {
+llvm::Value* Compiler::CreateCallRuntimeCreateCapture(llvm::Value* variable_ptr) {
   auto* func = types_->CreateRuntimeCreateCapture();
-  return builder_->CreateCall(func, {exec_context_, binding_ptr});
+  return builder_->CreateCall(func, {exec_context_, variable_ptr});
 }
 
 llvm::Value* Compiler::CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures) {
@@ -2125,14 +2125,14 @@ llvm::Value* Compiler::CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint1
   return builder_->CreateCall(func, {exec_context_, lambda, builder_->getInt16(num_captures)});
 }
 
-llvm::Value* Compiler::CreateGetBindingPtr(Locator locator) {
+llvm::Value* Compiler::CreateGetVariablePtr(Locator locator) {
   switch (locator.kind) {
     case LocatorKind::Argument:
-      return CreateGetArgumentBindingPtr(locator.index);
+      return CreateGetArgumentVariablePtr(locator.index);
     case LocatorKind::Local:
-      return CreateGetLocalBindingPtr(locator.index);
+      return CreateGetLocalVariablePtr(locator.index);
     case LocatorKind::Capture:
-      return CreateGetCaptureBindingPtr(locator.index);
+      return CreateGetCaptureVariablePtr(locator.index);
     default:
       // never reach here
       assert(false);
