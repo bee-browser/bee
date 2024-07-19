@@ -26,6 +26,14 @@
 #include "macros.hh"
 #include "module.hh"
 
+namespace {
+
+inline uint32_t ComputeKeyFromLocator(Locator locator) {
+  return (static_cast<uint32_t>(locator.kind) << 16) | static_cast<uint32_t>(locator.index);
+}
+
+}  // namespace
+
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
@@ -1464,7 +1472,7 @@ void Compiler::CreateCapture(Locator locator, bool prologue) {
 
   auto* capture_ptr = CreateCallRuntimeCreateCapture(variable_ptr);
 
-  auto key = *reinterpret_cast<uint32_t*>(&locator);
+  auto key = ComputeKeyFromLocator(locator);
   assert(captures_.find(key) == captures_.end());
   captures_[key] = capture_ptr;
 
@@ -1487,7 +1495,7 @@ void Compiler::CaptureBinding(bool prologue) {
   switch (ref.locator.kind) {
     case LocatorKind::Argument:
     case LocatorKind::Local: {
-      auto key = *reinterpret_cast<uint32_t*>(&ref.locator);
+      auto key = ComputeKeyFromLocator(ref.locator);
       assert(captures_.find(key) != captures_.end());
       capture_ptr = captures_[key];
       break;
@@ -1510,7 +1518,7 @@ void Compiler::CaptureBinding(bool prologue) {
 
 void Compiler::EscapeBinding(Locator locator) {
   assert(locator.kind != LocatorKind::Capture);
-  auto key = *reinterpret_cast<uint32_t*>(&locator);
+  auto key = ComputeKeyFromLocator(locator);
   assert(captures_.find(key) != captures_.end());
   auto* capture_ptr = captures_[key];
   auto* escaped_ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
