@@ -721,6 +721,7 @@ class Compiler {
   llvm::Value* argv_ = nullptr;
   llvm::Value* ret_ = nullptr;
   llvm::Value* status_ = nullptr;
+  // TODO: remove FunctionScope
   llvm::StructType* function_scope_type_ = nullptr;
   llvm::Value* function_scope_ = nullptr;
   llvm::Value* locals_ = nullptr;

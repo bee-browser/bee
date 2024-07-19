@@ -701,6 +701,7 @@ void Compiler::Bindings(uint16_t n) {
   max_locals_ = n;
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
+  // TODO: remove FunctionScope
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
   function_scope_type_->setBody({
       // bindings[]
@@ -708,8 +709,8 @@ void Compiler::Bindings(uint16_t n) {
   });
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
   locals_ = CreateGetBindingsPtrOfScope(function_scope_);
-  builder_->CreateMemSet(locals_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)),
-      llvm::MaybeAlign());
+  builder_->CreateMemSet(
+      locals_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)), llvm::MaybeAlign());
   builder_->SetInsertPoint(backup);
 }
 
