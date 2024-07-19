@@ -19,19 +19,6 @@ llvm::Value* TypeHolder::GetWord(size_t value) {
   return builder_.getIntN(kWorkBits, value);
 }
 
-llvm::StructType* TypeHolder::CreateValueType() {
-  if (value_type_ == nullptr) {
-    value_type_ = llvm::StructType::create(context_, "Value");
-    value_type_->setBody({
-        // kind
-        builder_.getInt8Ty(),
-        // holder
-        builder_.getInt64Ty(),
-    });
-  }
-  return value_type_;
-}
-
 llvm::StructType* TypeHolder::CreateVariableType() {
   if (variable_type_ == nullptr) {
     variable_type_ = llvm::StructType::create(context_, "Variable");

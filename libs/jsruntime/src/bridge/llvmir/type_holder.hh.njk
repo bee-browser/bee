@@ -21,7 +21,6 @@ class TypeHolder {
 
   llvm::Type* GetWordType();
   llvm::Value* GetWord(size_t value);
-  llvm::StructType* CreateValueType();
   llvm::StructType* CreateVariableType();
   llvm::StructType* CreateCaptureType();
   llvm::StructType* CreateClosureType();
@@ -30,11 +29,15 @@ class TypeHolder {
   llvm::Function* CreateRuntime{{ function.name | pascalCase }}();
   {%- endfor %}
 
+  // The Variable type has a compatible layout with the Value type.
+  llvm::StructType* CreateValueType() {
+    return CreateVariableType();
+  }
+
  private:
   llvm::LLVMContext& context_;
   llvm::Module& module_;
   llvm::IRBuilder<>& builder_;
-  llvm::StructType* value_type_ = nullptr;
   llvm::StructType* variable_type_ = nullptr;
   llvm::StructType* capture_type_ = nullptr;
   llvm::StructType* closure_type_ = nullptr;

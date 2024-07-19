@@ -474,6 +474,14 @@ class Compiler {
     return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 4);
   }
 
+  inline llvm::Value* CreateExtractValueKindFromVariable(llvm::Value* variable) {
+    return builder_->CreateExtractValue(variable, 0);
+  }
+
+  inline llvm::Value* CreateExtractValueHolderFromVariable(llvm::Value* variable) {
+    return builder_->CreateExtractValue(variable, 4);
+  }
+
   inline llvm::Value* CreateLoadVariable(llvm::Value* variable_ptr) {
     return builder_->CreateLoad(types_->CreateVariableType(), variable_ptr);
   }
@@ -540,21 +548,24 @@ class Compiler {
   void CreateStoreItemToVariable(const Item& item, llvm::Value* variable_ptr);
 
   // value
+  //
+  // Redirect to the corresponding method for the Variable type.
+  // The Variable type has a compatible layout with the Value type.
 
   inline llvm::Value* CreateGetValueKindPtrOfValue(llvm::Value* value_ptr) {
-    return builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+    return CreateGetValueKindPtrOfVariable(value_ptr);
   }
 
   inline llvm::Value* CreateGetValueHolderPtrOfValue(llvm::Value* value_ptr) {
-    return builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
+    return CreateGetValueHolderPtrOfVariable(value_ptr);
   }
 
   inline llvm::Value* CreateExtractValueKindFromValue(llvm::Value* value) {
-    return builder_->CreateExtractValue(value, 0);
+    return CreateExtractValueKindFromVariable(value);
   }
 
   inline llvm::Value* CreateExtractValueHolderFromValue(llvm::Value* value) {
-    return builder_->CreateExtractValue(value, 1);
+    return CreateExtractValueHolderFromVariable(value);
   }
 
   inline llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
