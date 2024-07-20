@@ -62,6 +62,10 @@ struct Compile {
 
 #[derive(clap::Args)]
 struct Run {
+    /// Disable optimization.
+    #[arg(long)]
+    no_optimize: bool,
+
     /// The source file of the JavaScript program to run.
     ///
     /// Reads the source text from STDIN if this argument is not specified.
@@ -98,8 +102,7 @@ fn main() -> Result<()> {
         Command::Run(args) => {
             let source = read_source(args.source.as_ref())?;
             let program = runtime.parse_script(&source)?;
-            // Always perform optimization.
-            let module = runtime.compile(&program, true)?;
+            let module = runtime.compile(&program, !args.no_optimize)?;
             match runtime.evaluate(module) {
                 Ok(_) => Ok(()),
                 Err(v) => anyhow::bail!("Uncaught {v:?}"),

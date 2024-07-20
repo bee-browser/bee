@@ -709,16 +709,12 @@ void Compiler::Bindings(uint16_t n) {
   max_locals_ = n;
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
-  // TODO: remove FunctionScope
-  function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
-  function_scope_type_->setBody({
-      // variables[]
-      llvm::ArrayType::get(types_->CreateVariableType(), n),
-  });
-  function_scope_ = builder_->CreateAlloca(function_scope_type_);
-  locals_ = CreateGetVariablesPtrOfScope(function_scope_);
-  builder_->CreateMemSet(
-      locals_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Variable)), llvm::MaybeAlign());
+  for (auto i = 0; i < n; ++i) {
+    auto* local = builder_->CreateAlloca(types_->CreateVariableType());
+    builder_->CreateMemSet(
+        local, builder_->getInt8(0), builder_->getInt32(sizeof(Variable)), llvm::MaybeAlign());
+    locals_.push_back(local);
+  }
   builder_->SetInsertPoint(backup);
 }
 
@@ -1401,6 +1397,9 @@ void Compiler::EndFunction(bool optimize) {
   builder_->CreateRet(status);
 
   // DumpStack();
+
+  assert(allocated_locals_ == 0);
+  locals_.clear();
 
   assert(stack_.empty());
   stack_.clear();

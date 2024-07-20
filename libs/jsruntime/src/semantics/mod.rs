@@ -20,9 +20,9 @@ use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;
 use super::Runtime;
-use scope::BindingKind;
 use scope::ScopeTreeBuilder;
 
+pub use scope::BindingKind;
 pub use scope::BindingRef;
 pub use scope::ScopeRef;
 pub use scope::ScopeTree;
@@ -1155,6 +1155,9 @@ impl FunctionContext {
         self.commands.push(CompileCommand::Function(func_id));
         self.commands
             .push(CompileCommand::Closure(false, captures.len() as u16));
+        if named {
+            self.scope_stack.last_mut().unwrap().num_bindings += 1;
+        }
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
@@ -1363,6 +1366,7 @@ impl FunctionContext {
 
 struct Scope {
     scope_ref: ScopeRef,
+    // TODO: remove and use the scope tree
     num_bindings: usize,
     max_child_bindings: usize,
 }

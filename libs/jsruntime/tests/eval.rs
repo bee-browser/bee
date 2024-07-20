@@ -669,8 +669,8 @@ fn eval_anonymous_function_expression() {
 #[test]
 fn eval_iife() {
     // IIFE: Immediately Invoked Function Expression
-    eval!("print((function() { return 1 })())", 1);
-    eval!("print((function x() { return 1 })())", 1);
+    eval!(file: "iife.js", 1);
+    eval!(file: "iife_with_name.js", 1);
 }
 
 #[test]

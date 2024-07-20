@@ -398,12 +398,6 @@ class Compiler {
   //   CreateStore<field>To<type>(value, ptr)
   //     Create instructions to store a value to the <field> of <type>.
 
-  // function scope
-
-  inline llvm::Value* CreateGetVariablesPtrOfScope(llvm::Value* scope_ptr) {
-    return builder_->CreateStructGEP(function_scope_type_, scope_ptr, 0);
-  }
-
   // arguments
 
   inline llvm::Value* CreateGetArgumentVariablePtr(uint16_t index) {
@@ -417,11 +411,11 @@ class Compiler {
   // locals
 
   inline llvm::Value* CreateGetLocalVariablePtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateVariableType(), locals_, index);
+    return locals_[index];
   }
 
   inline llvm::Value* CreateGetLocalValuePtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), locals_, index);
+    return CreateGetLocalVariablePtr(index);
   }
 
   // captures
@@ -721,7 +715,8 @@ class Compiler {
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
   std::unique_ptr<TypeHolder> types_ = nullptr;
-  // function-related data
+
+  // The following variables are reset for each function.
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* prologue_ = nullptr;
   llvm::BasicBlock* body_ = nullptr;
@@ -732,19 +727,20 @@ class Compiler {
   llvm::Value* argv_ = nullptr;
   llvm::Value* ret_ = nullptr;
   llvm::Value* status_ = nullptr;
-  // TODO: remove FunctionScope
-  llvm::StructType* function_scope_type_ = nullptr;
-  llvm::Value* function_scope_ = nullptr;
-  llvm::Value* locals_ = nullptr;
+
+  // The `locals_` must be reset in the end of compilation for each function.
+  std::vector<llvm::Value*> locals_;
   uint16_t max_locals_ = 0;
   uint16_t allocated_locals_ = 0;
 
+  // The following variables must be reset in the end of compilation for each function.
   std::vector<Item> stack_;
   std::vector<BlockItem> break_stack_;
   std::vector<BlockItem> continue_stack_;
   std::vector<llvm::BasicBlock*> catch_stack_;
   std::unordered_map<uint32_t, llvm::Value*> captures_;
 
+  // A cache of functions does not reset in the end of compilation for each function.
   std::unordered_map<std::string, llvm::Function*> functions_;
 
   // for optimization

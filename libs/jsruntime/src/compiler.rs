@@ -8,6 +8,7 @@ use crate::bridge::Locator;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
+use crate::semantics::BindingKind;
 use crate::semantics::CompileCommand;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
@@ -176,7 +177,12 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
                 let scope = self.scope_tree.scope(scope_ref);
-                let n = scope.bindings.len();
+                // The list of bindings includes formal parameters.
+                let n = scope
+                    .bindings
+                    .iter()
+                    .filter(|binding| !matches!(binding.kind, BindingKind::FormalParameter(_)))
+                    .count();
                 let prologue = scope.is_function();
                 if n > 0 {
                     unsafe {
@@ -205,7 +211,12 @@ impl<'a, 'b> Compiler<'a, 'b> {
                     }
                 }
                 let scope = self.scope_tree.scope(scope_ref);
-                let n = scope.bindings.len();
+                // The list of bindings includes formal parameters.
+                let n = scope
+                    .bindings
+                    .iter()
+                    .filter(|binding| !matches!(binding.kind, BindingKind::FormalParameter(_)))
+                    .count();
                 if n > 0 {
                     unsafe {
                         bridge::compiler_peer_release_bindings(self.peer, n as u16);

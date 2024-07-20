@@ -326,7 +326,7 @@ bitflags! {
 #[derive(Debug)]
 pub struct Binding {
     pub symbol: Symbol,
-    kind: BindingKind,
+    pub kind: BindingKind,
     pub captured: bool,
 }
 
