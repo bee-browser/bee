@@ -705,19 +705,6 @@ void Compiler::BitwiseOrAssignment() {
   Assignment();
 }
 
-void Compiler::Bindings(uint16_t n) {
-  max_locals_ = n;
-  auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(prologue_);
-  for (auto i = 0; i < n; ++i) {
-    auto* local = builder_->CreateAlloca(types_->CreateVariableType());
-    builder_->CreateMemSet(
-        local, builder_->getInt8(0), builder_->getInt32(sizeof(Variable)), llvm::MaybeAlign());
-    locals_.push_back(local);
-  }
-  builder_->SetInsertPoint(backup);
-}
-
 void Compiler::DeclareImmutable() {
   static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED;
 
@@ -1387,18 +1374,13 @@ void Compiler::EndFunction(bool optimize) {
   builder_->CreateBr(body_);
 
   builder_->SetInsertPoint(epilogue_);
-  for (uint16_t i = 0; i < max_locals_; ++i) {
-    // TODO: CG
-    auto* variable_ptr = CreateGetLocalVariablePtr(i);
-    CreateStoreFlagsToVariable(0, variable_ptr);
-  }
 
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_);
   builder_->CreateRet(status);
 
   // DumpStack();
 
-  assert(allocated_locals_ == 0);
+  assert(locals_.empty());
   locals_.clear();
 
   assert(stack_.empty());
@@ -1426,24 +1408,32 @@ void Compiler::EndFunction(bool optimize) {
 }
 
 void Compiler::AllocateBindings(uint16_t n, bool prologue) {
-  UNUSED(prologue);
-  assert(static_cast<size_t>(allocated_locals_) + static_cast<size_t>(n) <
-      std::numeric_limits<uint16_t>::max());
-  allocated_locals_ += n;
+  llvm::errs() << n << '\n';
+  // TODO(issue#234)
+  llvm::BasicBlock* backup;
+  if (prologue) {
+    backup = builder_->GetInsertBlock();
+    builder_->SetInsertPoint(prologue_);
+  }
+
+  for (auto i = 0; i < n; ++i) {
+    auto* local = builder_->CreateAlloca(types_->CreateVariableType());
+    builder_->CreateMemSet(
+        local, builder_->getInt8(0), builder_->getInt32(sizeof(Variable)), llvm::MaybeAlign());
+    locals_.push_back(local);
+  }
+
+  // TODO(issue#234)
+  if (prologue) {
+    builder_->SetInsertPoint(backup);
+  }
 }
 
 void Compiler::ReleaseBindings(uint16_t n) {
-  assert(allocated_locals_ >= n);
-  if (builder_->GetInsertBlock()->getTerminator() == nullptr) {
-    auto start = allocated_locals_ - n;
-    while (start < allocated_locals_) {
-      // TODO: CG
-      auto* variable_ptr = CreateGetLocalVariablePtr(start);
-      CreateStoreFlagsToVariable(0, variable_ptr);
-      start++;
-    }
+  for (auto i = 0; i < n; ++i) {
+    // TODO: GC
+    locals_.pop_back();
   }
-  allocated_locals_ -= n;
 }
 
 void Compiler::CreateCapture(Locator locator, bool prologue) {

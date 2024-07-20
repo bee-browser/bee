@@ -185,7 +185,6 @@ void compiler_peer_unsigned_right_shift_assignment(Compiler* self);
 void compiler_peer_bitwise_and_assignment(Compiler* self);
 void compiler_peer_bitwise_xor_assignment(Compiler* self);
 void compiler_peer_bitwise_or_assignment(Compiler* self);
-void compiler_peer_bindings(Compiler* self, uint16_t n);
 void compiler_peer_declare_immutable(Compiler* self);
 void compiler_peer_declare_mutable(Compiler* self);
 void compiler_peer_declare_function(Compiler* self);

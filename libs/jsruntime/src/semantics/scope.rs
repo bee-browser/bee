@@ -85,15 +85,13 @@ impl ScopeTree {
 
     pub fn compute_locator(&self, binding_ref: BindingRef) -> Locator {
         let scope = &self.scopes[binding_ref.scope_index()];
-        match scope.bindings[binding_ref.binding_index()].kind {
-            BindingKind::FormalParameter(index) => {
-                // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_argument(index).unwrap()
-            }
+        let binding = &scope.bindings[binding_ref.binding_index()];
+        match binding.kind {
+            BindingKind::FormalParameter => Locator::argument(binding.index),
             _ => {
                 let base = self.compute_offset(binding_ref.scope_ref());
                 // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_local(base + binding_ref.binding_index()).unwrap()
+                Locator::checked_local(base + binding.index as usize).unwrap()
             }
         }
     }
@@ -176,7 +174,8 @@ impl ScopeTreeBuilder {
         debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
-            kind: BindingKind::FormalParameter(index),
+            index: index as u16,
+            kind: BindingKind::FormalParameter,
             captured: false,
         });
         scope.num_formal_parameters += 1;
@@ -187,6 +186,7 @@ impl ScopeTreeBuilder {
         debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
+            index: scope.num_locals,
             kind: BindingKind::Mutable,
             captured: false,
         });
@@ -198,6 +198,7 @@ impl ScopeTreeBuilder {
         debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
+            index: scope.num_locals,
             kind: BindingKind::Immutable,
             captured: false,
         });
@@ -248,15 +249,13 @@ impl ScopeTreeBuilder {
 
     pub fn compute_locator(&self, binding_ref: BindingRef) -> Locator {
         let scope = &self.scopes[binding_ref.scope_index()];
-        match scope.bindings[binding_ref.binding_index()].kind {
-            BindingKind::FormalParameter(index) => {
-                // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_argument(index).unwrap()
-            }
+        let binding = &scope.bindings[binding_ref.binding_index()];
+        match binding.kind {
+            BindingKind::FormalParameter => Locator::argument(binding.index),
             _ => {
                 let base = self.compute_offset(binding_ref.scope_ref());
                 // TODO: the compilation should fail if `None` is returned.
-                Locator::checked_local(base + binding_ref.binding_index()).unwrap()
+                Locator::checked_local(base + binding.index as usize).unwrap()
             }
         }
     }
@@ -269,7 +268,7 @@ impl ScopeTreeBuilder {
         let mut offset = 0;
         scope = &self.scopes[scope.outer.index()];
         loop {
-            offset += scope.bindings.len();
+            offset += scope.num_locals as usize;
             if scope.is_function() {
                 return offset;
             }
@@ -335,9 +334,9 @@ impl<'a> std::fmt::Display for ScopePrinter<'a> {
             write!(f, "*")?;
         }
         if self.scope.is_function() {
-            write!(f, "function({}):", self.index)?;
+            write!(f, "F@{}:", self.index)?;
         } else {
-            write!(f, "block({}):", self.index)?;
+            write!(f, "B@{}:", self.index)?;
         }
         for binding in self.scope.bindings.iter() {
             write!(f, " {binding}")?;
@@ -356,6 +355,7 @@ bitflags! {
 #[derive(Debug)]
 pub struct Binding {
     pub symbol: Symbol,
+    pub index: u16,
     pub kind: BindingKind,
     pub captured: bool,
 }
@@ -363,9 +363,9 @@ pub struct Binding {
 impl std::fmt::Display for Binding {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind {
-            BindingKind::FormalParameter(index) => write!(f, "{index}:{:?}", self.symbol)?,
-            BindingKind::Mutable => write!(f, "M:{:?}", self.symbol)?,
-            BindingKind::Immutable => write!(f, "I:{:?}", self.symbol)?,
+            BindingKind::FormalParameter => write!(f, "P@{}:{:?}", self.index, self.symbol)?,
+            BindingKind::Mutable => write!(f, "M@{}:{:?}", self.index, self.symbol)?,
+            BindingKind::Immutable => write!(f, "I@{}:{:?}", self.index, self.symbol)?,
         }
         if self.captured {
             write!(f, "*")?;
@@ -376,7 +376,7 @@ impl std::fmt::Display for Binding {
 
 #[derive(Debug)]
 pub enum BindingKind {
-    FormalParameter(usize),
+    FormalParameter,
     Mutable,
     Immutable,
 }

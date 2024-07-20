@@ -274,10 +274,6 @@ void compiler_peer_bitwise_or_assignment(Compiler* self) {
   self->BitwiseOrAssignment();
 }
 
-void compiler_peer_bindings(Compiler* self, uint16_t n) {
-  self->Bindings(n);
-}
-
 void compiler_peer_declare_immutable(Compiler* self) {
   self->DeclareImmutable();
 }

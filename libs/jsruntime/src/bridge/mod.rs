@@ -28,6 +28,10 @@ impl Locator {
         Self::checked_new(LocatorKind_Capture, index)
     }
 
+    pub(crate) const fn argument(index: u16) -> Self {
+        Self::new(LocatorKind_Argument, index)
+    }
+
     pub(crate) const fn local(index: u16) -> Self {
         Self::new(LocatorKind_Local, index)
     }

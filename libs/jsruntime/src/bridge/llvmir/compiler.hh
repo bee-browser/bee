@@ -94,7 +94,6 @@ class Compiler {
   void BitwiseAndAssignment();
   void BitwiseXorAssignment();
   void BitwiseOrAssignment();
-  void Bindings(uint16_t n);
   void DeclareImmutable();
   void DeclareMutable();
   void DeclareFunction();
@@ -411,6 +410,8 @@ class Compiler {
   // locals
 
   inline llvm::Value* CreateGetLocalVariablePtr(uint16_t index) {
+    llvm::errs() << index << ' ' << locals_.size() << '\n';
+    assert(index < locals_.size());
     return locals_[index];
   }
 
@@ -728,12 +729,8 @@ class Compiler {
   llvm::Value* ret_ = nullptr;
   llvm::Value* status_ = nullptr;
 
-  // The `locals_` must be reset in the end of compilation for each function.
-  std::vector<llvm::Value*> locals_;
-  uint16_t max_locals_ = 0;
-  uint16_t allocated_locals_ = 0;
-
   // The following variables must be reset in the end of compilation for each function.
+  std::vector<llvm::Value*> locals_;
   std::vector<Item> stack_;
   std::vector<BlockItem> break_stack_;
   std::vector<BlockItem> continue_stack_;

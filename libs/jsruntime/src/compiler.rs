@@ -145,9 +145,6 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Exception => unsafe {
                 bridge::compiler_peer_exception(self.peer);
             },
-            CompileCommand::Bindings(n) => unsafe {
-                bridge::compiler_peer_bindings(self.peer, *n);
-            },
             CompileCommand::MutableBinding => unsafe {
                 bridge::compiler_peer_declare_mutable(self.peer);
             },

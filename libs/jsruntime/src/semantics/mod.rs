@@ -534,8 +534,6 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
 
-        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
         func.commands = context.commands;
@@ -558,8 +556,6 @@ impl<'r> Analyzer<'r> {
 
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
-
-        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
 
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
@@ -587,8 +583,6 @@ impl<'r> Analyzer<'r> {
 
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
-
-        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
 
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
@@ -884,9 +878,6 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         let scope_ref = self.scope_tree_builder.push_function();
 
         let context = self.context_stack.last_mut().unwrap();
-        // Push `Nop` as a placeholder.
-        // It will be replaced with `Bindings(n)` in `accept()`.
-        context.commands.push(CompileCommand::Nop);
         context.start_scope(scope_ref);
 
         if self.use_global_bindings {
@@ -906,7 +897,6 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         self.resolve_references(&mut context);
         debug_assert!(context.captures.is_empty());
 
-        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         context.commands.push(CompileCommand::Return(0));
         self.functions[context.func_index].commands = context.commands;
         self.functions[context.func_index].captures = context.captures.into_values().collect();
@@ -977,6 +967,8 @@ struct FunctionContext {
     nargs_stack: Vec<(usize, u16)>,
 
     /// A variable to hold the current maximum number of bindings in the function.
+    ///
+    /// TODO: remove or use for limitation check.
     max_bindings: usize,
 
     /// The index of the function in [`Analyzer::functions`].
@@ -1404,7 +1396,6 @@ pub enum CompileCommand {
     Reference(Symbol, Locator),
     Exception,
 
-    Bindings(u16),
     MutableBinding,
     ImmutableBinding,
     DeclareFunction,
@@ -1689,7 +1680,6 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::Bindings(4),
                     CompileCommand::AllocateBindings(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -1716,7 +1706,6 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::Bindings(3),
                     CompileCommand::AllocateBindings(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
