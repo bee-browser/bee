@@ -22,7 +22,6 @@ use super::FunctionRegistry;
 use super::Runtime;
 use scope::ScopeTreeBuilder;
 
-pub use scope::BindingKind;
 pub use scope::BindingRef;
 pub use scope::ScopeRef;
 pub use scope::ScopeTree;
@@ -761,8 +760,7 @@ impl<'r> Analyzer<'r> {
         let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder
-            .add_binding(symbol, BindingKind::Immutable);
+        self.scope_tree_builder.add_immutable(symbol);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
@@ -776,8 +774,7 @@ impl<'r> Analyzer<'r> {
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder
-            .add_binding(symbol, BindingKind::Immutable);
+        self.scope_tree_builder.add_immutable(symbol);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
@@ -791,8 +788,7 @@ impl<'r> Analyzer<'r> {
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder
-            .add_binding(symbol, BindingKind::Immutable);
+        self.scope_tree_builder.add_immutable(symbol);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
@@ -809,8 +805,7 @@ impl<'r> Analyzer<'r> {
             // The locator will be computed in `resolve_references()`.
             let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
             context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
-            self.scope_tree_builder
-                .add_binding(symbol, BindingKind::Immutable);
+            self.scope_tree_builder.add_immutable(symbol);
             context.references.push(Reference {
                 symbol,
                 scope_ref: self.scope_tree_builder.current(),
@@ -1073,13 +1068,14 @@ impl FunctionContext {
                 scope_ref: builder.current(),
                 from: ReferenceFrom::Command(command_index),
             });
-            builder.add_binding(symbol, BindingKind::Mutable);
+            // The BindingKind may change later by `builder.set_immutable()`.
+            builder.add_mutable(symbol);
         } else {
             // TODO: the compilation should fail if the following condition is unmet.
             assert!(self.formal_parameters.len() < u16::MAX as usize);
             let i = self.formal_parameters.len();
             self.formal_parameters.push(symbol);
-            builder.add_binding(symbol, BindingKind::FormalParameter(i));
+            builder.add_formal_parameter(symbol, i);
         }
     }
 

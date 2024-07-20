@@ -8,7 +8,6 @@ use crate::bridge::Locator;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
-use crate::semantics::BindingKind;
 use crate::semantics::CompileCommand;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
@@ -177,16 +176,14 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
                 let scope = self.scope_tree.scope(scope_ref);
-                // The list of bindings includes formal parameters.
-                let n = scope
-                    .bindings
-                    .iter()
-                    .filter(|binding| !matches!(binding.kind, BindingKind::FormalParameter(_)))
-                    .count();
                 let prologue = scope.is_function();
-                if n > 0 {
+                if scope.num_locals > 0 {
                     unsafe {
-                        bridge::compiler_peer_allocate_bindings(self.peer, n as u16, prologue);
+                        bridge::compiler_peer_allocate_bindings(
+                            self.peer,
+                            scope.num_locals,
+                            prologue,
+                        );
                     }
                 }
                 for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
@@ -211,15 +208,9 @@ impl<'a, 'b> Compiler<'a, 'b> {
                     }
                 }
                 let scope = self.scope_tree.scope(scope_ref);
-                // The list of bindings includes formal parameters.
-                let n = scope
-                    .bindings
-                    .iter()
-                    .filter(|binding| !matches!(binding.kind, BindingKind::FormalParameter(_)))
-                    .count();
-                if n > 0 {
+                if scope.num_locals > 0 {
                     unsafe {
-                        bridge::compiler_peer_release_bindings(self.peer, n as u16);
+                        bridge::compiler_peer_release_bindings(self.peer, scope.num_locals);
                     }
                 }
             }

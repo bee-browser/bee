@@ -149,6 +149,8 @@ impl ScopeTreeBuilder {
         let index = self.scopes.len();
         self.scopes.push(Scope {
             bindings: vec![],
+            num_formal_parameters: 0,
+            num_locals: 0,
             outer: self.current,
             depth: self.depth,
             flags,
@@ -169,20 +171,44 @@ impl ScopeTreeBuilder {
         self.depth -= 1;
     }
 
-    pub fn add_binding(&mut self, symbol: Symbol, kind: BindingKind) {
+    pub fn add_formal_parameter(&mut self, symbol: Symbol, index: usize) {
         let scope = &mut self.scopes[self.current.index()];
         debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
-            kind,
+            kind: BindingKind::FormalParameter(index),
             captured: false,
         });
+        scope.num_formal_parameters += 1;
+    }
+
+    pub fn add_mutable(&mut self, symbol: Symbol) {
+        let scope = &mut self.scopes[self.current.index()];
+        debug_assert!(!scope.is_sorted());
+        scope.bindings.push(Binding {
+            symbol,
+            kind: BindingKind::Mutable,
+            captured: false,
+        });
+        scope.num_locals += 1;
+    }
+
+    pub fn add_immutable(&mut self, symbol: Symbol) {
+        let scope = &mut self.scopes[self.current.index()];
+        debug_assert!(!scope.is_sorted());
+        scope.bindings.push(Binding {
+            symbol,
+            kind: BindingKind::Immutable,
+            captured: false,
+        });
+        scope.num_locals += 1;
     }
 
     pub fn set_immutable(&mut self, n: u32) {
         let scope = &mut self.scopes[self.current.index()];
         debug_assert!(!scope.is_sorted());
         for binding in scope.bindings.iter_mut().rev().take(n as usize) {
+            debug_assert!(matches!(binding.kind, BindingKind::Mutable));
             binding.kind = BindingKind::Immutable;
         }
     }
@@ -271,6 +297,8 @@ impl Default for ScopeTreeBuilder {
 
 pub struct Scope {
     pub bindings: Vec<Binding>,
+    pub num_formal_parameters: u16,
+    pub num_locals: u16,
     outer: ScopeRef,
     depth: u16,
     flags: ScopeFlags,
@@ -279,6 +307,8 @@ pub struct Scope {
 impl Scope {
     const NONE: Self = Self {
         bindings: vec![],
+        num_formal_parameters: 0,
+        num_locals: 0,
         outer: ScopeRef::NONE,
         depth: 0,
         flags: ScopeFlags::empty(),
