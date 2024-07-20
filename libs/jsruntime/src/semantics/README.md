@@ -9,6 +9,6 @@ The `semantics` module reads a sequence of the flattened AST and performs:
   * The compile commands can be processed on some kind of stack machine
 
 Some of the above correspond to the content of the semantic analysis phase described in
-[Modern Compiler Implementation in ML].
+[The Tiger Book].
 
-[Modern Compiler Implementation in ML]: https://www.cambridge.org/core/books/modern-compiler-implementation-in-ml/C2A59C37468AA8AAD0ADDCE080E3CB5D
+[The Tiger Book]: https://www.cs.princeton.edu/~appel/modern/

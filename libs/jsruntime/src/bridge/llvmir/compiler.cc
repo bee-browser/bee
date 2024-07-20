@@ -26,6 +26,14 @@
 #include "macros.hh"
 #include "module.hh"
 
+namespace {
+
+inline uint32_t ComputeKeyFromLocator(Locator locator) {
+  return (static_cast<uint32_t>(locator.kind) << 16) | static_cast<uint32_t>(locator.index);
+}
+
+}  // namespace
+
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
@@ -108,10 +116,37 @@ void Compiler::Function(uint32_t func_id, const char* name) {
     PushFunction(found->second);
     return;
   }
-  auto* prototype = types_->CreateFunctionType();
+  auto* prototype = types_->CreateLambdaType();
   auto* func = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
   functions_[name] = func;
   PushFunction(func);
+}
+
+void Compiler::Closure(bool prologue, uint16_t num_captures) {
+  assert(stack_.size() >= 1 + static_cast<size_t>(num_captures));
+
+  // TODO(issue#234)
+  llvm::BasicBlock* backup;
+  if (prologue) {
+    backup = builder_->GetInsertBlock();
+    builder_->SetInsertPoint(prologue_);
+  }
+
+  auto* lambda = PopFunction();
+  auto* closure_ptr = CreateCallRuntimeCreateClosure(lambda, num_captures);
+
+  auto* captures = CreateLoadCapturesFromClosure(closure_ptr);
+  for (uint16_t i = 0; i < num_captures; ++i) {
+    auto* capture_ptr = PopCapture();
+    CreateStoreCapturePtrToCaptures(capture_ptr, captures, i);
+  }
+
+  PushClosure(closure_ptr);
+
+  // TODO(issue#234)
+  if (prologue) {
+    builder_->SetInsertPoint(backup);
+  }
 }
 
 void Compiler::Reference(uint32_t symbol, Locator locator) {
@@ -534,11 +569,11 @@ void Compiler::Assignment() {
   auto item = Dereference();
   auto ref = PopReference();
 
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  auto* variable_ptr = CreateGetVariablePtr(ref.locator);
   // TODO: check the mutable flag
-  // auto* flags_ptr = CreateGetFlagsPtr(binding_ptr);
+  // auto* flags_ptr = CreateGetFlagsPtr(variable_ptr);
 
-  CreateStoreItemToBinding(item, binding_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 
   stack_.push_back(item);
 }
@@ -671,66 +706,76 @@ void Compiler::BitwiseOrAssignment() {
 }
 
 void Compiler::Bindings(uint16_t n) {
-  max_bindings_ = n;
+  max_locals_ = n;
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
-  bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
-  function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
-  function_scope_type_->setBody(
-      {builder_->getPtrTy(), types_->GetWordType(), builder_->getPtrTy(), bindings_type_});
-  function_scope_ = builder_->CreateAlloca(function_scope_type_);
-  CreateStoreOuterScopeToScope(outer_scope_, function_scope_);
-  CreateStoreArgcToScope(argc_, function_scope_);
-  CreateStoreArgvToScope(argv_, function_scope_);
-  bindings_ = CreateGetBindingsPtrOfScope(function_scope_);
-  builder_->CreateMemSet(bindings_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)),
-      llvm::MaybeAlign());
+  for (auto i = 0; i < n; ++i) {
+    auto* local = builder_->CreateAlloca(types_->CreateVariableType());
+    builder_->CreateMemSet(
+        local, builder_->getInt8(0), builder_->getInt32(sizeof(Variable)), llvm::MaybeAlign());
+    locals_.push_back(local);
+  }
   builder_->SetInsertPoint(backup);
 }
 
 void Compiler::DeclareImmutable() {
-  static constexpr uint8_t FLAGS = BINDING_INITIALIZED;
+  static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED;
 
   auto item = PopItem();
   auto ref = PopReference();
+  assert(ref.locator.kind == LocatorKind::Local);
 
-  assert(ref.locator.offset == 0);
-
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
-  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
-  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
-  CreateStoreItemToBinding(item, binding_ptr);
+  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  CreateStoreFlagsToVariable(FLAGS, variable_ptr);
+  CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 }
 
 void Compiler::DeclareMutable() {
-  static constexpr uint8_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+  static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
   auto item = Dereference();
   auto ref = PopReference();
+  assert(ref.locator.kind == LocatorKind::Local);
 
-  assert(ref.locator.offset == 0);
-
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
-  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
-  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
-  CreateStoreItemToBinding(item, binding_ptr);
+  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  CreateStoreFlagsToVariable(FLAGS, variable_ptr);
+  CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 }
 
 void Compiler::DeclareFunction() {
-  static constexpr uint8_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+  static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
 
   auto item = Dereference();
   auto ref = PopReference();
+  assert(ref.locator.kind == LocatorKind::Local);
 
-  assert(ref.locator.offset == 0);
+  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  CreateStoreFlagsToVariable(FLAGS, variable_ptr);
+  CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
-  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
-  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
-  CreateStoreItemToBinding(item, binding_ptr);
+  builder_->SetInsertPoint(backup);
+}
+
+void Compiler::DeclareClosure() {
+  static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
+
+  auto* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(prologue_);
+
+  auto item = Dereference();
+  auto ref = PopReference();
+  assert(ref.locator.kind == LocatorKind::Local);
+
+  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  CreateStoreFlagsToVariable(FLAGS, variable_ptr);
+  CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
+  CreateStoreItemToVariable(item, variable_ptr);
 
   builder_->SetInsertPoint(backup);
 }
@@ -757,21 +802,65 @@ void Compiler::Call(uint16_t argc) {
   } else {
     argv = llvm::Constant::getNullValue(builder_->getPtrTy());
   }
+
   auto* ret = CreateAllocaInEntryBlock(types_->CreateValueType());
-  llvm::Value* scope = function_scope_;
-  auto item = Dereference(nullptr, &scope);
-  llvm::Value* func;
-  if (item.type == Item::Function) {
-    func = item.value;  // IIFE
-  } else {
-    assert(item.type == Item::Any);
-    auto* kind = CreateLoadValueKindFromValue(item.value);
-    UNUSED(kind);  // TODO: check kind
-    func = CreateLoadFunctionFromValue(item.value);
+
+  auto item = Dereference();
+  llvm::Value* lambda;
+  llvm::Value* caps;
+  switch (item.type) {
+    case Item::Closure: {
+      // IIFE
+      auto* closure_ptr = item.value;
+      lambda = CreateLoadLambdaFromClosure(closure_ptr);
+      caps = CreateLoadCapturesFromClosure(closure_ptr);
+      break;
+    }
+    case Item::Any: {
+      auto* lambda_ptr = builder_->CreateAlloca(builder_->getPtrTy(), builder_->getInt32(1));
+      auto* caps_ptr = builder_->CreateAlloca(builder_->getPtrTy(), builder_->getInt32(1));
+      auto* kind = CreateLoadValueKindFromValue(item.value);
+      auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
+      auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
+      auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
+      // if (value.kind == ValueKind::Closure)
+      auto* is_closure = builder_->CreateICmpEQ(
+          kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)));
+      builder_->CreateCondBr(is_closure, then_block, else_block);
+      // {
+      {
+        builder_->SetInsertPoint(then_block);
+        auto* closure_ptr = CreateLoadClosureFromValue(item.value);
+        auto* lambda_tmp = CreateLoadLambdaFromClosure(closure_ptr);
+        builder_->CreateStore(lambda_tmp, lambda_ptr);
+        auto* caps_tmp = CreateLoadCapturesFromClosure(closure_ptr);
+        builder_->CreateStore(caps_tmp, caps_ptr);
+        builder_->CreateBr(end_block);
+      }
+      // } else {
+      {
+        builder_->SetInsertPoint(else_block);
+        // TODO: TypeError
+        PushNumber(builder_->getInt32(1));
+        Throw();
+        builder_->CreateBr(end_block);
+      }
+      // }
+      builder_->SetInsertPoint(end_block);
+      lambda = builder_->CreateLoad(builder_->getPtrTy(), lambda_ptr);
+      caps = builder_->CreateLoad(builder_->getPtrTy(), caps_ptr);
+      break;
+    }
+    default:
+      // TODO: TypeError
+      PushNumber(builder_->getInt32(1));
+      Throw();
+      return;
   }
-  auto* prototype = types_->CreateFunctionType();
+
+  auto* prototype = types_->CreateLambdaType();
   auto* status = builder_->CreateCall(
-      prototype, func, {exec_context_, scope, types_->GetWord(argc), argv, ret});
+      prototype, lambda, {exec_context_, caps, types_->GetWord(argc), argv, ret});
 
   // Handle an exception if it's thrown.
   auto* is_exception =
@@ -1266,7 +1355,7 @@ void Compiler::StartFunction(const char* name) {
     function_ = found->second;
   } else {
     // Create a function.
-    auto* prototype = types_->CreateFunctionType();
+    auto* prototype = types_->CreateLambdaType();
     function_ = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
     functions_[name] = function_;
   }
@@ -1276,7 +1365,7 @@ void Compiler::StartFunction(const char* name) {
   epilogue_ = llvm::BasicBlock::Create(*context_, "epilogue", function_);
 
   exec_context_ = function_->getArg(0);
-  outer_scope_ = function_->getArg(1);
+  caps_ = function_->getArg(1);
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
   ret_ = function_->getArg(4);
@@ -1298,16 +1387,19 @@ void Compiler::EndFunction(bool optimize) {
   builder_->CreateBr(body_);
 
   builder_->SetInsertPoint(epilogue_);
-  for (uint16_t i = 0; i < max_bindings_; ++i) {
+  for (uint16_t i = 0; i < max_locals_; ++i) {
     // TODO: CG
-    auto* binding_ptr = CreateGetBindingPtrOfScope(function_scope_, i);
-    CreateStoreFlagsToBinding(0, binding_ptr);
+    auto* variable_ptr = CreateGetLocalVariablePtr(i);
+    CreateStoreFlagsToVariable(0, variable_ptr);
   }
 
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_);
   builder_->CreateRet(status);
 
   // DumpStack();
+
+  assert(allocated_locals_ == 0);
+  locals_.clear();
 
   assert(stack_.empty());
   stack_.clear();
@@ -1335,23 +1427,107 @@ void Compiler::EndFunction(bool optimize) {
 
 void Compiler::AllocateBindings(uint16_t n, bool prologue) {
   UNUSED(prologue);
-  assert(static_cast<size_t>(allocated_bindings_) + static_cast<size_t>(n) <
+  assert(static_cast<size_t>(allocated_locals_) + static_cast<size_t>(n) <
       std::numeric_limits<uint16_t>::max());
-  allocated_bindings_ += n;
+  allocated_locals_ += n;
 }
 
 void Compiler::ReleaseBindings(uint16_t n) {
-  assert(allocated_bindings_ >= n);
+  assert(allocated_locals_ >= n);
   if (builder_->GetInsertBlock()->getTerminator() == nullptr) {
-    auto start = allocated_bindings_ - n;
-    while (start < allocated_bindings_) {
+    auto start = allocated_locals_ - n;
+    while (start < allocated_locals_) {
       // TODO: CG
-      auto* binding_ptr = CreateGetBindingPtrOfScope(function_scope_, start);
-      CreateStoreFlagsToBinding(0, binding_ptr);
+      auto* variable_ptr = CreateGetLocalVariablePtr(start);
+      CreateStoreFlagsToVariable(0, variable_ptr);
       start++;
     }
   }
-  allocated_bindings_ -= n;
+  allocated_locals_ -= n;
+}
+
+void Compiler::CreateCapture(Locator locator, bool prologue) {
+  assert(locator.kind != LocatorKind::Capture);
+
+  // TODO(issue#234)
+  llvm::BasicBlock* backup;
+  if (prologue) {
+    backup = builder_->GetInsertBlock();
+    builder_->SetInsertPoint(prologue_);
+  }
+
+  llvm::Value* variable_ptr;
+  switch (locator.kind) {
+    case LocatorKind::Argument:
+      variable_ptr = CreateGetArgumentVariablePtr(locator.index);
+      break;
+    case LocatorKind::Local:
+      variable_ptr = CreateGetLocalVariablePtr(locator.index);
+      break;
+    default:
+      assert(false);
+      return;
+  }
+
+  auto* capture_ptr = CreateCallRuntimeCreateCapture(variable_ptr);
+
+  auto key = ComputeKeyFromLocator(locator);
+  assert(captures_.find(key) == captures_.end());
+  captures_[key] = capture_ptr;
+
+  // TODO(issue#234)
+  if (prologue) {
+    builder_->SetInsertPoint(backup);
+  }
+}
+
+void Compiler::CaptureBinding(bool prologue) {
+  // TODO(issue#234)
+  llvm::BasicBlock* backup;
+  if (prologue) {
+    backup = builder_->GetInsertBlock();
+    builder_->SetInsertPoint(prologue_);
+  }
+
+  llvm::Value* capture_ptr;
+  auto ref = PopReference();
+  switch (ref.locator.kind) {
+    case LocatorKind::Argument:
+    case LocatorKind::Local: {
+      auto key = ComputeKeyFromLocator(ref.locator);
+      assert(captures_.find(key) != captures_.end());
+      capture_ptr = captures_[key];
+      break;
+    }
+    case LocatorKind::Capture:
+      capture_ptr = CreateLoadCapturePtrFromCaptures(caps_, ref.locator.index);
+      break;
+    default:
+      assert(false);
+      return;
+  }
+
+  PushCapture(capture_ptr);
+
+  // TODO(issue#234)
+  if (prologue) {
+    builder_->SetInsertPoint(backup);
+  }
+}
+
+void Compiler::EscapeBinding(Locator locator) {
+  assert(locator.kind != LocatorKind::Capture);
+  auto key = ComputeKeyFromLocator(locator);
+  assert(captures_.find(key) != captures_.end());
+  auto* capture_ptr = captures_[key];
+  auto* escaped_ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
+  CreateStoreTargetToCapture(escaped_ptr, capture_ptr);
+  auto* variable_ptr = CreateGetVariablePtr(locator);
+  auto* variable = CreateLoadVariable(variable_ptr);
+  CreateStoreEscapedToCapture(variable, capture_ptr);
+  // The value of `locator.index` may be reused for another local variable.
+  // The element identified by `locator.index` is removed from `captures_` here.
+  captures_.erase(key);
 }
 
 void Compiler::LabelStart(uint32_t symbol, bool is_iteration_statement) {
@@ -1391,7 +1567,8 @@ void Compiler::Continue(uint32_t symbol) {
   }
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
-  CreateDeadcodeBasicBlock();
+  // TODO(issue#234)
+  CreateBasicBlockForDeadcode();
 }
 
 void Compiler::Break(uint32_t symbol) {
@@ -1403,7 +1580,8 @@ void Compiler::Break(uint32_t symbol) {
   }
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
-  CreateDeadcodeBasicBlock();
+  // TODO(issue#234)
+  CreateBasicBlockForDeadcode();
 }
 
 void Compiler::Return(size_t n) {
@@ -1413,7 +1591,8 @@ void Compiler::Return(size_t n) {
     CreateStoreItemToValue(item, ret_);
   }
   builder_->CreateBr(epilogue_);
-  CreateDeadcodeBasicBlock();
+  // TODO(issue#234)
+  CreateBasicBlockForDeadcode();
 }
 
 void Compiler::Throw() {
@@ -1422,7 +1601,8 @@ void Compiler::Throw() {
   builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Exception)), status_);
   auto* catch_block = catch_stack_.back();
   builder_->CreateBr(catch_block);
-  CreateDeadcodeBasicBlock();
+  // TODO(issue#234)
+  CreateBasicBlockForDeadcode();
 }
 
 void Compiler::Discard() {
@@ -1458,6 +1638,9 @@ void Compiler::DumpStack() {
       case Item::Function:
         llvm::errs() << "function: " << item.func;
         break;
+      case Item::Closure:
+        llvm::errs() << "closure: " << item.value;
+        break;
       case Item::Any:
         llvm::errs() << "any: " << item.value;
         break;
@@ -1473,16 +1656,21 @@ void Compiler::DumpStack() {
           case LocatorKind::Local:
             llvm::errs() << " locator=local(";
             break;
+          case LocatorKind::Capture:
+            llvm::errs() << " locator=capture(";
+            break;
         }
-        // static_cast<uint16_t>() is needed for printing uint8_t values.
-        llvm::errs() << static_cast<uint16_t>(item.reference.locator.offset) << ", "
-                     << item.reference.locator.index << ")";
+        llvm::errs() << item.reference.locator.index;
+        llvm::errs() << ")";
         break;
       case Item::Argv:
         llvm::errs() << "argv: " << item.value;
         break;
       case Item::Block:
         llvm::errs() << "block: " << item.block;
+        break;
+      case Item::Capture:
+        llvm::errs() << "capture: " << item.value;
         break;
     }
 #if defined(BEE_BUILD_DEBUG)
@@ -1495,7 +1683,7 @@ void Compiler::DumpStack() {
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
 }
 
-Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope) {
+Compiler::Item Compiler::Dereference(struct Reference* ref) {
   const auto item = PopItem();
   switch (item.type) {
     case Item::Undefined:
@@ -1503,46 +1691,16 @@ Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope)
     case Item::Boolean:
     case Item::Number:
     case Item::Function:
+    case Item::Closure:
     case Item::Any:
       return item;
-    case Item::Reference:
-      switch (item.reference.locator.kind) {
-        case LocatorKind::None:
-          assert(false);
-          return Item(Item::Undefined);
-        case LocatorKind::Argument: {
-          auto* scope_ptr = function_scope_;
-          auto* argv = argv_;
-          if (item.reference.locator.offset > 0) {
-            scope_ptr = CreateGetScope(item.reference.locator);
-            argv = CreateLoadArgvFromScope(scope_ptr);
-          }
-          auto* arg = builder_->CreateConstInBoundsGEP1_32(
-              types_->CreateValueType(), argv, item.reference.locator.index);
-          return Item(Item::Any, arg);
-        }
-        case LocatorKind::Local: {
-          auto* scope_ptr = function_scope_;
-          auto* bindings_ptr = bindings_;
-          if (item.reference.locator.offset > 0) {
-            scope_ptr = CreateGetScope(item.reference.locator);
-            bindings_ptr = CreateGetBindingsPtrOfScope(scope_ptr);
-          }
-          auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(
-              bindings_type_, bindings_ptr, 0, item.reference.locator.index);
-          auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
-          builder_->CreateMemCpy(value, llvm::MaybeAlign(), binding_ptr, llvm::MaybeAlign(),
-              builder_->getInt32(sizeof(Value)));
-          if (ref != nullptr) {
-            *ref = item.reference;
-          }
-          if (scope != nullptr) {
-            *scope = scope_ptr;
-          }
-          return Item(Item::Any, value);
-        }
+    case Item::Reference: {
+      if (ref != nullptr) {
+        *ref = item.reference;
       }
-      // fall through
+      auto* value_ptr = CreateGetValuePtr(item.reference.locator);
+      return Item(Item::Any, value_ptr);
+    }
     default:
       // never reach here
       assert(false);
@@ -1597,36 +1755,25 @@ void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
   PushNumber(onum);
 }
 
-llvm::Value* Compiler::CreateGetScope(const Locator& locator) {
-  auto* scope_ptr = function_scope_;
-  if (locator.offset > 0) {
-    scope_ptr = outer_scope_;
-    for (size_t i = 1; i < locator.offset; ++i) {
-      scope_ptr = CreateLoadOuterScopeFromScope(scope_ptr);
-    }
-  }
-  return scope_ptr;
-}
-
-void Compiler::CreateStoreItemToBinding(const Item& item, llvm::Value* binding_ptr) {
+void Compiler::CreateStoreItemToVariable(const Item& item, llvm::Value* variable_ptr) {
   switch (item.type) {
     case Item::Undefined:
-      CreateStoreUndefinedToBinding(binding_ptr);
+      CreateStoreUndefinedToVariable(variable_ptr);
       break;
     case Item::Null:
-      CreateStoreNullToBinding(binding_ptr);
+      CreateStoreNullToVariable(variable_ptr);
       break;
     case Item::Boolean:
-      CreateStoreBooleanToBinding(item.value, binding_ptr);
+      CreateStoreBooleanToVariable(item.value, variable_ptr);
       break;
     case Item::Number:
-      CreateStoreNumberToBinding(item.value, binding_ptr);
+      CreateStoreNumberToVariable(item.value, variable_ptr);
       break;
-    case Item::Function:
-      CreateStoreFunctionToBinding(item.value, binding_ptr);
+    case Item::Closure:
+      CreateStoreClosureToVariable(item.value, variable_ptr);
       break;
     case Item::Any:
-      CreateStoreValueToBinding(item.value, binding_ptr);
+      CreateStoreValueToVariable(item.value, variable_ptr);
       break;
     default:
       assert(false);
@@ -1648,8 +1795,8 @@ void Compiler::CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr) 
     case Item::Number:
       CreateStoreNumberToValue(item.value, value_ptr);
       break;
-    case Item::Function:
-      CreateStoreFunctionToValue(item.value, value_ptr);
+    case Item::Closure:
+      CreateStoreClosureToValue(item.value, value_ptr);
       break;
     case Item::Any:
       builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
@@ -1673,6 +1820,7 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
     case Item::Number:
       return item.value;
     case Item::Function:
+    case Item::Closure:
       return llvm::ConstantFP::getNaN(builder_->getDoubleTy());
     case Item::Any:
       return ToNumeric(item.value);
@@ -1732,6 +1880,7 @@ llvm::Value* Compiler::CreateIsNonNullish(const Item& item) {
     case Item::Boolean:
     case Item::Number:
     case Item::Function:
+    case Item::Closure:
       return builder_->getTrue();
     case Item::Any:
       return CreateIsNonNullish(item.value);
@@ -1761,6 +1910,7 @@ llvm::Value* Compiler::CreateToBoolean(const Item& item) {
       return builder_->CreateFCmpUNE(
           item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
     case Item::Function:
+    case Item::Closure:
       return builder_->getTrue();
     case Item::Any:
       return CreateToBoolean(item.value);
@@ -1844,6 +1994,7 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(const Item& lhs, const Item& rhs) {
     case Item::Number:
       return builder_->CreateFCmpOEQ(lhs.value, rhs.value);
     case Item::Function:
+    case Item::Closure:
       return builder_->CreateICmpEQ(lhs.value, rhs.value);
     default:
       // never reach here.
@@ -1862,8 +2013,8 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* value_ptr, const Item&
       return CreateIsSameBooleanValue(value_ptr, item.value);
     case Item::Number:
       return CreateIsSameNumberValue(value_ptr, item.value);
-    case Item::Function:
-      return CreateIsSameFunctionValue(value_ptr, item.value);
+    case Item::Closure:
+      return CreateIsSameClosureValue(value_ptr, item.value);
     case Item::Any:
       return CreateIsStrictlyEqual(value_ptr, item.value);
     default:
@@ -1944,14 +2095,14 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
   return phi;
 }
 
-llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::Value* value) {
+llvm::Value* Compiler::CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value) {
   auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
   auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
   auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
-      builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Function)));
+      builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
@@ -1969,6 +2120,46 @@ llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::V
   phi->addIncoming(else_value, else_block);
 
   return phi;
+}
+
+llvm::Value* Compiler::CreateCallRuntimeCreateCapture(llvm::Value* variable_ptr) {
+  auto* func = types_->CreateRuntimeCreateCapture();
+  return builder_->CreateCall(func, {exec_context_, variable_ptr});
+}
+
+llvm::Value* Compiler::CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures) {
+  auto* func = types_->CreateRuntimeCreateClosure();
+  return builder_->CreateCall(func, {exec_context_, lambda, builder_->getInt16(num_captures)});
+}
+
+llvm::Value* Compiler::CreateGetVariablePtr(Locator locator) {
+  switch (locator.kind) {
+    case LocatorKind::Argument:
+      return CreateGetArgumentVariablePtr(locator.index);
+    case LocatorKind::Local:
+      return CreateGetLocalVariablePtr(locator.index);
+    case LocatorKind::Capture:
+      return CreateGetCaptureVariablePtr(locator.index);
+    default:
+      // never reach here
+      assert(false);
+      return nullptr;
+  }
+}
+
+llvm::Value* Compiler::CreateGetValuePtr(Locator locator) {
+  switch (locator.kind) {
+    case LocatorKind::Argument:
+      return CreateGetArgumentValuePtr(locator.index);
+    case LocatorKind::Local:
+      return CreateGetLocalValuePtr(locator.index);
+    case LocatorKind::Capture:
+      return CreateGetCaptureValuePtr(locator.index);
+    default:
+      // never reach here
+      assert(false);
+      return nullptr;
+  }
 }
 
 llvm::BasicBlock* Compiler::FindBlockBySymbol(const std::vector<BlockItem>& stack,

@@ -1,5 +1,7 @@
 mod scope;
 
+use indexmap::IndexMap;
+
 use jsparser::syntax::AssignmentOperator;
 use jsparser::syntax::BinaryOperator;
 use jsparser::syntax::LoopFlags;
@@ -8,6 +10,8 @@ use jsparser::syntax::NodeHandler;
 use jsparser::syntax::UnaryOperator;
 use jsparser::syntax::UpdateOperator;
 use jsparser::Error;
+use jsparser::Parser;
+use jsparser::Processor;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -15,38 +19,114 @@ use super::bridge::Locator;
 use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;
+use super::Runtime;
+use scope::ScopeTreeBuilder;
 
-use scope::BindingKind;
-use scope::ScopeKind;
-use scope::ScopeManager;
-use scope::ScopeRef;
+pub use scope::BindingRef;
+pub use scope::ScopeRef;
+pub use scope::ScopeTree;
 
+impl Runtime {
+    /// Parses a given source text as a script.
+    pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
+        logger::debug!(event = "parse", source_kind = "script");
+        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &mut self.function_registry);
+        analyzer.use_global_bindings();
+        let processor = Processor::new(analyzer, false);
+        Parser::for_script(source, processor).parse()
+    }
+}
+
+/// A type representing a JavaScript program after the semantic analysis.
 pub struct Program {
     pub functions: Vec<FunctionRecipe>,
+    pub scope_tree: ScopeTree,
 }
 
+impl Program {
+    pub fn print_functions(&self, indent: &str) {
+        for func in self.functions.iter() {
+            func.print(indent);
+        }
+    }
+
+    pub fn print_scope_tree(&self, indent: &str) {
+        self.scope_tree.print(indent);
+    }
+}
+
+/// A type representing a JavaScript function after the semantic analysis.
 pub struct FunctionRecipe {
+    /// TODO: remove?
     pub symbol: Symbol,
+
+    /// The function ID of the function.
     pub id: FunctionId,
+
+    /// A list of [`CompileCommand`]s generated from the function definition.
     pub commands: Vec<CompileCommand>,
+
+    /// A list of free variables in the function.
+    pub captures: Vec<Capture>,
 }
 
-pub struct Analyzer<'r> {
+impl FunctionRecipe {
+    pub fn print(&self, indent: &str) {
+        println!("{indent}function: {:?}", self.id);
+        if !self.commands.is_empty() {
+            println!("{indent} commands:");
+            for command in self.commands.iter() {
+                println!("{indent}  {command:?}");
+            }
+        }
+        if !self.captures.is_empty() {
+            println!("{indent} captures:");
+            for capture in self.captures.iter() {
+                println!("{indent}  {capture:?}");
+            }
+        }
+    }
+}
+
+/// Represents a free variable of a function.
+#[derive(Debug)]
+pub struct Capture {
+    /// The symbol of the captured variable defined outside the function.
+    pub symbol: Symbol,
+
+    pub target: Locator,
+}
+
+/// A semantic analyzer.
+///
+/// A semantic analyzer analyzes semantics of a JavaScript program.
+struct Analyzer<'r> {
+    /// A mutable reference to a symbol registry.
     symbol_registry: &'r mut SymbolRegistry,
+
+    /// A mutable reference to a function registry.
     function_registry: &'r mut FunctionRegistry,
+
+    /// A stack to keep the analysis data for outer JavaScript functions when analyzing nested
+    /// JavaScript functions.
     context_stack: Vec<FunctionContext>,
+
+    /// A list of [`FunctionRecipe`]s.
     functions: Vec<FunctionRecipe>,
-    scope_manager: ScopeManager,
-    references: Vec<Reference>,
+
+    /// A scope tree builder used for building the scope tree of the JavaScript program.
+    scope_tree_builder: ScopeTreeBuilder,
+
     use_global_bindings: bool,
 }
 
 impl<'r> Analyzer<'r> {
+    /// Creates a semantic analyzer.
     pub fn new(
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
     ) -> Self {
-        let id = function_registry.create_native_function(vec![]);
+        let id = function_registry.create_native_function();
         Self {
             symbol_registry,
             function_registry,
@@ -58,9 +138,9 @@ impl<'r> Analyzer<'r> {
                 symbol: Symbol::NONE,
                 id,
                 commands: vec![],
+                captures: vec![],
             }],
-            scope_manager: Default::default(),
-            references: vec![],
+            scope_tree_builder: Default::default(),
             use_global_bindings: false,
         }
     }
@@ -69,6 +149,7 @@ impl<'r> Analyzer<'r> {
         self.use_global_bindings = true;
     }
 
+    /// Handles an AST node coming from a parser.
     fn handle_node(&mut self, node: Node<'_>) {
         logger::debug!(event = "handle_node", ?node);
         match node {
@@ -175,38 +256,18 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
-        let context = self.context_stack.last_mut().unwrap();
-        // The locator will be updated later.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
-        self.references.push(Reference {
-            symbol,
-            func_index: context.func_index,
-            scope_ref: self.scope_manager.current(),
-            command_index,
-        });
+        let scope_ref = self.scope_tree_builder.current();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_identifier_reference(symbol, scope_ref);
     }
 
     fn handle_binding_identifier(&mut self, symbol: Symbol) {
-        let context = self.context_stack.last_mut().unwrap();
-        if context.in_body {
-            // The locator will be updated later.
-            let command_index =
-                context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
-            self.scope_manager.add_binding(symbol, BindingKind::Mutable);
-            self.references.push(Reference {
-                func_index: context.func_index,
-                scope_ref: self.scope_manager.current(),
-                command_index,
-                symbol,
-            })
-        } else {
-            // TODO: the compilation should fail if the following condition is unmet.
-            assert!(context.formal_parameters.len() < u16::MAX as usize);
-            let i = context.formal_parameters.len();
-            context.formal_parameters.push(symbol);
-            self.scope_manager
-                .add_binding(symbol, BindingKind::FormalParameter(i));
-        }
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_binding_identifier(symbol, &mut self.scope_tree_builder);
     }
 
     fn handle_argument_list_head(&mut self, empty: bool, spread: bool) {
@@ -221,7 +282,10 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_call_expression(&mut self) {
-        self.context_stack.last_mut().unwrap().put_call();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_call_expression();
     }
 
     fn handle_operator<T>(&mut self, op: T)
@@ -269,7 +333,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_const_declaration(&mut self, n: u32) {
-        self.scope_manager.set_immutable(n);
+        self.scope_tree_builder.set_immutable(n);
         self.context_stack
             .last_mut()
             .unwrap()
@@ -303,7 +367,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_do_while_statement(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -312,7 +376,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_while_statement(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -321,7 +385,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_for_statement(&mut self, flags: LoopFlags) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_manager.pop();
+        self.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -429,7 +493,15 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_catch_block(&mut self) {
-        self.context_stack.last_mut().unwrap().process_catch_block();
+        // In the specification, a new lexical scope is created only when the catch parameter
+        // exists, but we always create a scope here for simplicity.  In our processing model,
+        // the catch and finally clauses are always created even if there is no corresponding
+        // node in the AST.
+        let scope_ref = self.scope_tree_builder.push_block();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_catch_block(scope_ref);
     }
 
     fn handle_finally_block(&mut self) {
@@ -437,6 +509,7 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_finally_block();
+        self.scope_tree_builder.pop();
     }
 
     fn handle_catch_parameter(&mut self) {
@@ -455,36 +528,53 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_function_declaration(&mut self) {
-        self.scope_manager.pop();
-
         let mut context = self.context_stack.pop().unwrap();
-        context.end_scope(true);
-        // TODO: remaining references must be handled as var bindings w/ undefined value.
+        context.end_scope();
+
+        self.scope_tree_builder.pop();
+        self.resolve_references(&mut context);
+
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        let func_index = context.func_index as usize;
-        self.functions[func_index].commands = context.commands;
+
+        let func_index = context.func_index;
+        let func = &mut self.functions[func_index];
+        func.commands = context.commands;
+        func.captures = context.captures.into_values().collect();
 
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_function_declaration(self.functions[func_index].id);
+            .process_closure_declaration(
+                self.scope_tree_builder.current(),
+                func.id,
+                &func.captures,
+            );
     }
 
     // TODO: reduce code clone took from handle_function_declaration().
     fn handle_function_expression(&mut self, named: bool) {
-        self.scope_manager.pop();
-
         let mut context = self.context_stack.pop().unwrap();
-        context.end_scope(true);
-        // TODO: remaining references must be handled as var bindings w/ undefined value.
+        context.end_scope();
+
+        self.scope_tree_builder.pop();
+        self.resolve_references(&mut context);
+
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        let func_index = context.func_index as usize;
-        self.functions[func_index].commands = context.commands;
+
+        let func_index = context.func_index;
+        let func = &mut self.functions[func_index];
+        func.commands = context.commands;
+        func.captures = context.captures.into_values().collect();
 
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_function_expression(self.functions[func_index].id, named);
+            .process_closure_expression(
+                self.scope_tree_builder.current(),
+                func.id,
+                &func.captures,
+                named,
+            );
     }
 
     fn handle_arrow_function(&mut self) {
@@ -492,19 +582,28 @@ impl<'r> Analyzer<'r> {
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a binding in a lexically enclosing environment.
 
-        self.scope_manager.pop();
-
         let mut context = self.context_stack.pop().unwrap();
-        context.end_scope(true);
-        // TODO: remaining references must be handled as var bindings w/ undefined value.
+        context.end_scope();
+
+        self.scope_tree_builder.pop();
+        self.resolve_references(&mut context);
+
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        let func_index = context.func_index as usize;
-        self.functions[func_index].commands = context.commands;
+
+        let func_index = context.func_index;
+        let func = &mut self.functions[func_index];
+        func.commands = context.commands;
+        func.captures = context.captures.into_values().collect();
 
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_function_expression(self.functions[func_index].id, false);
+            .process_closure_expression(
+                self.scope_tree_builder.current(),
+                func.id,
+                &func.captures,
+                false,
+            );
     }
 
     fn handle_then_block(&mut self) {
@@ -563,8 +662,15 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_loop_start(&mut self) {
-        self.context_stack.last_mut().unwrap().process_loop_start();
-        self.scope_manager.push(ScopeKind::Block);
+        // NOTE: This doesn't follow the specification, but we create a new lexical scope for the
+        // iteration statement.  This is needed for the for-let/const statements, but not for
+        // others.  We believe that this change does not compromise conformance to the
+        // specification and does not cause security problems.
+        let scope_ref = self.scope_tree_builder.push_block();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_loop_start(scope_ref);
     }
 
     fn handle_loop_init_expression(&mut self) {
@@ -601,43 +707,46 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_start_block_scope(&mut self) {
-        self.context_stack.last_mut().unwrap().start_scope();
-        self.scope_manager.push(ScopeKind::Block);
+        let scope_ref = self.scope_tree_builder.push_block();
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .start_scope(scope_ref);
     }
 
     fn handle_end_block_scope(&mut self) {
-        self.scope_manager.pop();
-        self.context_stack.last_mut().unwrap().end_scope(false);
+        self.context_stack.last_mut().unwrap().end_scope();
+        self.scope_tree_builder.pop();
     }
 
     fn handle_function_context(&mut self) {
+        let scope_ref = self.scope_tree_builder.push_function();
+
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
-        let func_index = self.functions.len() as u32;
+        let func_index = self.functions.len();
         let mut context = FunctionContext {
             func_index,
             commands: vec![CompileCommand::Nop],
             ..Default::default()
         };
-        context.start_scope();
+        context.start_scope(scope_ref);
         self.context_stack.push(context);
         // Push a placeholder data which will be filled later.
         self.functions.push(FunctionRecipe {
             symbol: Symbol::NONE,
-            id: FunctionId::native(0),
+            id: FunctionId::MAIN,
             commands: vec![],
+            captures: Default::default(),
         });
-        self.scope_manager.push(ScopeKind::Function);
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
         let context = self.context_stack.last_mut().unwrap();
-        let id = self
-            .function_registry
-            .create_native_function(context.formal_parameters.clone());
-        let i = context.func_index as usize;
-        self.functions[i].symbol = symbol;
-        self.functions[i].id = id;
+        let id = self.function_registry.create_native_function();
+        let func_index = context.func_index;
+        self.functions[func_index].symbol = symbol;
+        self.functions[func_index].id = id;
         context.in_body = true;
     }
 
@@ -647,49 +756,43 @@ impl<'r> Analyzer<'r> {
 
         // Register `undefined`.
         let symbol = Symbol::UNDEFINED;
-        // The locator will be computed in `resolve_locators()`.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        // The locator will be computed in `resolve_references()`.
+        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
-        self.scope_manager
-            .add_binding(symbol, BindingKind::Immutable);
-        self.references.push(Reference {
+        self.scope_tree_builder.add_immutable(symbol);
+        context.references.push(Reference {
             symbol,
-            func_index: context.func_index,
-            scope_ref: self.scope_manager.current(),
-            command_index,
+            scope_ref: self.scope_tree_builder.current(),
+            from: ReferenceFrom::Command(command_index),
         });
 
         // Register `Infinity`.
         let symbol = Symbol::INFINITY;
-        // The locator will be computed in `resolve_locators()`.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        // The locator will be computed in `resolve_references()`.
+        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_manager
-            .add_binding(symbol, BindingKind::Immutable);
-        self.references.push(Reference {
+        self.scope_tree_builder.add_immutable(symbol);
+        context.references.push(Reference {
             symbol,
-            func_index: context.func_index,
-            scope_ref: self.scope_manager.current(),
-            command_index,
+            scope_ref: self.scope_tree_builder.current(),
+            from: ReferenceFrom::Command(command_index),
         });
 
         // Register `NaN`.
         let symbol = Symbol::NAN;
-        // The locator will be computed in `resolve_locators()`.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        // The locator will be computed in `resolve_references()`.
+        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_manager
-            .add_binding(symbol, BindingKind::Immutable);
-        self.references.push(Reference {
+        self.scope_tree_builder.add_immutable(symbol);
+        context.references.push(Reference {
             symbol,
-            func_index: context.func_index,
-            scope_ref: self.scope_manager.current(),
-            command_index,
+            scope_ref: self.scope_tree_builder.current(),
+            from: ReferenceFrom::Command(command_index),
         });
     }
 
@@ -699,27 +802,76 @@ impl<'r> Analyzer<'r> {
 
         for (func_id, host_func) in self.function_registry.enumerate_host_function() {
             let symbol = self.symbol_registry.intern_cstr(&host_func.name);
-            // The locator will be computed in `resolve_locators()`.
-            let command_index =
-                context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
-            context.process_function_declaration(func_id);
-            self.scope_manager
-                .add_binding(symbol, BindingKind::Immutable);
-            self.references.push(Reference {
+            // The locator will be computed in `resolve_references()`.
+            let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+            context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
+            self.scope_tree_builder.add_immutable(symbol);
+            context.references.push(Reference {
                 symbol,
-                func_index: context.func_index,
-                scope_ref: self.scope_manager.current(),
-                command_index,
+                scope_ref: self.scope_tree_builder.current(),
+                from: ReferenceFrom::Command(command_index),
             });
         }
     }
 
-    fn resolve_locators(&mut self) {
-        for reference in self.references.iter() {
-            let locator = self.scope_manager.compute_locator(reference);
-            logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
-            self.functions[reference.func_index as usize].commands[reference.command_index] =
-                CompileCommand::Reference(reference.symbol, locator);
+    fn resolve_references(&mut self, context: &mut FunctionContext) {
+        for reference in std::mem::take(&mut context.references).iter() {
+            self.resolve_reference(context, reference);
+        }
+    }
+
+    // TODO: refactoring
+    fn resolve_reference(&mut self, context: &mut FunctionContext, reference: &Reference) {
+        let binding_ref = self.scope_tree_builder.resolve_reference(reference);
+        logger::debug!(event = "resolve-reference", ?reference, ?binding_ref);
+
+        if binding_ref == BindingRef::NONE {
+            // This is a reference to a free variable.
+            let capture_index = match context.captures.get_full(&reference.symbol) {
+                Some((capture_index, ..)) => capture_index,
+                None => {
+                    let (capture_index, _) = context.captures.insert_full(
+                        reference.symbol,
+                        Capture {
+                            symbol: reference.symbol,
+                            target: Locator::NONE,
+                        },
+                    );
+                    self.context_stack
+                        .last_mut()
+                        .unwrap()
+                        .references
+                        .push(Reference {
+                            symbol: reference.symbol,
+                            scope_ref: self.scope_tree_builder.current(),
+                            from: ReferenceFrom::Capture(context.func_index, capture_index),
+                        });
+                    capture_index
+                }
+            };
+            let locator = Locator::checked_capture(capture_index).unwrap();
+            match reference.from {
+                ReferenceFrom::Command(command_index) => {
+                    context.commands[command_index] =
+                        CompileCommand::Reference(reference.symbol, locator);
+                }
+                ReferenceFrom::Capture(func_index, capture_index) => {
+                    self.functions[func_index].captures[capture_index].target = locator;
+                }
+            }
+            return;
+        }
+
+        let locator = self.scope_tree_builder.compute_locator(binding_ref);
+        match reference.from {
+            ReferenceFrom::Command(command_index) => {
+                context.commands[command_index] =
+                    CompileCommand::Reference(reference.symbol, locator);
+            }
+            ReferenceFrom::Capture(func_index, capture_index) => {
+                self.functions[func_index].captures[capture_index].target = locator;
+                self.scope_tree_builder.set_captured(binding_ref);
+            }
         }
     }
 }
@@ -729,12 +881,13 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
     fn start(&mut self) {
         logger::debug!(event = "start");
+        let scope_ref = self.scope_tree_builder.push_function();
+
         let context = self.context_stack.last_mut().unwrap();
         // Push `Nop` as a placeholder.
         // It will be replaced with `Bindings(n)` in `accept()`.
         context.commands.push(CompileCommand::Nop);
-        context.start_scope();
-        self.scope_manager.push(ScopeKind::Function);
+        context.start_scope(scope_ref);
 
         if self.use_global_bindings {
             self.put_global_bindings();
@@ -745,19 +898,22 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
+
         let mut context = self.context_stack.pop().unwrap();
+        context.end_scope();
 
-        self.scope_manager.pop();
-        //self.scope_manager.dump(ScopeRef(1));
-        context.end_scope(true);
+        self.scope_tree_builder.pop();
+        self.resolve_references(&mut context);
+        debug_assert!(context.captures.is_empty());
 
-        // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         context.commands.push(CompileCommand::Return(0));
-        self.functions[context.func_index as usize].commands = context.commands;
-        self.resolve_locators();
+        self.functions[context.func_index].commands = context.commands;
+        self.functions[context.func_index].captures = context.captures.into_values().collect();
+
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
+            scope_tree: self.scope_tree_builder.build(),
         })
     }
 
@@ -773,24 +929,64 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
     }
 }
 
+/// A type representing analysis states of a JavaScript function.
+///
+/// This type uses a stack for each data type, instead of using a single stack that holds an
+/// enumerate type having a variant for the each data type.  This way make it possible to easily
+/// and efficiently access to particular elements in a stack for a data type.  While on the other
+/// hand, this way is inefficient in memory usage points of view.
 #[derive(Default)]
 struct FunctionContext {
+    /// A buffer to store [`CompileCommand`]s while analyzing.
+    ///
+    /// Some of commands stored in the buffer will work as placeholders and will be updated later.
     commands: Vec<CompileCommand>,
+
+    /// Holds unresolved references in the function.
+    ///
+    /// All the references will be resolved at the end of the function definition in order to
+    /// compute the memory layout of local variables on the stack because the computation has to be
+    /// performed after all variable declarations are processed.
+    references: Vec<Reference>,
+
+    /// A list of captured variables outside the function scope.
+    captures: IndexMap<Symbol, Capture>,
+
+    /// A list of indexes of commands that have to be updated while analyzing.
     pending_lexical_bindings: Vec<usize>,
+
+    /// A list of symbols in the formal parameters of the function.
     formal_parameters: Vec<Symbol>,
+
+    /// A stack to hold [`Scope`]s.
     scope_stack: Vec<Scope>,
+
+    /// A stack to hold [`LoopContext`]s.
     loop_stack: Vec<LoopContext>,
+
+    /// A stack to hold [`SwitchContext`]s.
     switch_stack: Vec<SwitchContext>,
+
+    /// A stack to hold [`LabelContext`]s.
     label_stack: Vec<LabelContext>,
+
+    /// A stack to hold [`TryContext`]s.
     try_stack: Vec<TryContext>,
+
+    /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<(usize, u16)>,
+
+    /// A variable to hold the current maximum number of bindings in the function.
     max_bindings: usize,
-    func_index: u32,
+
+    /// The index of the function in [`Analyzer::functions`].
+    func_index: usize,
+
+    /// `false` while analyzing formal parameters, `true` while analyzing the function body.
     in_body: bool,
 }
 
 impl FunctionContext {
-    #[inline(always)]
     fn put_command(&mut self, command: CompileCommand) -> usize {
         let index = self.commands.len();
         self.commands.push(command);
@@ -836,7 +1032,7 @@ impl FunctionContext {
         self.nargs_stack.last_mut().unwrap().1 += 1;
     }
 
-    fn put_call(&mut self) {
+    fn process_call_expression(&mut self) {
         let (index, nargs) = self.nargs_stack.pop().unwrap();
         self.commands[index] = CompileCommand::Arguments(nargs);
         self.commands.push(CompileCommand::Call(nargs));
@@ -851,6 +1047,36 @@ impl FunctionContext {
         let command_index = self.put_command(CompileCommand::Nop);
         self.pending_lexical_bindings.push(command_index);
         // TODO: type info
+    }
+
+    fn process_identifier_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
+        // The locator will be updated later.
+        let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+        self.references.push(Reference {
+            symbol,
+            scope_ref,
+            from: ReferenceFrom::Command(command_index),
+        });
+    }
+
+    fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
+        if self.in_body {
+            // The locator will be updated later.
+            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+            self.references.push(Reference {
+                symbol,
+                scope_ref: builder.current(),
+                from: ReferenceFrom::Command(command_index),
+            });
+            // The BindingKind may change later by `builder.set_immutable()`.
+            builder.add_mutable(symbol);
+        } else {
+            // TODO: the compilation should fail if the following condition is unmet.
+            assert!(self.formal_parameters.len() < u16::MAX as usize);
+            let i = self.formal_parameters.len();
+            self.formal_parameters.push(symbol);
+            builder.add_formal_parameter(symbol, i);
+        }
     }
 
     fn process_sequence_expression(&mut self) {
@@ -878,30 +1104,64 @@ impl FunctionContext {
         self.pending_lexical_bindings.clear();
     }
 
-    fn process_function_declaration(&mut self, func_id: FunctionId) {
+    fn process_closure_declaration(
+        &mut self,
+        scope_ref: ScopeRef,
+        func_id: FunctionId,
+        captures: &[Capture],
+    ) {
+        for capture in captures.iter().rev() {
+            // `capture.target` has not been resolved at this point...
+            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+            self.references.push(Reference {
+                symbol: capture.symbol,
+                scope_ref,
+                from: ReferenceFrom::Command(command_index),
+            });
+            self.commands.push(CompileCommand::CaptureBinding(true));
+        }
         self.commands.push(CompileCommand::Function(func_id));
-        self.commands.push(CompileCommand::DeclareFunction);
+        self.commands
+            .push(CompileCommand::Closure(true, captures.len() as u16));
+        self.commands.push(CompileCommand::DeclareClosure);
         self.scope_stack.last_mut().unwrap().num_bindings += 1;
     }
 
-    fn process_function_expression(&mut self, func_id: FunctionId, named: bool) {
+    fn process_closure_expression(
+        &mut self,
+        scope_ref: ScopeRef,
+        func_id: FunctionId,
+        captures: &[Capture],
+        named: bool,
+    ) {
         if named {
             // Remove the BindingIdentifier of the function.
             self.put_command(CompileCommand::Discard);
         }
+        for capture in captures.iter().rev() {
+            // `capture.target` has not been resolved at this point...
+            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+            self.references.push(Reference {
+                symbol: capture.symbol,
+                scope_ref,
+                from: ReferenceFrom::Command(command_index),
+            });
+            self.commands.push(CompileCommand::CaptureBinding(false));
+        }
         self.commands.push(CompileCommand::Function(func_id));
+        self.commands
+            .push(CompileCommand::Closure(false, captures.len() as u16));
+        if named {
+            self.scope_stack.last_mut().unwrap().num_bindings += 1;
+        }
     }
 
-    fn process_loop_start(&mut self) {
+    fn process_loop_start(&mut self, scope_ref: ScopeRef) {
         // Push `Nop` as a placeholder.
         // It will be replaced with an appropriate command in process_loop_end().
         let start_index = self.put_command(CompileCommand::Nop);
         self.loop_stack.push(LoopContext { start_index });
-        // NOTE: This doesn't follow the specification, but we create a new lexical scope for the
-        // iteration statement.  This is needed for the for-let/const statements, but not for
-        // others.  We believe that this change does not compromise conformance to the
-        // specification and does not cause security problems.
-        self.start_scope();
+        self.start_scope(scope_ref);
     }
 
     fn process_loop_init_expression(&mut self) {
@@ -927,7 +1187,7 @@ impl FunctionContext {
     }
 
     fn process_loop_end(&mut self, command: CompileCommand) {
-        self.end_scope(false);
+        self.end_scope();
         self.put_command(CompileCommand::LoopEnd);
         let LoopContext { start_index } = self.loop_stack.pop().unwrap();
         self.commands[start_index] = command;
@@ -1025,17 +1285,13 @@ impl FunctionContext {
         self.try_stack.push(Default::default());
     }
 
-    fn process_catch_block(&mut self) {
+    fn process_catch_block(&mut self, scope_ref: ScopeRef) {
         // Push a *nominal* `Catch` command.
         // It will be replaced with a *substantial* `Catch` command in `process_catch_clause()`
         // if a catch clause exists.
         let index = self.put_command(CompileCommand::Catch(true));
         self.try_stack.last_mut().unwrap().catch_index = index;
-        // In the specification, a new lexical scope is created only when the catch parameter
-        // exists, but we always create a scope here for simplicity.  In our processing model,
-        // the catch and finally clauses are always created even if there is no corresponding
-        // node in the AST.
-        self.start_scope();
+        self.start_scope(scope_ref);
     }
 
     fn process_catch_clause(&mut self, _has_parameter: bool) {
@@ -1045,7 +1301,7 @@ impl FunctionContext {
 
     fn process_finally_block(&mut self) {
         // Remove the scope created for the catch clause.
-        self.end_scope(false);
+        self.end_scope();
         // Push a *nominal* `Finally` command.
         // It will be replaced with a *substantial* `Finally` command in `process_finally_clause()`
         // if a finally clause exists.
@@ -1069,30 +1325,32 @@ impl FunctionContext {
         self.process_mutable_bindings(1);
     }
 
-    fn start_scope(&mut self) {
-        // Push `Nop` as a placeholder.
-        // It will be replaced with `AllocateBindings(n)` in `end_scope()`.
-        let index = self.put_command(CompileCommand::Nop);
+    fn start_scope(&mut self, scope_ref: ScopeRef) {
+        // NOTE(perf): The scope may has no binding.  In this case, we can remove the
+        // AllocateBindings command safely and reduce the number of the commands.  We can add a
+        // post-process for optimization if it's needed.
+        self.put_command(CompileCommand::AllocateBindings(scope_ref));
         self.scope_stack.push(Scope {
-            command_base_index: index,
+            scope_ref,
             num_bindings: 0,
             max_child_bindings: 0,
         });
     }
 
-    fn end_scope(&mut self, function_scope: bool) {
+    fn end_scope(&mut self) {
         let scope = self.scope_stack.pop().unwrap();
 
         // TODO: the compilation should fail if the following conditions are unmet.
-        assert!(scope.num_bindings <= ScopeManager::MAX_LOCAL_BINDINGS);
-        assert!(scope.num_bindings + scope.max_child_bindings <= ScopeManager::MAX_LOCAL_BINDINGS);
+        assert!(scope.num_bindings <= ScopeTreeBuilder::MAX_LOCAL_BINDINGS);
+        assert!(
+            scope.num_bindings + scope.max_child_bindings <= ScopeTreeBuilder::MAX_LOCAL_BINDINGS
+        );
 
-        let n = scope.num_bindings as u16;
-        if n > 0 {
-            self.commands[scope.command_base_index] =
-                CompileCommand::AllocateBindings(n, function_scope);
-            self.commands.push(CompileCommand::ReleaseBindings(n));
-        }
+        // NOTE(perf): The scope may has no binding.  In this case, we can remove the
+        // ReleaseBindings command safely and reduce the number of the commands.  We can add a
+        // post-process for optimization if it's needed.
+        self.commands
+            .push(CompileCommand::ReleaseBindings(scope.scope_ref));
 
         let n = scope.num_bindings + scope.max_child_bindings;
         match self.scope_stack.last_mut() {
@@ -1103,7 +1361,8 @@ impl FunctionContext {
 }
 
 struct Scope {
-    command_base_index: usize,
+    scope_ref: ScopeRef,
+    // TODO: remove and use the scope tree
     num_bindings: usize,
     max_child_bindings: usize,
 }
@@ -1131,6 +1390,7 @@ struct TryContext {
     finally_index: usize,
 }
 
+/// A compile command.
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
     Nop,
@@ -1140,6 +1400,7 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Function(FunctionId),
+    Closure(bool, u16),
     Reference(Symbol, Locator),
     Exception,
 
@@ -1147,11 +1408,13 @@ pub enum CompileCommand {
     MutableBinding,
     ImmutableBinding,
     DeclareFunction,
+    DeclareClosure,
     Arguments(u16),
     Argument(u16),
     Call(u16),
-    AllocateBindings(u16, bool),
-    ReleaseBindings(u16),
+    AllocateBindings(ScopeRef),
+    ReleaseBindings(ScopeRef),
+    CaptureBinding(bool),
 
     // update operators
     PostfixIncrement,
@@ -1285,6 +1548,10 @@ pub enum CompileCommand {
     Swap,
 }
 
+impl CompileCommand {
+    const REFERENCE_PLACEHOLDER: Self = Self::Reference(Symbol::NONE, Locator::NONE);
+}
+
 impl From<UpdateOperator> for CompileCommand {
     fn from(value: UpdateOperator) -> Self {
         match value {
@@ -1363,12 +1630,33 @@ impl From<AssignmentOperator> for CompileCommand {
     }
 }
 
+/// A type representing information needed for resolving a reference to a symbol.
 #[derive(Debug)]
 struct Reference {
+    /// The symbol referred.
     symbol: Symbol,
-    func_index: u32,
+
+    /// The reference to a (function or block) scope where the symbol is referred.
     scope_ref: ScopeRef,
-    command_index: usize,
+
+    from: ReferenceFrom,
+}
+
+#[derive(Debug)]
+enum ReferenceFrom {
+    /// A reference to a [`CompileCommand`] that needs to be updated.
+    ///
+    /// This is a tuple of two indexes.  The first one is the index of a [`FunctionContext`] in
+    /// [`Analyzer::functions`].  The second one is the index of the [`CompileCommand`] in
+    /// the [`FunctionContext::commands`] identified by the first index.
+    Command(usize),
+
+    /// A reference from a [`Capture`] that needs to be updated.
+    ///
+    /// This is a tuple of two indexes.  The first one is the index of a [`FunctionContext`] in
+    /// [`Analyzer::functions`].  The second one is the index of the [`Capture`] in
+    /// the [`FunctionContext::captures`] identified by the first index.
+    Capture(usize, usize),
 }
 
 #[cfg(test)]
@@ -1383,13 +1671,15 @@ mod tests {
             $symbol_registry.lookup($name.encode_utf16().collect::<Vec<u16>>().as_slice())
         };
     }
-
-    macro_rules! local {
+    macro_rules! scope_ref {
         ($index:expr) => {
-            local!(0, $index)
+            ScopeRef::new($index)
         };
-        ($func:expr, $index:expr) => {
-            Locator::local($func, $index)
+    }
+
+    macro_rules! locator {
+        (local: $index:expr) => {
+            Locator::local($index)
         };
     }
 
@@ -1400,20 +1690,20 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Bindings(4),
-                    CompileCommand::AllocateBindings(4, true),
-                    CompileCommand::Reference(symbol!(reg, "a"), local!(0)),
+                    CompileCommand::AllocateBindings(scope_ref!(1)),
+                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), local!(1)),
+                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 1)),
                     CompileCommand::Number(2.0),
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "c"), local!(2)),
+                    CompileCommand::Reference(symbol!(reg, "c"), locator!(local: 2)),
                     CompileCommand::Number(3.0),
                     CompileCommand::ImmutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "d"), local!(3)),
+                    CompileCommand::Reference(symbol!(reg, "d"), locator!(local: 3)),
                     CompileCommand::Number(4.0),
                     CompileCommand::ImmutableBinding,
-                    CompileCommand::ReleaseBindings(4),
+                    CompileCommand::ReleaseBindings(scope_ref!(1)),
                     CompileCommand::Return(0),
                 ]
             );
@@ -1427,24 +1717,24 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Bindings(3),
-                    CompileCommand::AllocateBindings(1, true),
-                    CompileCommand::Reference(symbol!(reg, "a"), local!(0)),
+                    CompileCommand::AllocateBindings(scope_ref!(1)),
+                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::AllocateBindings(1, false),
-                    CompileCommand::Reference(symbol!(reg, "a"), local!(1)),
+                    CompileCommand::AllocateBindings(scope_ref!(2)),
+                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::ReleaseBindings(1),
-                    CompileCommand::AllocateBindings(2, false),
-                    CompileCommand::Reference(symbol!(reg, "a"), local!(1)),
+                    CompileCommand::ReleaseBindings(scope_ref!(2)),
+                    CompileCommand::AllocateBindings(scope_ref!(3)),
+                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), local!(2)),
+                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 2)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::ReleaseBindings(2),
-                    CompileCommand::ReleaseBindings(1),
+                    CompileCommand::ReleaseBindings(scope_ref!(3)),
+                    CompileCommand::ReleaseBindings(scope_ref!(1)),
                     CompileCommand::Return(0),
                 ]
             );

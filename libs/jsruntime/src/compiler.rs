@@ -1,9 +1,6 @@
 use std::ffi::CStr;
 
 use jsparser::syntax::LoopFlags;
-use jsparser::Error;
-use jsparser::Parser;
-use jsparser::Processor;
 use jsparser::Symbol;
 
 use crate::bridge;
@@ -11,20 +8,19 @@ use crate::bridge::Locator;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
-use crate::semantics::Analyzer;
 use crate::semantics::CompileCommand;
+use crate::semantics::ScopeRef;
+use crate::semantics::ScopeTree;
 use crate::Module;
+use crate::Program;
 use crate::Runtime;
 
 impl Runtime {
-    pub fn compile_script(&mut self, source: &str, optimize: bool) -> Option<Module> {
-        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &mut self.function_registry);
-        analyzer.use_global_bindings();
-        let processor = Processor::new(analyzer, false);
-        let program = Parser::for_script(source, processor).parse().ok()?;
+    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
+        logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(&self.function_registry);
+        let mut compiler = Compiler::new(&self.function_registry, &program.scope_tree);
         compiler.start_compile();
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
@@ -36,20 +32,25 @@ impl Runtime {
             }
             compiler.end_function(optimize);
         }
-        compiler.end_compile().ok()
+        Ok(compiler.end_compile())
     }
 }
 
-struct Compiler<'a> {
+#[derive(Debug, thiserror::Error)]
+pub enum CompileError {}
+
+struct Compiler<'a, 'b> {
     peer: *mut bridge::Compiler,
     function_registry: &'a FunctionRegistry,
+    scope_tree: &'b ScopeTree,
 }
 
-impl<'a> Compiler<'a> {
-    pub fn new(function_registry: &'a FunctionRegistry) -> Self {
+impl<'a, 'b> Compiler<'a, 'b> {
+    pub fn new(function_registry: &'a FunctionRegistry, scope_tree: &'b ScopeTree) -> Self {
         Self {
             peer: unsafe { bridge::compiler_peer_new() },
             function_registry,
+            scope_tree,
         }
     }
 
@@ -60,10 +61,10 @@ impl<'a> Compiler<'a> {
         }
     }
 
-    fn end_compile(&self) -> Result<Module, Error> {
+    fn end_compile(&self) -> Module {
         logger::debug!(event = "end_compile");
         let peer = unsafe { bridge::compiler_peer_end(self.peer) };
-        Ok(Module { peer })
+        Module { peer }
     }
 
     fn set_data_layout(&self, data_layout: &CStr) {
@@ -90,7 +91,7 @@ impl<'a> Compiler<'a> {
 
     fn start_function(&self, symbol: Symbol, func_id: FunctionId) {
         logger::debug!(event = "start_function", ?symbol, ?func_id);
-        let native = self.function_registry.get_native(func_id.value());
+        let native = self.function_registry.get_native(func_id);
         unsafe {
             bridge::compiler_peer_start_function(self.peer, native.name.as_ptr());
         }
@@ -123,17 +124,22 @@ impl<'a> Compiler<'a> {
                 unimplemented!("string literal");
             }
             CompileCommand::Function(func_id) => {
+                let func_id = *func_id;
                 let name = if func_id.is_native() {
-                    &self.function_registry.get_native(func_id.value()).name
+                    &self.function_registry.get_native(func_id).name
                 } else {
-                    &self.function_registry.get_host(func_id.value()).name
+                    &self.function_registry.get_host(func_id).name
                 };
                 unsafe {
-                    bridge::compiler_peer_function(self.peer, (*func_id).into(), name.as_ptr());
+                    bridge::compiler_peer_function(self.peer, func_id.into(), name.as_ptr());
                 }
             }
+            CompileCommand::Closure(prologue, num_captures) => unsafe {
+                // `*num_captures` may be 0.
+                bridge::compiler_peer_closure(self.peer, *prologue, *num_captures);
+            },
             CompileCommand::Reference(symbol, locator) => unsafe {
-                assert_ne!(*locator, Locator::NONE);
+                debug_assert_ne!(*locator, Locator::NONE);
                 bridge::compiler_peer_reference(self.peer, symbol.id(), *locator);
             },
             CompileCommand::Exception => unsafe {
@@ -151,6 +157,9 @@ impl<'a> Compiler<'a> {
             CompileCommand::DeclareFunction => unsafe {
                 bridge::compiler_peer_declare_function(self.peer);
             },
+            CompileCommand::DeclareClosure => unsafe {
+                bridge::compiler_peer_declare_closure(self.peer);
+            },
             CompileCommand::Arguments(nargs) => unsafe {
                 if *nargs > 0 {
                     bridge::compiler_peer_arguments(self.peer, *nargs);
@@ -162,20 +171,52 @@ impl<'a> Compiler<'a> {
             CompileCommand::Call(nargs) => unsafe {
                 bridge::compiler_peer_call(self.peer, *nargs);
             },
-            CompileCommand::AllocateBindings(n, prologue) => {
-                debug_assert!(*n > 0);
-                unsafe {
-                    bridge::compiler_peer_allocate_bindings(self.peer, *n, *prologue);
+            CompileCommand::AllocateBindings(scope_ref) => {
+                // TODO(issue#234)
+                let scope_ref = *scope_ref;
+                debug_assert_ne!(scope_ref, ScopeRef::NONE);
+                let scope = self.scope_tree.scope(scope_ref);
+                let prologue = scope.is_function();
+                if scope.num_locals > 0 {
+                    unsafe {
+                        bridge::compiler_peer_allocate_bindings(
+                            self.peer,
+                            scope.num_locals,
+                            prologue,
+                        );
+                    }
+                }
+                for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
+                    if binding.captured {
+                        let locator = self.scope_tree.compute_locator(binding_ref);
+                        unsafe {
+                            bridge::compiler_peer_create_capture(self.peer, locator, prologue);
+                        }
+                    }
                 }
             }
-            CompileCommand::ReleaseBindings(n) => {
-                debug_assert!(*n > 0);
-                unsafe {
-                    // `runtime_pop_scope()` call will not be added if the basic block already has
-                    // a terminator instruction.
-                    bridge::compiler_peer_release_bindings(self.peer, *n);
+            CompileCommand::ReleaseBindings(scope_ref) => {
+                // TODO(issue#234)
+                let scope_ref = *scope_ref;
+                debug_assert_ne!(scope_ref, ScopeRef::NONE);
+                for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
+                    if binding.captured {
+                        let locator = self.scope_tree.compute_locator(binding_ref);
+                        unsafe {
+                            bridge::compiler_peer_escape_binding(self.peer, locator);
+                        }
+                    }
+                }
+                let scope = self.scope_tree.scope(scope_ref);
+                if scope.num_locals > 0 {
+                    unsafe {
+                        bridge::compiler_peer_release_bindings(self.peer, scope.num_locals);
+                    }
                 }
             }
+            CompileCommand::CaptureBinding(prologue) => unsafe {
+                bridge::compiler_peer_capture_binding(self.peer, *prologue);
+            },
             CompileCommand::PostfixIncrement => unsafe {
                 bridge::compiler_peer_postfix_increment(self.peer);
             },
@@ -446,7 +487,7 @@ impl<'a> Compiler<'a> {
     }
 }
 
-impl<'a> Drop for Compiler<'a> {
+impl<'a, 'b> Drop for Compiler<'a, 'b> {
     fn drop(&mut self) {
         unsafe {
             bridge::compiler_peer_delete(self.peer);

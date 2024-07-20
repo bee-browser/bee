@@ -16,8 +16,9 @@ macro_rules! eval {
             let expected = format!("{:?}", Value::from($expected));
             assert_eq!(actual, expected);
         });
-        let module = runtime.compile_script($src.as_ref(), true).unwrap();
-        assert_matches!(runtime.eval(module), Ok(_));
+        let program = runtime.parse_script($src.as_ref()).unwrap();
+        let module = runtime.compile(&program, true).unwrap();
+        assert_matches!(runtime.evaluate(module), Ok(_));
     };
     (file: $filename:literal, $expected:expr) => {
         let src = include_str!($filename);
@@ -26,8 +27,9 @@ macro_rules! eval {
     ($src:expr, throws: $expected:expr) => {
         Runtime::initialize();
         let mut runtime = Runtime::new();
-        let module = runtime.compile_script($src.as_ref(), true).unwrap();
-        assert_matches!(runtime.eval(module), Err(v) => {
+        let program = runtime.parse_script($src.as_ref()).unwrap();
+        let module = runtime.compile(&program, true).unwrap();
+        assert_matches!(runtime.evaluate(module), Err(v) => {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
             let actual = format!("{:?}", v);
             let expected = format!("{:?}", Value::from($expected));
@@ -640,20 +642,18 @@ fn eval_nested_function() {
 }
 
 #[test]
-fn eval_argument_in_outer_function() {
-    eval!(
-        "print(a(1)); function a(x) { return b(); function b() { return x } }",
-        1.
-    );
+fn eval_argument_of_enclosing_function() {
+    eval!(file: "argument_of_enclosing_function.js", 1);
+}
+
+#[test]
+fn eval_argument_assignment() {
+    eval!(file: "argument_assignment.js", 2);
 }
 
 #[test]
 fn eval_fibonacci() {
-    eval!(
-        "print(fib(10)); \
-         function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); }",
-        55.
-    );
+    eval!(file: "fibonacci.js", 55);
 }
 
 #[test]
@@ -669,8 +669,8 @@ fn eval_anonymous_function_expression() {
 #[test]
 fn eval_iife() {
     // IIFE: Immediately Invoked Function Expression
-    eval!("print((function() { return 1 })())", 1);
-    eval!("print((function x() { return 1 })())", 1);
+    eval!(file: "iife.js", 1);
+    eval!(file: "iife_with_name.js", 1);
 }
 
 #[test]
@@ -730,76 +730,67 @@ fn eval_arrow_function_empty_parameter_list() {
 
 #[test]
 fn eval_do_while_statement() {
-    eval!("let i = 0; do { i++ } while (i < 2); print(i)", 2);
+    eval!(file: "do_while_statement.js", 2);
 }
 
 #[test]
 fn eval_while_statement() {
-    eval!("let i = 0; while (i < 2) { i++ } print(i)", 2);
+    eval!(file: "while_statement.js", 2);
 }
 
 #[test]
 fn eval_for_statement() {
-    eval!(
-        "let i = 0; for (let j = 0; j < 2; ++j) { i = j } print(i)",
-        1
-    );
+    eval!(file: "for_statement.js", 1);
 }
 
 #[test]
 fn eval_for_statement_no_init() {
-    eval!("let i = 0; for (; i < 2; ++i) {} print(i)", 2);
+    eval!(file: "for_statement_no_init.js", 2);
 }
 
 #[test]
 fn eval_for_statement_no_test() {
-    eval!("let i; for (i = 0; ; ++i) { if (i > 2) break } print(i)", 3);
+    eval!(file: "for_statement_no_test.js", 3);
 }
 
 #[test]
 fn eval_for_statement_no_init_next() {
-    eval!("let i = 0; for (; i < 2; ) { ++i } print(i)", 2);
+    eval!(file: "for_statement_no_init_next.js", 2);
 }
 
 #[test]
 fn eval_for_statement_no_init_test() {
-    eval!("let i = 0; for (; ; ++i) { if (i > 2) break } print(i)", 3);
+    eval!(file: "for_statement_no_init_test.js", 3);
 }
 
 #[test]
 fn eval_for_statement_no_test_next() {
-    eval!(
-        "let i; for (i = 0; ; ) { if (i > 2) break; ++i } print(i)",
-        3
-    );
+    eval!(file: "for_statement_no_test_next.js", 3);
 }
 
 #[test]
 fn eval_for_statement_no_init_test_next() {
-    eval!("let i = 0; for (;;) { if (i > 2) break; ++i } print(i)", 3);
+    eval!(file: "for_statement_no_init_test_next.js", 3);
 }
 
 #[test]
 fn eval_continue() {
-    eval!("let i = 0; for (; i < 2; ++i) { continue } print(i)", 2);
+    eval!(file: "continue.js", 2);
 }
 
 #[test]
 fn eval_deadcode_after_continue() {
-    eval!(
-        "let i = 0; for (; i < 2; ++i) { continue; i = 1 } print(i)",
-        2
-    );
+    eval!(file: "deadcode_after_continue.js", 2);
 }
 
 #[test]
 fn eval_break() {
-    eval!("let i = 0; for (;;) { break } print(0)", 0);
+    eval!(file: "break.js", 0);
 }
 
 #[test]
 fn eval_deadcode_after_break() {
-    eval!("let i = 0; for (;;) { break; i = 1 } print(i)", 0);
+    eval!(file: "deadcode_after_break.js", 0);
 }
 
 #[test]
@@ -980,4 +971,19 @@ fn eval_try_nested() {
 #[test]
 fn eval_try_call_throw() {
     eval!(file: "try_call_throw.js", 1);
+}
+
+#[test]
+fn eval_closure_escape() {
+    eval!(file: "closure_escape.js", 1);
+}
+
+#[test]
+fn eval_closure_nested() {
+    eval!(file: "closure_nested.js", 1);
+}
+
+#[test]
+fn eval_closure_assignment() {
+    eval!(file: "closure_assignment.js", 2);
 }

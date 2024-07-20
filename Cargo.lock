@@ -1005,11 +1005,14 @@ dependencies = [
  "base",
  "bindgen",
  "bitflags",
+ "bumpalo",
  "cc",
  "criterion",
  "duct",
+ "indexmap",
  "jsparser",
  "logging",
+ "thiserror",
 ]
 
 [[package]]

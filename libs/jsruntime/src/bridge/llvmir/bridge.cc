@@ -74,6 +74,10 @@ void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name) 
   self->Function(func_id, name);
 }
 
+void compiler_peer_closure(Compiler* self, bool prologue, uint16_t num_captures) {
+  self->Closure(prologue, num_captures);
+}
+
 void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator) {
   self->Reference(symbol, locator);
 }
@@ -286,6 +290,10 @@ void compiler_peer_declare_function(Compiler* self) {
   self->DeclareFunction();
 }
 
+void compiler_peer_declare_closure(Compiler* self) {
+  self->DeclareClosure();
+}
+
 void compiler_peer_arguments(Compiler* self, uint16_t argc) {
   self->Arguments(argc);
 }
@@ -420,6 +428,18 @@ void compiler_peer_release_bindings(Compiler* self, uint16_t n) {
   self->ReleaseBindings(n);
 }
 
+void compiler_peer_create_capture(Compiler* self, Locator locator, bool prologue) {
+  self->CreateCapture(locator, prologue);
+}
+
+void compiler_peer_capture_binding(Compiler* self, bool prologue) {
+  self->CaptureBinding(prologue);
+}
+
+void compiler_peer_escape_binding(Compiler* self, Locator locator) {
+  self->EscapeBinding(locator);
+}
+
 void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement) {
   self->LabelStart(symbol, is_iteration_statement);
 }
@@ -470,8 +490,8 @@ void executor_peer_register_runtime(Executor* self, const Runtime* runtime) {
   self->RegisterRuntime(runtime);
 }
 
-void executor_peer_register_host_function(Executor* self, const char* name, FuncPtr func) {
-  self->RegisterHostFunction(name, func);
+void executor_peer_register_host_function(Executor* self, const char* name, Lambda lambda) {
+  self->RegisterHostFunction(name, lambda);
 }
 
 void executor_peer_register_module(Executor* self, Module* mod) {
@@ -486,6 +506,6 @@ const char* executor_peer_get_target_triple(const Executor* self) {
   return self->target_triple().getTriple().c_str();
 }
 
-FuncPtr executor_peer_get_native_func(Executor* self, const char* name) {
-  return self->GetNativeFunc(name);
+Lambda executor_peer_get_native_function(Executor* self, const char* name) {
+  return self->GetNativeFunction(name);
 }

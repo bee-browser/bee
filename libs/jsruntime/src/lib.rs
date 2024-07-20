@@ -7,18 +7,22 @@ mod semantics;
 
 use jsparser::SymbolRegistry;
 
+use bridge::ReturnValue;
+use bridge::Status;
 use executor::Executor;
 use function::FunctionId;
 use function::FunctionRegistry;
 
-use bridge::ReturnValue;
-use bridge::Status;
 pub use bridge::Value;
+pub use compiler::CompileError;
+pub use semantics::Program;
 
 pub struct Runtime {
     symbol_registry: SymbolRegistry,
     function_registry: FunctionRegistry,
     executor: Executor,
+    // TODO: GcArena
+    allocator: bumpalo::Bump,
 }
 
 impl Runtime {
@@ -33,6 +37,7 @@ impl Runtime {
             symbol_registry: Default::default(),
             function_registry: FunctionRegistry::new(),
             executor: Default::default(),
+            allocator: bumpalo::Bump::new(),
         }
     }
 
@@ -57,17 +62,17 @@ impl Runtime {
         self
     }
 
-    pub fn eval(&mut self, module: Module) -> Result<Value, Value> {
-        logger::debug!(event = "eval");
+    pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
+        logger::debug!(event = "evaluate");
         self.executor.register_module(module);
-        let func = self.function_registry.get_native_mut(0);
+        let main = self.function_registry.get_native(FunctionId::MAIN);
         let mut ret = Value::UNDEFINED;
-        let status = match self.executor.get_native_func(&func.name) {
+        let status = match self.executor.get_native_function(&main.name) {
             Some(main) => unsafe {
                 main(
-                    // exec_context
+                    // ctx
                     self as *mut Self as *mut std::ffi::c_void,
-                    // outer_scope
+                    // caps
                     std::ptr::null_mut(),
                     // argc
                     0,
@@ -80,6 +85,10 @@ impl Runtime {
             None => unreachable!(),
         };
         ret.into_result(status)
+    }
+
+    fn allocator(&self) -> &bumpalo::Bump {
+        &self.allocator
     }
 }
 
@@ -132,8 +141,8 @@ where
 }
 
 unsafe extern "C" fn wrapper<F, R>(
-    exec_context: *mut std::ffi::c_void,
-    outer_scope: *mut std::ffi::c_void,
+    ctx: *mut std::ffi::c_void,
+    _caps: *mut std::ffi::c_void,
     argc: usize,
     argv: *mut Value,
     ret: *mut Value,
@@ -144,8 +153,7 @@ where
 {
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
-    let runtime = &mut *(exec_context as *mut Runtime);
-    let _ = outer_scope;
+    let runtime = &mut *(ctx as *mut Runtime);
     let args = std::slice::from_raw_parts(argv as *const Value, argc);
     // TODO: the return value is copied twice.  that's inefficient.
     let retval = host_fn(runtime, args);

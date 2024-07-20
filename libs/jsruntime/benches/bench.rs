@@ -18,8 +18,9 @@ fn fib(c: &mut Criterion) {
             group.bench_function($label, |b| {
                 b.iter(|| {
                     let mut runtime = Runtime::new();
-                    let module = runtime.compile_script($src, true).unwrap();
-                    runtime.eval(module).unwrap();
+                    let program = runtime.parse_script($src).unwrap();
+                    let module = runtime.compile(&program, true).unwrap();
+                    runtime.evaluate(module).unwrap();
                 })
             });
         };

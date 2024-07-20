@@ -16,9 +16,12 @@ struct CommandLine {
 /// A testbed for the jsruntime module.
 #[derive(clap::Subcommand)]
 enum Command {
-    /// Compile a JavaScript program and print the compiled module.
+    /// Parses a JavaScript program and print the result.
+    Parse(Parse),
+
+    /// Compiles a JavaScript program and print the compiled module.
     ///
-    /// lli cannot interpret the module directly.  Because it includes unresolved symbols for the
+    /// `lli` cannot interpret the module directly.  Because it includes unresolved symbols for the
     /// runtime function calls.  At this point, there is no command-line option to output anything
     /// containing the runtime functions which can link to the module.
     Compile(Compile),
@@ -28,8 +31,16 @@ enum Command {
 }
 
 #[derive(clap::Args)]
-struct Run {
-    /// The source file of the JavaScript program to run.
+struct Parse {
+    /// Prints the functions.
+    #[arg(long)]
+    print_functions: bool,
+
+    /// Prints the scope tree.
+    #[arg(long)]
+    print_scope_tree: bool,
+
+    /// The source file of the JavaScript program to parse.
     ///
     /// Reads the source text from STDIN if this argument is not specified.
     #[arg()]
@@ -38,6 +49,19 @@ struct Run {
 
 #[derive(clap::Args)]
 struct Compile {
+    /// Disable optimization.
+    #[arg(long)]
+    no_optimize: bool,
+
+    /// The source file of the JavaScript program to compile.
+    ///
+    /// Reads the source text from STDIN if this argument is not specified.
+    #[arg()]
+    source: Option<PathBuf>,
+}
+
+#[derive(clap::Args)]
+struct Run {
     /// Disable optimization.
     #[arg(long)]
     no_optimize: bool,
@@ -55,23 +79,31 @@ fn main() -> Result<()> {
     let cl = CommandLine::parse();
     let mut runtime = Runtime::new().with_host_function("print", print);
     match cl.command {
+        Command::Parse(args) => {
+            let source = read_source(args.source.as_ref())?;
+            let program = runtime.parse_script(&source)?;
+            if args.print_functions {
+                println!("### functions");
+                program.print_functions("");
+            }
+            if args.print_scope_tree {
+                println!("### scope tree");
+                program.print_scope_tree("");
+            }
+            Ok(())
+        }
         Command::Compile(args) => {
             let source = read_source(args.source.as_ref())?;
-            let module = match runtime.compile_script(&source, !args.no_optimize) {
-                Some(module) => module,
-                None => anyhow::bail!("Failed to parse"),
-            };
+            let program = runtime.parse_script(&source)?;
+            let module = runtime.compile(&program, !args.no_optimize)?;
             module.print(false); // to STDOUT
             Ok(())
         }
         Command::Run(args) => {
             let source = read_source(args.source.as_ref())?;
-            // Always perform optimization.
-            let module = match runtime.compile_script(&source, true) {
-                Some(module) => module,
-                None => anyhow::bail!("Failed to parse"),
-            };
-            match runtime.eval(module) {
+            let program = runtime.parse_script(&source)?;
+            let module = runtime.compile(&program, !args.no_optimize)?;
+            match runtime.evaluate(module) {
                 Ok(_) => Ok(()),
                 Err(v) => anyhow::bail!("Uncaught {v:?}"),
             }

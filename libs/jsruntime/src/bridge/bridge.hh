@@ -5,21 +5,21 @@
 
 enum class Status;
 struct Value;
-typedef Status (
-    *FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv, Value* ret);
+struct Closure;
+typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
 
-enum class LocatorKind : uint8_t {
+enum class LocatorKind : uint16_t {
   None,
   Argument,
   Local,
+  Capture,
 };
 
-static_assert(sizeof(LocatorKind) == sizeof(uint8_t), "size mismatched");
+static_assert(sizeof(LocatorKind) == sizeof(uint16_t), "size mismatched");
 
 // TODO: Changing the order of member variables causes performance regression in fib(41).
 // However, we don't know the exact reason at this point.  Deeper investigation is needed.
 struct Locator {
-  uint8_t offset = 0;
   LocatorKind kind = LocatorKind::None;
   uint16_t index = 0;
 };
@@ -40,7 +40,7 @@ enum class ValueKind : uint8_t {
   Null,
   Boolean,
   Number,
-  Function,
+  Closure,
 };
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
@@ -49,7 +49,8 @@ union ValueHolder {
   uintptr_t opaque;
   bool boolean;
   double number;
-  FuncPtr function;
+  // TODO(issue#237): GcCellRef
+  Closure* closure;
 };
 
 static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
@@ -63,7 +64,7 @@ struct Value {
 static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 
 // Can be copied as Value.
-struct Binding {
+struct Variable {
   ValueKind kind;
   uint8_t flags;
   uint16_t reserved;
@@ -71,12 +72,43 @@ struct Binding {
   ValueHolder holder;
 };
 
-#define BINDING_INITIALIZED 0x01
-#define BINDING_DELETABLE 0x02
-#define BINDING_MUTABLE 0x04
-#define BINDING_STRICT 0x08
+#define VARIABLE_INITIALIZED 0x01
+#define VARIABLE_DELETABLE 0x02
+#define VARIABLE_MUTABLE 0x04
+#define VARIABLE_STRICT 0x08
 
-static_assert(sizeof(Binding) == sizeof(uint64_t) * 2, "size mismatched");
+static_assert(sizeof(Variable) == sizeof(uint64_t) * 2, "size mismatched");
+
+// TODO(issue#237): GcCell
+struct Capture {
+  Variable* target;
+  Variable escaped;
+};
+
+static_assert(sizeof(Capture) == sizeof(uint64_t) * 3, "size mismatched");
+
+// TODO(issue#237): GcCell
+struct Closure {
+  // A pointer to a function compiled from a JavaScript function.
+  Lambda lambda;
+
+  // The number of elements in `storage[]`.
+  //
+  // Usually, this field does not used in the compiled function, but we add this field here for
+  // debugging purposes.  If we need to reduce the heap memory usage and `Closure`s dominant, we
+  // can remove this field.
+  uint16_t num_captures;
+  // uint8_t padding[6];
+
+  // Using the following definition instead of `Capture* captures[]`, we can avoid accessing the
+  // `num_captures` field and comparison and conditional branch instructions that are needed for
+  // checking whether `captures` is empty or not.
+  Capture** captures;
+
+  // `Capture* storage[num_captures]` is placed here if it's not empty.
+};
+
+static_assert(sizeof(Closure) == sizeof(uint64_t) * 3, "size mismatched");
 
 #include "runtime.hh"
 
@@ -103,6 +135,7 @@ void compiler_peer_null(Compiler* self);
 void compiler_peer_boolean(Compiler* self, bool value);
 void compiler_peer_number(Compiler* self, double value);
 void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name);
+void compiler_peer_closure(Compiler* self, bool prologue, uint16_t num_captures);
 void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator);
 void compiler_peer_exception(Compiler* self);
 void compiler_peer_postfix_increment(Compiler* self);
@@ -156,6 +189,7 @@ void compiler_peer_bindings(Compiler* self, uint16_t n);
 void compiler_peer_declare_immutable(Compiler* self);
 void compiler_peer_declare_mutable(Compiler* self);
 void compiler_peer_declare_function(Compiler* self);
+void compiler_peer_declare_closure(Compiler* self);
 void compiler_peer_arguments(Compiler* self, uint16_t argc);
 void compiler_peer_argument(Compiler* self, uint16_t index);
 void compiler_peer_call(Compiler* self, uint16_t argc);
@@ -189,6 +223,9 @@ void compiler_peer_start_function(Compiler* self, const char* name);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue);
 void compiler_peer_release_bindings(Compiler* self, uint16_t n);
+void compiler_peer_create_capture(Compiler* self, Locator locator, bool prologue);
+void compiler_peer_capture_binding(Compiler* self, bool prologue);
+void compiler_peer_escape_binding(Compiler* self, Locator locator);
 void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement);
 void compiler_peer_label_end(Compiler* self, uint32_t symbol, bool is_iteration_statement);
 void compiler_peer_continue(Compiler* self, uint32_t symbol);
@@ -205,8 +242,8 @@ class Executor;
 Executor* executor_peer_new();
 void executor_peer_delete(Executor* self);
 void executor_peer_register_runtime(Executor* self, const Runtime* runtime);
-void executor_peer_register_host_function(Executor* self, const char* name, FuncPtr func);
+void executor_peer_register_host_function(Executor* self, const char* name, Lambda func);
 void executor_peer_register_module(Executor* self, Module* mod);
 const char* executor_peer_get_data_layout(const Executor* self);
 const char* executor_peer_get_target_triple(const Executor* self);
-FuncPtr executor_peer_get_native_func(Executor* self, const char* name);
+Lambda executor_peer_get_native_function(Executor* self, const char* name);

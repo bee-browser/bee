@@ -5,53 +5,54 @@
 
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
 
-impl Locator {
-    pub(crate) const NONE: Self = Self::new(LocatorKind_None, 0, 0);
+macro_rules! into_runtime {
+    ($context:expr) => {
+        &mut *($context as *mut crate::Runtime)
+    };
+}
 
-    const MAX_OFFSET: usize = u8::MAX as usize;
+impl Locator {
+    pub(crate) const NONE: Self = Self::new(LocatorKind_None, 0);
+
     const MAX_INDEX: usize = u16::MAX as usize;
 
-    pub(crate) fn checked_argument(offset: usize, index: usize) -> Option<Self> {
-        Self::checked_new(LocatorKind_Argument, offset, index)
+    pub(crate) fn checked_argument(index: usize) -> Option<Self> {
+        Self::checked_new(LocatorKind_Argument, index)
     }
 
-    pub(crate) fn checked_local(offset: usize, index: usize) -> Option<Self> {
-        Self::checked_new(LocatorKind_Local, offset, index)
+    pub(crate) fn checked_local(index: usize) -> Option<Self> {
+        Self::checked_new(LocatorKind_Local, index)
     }
 
-    pub(crate) const fn local(offset: u8, index: u16) -> Self {
-        Self::new(LocatorKind_Local, offset, index)
+    pub(crate) fn checked_capture(index: usize) -> Option<Self> {
+        Self::checked_new(LocatorKind_Capture, index)
     }
 
-    const fn new(kind: LocatorKind, offset: u8, index: u16) -> Self {
-        Self {
-            offset,
-            kind,
-            index,
-        }
+    pub(crate) const fn local(index: u16) -> Self {
+        Self::new(LocatorKind_Local, index)
     }
 
-    fn checked_new(kind: LocatorKind, offset: usize, index: usize) -> Option<Self> {
-        if offset > Self::MAX_OFFSET {
-            crate::logger::error!(err = "too large", offset);
-            return None;
-        }
+    const fn new(kind: LocatorKind, index: u16) -> Self {
+        Self { kind, index }
+    }
+
+    fn checked_new(kind: LocatorKind, index: usize) -> Option<Self> {
         if index > Self::MAX_INDEX {
             crate::logger::error!(err = "too large", index);
             return None;
         }
-        Some(Self::new(kind, offset as u8, index as u16))
+        Some(Self::new(kind, index as u16))
     }
 }
 
 impl std::fmt::Debug for Locator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let offset = self.offset;
         let index = self.index;
         match self.kind {
             LocatorKind_None => write!(f, "Locator::None"),
-            LocatorKind_Argument => write!(f, "Locator::Argument({offset}, {index})"),
-            LocatorKind_Local => write!(f, "Locator::Local({offset}, {index})"),
+            LocatorKind_Argument => write!(f, "Locator::Argument({index})"),
+            LocatorKind_Local => write!(f, "Locator::Local({index})"),
+            LocatorKind_Capture => write!(f, "Locator::Capture({index})"),
             _ => unreachable!(),
         }
     }
@@ -82,13 +83,6 @@ impl Value {
         Self {
             kind: ValueKind_Number,
             holder: ValueHolder { number },
-        }
-    }
-
-    pub const fn function(function: FuncPtr) -> Self {
-        Self {
-            kind: ValueKind_Function,
-            holder: ValueHolder { function },
         }
     }
 
@@ -131,12 +125,6 @@ impl From<u32> for Value {
     }
 }
 
-impl From<FuncPtr> for Value {
-    fn from(value: FuncPtr) -> Self {
-        Self::function(value)
-    }
-}
-
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // `unsafe` is needed for accessing the `holder` field.
@@ -147,9 +135,40 @@ impl std::fmt::Debug for Value {
                 ValueKind_Boolean if self.holder.boolean => write!(f, "true"),
                 ValueKind_Boolean => write!(f, "false"),
                 ValueKind_Number => write!(f, "{}", self.holder.number),
-                ValueKind_Function => write!(f, "function({:?})", self.holder.function.unwrap()),
+                ValueKind_Closure => {
+                    let lambda = (*self.holder.closure).lambda.unwrap();
+                    write!(f, "closure({lambda:?}, [")?;
+                    let len = (*self.holder.closure).num_captures as usize;
+                    let data = (*self.holder.closure).captures;
+                    let mut captures = std::slice::from_raw_parts_mut(data, len)
+                        .iter()
+                        .map(|capture| capture.as_ref().unwrap());
+                    if let Some(capture) = captures.next() {
+                        write!(f, "{capture:?}")?;
+                        for capture in captures {
+                            write!(f, ", {capture:?}")?;
+                        }
+                    }
+                    write!(f, "])")
+                }
                 _ => unreachable!(),
             }
+        }
+    }
+}
+
+impl Capture {
+    fn is_escaped(&self) -> bool {
+        self.target as *const Variable == &self.escaped
+    }
+}
+
+impl std::fmt::Debug for Capture {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_escaped() {
+            write!(f, "capture(escaped: {:?})", self.target)
+        } else {
+            write!(f, "capture(onstack: {:?})", self.target)
         }
     }
 }
@@ -202,6 +221,8 @@ impl Default for Runtime {
             to_uint32: Some(runtime_to_uint32),
             is_loosely_equal: Some(runtime_is_loosely_equal),
             is_strictly_equal: Some(runtime_is_strictly_equal),
+            create_capture: Some(runtime_create_capture),
+            create_closure: Some(runtime_create_closure),
         }
     }
 }
@@ -216,7 +237,7 @@ unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
         ValueKind_Number if value.holder.number == 0.0 => false,
         ValueKind_Number if value.holder.number.is_nan() => false,
         ValueKind_Number => true,
-        ValueKind_Function => true,
+        ValueKind_Closure => true,
         _ => unreachable!(),
     }
 }
@@ -231,7 +252,7 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
         ValueKind_Boolean if value.holder.boolean => 1.0,
         ValueKind_Boolean => 0.0,
         ValueKind_Number => value.holder.number,
-        ValueKind_Function => f64::NAN,
+        ValueKind_Closure => f64::NAN,
         _ => unreachable!(),
     }
 }
@@ -335,7 +356,64 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
         ValueKind_Null => true,
         ValueKind_Boolean => x.holder.boolean == y.holder.boolean,
         ValueKind_Number => x.holder.number == y.holder.number,
-        ValueKind_Function => x.holder.function == y.holder.function,
+        ValueKind_Closure => x.holder.closure == y.holder.closure,
         _ => unreachable!(),
     }
+}
+
+unsafe extern "C" fn runtime_create_capture(context: usize, target: *mut Variable) -> *mut Capture {
+    const LAYOUT: std::alloc::Layout = unsafe {
+        std::alloc::Layout::from_size_align_unchecked(
+            std::mem::size_of::<Capture>(),
+            std::mem::align_of::<Capture>(),
+        )
+    };
+
+    let runtime = into_runtime!(context);
+    let allocator = runtime.allocator();
+
+    // TODO: GC
+    let ptr = allocator.alloc_layout(LAYOUT);
+
+    let capture = ptr.cast::<Capture>().as_ptr();
+    (*capture).target = target;
+
+    // `capture.escaped` will be filled with an actual value.
+
+    capture
+}
+
+unsafe extern "C" fn runtime_create_closure(
+    context: usize,
+    lambda: Lambda,
+    num_captures: u16,
+) -> *mut Closure {
+    const BASE_LAYOUT: std::alloc::Layout = unsafe {
+        std::alloc::Layout::from_size_align_unchecked(
+            std::mem::size_of::<Closure>(),
+            std::mem::align_of::<Closure>(),
+        )
+    };
+
+    let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
+    let (layout, offset) = BASE_LAYOUT.extend(storage_layout).unwrap();
+
+    let runtime = into_runtime!(context);
+    let allocator = runtime.allocator();
+
+    // TODO: GC
+    let ptr = allocator.alloc_layout(layout);
+
+    let closure = ptr.cast::<Closure>().as_ptr();
+    (*closure).lambda = lambda;
+    (*closure).num_captures = num_captures;
+    if num_captures == 0 {
+        (*closure).captures = std::ptr::null_mut();
+    } else {
+        (*closure).captures = ptr.as_ptr().wrapping_add(offset).cast::<*mut Capture>();
+    }
+
+    // `closure.storage[]` will be filled with actual pointers to `Captures`.
+
+    closure
 }
