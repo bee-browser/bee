@@ -136,16 +136,17 @@ impl ScopeTreeBuilder {
     }
 
     pub fn push_function(&mut self) -> ScopeRef {
-        self.push(ScopeFlags::FUNCTION)
+        self.push(ScopeFlags::FUNCTION, "")
     }
 
-    pub fn push_block(&mut self) -> ScopeRef {
-        self.push(ScopeFlags::empty())
+    pub fn push_block(&mut self, label: &'static str) -> ScopeRef {
+        self.push(ScopeFlags::empty(), label)
     }
 
-    fn push(&mut self, flags: ScopeFlags) -> ScopeRef {
+    fn push(&mut self, flags: ScopeFlags, label: &'static str) -> ScopeRef {
         let index = self.scopes.len();
         self.scopes.push(Scope {
+            label,
             bindings: vec![],
             num_formal_parameters: 0,
             num_locals: 0,
@@ -295,6 +296,7 @@ impl Default for ScopeTreeBuilder {
 }
 
 pub struct Scope {
+    label: &'static str,
     pub bindings: Vec<Binding>,
     pub num_formal_parameters: u16,
     pub num_locals: u16,
@@ -305,6 +307,7 @@ pub struct Scope {
 
 impl Scope {
     const NONE: Self = Self {
+        label: "",
         bindings: vec![],
         num_formal_parameters: 0,
         num_locals: 0,
@@ -334,10 +337,14 @@ impl<'a> std::fmt::Display for ScopePrinter<'a> {
             write!(f, "*")?;
         }
         if self.scope.is_function() {
-            write!(f, "F@{}:", self.index)?;
+            write!(f, "F")?;
         } else {
-            write!(f, "B@{}:", self.index)?;
+            write!(f, "B")?;
         }
+        if !self.scope.label.is_empty() {
+            write!(f, ".{}", self.scope.label)?;
+        }
+        write!(f, "@{}:", self.index)?;
         for binding in self.scope.bindings.iter() {
             write!(f, " {binding}")?;
         }
@@ -363,9 +370,9 @@ pub struct Binding {
 impl std::fmt::Display for Binding {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind {
-            BindingKind::FormalParameter => write!(f, "P@{}:{:?}", self.index, self.symbol)?,
-            BindingKind::Mutable => write!(f, "M@{}:{:?}", self.index, self.symbol)?,
-            BindingKind::Immutable => write!(f, "I@{}:{:?}", self.index, self.symbol)?,
+            BindingKind::FormalParameter => write!(f, "P@{}:{}", self.index, self.symbol)?,
+            BindingKind::Mutable => write!(f, "M@{}:{}", self.index, self.symbol)?,
+            BindingKind::Immutable => write!(f, "I@{}:{}", self.index, self.symbol)?,
         }
         if self.captured {
             write!(f, "*")?;

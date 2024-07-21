@@ -28,6 +28,12 @@ impl From<u32> for Symbol {
     }
 }
 
+impl std::fmt::Display for Symbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "${}", self.0)
+    }
+}
+
 pub struct SymbolRegistry {
     symbols: IndexSet<Vec<u16>>,
 }
