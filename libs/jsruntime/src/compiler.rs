@@ -168,31 +168,29 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Call(nargs) => unsafe {
                 bridge::compiler_peer_call(self.peer, *nargs);
             },
-            CompileCommand::AllocateBindings(scope_ref) => {
+            CompileCommand::PushScope(scope_ref) => {
                 // TODO(issue#234)
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
+                unsafe {
+                    bridge::compiler_peer_start_scope(self.peer);
+                }
                 let scope = self.scope_tree.scope(scope_ref);
-                let prologue = scope.is_function();
                 if scope.num_locals > 0 {
                     unsafe {
-                        bridge::compiler_peer_allocate_bindings(
-                            self.peer,
-                            scope.num_locals,
-                            prologue,
-                        );
+                        bridge::compiler_peer_allocate_locals(self.peer, scope.num_locals);
                     }
                 }
                 for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
                     if binding.captured {
                         let locator = self.scope_tree.compute_locator(binding_ref);
                         unsafe {
-                            bridge::compiler_peer_create_capture(self.peer, locator, prologue);
+                            bridge::compiler_peer_create_capture(self.peer, locator);
                         }
                     }
                 }
             }
-            CompileCommand::ReleaseBindings(scope_ref) => {
+            CompileCommand::PopScope(scope_ref) => {
                 // TODO(issue#234)
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
@@ -200,19 +198,22 @@ impl<'a, 'b> Compiler<'a, 'b> {
                     if binding.captured {
                         let locator = self.scope_tree.compute_locator(binding_ref);
                         unsafe {
-                            bridge::compiler_peer_escape_binding(self.peer, locator);
+                            bridge::compiler_peer_escape_variable(self.peer, locator);
                         }
                     }
                 }
                 let scope = self.scope_tree.scope(scope_ref);
                 if scope.num_locals > 0 {
                     unsafe {
-                        bridge::compiler_peer_release_bindings(self.peer, scope.num_locals);
+                        bridge::compiler_peer_release_locals(self.peer, scope.num_locals);
                     }
                 }
+                unsafe {
+                    bridge::compiler_peer_end_scope(self.peer);
+                }
             }
-            CompileCommand::CaptureBinding(prologue) => unsafe {
-                bridge::compiler_peer_capture_binding(self.peer, *prologue);
+            CompileCommand::CaptureVariable(declaration) => unsafe {
+                bridge::compiler_peer_capture_variable(self.peer, *declaration);
             },
             CompileCommand::PostfixIncrement => unsafe {
                 bridge::compiler_peer_postfix_increment(self.peer);

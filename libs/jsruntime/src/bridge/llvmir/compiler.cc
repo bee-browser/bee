@@ -2,12 +2,12 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include <limits>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <llvm/Analysis/CGSCCPassManager.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/PassInstrumentation.h>
 #include <llvm/IR/PassManager.h>
@@ -31,6 +31,12 @@ namespace {
 inline uint32_t ComputeKeyFromLocator(Locator locator) {
   return (static_cast<uint32_t>(locator.kind) << 16) | static_cast<uint32_t>(locator.index);
 }
+
+#if defined(BEE_BUILD_DEBUG)
+#define LABEL(label) (label)
+#else
+#define LABEL(label) ""
+#endif
 
 }  // namespace
 
@@ -122,14 +128,16 @@ void Compiler::Function(uint32_t func_id, const char* name) {
   PushFunction(func);
 }
 
-void Compiler::Closure(bool prologue, uint16_t num_captures) {
+void Compiler::Closure(bool declaration, uint16_t num_captures) {
   assert(stack_.size() >= 1 + static_cast<size_t>(num_captures));
+  assert(!scope_stack_.empty());
 
-  // TODO(issue#234)
+  auto& scope = scope_stack_.back();
+
   llvm::BasicBlock* backup;
-  if (prologue) {
+  if (declaration) {
     backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(prologue_);
+    builder_->SetInsertPoint(scope.decl_block);
   }
 
   auto* lambda = PopFunction();
@@ -143,8 +151,7 @@ void Compiler::Closure(bool prologue, uint16_t num_captures) {
 
   PushClosure(closure_ptr);
 
-  // TODO(issue#234)
-  if (prologue) {
+  if (declaration) {
     builder_->SetInsertPoint(backup);
   }
 }
@@ -734,8 +741,11 @@ void Compiler::DeclareMutable() {
 void Compiler::DeclareFunction() {
   static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
+  assert(!scope_stack_.empty());
+  auto& scope = scope_stack_.back();
+
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(prologue_);
+  builder_->SetInsertPoint(scope.decl_block);
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -752,8 +762,11 @@ void Compiler::DeclareFunction() {
 void Compiler::DeclareClosure() {
   static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
+  assert(!scope_stack_.empty());
+  auto& scope = scope_stack_.back();
+
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(prologue_);
+  builder_->SetInsertPoint(scope.decl_block);
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -804,8 +817,8 @@ void Compiler::Call(uint16_t argc) {
       break;
     }
     case Item::Any: {
-      auto* lambda_ptr = builder_->CreateAlloca(builder_->getPtrTy(), builder_->getInt32(1));
-      auto* caps_ptr = builder_->CreateAlloca(builder_->getPtrTy(), builder_->getInt32(1));
+      auto* lambda_ptr = builder_->CreateAlloca(builder_->getPtrTy());
+      auto* caps_ptr = builder_->CreateAlloca(builder_->getPtrTy());
       auto* kind = CreateLoadValueKindFromValue(item.value);
       auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
       auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
@@ -1359,7 +1372,7 @@ void Compiler::StartFunction(const char* name) {
   catch_stack_.push_back(epilogue_);
 
   builder_->SetInsertPoint(prologue_);
-  status_ = builder_->CreateAlloca(builder_->getInt32Ty(), builder_->getInt32(1));
+  status_ = builder_->CreateAlloca(builder_->getInt32Ty());
   builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
   CreateStoreUndefinedToValue(ret_);
 
@@ -1407,44 +1420,73 @@ void Compiler::EndFunction(bool optimize) {
   }
 }
 
-void Compiler::AllocateBindings(uint16_t n, bool prologue) {
-  llvm::errs() << n << '\n';
-  // TODO(issue#234)
-  llvm::BasicBlock* backup;
-  if (prologue) {
-    backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(prologue_);
-  }
+void Compiler::StartScope() {
+  auto* init = llvm::BasicBlock::Create(*context_, LABEL("init"), function_);
+  auto* decl = llvm::BasicBlock::Create(*context_, LABEL("decl"), function_);
+  auto* stmt = llvm::BasicBlock::Create(*context_, LABEL("stmt"), function_);
+  auto* tidy = llvm::BasicBlock::Create(*context_, LABEL("tidy"), function_);
+  builder_->CreateBr(init);
+  builder_->SetInsertPoint(stmt);
+  scope_stack_.push_back({init, decl, stmt, tidy});
+}
 
-  for (auto i = 0; i < n; ++i) {
+void Compiler::EndScope() {
+  assert(!scope_stack_.empty());
+
+  auto& scope = scope_stack_.back();
+
+  builder_->CreateBr(scope.tidy_block);
+  scope.tidy_block->moveAfter(builder_->GetInsertBlock());
+
+  builder_->SetInsertPoint(scope.init_block);
+  builder_->CreateBr(scope.decl_block);
+
+  builder_->SetInsertPoint(scope.decl_block);
+  builder_->CreateBr(scope.stmt_block);
+  scope.stmt_block->moveAfter(builder_->GetInsertBlock());
+
+  auto* block = llvm::BasicBlock::Create(*context_, LABEL("stmt"), function_);
+  builder_->SetInsertPoint(scope.tidy_block);
+  builder_->CreateBr(block);
+  block->moveAfter(builder_->GetInsertBlock());
+
+  builder_->SetInsertPoint(block);
+
+  scope_stack_.pop_back();
+}
+
+void Compiler::AllocateLocals(uint16_t num_locals) {
+  assert(!scope_stack_.empty());
+
+  auto& scope = scope_stack_.back();
+
+  llvm::BasicBlock* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(scope.init_block);
+
+  for (auto i = 0; i < num_locals; ++i) {
     auto* local = builder_->CreateAlloca(types_->CreateVariableType());
-    builder_->CreateMemSet(
-        local, builder_->getInt8(0), builder_->getInt32(sizeof(Variable)), llvm::MaybeAlign());
+    CreateStoreFlagsToVariable(0, local);
     locals_.push_back(local);
   }
 
-  // TODO(issue#234)
-  if (prologue) {
-    builder_->SetInsertPoint(backup);
-  }
+  builder_->SetInsertPoint(backup);
 }
 
-void Compiler::ReleaseBindings(uint16_t n) {
-  for (auto i = 0; i < n; ++i) {
+void Compiler::ReleaseLocals(uint16_t num_locals) {
+  for (auto i = 0; i < num_locals; ++i) {
     // TODO: GC
     locals_.pop_back();
   }
 }
 
-void Compiler::CreateCapture(Locator locator, bool prologue) {
+void Compiler::CreateCapture(Locator locator) {
   assert(locator.kind != LocatorKind::Capture);
+  assert(!scope_stack_.empty());
 
-  // TODO(issue#234)
-  llvm::BasicBlock* backup;
-  if (prologue) {
-    backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(prologue_);
-  }
+  auto& scope = scope_stack_.back();
+
+  llvm::BasicBlock* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(scope.init_block);
 
   llvm::Value* variable_ptr;
   switch (locator.kind) {
@@ -1465,18 +1507,18 @@ void Compiler::CreateCapture(Locator locator, bool prologue) {
   assert(captures_.find(key) == captures_.end());
   captures_[key] = capture_ptr;
 
-  // TODO(issue#234)
-  if (prologue) {
-    builder_->SetInsertPoint(backup);
-  }
+  builder_->SetInsertPoint(backup);
 }
 
-void Compiler::CaptureBinding(bool prologue) {
-  // TODO(issue#234)
+void Compiler::CaptureVariable(bool declaration) {
+  assert(!scope_stack_.empty());
+
+  auto& scope = scope_stack_.back();
+
   llvm::BasicBlock* backup;
-  if (prologue) {
+  if (declaration) {
     backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(prologue_);
+    builder_->SetInsertPoint(scope.decl_block);
   }
 
   llvm::Value* capture_ptr;
@@ -1499,25 +1541,36 @@ void Compiler::CaptureBinding(bool prologue) {
 
   PushCapture(capture_ptr);
 
-  // TODO(issue#234)
-  if (prologue) {
+  if (declaration) {
     builder_->SetInsertPoint(backup);
   }
 }
 
-void Compiler::EscapeBinding(Locator locator) {
+void Compiler::EscapeVariable(Locator locator) {
   assert(locator.kind != LocatorKind::Capture);
+  assert(!scope_stack_.empty());
+
+  auto& scope = scope_stack_.back();
+
+  llvm::BasicBlock* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(scope.tidy_block);
+
   auto key = ComputeKeyFromLocator(locator);
   assert(captures_.find(key) != captures_.end());
+
   auto* capture_ptr = captures_[key];
   auto* escaped_ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
   CreateStoreTargetToCapture(escaped_ptr, capture_ptr);
+
   auto* variable_ptr = CreateGetVariablePtr(locator);
   auto* variable = CreateLoadVariable(variable_ptr);
   CreateStoreEscapedToCapture(variable, capture_ptr);
+
   // The value of `locator.index` may be reused for another local variable.
   // The element identified by `locator.index` is removed from `captures_` here.
   captures_.erase(key);
+
+  builder_->SetInsertPoint(backup);
 }
 
 void Compiler::LabelStart(uint32_t symbol, bool is_iteration_statement) {

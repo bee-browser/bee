@@ -603,8 +603,8 @@ fn eval_if_else_statement() {
 
 #[test]
 fn eval_block_statement() {
-    eval!("let a = 1; { let a = 2; } print(a);", 1.);
-    eval!("let a = 1; { a = 2; } print(a);", 2.);
+    eval!(file: "block_statement.js", 1);
+    eval!(file: "block_statement_2.js", 2);
 }
 
 #[test]

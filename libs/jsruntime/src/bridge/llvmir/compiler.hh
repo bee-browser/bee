@@ -129,11 +129,13 @@ class Compiler {
   void TryEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
-  void AllocateBindings(uint16_t n, bool prologue);
-  void ReleaseBindings(uint16_t n);
-  void CreateCapture(Locator locator, bool prologue);
-  void CaptureBinding(bool prologue);
-  void EscapeBinding(Locator locator);
+  void StartScope();
+  void EndScope();
+  void AllocateLocals(uint16_t num_locals);
+  void ReleaseLocals(uint16_t num_locals);
+  void CreateCapture(Locator locator);
+  void CaptureVariable(bool declaration);
+  void EscapeVariable(Locator locator);
   void LabelStart(uint32_t symbol, bool is_iteration_statement);
   void LabelEnd(uint32_t symbol, bool is_iteration_statement);
   void Continue(uint32_t symbol);
@@ -213,6 +215,13 @@ class Compiler {
   struct BlockItem {
     llvm::BasicBlock* block;
     uint32_t symbol;
+  };
+
+  struct ScopeItem {
+    llvm::BasicBlock* init_block;
+    llvm::BasicBlock* decl_block;
+    llvm::BasicBlock* stmt_block;
+    llvm::BasicBlock* tidy_block;
   };
 
   inline void PushUndefined() {
@@ -410,7 +419,6 @@ class Compiler {
   // locals
 
   inline llvm::Value* CreateGetLocalVariablePtr(uint16_t index) {
-    llvm::errs() << index << ' ' << locals_.size() << '\n';
     assert(index < locals_.size());
     return locals_[index];
   }
@@ -732,6 +740,7 @@ class Compiler {
   // The following variables must be reset in the end of compilation for each function.
   std::vector<llvm::Value*> locals_;
   std::vector<Item> stack_;
+  std::vector<ScopeItem> scope_stack_;
   std::vector<BlockItem> break_stack_;
   std::vector<BlockItem> continue_stack_;
   std::vector<llvm::BasicBlock*> catch_stack_;

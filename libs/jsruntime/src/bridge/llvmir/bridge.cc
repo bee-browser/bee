@@ -414,26 +414,32 @@ void compiler_peer_end_function(Compiler* self, bool optimize) {
   self->EndFunction(optimize);
 }
 
-void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue) {
-  assert(n > 0);
-  self->AllocateBindings(n, prologue);
+void compiler_peer_start_scope(Compiler* self) {
+  self->StartScope();
 }
 
-void compiler_peer_release_bindings(Compiler* self, uint16_t n) {
-  assert(n > 0);
-  self->ReleaseBindings(n);
+void compiler_peer_end_scope(Compiler* self) {
+  self->EndScope();
 }
 
-void compiler_peer_create_capture(Compiler* self, Locator locator, bool prologue) {
-  self->CreateCapture(locator, prologue);
+void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals) {
+  self->AllocateLocals(num_locals);
 }
 
-void compiler_peer_capture_binding(Compiler* self, bool prologue) {
-  self->CaptureBinding(prologue);
+void compiler_peer_release_locals(Compiler* self, uint16_t num_locals) {
+  self->ReleaseLocals(num_locals);
 }
 
-void compiler_peer_escape_binding(Compiler* self, Locator locator) {
-  self->EscapeBinding(locator);
+void compiler_peer_create_capture(Compiler* self, Locator locator) {
+  self->CreateCapture(locator);
+}
+
+void compiler_peer_capture_variable(Compiler* self, bool declaration) {
+  self->CaptureVariable(declaration);
+}
+
+void compiler_peer_escape_variable(Compiler* self, Locator locator) {
+  self->EscapeVariable(locator);
 }
 
 void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement) {

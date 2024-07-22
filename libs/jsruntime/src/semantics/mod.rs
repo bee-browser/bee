@@ -1110,7 +1110,7 @@ impl FunctionContext {
                 scope_ref,
                 from: ReferenceFrom::Command(command_index),
             });
-            self.commands.push(CompileCommand::CaptureBinding(true));
+            self.commands.push(CompileCommand::CaptureVariable(true));
         }
         self.commands.push(CompileCommand::Function(func_id));
         self.commands
@@ -1138,7 +1138,7 @@ impl FunctionContext {
                 scope_ref,
                 from: ReferenceFrom::Command(command_index),
             });
-            self.commands.push(CompileCommand::CaptureBinding(false));
+            self.commands.push(CompileCommand::CaptureVariable(false));
         }
         self.commands.push(CompileCommand::Function(func_id));
         self.commands
@@ -1319,9 +1319,9 @@ impl FunctionContext {
 
     fn start_scope(&mut self, scope_ref: ScopeRef) {
         // NOTE(perf): The scope may has no binding.  In this case, we can remove the
-        // AllocateBindings command safely and reduce the number of the commands.  We can add a
+        // PushScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
-        self.put_command(CompileCommand::AllocateBindings(scope_ref));
+        self.put_command(CompileCommand::PushScope(scope_ref));
         self.scope_stack.push(Scope {
             scope_ref,
             num_bindings: 0,
@@ -1339,10 +1339,10 @@ impl FunctionContext {
         );
 
         // NOTE(perf): The scope may has no binding.  In this case, we can remove the
-        // ReleaseBindings command safely and reduce the number of the commands.  We can add a
+        // PopScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
         self.commands
-            .push(CompileCommand::ReleaseBindings(scope.scope_ref));
+            .push(CompileCommand::PopScope(scope.scope_ref));
 
         let n = scope.num_bindings + scope.max_child_bindings;
         match self.scope_stack.last_mut() {
@@ -1403,9 +1403,9 @@ pub enum CompileCommand {
     Arguments(u16),
     Argument(u16),
     Call(u16),
-    AllocateBindings(ScopeRef),
-    ReleaseBindings(ScopeRef),
-    CaptureBinding(bool),
+    PushScope(ScopeRef),
+    PopScope(ScopeRef),
+    CaptureVariable(bool),
 
     // update operators
     PostfixIncrement,
@@ -1680,7 +1680,7 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateBindings(scope_ref!(1)),
+                    CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
@@ -1693,7 +1693,7 @@ mod tests {
                     CompileCommand::Reference(symbol!(reg, "d"), locator!(local: 3)),
                     CompileCommand::Number(4.0),
                     CompileCommand::ImmutableBinding,
-                    CompileCommand::ReleaseBindings(scope_ref!(1)),
+                    CompileCommand::PopScope(scope_ref!(1)),
                     CompileCommand::Return(0),
                 ]
             );
@@ -1706,24 +1706,24 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateBindings(scope_ref!(1)),
+                    CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::AllocateBindings(scope_ref!(2)),
+                    CompileCommand::PushScope(scope_ref!(2)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::ReleaseBindings(scope_ref!(2)),
-                    CompileCommand::AllocateBindings(scope_ref!(3)),
+                    CompileCommand::PopScope(scope_ref!(2)),
+                    CompileCommand::PushScope(scope_ref!(3)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
                     CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 2)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::ReleaseBindings(scope_ref!(3)),
-                    CompileCommand::ReleaseBindings(scope_ref!(1)),
+                    CompileCommand::PopScope(scope_ref!(3)),
+                    CompileCommand::PopScope(scope_ref!(1)),
                     CompileCommand::Return(0),
                 ]
             );
