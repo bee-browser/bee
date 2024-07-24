@@ -803,54 +803,16 @@ void Compiler::Call(uint16_t argc) {
     argv = llvm::Constant::getNullValue(builder_->getPtrTy());
   }
 
-  auto* ret = CreateAllocaInEntryBlock(types_->CreateValueType());
-
   auto item = Dereference();
-  llvm::Value* lambda;
-  llvm::Value* caps;
+  llvm::Value* closure_ptr;
   switch (item.type) {
-    case Item::Closure: {
+    case Item::Closure:
       // IIFE
-      auto* closure_ptr = item.value;
-      lambda = CreateLoadLambdaFromClosure(closure_ptr);
-      caps = CreateLoadCapturesFromClosure(closure_ptr);
+      closure_ptr = item.value;
       break;
-    }
-    case Item::Any: {
-      auto* lambda_ptr = builder_->CreateAlloca(builder_->getPtrTy());
-      auto* caps_ptr = builder_->CreateAlloca(builder_->getPtrTy());
-      auto* kind = CreateLoadValueKindFromValue(item.value);
-      auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
-      auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
-      auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
-      // if (value.kind == ValueKind::Closure)
-      auto* is_closure = builder_->CreateICmpEQ(
-          kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)));
-      builder_->CreateCondBr(is_closure, then_block, else_block);
-      // {
-      {
-        builder_->SetInsertPoint(then_block);
-        auto* closure_ptr = CreateLoadClosureFromValue(item.value);
-        auto* lambda_tmp = CreateLoadLambdaFromClosure(closure_ptr);
-        builder_->CreateStore(lambda_tmp, lambda_ptr);
-        auto* caps_tmp = CreateLoadCapturesFromClosure(closure_ptr);
-        builder_->CreateStore(caps_tmp, caps_ptr);
-        builder_->CreateBr(end_block);
-      }
-      // } else {
-      {
-        builder_->SetInsertPoint(else_block);
-        // TODO: TypeError
-        PushNumber(builder_->getInt32(1));
-        Throw();
-        builder_->CreateBr(end_block);
-      }
-      // }
-      builder_->SetInsertPoint(end_block);
-      lambda = builder_->CreateLoad(builder_->getPtrTy(), lambda_ptr);
-      caps = builder_->CreateLoad(builder_->getPtrTy(), caps_ptr);
+    case Item::Any:
+      closure_ptr = CreateLoadClosureFromValueOrThrowTypeError(item.value);
       break;
-    }
     default:
       // TODO: TypeError
       PushNumber(builder_->getInt32(1));
@@ -859,16 +821,57 @@ void Compiler::Call(uint16_t argc) {
   }
 
   auto* prototype = types_->CreateLambdaType();
+  auto* lambda = CreateLoadLambdaFromClosure(closure_ptr);
+  auto* caps = CreateLoadCapturesFromClosure(closure_ptr);
+  auto* ret = builder_->CreateAlloca(types_->CreateValueType());
+
   auto* status = builder_->CreateCall(
       prototype, lambda, {exec_context_, caps, types_->GetWord(argc), argv, ret});
 
-  // Handle an exception if it's thrown.
-  auto* is_exception =
-      builder_->CreateICmpEQ(status, builder_->getInt32(static_cast<int32_t>(Status::Exception)));
+  CreateCheckStatusForException(status, ret);
+
+  PushAny(ret);
+}
+
+llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* value_ptr) {
+  auto* closure = builder_->CreateAlloca(builder_->getPtrTy());
+
+  auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
   auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
-  builder_->CreateCondBr(is_exception, then_block, else_block);
+  auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
 
+  // if (value.kind == ValueKind::Closure)
+  auto* is_closure =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)));
+  builder_->CreateCondBr(is_closure, then_block, else_block);
+  // {
+  builder_->SetInsertPoint(then_block);
+  auto* closure_ptr = CreateLoadClosureFromValue(value_ptr);
+  builder_->CreateStore(closure_ptr, closure);
+  builder_->CreateBr(end_block);
+  // } else {
+  builder_->SetInsertPoint(else_block);
+  // TODO: TypeError
+  PushNumber(builder_->getInt32(1));
+  Throw();
+  builder_->CreateBr(end_block);
+  // }
+
+  builder_->SetInsertPoint(end_block);
+  return builder_->CreateLoad(builder_->getPtrTy(), closure);
+}
+
+// Handle an exception if it's thrown.
+void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* ret) {
+  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
+
+  // if (status == Status::Exception)
+  auto* is_exception =
+      builder_->CreateICmpEQ(status, builder_->getInt32(static_cast<int32_t>(Status::Exception)));
+  builder_->CreateCondBr(is_exception, then_block, end_block);
+  // {
   builder_->SetInsertPoint(then_block);
   // Store the exception.
   builder_->CreateStore(status, status_);
@@ -877,9 +880,9 @@ void Compiler::Call(uint16_t argc) {
   assert(!catch_stack_.empty());
   auto* catch_block = catch_stack_.back();
   builder_->CreateBr(catch_block);
+  // }
 
-  builder_->SetInsertPoint(else_block);
-  PushAny(ret);
+  builder_->SetInsertPoint(end_block);
 }
 
 void Compiler::Truthy() {

@@ -720,6 +720,10 @@ class Compiler {
   llvm::BasicBlock* FindBlockBySymbol(const std::vector<BlockItem>& stack, uint32_t symbol) const;
   void SetBlockForLabelsInContinueStack(llvm::BasicBlock* block);
 
+  // Helper methods for Call().
+  llvm::Value* CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* value_ptr);
+  void CreateCheckStatusForException(llvm::Value* status, llvm::Value* ret);
+
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
