@@ -390,16 +390,17 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::IfStatement => unsafe {
                 bridge::compiler_peer_if_statement(self.peer);
             },
-            CompileCommand::DoWhileLoop => unsafe {
-                bridge::compiler_peer_do_while_loop(self.peer);
+            CompileCommand::DoWhileLoop(id) => unsafe {
+                bridge::compiler_peer_do_while_loop(self.peer, *id);
             },
-            CompileCommand::WhileLoop => unsafe {
-                bridge::compiler_peer_while_loop(self.peer);
+            CompileCommand::WhileLoop(id) => unsafe {
+                bridge::compiler_peer_while_loop(self.peer, *id);
             },
             // TODO: rewrite using if and break
-            CompileCommand::ForLoop(flags) => unsafe {
+            CompileCommand::ForLoop(id, flags) => unsafe {
                 bridge::compiler_peer_for_loop(
                     self.peer,
+                    *id,
                     flags.contains(LoopFlags::HAS_INIT),
                     flags.contains(LoopFlags::HAS_TEST),
                     flags.contains(LoopFlags::HAS_NEXT),
@@ -420,10 +421,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::LoopEnd => unsafe {
                 bridge::compiler_peer_loop_end(self.peer);
             },
-            CompileCommand::CaseBlock(n) => unsafe {
-                debug_assert!(*n > 0);
+            CompileCommand::CaseBlock(id, num_cases) => unsafe {
+                debug_assert!(*num_cases > 0);
                 // TODO: refactoring
-                bridge::compiler_peer_case_block(self.peer, *n);
+                bridge::compiler_peer_case_block(self.peer, *id, *num_cases);
             },
             CompileCommand::CaseClause(has_statement) => unsafe {
                 bridge::compiler_peer_case_clause(self.peer, *has_statement);
@@ -431,9 +432,9 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::DefaultClause(has_statement) => unsafe {
                 bridge::compiler_peer_default_clause(self.peer, *has_statement);
             },
-            CompileCommand::Switch(n, default_index) => unsafe {
-                let i = default_index.unwrap_or(*n);
-                bridge::compiler_peer_switch(self.peer, *n, i);
+            CompileCommand::Switch(id, num_cases, default_index) => unsafe {
+                let default_index = default_index.unwrap_or(*num_cases);
+                bridge::compiler_peer_switch(self.peer, *id, *num_cases, default_index);
             },
             CompileCommand::Try => unsafe {
                 bridge::compiler_peer_try(self.peer);

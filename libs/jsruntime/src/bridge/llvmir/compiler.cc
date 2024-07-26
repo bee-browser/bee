@@ -1027,7 +1027,9 @@ void Compiler::IfStatement() {
   builder_->SetInsertPoint(block);
 }
 
-void Compiler::DoWhileLoop() {
+void Compiler::DoWhileLoop(uint16_t id) {
+  PushDebugName(NAME_WITH_ID("do-while", id));
+
   auto* loop_body = CreateBasicBlock(NAME("loop-body"));
   auto* loop_test = CreateBasicBlock(NAME("loop-test"));
   auto* loop_end = CreateBasicBlock(NAME("loop-end"));
@@ -1054,7 +1056,9 @@ void Compiler::DoWhileLoop() {
   continue_stack_.push_back({loop_continue, 0});
 }
 
-void Compiler::WhileLoop() {
+void Compiler::WhileLoop(uint16_t id) {
+  PushDebugName(NAME_WITH_ID("while", id));
+
   auto* loop_test = CreateBasicBlock(NAME("loop-test"));
   auto* loop_body = CreateBasicBlock(NAME("loop-body"));
   auto* loop_end = CreateBasicBlock(NAME("loop-end"));
@@ -1081,7 +1085,9 @@ void Compiler::WhileLoop() {
   continue_stack_.push_back({loop_continue, 0});
 }
 
-void Compiler::ForLoop(bool has_init, bool has_test, bool has_next) {
+void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next) {
+  PushDebugName(NAME_WITH_ID("for", id));
+
   auto* loop_init = has_init ? CreateBasicBlock(NAME("loop-init")) : nullptr;
   auto* loop_test = has_test ? CreateBasicBlock(NAME("loop-test")) : nullptr;
   auto* loop_body = CreateBasicBlock(NAME("loop-body"));
@@ -1186,16 +1192,20 @@ void Compiler::LoopBody() {
   auto* insert_point = PopBlock();
 
   builder_->CreateBr(next_block);
+  break_stack_.back().block->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(insert_point);
 }
 
 void Compiler::LoopEnd() {
+  PopDebugName();
   break_stack_.pop_back();
   continue_stack_.pop_back();
 }
 
-void Compiler::CaseBlock(uint32_t n) {
-  UNUSED(n);
+void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
+  UNUSED(num_cases);
+
+  PushDebugName(NAME_WITH_ID("switch", id));
 
   auto item = Dereference();
   item.SetLabel("switch-value");
@@ -1246,7 +1256,11 @@ void Compiler::DefaultClause(bool has_statement) {
   Duplicate();
 }
 
-void Compiler::Switch(uint32_t n, uint32_t default_index) {
+void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
+  UNUSED(id);
+
+  PopDebugName();
+
   auto* end_block = break_stack_.back().block;
   break_stack_.pop_back();
 
@@ -1260,7 +1274,7 @@ void Compiler::Switch(uint32_t n, uint32_t default_index) {
   // The blocks has been stored in the stack in reverse order.
   auto* fallback_block = end_block;
   llvm::BasicBlock* default_block = nullptr;
-  for (auto i = n - 1;; --i) {
+  for (auto i = num_cases - 1;; --i) {
     auto* block = PopBlock();
     if (block->getTerminator() == nullptr) {
       builder_->SetInsertPoint(block);
@@ -1433,6 +1447,7 @@ void Compiler::StartScope(size_t scope_id) {
   auto* block = CreateBasicBlock(NAME("block"));
   auto* cleanup = CreateBasicBlock(NAME("cleanup"));
   builder_->CreateBr(locals);
+  locals->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(block);
   scope_stack_.push_back({locals, hoisted, block, cleanup});
 }
@@ -1450,6 +1465,7 @@ void Compiler::EndScope(size_t scope_id) {
 
   builder_->SetInsertPoint(scope.locals_block);
   builder_->CreateBr(scope.hoisted_block);
+  scope.hoisted_block->moveAfter(builder_->GetInsertBlock());
 
   builder_->SetInsertPoint(scope.hoisted_block);
   builder_->CreateBr(scope.block);

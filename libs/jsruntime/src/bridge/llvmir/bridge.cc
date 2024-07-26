@@ -342,16 +342,20 @@ void compiler_peer_if_statement(Compiler* self) {
   self->IfStatement();
 }
 
-void compiler_peer_do_while_loop(Compiler* self) {
-  self->DoWhileLoop();
+void compiler_peer_do_while_loop(Compiler* self, uint16_t id) {
+  self->DoWhileLoop(id);
 }
 
-void compiler_peer_while_loop(Compiler* self) {
-  self->WhileLoop();
+void compiler_peer_while_loop(Compiler* self, uint16_t id) {
+  self->WhileLoop(id);
 }
 
-void compiler_peer_for_loop(Compiler* self, bool has_init, bool has_test, bool has_next) {
-  self->ForLoop(has_init, has_test, has_next);
+void compiler_peer_for_loop(Compiler* self,
+    uint16_t id,
+    bool has_init,
+    bool has_test,
+    bool has_next) {
+  self->ForLoop(id, has_init, has_test, has_next);
 }
 
 void compiler_peer_loop_init(Compiler* self) {
@@ -374,8 +378,8 @@ void compiler_peer_loop_end(Compiler* self) {
   self->LoopEnd();
 }
 
-void compiler_peer_case_block(Compiler* self, uint32_t n) {
-  self->CaseBlock(n);
+void compiler_peer_case_block(Compiler* self, uint16_t id, uint16_t num_cases) {
+  self->CaseBlock(id, num_cases);
 }
 
 void compiler_peer_case_clause(Compiler* self, bool has_statement) {
@@ -386,8 +390,11 @@ void compiler_peer_default_clause(Compiler* self, bool has_statement) {
   self->DefaultClause(has_statement);
 }
 
-void compiler_peer_switch(Compiler* self, uint32_t n, uint32_t default_index) {
-  self->Switch(n, default_index);
+void compiler_peer_switch(Compiler* self,
+    uint16_t id,
+    uint16_t num_cases,
+    uint16_t default_index) {
+  self->Switch(id, num_cases, default_index);
 }
 
 void compiler_peer_try(Compiler* self) {

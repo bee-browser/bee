@@ -974,6 +974,11 @@ struct FunctionContext {
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
 
+    num_do_while_statements: u16,
+    num_while_statements: u16,
+    num_for_statements: u16,
+    num_switch_statements: u16,
+
     /// `false` while analyzing formal parameters, `true` while analyzing the function body.
     in_body: bool,
 }
@@ -1187,21 +1192,24 @@ impl FunctionContext {
 
     fn process_do_while_statement(&mut self) {
         self.put_command(CompileCommand::LoopTest);
-        self.process_loop_end(CompileCommand::DoWhileLoop);
+        self.process_loop_end(CompileCommand::DoWhileLoop(self.num_do_while_statements));
+        self.num_do_while_statements += 1;
     }
 
     fn process_while_statement(&mut self) {
         self.put_command(CompileCommand::LoopBody);
-        self.process_loop_end(CompileCommand::WhileLoop);
+        self.process_loop_end(CompileCommand::WhileLoop(self.num_while_statements));
+        self.num_while_statements += 1;
     }
 
     fn process_for_statement(&mut self, flags: LoopFlags) {
         self.put_command(CompileCommand::LoopBody);
-        self.process_loop_end(CompileCommand::ForLoop(flags));
+        self.process_loop_end(CompileCommand::ForLoop(self.num_for_statements, flags));
+        self.num_for_statements += 1;
     }
 
     fn process_case_block(&mut self) {
-        let case_block_index = self.put_command(CompileCommand::CaseBlock(0));
+        let case_block_index = self.put_command(CompileCommand::Nop);
         self.switch_stack.push(SwitchContext {
             case_block_index,
             ..Default::default()
@@ -1215,7 +1223,7 @@ impl FunctionContext {
 
     fn process_case_clause(&mut self, has_statement: bool) {
         self.put_command(CompileCommand::CaseClause(has_statement));
-        self.switch_stack.last_mut().unwrap().num_clauses += 1;
+        self.switch_stack.last_mut().unwrap().num_cases += 1;
     }
 
     fn process_default_selector(&mut self) {
@@ -1227,25 +1235,25 @@ impl FunctionContext {
     fn process_default_clause(&mut self, has_statement: bool) {
         self.put_command(CompileCommand::DefaultClause(has_statement));
         let context = self.switch_stack.last_mut().unwrap();
-        context.default_index = Some(context.num_clauses);
-        context.num_clauses += 1;
+        context.default_index = Some(context.num_cases);
+        context.num_cases += 1;
     }
 
     fn process_switch_statement(&mut self) {
         let context = self.switch_stack.pop().unwrap();
 
-        // TODO: the compilation should fail if the following condition is unmet.
-        assert!(context.num_clauses <= u32::MAX as usize);
-        let n = context.num_clauses as u32;
+        let id = self.num_switch_statements;
+        let n = context.num_cases;
 
         if n == 0 {
             // empty case block
             // Discard the `switchValue`.
             self.commands[context.case_block_index] = CompileCommand::Discard;
         } else {
-            self.commands[context.case_block_index] = CompileCommand::CaseBlock(n);
-            let default_index = context.default_index.map(|i| i as u32);
-            self.put_command(CompileCommand::Switch(n, default_index));
+            self.commands[context.case_block_index] = CompileCommand::CaseBlock(id, n);
+            let i = context.default_index;
+            self.put_command(CompileCommand::Switch(id, n, i));
+            self.num_switch_statements += 1;
         }
     }
 
@@ -1366,8 +1374,8 @@ struct LoopContext {
 #[derive(Default)]
 struct SwitchContext {
     case_block_index: usize,
-    num_clauses: usize,
-    default_index: Option<usize>,
+    num_cases: u16,
+    default_index: Option<u16>,
 }
 
 #[derive(Default)]
@@ -1505,9 +1513,9 @@ pub enum CompileCommand {
     IfStatement,
 
     // loop
-    WhileLoop,
-    DoWhileLoop,
-    ForLoop(LoopFlags),
+    WhileLoop(u16),
+    DoWhileLoop(u16),
+    ForLoop(u16, LoopFlags),
     LoopInit,
     LoopTest,
     LoopNext,
@@ -1515,10 +1523,10 @@ pub enum CompileCommand {
     LoopEnd,
 
     // switch
-    CaseBlock(u32),
+    CaseBlock(u16, u16),
     CaseClause(bool),
     DefaultClause(bool),
-    Switch(u32, Option<u32>),
+    Switch(u16, u16, Option<u16>),
 
     // label
     LabelStart(Symbol, bool),

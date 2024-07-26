@@ -202,18 +202,22 @@ void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
 void compiler_peer_block(Compiler* self);
 void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);
-void compiler_peer_do_while_loop(Compiler* self);
-void compiler_peer_while_loop(Compiler* self);
-void compiler_peer_for_loop(Compiler* self, bool has_init, bool has_test, bool has_next);
+void compiler_peer_do_while_loop(Compiler* self, uint16_t id);
+void compiler_peer_while_loop(Compiler* self, uint16_t id);
+void compiler_peer_for_loop(Compiler* self,
+    uint16_t id,
+    bool has_init,
+    bool has_test,
+    bool has_next);
 void compiler_peer_loop_init(Compiler* self);
 void compiler_peer_loop_test(Compiler* self);
 void compiler_peer_loop_next(Compiler* self);
 void compiler_peer_loop_body(Compiler* self);
 void compiler_peer_loop_end(Compiler* self);
-void compiler_peer_case_block(Compiler* self, uint32_t n);
+void compiler_peer_case_block(Compiler* self, uint16_t id, uint16_t num_cases);
 void compiler_peer_case_clause(Compiler* self, bool has_statement);
 void compiler_peer_default_clause(Compiler* self, bool has_statement);
-void compiler_peer_switch(Compiler* self, uint32_t n, uint32_t default_index);
+void compiler_peer_switch(Compiler* self, uint16_t id, uint16_t num_cases, uint16_t default_index);
 void compiler_peer_try(Compiler* self);
 void compiler_peer_catch(Compiler* self, bool nominal);
 void compiler_peer_finally(Compiler* self, bool nominal);
