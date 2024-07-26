@@ -129,8 +129,8 @@ class Compiler {
   void TryEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
-  void StartScope();
-  void EndScope();
+  void StartScope(size_t scope_id);
+  void EndScope(size_t scope_id);
   void AllocateLocals(uint16_t num_locals);
   void ReleaseLocals(uint16_t num_locals);
   void CreateCapture(Locator locator);
@@ -218,10 +218,10 @@ class Compiler {
   };
 
   struct ScopeItem {
-    llvm::BasicBlock* init_block;
-    llvm::BasicBlock* decl_block;
-    llvm::BasicBlock* stmt_block;
-    llvm::BasicBlock* tidy_block;
+    llvm::BasicBlock* locals_block;
+    llvm::BasicBlock* hoisted_block;
+    llvm::BasicBlock* block;
+    llvm::BasicBlock* cleanup_block;
   };
 
   inline void PushUndefined() {
@@ -697,6 +697,14 @@ class Compiler {
     return builder_->CreateLoad(builder_->getPtrTy(), ptr);
   }
 
+  llvm::BasicBlock* CreateBasicBlock(const char* name) {
+    return llvm::BasicBlock::Create(*context_, name, function_);
+  }
+
+  llvm::BasicBlock* CreateBasicBlock(const std::string& name) {
+    return llvm::BasicBlock::Create(*context_, name, function_);
+  }
+
   // FIXME: Handle dead code in the proper way.
   //
   // We insert a **unreachable** basic block for dead code in order to avoid the following
@@ -710,10 +718,7 @@ class Compiler {
   // optimization passes.
   //
   // At this point, we don't know whether this is a common method or not...
-  inline void CreateBasicBlockForDeadcode() {
-    auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
-    builder_->SetInsertPoint(dummy);
-  }
+  void CreateBasicBlockForDeadcode();
 
   // TODO: separate variables that must be reset in EndFunction() from others.
 
@@ -761,4 +766,24 @@ class Compiler {
   std::unique_ptr<llvm::ModuleAnalysisManager> mam_;
   std::unique_ptr<llvm::PassInstrumentationCallbacks> pic_;
   std::unique_ptr<llvm::StandardInstrumentations> si_;
+
+#if defined(BEE_BUILD_DEBUG)
+  inline void PushDebugName(std::string&& name) {
+    debug_name_stack_.push_back(std::move(name));
+  }
+
+  inline void PopDebugName() {
+    debug_name_stack_.pop_back();
+  }
+
+  std::string MakeDebugName(const char* name) const;
+
+  std::vector<std::string> debug_name_stack_;
+#else
+  inline void PushDebugName(std::string&&) {}
+  inline void PopDebugName() {}
+  inline const char* MakeDebugName(const char* name) {
+    return name;
+  }
+#endif
 };

@@ -14,6 +14,10 @@ impl ScopeRef {
         Self(index)
     }
 
+    pub const fn id(&self) -> u16 {
+        self.0
+    }
+
     fn checked_new(index: usize) -> Option<Self> {
         if index > u16::MAX as usize {
             crate::logger::error!(err = "too large", index);

@@ -26,17 +26,19 @@
 #include "macros.hh"
 #include "module.hh"
 
+#if defined(BEE_BUILD_DEBUG)
+#define NAME(s) MakeDebugName(s)
+#define NAME_WITH_ID(name, id) ((name + llvm::Twine(id)).str())
+#else
+#define NAME(s) ""
+#define NAME_WITH_ID(name, id) (UNUSED(id), std::string())
+#endif
+
 namespace {
 
 inline uint32_t ComputeKeyFromLocator(Locator locator) {
   return (static_cast<uint32_t>(locator.kind) << 16) | static_cast<uint32_t>(locator.index);
 }
-
-#if defined(BEE_BUILD_DEBUG)
-#define LABEL(label) (label)
-#else
-#define LABEL(label) ""
-#endif
 
 }  // namespace
 
@@ -137,7 +139,7 @@ void Compiler::Closure(bool declaration, uint16_t num_captures) {
   llvm::BasicBlock* backup;
   if (declaration) {
     backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(scope.decl_block);
+    builder_->SetInsertPoint(scope.hoisted_block);
   }
 
   auto* lambda = PopFunction();
@@ -506,7 +508,7 @@ void Compiler::ConditionalTernary() {
   auto* cond_value = PopValue();
   builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
 
-  auto* block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* block = CreateBasicBlock(NAME("block"));
 
   if (then_item.type == else_item.type) {
     builder_->SetInsertPoint(then_tail_block);
@@ -745,7 +747,7 @@ void Compiler::DeclareFunction() {
   auto& scope = scope_stack_.back();
 
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.decl_block);
+  builder_->SetInsertPoint(scope.hoisted_block);
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -766,7 +768,7 @@ void Compiler::DeclareClosure() {
   auto& scope = scope_stack_.back();
 
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.decl_block);
+  builder_->SetInsertPoint(scope.hoisted_block);
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -837,9 +839,9 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
   auto* closure = builder_->CreateAlloca(builder_->getPtrTy());
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* then_block = CreateBasicBlock(NAME("then"));
+  auto* else_block = CreateBasicBlock(NAME("else"));
+  auto* end_block = CreateBasicBlock(NAME("block"));
 
   // if (value.kind == ValueKind::Closure)
   auto* is_closure =
@@ -864,8 +866,8 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
 
 // Handle an exception if it's thrown.
 void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* ret) {
-  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* then_block = CreateBasicBlock(NAME("then"));
+  auto* end_block = CreateBasicBlock(NAME("block"));
 
   // if (status == Status::Exception)
   auto* is_exception =
@@ -961,7 +963,7 @@ void Compiler::Block() {
 
   // Push a newly created block.
   // This will be used in ConditionalExpression() in order to build a branch instruction.
-  auto* block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* block = CreateBasicBlock(NAME("block"));
   PushBlock(block, "new-block");
 
   builder_->SetInsertPoint(block);
@@ -975,7 +977,7 @@ void Compiler::IfElseStatement() {
   if (else_tail_block->getTerminator() != nullptr) {
     // We should not append any instructions after a terminator instruction such as `ret`.
   } else {
-    block = llvm::BasicBlock::Create(*context_, "", function_);
+    block = CreateBasicBlock(NAME("block"));
     builder_->CreateBr(block);
   }
 
@@ -986,7 +988,7 @@ void Compiler::IfElseStatement() {
     // We should not append any instructions after a terminator instruction such as `ret`.
   } else {
     if (block == nullptr) {
-      block = llvm::BasicBlock::Create(*context_, "", function_);
+      block = CreateBasicBlock(NAME("block"));
     }
     builder_->SetInsertPoint(then_tail_block);
     builder_->CreateBr(block);
@@ -1007,7 +1009,7 @@ void Compiler::IfElseStatement() {
 void Compiler::IfStatement() {
   auto* then_tail_block = builder_->GetInsertBlock();
 
-  auto* block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* block = CreateBasicBlock(NAME("block"));
 
   if (then_tail_block->getTerminator() != nullptr) {
     // We should not append any instructions after a terminator instruction such as `ret`.
@@ -1026,9 +1028,9 @@ void Compiler::IfStatement() {
 }
 
 void Compiler::DoWhileLoop() {
-  auto* loop_body = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* loop_test = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* loop_end = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* loop_body = CreateBasicBlock(NAME("loop-body"));
+  auto* loop_test = CreateBasicBlock(NAME("loop-test"));
+  auto* loop_end = CreateBasicBlock(NAME("loop-end"));
 
   auto* loop_start = loop_body;
   auto* loop_continue = loop_test;
@@ -1053,9 +1055,9 @@ void Compiler::DoWhileLoop() {
 }
 
 void Compiler::WhileLoop() {
-  auto* loop_test = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* loop_body = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* loop_end = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* loop_test = CreateBasicBlock(NAME("loop-test"));
+  auto* loop_body = CreateBasicBlock(NAME("loop-body"));
+  auto* loop_end = CreateBasicBlock(NAME("loop-end"));
 
   auto* loop_start = loop_test;
   auto* loop_continue = loop_test;
@@ -1080,11 +1082,11 @@ void Compiler::WhileLoop() {
 }
 
 void Compiler::ForLoop(bool has_init, bool has_test, bool has_next) {
-  auto* loop_init = has_init ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
-  auto* loop_test = has_test ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
-  auto* loop_body = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* loop_next = has_next ? llvm::BasicBlock::Create(*context_, "", function_) : nullptr;
-  auto* loop_end = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* loop_init = has_init ? CreateBasicBlock(NAME("loop-init")) : nullptr;
+  auto* loop_test = has_test ? CreateBasicBlock(NAME("loop-test")) : nullptr;
+  auto* loop_body = CreateBasicBlock(NAME("loop-body"));
+  auto* loop_next = has_next ? CreateBasicBlock(NAME("loop-next")) : nullptr;
+  auto* loop_end = CreateBasicBlock(NAME("loop-end"));
 
   auto* loop_start = loop_body;
   auto* loop_continue = loop_body;
@@ -1200,11 +1202,11 @@ void Compiler::CaseBlock(uint32_t n) {
   stack_.push_back(item);
   stack_.push_back(item);  // Dup for test on CaseClause
 
-  auto* start_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* start_block = CreateBasicBlock(NAME("start"));
   builder_->CreateBr(start_block);
   builder_->SetInsertPoint(start_block);
 
-  auto* end_block = llvm::BasicBlock::Create(*context_);
+  auto* end_block = CreateBasicBlock(NAME("end"));
   break_stack_.push_back({end_block, 0});
 }
 
@@ -1213,7 +1215,7 @@ void Compiler::CaseClause(bool has_statement) {
 
   auto* case_clause_statement = builder_->GetInsertBlock();
 
-  auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* else_block = CreateBasicBlock(NAME("else"));
   auto* then_block = PopBlock();
   auto* cond_block = PopBlock();
   auto* cond_value = PopBoolean();
@@ -1252,9 +1254,6 @@ void Compiler::Switch(uint32_t n, uint32_t default_index) {
   Discard();
   Discard();
 
-  // Connect the tail block of the case selection block sequence to the end block.
-  end_block->insertInto(function_);
-
   auto* case_block = builder_->GetInsertBlock();
 
   // Connect statement blocks of case/default clauses.
@@ -1266,6 +1265,7 @@ void Compiler::Switch(uint32_t n, uint32_t default_index) {
     if (block->getTerminator() == nullptr) {
       builder_->SetInsertPoint(block);
       builder_->CreateBr(fallback_block);
+      fallback_block->moveAfter(builder_->GetInsertBlock());
     }
     fallback_block = block;
     if (i == default_index) {
@@ -1283,16 +1283,17 @@ void Compiler::Switch(uint32_t n, uint32_t default_index) {
     builder_->CreateBr(default_block);
   } else {
     builder_->CreateBr(end_block);
+    end_block->moveAfter(builder_->GetInsertBlock());
   }
 
   builder_->SetInsertPoint(end_block);
 }
 
 void Compiler::Try() {
-  auto* try_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* catch_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* finally_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* end_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* try_block = CreateBasicBlock(NAME("try"));
+  auto* catch_block = CreateBasicBlock(NAME("catch"));
+  auto* finally_block = CreateBasicBlock(NAME("finally"));
+  auto* end_block = CreateBasicBlock(NAME("end"));
 
   // Jump from the end of previous block to the beginning of the try block.
   builder_->CreateBr(try_block);
@@ -1363,9 +1364,9 @@ void Compiler::StartFunction(const char* name) {
     functions_[name] = function_;
   }
 
-  prologue_ = llvm::BasicBlock::Create(*context_, "prologue", function_);
-  body_ = llvm::BasicBlock::Create(*context_, "body", function_);
-  epilogue_ = llvm::BasicBlock::Create(*context_, "epilogue", function_);
+  prologue_ = CreateBasicBlock("prologue");
+  body_ = CreateBasicBlock("body");
+  epilogue_ = CreateBasicBlock("epilogue");
 
   exec_context_ = function_->getArg(0);
   caps_ = function_->getArg(1);
@@ -1385,6 +1386,7 @@ void Compiler::StartFunction(const char* name) {
 
 void Compiler::EndFunction(bool optimize) {
   builder_->CreateBr(epilogue_);
+  epilogue_->moveAfter(builder_->GetInsertBlock());
 
   builder_->SetInsertPoint(prologue_);
   builder_->CreateBr(body_);
@@ -1423,33 +1425,38 @@ void Compiler::EndFunction(bool optimize) {
   }
 }
 
-void Compiler::StartScope() {
-  auto* init = llvm::BasicBlock::Create(*context_, LABEL("init"), function_);
-  auto* decl = llvm::BasicBlock::Create(*context_, LABEL("decl"), function_);
-  auto* stmt = llvm::BasicBlock::Create(*context_, LABEL("stmt"), function_);
-  auto* tidy = llvm::BasicBlock::Create(*context_, LABEL("tidy"), function_);
-  builder_->CreateBr(init);
-  builder_->SetInsertPoint(stmt);
-  scope_stack_.push_back({init, decl, stmt, tidy});
+void Compiler::StartScope(size_t scope_id) {
+  PushDebugName(NAME_WITH_ID("scope", scope_id));
+
+  auto* locals = CreateBasicBlock(NAME("locals"));
+  auto* hoisted = CreateBasicBlock(NAME("hoisted"));
+  auto* block = CreateBasicBlock(NAME("block"));
+  auto* cleanup = CreateBasicBlock(NAME("cleanup"));
+  builder_->CreateBr(locals);
+  builder_->SetInsertPoint(block);
+  scope_stack_.push_back({locals, hoisted, block, cleanup});
 }
 
-void Compiler::EndScope() {
-  assert(!scope_stack_.empty());
+void Compiler::EndScope(size_t scope_id) {
+  UNUSED(scope_id);
 
+  PopDebugName();
+
+  assert(!scope_stack_.empty());
   auto& scope = scope_stack_.back();
 
-  builder_->CreateBr(scope.tidy_block);
-  scope.tidy_block->moveAfter(builder_->GetInsertBlock());
+  builder_->CreateBr(scope.cleanup_block);
+  scope.cleanup_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(scope.init_block);
-  builder_->CreateBr(scope.decl_block);
+  builder_->SetInsertPoint(scope.locals_block);
+  builder_->CreateBr(scope.hoisted_block);
 
-  builder_->SetInsertPoint(scope.decl_block);
-  builder_->CreateBr(scope.stmt_block);
-  scope.stmt_block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(scope.hoisted_block);
+  builder_->CreateBr(scope.block);
+  scope.block->moveAfter(builder_->GetInsertBlock());
 
-  auto* block = llvm::BasicBlock::Create(*context_, LABEL("stmt"), function_);
-  builder_->SetInsertPoint(scope.tidy_block);
+  auto* block = CreateBasicBlock(NAME("block"));
+  builder_->SetInsertPoint(scope.cleanup_block);
   builder_->CreateBr(block);
   block->moveAfter(builder_->GetInsertBlock());
 
@@ -1464,7 +1471,7 @@ void Compiler::AllocateLocals(uint16_t num_locals) {
   auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.init_block);
+  builder_->SetInsertPoint(scope.locals_block);
 
   for (auto i = 0; i < num_locals; ++i) {
     auto* local = builder_->CreateAlloca(types_->CreateVariableType());
@@ -1489,7 +1496,7 @@ void Compiler::CreateCapture(Locator locator) {
   auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.init_block);
+  builder_->SetInsertPoint(scope.locals_block);
 
   llvm::Value* variable_ptr;
   switch (locator.kind) {
@@ -1521,7 +1528,7 @@ void Compiler::CaptureVariable(bool declaration) {
   llvm::BasicBlock* backup;
   if (declaration) {
     backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(scope.decl_block);
+    builder_->SetInsertPoint(scope.hoisted_block);
   }
 
   llvm::Value* capture_ptr;
@@ -1556,7 +1563,7 @@ void Compiler::EscapeVariable(Locator locator) {
   auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.tidy_block);
+  builder_->SetInsertPoint(scope.cleanup_block);
 
   auto key = ComputeKeyFromLocator(locator);
   assert(captures_.find(key) != captures_.end());
@@ -1578,10 +1585,10 @@ void Compiler::EscapeVariable(Locator locator) {
 
 void Compiler::LabelStart(uint32_t symbol, bool is_iteration_statement) {
   assert(symbol != 0);
-  auto* start_block = llvm::BasicBlock::Create(*context_);
-  auto* end_block = llvm::BasicBlock::Create(*context_);
-  start_block->insertInto(function_);
+  auto* start_block = CreateBasicBlock(NAME("start"));
+  auto* end_block = CreateBasicBlock(NAME("end"));
   builder_->CreateBr(start_block);
+  end_block->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(start_block);
   break_stack_.push_back({end_block, symbol});
   if (is_iteration_statement) {
@@ -1595,8 +1602,8 @@ void Compiler::LabelEnd(uint32_t symbol, bool is_iteration_statement) {
   assert(symbol != 0);
   assert(break_stack_.back().symbol == symbol);
   auto* end_block = break_stack_.back().block;
-  end_block->insertInto(function_);
   builder_->CreateBr(end_block);
+  end_block->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(end_block);
   break_stack_.pop_back();
   if (is_iteration_statement) {
@@ -2088,9 +2095,9 @@ llvm::Value* Compiler::CreateIsNull(llvm::Value* value_ptr) {
 }
 
 llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* then_block = CreateBasicBlock(NAME("then"));
+  auto* else_block = CreateBasicBlock(NAME("else"));
+  auto* merge_block = CreateBasicBlock(NAME("end"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
@@ -2115,9 +2122,9 @@ llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Va
 }
 
 llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* then_block = CreateBasicBlock(NAME("then"));
+  auto* else_block = CreateBasicBlock(NAME("else"));
+  auto* merge_block = CreateBasicBlock(NAME("end"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
@@ -2142,9 +2149,9 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
 }
 
 llvm::Value* Compiler::CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* else_block = llvm::BasicBlock::Create(*context_, "", function_);
-  auto* merge_block = llvm::BasicBlock::Create(*context_, "", function_);
+  auto* then_block = CreateBasicBlock(NAME("then"));
+  auto* else_block = CreateBasicBlock(NAME("else"));
+  auto* merge_block = CreateBasicBlock(NAME("end"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
@@ -2208,6 +2215,11 @@ llvm::Value* Compiler::CreateGetValuePtr(Locator locator) {
   }
 }
 
+void Compiler::CreateBasicBlockForDeadcode() {
+  auto* block = CreateBasicBlock(NAME("deadcode"));
+  builder_->SetInsertPoint(block);
+}
+
 llvm::BasicBlock* Compiler::FindBlockBySymbol(const std::vector<BlockItem>& stack,
     uint32_t symbol) const {
   assert(!break_stack_.empty());
@@ -2231,3 +2243,20 @@ void Compiler::SetBlockForLabelsInContinueStack(llvm::BasicBlock* block) {
     it->block = block;
   }
 }
+
+#if defined(BEE_BUILD_DEBUG)
+#include <sstream>
+
+std::string Compiler::MakeDebugName(const char* name) const {
+  if (debug_name_stack_.empty()) {
+    return name;
+  }
+  std::stringstream ss;
+  ss << debug_name_stack_[0];
+  for (size_t i = 1; i < debug_name_stack_.size(); ++i) {
+    ss << '.' << debug_name_stack_[i];
+  }
+  ss << '.' << name;
+  return ss.str();
+}
+#endif

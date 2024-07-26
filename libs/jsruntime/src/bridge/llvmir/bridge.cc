@@ -414,12 +414,12 @@ void compiler_peer_end_function(Compiler* self, bool optimize) {
   self->EndFunction(optimize);
 }
 
-void compiler_peer_start_scope(Compiler* self) {
-  self->StartScope();
+void compiler_peer_start_scope(Compiler* self, uint16_t scope_id) {
+  self->StartScope(scope_id);
 }
 
-void compiler_peer_end_scope(Compiler* self) {
-  self->EndScope();
+void compiler_peer_end_scope(Compiler* self, uint16_t scope_id) {
+  self->EndScope(scope_id);
 }
 
 void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals) {

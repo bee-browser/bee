@@ -173,7 +173,7 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
                 unsafe {
-                    bridge::compiler_peer_start_scope(self.peer);
+                    bridge::compiler_peer_start_scope(self.peer, scope_ref.id());
                 }
                 let scope = self.scope_tree.scope(scope_ref);
                 if scope.num_locals > 0 {
@@ -209,7 +209,7 @@ impl<'a, 'b> Compiler<'a, 'b> {
                     }
                 }
                 unsafe {
-                    bridge::compiler_peer_end_scope(self.peer);
+                    bridge::compiler_peer_end_scope(self.peer, scope_ref.id());
                 }
             }
             CompileCommand::CaptureVariable(declaration) => unsafe {
