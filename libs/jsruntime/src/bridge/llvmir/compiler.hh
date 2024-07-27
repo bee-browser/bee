@@ -418,13 +418,15 @@ class Compiler {
 
   // locals
 
-  inline llvm::Value* CreateGetLocalVariablePtr(uint16_t index) {
+  // NOTE: No instruction is emitted.
+  inline llvm::Value* GetLocalVariablePtr(uint16_t index) {
     assert(index < locals_.size());
     return locals_[index];
   }
 
-  inline llvm::Value* CreateGetLocalValuePtr(uint16_t index) {
-    return CreateGetLocalVariablePtr(index);
+  // NOTE: No instruction is emitted.
+  inline llvm::Value* GetLocalValuePtr(uint16_t index) {
+    return GetLocalVariablePtr(index);
   }
 
   // captures

@@ -721,7 +721,7 @@ void Compiler::DeclareImmutable() {
   auto ref = PopReference();
   assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  auto* variable_ptr = GetLocalVariablePtr(ref.locator.index);
   CreateStoreFlagsToVariable(FLAGS, variable_ptr);
   CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
   CreateStoreItemToVariable(item, variable_ptr);
@@ -734,7 +734,7 @@ void Compiler::DeclareMutable() {
   auto ref = PopReference();
   assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  auto* variable_ptr = GetLocalVariablePtr(ref.locator.index);
   CreateStoreFlagsToVariable(FLAGS, variable_ptr);
   CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
   CreateStoreItemToVariable(item, variable_ptr);
@@ -753,7 +753,7 @@ void Compiler::DeclareFunction() {
   auto ref = PopReference();
   assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  auto* variable_ptr = GetLocalVariablePtr(ref.locator.index);
   CreateStoreFlagsToVariable(FLAGS, variable_ptr);
   CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
   CreateStoreItemToVariable(item, variable_ptr);
@@ -774,7 +774,7 @@ void Compiler::DeclareClosure() {
   auto ref = PopReference();
   assert(ref.locator.kind == LocatorKind::Local);
 
-  auto* variable_ptr = CreateGetLocalVariablePtr(ref.locator.index);
+  auto* variable_ptr = GetLocalVariablePtr(ref.locator.index);
   CreateStoreFlagsToVariable(FLAGS, variable_ptr);
   CreateStoreSymbolToVariable(ref.symbol, variable_ptr);
   CreateStoreItemToVariable(item, variable_ptr);
@@ -1520,7 +1520,7 @@ void Compiler::CreateCapture(Locator locator) {
       variable_ptr = CreateGetArgumentVariablePtr(locator.index);
       break;
     case LocatorKind::Local:
-      variable_ptr = CreateGetLocalVariablePtr(locator.index);
+      variable_ptr = GetLocalVariablePtr(locator.index);
       break;
     default:
       assert(false);
@@ -2206,7 +2206,7 @@ llvm::Value* Compiler::CreateGetVariablePtr(Locator locator) {
     case LocatorKind::Argument:
       return CreateGetArgumentVariablePtr(locator.index);
     case LocatorKind::Local:
-      return CreateGetLocalVariablePtr(locator.index);
+      return GetLocalVariablePtr(locator.index);
     case LocatorKind::Capture:
       return CreateGetCaptureVariablePtr(locator.index);
     default:
@@ -2221,7 +2221,7 @@ llvm::Value* Compiler::CreateGetValuePtr(Locator locator) {
     case LocatorKind::Argument:
       return CreateGetArgumentValuePtr(locator.index);
     case LocatorKind::Local:
-      return CreateGetLocalValuePtr(locator.index);
+      return GetLocalValuePtr(locator.index);
     case LocatorKind::Capture:
       return CreateGetCaptureValuePtr(locator.index);
     default:
