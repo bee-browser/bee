@@ -433,8 +433,12 @@ void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals) {
   self->AllocateLocals(num_locals);
 }
 
-void compiler_peer_release_locals(Compiler* self, uint16_t num_locals) {
-  self->ReleaseLocals(num_locals);
+void compiler_peer_init_local(Compiler* self, Locator locator) {
+  self->InitLocal(locator);
+}
+
+void compiler_peer_tidy_local(Compiler* self, Locator locator) {
+  self->TidyLocal(locator);
 }
 
 void compiler_peer_create_capture(Compiler* self, Locator locator) {

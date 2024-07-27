@@ -1378,41 +1378,41 @@ void Compiler::StartFunction(const char* name) {
     functions_[name] = function_;
   }
 
-  prologue_ = CreateBasicBlock("prologue");
-  body_ = CreateBasicBlock("body");
-  epilogue_ = CreateBasicBlock("epilogue");
+  prologue_block_ = CreateBasicBlock("prologue");
+  body_block_ = CreateBasicBlock("body");
+  epilogue_block_ = CreateBasicBlock("epilogue");
 
   exec_context_ = function_->getArg(0);
   caps_ = function_->getArg(1);
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
   ret_ = function_->getArg(4);
-  catch_stack_.push_back(epilogue_);
+  catch_stack_.push_back(epilogue_block_);
 
-  builder_->SetInsertPoint(prologue_);
+  builder_->SetInsertPoint(prologue_block_);
   status_ = builder_->CreateAlloca(builder_->getInt32Ty());
+
+  builder_->SetInsertPoint(body_block_);
+
   builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
   CreateStoreUndefinedToValue(ret_);
-
-  // Switch the insertion point.
-  builder_->SetInsertPoint(body_);
 }
 
 void Compiler::EndFunction(bool optimize) {
-  builder_->CreateBr(epilogue_);
-  epilogue_->moveAfter(builder_->GetInsertBlock());
+  builder_->CreateBr(epilogue_block_);
+  epilogue_block_->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(prologue_);
-  builder_->CreateBr(body_);
+  builder_->SetInsertPoint(prologue_block_);
+  builder_->CreateBr(body_block_);
+  body_block_->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(epilogue_);
+  builder_->SetInsertPoint(epilogue_block_);
 
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_);
   builder_->CreateRet(status);
 
   // DumpStack();
 
-  assert(locals_.empty());
   locals_.clear();
 
   assert(stack_.empty());
@@ -1442,14 +1442,14 @@ void Compiler::EndFunction(bool optimize) {
 void Compiler::StartScope(size_t scope_id) {
   PushDebugName(NAME_WITH_ID("scope", scope_id));
 
-  auto* locals = CreateBasicBlock(NAME("locals"));
+  auto* init = CreateBasicBlock(NAME("init"));
   auto* hoisted = CreateBasicBlock(NAME("hoisted"));
   auto* block = CreateBasicBlock(NAME("block"));
-  auto* cleanup = CreateBasicBlock(NAME("cleanup"));
-  builder_->CreateBr(locals);
-  locals->moveAfter(builder_->GetInsertBlock());
+  auto* tidy = CreateBasicBlock(NAME("tidy"));
+  builder_->CreateBr(init);
+  init->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(block);
-  scope_stack_.push_back({locals, hoisted, block, cleanup});
+  scope_stack_.push_back({init, hoisted, block, tidy});
 }
 
 void Compiler::EndScope(size_t scope_id) {
@@ -1460,10 +1460,10 @@ void Compiler::EndScope(size_t scope_id) {
   assert(!scope_stack_.empty());
   auto& scope = scope_stack_.back();
 
-  builder_->CreateBr(scope.cleanup_block);
-  scope.cleanup_block->moveAfter(builder_->GetInsertBlock());
+  builder_->CreateBr(scope.tidy_block);
+  scope.tidy_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(scope.locals_block);
+  builder_->SetInsertPoint(scope.init_block);
   builder_->CreateBr(scope.hoisted_block);
   scope.hoisted_block->moveAfter(builder_->GetInsertBlock());
 
@@ -1472,7 +1472,7 @@ void Compiler::EndScope(size_t scope_id) {
   scope.block->moveAfter(builder_->GetInsertBlock());
 
   auto* block = CreateBasicBlock(NAME("block"));
-  builder_->SetInsertPoint(scope.cleanup_block);
+  builder_->SetInsertPoint(scope.tidy_block);
   builder_->CreateBr(block);
   block->moveAfter(builder_->GetInsertBlock());
 
@@ -1482,27 +1482,38 @@ void Compiler::EndScope(size_t scope_id) {
 }
 
 void Compiler::AllocateLocals(uint16_t num_locals) {
-  assert(!scope_stack_.empty());
-
-  auto& scope = scope_stack_.back();
-
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.locals_block);
+  builder_->SetInsertPoint(prologue_block_);
 
   for (auto i = 0; i < num_locals; ++i) {
     auto* local = builder_->CreateAlloca(types_->CreateVariableType());
-    CreateStoreFlagsToVariable(0, local);
     locals_.push_back(local);
   }
 
   builder_->SetInsertPoint(backup);
 }
 
-void Compiler::ReleaseLocals(uint16_t num_locals) {
-  for (auto i = 0; i < num_locals; ++i) {
-    // TODO: GC
-    locals_.pop_back();
-  }
+void Compiler::InitLocal(Locator locator) {
+  assert(locator.kind == LocatorKind::Local);
+  assert(!scope_stack_.empty());
+
+  auto& scope = scope_stack_.back();
+
+  llvm::BasicBlock* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(scope.init_block);
+
+  auto* variable_ptr = GetLocalVariablePtr(locator.index);
+  CreateStoreFlagsToVariable(0, variable_ptr);
+
+  builder_->SetInsertPoint(backup);
+}
+
+void Compiler::TidyLocal(Locator locator) {
+  assert(locator.kind == LocatorKind::Local);
+  assert(!scope_stack_.empty());
+
+  UNUSED(locator);
+  // TODO: GC
 }
 
 void Compiler::CreateCapture(Locator locator) {
@@ -1512,7 +1523,7 @@ void Compiler::CreateCapture(Locator locator) {
   auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.locals_block);
+  builder_->SetInsertPoint(scope.init_block);
 
   llvm::Value* variable_ptr;
   switch (locator.kind) {
@@ -1579,7 +1590,7 @@ void Compiler::EscapeVariable(Locator locator) {
   auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.cleanup_block);
+  builder_->SetInsertPoint(scope.tidy_block);
 
   auto key = ComputeKeyFromLocator(locator);
   assert(captures_.find(key) != captures_.end());
@@ -1659,7 +1670,7 @@ void Compiler::Return(size_t n) {
     auto item = Dereference();
     CreateStoreItemToValue(item, ret_);
   }
-  builder_->CreateBr(epilogue_);
+  builder_->CreateBr(epilogue_block_);
   // TODO(issue#234)
   CreateBasicBlockForDeadcode();
 }
@@ -1933,7 +1944,7 @@ llvm::Value* Compiler::ToAny(const Item& item) {
 
 llvm::AllocaInst* Compiler::CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n) {
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(prologue_);
+  builder_->SetInsertPoint(prologue_block_);
   auto* alloca = builder_->CreateAlloca(ty, builder_->getInt32(n));
   builder_->SetInsertPoint(backup);
   return alloca;

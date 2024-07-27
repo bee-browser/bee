@@ -145,6 +145,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Exception => unsafe {
                 bridge::compiler_peer_exception(self.peer);
             },
+            CompileCommand::AllocateLocals(num_locals) => unsafe {
+                debug_assert!(*num_locals > 0);
+                bridge::compiler_peer_allocate_locals(self.peer, *num_locals);
+            },
             CompileCommand::MutableBinding => unsafe {
                 bridge::compiler_peer_declare_mutable(self.peer);
             },
@@ -176,16 +180,15 @@ impl<'a, 'b> Compiler<'a, 'b> {
                     bridge::compiler_peer_start_scope(self.peer, scope_ref.id());
                 }
                 let scope = self.scope_tree.scope(scope_ref);
-                if scope.num_locals > 0 {
-                    unsafe {
-                        bridge::compiler_peer_allocate_locals(self.peer, scope.num_locals);
-                    }
-                }
-                for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
-                    if binding.captured {
-                        let locator = self.scope_tree.compute_locator(binding_ref);
+                for binding in scope.bindings.iter() {
+                    if binding.is_local() {
                         unsafe {
-                            bridge::compiler_peer_create_capture(self.peer, locator);
+                            bridge::compiler_peer_init_local(self.peer, binding.locator());
+                        }
+                    }
+                    if binding.captured {
+                        unsafe {
+                            bridge::compiler_peer_create_capture(self.peer, binding.locator());
                         }
                     }
                 }
@@ -194,18 +197,17 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 // TODO(issue#234)
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
-                for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
+                let scope = self.scope_tree.scope(scope_ref);
+                for binding in scope.bindings.iter() {
                     if binding.captured {
-                        let locator = self.scope_tree.compute_locator(binding_ref);
                         unsafe {
-                            bridge::compiler_peer_escape_variable(self.peer, locator);
+                            bridge::compiler_peer_escape_variable(self.peer, binding.locator());
                         }
                     }
-                }
-                let scope = self.scope_tree.scope(scope_ref);
-                if scope.num_locals > 0 {
-                    unsafe {
-                        bridge::compiler_peer_release_locals(self.peer, scope.num_locals);
+                    if binding.is_local() {
+                        unsafe {
+                            bridge::compiler_peer_tidy_local(self.peer, binding.locator());
+                        }
                     }
                 }
                 unsafe {

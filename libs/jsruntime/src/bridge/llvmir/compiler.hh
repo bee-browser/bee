@@ -132,7 +132,8 @@ class Compiler {
   void StartScope(size_t scope_id);
   void EndScope(size_t scope_id);
   void AllocateLocals(uint16_t num_locals);
-  void ReleaseLocals(uint16_t num_locals);
+  void InitLocal(Locator locator);
+  void TidyLocal(Locator locator);
   void CreateCapture(Locator locator);
   void CaptureVariable(bool declaration);
   void EscapeVariable(Locator locator);
@@ -218,10 +219,10 @@ class Compiler {
   };
 
   struct ScopeItem {
-    llvm::BasicBlock* locals_block;
+    llvm::BasicBlock* init_block;
     llvm::BasicBlock* hoisted_block;
     llvm::BasicBlock* block;
-    llvm::BasicBlock* cleanup_block;
+    llvm::BasicBlock* tidy_block;
   };
 
   inline void PushUndefined() {
@@ -738,9 +739,10 @@ class Compiler {
 
   // The following variables are reset for each function.
   llvm::Function* function_ = nullptr;
-  llvm::BasicBlock* prologue_ = nullptr;
-  llvm::BasicBlock* body_ = nullptr;
-  llvm::BasicBlock* epilogue_ = nullptr;
+  llvm::BasicBlock* prologue_block_ = nullptr;
+  llvm::BasicBlock* locals_block_ = nullptr;
+  llvm::BasicBlock* body_block_ = nullptr;
+  llvm::BasicBlock* epilogue_block_ = nullptr;
   llvm::Value* exec_context_ = nullptr;
   llvm::Value* caps_ = nullptr;
   llvm::Value* argc_ = nullptr;

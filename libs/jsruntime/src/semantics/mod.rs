@@ -131,6 +131,9 @@ impl<'r> Analyzer<'r> {
             symbol_registry,
             function_registry,
             context_stack: vec![FunctionContext {
+                // `commands[0]` will be replaced with `AllocateLocals` in `accept()` if the
+                // function has local variables.
+                commands: vec![CompileCommand::Nop],
                 in_body: true,
                 ..Default::default()
             }],
@@ -534,6 +537,10 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
 
+        if context.num_locals > 0 {
+            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
+
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
         func.commands = context.commands;
@@ -556,6 +563,10 @@ impl<'r> Analyzer<'r> {
 
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
+
+        if context.num_locals > 0 {
+            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
 
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
@@ -583,6 +594,10 @@ impl<'r> Analyzer<'r> {
 
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
+
+        if context.num_locals > 0 {
+            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
 
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
@@ -721,6 +736,8 @@ impl<'r> Analyzer<'r> {
         let func_index = self.functions.len();
         let mut context = FunctionContext {
             func_index,
+            // `commands[0]` will be replaced with `AllocateLocals` if the function has local
+            // variables.
             commands: vec![CompileCommand::Nop],
             ..Default::default()
         };
@@ -754,12 +771,14 @@ impl<'r> Analyzer<'r> {
         let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder.add_immutable(symbol);
+        self.scope_tree_builder
+            .add_immutable(symbol, context.num_locals);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             from: ReferenceFrom::Command(command_index),
         });
+        context.num_locals += 1;
 
         // Register `Infinity`.
         let symbol = Symbol::INFINITY;
@@ -768,12 +787,14 @@ impl<'r> Analyzer<'r> {
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder.add_immutable(symbol);
+        self.scope_tree_builder
+            .add_immutable(symbol, context.num_locals);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             from: ReferenceFrom::Command(command_index),
         });
+        context.num_locals += 1;
 
         // Register `NaN`.
         let symbol = Symbol::NAN;
@@ -782,12 +803,14 @@ impl<'r> Analyzer<'r> {
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder.add_immutable(symbol);
+        self.scope_tree_builder
+            .add_immutable(symbol, context.num_locals);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             from: ReferenceFrom::Command(command_index),
         });
+        context.num_locals += 1;
     }
 
     // TODO: global object
@@ -799,12 +822,14 @@ impl<'r> Analyzer<'r> {
             // The locator will be computed in `resolve_references()`.
             let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
             context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
-            self.scope_tree_builder.add_immutable(symbol);
+            self.scope_tree_builder
+                .add_immutable(symbol, context.num_locals);
             context.references.push(Reference {
                 symbol,
                 scope_ref: self.scope_tree_builder.current(),
                 from: ReferenceFrom::Command(command_index),
             });
+            context.num_locals += 1;
         }
     }
 
@@ -897,7 +922,11 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         self.resolve_references(&mut context);
         debug_assert!(context.captures.is_empty());
 
+        if context.num_locals > 0 {
+            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
         context.commands.push(CompileCommand::Return(0));
+
         self.functions[context.func_index].commands = context.commands;
         self.functions[context.func_index].captures = context.captures.into_values().collect();
 
@@ -966,14 +995,10 @@ struct FunctionContext {
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<(usize, u16)>,
 
-    /// A variable to hold the current maximum number of bindings in the function.
-    ///
-    /// TODO: remove or use for limitation check.
-    max_bindings: usize,
-
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
 
+    num_locals: u16,
     num_do_while_statements: u16,
     num_while_statements: u16,
     num_for_statements: u16,
@@ -1066,7 +1091,8 @@ impl FunctionContext {
                 from: ReferenceFrom::Command(command_index),
             });
             // The BindingKind may change later by `builder.set_immutable()`.
-            builder.add_mutable(symbol);
+            builder.add_mutable(symbol, self.num_locals);
+            self.num_locals += 1;
         } else {
             // TODO: the compilation should fail if the following condition is unmet.
             assert!(self.formal_parameters.len() < u16::MAX as usize);
@@ -1087,7 +1113,6 @@ impl FunctionContext {
             debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
             self.commands[i] = CompileCommand::MutableBinding;
         }
-        self.scope_stack.last_mut().unwrap().num_bindings += self.pending_lexical_bindings.len();
         self.pending_lexical_bindings.clear();
     }
 
@@ -1097,7 +1122,6 @@ impl FunctionContext {
             debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
             self.commands[i] = CompileCommand::ImmutableBinding;
         }
-        self.scope_stack.last_mut().unwrap().num_bindings += self.pending_lexical_bindings.len();
         self.pending_lexical_bindings.clear();
     }
 
@@ -1121,7 +1145,6 @@ impl FunctionContext {
         self.commands
             .push(CompileCommand::Closure(true, captures.len() as u16));
         self.commands.push(CompileCommand::DeclareClosure);
-        self.scope_stack.last_mut().unwrap().num_bindings += 1;
     }
 
     fn process_closure_expression(
@@ -1148,9 +1171,6 @@ impl FunctionContext {
         self.commands.push(CompileCommand::Function(func_id));
         self.commands
             .push(CompileCommand::Closure(false, captures.len() as u16));
-        if named {
-            self.scope_stack.last_mut().unwrap().num_bindings += 1;
-        }
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
@@ -1332,39 +1352,22 @@ impl FunctionContext {
         self.put_command(CompileCommand::PushScope(scope_ref));
         self.scope_stack.push(Scope {
             scope_ref,
-            num_bindings: 0,
-            max_child_bindings: 0,
         });
     }
 
     fn end_scope(&mut self) {
         let scope = self.scope_stack.pop().unwrap();
 
-        // TODO: the compilation should fail if the following conditions are unmet.
-        assert!(scope.num_bindings <= ScopeTreeBuilder::MAX_LOCAL_BINDINGS);
-        assert!(
-            scope.num_bindings + scope.max_child_bindings <= ScopeTreeBuilder::MAX_LOCAL_BINDINGS
-        );
-
         // NOTE(perf): The scope may has no binding.  In this case, we can remove the
         // PopScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
         self.commands
             .push(CompileCommand::PopScope(scope.scope_ref));
-
-        let n = scope.num_bindings + scope.max_child_bindings;
-        match self.scope_stack.last_mut() {
-            Some(scope) => scope.max_child_bindings = scope.max_child_bindings.max(n),
-            None => self.max_bindings = n,
-        }
     }
 }
 
 struct Scope {
     scope_ref: ScopeRef,
-    // TODO: remove and use the scope tree
-    num_bindings: usize,
-    max_child_bindings: usize,
 }
 
 struct LoopContext {
@@ -1404,6 +1407,7 @@ pub enum CompileCommand {
     Reference(Symbol, Locator),
     Exception,
 
+    AllocateLocals(u16),
     MutableBinding,
     ImmutableBinding,
     DeclareFunction,
@@ -1688,6 +1692,7 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
+                    CompileCommand::AllocateLocals(4),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -1714,6 +1719,7 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
+                    CompileCommand::AllocateLocals(4),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -1724,10 +1730,10 @@ mod tests {
                     CompileCommand::MutableBinding,
                     CompileCommand::PopScope(scope_ref!(2)),
                     CompileCommand::PushScope(scope_ref!(3)),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 1)),
+                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 2)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 2)),
+                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 3)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
                     CompileCommand::PopScope(scope_ref!(3)),
