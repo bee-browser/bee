@@ -363,7 +363,9 @@ class Compiler {
   llvm::Value* ToInt32(llvm::Value* number);
   llvm::Value* ToUint32(llvm::Value* number);
   llvm::Value* ToAny(const Item& item);
-  llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
+  llvm::AllocaInst* CreateAlloc1(llvm::Type* ty, const llvm::Twine& name = "");
+  llvm::AllocaInst* CreateAllocN(llvm::Type* ty, uint32_t n, const llvm::Twine& name = "");
+  llvm::Function* CreateLambda(const char* name);
 
   llvm::Value* CreateIsNonNullish(const Item& item);
   llvm::Value* CreateIsNonNullish(llvm::Value* value_ptr);
@@ -410,11 +412,12 @@ class Compiler {
   // arguments
 
   inline llvm::Value* CreateGetArgumentVariablePtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateVariableType(), argv_, index);
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateVariableType(), argv_, index,
+        REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
   }
 
   inline llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv_, index);
+    return CreateGetArgumentVariablePtr(index);
   }
 
   // locals
@@ -443,12 +446,13 @@ class Compiler {
   }
 
   inline llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, index);
+    return builder_->CreateConstInBoundsGEP1_32(
+        builder_->getPtrTy(), captures, index, REG_NAME("caps." + llvm::Twine(index) + ".ptr"));
   }
 
   inline llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("caps." + llvm::Twine(index)));
   }
 
   inline void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
@@ -461,11 +465,13 @@ class Compiler {
   // variable
 
   inline llvm::Value* CreateGetValueKindPtrOfVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 0);
+    return builder_->CreateStructGEP(
+        types_->CreateVariableType(), variable_ptr, 0, REG_NAME("kind.ptr"));
   }
 
   inline llvm::Value* CreateGetFlagsPtrOfVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 1);
+    return builder_->CreateStructGEP(
+        types_->CreateVariableType(), variable_ptr, 1, REG_NAME("flags.ptr"));
   }
 
   inline llvm::Value* CreateGetReservedPtrOfVariable(llvm::Value* variable_ptr) {
@@ -473,23 +479,25 @@ class Compiler {
   }
 
   inline llvm::Value* CreateGetSymbolPtrOfVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 3);
+    return builder_->CreateStructGEP(
+        types_->CreateVariableType(), variable_ptr, 3, REG_NAME("symbol.ptr"));
   }
 
   inline llvm::Value* CreateGetValueHolderPtrOfVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 4);
+    return builder_->CreateStructGEP(
+        types_->CreateVariableType(), variable_ptr, 4, REG_NAME("holder.ptr"));
   }
 
   inline llvm::Value* CreateExtractValueKindFromVariable(llvm::Value* variable) {
-    return builder_->CreateExtractValue(variable, 0);
+    return builder_->CreateExtractValue(variable, 0, REG_NAME("kind"));
   }
 
   inline llvm::Value* CreateExtractValueHolderFromVariable(llvm::Value* variable) {
-    return builder_->CreateExtractValue(variable, 4);
+    return builder_->CreateExtractValue(variable, 4, REG_NAME("holder"));
   }
 
   inline llvm::Value* CreateLoadVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateLoad(types_->CreateVariableType(), variable_ptr);
+    return builder_->CreateLoad(types_->CreateVariableType(), variable_ptr, REG_NAME("variable"));
   }
 
   inline void CreateStoreValueKindToVariable(ValueKind value, llvm::Value* variable_ptr) {
@@ -576,31 +584,31 @@ class Compiler {
 
   inline llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueKindPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getInt8Ty(), ptr);
+    return builder_->CreateLoad(builder_->getInt8Ty(), ptr, REG_NAME("kind"));
   }
 
   inline llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getInt1Ty(), ptr);
+    return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("boolean"));
   }
 
   inline llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getDoubleTy(), ptr);
+    return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("number"));
   }
 
   inline llvm::Value* CreateLoadFunctionFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("lambda"));
   }
 
   inline llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("closure"));
   }
 
   inline llvm::Value* CreateLoadValue(llvm::Value* value_ptr) {
-    return builder_->CreateLoad(types_->CreateValueType(), value_ptr);
+    return CreateLoadVariable(value_ptr);
   }
 
   inline void CreateStoreValueKindToValue(ValueKind value, llvm::Value* value_ptr) {
@@ -649,16 +657,18 @@ class Compiler {
   // capture
 
   inline llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
-    return builder_->CreateStructGEP(types_->CreateCaptureType(), capture_ptr, 0);
+    return builder_->CreateStructGEP(
+        types_->CreateCaptureType(), capture_ptr, 0, REG_NAME("target.ptr"));
   }
 
   inline llvm::Value* CreateGetEscapedPtrOfCapture(llvm::Value* capture_ptr) {
-    return builder_->CreateStructGEP(types_->CreateCaptureType(), capture_ptr, 1);
+    return builder_->CreateStructGEP(
+        types_->CreateCaptureType(), capture_ptr, 1, REG_NAME("escaped.ptr"));
   }
 
   inline llvm::Value* CreateLoadTargetFromCapture(llvm::Value* capture_ptr) {
     auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("target"));
   }
 
   inline void CreateStoreTargetToCapture(llvm::Value* variable_ptr, llvm::Value* capture_ptr) {
@@ -674,37 +684,36 @@ class Compiler {
   // closure
 
   inline llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 0);
+    return builder_->CreateStructGEP(
+        types_->CreateClosureType(), closure_ptr, 0, REG_NAME("lambda.ptr"));
   }
 
   inline llvm::Value* CreateGetNumCapturesPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 1);
+    return builder_->CreateStructGEP(
+        types_->CreateClosureType(), closure_ptr, 1, REG_NAME("num_captures.ptr"));
   }
 
   inline llvm::Value* CreateGetCapturesPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 2);
+    return builder_->CreateStructGEP(
+        types_->CreateClosureType(), closure_ptr, 2, REG_NAME("captures.ptr"));
   }
 
   inline llvm::Value* CreateLoadLambdaFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetLambdaPtrOfClosure(closure_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("lambda"));
   }
 
   inline llvm::Value* CreateLoadNumCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetNumCapturesPtrOfClosure(closure_ptr);
-    return builder_->CreateLoad(builder_->getInt16Ty(), ptr);
+    return builder_->CreateLoad(builder_->getInt16Ty(), ptr, REG_NAME("num_captures"));
   }
 
   inline llvm::Value* CreateLoadCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("captures"));
   }
 
   llvm::BasicBlock* CreateBasicBlock(const char* name) {
-    return llvm::BasicBlock::Create(*context_, name, function_);
-  }
-
-  llvm::BasicBlock* CreateBasicBlock(const std::string& name) {
     return llvm::BasicBlock::Create(*context_, name, function_);
   }
 
@@ -739,10 +748,10 @@ class Compiler {
 
   // The following variables are reset for each function.
   llvm::Function* function_ = nullptr;
-  llvm::BasicBlock* prologue_block_ = nullptr;
   llvm::BasicBlock* locals_block_ = nullptr;
+  llvm::BasicBlock* args_block_ = nullptr;
   llvm::BasicBlock* body_block_ = nullptr;
-  llvm::BasicBlock* epilogue_block_ = nullptr;
+  llvm::BasicBlock* return_block_ = nullptr;
   llvm::Value* exec_context_ = nullptr;
   llvm::Value* caps_ = nullptr;
   llvm::Value* argc_ = nullptr;
@@ -772,21 +781,22 @@ class Compiler {
   std::unique_ptr<llvm::StandardInstrumentations> si_;
 
 #if defined(BEE_BUILD_DEBUG)
-  inline void PushDebugName(std::string&& name) {
-    debug_name_stack_.push_back(std::move(name));
+  inline void PushBasicBlockName(std::string&& name) {
+    basic_block_name_stack_.push_back(std::move(name));
   }
 
-  inline void PopDebugName() {
-    debug_name_stack_.pop_back();
+  // TODO: detect an ill-nested block name
+  inline void PopBasicBlockName() {
+    basic_block_name_stack_.pop_back();
   }
 
-  std::string MakeDebugName(const char* name) const;
+  std::string MakeBasicBlockName(const char* name) const;
 
-  std::vector<std::string> debug_name_stack_;
+  std::vector<std::string> basic_block_name_stack_;
 #else
-  inline void PushDebugName(std::string&&) {}
-  inline void PopDebugName() {}
-  inline const char* MakeDebugName(const char* name) {
+  inline void PushBasicBlockName(std::string&&) {}
+  inline void PopBasicBlockName() {}
+  inline const char* MakeBasicBlockName(const char* name) {
     return name;
   }
 #endif

@@ -1350,9 +1350,7 @@ impl FunctionContext {
         // PushScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
         self.put_command(CompileCommand::PushScope(scope_ref));
-        self.scope_stack.push(Scope {
-            scope_ref,
-        });
+        self.scope_stack.push(Scope { scope_ref });
     }
 
     fn end_scope(&mut self) {

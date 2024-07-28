@@ -37,24 +37,20 @@ async function main(args, options) {
   const runtimeSpec = yaml.parse(runtimeYaml);
 
   for (const func of runtimeSpec.functions) {
+    func.args = [{ name: 'context', type: 'opaque' }].concat(func.args).map(({ name, type }) => {
+      return { name, type, ctype: makeCType(type), llvmir_type: makeLLVMIRType(type) };
+    });
     func.c_type = makeCFunc(func);
+    func.c_ret = makeCType(func.ret);
     func.llvmir_ret = makeLLVMIRType(func.ret);
-    func.llvmir_args = makeLLVMIRArgs(func);
   }
 
   console.log(JSON.stringify(runtimeSpec));
 }
 
 function makeCFunc(func) {
-  const args = [{ name: 'context', type: 'opaque' }].concat(func.args).map(({ name, type }) =>
-    `${makeCType(type)} ${name}`
-  ).join(', ');
+  const args = func.args.map((arg) => `${arg.ctype} ${arg.name}`).join(', ');
   return `${makeCType(func.ret)} (*${func.name})(${args})`;
-}
-
-function makeLLVMIRArgs(func) {
-  let args = ['opaque'].concat(func.args.map((arg) => arg.type)).map(makeLLVMIRType).join(', ');
-  return `{${args}}`;
 }
 
 function makeLLVMIRType(type) {
