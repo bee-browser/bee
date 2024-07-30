@@ -93,25 +93,23 @@ fn main() -> Result<()> {
                     _ => (),
                 }
             }
-            Ok(())
         }
         Command::Compile(args) => {
             let source = read_source(args.source.as_ref())?;
             let program = runtime.parse_script(&source)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
             module.print(false); // to STDOUT
-            Ok(())
         }
         Command::Run(args) => {
             let source = read_source(args.source.as_ref())?;
             let program = runtime.parse_script(&source)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
-            match runtime.evaluate(module) {
-                Ok(_) => Ok(()),
-                Err(v) => anyhow::bail!("Uncaught {v:?}"),
+            if let Err(v) = runtime.evaluate(module) {
+                println!("Uncaught {v:?}");
             }
         }
     }
+    Ok(())
 }
 
 fn read_source(file: Option<&PathBuf>) -> Result<String> {

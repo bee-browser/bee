@@ -28,7 +28,8 @@ static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
 enum class Status : int32_t {
   Normal = 0,
-  Exception,
+  Exception = 1,
+  Unset = 2,
 };
 
 static_assert(sizeof(Status) == sizeof(int32_t), "size mismatched");

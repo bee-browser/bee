@@ -614,10 +614,7 @@ fn eval_return_statement_in_block() {
 
 #[test]
 fn eval_terminated_basic_block() {
-    eval!(
-        "print(a()); function a() { if (1) { return 1; } return 2; }",
-        1.
-    );
+    eval!(file: "terminated_basic_block.js", 1);
 }
 
 #[test]
@@ -976,14 +973,17 @@ fn eval_try_call_throw() {
 #[test]
 fn eval_closure_escape() {
     eval!(file: "closure_escape.js", 1);
+    eval!(file: "closure_escape_workaround.js", 1);
 }
 
 #[test]
 fn eval_closure_nested() {
     eval!(file: "closure_nested.js", 1);
+    eval!(file: "closure_nested_workaround.js", 1);
 }
 
 #[test]
 fn eval_closure_assignment() {
     eval!(file: "closure_assignment.js", 2);
+    eval!(file: "closure_assignment_workaround.js", 2);
 }

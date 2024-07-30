@@ -222,7 +222,9 @@ class Compiler {
     llvm::BasicBlock* init_block;
     llvm::BasicBlock* hoisted_block;
     llvm::BasicBlock* block;
-    llvm::BasicBlock* tidy_block;
+    llvm::BasicBlock* cleanup_block;
+    bool has_return_statement;
+    bool has_throw_statement;
   };
 
   inline void PushUndefined() {
@@ -552,10 +554,9 @@ class Compiler {
   }
 
   inline void CreateStoreValueToVariable(llvm::Value* value_ptr, llvm::Value* variable_ptr) {
-    auto* value = CreateLoadValue(value_ptr);
-    auto* kind = CreateExtractValueKindFromValue(value);
-    auto* holder = CreateExtractValueHolderFromValue(value);
+    auto* kind = CreateLoadValueKindFromValue(value_ptr);
     CreateStoreValueKindToVariable(kind, variable_ptr);
+    auto* holder = CreateLoadValueHolderFromValue(value_ptr);
     CreateStoreValueHolderToVariable(holder, variable_ptr);
   }
 
@@ -585,6 +586,11 @@ class Compiler {
   inline llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueKindPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt8Ty(), ptr, REG_NAME("kind"));
+  }
+
+  inline llvm::Value* CreateLoadValueHolderFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt64Ty(), ptr, REG_NAME("holder"));
   }
 
   inline llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
@@ -676,9 +682,10 @@ class Compiler {
     builder_->CreateStore(variable_ptr, ptr);
   }
 
-  inline void CreateStoreEscapedToCapture(llvm::Value* variable, llvm::Value* capture_ptr) {
+  inline void CreateStoreEscapedToCapture(llvm::Value* variable_ptr, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
-    builder_->CreateStore(variable, ptr);
+    auto align = llvm::Align(sizeof(double));
+    builder_->CreateMemCpy(ptr, align, variable_ptr, align, types_->GetWord(sizeof(Variable)));
   }
 
   // closure
@@ -756,7 +763,7 @@ class Compiler {
   llvm::Value* caps_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
-  llvm::Value* ret_ = nullptr;
+  llvm::Value* retv_ = nullptr;
   llvm::Value* status_ = nullptr;
 
   // The following variables must be reset in the end of compilation for each function.
