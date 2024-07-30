@@ -609,7 +609,7 @@ fn eval_block_statement() {
 
 #[test]
 fn eval_return_statement_in_block() {
-    eval!("print(a()); function a() { let a = 1; { return a; } }", 1.);
+    eval!(file: "return_statement_in_block.js", 1);
 }
 
 #[test]

@@ -1490,6 +1490,10 @@ void Compiler::EndScope(size_t scope_id) {
     auto* switch_inst = builder_->CreateSwitch(status, block);
     if (scope.has_return_statement) {
       switch_inst->addCase(builder_->getInt32(static_cast<int32_t>(Status::Normal)), next_cleanup);
+      if (!scope_stack_.empty()) {
+        // Propagate the flag to the enclosing scope.
+        scope_stack_.back().has_return_statement = true;
+      }
     }
     if (scope.has_throw_statement) {
       // TODO: nested blocks
