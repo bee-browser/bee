@@ -3,10 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-enum class Status;
-struct Value;
 struct Closure;
-typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
 
 enum class LocatorKind : uint16_t {
   None,
@@ -26,13 +23,18 @@ struct Locator {
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
-enum class Status : int32_t {
-  Normal = 0,
-  Exception = 1,
-  Unset = 2,
+#define STATUS_UNSET_BIT 0x10
+#define STATUS_MASK 0x0F
+#define STATUS_NORMAL 0x00
+#define STATUS_EXCEPTION 0x01
+#define STATUS_UNSET (STATUS_UNSET_BIT | STATUS_NORMAL)
+
+enum class Status : uint32_t {
+  Normal = STATUS_NORMAL,
+  Exception = STATUS_EXCEPTION,
 };
 
-static_assert(sizeof(Status) == sizeof(int32_t), "size mismatched");
+static_assert(sizeof(Status) == sizeof(uint32_t), "size mismatched");
 
 enum class ValueKind : uint8_t {
   // DO NOT CHANGE THE ORDER OF THE FOLLOWING ENUM VARIANTS.
@@ -79,6 +81,8 @@ struct Variable {
 #define VARIABLE_STRICT 0x08
 
 static_assert(sizeof(Variable) == sizeof(uint64_t) * 2, "size mismatched");
+
+typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
 
 // TODO(issue#237): GcCell
 struct Capture {

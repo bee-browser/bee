@@ -764,6 +764,7 @@ class Compiler {
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
   llvm::Value* retv_ = nullptr;
+  // Holds one of STATUS_XXX values, not Status::*.
   llvm::Value* status_ = nullptr;
 
   // The following variables must be reset in the end of compilation for each function.

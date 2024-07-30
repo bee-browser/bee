@@ -36,6 +36,12 @@
 
 namespace {
 
+constexpr uint8_t kValueKindUndefined = static_cast<uint8_t>(ValueKind::Undefined);
+constexpr uint8_t kValueKindNull = static_cast<uint8_t>(ValueKind::Null);
+constexpr uint8_t kValueKindBoolean = static_cast<uint8_t>(ValueKind::Boolean);
+constexpr uint8_t kValueKindNumber = static_cast<uint8_t>(ValueKind::Number);
+constexpr uint8_t kValueKindClosure = static_cast<uint8_t>(ValueKind::Closure);
+
 inline uint32_t ComputeKeyFromLocator(Locator locator) {
   return (static_cast<uint32_t>(locator.kind) << 16) | static_cast<uint32_t>(locator.index);
 }
@@ -838,8 +844,8 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
   auto* end_block = CreateBasicBlock(BB_NAME("block"));
 
   // if (value.kind == ValueKind::Closure)
-  auto* is_closure = builder_->CreateICmpEQ(
-      kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)), REG_NAME("is_closure"));
+  auto* is_closure =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindClosure), REG_NAME("is_closure"));
   builder_->CreateCondBr(is_closure, then_block, else_block);
   // {
   builder_->SetInsertPoint(then_block);
@@ -860,7 +866,7 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
 
 // Handle an exception if it's thrown.
 void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* retv) {
-  auto* status_exception = builder_->getInt32(static_cast<int32_t>(Status::Exception));
+  auto* status_exception = builder_->getInt32(STATUS_EXCEPTION);
   auto* then_block = CreateBasicBlock(BB_NAME("then"));
   auto* end_block = CreateBasicBlock(BB_NAME("block"));
 
@@ -1329,7 +1335,7 @@ void Compiler::Catch(bool nominal) {
 
   if (!nominal) {
     // TODO: Reset the status to Status::Normal.
-    builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
+    builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
   }
 
   catch_stack_.pop_back();
@@ -1358,9 +1364,8 @@ void Compiler::TryEnd() {
   // Jump from the end of the finally block to the beginning of the outer catch block if there is
   // an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
-  auto* has_uncaught_exception =
-      builder_->CreateICmpEQ(status, builder_->getInt32(static_cast<int32_t>(Status::Exception)),
-          REG_NAME("has_uncaught_exception"));
+  auto* has_uncaught_exception = builder_->CreateICmpEQ(
+      status, builder_->getInt32(STATUS_EXCEPTION), REG_NAME("has_uncaught_exception"));
   assert(!catch_stack_.empty());
   auto* catch_block = catch_stack_.back();
   builder_->CreateCondBr(has_uncaught_exception, catch_block, end_block);
@@ -1390,7 +1395,7 @@ void Compiler::StartFunction(const char* name) {
   builder_->SetInsertPoint(body_block_);
 
   CreateStoreUndefinedToValue(retv_);
-  builder_->CreateStore(builder_->getInt32(static_cast<uint32_t>(Status::Unset)), status_);
+  builder_->CreateStore(builder_->getInt32(STATUS_UNSET), status_);
 }
 
 void Compiler::EndFunction(bool optimize) {
@@ -1408,8 +1413,9 @@ void Compiler::EndFunction(bool optimize) {
   builder_->SetInsertPoint(return_block_);
 
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, "status");
-  auto* masked = builder_->CreateAnd(status, builder_->getInt32(1));
-  builder_->CreateRet(masked);  // Status::Normal or Status::Exception
+  // Convert STATUS_XXX into Status.
+  auto* masked = builder_->CreateAnd(status, builder_->getInt32(STATUS_MASK));
+  builder_->CreateRet(masked);
 
   // DumpStack();
 
@@ -1489,7 +1495,7 @@ void Compiler::EndScope(size_t scope_id) {
     auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, "status");
     auto* switch_inst = builder_->CreateSwitch(status, block);
     if (scope.has_return_statement) {
-      switch_inst->addCase(builder_->getInt32(static_cast<int32_t>(Status::Normal)), next_cleanup);
+      switch_inst->addCase(builder_->getInt32(STATUS_NORMAL), next_cleanup);
       if (!scope_stack_.empty()) {
         // Propagate the flag to the enclosing scope.
         scope_stack_.back().has_return_statement = true;
@@ -1499,8 +1505,7 @@ void Compiler::EndScope(size_t scope_id) {
       // TODO: nested blocks
       assert(!catch_stack_.empty());
       auto* catch_block = catch_stack_.back();
-      switch_inst->addCase(
-          builder_->getInt32(static_cast<int32_t>(Status::Exception)), catch_block);
+      switch_inst->addCase(builder_->getInt32(STATUS_EXCEPTION), catch_block);
     }
   }
 
@@ -1700,7 +1705,7 @@ void Compiler::Return(size_t n) {
     CreateStoreItemToValue(item, retv_);
   }
 
-  builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Normal)), status_);
+  builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
 
   llvm::BasicBlock* next_block;
   if (scope_stack_.empty()) {
@@ -1719,7 +1724,7 @@ void Compiler::Throw() {
   auto item = Dereference();
   CreateStoreItemToValue(item, retv_);
 
-  builder_->CreateStore(builder_->getInt32(static_cast<int32_t>(Status::Exception)), status_);
+  builder_->CreateStore(builder_->getInt32(STATUS_EXCEPTION), status_);
 
   llvm::BasicBlock* next_block;
   if (scope_stack_.empty()) {
@@ -2049,7 +2054,7 @@ llvm::Value* Compiler::CreateIsNonNullish(const Item& item) {
 llvm::Value* Compiler::CreateIsNonNullish(llvm::Value* value_ptr) {
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   return builder_->CreateICmpUGT(
-      kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Null)), REG_NAME("is_non_nullish"));
+      kind, builder_->getInt8(kValueKindNull), REG_NAME("is_non_nullish"));
 }
 
 // 7.1.2 ToBoolean ( argument )
@@ -2189,14 +2194,13 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
 
 llvm::Value* Compiler::CreateIsUndefined(llvm::Value* value_ptr) {
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  return builder_->CreateICmpEQ(kind,
-      builder_->getInt8(static_cast<uint8_t>(ValueKind::Undefined)), REG_NAME("is_undefined"));
+  return builder_->CreateICmpEQ(
+      kind, builder_->getInt8(kValueKindUndefined), REG_NAME("is_undefined"));
 }
 
 llvm::Value* Compiler::CreateIsNull(llvm::Value* value_ptr) {
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  return builder_->CreateICmpEQ(
-      kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Null)), REG_NAME("is_null"));
+  return builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindNull), REG_NAME("is_null"));
 }
 
 llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value) {
@@ -2205,8 +2209,8 @@ llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Va
   auto* merge_block = CreateBasicBlock(BB_NAME("end"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(
-      kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Boolean)), REG_NAME("is_boolean"));
+  auto* cond =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindBoolean), REG_NAME("is_boolean"));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
@@ -2232,8 +2236,8 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
   auto* merge_block = CreateBasicBlock(BB_NAME("end"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(
-      kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Number)), REG_NAME("is_number"));
+  auto* cond =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindNumber), REG_NAME("is_number"));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
@@ -2259,8 +2263,8 @@ llvm::Value* Compiler::CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Va
   auto* merge_block = CreateBasicBlock(BB_NAME("end"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* cond = builder_->CreateICmpEQ(
-      kind, builder_->getInt8(static_cast<uint8_t>(ValueKind::Closure)), REG_NAME("is_closure"));
+  auto* cond =
+      builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindClosure), REG_NAME("is_closure"));
   builder_->CreateCondBr(cond, then_block, else_block);
 
   builder_->SetInsertPoint(then_block);
