@@ -77,7 +77,11 @@ struct Flow {
     ExceptionFlow exception;
   };
 
-  inline Flow(FlowKind kind, llvm::BasicBlock* locals_block, llvm::BasicBlock* args_block, llvm::BasicBlock* body_block, llvm::BasicBlock* return_block)
+  inline Flow(FlowKind kind,
+      llvm::BasicBlock* locals_block,
+      llvm::BasicBlock* args_block,
+      llvm::BasicBlock* body_block,
+      llvm::BasicBlock* return_block)
       : kind(kind) {
     function.locals_block = locals_block;
     function.args_block = args_block;
@@ -85,7 +89,12 @@ struct Flow {
     function.return_block = return_block;
   }
 
-  inline Flow(FlowKind kind, llvm::BasicBlock* init, llvm::BasicBlock* hoisted, llvm::BasicBlock* block, llvm::BasicBlock* cleanup, size_t outer_index)
+  inline Flow(FlowKind kind,
+      llvm::BasicBlock* init,
+      llvm::BasicBlock* hoisted,
+      llvm::BasicBlock* block,
+      llvm::BasicBlock* cleanup,
+      size_t outer_index)
       : kind(kind) {
     scope.init_block = init;
     scope.hoisted_block = hoisted;
@@ -96,7 +105,13 @@ struct Flow {
     scope.thrown = false;
   }
 
-  inline Flow(FlowKind kind, llvm::BasicBlock* try_block, llvm::BasicBlock* catch_block, llvm::BasicBlock* finally_block, llvm::BasicBlock* end_block, size_t outer_index, bool thrown)
+  inline Flow(FlowKind kind,
+      llvm::BasicBlock* try_block,
+      llvm::BasicBlock* catch_block,
+      llvm::BasicBlock* finally_block,
+      llvm::BasicBlock* end_block,
+      size_t outer_index,
+      bool thrown)
       : kind(kind) {
     exception.try_block = try_block;
     exception.catch_block = catch_block;
@@ -122,7 +137,10 @@ class FlowStack {
     return stack_.empty();
   }
 
-  inline void PushFunctionFlow(llvm::BasicBlock* locals_block, llvm::BasicBlock* args_block, llvm::BasicBlock* body_block, llvm::BasicBlock* return_block) {
+  inline void PushFunctionFlow(llvm::BasicBlock* locals_block,
+      llvm::BasicBlock* args_block,
+      llvm::BasicBlock* body_block,
+      llvm::BasicBlock* return_block) {
     assert(stack_.empty());
     stack_.emplace_back(FlowKind::kFunction, locals_block, args_block, body_block, return_block);
   }
@@ -137,7 +155,10 @@ class FlowStack {
     return flow.function;
   }
 
-  inline void PushScopeFlow(llvm::BasicBlock* init, llvm::BasicBlock* hoisted, llvm::BasicBlock* block, llvm::BasicBlock* cleanup) {
+  inline void PushScopeFlow(llvm::BasicBlock* init,
+      llvm::BasicBlock* hoisted,
+      llvm::BasicBlock* block,
+      llvm::BasicBlock* cleanup) {
     auto index = stack_.size();
     stack_.emplace_back(FlowKind::kScope, init, hoisted, block, cleanup, scope_index_);
     scope_index_ = index;
@@ -176,9 +197,13 @@ class FlowStack {
     return flow;
   }
 
-  inline void PushExceptionFlow(llvm::BasicBlock* try_block, llvm::BasicBlock* catch_block, llvm::BasicBlock* finally_block, llvm::BasicBlock* end_block) {
+  inline void PushExceptionFlow(llvm::BasicBlock* try_block,
+      llvm::BasicBlock* catch_block,
+      llvm::BasicBlock* finally_block,
+      llvm::BasicBlock* end_block) {
     auto index = stack_.size();
-    stack_.emplace_back(FlowKind::kException, try_block, catch_block, finally_block, end_block, exception_index_, false);
+    stack_.emplace_back(FlowKind::kException, try_block, catch_block, finally_block, end_block,
+        exception_index_, false);
     exception_index_ = index;
   }
 
