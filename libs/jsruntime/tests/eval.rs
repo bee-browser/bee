@@ -971,6 +971,16 @@ fn eval_try_call_throw() {
 }
 
 #[test]
+fn eval_try_throw_in_block_catch() {
+    eval!(file: "try_throw_in_block_catch.js", throws: 1);
+}
+
+#[test]
+fn eval_try_throw_in_block_finally() {
+    eval!(file: "try_throw_in_block_finally.js", throws: 1);
+}
+
+#[test]
 fn eval_closure_escape() {
     eval!(file: "closure_escape.js", 1);
     eval!(file: "closure_escape_workaround.js", 1);

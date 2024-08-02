@@ -16,6 +16,7 @@
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/StandardInstrumentations.h>
 #include <llvm/Support/Alignment.h>
+#include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Scalar/Reassociate.h>
@@ -131,14 +132,11 @@ void Compiler::Function(uint32_t func_id, const char* name) {
 
 void Compiler::Closure(bool declaration, uint16_t num_captures) {
   assert(stack_.size() >= 1 + static_cast<size_t>(num_captures));
-  assert(!scope_stack_.empty());
-
-  auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup;
   if (declaration) {
     backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(scope.hoisted_block);
+    builder_->SetInsertPoint(flow_stack_.scope_flow().hoisted_block);
   }
 
   auto* lambda = PopFunction();
@@ -742,11 +740,8 @@ void Compiler::DeclareMutable() {
 void Compiler::DeclareFunction() {
   static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
-  assert(!scope_stack_.empty());
-  auto& scope = scope_stack_.back();
-
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.hoisted_block);
+  builder_->SetInsertPoint(flow_stack_.scope_flow().hoisted_block);
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -763,11 +758,8 @@ void Compiler::DeclareFunction() {
 void Compiler::DeclareClosure() {
   static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
-  assert(!scope_stack_.empty());
-  auto& scope = scope_stack_.back();
-
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.hoisted_block);
+  builder_->SetInsertPoint(flow_stack_.scope_flow().hoisted_block);
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -839,8 +831,8 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
   auto* closure = CreateAlloc1(builder_->getPtrTy(), REG_NAME("closure.ptr"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* then_block = CreateBasicBlock(BB_NAME("then"));
-  auto* else_block = CreateBasicBlock(BB_NAME("else"));
+  auto* then_block = CreateBasicBlock(BB_NAME("closure"));
+  auto* else_block = CreateBasicBlock(BB_NAME("not_closure"));
   auto* end_block = CreateBasicBlock(BB_NAME("block"));
 
   // if (value.kind == ValueKind::Closure)
@@ -867,7 +859,7 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
 // Handle an exception if it's thrown.
 void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* retv) {
   auto* status_exception = builder_->getInt32(STATUS_EXCEPTION);
-  auto* then_block = CreateBasicBlock(BB_NAME("then"));
+  auto* then_block = CreateBasicBlock(BB_NAME("exception"));
   auto* end_block = CreateBasicBlock(BB_NAME("block"));
 
   // if (status == Status::Exception)
@@ -878,9 +870,8 @@ void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* r
   // Store the exception.
   builder_->CreateStore(status_exception, status_);
   CreateStoreValueToVariable(retv, retv_);
-  assert(!catch_stack_.empty());
-  auto* catch_block = catch_stack_.back();
-  builder_->CreateBr(catch_block);
+  auto* exception_block = flow_stack_.exception_block();
+  builder_->CreateBr(exception_block);
   // }
 
   builder_->SetInsertPoint(end_block);
@@ -1303,75 +1294,74 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
 }
 
 void Compiler::Try() {
-  PushBasicBlockName("try");
-
-  auto* try_block = CreateBasicBlock(BB_NAME("start"));
+  auto* try_block = CreateBasicBlock(BB_NAME("try"));
   auto* catch_block = CreateBasicBlock(BB_NAME("catch"));
   auto* finally_block = CreateBasicBlock(BB_NAME("finally"));
-  auto* end_block = CreateBasicBlock(BB_NAME("end"));
+  auto* end_block = CreateBasicBlock(BB_NAME("try-end"));
+
+  flow_stack_.PushExceptionFlow(try_block, catch_block, finally_block, end_block);
 
   // Jump from the end of previous block to the beginning of the try block.
   builder_->CreateBr(try_block);
 
   builder_->SetInsertPoint(try_block);
 
-  PushBlock(end_block, "try-end");
-  PushBlock(finally_block, "finally");
-  PushBlock(catch_block, "catch");
-
-  catch_stack_.push_back(catch_block);
+  PushBasicBlockName("try");
 }
 
 void Compiler::Catch(bool nominal) {
-  auto* catch_block = PopBlock();
-  auto* finally_block = PeekBlock();
+  PopBasicBlockName();
+
+  flow_stack_.SetCaught(nominal);
+  const auto& flow = flow_stack_.exception_flow();
 
   // Jump from the end of the try block to the beginning of the finally block.
-  builder_->CreateBr(finally_block);
-  finally_block->moveAfter(builder_->GetInsertBlock());
+  builder_->CreateBr(flow.finally_block);
+  flow.finally_block->moveAfter(builder_->GetInsertBlock());
 
-  catch_block->moveAfter(builder_->GetInsertBlock());
-  builder_->SetInsertPoint(catch_block);
+  flow.catch_block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(flow.catch_block);
 
   if (!nominal) {
     // TODO: Reset the status to Status::Normal.
     builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
   }
 
-  catch_stack_.pop_back();
-  catch_stack_.push_back(finally_block);
+  PushBasicBlockName("catch");
 }
 
 void Compiler::Finally(bool nominal) {
   UNUSED(nominal);
 
-  auto* finally_block = PopBlock();
+  PopBasicBlockName();
+
+  flow_stack_.SetEnded();
+  const auto& flow = flow_stack_.exception_flow();
 
   // Jump from the end of the catch block to the beginning of the finally block.
-  builder_->CreateBr(finally_block);
+  builder_->CreateBr(flow.finally_block);
 
-  finally_block->moveAfter(builder_->GetInsertBlock());
-  builder_->SetInsertPoint(finally_block);
+  flow.finally_block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(flow.finally_block);
 
-  catch_stack_.pop_back();
+  PushBasicBlockName("finally");
 }
 
 void Compiler::TryEnd() {
   PopBasicBlockName();
 
-  auto* end_block = PopBlock();
+  auto flow = flow_stack_.PopExceptionFlow();
 
   // Jump from the end of the finally block to the beginning of the outer catch block if there is
   // an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
   auto* has_uncaught_exception = builder_->CreateICmpEQ(
       status, builder_->getInt32(STATUS_EXCEPTION), REG_NAME("has_uncaught_exception"));
-  assert(!catch_stack_.empty());
-  auto* catch_block = catch_stack_.back();
-  builder_->CreateCondBr(has_uncaught_exception, catch_block, end_block);
+  auto* exception_block = flow_stack_.exception_block();
+  builder_->CreateCondBr(has_uncaught_exception, exception_block, flow.end_block);
 
-  end_block->moveAfter(builder_->GetInsertBlock());
-  builder_->SetInsertPoint(end_block);
+  flow.end_block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(flow.end_block);
 }
 
 void Compiler::StartFunction(const char* name) {
@@ -1382,12 +1372,13 @@ void Compiler::StartFunction(const char* name) {
   body_block_ = CreateBasicBlock(BB_NAME("body"));
   return_block_ = CreateBasicBlock(BB_NAME("return"));
 
+  flow_stack_.PushFunctionFlow(locals_block_, args_block_, body_block_, return_block_);
+
   exec_context_ = function_->getArg(0);
   caps_ = function_->getArg(1);
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
   retv_ = function_->getArg(4);
-  catch_stack_.push_back(return_block_);
 
   builder_->SetInsertPoint(locals_block_);
   status_ = CreateAlloc1(builder_->getInt32Ty(), REG_NAME("status.ptr"));
@@ -1399,18 +1390,20 @@ void Compiler::StartFunction(const char* name) {
 }
 
 void Compiler::EndFunction(bool optimize) {
-  builder_->CreateBr(return_block_);
-  return_block_->moveAfter(builder_->GetInsertBlock());
+  auto flow = flow_stack_.PopFunctionFlow();
 
-  builder_->SetInsertPoint(locals_block_);
-  builder_->CreateBr(args_block_);
-  args_block_->moveAfter(builder_->GetInsertBlock());
+  builder_->CreateBr(flow.return_block);
+  flow.return_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(args_block_);
-  builder_->CreateBr(body_block_);
-  body_block_->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(flow.locals_block);
+  builder_->CreateBr(flow.args_block);
+  flow.args_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(return_block_);
+  builder_->SetInsertPoint(flow.args_block);
+  builder_->CreateBr(flow.body_block);
+  flow.body_block->moveAfter(builder_->GetInsertBlock());
+
+  builder_->SetInsertPoint(flow.return_block);
 
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, "status");
   // Convert STATUS_XXX into Status.
@@ -1430,8 +1423,8 @@ void Compiler::EndFunction(bool optimize) {
   assert(continue_stack_.empty());
   continue_stack_.clear();
 
-  assert(catch_stack_.size() == 1);
-  catch_stack_.clear();
+  assert(flow_stack_.IsEmpty());
+  flow_stack_.Clear();
 
   if (llvm::verifyFunction(*function_, &llvm::errs())) {
     llvm::errs() << "<broken-function>\n";
@@ -1452,10 +1445,12 @@ void Compiler::StartScope(size_t scope_id) {
   auto* hoisted = CreateBasicBlock(BB_NAME("hoisted"));
   auto* block = CreateBasicBlock(BB_NAME("block"));
   auto* cleanup = CreateBasicBlock(BB_NAME("cleanup"));
+
   builder_->CreateBr(init);
   init->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(block);
-  scope_stack_.push_back({init, hoisted, block, cleanup, false, false});
+
+  flow_stack_.PushScopeFlow(init, hoisted, block, cleanup);
 }
 
 void Compiler::EndScope(size_t scope_id) {
@@ -1463,49 +1458,35 @@ void Compiler::EndScope(size_t scope_id) {
 
   PopBasicBlockName();
 
-  assert(!scope_stack_.empty());
-  auto scope = scope_stack_.back();
-  scope_stack_.pop_back();
+  auto flow = flow_stack_.PopScopeFlow();
 
-  builder_->CreateBr(scope.cleanup_block);
-  scope.cleanup_block->moveAfter(builder_->GetInsertBlock());
+  builder_->CreateBr(flow.cleanup_block);
+  flow.cleanup_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(scope.init_block);
-  builder_->CreateBr(scope.hoisted_block);
-  scope.hoisted_block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(flow.init_block);
+  builder_->CreateBr(flow.hoisted_block);
+  flow.hoisted_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(scope.hoisted_block);
-  builder_->CreateBr(scope.block);
-  scope.block->moveAfter(builder_->GetInsertBlock());
-
-  llvm::BasicBlock* next_cleanup;
-  if (scope_stack_.empty()) {
-    next_cleanup = return_block_;
-  } else {
-    next_cleanup = scope_stack_.back().cleanup_block;
-  }
+  builder_->SetInsertPoint(flow.hoisted_block);
+  builder_->CreateBr(flow.block);
+  flow.block->moveAfter(builder_->GetInsertBlock());
 
   auto* block = CreateBasicBlock(BB_NAME("block"));
 
-  builder_->SetInsertPoint(scope.cleanup_block);
+  builder_->SetInsertPoint(flow.cleanup_block);
 
-  if (!scope.has_return_statement && !scope.has_throw_statement) {
+  if (!flow.returned && !flow.thrown) {
     builder_->CreateBr(block);
   } else {
     auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, "status");
     auto* switch_inst = builder_->CreateSwitch(status, block);
-    if (scope.has_return_statement) {
-      switch_inst->addCase(builder_->getInt32(STATUS_NORMAL), next_cleanup);
-      if (!scope_stack_.empty()) {
-        // Propagate the flag to the enclosing scope.
-        scope_stack_.back().has_return_statement = true;
-      }
+    if (flow.returned) {
+      auto* cleanup_block = flow_stack_.cleanup_block();
+      switch_inst->addCase(builder_->getInt32(STATUS_NORMAL), cleanup_block);
     }
-    if (scope.has_throw_statement) {
-      // TODO: nested blocks
-      assert(!catch_stack_.empty());
-      auto* catch_block = catch_stack_.back();
-      switch_inst->addCase(builder_->getInt32(STATUS_EXCEPTION), catch_block);
+    if (flow.thrown) {
+      auto* exception_block = flow_stack_.exception_block();
+      switch_inst->addCase(builder_->getInt32(STATUS_EXCEPTION), exception_block);
     }
   }
 
@@ -1528,12 +1509,9 @@ void Compiler::AllocateLocals(uint16_t num_locals) {
 
 void Compiler::InitLocal(Locator locator) {
   assert(locator.kind == LocatorKind::Local);
-  assert(!scope_stack_.empty());
-
-  auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.init_block);
+  builder_->SetInsertPoint(flow_stack_.scope_flow().init_block);
 
   auto* variable_ptr = GetLocalVariablePtr(locator.index);
   CreateStoreFlagsToVariable(0, variable_ptr);
@@ -1543,7 +1521,6 @@ void Compiler::InitLocal(Locator locator) {
 
 void Compiler::TidyLocal(Locator locator) {
   assert(locator.kind == LocatorKind::Local);
-  assert(!scope_stack_.empty());
 
   UNUSED(locator);
   // TODO: GC
@@ -1551,12 +1528,9 @@ void Compiler::TidyLocal(Locator locator) {
 
 void Compiler::CreateCapture(Locator locator) {
   assert(locator.kind != LocatorKind::Capture);
-  assert(!scope_stack_.empty());
-
-  auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.init_block);
+  builder_->SetInsertPoint(flow_stack_.scope_flow().init_block);
 
   llvm::Value* variable_ptr;
   switch (locator.kind) {
@@ -1581,14 +1555,10 @@ void Compiler::CreateCapture(Locator locator) {
 }
 
 void Compiler::CaptureVariable(bool declaration) {
-  assert(!scope_stack_.empty());
-
-  auto& scope = scope_stack_.back();
-
   llvm::BasicBlock* backup;
   if (declaration) {
     backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(scope.hoisted_block);
+    builder_->SetInsertPoint(flow_stack_.scope_flow().hoisted_block);
   }
 
   llvm::Value* capture_ptr;
@@ -1618,12 +1588,9 @@ void Compiler::CaptureVariable(bool declaration) {
 
 void Compiler::EscapeVariable(Locator locator) {
   assert(locator.kind != LocatorKind::Capture);
-  assert(!scope_stack_.empty());
-
-  auto& scope = scope_stack_.back();
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(scope.cleanup_block);
+  builder_->SetInsertPoint(flow_stack_.scope_flow().cleanup_block);
 
   auto key = ComputeKeyFromLocator(locator);
   assert(captures_.find(key) != captures_.end());
@@ -1707,13 +1674,9 @@ void Compiler::Return(size_t n) {
 
   builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
 
-  llvm::BasicBlock* next_block;
-  if (scope_stack_.empty()) {
-    next_block = return_block_;
-  } else {
-    next_block = scope_stack_.back().cleanup_block;
-    scope_stack_.back().has_return_statement = true;
-  }
+  flow_stack_.SetReturned();
+
+  llvm::BasicBlock* next_block = flow_stack_.cleanup_block();
   builder_->CreateBr(next_block);
 
   // TODO(issue#234)
@@ -1726,13 +1689,9 @@ void Compiler::Throw() {
 
   builder_->CreateStore(builder_->getInt32(STATUS_EXCEPTION), status_);
 
-  llvm::BasicBlock* next_block;
-  if (scope_stack_.empty()) {
-    next_block = return_block_;
-  } else {
-    next_block = scope_stack_.back().cleanup_block;
-    scope_stack_.back().has_throw_statement = true;
-  }
+  flow_stack_.SetThrown();
+
+  llvm::BasicBlock* next_block = flow_stack_.exception_block();
   builder_->CreateBr(next_block);
   next_block->moveAfter(builder_->GetInsertBlock());
 
@@ -1816,6 +1775,7 @@ void Compiler::DumpStack() {
     llvm::errs() << "\n";
   }
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
+  flow_stack_.Dump();
 }
 
 Compiler::Item Compiler::Dereference(struct Reference* ref) {
