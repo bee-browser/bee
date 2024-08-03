@@ -1990,8 +1990,8 @@ where
     fn process_case_block(&mut self) -> Result<(), Error> {
         ensure!(self.switch_statement_depth < MAX_SWITCH_STATEMENT_DEPTH);
         self.switch_statement_depth += 1;
-        self.enqueue(Node::StartBlockScope);
         self.enqueue(Node::CaseBlock);
+        self.enqueue(Node::StartBlockScope);
         Ok(())
     }
 
