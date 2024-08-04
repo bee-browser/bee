@@ -1980,7 +1980,6 @@ where
     fn process_switch_statement(&mut self) -> Result<(), Error> {
         assert!(self.switch_statement_depth > 0);
         self.switch_statement_depth -= 1;
-        self.enqueue(Node::EndBlockScope); // See process_case_block().
         self.enqueue(Node::SwitchStatement);
         self.replace(5, Detail::SwitchStatement);
         Ok(())
@@ -1991,7 +1990,6 @@ where
         ensure!(self.switch_statement_depth < MAX_SWITCH_STATEMENT_DEPTH);
         self.switch_statement_depth += 1;
         self.enqueue(Node::CaseBlock);
-        self.enqueue(Node::StartBlockScope);
         Ok(())
     }
 

@@ -1203,6 +1203,8 @@ void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
 
   auto* end_block = CreateBasicBlock(BB_NAME("end"));
   break_stack_.push_back({end_block, 0});
+
+  flow_stack_.PushSelectFlow(end_block);
 }
 
 void Compiler::CaseClause(bool has_statement) {
@@ -1210,7 +1212,7 @@ void Compiler::CaseClause(bool has_statement) {
 
   auto branch = flow_stack_.PopBranchFlow();
 
-  auto* case_clause_statement = builder_->GetInsertBlock();
+  auto* case_end_block = builder_->GetInsertBlock();
 
   auto* else_block = CreateBasicBlock(BB_NAME("else"));
   auto* cond_value = PopBoolean();
@@ -1219,34 +1221,33 @@ void Compiler::CaseClause(bool has_statement) {
   builder_->CreateCondBr(cond_value, branch.after_block, else_block);
   builder_->SetInsertPoint(else_block);
 
-  PushBlock(case_clause_statement, "case-clause-statement");
-  Swap();
   Duplicate();
+
+  flow_stack_.PushCaseEndFlow(case_end_block);
 }
 
 void Compiler::DefaultClause(bool has_statement) {
   UNUSED(has_statement);
 
   auto branch = flow_stack_.PopBranchFlow();
-  UNUSED(branch);
 
-  auto* default_clause_statement = builder_->GetInsertBlock();
-
+  auto* case_end_block = builder_->GetInsertBlock();
   builder_->SetInsertPoint(branch.before_block);
 
-  PushBlock(branch.after_block, "default-clause-br");
-  Swap();
-  PushBlock(default_clause_statement, "default-clause-statement");
-  Swap();
   Duplicate();
+
+  flow_stack_.PushCaseEndFlow(case_end_block);
+  flow_stack_.SetDefaultCaseBlock(branch.after_block);
 }
 
 void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
   UNUSED(id);
+  UNUSED(default_index);
 
   PopBasicBlockName();
 
-  auto* end_block = break_stack_.back().block;
+  const auto& select = flow_stack_.select_flow();
+
   break_stack_.pop_back();
 
   // Discard the switch-values
@@ -1257,19 +1258,15 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
 
   // Connect statement blocks of case/default clauses.
   // The blocks has been stored in the stack in reverse order.
-  auto* fallback_block = end_block;
-  llvm::BasicBlock* default_block = nullptr;
+  auto* fall_through_block = select.end_block;
   for (auto i = num_cases - 1;; --i) {
-    auto* block = PopBlock();
-    if (block->getTerminator() == nullptr) {
-      builder_->SetInsertPoint(block);
-      builder_->CreateBr(fallback_block);
-      fallback_block->moveAfter(builder_->GetInsertBlock());
+    auto case_end = flow_stack_.PopCaseEndFlow();
+    if (case_end.block->getTerminator() == nullptr) {
+      builder_->SetInsertPoint(case_end.block);
+      builder_->CreateBr(fall_through_block);
+      fall_through_block->moveAfter(builder_->GetInsertBlock());
     }
-    fallback_block = block;
-    if (i == default_index) {
-      default_block = PopBlock();
-    }
+    fall_through_block = case_end.block;
     if (i == 0) {
       break;
     }
@@ -1278,14 +1275,16 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
   // Create an unconditional jump to the statement of the default clause if it exists.
   // Otherwise, jump to the end block.
   builder_->SetInsertPoint(case_block);
-  if (default_block != nullptr) {
-    builder_->CreateBr(default_block);
+  if (select.default_case_block != nullptr) {
+    builder_->CreateBr(select.default_case_block);
   } else {
-    builder_->CreateBr(end_block);
-    end_block->moveAfter(builder_->GetInsertBlock());
+    builder_->CreateBr(select.end_block);
   }
 
-  builder_->SetInsertPoint(end_block);
+  select.end_block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(select.end_block);
+
+  flow_stack_.PopSelectFlow();
 }
 
 void Compiler::Try() {

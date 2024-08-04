@@ -421,10 +421,15 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_switch_statement();
+        self.scope_tree_builder.pop();
     }
 
     fn handle_case_block(&mut self) {
-        self.context_stack.last_mut().unwrap().process_case_block();
+        let scope_ref = self.scope_tree_builder.push_block("switch");
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_case_block(scope_ref);
     }
 
     fn handle_case_selector(&mut self) {
@@ -1228,7 +1233,8 @@ impl FunctionContext {
         self.num_for_statements += 1;
     }
 
-    fn process_case_block(&mut self) {
+    fn process_case_block(&mut self, scope_ref: ScopeRef) {
+        self.start_scope(scope_ref);
         let case_block_index = self.put_command(CompileCommand::Nop);
         self.switch_stack.push(SwitchContext {
             case_block_index,
@@ -1275,6 +1281,8 @@ impl FunctionContext {
             self.put_command(CompileCommand::Switch(id, n, i));
             self.num_switch_statements += 1;
         }
+
+        self.end_scope();
     }
 
     fn process_label(&mut self, symbol: Symbol) {

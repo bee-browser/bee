@@ -17,6 +17,8 @@ enum class FlowKind {
   kFunction,
   kScope,
   kBranch,
+  kSelect,
+  kCaseEnd,
   kException,
 };
 
@@ -58,6 +60,16 @@ struct BranchFlow {
   llvm::BasicBlock* after_block;
 };
 
+struct SelectFlow {
+  llvm::BasicBlock* end_block;
+  size_t outer_index;
+  llvm::BasicBlock* default_case_block = nullptr;
+};
+
+struct CaseEndFlow {
+  llvm::BasicBlock* block;
+};
+
 struct ExceptionFlow {
   llvm::BasicBlock* try_block;
   llvm::BasicBlock* catch_block;
@@ -83,17 +95,17 @@ struct Flow {
     FunctionFlow function;
     ScopeFlow scope;
     BranchFlow branch;
+    SelectFlow select;
+    CaseEndFlow case_end;
     ExceptionFlow exception;
   };
 
   inline Flow(const FunctionFlow& function) : kind(FlowKind::kFunction), function(function) {}
-
   inline Flow(const ScopeFlow& scope) : kind(FlowKind::kScope), scope(scope) {}
-
   inline Flow(const BranchFlow& branch) : kind(FlowKind::kBranch), branch(branch) {}
-
+  inline Flow(const SelectFlow& select) : kind(FlowKind::kSelect), select(select) {}
+  inline Flow(const CaseEndFlow& case_end) : kind(FlowKind::kCaseEnd), case_end(case_end) {}
   inline Flow(const ExceptionFlow& exception) : kind(FlowKind::kException), exception(exception) {}
-
   Flow(const Flow& flow) = default;
   ~Flow() = default;
 };
@@ -111,6 +123,10 @@ class FlowStack {
       llvm::BasicBlock* args_block,
       llvm::BasicBlock* body_block,
       llvm::BasicBlock* return_block) {
+    assert(locals_block != nullptr);
+    assert(args_block != nullptr);
+    assert(body_block != nullptr);
+    assert(return_block != nullptr);
     assert(stack_.empty());
     stack_.emplace_back(FunctionFlow{locals_block, args_block, body_block, return_block});
   }
@@ -125,12 +141,16 @@ class FlowStack {
     return flow.function;
   }
 
-  inline void PushScopeFlow(llvm::BasicBlock* init,
-      llvm::BasicBlock* hoisted,
+  inline void PushScopeFlow(llvm::BasicBlock* init_block,
+      llvm::BasicBlock* hoisted_block,
       llvm::BasicBlock* block,
-      llvm::BasicBlock* cleanup) {
+      llvm::BasicBlock* cleanup_block) {
+    assert(init_block != nullptr);
+    assert(hoisted_block != nullptr);
+    assert(block != nullptr);
+    assert(cleanup_block != nullptr);
     auto index = stack_.size();
-    stack_.emplace_back(ScopeFlow{init, hoisted, block, cleanup, scope_index_});
+    stack_.emplace_back(ScopeFlow{init_block, hoisted_block, block, cleanup_block, scope_index_});
     scope_index_ = index;
   }
 
@@ -158,6 +178,8 @@ class FlowStack {
         }
         break;
       case FlowKind::kBranch:
+      case FlowKind::kSelect:   // TODO
+      case FlowKind::kCaseEnd:  // TODO
         if (flow.returned) {
           scope_flow_mut().returned = true;
         }
@@ -176,22 +198,57 @@ class FlowStack {
   }
 
   inline void PushBranchFlow(llvm::BasicBlock* before_block, llvm::BasicBlock* after_block) {
+    assert(before_block != nullptr);
+    assert(after_block != nullptr);
     stack_.emplace_back(BranchFlow{before_block, after_block});
   }
 
   inline BranchFlow PopBranchFlow() {
     assert(top().kind == FlowKind::kBranch);
     auto branch = top().branch;
+    stack_.pop_back();
+    return branch;
+  }
+
+  inline void PushSelectFlow(llvm::BasicBlock* end_block) {
+    assert(end_block != nullptr);
+    auto index = stack_.size();
+    stack_.emplace_back(SelectFlow{end_block, select_index_});
+    select_index_ = index;
+  }
+
+  inline SelectFlow PopSelectFlow() {
+    assert(top().kind == FlowKind::kSelect);
+    auto select = top().select;
 
     stack_.pop_back();
+    // The `exception_index_` must be updated just after stack_.pop_back() so that other instance
+    // methods such as `exception_flow()` work properly.
+    select_index_ = select.outer_index;
 
-    return branch;
+    return select;
+  }
+
+  inline void PushCaseEndFlow(llvm::BasicBlock* block) {
+    assert(block != nullptr);
+    stack_.emplace_back(CaseEndFlow{block});
+  }
+
+  inline CaseEndFlow PopCaseEndFlow() {
+    assert(top().kind == FlowKind::kCaseEnd);
+    auto case_end = top().case_end;
+    stack_.pop_back();
+    return case_end;
   }
 
   inline void PushExceptionFlow(llvm::BasicBlock* try_block,
       llvm::BasicBlock* catch_block,
       llvm::BasicBlock* finally_block,
       llvm::BasicBlock* end_block) {
+    assert(try_block != nullptr);
+    assert(catch_block != nullptr);
+    assert(finally_block != nullptr);
+    assert(end_block != nullptr);
     auto index = stack_.size();
     stack_.emplace_back(
         ExceptionFlow{try_block, catch_block, finally_block, end_block, exception_index_});
@@ -255,6 +312,11 @@ class FlowStack {
     top_mut().exception.ended = true;
   }
 
+  inline void SetDefaultCaseBlock(llvm::BasicBlock* block) {
+    assert(block != nullptr);
+    select_flow_mut().default_case_block = block;
+  }
+
   inline void Clear() {
     stack_.clear();
   }
@@ -279,6 +341,12 @@ class FlowStack {
         case FlowKind::kBranch:
           llvm::errs() << "branch";
           break;
+        case FlowKind::kSelect:
+          llvm::errs() << "select";
+          break;
+        case FlowKind::kCaseEnd:
+          llvm::errs() << "case-end";
+          break;
         case FlowKind::kException:
           llvm::errs() << "exception: ";
           if (flow.exception.thrown) {
@@ -301,16 +369,25 @@ class FlowStack {
 
   inline const FunctionFlow& function_flow() const {
     assert(!stack_.empty());
+    assert(stack_[0].kind == FlowKind::kFunction);
     return stack_[0].function;
   }
 
   inline const ScopeFlow& scope_flow() const {
     assert(scope_index_ != 0);
+    assert(stack_[scope_index_].kind == FlowKind::kScope);
     return stack_[scope_index_].scope;
+  }
+
+  inline const SelectFlow& select_flow() const {
+    assert(select_index_ != 0);
+    assert(stack_[select_index_].kind == FlowKind::kSelect);
+    return stack_[select_index_].select;
   }
 
   inline const ExceptionFlow& exception_flow() const {
     assert(exception_index_ != 0);
+    assert(stack_[exception_index_].kind == FlowKind::kException);
     return stack_[exception_index_].exception;
   }
 
@@ -371,13 +448,22 @@ class FlowStack {
     return stack_[exception_index_].exception;
   }
 
+  inline SelectFlow& select_flow_mut() {
+    assert(select_index_ != 0);
+    return stack_[select_index_].select;
+  }
+
   std::vector<Flow> stack_;
 
   // The index of the top-most scope flow on the stack.
-  // It's used for building the scope chain from the top-most to the bottom-most.
+  // It's used for building the flow chain from the top-most to the bottom-most.
   size_t scope_index_ = 0;
 
   // The index of the top-most exception flow on the stack.
-  // It's used for building the scope chain from the top-most to the bottom-most.
+  // It's used for building the flow chain from the top-most to the bottom-most.
   size_t exception_index_ = 0;
+
+  // The index of the top-most select flow on the stack.
+  // It's used for building the flow chain from the top-most to the bottom-most.
+  size_t select_index_ = 0;
 };
