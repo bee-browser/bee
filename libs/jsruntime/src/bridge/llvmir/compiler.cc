@@ -953,7 +953,7 @@ void Compiler::Branch() {
 
   builder_->SetInsertPoint(after_block);
 
-  flow_stack_.PushBranchFlow({before_block, after_block});
+  flow_stack_.PushBranchFlow(before_block, after_block);
 }
 
 void Compiler::IfElseStatement() {

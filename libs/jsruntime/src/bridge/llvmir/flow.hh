@@ -20,6 +20,7 @@ enum class FlowKind {
   kException,
 };
 
+// Contains data used for building the root region of a function.
 struct FunctionFlow {
   llvm::BasicBlock* locals_block;
   llvm::BasicBlock* args_block;
@@ -27,6 +28,7 @@ struct FunctionFlow {
   llvm::BasicBlock* return_block;
 };
 
+// Contains data used for building a region representing a lexical scope.
 struct ScopeFlow {
   // The entry block of the scope flow.
   llvm::BasicBlock* init_block;
@@ -45,10 +47,10 @@ struct ScopeFlow {
   size_t outer_index;
 
   // `true` if the scope flow contains return statements.
-  bool returned;
+  bool returned = false;
 
   // `true` if the scope flow has uncaught exceptions.
-  bool thrown;
+  bool thrown = false;
 };
 
 struct BranchFlow {
@@ -66,11 +68,11 @@ struct ExceptionFlow {
   size_t outer_index;
 
   // `true` if the scope flow has uncaught exceptions.
-  bool thrown;
+  bool thrown = false;
 
-  bool caught;
+  bool caught = false;
 
-  bool ended;
+  bool ended = false;
 };
 
 // A `Flow` object contains basic blocks that will construct a region in the control flow graph
@@ -84,56 +86,15 @@ struct Flow {
     ExceptionFlow exception;
   };
 
-  inline Flow(FlowKind kind,
-      llvm::BasicBlock* locals_block,
-      llvm::BasicBlock* args_block,
-      llvm::BasicBlock* body_block,
-      llvm::BasicBlock* return_block)
-      : kind(kind) {
-    function.locals_block = locals_block;
-    function.args_block = args_block;
-    function.body_block = body_block;
-    function.return_block = return_block;
-  }
+  inline Flow(const FunctionFlow& function) : kind(FlowKind::kFunction), function(function) {}
 
-  inline Flow(FlowKind kind,
-      llvm::BasicBlock* init,
-      llvm::BasicBlock* hoisted,
-      llvm::BasicBlock* block,
-      llvm::BasicBlock* cleanup,
-      size_t outer_index)
-      : kind(kind) {
-    scope.init_block = init;
-    scope.hoisted_block = hoisted;
-    scope.block = block;
-    scope.cleanup_block = cleanup;
-    scope.outer_index = outer_index;
-    scope.returned = false;
-    scope.thrown = false;
-  }
+  inline Flow(const ScopeFlow& scope) : kind(FlowKind::kScope), scope(scope) {}
 
   inline Flow(const BranchFlow& branch) : kind(FlowKind::kBranch), branch(branch) {}
 
-  inline Flow(FlowKind kind,
-      llvm::BasicBlock* try_block,
-      llvm::BasicBlock* catch_block,
-      llvm::BasicBlock* finally_block,
-      llvm::BasicBlock* end_block,
-      size_t outer_index,
-      bool thrown)
-      : kind(kind) {
-    exception.try_block = try_block;
-    exception.catch_block = catch_block;
-    exception.finally_block = finally_block;
-    exception.end_block = end_block;
-    exception.outer_index = outer_index;
-    exception.thrown = thrown;
-    exception.caught = false;
-    exception.ended = false;
-  }
+  inline Flow(const ExceptionFlow& exception) : kind(FlowKind::kException), exception(exception) {}
 
   Flow(const Flow& flow) = default;
-
   ~Flow() = default;
 };
 
@@ -151,7 +112,7 @@ class FlowStack {
       llvm::BasicBlock* body_block,
       llvm::BasicBlock* return_block) {
     assert(stack_.empty());
-    stack_.emplace_back(FlowKind::kFunction, locals_block, args_block, body_block, return_block);
+    stack_.emplace_back(FunctionFlow{locals_block, args_block, body_block, return_block});
   }
 
   inline FunctionFlow PopFunctionFlow() {
@@ -169,7 +130,7 @@ class FlowStack {
       llvm::BasicBlock* block,
       llvm::BasicBlock* cleanup) {
     auto index = stack_.size();
-    stack_.emplace_back(FlowKind::kScope, init, hoisted, block, cleanup, scope_index_);
+    stack_.emplace_back(ScopeFlow{init, hoisted, block, cleanup, scope_index_});
     scope_index_ = index;
   }
 
@@ -214,8 +175,8 @@ class FlowStack {
     return flow;
   }
 
-  inline void PushBranchFlow(const BranchFlow& flow) {
-    stack_.emplace_back(flow);
+  inline void PushBranchFlow(llvm::BasicBlock* before_block, llvm::BasicBlock* after_block) {
+    stack_.emplace_back(BranchFlow{before_block, after_block});
   }
 
   inline BranchFlow PopBranchFlow() {
@@ -232,8 +193,8 @@ class FlowStack {
       llvm::BasicBlock* finally_block,
       llvm::BasicBlock* end_block) {
     auto index = stack_.size();
-    stack_.emplace_back(FlowKind::kException, try_block, catch_block, finally_block, end_block,
-        exception_index_, false);
+    stack_.emplace_back(
+        ExceptionFlow{try_block, catch_block, finally_block, end_block, exception_index_});
     exception_index_ = index;
   }
 
