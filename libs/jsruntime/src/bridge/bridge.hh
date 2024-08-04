@@ -204,7 +204,7 @@ void compiler_peer_nullish_short_circuit(Compiler* self);
 void compiler_peer_falsy_short_circuit_assignment(Compiler* self);
 void compiler_peer_truthy_short_circuit_assignment(Compiler* self);
 void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
-void compiler_peer_block(Compiler* self);
+void compiler_peer_branch(Compiler* self);
 void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);
 void compiler_peer_do_while_loop(Compiler* self, uint16_t id);

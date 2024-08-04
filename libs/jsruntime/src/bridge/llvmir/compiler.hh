@@ -109,7 +109,7 @@ class Compiler {
   void FalsyShortCircuitAssignment();
   void TruthyShortCircuitAssignment();
   void NullishShortCircuitAssignment();
-  void Block();
+  void Branch();
   void IfElseStatement();
   void IfStatement();
   void DoWhileLoop(uint16_t id);

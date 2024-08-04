@@ -488,27 +488,24 @@ void Compiler::BitwiseOr() {
 }
 
 void Compiler::ConditionalTernary() {
+  auto else_branch = flow_stack_.PopBranchFlow();
+  auto then_branch = flow_stack_.PopBranchFlow();
+
   auto* else_tail_block = builder_->GetInsertBlock();
 
   auto else_item = Dereference();
 
-  auto* else_head_block = PopBlock();
-  auto* then_tail_block = PopBlock();
-
-  builder_->SetInsertPoint(then_tail_block);
+  builder_->SetInsertPoint(else_branch.before_block);
   auto then_item = Dereference();
 
-  auto* then_head_block = PopBlock();
-  auto* cond_block = PopBlock();
-
-  builder_->SetInsertPoint(cond_block);
+  builder_->SetInsertPoint(then_branch.before_block);
   auto* cond_value = PopValue();
-  builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
+  builder_->CreateCondBr(cond_value, then_branch.after_block, else_branch.after_block);
 
   auto* block = CreateBasicBlock(BB_NAME("block"));
 
   if (then_item.type == else_item.type) {
-    builder_->SetInsertPoint(then_tail_block);
+    builder_->SetInsertPoint(else_branch.before_block);
     builder_->CreateBr(block);
 
     builder_->SetInsertPoint(else_tail_block);
@@ -526,21 +523,21 @@ void Compiler::ConditionalTernary() {
         return;
       case Item::Boolean: {
         auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
-        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(then_item.value, else_branch.before_block);
         phi->addIncoming(else_item.value, else_tail_block);
         PushBoolean(phi);
         return;
       }
       case Item::Number: {
         auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2);
-        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(then_item.value, else_branch.before_block);
         phi->addIncoming(else_item.value, else_tail_block);
         PushNumber(phi);
         return;
       }
       case Item::Any: {
         auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
-        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(then_item.value, else_branch.before_block);
         phi->addIncoming(else_item.value, else_tail_block);
         PushAny(phi);
         return;
@@ -555,7 +552,7 @@ void Compiler::ConditionalTernary() {
 
   // We have to convert the value before the branch in each block.
 
-  builder_->SetInsertPoint(then_tail_block);
+  builder_->SetInsertPoint(else_branch.before_block);
   auto* then_value = ToAny(then_item);
   builder_->CreateBr(block);
 
@@ -565,7 +562,7 @@ void Compiler::ConditionalTernary() {
 
   builder_->SetInsertPoint(block);
   auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
-  phi->addIncoming(then_value, then_tail_block);
+  phi->addIncoming(then_value, else_branch.before_block);
   phi->addIncoming(else_value, else_tail_block);
   PushAny(phi);
 }
@@ -888,27 +885,27 @@ void Compiler::FalsyShortCircuit() {
   auto* truthy = CreateToBoolean(item);
   PushBoolean(truthy);
   LogicalNot();
-  Block();  // then
+  Branch();  // then
   stack_.push_back(item);
-  Block();  // else
+  Branch();  // else
 }
 
 void Compiler::TruthyShortCircuit() {
   const auto item = Dereference();
   auto* truthy = CreateToBoolean(item);
   PushBoolean(truthy);
-  Block();  // then
+  Branch();  // then
   stack_.push_back(item);
-  Block();  // else
+  Branch();  // else
 }
 
 void Compiler::NullishShortCircuit() {
   const auto item = Dereference();
   auto* non_nullish = CreateIsNonNullish(item);
   PushBoolean(non_nullish);
-  Block();  // then
+  Branch();  // then
   stack_.push_back(item);
-  Block();  // else
+  Branch();  // else
 }
 
 void Compiler::FalsyShortCircuitAssignment() {
@@ -918,9 +915,9 @@ void Compiler::FalsyShortCircuitAssignment() {
   auto* truthy = CreateToBoolean(item);
   PushBoolean(truthy);
   LogicalNot();
-  Block();  // then
+  Branch();  // then
   stack_.push_back(item);
-  Block();  // else
+  Branch();  // else
 }
 
 void Compiler::TruthyShortCircuitAssignment() {
@@ -929,9 +926,9 @@ void Compiler::TruthyShortCircuitAssignment() {
   const auto item = Dereference();
   auto* truthy = CreateToBoolean(item);
   PushBoolean(truthy);
-  Block();  // then
+  Branch();  // then
   stack_.push_back(item);
-  Block();  // else
+  Branch();  // else
 }
 
 void Compiler::NullishShortCircuitAssignment() {
@@ -940,26 +937,29 @@ void Compiler::NullishShortCircuitAssignment() {
   const auto item = Dereference();
   auto* non_nullish = CreateIsNonNullish(item);
   PushBoolean(non_nullish);
-  Block();  // then
+  Branch();  // then
   stack_.push_back(item);
-  Block();  // else
+  Branch();  // else
 }
 
-void Compiler::Block() {
+void Compiler::Branch() {
   // Push the current block.
-  auto* current_block = builder_->GetInsertBlock();
-  assert(current_block != nullptr);
-  PushBlock(current_block, "old-block");
+  auto* before_block = builder_->GetInsertBlock();
+  assert(before_block != nullptr);
 
   // Push a newly created block.
   // This will be used in ConditionalExpression() in order to build a branch instruction.
-  auto* block = CreateBasicBlock(BB_NAME("block"));
-  PushBlock(block, "new-block");
+  auto* after_block = CreateBasicBlock(BB_NAME("block"));
 
-  builder_->SetInsertPoint(block);
+  builder_->SetInsertPoint(after_block);
+
+  flow_stack_.PushBranchFlow({before_block, after_block});
 }
 
 void Compiler::IfElseStatement() {
+  auto else_branch = flow_stack_.PopBranchFlow();
+  auto then_branch = flow_stack_.PopBranchFlow();
+
   auto* else_tail_block = builder_->GetInsertBlock();
 
   llvm::BasicBlock* block = nullptr;
@@ -971,25 +971,20 @@ void Compiler::IfElseStatement() {
     builder_->CreateBr(block);
   }
 
-  auto* else_head_block = PopBlock();
-  auto* then_tail_block = PopBlock();
-
-  if (then_tail_block->getTerminator() != nullptr) {
+  if (else_branch.before_block->getTerminator() != nullptr) {
     // We should not append any instructions after a terminator instruction such as `ret`.
   } else {
     if (block == nullptr) {
       block = CreateBasicBlock(BB_NAME("block"));
     }
-    builder_->SetInsertPoint(then_tail_block);
+    builder_->SetInsertPoint(else_branch.before_block);
     builder_->CreateBr(block);
   }
 
-  auto* then_head_block = PopBlock();
-  auto* cond_block = PopBlock();
   auto* cond_value = PopBoolean();
 
-  builder_->SetInsertPoint(cond_block);
-  builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
+  builder_->SetInsertPoint(then_branch.before_block);
+  builder_->CreateCondBr(cond_value, then_branch.after_block, else_branch.after_block);
 
   if (block != nullptr) {
     builder_->SetInsertPoint(block);
@@ -999,6 +994,8 @@ void Compiler::IfElseStatement() {
 void Compiler::IfStatement() {
   auto* then_tail_block = builder_->GetInsertBlock();
 
+  auto branch = flow_stack_.PopBranchFlow();
+
   auto* block = CreateBasicBlock(BB_NAME("block"));
 
   if (then_tail_block->getTerminator() != nullptr) {
@@ -1007,12 +1004,10 @@ void Compiler::IfStatement() {
     builder_->CreateBr(block);
   }
 
-  auto* then_head_block = PopBlock();
-  auto* cond_block = PopBlock();
   auto* cond_value = PopBoolean();
 
-  builder_->SetInsertPoint(cond_block);
-  builder_->CreateCondBr(cond_value, then_head_block, block);
+  builder_->SetInsertPoint(branch.before_block);
+  builder_->CreateCondBr(cond_value, branch.after_block, block);
 
   builder_->SetInsertPoint(block);
 }
@@ -1213,15 +1208,15 @@ void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
 void Compiler::CaseClause(bool has_statement) {
   UNUSED(has_statement);
 
+  auto branch = flow_stack_.PopBranchFlow();
+
   auto* case_clause_statement = builder_->GetInsertBlock();
 
   auto* else_block = CreateBasicBlock(BB_NAME("else"));
-  auto* then_block = PopBlock();
-  auto* cond_block = PopBlock();
   auto* cond_value = PopBoolean();
 
-  builder_->SetInsertPoint(cond_block);
-  builder_->CreateCondBr(cond_value, then_block, else_block);
+  builder_->SetInsertPoint(branch.before_block);
+  builder_->CreateCondBr(cond_value, branch.after_block, else_block);
   builder_->SetInsertPoint(else_block);
 
   PushBlock(case_clause_statement, "case-clause-statement");
@@ -1232,14 +1227,14 @@ void Compiler::CaseClause(bool has_statement) {
 void Compiler::DefaultClause(bool has_statement) {
   UNUSED(has_statement);
 
+  auto branch = flow_stack_.PopBranchFlow();
+  UNUSED(branch);
+
   auto* default_clause_statement = builder_->GetInsertBlock();
 
-  auto* default_clause_br = PopBlock();
-  auto* case_block = PopBlock();
+  builder_->SetInsertPoint(branch.before_block);
 
-  builder_->SetInsertPoint(case_block);
-
-  PushBlock(default_clause_br, "default-clause-br");
+  PushBlock(branch.after_block, "default-clause-br");
   Swap();
   PushBlock(default_clause_statement, "default-clause-statement");
   Swap();

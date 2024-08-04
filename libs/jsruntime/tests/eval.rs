@@ -585,20 +585,17 @@ fn eval_comma_operator() {
 
 #[test]
 fn eval_if_statement() {
-    eval!("let a = 1; if (true) { a = 2; } print(a);", 2.);
-    eval!("let a = 1; if (false) { a = 2; } print(a);", 1.);
+    eval!(file: "if_statement_true.js", 2);
+    eval!(file: "if_statement_false.js", 1);
+    eval!(file: "if_statement_return_in_block.js", 1);
 }
 
 #[test]
 fn eval_if_else_statement() {
-    eval!(
-        "let a = 1; if (true) { a = 2; } else { a = 3; } print(a);",
-        2.
-    );
-    eval!(
-        "let a = 1; if (false) { a = 2; } else { a = 3; } print(a);",
-        3.
-    );
+    eval!(file: "if_else_statement_true.js", 2);
+    eval!(file: "if_else_statement_false.js", 3);
+    eval!(file: "if_else_statement_return_in_block_true.js", 1);
+    eval!(file: "if_else_statement_return_in_block_false.js", 3);
 }
 
 #[test]

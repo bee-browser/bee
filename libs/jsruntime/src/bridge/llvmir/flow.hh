@@ -16,6 +16,7 @@ class BasicBlock;
 enum class FlowKind {
   kFunction,
   kScope,
+  kBranch,
   kException,
 };
 
@@ -50,6 +51,11 @@ struct ScopeFlow {
   bool thrown;
 };
 
+struct BranchFlow {
+  llvm::BasicBlock* before_block;
+  llvm::BasicBlock* after_block;
+};
+
 struct ExceptionFlow {
   llvm::BasicBlock* try_block;
   llvm::BasicBlock* catch_block;
@@ -74,6 +80,7 @@ struct Flow {
   union {
     FunctionFlow function;
     ScopeFlow scope;
+    BranchFlow branch;
     ExceptionFlow exception;
   };
 
@@ -104,6 +111,8 @@ struct Flow {
     scope.returned = false;
     scope.thrown = false;
   }
+
+  inline Flow(const BranchFlow& branch) : kind(FlowKind::kBranch), branch(branch) {}
 
   inline Flow(FlowKind kind,
       llvm::BasicBlock* try_block,
@@ -181,10 +190,18 @@ class FlowStack {
         break;
       case FlowKind::kScope:
         if (flow.returned) {
-          scope_flow_mut().returned = true;
+          outer.scope.returned = true;
         }
         if (flow.thrown) {
           outer.scope.thrown = true;
+        }
+        break;
+      case FlowKind::kBranch:
+        if (flow.returned) {
+          scope_flow_mut().returned = true;
+        }
+        if (flow.thrown) {
+          scope_flow_mut().thrown = true;
         }
         break;
       case FlowKind::kException:
@@ -195,6 +212,19 @@ class FlowStack {
     }
 
     return flow;
+  }
+
+  inline void PushBranchFlow(const BranchFlow& flow) {
+    stack_.emplace_back(flow);
+  }
+
+  inline BranchFlow PopBranchFlow() {
+    assert(top().kind == FlowKind::kBranch);
+    auto branch = top().branch;
+
+    stack_.pop_back();
+
+    return branch;
   }
 
   inline void PushExceptionFlow(llvm::BasicBlock* try_block,
@@ -235,6 +265,9 @@ class FlowStack {
         break;
       case FlowKind::kScope:
         flow.scope.returned = true;
+        break;
+      case FlowKind::kBranch:
+        scope_flow_mut().returned = true;
         break;
       default:
         // never reach here
@@ -282,6 +315,9 @@ class FlowStack {
             llvm::errs() << 'E';
           }
           break;
+        case FlowKind::kBranch:
+          llvm::errs() << "branch";
+          break;
         case FlowKind::kException:
           llvm::errs() << "exception: ";
           if (flow.exception.thrown) {
@@ -324,6 +360,7 @@ class FlowStack {
         return flow.function.return_block;
       case FlowKind::kScope:
         return flow.scope.cleanup_block;
+      case FlowKind::kBranch:
       case FlowKind::kException:
         return scope_flow().cleanup_block;
       default:
@@ -340,6 +377,8 @@ class FlowStack {
         return flow.function.return_block;
       case FlowKind::kScope:
         return flow.scope.cleanup_block;
+      case FlowKind::kBranch:
+        return scope_flow().cleanup_block;
       case FlowKind::kException:
         if (flow.exception.ended) {
           return flow.exception.end_block;

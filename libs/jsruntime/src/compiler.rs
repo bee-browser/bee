@@ -381,10 +381,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 bridge::compiler_peer_nullish_short_circuit_assignment(self.peer);
             },
             CompileCommand::Then => unsafe {
-                bridge::compiler_peer_block(self.peer);
+                bridge::compiler_peer_branch(self.peer);
             },
             CompileCommand::Else => unsafe {
-                bridge::compiler_peer_block(self.peer);
+                bridge::compiler_peer_branch(self.peer);
             },
             CompileCommand::IfElseStatement => unsafe {
                 bridge::compiler_peer_if_else_statement(self.peer);

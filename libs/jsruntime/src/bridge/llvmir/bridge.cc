@@ -330,8 +330,8 @@ void compiler_peer_nullish_short_circuit_assignment(Compiler* self) {
   self->NullishShortCircuitAssignment();
 }
 
-void compiler_peer_block(Compiler* self) {
-  self->Block();
+void compiler_peer_branch(Compiler* self) {
+  self->Branch();
 }
 
 void compiler_peer_if_else_statement(Compiler* self) {
