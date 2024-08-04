@@ -1234,7 +1234,9 @@ impl FunctionContext {
     }
 
     fn process_case_block(&mut self, scope_ref: ScopeRef) {
+        // Step#3..7 in 14.12.4 Runtime Semantics: Evaluation
         self.start_scope(scope_ref);
+
         let case_block_index = self.put_command(CompileCommand::Nop);
         self.switch_stack.push(SwitchContext {
             case_block_index,
@@ -1282,6 +1284,7 @@ impl FunctionContext {
             self.num_switch_statements += 1;
         }
 
+        // Step#8 in 14.12.4 Runtime Semantics: Evaluation
         self.end_scope();
     }
 
