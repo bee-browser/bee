@@ -17,6 +17,7 @@ enum class FlowKind {
   kFunction,
   kScope,
   kBranch,
+  kLoop,
   kSelect,
   kCaseEnd,
   kException,
@@ -60,6 +61,27 @@ struct BranchFlow {
   llvm::BasicBlock* after_block;
 };
 
+struct LoopFlow {
+  size_t outer_index;
+
+  // For LoopTest()
+  llvm::BasicBlock* test_then_block;
+  llvm::BasicBlock* test_else_block;
+  llvm::BasicBlock* test_insert_point;
+
+  // For LoopBody()
+  llvm::BasicBlock* body_branch_block;
+  llvm::BasicBlock* body_insert_point;
+
+  // For LoopInit()
+  llvm::BasicBlock* init_branch_block = nullptr;
+  llvm::BasicBlock* init_insert_point = nullptr;
+
+  // For LoopNext()
+  llvm::BasicBlock* next_branch_block = nullptr;
+  llvm::BasicBlock* next_insert_point = nullptr;
+};
+
 struct SelectFlow {
   llvm::BasicBlock* end_block;
   size_t outer_index;
@@ -95,6 +117,7 @@ struct Flow {
     FunctionFlow function;
     ScopeFlow scope;
     BranchFlow branch;
+    LoopFlow loop;
     SelectFlow select;
     CaseEndFlow case_end;
     ExceptionFlow exception;
@@ -103,6 +126,7 @@ struct Flow {
   inline Flow(const FunctionFlow& function) : kind(FlowKind::kFunction), function(function) {}
   inline Flow(const ScopeFlow& scope) : kind(FlowKind::kScope), scope(scope) {}
   inline Flow(const BranchFlow& branch) : kind(FlowKind::kBranch), branch(branch) {}
+  inline Flow(const LoopFlow& loop) : kind(FlowKind::kLoop), loop(loop) {}
   inline Flow(const SelectFlow& select) : kind(FlowKind::kSelect), select(select) {}
   inline Flow(const CaseEndFlow& case_end) : kind(FlowKind::kCaseEnd), case_end(case_end) {}
   inline Flow(const ExceptionFlow& exception) : kind(FlowKind::kException), exception(exception) {}
@@ -178,6 +202,7 @@ class FlowStack {
         }
         break;
       case FlowKind::kBranch:
+      case FlowKind::kLoop:     // TODO
       case FlowKind::kSelect:   // TODO
       case FlowKind::kCaseEnd:  // TODO
         if (flow.returned) {
@@ -210,6 +235,56 @@ class FlowStack {
     return branch;
   }
 
+  inline void PushDoWhileLoopFlow(llvm::BasicBlock* body_branch_block,
+      llvm::BasicBlock* body_insert_point,
+      llvm::BasicBlock* test_then_block,
+      llvm::BasicBlock* test_else_block,
+      llvm::BasicBlock* test_insert_point) {
+    auto index = stack_.size();
+    stack_.emplace_back(LoopFlow{loop_index_, test_then_block, test_else_block, test_insert_point,
+        body_branch_block, body_insert_point});
+    loop_index_ = index;
+  }
+
+  inline void PushWhileLoopFlow(llvm::BasicBlock* test_then_block,
+      llvm::BasicBlock* test_else_block,
+      llvm::BasicBlock* test_insert_point,
+      llvm::BasicBlock* body_branch_block,
+      llvm::BasicBlock* body_insert_point) {
+    auto index = stack_.size();
+    stack_.emplace_back(LoopFlow{loop_index_, test_then_block, test_else_block, test_insert_point,
+        body_branch_block, body_insert_point});
+    loop_index_ = index;
+  }
+
+  inline void PushForLoopFlow(llvm::BasicBlock* init_branch_block,
+      llvm::BasicBlock* init_insert_point,
+      llvm::BasicBlock* test_then_block,
+      llvm::BasicBlock* test_else_block,
+      llvm::BasicBlock* test_insert_point,
+      llvm::BasicBlock* next_branch_block,
+      llvm::BasicBlock* next_insert_point,
+      llvm::BasicBlock* body_branch_block,
+      llvm::BasicBlock* body_insert_point) {
+    auto index = stack_.size();
+    stack_.emplace_back(LoopFlow{loop_index_, test_then_block, test_else_block, test_insert_point,
+        body_branch_block, body_insert_point, init_branch_block, init_insert_point,
+        next_branch_block, next_insert_point});
+    loop_index_ = index;
+  }
+
+  inline LoopFlow PopLoopFlow() {
+    assert(top().kind == FlowKind::kLoop);
+    auto loop = top().loop;
+
+    stack_.pop_back();
+    // The `loop_index_` must be updated just after stack_.pop_back() so that other instance
+    // methods such as `loop_flow()` work properly.
+    loop_index_ = loop.outer_index;
+
+    return loop;
+  }
+
   inline void PushSelectFlow(llvm::BasicBlock* end_block) {
     assert(end_block != nullptr);
     auto index = stack_.size();
@@ -222,8 +297,8 @@ class FlowStack {
     auto select = top().select;
 
     stack_.pop_back();
-    // The `exception_index_` must be updated just after stack_.pop_back() so that other instance
-    // methods such as `exception_flow()` work properly.
+    // The `select_index_` must be updated just after stack_.pop_back() so that other instance
+    // methods such as `select_flow()` work properly.
     select_index_ = select.outer_index;
 
     return select;
@@ -341,6 +416,9 @@ class FlowStack {
         case FlowKind::kBranch:
           llvm::errs() << "branch";
           break;
+        case FlowKind::kLoop:
+          llvm::errs() << "loop";
+          break;
         case FlowKind::kSelect:
           llvm::errs() << "select";
           break;
@@ -377,6 +455,12 @@ class FlowStack {
     assert(scope_index_ != 0);
     assert(stack_[scope_index_].kind == FlowKind::kScope);
     return stack_[scope_index_].scope;
+  }
+
+  inline const LoopFlow& loop_flow() const {
+    assert(loop_index_ != 0);
+    assert(stack_[loop_index_].kind == FlowKind::kLoop);
+    return stack_[loop_index_].loop;
   }
 
   inline const SelectFlow& select_flow() const {
@@ -443,14 +527,19 @@ class FlowStack {
     return stack_[scope_index_].scope;
   }
 
-  inline ExceptionFlow& exception_flow_mut() {
-    assert(exception_index_ != 0);
-    return stack_[exception_index_].exception;
+  inline LoopFlow& loop_flow_mut() {
+    assert(loop_index_ != 0);
+    return stack_[loop_index_].loop;
   }
 
   inline SelectFlow& select_flow_mut() {
     assert(select_index_ != 0);
     return stack_[select_index_].select;
+  }
+
+  inline ExceptionFlow& exception_flow_mut() {
+    assert(exception_index_ != 0);
+    return stack_[exception_index_].exception;
   }
 
   std::vector<Flow> stack_;
@@ -459,11 +548,15 @@ class FlowStack {
   // It's used for building the flow chain from the top-most to the bottom-most.
   size_t scope_index_ = 0;
 
-  // The index of the top-most exception flow on the stack.
+  // The index of the top-most loop flow on the stack.
   // It's used for building the flow chain from the top-most to the bottom-most.
-  size_t exception_index_ = 0;
+  size_t loop_index_ = 0;
 
   // The index of the top-most select flow on the stack.
   // It's used for building the flow chain from the top-most to the bottom-most.
   size_t select_index_ = 0;
+
+  // The index of the top-most exception flow on the stack.
+  // It's used for building the flow chain from the top-most to the bottom-most.
+  size_t exception_index_ = 0;
 };

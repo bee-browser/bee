@@ -1179,11 +1179,12 @@ impl FunctionContext {
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
+        self.start_scope(scope_ref);
+
         // Push `Nop` as a placeholder.
         // It will be replaced with an appropriate command in process_loop_end().
         let start_index = self.put_command(CompileCommand::Nop);
         self.loop_stack.push(LoopContext { start_index });
-        self.start_scope(scope_ref);
     }
 
     fn process_loop_init_expression(&mut self) {
@@ -1209,10 +1210,11 @@ impl FunctionContext {
     }
 
     fn process_loop_end(&mut self, command: CompileCommand) {
-        self.end_scope();
         self.put_command(CompileCommand::LoopEnd);
         let LoopContext { start_index } = self.loop_stack.pop().unwrap();
         self.commands[start_index] = command;
+
+        self.end_scope();
     }
 
     fn process_do_while_statement(&mut self) {

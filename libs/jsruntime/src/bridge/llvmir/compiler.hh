@@ -171,14 +171,12 @@ class Compiler {
       Any,  // undefined, boolean, number or object.
       Reference,
       Argv,
-      Block,
       Capture,
     } type;
     union {
       llvm::Value* value;
       llvm::Function* func;
       struct Reference reference;
-      llvm::BasicBlock* block;
     };
 #if defined(BEE_BUILD_DEBUG)
     const char* label = nullptr;
@@ -188,7 +186,6 @@ class Compiler {
     explicit Item(llvm::Function* func) : type(Item::Function), func(func) {}
     Item(Type type, llvm::Value* value) : type(type), value(value) {}
     Item(uint32_t symbol, Locator locator) : type(Item::Reference), reference(symbol, locator) {}
-    explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
 
     inline void SetLabel(const char* label) {
 #if defined(BEE_BUILD_DEBUG)
@@ -255,12 +252,6 @@ class Compiler {
     stack_.push_back(Item(Item::Argv, value));
   }
 
-  inline void PushBlock(llvm::BasicBlock* block, const char* label) {
-    Item item(block);
-    item.SetLabel(label);
-    stack_.push_back(item);
-  }
-
   inline void PushCapture(llvm::Value* value) {
     stack_.push_back(Item(Item::Capture, value));
   }
@@ -315,23 +306,6 @@ class Compiler {
     auto* argv = item.value;
     stack_.pop_back();
     return argv;
-  }
-
-  inline llvm::BasicBlock* PopBlock() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Block);
-    auto* block = item.block;
-    stack_.pop_back();
-    return block;
-  }
-
-  inline llvm::BasicBlock* PeekBlock() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Block);
-    auto* block = item.block;
-    return block;
   }
 
   inline llvm::Value* PopCapture() {
