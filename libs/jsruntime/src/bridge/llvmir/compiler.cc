@@ -1031,7 +1031,8 @@ void Compiler::DoWhileLoop(uint16_t id) {
   break_stack_.push_back({loop_break, 0});
   continue_stack_.push_back({loop_continue, 0});
 
-  flow_stack_.PushDoWhileLoopFlow(loop_test, loop_test, loop_body, loop_end, loop_end);
+  flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_end);
+  flow_stack_.PushLoopBodyFlow(loop_test, loop_test);
 }
 
 void Compiler::WhileLoop(uint16_t id) {
@@ -1053,7 +1054,8 @@ void Compiler::WhileLoop(uint16_t id) {
   break_stack_.push_back({loop_break, 0});
   continue_stack_.push_back({loop_continue, 0});
 
-  flow_stack_.PushWhileLoopFlow(loop_body, loop_end, loop_body, loop_test, loop_end);
+  flow_stack_.PushLoopBodyFlow(loop_test, loop_end);
+  flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_body);
 }
 
 void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next) {
@@ -1070,31 +1072,19 @@ void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next)
   auto* loop_break = loop_end;
   auto* insert_point = loop_body;
 
-  llvm::BasicBlock* test_then_block = nullptr;
-  llvm::BasicBlock* test_else_block = nullptr;
-  llvm::BasicBlock* test_insert_point = nullptr;
-  llvm::BasicBlock* body_branch_block = nullptr;
-  llvm::BasicBlock* body_insert_point = nullptr;
-  llvm::BasicBlock* next_branch_block = nullptr;
-  llvm::BasicBlock* next_insert_point = nullptr;
-  llvm::BasicBlock* init_branch_block = nullptr;
-  llvm::BasicBlock* init_insert_point = nullptr;
-
-  body_insert_point = loop_end;
   if (has_next) {
-    body_branch_block = loop_next;
+    flow_stack_.PushLoopBodyFlow(loop_next, loop_end);
   } else if (has_test) {
-    body_branch_block = loop_test;
+    flow_stack_.PushLoopBodyFlow(loop_test, loop_end);
   } else {
-    body_branch_block = loop_body;
+    flow_stack_.PushLoopBodyFlow(loop_body, loop_end);
   }
 
   if (has_next) {
-    next_insert_point = loop_body;
     if (has_test) {
-      next_branch_block = loop_test;
+      flow_stack_.PushLoopNextFlow(loop_test, loop_body);
     } else {
-      next_branch_block = loop_body;
+      flow_stack_.PushLoopNextFlow(loop_body, loop_body);
     }
     loop_continue = loop_next;
     insert_point = loop_next;
@@ -1102,12 +1092,10 @@ void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next)
 
   if (has_test) {
     if (has_next) {
-      test_insert_point = loop_next;
+      flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_next);
     } else {
-      test_insert_point = loop_body;
+      flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_body);
     }
-    test_else_block = loop_end;
-    test_then_block = loop_body;
     loop_start = loop_test;
     if (!has_next) {
       loop_continue = loop_test;
@@ -1117,14 +1105,11 @@ void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next)
 
   if (has_init) {
     if (has_test) {
-      init_insert_point = loop_test;
-      init_branch_block = loop_test;
+      flow_stack_.PushLoopInitFlow(loop_test, loop_test);
     } else if (has_next) {
-      init_insert_point = loop_next;
-      init_branch_block = loop_body;
+      flow_stack_.PushLoopInitFlow(loop_body, loop_next);
     } else {
-      init_insert_point = loop_body;
-      init_branch_block = loop_body;
+      flow_stack_.PushLoopInitFlow(loop_body, loop_body);
     }
     loop_start = loop_init;
     insert_point = loop_init;
@@ -1137,46 +1122,41 @@ void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next)
 
   break_stack_.push_back({loop_break, 0});
   continue_stack_.push_back({loop_continue, 0});
-
-  flow_stack_.PushForLoopFlow(init_branch_block, init_insert_point, test_then_block,
-      test_else_block, test_insert_point, next_branch_block, next_insert_point, body_branch_block,
-      body_insert_point);
 }
 
 void Compiler::LoopInit() {
-  const auto& loop = flow_stack_.loop_flow();
-  builder_->CreateBr(loop.init_branch_block);
-  builder_->SetInsertPoint(loop.init_insert_point);
+  auto loop_init = flow_stack_.PopLoopInitFlow();
+  builder_->CreateBr(loop_init.branch_block);
+  builder_->SetInsertPoint(loop_init.insert_point);
 }
 
 void Compiler::LoopTest() {
   auto cond = Dereference();
   auto* truthy = CreateToBoolean(cond);
-  const auto& loop = flow_stack_.loop_flow();
-  builder_->CreateCondBr(truthy, loop.test_then_block, loop.test_else_block);
-  builder_->SetInsertPoint(loop.test_insert_point);
+  auto loop_test = flow_stack_.PopLoopTestFlow();
+  builder_->CreateCondBr(truthy, loop_test.then_block, loop_test.else_block);
+  builder_->SetInsertPoint(loop_test.insert_point);
 }
 
 void Compiler::LoopNext() {
   // Discard the evaluation result.
   Discard();
-  const auto& loop = flow_stack_.loop_flow();
-  builder_->CreateBr(loop.next_branch_block);
-  builder_->SetInsertPoint(loop.next_insert_point);
+  auto loop_next = flow_stack_.PopLoopNextFlow();
+  builder_->CreateBr(loop_next.branch_block);
+  builder_->SetInsertPoint(loop_next.insert_point);
 }
 
 void Compiler::LoopBody() {
-  const auto& loop = flow_stack_.loop_flow();
-  builder_->CreateBr(loop.body_branch_block);
+  auto loop_body = flow_stack_.PopLoopBodyFlow();
+  builder_->CreateBr(loop_body.branch_block);
   break_stack_.back().block->moveAfter(builder_->GetInsertBlock());
-  builder_->SetInsertPoint(loop.body_insert_point);
+  builder_->SetInsertPoint(loop_body.insert_point);
 }
 
 void Compiler::LoopEnd() {
   PopBasicBlockName();
   break_stack_.pop_back();
   continue_stack_.pop_back();
-  flow_stack_.PopLoopFlow();
 }
 
 void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
