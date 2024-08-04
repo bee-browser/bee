@@ -499,7 +499,7 @@ void Compiler::ConditionalTernary() {
   auto then_item = Dereference();
 
   builder_->SetInsertPoint(then_branch.before_block);
-  auto* cond_value = PopValue();
+  auto* cond_value = PopBoolean();
   builder_->CreateCondBr(cond_value, then_branch.after_block, else_branch.after_block);
 
   auto* block = CreateBasicBlock(BB_NAME("block"));

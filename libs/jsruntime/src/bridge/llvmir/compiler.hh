@@ -194,21 +194,6 @@ class Compiler {
       UNUSED(label);
 #endif
     }
-
-    inline bool IsValue() const {
-      switch (type) {
-        case Item::Undefined:
-        case Item::Null:
-        case Item::Boolean:
-        case Item::Number:
-        case Item::Function:
-        case Item::Closure:
-        case Item::Any:
-          return true;
-        default:
-          return false;
-      }
-    }
   };
 
   struct BlockItem {
@@ -267,15 +252,6 @@ class Compiler {
     assert(!stack_.empty());
     const auto& item = stack_.back();
     assert(item.type == Item::Boolean);
-    auto* value = item.value;
-    stack_.pop_back();
-    return value;
-  }
-
-  inline llvm::Value* PopValue() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.IsValue());
     auto* value = item.value;
     stack_.pop_back();
     return value;
