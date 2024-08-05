@@ -1023,16 +1023,15 @@ void Compiler::DoWhileLoop(uint16_t id) {
   auto* loop_continue = loop_test;
   auto* loop_break = loop_end;
 
-  builder_->CreateBr(loop_start);
-  builder_->SetInsertPoint(loop_start);
-
-  SetBlockForLabelsInContinueStack(loop_continue);
-
-  break_stack_.push_back({loop_break, 0});
-  continue_stack_.push_back({loop_continue, 0});
-
   flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_end);
   flow_stack_.PushLoopBodyFlow(loop_test, loop_test);
+
+  flow_stack_.SetContinueTarget(loop_continue);
+  flow_stack_.PushBreakTarget(loop_break);
+  flow_stack_.PushContinueTarget(loop_continue);
+
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(loop_start);
 }
 
 void Compiler::WhileLoop(uint16_t id) {
@@ -1046,16 +1045,15 @@ void Compiler::WhileLoop(uint16_t id) {
   auto* loop_continue = loop_test;
   auto* loop_break = loop_end;
 
-  builder_->CreateBr(loop_start);
-  builder_->SetInsertPoint(loop_start);
-
-  SetBlockForLabelsInContinueStack(loop_continue);
-
-  break_stack_.push_back({loop_break, 0});
-  continue_stack_.push_back({loop_continue, 0});
-
   flow_stack_.PushLoopBodyFlow(loop_test, loop_end);
   flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_body);
+
+  flow_stack_.SetContinueTarget(loop_continue);
+  flow_stack_.PushBreakTarget(loop_break);
+  flow_stack_.PushContinueTarget(loop_continue);
+
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(loop_start);
 }
 
 void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next) {
@@ -1115,13 +1113,12 @@ void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next)
     insert_point = loop_init;
   }
 
+  flow_stack_.SetContinueTarget(loop_continue);
+  flow_stack_.PushBreakTarget(loop_break);
+  flow_stack_.PushContinueTarget(loop_continue);
+
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(insert_point);
-
-  SetBlockForLabelsInContinueStack(loop_continue);
-
-  break_stack_.push_back({loop_break, 0});
-  continue_stack_.push_back({loop_continue, 0});
 }
 
 void Compiler::LoopInit() {
@@ -1149,14 +1146,14 @@ void Compiler::LoopNext() {
 void Compiler::LoopBody() {
   auto loop_body = flow_stack_.PopLoopBodyFlow();
   builder_->CreateBr(loop_body.branch_block);
-  break_stack_.back().block->moveAfter(builder_->GetInsertBlock());
+  loop_body.insert_point->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(loop_body.insert_point);
 }
 
 void Compiler::LoopEnd() {
   PopBasicBlockName();
-  break_stack_.pop_back();
-  continue_stack_.pop_back();
+  flow_stack_.PopBreakTarget();
+  flow_stack_.PopContinueTarget();
 }
 
 void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
@@ -1174,9 +1171,8 @@ void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
   builder_->SetInsertPoint(start_block);
 
   auto* end_block = CreateBasicBlock(BB_NAME("end"));
-  break_stack_.push_back({end_block, 0});
-
   flow_stack_.PushSelectFlow(end_block);
+  flow_stack_.PushBreakTarget(end_block);
 }
 
 void Compiler::CaseClause(bool has_statement) {
@@ -1219,8 +1215,7 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
   PopBasicBlockName();
 
   const auto& select = flow_stack_.select_flow();
-
-  break_stack_.pop_back();
+  flow_stack_.PopBreakTarget();
 
   // Discard the switch-values
   Discard();
@@ -1382,12 +1377,6 @@ void Compiler::EndFunction(bool optimize) {
 
   assert(stack_.empty());
   stack_.clear();
-
-  assert(break_stack_.empty());
-  break_stack_.clear();
-
-  assert(continue_stack_.empty());
-  continue_stack_.clear();
 
   assert(flow_stack_.IsEmpty());
   flow_stack_.Clear();
@@ -1579,39 +1568,40 @@ void Compiler::EscapeVariable(Locator locator) {
 
 void Compiler::LabelStart(uint32_t symbol, bool is_iteration_statement) {
   assert(symbol != 0);
+
   auto* start_block = CreateBasicBlock(BB_NAME("start"));
   auto* end_block = CreateBasicBlock(BB_NAME("end"));
+
   builder_->CreateBr(start_block);
   end_block->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(start_block);
-  break_stack_.push_back({end_block, symbol});
+
+  flow_stack_.PushBreakTarget(end_block, symbol);
+
   if (is_iteration_statement) {
     // The `block` member variable will be updated in the method to handle the loop start of the
     // labeled iteration statement.
-    continue_stack_.push_back({nullptr, symbol});
+    flow_stack_.PushContinueTarget(nullptr, symbol);
   }
 }
 
 void Compiler::LabelEnd(uint32_t symbol, bool is_iteration_statement) {
   assert(symbol != 0);
-  assert(break_stack_.back().symbol == symbol);
-  auto* end_block = break_stack_.back().block;
-  builder_->CreateBr(end_block);
-  end_block->moveAfter(builder_->GetInsertBlock());
-  builder_->SetInsertPoint(end_block);
-  break_stack_.pop_back();
+
   if (is_iteration_statement) {
-    continue_stack_.pop_back();
+    flow_stack_.PopContinueTarget();
   }
+
+  auto break_target = flow_stack_.PopBreakTarget();
+  assert(break_target.symbol == symbol);
+
+  builder_->CreateBr(break_target.block);
+  break_target.block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(break_target.block);
 }
 
 void Compiler::Continue(uint32_t symbol) {
-  llvm::BasicBlock* target_block = nullptr;
-  if (symbol == 0) {
-    target_block = continue_stack_.back().block;
-  } else {
-    target_block = FindBlockBySymbol(continue_stack_, symbol);
-  }
+  llvm::BasicBlock* target_block = flow_stack_.continue_target(symbol);
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
   // TODO(issue#234)
@@ -1619,12 +1609,7 @@ void Compiler::Continue(uint32_t symbol) {
 }
 
 void Compiler::Break(uint32_t symbol) {
-  llvm::BasicBlock* target_block = nullptr;
-  if (symbol == 0) {
-    target_block = break_stack_.back().block;
-  } else {
-    target_block = FindBlockBySymbol(break_stack_, symbol);
-  }
+  llvm::BasicBlock* target_block = flow_stack_.break_target(symbol);
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
   // TODO(issue#234)
@@ -2251,30 +2236,6 @@ llvm::Value* Compiler::CreateGetValuePtr(Locator locator) {
 void Compiler::CreateBasicBlockForDeadcode() {
   auto* block = CreateBasicBlock(BB_NAME("deadcode"));
   builder_->SetInsertPoint(block);
-}
-
-llvm::BasicBlock* Compiler::FindBlockBySymbol(const std::vector<BlockItem>& stack,
-    uint32_t symbol) const {
-  assert(!break_stack_.empty());
-  for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
-    if (it->symbol == symbol) {
-      return it->block;
-    }
-  }
-  assert(false);  // never reach here
-  return nullptr;
-}
-
-void Compiler::SetBlockForLabelsInContinueStack(llvm::BasicBlock* block) {
-  assert(block != nullptr);
-  for (auto it = continue_stack_.rbegin(); it != continue_stack_.rend(); ++it) {
-    if (it->symbol == 0) {
-      assert(it->block != nullptr);
-      return;
-    }
-    assert(it->block == nullptr);
-    it->block = block;
-  }
 }
 
 #if defined(BEE_BUILD_DEBUG)

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #pragma GCC diagnostic push
@@ -143,13 +144,21 @@ struct Flow {
   ~Flow() = default;
 };
 
+struct BranchTarget {
+  llvm::BasicBlock* block;
+  uint32_t symbol;
+
+  BranchTarget(llvm::BasicBlock* block, uint32_t symbol) : block(block), symbol(symbol) {}
+  ~BranchTarget() = default;
+};
+
 class FlowStack {
  public:
   FlowStack() = default;
   ~FlowStack() = default;
 
   inline bool IsEmpty() const {
-    return stack_.empty();
+    return stack_.empty() && break_stack_.empty() && continue_stack_.empty();
   }
 
   inline void PushFunctionFlow(llvm::BasicBlock* locals_block,
@@ -409,8 +418,40 @@ class FlowStack {
     select_flow_mut().default_case_block = block;
   }
 
+  inline void PushBreakTarget(llvm::BasicBlock* block, uint32_t symbol = 0) {
+    break_stack_.emplace_back(block, symbol);
+  }
+
+  inline BranchTarget PopBreakTarget() {
+    auto target = break_stack_.back();
+    break_stack_.pop_back();
+    return target;
+  }
+
+  inline void PushContinueTarget(llvm::BasicBlock* block, uint32_t symbol = 0) {
+    continue_stack_.emplace_back(block, symbol);
+  }
+
+  inline void PopContinueTarget() {
+    continue_stack_.pop_back();
+  }
+
+  inline void SetContinueTarget(llvm::BasicBlock* block) {
+    assert(block != nullptr);
+    for (auto it = continue_stack_.rbegin(); it != continue_stack_.rend(); ++it) {
+      if (it->symbol == 0) {
+        assert(it->block != nullptr);
+        return;
+      }
+      assert(it->block == nullptr);
+      it->block = block;
+    }
+  }
+
   inline void Clear() {
     stack_.clear();
+    break_stack_.clear();
+    continue_stack_.clear();
   }
 
   void Dump() const {
@@ -536,6 +577,34 @@ class FlowStack {
     }
   }
 
+  inline llvm::BasicBlock* break_target(uint32_t symbol) const {
+    if (symbol == 0) {
+      return break_stack_.back().block;
+    }
+    assert(!break_stack_.empty());
+    for (auto it = break_stack_.rbegin(); it != break_stack_.rend(); ++it) {
+      if (it->symbol == symbol) {
+        return it->block;
+      }
+    }
+    assert(false);  // never reach here
+    return nullptr;
+  }
+
+  inline llvm::BasicBlock* continue_target(uint32_t symbol) const {
+    if (symbol == 0) {
+      return continue_stack_.back().block;
+    }
+    assert(!continue_stack_.empty());
+    for (auto it = continue_stack_.rbegin(); it != continue_stack_.rend(); ++it) {
+      if (it->symbol == symbol) {
+        return it->block;
+      }
+    }
+    assert(false);  // never reach here
+    return nullptr;
+  }
+
  private:
   inline Flow& top_mut() {
     assert(!stack_.empty());
@@ -558,6 +627,8 @@ class FlowStack {
   }
 
   std::vector<Flow> stack_;
+  std::vector<BranchTarget> break_stack_;
+  std::vector<BranchTarget> continue_stack_;
 
   // The index of the top-most scope flow on the stack.
   // It's used for building the flow chain from the top-most to the bottom-most.

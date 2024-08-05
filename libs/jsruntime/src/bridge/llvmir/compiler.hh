@@ -196,11 +196,6 @@ class Compiler {
     }
   };
 
-  struct BlockItem {
-    llvm::BasicBlock* block;
-    uint32_t symbol;
-  };
-
   inline void PushUndefined() {
     stack_.push_back(Item(Item::Undefined));
   }
@@ -683,9 +678,6 @@ class Compiler {
 
   // TODO: separate variables that must be reset in EndFunction() from others.
 
-  llvm::BasicBlock* FindBlockBySymbol(const std::vector<BlockItem>& stack, uint32_t symbol) const;
-  void SetBlockForLabelsInContinueStack(llvm::BasicBlock* block);
-
   // Helper methods for Call().
   llvm::Value* CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* value_ptr);
   void CreateCheckStatusForException(llvm::Value* status, llvm::Value* ret);
@@ -712,8 +704,6 @@ class Compiler {
   // The following variables must be reset in the end of compilation for each function.
   std::vector<llvm::Value*> locals_;
   std::vector<Item> stack_;
-  std::vector<BlockItem> break_stack_;
-  std::vector<BlockItem> continue_stack_;
   FlowStack flow_stack_;
   std::unordered_map<uint32_t, llvm::Value*> captures_;
 
