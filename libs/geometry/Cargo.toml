@@ -10,7 +10,7 @@ num-traits = "0.2.19"
 serde = { version = "1.0.204", features = ["derive"], optional = true }
 
 [dev-dependencies]
-serde_test = "1.0.176"
+serde_test = "1.0.177"
 
 [lib]
 bench = false
