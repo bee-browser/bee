@@ -204,12 +204,12 @@ class ControlFlowStack {
 
   ScopeFlow PopScopeFlow() {
     assert(top().kind == ControlFlowKind::kScope);
-    auto flow = top().scope;
+    auto scope = top().scope;
 
     stack_.pop_back();
     // The `scope_index_` must be updated just after stack_.pop_back() so that other instance
     // methods such as `scope_flow()` work properly.
-    scope_index_ = flow.outer_index;
+    scope_index_ = scope.outer_index;
 
     // Propagate flags to the outer flow.
     auto& outer = top_mut();
@@ -218,10 +218,10 @@ class ControlFlowStack {
         // Nothing to do.
         break;
       case ControlFlowKind::kScope:
-        if (flow.returned) {
+        if (scope.returned) {
           outer.scope.returned = true;
         }
-        if (flow.thrown) {
+        if (scope.thrown) {
           outer.scope.thrown = true;
         }
         break;
@@ -232,21 +232,21 @@ class ControlFlowStack {
       case ControlFlowKind::kLoopBody:  // TODO
       case ControlFlowKind::kSelect:    // TODO
       case ControlFlowKind::kCaseEnd:   // TODO
-        if (flow.returned) {
+        if (scope.returned) {
           scope_flow_mut().returned = true;
         }
-        if (flow.thrown) {
+        if (scope.thrown) {
           scope_flow_mut().thrown = true;
         }
         break;
       case ControlFlowKind::kException:
-        if (flow.thrown) {
+        if (scope.thrown) {
           outer.exception.thrown = true;
         }
         break;
     }
 
-    return flow;
+    return scope;
   }
 
   void PushBranchFlow(llvm::BasicBlock* before_block, llvm::BasicBlock* after_block) {
@@ -364,22 +364,22 @@ class ControlFlowStack {
 
   ExceptionFlow PopExceptionFlow() {
     assert(top().kind == ControlFlowKind::kException);
-    auto flow = top().exception;
+    auto exception = top().exception;
 
     stack_.pop_back();
     // The `exception_index_` must be updated just after stack_.pop_back() so that other instance
     // methods such as `exception_flow()` work properly.
-    exception_index_ = flow.outer_index;
+    exception_index_ = exception.outer_index;
 
     // Any exception flow is enclosed by a scope flow.
     assert(top().kind == ControlFlowKind::kScope);
 
     // Propagate flags to the outer flow.
-    if (flow.thrown) {
+    if (exception.thrown) {
       top_mut().scope.thrown = true;
     }
 
-    return flow;
+    return exception;
   }
 
   void SetReturned() {

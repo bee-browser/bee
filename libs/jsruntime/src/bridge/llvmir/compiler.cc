@@ -295,7 +295,6 @@ void Compiler::Subtraction() {
 // 13.9.1.1 Runtime Semantics: Evaluation
 void Compiler::LeftShift() {
   // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-
   Swap();
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
