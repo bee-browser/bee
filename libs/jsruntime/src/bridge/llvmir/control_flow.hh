@@ -351,14 +351,14 @@ class ControlFlowStack {
   }
 
   void SetReturned() {
-    if (scope_index_ > 0) {
-      scope_flow_mut().returned = true;
-    }
+    assert(scope_index_ > 0);
+    scope_flow_mut().returned = true;
   }
 
   void SetThrown() {
-    assert(top().kind == ControlFlowKind::kScope);
-    top_mut().scope.thrown = true;
+    assert(scope_index_ > 0);
+    assert(scope_index_ > exception_index_);
+    scope_flow_mut().thrown = true;
   }
 
   void SetCaught(bool nominal) {
@@ -514,7 +514,9 @@ class ControlFlowStack {
   }
 
   void PropagateReturned() {
-    SetReturned();
+    if (scope_index_ > 0) {
+      SetReturned();
+    }
   }
 
   void PropageteThrown() {

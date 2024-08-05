@@ -26,7 +26,12 @@ macro_rules! eval {
     };
     ($src:expr, throws: $expected:expr) => {
         Runtime::initialize();
-        let mut runtime = Runtime::new();
+        let mut runtime = Runtime::new().with_host_function("print", |_, args| {
+            // Some cases including `f64::NAN` fail in `assert_eq!()`.
+            let actual = format!("{:?}", args[0]);
+            let expected = format!("{:?}", Value::from($expected));
+            assert_eq!(actual, expected);
+        });
         let program = runtime.parse_script($src.as_ref()).unwrap();
         let module = runtime.compile(&program, true).unwrap();
         assert_matches!(runtime.evaluate(module), Err(v) => {
@@ -587,7 +592,10 @@ fn eval_comma_operator() {
 fn eval_if_statement() {
     eval!(file: "if_statement_true.js", 2);
     eval!(file: "if_statement_false.js", 1);
+    eval!(file: "if_statement_return.js", 1);
     eval!(file: "if_statement_return_in_block.js", 1);
+    eval!(file: "if_statement_throw.js", throws: 1);
+    eval!(file: "if_statement_throw_in_block.js", throws: 1);
 }
 
 #[test]

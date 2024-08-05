@@ -930,7 +930,6 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         if context.num_locals > 0 {
             context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
         }
-        context.commands.push(CompileCommand::Return(0));
 
         self.functions[context.func_index].commands = context.commands;
         self.functions[context.func_index].captures = context.captures.into_values().collect();
@@ -1718,7 +1717,6 @@ mod tests {
                     CompileCommand::Number(4.0),
                     CompileCommand::ImmutableBinding,
                     CompileCommand::PopScope(scope_ref!(1)),
-                    CompileCommand::Return(0),
                 ]
             );
         });
@@ -1749,7 +1747,6 @@ mod tests {
                     CompileCommand::MutableBinding,
                     CompileCommand::PopScope(scope_ref!(3)),
                     CompileCommand::PopScope(scope_ref!(1)),
-                    CompileCommand::Return(0),
                 ]
             );
         });
