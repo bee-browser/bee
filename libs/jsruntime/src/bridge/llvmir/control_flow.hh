@@ -7,12 +7,9 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <llvm/IR/BasicBlock.h>
 #include <llvm/Support/raw_ostream.h>
 #pragma GCC diagnostic pop
-
-namespace llvm {
-class BasicBlock;
-}
 
 enum class ControlFlowKind {
   kFunction,
@@ -89,7 +86,7 @@ struct LoopBodyFlow {
 struct SelectFlow {
   llvm::BasicBlock* end_block;
   size_t outer_index;
-  llvm::BasicBlock* default_case_block = nullptr;
+  llvm::BasicBlock* default_block = nullptr;
 };
 
 struct CaseEndFlow {
@@ -211,39 +208,11 @@ class ControlFlowStack {
     // methods such as `scope_flow()` work properly.
     scope_index_ = scope.outer_index;
 
-    // Propagate flags to the outer flow.
-    auto& outer = top_mut();
-    switch (outer.kind) {
-      case ControlFlowKind::kFunction:
-        // Nothing to do.
-        break;
-      case ControlFlowKind::kScope:
-        if (scope.returned) {
-          outer.scope.returned = true;
-        }
-        if (scope.thrown) {
-          outer.scope.thrown = true;
-        }
-        break;
-      case ControlFlowKind::kBranch:
-      case ControlFlowKind::kLoopInit:  // TODO
-      case ControlFlowKind::kLoopTest:  // TODO
-      case ControlFlowKind::kLoopNext:  // TODO
-      case ControlFlowKind::kLoopBody:  // TODO
-      case ControlFlowKind::kSelect:    // TODO
-      case ControlFlowKind::kCaseEnd:   // TODO
-        if (scope.returned) {
-          scope_flow_mut().returned = true;
-        }
-        if (scope.thrown) {
-          scope_flow_mut().thrown = true;
-        }
-        break;
-      case ControlFlowKind::kException:
-        if (scope.thrown) {
-          outer.exception.thrown = true;
-        }
-        break;
+    if (scope.returned) {
+      PropagateReturned();
+    }
+    if (scope.thrown) {
+      PropageteThrown();
     }
 
     return scope;
@@ -374,30 +343,16 @@ class ControlFlowStack {
     // Any exception flow is enclosed by a scope flow.
     assert(top().kind == ControlFlowKind::kScope);
 
-    // Propagate flags to the outer flow.
     if (exception.thrown) {
-      top_mut().scope.thrown = true;
+      PropageteThrown();
     }
 
     return exception;
   }
 
   void SetReturned() {
-    auto& flow = top_mut();
-    switch (flow.kind) {
-      case ControlFlowKind::kFunction:
-        // Nothing to do.
-        break;
-      case ControlFlowKind::kScope:
-        flow.scope.returned = true;
-        break;
-      case ControlFlowKind::kBranch:
-        scope_flow_mut().returned = true;
-        break;
-      default:
-        // never reach here
-        assert(false);
-        break;
+    if (scope_index_ > 0) {
+      scope_flow_mut().returned = true;
     }
   }
 
@@ -421,7 +376,7 @@ class ControlFlowStack {
 
   void SetDefaultCaseBlock(llvm::BasicBlock* block) {
     assert(block != nullptr);
-    select_flow_mut().default_case_block = block;
+    select_flow_mut().default_block = block;
   }
 
   void PushBreakTarget(llvm::BasicBlock* block, uint32_t symbol = 0) {
@@ -461,56 +416,9 @@ class ControlFlowStack {
   }
 
   void Dump() const {
-    llvm::errs() << "<llvm-ir:flow-stack>\n";
-    for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {
-      const auto& flow = *it;
-      switch (flow.kind) {
-        case ControlFlowKind::kFunction:
-          llvm::errs() << "function";
-          break;
-        case ControlFlowKind::kScope:
-          llvm::errs() << "scope: ";
-          if (flow.scope.returned) {
-            llvm::errs() << 'R';
-          }
-          if (flow.scope.thrown) {
-            llvm::errs() << 'E';
-          }
-          break;
-        case ControlFlowKind::kBranch:
-          llvm::errs() << "branch";
-          break;
-        case ControlFlowKind::kLoopInit:
-          llvm::errs() << "loop-init";
-          break;
-        case ControlFlowKind::kLoopTest:
-          llvm::errs() << "loop-test";
-          break;
-        case ControlFlowKind::kLoopNext:
-          llvm::errs() << "loop-next";
-          break;
-        case ControlFlowKind::kLoopBody:
-          llvm::errs() << "loop-body";
-          break;
-        case ControlFlowKind::kSelect:
-          llvm::errs() << "select";
-          break;
-        case ControlFlowKind::kCaseEnd:
-          llvm::errs() << "case-end";
-          break;
-        case ControlFlowKind::kException:
-          llvm::errs() << "exception: ";
-          if (flow.exception.thrown) {
-            llvm::errs() << 'E';
-          }
-          if (flow.exception.caught) {
-            llvm::errs() << 'C';
-          }
-          break;
-      }
-      llvm::errs() << '\n';
-    }
-    llvm::errs() << "</llvm-ir:flow-stack>\n";
+    DumpStack();
+    DumpBranchTargetStack(break_stack_, "break-stack");
+    DumpBranchTargetStack(continue_stack_, "continue-stack");
   }
 
   const FunctionFlow& function_flow() const {
@@ -603,6 +511,113 @@ class ControlFlowStack {
     }
     assert(false);  // never reach here
     return nullptr;
+  }
+
+  void PropagateReturned() {
+    SetReturned();
+  }
+
+  void PropageteThrown() {
+    if (scope_index_ > exception_index_) {
+      scope_flow_mut().thrown = true;
+    } else if (exception_index_ > scope_index_) {
+      exception_flow_mut().thrown = true;
+    }
+  }
+
+  void DumpStack() const {
+    llvm::errs() << "<llvm-ir:control-flow-stack>\n";
+    for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {
+      const auto& flow = *it;
+      switch (flow.kind) {
+        case ControlFlowKind::kFunction:
+          llvm::errs() << "function:\n";
+          llvm::errs() << " locals-block=" << flow.function.locals_block->getName() << '\n';
+          llvm::errs() << " args-block=" << flow.function.args_block->getName() << '\n';
+          llvm::errs() << " body-block=" << flow.function.body_block->getName() << '\n';
+          llvm::errs() << " return-block=" << flow.function.return_block->getName() << '\n';
+          break;
+        case ControlFlowKind::kScope:
+          llvm::errs() << "scope: ";
+          if (flow.scope.returned) {
+            llvm::errs() << 'R';
+          }
+          if (flow.scope.thrown) {
+            llvm::errs() << 'T';
+          }
+          llvm::errs() << '\n';
+          llvm::errs() << " init-block=" << flow.scope.init_block->getName() << '\n';
+          llvm::errs() << " hoisted-block=" << flow.scope.hoisted_block->getName() << '\n';
+          llvm::errs() << " block=" << flow.scope.block->getName() << '\n';
+          llvm::errs() << " cleanup-block=" << flow.scope.cleanup_block->getName() << '\n';
+          break;
+        case ControlFlowKind::kBranch:
+          llvm::errs() << "branch:\n";
+          llvm::errs() << " before-block=" << flow.branch.before_block->getName() << '\n';
+          llvm::errs() << " after-block=" << flow.branch.after_block->getName() << '\n';
+          break;
+        case ControlFlowKind::kLoopInit:
+          llvm::errs() << "loop-init:\n";
+          llvm::errs() << " branch-block=" << flow.loop_init.branch_block->getName() << '\n';
+          llvm::errs() << " insert-point=" << flow.loop_init.insert_point->getName() << '\n';
+          break;
+        case ControlFlowKind::kLoopTest:
+          llvm::errs() << "loop-test:\n";
+          llvm::errs() << " then-block=" << flow.loop_test.then_block->getName() << '\n';
+          llvm::errs() << " else-block=" << flow.loop_test.else_block->getName() << '\n';
+          llvm::errs() << " insert-point=" << flow.loop_test.insert_point->getName() << '\n';
+          break;
+        case ControlFlowKind::kLoopNext:
+          llvm::errs() << "loop-next:\n";
+          llvm::errs() << " branch-block=" << flow.loop_next.branch_block->getName() << '\n';
+          llvm::errs() << " insert-point=" << flow.loop_next.insert_point->getName() << '\n';
+          break;
+        case ControlFlowKind::kLoopBody:
+          llvm::errs() << "loop-body:\n";
+          llvm::errs() << " branch-block=" << flow.loop_body.branch_block->getName() << '\n';
+          llvm::errs() << " insert-point=" << flow.loop_body.insert_point->getName() << '\n';
+          break;
+        case ControlFlowKind::kSelect:
+          llvm::errs() << "select:\n";
+          llvm::errs() << " end-block=" << flow.select.end_block->getName() << '\n';
+          llvm::errs() << " default-block=" << flow.select.default_block->getName() << '\n';
+          break;
+        case ControlFlowKind::kCaseEnd:
+          llvm::errs() << "case-end:\n";
+          llvm::errs() << " block=" << flow.case_end.block->getName() << '\n';
+          break;
+        case ControlFlowKind::kException:
+          llvm::errs() << "exception: ";
+          if (flow.exception.thrown) {
+            llvm::errs() << 'T';
+          }
+          if (flow.exception.caught) {
+            llvm::errs() << 'C';
+          }
+          if (flow.exception.ended) {
+            llvm::errs() << 'E';
+          }
+          llvm::errs() << '\n';
+          llvm::errs() << " try-block=" << flow.exception.try_block->getName() << '\n';
+          llvm::errs() << " catch-block=" << flow.exception.catch_block->getName() << '\n';
+          llvm::errs() << " finally-block=" << flow.exception.finally_block->getName() << '\n';
+          llvm::errs() << " end-block=" << flow.exception.end_block->getName() << '\n';
+          break;
+      }
+    }
+    llvm::errs() << "</llvm-ir:control-flow-stack>\n";
+  }
+
+  void DumpBranchTargetStack(const std::vector<BranchTarget>& stack, const char* name) const {
+    llvm::errs() << "<llvm-ir:" << name << ">\n";
+    for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+      llvm::errs() << "block: " << it->block->getName();
+      if (it->symbol != 0) {
+        llvm::errs() << ":" << it->symbol;
+      }
+      llvm::errs() << '\n';
+    }
+    llvm::errs() << "</llvm-ir:" << name << ">\n";
   }
 
   const ControlFlow& top() const {

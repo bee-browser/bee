@@ -1241,8 +1241,8 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
   // Create an unconditional jump to the statement of the default clause if it exists.
   // Otherwise, jump to the end block.
   builder_->SetInsertPoint(case_block);
-  if (select.default_case_block != nullptr) {
-    builder_->CreateBr(select.default_case_block);
+  if (select.default_block != nullptr) {
+    builder_->CreateBr(select.default_block);
   } else {
     builder_->CreateBr(select.end_block);
   }
