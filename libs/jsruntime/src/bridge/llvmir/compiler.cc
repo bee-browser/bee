@@ -136,7 +136,7 @@ void Compiler::Closure(bool declaration, uint16_t num_captures) {
   llvm::BasicBlock* backup;
   if (declaration) {
     backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(flow_stack_.scope_flow().hoisted_block);
+    builder_->SetInsertPoint(control_flow_stack_.scope_flow().hoisted_block);
   }
 
   auto* lambda = PopFunction();
@@ -488,8 +488,8 @@ void Compiler::BitwiseOr() {
 }
 
 void Compiler::ConditionalTernary() {
-  auto else_branch = flow_stack_.PopBranchFlow();
-  auto then_branch = flow_stack_.PopBranchFlow();
+  auto else_branch = control_flow_stack_.PopBranchFlow();
+  auto then_branch = control_flow_stack_.PopBranchFlow();
 
   auto* else_tail_block = builder_->GetInsertBlock();
 
@@ -738,7 +738,7 @@ void Compiler::DeclareFunction() {
   static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(flow_stack_.scope_flow().hoisted_block);
+  builder_->SetInsertPoint(control_flow_stack_.scope_flow().hoisted_block);
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -756,7 +756,7 @@ void Compiler::DeclareClosure() {
   static constexpr uint8_t FLAGS = VARIABLE_INITIALIZED | VARIABLE_MUTABLE;
 
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(flow_stack_.scope_flow().hoisted_block);
+  builder_->SetInsertPoint(control_flow_stack_.scope_flow().hoisted_block);
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -867,7 +867,7 @@ void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* r
   // Store the exception.
   builder_->CreateStore(status_exception, status_);
   CreateStoreValueToVariable(retv, retv_);
-  auto* exception_block = flow_stack_.exception_block();
+  auto* exception_block = control_flow_stack_.exception_block();
   builder_->CreateBr(exception_block);
   // }
 
@@ -953,12 +953,12 @@ void Compiler::Branch() {
 
   builder_->SetInsertPoint(after_block);
 
-  flow_stack_.PushBranchFlow(before_block, after_block);
+  control_flow_stack_.PushBranchFlow(before_block, after_block);
 }
 
 void Compiler::IfElseStatement() {
-  auto else_branch = flow_stack_.PopBranchFlow();
-  auto then_branch = flow_stack_.PopBranchFlow();
+  auto else_branch = control_flow_stack_.PopBranchFlow();
+  auto then_branch = control_flow_stack_.PopBranchFlow();
 
   auto* else_tail_block = builder_->GetInsertBlock();
 
@@ -994,7 +994,7 @@ void Compiler::IfElseStatement() {
 void Compiler::IfStatement() {
   auto* then_tail_block = builder_->GetInsertBlock();
 
-  auto branch = flow_stack_.PopBranchFlow();
+  auto branch = control_flow_stack_.PopBranchFlow();
 
   auto* block = CreateBasicBlock(BB_NAME("block"));
 
@@ -1023,12 +1023,12 @@ void Compiler::DoWhileLoop(uint16_t id) {
   auto* loop_continue = loop_test;
   auto* loop_break = loop_end;
 
-  flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_end);
-  flow_stack_.PushLoopBodyFlow(loop_test, loop_test);
+  control_flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_end);
+  control_flow_stack_.PushLoopBodyFlow(loop_test, loop_test);
 
-  flow_stack_.SetContinueTarget(loop_continue);
-  flow_stack_.PushBreakTarget(loop_break);
-  flow_stack_.PushContinueTarget(loop_continue);
+  control_flow_stack_.SetContinueTarget(loop_continue);
+  control_flow_stack_.PushBreakTarget(loop_break);
+  control_flow_stack_.PushContinueTarget(loop_continue);
 
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(loop_start);
@@ -1045,12 +1045,12 @@ void Compiler::WhileLoop(uint16_t id) {
   auto* loop_continue = loop_test;
   auto* loop_break = loop_end;
 
-  flow_stack_.PushLoopBodyFlow(loop_test, loop_end);
-  flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_body);
+  control_flow_stack_.PushLoopBodyFlow(loop_test, loop_end);
+  control_flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_body);
 
-  flow_stack_.SetContinueTarget(loop_continue);
-  flow_stack_.PushBreakTarget(loop_break);
-  flow_stack_.PushContinueTarget(loop_continue);
+  control_flow_stack_.SetContinueTarget(loop_continue);
+  control_flow_stack_.PushBreakTarget(loop_break);
+  control_flow_stack_.PushContinueTarget(loop_continue);
 
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(loop_start);
@@ -1071,18 +1071,18 @@ void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next)
   auto* insert_point = loop_body;
 
   if (has_next) {
-    flow_stack_.PushLoopBodyFlow(loop_next, loop_end);
+    control_flow_stack_.PushLoopBodyFlow(loop_next, loop_end);
   } else if (has_test) {
-    flow_stack_.PushLoopBodyFlow(loop_test, loop_end);
+    control_flow_stack_.PushLoopBodyFlow(loop_test, loop_end);
   } else {
-    flow_stack_.PushLoopBodyFlow(loop_body, loop_end);
+    control_flow_stack_.PushLoopBodyFlow(loop_body, loop_end);
   }
 
   if (has_next) {
     if (has_test) {
-      flow_stack_.PushLoopNextFlow(loop_test, loop_body);
+      control_flow_stack_.PushLoopNextFlow(loop_test, loop_body);
     } else {
-      flow_stack_.PushLoopNextFlow(loop_body, loop_body);
+      control_flow_stack_.PushLoopNextFlow(loop_body, loop_body);
     }
     loop_continue = loop_next;
     insert_point = loop_next;
@@ -1090,9 +1090,9 @@ void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next)
 
   if (has_test) {
     if (has_next) {
-      flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_next);
+      control_flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_next);
     } else {
-      flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_body);
+      control_flow_stack_.PushLoopTestFlow(loop_body, loop_end, loop_body);
     }
     loop_start = loop_test;
     if (!has_next) {
@@ -1103,26 +1103,26 @@ void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next)
 
   if (has_init) {
     if (has_test) {
-      flow_stack_.PushLoopInitFlow(loop_test, loop_test);
+      control_flow_stack_.PushLoopInitFlow(loop_test, loop_test);
     } else if (has_next) {
-      flow_stack_.PushLoopInitFlow(loop_body, loop_next);
+      control_flow_stack_.PushLoopInitFlow(loop_body, loop_next);
     } else {
-      flow_stack_.PushLoopInitFlow(loop_body, loop_body);
+      control_flow_stack_.PushLoopInitFlow(loop_body, loop_body);
     }
     loop_start = loop_init;
     insert_point = loop_init;
   }
 
-  flow_stack_.SetContinueTarget(loop_continue);
-  flow_stack_.PushBreakTarget(loop_break);
-  flow_stack_.PushContinueTarget(loop_continue);
+  control_flow_stack_.SetContinueTarget(loop_continue);
+  control_flow_stack_.PushBreakTarget(loop_break);
+  control_flow_stack_.PushContinueTarget(loop_continue);
 
   builder_->CreateBr(loop_start);
   builder_->SetInsertPoint(insert_point);
 }
 
 void Compiler::LoopInit() {
-  auto loop_init = flow_stack_.PopLoopInitFlow();
+  auto loop_init = control_flow_stack_.PopLoopInitFlow();
   builder_->CreateBr(loop_init.branch_block);
   builder_->SetInsertPoint(loop_init.insert_point);
 }
@@ -1130,7 +1130,7 @@ void Compiler::LoopInit() {
 void Compiler::LoopTest() {
   auto cond = Dereference();
   auto* truthy = CreateToBoolean(cond);
-  auto loop_test = flow_stack_.PopLoopTestFlow();
+  auto loop_test = control_flow_stack_.PopLoopTestFlow();
   builder_->CreateCondBr(truthy, loop_test.then_block, loop_test.else_block);
   builder_->SetInsertPoint(loop_test.insert_point);
 }
@@ -1138,13 +1138,13 @@ void Compiler::LoopTest() {
 void Compiler::LoopNext() {
   // Discard the evaluation result.
   Discard();
-  auto loop_next = flow_stack_.PopLoopNextFlow();
+  auto loop_next = control_flow_stack_.PopLoopNextFlow();
   builder_->CreateBr(loop_next.branch_block);
   builder_->SetInsertPoint(loop_next.insert_point);
 }
 
 void Compiler::LoopBody() {
-  auto loop_body = flow_stack_.PopLoopBodyFlow();
+  auto loop_body = control_flow_stack_.PopLoopBodyFlow();
   builder_->CreateBr(loop_body.branch_block);
   loop_body.insert_point->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(loop_body.insert_point);
@@ -1152,8 +1152,8 @@ void Compiler::LoopBody() {
 
 void Compiler::LoopEnd() {
   PopBasicBlockName();
-  flow_stack_.PopBreakTarget();
-  flow_stack_.PopContinueTarget();
+  control_flow_stack_.PopBreakTarget();
+  control_flow_stack_.PopContinueTarget();
 }
 
 void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
@@ -1171,14 +1171,14 @@ void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
   builder_->SetInsertPoint(start_block);
 
   auto* end_block = CreateBasicBlock(BB_NAME("end"));
-  flow_stack_.PushSelectFlow(end_block);
-  flow_stack_.PushBreakTarget(end_block);
+  control_flow_stack_.PushSelectFlow(end_block);
+  control_flow_stack_.PushBreakTarget(end_block);
 }
 
 void Compiler::CaseClause(bool has_statement) {
   UNUSED(has_statement);
 
-  auto branch = flow_stack_.PopBranchFlow();
+  auto branch = control_flow_stack_.PopBranchFlow();
 
   auto* case_end_block = builder_->GetInsertBlock();
 
@@ -1191,21 +1191,21 @@ void Compiler::CaseClause(bool has_statement) {
 
   Duplicate();
 
-  flow_stack_.PushCaseEndFlow(case_end_block);
+  control_flow_stack_.PushCaseEndFlow(case_end_block);
 }
 
 void Compiler::DefaultClause(bool has_statement) {
   UNUSED(has_statement);
 
-  auto branch = flow_stack_.PopBranchFlow();
+  auto branch = control_flow_stack_.PopBranchFlow();
 
   auto* case_end_block = builder_->GetInsertBlock();
   builder_->SetInsertPoint(branch.before_block);
 
   Duplicate();
 
-  flow_stack_.PushCaseEndFlow(case_end_block);
-  flow_stack_.SetDefaultCaseBlock(branch.after_block);
+  control_flow_stack_.PushCaseEndFlow(case_end_block);
+  control_flow_stack_.SetDefaultCaseBlock(branch.after_block);
 }
 
 void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
@@ -1214,8 +1214,8 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
 
   PopBasicBlockName();
 
-  const auto& select = flow_stack_.select_flow();
-  flow_stack_.PopBreakTarget();
+  const auto& select = control_flow_stack_.select_flow();
+  control_flow_stack_.PopBreakTarget();
 
   // Discard the switch-values
   Discard();
@@ -1227,7 +1227,7 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
   // The blocks has been stored in the stack in reverse order.
   auto* fall_through_block = select.end_block;
   for (auto i = num_cases - 1;; --i) {
-    auto case_end = flow_stack_.PopCaseEndFlow();
+    auto case_end = control_flow_stack_.PopCaseEndFlow();
     if (case_end.block->getTerminator() == nullptr) {
       builder_->SetInsertPoint(case_end.block);
       builder_->CreateBr(fall_through_block);
@@ -1251,7 +1251,7 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
   select.end_block->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(select.end_block);
 
-  flow_stack_.PopSelectFlow();
+  control_flow_stack_.PopSelectFlow();
 }
 
 void Compiler::Try() {
@@ -1260,7 +1260,7 @@ void Compiler::Try() {
   auto* finally_block = CreateBasicBlock(BB_NAME("finally"));
   auto* end_block = CreateBasicBlock(BB_NAME("try-end"));
 
-  flow_stack_.PushExceptionFlow(try_block, catch_block, finally_block, end_block);
+  control_flow_stack_.PushExceptionFlow(try_block, catch_block, finally_block, end_block);
 
   // Jump from the end of previous block to the beginning of the try block.
   builder_->CreateBr(try_block);
@@ -1273,8 +1273,8 @@ void Compiler::Try() {
 void Compiler::Catch(bool nominal) {
   PopBasicBlockName();
 
-  flow_stack_.SetCaught(nominal);
-  const auto& flow = flow_stack_.exception_flow();
+  control_flow_stack_.SetCaught(nominal);
+  const auto& flow = control_flow_stack_.exception_flow();
 
   // Jump from the end of the try block to the beginning of the finally block.
   builder_->CreateBr(flow.finally_block);
@@ -1296,8 +1296,8 @@ void Compiler::Finally(bool nominal) {
 
   PopBasicBlockName();
 
-  flow_stack_.SetEnded();
-  const auto& flow = flow_stack_.exception_flow();
+  control_flow_stack_.SetEnded();
+  const auto& flow = control_flow_stack_.exception_flow();
 
   // Jump from the end of the catch block to the beginning of the finally block.
   builder_->CreateBr(flow.finally_block);
@@ -1311,14 +1311,14 @@ void Compiler::Finally(bool nominal) {
 void Compiler::TryEnd() {
   PopBasicBlockName();
 
-  auto flow = flow_stack_.PopExceptionFlow();
+  auto flow = control_flow_stack_.PopExceptionFlow();
 
   // Jump from the end of the finally block to the beginning of the outer catch block if there is
   // an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
   auto* has_uncaught_exception = builder_->CreateICmpEQ(
       status, builder_->getInt32(STATUS_EXCEPTION), REG_NAME("has_uncaught_exception"));
-  auto* exception_block = flow_stack_.exception_block();
+  auto* exception_block = control_flow_stack_.exception_block();
   builder_->CreateCondBr(has_uncaught_exception, exception_block, flow.end_block);
 
   flow.end_block->moveAfter(builder_->GetInsertBlock());
@@ -1333,7 +1333,7 @@ void Compiler::StartFunction(const char* name) {
   body_block_ = CreateBasicBlock(BB_NAME("body"));
   return_block_ = CreateBasicBlock(BB_NAME("return"));
 
-  flow_stack_.PushFunctionFlow(locals_block_, args_block_, body_block_, return_block_);
+  control_flow_stack_.PushFunctionFlow(locals_block_, args_block_, body_block_, return_block_);
 
   exec_context_ = function_->getArg(0);
   caps_ = function_->getArg(1);
@@ -1351,7 +1351,7 @@ void Compiler::StartFunction(const char* name) {
 }
 
 void Compiler::EndFunction(bool optimize) {
-  auto flow = flow_stack_.PopFunctionFlow();
+  auto flow = control_flow_stack_.PopFunctionFlow();
 
   builder_->CreateBr(flow.return_block);
   flow.return_block->moveAfter(builder_->GetInsertBlock());
@@ -1378,8 +1378,8 @@ void Compiler::EndFunction(bool optimize) {
   assert(stack_.empty());
   stack_.clear();
 
-  assert(flow_stack_.IsEmpty());
-  flow_stack_.Clear();
+  assert(control_flow_stack_.IsEmpty());
+  control_flow_stack_.Clear();
 
   if (llvm::verifyFunction(*function_, &llvm::errs())) {
     llvm::errs() << "<broken-function>\n";
@@ -1405,7 +1405,7 @@ void Compiler::StartScope(size_t scope_id) {
   init->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(block);
 
-  flow_stack_.PushScopeFlow(init, hoisted, block, cleanup);
+  control_flow_stack_.PushScopeFlow(init, hoisted, block, cleanup);
 }
 
 void Compiler::EndScope(size_t scope_id) {
@@ -1413,7 +1413,7 @@ void Compiler::EndScope(size_t scope_id) {
 
   PopBasicBlockName();
 
-  auto flow = flow_stack_.PopScopeFlow();
+  auto flow = control_flow_stack_.PopScopeFlow();
 
   builder_->CreateBr(flow.cleanup_block);
   flow.cleanup_block->moveAfter(builder_->GetInsertBlock());
@@ -1436,11 +1436,11 @@ void Compiler::EndScope(size_t scope_id) {
     auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, "status");
     auto* switch_inst = builder_->CreateSwitch(status, block);
     if (flow.returned) {
-      auto* cleanup_block = flow_stack_.cleanup_block();
+      auto* cleanup_block = control_flow_stack_.cleanup_block();
       switch_inst->addCase(builder_->getInt32(STATUS_NORMAL), cleanup_block);
     }
     if (flow.thrown) {
-      auto* exception_block = flow_stack_.exception_block();
+      auto* exception_block = control_flow_stack_.exception_block();
       switch_inst->addCase(builder_->getInt32(STATUS_EXCEPTION), exception_block);
     }
   }
@@ -1466,7 +1466,7 @@ void Compiler::InitLocal(Locator locator) {
   assert(locator.kind == LocatorKind::Local);
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(flow_stack_.scope_flow().init_block);
+  builder_->SetInsertPoint(control_flow_stack_.scope_flow().init_block);
 
   auto* variable_ptr = GetLocalVariablePtr(locator.index);
   CreateStoreFlagsToVariable(0, variable_ptr);
@@ -1485,7 +1485,7 @@ void Compiler::CreateCapture(Locator locator) {
   assert(locator.kind != LocatorKind::Capture);
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(flow_stack_.scope_flow().init_block);
+  builder_->SetInsertPoint(control_flow_stack_.scope_flow().init_block);
 
   llvm::Value* variable_ptr;
   switch (locator.kind) {
@@ -1513,7 +1513,7 @@ void Compiler::CaptureVariable(bool declaration) {
   llvm::BasicBlock* backup;
   if (declaration) {
     backup = builder_->GetInsertBlock();
-    builder_->SetInsertPoint(flow_stack_.scope_flow().hoisted_block);
+    builder_->SetInsertPoint(control_flow_stack_.scope_flow().hoisted_block);
   }
 
   llvm::Value* capture_ptr;
@@ -1545,7 +1545,7 @@ void Compiler::EscapeVariable(Locator locator) {
   assert(locator.kind != LocatorKind::Capture);
 
   llvm::BasicBlock* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(flow_stack_.scope_flow().cleanup_block);
+  builder_->SetInsertPoint(control_flow_stack_.scope_flow().cleanup_block);
 
   auto key = ComputeKeyFromLocator(locator);
   assert(captures_.find(key) != captures_.end());
@@ -1576,12 +1576,12 @@ void Compiler::LabelStart(uint32_t symbol, bool is_iteration_statement) {
   end_block->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(start_block);
 
-  flow_stack_.PushBreakTarget(end_block, symbol);
+  control_flow_stack_.PushBreakTarget(end_block, symbol);
 
   if (is_iteration_statement) {
     // The `block` member variable will be updated in the method to handle the loop start of the
     // labeled iteration statement.
-    flow_stack_.PushContinueTarget(nullptr, symbol);
+    control_flow_stack_.PushContinueTarget(nullptr, symbol);
   }
 }
 
@@ -1589,10 +1589,10 @@ void Compiler::LabelEnd(uint32_t symbol, bool is_iteration_statement) {
   assert(symbol != 0);
 
   if (is_iteration_statement) {
-    flow_stack_.PopContinueTarget();
+    control_flow_stack_.PopContinueTarget();
   }
 
-  auto break_target = flow_stack_.PopBreakTarget();
+  auto break_target = control_flow_stack_.PopBreakTarget();
   assert(break_target.symbol == symbol);
 
   builder_->CreateBr(break_target.block);
@@ -1601,7 +1601,7 @@ void Compiler::LabelEnd(uint32_t symbol, bool is_iteration_statement) {
 }
 
 void Compiler::Continue(uint32_t symbol) {
-  llvm::BasicBlock* target_block = flow_stack_.continue_target(symbol);
+  llvm::BasicBlock* target_block = control_flow_stack_.continue_target(symbol);
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
   // TODO(issue#234)
@@ -1609,7 +1609,7 @@ void Compiler::Continue(uint32_t symbol) {
 }
 
 void Compiler::Break(uint32_t symbol) {
-  llvm::BasicBlock* target_block = flow_stack_.break_target(symbol);
+  llvm::BasicBlock* target_block = control_flow_stack_.break_target(symbol);
   assert(target_block != nullptr);
   builder_->CreateBr(target_block);
   // TODO(issue#234)
@@ -1625,9 +1625,9 @@ void Compiler::Return(size_t n) {
 
   builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
 
-  flow_stack_.SetReturned();
+  control_flow_stack_.SetReturned();
 
-  llvm::BasicBlock* next_block = flow_stack_.cleanup_block();
+  llvm::BasicBlock* next_block = control_flow_stack_.cleanup_block();
   builder_->CreateBr(next_block);
 
   // TODO(issue#234)
@@ -1640,9 +1640,9 @@ void Compiler::Throw() {
 
   builder_->CreateStore(builder_->getInt32(STATUS_EXCEPTION), status_);
 
-  flow_stack_.SetThrown();
+  control_flow_stack_.SetThrown();
 
-  llvm::BasicBlock* next_block = flow_stack_.exception_block();
+  llvm::BasicBlock* next_block = control_flow_stack_.exception_block();
   builder_->CreateBr(next_block);
   next_block->moveAfter(builder_->GetInsertBlock());
 
@@ -1723,7 +1723,7 @@ void Compiler::DumpStack() {
     llvm::errs() << "\n";
   }
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
-  flow_stack_.Dump();
+  control_flow_stack_.Dump();
 }
 
 Compiler::Item Compiler::Dereference(struct Reference* ref) {

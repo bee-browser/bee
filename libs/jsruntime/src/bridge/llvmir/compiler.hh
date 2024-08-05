@@ -21,7 +21,7 @@
 #pragma GCC diagnostic pop
 
 #include "../bridge.hh"
-#include "flow.hh"
+#include "control_flow.hh"
 #include "macros.hh"
 #include "type_holder.hh"
 
@@ -704,7 +704,7 @@ class Compiler {
   // The following variables must be reset in the end of compilation for each function.
   std::vector<llvm::Value*> locals_;
   std::vector<Item> stack_;
-  FlowStack flow_stack_;
+  ControlFlowStack control_flow_stack_;
   std::unordered_map<uint32_t, llvm::Value*> captures_;
 
   // A cache of functions does not reset in the end of compilation for each function.
