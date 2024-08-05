@@ -130,22 +130,21 @@ struct ControlFlow {
     ExceptionFlow exception;
   };
 
-  inline ControlFlow(const FunctionFlow& function)
+  ControlFlow(const FunctionFlow& function)
       : kind(ControlFlowKind::kFunction), function(function) {}
-  inline ControlFlow(const ScopeFlow& scope) : kind(ControlFlowKind::kScope), scope(scope) {}
-  inline ControlFlow(const BranchFlow& branch) : kind(ControlFlowKind::kBranch), branch(branch) {}
-  inline ControlFlow(const LoopInitFlow& loop_init)
+  ControlFlow(const ScopeFlow& scope) : kind(ControlFlowKind::kScope), scope(scope) {}
+  ControlFlow(const BranchFlow& branch) : kind(ControlFlowKind::kBranch), branch(branch) {}
+  ControlFlow(const LoopInitFlow& loop_init)
       : kind(ControlFlowKind::kLoopInit), loop_init(loop_init) {}
-  inline ControlFlow(const LoopTestFlow& loop_test)
+  ControlFlow(const LoopTestFlow& loop_test)
       : kind(ControlFlowKind::kLoopTest), loop_test(loop_test) {}
-  inline ControlFlow(const LoopNextFlow& loop_next)
+  ControlFlow(const LoopNextFlow& loop_next)
       : kind(ControlFlowKind::kLoopNext), loop_next(loop_next) {}
-  inline ControlFlow(const LoopBodyFlow& loop_body)
+  ControlFlow(const LoopBodyFlow& loop_body)
       : kind(ControlFlowKind::kLoopBody), loop_body(loop_body) {}
-  inline ControlFlow(const SelectFlow& select) : kind(ControlFlowKind::kSelect), select(select) {}
-  inline ControlFlow(const CaseEndFlow& case_end)
-      : kind(ControlFlowKind::kCaseEnd), case_end(case_end) {}
-  inline ControlFlow(const ExceptionFlow& exception)
+  ControlFlow(const SelectFlow& select) : kind(ControlFlowKind::kSelect), select(select) {}
+  ControlFlow(const CaseEndFlow& case_end) : kind(ControlFlowKind::kCaseEnd), case_end(case_end) {}
+  ControlFlow(const ExceptionFlow& exception)
       : kind(ControlFlowKind::kException), exception(exception) {}
   ControlFlow(const ControlFlow& flow) = default;
   ~ControlFlow() = default;
@@ -164,11 +163,11 @@ class ControlFlowStack {
   ControlFlowStack() = default;
   ~ControlFlowStack() = default;
 
-  inline bool IsEmpty() const {
+  bool IsEmpty() const {
     return stack_.empty() && break_stack_.empty() && continue_stack_.empty();
   }
 
-  inline void PushFunctionFlow(llvm::BasicBlock* locals_block,
+  void PushFunctionFlow(llvm::BasicBlock* locals_block,
       llvm::BasicBlock* args_block,
       llvm::BasicBlock* body_block,
       llvm::BasicBlock* return_block) {
@@ -180,7 +179,7 @@ class ControlFlowStack {
     stack_.emplace_back(FunctionFlow{locals_block, args_block, body_block, return_block});
   }
 
-  inline FunctionFlow PopFunctionFlow() {
+  FunctionFlow PopFunctionFlow() {
     auto flow = top();
     assert(flow.kind == ControlFlowKind::kFunction);
     stack_.pop_back();
@@ -190,7 +189,7 @@ class ControlFlowStack {
     return flow.function;
   }
 
-  inline void PushScopeFlow(llvm::BasicBlock* init_block,
+  void PushScopeFlow(llvm::BasicBlock* init_block,
       llvm::BasicBlock* hoisted_block,
       llvm::BasicBlock* block,
       llvm::BasicBlock* cleanup_block) {
@@ -203,7 +202,7 @@ class ControlFlowStack {
     scope_index_ = index;
   }
 
-  inline ScopeFlow PopScopeFlow() {
+  ScopeFlow PopScopeFlow() {
     assert(top().kind == ControlFlowKind::kScope);
     auto flow = top().scope;
 
@@ -250,33 +249,33 @@ class ControlFlowStack {
     return flow;
   }
 
-  inline void PushBranchFlow(llvm::BasicBlock* before_block, llvm::BasicBlock* after_block) {
+  void PushBranchFlow(llvm::BasicBlock* before_block, llvm::BasicBlock* after_block) {
     assert(before_block != nullptr);
     assert(after_block != nullptr);
     stack_.emplace_back(BranchFlow{before_block, after_block});
   }
 
-  inline BranchFlow PopBranchFlow() {
+  BranchFlow PopBranchFlow() {
     assert(top().kind == ControlFlowKind::kBranch);
     auto branch = top().branch;
     stack_.pop_back();
     return branch;
   }
 
-  inline void PushLoopInitFlow(llvm::BasicBlock* branch_block, llvm::BasicBlock* insert_point) {
+  void PushLoopInitFlow(llvm::BasicBlock* branch_block, llvm::BasicBlock* insert_point) {
     assert(branch_block != nullptr);
     assert(insert_point != nullptr);
     stack_.emplace_back(LoopInitFlow{branch_block, insert_point});
   }
 
-  inline LoopInitFlow PopLoopInitFlow() {
+  LoopInitFlow PopLoopInitFlow() {
     assert(top().kind == ControlFlowKind::kLoopInit);
     auto loop_init = top().loop_init;
     stack_.pop_back();
     return loop_init;
   }
 
-  inline void PushLoopTestFlow(llvm::BasicBlock* then_block,
+  void PushLoopTestFlow(llvm::BasicBlock* then_block,
       llvm::BasicBlock* else_block,
       llvm::BasicBlock* insert_point) {
     assert(then_block != nullptr);
@@ -285,47 +284,47 @@ class ControlFlowStack {
     stack_.emplace_back(LoopTestFlow{then_block, else_block, insert_point});
   }
 
-  inline LoopTestFlow PopLoopTestFlow() {
+  LoopTestFlow PopLoopTestFlow() {
     assert(top().kind == ControlFlowKind::kLoopTest);
     auto loop_test = top().loop_test;
     stack_.pop_back();
     return loop_test;
   }
 
-  inline void PushLoopNextFlow(llvm::BasicBlock* branch_block, llvm::BasicBlock* insert_point) {
+  void PushLoopNextFlow(llvm::BasicBlock* branch_block, llvm::BasicBlock* insert_point) {
     assert(branch_block != nullptr);
     assert(insert_point != nullptr);
     stack_.emplace_back(LoopNextFlow{branch_block, insert_point});
   }
 
-  inline LoopNextFlow PopLoopNextFlow() {
+  LoopNextFlow PopLoopNextFlow() {
     assert(top().kind == ControlFlowKind::kLoopNext);
     auto loop_next = top().loop_next;
     stack_.pop_back();
     return loop_next;
   }
 
-  inline void PushLoopBodyFlow(llvm::BasicBlock* branch_block, llvm::BasicBlock* insert_point) {
+  void PushLoopBodyFlow(llvm::BasicBlock* branch_block, llvm::BasicBlock* insert_point) {
     assert(branch_block != nullptr);
     assert(insert_point != nullptr);
     stack_.emplace_back(LoopBodyFlow{branch_block, insert_point});
   }
 
-  inline LoopBodyFlow PopLoopBodyFlow() {
+  LoopBodyFlow PopLoopBodyFlow() {
     assert(top().kind == ControlFlowKind::kLoopBody);
     auto loop_body = top().loop_body;
     stack_.pop_back();
     return loop_body;
   }
 
-  inline void PushSelectFlow(llvm::BasicBlock* end_block) {
+  void PushSelectFlow(llvm::BasicBlock* end_block) {
     assert(end_block != nullptr);
     auto index = stack_.size();
     stack_.emplace_back(SelectFlow{end_block, select_index_});
     select_index_ = index;
   }
 
-  inline SelectFlow PopSelectFlow() {
+  SelectFlow PopSelectFlow() {
     assert(top().kind == ControlFlowKind::kSelect);
     auto select = top().select;
 
@@ -337,19 +336,19 @@ class ControlFlowStack {
     return select;
   }
 
-  inline void PushCaseEndFlow(llvm::BasicBlock* block) {
+  void PushCaseEndFlow(llvm::BasicBlock* block) {
     assert(block != nullptr);
     stack_.emplace_back(CaseEndFlow{block});
   }
 
-  inline CaseEndFlow PopCaseEndFlow() {
+  CaseEndFlow PopCaseEndFlow() {
     assert(top().kind == ControlFlowKind::kCaseEnd);
     auto case_end = top().case_end;
     stack_.pop_back();
     return case_end;
   }
 
-  inline void PushExceptionFlow(llvm::BasicBlock* try_block,
+  void PushExceptionFlow(llvm::BasicBlock* try_block,
       llvm::BasicBlock* catch_block,
       llvm::BasicBlock* finally_block,
       llvm::BasicBlock* end_block) {
@@ -363,7 +362,7 @@ class ControlFlowStack {
     exception_index_ = index;
   }
 
-  inline ExceptionFlow PopExceptionFlow() {
+  ExceptionFlow PopExceptionFlow() {
     assert(top().kind == ControlFlowKind::kException);
     auto flow = top().exception;
 
@@ -383,7 +382,7 @@ class ControlFlowStack {
     return flow;
   }
 
-  inline void SetReturned() {
+  void SetReturned() {
     auto& flow = top_mut();
     switch (flow.kind) {
       case ControlFlowKind::kFunction:
@@ -402,12 +401,12 @@ class ControlFlowStack {
     }
   }
 
-  inline void SetThrown() {
+  void SetThrown() {
     assert(top().kind == ControlFlowKind::kScope);
     top_mut().scope.thrown = true;
   }
 
-  inline void SetCaught(bool nominal) {
+  void SetCaught(bool nominal) {
     assert(top().kind == ControlFlowKind::kException);
     top_mut().exception.caught = true;
     if (!nominal) {
@@ -415,35 +414,35 @@ class ControlFlowStack {
     }
   }
 
-  inline void SetEnded() {
+  void SetEnded() {
     assert(top().kind == ControlFlowKind::kException);
     top_mut().exception.ended = true;
   }
 
-  inline void SetDefaultCaseBlock(llvm::BasicBlock* block) {
+  void SetDefaultCaseBlock(llvm::BasicBlock* block) {
     assert(block != nullptr);
     select_flow_mut().default_case_block = block;
   }
 
-  inline void PushBreakTarget(llvm::BasicBlock* block, uint32_t symbol = 0) {
+  void PushBreakTarget(llvm::BasicBlock* block, uint32_t symbol = 0) {
     break_stack_.emplace_back(block, symbol);
   }
 
-  inline BranchTarget PopBreakTarget() {
+  BranchTarget PopBreakTarget() {
     auto target = break_stack_.back();
     break_stack_.pop_back();
     return target;
   }
 
-  inline void PushContinueTarget(llvm::BasicBlock* block, uint32_t symbol = 0) {
+  void PushContinueTarget(llvm::BasicBlock* block, uint32_t symbol = 0) {
     continue_stack_.emplace_back(block, symbol);
   }
 
-  inline void PopContinueTarget() {
+  void PopContinueTarget() {
     continue_stack_.pop_back();
   }
 
-  inline void SetContinueTarget(llvm::BasicBlock* block) {
+  void SetContinueTarget(llvm::BasicBlock* block) {
     assert(block != nullptr);
     for (auto it = continue_stack_.rbegin(); it != continue_stack_.rend(); ++it) {
       if (it->symbol == 0) {
@@ -455,7 +454,7 @@ class ControlFlowStack {
     }
   }
 
-  inline void Clear() {
+  void Clear() {
     stack_.clear();
     break_stack_.clear();
     continue_stack_.clear();
@@ -514,31 +513,31 @@ class ControlFlowStack {
     llvm::errs() << "</llvm-ir:flow-stack>\n";
   }
 
-  inline const FunctionFlow& function_flow() const {
+  const FunctionFlow& function_flow() const {
     assert(!stack_.empty());
     assert(stack_[0].kind == ControlFlowKind::kFunction);
     return stack_[0].function;
   }
 
-  inline const ScopeFlow& scope_flow() const {
+  const ScopeFlow& scope_flow() const {
     assert(scope_index_ != 0);
     assert(stack_[scope_index_].kind == ControlFlowKind::kScope);
     return stack_[scope_index_].scope;
   }
 
-  inline const SelectFlow& select_flow() const {
+  const SelectFlow& select_flow() const {
     assert(select_index_ != 0);
     assert(stack_[select_index_].kind == ControlFlowKind::kSelect);
     return stack_[select_index_].select;
   }
 
-  inline const ExceptionFlow& exception_flow() const {
+  const ExceptionFlow& exception_flow() const {
     assert(exception_index_ != 0);
     assert(stack_[exception_index_].kind == ControlFlowKind::kException);
     return stack_[exception_index_].exception;
   }
 
-  inline llvm::BasicBlock* cleanup_block() const {
+  llvm::BasicBlock* cleanup_block() const {
     const auto& flow = top();
     switch (flow.kind) {
       case ControlFlowKind::kFunction:
@@ -555,7 +554,7 @@ class ControlFlowStack {
     }
   }
 
-  inline llvm::BasicBlock* exception_block() const {
+  llvm::BasicBlock* exception_block() const {
     const auto& flow = top();
     switch (flow.kind) {
       case ControlFlowKind::kFunction:
@@ -579,14 +578,14 @@ class ControlFlowStack {
     }
   }
 
-  inline llvm::BasicBlock* break_target(uint32_t symbol) const {
+  llvm::BasicBlock* break_target(uint32_t symbol) const {
     if (symbol == 0) {
       return break_stack_.back().block;
     }
     return FindBranchTarget(break_stack_, symbol);
   }
 
-  inline llvm::BasicBlock* continue_target(uint32_t symbol) const {
+  llvm::BasicBlock* continue_target(uint32_t symbol) const {
     if (symbol == 0) {
       return continue_stack_.back().block;
     }
@@ -606,27 +605,27 @@ class ControlFlowStack {
     return nullptr;
   }
 
-  inline const ControlFlow& top() const {
+  const ControlFlow& top() const {
     assert(!stack_.empty());
     return stack_.back();
   }
 
-  inline ControlFlow& top_mut() {
+  ControlFlow& top_mut() {
     assert(!stack_.empty());
     return stack_.back();
   }
 
-  inline ScopeFlow& scope_flow_mut() {
+  ScopeFlow& scope_flow_mut() {
     assert(scope_index_ != 0);
     return stack_[scope_index_].scope;
   }
 
-  inline SelectFlow& select_flow_mut() {
+  SelectFlow& select_flow_mut() {
     assert(select_index_ != 0);
     return stack_[select_index_].select;
   }
 
-  inline ExceptionFlow& exception_flow_mut() {
+  ExceptionFlow& exception_flow_mut() {
     assert(exception_index_ != 0);
     return stack_[exception_index_].exception;
   }
