@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -130,8 +131,8 @@ class Compiler {
   void TryEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
-  void StartScope(size_t scope_id);
-  void EndScope(size_t scope_id);
+  void StartScope(uint16_t scope_id);
+  void EndScope(uint16_t scope_id);
   void AllocateLocals(uint16_t num_locals);
   void InitLocal(Locator locator);
   void TidyLocal(Locator locator);
@@ -146,6 +147,8 @@ class Compiler {
   void Throw();
   void Discard();
   void Swap();
+
+  void PrepareScopeCleanupChecker(uint32_t stack_size);
 
   void DumpStack();
 
@@ -327,6 +330,7 @@ class Compiler {
 
   llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* variable_ptr);
   llvm::Value* CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures);
+  void CreateCallRuntimeAssert(llvm::Value* assertion, llvm::Value* msg);
 
   llvm::Value* CreateGetVariablePtr(Locator locator);
   llvm::Value* CreateGetValuePtr(Locator locator);
@@ -657,6 +661,37 @@ class Compiler {
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("captures"));
   }
 
+  // scope cleanup cheker
+
+  void CreatePushOntoScopeCleanupStack(uint16_t scope_id);
+  llvm::Value* CreatePopFromScopeCleanupStack();
+  void CreateAssertScopeCleanupStackBounds();
+  void CreateAssertScopeCleanupStackPoppedValue(llvm::Value* actual, uint16_t expected);
+  void CreateAssertScopeCleanupStackIsEmpty();
+  void CreateAssertScopeCleanupStackHasItem();
+
+  bool IsScopeCleanupCheckerEnabled() const {
+    return scope_cleanup_stack_ != nullptr;
+  }
+
+  llvm::Value* CreateLoadScopeCleanupStackTop() {
+    return builder_->CreateLoad(
+        builder_->getInt32Ty(), scope_cleanup_stack_top_, REG_NAME("scope_cleanup_stack.top"));
+  }
+
+  void CreateStoreScopeCleanupStackTop(llvm::Value* value) {
+    builder_->CreateStore(value, scope_cleanup_stack_top_);
+  }
+
+  void ClearScopeCleanupStack() {
+    scope_cleanup_stack_type_ = nullptr;
+    scope_cleanup_stack_ = nullptr;
+    scope_cleanup_stack_top_ = nullptr;
+    scope_cleanup_stack_size_ = 0;
+  }
+
+  // helper methods for basic blocks
+
   llvm::BasicBlock* CreateBasicBlock(const char* name) {
     return llvm::BasicBlock::Create(*context_, name, function_);
   }
@@ -700,6 +735,12 @@ class Compiler {
   llvm::Value* retv_ = nullptr;
   // Holds one of STATUS_XXX values, not Status::*.
   llvm::Value* status_ = nullptr;
+
+  // scope cleanup checker
+  llvm::Type* scope_cleanup_stack_type_ = nullptr;
+  llvm::Value* scope_cleanup_stack_ = nullptr;
+  llvm::Value* scope_cleanup_stack_top_ = nullptr;
+  uint16_t scope_cleanup_stack_size_ = 0;
 
   // The following variables must be reset in the end of compilation for each function.
   std::vector<llvm::Value*> locals_;

@@ -245,6 +245,7 @@ void compiler_peer_return(Compiler* self, size_t n);
 void compiler_peer_throw(Compiler* self);
 void compiler_peer_discard(Compiler* self);
 void compiler_peer_swap(Compiler* self);
+void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
 void compiler_peer_dump_stack(Compiler* self);
 
 // Execution

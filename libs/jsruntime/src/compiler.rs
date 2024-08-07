@@ -476,6 +476,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 // TODO: the stack should be managed in the Rust side.
                 bridge::compiler_peer_swap(self.peer);
             },
+            CompileCommand::PrepareScopeCleanupChecker(stack_size) => unsafe {
+                debug_assert!(*stack_size > 0);
+                bridge::compiler_peer_prepare_scope_cleanup_checker(self.peer, *stack_size);
+            },
         }
 
         if cfg!(debug_assertions)

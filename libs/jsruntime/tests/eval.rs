@@ -10,7 +10,9 @@ logging::init!();
 macro_rules! eval {
     ($src:expr, $expected:expr) => {
         Runtime::initialize();
-        let mut runtime = Runtime::new().with_host_function("print", |_, args| {
+        let mut runtime = Runtime::new();
+        runtime.enable_scope_cleanup_checker();
+        runtime.register_host_function("print", |_, args| {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
             let actual = format!("{:?}", args[0]);
             let expected = format!("{:?}", Value::from($expected));
@@ -26,7 +28,9 @@ macro_rules! eval {
     };
     ($src:expr, throws: $expected:expr) => {
         Runtime::initialize();
-        let mut runtime = Runtime::new().with_host_function("print", |_, args| {
+        let mut runtime = Runtime::new();
+        runtime.enable_scope_cleanup_checker();
+        runtime.register_host_function("print", |_, args| {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
             let actual = format!("{:?}", args[0]);
             let expected = format!("{:?}", Value::from($expected));

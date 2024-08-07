@@ -227,6 +227,7 @@ impl Default for Runtime {
             is_strictly_equal: Some(runtime_is_strictly_equal),
             create_capture: Some(runtime_create_capture),
             create_closure: Some(runtime_create_closure),
+            assert: Some(runtime_assert),
         }
     }
 }
@@ -420,4 +421,14 @@ unsafe extern "C" fn runtime_create_closure(
     // `closure.storage[]` will be filled with actual pointers to `Captures`.
 
     closure
+}
+
+unsafe extern "C" fn runtime_assert(
+    _context: usize,
+    assertion: bool,
+    msg: *const std::os::raw::c_char,
+) {
+    if !assertion {
+        panic!("{:?}", std::ffi::CStr::from_ptr(msg));
+    }
 }

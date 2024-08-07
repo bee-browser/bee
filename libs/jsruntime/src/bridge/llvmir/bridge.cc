@@ -485,6 +485,10 @@ void compiler_peer_swap(Compiler* self) {
   self->Swap();
 }
 
+void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size) {
+  self->PrepareScopeCleanupChecker(stack_size);
+}
+
 void compiler_peer_dump_stack(Compiler* self) {
   self->DumpStack();
 }

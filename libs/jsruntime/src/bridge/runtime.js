@@ -64,6 +64,7 @@ function makeLLVMIRType(type) {
       return 'builder_.getInt32Ty()';
     case 'f64':
       return 'builder_.getDoubleTy()';
+    case '&std::ffi::CStr':
     case '&mut Variable':
     case '&mut Capture':
     case '&mut Closure':
@@ -92,6 +93,8 @@ function makeCType(type) {
       return 'uint32_t';
     case 'f64':
       return 'double';
+    case '&std::ffi::CStr':
+      return 'const char*';
     case '&mut Variable':
       return 'Variable*';
     case '&mut Capture':

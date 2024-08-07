@@ -20,6 +20,7 @@ use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;
 use super::Runtime;
+use super::RuntimePref;
 use scope::ScopeTreeBuilder;
 
 pub use scope::BindingRef;
@@ -30,7 +31,11 @@ impl Runtime {
     /// Parses a given source text as a script.
     pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "script");
-        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &mut self.function_registry);
+        let mut analyzer = Analyzer::new(
+            &self.pref,
+            &mut self.symbol_registry,
+            &mut self.function_registry,
+        );
         analyzer.use_global_bindings();
         let processor = Processor::new(analyzer, false);
         Parser::for_script(source, processor).parse()
@@ -101,6 +106,8 @@ pub struct Capture {
 ///
 /// A semantic analyzer analyzes semantics of a JavaScript program.
 struct Analyzer<'r> {
+    runtime_pref: &'r RuntimePref,
+
     /// A mutable reference to a symbol registry.
     symbol_registry: &'r mut SymbolRegistry,
 
@@ -123,11 +130,13 @@ struct Analyzer<'r> {
 impl<'r> Analyzer<'r> {
     /// Creates a semantic analyzer.
     pub fn new(
+        runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
     ) -> Self {
         let id = function_registry.create_native_function();
         Self {
+            runtime_pref,
             symbol_registry,
             function_registry,
             context_stack: vec![FunctionContext {
@@ -546,6 +555,12 @@ impl<'r> Analyzer<'r> {
             context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
         }
 
+        if self.runtime_pref.enable_scope_cleanup_checker {
+            let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
+            debug_assert!(stack_size > 0);
+            context.commands[1] = CompileCommand::PrepareScopeCleanupChecker(stack_size);
+        }
+
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
         func.commands = context.commands;
@@ -741,11 +756,17 @@ impl<'r> Analyzer<'r> {
         let func_index = self.functions.len();
         let mut context = FunctionContext {
             func_index,
+            scope_ref,
             // `commands[0]` will be replaced with `AllocateLocals` if the function has local
             // variables.
             commands: vec![CompileCommand::Nop],
             ..Default::default()
         };
+        if self.runtime_pref.enable_scope_cleanup_checker {
+            // Put a placeholder command which will be replaced with `PrepareScopeCleanupChecker`.
+            let index = context.put_command(CompileCommand::Nop);
+            debug_assert_eq!(index, 1);
+        }
         context.start_scope(scope_ref);
         self.context_stack.push(context);
         // Push a placeholder data which will be filled later.
@@ -908,6 +929,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         let scope_ref = self.scope_tree_builder.push_function();
 
         let context = self.context_stack.last_mut().unwrap();
+        context.scope_ref = scope_ref;
         context.start_scope(scope_ref);
 
         if self.use_global_bindings {
@@ -1001,6 +1023,9 @@ struct FunctionContext {
 
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
+
+    /// A reference to a function scope in the scope tree.
+    scope_ref: ScopeRef,
 
     num_locals: u16,
     num_do_while_statements: u16,
@@ -1407,6 +1432,7 @@ struct TryContext {
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
     Nop,
+
     Undefined,
     Null,
     Boolean(bool),
@@ -1559,6 +1585,8 @@ pub enum CompileCommand {
 
     Discard,
     Swap,
+
+    PrepareScopeCleanupChecker(u16),
 }
 
 impl CompileCommand {
@@ -1753,12 +1781,15 @@ mod tests {
     }
 
     fn test(regc: &str, validate: fn(symbol_registry: &SymbolRegistry, program: &Program)) {
+        let runtime_pref = RuntimePref {
+            enable_scope_cleanup_checker: true,
+        };
         let mut symbol_registry = Default::default();
         let mut function_registry = FunctionRegistry::new();
         let result = Parser::for_script(
             regc,
             Processor::new(
-                Analyzer::new(&mut symbol_registry, &mut function_registry),
+                Analyzer::new(&runtime_pref, &mut symbol_registry, &mut function_registry),
                 false,
             ),
         )

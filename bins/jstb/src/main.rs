@@ -11,6 +11,16 @@ use jsruntime::Value;
 struct CommandLine {
     #[command(subcommand)]
     command: Command,
+
+    /// Enables the scope cleanup checker.
+    #[arg(global = true, long)]
+    scope_cleanup_checker: bool,
+
+    /// The source file of the JavaScript program to compile.
+    ///
+    /// Reads the source text from STDIN if this argument is not specified.
+    #[arg(global = true)]
+    source: Option<PathBuf>,
 }
 
 /// A testbed for the jsruntime module.
@@ -37,12 +47,6 @@ struct Parse {
     /// (f)unctions, (s)cope-tree
     #[arg(short, long)]
     print: String,
-
-    /// The source file of the JavaScript program to parse.
-    ///
-    /// Reads the source text from STDIN if this argument is not specified.
-    #[arg()]
-    source: Option<PathBuf>,
 }
 
 #[derive(clap::Args)]
@@ -50,12 +54,6 @@ struct Compile {
     /// Disable optimization.
     #[arg(long)]
     no_optimize: bool,
-
-    /// The source file of the JavaScript program to compile.
-    ///
-    /// Reads the source text from STDIN if this argument is not specified.
-    #[arg()]
-    source: Option<PathBuf>,
 }
 
 #[derive(clap::Args)]
@@ -63,22 +61,24 @@ struct Run {
     /// Disable optimization.
     #[arg(long)]
     no_optimize: bool,
-
-    /// The source file of the JavaScript program to run.
-    ///
-    /// Reads the source text from STDIN if this argument is not specified.
-    #[arg()]
-    source: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
     logging::init();
-    Runtime::initialize();
+
     let cl = CommandLine::parse();
-    let mut runtime = Runtime::new().with_host_function("print", print);
+
+    Runtime::initialize();
+    let mut runtime = Runtime::new();
+    if cl.scope_cleanup_checker {
+        runtime.enable_scope_cleanup_checker();
+    }
+    runtime.register_host_function("print", print);
+
+    let source = read_source(cl.source.as_ref())?;
+
     match cl.command {
         Command::Parse(args) => {
-            let source = read_source(args.source.as_ref())?;
             let program = runtime.parse_script(&source)?;
             for kind in args.print.chars() {
                 match kind {
@@ -95,13 +95,11 @@ fn main() -> Result<()> {
             }
         }
         Command::Compile(args) => {
-            let source = read_source(args.source.as_ref())?;
             let program = runtime.parse_script(&source)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
             module.print(false); // to STDOUT
         }
         Command::Run(args) => {
-            let source = read_source(args.source.as_ref())?;
             let program = runtime.parse_script(&source)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
             if let Err(v) = runtime.evaluate(module) {
@@ -109,6 +107,7 @@ fn main() -> Result<()> {
             }
         }
     }
+
     Ok(())
 }
 

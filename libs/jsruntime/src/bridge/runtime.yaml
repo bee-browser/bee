@@ -45,3 +45,9 @@ functions:
       - name: num_captures
         type: 'u16'
     ret: '&mut Closure'
+  - name: assert
+    args:
+      - name: assertion
+        type: bool
+      - name: msg
+        type: '&std::ffi::CStr'

@@ -31,6 +31,12 @@ impl ScopeRef {
     }
 }
 
+impl Default for ScopeRef {
+    fn default() -> Self {
+        Self::NONE
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BindingRef(u16, u16);
 
@@ -131,6 +137,7 @@ impl ScopeTreeBuilder {
             num_locals: 0,
             outer: self.current,
             depth: self.depth,
+            max_child_block_depth: self.depth,
             flags,
         });
         // TODO: should return an error
@@ -146,6 +153,13 @@ impl ScopeTreeBuilder {
             .sort_unstable_by_key(|binding| binding.symbol);
         scope.flags.insert(ScopeFlags::SORTED);
         self.current = scope.outer;
+        if !scope.is_function() {
+            let max_child_scope_depth = scope.max_child_block_depth;
+            let scope = &mut self.scopes[self.current.index()];
+            if scope.max_child_block_depth < max_child_scope_depth {
+                scope.max_child_block_depth = max_child_scope_depth;
+            }
+        }
         self.depth -= 1;
     }
 
@@ -198,6 +212,12 @@ impl ScopeTreeBuilder {
         let scope = &mut self.scopes[binding_ref.scope_index()];
         debug_assert!(scope.is_sorted());
         scope.bindings[binding_ref.binding_index()].captured = true;
+    }
+
+    pub fn max_stack_size(&self, scope_ref: ScopeRef) -> u16 {
+        let scope = &self.scopes[scope_ref.index()];
+        debug_assert!(scope.max_child_block_depth >= scope.depth);
+        scope.max_child_block_depth - scope.depth + 1
     }
 
     pub fn resolve_reference(&self, reference: &Reference) -> BindingRef {
@@ -253,6 +273,7 @@ impl Default for ScopeTreeBuilder {
     }
 }
 
+// TODO: refactoring
 pub struct Scope {
     label: &'static str,
     pub bindings: Vec<Binding>,
@@ -260,6 +281,7 @@ pub struct Scope {
     pub num_locals: u16,
     outer: ScopeRef,
     depth: u16,
+    max_child_block_depth: u16,
     flags: ScopeFlags,
 }
 
@@ -271,6 +293,7 @@ impl Scope {
         num_locals: 0,
         outer: ScopeRef::NONE,
         depth: 0,
+        max_child_block_depth: 0,
         flags: ScopeFlags::empty(),
     };
 

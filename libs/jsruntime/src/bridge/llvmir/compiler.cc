@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <sstream>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -1339,9 +1340,9 @@ void Compiler::StartFunction(const char* name) {
   argc_ = function_->getArg(2);
   argv_ = function_->getArg(3);
   retv_ = function_->getArg(4);
-
-  builder_->SetInsertPoint(locals_block_);
   status_ = CreateAlloc1(builder_->getInt32Ty(), REG_NAME("status.ptr"));
+
+  ClearScopeCleanupStack();
 
   builder_->SetInsertPoint(body_block_);
 
@@ -1364,6 +1365,10 @@ void Compiler::EndFunction(bool optimize) {
   flow.body_block->moveAfter(builder_->GetInsertBlock());
 
   builder_->SetInsertPoint(flow.return_block);
+
+  if (IsScopeCleanupCheckerEnabled()) {
+    CreateAssertScopeCleanupStackIsEmpty();
+  }
 
   auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, "status");
   // Convert STATUS_XXX into Status.
@@ -1392,7 +1397,7 @@ void Compiler::EndFunction(bool optimize) {
   }
 }
 
-void Compiler::StartScope(size_t scope_id) {
+void Compiler::StartScope(uint16_t scope_id) {
   PushBasicBlockName(BB_NAME_WITH_ID("scope", scope_id));
 
   auto* init = CreateBasicBlock(BB_NAME("init"));
@@ -1405,9 +1410,16 @@ void Compiler::StartScope(size_t scope_id) {
   builder_->SetInsertPoint(block);
 
   control_flow_stack_.PushScopeFlow(init, hoisted, block, cleanup);
+
+  if (IsScopeCleanupCheckerEnabled()) {
+    // We assumed here that the control flow does not enter into a scope which is already entered.
+    // However, it may be better to check that explicitly here before pushing the scope ID.
+    CreateAssertScopeCleanupStackBounds();
+    CreatePushOntoScopeCleanupStack(scope_id);
+  }
 }
 
-void Compiler::EndScope(size_t scope_id) {
+void Compiler::EndScope(uint16_t scope_id) {
   UNUSED(scope_id);
 
   PopBasicBlockName();
@@ -1428,6 +1440,12 @@ void Compiler::EndScope(size_t scope_id) {
   auto* block = CreateBasicBlock(BB_NAME("block"));
 
   builder_->SetInsertPoint(flow.cleanup_block);
+
+  if (IsScopeCleanupCheckerEnabled()) {
+    CreateAssertScopeCleanupStackHasItem();
+    auto* popped = CreatePopFromScopeCleanupStack();
+    CreateAssertScopeCleanupStackPoppedValue(popped, scope_id);
+  }
 
   if (!flow.returned && !flow.thrown) {
     builder_->CreateBr(block);
@@ -1660,6 +1678,16 @@ void Compiler::Swap() {
   Item item = stack_[i];
   stack_[i] = stack_[i - 1];
   stack_[i - 1] = item;
+}
+
+void Compiler::PrepareScopeCleanupChecker(uint32_t stack_size) {
+  scope_cleanup_stack_type_ = llvm::ArrayType::get(builder_->getInt16Ty(), stack_size);
+  scope_cleanup_stack_ =
+      CreateAllocN(builder_->getInt16Ty(), stack_size, REG_NAME("scope_cleanup_stack"));
+  scope_cleanup_stack_top_ =
+      CreateAlloc1(builder_->getInt32Ty(), REG_NAME("scope_cleanup_stack_top"));
+  builder_->CreateStore(builder_->getInt32(0), scope_cleanup_stack_top_);
+  scope_cleanup_stack_size_ = stack_size;
 }
 
 void Compiler::DumpStack() {
@@ -2202,6 +2230,11 @@ llvm::Value* Compiler::CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint1
       func, {exec_context_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
 }
 
+void Compiler::CreateCallRuntimeAssert(llvm::Value* assertion, llvm::Value* msg) {
+  auto* func = types_->CreateRuntimeAssert();
+  builder_->CreateCall(func, {exec_context_, assertion, msg});
+}
+
 llvm::Value* Compiler::CreateGetVariablePtr(Locator locator) {
   switch (locator.kind) {
     case LocatorKind::Argument:
@@ -2232,14 +2265,78 @@ llvm::Value* Compiler::CreateGetValuePtr(Locator locator) {
   }
 }
 
+void Compiler::CreatePushOntoScopeCleanupStack(uint16_t scope_id) {
+  auto* top = CreateLoadScopeCleanupStackTop();
+  // scope_cleanup_stack_[scope_cleanup_stack_top_] = scope_id;
+  auto* ptr = builder_->CreateInBoundsGEP(scope_cleanup_stack_type_, scope_cleanup_stack_,
+      {builder_->getInt32(0), top}, REG_NAME("scope_cleanup_stack.pushed.ptr"));
+  builder_->CreateStore(builder_->getInt16(scope_id), ptr);
+  // scope_cleanup_stack_top_++;
+  auto* incr =
+      builder_->CreateAdd(top, builder_->getInt32(1), REG_NAME("scope_cleanup_stack.top.incr"));
+  CreateStoreScopeCleanupStackTop(incr);
+}
+
+llvm::Value* Compiler::CreatePopFromScopeCleanupStack() {
+  auto* top = CreateLoadScopeCleanupStackTop();
+  // scope_cleanup_stack_top_--;
+  auto* decr =
+      builder_->CreateSub(top, builder_->getInt32(1), REG_NAME("scope_cleanup_stack.top.decr"));
+  CreateStoreScopeCleanupStackTop(decr);
+  // return scope_cleanup_stack_[scope_cleanup_stack_top_];
+  auto* ptr = builder_->CreateInBoundsGEP(scope_cleanup_stack_type_, scope_cleanup_stack_,
+      {builder_->getInt32(0), decr}, REG_NAME("scope_cleanup_stack.popped.ptr"));
+  return builder_->CreateLoad(builder_->getInt16Ty(), ptr, REG_NAME("scope_cleanup_stack.popped"));
+}
+
+// assert(scope_cleanup_stack_top_ <= scope_cleanup_stack_size_);
+void Compiler::CreateAssertScopeCleanupStackBounds() {
+  auto* top = CreateLoadScopeCleanupStackTop();
+  auto* assertion = builder_->CreateICmpULE(top, builder_->getInt32(scope_cleanup_stack_size_),
+      REG_NAME("assertion.scope_cleanup_stack.size"));
+  auto* msg = builder_->CreateGlobalString(
+      "assertion failure: scope_cleanup_stack_top_ <= scoke_cleanup_stack_size_",
+      REG_NAME("assertion.msg.scope_cleanup_stack.size"));
+  CreateCallRuntimeAssert(assertion, msg);
+}
+
+// assert(popped == scope_id);
+void Compiler::CreateAssertScopeCleanupStackPoppedValue(llvm::Value* actual, uint16_t expected) {
+  auto* assertion = builder_->CreateICmpEQ(
+      actual, builder_->getInt16(expected), REG_NAME("assertion.scope_cleanup_stack.popped"));
+  std::stringstream ss;
+  ss << "assertion failure: popped == " << expected;
+  auto* msg =
+      builder_->CreateGlobalString(ss.str(), REG_NAME("assertion.msg.scope_cleanup_stack.popped"));
+  CreateCallRuntimeAssert(assertion, msg);
+}
+
+// assert(scope_cleanup_stack_top_ == 0);
+void Compiler::CreateAssertScopeCleanupStackIsEmpty() {
+  auto* top = CreateLoadScopeCleanupStackTop();
+  auto* assertion = builder_->CreateICmpEQ(
+      top, builder_->getInt32(0), REG_NAME("assertion.scope_cleanup_stack.is_empty"));
+  auto* msg = builder_->CreateGlobalString("assertion failure: scope_cleanup_stack_top_ == 0",
+      REG_NAME("assertion.msg.scope_cleanup_stack.is_empty"));
+  CreateCallRuntimeAssert(assertion, msg);
+}
+
+// assert(scope_cleanup_stack_top_ != 0);
+void Compiler::CreateAssertScopeCleanupStackHasItem() {
+  auto* top = CreateLoadScopeCleanupStackTop();
+  auto* assertion = builder_->CreateICmpNE(
+      top, builder_->getInt32(0), REG_NAME("assertion.scope_cleanup_stack.has_item"));
+  auto* msg = builder_->CreateGlobalString("assertion failure: scope_cleanup_stack_top_ != 0",
+      REG_NAME("assertion.msg.scope_cleanup_stack.has_item"));
+  CreateCallRuntimeAssert(assertion, msg);
+}
+
 void Compiler::CreateBasicBlockForDeadcode() {
   auto* block = CreateBasicBlock(BB_NAME("deadcode"));
   builder_->SetInsertPoint(block);
 }
 
 #if defined(BEE_BUILD_DEBUG)
-#include <sstream>
-
 std::string Compiler::MakeBasicBlockName(const char* name) const {
   std::stringstream ss;
   ss << "bb";
