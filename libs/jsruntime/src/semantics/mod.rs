@@ -20,6 +20,7 @@ use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;
 use super::Runtime;
+use super::RuntimePref;
 use scope::ScopeTreeBuilder;
 
 pub use scope::BindingRef;
@@ -30,7 +31,11 @@ impl Runtime {
     /// Parses a given source text as a script.
     pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "script");
-        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &mut self.function_registry);
+        let mut analyzer = Analyzer::new(
+            &self.pref,
+            &mut self.symbol_registry,
+            &mut self.function_registry,
+        );
         analyzer.use_global_bindings();
         let processor = Processor::new(analyzer, false);
         Parser::for_script(source, processor).parse()
@@ -101,6 +106,8 @@ pub struct Capture {
 ///
 /// A semantic analyzer analyzes semantics of a JavaScript program.
 struct Analyzer<'r> {
+    runtime_pref: &'r RuntimePref,
+
     /// A mutable reference to a symbol registry.
     symbol_registry: &'r mut SymbolRegistry,
 
@@ -123,14 +130,19 @@ struct Analyzer<'r> {
 impl<'r> Analyzer<'r> {
     /// Creates a semantic analyzer.
     pub fn new(
+        runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
     ) -> Self {
         let id = function_registry.create_native_function();
         Self {
+            runtime_pref,
             symbol_registry,
             function_registry,
             context_stack: vec![FunctionContext {
+                // `commands[0]` will be replaced with `AllocateLocals` in `accept()` if the
+                // function has local variables.
+                commands: vec![CompileCommand::Nop],
                 in_body: true,
                 ..Default::default()
             }],
@@ -418,10 +430,15 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_switch_statement();
+        self.scope_tree_builder.pop();
     }
 
     fn handle_case_block(&mut self) {
-        self.context_stack.last_mut().unwrap().process_case_block();
+        let scope_ref = self.scope_tree_builder.push_block("switch");
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_case_block(scope_ref);
     }
 
     fn handle_case_selector(&mut self) {
@@ -497,7 +514,7 @@ impl<'r> Analyzer<'r> {
         // exists, but we always create a scope here for simplicity.  In our processing model,
         // the catch and finally clauses are always created even if there is no corresponding
         // node in the AST.
-        let scope_ref = self.scope_tree_builder.push_block();
+        let scope_ref = self.scope_tree_builder.push_block("catch");
         self.context_stack
             .last_mut()
             .unwrap()
@@ -534,7 +551,15 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
 
-        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
+        if context.num_locals > 0 {
+            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
+
+        if self.runtime_pref.enable_scope_cleanup_checker {
+            let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
+            debug_assert!(stack_size > 0);
+            context.commands[1] = CompileCommand::PrepareScopeCleanupChecker(stack_size);
+        }
 
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
@@ -559,7 +584,9 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
 
-        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
+        if context.num_locals > 0 {
+            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
 
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
@@ -588,7 +615,9 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
 
-        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
+        if context.num_locals > 0 {
+            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
 
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
@@ -666,7 +695,7 @@ impl<'r> Analyzer<'r> {
         // iteration statement.  This is needed for the for-let/const statements, but not for
         // others.  We believe that this change does not compromise conformance to the
         // specification and does not cause security problems.
-        let scope_ref = self.scope_tree_builder.push_block();
+        let scope_ref = self.scope_tree_builder.push_block("loop");
         self.context_stack
             .last_mut()
             .unwrap()
@@ -707,7 +736,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_start_block_scope(&mut self) {
-        let scope_ref = self.scope_tree_builder.push_block();
+        let scope_ref = self.scope_tree_builder.push_block("");
         self.context_stack
             .last_mut()
             .unwrap()
@@ -727,9 +756,17 @@ impl<'r> Analyzer<'r> {
         let func_index = self.functions.len();
         let mut context = FunctionContext {
             func_index,
+            scope_ref,
+            // `commands[0]` will be replaced with `AllocateLocals` if the function has local
+            // variables.
             commands: vec![CompileCommand::Nop],
             ..Default::default()
         };
+        if self.runtime_pref.enable_scope_cleanup_checker {
+            // Put a placeholder command which will be replaced with `PrepareScopeCleanupChecker`.
+            let index = context.put_command(CompileCommand::Nop);
+            debug_assert_eq!(index, 1);
+        }
         context.start_scope(scope_ref);
         self.context_stack.push(context);
         // Push a placeholder data which will be filled later.
@@ -760,12 +797,14 @@ impl<'r> Analyzer<'r> {
         let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder.add_immutable(symbol);
+        self.scope_tree_builder
+            .add_immutable(symbol, context.num_locals);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             from: ReferenceFrom::Command(command_index),
         });
+        context.num_locals += 1;
 
         // Register `Infinity`.
         let symbol = Symbol::INFINITY;
@@ -774,12 +813,14 @@ impl<'r> Analyzer<'r> {
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder.add_immutable(symbol);
+        self.scope_tree_builder
+            .add_immutable(symbol, context.num_locals);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             from: ReferenceFrom::Command(command_index),
         });
+        context.num_locals += 1;
 
         // Register `NaN`.
         let symbol = Symbol::NAN;
@@ -788,12 +829,14 @@ impl<'r> Analyzer<'r> {
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
-        self.scope_tree_builder.add_immutable(symbol);
+        self.scope_tree_builder
+            .add_immutable(symbol, context.num_locals);
         context.references.push(Reference {
             symbol,
             scope_ref: self.scope_tree_builder.current(),
             from: ReferenceFrom::Command(command_index),
         });
+        context.num_locals += 1;
     }
 
     // TODO: global object
@@ -805,12 +848,14 @@ impl<'r> Analyzer<'r> {
             // The locator will be computed in `resolve_references()`.
             let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
             context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
-            self.scope_tree_builder.add_immutable(symbol);
+            self.scope_tree_builder
+                .add_immutable(symbol, context.num_locals);
             context.references.push(Reference {
                 symbol,
                 scope_ref: self.scope_tree_builder.current(),
                 from: ReferenceFrom::Command(command_index),
             });
+            context.num_locals += 1;
         }
     }
 
@@ -884,9 +929,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         let scope_ref = self.scope_tree_builder.push_function();
 
         let context = self.context_stack.last_mut().unwrap();
-        // Push `Nop` as a placeholder.
-        // It will be replaced with `Bindings(n)` in `accept()`.
-        context.commands.push(CompileCommand::Nop);
+        context.scope_ref = scope_ref;
         context.start_scope(scope_ref);
 
         if self.use_global_bindings {
@@ -906,8 +949,10 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         self.resolve_references(&mut context);
         debug_assert!(context.captures.is_empty());
 
-        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        context.commands.push(CompileCommand::Return(0));
+        if context.num_locals > 0 {
+            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
+
         self.functions[context.func_index].commands = context.commands;
         self.functions[context.func_index].captures = context.captures.into_values().collect();
 
@@ -976,11 +1021,17 @@ struct FunctionContext {
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<(usize, u16)>,
 
-    /// A variable to hold the current maximum number of bindings in the function.
-    max_bindings: usize,
-
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
+
+    /// A reference to a function scope in the scope tree.
+    scope_ref: ScopeRef,
+
+    num_locals: u16,
+    num_do_while_statements: u16,
+    num_while_statements: u16,
+    num_for_statements: u16,
+    num_switch_statements: u16,
 
     /// `false` while analyzing formal parameters, `true` while analyzing the function body.
     in_body: bool,
@@ -1069,7 +1120,8 @@ impl FunctionContext {
                 from: ReferenceFrom::Command(command_index),
             });
             // The BindingKind may change later by `builder.set_immutable()`.
-            builder.add_mutable(symbol);
+            builder.add_mutable(symbol, self.num_locals);
+            self.num_locals += 1;
         } else {
             // TODO: the compilation should fail if the following condition is unmet.
             assert!(self.formal_parameters.len() < u16::MAX as usize);
@@ -1090,7 +1142,6 @@ impl FunctionContext {
             debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
             self.commands[i] = CompileCommand::MutableBinding;
         }
-        self.scope_stack.last_mut().unwrap().num_bindings += self.pending_lexical_bindings.len();
         self.pending_lexical_bindings.clear();
     }
 
@@ -1100,7 +1151,6 @@ impl FunctionContext {
             debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
             self.commands[i] = CompileCommand::ImmutableBinding;
         }
-        self.scope_stack.last_mut().unwrap().num_bindings += self.pending_lexical_bindings.len();
         self.pending_lexical_bindings.clear();
     }
 
@@ -1118,13 +1168,12 @@ impl FunctionContext {
                 scope_ref,
                 from: ReferenceFrom::Command(command_index),
             });
-            self.commands.push(CompileCommand::CaptureBinding(true));
+            self.commands.push(CompileCommand::CaptureVariable(true));
         }
         self.commands.push(CompileCommand::Function(func_id));
         self.commands
             .push(CompileCommand::Closure(true, captures.len() as u16));
         self.commands.push(CompileCommand::DeclareClosure);
-        self.scope_stack.last_mut().unwrap().num_bindings += 1;
     }
 
     fn process_closure_expression(
@@ -1146,22 +1195,20 @@ impl FunctionContext {
                 scope_ref,
                 from: ReferenceFrom::Command(command_index),
             });
-            self.commands.push(CompileCommand::CaptureBinding(false));
+            self.commands.push(CompileCommand::CaptureVariable(false));
         }
         self.commands.push(CompileCommand::Function(func_id));
         self.commands
             .push(CompileCommand::Closure(false, captures.len() as u16));
-        if named {
-            self.scope_stack.last_mut().unwrap().num_bindings += 1;
-        }
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
+        self.start_scope(scope_ref);
+
         // Push `Nop` as a placeholder.
         // It will be replaced with an appropriate command in process_loop_end().
         let start_index = self.put_command(CompileCommand::Nop);
         self.loop_stack.push(LoopContext { start_index });
-        self.start_scope(scope_ref);
     }
 
     fn process_loop_init_expression(&mut self) {
@@ -1187,29 +1234,36 @@ impl FunctionContext {
     }
 
     fn process_loop_end(&mut self, command: CompileCommand) {
-        self.end_scope();
         self.put_command(CompileCommand::LoopEnd);
         let LoopContext { start_index } = self.loop_stack.pop().unwrap();
         self.commands[start_index] = command;
+
+        self.end_scope();
     }
 
     fn process_do_while_statement(&mut self) {
         self.put_command(CompileCommand::LoopTest);
-        self.process_loop_end(CompileCommand::DoWhileLoop);
+        self.process_loop_end(CompileCommand::DoWhileLoop(self.num_do_while_statements));
+        self.num_do_while_statements += 1;
     }
 
     fn process_while_statement(&mut self) {
         self.put_command(CompileCommand::LoopBody);
-        self.process_loop_end(CompileCommand::WhileLoop);
+        self.process_loop_end(CompileCommand::WhileLoop(self.num_while_statements));
+        self.num_while_statements += 1;
     }
 
     fn process_for_statement(&mut self, flags: LoopFlags) {
         self.put_command(CompileCommand::LoopBody);
-        self.process_loop_end(CompileCommand::ForLoop(flags));
+        self.process_loop_end(CompileCommand::ForLoop(self.num_for_statements, flags));
+        self.num_for_statements += 1;
     }
 
-    fn process_case_block(&mut self) {
-        let case_block_index = self.put_command(CompileCommand::CaseBlock(0));
+    fn process_case_block(&mut self, scope_ref: ScopeRef) {
+        // Step#3..7 in 14.12.4 Runtime Semantics: Evaluation
+        self.start_scope(scope_ref);
+
+        let case_block_index = self.put_command(CompileCommand::Nop);
         self.switch_stack.push(SwitchContext {
             case_block_index,
             ..Default::default()
@@ -1223,7 +1277,7 @@ impl FunctionContext {
 
     fn process_case_clause(&mut self, has_statement: bool) {
         self.put_command(CompileCommand::CaseClause(has_statement));
-        self.switch_stack.last_mut().unwrap().num_clauses += 1;
+        self.switch_stack.last_mut().unwrap().num_cases += 1;
     }
 
     fn process_default_selector(&mut self) {
@@ -1235,26 +1289,29 @@ impl FunctionContext {
     fn process_default_clause(&mut self, has_statement: bool) {
         self.put_command(CompileCommand::DefaultClause(has_statement));
         let context = self.switch_stack.last_mut().unwrap();
-        context.default_index = Some(context.num_clauses);
-        context.num_clauses += 1;
+        context.default_index = Some(context.num_cases);
+        context.num_cases += 1;
     }
 
     fn process_switch_statement(&mut self) {
         let context = self.switch_stack.pop().unwrap();
 
-        // TODO: the compilation should fail if the following condition is unmet.
-        assert!(context.num_clauses <= u32::MAX as usize);
-        let n = context.num_clauses as u32;
+        let id = self.num_switch_statements;
+        let n = context.num_cases;
 
         if n == 0 {
             // empty case block
             // Discard the `switchValue`.
             self.commands[context.case_block_index] = CompileCommand::Discard;
         } else {
-            self.commands[context.case_block_index] = CompileCommand::CaseBlock(n);
-            let default_index = context.default_index.map(|i| i as u32);
-            self.put_command(CompileCommand::Switch(n, default_index));
+            self.commands[context.case_block_index] = CompileCommand::CaseBlock(id, n);
+            let i = context.default_index;
+            self.put_command(CompileCommand::Switch(id, n, i));
+            self.num_switch_statements += 1;
         }
+
+        // Step#8 in 14.12.4 Runtime Semantics: Evaluation
+        self.end_scope();
     }
 
     fn process_label(&mut self, symbol: Symbol) {
@@ -1327,44 +1384,25 @@ impl FunctionContext {
 
     fn start_scope(&mut self, scope_ref: ScopeRef) {
         // NOTE(perf): The scope may has no binding.  In this case, we can remove the
-        // AllocateBindings command safely and reduce the number of the commands.  We can add a
+        // PushScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
-        self.put_command(CompileCommand::AllocateBindings(scope_ref));
-        self.scope_stack.push(Scope {
-            scope_ref,
-            num_bindings: 0,
-            max_child_bindings: 0,
-        });
+        self.put_command(CompileCommand::PushScope(scope_ref));
+        self.scope_stack.push(Scope { scope_ref });
     }
 
     fn end_scope(&mut self) {
         let scope = self.scope_stack.pop().unwrap();
 
-        // TODO: the compilation should fail if the following conditions are unmet.
-        assert!(scope.num_bindings <= ScopeTreeBuilder::MAX_LOCAL_BINDINGS);
-        assert!(
-            scope.num_bindings + scope.max_child_bindings <= ScopeTreeBuilder::MAX_LOCAL_BINDINGS
-        );
-
         // NOTE(perf): The scope may has no binding.  In this case, we can remove the
-        // ReleaseBindings command safely and reduce the number of the commands.  We can add a
+        // PopScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
         self.commands
-            .push(CompileCommand::ReleaseBindings(scope.scope_ref));
-
-        let n = scope.num_bindings + scope.max_child_bindings;
-        match self.scope_stack.last_mut() {
-            Some(scope) => scope.max_child_bindings = scope.max_child_bindings.max(n),
-            None => self.max_bindings = n,
-        }
+            .push(CompileCommand::PopScope(scope.scope_ref));
     }
 }
 
 struct Scope {
     scope_ref: ScopeRef,
-    // TODO: remove and use the scope tree
-    num_bindings: usize,
-    max_child_bindings: usize,
 }
 
 struct LoopContext {
@@ -1374,8 +1412,8 @@ struct LoopContext {
 #[derive(Default)]
 struct SwitchContext {
     case_block_index: usize,
-    num_clauses: usize,
-    default_index: Option<usize>,
+    num_cases: u16,
+    default_index: Option<u16>,
 }
 
 #[derive(Default)]
@@ -1394,6 +1432,7 @@ struct TryContext {
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
     Nop,
+
     Undefined,
     Null,
     Boolean(bool),
@@ -1404,7 +1443,7 @@ pub enum CompileCommand {
     Reference(Symbol, Locator),
     Exception,
 
-    Bindings(u16),
+    AllocateLocals(u16),
     MutableBinding,
     ImmutableBinding,
     DeclareFunction,
@@ -1412,9 +1451,9 @@ pub enum CompileCommand {
     Arguments(u16),
     Argument(u16),
     Call(u16),
-    AllocateBindings(ScopeRef),
-    ReleaseBindings(ScopeRef),
-    CaptureBinding(bool),
+    PushScope(ScopeRef),
+    PopScope(ScopeRef),
+    CaptureVariable(bool),
 
     // update operators
     PostfixIncrement,
@@ -1514,9 +1553,9 @@ pub enum CompileCommand {
     IfStatement,
 
     // loop
-    WhileLoop,
-    DoWhileLoop,
-    ForLoop(LoopFlags),
+    WhileLoop(u16),
+    DoWhileLoop(u16),
+    ForLoop(u16, LoopFlags),
     LoopInit,
     LoopTest,
     LoopNext,
@@ -1524,10 +1563,10 @@ pub enum CompileCommand {
     LoopEnd,
 
     // switch
-    CaseBlock(u32),
+    CaseBlock(u16, u16),
     CaseClause(bool),
     DefaultClause(bool),
-    Switch(u32, Option<u32>),
+    Switch(u16, u16, Option<u16>),
 
     // label
     LabelStart(Symbol, bool),
@@ -1546,6 +1585,8 @@ pub enum CompileCommand {
 
     Discard,
     Swap,
+
+    PrepareScopeCleanupChecker(u16),
 }
 
 impl CompileCommand {
@@ -1689,8 +1730,8 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::Bindings(4),
-                    CompileCommand::AllocateBindings(scope_ref!(1)),
+                    CompileCommand::AllocateLocals(4),
+                    CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
@@ -1703,8 +1744,7 @@ mod tests {
                     CompileCommand::Reference(symbol!(reg, "d"), locator!(local: 3)),
                     CompileCommand::Number(4.0),
                     CompileCommand::ImmutableBinding,
-                    CompileCommand::ReleaseBindings(scope_ref!(1)),
-                    CompileCommand::Return(0),
+                    CompileCommand::PopScope(scope_ref!(1)),
                 ]
             );
         });
@@ -1716,38 +1756,40 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::Bindings(3),
-                    CompileCommand::AllocateBindings(scope_ref!(1)),
+                    CompileCommand::AllocateLocals(4),
+                    CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::AllocateBindings(scope_ref!(2)),
+                    CompileCommand::PushScope(scope_ref!(2)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::ReleaseBindings(scope_ref!(2)),
-                    CompileCommand::AllocateBindings(scope_ref!(3)),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 1)),
+                    CompileCommand::PopScope(scope_ref!(2)),
+                    CompileCommand::PushScope(scope_ref!(3)),
+                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 2)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 2)),
+                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 3)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::ReleaseBindings(scope_ref!(3)),
-                    CompileCommand::ReleaseBindings(scope_ref!(1)),
-                    CompileCommand::Return(0),
+                    CompileCommand::PopScope(scope_ref!(3)),
+                    CompileCommand::PopScope(scope_ref!(1)),
                 ]
             );
         });
     }
 
     fn test(regc: &str, validate: fn(symbol_registry: &SymbolRegistry, program: &Program)) {
+        let runtime_pref = RuntimePref {
+            enable_scope_cleanup_checker: true,
+        };
         let mut symbol_registry = Default::default();
         let mut function_registry = FunctionRegistry::new();
         let result = Parser::for_script(
             regc,
             Processor::new(
-                Analyzer::new(&mut symbol_registry, &mut function_registry),
+                Analyzer::new(&runtime_pref, &mut symbol_registry, &mut function_registry),
                 false,
             ),
         )

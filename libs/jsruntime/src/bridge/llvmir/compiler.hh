@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -21,6 +22,7 @@
 #pragma GCC diagnostic pop
 
 #include "../bridge.hh"
+#include "control_flow.hh"
 #include "macros.hh"
 #include "type_holder.hh"
 
@@ -94,7 +96,6 @@ class Compiler {
   void BitwiseAndAssignment();
   void BitwiseXorAssignment();
   void BitwiseOrAssignment();
-  void Bindings(uint16_t n);
   void DeclareImmutable();
   void DeclareMutable();
   void DeclareFunction();
@@ -109,32 +110,35 @@ class Compiler {
   void FalsyShortCircuitAssignment();
   void TruthyShortCircuitAssignment();
   void NullishShortCircuitAssignment();
-  void Block();
+  void Branch();
   void IfElseStatement();
   void IfStatement();
-  void DoWhileLoop();
-  void WhileLoop();
-  void ForLoop(bool has_init, bool has_test, bool has_next);
+  void DoWhileLoop(uint16_t id);
+  void WhileLoop(uint16_t id);
+  void ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next);
   void LoopInit();
   void LoopTest();
   void LoopNext();
   void LoopBody();
   void LoopEnd();
-  void CaseBlock(uint32_t n);
+  void CaseBlock(uint16_t id, uint16_t num_cases);
   void CaseClause(bool has_statement);
   void DefaultClause(bool has_statement);
-  void Switch(uint32_t n, uint32_t default_index);
+  void Switch(uint16_t id, uint16_t num_cases, uint16_t default_index);
   void Try();
   void Catch(bool nominal);
   void Finally(bool nominal);
   void TryEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
-  void AllocateBindings(uint16_t n, bool prologue);
-  void ReleaseBindings(uint16_t n);
-  void CreateCapture(Locator locator, bool prologue);
-  void CaptureBinding(bool prologue);
-  void EscapeBinding(Locator locator);
+  void StartScope(uint16_t scope_id);
+  void EndScope(uint16_t scope_id);
+  void AllocateLocals(uint16_t num_locals);
+  void InitLocal(Locator locator);
+  void TidyLocal(Locator locator);
+  void CreateCapture(Locator locator);
+  void CaptureVariable(bool declaration);
+  void EscapeVariable(Locator locator);
   void LabelStart(uint32_t symbol, bool is_iteration_statement);
   void LabelEnd(uint32_t symbol, bool is_iteration_statement);
   void Continue(uint32_t symbol);
@@ -143,6 +147,8 @@ class Compiler {
   void Throw();
   void Discard();
   void Swap();
+
+  void PrepareScopeCleanupChecker(uint32_t stack_size);
 
   void DumpStack();
 
@@ -168,14 +174,12 @@ class Compiler {
       Any,  // undefined, boolean, number or object.
       Reference,
       Argv,
-      Block,
       Capture,
     } type;
     union {
       llvm::Value* value;
       llvm::Function* func;
       struct Reference reference;
-      llvm::BasicBlock* block;
     };
 #if defined(BEE_BUILD_DEBUG)
     const char* label = nullptr;
@@ -185,7 +189,6 @@ class Compiler {
     explicit Item(llvm::Function* func) : type(Item::Function), func(func) {}
     Item(Type type, llvm::Value* value) : type(type), value(value) {}
     Item(uint32_t symbol, Locator locator) : type(Item::Reference), reference(symbol, locator) {}
-    explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
 
     inline void SetLabel(const char* label) {
 #if defined(BEE_BUILD_DEBUG)
@@ -194,26 +197,6 @@ class Compiler {
       UNUSED(label);
 #endif
     }
-
-    inline bool IsValue() const {
-      switch (type) {
-        case Item::Undefined:
-        case Item::Null:
-        case Item::Boolean:
-        case Item::Number:
-        case Item::Function:
-        case Item::Closure:
-        case Item::Any:
-          return true;
-        default:
-          return false;
-      }
-    }
-  };
-
-  struct BlockItem {
-    llvm::BasicBlock* block;
-    uint32_t symbol;
   };
 
   inline void PushUndefined() {
@@ -252,12 +235,6 @@ class Compiler {
     stack_.push_back(Item(Item::Argv, value));
   }
 
-  inline void PushBlock(llvm::BasicBlock* block, const char* label) {
-    Item item(block);
-    item.SetLabel(label);
-    stack_.push_back(item);
-  }
-
   inline void PushCapture(llvm::Value* value) {
     stack_.push_back(Item(Item::Capture, value));
   }
@@ -273,15 +250,6 @@ class Compiler {
     assert(!stack_.empty());
     const auto& item = stack_.back();
     assert(item.type == Item::Boolean);
-    auto* value = item.value;
-    stack_.pop_back();
-    return value;
-  }
-
-  inline llvm::Value* PopValue() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.IsValue());
     auto* value = item.value;
     stack_.pop_back();
     return value;
@@ -314,23 +282,6 @@ class Compiler {
     return argv;
   }
 
-  inline llvm::BasicBlock* PopBlock() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Block);
-    auto* block = item.block;
-    stack_.pop_back();
-    return block;
-  }
-
-  inline llvm::BasicBlock* PeekBlock() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Block);
-    auto* block = item.block;
-    return block;
-  }
-
   inline llvm::Value* PopCapture() {
     assert(!stack_.empty());
     const auto& item = stack_.back();
@@ -354,7 +305,9 @@ class Compiler {
   llvm::Value* ToInt32(llvm::Value* number);
   llvm::Value* ToUint32(llvm::Value* number);
   llvm::Value* ToAny(const Item& item);
-  llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
+  llvm::AllocaInst* CreateAlloc1(llvm::Type* ty, const llvm::Twine& name = "");
+  llvm::AllocaInst* CreateAllocN(llvm::Type* ty, uint32_t n, const llvm::Twine& name = "");
+  llvm::Function* CreateLambda(const char* name);
 
   llvm::Value* CreateIsNonNullish(const Item& item);
   llvm::Value* CreateIsNonNullish(llvm::Value* value_ptr);
@@ -377,6 +330,7 @@ class Compiler {
 
   llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* variable_ptr);
   llvm::Value* CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures);
+  void CreateCallRuntimeAssert(llvm::Value* assertion, llvm::Value* msg);
 
   llvm::Value* CreateGetVariablePtr(Locator locator);
   llvm::Value* CreateGetValuePtr(Locator locator);
@@ -401,21 +355,25 @@ class Compiler {
   // arguments
 
   inline llvm::Value* CreateGetArgumentVariablePtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateVariableType(), argv_, index);
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateVariableType(), argv_, index,
+        REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
   }
 
   inline llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv_, index);
+    return CreateGetArgumentVariablePtr(index);
   }
 
   // locals
 
-  inline llvm::Value* CreateGetLocalVariablePtr(uint16_t index) {
+  // NOTE: No instruction is emitted.
+  inline llvm::Value* GetLocalVariablePtr(uint16_t index) {
+    assert(index < locals_.size());
     return locals_[index];
   }
 
-  inline llvm::Value* CreateGetLocalValuePtr(uint16_t index) {
-    return CreateGetLocalVariablePtr(index);
+  // NOTE: No instruction is emitted.
+  inline llvm::Value* GetLocalValuePtr(uint16_t index) {
+    return GetLocalVariablePtr(index);
   }
 
   // captures
@@ -431,12 +389,13 @@ class Compiler {
   }
 
   inline llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, index);
+    return builder_->CreateConstInBoundsGEP1_32(
+        builder_->getPtrTy(), captures, index, REG_NAME("caps." + llvm::Twine(index) + ".ptr"));
   }
 
   inline llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("caps." + llvm::Twine(index)));
   }
 
   inline void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
@@ -449,11 +408,13 @@ class Compiler {
   // variable
 
   inline llvm::Value* CreateGetValueKindPtrOfVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 0);
+    return builder_->CreateStructGEP(
+        types_->CreateVariableType(), variable_ptr, 0, REG_NAME("kind.ptr"));
   }
 
   inline llvm::Value* CreateGetFlagsPtrOfVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 1);
+    return builder_->CreateStructGEP(
+        types_->CreateVariableType(), variable_ptr, 1, REG_NAME("flags.ptr"));
   }
 
   inline llvm::Value* CreateGetReservedPtrOfVariable(llvm::Value* variable_ptr) {
@@ -461,23 +422,25 @@ class Compiler {
   }
 
   inline llvm::Value* CreateGetSymbolPtrOfVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 3);
+    return builder_->CreateStructGEP(
+        types_->CreateVariableType(), variable_ptr, 3, REG_NAME("symbol.ptr"));
   }
 
   inline llvm::Value* CreateGetValueHolderPtrOfVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateStructGEP(types_->CreateVariableType(), variable_ptr, 4);
+    return builder_->CreateStructGEP(
+        types_->CreateVariableType(), variable_ptr, 4, REG_NAME("holder.ptr"));
   }
 
   inline llvm::Value* CreateExtractValueKindFromVariable(llvm::Value* variable) {
-    return builder_->CreateExtractValue(variable, 0);
+    return builder_->CreateExtractValue(variable, 0, REG_NAME("kind"));
   }
 
   inline llvm::Value* CreateExtractValueHolderFromVariable(llvm::Value* variable) {
-    return builder_->CreateExtractValue(variable, 4);
+    return builder_->CreateExtractValue(variable, 4, REG_NAME("holder"));
   }
 
   inline llvm::Value* CreateLoadVariable(llvm::Value* variable_ptr) {
-    return builder_->CreateLoad(types_->CreateVariableType(), variable_ptr);
+    return builder_->CreateLoad(types_->CreateVariableType(), variable_ptr, REG_NAME("variable"));
   }
 
   inline void CreateStoreValueKindToVariable(ValueKind value, llvm::Value* variable_ptr) {
@@ -532,10 +495,9 @@ class Compiler {
   }
 
   inline void CreateStoreValueToVariable(llvm::Value* value_ptr, llvm::Value* variable_ptr) {
-    auto* value = CreateLoadValue(value_ptr);
-    auto* kind = CreateExtractValueKindFromValue(value);
-    auto* holder = CreateExtractValueHolderFromValue(value);
+    auto* kind = CreateLoadValueKindFromValue(value_ptr);
     CreateStoreValueKindToVariable(kind, variable_ptr);
+    auto* holder = CreateLoadValueHolderFromValue(value_ptr);
     CreateStoreValueHolderToVariable(holder, variable_ptr);
   }
 
@@ -564,31 +526,36 @@ class Compiler {
 
   inline llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueKindPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getInt8Ty(), ptr);
+    return builder_->CreateLoad(builder_->getInt8Ty(), ptr, REG_NAME("kind"));
+  }
+
+  inline llvm::Value* CreateLoadValueHolderFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt64Ty(), ptr, REG_NAME("holder"));
   }
 
   inline llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getInt1Ty(), ptr);
+    return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("boolean"));
   }
 
   inline llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getDoubleTy(), ptr);
+    return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("number"));
   }
 
   inline llvm::Value* CreateLoadFunctionFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("lambda"));
   }
 
   inline llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("closure"));
   }
 
   inline llvm::Value* CreateLoadValue(llvm::Value* value_ptr) {
-    return builder_->CreateLoad(types_->CreateValueType(), value_ptr);
+    return CreateLoadVariable(value_ptr);
   }
 
   inline void CreateStoreValueKindToValue(ValueKind value, llvm::Value* value_ptr) {
@@ -637,16 +604,18 @@ class Compiler {
   // capture
 
   inline llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
-    return builder_->CreateStructGEP(types_->CreateCaptureType(), capture_ptr, 0);
+    return builder_->CreateStructGEP(
+        types_->CreateCaptureType(), capture_ptr, 0, REG_NAME("target.ptr"));
   }
 
   inline llvm::Value* CreateGetEscapedPtrOfCapture(llvm::Value* capture_ptr) {
-    return builder_->CreateStructGEP(types_->CreateCaptureType(), capture_ptr, 1);
+    return builder_->CreateStructGEP(
+        types_->CreateCaptureType(), capture_ptr, 1, REG_NAME("escaped.ptr"));
   }
 
   inline llvm::Value* CreateLoadTargetFromCapture(llvm::Value* capture_ptr) {
     auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("target"));
   }
 
   inline void CreateStoreTargetToCapture(llvm::Value* variable_ptr, llvm::Value* capture_ptr) {
@@ -654,38 +623,77 @@ class Compiler {
     builder_->CreateStore(variable_ptr, ptr);
   }
 
-  inline void CreateStoreEscapedToCapture(llvm::Value* variable, llvm::Value* capture_ptr) {
+  inline void CreateStoreEscapedToCapture(llvm::Value* variable_ptr, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
-    builder_->CreateStore(variable, ptr);
+    auto align = llvm::Align(sizeof(double));
+    builder_->CreateMemCpy(ptr, align, variable_ptr, align, types_->GetWord(sizeof(Variable)));
   }
 
   // closure
 
   inline llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 0);
+    return builder_->CreateStructGEP(
+        types_->CreateClosureType(), closure_ptr, 0, REG_NAME("lambda.ptr"));
   }
 
   inline llvm::Value* CreateGetNumCapturesPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 1);
+    return builder_->CreateStructGEP(
+        types_->CreateClosureType(), closure_ptr, 1, REG_NAME("num_captures.ptr"));
   }
 
   inline llvm::Value* CreateGetCapturesPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 2);
+    return builder_->CreateStructGEP(
+        types_->CreateClosureType(), closure_ptr, 2, REG_NAME("captures.ptr"));
   }
 
   inline llvm::Value* CreateLoadLambdaFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetLambdaPtrOfClosure(closure_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("lambda"));
   }
 
   inline llvm::Value* CreateLoadNumCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetNumCapturesPtrOfClosure(closure_ptr);
-    return builder_->CreateLoad(builder_->getInt16Ty(), ptr);
+    return builder_->CreateLoad(builder_->getInt16Ty(), ptr, REG_NAME("num_captures"));
   }
 
   inline llvm::Value* CreateLoadCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("captures"));
+  }
+
+  // scope cleanup cheker
+
+  void CreatePushOntoScopeCleanupStack(uint16_t scope_id);
+  llvm::Value* CreatePopFromScopeCleanupStack();
+  void CreateAssertScopeCleanupStackBounds();
+  void CreateAssertScopeCleanupStackPoppedValue(llvm::Value* actual, uint16_t expected);
+  void CreateAssertScopeCleanupStackIsEmpty();
+  void CreateAssertScopeCleanupStackHasItem();
+
+  bool IsScopeCleanupCheckerEnabled() const {
+    return scope_cleanup_stack_ != nullptr;
+  }
+
+  llvm::Value* CreateLoadScopeCleanupStackTop() {
+    return builder_->CreateLoad(
+        builder_->getInt32Ty(), scope_cleanup_stack_top_, REG_NAME("scope_cleanup_stack.top"));
+  }
+
+  void CreateStoreScopeCleanupStackTop(llvm::Value* value) {
+    builder_->CreateStore(value, scope_cleanup_stack_top_);
+  }
+
+  void ClearScopeCleanupStack() {
+    scope_cleanup_stack_type_ = nullptr;
+    scope_cleanup_stack_ = nullptr;
+    scope_cleanup_stack_top_ = nullptr;
+    scope_cleanup_stack_size_ = 0;
+  }
+
+  // helper methods for basic blocks
+
+  llvm::BasicBlock* CreateBasicBlock(const char* name) {
+    return llvm::BasicBlock::Create(*context_, name, function_);
   }
 
   // FIXME: Handle dead code in the proper way.
@@ -701,15 +709,13 @@ class Compiler {
   // optimization passes.
   //
   // At this point, we don't know whether this is a common method or not...
-  inline void CreateBasicBlockForDeadcode() {
-    auto* dummy = llvm::BasicBlock::Create(*context_, "deadcode", function_);
-    builder_->SetInsertPoint(dummy);
-  }
+  void CreateBasicBlockForDeadcode();
 
   // TODO: separate variables that must be reset in EndFunction() from others.
 
-  llvm::BasicBlock* FindBlockBySymbol(const std::vector<BlockItem>& stack, uint32_t symbol) const;
-  void SetBlockForLabelsInContinueStack(llvm::BasicBlock* block);
+  // Helper methods for Call().
+  llvm::Value* CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* value_ptr);
+  void CreateCheckStatusForException(llvm::Value* status, llvm::Value* ret);
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
@@ -718,26 +724,28 @@ class Compiler {
 
   // The following variables are reset for each function.
   llvm::Function* function_ = nullptr;
-  llvm::BasicBlock* prologue_ = nullptr;
-  llvm::BasicBlock* body_ = nullptr;
-  llvm::BasicBlock* epilogue_ = nullptr;
+  llvm::BasicBlock* locals_block_ = nullptr;
+  llvm::BasicBlock* args_block_ = nullptr;
+  llvm::BasicBlock* body_block_ = nullptr;
+  llvm::BasicBlock* return_block_ = nullptr;
   llvm::Value* exec_context_ = nullptr;
   llvm::Value* caps_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
-  llvm::Value* ret_ = nullptr;
+  llvm::Value* retv_ = nullptr;
+  // Holds one of STATUS_XXX values, not Status::*.
   llvm::Value* status_ = nullptr;
 
-  // The `locals_` must be reset in the end of compilation for each function.
-  std::vector<llvm::Value*> locals_;
-  uint16_t max_locals_ = 0;
-  uint16_t allocated_locals_ = 0;
+  // scope cleanup checker
+  llvm::Type* scope_cleanup_stack_type_ = nullptr;
+  llvm::Value* scope_cleanup_stack_ = nullptr;
+  llvm::Value* scope_cleanup_stack_top_ = nullptr;
+  uint16_t scope_cleanup_stack_size_ = 0;
 
   // The following variables must be reset in the end of compilation for each function.
+  std::vector<llvm::Value*> locals_;
   std::vector<Item> stack_;
-  std::vector<BlockItem> break_stack_;
-  std::vector<BlockItem> continue_stack_;
-  std::vector<llvm::BasicBlock*> catch_stack_;
+  ControlFlowStack control_flow_stack_;
   std::unordered_map<uint32_t, llvm::Value*> captures_;
 
   // A cache of functions does not reset in the end of compilation for each function.
@@ -751,4 +759,25 @@ class Compiler {
   std::unique_ptr<llvm::ModuleAnalysisManager> mam_;
   std::unique_ptr<llvm::PassInstrumentationCallbacks> pic_;
   std::unique_ptr<llvm::StandardInstrumentations> si_;
+
+#if defined(BEE_BUILD_DEBUG)
+  inline void PushBasicBlockName(std::string&& name) {
+    basic_block_name_stack_.push_back(std::move(name));
+  }
+
+  // TODO: detect an ill-nested block name
+  inline void PopBasicBlockName() {
+    basic_block_name_stack_.pop_back();
+  }
+
+  std::string MakeBasicBlockName(const char* name) const;
+
+  std::vector<std::string> basic_block_name_stack_;
+#else
+  inline void PushBasicBlockName(std::string&&) {}
+  inline void PopBasicBlockName() {}
+  inline const char* MakeBasicBlockName(const char* name) {
+    return name;
+  }
+#endif
 };

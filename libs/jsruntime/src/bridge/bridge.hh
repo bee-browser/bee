@@ -3,10 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-enum class Status;
-struct Value;
 struct Closure;
-typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
 
 enum class LocatorKind : uint16_t {
   None,
@@ -26,12 +23,18 @@ struct Locator {
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
-enum class Status : int32_t {
-  Normal = 0,
-  Exception,
+#define STATUS_UNSET_BIT 0x10
+#define STATUS_MASK 0x0F
+#define STATUS_NORMAL 0x00
+#define STATUS_EXCEPTION 0x01
+#define STATUS_UNSET (STATUS_UNSET_BIT | STATUS_NORMAL)
+
+enum class Status : uint32_t {
+  Normal = STATUS_NORMAL,
+  Exception = STATUS_EXCEPTION,
 };
 
-static_assert(sizeof(Status) == sizeof(int32_t), "size mismatched");
+static_assert(sizeof(Status) == sizeof(uint32_t), "size mismatched");
 
 enum class ValueKind : uint8_t {
   // DO NOT CHANGE THE ORDER OF THE FOLLOWING ENUM VARIANTS.
@@ -78,6 +81,8 @@ struct Variable {
 #define VARIABLE_STRICT 0x08
 
 static_assert(sizeof(Variable) == sizeof(uint64_t) * 2, "size mismatched");
+
+typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
 
 // TODO(issue#237): GcCell
 struct Capture {
@@ -185,7 +190,6 @@ void compiler_peer_unsigned_right_shift_assignment(Compiler* self);
 void compiler_peer_bitwise_and_assignment(Compiler* self);
 void compiler_peer_bitwise_xor_assignment(Compiler* self);
 void compiler_peer_bitwise_or_assignment(Compiler* self);
-void compiler_peer_bindings(Compiler* self, uint16_t n);
 void compiler_peer_declare_immutable(Compiler* self);
 void compiler_peer_declare_mutable(Compiler* self);
 void compiler_peer_declare_function(Compiler* self);
@@ -200,32 +204,39 @@ void compiler_peer_nullish_short_circuit(Compiler* self);
 void compiler_peer_falsy_short_circuit_assignment(Compiler* self);
 void compiler_peer_truthy_short_circuit_assignment(Compiler* self);
 void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
-void compiler_peer_block(Compiler* self);
+void compiler_peer_branch(Compiler* self);
 void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);
-void compiler_peer_do_while_loop(Compiler* self);
-void compiler_peer_while_loop(Compiler* self);
-void compiler_peer_for_loop(Compiler* self, bool has_init, bool has_test, bool has_next);
+void compiler_peer_do_while_loop(Compiler* self, uint16_t id);
+void compiler_peer_while_loop(Compiler* self, uint16_t id);
+void compiler_peer_for_loop(Compiler* self,
+    uint16_t id,
+    bool has_init,
+    bool has_test,
+    bool has_next);
 void compiler_peer_loop_init(Compiler* self);
 void compiler_peer_loop_test(Compiler* self);
 void compiler_peer_loop_next(Compiler* self);
 void compiler_peer_loop_body(Compiler* self);
 void compiler_peer_loop_end(Compiler* self);
-void compiler_peer_case_block(Compiler* self, uint32_t n);
+void compiler_peer_case_block(Compiler* self, uint16_t id, uint16_t num_cases);
 void compiler_peer_case_clause(Compiler* self, bool has_statement);
 void compiler_peer_default_clause(Compiler* self, bool has_statement);
-void compiler_peer_switch(Compiler* self, uint32_t n, uint32_t default_index);
+void compiler_peer_switch(Compiler* self, uint16_t id, uint16_t num_cases, uint16_t default_index);
 void compiler_peer_try(Compiler* self);
 void compiler_peer_catch(Compiler* self, bool nominal);
 void compiler_peer_finally(Compiler* self, bool nominal);
 void compiler_peer_try_end(Compiler* self);
 void compiler_peer_start_function(Compiler* self, const char* name);
 void compiler_peer_end_function(Compiler* self, bool optimize);
-void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue);
-void compiler_peer_release_bindings(Compiler* self, uint16_t n);
-void compiler_peer_create_capture(Compiler* self, Locator locator, bool prologue);
-void compiler_peer_capture_binding(Compiler* self, bool prologue);
-void compiler_peer_escape_binding(Compiler* self, Locator locator);
+void compiler_peer_start_scope(Compiler* self, uint16_t scope_id);
+void compiler_peer_end_scope(Compiler* self, uint16_t scope_id);
+void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals);
+void compiler_peer_init_local(Compiler* self, Locator locator);
+void compiler_peer_tidy_local(Compiler* self, Locator locator);
+void compiler_peer_create_capture(Compiler* self, Locator locator);
+void compiler_peer_capture_variable(Compiler* self, bool declaration);
+void compiler_peer_escape_variable(Compiler* self, Locator locator);
 void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement);
 void compiler_peer_label_end(Compiler* self, uint32_t symbol, bool is_iteration_statement);
 void compiler_peer_continue(Compiler* self, uint32_t symbol);
@@ -234,6 +245,7 @@ void compiler_peer_return(Compiler* self, size_t n);
 void compiler_peer_throw(Compiler* self);
 void compiler_peer_discard(Compiler* self);
 void compiler_peer_swap(Compiler* self);
+void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
 void compiler_peer_dump_stack(Compiler* self);
 
 // Execution

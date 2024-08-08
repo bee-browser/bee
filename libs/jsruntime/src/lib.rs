@@ -17,7 +17,15 @@ pub use bridge::Value;
 pub use compiler::CompileError;
 pub use semantics::Program;
 
+#[derive(Default)]
+pub struct RuntimePref {
+    // Insert LLVM IR instructions to check if the cleanup for each scope is performed properly.
+    // Immediately panic the current thread evaluating a JavaScript program if the check fails.
+    enable_scope_cleanup_checker: bool,
+}
+
 pub struct Runtime {
+    pref: RuntimePref,
     symbol_registry: SymbolRegistry,
     function_registry: FunctionRegistry,
     executor: Executor,
@@ -34,6 +42,7 @@ impl Runtime {
 
     pub fn new() -> Self {
         Self {
+            pref: Default::default(),
             symbol_registry: Default::default(),
             function_registry: FunctionRegistry::new(),
             executor: Default::default(),
@@ -41,25 +50,19 @@ impl Runtime {
         }
     }
 
-    pub fn with_host_function<F, R>(self, name: &str, func: F) -> Self
+    pub fn enable_scope_cleanup_checker(&mut self) {
+        self.pref.enable_scope_cleanup_checker = true;
+    }
+
+    pub fn register_host_function<F, R>(&mut self, name: &str, func: F)
     where
         F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
         R: Clone + ReturnValue,
     {
-        self.with_host_function_internal(name, wrap(func))
-    }
-
-    fn with_host_function_internal(mut self, name: &str, func: HostFn) -> Self {
         let symbol = self.symbol_registry.intern_str(name);
         let func_id = self.function_registry.register_host_function(name);
-        self.executor.register_host_function(name, func);
-        logger::debug!(
-            event = "with_host_function_internal",
-            name,
-            ?symbol,
-            ?func_id
-        );
-        self
+        self.executor.register_host_function(name, wrap(func));
+        logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {

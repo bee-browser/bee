@@ -11,6 +11,7 @@ static LLVMIR_SOURCE_FILES: &[&str] = &[
     "src/bridge/llvmir/bridge.cc",
     "src/bridge/llvmir/compiler.cc",
     "src/bridge/llvmir/compiler.hh",
+    "src/bridge/llvmir/control_flow.hh",
     "src/bridge/llvmir/executor.cc",
     "src/bridge/llvmir/executor.codegen.cc",
     "src/bridge/llvmir/executor.hh",

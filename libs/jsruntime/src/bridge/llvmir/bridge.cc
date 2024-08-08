@@ -274,10 +274,6 @@ void compiler_peer_bitwise_or_assignment(Compiler* self) {
   self->BitwiseOrAssignment();
 }
 
-void compiler_peer_bindings(Compiler* self, uint16_t n) {
-  self->Bindings(n);
-}
-
 void compiler_peer_declare_immutable(Compiler* self) {
   self->DeclareImmutable();
 }
@@ -334,8 +330,8 @@ void compiler_peer_nullish_short_circuit_assignment(Compiler* self) {
   self->NullishShortCircuitAssignment();
 }
 
-void compiler_peer_block(Compiler* self) {
-  self->Block();
+void compiler_peer_branch(Compiler* self) {
+  self->Branch();
 }
 
 void compiler_peer_if_else_statement(Compiler* self) {
@@ -346,16 +342,20 @@ void compiler_peer_if_statement(Compiler* self) {
   self->IfStatement();
 }
 
-void compiler_peer_do_while_loop(Compiler* self) {
-  self->DoWhileLoop();
+void compiler_peer_do_while_loop(Compiler* self, uint16_t id) {
+  self->DoWhileLoop(id);
 }
 
-void compiler_peer_while_loop(Compiler* self) {
-  self->WhileLoop();
+void compiler_peer_while_loop(Compiler* self, uint16_t id) {
+  self->WhileLoop(id);
 }
 
-void compiler_peer_for_loop(Compiler* self, bool has_init, bool has_test, bool has_next) {
-  self->ForLoop(has_init, has_test, has_next);
+void compiler_peer_for_loop(Compiler* self,
+    uint16_t id,
+    bool has_init,
+    bool has_test,
+    bool has_next) {
+  self->ForLoop(id, has_init, has_test, has_next);
 }
 
 void compiler_peer_loop_init(Compiler* self) {
@@ -378,8 +378,8 @@ void compiler_peer_loop_end(Compiler* self) {
   self->LoopEnd();
 }
 
-void compiler_peer_case_block(Compiler* self, uint32_t n) {
-  self->CaseBlock(n);
+void compiler_peer_case_block(Compiler* self, uint16_t id, uint16_t num_cases) {
+  self->CaseBlock(id, num_cases);
 }
 
 void compiler_peer_case_clause(Compiler* self, bool has_statement) {
@@ -390,8 +390,11 @@ void compiler_peer_default_clause(Compiler* self, bool has_statement) {
   self->DefaultClause(has_statement);
 }
 
-void compiler_peer_switch(Compiler* self, uint32_t n, uint32_t default_index) {
-  self->Switch(n, default_index);
+void compiler_peer_switch(Compiler* self,
+    uint16_t id,
+    uint16_t num_cases,
+    uint16_t default_index) {
+  self->Switch(id, num_cases, default_index);
 }
 
 void compiler_peer_try(Compiler* self) {
@@ -418,26 +421,36 @@ void compiler_peer_end_function(Compiler* self, bool optimize) {
   self->EndFunction(optimize);
 }
 
-void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue) {
-  assert(n > 0);
-  self->AllocateBindings(n, prologue);
+void compiler_peer_start_scope(Compiler* self, uint16_t scope_id) {
+  self->StartScope(scope_id);
 }
 
-void compiler_peer_release_bindings(Compiler* self, uint16_t n) {
-  assert(n > 0);
-  self->ReleaseBindings(n);
+void compiler_peer_end_scope(Compiler* self, uint16_t scope_id) {
+  self->EndScope(scope_id);
 }
 
-void compiler_peer_create_capture(Compiler* self, Locator locator, bool prologue) {
-  self->CreateCapture(locator, prologue);
+void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals) {
+  self->AllocateLocals(num_locals);
 }
 
-void compiler_peer_capture_binding(Compiler* self, bool prologue) {
-  self->CaptureBinding(prologue);
+void compiler_peer_init_local(Compiler* self, Locator locator) {
+  self->InitLocal(locator);
 }
 
-void compiler_peer_escape_binding(Compiler* self, Locator locator) {
-  self->EscapeBinding(locator);
+void compiler_peer_tidy_local(Compiler* self, Locator locator) {
+  self->TidyLocal(locator);
+}
+
+void compiler_peer_create_capture(Compiler* self, Locator locator) {
+  self->CreateCapture(locator);
+}
+
+void compiler_peer_capture_variable(Compiler* self, bool declaration) {
+  self->CaptureVariable(declaration);
+}
+
+void compiler_peer_escape_variable(Compiler* self, Locator locator) {
+  self->EscapeVariable(locator);
 }
 
 void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement) {
@@ -470,6 +483,10 @@ void compiler_peer_discard(Compiler* self) {
 
 void compiler_peer_swap(Compiler* self) {
   self->Swap();
+}
+
+void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size) {
+  self->PrepareScopeCleanupChecker(stack_size);
 }
 
 void compiler_peer_dump_stack(Compiler* self) {

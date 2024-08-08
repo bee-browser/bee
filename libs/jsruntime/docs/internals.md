@@ -101,3 +101,32 @@ The second part is implemented in the `compiler` and `bridge` modules.  A `compi
 interprets the `semantics::CompileCommand`s and calls functions of `bridge::Compiler` in order to
 build LLVM IR instructions for closures.  The logical location of each free variable on the stack
 is computed and the runtime part of the original algorithm are coded in this phase.
+
+## Stacks used in the LLVM IR compiler
+
+The LLVM IR compiler uses multiple stacks for different purposes.
+
+The value stack (`stack_`) holds LLVM IR values (concrete classes of `llvm::Value`).
+
+The control flow stack (`control_flow_`) holds sets of basic blocks (`llvm::BasicBlock`) which
+construct of a region in the control flow graph (CFG) finally built.  Nested relationships of
+regions can be represented as a graph of connected basic blocks.  However, the graph representation
+is not a program-friendly representation.  By contrast, a stack can represent the nested
+relationships easily as parent-child relationships between adjacent elements of the stack.
+
+## Scope cleanup checker
+
+We introduced the scope cleanup checker.  At compile time, it inserts additional LLVM IR
+instructions that check at runtime if the cleanup instructions for a scope are performed in the
+correct order.  It immediately aborts the current program when detecting the cleanup for an
+unexpected scope.
+
+In the current implementation, the scope cleanup checker uses a stack to keep IDs of nested scopes.
+And it checks:
+
+* If a scope ID at the top of the stack is equals to the current scope ID before performing any
+  instructions for the scope cleanup
+* If the stack is empty before returning the current function
+
+This feature is one of runtime preferences and we don't need rebuilding a binary for enabling this
+feature.

@@ -145,8 +145,9 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Exception => unsafe {
                 bridge::compiler_peer_exception(self.peer);
             },
-            CompileCommand::Bindings(n) => unsafe {
-                bridge::compiler_peer_bindings(self.peer, *n);
+            CompileCommand::AllocateLocals(num_locals) => unsafe {
+                debug_assert!(*num_locals > 0);
+                bridge::compiler_peer_allocate_locals(self.peer, *num_locals);
             },
             CompileCommand::MutableBinding => unsafe {
                 bridge::compiler_peer_declare_mutable(self.peer);
@@ -171,51 +172,50 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Call(nargs) => unsafe {
                 bridge::compiler_peer_call(self.peer, *nargs);
             },
-            CompileCommand::AllocateBindings(scope_ref) => {
+            CompileCommand::PushScope(scope_ref) => {
                 // TODO(issue#234)
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
-                let scope = self.scope_tree.scope(scope_ref);
-                let prologue = scope.is_function();
-                if scope.num_locals > 0 {
-                    unsafe {
-                        bridge::compiler_peer_allocate_bindings(
-                            self.peer,
-                            scope.num_locals,
-                            prologue,
-                        );
-                    }
+                unsafe {
+                    bridge::compiler_peer_start_scope(self.peer, scope_ref.id());
                 }
-                for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
-                    if binding.captured {
-                        let locator = self.scope_tree.compute_locator(binding_ref);
+                let scope = self.scope_tree.scope(scope_ref);
+                for binding in scope.bindings.iter() {
+                    if binding.is_local() {
                         unsafe {
-                            bridge::compiler_peer_create_capture(self.peer, locator, prologue);
+                            bridge::compiler_peer_init_local(self.peer, binding.locator());
+                        }
+                    }
+                    if binding.captured {
+                        unsafe {
+                            bridge::compiler_peer_create_capture(self.peer, binding.locator());
                         }
                     }
                 }
             }
-            CompileCommand::ReleaseBindings(scope_ref) => {
+            CompileCommand::PopScope(scope_ref) => {
                 // TODO(issue#234)
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
-                for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
+                let scope = self.scope_tree.scope(scope_ref);
+                for binding in scope.bindings.iter() {
                     if binding.captured {
-                        let locator = self.scope_tree.compute_locator(binding_ref);
                         unsafe {
-                            bridge::compiler_peer_escape_binding(self.peer, locator);
+                            bridge::compiler_peer_escape_variable(self.peer, binding.locator());
+                        }
+                    }
+                    if binding.is_local() {
+                        unsafe {
+                            bridge::compiler_peer_tidy_local(self.peer, binding.locator());
                         }
                     }
                 }
-                let scope = self.scope_tree.scope(scope_ref);
-                if scope.num_locals > 0 {
-                    unsafe {
-                        bridge::compiler_peer_release_bindings(self.peer, scope.num_locals);
-                    }
+                unsafe {
+                    bridge::compiler_peer_end_scope(self.peer, scope_ref.id());
                 }
             }
-            CompileCommand::CaptureBinding(prologue) => unsafe {
-                bridge::compiler_peer_capture_binding(self.peer, *prologue);
+            CompileCommand::CaptureVariable(declaration) => unsafe {
+                bridge::compiler_peer_capture_variable(self.peer, *declaration);
             },
             CompileCommand::PostfixIncrement => unsafe {
                 bridge::compiler_peer_postfix_increment(self.peer);
@@ -381,10 +381,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 bridge::compiler_peer_nullish_short_circuit_assignment(self.peer);
             },
             CompileCommand::Then => unsafe {
-                bridge::compiler_peer_block(self.peer);
+                bridge::compiler_peer_branch(self.peer);
             },
             CompileCommand::Else => unsafe {
-                bridge::compiler_peer_block(self.peer);
+                bridge::compiler_peer_branch(self.peer);
             },
             CompileCommand::IfElseStatement => unsafe {
                 bridge::compiler_peer_if_else_statement(self.peer);
@@ -392,16 +392,17 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::IfStatement => unsafe {
                 bridge::compiler_peer_if_statement(self.peer);
             },
-            CompileCommand::DoWhileLoop => unsafe {
-                bridge::compiler_peer_do_while_loop(self.peer);
+            CompileCommand::DoWhileLoop(id) => unsafe {
+                bridge::compiler_peer_do_while_loop(self.peer, *id);
             },
-            CompileCommand::WhileLoop => unsafe {
-                bridge::compiler_peer_while_loop(self.peer);
+            CompileCommand::WhileLoop(id) => unsafe {
+                bridge::compiler_peer_while_loop(self.peer, *id);
             },
             // TODO: rewrite using if and break
-            CompileCommand::ForLoop(flags) => unsafe {
+            CompileCommand::ForLoop(id, flags) => unsafe {
                 bridge::compiler_peer_for_loop(
                     self.peer,
+                    *id,
                     flags.contains(LoopFlags::HAS_INIT),
                     flags.contains(LoopFlags::HAS_TEST),
                     flags.contains(LoopFlags::HAS_NEXT),
@@ -422,10 +423,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::LoopEnd => unsafe {
                 bridge::compiler_peer_loop_end(self.peer);
             },
-            CompileCommand::CaseBlock(n) => unsafe {
-                debug_assert!(*n > 0);
+            CompileCommand::CaseBlock(id, num_cases) => unsafe {
+                debug_assert!(*num_cases > 0);
                 // TODO: refactoring
-                bridge::compiler_peer_case_block(self.peer, *n);
+                bridge::compiler_peer_case_block(self.peer, *id, *num_cases);
             },
             CompileCommand::CaseClause(has_statement) => unsafe {
                 bridge::compiler_peer_case_clause(self.peer, *has_statement);
@@ -433,9 +434,9 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::DefaultClause(has_statement) => unsafe {
                 bridge::compiler_peer_default_clause(self.peer, *has_statement);
             },
-            CompileCommand::Switch(n, default_index) => unsafe {
-                let i = default_index.unwrap_or(*n);
-                bridge::compiler_peer_switch(self.peer, *n, i);
+            CompileCommand::Switch(id, num_cases, default_index) => unsafe {
+                let default_index = default_index.unwrap_or(*num_cases);
+                bridge::compiler_peer_switch(self.peer, *id, *num_cases, default_index);
             },
             CompileCommand::Try => unsafe {
                 bridge::compiler_peer_try(self.peer);
@@ -474,6 +475,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Swap => unsafe {
                 // TODO: the stack should be managed in the Rust side.
                 bridge::compiler_peer_swap(self.peer);
+            },
+            CompileCommand::PrepareScopeCleanupChecker(stack_size) => unsafe {
+                debug_assert!(*stack_size > 0);
+                bridge::compiler_peer_prepare_scope_cleanup_checker(self.peer, *stack_size);
             },
         }
 

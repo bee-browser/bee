@@ -390,7 +390,7 @@ impl std::fmt::Debug for AssignmentOperator {
 
 bitflags! {
     #[derive(Debug, PartialEq)]
-    pub struct LoopFlags : u32 {
+    pub struct LoopFlags : u16 {
         const HAS_INIT = 0b0001;
         const HAS_TEST = 0b0010;
         const HAS_NEXT = 0b0100;
@@ -1980,7 +1980,6 @@ where
     fn process_switch_statement(&mut self) -> Result<(), Error> {
         assert!(self.switch_statement_depth > 0);
         self.switch_statement_depth -= 1;
-        self.enqueue(Node::EndBlockScope); // See process_case_block().
         self.enqueue(Node::SwitchStatement);
         self.replace(5, Detail::SwitchStatement);
         Ok(())
@@ -1990,7 +1989,6 @@ where
     fn process_case_block(&mut self) -> Result<(), Error> {
         ensure!(self.switch_statement_depth < MAX_SWITCH_STATEMENT_DEPTH);
         self.switch_statement_depth += 1;
-        self.enqueue(Node::StartBlockScope);
         self.enqueue(Node::CaseBlock);
         Ok(())
     }

@@ -7,6 +7,8 @@
 
 #include <climits>
 
+#include "macros.hh"
+
 namespace {
 constexpr unsigned kWorkBits = sizeof(size_t) * CHAR_BIT;
 }
@@ -91,8 +93,20 @@ llvm::FunctionType* TypeHolder::CreateLambdaType() {
 
 llvm::Function* TypeHolder::CreateRuntime{{ function.name | pascalCase }}() {
   if (runtime_{{ function.name }}_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get({{ function.llvmir_ret }}, {{ function.llvmir_args }}, false);
+    auto* prototype = llvm::FunctionType::get(
+        // {{ function.c_ret }}
+        {{ function.llvmir_ret }},
+        {
+            {%- for arg in function.args %}
+            // {{arg.ctype}} {{ arg.name }}
+            {{ arg.llvmir_type }},
+            {%- endfor %}
+        },
+        false);
     runtime_{{ function.name }}_ = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "runtime_{{ function.name }}", module_);
+    {%- for arg in function.args %}
+    runtime_{{ function.name }}_->getArg({{ loop.index0 }})->setName(REG_NAME("{{ arg.name }}"));
+    {%- endfor %}
   }
   return runtime_{{ function.name }}_;
 }

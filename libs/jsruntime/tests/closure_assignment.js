@@ -1,32 +1,16 @@
-// TODO(issue#234): replace with the following code:
-//
-// let x = (function() {
-//   let a;
-//   return b();
-//   function b() {
-//     a = 1;
-//     return () => a = 2;
-//   }
-// })();
-// print(x());
 let x = (function() {
-  let c;
-  {
-    let a;
+  let a;
 
-    let b = function() {
-      a = 1;
-      return () => a = 2;
-    };
+  // `print(b)` will print:
+  // [closure(<b.lambda>, [capture(onstack: <addr of `a`>)])]
+  return b();
 
-    // `print(b)` will print:
-    // [closure(<b.lambda>, [capture(onstack: <addr of `a`>)])]
-    c = b();
+  function b() {
+    a = 1;
+    return () => a = 2;
   }
-
-  // `print(c)` will print:
-  // [closure(<c.lambda>, [capture(escaped: <addr of captured `a`>)])]
-  return c;
 })();
 
+// `print(x)` will print:
+// [closure(<lambda>, [capture(escaped: <addr of captured `a`>)])]
 print(x());

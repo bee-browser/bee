@@ -10,7 +10,9 @@ logging::init!();
 macro_rules! eval {
     ($src:expr, $expected:expr) => {
         Runtime::initialize();
-        let mut runtime = Runtime::new().with_host_function("print", |_, args| {
+        let mut runtime = Runtime::new();
+        runtime.enable_scope_cleanup_checker();
+        runtime.register_host_function("print", |_, args| {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
             let actual = format!("{:?}", args[0]);
             let expected = format!("{:?}", Value::from($expected));
@@ -27,6 +29,13 @@ macro_rules! eval {
     ($src:expr, throws: $expected:expr) => {
         Runtime::initialize();
         let mut runtime = Runtime::new();
+        runtime.enable_scope_cleanup_checker();
+        runtime.register_host_function("print", |_, args| {
+            // Some cases including `f64::NAN` fail in `assert_eq!()`.
+            let actual = format!("{:?}", args[0]);
+            let expected = format!("{:?}", Value::from($expected));
+            assert_eq!(actual, expected);
+        });
         let program = runtime.parse_script($src.as_ref()).unwrap();
         let module = runtime.compile(&program, true).unwrap();
         assert_matches!(runtime.evaluate(module), Err(v) => {
@@ -585,39 +594,36 @@ fn eval_comma_operator() {
 
 #[test]
 fn eval_if_statement() {
-    eval!("let a = 1; if (true) { a = 2; } print(a);", 2.);
-    eval!("let a = 1; if (false) { a = 2; } print(a);", 1.);
+    eval!(file: "if_statement_true.js", 2);
+    eval!(file: "if_statement_false.js", 1);
+    eval!(file: "if_statement_return.js", 1);
+    eval!(file: "if_statement_return_in_block.js", 1);
+    eval!(file: "if_statement_throw.js", throws: 1);
+    eval!(file: "if_statement_throw_in_block.js", throws: 1);
 }
 
 #[test]
 fn eval_if_else_statement() {
-    eval!(
-        "let a = 1; if (true) { a = 2; } else { a = 3; } print(a);",
-        2.
-    );
-    eval!(
-        "let a = 1; if (false) { a = 2; } else { a = 3; } print(a);",
-        3.
-    );
+    eval!(file: "if_else_statement_true.js", 2);
+    eval!(file: "if_else_statement_false.js", 3);
+    eval!(file: "if_else_statement_return_in_block_true.js", 1);
+    eval!(file: "if_else_statement_return_in_block_false.js", 3);
 }
 
 #[test]
 fn eval_block_statement() {
-    eval!("let a = 1; { let a = 2; } print(a);", 1.);
-    eval!("let a = 1; { a = 2; } print(a);", 2.);
+    eval!(file: "block_statement.js", 1);
+    eval!(file: "block_statement_2.js", 2);
 }
 
 #[test]
 fn eval_return_statement_in_block() {
-    eval!("print(a()); function a() { let a = 1; { return a; } }", 1.);
+    eval!(file: "return_statement_in_block.js", 1);
 }
 
 #[test]
 fn eval_terminated_basic_block() {
-    eval!(
-        "print(a()); function a() { if (1) { return 1; } return 2; }",
-        1.
-    );
+    eval!(file: "terminated_basic_block.js", 1);
 }
 
 #[test]
@@ -974,16 +980,29 @@ fn eval_try_call_throw() {
 }
 
 #[test]
+fn eval_try_throw_in_block_catch() {
+    eval!(file: "try_throw_in_block_catch.js", throws: 1);
+}
+
+#[test]
+fn eval_try_throw_in_block_finally() {
+    eval!(file: "try_throw_in_block_finally.js", throws: 1);
+}
+
+#[test]
 fn eval_closure_escape() {
     eval!(file: "closure_escape.js", 1);
+    eval!(file: "closure_escape_workaround.js", 1);
 }
 
 #[test]
 fn eval_closure_nested() {
     eval!(file: "closure_nested.js", 1);
+    eval!(file: "closure_nested_workaround.js", 1);
 }
 
 #[test]
 fn eval_closure_assignment() {
     eval!(file: "closure_assignment.js", 2);
+    eval!(file: "closure_assignment_workaround.js", 2);
 }
