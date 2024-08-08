@@ -6,7 +6,7 @@ set -eu
 PROGNAME="$(basename $0)"
 
 # TODO: Update by `make update-deps`
-PUPPETEER_IMAGE_VERSION=22.12.0
+PUPPETEER_IMAGE_VERSION=23.0.1
 DOCKER_IMAGE="ghcr.io/puppeteer/puppeteer:$PUPPETEER_IMAGE_VERSION"
 
 if [ "$(uname)" != Linux ] || id -nG | grep -q docker; then
