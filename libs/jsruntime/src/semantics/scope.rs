@@ -113,8 +113,6 @@ pub struct ScopeTreeBuilder {
 }
 
 impl ScopeTreeBuilder {
-    pub const MAX_LOCAL_BINDINGS: usize = 0x1000;
-
     #[inline(always)]
     pub fn current(&self) -> ScopeRef {
         self.current
