@@ -8,7 +8,7 @@ use jsruntime::Value;
 logging::init!();
 
 macro_rules! eval {
-    ($src:expr, $expected:expr) => {
+    ($script:expr, $opt:expr, $src:expr, $expected:expr) => {
         Runtime::initialize();
         let mut runtime = Runtime::new();
         runtime.enable_scope_cleanup_checker();
@@ -16,38 +16,45 @@ macro_rules! eval {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
             let actual = format!("{:?}", args[0]);
             let expected = format!("{:?}", Value::from($expected));
-            assert_eq!(actual, expected);
+            assert_eq!(actual, expected, "script={} optimize={}", $script, $opt);
         });
         let program = runtime.parse_script($src.as_ref()).unwrap();
-        let module = runtime.compile(&program, true).unwrap();
+        let module = runtime.compile(&program, $opt).unwrap();
         assert_matches!(runtime.evaluate(module), Ok(_));
     };
-    (file: $filename:literal, $expected:expr) => {
-        let src = include_str!($filename);
-        eval!(src, $expected);
+    ($src:expr, $expected:expr) => {
+        let src = $src;
+        eval!($src, true, &src, $expected);
+        eval!($src, false, &src, $expected);
     };
-    ($src:expr, throws: $expected:expr) => {
+    (file: $filename:expr, $expected:expr) => {
+        let src = include_str!($filename);
+        eval!($filename, true, src, $expected);
+        eval!($filename, false, src, $expected);
+    };
+    ($script:expr, $opt:expr, $src:expr, throws: $expected:expr) => {
         Runtime::initialize();
         let mut runtime = Runtime::new();
         runtime.enable_scope_cleanup_checker();
-        runtime.register_host_function("print", |_, args| {
-            // Some cases including `f64::NAN` fail in `assert_eq!()`.
-            let actual = format!("{:?}", args[0]);
-            let expected = format!("{:?}", Value::from($expected));
-            assert_eq!(actual, expected);
-        });
+        runtime.register_host_function("print", |_, _| {});
         let program = runtime.parse_script($src.as_ref()).unwrap();
-        let module = runtime.compile(&program, true).unwrap();
+        let module = runtime.compile(&program, $opt).unwrap();
         assert_matches!(runtime.evaluate(module), Err(v) => {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
-            let actual = format!("{:?}", v);
+            let actual = format!("{v:?}");
             let expected = format!("{:?}", Value::from($expected));
-            assert_eq!(actual, expected);
+            assert_eq!(actual, expected, "script={} optimize={}", $script, $opt);
         });
     };
-    (file: $filename:literal, throws: $expected:expr) => {
+    ($src:expr, throws: $expected:expr) => {
+        let src = $src;
+        eval!($src, true, &src, throws: $expected);
+        eval!($src, false, &src, throws: $expected);
+    };
+    (file: $filename:expr, throws: $expected:expr) => {
         let src = include_str!($filename);
-        eval!(src, throws: $expected);
+        eval!($filename, true, src, throws: $expected);
+        eval!($filename, false, src, throws: $expected);
     };
 }
 
@@ -69,42 +76,42 @@ fn eval_boolean() {
 
 #[test]
 fn eval_number() {
-    eval!("print(1)", 1.);
+    eval!("print(1)", 1);
     eval!("print(NaN)", f64::NAN);
     eval!("print(Infinity)", f64::INFINITY);
 }
 
 #[test]
 fn eval_addition_expression() {
-    eval!("print(1 + 2)", 3.);
+    eval!("print(1 + 2)", 3);
 }
 
 #[test]
 fn eval_subtraction_expression() {
-    eval!("print(2 - 1)", 1.);
-    eval!("print(1 - 2)", -1.);
+    eval!("print(2 - 1)", 1);
+    eval!("print(1 - 2)", -1);
 }
 
 #[test]
 fn eval_multiplication_expression() {
-    eval!("print(2 * 3)", 6.);
+    eval!("print(2 * 3)", 6);
 }
 
 #[test]
 fn eval_division_expression() {
-    eval!("print(4 / 2)", 2.);
+    eval!("print(4 / 2)", 2);
     eval!("print(1 / 3)", 1. / 3.);
 }
 
 #[test]
 fn eval_remainder_expression() {
-    eval!("print(1 % 3)", 1.);
+    eval!("print(1 % 3)", 1);
     eval!("print(1.2 % 3.4)", 1.2 % 3.4);
 }
 
 #[test]
 fn eval_group_expression() {
-    eval!("print(2 * (3 + 4))", 14.);
+    eval!("print(2 * (3 + 4))", 14);
 }
 
 #[test]
@@ -441,9 +448,9 @@ fn eval_nullish_coalescing() {
 #[test]
 fn eval_to_numeric() {
     eval!("print(undefined + 0)", f64::NAN);
-    eval!("print(null + 0)", 0.);
-    eval!("print(false + 0)", 0.);
-    eval!("print(true + 0)", 1.);
+    eval!("print(null + 0)", 0);
+    eval!("print(false + 0)", 0);
+    eval!("print(true + 0)", 1);
 }
 
 #[test]
@@ -453,20 +460,20 @@ fn eval_call_with_no_argument() {
 
 #[test]
 fn eval_call_with_no_argument_hoistable_declaration() {
-    eval!("print(a()); function a() { return 1 }", 1.);
+    eval!("print(a()); function a() { return 1 }", 1);
 }
 
 #[test]
 fn eval_const_declaration() {
-    eval!("const a = 1, b = 2; print(a);", 1.);
-    eval!("const a = 1, b = 2; print(b);", 2.);
+    eval!("const a = 1, b = 2; print(a);", 1);
+    eval!("const a = 1, b = 2; print(b);", 2);
 }
 
 #[test]
 fn eval_let_declaration() {
     eval!("let a; print(a);", Value::UNDEFINED);
-    eval!("let a, b = 2; a = 1; print(a);", 1.);
-    eval!("let a, b = 2; a = 1; print(b);", 2.);
+    eval!("let a, b = 2; a = 1; print(a);", 1);
+    eval!("let a, b = 2; a = 1; print(b);", 2);
 }
 
 #[test]
@@ -576,15 +583,15 @@ fn eval_nullish_coalescing_assignment() {
 
 #[test]
 fn eval_nested_conditional_expression() {
-    eval!("print(1 > 0 ? 1 > 0 ? 2 : 3 : 1 > 0 ? 4 : 5)", 2.);
+    eval!("print(1 > 0 ? 1 > 0 ? 2 : 3 : 1 > 0 ? 4 : 5)", 2);
 }
 
 #[test]
 fn eval_conditional_expression_mixed_types() {
-    eval!("print(true ? 2.0 : false)", 2.);
-    eval!("print(false ? 2.0 : false)", false);
-    eval!("print(true ? 2.0 : undefined)", 2.);
-    eval!("print(false ? 2.0 : undefined)", Value::UNDEFINED);
+    eval!("print(true ? 2 : false)", 2);
+    eval!("print(false ? 2 : false)", false);
+    eval!("print(true ? 2 : undefined)", 2);
+    eval!("print(false ? 2 : undefined)", Value::UNDEFINED);
 }
 
 #[test]
@@ -628,23 +635,17 @@ fn eval_terminated_basic_block() {
 
 #[test]
 fn eval_function_single_name_binding() {
-    eval!("print(a(1)); function a(x) { return x; }", 1.);
+    eval!("print(a(1)); function a(x) { return x; }", 1);
 }
 
 #[test]
 fn eval_call_other_function() {
-    eval!(
-        "print(a()); function a() { return b() } function b() { return 1 }",
-        1.
-    );
+    eval!("print(a()); function a() { return b() } function b() { return 1 }", 1);
 }
 
 #[test]
 fn eval_nested_function() {
-    eval!(
-        "print(a()); function a() { return b(); function b() { return 1 } }",
-        1.
-    );
+    eval!("print(a()); function a() { return b(); function b() { return 1 } }", 1);
 }
 
 #[test]
