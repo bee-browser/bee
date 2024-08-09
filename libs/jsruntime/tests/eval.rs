@@ -7,9 +7,13 @@ use jsruntime::Value;
 
 logging::init!();
 
+#[ctor::ctor]
+fn init_jsruntime() {
+    jsruntime::initialize();
+}
+
 macro_rules! eval {
     ($script:expr, $opt:expr, $src:expr, $expected:expr) => {
-        jsruntime::initialize();
         let mut runtime = Runtime::with_extension(());
         runtime.enable_scope_cleanup_checker();
         runtime.register_host_function("print", |_, args| {
@@ -33,7 +37,6 @@ macro_rules! eval {
         eval!($filename, false, src, $expected);
     };
     ($script:expr, $opt:expr, $src:expr, throws: $expected:expr) => {
-        jsruntime::initialize();
         let mut runtime = Runtime::with_extension(());
         runtime.enable_scope_cleanup_checker();
         runtime.register_host_function("print", |_, _| {});
