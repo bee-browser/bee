@@ -364,7 +364,10 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
     }
 }
 
-unsafe extern "C" fn runtime_create_capture<X>(context: usize, target: *mut Variable) -> *mut Capture {
+unsafe extern "C" fn runtime_create_capture<X>(
+    context: usize,
+    target: *mut Variable,
+) -> *mut Capture {
     const LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::size_of::<Capture>(),

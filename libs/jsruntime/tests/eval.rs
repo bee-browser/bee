@@ -643,12 +643,18 @@ fn eval_function_single_name_binding() {
 
 #[test]
 fn eval_call_other_function() {
-    eval!("print(a()); function a() { return b() } function b() { return 1 }", 1);
+    eval!(
+        "print(a()); function a() { return b() } function b() { return 1 }",
+        1
+    );
 }
 
 #[test]
 fn eval_nested_function() {
-    eval!("print(a()); function a() { return b(); function b() { return 1 } }", 1);
+    eval!(
+        "print(a()); function a() { return b(); function b() { return 1 } }",
+        1
+    );
 }
 
 #[test]

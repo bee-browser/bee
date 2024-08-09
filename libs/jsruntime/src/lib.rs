@@ -80,7 +80,8 @@ impl<X> Runtime<X> {
     {
         let symbol = self.symbol_registry.intern_str(name);
         let func_id = self.function_registry.register_host_function(name);
-        self.executor.register_host_function(name, into_host_lambda(host_fn));
+        self.executor
+            .register_host_function(name, into_host_lambda(host_fn));
         logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
     }
 
