@@ -4,7 +4,7 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::Criterion;
 
-use jsruntime::Runtime;
+use jsruntime::BasicRuntime;
 
 fn fib(c: &mut Criterion) {
     const FIB16: &str = include_str!("dataset/fib16.js");
