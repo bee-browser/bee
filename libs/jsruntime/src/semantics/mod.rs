@@ -27,7 +27,7 @@ pub use scope::BindingRef;
 pub use scope::ScopeRef;
 pub use scope::ScopeTree;
 
-impl Runtime {
+impl<X> Runtime<X> {
     /// Parses a given source text as a script.
     pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "script");

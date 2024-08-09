@@ -9,8 +9,8 @@ logging::init!();
 
 macro_rules! eval {
     ($script:expr, $opt:expr, $src:expr, $expected:expr) => {
-        Runtime::initialize();
-        let mut runtime = Runtime::new();
+        jsruntime::initialize();
+        let mut runtime = Runtime::with_extension(());
         runtime.enable_scope_cleanup_checker();
         runtime.register_host_function("print", |_, args| {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
@@ -33,8 +33,8 @@ macro_rules! eval {
         eval!($filename, false, src, $expected);
     };
     ($script:expr, $opt:expr, $src:expr, throws: $expected:expr) => {
-        Runtime::initialize();
-        let mut runtime = Runtime::new();
+        jsruntime::initialize();
+        let mut runtime = Runtime::with_extension(());
         runtime.enable_scope_cleanup_checker();
         runtime.register_host_function("print", |_, _| {});
         let program = runtime.parse_script($src.as_ref()).unwrap();

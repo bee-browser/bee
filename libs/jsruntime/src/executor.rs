@@ -2,7 +2,7 @@ use std::ffi::CStr;
 use std::ffi::CString;
 
 use crate::bridge;
-use crate::HostFn;
+use crate::HostLambda;
 use crate::Module;
 
 pub struct Executor {
@@ -10,16 +10,16 @@ pub struct Executor {
 }
 
 impl Executor {
-    pub fn new() -> Self {
+    pub fn with_runtime_bridge(runtime: &bridge::Runtime) -> Self {
         let peer = unsafe {
             let peer = bridge::executor_peer_new();
-            bridge::executor_peer_register_runtime(peer, &bridge::Runtime::default());
+            bridge::executor_peer_register_runtime(peer, runtime);
             peer
         };
         Self { peer }
     }
 
-    pub fn register_host_function(&self, name: &str, func: HostFn) {
+    pub fn register_host_function(&self, name: &str, func: HostLambda) {
         let name = CString::new(name).unwrap();
         unsafe {
             bridge::executor_peer_register_host_function(self.peer, name.as_ptr(), Some(func));
@@ -42,12 +42,6 @@ impl Executor {
 
     pub fn get_native_function(&self, name: &CStr) -> bridge::Lambda {
         unsafe { bridge::executor_peer_get_native_function(self.peer, name.as_ptr()) }
-    }
-}
-
-impl Default for Executor {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

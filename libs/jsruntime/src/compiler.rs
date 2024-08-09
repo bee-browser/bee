@@ -15,7 +15,7 @@ use crate::Module;
 use crate::Program;
 use crate::Runtime;
 
-impl Runtime {
+impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
         logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
@@ -81,8 +81,8 @@ impl<'a, 'b> Compiler<'a, 'b> {
         }
     }
 
-    fn set_runtime(&self, runtime: &Runtime) {
-        let runtime = runtime as *const Runtime as usize;
+    fn set_runtime<X>(&self, runtime: &Runtime<X>) {
+        let runtime = runtime as *const Runtime<X> as usize;
         logger::debug!(event = "set_runtime", ?runtime);
         unsafe {
             bridge::compiler_peer_set_runtime(self.peer, runtime);

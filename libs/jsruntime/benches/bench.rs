@@ -17,7 +17,7 @@ fn fib(c: &mut Criterion) {
         ($label:literal, $src:expr) => {
             group.bench_function($label, |b| {
                 b.iter(|| {
-                    let mut runtime = Runtime::new();
+                    let mut runtime = BasicRuntime::new();
                     let program = runtime.parse_script($src).unwrap();
                     let module = runtime.compile(&program, true).unwrap();
                     runtime.evaluate(module).unwrap();
@@ -26,7 +26,7 @@ fn fib(c: &mut Criterion) {
         };
     }
 
-    Runtime::initialize();
+    jsruntime::initialize();
     fib!("16", FIB16);
     fib!("24", FIB24);
     group.measurement_time(Duration::from_secs(10));

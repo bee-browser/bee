@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::Parser as _;
 
-use jsruntime::Runtime;
+use jsruntime::BasicRuntime;
 use jsruntime::Value;
 
 #[derive(clap::Parser)]
@@ -68,8 +68,9 @@ fn main() -> Result<()> {
 
     let cl = CommandLine::parse();
 
-    Runtime::initialize();
-    let mut runtime = Runtime::new();
+    jsruntime::initialize();
+
+    let mut runtime = BasicRuntime::new();
     if cl.scope_cleanup_checker {
         runtime.enable_scope_cleanup_checker();
     }
@@ -125,6 +126,6 @@ fn read_from_stdin() -> Result<String> {
     Ok(source)
 }
 
-fn print(_runtime: &mut Runtime, args: &[Value]) {
+fn print(_runtime: &mut BasicRuntime, args: &[Value]) {
     println!("{args:?}");
 }
