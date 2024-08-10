@@ -42,6 +42,14 @@ fn evaluate(src: &str, optimize: bool, expected_values: Vec<Value>) -> Result<Va
     });
     runtime.enable_scope_cleanup_checker();
     runtime.register_host_function("print", |runtime, args| {
+        // FIXME(issue#260): bindgen derives `Copy` and `Clone` for all types by default and
+        // provides `no_copy()`.  However, `no_copy()` stops deriving `Copy` and `Clone` for
+        // specific types.  There are no function to stop deriving only `Copy` for specific
+        // types...
+        //
+        // We plan to implement own code generator in the future.  For a meanwhile, we silence
+        // `clippy`.
+        #[allow(clippy::clone_on_copy)]
         runtime.extension_mut().actual_values.push(args[0].clone());
     });
     let program = runtime.parse_script(src).unwrap();
@@ -64,14 +72,26 @@ fn {{ test.name }}(optimize: bool) {
     let src = include_str!("{{ test.name }}.js");
     let result = evaluate(src, optimize, vec![
         {%- for expected in test.expectedValues %}
+        {%- if expected === "Value::UNDEFINED" %}
+        {{ expected }},
+        {%- elif expected === "Value::NULL" %}
+        {{ expected }},
+        {%- else %}
         Value::from({{ expected }}),
+        {%- endif %}
         {%- endfor %}
     ]);
     {%- if test.throws %}
     assert_matches!(result, Err(actual) => {
         // Some cases including `f64::NAN` fail in `assert_eq!()`.
         let actual = format!("{actual:?}");
+        {%- if test.throws === "Value::UNDEFINED" %}
+        let expected = format!("{:?}", {{ test.throws }});
+        {%- elif test.throws === "Value::NULL" %}
+        let expected = format!("{:?}", {{ test.throws }});
+        {%- else %}
         let expected = format!("{:?}", Value::from({{ test.throws }}));
+        {%- endif %}
         assert_eq!(actual, expected);
     });
     {%- else %}
