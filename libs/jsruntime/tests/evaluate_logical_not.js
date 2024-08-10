@@ -1,0 +1,9 @@
+print(!undefined); ///=true
+print(!null); ///=true
+print(!true); ///=false
+print(!false); ///=true
+print(!0); ///=true
+print(!1); ///=false
+print(!-1); ///=false
+print(!NaN); ///=true
+print(!Infinity); ///=false

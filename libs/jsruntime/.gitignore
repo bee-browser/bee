@@ -2,3 +2,4 @@
 /src/bridge/llvmir/executor.codegen.cc
 /src/bridge/llvmir/type_holder.cc
 /src/bridge/llvmir/type_holder.hh
+/tests/evaluate.rs

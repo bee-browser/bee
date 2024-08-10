@@ -1,0 +1,1 @@
+print(null); ///=Value::NULL
