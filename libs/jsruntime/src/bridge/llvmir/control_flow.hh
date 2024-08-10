@@ -446,44 +446,24 @@ class ControlFlowStack {
   }
 
   llvm::BasicBlock* cleanup_block() const {
-    const auto& flow = top();
-    switch (flow.kind) {
-      case ControlFlowKind::kFunction:
-        return flow.function.return_block;
-      case ControlFlowKind::kScope:
-        return flow.scope.cleanup_block;
-      case ControlFlowKind::kBranch:
-      case ControlFlowKind::kException:
-        return scope_flow().cleanup_block;
-      default:
-        // never reach here
-        assert(false);
-        return nullptr;
+    if (scope_index_ == 0) {
+      return function_flow().return_block;
     }
+    return scope_flow().cleanup_block;
   }
 
   llvm::BasicBlock* exception_block() const {
-    const auto& flow = top();
-    switch (flow.kind) {
-      case ControlFlowKind::kFunction:
-        return flow.function.return_block;
-      case ControlFlowKind::kScope:
-        return flow.scope.cleanup_block;
-      case ControlFlowKind::kBranch:
-        return scope_flow().cleanup_block;
-      case ControlFlowKind::kException:
-        if (flow.exception.ended) {
-          return flow.exception.end_block;
-        }
-        if (flow.exception.caught) {
-          return flow.exception.finally_block;
-        }
-        return flow.exception.catch_block;
-      default:
-        // never reach here
-        assert(false);
-        return nullptr;
+    if (exception_index_ > scope_index_) {
+      const auto& exception = exception_flow();
+      if (exception.ended) {
+        return exception.end_block;
+      }
+      if (exception.caught) {
+        return exception.finally_block;
+      }
+      return exception.catch_block;
     }
+    return cleanup_block();
   }
 
   llvm::BasicBlock* break_target(uint32_t symbol) const {
