@@ -1273,7 +1273,7 @@ void Compiler::Try() {
 void Compiler::Catch(bool nominal) {
   PopBasicBlockName();
 
-  control_flow_stack_.SetCaught(nominal);
+  control_flow_stack_.SetInCatchBlock(nominal);
   const auto& flow = control_flow_stack_.exception_flow();
 
   // Jump from the end of the try block to the beginning of the finally block.
@@ -1296,7 +1296,7 @@ void Compiler::Finally(bool nominal) {
 
   PopBasicBlockName();
 
-  control_flow_stack_.SetEnded();
+  control_flow_stack_.SetInFinallyBlock();
   const auto& flow = control_flow_stack_.exception_flow();
 
   // Jump from the end of the catch block to the beginning of the finally block.
@@ -1425,22 +1425,22 @@ void Compiler::EndScope(uint16_t scope_id) {
 
   PopBasicBlockName();
 
-  auto flow = control_flow_stack_.PopScopeFlow();
+  auto scope = control_flow_stack_.PopScopeFlow();
 
-  builder_->CreateBr(flow.cleanup_block);
-  flow.cleanup_block->moveAfter(builder_->GetInsertBlock());
+  builder_->CreateBr(scope.cleanup_block);
+  scope.cleanup_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(flow.init_block);
-  builder_->CreateBr(flow.hoisted_block);
-  flow.hoisted_block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(scope.init_block);
+  builder_->CreateBr(scope.hoisted_block);
+  scope.hoisted_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(flow.hoisted_block);
-  builder_->CreateBr(flow.block);
-  flow.block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(scope.hoisted_block);
+  builder_->CreateBr(scope.block);
+  scope.block->moveAfter(builder_->GetInsertBlock());
 
   auto* block = CreateBasicBlock(BB_NAME("block"));
 
-  builder_->SetInsertPoint(flow.cleanup_block);
+  builder_->SetInsertPoint(scope.cleanup_block);
 
   if (IsScopeCleanupCheckerEnabled()) {
     CreateAssertScopeCleanupStackHasItem();
@@ -1448,16 +1448,16 @@ void Compiler::EndScope(uint16_t scope_id) {
     CreateAssertScopeCleanupStackPoppedValue(popped, scope_id);
   }
 
-  if (!flow.returned && !flow.thrown) {
+  if (!scope.returned && !scope.thrown) {
     builder_->CreateBr(block);
   } else {
     auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
     auto* switch_inst = builder_->CreateSwitch(status, block);
-    if (flow.returned) {
+    if (scope.returned) {
       auto* cleanup_block = control_flow_stack_.cleanup_block();
       switch_inst->addCase(builder_->getInt32(STATUS_NORMAL), cleanup_block);
     }
-    if (flow.thrown) {
+    if (scope.thrown && !control_flow_stack_.IsInFinallyBlock()) {
       auto* exception_block = control_flow_stack_.exception_block();
       switch_inst->addCase(builder_->getInt32(STATUS_EXCEPTION), exception_block);
     }

@@ -6,4 +6,4 @@ try {
   print(i); ///=2
 }
 // never reach here
-print(i);
+print(100);

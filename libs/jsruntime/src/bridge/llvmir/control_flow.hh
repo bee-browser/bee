@@ -93,6 +93,12 @@ struct CaseEndFlow {
   llvm::BasicBlock* block;
 };
 
+enum class ExceptionState {
+  kInTryBlock,
+  kInCatchBlock,
+  kInFinallyBlock,
+};
+
 struct ExceptionFlow {
   llvm::BasicBlock* try_block;
   llvm::BasicBlock* catch_block;
@@ -102,12 +108,10 @@ struct ExceptionFlow {
   // The index of the enclosing outer exception flow.
   size_t outer_index;
 
+  ExceptionState state = ExceptionState::kInTryBlock;
+
   // `true` if the scope flow has uncaught exceptions.
   bool thrown = false;
-
-  bool caught = false;
-
-  bool ended = false;
 };
 
 // A `Flow` object contains basic blocks that will construct a region in the control flow graph
@@ -162,6 +166,16 @@ class ControlFlowStack {
 
   bool IsEmpty() const {
     return stack_.empty() && break_stack_.empty() && continue_stack_.empty();
+  }
+
+  bool IsInFinallyBlock() const {
+    if (exception_index_ == 0) {
+      return false;
+    }
+    if (top().kind != ControlFlowKind::kException) {
+      return false;
+    }
+    return top().exception.state == ExceptionState::kInFinallyBlock;
   }
 
   void PushFunctionFlow(llvm::BasicBlock* locals_block,
@@ -361,17 +375,17 @@ class ControlFlowStack {
     scope_flow_mut().thrown = true;
   }
 
-  void SetCaught(bool nominal) {
+  void SetInCatchBlock(bool nominal) {
     assert(top().kind == ControlFlowKind::kException);
-    top_mut().exception.caught = true;
+    top_mut().exception.state = ExceptionState::kInCatchBlock;
     if (!nominal) {
       top_mut().exception.thrown = false;
     }
   }
 
-  void SetEnded() {
+  void SetInFinallyBlock() {
     assert(top().kind == ControlFlowKind::kException);
-    top_mut().exception.ended = true;
+    top_mut().exception.state = ExceptionState::kInFinallyBlock;
   }
 
   void SetDefaultCaseBlock(llvm::BasicBlock* block) {
@@ -455,13 +469,15 @@ class ControlFlowStack {
   llvm::BasicBlock* exception_block() const {
     if (exception_index_ > scope_index_) {
       const auto& exception = exception_flow();
-      if (exception.ended) {
-        return exception.end_block;
+      switch (exception.state) {
+        case ExceptionState::kInTryBlock:
+          return exception.catch_block;
+        case ExceptionState::kInCatchBlock:
+          return exception.finally_block;
+        case ExceptionState::kInFinallyBlock:
+          assert(false);
+          return nullptr;
       }
-      if (exception.caught) {
-        return exception.finally_block;
-      }
-      return exception.catch_block;
     }
     return cleanup_block();
   }
@@ -520,12 +536,12 @@ class ControlFlowStack {
           llvm::errs() << " return-block=" << flow.function.return_block->getName() << '\n';
           break;
         case ControlFlowKind::kScope:
-          llvm::errs() << "scope: ";
+          llvm::errs() << "scope:";
           if (flow.scope.returned) {
-            llvm::errs() << 'R';
+            llvm::errs() << " returned";
           }
           if (flow.scope.thrown) {
-            llvm::errs() << 'T';
+            llvm::errs() << " thrown";
           }
           llvm::errs() << '\n';
           llvm::errs() << " init-block=" << flow.scope.init_block->getName() << '\n';
@@ -571,15 +587,20 @@ class ControlFlowStack {
           llvm::errs() << " block=" << flow.case_end.block->getName() << '\n';
           break;
         case ControlFlowKind::kException:
-          llvm::errs() << "exception: ";
+          llvm::errs() << "exception:";
           if (flow.exception.thrown) {
-            llvm::errs() << 'T';
+            llvm::errs() << " thrown";
           }
-          if (flow.exception.caught) {
-            llvm::errs() << 'C';
-          }
-          if (flow.exception.ended) {
-            llvm::errs() << 'E';
+          switch (flow.exception.state) {
+            case ExceptionState::kInTryBlock:
+              llvm::errs() << " in-try-block";
+              break;
+            case ExceptionState::kInCatchBlock:
+              llvm::errs() << " in-catch-block";
+              break;
+            case ExceptionState::kInFinallyBlock:
+              llvm::errs() << " in-finally-block";
+              break;
           }
           llvm::errs() << '\n';
           llvm::errs() << " try-block=" << flow.exception.try_block->getName() << '\n';
