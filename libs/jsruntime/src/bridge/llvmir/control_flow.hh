@@ -508,7 +508,7 @@ class ControlFlowStack {
   }
 
   void DumpStack() const {
-    llvm::errs() << "<llvm-ir:control-flow-stack>\n";
+    llvm::errs() << "### llvm-ir:control-flow-stack\n";
     for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {
       const auto& flow = *it;
       switch (flow.kind) {
@@ -562,7 +562,9 @@ class ControlFlowStack {
         case ControlFlowKind::kSelect:
           llvm::errs() << "select:\n";
           llvm::errs() << " end-block=" << flow.select.end_block->getName() << '\n';
-          llvm::errs() << " default-block=" << flow.select.default_block->getName() << '\n';
+          if (flow.select.default_block != nullptr) {
+            llvm::errs() << " default-block=" << flow.select.default_block->getName() << '\n';
+          }
           break;
         case ControlFlowKind::kCaseEnd:
           llvm::errs() << "case-end:\n";
@@ -587,11 +589,11 @@ class ControlFlowStack {
           break;
       }
     }
-    llvm::errs() << "</llvm-ir:control-flow-stack>\n";
+    llvm::errs() << '\n';
   }
 
   void DumpBranchTargetStack(const std::vector<BranchTarget>& stack, const char* name) const {
-    llvm::errs() << "<llvm-ir:" << name << ">\n";
+    llvm::errs() << "### llvm-ir:" << name << '\n';
     for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
       llvm::errs() << "block: " << it->block->getName();
       if (it->symbol != 0) {
@@ -599,7 +601,7 @@ class ControlFlowStack {
       }
       llvm::errs() << '\n';
     }
-    llvm::errs() << "</llvm-ir:" << name << ">\n";
+    llvm::errs() << '\n';
   }
 
   const ControlFlow& top() const {

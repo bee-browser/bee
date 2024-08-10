@@ -1386,9 +1386,9 @@ void Compiler::EndFunction(bool optimize) {
   control_flow_stack_.Clear();
 
   if (llvm::verifyFunction(*function_, &llvm::errs())) {
-    llvm::errs() << "<broken-function>\n";
+    llvm::errs() << "### broken-function\n";
     function_->print(llvm::errs());
-    llvm::errs() << "</broken-function>\n";
+    llvm::errs() << '\n';
     std::abort();
   }
 
@@ -1691,7 +1691,7 @@ void Compiler::PrepareScopeCleanupChecker(uint32_t stack_size) {
 }
 
 void Compiler::DumpStack() {
-  llvm::errs() << "<llvm-ir:compiler-stack>\n";
+  llvm::errs() << "### llvm-ir:compiler-stack\n";
   for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {
     const auto& item = *it;
     switch (item.type) {
@@ -1747,9 +1747,9 @@ void Compiler::DumpStack() {
       llvm::errs() << " [" << item.label << "]";
     }
 #endif
-    llvm::errs() << "\n";
+    llvm::errs() << '\n';
   }
-  llvm::errs() << "</llvm-ir:compiler-stack>\n";
+  llvm::errs() << '\n';
   control_flow_stack_.Dump();
 }
 
