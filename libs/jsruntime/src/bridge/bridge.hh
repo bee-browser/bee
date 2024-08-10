@@ -176,7 +176,7 @@ void compiler_peer_strict_inequality(Compiler* self);
 void compiler_peer_bitwise_and(Compiler* self);
 void compiler_peer_bitwise_xor(Compiler* self);
 void compiler_peer_bitwise_or(Compiler* self);
-void compiler_peer_conditional_ternary(Compiler* self);
+void compiler_peer_ternary(Compiler* self);
 void compiler_peer_assignment(Compiler* self);
 void compiler_peer_exponentiation_assignment(Compiler* self);
 void compiler_peer_multiplication_assignment(Compiler* self);

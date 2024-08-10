@@ -218,8 +218,8 @@ void compiler_peer_bitwise_or(Compiler* self) {
   self->BitwiseOr();
 }
 
-void compiler_peer_conditional_ternary(Compiler* self) {
-  self->ConditionalTernary();
+void compiler_peer_ternary(Compiler* self) {
+  self->Ternary();
 }
 
 void compiler_peer_assignment(Compiler* self) {

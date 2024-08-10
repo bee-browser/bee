@@ -321,12 +321,12 @@ impl<'r> Analyzer<'r> {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_command(CompileCommand::ConditionalTernary);
+            .put_command(CompileCommand::Ternary);
     }
 
     fn handle_conditional_assignment(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::ConditionalTernary);
+        context.put_command(CompileCommand::Ternary);
         context.put_command(CompileCommand::Assignment);
     }
 
@@ -1519,8 +1519,8 @@ pub enum CompileCommand {
     //   2. Emit supplemental commands and CompileCommand::ConditionalTernery in
     //      handle_logical_expression()
 
-    // conditional operator
-    ConditionalTernary,
+    // ternary operator
+    Ternary,
 
     // assignment operators
     Assignment,

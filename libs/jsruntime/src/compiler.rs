@@ -317,8 +317,8 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::BitwiseOr => unsafe {
                 bridge::compiler_peer_bitwise_or(self.peer);
             },
-            CompileCommand::ConditionalTernary => unsafe {
-                bridge::compiler_peer_conditional_ternary(self.peer);
+            CompileCommand::Ternary => unsafe {
+                bridge::compiler_peer_ternary(self.peer);
             },
             CompileCommand::Assignment => unsafe {
                 bridge::compiler_peer_assignment(self.peer);

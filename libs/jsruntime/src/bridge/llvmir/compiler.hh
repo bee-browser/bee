@@ -82,7 +82,7 @@ class Compiler {
   void BitwiseAnd();
   void BitwiseXor();
   void BitwiseOr();
-  void ConditionalTernary();
+  void Ternary();
   void Assignment();
   void ExponentiationAssignment();
   void MultiplicationAssignment();
