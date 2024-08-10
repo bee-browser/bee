@@ -72,8 +72,8 @@ macro_rules! debug_assert_ne {
     };
 }
 
-pub use delegate_all;
 pub use assert_eq;
 pub use assert_ne;
 pub use debug_assert_eq;
 pub use debug_assert_ne;
+pub use delegate_all;
