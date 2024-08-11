@@ -19,6 +19,10 @@ class TypeHolder {
   TypeHolder(llvm::LLVMContext& context, llvm::Module& module, llvm::IRBuilder<>& builder)
       : context_(context), module_(module), builder_(builder) {}
 
+  void EnableLabels() {
+    enable_labels_ = true;
+  }
+
   llvm::Type* GetWordType();
   llvm::Value* GetWord(size_t value);
   llvm::StructType* CreateVariableType();
@@ -45,4 +49,6 @@ class TypeHolder {
   {%- for function in data.functions %}
   llvm::Function* runtime_{{ function.name }}_ = nullptr;
   {%- endfor %}
+
+  bool enable_labels_ = false;
 };

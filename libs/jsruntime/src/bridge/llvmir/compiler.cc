@@ -25,16 +25,9 @@
 #include <llvm/Transforms/Utils/Mem2Reg.h>
 #pragma GCC diagnostic pop
 
+#include "helper.hh"
 #include "macros.hh"
 #include "module.hh"
-
-#if defined(BEE_BUILD_DEBUG)
-#define BB_NAME(s) MakeBasicBlockName(s).c_str()
-#define BB_NAME_WITH_ID(name, id) ((name + llvm::Twine(id)).str().c_str())
-#else
-#define BB_NAME(s) ""
-#define BB_NAME_WITH_ID(name, id) (UNUSED(id), "")
-#endif
 
 namespace {
 
@@ -83,9 +76,9 @@ Compiler::Compiler() {
 
 Module* Compiler::TakeModule() {
   if (llvm::verifyModule(*module_, &llvm::errs())) {
-    llvm::errs() << "<broken-module>\n";
+    llvm::errs() << "### broken-module\n";
     module_->print(llvm::errs(), nullptr);
-    llvm::errs() << "</broken-module>\n";
+    llvm::errs() << '\n';
     std::abort();
   }
 
@@ -214,7 +207,7 @@ void Compiler::UnaryMinus() {
   auto* num = ToNumeric(Dereference());
   // TODO: BigInt
   // 6.1.6.1.1 Number::unaryMinus ( x )
-  auto* v = builder_->CreateFNeg(num);
+  auto* v = builder_->CreateFNeg(num, REG_NAME("neg"));
   PushNumber(v);
 }
 
@@ -224,8 +217,8 @@ void Compiler::BitwiseNot() {
   // TODO: BigInt
   // 6.1.6.1.2 Number::bitwiseNOT ( x )
   auto* int32 = ToInt32(num);
-  auto* xored = builder_->CreateXor(int32, -1);
-  auto* v = builder_->CreateSIToFP(xored, builder_->getDoubleTy());
+  auto* xored = builder_->CreateXor(int32, -1, REG_NAME("xor"));
+  auto* v = builder_->CreateSIToFP(xored, builder_->getDoubleTy(), REG_NAME("si2fp"));
   PushNumber(v);
 }
 
@@ -233,7 +226,7 @@ void Compiler::BitwiseNot() {
 void Compiler::LogicalNot() {
   const auto item = Dereference();
   auto* truthy = CreateToBoolean(item);
-  auto* v = builder_->CreateXor(truthy, builder_->getTrue());
+  auto* v = builder_->CreateXor(truthy, builder_->getTrue(), REG_NAME("xor"));
   PushBoolean(v);
 }
 
@@ -249,7 +242,7 @@ void Compiler::Multiplication() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFMul(lhs, rhs);
+  auto* v = builder_->CreateFMul(lhs, rhs, REG_NAME("mul"));
   PushNumber(v);
 }
 
@@ -259,7 +252,7 @@ void Compiler::Division() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFDiv(lhs, rhs);
+  auto* v = builder_->CreateFDiv(lhs, rhs, REG_NAME("div"));
   PushNumber(v);
 }
 
@@ -269,7 +262,7 @@ void Compiler::Remainder() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFRem(lhs, rhs);
+  auto* v = builder_->CreateFRem(lhs, rhs, REG_NAME("rem"));
   PushNumber(v);
 }
 
@@ -279,7 +272,7 @@ void Compiler::Addition() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFAdd(lhs, rhs);
+  auto* v = builder_->CreateFAdd(lhs, rhs, REG_NAME("add"));
   PushNumber(v);
 }
 
@@ -289,7 +282,7 @@ void Compiler::Subtraction() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFSub(lhs, rhs);
+  auto* v = builder_->CreateFSub(lhs, rhs, REG_NAME("sub"));
   PushNumber(v);
 }
 
@@ -304,9 +297,9 @@ void Compiler::LeftShift() {
   // 6.1.6.1.9 Number::leftShift ( x, y )
   auto* lnum = ToInt32(lhs);
   auto* rnum = ToUint32(rhs);
-  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
-  auto* shifted = builder_->CreateShl(lnum, shift_count);
-  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32), REG_NAME("rem"));
+  auto* shifted = builder_->CreateShl(lnum, shift_count, REG_NAME("shl"));
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy(), REG_NAME("si2fp"));
   PushNumber(v);
 }
 
@@ -321,9 +314,9 @@ void Compiler::SignedRightShift() {
   // 6.1.6.1.10 Number::signedRightShift ( x, y )
   auto* lnum = ToInt32(lhs);
   auto* rnum = ToUint32(rhs);
-  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
-  auto* shifted = builder_->CreateAShr(lnum, shift_count);
-  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32), REG_NAME("rem"));
+  auto* shifted = builder_->CreateAShr(lnum, shift_count, REG_NAME("ashr"));
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy(), REG_NAME("si2fp"));
   PushNumber(v);
 }
 
@@ -338,9 +331,9 @@ void Compiler::UnsignedRightShift() {
   // 6.1.6.1.11 Number::unsignedRightShift ( x, y )
   auto* lnum = ToUint32(lhs);
   auto* rnum = ToUint32(rhs);
-  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
-  auto* shifted = builder_->CreateLShr(lnum, shift_count);
-  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32), REG_NAME("rem"));
+  auto* shifted = builder_->CreateLShr(lnum, shift_count, REG_NAME("lshr"));
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy(), REG_NAME("si2fp"));
   PushNumber(v);
 }
 
@@ -350,7 +343,7 @@ void Compiler::LessThan() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOLT(lhs, rhs);
+  auto* v = builder_->CreateFCmpOLT(lhs, rhs, REG_NAME("lt"));
   PushBoolean(v);
 }
 
@@ -360,7 +353,7 @@ void Compiler::GreaterThan() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOGT(lhs, rhs);
+  auto* v = builder_->CreateFCmpOGT(lhs, rhs, REG_NAME("gt"));
   PushBoolean(v);
 }
 
@@ -370,7 +363,7 @@ void Compiler::LessThanOrEqual() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOLE(lhs, rhs);
+  auto* v = builder_->CreateFCmpOLE(lhs, rhs, REG_NAME("le"));
   PushBoolean(v);
 }
 
@@ -380,7 +373,7 @@ void Compiler::GreaterThanOrEqual() {
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOGE(lhs, rhs);
+  auto* v = builder_->CreateFCmpOGE(lhs, rhs, REG_NAME("ge"));
   PushBoolean(v);
 }
 
@@ -415,7 +408,7 @@ void Compiler::Inequality() {
   // TODO: comparing references improves the performance.
   auto* eq = CreateIsLooselyEqual(lhs, rhs);
   // TODO: should reuse LogicalNot()?
-  auto* v = builder_->CreateXor(eq, builder_->getTrue());
+  auto* v = builder_->CreateXor(eq, builder_->getTrue(), REG_NAME("not"));
   PushBoolean(v);
 }
 
@@ -435,7 +428,7 @@ void Compiler::StrictInequality() {
   auto rhs = Dereference();
   auto* eq = CreateIsStrictlyEqual(lhs, rhs);
   // TODO: should reuse LogicalNot()?
-  auto* v = builder_->CreateXor(eq, builder_->getTrue());
+  auto* v = builder_->CreateXor(eq, builder_->getTrue(), REG_NAME("not"));
   PushBoolean(v);
 }
 
@@ -487,7 +480,7 @@ void Compiler::BitwiseOr() {
   NumberBitwiseOp('|', lnum, rnum);
 }
 
-void Compiler::ConditionalTernary() {
+void Compiler::Ternary() {
   auto else_branch = control_flow_stack_.PopBranchFlow();
   auto then_branch = control_flow_stack_.PopBranchFlow();
 
@@ -502,7 +495,7 @@ void Compiler::ConditionalTernary() {
   auto* cond_value = PopBoolean();
   builder_->CreateCondBr(cond_value, then_branch.after_block, else_branch.after_block);
 
-  auto* block = CreateBasicBlock(BB_NAME("block"));
+  auto* block = CreateBasicBlock(BB_NAME("ternary"));
 
   if (then_item.type == else_item.type) {
     builder_->SetInsertPoint(else_branch.before_block);
@@ -522,21 +515,21 @@ void Compiler::ConditionalTernary() {
         PushNull();
         return;
       case Item::Boolean: {
-        auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+        auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("ternary"));
         phi->addIncoming(then_item.value, else_branch.before_block);
         phi->addIncoming(else_item.value, else_tail_block);
         PushBoolean(phi);
         return;
       }
       case Item::Number: {
-        auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2);
+        auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2, REG_NAME("ternary"));
         phi->addIncoming(then_item.value, else_branch.before_block);
         phi->addIncoming(else_item.value, else_tail_block);
         PushNumber(phi);
         return;
       }
       case Item::Any: {
-        auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
+        auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("ternary"));
         phi->addIncoming(then_item.value, else_branch.before_block);
         phi->addIncoming(else_item.value, else_tail_block);
         PushAny(phi);
@@ -561,7 +554,7 @@ void Compiler::ConditionalTernary() {
   builder_->CreateBr(block);
 
   builder_->SetInsertPoint(block);
-  auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
+  auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("ternary"));
   phi->addIncoming(then_value, else_branch.before_block);
   phi->addIncoming(else_value, else_tail_block);
   PushAny(phi);
@@ -772,7 +765,7 @@ void Compiler::DeclareClosure() {
 
 void Compiler::Arguments(uint16_t argc) {
   assert(argc > 0);
-  auto* argv = CreateAllocN(types_->CreateValueType(), argc, "args.ptr");
+  auto* argv = CreateAllocN(types_->CreateValueType(), argc, REG_NAME("args.ptr"));
   PushArgv(argv);
   Swap();
 }
@@ -828,9 +821,9 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
   auto* closure = CreateAlloc1(builder_->getPtrTy(), REG_NAME("closure.ptr"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* then_block = CreateBasicBlock(BB_NAME("closure"));
-  auto* else_block = CreateBasicBlock(BB_NAME("not_closure"));
-  auto* end_block = CreateBasicBlock(BB_NAME("block"));
+  auto* then_block = CreateBasicBlock(BB_NAME("is_closure.then"));
+  auto* else_block = CreateBasicBlock(BB_NAME("is_closure.else"));
+  auto* end_block = CreateBasicBlock(BB_NAME("closure"));
 
   // if (value.kind == ValueKind::Closure)
   auto* is_closure =
@@ -856,22 +849,21 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
 // Handle an exception if it's thrown.
 void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* retv) {
   auto* status_exception = builder_->getInt32(STATUS_EXCEPTION);
-  auto* then_block = CreateBasicBlock(BB_NAME("exception"));
-  auto* end_block = CreateBasicBlock(BB_NAME("block"));
+  auto* exception_block = CreateBasicBlock(BB_NAME("status.exception"));
+  auto* normal_block = CreateBasicBlock(BB_NAME("status.normal"));
 
   // if (status == Status::Exception)
   auto* is_exception = builder_->CreateICmpEQ(status, status_exception, REG_NAME("is_exception"));
-  builder_->CreateCondBr(is_exception, then_block, end_block);
+  builder_->CreateCondBr(is_exception, exception_block, normal_block);
   // {
-  builder_->SetInsertPoint(then_block);
+  builder_->SetInsertPoint(exception_block);
   // Store the exception.
   builder_->CreateStore(status_exception, status_);
   CreateStoreValueToVariable(retv, retv_);
-  auto* exception_block = control_flow_stack_.exception_block();
-  builder_->CreateBr(exception_block);
+  builder_->CreateBr(control_flow_stack_.exception_block());
   // }
 
-  builder_->SetInsertPoint(end_block);
+  builder_->SetInsertPoint(normal_block);
 }
 
 void Compiler::Truthy() {
@@ -1013,7 +1005,7 @@ void Compiler::IfStatement() {
 }
 
 void Compiler::DoWhileLoop(uint16_t id) {
-  PushBasicBlockName(BB_NAME_WITH_ID("do-while", id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("do-while", id));
 
   auto* loop_body = CreateBasicBlock(BB_NAME("loop-body"));
   auto* loop_test = CreateBasicBlock(BB_NAME("loop-test"));
@@ -1035,7 +1027,7 @@ void Compiler::DoWhileLoop(uint16_t id) {
 }
 
 void Compiler::WhileLoop(uint16_t id) {
-  PushBasicBlockName(BB_NAME_WITH_ID("while", id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("while", id));
 
   auto* loop_test = CreateBasicBlock(BB_NAME("loop-test"));
   auto* loop_body = CreateBasicBlock(BB_NAME("loop-body"));
@@ -1057,7 +1049,7 @@ void Compiler::WhileLoop(uint16_t id) {
 }
 
 void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next) {
-  PushBasicBlockName(BB_NAME_WITH_ID("for", id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("for", id));
 
   auto* loop_init = has_init ? CreateBasicBlock(BB_NAME("loop-init")) : nullptr;
   auto* loop_test = has_test ? CreateBasicBlock(BB_NAME("loop-test")) : nullptr;
@@ -1151,7 +1143,7 @@ void Compiler::LoopBody() {
 }
 
 void Compiler::LoopEnd() {
-  PopBasicBlockName();
+  BB_NAME_POP();
   control_flow_stack_.PopBreakTarget();
   control_flow_stack_.PopContinueTarget();
 }
@@ -1159,7 +1151,7 @@ void Compiler::LoopEnd() {
 void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
   UNUSED(num_cases);
 
-  PushBasicBlockName(BB_NAME_WITH_ID("switch", id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("switch", id));
 
   auto item = Dereference();
   item.SetLabel("switch-value");
@@ -1191,7 +1183,7 @@ void Compiler::CaseClause(bool has_statement) {
 
   Duplicate();
 
-  control_flow_stack_.PushCaseEndFlow(case_end_block);
+  control_flow_stack_.PushCaseBranchFlow(case_end_block, branch.after_block);
 }
 
 void Compiler::DefaultClause(bool has_statement) {
@@ -1204,7 +1196,7 @@ void Compiler::DefaultClause(bool has_statement) {
 
   Duplicate();
 
-  control_flow_stack_.PushCaseEndFlow(case_end_block);
+  control_flow_stack_.PushCaseBranchFlow(case_end_block, branch.after_block);
   control_flow_stack_.SetDefaultCaseBlock(branch.after_block);
 }
 
@@ -1212,7 +1204,7 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
   UNUSED(id);
   UNUSED(default_index);
 
-  PopBasicBlockName();
+  BB_NAME_POP();
 
   const auto& select = control_flow_stack_.select_flow();
   control_flow_stack_.PopBreakTarget();
@@ -1223,17 +1215,19 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
 
   auto* case_block = builder_->GetInsertBlock();
 
-  // Connect statement blocks of case/default clauses.
-  // The blocks has been stored in the stack in reverse order.
+  // Connect the last basic blocks of each case/default clause to the first basic block of the
+  // statement lists of the next case/default clause if it's not terminated.
+  //
+  // The last basic blocks has been stored in the control flow stack in reverse order.
   auto* fall_through_block = select.end_block;
   for (auto i = num_cases - 1;; --i) {
-    auto case_end = control_flow_stack_.PopCaseEndFlow();
-    if (case_end.block->getTerminator() == nullptr) {
-      builder_->SetInsertPoint(case_end.block);
+    auto case_branch = control_flow_stack_.PopCaseBranchFlow();
+    if (case_branch.before_block->getTerminator() == nullptr) {
+      builder_->SetInsertPoint(case_branch.before_block);
       builder_->CreateBr(fall_through_block);
       fall_through_block->moveAfter(builder_->GetInsertBlock());
     }
-    fall_through_block = case_end.block;
+    fall_through_block = case_branch.after_block;
     if (i == 0) {
       break;
     }
@@ -1267,13 +1261,13 @@ void Compiler::Try() {
 
   builder_->SetInsertPoint(try_block);
 
-  PushBasicBlockName("try");
+  BB_NAME_PUSH("try");
 }
 
 void Compiler::Catch(bool nominal) {
-  PopBasicBlockName();
+  BB_NAME_POP();
 
-  control_flow_stack_.SetCaught(nominal);
+  control_flow_stack_.SetInCatchBlock(nominal);
   const auto& flow = control_flow_stack_.exception_flow();
 
   // Jump from the end of the try block to the beginning of the finally block.
@@ -1288,15 +1282,15 @@ void Compiler::Catch(bool nominal) {
     builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
   }
 
-  PushBasicBlockName("catch");
+  BB_NAME_PUSH("catch");
 }
 
 void Compiler::Finally(bool nominal) {
   UNUSED(nominal);
 
-  PopBasicBlockName();
+  BB_NAME_POP();
 
-  control_flow_stack_.SetEnded();
+  control_flow_stack_.SetInFinallyBlock();
   const auto& flow = control_flow_stack_.exception_flow();
 
   // Jump from the end of the catch block to the beginning of the finally block.
@@ -1305,11 +1299,11 @@ void Compiler::Finally(bool nominal) {
   flow.finally_block->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(flow.finally_block);
 
-  PushBasicBlockName("finally");
+  BB_NAME_PUSH("finally");
 }
 
 void Compiler::TryEnd() {
-  PopBasicBlockName();
+  BB_NAME_POP();
 
   auto flow = control_flow_stack_.PopExceptionFlow();
 
@@ -1370,9 +1364,10 @@ void Compiler::EndFunction(bool optimize) {
     CreateAssertScopeCleanupStackIsEmpty();
   }
 
-  auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, "status");
+  auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
   // Convert STATUS_XXX into Status.
-  auto* masked = builder_->CreateAnd(status, builder_->getInt32(STATUS_MASK));
+  auto* masked =
+      builder_->CreateAnd(status, builder_->getInt32(STATUS_MASK), REG_NAME("status.masked"));
   builder_->CreateRet(masked);
 
   // DumpStack();
@@ -1386,9 +1381,9 @@ void Compiler::EndFunction(bool optimize) {
   control_flow_stack_.Clear();
 
   if (llvm::verifyFunction(*function_, &llvm::errs())) {
-    llvm::errs() << "<broken-function>\n";
+    llvm::errs() << "### broken-function\n";
     function_->print(llvm::errs());
-    llvm::errs() << "</broken-function>\n";
+    llvm::errs() << '\n';
     std::abort();
   }
 
@@ -1398,11 +1393,11 @@ void Compiler::EndFunction(bool optimize) {
 }
 
 void Compiler::StartScope(uint16_t scope_id) {
-  PushBasicBlockName(BB_NAME_WITH_ID("scope", scope_id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("scope", scope_id));
 
   auto* init = CreateBasicBlock(BB_NAME("init"));
   auto* hoisted = CreateBasicBlock(BB_NAME("hoisted"));
-  auto* block = CreateBasicBlock(BB_NAME("block"));
+  auto* block = CreateBasicBlock(BB_NAME("body"));
   auto* cleanup = CreateBasicBlock(BB_NAME("cleanup"));
 
   builder_->CreateBr(init);
@@ -1422,24 +1417,24 @@ void Compiler::StartScope(uint16_t scope_id) {
 void Compiler::EndScope(uint16_t scope_id) {
   UNUSED(scope_id);
 
-  PopBasicBlockName();
+  BB_NAME_POP();
 
-  auto flow = control_flow_stack_.PopScopeFlow();
+  auto scope = control_flow_stack_.PopScopeFlow();
 
-  builder_->CreateBr(flow.cleanup_block);
-  flow.cleanup_block->moveAfter(builder_->GetInsertBlock());
+  builder_->CreateBr(scope.cleanup_block);
+  scope.cleanup_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(flow.init_block);
-  builder_->CreateBr(flow.hoisted_block);
-  flow.hoisted_block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(scope.init_block);
+  builder_->CreateBr(scope.hoisted_block);
+  scope.hoisted_block->moveAfter(builder_->GetInsertBlock());
 
-  builder_->SetInsertPoint(flow.hoisted_block);
-  builder_->CreateBr(flow.block);
-  flow.block->moveAfter(builder_->GetInsertBlock());
+  builder_->SetInsertPoint(scope.hoisted_block);
+  builder_->CreateBr(scope.block);
+  scope.block->moveAfter(builder_->GetInsertBlock());
 
   auto* block = CreateBasicBlock(BB_NAME("block"));
 
-  builder_->SetInsertPoint(flow.cleanup_block);
+  builder_->SetInsertPoint(scope.cleanup_block);
 
   if (IsScopeCleanupCheckerEnabled()) {
     CreateAssertScopeCleanupStackHasItem();
@@ -1447,16 +1442,16 @@ void Compiler::EndScope(uint16_t scope_id) {
     CreateAssertScopeCleanupStackPoppedValue(popped, scope_id);
   }
 
-  if (!flow.returned && !flow.thrown) {
+  if (!scope.returned && !scope.thrown) {
     builder_->CreateBr(block);
   } else {
-    auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, "status");
+    auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
     auto* switch_inst = builder_->CreateSwitch(status, block);
-    if (flow.returned) {
+    if (scope.returned) {
       auto* cleanup_block = control_flow_stack_.cleanup_block();
       switch_inst->addCase(builder_->getInt32(STATUS_NORMAL), cleanup_block);
     }
-    if (flow.thrown) {
+    if (scope.thrown && !control_flow_stack_.IsInFinallyBlock()) {
       auto* exception_block = control_flow_stack_.exception_block();
       switch_inst->addCase(builder_->getInt32(STATUS_EXCEPTION), exception_block);
     }
@@ -1691,30 +1686,30 @@ void Compiler::PrepareScopeCleanupChecker(uint32_t stack_size) {
 }
 
 void Compiler::DumpStack() {
-  llvm::errs() << "<llvm-ir:compiler-stack>\n";
+  llvm::errs() << "### llvm-ir:compiler-stack\n";
   for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {
     const auto& item = *it;
     switch (item.type) {
       case Item::Undefined:
-        llvm::errs() << "value: undefined";
+        llvm::errs() << "undefined";
         break;
       case Item::Null:
-        llvm::errs() << "value: null";
+        llvm::errs() << "null";
         break;
       case Item::Boolean:
-        llvm::errs() << "boolean: " << item.value;
+        llvm::errs() << "boolean: " << V2S(item.value);
         break;
       case Item::Number:
-        llvm::errs() << "number: " << item.value;
+        llvm::errs() << "number: " << V2S(item.value);
         break;
       case Item::Function:
-        llvm::errs() << "function: " << item.func;
+        llvm::errs() << "function: " << V2S(item.func);
         break;
       case Item::Closure:
-        llvm::errs() << "closure: " << item.value;
+        llvm::errs() << "closure: " << V2S(item.value);
         break;
       case Item::Any:
-        llvm::errs() << "any: " << item.value;
+        llvm::errs() << "any: " << V2S(item.value);
         break;
       case Item::Reference:
         llvm::errs() << "reference: symbol=" << item.reference.symbol;
@@ -1723,23 +1718,22 @@ void Compiler::DumpStack() {
             llvm::errs() << " locator=none";
             return;
           case LocatorKind::Argument:
-            llvm::errs() << " locator=argument(";
+            llvm::errs() << " locator=argument@";
             break;
           case LocatorKind::Local:
-            llvm::errs() << " locator=local(";
+            llvm::errs() << " locator=local@";
             break;
           case LocatorKind::Capture:
-            llvm::errs() << " locator=capture(";
+            llvm::errs() << " locator=capture@";
             break;
         }
         llvm::errs() << item.reference.locator.index;
-        llvm::errs() << ")";
         break;
       case Item::Argv:
-        llvm::errs() << "argv: " << item.value;
+        llvm::errs() << "argv: " << V2S(item.value);
         break;
       case Item::Capture:
-        llvm::errs() << "capture: " << item.value;
+        llvm::errs() << "capture: " << V2S(item.value);
         break;
     }
 #if defined(BEE_BUILD_DEBUG)
@@ -1747,9 +1741,9 @@ void Compiler::DumpStack() {
       llvm::errs() << " [" << item.label << "]";
     }
 #endif
-    llvm::errs() << "\n";
+    llvm::errs() << '\n';
   }
-  llvm::errs() << "</llvm-ir:compiler-stack>\n";
+  llvm::errs() << '\n';
   control_flow_stack_.Dump();
 }
 
@@ -1787,8 +1781,8 @@ void Compiler::IncrDecr(char pos, char op) {
   auto* old_value = ToNumeric(Dereference(&ref));
   // TODO: BigInt
   auto* one = llvm::ConstantFP::get(builder_->getDoubleTy(), 1.0);
-  auto* new_value =
-      op == '+' ? builder_->CreateFAdd(old_value, one) : builder_->CreateFSub(old_value, one);
+  auto* new_value = op == '+' ? builder_->CreateFAdd(old_value, one, REG_NAME("incr"))
+                              : builder_->CreateFSub(old_value, one, REG_NAME("decr"));
   if (ref.symbol != 0) {
     assert(ref.locator.kind != LocatorKind::None);
     PushReference(ref.symbol, ref.locator);
@@ -1808,20 +1802,20 @@ void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
   llvm::Value* oint;
   switch (op) {
     case '&':
-      oint = builder_->CreateAnd(lint, rint);
+      oint = builder_->CreateAnd(lint, rint, REG_NAME("and"));
       break;
     case '^':
-      oint = builder_->CreateXor(lint, rint);
+      oint = builder_->CreateXor(lint, rint, REG_NAME("xor"));
       break;
     case '|':
-      oint = builder_->CreateOr(lint, rint);
+      oint = builder_->CreateOr(lint, rint, REG_NAME("or"));
       break;
     default:
       assert(false);
       oint = nullptr;
       break;
   }
-  auto* onum = builder_->CreateSIToFP(oint, builder_->getDoubleTy());
+  auto* onum = builder_->CreateSIToFP(oint, builder_->getDoubleTy(), REG_NAME("si2fp"));
   PushNumber(onum);
 }
 
@@ -1885,7 +1879,7 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
     case Item::Null:
       return llvm::ConstantFP::getZero(builder_->getDoubleTy());
     case Item::Boolean:
-      return builder_->CreateUIToFP(item.value, builder_->getDoubleTy());
+      return builder_->CreateUIToFP(item.value, builder_->getDoubleTy(), REG_NAME("ui2fp"));
     case Item::Number:
       return item.value;
     case Item::Function:
@@ -1901,7 +1895,7 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
 
 llvm::Value* Compiler::ToNumeric(llvm::Value* value_ptr) {
   auto* call = types_->CreateRuntimeToNumeric();
-  return builder_->CreateCall(call, {exec_context_, value_ptr});
+  return builder_->CreateCall(call, {exec_context_, value_ptr}, REG_NAME("numeric"));
 }
 
 // 7.1.6 ToInt32 ( argument )
@@ -1910,7 +1904,7 @@ llvm::Value* Compiler::ToInt32(llvm::Value* number) {
   // We assumed that `number` holds a number value.
   // TODO: Create inline instructions if runtime_to_int32() is slow.
   auto* func = types_->CreateRuntimeToInt32();
-  return builder_->CreateCall(func, {exec_context_, number});
+  return builder_->CreateCall(func, {exec_context_, number}, REG_NAME("int32"));
 }
 
 // 7.1.7 ToUint32 ( argument )
@@ -1919,7 +1913,7 @@ llvm::Value* Compiler::ToUint32(llvm::Value* number) {
   // We assumed that `number` holds a number value.
   // TODO: Create inline instructions if runtime_to_uint32() is slow.
   auto* func = types_->CreateRuntimeToUint32();
-  return builder_->CreateCall(func, {exec_context_, number});
+  return builder_->CreateCall(func, {exec_context_, number}, REG_NAME("uint32"));
 }
 
 llvm::Value* Compiler::ToAny(const Item& item) {
@@ -2004,7 +1998,7 @@ llvm::Value* Compiler::CreateToBoolean(const Item& item) {
       return item.value;
     case Item::Number:
       return builder_->CreateFCmpUNE(
-          item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
+          item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()), REG_NAME("ne"));
     case Item::Function:
     case Item::Closure:
       return builder_->getTrue();
@@ -2019,7 +2013,7 @@ llvm::Value* Compiler::CreateToBoolean(const Item& item) {
 
 llvm::Value* Compiler::CreateToBoolean(llvm::Value* value_ptr) {
   auto* func = types_->CreateRuntimeToBoolean();
-  return builder_->CreateCall(func, {exec_context_, value_ptr});
+  return builder_->CreateCall(func, {exec_context_, value_ptr}, REG_NAME("boolean"));
 }
 
 // 7.2.13 IsLooselyEqual ( x, y )
@@ -2065,7 +2059,7 @@ llvm::Value* Compiler::CreateIsLooselyEqual(llvm::Value* value_ptr, const Item& 
 llvm::Value* Compiler::CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y) {
   // TODO: Create inline instructions if runtime_is_loosely_equal() is slow.
   auto* func = types_->CreateRuntimeIsLooselyEqual();
-  return builder_->CreateCall(func, {exec_context_, x, y});
+  return builder_->CreateCall(func, {exec_context_, x, y}, REG_NAME("is_loosely_equal.retval"));
 }
 
 // 7.2.14 IsStrictlyEqual ( x, y )
@@ -2124,7 +2118,7 @@ llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* value_ptr, const Item&
 llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
   // TODO: Create inline instructions if runtime_is_strictly_equal() is slow.
   auto* func = types_->CreateRuntimeIsStrictlyEqual();
-  return builder_->CreateCall(func, {exec_context_, x, y});
+  return builder_->CreateCall(func, {exec_context_, x, y}, REG_NAME("is_strictly_equal.retval"));
 }
 
 llvm::Value* Compiler::CreateIsUndefined(llvm::Value* value_ptr) {
@@ -2139,26 +2133,27 @@ llvm::Value* Compiler::CreateIsNull(llvm::Value* value_ptr) {
 }
 
 llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = CreateBasicBlock(BB_NAME("then"));
-  auto* else_block = CreateBasicBlock(BB_NAME("else"));
-  auto* merge_block = CreateBasicBlock(BB_NAME("end"));
+  auto* then_block = CreateBasicBlock(BB_NAME("is_boolean.then"));
+  auto* else_block = CreateBasicBlock(BB_NAME("is_boolean.else"));
+  auto* merge_block = CreateBasicBlock(BB_NAME("is_same_boolean"));
 
+  // if (value.kind == kValueKindBoolean)
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
       builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindBoolean), REG_NAME("is_boolean"));
   builder_->CreateCondBr(cond, then_block, else_block);
-
+  // {
   builder_->SetInsertPoint(then_block);
   auto* boolean = CreateLoadBooleanFromValue(value_ptr);
-  auto* then_value = builder_->CreateICmpEQ(boolean, value, REG_NAME("is_same_boolean"));
+  auto* then_value = builder_->CreateICmpEQ(boolean, value, REG_NAME("is_same_boolean_value"));
   builder_->CreateBr(merge_block);
-
+  // } else {
   builder_->SetInsertPoint(else_block);
   auto* else_value = builder_->getFalse();
   builder_->CreateBr(merge_block);
-
+  // }
   builder_->SetInsertPoint(merge_block);
-  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("is_same_boolean"));
   phi->addIncoming(then_value, then_block);
   phi->addIncoming(else_value, else_block);
 
@@ -2166,26 +2161,27 @@ llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Va
 }
 
 llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = CreateBasicBlock(BB_NAME("then"));
-  auto* else_block = CreateBasicBlock(BB_NAME("else"));
-  auto* merge_block = CreateBasicBlock(BB_NAME("end"));
+  auto* then_block = CreateBasicBlock(BB_NAME("is_number.then"));
+  auto* else_block = CreateBasicBlock(BB_NAME("is_number.else"));
+  auto* merge_block = CreateBasicBlock(BB_NAME("is_same_number"));
 
+  // if (value.kind == kValueKindNumber)
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
       builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindNumber), REG_NAME("is_number"));
   builder_->CreateCondBr(cond, then_block, else_block);
-
+  // {
   builder_->SetInsertPoint(then_block);
   auto* number = CreateLoadNumberFromValue(value_ptr);
-  auto* then_value = builder_->CreateFCmpOEQ(number, value, REG_NAME("is_same_number"));
+  auto* then_value = builder_->CreateFCmpOEQ(number, value, REG_NAME("is_same_number_value"));
   builder_->CreateBr(merge_block);
-
+  // } else {
   builder_->SetInsertPoint(else_block);
   auto* else_value = builder_->getFalse();
   builder_->CreateBr(merge_block);
-
+  // }
   builder_->SetInsertPoint(merge_block);
-  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("is_same_number"));
   phi->addIncoming(then_value, then_block);
   phi->addIncoming(else_value, else_block);
 
@@ -2193,26 +2189,27 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
 }
 
 llvm::Value* Compiler::CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = CreateBasicBlock(BB_NAME("then"));
-  auto* else_block = CreateBasicBlock(BB_NAME("else"));
-  auto* merge_block = CreateBasicBlock(BB_NAME("end"));
+  auto* then_block = CreateBasicBlock(BB_NAME("is_closure.then"));
+  auto* else_block = CreateBasicBlock(BB_NAME("is_closure.else"));
+  auto* merge_block = CreateBasicBlock(BB_NAME("is_same_closure"));
 
+  // if (value.kind == kValueKindClosure)
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
       builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindClosure), REG_NAME("is_closure"));
   builder_->CreateCondBr(cond, then_block, else_block);
-
+  // {
   builder_->SetInsertPoint(then_block);
   auto* func_ptr = CreateLoadFunctionFromValue(value_ptr);
-  auto* then_value = builder_->CreateICmpEQ(func_ptr, value, REG_NAME("is_same_closure"));
+  auto* then_value = builder_->CreateICmpEQ(func_ptr, value, REG_NAME("is_same_closure_value"));
   builder_->CreateBr(merge_block);
-
+  // } else {
   builder_->SetInsertPoint(else_block);
   auto* else_value = builder_->getFalse();
   builder_->CreateBr(merge_block);
-
+  // }
   builder_->SetInsertPoint(merge_block);
-  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("is_same_closure"));
   phi->addIncoming(then_value, then_block);
   phi->addIncoming(else_value, else_block);
 
@@ -2336,8 +2333,8 @@ void Compiler::CreateBasicBlockForDeadcode() {
   builder_->SetInsertPoint(block);
 }
 
-#if defined(BEE_BUILD_DEBUG)
 std::string Compiler::MakeBasicBlockName(const char* name) const {
+  assert(enable_labels_);
   std::stringstream ss;
   ss << "bb";
   if (!basic_block_name_stack_.empty()) {
@@ -2349,4 +2346,3 @@ std::string Compiler::MakeBasicBlockName(const char* name) const {
   ss << '.' << name;
   return ss.str();
 }
-#endif

@@ -15,13 +15,13 @@ use crate::Module;
 use crate::Program;
 use crate::Runtime;
 
-impl Runtime {
+impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
         logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
         let mut compiler = Compiler::new(&self.function_registry, &program.scope_tree);
-        compiler.start_compile();
+        compiler.start_compile(self.pref.enable_llvmir_labels);
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
         compiler.set_runtime(self);
@@ -54,10 +54,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
         }
     }
 
-    fn start_compile(&self) {
-        logger::debug!(event = "start_compile");
+    fn start_compile(&self, enable_labels: bool) {
+        logger::debug!(event = "start_compile", enable_labels);
         unsafe {
-            bridge::compiler_peer_start(self.peer);
+            bridge::compiler_peer_start(self.peer, enable_labels);
         }
     }
 
@@ -81,8 +81,8 @@ impl<'a, 'b> Compiler<'a, 'b> {
         }
     }
 
-    fn set_runtime(&self, runtime: &Runtime) {
-        let runtime = runtime as *const Runtime as usize;
+    fn set_runtime<X>(&self, runtime: &Runtime<X>) {
+        let runtime = runtime as *const Runtime<X> as usize;
         logger::debug!(event = "set_runtime", ?runtime);
         unsafe {
             bridge::compiler_peer_set_runtime(self.peer, runtime);
@@ -317,8 +317,8 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::BitwiseOr => unsafe {
                 bridge::compiler_peer_bitwise_or(self.peer);
             },
-            CompileCommand::ConditionalTernary => unsafe {
-                bridge::compiler_peer_conditional_ternary(self.peer);
+            CompileCommand::Ternary => unsafe {
+                bridge::compiler_peer_ternary(self.peer);
             },
             CompileCommand::Assignment => unsafe {
                 bridge::compiler_peer_assignment(self.peer);

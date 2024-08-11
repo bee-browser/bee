@@ -27,7 +27,7 @@ pub use scope::BindingRef;
 pub use scope::ScopeRef;
 pub use scope::ScopeTree;
 
-impl Runtime {
+impl<X> Runtime<X> {
     /// Parses a given source text as a script.
     pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "script");
@@ -321,12 +321,12 @@ impl<'r> Analyzer<'r> {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_command(CompileCommand::ConditionalTernary);
+            .put_command(CompileCommand::Ternary);
     }
 
     fn handle_conditional_assignment(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::ConditionalTernary);
+        context.put_command(CompileCommand::Ternary);
         context.put_command(CompileCommand::Assignment);
     }
 
@@ -1519,8 +1519,8 @@ pub enum CompileCommand {
     //   2. Emit supplemental commands and CompileCommand::ConditionalTernery in
     //      handle_logical_expression()
 
-    // conditional operator
-    ConditionalTernary,
+    // ternary operator
+    Ternary,
 
     // assignment operators
     Assignment,
@@ -1783,6 +1783,7 @@ mod tests {
     fn test(regc: &str, validate: fn(symbol_registry: &SymbolRegistry, program: &Program)) {
         let runtime_pref = RuntimePref {
             enable_scope_cleanup_checker: true,
+            ..Default::default()
         };
         let mut symbol_registry = Default::default();
         let mut function_registry = FunctionRegistry::new();

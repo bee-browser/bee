@@ -6,8 +6,8 @@
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
 
 macro_rules! into_runtime {
-    ($context:expr) => {
-        &mut *($context as *mut crate::Runtime)
+    ($context:expr, $extension:ident) => {
+        &mut *($context as *mut crate::Runtime<$extension>)
     };
 }
 
@@ -216,19 +216,17 @@ where
     }
 }
 
-impl Default for Runtime {
-    fn default() -> Self {
-        Self {
-            to_boolean: Some(runtime_to_boolean),
-            to_numeric: Some(runtime_to_numeric),
-            to_int32: Some(runtime_to_int32),
-            to_uint32: Some(runtime_to_uint32),
-            is_loosely_equal: Some(runtime_is_loosely_equal),
-            is_strictly_equal: Some(runtime_is_strictly_equal),
-            create_capture: Some(runtime_create_capture),
-            create_closure: Some(runtime_create_closure),
-            assert: Some(runtime_assert),
-        }
+pub fn runtime_bridge<X>() -> Runtime {
+    Runtime {
+        to_boolean: Some(runtime_to_boolean),
+        to_numeric: Some(runtime_to_numeric),
+        to_int32: Some(runtime_to_int32),
+        to_uint32: Some(runtime_to_uint32),
+        is_loosely_equal: Some(runtime_is_loosely_equal),
+        is_strictly_equal: Some(runtime_is_strictly_equal),
+        create_capture: Some(runtime_create_capture::<X>),
+        create_closure: Some(runtime_create_closure::<X>),
+        assert: Some(runtime_assert),
     }
 }
 
@@ -366,7 +364,10 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
     }
 }
 
-unsafe extern "C" fn runtime_create_capture(context: usize, target: *mut Variable) -> *mut Capture {
+unsafe extern "C" fn runtime_create_capture<X>(
+    context: usize,
+    target: *mut Variable,
+) -> *mut Capture {
     const LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::size_of::<Capture>(),
@@ -374,7 +375,7 @@ unsafe extern "C" fn runtime_create_capture(context: usize, target: *mut Variabl
         )
     };
 
-    let runtime = into_runtime!(context);
+    let runtime = into_runtime!(context, X);
     let allocator = runtime.allocator();
 
     // TODO: GC
@@ -388,7 +389,7 @@ unsafe extern "C" fn runtime_create_capture(context: usize, target: *mut Variabl
     capture
 }
 
-unsafe extern "C" fn runtime_create_closure(
+unsafe extern "C" fn runtime_create_closure<X>(
     context: usize,
     lambda: Lambda,
     num_captures: u16,
@@ -403,7 +404,7 @@ unsafe extern "C" fn runtime_create_closure(
     let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
     let (layout, offset) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
-    let runtime = into_runtime!(context);
+    let runtime = into_runtime!(context, X);
     let allocator = runtime.allocator();
 
     // TODO: GC

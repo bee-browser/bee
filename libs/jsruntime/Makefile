@@ -10,6 +10,7 @@ test:
 .PHONY: codegen
 codegen:
 	@$(MAKE) -s -C src/bridge codegen
+	@$(MAKE) -s -C tests codegen
 
 .PHONY: clean
 clean:

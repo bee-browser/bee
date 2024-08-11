@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::Parser as _;
 
-use jsruntime::Runtime;
+use jsruntime::BasicRuntime;
 use jsruntime::Value;
 
 #[derive(clap::Parser)]
@@ -34,6 +34,8 @@ enum Command {
     /// `lli` cannot interpret the module directly.  Because it includes unresolved symbols for the
     /// runtime function calls.  At this point, there is no command-line option to output anything
     /// containing the runtime functions which can link to the module.
+    ///
+    /// Contextual labels for registers and basic blocks are enabled.
     Compile(Compile),
 
     /// Runs a JavaScript program.
@@ -68,8 +70,9 @@ fn main() -> Result<()> {
 
     let cl = CommandLine::parse();
 
-    Runtime::initialize();
-    let mut runtime = Runtime::new();
+    jsruntime::initialize();
+
+    let mut runtime = BasicRuntime::new();
     if cl.scope_cleanup_checker {
         runtime.enable_scope_cleanup_checker();
     }
@@ -95,6 +98,7 @@ fn main() -> Result<()> {
             }
         }
         Command::Compile(args) => {
+            runtime.enable_llvmir_labels();
             let program = runtime.parse_script(&source)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
             module.print(false); // to STDOUT
@@ -125,6 +129,6 @@ fn read_from_stdin() -> Result<String> {
     Ok(source)
 }
 
-fn print(_runtime: &mut Runtime, args: &[Value]) {
+fn print(_runtime: &mut BasicRuntime, args: &[Value]) {
     println!("{args:?}");
 }
