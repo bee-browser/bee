@@ -7,7 +7,7 @@
 
 #include <climits>
 
-#include "macros.hh"
+#define REG_NAME(expr) (enable_labels_ ? expr : "")
 
 namespace {
 constexpr unsigned kWorkBits = sizeof(size_t) * CHAR_BIT;

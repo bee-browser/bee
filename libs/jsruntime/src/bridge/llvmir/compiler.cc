@@ -28,14 +28,6 @@
 #include "macros.hh"
 #include "module.hh"
 
-#if defined(BEE_BUILD_DEBUG)
-#define BB_NAME(s) MakeBasicBlockName(s).c_str()
-#define BB_NAME_WITH_ID(name, id) ((name + llvm::Twine(id)).str().c_str())
-#else
-#define BB_NAME(s) ""
-#define BB_NAME_WITH_ID(name, id) (UNUSED(id), "")
-#endif
-
 namespace {
 
 constexpr uint8_t kValueKindUndefined = static_cast<uint8_t>(ValueKind::Undefined);
@@ -1013,7 +1005,7 @@ void Compiler::IfStatement() {
 }
 
 void Compiler::DoWhileLoop(uint16_t id) {
-  PushBasicBlockName(BB_NAME_WITH_ID("do-while", id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("do-while", id));
 
   auto* loop_body = CreateBasicBlock(BB_NAME("loop-body"));
   auto* loop_test = CreateBasicBlock(BB_NAME("loop-test"));
@@ -1035,7 +1027,7 @@ void Compiler::DoWhileLoop(uint16_t id) {
 }
 
 void Compiler::WhileLoop(uint16_t id) {
-  PushBasicBlockName(BB_NAME_WITH_ID("while", id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("while", id));
 
   auto* loop_test = CreateBasicBlock(BB_NAME("loop-test"));
   auto* loop_body = CreateBasicBlock(BB_NAME("loop-body"));
@@ -1057,7 +1049,7 @@ void Compiler::WhileLoop(uint16_t id) {
 }
 
 void Compiler::ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next) {
-  PushBasicBlockName(BB_NAME_WITH_ID("for", id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("for", id));
 
   auto* loop_init = has_init ? CreateBasicBlock(BB_NAME("loop-init")) : nullptr;
   auto* loop_test = has_test ? CreateBasicBlock(BB_NAME("loop-test")) : nullptr;
@@ -1151,7 +1143,7 @@ void Compiler::LoopBody() {
 }
 
 void Compiler::LoopEnd() {
-  PopBasicBlockName();
+  BB_NAME_POP();
   control_flow_stack_.PopBreakTarget();
   control_flow_stack_.PopContinueTarget();
 }
@@ -1159,7 +1151,7 @@ void Compiler::LoopEnd() {
 void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
   UNUSED(num_cases);
 
-  PushBasicBlockName(BB_NAME_WITH_ID("switch", id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("switch", id));
 
   auto item = Dereference();
   item.SetLabel("switch-value");
@@ -1212,7 +1204,7 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
   UNUSED(id);
   UNUSED(default_index);
 
-  PopBasicBlockName();
+  BB_NAME_POP();
 
   const auto& select = control_flow_stack_.select_flow();
   control_flow_stack_.PopBreakTarget();
@@ -1267,11 +1259,11 @@ void Compiler::Try() {
 
   builder_->SetInsertPoint(try_block);
 
-  PushBasicBlockName("try");
+  BB_NAME_PUSH("try");
 }
 
 void Compiler::Catch(bool nominal) {
-  PopBasicBlockName();
+  BB_NAME_POP();
 
   control_flow_stack_.SetInCatchBlock(nominal);
   const auto& flow = control_flow_stack_.exception_flow();
@@ -1288,13 +1280,13 @@ void Compiler::Catch(bool nominal) {
     builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
   }
 
-  PushBasicBlockName("catch");
+  BB_NAME_PUSH("catch");
 }
 
 void Compiler::Finally(bool nominal) {
   UNUSED(nominal);
 
-  PopBasicBlockName();
+  BB_NAME_POP();
 
   control_flow_stack_.SetInFinallyBlock();
   const auto& flow = control_flow_stack_.exception_flow();
@@ -1305,11 +1297,11 @@ void Compiler::Finally(bool nominal) {
   flow.finally_block->moveAfter(builder_->GetInsertBlock());
   builder_->SetInsertPoint(flow.finally_block);
 
-  PushBasicBlockName("finally");
+  BB_NAME_PUSH("finally");
 }
 
 void Compiler::TryEnd() {
-  PopBasicBlockName();
+  BB_NAME_POP();
 
   auto flow = control_flow_stack_.PopExceptionFlow();
 
@@ -1399,7 +1391,7 @@ void Compiler::EndFunction(bool optimize) {
 }
 
 void Compiler::StartScope(uint16_t scope_id) {
-  PushBasicBlockName(BB_NAME_WITH_ID("scope", scope_id));
+  BB_NAME_PUSH(BB_NAME_WITH_ID("scope", scope_id));
 
   auto* init = CreateBasicBlock(BB_NAME("init"));
   auto* hoisted = CreateBasicBlock(BB_NAME("hoisted"));
@@ -1423,7 +1415,7 @@ void Compiler::StartScope(uint16_t scope_id) {
 void Compiler::EndScope(uint16_t scope_id) {
   UNUSED(scope_id);
 
-  PopBasicBlockName();
+  BB_NAME_POP();
 
   auto scope = control_flow_stack_.PopScopeFlow();
 
@@ -2336,8 +2328,8 @@ void Compiler::CreateBasicBlockForDeadcode() {
   builder_->SetInsertPoint(block);
 }
 
-#if defined(BEE_BUILD_DEBUG)
 std::string Compiler::MakeBasicBlockName(const char* name) const {
+  assert(enable_labels_);
   std::stringstream ss;
   ss << "bb";
   if (!basic_block_name_stack_.empty()) {
@@ -2349,4 +2341,3 @@ std::string Compiler::MakeBasicBlockName(const char* name) const {
   ss << '.' << name;
   return ss.str();
 }
-#endif

@@ -21,7 +21,7 @@ impl<X> Runtime<X> {
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
         let mut compiler = Compiler::new(&self.function_registry, &program.scope_tree);
-        compiler.start_compile();
+        compiler.start_compile(self.pref.enable_llvmir_labels);
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
         compiler.set_runtime(self);
@@ -54,10 +54,10 @@ impl<'a, 'b> Compiler<'a, 'b> {
         }
     }
 
-    fn start_compile(&self) {
-        logger::debug!(event = "start_compile");
+    fn start_compile(&self, enable_labels: bool) {
+        logger::debug!(event = "start_compile", enable_labels);
         unsafe {
-            bridge::compiler_peer_start(self.peer);
+            bridge::compiler_peer_start(self.peer, enable_labels);
         }
     }
 

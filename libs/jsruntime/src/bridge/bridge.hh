@@ -130,7 +130,7 @@ void module_peer_delete(Module* self);
 class Compiler;
 Compiler* compiler_peer_new();
 void compiler_peer_delete(Compiler* self);
-void compiler_peer_start(Compiler* self);
+void compiler_peer_start(Compiler* self, bool enable_labels);
 Module* compiler_peer_end(Compiler* self);
 void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);

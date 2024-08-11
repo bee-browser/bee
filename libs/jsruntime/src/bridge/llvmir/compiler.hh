@@ -23,16 +23,25 @@
 
 #include "../bridge.hh"
 #include "control_flow.hh"
-#include "macros.hh"
 #include "type_holder.hh"
 
 class TypeHolder;
 struct Module;
 
+#define BB_NAME_PUSH(name) (enable_labels_ ? PushBasicBlockName(name) : (void)0)
+#define BB_NAME_POP() (enable_labels_ ? PopBasicBlockName() : (void)0)
+#define BB_NAME(s) (enable_labels_ ? MakeBasicBlockName(s).c_str() : "")
+#define BB_NAME_WITH_ID(name, id) (enable_labels_ ? (name + llvm::Twine(id)).str().c_str() : "")
+#define REG_NAME(expr) (enable_labels_ ? expr : "")
+
 class Compiler {
  public:
   Compiler();
   ~Compiler() = default;
+
+  void EnableLabels() {
+    enable_labels_ = true;
+  }
 
   Module* TakeModule();
 
@@ -181,9 +190,7 @@ class Compiler {
       llvm::Function* func;
       struct Reference reference;
     };
-#if defined(BEE_BUILD_DEBUG)
     const char* label = nullptr;
-#endif
 
     explicit Item(Type type) : type(type), value(nullptr) {}
     explicit Item(llvm::Function* func) : type(Item::Function), func(func) {}
@@ -191,11 +198,7 @@ class Compiler {
     Item(uint32_t symbol, Locator locator) : type(Item::Reference), reference(symbol, locator) {}
 
     inline void SetLabel(const char* label) {
-#if defined(BEE_BUILD_DEBUG)
       this->label = label;
-#else
-      UNUSED(label);
-#endif
     }
   };
 
@@ -760,24 +763,20 @@ class Compiler {
   std::unique_ptr<llvm::PassInstrumentationCallbacks> pic_;
   std::unique_ptr<llvm::StandardInstrumentations> si_;
 
-#if defined(BEE_BUILD_DEBUG)
+  bool enable_labels_ = false;
+
   inline void PushBasicBlockName(std::string&& name) {
+    assert(enable_labels_);
     basic_block_name_stack_.push_back(std::move(name));
   }
 
   // TODO: detect an ill-nested block name
   inline void PopBasicBlockName() {
+    assert(enable_labels_);
     basic_block_name_stack_.pop_back();
   }
 
   std::string MakeBasicBlockName(const char* name) const;
 
   std::vector<std::string> basic_block_name_stack_;
-#else
-  inline void PushBasicBlockName(std::string&&) {}
-  inline void PopBasicBlockName() {}
-  inline const char* MakeBasicBlockName(const char* name) {
-    return name;
-  }
-#endif
 };

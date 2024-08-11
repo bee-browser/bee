@@ -1783,6 +1783,7 @@ mod tests {
     fn test(regc: &str, validate: fn(symbol_registry: &SymbolRegistry, program: &Program)) {
         let runtime_pref = RuntimePref {
             enable_scope_cleanup_checker: true,
+            ..Default::default()
         };
         let mut symbol_registry = Default::default();
         let mut function_registry = FunctionRegistry::new();

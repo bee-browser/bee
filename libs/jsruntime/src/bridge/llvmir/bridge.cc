@@ -34,8 +34,10 @@ void compiler_peer_delete(Compiler* self) {
   delete self;
 }
 
-void compiler_peer_start(Compiler* self) {
-  UNUSED(self);
+void compiler_peer_start(Compiler* self, bool enable_labels) {
+  if (enable_labels) {
+    self->EnableLabels();
+  }
 }
 
 Module* compiler_peer_end(Compiler* self) {

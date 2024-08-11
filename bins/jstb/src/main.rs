@@ -34,6 +34,8 @@ enum Command {
     /// `lli` cannot interpret the module directly.  Because it includes unresolved symbols for the
     /// runtime function calls.  At this point, there is no command-line option to output anything
     /// containing the runtime functions which can link to the module.
+    ///
+    /// Contextual labels for registers and basic blocks are enabled.
     Compile(Compile),
 
     /// Runs a JavaScript program.
@@ -96,6 +98,7 @@ fn main() -> Result<()> {
             }
         }
         Command::Compile(args) => {
+            runtime.enable_llvmir_labels();
             let program = runtime.parse_script(&source)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
             module.print(false); // to STDOUT
