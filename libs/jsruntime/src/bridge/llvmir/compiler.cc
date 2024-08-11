@@ -494,7 +494,7 @@ void Compiler::Ternary() {
   auto* cond_value = PopBoolean();
   builder_->CreateCondBr(cond_value, then_branch.after_block, else_branch.after_block);
 
-  auto* block = CreateBasicBlock(BB_NAME("block"));
+  auto* block = CreateBasicBlock(BB_NAME("ternary"));
 
   if (then_item.type == else_item.type) {
     builder_->SetInsertPoint(else_branch.before_block);
@@ -820,9 +820,9 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
   auto* closure = CreateAlloc1(builder_->getPtrTy(), REG_NAME("closure.ptr"));
 
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
-  auto* then_block = CreateBasicBlock(BB_NAME("closure"));
-  auto* else_block = CreateBasicBlock(BB_NAME("not_closure"));
-  auto* end_block = CreateBasicBlock(BB_NAME("block"));
+  auto* then_block = CreateBasicBlock(BB_NAME("is_closure.then"));
+  auto* else_block = CreateBasicBlock(BB_NAME("is_closure.else"));
+  auto* end_block = CreateBasicBlock(BB_NAME("closure"));
 
   // if (value.kind == ValueKind::Closure)
   auto* is_closure =
@@ -848,8 +848,8 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
 // Handle an exception if it's thrown.
 void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* retv) {
   auto* status_exception = builder_->getInt32(STATUS_EXCEPTION);
-  auto* then_block = CreateBasicBlock(BB_NAME("exception"));
-  auto* end_block = CreateBasicBlock(BB_NAME("block"));
+  auto* then_block = CreateBasicBlock(BB_NAME("status.exception"));
+  auto* end_block = CreateBasicBlock(BB_NAME("status.normal"));
 
   // if (status == Status::Exception)
   auto* is_exception = builder_->CreateICmpEQ(status, status_exception, REG_NAME("is_exception"));
@@ -1395,7 +1395,7 @@ void Compiler::StartScope(uint16_t scope_id) {
 
   auto* init = CreateBasicBlock(BB_NAME("init"));
   auto* hoisted = CreateBasicBlock(BB_NAME("hoisted"));
-  auto* block = CreateBasicBlock(BB_NAME("block"));
+  auto* block = CreateBasicBlock(BB_NAME("body"));
   auto* cleanup = CreateBasicBlock(BB_NAME("cleanup"));
 
   builder_->CreateBr(init);
@@ -2131,24 +2131,25 @@ llvm::Value* Compiler::CreateIsNull(llvm::Value* value_ptr) {
 }
 
 llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = CreateBasicBlock(BB_NAME("then"));
-  auto* else_block = CreateBasicBlock(BB_NAME("else"));
-  auto* merge_block = CreateBasicBlock(BB_NAME("end"));
+  auto* then_block = CreateBasicBlock(BB_NAME("is_boolean.then"));
+  auto* else_block = CreateBasicBlock(BB_NAME("is_boolean.else"));
+  auto* merge_block = CreateBasicBlock(BB_NAME("is_same_boolean"));
 
+  // if (value.kind == kValueKindBoolean)
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
       builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindBoolean), REG_NAME("is_boolean"));
   builder_->CreateCondBr(cond, then_block, else_block);
-
+  // {
   builder_->SetInsertPoint(then_block);
   auto* boolean = CreateLoadBooleanFromValue(value_ptr);
   auto* then_value = builder_->CreateICmpEQ(boolean, value, REG_NAME("is_same_boolean_value"));
   builder_->CreateBr(merge_block);
-
+  // } else {
   builder_->SetInsertPoint(else_block);
   auto* else_value = builder_->getFalse();
   builder_->CreateBr(merge_block);
-
+  // }
   builder_->SetInsertPoint(merge_block);
   auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("is_same_boolean"));
   phi->addIncoming(then_value, then_block);
@@ -2158,24 +2159,25 @@ llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Va
 }
 
 llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = CreateBasicBlock(BB_NAME("then"));
-  auto* else_block = CreateBasicBlock(BB_NAME("else"));
-  auto* merge_block = CreateBasicBlock(BB_NAME("end"));
+  auto* then_block = CreateBasicBlock(BB_NAME("is_number.then"));
+  auto* else_block = CreateBasicBlock(BB_NAME("is_number.else"));
+  auto* merge_block = CreateBasicBlock(BB_NAME("is_same_number"));
 
+  // if (value.kind == kValueKindNumber)
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
       builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindNumber), REG_NAME("is_number"));
   builder_->CreateCondBr(cond, then_block, else_block);
-
+  // {
   builder_->SetInsertPoint(then_block);
   auto* number = CreateLoadNumberFromValue(value_ptr);
   auto* then_value = builder_->CreateFCmpOEQ(number, value, REG_NAME("is_same_number_value"));
   builder_->CreateBr(merge_block);
-
+  // } else {
   builder_->SetInsertPoint(else_block);
   auto* else_value = builder_->getFalse();
   builder_->CreateBr(merge_block);
-
+  // }
   builder_->SetInsertPoint(merge_block);
   auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("is_same_number"));
   phi->addIncoming(then_value, then_block);
@@ -2185,24 +2187,25 @@ llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Val
 }
 
 llvm::Value* Compiler::CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value) {
-  auto* then_block = CreateBasicBlock(BB_NAME("then"));
-  auto* else_block = CreateBasicBlock(BB_NAME("else"));
-  auto* merge_block = CreateBasicBlock(BB_NAME("end"));
+  auto* then_block = CreateBasicBlock(BB_NAME("is_closure.then"));
+  auto* else_block = CreateBasicBlock(BB_NAME("is_closure.else"));
+  auto* merge_block = CreateBasicBlock(BB_NAME("is_same_closure"));
 
+  // if (value.kind == kValueKindClosure)
   auto* kind = CreateLoadValueKindFromValue(value_ptr);
   auto* cond =
       builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindClosure), REG_NAME("is_closure"));
   builder_->CreateCondBr(cond, then_block, else_block);
-
+  // {
   builder_->SetInsertPoint(then_block);
   auto* func_ptr = CreateLoadFunctionFromValue(value_ptr);
   auto* then_value = builder_->CreateICmpEQ(func_ptr, value, REG_NAME("is_same_closure_value"));
   builder_->CreateBr(merge_block);
-
+  // } else {
   builder_->SetInsertPoint(else_block);
   auto* else_value = builder_->getFalse();
   builder_->CreateBr(merge_block);
-
+  // }
   builder_->SetInsertPoint(merge_block);
   auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("is_same_closure"));
   phi->addIncoming(then_value, then_block);
