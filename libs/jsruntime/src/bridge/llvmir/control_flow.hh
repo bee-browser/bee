@@ -20,7 +20,7 @@ enum class ControlFlowKind {
   kLoopNext,
   kLoopBody,
   kSelect,
-  kCaseEnd,
+  kCaseBranch,
   kException,
 };
 
@@ -89,8 +89,16 @@ struct SelectFlow {
   llvm::BasicBlock* default_block = nullptr;
 };
 
-struct CaseEndFlow {
-  llvm::BasicBlock* block;
+struct CaseBranchFlow {
+  // The last basic block in the statement lists of a case/default clause before the branch.
+  //
+  // This will be connected to `after_block` if it's not terminated and there is a subsequent
+  // case/default clause in the current `SelectFlow`.  If it's not terminated and there is no
+  // subsequent case/default clause, it will be connected to `SelectFlow::end_block`.
+  llvm::BasicBlock* before_block;
+
+  // The first basic block in the statement lists of a case/default clause after the branch.
+  llvm::BasicBlock* after_block;
 };
 
 enum class ExceptionState {
@@ -127,7 +135,7 @@ struct ControlFlow {
     LoopNextFlow loop_next;
     LoopBodyFlow loop_body;
     SelectFlow select;
-    CaseEndFlow case_end;
+    CaseBranchFlow case_branch;
     ExceptionFlow exception;
   };
 
@@ -144,7 +152,8 @@ struct ControlFlow {
   ControlFlow(const LoopBodyFlow& loop_body)
       : kind(ControlFlowKind::kLoopBody), loop_body(loop_body) {}
   ControlFlow(const SelectFlow& select) : kind(ControlFlowKind::kSelect), select(select) {}
-  ControlFlow(const CaseEndFlow& case_end) : kind(ControlFlowKind::kCaseEnd), case_end(case_end) {}
+  ControlFlow(const CaseBranchFlow& case_branch)
+      : kind(ControlFlowKind::kCaseBranch), case_branch(case_branch) {}
   ControlFlow(const ExceptionFlow& exception)
       : kind(ControlFlowKind::kException), exception(exception) {}
   ControlFlow(const ControlFlow& flow) = default;
@@ -319,16 +328,17 @@ class ControlFlowStack {
     return select;
   }
 
-  void PushCaseEndFlow(llvm::BasicBlock* block) {
-    assert(block != nullptr);
-    stack_.emplace_back(CaseEndFlow{block});
+  void PushCaseBranchFlow(llvm::BasicBlock* before_block, llvm::BasicBlock* after_block) {
+    assert(before_block != nullptr);
+    assert(after_block != nullptr);
+    stack_.emplace_back(CaseBranchFlow{before_block, after_block});
   }
 
-  CaseEndFlow PopCaseEndFlow() {
-    assert(top().kind == ControlFlowKind::kCaseEnd);
-    auto case_end = top().case_end;
+  CaseBranchFlow PopCaseBranchFlow() {
+    assert(top().kind == ControlFlowKind::kCaseBranch);
+    auto case_branch = top().case_branch;
     stack_.pop_back();
-    return case_end;
+    return case_branch;
   }
 
   void PushExceptionFlow(llvm::BasicBlock* try_block,
@@ -582,9 +592,10 @@ class ControlFlowStack {
             llvm::errs() << " default-block=" << flow.select.default_block->getName() << '\n';
           }
           break;
-        case ControlFlowKind::kCaseEnd:
-          llvm::errs() << "case-end:\n";
-          llvm::errs() << " block=" << flow.case_end.block->getName() << '\n';
+        case ControlFlowKind::kCaseBranch:
+          llvm::errs() << "case-branch:\n";
+          llvm::errs() << " before-block=" << flow.case_branch.before_block->getName() << '\n';
+          llvm::errs() << " after-block=" << flow.case_branch.after_block->getName() << '\n';
           break;
         case ControlFlowKind::kException:
           llvm::errs() << "exception:";

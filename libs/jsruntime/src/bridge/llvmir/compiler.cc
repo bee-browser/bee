@@ -848,22 +848,21 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
 // Handle an exception if it's thrown.
 void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* retv) {
   auto* status_exception = builder_->getInt32(STATUS_EXCEPTION);
-  auto* then_block = CreateBasicBlock(BB_NAME("status.exception"));
-  auto* end_block = CreateBasicBlock(BB_NAME("status.normal"));
+  auto* exception_block = CreateBasicBlock(BB_NAME("status.exception"));
+  auto* normal_block = CreateBasicBlock(BB_NAME("status.normal"));
 
   // if (status == Status::Exception)
   auto* is_exception = builder_->CreateICmpEQ(status, status_exception, REG_NAME("is_exception"));
-  builder_->CreateCondBr(is_exception, then_block, end_block);
+  builder_->CreateCondBr(is_exception, exception_block, normal_block);
   // {
-  builder_->SetInsertPoint(then_block);
+  builder_->SetInsertPoint(exception_block);
   // Store the exception.
   builder_->CreateStore(status_exception, status_);
   CreateStoreValueToVariable(retv, retv_);
-  auto* exception_block = control_flow_stack_.exception_block();
-  builder_->CreateBr(exception_block);
+  builder_->CreateBr(control_flow_stack_.exception_block());
   // }
 
-  builder_->SetInsertPoint(end_block);
+  builder_->SetInsertPoint(normal_block);
 }
 
 void Compiler::Truthy() {
@@ -1183,7 +1182,7 @@ void Compiler::CaseClause(bool has_statement) {
 
   Duplicate();
 
-  control_flow_stack_.PushCaseEndFlow(case_end_block);
+  control_flow_stack_.PushCaseBranchFlow(case_end_block, branch.after_block);
 }
 
 void Compiler::DefaultClause(bool has_statement) {
@@ -1196,7 +1195,7 @@ void Compiler::DefaultClause(bool has_statement) {
 
   Duplicate();
 
-  control_flow_stack_.PushCaseEndFlow(case_end_block);
+  control_flow_stack_.PushCaseBranchFlow(case_end_block, branch.after_block);
   control_flow_stack_.SetDefaultCaseBlock(branch.after_block);
 }
 
@@ -1215,17 +1214,19 @@ void Compiler::Switch(uint16_t id, uint16_t num_cases, uint16_t default_index) {
 
   auto* case_block = builder_->GetInsertBlock();
 
-  // Connect statement blocks of case/default clauses.
-  // The blocks has been stored in the stack in reverse order.
+  // Connect the last basic blocks of each case/default clause to the first basic block of the
+  // statement lists of the next case/default clause if it's not terminated.
+  //
+  // The last basic blocks has been stored in the control flow stack in reverse order.
   auto* fall_through_block = select.end_block;
   for (auto i = num_cases - 1;; --i) {
-    auto case_end = control_flow_stack_.PopCaseEndFlow();
-    if (case_end.block->getTerminator() == nullptr) {
-      builder_->SetInsertPoint(case_end.block);
+    auto case_branch = control_flow_stack_.PopCaseBranchFlow();
+    if (case_branch.before_block->getTerminator() == nullptr) {
+      builder_->SetInsertPoint(case_branch.before_block);
       builder_->CreateBr(fall_through_block);
       fall_through_block->moveAfter(builder_->GetInsertBlock());
     }
-    fall_through_block = case_end.block;
+    fall_through_block = case_branch.after_block;
     if (i == 0) {
       break;
     }
