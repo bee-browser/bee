@@ -35,12 +35,15 @@ impl Drop for Validator {
     }
 }
 
-fn evaluate(src: &str, optimize: bool, expected_values: Vec<Value>) -> Result<Value, Value> {
+fn evaluate(src: &str, optimize: bool, enable_labels: bool, expected_values: Vec<Value>) -> Result<Value, Value> {
     let mut runtime = Runtime::with_extension(Validator {
         expected_values,
         actual_values: vec![],
     });
     runtime.enable_scope_cleanup_checker();
+    if enable_labels {
+        runtime.enable_llvmir_labels();
+    }
     runtime.register_host_function("print", |runtime, args| {
         // FIXME(issue#260): bindgen derives `Copy` and `Clone` for all types by default and
         // provides `no_copy()`.  However, `no_copy()` stops deriving `Copy` and `Clone` for
@@ -60,17 +63,22 @@ fn evaluate(src: &str, optimize: bool, expected_values: Vec<Value>) -> Result<Va
 
 #[test]
 fn {{ test.name }}_optimize() {
-   {{ test.name }}(true);
+   {{ test.name }}(true, false);
 }
 
 #[test]
 fn {{ test.name }}_no_optimize() {
-   {{ test.name }}(false);
+   {{ test.name }}(false, false);
 }
 
-fn {{ test.name }}(optimize: bool) {
+#[test]
+fn {{ test.name }}_with_labels() {
+   {{ test.name }}(false, true);
+}
+
+fn {{ test.name }}(optimize: bool, enable_labels: bool) {
     let src = include_str!("{{ test.name }}.js");
-    let result = evaluate(src, optimize, vec![
+    let result = evaluate(src, optimize, enable_labels, vec![
         {%- for expected in test.expectedValues %}
         {%- if expected === "Value::UNDEFINED" %}
         {{ expected }},
