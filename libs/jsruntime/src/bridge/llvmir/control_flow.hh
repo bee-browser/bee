@@ -11,6 +11,8 @@
 #include <llvm/Support/raw_ostream.h>
 #pragma GCC diagnostic pop
 
+#include "helper.hh"
+
 enum class ControlFlowKind {
   kFunction,
   kScope,
@@ -540,10 +542,10 @@ class ControlFlowStack {
       switch (flow.kind) {
         case ControlFlowKind::kFunction:
           llvm::errs() << "function:\n";
-          llvm::errs() << " locals-block=" << flow.function.locals_block->getName() << '\n';
-          llvm::errs() << " args-block=" << flow.function.args_block->getName() << '\n';
-          llvm::errs() << " body-block=" << flow.function.body_block->getName() << '\n';
-          llvm::errs() << " return-block=" << flow.function.return_block->getName() << '\n';
+          llvm::errs() << " locals-block=" << V2S(flow.function.locals_block) << '\n';
+          llvm::errs() << " args-block=" << V2S(flow.function.args_block) << '\n';
+          llvm::errs() << " body-block=" << V2S(flow.function.body_block) << '\n';
+          llvm::errs() << " return-block=" << V2S(flow.function.return_block) << '\n';
           break;
         case ControlFlowKind::kScope:
           llvm::errs() << "scope:";
@@ -554,48 +556,48 @@ class ControlFlowStack {
             llvm::errs() << " thrown";
           }
           llvm::errs() << '\n';
-          llvm::errs() << " init-block=" << flow.scope.init_block->getName() << '\n';
-          llvm::errs() << " hoisted-block=" << flow.scope.hoisted_block->getName() << '\n';
-          llvm::errs() << " block=" << flow.scope.block->getName() << '\n';
-          llvm::errs() << " cleanup-block=" << flow.scope.cleanup_block->getName() << '\n';
+          llvm::errs() << " init-block=" << V2S(flow.scope.init_block) << '\n';
+          llvm::errs() << " hoisted-block=" << V2S(flow.scope.hoisted_block) << '\n';
+          llvm::errs() << " body-block=" << V2S(flow.scope.block) << '\n';
+          llvm::errs() << " cleanup-block=" << V2S(flow.scope.cleanup_block) << '\n';
           break;
         case ControlFlowKind::kBranch:
           llvm::errs() << "branch:\n";
-          llvm::errs() << " before-block=" << flow.branch.before_block->getName() << '\n';
-          llvm::errs() << " after-block=" << flow.branch.after_block->getName() << '\n';
+          llvm::errs() << " before-block=" << V2S(flow.branch.before_block) << '\n';
+          llvm::errs() << " after-block=" << V2S(flow.branch.after_block) << '\n';
           break;
         case ControlFlowKind::kLoopInit:
           llvm::errs() << "loop-init:\n";
-          llvm::errs() << " branch-block=" << flow.loop_init.branch_block->getName() << '\n';
-          llvm::errs() << " insert-point=" << flow.loop_init.insert_point->getName() << '\n';
+          llvm::errs() << " branch-block=" << V2S(flow.loop_init.branch_block) << '\n';
+          llvm::errs() << " insert-point=" << V2S(flow.loop_init.insert_point) << '\n';
           break;
         case ControlFlowKind::kLoopTest:
           llvm::errs() << "loop-test:\n";
-          llvm::errs() << " then-block=" << flow.loop_test.then_block->getName() << '\n';
-          llvm::errs() << " else-block=" << flow.loop_test.else_block->getName() << '\n';
-          llvm::errs() << " insert-point=" << flow.loop_test.insert_point->getName() << '\n';
+          llvm::errs() << " then-block=" << V2S(flow.loop_test.then_block) << '\n';
+          llvm::errs() << " else-block=" << V2S(flow.loop_test.else_block) << '\n';
+          llvm::errs() << " insert-point=" << V2S(flow.loop_test.insert_point) << '\n';
           break;
         case ControlFlowKind::kLoopNext:
           llvm::errs() << "loop-next:\n";
-          llvm::errs() << " branch-block=" << flow.loop_next.branch_block->getName() << '\n';
-          llvm::errs() << " insert-point=" << flow.loop_next.insert_point->getName() << '\n';
+          llvm::errs() << " branch-block=" << V2S(flow.loop_next.branch_block) << '\n';
+          llvm::errs() << " insert-point=" << V2S(flow.loop_next.insert_point) << '\n';
           break;
         case ControlFlowKind::kLoopBody:
           llvm::errs() << "loop-body:\n";
-          llvm::errs() << " branch-block=" << flow.loop_body.branch_block->getName() << '\n';
-          llvm::errs() << " insert-point=" << flow.loop_body.insert_point->getName() << '\n';
+          llvm::errs() << " branch-block=" << V2S(flow.loop_body.branch_block) << '\n';
+          llvm::errs() << " insert-point=" << V2S(flow.loop_body.insert_point) << '\n';
           break;
         case ControlFlowKind::kSelect:
           llvm::errs() << "select:\n";
-          llvm::errs() << " end-block=" << flow.select.end_block->getName() << '\n';
+          llvm::errs() << " end-block=" << V2S(flow.select.end_block) << '\n';
           if (flow.select.default_block != nullptr) {
-            llvm::errs() << " default-block=" << flow.select.default_block->getName() << '\n';
+            llvm::errs() << " default-block=" << V2S(flow.select.default_block) << '\n';
           }
           break;
         case ControlFlowKind::kCaseBranch:
           llvm::errs() << "case-branch:\n";
-          llvm::errs() << " before-block=" << flow.case_branch.before_block->getName() << '\n';
-          llvm::errs() << " after-block=" << flow.case_branch.after_block->getName() << '\n';
+          llvm::errs() << " before-block=" << V2S(flow.case_branch.before_block) << '\n';
+          llvm::errs() << " after-block=" << V2S(flow.case_branch.after_block) << '\n';
           break;
         case ControlFlowKind::kException:
           llvm::errs() << "exception:";
@@ -614,10 +616,10 @@ class ControlFlowStack {
               break;
           }
           llvm::errs() << '\n';
-          llvm::errs() << " try-block=" << flow.exception.try_block->getName() << '\n';
-          llvm::errs() << " catch-block=" << flow.exception.catch_block->getName() << '\n';
-          llvm::errs() << " finally-block=" << flow.exception.finally_block->getName() << '\n';
-          llvm::errs() << " end-block=" << flow.exception.end_block->getName() << '\n';
+          llvm::errs() << " try-block=" << V2S(flow.exception.try_block) << '\n';
+          llvm::errs() << " catch-block=" << V2S(flow.exception.catch_block) << '\n';
+          llvm::errs() << " finally-block=" << V2S(flow.exception.finally_block) << '\n';
+          llvm::errs() << " end-block=" << V2S(flow.exception.end_block) << '\n';
           break;
       }
     }
@@ -627,7 +629,7 @@ class ControlFlowStack {
   void DumpBranchTargetStack(const std::vector<BranchTarget>& stack, const char* name) const {
     llvm::errs() << "### llvm-ir:" << name << '\n';
     for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
-      llvm::errs() << "block: " << it->block->getName();
+      llvm::errs() << "block: " << V2S(it->block);
       if (it->symbol != 0) {
         llvm::errs() << ":" << it->symbol;
       }

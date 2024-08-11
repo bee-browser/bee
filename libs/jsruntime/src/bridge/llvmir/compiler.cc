@@ -25,6 +25,7 @@
 #include <llvm/Transforms/Utils/Mem2Reg.h>
 #pragma GCC diagnostic pop
 
+#include "helper.hh"
 #include "macros.hh"
 #include "module.hh"
 
@@ -1690,25 +1691,25 @@ void Compiler::DumpStack() {
     const auto& item = *it;
     switch (item.type) {
       case Item::Undefined:
-        llvm::errs() << "value: undefined";
+        llvm::errs() << "undefined";
         break;
       case Item::Null:
-        llvm::errs() << "value: null";
+        llvm::errs() << "null";
         break;
       case Item::Boolean:
-        llvm::errs() << "boolean: " << item.value;
+        llvm::errs() << "boolean: " << V2S(item.value);
         break;
       case Item::Number:
-        llvm::errs() << "number: " << item.value;
+        llvm::errs() << "number: " << V2S(item.value);
         break;
       case Item::Function:
-        llvm::errs() << "function: " << item.func;
+        llvm::errs() << "function: " << V2S(item.func);
         break;
       case Item::Closure:
-        llvm::errs() << "closure: " << item.value;
+        llvm::errs() << "closure: " << V2S(item.value);
         break;
       case Item::Any:
-        llvm::errs() << "any: " << item.value;
+        llvm::errs() << "any: " << V2S(item.value);
         break;
       case Item::Reference:
         llvm::errs() << "reference: symbol=" << item.reference.symbol;
@@ -1729,10 +1730,10 @@ void Compiler::DumpStack() {
         llvm::errs() << item.reference.locator.index;
         break;
       case Item::Argv:
-        llvm::errs() << "argv: " << item.value;
+        llvm::errs() << "argv: " << V2S(item.value);
         break;
       case Item::Capture:
-        llvm::errs() << "capture: " << item.value;
+        llvm::errs() << "capture: " << V2S(item.value);
         break;
     }
 #if defined(BEE_BUILD_DEBUG)
