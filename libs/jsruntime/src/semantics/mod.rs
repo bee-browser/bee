@@ -39,6 +39,19 @@ impl<X> Runtime<X> {
         let processor = Processor::new(analyzer, false);
         Parser::for_script(source, processor).parse()
     }
+
+    /// Parses a given source text as a module.
+    pub fn parse_module(&mut self, source: &str) -> Result<Program, Error> {
+        logger::debug!(event = "parse", source_kind = "module");
+        let mut analyzer = Analyzer::new(
+            &self.pref,
+            &mut self.symbol_registry,
+            &mut self.function_registry,
+        );
+        analyzer.use_global_bindings();
+        let processor = Processor::new(analyzer, true);
+        Parser::for_module(source, processor).parse()
+    }
 }
 
 /// A type representing a JavaScript program after the semantic analysis.
