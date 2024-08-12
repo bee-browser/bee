@@ -234,6 +234,7 @@ impl<'r> Analyzer<'r> {
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::FunctionExpression(named) => self.handle_function_expression(named),
             Node::ArrowFunction => self.handle_arrow_function(),
+            Node::AwaitExpression => self.handle_await_expression(),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
@@ -607,6 +608,10 @@ impl<'r> Analyzer<'r> {
                 &func.captures,
                 false,
             );
+    }
+
+    fn handle_await_expression(&mut self) {
+        self.context_stack.last_mut().unwrap().put_command(CompileCommand::Await);
     }
 
     fn handle_then_block(&mut self) {
@@ -1539,6 +1544,8 @@ pub enum CompileCommand {
     Break(Symbol),
     Return(u32),
     Throw,
+
+    Await,
 
     Discard,
     Swap,

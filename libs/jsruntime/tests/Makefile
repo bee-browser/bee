@@ -5,7 +5,7 @@ TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 CODEGEN_TARGETS := evaluate.rs
 
-EVALUATE_TESTS := $(wildcard evaluate_*.js)
+EVALUATE_TESTS := $(wildcard evaluate_*.js) $(wildcard evaluate_*.mjs)
 
 .PHONY: codegen
 codegen: evaluate.rs

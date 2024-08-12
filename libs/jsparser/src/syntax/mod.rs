@@ -123,6 +123,7 @@ enum Detail {
     ConciseBody,
     StatementList,
     CoverCallExpressionAndAsyncArrowHead,
+    ModuleItemList,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -210,6 +211,7 @@ pub enum Node<'s> {
     FunctionDeclaration,
     FunctionExpression(bool),
     ArrowFunction,
+    AwaitExpression,
     ThenBlock,
     ElseBlock,
     FalsyShortCircuit,
@@ -2442,6 +2444,16 @@ where
         Ok(())
     }
 
+    // 15.8 Async Function Definitions
+
+    // AwaitExpression[Yield] :
+    //   await UnaryExpression[?Yield, +Await]
+    fn process_await(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AwaitExpression);
+        self.replace(2,Detail::Expression);
+        Ok(())
+    }
+
     // 16.1 Scripts
 
     // Script :
@@ -2454,6 +2466,36 @@ where
     //   ScriptBody
     fn process_script(&mut self) -> Result<(), Error> {
         self.pop();
+        Ok(())
+    }
+
+    // 16.2 Modules
+
+    // Module :
+    //   [empty]
+    fn process_empty_module(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    // Module :
+    //   ModuleBody
+    fn process_module(&mut self) -> Result<(), Error> {
+        self.pop();
+        Ok(())
+    }
+
+    // ModuleItemList :
+    //   ModuleItem
+    fn process_module_item_list_head(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::ModuleItemList;
+        Ok(())
+    }
+
+    // ModuleItemList :
+    //   ModuleItemList ModuleItem
+    fn process_module_item_list_item(&mut self) -> Result<(), Error> {
+        self.pop();
+        self.update_ends();
         Ok(())
     }
 }
