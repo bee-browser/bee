@@ -337,6 +337,7 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Break(symbol) => self.process_break(*symbol),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Throw => self.process_throw(),
+            CompileCommand::Await => self.process_await(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
@@ -2101,6 +2102,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(next_block);
 
         self.create_basic_block_for_deadcode();
+    }
+
+    fn process_await(&mut self) {
+        // TODO
     }
 
     fn process_discard(&mut self) {
