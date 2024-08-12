@@ -5,9 +5,9 @@
 - rule: Script -> ScriptBody
   action: process_script
 - rule: Module -> (empty)
-  action: undefined
+  action: process_empty_module
 - rule: Module -> ModuleBody
-  action: undefined
+  action: process_module
 - rule: ArrowFormalParameters -> LPAREN UniqueFormalParameters RPAREN
   action: process_arrow_formal_parameters
 - rule: ArrowFormalParameters_Yield -> LPAREN UniqueFormalParameters_Yield RPAREN
@@ -21,7 +21,7 @@
 - rule: ScriptBody -> StatementList
   action: nop
 - rule: ModuleBody -> ModuleItemList
-  action: undefined
+  action: nop
 - rule: UniqueFormalParameters -> FormalParameters
   action: nop
 - rule: UniqueFormalParameters_Yield -> FormalParameters_Yield
@@ -35,9 +35,9 @@
 - rule: StatementList -> StatementList StatementListItem
   action: process_statement_list_item
 - rule: ModuleItemList -> ModuleItem
-  action: undefined
+  action: process_module_item_list_head
 - rule: ModuleItemList -> ModuleItemList ModuleItem
-  action: undefined
+  action: process_module_item_list_item
 - rule: FormalParameters -> (empty)
   action: process_formal_parameters_empty
 - rule: FormalParameters -> FunctionRestParameter
@@ -93,7 +93,7 @@
 - rule: ModuleItem -> ExportDeclaration
   action: undefined
 - rule: ModuleItem -> StatementListItem_Await
-  action: undefined
+  action: nop
 - rule: FunctionRestParameter -> BindingRestElement
   action: undefined
 - rule: FormalParameterList -> FormalParameter
@@ -5462,7 +5462,7 @@
 - rule: UnaryExpression_Await -> NOT UnaryExpression_Await
   action: process_logical_not
 - rule: UnaryExpression_Await -> AwaitExpression
-  action: undefined
+  action: nop
 - rule: UpdateExpression_Await -> LeftHandSideExpression_Await
   action: nop
 - rule: >-
@@ -5540,7 +5540,7 @@
 - rule: ShortCircuitExpression_Yield_Await -> CoalesceExpression_Yield_Await
   action: nop
 - rule: AwaitExpression -> AWAIT UnaryExpression_Await
-  action: undefined
+  action: process_await
 - rule: ExponentiationExpression_Yield -> UnaryExpression_Yield
   action: nop
 - rule: >-
@@ -5646,7 +5646,7 @@
 - rule: UnaryExpression_Yield_Await -> NOT UnaryExpression_Yield_Await
   action: process_logical_not
 - rule: UnaryExpression_Yield_Await -> AwaitExpression_Yield
-  action: undefined
+  action: nop
 - rule: UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await
   action: nop
 - rule: >-
@@ -5694,7 +5694,7 @@
     BitwiseXORExpression_Yield_Await
   action: process_bitwise_or
 - rule: AwaitExpression_Yield -> AWAIT UnaryExpression_Yield_Await
-  action: undefined
+  action: process_await
 - rule: BitwiseXORExpression_Yield -> BitwiseANDExpression_Yield
   action: nop
 - rule: >-

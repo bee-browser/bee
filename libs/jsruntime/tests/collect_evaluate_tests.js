@@ -37,8 +37,12 @@ async function main(args, options) {
     const lines = script.split('\n').map((line) => line.trim());
     const expectedValues = lines.filter((line) => line.includes('///=')).map((line) => line.split('///=')[1].trim());
     const throws = lines.find((line) => line.includes('///!'))?.split('///!')[1].trim();
+    const name = test.endsWith('.js') ? path.basename(test, '.js') : path.basename(test, '.mjs');
+    const module = test.endsWith('.js') ? false : true;
     tests.push({
-      name: path.basename(test, '.js'),
+      filename: test,
+      name,
+      module,
       expectedValues,
       throws,
     });
