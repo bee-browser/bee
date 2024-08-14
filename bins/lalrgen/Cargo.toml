@@ -12,7 +12,7 @@ clap = { version = "4.5.15", features = ["derive", "env"] }
 dashmap = "6.0.1"
 humantime = "2.1.0"
 im = "15.1.0"
-indexmap = "2.3.0"
+indexmap = "2.4.0"
 itertools = "0.13.0"
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
