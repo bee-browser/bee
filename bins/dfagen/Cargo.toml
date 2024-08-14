@@ -9,7 +9,7 @@ publish = false
 anyhow = "1.0.86"
 base = { path = "../../libs/base" }
 clap = { version = "4.5.15", features = ["derive", "env"] }
-indexmap = { version = "2.3.0", features = ["serde"] }
+indexmap = { version = "2.4.0", features = ["serde"] }
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
 serde = { version = "1.0.207", features = ["derive", "rc"] }
