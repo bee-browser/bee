@@ -12,4 +12,4 @@ clap = { version = "4.5.15", features = ["env", "derive", "wrap_help"] }
 serde = { version = "1.0.207", features = ["derive"] }
 # "unbounded_depth" is needed for parsing a large JSON.
 # See https://github.com/serde-rs/json/issues/334.
-serde_json = { version = "1.0.124", features = ["preserve_order", "unbounded_depth"] }
+serde_json = { version = "1.0.125", features = ["preserve_order", "unbounded_depth"] }
