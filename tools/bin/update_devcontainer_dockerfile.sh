@@ -2,8 +2,8 @@ set -eu
 
 PROGNAME=$(basename $0)
 BASEDIR=$(cd $(dirname $0); pwd)
-PROJDIR=$(cd $BASEDIR/..; pwd)
-TARGET_FILE=.devcontainer/Dockerfile
+PROJDIR=$(cd $BASEDIR/../..; pwd)
+DOCKERFILE=.devcontainer/Dockerfile
 
 if [ "$(uname)" != Linux ] || id -nG | grep -q docker
 then
@@ -12,12 +12,21 @@ else
   DOCKER='sudo docker'
 fi
 
+log() {
+  echo "$1" >&2
+}
+
+error() {
+  log "ERROR: $1"
+  exit 1
+}
+
 IMAGE='mcr.microsoft.com/vscode/devcontainers/rust'
 CLEAN=no
 
 help() {
   cat <<EOF >&2
-Update Dockerfile for VSCode Remote Container.
+Update $DOCKERFILE.
 
 USAGE:
   $PROGNAME [options]
@@ -25,7 +34,7 @@ USAGE:
 
 OPTIONS:
   -h, --help
-    Show help.
+    Show this screen.
 
   -c, --clean
     Remove $IMAGE at exit.
@@ -38,7 +47,7 @@ clean() {
   if [ "$CLEAN" = yes ]
   then
     $DOCKER image rm -f $IMAGE >/dev/null
-    echo "Removed $IMAGE"
+    log "Removed $IMAGE"
   fi
   rm -f $TEMP_FILE
 }
@@ -59,23 +68,17 @@ do
   esac
 done
 
-if [ "$(pwd)" != "$PROJDIR" ]
-then
-  echo "ERROR: must run in the project root"
-  exit 1
-fi
-
 TEMP_FILE=$(mktemp)
 trap "clean" EXIT INT TERM
 
-echo "Downloading $IMAGE..."
+log "Downloading $IMAGE..."
 $DOCKER image pull $IMAGE
 
-echo "Getting the commit hash of rustc contained in $IMAGE..." >&2
+log "Getting the commit hash of rustc contained in $IMAGE..."
 RUSTC_COMMIT_HASH=$($DOCKER run --rm $IMAGE rustc -vV | \
                       grep 'commit-hash' | cut -d ' ' -f 2)
 
-echo "Getting the path of the default toolchain contained in $IMAGE..." >&2
+log "Getting the path of the default toolchain contained in $IMAGE..."
 RUST_TOOLCHAIN_PATH=$($DOCKER run --rm $IMAGE rustup toolchain list -v | \
                         grep '(default)' | cut -f 2)
 
@@ -86,21 +89,21 @@ RUST_TOOLCHAIN_PATH: $RUST_TOOLCHAIN_PATH
 --------------------------------------------------------------------------------
 EOF
 
-echo "Updating sourcemap variables in $TARGET_FILE..." >&2
+log "Updating sourcemap variables in $DOCKERFILE..."
 # Don't use the -i option of `sed`.
 # The incompatibility between macOS and GNU will cause troubles.
 #
 # Use `|` instead of `/` because RUST_TOOLCHAIN_PATH contains `/`.
 sed -e "s|^ENV RUSTC_COMMIT_HASH=.*|ENV RUSTC_COMMIT_HASH=\"$RUSTC_COMMIT_HASH\"|" \
     -e "s|^ENV RUST_TOOLCHAIN_PATH=.*|ENV RUST_TOOLCHAIN_PATH=\"$RUST_TOOLCHAIN_PATH\"|" \
-    $TARGET_FILE >$TEMP_FILE
-mv -f $TEMP_FILE $TARGET_FILE
+    $PROJDIR/$DOCKERFILE >$TEMP_FILE
+mv -f $TEMP_FILE $PROJDIR/$DOCKERFILE
 
-if git diff --quiet -- $TARGET_FILE
+if git -C $PROJDIR diff --quiet -- $DOCKERFILE
 then
-  echo "Not changed"
+  log "Not changed"
 else
-  echo "Updated"
-  git add $TARGET_FILE
-  git commit -m "build: update $TARGET_FILE"
+  log "Updated"
+  git -C $PROJDIR add $DOCKERFILE
+  git -C $PROJDIR commit -m "build: update $DOCKERFILE"
 fi
