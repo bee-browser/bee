@@ -1,3 +1,5 @@
+export PROJDIR := $(abspath ..)
+
 # On my environment, the maximum size of memory usage of a linker is smaller than 10GB.
 LLVM_LINK_MAX_RAM_USAGE := $(shell deno eval -p '10 * 1024 * 1024 * 1024')
 DEFAULT_LLVM_PARALLEL_LINK_JOBS := \
@@ -10,9 +12,12 @@ ADDR2LINE_VERSION := 0.23.0
 install: addr2line llvm
 
 .PHONY: addr2line
-addr2line:
-	@mkdir -p bin
+addr2line: | BINDIR
 	@cargo install --root=. --bin=addr2line --features=bin addr2line@$(ADDR2LINE_VERSION)
+
+.PHONY: v8
+v8: | BINDIR
+	@sh $(PROJDIR)/tools/bin/install_v8.sh $(abspath bin)
 
 .PHONY: llvm
 # See //vendor/src/llvm/llvm-project/llvm/docs/GettingStarted.rst
@@ -39,3 +44,6 @@ llvm:
 .PHONY: clean
 clean:
 	@rm -rf bin include lib share
+
+BINDIR:
+	@mkdir -p bin
