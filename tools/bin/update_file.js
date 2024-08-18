@@ -8,7 +8,7 @@ const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DOC = `
 Update the content of a file iff it changes.
 
-Usage:
+USAGE:
   ${PROGNAME} [options] <file>
 `.trim();
 

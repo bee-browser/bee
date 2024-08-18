@@ -1,13 +1,18 @@
-set -eu
+# tools/bin
 
-PROGNAME=$(basename $0)
-BASEDIR=$(realpath $(dirname $0))
-PROJDIR=$(realpath $BASEDIR/../..)
+This folder contains scripts files implementing commands used in development.
 
-ADDR2LINE="$PROJDIR/vendor/bin/addr2line"
+There are two types of scripts:
 
-help() {
-  cat <<EOF >&2
+1. Shell scripts (`*.sh`) which can be run with `sh` or `bash`
+2. JavaScript scripts (`*.js`) which can be run with `deno`
+
+You can choose either one depending on the task that the script does.
+
+Every command supports the `-h` and `--help` options.  The help of each command is described in
+accordance with the [`docopt`] format like this:
+
+```
 Run a command for a performance measurement.
 
 USAGE:
@@ -33,34 +38,11 @@ DESCRIPTION:
 EXAMPLES:
   $PROGNAME -- cargo flamegraph --bin=jstb --profile=profiling -- \\
     run libs/jsruntime/benches/dataset/fib32.js
-EOF
-  exit 0
-}
+```
 
-while [ $# -gt 0 ]
-do
-  case "$1" in
-    '-h' | '--help')
-      help
-      ;;
-    '--addr2line')
-      ADDR2LINE="$(realpath $2)"
-      shift 2
-      ;;
-    '--')
-      shift
-      break
-      ;;
-  esac
-done
+The help starts with a single-line short description of the command, followed by sections.
 
-CMD=$@
+Each section starts with a line in the format `<UPPERCASE-SECTION-NAME>:`.  The `USAGE:` section is
+always required and others are optional.
 
-echo 'Change /proc/sys/kernel/perf_event_paranoid temporarily for the measurement'
-SAVED=$(cat /proc/sys/kernel/perf_event_paranoid)
-trap "echo $SAVED | sudo tee /proc/sys/kernel/perf_event_paranoid >/dev/null" EXIT
-echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid >/dev/null
-
-echo "Running \`$CMD\`..."
-export PATH="$(dirname $ADDR2LINE):$PATH"
-$CMD
+[`docopt`]: http://docopt.org/

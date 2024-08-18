@@ -11,11 +11,11 @@ const DEFAULT_LIMIT = 100;
 const DOC = `
 Show a list of popular web sites.
 
-Usage:
+USAGE:
   ${PROGNAME} <ranking> [<limit>]
   ${PROGNAME} -h | --help
 
-Arguments:
+ARGUMENTS:
   <ranking>
     Ranking site to use.
 

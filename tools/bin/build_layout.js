@@ -10,15 +10,15 @@ const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));
 const DOC = `
 Build a layout tree from a DOM tree scraped by dom-scrapter.
 
-Usage:
+USAGE:
   ${PROGNAME} [options] [<file>]
   ${PROGNAME} -h | --help
 
-Options:
+OPTIONS:
   --json
     Output JSON instead of JSONL.
 
-Arguments:
+ARGUMENTS:
   <file>
     Path to a JSON file containing the DOM tree.
 
