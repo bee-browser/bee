@@ -16,11 +16,6 @@
       "libs/jsruntime/tests/",
     ]
   },
-  // TODO: no package for cliffy in jsr.io.
-  // TODO: servest was deprecated...
-  // TODO: npm:puppeteer work with deno, but warning messages are shown.
-  //       See https://github.com/denoland/deno/issues/19507.
-  // TODO: migrate to jsr.io.
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.5",
     "@deno/emit": "jsr:@deno/emit@0.44.0",
@@ -43,6 +38,7 @@
     "handlebars": "npm:handlebars@4.7.8",
     "nunjucks": "npm:nunjucks@3.2.4",
     "ora": "npm:ora@8.0.1",
+    // TODO(issue#275): servest was deprecated...
     "servest": "https://deno.land/x/servest@v1.3.4/mod.ts",
     "test262-stream": "npm:test262-stream@1.4.0"
   },
