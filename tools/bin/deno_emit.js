@@ -10,11 +10,11 @@ const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DOC = `
 Take a root module and all its dependencies and emit a single JavaScript bundle.
 
-Usage:
+USAGE:
   ${PROGNAME} <root>
   ${PROGNAME} -h | --help
 
-Arguments:
+ARGUMENTS:
   <root>
     Path to the root module file.
 `;

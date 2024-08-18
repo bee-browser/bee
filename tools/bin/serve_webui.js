@@ -12,11 +12,11 @@ const DEFAULT_PORT = 3000;
 const DOC = `
 Start Web UI server.
 
-Usage:
+USAGE:
   ${PROGNAME} [options]
   ${PROGNAME} -h | --help
 
-Options:
+OPTIONS:
   -p, --port=<port>  [default: ${DEFAULT_PORT}]
     Port to be listened.
 

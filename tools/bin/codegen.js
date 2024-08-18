@@ -12,11 +12,11 @@ const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DOC = `
 Generate a source file using a Handlebars template file and an input object.
 
-Usage:
+USAGE:
   ${PROGNAME} [options] <template> [<input>]
   ${PROGNAME} -h | --help
 
-Options:
+OPTIONS:
   --no-escape
     Disable to HTML-escape results of expressions in mustaches.
 
@@ -36,18 +36,18 @@ Options:
   --deps <target>
     Print a Makefile which contains dependencies of the <target>.
 
-Arguments:
+ARGUMENTS:
   <template>
     The path to the template file to use.
 
   <input>
     A data source of the input object.
 
-Description:
+DESCRIPTION:
   This command processes the template function in the strict mode and stops the processing if
   identifies used in the template are undefined.
 
-Custom @data:
+CUSTOM DATA:
   @command
     The command that generated the source file.  The JSON string of the input object is not
     included if it's read from STDIN.
@@ -55,7 +55,7 @@ Custom @data:
   @template
     Relatie path to the template file from the project root.
 
-Helpers:
+HELPER:
   * json as JSON.stringify
   * padStart, padEnd
   * npm:change-case

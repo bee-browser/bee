@@ -1,6 +1,3 @@
-#!/bin/sh
-
-
 set -eu
 
 PROGNAME="$(basename $0)"
@@ -22,21 +19,22 @@ help() {
   cat <<EOF >&2
 Evaluate JavaScript code in a Puppeteer Docker container.
 
-Usage:
+USAGE:
   $PROGNAME [<script>] -- [<docker-run-options>...]
   $PROGNAME -h | --help
 
-Arguments:
+ARGUMENTS:
   <script>
     JavaScript code or a path to an existing JavaScript file.
 
     Read JavaScript code from STDIN if the <script> is not specified.
 
-Description:
-  The JavaScript code must be a CommonJS module.  It will be evaluated by Node.js inside the Docker
-  container created from the Docker image $DOCKER_IMAGE.
+DESCRIPTION:
+  The JavaScript code must be a CommonJS module.  It will be evaluated by
+  Node.js inside the Docker container created from the Docker image
+  $DOCKER_IMAGE.
 
-Examples:
+EXAMPLES:
   Evaluate JavaScript code:
     $PROGNAME "console.log('hi there')"
 

@@ -1,5 +1,3 @@
-#!/bin/sh
-
 set -eu
 
 PROGNAME=$(basename $0)
@@ -15,18 +13,18 @@ help() {
   cat <<EOF >&2
 Get a DevTools performance trace for a page load.
 
-Usage:
+USAGE:
   $PROGNAME [options] [<url-or-file>]
   $PROGNAME -h | --help
 
-Options:
+OPTIONS:
   --logging
     Enable logging.
 
   --viewport=<size> [default: ${VIEWPORT_WIDTH}x${VIEWPORT_HEIGHT}]
     A size of the viewport where the content is rendered.
 
-Arguments:
+ARGUMENTS:
   <url-or-file>
     An URL or a path to an existing file to load.
 

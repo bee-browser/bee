@@ -12,11 +12,11 @@ const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DOC = `
 Render a Nunjucks template file with an input data.
 
-Usage:
+USAGE:
   ${PROGNAME} [options] <template> [<data>]
   ${PROGNAME} -h | --help
 
-Options:
+OPTIONS:
   --escape
     Enable HTML-escape.
 
@@ -27,14 +27,14 @@ Options:
     without the '_'.  For example, \`_partial.html\` template file can be rendered with
     \`{{< partial.html}}\`.
 
-Arguments:
+ARGUMENTS:
   <template>
     The path to the template file to use.
 
   <data>
     A data source of the input object.
 
-Description:
+DESCRIPTION:
   This command processes the template function in the strict mode and stops the processing if
   identifies used in the template are undefined.
 
@@ -46,10 +46,10 @@ Custom @data:
   @template
     Relatie path to the template file from the project root.
 
-Helpers:
+HELPERS:
   * npm:change-case
 
-Examples:
+EXAMPLES:
   The following commands output the same result:
     echo '{ "name": "value1" }' | ${PROGNAME} template.njk
     ${PROGNAME} template.njk '{ "name": "value2" }'

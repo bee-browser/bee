@@ -17,18 +17,18 @@ const TEMPLATE_FILE = path.join(RESOURCES_DIR, 'dot_matrix', 'main.html.hbs');
 const DOC = `
 Convert a text to a html where the text is rendered with a dot matrix font.
 
-Usage:
+USAGE:
   ${PROGNAME} [options] [<text>]
   ${PROGNAME} -h | --help
 
-Options:
+OPTIONS:
   -b, --box=<size>  [default: ${DEFAULT_BOX_SIZE}]
     Box size in pixels in the form "<width>x<height>".
 
   -c, --color=<color>  [default: ${DEFAULT_COLOR}]
     Text color.
 
-Arguments:
+ARGUMENTS:
   <text>
     The text to be renderer with the dot matrix font.
 

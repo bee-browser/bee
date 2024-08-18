@@ -33,11 +33,8 @@ USAGE:
   $PROGNAME -h | --help
 
 OPTIONS:
-  -h, --help
-    Show this screen.
-
   -c, --clean
-    Remove $IMAGE at exit.
+    Remove the $IMAGE image.
 EOF
   exit 0
 }
@@ -47,7 +44,7 @@ clean() {
   if [ "$CLEAN" = yes ]
   then
     $DOCKER image rm -f $IMAGE >/dev/null
-    log "Removed $IMAGE"
+    log "Removed the image"
   fi
   rm -f $TEMP_FILE
 }
