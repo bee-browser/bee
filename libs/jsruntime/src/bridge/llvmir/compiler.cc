@@ -98,10 +98,6 @@ void Compiler::SetTargetTriple(const char* triple) {
   module_->setTargetTriple(triple);
 }
 
-void Compiler::SetRuntime(uintptr_t runtime) {
-  UNUSED(runtime);
-}
-
 void Compiler::Undefined() {
   PushUndefined();
 }

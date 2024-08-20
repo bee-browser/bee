@@ -48,7 +48,6 @@ class Compiler {
   void SetSourceFileName(const char* input);
   void SetDataLayout(const char* data_layout);
   void SetTargetTriple(const char* triple);
-  void SetRuntime(uintptr_t runtime);
 
   void Undefined();
   void Null();

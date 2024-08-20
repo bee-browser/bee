@@ -52,10 +52,6 @@ void compiler_peer_set_target_triple(Compiler* self, const char* triple) {
   self->SetTargetTriple(triple);
 }
 
-void compiler_peer_set_runtime(Compiler* self, uintptr_t runtime) {
-  self->SetRuntime(runtime);
-}
-
 void compiler_peer_undefined(Compiler* self) {
   self->Undefined();
 }
