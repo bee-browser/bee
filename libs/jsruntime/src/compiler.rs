@@ -24,7 +24,6 @@ impl<X> Runtime<X> {
         compiler.start_compile(self.pref.enable_llvmir_labels);
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
-        compiler.set_runtime(self);
         for func in program.functions.iter() {
             compiler.start_function(func.symbol, func.id);
             for command in func.commands.iter() {
@@ -78,14 +77,6 @@ impl<'a, 'b> Compiler<'a, 'b> {
         logger::debug!(event = "set_target_triple", ?triple);
         unsafe {
             bridge::compiler_peer_set_target_triple(self.peer, triple.as_ptr());
-        }
-    }
-
-    fn set_runtime<X>(&self, runtime: &Runtime<X>) {
-        let runtime = runtime as *const Runtime<X> as usize;
-        logger::debug!(event = "set_runtime", ?runtime);
-        unsafe {
-            bridge::compiler_peer_set_runtime(self.peer, runtime);
         }
     }
 

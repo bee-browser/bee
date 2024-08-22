@@ -27,7 +27,7 @@ help() {
 Install v8 (d8).
 
 USAGE:
-  $PROGNAME [options] <bindir>
+  $PROGNAME [options] <install-dir>
   $PROGNAME -h | --help
 
 OPTIONS:
@@ -35,11 +35,11 @@ OPTIONS:
     Remove the 'node' image.
 
 ARGUMENTS:
-  <bindir>
-    A path to the folder where 'v8' and 'v8.d' will be installed.
+  <install-dir>
+    The path to a folder where 'v8' and 'v8.d' will be installed.
 
 DESCRIPTION:
-  This script installs the 'v8' command and the 'v8.d' folder into the specified folder.
+  This script installs the 'v8' command and the 'v8.d' folder into <install-dir>/bin/.
 
   For downloading a pre-built binaries, 'jsvu' is used inside a Docker container created from the
   'node' image.
@@ -63,6 +63,12 @@ do
   esac
 done
 
+INSTALL_DIR=$(realpath "$1")
+if [ -z "$INSTALL_DIR" ]
+then
+  error "<install-dir> is required"
+fi
+
 clean() {
   sleep 1
   if [ -n "$CLEAN" ]
@@ -83,22 +89,21 @@ case $ARCH in
     error "unsupported development environment: $ARCH"
 esac
 
-OUTDIR=$(realpath "$1")
-
-rm -fr $OUTDIR/v8.d
+rm -fr $INSTALL_DIR/bin/v8.d
 
 SCRIPT="npx -y jsvu --os=$OS --engines=v8"
 SCRIPT="$SCRIPT && cp -f -R -v /root/.jsvu/engines/v8 /outdir/v8.d"
 SCRIPT="$SCRIPT && chown $(id -u):$(id -g) /outdir/v8.d"
 
-$DOCKER run --rm -t --mount type=bind,source="$OUTDIR",target=/outdir node bash -c "$SCRIPT"
+mkdir -p $INSTALL_DIR/bin
+$DOCKER run --rm -t --mount type=bind,source="$INSTALL_DIR/bin",target=/outdir node bash -c "$SCRIPT"
 
-cat <<EOF >$OUTDIR/v8
+cat <<EOF >$INSTALL_DIR/bin/v8
 #!/bin/sh
-exec $OUTDIR/v8.d/v8 --snapshot_blob="$OUTDIR/v8.d/snapshot_blob.bin" "\$@"
+exec $INSTALL_DIR/bin/v8.d/v8 --snapshot_blob="$INSTALL_DIR/bin/v8.d/snapshot_blob.bin" "\$@"
 EOF
 
-chmod +x $OUTDIR/v8
+chmod +x $INSTALL_DIR/bin/v8
 
 # tests
-test $($OUTDIR/v8 -e 'print(0)' | grep '0')
+test $($INSTALL_DIR/bin/v8 -e 'print(0)' | grep '0')

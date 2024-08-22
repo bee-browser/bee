@@ -134,7 +134,6 @@ void compiler_peer_start(Compiler* self, bool enable_labels);
 Module* compiler_peer_end(Compiler* self);
 void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);
-void compiler_peer_set_runtime(Compiler* self, uintptr_t runtime);
 void compiler_peer_undefined(Compiler* self);
 void compiler_peer_null(Compiler* self);
 void compiler_peer_boolean(Compiler* self, bool value);

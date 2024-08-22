@@ -10,6 +10,7 @@
 .envrc
 cobertura.xml
 flamegraph.svg
+memory-profiling_*
 perf.data
 perf.data.old
 
