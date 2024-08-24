@@ -47,7 +47,7 @@ struct Parse {
     /// Prints information.
     ///
     /// (f)unctions, (s)cope-tree
-    #[arg(short, long)]
+    #[arg(short, long, default_value = "")]
     print: String,
 }
 
