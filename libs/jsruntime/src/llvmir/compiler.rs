@@ -3,17 +3,18 @@ use std::ffi::CStr;
 use jsparser::syntax::LoopFlags;
 use jsparser::Symbol;
 
-use crate::bridge;
-use crate::bridge::Locator;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
-use crate::Module;
 use crate::Program;
 use crate::Runtime;
+
+use super::bridge;
+use super::Locator;
+use super::Module;
 
 impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {

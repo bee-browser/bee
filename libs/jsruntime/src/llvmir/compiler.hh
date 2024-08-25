@@ -21,7 +21,7 @@
 #include <llvm/Passes/StandardInstrumentations.h>
 #pragma GCC diagnostic pop
 
-#include "../bridge.hh"
+#include "bridge.hh"
 #include "control_flow.hh"
 #include "type_holder.hh"
 

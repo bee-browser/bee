@@ -11,7 +11,7 @@
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #pragma GCC diagnostic pop
 
-#include "../bridge.hh"
+#include "bridge.hh"
 
 struct Module;
 

@@ -15,10 +15,10 @@ use jsparser::Processor;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
-use super::bridge::Locator;
 use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;
+use super::Locator;
 use super::Runtime;
 use super::RuntimePref;
 use scope::ScopeTreeBuilder;
