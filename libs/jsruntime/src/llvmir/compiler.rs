@@ -13,6 +13,7 @@ use crate::Program;
 use crate::Runtime;
 
 use super::bridge;
+use super::control_flow::ControlFlowStack;
 use super::Locator;
 use super::Module;
 
@@ -43,6 +44,7 @@ struct Compiler<'a, 'b> {
     peer: *mut bridge::Compiler,
     function_registry: &'a FunctionRegistry,
     scope_tree: &'b ScopeTree,
+    control_flow_stack: ControlFlowStack,
 }
 
 impl<'a, 'b> Compiler<'a, 'b> {
@@ -51,6 +53,7 @@ impl<'a, 'b> Compiler<'a, 'b> {
             peer: unsafe { bridge::compiler_peer_new() },
             function_registry,
             scope_tree,
+            control_flow_stack: Default::default(),
         }
     }
 

@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+using BasicBlock = uintptr_t;
+
 struct Closure;
 
 enum class LocatorKind : uint16_t {
