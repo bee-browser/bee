@@ -54,7 +54,8 @@ class Compiler {
   }
 
   llvm::BasicBlock* CreateBasicBlock(const char* name, size_t name_len) {
-    return llvm::BasicBlock::Create(*context_, llvm::Twine(llvm::StringRef(name, name_len)), function_);
+    return llvm::BasicBlock::Create(
+        *context_, llvm::Twine(llvm::StringRef(name, name_len)), function_);
   }
 
   llvm::BasicBlock* GetBasicBlock() const {
@@ -142,7 +143,10 @@ class Compiler {
   void BitwiseAnd();
   void BitwiseXor();
   void BitwiseOr();
-  void Ternary(llvm::BasicBlock* test_block, llvm::BasicBlock* then_head_block, llvm::BasicBlock* then_tail_block, llvm::BasicBlock* else_head_block);
+  void Ternary(llvm::BasicBlock* test_block,
+      llvm::BasicBlock* then_head_block,
+      llvm::BasicBlock* then_tail_block,
+      llvm::BasicBlock* else_head_block);
   void Assignment();
   void ExponentiationAssignment();
   void MultiplicationAssignment();
@@ -170,18 +174,29 @@ class Compiler {
   void FalsyShortCircuitAssignment();
   void TruthyShortCircuitAssignment();
   void NullishShortCircuitAssignment();
-  void IfElseStatement(llvm::BasicBlock* test_block, llvm::BasicBlock* then_head_block, llvm::BasicBlock* then_tail_block, llvm::BasicBlock* else_head_block);
+  void IfElseStatement(llvm::BasicBlock* test_block,
+      llvm::BasicBlock* then_head_block,
+      llvm::BasicBlock* then_tail_block,
+      llvm::BasicBlock* else_head_block);
   void IfStatement(llvm::BasicBlock* test_block, llvm::BasicBlock* then_block);
-  void LoopTest(llvm::BasicBlock* then_block, llvm::BasicBlock* else_block, llvm::BasicBlock* insert_point);
+  void LoopTest(llvm::BasicBlock* then_block,
+      llvm::BasicBlock* else_block,
+      llvm::BasicBlock* insert_point);
   void CaseBlock(uint16_t id, uint16_t num_cases);
-  void CaseClause(bool has_statement, llvm::BasicBlock* before_block, llvm::BasicBlock* after_block);
+  void CaseClause(bool has_statement,
+      llvm::BasicBlock* before_block,
+      llvm::BasicBlock* after_block);
   void DefaultClause(bool has_statement, llvm::BasicBlock* before_block);
   void TryEnd(llvm::BasicBlock* exception_block, llvm::BasicBlock* end_block);
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
   void StartScopeCleanupChecker(uint16_t scope_id);
   void EndScopeCleanupChecker(uint16_t scope_id);
-  void HandleReturnedThrown(bool returned, bool thrown, llvm::BasicBlock* block, llvm::BasicBlock* cleanup_block, llvm::BasicBlock* exception_block);
+  void HandleReturnedThrown(bool returned,
+      bool thrown,
+      llvm::BasicBlock* block,
+      llvm::BasicBlock* cleanup_block,
+      llvm::BasicBlock* exception_block);
   void AllocateLocals(uint16_t num_locals);
   void InitLocal(Locator locator, llvm::BasicBlock* block);
   void TidyLocal(Locator locator);
@@ -729,28 +744,13 @@ class Compiler {
     scope_cleanup_stack_size_ = 0;
   }
 
-  // helper methods for basic blocks
-
-  // FIXME: Handle dead code in the proper way.
-  //
-  // We insert a **unreachable** basic block for dead code in order to avoid the following
-  // validation error: "Terminator found in the middle of a basic block!"
-  //
-  // IRBuilder accepts inserting instructions after a terminator instruction in a basic block.
-  // It's our responsibility to avoid a malformed basic block.  We think that it's not a good
-  // direction to check the existence of a terminator instruction in a basic block before
-  // insertion in efficiency and maintainability points of view.  Instead, we create an
-  // **unreachable** basic block for dead code.  Eventually, this basic block was removed in the
-  // optimization passes.
-  //
-  // At this point, we don't know whether this is a common method or not...
-  void CreateBasicBlockForDeadcode();
-
   // TODO: separate variables that must be reset in EndFunction() from others.
 
   // Helper methods for Call().
   llvm::Value* CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* value_ptr);
-  void CreateCheckStatusForException(llvm::Value* status, llvm::Value* ret, llvm::BasicBlock* block);
+  void CreateCheckStatusForException(llvm::Value* status,
+      llvm::Value* ret,
+      llvm::BasicBlock* block);
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;

@@ -263,8 +263,13 @@ void compiler_peer_bitwise_or(Compiler* self) {
   self->BitwiseOr();
 }
 
-void compiler_peer_ternary(Compiler* self, BasicBlock test_block, BasicBlock then_head_block, BasicBlock then_tail_block, BasicBlock else_head_block) {
-  self->Ternary(LLVM_BB(test_block), LLVM_BB(then_head_block), LLVM_BB(then_tail_block), LLVM_BB(else_head_block));
+void compiler_peer_ternary(Compiler* self,
+    BasicBlock test_block,
+    BasicBlock then_head_block,
+    BasicBlock then_tail_block,
+    BasicBlock else_head_block) {
+  self->Ternary(LLVM_BB(test_block), LLVM_BB(then_head_block), LLVM_BB(then_tail_block),
+      LLVM_BB(else_head_block));
 }
 
 void compiler_peer_assignment(Compiler* self) {
@@ -375,15 +380,23 @@ void compiler_peer_nullish_short_circuit_assignment(Compiler* self) {
   self->NullishShortCircuitAssignment();
 }
 
-void compiler_peer_if_else_statement(Compiler* self, BasicBlock test_block, BasicBlock then_head_block, BasicBlock then_tail_block, BasicBlock else_head_block) {
-  self->IfElseStatement(LLVM_BB(test_block), LLVM_BB(then_head_block), LLVM_BB(then_tail_block), LLVM_BB(else_head_block));
+void compiler_peer_if_else_statement(Compiler* self,
+    BasicBlock test_block,
+    BasicBlock then_head_block,
+    BasicBlock then_tail_block,
+    BasicBlock else_head_block) {
+  self->IfElseStatement(LLVM_BB(test_block), LLVM_BB(then_head_block), LLVM_BB(then_tail_block),
+      LLVM_BB(else_head_block));
 }
 
 void compiler_peer_if_statement(Compiler* self, BasicBlock test_block, BasicBlock then_block) {
   self->IfStatement(LLVM_BB(test_block), LLVM_BB(then_block));
 }
 
-void compiler_peer_loop_test(Compiler* self, BasicBlock then_block, BasicBlock else_block, BasicBlock insert_point) {
+void compiler_peer_loop_test(Compiler* self,
+    BasicBlock then_block,
+    BasicBlock else_block,
+    BasicBlock insert_point) {
   self->LoopTest(LLVM_BB(then_block), LLVM_BB(else_block), LLVM_BB(insert_point));
 }
 
@@ -391,7 +404,10 @@ void compiler_peer_case_block(Compiler* self, uint16_t id, uint16_t num_cases) {
   self->CaseBlock(id, num_cases);
 }
 
-void compiler_peer_case_clause(Compiler* self, bool has_statement, BasicBlock before_block, BasicBlock after_block) {
+void compiler_peer_case_clause(Compiler* self,
+    bool has_statement,
+    BasicBlock before_block,
+    BasicBlock after_block) {
   self->CaseClause(has_statement, LLVM_BB(before_block), LLVM_BB(after_block));
 }
 
@@ -419,8 +435,14 @@ void compiler_peer_end_scope_cleanup_checker(Compiler* self, uint16_t scope_id) 
   self->EndScopeCleanupChecker(scope_id);
 }
 
-void compiler_peer_handle_returned_thrown(Compiler* self, bool returned, bool thrown, BasicBlock block, BasicBlock cleanup_block, BasicBlock exception_block) {
-  self->HandleReturnedThrown(returned, thrown, LLVM_BB(block), LLVM_BB(cleanup_block), LLVM_BB(exception_block));
+void compiler_peer_handle_returned_thrown(Compiler* self,
+    bool returned,
+    bool thrown,
+    BasicBlock block,
+    BasicBlock cleanup_block,
+    BasicBlock exception_block) {
+  self->HandleReturnedThrown(
+      returned, thrown, LLVM_BB(block), LLVM_BB(cleanup_block), LLVM_BB(exception_block));
 }
 void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals) {
   self->AllocateLocals(num_locals);

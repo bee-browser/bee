@@ -188,7 +188,11 @@ void compiler_peer_strict_inequality(Compiler* self);
 void compiler_peer_bitwise_and(Compiler* self);
 void compiler_peer_bitwise_xor(Compiler* self);
 void compiler_peer_bitwise_or(Compiler* self);
-void compiler_peer_ternary(Compiler* self, BasicBlock test_block, BasicBlock then_head_block, BasicBlock then_tail_block, BasicBlock else_head_block);
+void compiler_peer_ternary(Compiler* self,
+    BasicBlock test_block,
+    BasicBlock then_head_block,
+    BasicBlock then_tail_block,
+    BasicBlock else_head_block);
 void compiler_peer_assignment(Compiler* self);
 void compiler_peer_exponentiation_assignment(Compiler* self);
 void compiler_peer_multiplication_assignment(Compiler* self);
@@ -216,18 +220,33 @@ void compiler_peer_nullish_short_circuit(Compiler* self);
 void compiler_peer_falsy_short_circuit_assignment(Compiler* self);
 void compiler_peer_truthy_short_circuit_assignment(Compiler* self);
 void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
-void compiler_peer_if_else_statement(Compiler* self, BasicBlock test_block, BasicBlock then_head_block, BasicBlock then_tail_block, BasicBlock else_head_block);
+void compiler_peer_if_else_statement(Compiler* self,
+    BasicBlock test_block,
+    BasicBlock then_head_block,
+    BasicBlock then_tail_block,
+    BasicBlock else_head_block);
 void compiler_peer_if_statement(Compiler* self, BasicBlock test_block, BasicBlock then_block);
-void compiler_peer_loop_test(Compiler* self, BasicBlock then_block, BasicBlock else_block, BasicBlock insert_point);
+void compiler_peer_loop_test(Compiler* self,
+    BasicBlock then_block,
+    BasicBlock else_block,
+    BasicBlock insert_point);
 void compiler_peer_case_block(Compiler* self, uint16_t id, uint16_t num_cases);
-void compiler_peer_case_clause(Compiler* self, bool has_statement, BasicBlock before_block, BasicBlock after_block);
+void compiler_peer_case_clause(Compiler* self,
+    bool has_statement,
+    BasicBlock before_block,
+    BasicBlock after_block);
 void compiler_peer_default_clause(Compiler* self, bool has_statement, BasicBlock before_block);
 void compiler_peer_try_end(Compiler* self, BasicBlock exception_block, BasicBlock end_block);
 void compiler_peer_start_function(Compiler* self, const char* name);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_start_scope_cleanup_checker(Compiler* self, uint16_t scope_id);
 void compiler_peer_end_scope_cleanup_checker(Compiler* self, uint16_t scope_id);
-void compiler_peer_handle_returned_thrown(Compiler* self, bool returned, bool thrown, BasicBlock block, BasicBlock cleanup_block, BasicBlock exception_block);
+void compiler_peer_handle_returned_thrown(Compiler* self,
+    bool returned,
+    bool thrown,
+    BasicBlock block,
+    BasicBlock cleanup_block,
+    BasicBlock exception_block);
 void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals);
 void compiler_peer_init_local(Compiler* self, Locator locator, BasicBlock block);
 void compiler_peer_tidy_local(Compiler* self, Locator locator);

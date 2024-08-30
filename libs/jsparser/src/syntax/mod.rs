@@ -389,7 +389,7 @@ impl std::fmt::Debug for AssignmentOperator {
 }
 
 bitflags! {
-    #[derive(Debug, PartialEq)]
+    #[derive(Clone, Copy, Debug, PartialEq)]
     pub struct LoopFlags : u16 {
         const HAS_INIT = 0b0001;
         const HAS_TEST = 0b0010;

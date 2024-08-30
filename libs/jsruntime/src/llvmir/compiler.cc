@@ -477,7 +477,10 @@ void Compiler::BitwiseOr() {
   NumberBitwiseOp('|', lnum, rnum);
 }
 
-void Compiler::Ternary(llvm::BasicBlock* test_block, llvm::BasicBlock* then_head_block, llvm::BasicBlock* then_tail_block, llvm::BasicBlock* else_head_block) {
+void Compiler::Ternary(llvm::BasicBlock* test_block,
+    llvm::BasicBlock* then_head_block,
+    llvm::BasicBlock* then_tail_block,
+    llvm::BasicBlock* else_head_block) {
   assert(test_block != nullptr);
   assert(then_head_block != nullptr);
   assert(then_tail_block != nullptr);
@@ -850,7 +853,9 @@ llvm::Value* Compiler::CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* v
 }
 
 // Handle an exception if it's thrown.
-void Compiler::CreateCheckStatusForException(llvm::Value* status, llvm::Value* retv, llvm::BasicBlock* block) {
+void Compiler::CreateCheckStatusForException(llvm::Value* status,
+    llvm::Value* retv,
+    llvm::BasicBlock* block) {
   assert(block != nullptr);
 
   auto* status_exception = builder_->getInt32(STATUS_EXCEPTION);
@@ -927,7 +932,10 @@ void Compiler::NullishShortCircuitAssignment() {
   stack_.push_back(item);
 }
 
-void Compiler::IfElseStatement(llvm::BasicBlock* test_block, llvm::BasicBlock* then_head_block, llvm::BasicBlock* then_tail_block, llvm::BasicBlock* else_head_block) {
+void Compiler::IfElseStatement(llvm::BasicBlock* test_block,
+    llvm::BasicBlock* then_head_block,
+    llvm::BasicBlock* then_tail_block,
+    llvm::BasicBlock* else_head_block) {
   assert(test_block != nullptr);
   assert(then_head_block != nullptr);
   assert(then_tail_block != nullptr);
@@ -987,7 +995,9 @@ void Compiler::IfStatement(llvm::BasicBlock* test_block, llvm::BasicBlock* then_
 }
 
 // TODO: refactoring
-void Compiler::LoopTest(llvm::BasicBlock* then_block, llvm::BasicBlock* else_block, llvm::BasicBlock* insert_point) {
+void Compiler::LoopTest(llvm::BasicBlock* then_block,
+    llvm::BasicBlock* else_block,
+    llvm::BasicBlock* insert_point) {
   assert(then_block != nullptr);
   assert(else_block != nullptr);
   assert(insert_point != nullptr);
@@ -1011,7 +1021,9 @@ void Compiler::CaseBlock(uint16_t id, uint16_t num_cases) {
   builder_->SetInsertPoint(start_block);
 }
 
-void Compiler::CaseClause(bool has_statement, llvm::BasicBlock* before_block, llvm::BasicBlock* after_block) {
+void Compiler::CaseClause(bool has_statement,
+    llvm::BasicBlock* before_block,
+    llvm::BasicBlock* after_block) {
   UNUSED(has_statement);
   assert(before_block != nullptr);
   assert(after_block != nullptr);
@@ -1130,7 +1142,11 @@ void Compiler::EndScopeCleanupChecker(uint16_t scope_id) {
   }
 }
 
-void Compiler::HandleReturnedThrown(bool returned, bool thrown, llvm::BasicBlock* block, llvm::BasicBlock* cleanup_block, llvm::BasicBlock* exception_block) {
+void Compiler::HandleReturnedThrown(bool returned,
+    bool thrown,
+    llvm::BasicBlock* block,
+    llvm::BasicBlock* cleanup_block,
+    llvm::BasicBlock* exception_block) {
   assert(block != nullptr);
   // cleanup_block may be nullptr.
   // exception_block may be nullptr.
@@ -1951,11 +1967,6 @@ void Compiler::CreateAssertScopeCleanupStackHasItem() {
   auto* msg = builder_->CreateGlobalString("assertion failure: scope_cleanup_stack_top_ != 0",
       REG_NAME("assertion.msg.scope_cleanup_stack.has_item"));
   CreateCallRuntimeAssert(assertion, msg);
-}
-
-void Compiler::CreateBasicBlockForDeadcode() {
-  auto* block = CreateBasicBlock(BB_NAME("deadcode"));
-  builder_->SetInsertPoint(block);
 }
 
 std::string Compiler::MakeBasicBlockName(const char* name) const {

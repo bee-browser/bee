@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use base::macros::debug_assert_ne;
 use jsparser::Symbol;
 
@@ -441,13 +443,15 @@ impl ControlFlowStack {
         eprintln!("### continue-stack");
         Self::print_branch_target_stack(&self.continue_stack, buf, BUF_SIZE);
         eprintln!();
-
     }
 
     pub fn print_stack(&self, buf: *mut std::ffi::c_char, len: usize) {
         macro_rules! bb {
             ($flow:expr, $bb:ident) => {
-                eprintln!(concat!(" ", stringify!($bb), "={:?}"), bb2cstr!($flow.$bb, buf, len));
+                eprintln!(
+                    concat!(" ", stringify!($bb), "={:?}"),
+                    bb2cstr!($flow.$bb, buf, len)
+                );
             };
         }
 
@@ -534,7 +538,11 @@ impl ControlFlowStack {
 
     fn print_branch_target_stack(stack: &[BranchTarget], buf: *mut std::ffi::c_char, len: usize) {
         for target in stack.iter().rev() {
-            eprintln!("block={:?} symbol={}", bb2cstr!(target.block, buf, len), target.symbol);
+            eprintln!(
+                "block={:?} symbol={}",
+                bb2cstr!(target.block, buf, len),
+                target.symbol
+            );
         }
     }
 
@@ -587,10 +595,13 @@ impl ControlFlowStack {
     }
 
     pub fn propagate_thrown(&mut self) {
-        if self.scope_index > self.exception_index {
-            self.scope_flow_mut().thrown = true;
-        } else if self.exception_index > self.scope_index {
-            self.exception_flow_mut().thrown = true;
+        match self.scope_index.cmp(&self.exception_index) {
+            // self.scope_index > self.exception_index
+            Ordering::Greater => self.scope_flow_mut().thrown = true,
+            // self.scope_index < self.exception_index
+            Ordering::Less => self.exception_flow_mut().thrown = true,
+            // self.scope_index == self.exception_index (== 0)
+            _ => debug_assert_eq!(self.scope_index, 0),
         }
     }
 }
