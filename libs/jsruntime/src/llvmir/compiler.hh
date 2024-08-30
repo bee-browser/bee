@@ -12,6 +12,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <llvm/Analysis/CGSCCPassManager.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -22,7 +23,6 @@
 #pragma GCC diagnostic pop
 
 #include "bridge.hh"
-#include "control_flow.hh"
 #include "type_holder.hh"
 
 class TypeHolder;
@@ -49,12 +49,64 @@ class Compiler {
   void SetDataLayout(const char* data_layout);
   void SetTargetTriple(const char* triple);
 
+  llvm::BasicBlock* CreateBasicBlock(const char* name) {
+    return llvm::BasicBlock::Create(*context_, name, function_);
+  }
+
+  llvm::BasicBlock* CreateBasicBlock(const char* name, size_t name_len) {
+    return llvm::BasicBlock::Create(*context_, llvm::Twine(llvm::StringRef(name, name_len)), function_);
+  }
+
+  llvm::BasicBlock* GetBasicBlock() const {
+    return builder_->GetInsertBlock();
+  }
+
+  llvm::BasicBlock* GetLocalsBlock() const {
+    return locals_block_;
+  }
+
+  llvm::BasicBlock* GetArgsBlock() const {
+    return args_block_;
+  }
+
+  llvm::BasicBlock* GetBodyBlock() const {
+    return body_block_;
+  }
+
+  llvm::BasicBlock* GetReturnBlock() const {
+    return return_block_;
+  }
+
+  void SetBasicBlock(llvm::BasicBlock* block) {
+    assert(block != nullptr);
+    builder_->SetInsertPoint(block);
+  }
+
+  void MoveBasicBlockAfter(llvm::BasicBlock* block) const {
+    assert(block != nullptr);
+    block->moveAfter(builder_->GetInsertBlock());
+  }
+
+  bool IsBasicBlockTerminated(llvm::BasicBlock* block) const {
+    assert(block != nullptr);
+    return block->getTerminator() != nullptr;
+  }
+
+  void CreateBr(llvm::BasicBlock* block) {
+    assert(block != nullptr);
+    builder_->CreateBr(block);
+  }
+
+  void CreateStoreNormalStatus() {
+    builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
+  }
+
   void Undefined();
   void Null();
   void Boolean(bool value);
   void Number(double value);
   void Function(uint32_t func_id, const char* name);
-  void Closure(bool prologue, uint16_t num_captures);
+  void Closure(llvm::BasicBlock* block, uint16_t num_captures);
   void Reference(uint32_t symbol, Locator locator);
   void Exception();
   void PostfixIncrement();
@@ -90,7 +142,7 @@ class Compiler {
   void BitwiseAnd();
   void BitwiseXor();
   void BitwiseOr();
-  void Ternary();
+  void Ternary(llvm::BasicBlock* test_block, llvm::BasicBlock* then_head_block, llvm::BasicBlock* then_tail_block, llvm::BasicBlock* else_head_block);
   void Assignment();
   void ExponentiationAssignment();
   void MultiplicationAssignment();
@@ -106,11 +158,11 @@ class Compiler {
   void BitwiseOrAssignment();
   void DeclareImmutable();
   void DeclareMutable();
-  void DeclareFunction();
-  void DeclareClosure();
+  void DeclareFunction(llvm::BasicBlock* block);
+  void DeclareClosure(llvm::BasicBlock* block);
   void Arguments(uint16_t argc);
   void Argument(uint16_t index);
-  void Call(uint16_t argc);
+  void Call(uint16_t argc, llvm::BasicBlock* block);
   void Truthy();
   void FalsyShortCircuit();
   void TruthyShortCircuit();
@@ -118,39 +170,24 @@ class Compiler {
   void FalsyShortCircuitAssignment();
   void TruthyShortCircuitAssignment();
   void NullishShortCircuitAssignment();
-  void Branch();
-  void IfElseStatement();
-  void IfStatement();
-  void DoWhileLoop(uint16_t id);
-  void WhileLoop(uint16_t id);
-  void ForLoop(uint16_t id, bool has_init, bool has_test, bool has_next);
-  void LoopInit();
-  void LoopTest();
-  void LoopNext();
-  void LoopBody();
-  void LoopEnd();
+  void IfElseStatement(llvm::BasicBlock* test_block, llvm::BasicBlock* then_head_block, llvm::BasicBlock* then_tail_block, llvm::BasicBlock* else_head_block);
+  void IfStatement(llvm::BasicBlock* test_block, llvm::BasicBlock* then_block);
+  void LoopTest(llvm::BasicBlock* then_block, llvm::BasicBlock* else_block, llvm::BasicBlock* insert_point);
   void CaseBlock(uint16_t id, uint16_t num_cases);
-  void CaseClause(bool has_statement);
-  void DefaultClause(bool has_statement);
-  void Switch(uint16_t id, uint16_t num_cases, uint16_t default_index);
-  void Try();
-  void Catch(bool nominal);
-  void Finally(bool nominal);
-  void TryEnd();
+  void CaseClause(bool has_statement, llvm::BasicBlock* before_block, llvm::BasicBlock* after_block);
+  void DefaultClause(bool has_statement, llvm::BasicBlock* before_block);
+  void TryEnd(llvm::BasicBlock* exception_block, llvm::BasicBlock* end_block);
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
-  void StartScope(uint16_t scope_id);
-  void EndScope(uint16_t scope_id);
+  void StartScopeCleanupChecker(uint16_t scope_id);
+  void EndScopeCleanupChecker(uint16_t scope_id);
+  void HandleReturnedThrown(bool returned, bool thrown, llvm::BasicBlock* block, llvm::BasicBlock* cleanup_block, llvm::BasicBlock* exception_block);
   void AllocateLocals(uint16_t num_locals);
-  void InitLocal(Locator locator);
+  void InitLocal(Locator locator, llvm::BasicBlock* block);
   void TidyLocal(Locator locator);
-  void CreateCapture(Locator locator);
-  void CaptureVariable(bool declaration);
-  void EscapeVariable(Locator locator);
-  void LabelStart(uint32_t symbol, bool is_iteration_statement);
-  void LabelEnd(uint32_t symbol, bool is_iteration_statement);
-  void Continue(uint32_t symbol);
-  void Break(uint32_t symbol);
+  void CreateCapture(Locator locator, llvm::BasicBlock* block);
+  void CaptureVariable(llvm::BasicBlock* block);
+  void EscapeVariable(Locator locator, llvm::BasicBlock* block);
   void Return(size_t n);
   void Throw();
   void Discard();
@@ -694,10 +731,6 @@ class Compiler {
 
   // helper methods for basic blocks
 
-  llvm::BasicBlock* CreateBasicBlock(const char* name) {
-    return llvm::BasicBlock::Create(*context_, name, function_);
-  }
-
   // FIXME: Handle dead code in the proper way.
   //
   // We insert a **unreachable** basic block for dead code in order to avoid the following
@@ -717,7 +750,7 @@ class Compiler {
 
   // Helper methods for Call().
   llvm::Value* CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* value_ptr);
-  void CreateCheckStatusForException(llvm::Value* status, llvm::Value* ret);
+  void CreateCheckStatusForException(llvm::Value* status, llvm::Value* ret, llvm::BasicBlock* block);
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
@@ -747,7 +780,6 @@ class Compiler {
   // The following variables must be reset in the end of compilation for each function.
   std::vector<llvm::Value*> locals_;
   std::vector<Item> stack_;
-  ControlFlowStack control_flow_stack_;
   std::unordered_map<uint32_t, llvm::Value*> captures_;
 
   // A cache of functions does not reset in the end of compilation for each function.
@@ -777,5 +809,6 @@ class Compiler {
 
   std::string MakeBasicBlockName(const char* name) const;
 
+  // TODO: remove
   std::vector<std::string> basic_block_name_stack_;
 };

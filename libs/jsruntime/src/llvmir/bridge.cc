@@ -6,8 +6,11 @@
 
 #include "compiler.hh"
 #include "executor.hh"
-#include "macros.hh"
+#include "helper.hh"
 #include "module.hh"
+
+#define PEER_BB(bb) (reinterpret_cast<BasicBlock>(bb))
+#define LLVM_BB(bb) (reinterpret_cast<llvm::BasicBlock*>(bb))
 
 void llvmir_initialize() {
   // Uncomment if you want to enable LLVM_DEBUG().
@@ -52,6 +55,50 @@ void compiler_peer_set_target_triple(Compiler* self, const char* triple) {
   self->SetTargetTriple(triple);
 }
 
+BasicBlock compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len) {
+  return PEER_BB(self->CreateBasicBlock(name, name_len));
+}
+
+BasicBlock compiler_peer_get_basic_block(const Compiler* self) {
+  return PEER_BB(self->GetBasicBlock());
+}
+
+BasicBlock compiler_peer_get_locals_block(const Compiler* self) {
+  return PEER_BB(self->GetLocalsBlock());
+}
+
+BasicBlock compiler_peer_get_args_block(const Compiler* self) {
+  return PEER_BB(self->GetArgsBlock());
+}
+
+BasicBlock compiler_peer_get_body_block(const Compiler* self) {
+  return PEER_BB(self->GetBodyBlock());
+}
+
+BasicBlock compiler_peer_get_return_block(const Compiler* self) {
+  return PEER_BB(self->GetReturnBlock());
+}
+
+void compiler_peer_set_basic_block(Compiler* self, BasicBlock block) {
+  self->SetBasicBlock(LLVM_BB(block));
+}
+
+void compiler_peer_move_basic_block_after(Compiler* self, BasicBlock block) {
+  self->MoveBasicBlockAfter(LLVM_BB(block));
+}
+
+bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock block) {
+  return self->IsBasicBlockTerminated(LLVM_BB(block));
+}
+
+void compiler_peer_create_br(Compiler* self, BasicBlock block) {
+  self->CreateBr(LLVM_BB(block));
+}
+
+void compiler_peer_create_store_normal_status(Compiler* self) {
+  self->CreateStoreNormalStatus();
+}
+
 void compiler_peer_undefined(Compiler* self) {
   self->Undefined();
 }
@@ -72,8 +119,8 @@ void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name) 
   self->Function(func_id, name);
 }
 
-void compiler_peer_closure(Compiler* self, bool prologue, uint16_t num_captures) {
-  self->Closure(prologue, num_captures);
+void compiler_peer_closure(Compiler* self, BasicBlock block, uint16_t num_captures) {
+  self->Closure(LLVM_BB(block), num_captures);
 }
 
 void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator) {
@@ -216,8 +263,8 @@ void compiler_peer_bitwise_or(Compiler* self) {
   self->BitwiseOr();
 }
 
-void compiler_peer_ternary(Compiler* self) {
-  self->Ternary();
+void compiler_peer_ternary(Compiler* self, BasicBlock test_block, BasicBlock then_head_block, BasicBlock then_tail_block, BasicBlock else_head_block) {
+  self->Ternary(LLVM_BB(test_block), LLVM_BB(then_head_block), LLVM_BB(then_tail_block), LLVM_BB(else_head_block));
 }
 
 void compiler_peer_assignment(Compiler* self) {
@@ -280,12 +327,12 @@ void compiler_peer_declare_mutable(Compiler* self) {
   self->DeclareMutable();
 }
 
-void compiler_peer_declare_function(Compiler* self) {
-  self->DeclareFunction();
+void compiler_peer_declare_function(Compiler* self, BasicBlock block) {
+  self->DeclareFunction(LLVM_BB(block));
 }
 
-void compiler_peer_declare_closure(Compiler* self) {
-  self->DeclareClosure();
+void compiler_peer_declare_closure(Compiler* self, BasicBlock block) {
+  self->DeclareClosure(LLVM_BB(block));
 }
 
 void compiler_peer_arguments(Compiler* self, uint16_t argc) {
@@ -296,8 +343,8 @@ void compiler_peer_argument(Compiler* self, uint16_t index) {
   self->Argument(index);
 }
 
-void compiler_peer_call(Compiler* self, uint16_t argc) {
-  self->Call(argc);
+void compiler_peer_call(Compiler* self, uint16_t argc, BasicBlock block) {
+  self->Call(argc, LLVM_BB(block));
 }
 
 void compiler_peer_truthy(Compiler* self) {
@@ -328,87 +375,32 @@ void compiler_peer_nullish_short_circuit_assignment(Compiler* self) {
   self->NullishShortCircuitAssignment();
 }
 
-void compiler_peer_branch(Compiler* self) {
-  self->Branch();
+void compiler_peer_if_else_statement(Compiler* self, BasicBlock test_block, BasicBlock then_head_block, BasicBlock then_tail_block, BasicBlock else_head_block) {
+  self->IfElseStatement(LLVM_BB(test_block), LLVM_BB(then_head_block), LLVM_BB(then_tail_block), LLVM_BB(else_head_block));
 }
 
-void compiler_peer_if_else_statement(Compiler* self) {
-  self->IfElseStatement();
+void compiler_peer_if_statement(Compiler* self, BasicBlock test_block, BasicBlock then_block) {
+  self->IfStatement(LLVM_BB(test_block), LLVM_BB(then_block));
 }
 
-void compiler_peer_if_statement(Compiler* self) {
-  self->IfStatement();
-}
-
-void compiler_peer_do_while_loop(Compiler* self, uint16_t id) {
-  self->DoWhileLoop(id);
-}
-
-void compiler_peer_while_loop(Compiler* self, uint16_t id) {
-  self->WhileLoop(id);
-}
-
-void compiler_peer_for_loop(Compiler* self,
-    uint16_t id,
-    bool has_init,
-    bool has_test,
-    bool has_next) {
-  self->ForLoop(id, has_init, has_test, has_next);
-}
-
-void compiler_peer_loop_init(Compiler* self) {
-  self->LoopInit();
-}
-
-void compiler_peer_loop_test(Compiler* self) {
-  self->LoopTest();
-}
-
-void compiler_peer_loop_next(Compiler* self) {
-  self->LoopNext();
-}
-
-void compiler_peer_loop_body(Compiler* self) {
-  self->LoopBody();
-}
-
-void compiler_peer_loop_end(Compiler* self) {
-  self->LoopEnd();
+void compiler_peer_loop_test(Compiler* self, BasicBlock then_block, BasicBlock else_block, BasicBlock insert_point) {
+  self->LoopTest(LLVM_BB(then_block), LLVM_BB(else_block), LLVM_BB(insert_point));
 }
 
 void compiler_peer_case_block(Compiler* self, uint16_t id, uint16_t num_cases) {
   self->CaseBlock(id, num_cases);
 }
 
-void compiler_peer_case_clause(Compiler* self, bool has_statement) {
-  self->CaseClause(has_statement);
+void compiler_peer_case_clause(Compiler* self, bool has_statement, BasicBlock before_block, BasicBlock after_block) {
+  self->CaseClause(has_statement, LLVM_BB(before_block), LLVM_BB(after_block));
 }
 
-void compiler_peer_default_clause(Compiler* self, bool has_statement) {
-  self->DefaultClause(has_statement);
+void compiler_peer_default_clause(Compiler* self, bool has_statement, BasicBlock before_block) {
+  self->DefaultClause(has_statement, LLVM_BB(before_block));
 }
 
-void compiler_peer_switch(Compiler* self,
-    uint16_t id,
-    uint16_t num_cases,
-    uint16_t default_index) {
-  self->Switch(id, num_cases, default_index);
-}
-
-void compiler_peer_try(Compiler* self) {
-  self->Try();
-}
-
-void compiler_peer_catch(Compiler* self, bool nominal) {
-  self->Catch(nominal);
-}
-
-void compiler_peer_finally(Compiler* self, bool nominal) {
-  self->Finally(nominal);
-}
-
-void compiler_peer_try_end(Compiler* self) {
-  self->TryEnd();
+void compiler_peer_try_end(Compiler* self, BasicBlock exception_block, BasicBlock end_block) {
+  self->TryEnd(LLVM_BB(exception_block), LLVM_BB(end_block));
 }
 
 void compiler_peer_start_function(Compiler* self, const char* name) {
@@ -419,52 +411,39 @@ void compiler_peer_end_function(Compiler* self, bool optimize) {
   self->EndFunction(optimize);
 }
 
-void compiler_peer_start_scope(Compiler* self, uint16_t scope_id) {
-  self->StartScope(scope_id);
+void compiler_peer_start_scope_cleanup_checker(Compiler* self, uint16_t scope_id) {
+  self->StartScopeCleanupChecker(scope_id);
 }
 
-void compiler_peer_end_scope(Compiler* self, uint16_t scope_id) {
-  self->EndScope(scope_id);
+void compiler_peer_end_scope_cleanup_checker(Compiler* self, uint16_t scope_id) {
+  self->EndScopeCleanupChecker(scope_id);
 }
 
+void compiler_peer_handle_returned_thrown(Compiler* self, bool returned, bool thrown, BasicBlock block, BasicBlock cleanup_block, BasicBlock exception_block) {
+  self->HandleReturnedThrown(returned, thrown, LLVM_BB(block), LLVM_BB(cleanup_block), LLVM_BB(exception_block));
+}
 void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals) {
   self->AllocateLocals(num_locals);
 }
 
-void compiler_peer_init_local(Compiler* self, Locator locator) {
-  self->InitLocal(locator);
+void compiler_peer_init_local(Compiler* self, Locator locator, BasicBlock block) {
+  self->InitLocal(locator, LLVM_BB(block));
 }
 
 void compiler_peer_tidy_local(Compiler* self, Locator locator) {
   self->TidyLocal(locator);
 }
 
-void compiler_peer_create_capture(Compiler* self, Locator locator) {
-  self->CreateCapture(locator);
+void compiler_peer_create_capture(Compiler* self, Locator locator, BasicBlock block) {
+  self->CreateCapture(locator, LLVM_BB(block));
 }
 
-void compiler_peer_capture_variable(Compiler* self, bool declaration) {
-  self->CaptureVariable(declaration);
+void compiler_peer_capture_variable(Compiler* self, BasicBlock block) {
+  self->CaptureVariable(LLVM_BB(block));
 }
 
-void compiler_peer_escape_variable(Compiler* self, Locator locator) {
-  self->EscapeVariable(locator);
-}
-
-void compiler_peer_label_start(Compiler* self, uint32_t symbol, bool is_iteration_statement) {
-  self->LabelStart(symbol, is_iteration_statement);
-}
-
-void compiler_peer_label_end(Compiler* self, uint32_t symbol, bool is_iteration_statement) {
-  self->LabelEnd(symbol, is_iteration_statement);
-}
-
-void compiler_peer_continue(Compiler* self, uint32_t symbol) {
-  self->Continue(symbol);
-}
-
-void compiler_peer_break(Compiler* self, uint32_t symbol) {
-  self->Break(symbol);
+void compiler_peer_escape_variable(Compiler* self, Locator locator, BasicBlock block) {
+  self->EscapeVariable(locator, LLVM_BB(block));
 }
 
 void compiler_peer_return(Compiler* self, size_t n) {
@@ -523,4 +502,10 @@ const char* executor_peer_get_target_triple(const Executor* self) {
 
 Lambda executor_peer_get_native_function(Executor* self, const char* name) {
   return self->GetNativeFunction(name);
+}
+
+// helper functions
+
+size_t helper_peer_get_basic_block_name_or_as_operand(BasicBlock block, char* buf, size_t len) {
+  return GetNameOrAsOperand(LLVM_BB(block), buf, len);
 }

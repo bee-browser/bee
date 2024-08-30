@@ -1,4 +1,5 @@
 use std::ffi::CStr;
+use std::io::Write;
 
 use jsparser::syntax::LoopFlags;
 use jsparser::Symbol;
@@ -40,25 +41,105 @@ impl<X> Runtime<X> {
 #[derive(Debug, thiserror::Error)]
 pub enum CompileError {}
 
-struct Compiler<'a, 'b> {
-    peer: *mut bridge::Compiler,
-    function_registry: &'a FunctionRegistry,
-    scope_tree: &'b ScopeTree,
-    control_flow_stack: ControlFlowStack,
+struct BasicBlockNameStack {
+    buffer: Vec<u8>,
+    index_stack: Vec<usize>,
 }
 
-impl<'a, 'b> Compiler<'a, 'b> {
-    pub fn new(function_registry: &'a FunctionRegistry, scope_tree: &'b ScopeTree) -> Self {
+impl BasicBlockNameStack {
+    fn new() -> Self {
+        let mut buffer = Vec::with_capacity(1024);
+        write!(&mut buffer, "bb").unwrap();
+        Self {
+            buffer,
+            index_stack: Vec::with_capacity(64),
+        }
+    }
+
+    fn as_name(&self) -> (*const std::ffi::c_char, usize) {
+        (self.buffer.as_ptr() as *const std::ffi::c_char, self.buffer.len())
+    }
+
+    fn push(&mut self, name: &str) {
+        let index = self.buffer.len();
+        write!(&mut self.buffer, ".{}", name).unwrap();
+        self.index_stack.push(index);
+    }
+
+    fn push_with_id<T: std::fmt::Display>(&mut self, name: &str, id: T) {
+        let index = self.buffer.len();
+        write!(&mut self.buffer, ".{}", name).unwrap();
+        write!(&mut self.buffer, ".{}", id).unwrap();
+        self.index_stack.push(index);
+    }
+
+    fn pop(&mut self) {
+        let index = self.index_stack.pop().unwrap();
+        self.buffer.truncate(index);
+    }
+}
+
+impl Default for BasicBlockNameStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+struct Compiler<'r, 's> {
+    peer: *mut bridge::Compiler,
+    function_registry: &'r FunctionRegistry,
+    scope_tree: &'s ScopeTree,
+    control_flow_stack: ControlFlowStack,
+    basic_block_name_stack: Option<BasicBlockNameStack>,
+}
+
+macro_rules! push_bb_name {
+    ($compiler:expr, $name:expr) => {
+        if let Some(ref mut stack) = $compiler.basic_block_name_stack {
+            stack.push($name);
+        }
+    };
+    ($compiler:expr, $name:expr, $id:expr) => {
+        if let Some(ref mut stack) = $compiler.basic_block_name_stack {
+            stack.push_with_id($name, $id);
+        }
+    };
+}
+
+macro_rules! pop_bb_name {
+    ($compiler:expr) => {
+        if let Some(ref mut stack) = $compiler.basic_block_name_stack {
+            stack.pop();
+        }
+    };
+}
+
+macro_rules! bb_name {
+    ($compiler:expr) => {
+        if let Some(ref mut stack) = $compiler.basic_block_name_stack {
+            stack.as_name()
+        } else {
+            (c"".as_ptr(), 0)
+        }
+    };
+}
+
+impl<'r, 's> Compiler<'r, 's> {
+    pub fn new(function_registry: &'r FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
         Self {
             peer: unsafe { bridge::compiler_peer_new() },
             function_registry,
             scope_tree,
             control_flow_stack: Default::default(),
+            basic_block_name_stack: None,
         }
     }
 
-    fn start_compile(&self, enable_labels: bool) {
+    fn start_compile(&mut self, enable_labels: bool) {
         logger::debug!(event = "start_compile", enable_labels);
+        if enable_labels {
+            self.basic_block_name_stack = Some(Default::default());
+        }
         unsafe {
             bridge::compiler_peer_start(self.peer, enable_labels);
         }
@@ -84,19 +165,36 @@ impl<'a, 'b> Compiler<'a, 'b> {
         }
     }
 
-    fn start_function(&self, symbol: Symbol, func_id: FunctionId) {
+    fn start_function(&mut self, symbol: Symbol, func_id: FunctionId) {
         logger::debug!(event = "start_function", ?symbol, ?func_id);
         let native = self.function_registry.get_native(func_id);
         unsafe {
             bridge::compiler_peer_start_function(self.peer, native.name.as_ptr());
         }
+
+        let locals_block = unsafe {
+            bridge::compiler_peer_get_locals_block(self.peer)
+        };
+        let args_block = unsafe {
+            bridge::compiler_peer_get_args_block(self.peer)
+        };
+        let body_block = unsafe {
+            bridge::compiler_peer_get_body_block(self.peer)
+        };
+        let return_block = unsafe {
+            bridge::compiler_peer_get_return_block(self.peer)
+        };
+        self.control_flow_stack.push_function_flow(locals_block, args_block, body_block, return_block);
     }
 
-    fn end_function(&self, optimize: bool) {
+    fn end_function(&mut self, optimize: bool) {
         logger::debug!(event = "end_function", optimize);
+        self.control_flow_stack.pop_function_flow();
         unsafe {
             bridge::compiler_peer_end_function(self.peer, optimize);
         }
+        debug_assert!(self.control_flow_stack.is_empty());
+        self.control_flow_stack.clear();
     }
 
     fn process_command(&mut self, command: &CompileCommand) {
@@ -129,10 +227,17 @@ impl<'a, 'b> Compiler<'a, 'b> {
                     bridge::compiler_peer_function(self.peer, func_id.into(), name.as_ptr());
                 }
             }
-            CompileCommand::Closure(prologue, num_captures) => unsafe {
-                // `*num_captures` may be 0.
-                bridge::compiler_peer_closure(self.peer, *prologue, *num_captures);
-            },
+            CompileCommand::Closure(prologue, num_captures) => {
+                let block = if *prologue {
+                    self.control_flow_stack.scope_flow().hoisted_block
+                } else {
+                    0
+                };
+                unsafe {
+                    // `*num_captures` may be 0.
+                    bridge::compiler_peer_closure(self.peer, block, *num_captures);
+                }
+            }
             CompileCommand::Reference(symbol, locator) => unsafe {
                 debug_assert_ne!(*locator, Locator::NONE);
                 bridge::compiler_peer_reference(self.peer, symbol.id(), *locator);
@@ -150,12 +255,18 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::ImmutableBinding => unsafe {
                 bridge::compiler_peer_declare_immutable(self.peer);
             },
-            CompileCommand::DeclareFunction => unsafe {
-                bridge::compiler_peer_declare_function(self.peer);
-            },
-            CompileCommand::DeclareClosure => unsafe {
-                bridge::compiler_peer_declare_closure(self.peer);
-            },
+            CompileCommand::DeclareFunction => {
+                let block = self.control_flow_stack.scope_flow().hoisted_block;
+                unsafe {
+                    bridge::compiler_peer_declare_function(self.peer, block);
+                }
+            }
+            CompileCommand::DeclareClosure => {
+                let block = self.control_flow_stack.scope_flow().hoisted_block;
+                unsafe {
+                    bridge::compiler_peer_declare_closure(self.peer, block);
+                }
+            }
             CompileCommand::Arguments(nargs) => unsafe {
                 if *nargs > 0 {
                     bridge::compiler_peer_arguments(self.peer, *nargs);
@@ -164,26 +275,31 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Argument(index) => unsafe {
                 bridge::compiler_peer_argument(self.peer, *index);
             },
-            CompileCommand::Call(nargs) => unsafe {
-                bridge::compiler_peer_call(self.peer, *nargs);
-            },
+            CompileCommand::Call(nargs) => {
+                let block = self.control_flow_stack.exception_block();
+                unsafe {
+                    bridge::compiler_peer_call(self.peer, *nargs, block);
+                }
+                // The function may throw an exception.
+                self.control_flow_stack.set_thrown();
+            }
             CompileCommand::PushScope(scope_ref) => {
                 // TODO(issue#234)
                 let scope_ref = *scope_ref;
                 debug_assert_ne!(scope_ref, ScopeRef::NONE);
-                unsafe {
-                    bridge::compiler_peer_start_scope(self.peer, scope_ref.id());
-                }
+                self.start_scope(scope_ref);
                 let scope = self.scope_tree.scope(scope_ref);
                 for binding in scope.bindings.iter() {
                     if binding.is_local() {
+                        let flow = self.control_flow_stack.scope_flow();
                         unsafe {
-                            bridge::compiler_peer_init_local(self.peer, binding.locator());
+                            bridge::compiler_peer_init_local(self.peer, binding.locator(), flow.init_block);
                         }
                     }
                     if binding.captured {
+                        let flow = self.control_flow_stack.scope_flow();
                         unsafe {
-                            bridge::compiler_peer_create_capture(self.peer, binding.locator());
+                            bridge::compiler_peer_create_capture(self.peer, binding.locator(), flow.init_block);
                         }
                     }
                 }
@@ -195,8 +311,9 @@ impl<'a, 'b> Compiler<'a, 'b> {
                 let scope = self.scope_tree.scope(scope_ref);
                 for binding in scope.bindings.iter() {
                     if binding.captured {
+                        let block = self.control_flow_stack.scope_flow().cleanup_block;
                         unsafe {
-                            bridge::compiler_peer_escape_variable(self.peer, binding.locator());
+                            bridge::compiler_peer_escape_variable(self.peer, binding.locator(), block);
                         }
                     }
                     if binding.is_local() {
@@ -205,13 +322,18 @@ impl<'a, 'b> Compiler<'a, 'b> {
                         }
                     }
                 }
+                self.end_scope(scope_ref);
+            }
+            CompileCommand::CaptureVariable(declaration) => {
+                let block = if *declaration {
+                    self.control_flow_stack.scope_flow().hoisted_block
+                } else {
+                    0
+                };
                 unsafe {
-                    bridge::compiler_peer_end_scope(self.peer, scope_ref.id());
+                    bridge::compiler_peer_capture_variable(self.peer, block);
                 }
             }
-            CompileCommand::CaptureVariable(declaration) => unsafe {
-                bridge::compiler_peer_capture_variable(self.peer, *declaration);
-            },
             CompileCommand::PostfixIncrement => unsafe {
                 bridge::compiler_peer_postfix_increment(self.peer);
             },
@@ -312,9 +434,13 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::BitwiseOr => unsafe {
                 bridge::compiler_peer_bitwise_or(self.peer);
             },
-            CompileCommand::Ternary => unsafe {
-                bridge::compiler_peer_ternary(self.peer);
-            },
+            CompileCommand::Ternary => {
+                let else_branch = self.control_flow_stack.pop_branch_flow();
+                let then_branch = self.control_flow_stack.pop_branch_flow();
+                unsafe {
+                    bridge::compiler_peer_ternary(self.peer, then_branch.before_block, then_branch.after_block, else_branch.before_block, else_branch.after_block);
+                }
+            }
             CompileCommand::Assignment => unsafe {
                 bridge::compiler_peer_assignment(self.peer);
             },
@@ -357,112 +483,447 @@ impl<'a, 'b> Compiler<'a, 'b> {
             CompileCommand::Truthy => unsafe {
                 bridge::compiler_peer_truthy(self.peer);
             },
-            CompileCommand::FalsyShortCircuit => unsafe {
-                bridge::compiler_peer_falsy_short_circuit(self.peer);
-            },
-            CompileCommand::TruthyShortCircuit => unsafe {
-                bridge::compiler_peer_truthy_short_circuit(self.peer);
-            },
-            CompileCommand::NullishShortCircuit => unsafe {
-                bridge::compiler_peer_nullish_short_circuit(self.peer);
-            },
-            CompileCommand::FalsyShortCircuitAssignment => unsafe {
-                bridge::compiler_peer_falsy_short_circuit_assignment(self.peer);
-            },
-            CompileCommand::TruthyShortCircuitAssignment => unsafe {
-                bridge::compiler_peer_truthy_short_circuit_assignment(self.peer);
-            },
-            CompileCommand::NullishShortCircuitAssignment => unsafe {
-                bridge::compiler_peer_nullish_short_circuit_assignment(self.peer);
-            },
-            CompileCommand::Then => unsafe {
-                bridge::compiler_peer_branch(self.peer);
-            },
-            CompileCommand::Else => unsafe {
-                bridge::compiler_peer_branch(self.peer);
-            },
-            CompileCommand::IfElseStatement => unsafe {
-                bridge::compiler_peer_if_else_statement(self.peer);
-            },
-            CompileCommand::IfStatement => unsafe {
-                bridge::compiler_peer_if_statement(self.peer);
-            },
-            CompileCommand::DoWhileLoop(id) => unsafe {
-                bridge::compiler_peer_do_while_loop(self.peer, *id);
-            },
-            CompileCommand::WhileLoop(id) => unsafe {
-                bridge::compiler_peer_while_loop(self.peer, *id);
-            },
+            CompileCommand::FalsyShortCircuit => {
+                unsafe {
+                    bridge::compiler_peer_falsy_short_circuit(self.peer);
+                }
+                self.branch(); // then
+                self.branch(); // else
+            }
+            CompileCommand::TruthyShortCircuit => {
+                unsafe {
+                    bridge::compiler_peer_truthy_short_circuit(self.peer);
+                }
+                self.branch(); // then
+                self.branch(); // else
+            }
+            CompileCommand::NullishShortCircuit => {
+                unsafe {
+                    bridge::compiler_peer_nullish_short_circuit(self.peer);
+                }
+                self.branch(); // then
+                self.branch(); // else
+            }
+            CompileCommand::FalsyShortCircuitAssignment => {
+                unsafe {
+                    bridge::compiler_peer_falsy_short_circuit_assignment(self.peer);
+                }
+                self.branch(); // then
+                self.branch(); // else
+            }
+            CompileCommand::TruthyShortCircuitAssignment => {
+                unsafe {
+                    bridge::compiler_peer_truthy_short_circuit_assignment(self.peer);
+                }
+                self.branch(); // then
+                self.branch(); // else
+            }
+            CompileCommand::NullishShortCircuitAssignment => {
+                unsafe {
+                    bridge::compiler_peer_nullish_short_circuit_assignment(self.peer);
+                }
+                self.branch(); // then
+                self.branch(); // else
+            }
+            CompileCommand::Then => self.branch(),
+            CompileCommand::Else => self.branch(),
+            CompileCommand::IfElseStatement => {
+                let else_branch = self.control_flow_stack.pop_branch_flow();
+                let then_branch = self.control_flow_stack.pop_branch_flow();
+                unsafe {
+                    bridge::compiler_peer_if_else_statement(self.peer, then_branch.before_block, then_branch.after_block, else_branch.before_block, else_branch.after_block);
+                }
+            }
+            CompileCommand::IfStatement => {
+                let branch = self.control_flow_stack.pop_branch_flow();
+                unsafe {
+                    bridge::compiler_peer_if_statement(self.peer, branch.before_block, branch.after_block);
+                }
+            }
+            CompileCommand::DoWhileLoop(id) => {
+                push_bb_name!(self, "do-while", id);
+
+                let loop_body = self.create_basic_block("loop-body");
+                let loop_test = self.create_basic_block("loop-test");
+                let loop_end = self.create_basic_block("loop-end");
+                let loop_start = loop_body;
+                let loop_continue = loop_test;
+                let loop_break = loop_end;
+                self.control_flow_stack.push_loop_test_flow(loop_body, loop_end, loop_end);
+                self.control_flow_stack.push_loop_body_flow(loop_test, loop_test);
+                self.control_flow_stack.set_continue_target(loop_continue);
+                self.control_flow_stack.push_break_target(loop_break, Symbol::NONE);
+                self.control_flow_stack.push_continue_target(loop_continue, Symbol::NONE);
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, loop_start);
+                    bridge::compiler_peer_set_basic_block(self.peer, loop_start);
+                }
+            }
+            CompileCommand::WhileLoop(id) => {
+                push_bb_name!(self, "while", id);
+
+                let loop_test = self.create_basic_block("loop-test");
+                let loop_body = self.create_basic_block("loop-body");
+                let loop_end = self.create_basic_block("loop-end");
+
+                let loop_start = loop_test;
+                let loop_continue = loop_test;
+                let loop_break = loop_end;
+
+                self.control_flow_stack.push_loop_body_flow(loop_test, loop_end);
+                self.control_flow_stack.push_loop_test_flow(loop_body, loop_end, loop_body);
+                self.control_flow_stack.set_continue_target(loop_continue);
+                self.control_flow_stack.push_break_target(loop_break, Symbol::NONE);
+                self.control_flow_stack.push_continue_target(loop_continue, Symbol::NONE);
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, loop_start);
+                    bridge::compiler_peer_set_basic_block(self.peer, loop_start);
+                }
+            }
             // TODO: rewrite using if and break
-            CompileCommand::ForLoop(id, flags) => unsafe {
-                bridge::compiler_peer_for_loop(
-                    self.peer,
-                    *id,
-                    flags.contains(LoopFlags::HAS_INIT),
-                    flags.contains(LoopFlags::HAS_TEST),
-                    flags.contains(LoopFlags::HAS_NEXT),
-                );
-            },
-            CompileCommand::LoopInit => unsafe {
-                bridge::compiler_peer_loop_init(self.peer);
-            },
-            CompileCommand::LoopTest => unsafe {
-                bridge::compiler_peer_loop_test(self.peer);
-            },
-            CompileCommand::LoopNext => unsafe {
-                bridge::compiler_peer_loop_next(self.peer);
-            },
-            CompileCommand::LoopBody => unsafe {
-                bridge::compiler_peer_loop_body(self.peer);
-            },
-            CompileCommand::LoopEnd => unsafe {
-                bridge::compiler_peer_loop_end(self.peer);
-            },
-            CompileCommand::CaseBlock(id, num_cases) => unsafe {
-                debug_assert!(*num_cases > 0);
-                // TODO: refactoring
-                bridge::compiler_peer_case_block(self.peer, *id, *num_cases);
-            },
-            CompileCommand::CaseClause(has_statement) => unsafe {
-                bridge::compiler_peer_case_clause(self.peer, *has_statement);
-            },
-            CompileCommand::DefaultClause(has_statement) => unsafe {
-                bridge::compiler_peer_default_clause(self.peer, *has_statement);
-            },
-            CompileCommand::Switch(id, num_cases, default_index) => unsafe {
-                let default_index = default_index.unwrap_or(*num_cases);
-                bridge::compiler_peer_switch(self.peer, *id, *num_cases, default_index);
-            },
-            CompileCommand::Try => unsafe {
-                bridge::compiler_peer_try(self.peer);
-            },
-            CompileCommand::Catch(nominal) => unsafe {
-                bridge::compiler_peer_catch(self.peer, *nominal);
-            },
-            CompileCommand::Finally(nominal) => unsafe {
-                bridge::compiler_peer_finally(self.peer, *nominal);
-            },
-            CompileCommand::TryEnd => unsafe {
-                bridge::compiler_peer_try_end(self.peer);
-            },
-            CompileCommand::LabelStart(symbol, is_iteration_statement) => unsafe {
-                bridge::compiler_peer_label_start(self.peer, symbol.id(), *is_iteration_statement);
-            },
-            CompileCommand::LabelEnd(symbol, is_iteration_statement) => unsafe {
-                bridge::compiler_peer_label_end(self.peer, symbol.id(), *is_iteration_statement);
-            },
-            CompileCommand::Continue(symbol) => unsafe {
-                bridge::compiler_peer_continue(self.peer, symbol.id());
-            },
-            CompileCommand::Break(symbol) => unsafe {
-                bridge::compiler_peer_break(self.peer, symbol.id());
-            },
-            CompileCommand::Return(n) => unsafe {
-                bridge::compiler_peer_return(self.peer, *n as usize);
-            },
-            CompileCommand::Throw => unsafe {
-                bridge::compiler_peer_throw(self.peer);
-            },
+            CompileCommand::ForLoop(id, flags) => {
+                push_bb_name!(self, "for", id);
+
+                let has_init = flags.contains(LoopFlags::HAS_INIT);
+                let has_test = flags.contains(LoopFlags::HAS_TEST);
+                let has_next = flags.contains(LoopFlags::HAS_NEXT);
+                let loop_init = if has_init {
+                    self.create_basic_block("loop-init")
+                } else {
+                    0
+                };
+                let loop_test = if has_test {
+                    self.create_basic_block("loop-test")
+                } else {
+                    0
+                };
+                let loop_body = self.create_basic_block("loop-body");
+                let loop_next = if has_next {
+                    self.create_basic_block("loop-next")
+                } else {
+                    0
+                };
+                let loop_end = self.create_basic_block("loop-end");
+
+                let mut loop_start = loop_body;
+                let mut loop_continue = loop_body;
+                let loop_break = loop_end;
+                let mut insert_point = loop_body;
+
+                if has_next {
+                    self.control_flow_stack.push_loop_body_flow(loop_next, loop_end);
+                } else if has_test {
+                    self.control_flow_stack.push_loop_body_flow(loop_test, loop_end);
+                } else {
+                    self.control_flow_stack.push_loop_body_flow(loop_body, loop_end);
+                }
+
+                if has_next {
+                    if has_test {
+                        self.control_flow_stack.push_loop_next_flow(loop_test, loop_body);
+                    } else {
+                        self.control_flow_stack.push_loop_next_flow(loop_body, loop_body);
+                    }
+                    loop_continue = loop_next;
+                    insert_point = loop_next;
+                }
+
+                if has_test {
+                    if has_next {
+                        self.control_flow_stack.push_loop_test_flow(loop_body, loop_end, loop_next);
+                    } else {
+                        self.control_flow_stack.push_loop_test_flow(loop_body, loop_end, loop_body);
+                    }
+                    loop_start = loop_test;
+                    if !has_next {
+                        loop_continue = loop_test;
+                    }
+                    insert_point = loop_test;
+                }
+
+                if has_init {
+                    if has_test {
+                        self.control_flow_stack.push_loop_init_flow(loop_test, loop_test);
+                    } else if has_next {
+                        self.control_flow_stack.push_loop_init_flow(loop_body, loop_next);
+                    } else {
+                        self.control_flow_stack.push_loop_init_flow(loop_body, loop_body);
+                    }
+                    loop_start = loop_init;
+                    insert_point = loop_init;
+                }
+                self.control_flow_stack.set_continue_target(loop_continue);
+                self.control_flow_stack.push_break_target(loop_break, Symbol::NONE);
+                self.control_flow_stack.push_continue_target(loop_continue, Symbol::NONE);
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, loop_start);
+                    bridge::compiler_peer_set_basic_block(self.peer, insert_point);
+                }
+            }
+            CompileCommand::LoopInit => {
+                let loop_init = self.control_flow_stack.pop_loop_init_flow();
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, loop_init.branch_block);
+                    bridge::compiler_peer_set_basic_block(self.peer, loop_init.insert_point);
+                }
+            }
+            CompileCommand::LoopTest => {
+                let loop_test = self.control_flow_stack.pop_loop_test_flow();
+                unsafe {
+                    // TODO: refactoring
+                    bridge::compiler_peer_loop_test(self.peer, loop_test.then_block, loop_test.else_block, loop_test.insert_point);
+                }
+            }
+            CompileCommand::LoopNext => {
+                let loop_next = self.control_flow_stack.pop_loop_next_flow();
+                unsafe {
+                    // Discard the evaluation result.
+                    bridge::compiler_peer_discard(self.peer);
+                    bridge::compiler_peer_create_br(self.peer, loop_next.branch_block);
+                    bridge::compiler_peer_set_basic_block(self.peer, loop_next.insert_point);
+                }
+            }
+            CompileCommand::LoopBody => {
+                let loop_body = self.control_flow_stack.pop_loop_body_flow();
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, loop_body.branch_block);
+                    bridge::compiler_peer_move_basic_block_after(self.peer, loop_body.insert_point);
+                    bridge::compiler_peer_set_basic_block(self.peer, loop_body.insert_point);
+                }
+            }
+            CompileCommand::LoopEnd => {
+                pop_bb_name!(self);
+
+                self.control_flow_stack.pop_break_target();
+                self.control_flow_stack.pop_continue_target();
+            }
+            CompileCommand::CaseBlock(id, num_cases) => {
+                push_bb_name!(self, "switch", id);
+                unsafe {
+                    debug_assert!(*num_cases > 0);
+                    // TODO: refactoring
+                    bridge::compiler_peer_case_block(self.peer, *id, *num_cases);
+                }
+                let end_block = self.create_basic_block("end");
+                self.control_flow_stack.push_switch_flow(end_block);
+                self.control_flow_stack.push_break_target(end_block, Symbol::NONE);
+            }
+            CompileCommand::CaseClause(has_statement) => {
+                let branch = self.control_flow_stack.pop_branch_flow();
+                let case_end_block = unsafe {
+                    bridge::compiler_peer_get_basic_block(self.peer)
+                };
+                unsafe {
+                    bridge::compiler_peer_case_clause(self.peer, *has_statement, branch.before_block, branch.after_block);
+                }
+                self.control_flow_stack.push_case_banch_flow(case_end_block, branch.after_block);
+            }
+            CompileCommand::DefaultClause(has_statement) => {
+                let branch = self.control_flow_stack.pop_branch_flow();
+                let case_end_block = unsafe {
+                    bridge::compiler_peer_get_basic_block(self.peer)
+                };
+                unsafe {
+                    bridge::compiler_peer_default_clause(self.peer, *has_statement, branch.before_block);
+                }
+                self.control_flow_stack.push_case_banch_flow(case_end_block, branch.after_block);
+                self.control_flow_stack.set_default_case_block(branch.after_block);
+            }
+            CompileCommand::Switch(_id, num_cases, _default_index) => {
+                let num_cases = *num_cases;
+
+                pop_bb_name!(self);
+
+                self.control_flow_stack.pop_break_target();
+                let case_block = unsafe {
+                    bridge::compiler_peer_get_basic_block(self.peer)
+                };
+
+                // Discard the switch-values
+                unsafe {
+                    bridge::compiler_peer_discard(self.peer);
+                    bridge::compiler_peer_discard(self.peer);
+                }
+
+                // Connect the last basic blocks of each case/default clause to the first basic block of the
+                // statement lists of the next case/default clause if it's not terminated.
+                //
+                // The last basic blocks has been stored in the control flow stack in reverse order.
+                let mut fall_through_block = self.control_flow_stack.switch_flow().end_block;
+                for _ in 0..num_cases {
+                    let case_branch = self.control_flow_stack.pop_case_branch_flow();
+                    let terminated = unsafe {
+                        bridge::compiler_peer_is_basic_block_terminated(self.peer, case_branch.before_block)
+                    };
+                    if !terminated {
+                        unsafe {
+                            bridge::compiler_peer_set_basic_block(self.peer, case_branch.before_block);
+                            bridge::compiler_peer_create_br(self.peer, fall_through_block);
+                            bridge::compiler_peer_move_basic_block_after(self.peer, fall_through_block);
+                        }
+                    }
+                    fall_through_block = case_branch.after_block;
+                }
+
+                let switch = self.control_flow_stack.pop_switch_flow();
+
+                // Create an unconditional jump to the statement of the default clause if it
+                // exists.  Otherwise, jump to the end block.
+                unsafe {
+                    bridge::compiler_peer_set_basic_block(self.peer, case_block);
+                    bridge::compiler_peer_create_br(self.peer, if switch.default_block != 0 {
+                        switch.default_block
+                    } else {
+                        switch.end_block
+                    });
+                }
+
+                unsafe {
+                    bridge::compiler_peer_move_basic_block_after(self.peer, switch.end_block);
+                }
+                unsafe {
+                    bridge::compiler_peer_set_basic_block(self.peer, switch.end_block);
+                }
+            }
+            CompileCommand::Try => {
+                let try_block = self.create_basic_block("try");
+                let catch_block = self.create_basic_block("catch");
+                let finally_block = self.create_basic_block("finally");
+                let end_block = self.create_basic_block("try-end");
+                self.control_flow_stack.push_exception_flow(try_block, catch_block, finally_block, end_block);
+                unsafe {
+                    // Jump from the end of previous block to the beginning of the try block.
+                    bridge::compiler_peer_create_br(self.peer, try_block);
+
+                    bridge::compiler_peer_set_basic_block(self.peer, try_block);
+                }
+                push_bb_name!(self, "try");
+            }
+            CompileCommand::Catch(nominal) => {
+                let nominal = *nominal;
+
+                pop_bb_name!(self);
+
+                self.control_flow_stack.set_in_catch(nominal);
+                let flow = self.control_flow_stack.exception_flow();
+
+                // Jump from the end of the try block to the beginning of the finally block.
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, flow.finally_block);
+                    bridge::compiler_peer_move_basic_block_after(self.peer, flow.finally_block);
+
+                    bridge::compiler_peer_move_basic_block_after(self.peer, flow.catch_block);
+                    bridge::compiler_peer_set_basic_block(self.peer, flow.catch_block);
+
+                    if !nominal {
+                        // TODO: Reset the status to Status::Normal.
+                        bridge::compiler_peer_create_store_normal_status(self.peer);
+                    }
+                }
+
+                push_bb_name!(self, "catch");
+            }
+            CompileCommand::Finally(_nominal) => {
+                pop_bb_name!(self);
+
+                self.control_flow_stack.set_in_finally();
+                let flow = self.control_flow_stack.exception_flow();
+
+                unsafe {
+                    // Jump from the end of the catch block to the beginning of the finally block.
+                    bridge::compiler_peer_create_br(self.peer, flow.finally_block);
+
+                    bridge::compiler_peer_move_basic_block_after(self.peer, flow.finally_block);
+                    bridge::compiler_peer_set_basic_block(self.peer, flow.finally_block);
+                }
+
+                push_bb_name!(self, "finally");
+            }
+            CompileCommand::TryEnd => {
+                pop_bb_name!(self);
+
+                let flow = self.control_flow_stack.pop_exception_flow();
+                let exception_block = self.control_flow_stack.exception_block();
+
+                unsafe {
+                    bridge::compiler_peer_try_end(self.peer, exception_block, flow.end_block);
+
+                    bridge::compiler_peer_move_basic_block_after(self.peer, flow.end_block);
+                    bridge::compiler_peer_set_basic_block(self.peer, flow.end_block);
+                }
+            }
+            CompileCommand::LabelStart(symbol, is_iteration_statement) => {
+                debug_assert_ne!(*symbol, Symbol::NONE);
+                let start_block = self.create_basic_block("start");
+                let end_block = self.create_basic_block("end");
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, start_block);
+                    bridge::compiler_peer_move_basic_block_after(self.peer, end_block);
+                    bridge::compiler_peer_set_basic_block(self.peer, start_block);
+                }
+                self.control_flow_stack.push_break_target(end_block, *symbol);
+                if *is_iteration_statement {
+                    // The `block` member variable will be updated in the method to handle the loop start of the
+                    // labeled iteration statement.
+                    self.control_flow_stack.push_continue_target(0, *symbol);
+                }
+            }
+            CompileCommand::LabelEnd(symbol, is_iteration_statement) => {
+                debug_assert_ne!(*symbol, Symbol::NONE);
+                if *is_iteration_statement {
+                    self.control_flow_stack.pop_continue_target();
+                }
+                let break_target = self.control_flow_stack.pop_break_target();
+                debug_assert_eq!(break_target.symbol, *symbol);
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, break_target.block);
+                    bridge::compiler_peer_move_basic_block_after(self.peer, break_target.block);
+                    bridge::compiler_peer_set_basic_block(self.peer, break_target.block);
+                }
+            }
+            CompileCommand::Continue(symbol) => {
+                let target_block = self.control_flow_stack.continue_target(*symbol);
+                debug_assert_ne!(target_block, 0);
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, target_block);
+                }
+                // TODO(issue#234)
+                self.create_basic_block_for_deadcode();
+            }
+            CompileCommand::Break(symbol) => {
+                let target_block = self.control_flow_stack.break_target(*symbol);
+                debug_assert_ne!(target_block, 0);
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, target_block);
+                }
+                // TODO(issue#234)
+                self.create_basic_block_for_deadcode();
+            }
+            CompileCommand::Return(n) => {
+                unsafe {
+                    bridge::compiler_peer_return(self.peer, *n as usize);
+                }
+                self.control_flow_stack.set_returned();
+                let next_block = self.control_flow_stack.cleanup_block();
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, next_block);
+                }
+                // TODO(issue#234)
+                self.create_basic_block_for_deadcode();
+            }
+            CompileCommand::Throw => {
+                unsafe {
+                    bridge::compiler_peer_throw(self.peer);
+                }
+                self.control_flow_stack.set_thrown();
+                let next_block = self.control_flow_stack.exception_block();
+                unsafe {
+                    bridge::compiler_peer_create_br(self.peer, next_block);
+                    bridge::compiler_peer_move_basic_block_after(self.peer, next_block);
+                }
+                // TODO(issue#234)
+                self.create_basic_block_for_deadcode();
+            }
             CompileCommand::Discard => unsafe {
                 // TODO: the stack should be managed in the Rust side.
                 bridge::compiler_peer_discard(self.peer);
@@ -483,11 +944,110 @@ impl<'a, 'b> Compiler<'a, 'b> {
             unsafe {
                 bridge::compiler_peer_dump_stack(self.peer);
             }
+            self.control_flow_stack.print();
+        }
+    }
+
+    fn start_scope(&mut self, scope_ref: ScopeRef) {
+        push_bb_name!(self, "scope", scope_ref.id());
+
+        let init_block = self.create_basic_block("init");
+        let hoisted_block = self.create_basic_block("hoisted");
+        let body_block = self.create_basic_block("body");
+        let cleanup_block = self.create_basic_block("cleanup");
+
+        self.control_flow_stack.push_scope_flow(init_block, hoisted_block, body_block, cleanup_block);
+
+        unsafe {
+            bridge::compiler_peer_create_br(self.peer, init_block);
+            bridge::compiler_peer_move_basic_block_after(self.peer, init_block);
+            bridge::compiler_peer_set_basic_block(self.peer, body_block);
+
+            bridge::compiler_peer_start_scope_cleanup_checker(self.peer, scope_ref.id());
+        }
+    }
+
+    fn end_scope(&mut self, scope_ref: ScopeRef) {
+        pop_bb_name!(self);
+
+        let flow = self.control_flow_stack.pop_scope_flow();
+
+        unsafe {
+            bridge::compiler_peer_create_br(self.peer, flow.cleanup_block);
+            bridge::compiler_peer_move_basic_block_after(self.peer, flow.cleanup_block);
+
+            bridge::compiler_peer_set_basic_block(self.peer, flow.init_block);
+            bridge::compiler_peer_create_br(self.peer, flow.hoisted_block);
+            bridge::compiler_peer_move_basic_block_after(self.peer, flow.hoisted_block);
+
+            bridge::compiler_peer_set_basic_block(self.peer, flow.hoisted_block);
+            bridge::compiler_peer_create_br(self.peer, flow.body_block);
+            bridge::compiler_peer_move_basic_block_after(self.peer, flow.body_block);
+
+            bridge::compiler_peer_set_basic_block(self.peer, flow.cleanup_block);
+        }
+
+        unsafe {
+            bridge::compiler_peer_end_scope_cleanup_checker(self.peer, scope_ref.id());
+        }
+
+        let block = self.create_basic_block("block");
+
+        let cleanup_block = if flow.returned {
+            self.control_flow_stack.cleanup_block()
+        } else {
+            0
+        };
+        let exception_block = if flow.thrown && !self.control_flow_stack.in_finally_block() {
+            self.control_flow_stack.exception_block()
+        } else {
+            0
+        };
+        unsafe {
+            bridge::compiler_peer_handle_returned_thrown(self.peer, flow.returned, flow.thrown, block, cleanup_block, exception_block);
+        }
+
+        unsafe {
+            bridge::compiler_peer_move_basic_block_after(self.peer, block);
+            bridge::compiler_peer_set_basic_block(self.peer, block);
+        }
+    }
+
+    fn branch(&mut self) {
+        let before_block = unsafe {
+            bridge::compiler_peer_get_basic_block(self.peer)
+        };
+
+        // Push a newly created block.
+        // This will be used in ConditionalExpression() in order to build a branch instruction.
+        let after_block = self.create_basic_block("block");
+
+        unsafe {
+            bridge::compiler_peer_set_basic_block(self.peer, after_block);
+        }
+
+        self.control_flow_stack.push_branch_flow(before_block, after_block);
+    }
+
+    fn create_basic_block(&mut self, name: &str) -> bridge::BasicBlock {
+        push_bb_name!(self, name);
+        let (name, name_len) = bb_name!(self);
+        let block = unsafe {
+            bridge::compiler_peer_create_basic_block(self.peer, name, name_len)
+        };
+        pop_bb_name!(self);
+        block
+    }
+
+    fn create_basic_block_for_deadcode(&mut self) {
+        let block = self.create_basic_block("deadcode");
+        unsafe {
+            bridge::compiler_peer_set_basic_block(self.peer, block);
         }
     }
 }
 
-impl<'a, 'b> Drop for Compiler<'a, 'b> {
+impl<'r, 's> Drop for Compiler<'r, 's> {
     fn drop(&mut self) {
         unsafe {
             bridge::compiler_peer_delete(self.peer);

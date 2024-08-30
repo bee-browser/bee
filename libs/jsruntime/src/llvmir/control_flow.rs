@@ -1,7 +1,17 @@
 use base::macros::debug_assert_ne;
 use jsparser::Symbol;
 
+use super::bridge;
 use super::bridge::BasicBlock;
+
+macro_rules! bb2cstr {
+    ($bb:expr, $buf:expr, $len:expr) => {
+        unsafe {
+            bridge::helper_peer_get_basic_block_name_or_as_operand($bb, $buf, $len);
+            std::ffi::CStr::from_ptr($buf)
+        }
+    };
+}
 
 #[derive(Default)]
 pub struct ControlFlowStack {
@@ -28,13 +38,13 @@ impl ControlFlowStack {
     }
 
     pub fn in_finally_block(&self) -> bool {
-        matches!(
-            self.exception_flow(),
-            ExceptionFlow {
-                state: ExceptionState::Finally,
-                ..
-            }
-        )
+        if self.exception_index == 0 {
+            return false;
+        }
+        match self.stack.last() {
+            Some(ControlFlow::Exception(flow)) => matches!(flow.state, ExceptionState::Finally),
+            _ => false,
+        }
     }
 
     pub fn push_function_flow(
@@ -357,10 +367,10 @@ impl ControlFlowStack {
         self.scope_flow_mut().thrown = true;
     }
 
-    pub fn set_in_try(&mut self, nominal: bool) {
+    pub fn set_in_catch(&mut self, nominal: bool) {
         debug_assert!(matches!(self.stack.last(), Some(ControlFlow::Exception(_))));
         let flow = self.exception_flow_mut();
-        flow.state = ExceptionState::Try;
+        flow.state = ExceptionState::Catch;
         if !nominal {
             flow.thrown = false;
         }
@@ -387,7 +397,6 @@ impl ControlFlowStack {
     }
 
     pub fn push_continue_target(&mut self, block: BasicBlock, symbol: Symbol) {
-        debug_assert_ne!(block, 0);
         self.continue_stack.push(BranchTarget { block, symbol });
     }
 
@@ -416,7 +425,118 @@ impl ControlFlowStack {
         self.exception_index = 0;
     }
 
-    pub fn print(&self) {}
+    pub fn print(&self) {
+        const BUF_SIZE: usize = 512;
+        let mut buf: Vec<std::ffi::c_char> = Vec::with_capacity(BUF_SIZE);
+        let buf = buf.as_mut_ptr();
+
+        eprintln!("### control-flow-stack");
+        self.print_stack(buf, BUF_SIZE);
+        eprintln!();
+
+        eprintln!("### break-stack");
+        Self::print_branch_target_stack(&self.break_stack, buf, BUF_SIZE);
+        eprintln!();
+
+        eprintln!("### continue-stack");
+        Self::print_branch_target_stack(&self.continue_stack, buf, BUF_SIZE);
+        eprintln!();
+
+    }
+
+    pub fn print_stack(&self, buf: *mut std::ffi::c_char, len: usize) {
+        macro_rules! bb {
+            ($flow:expr, $bb:ident) => {
+                eprintln!(concat!(" ", stringify!($bb), "={:?}"), bb2cstr!($flow.$bb, buf, len));
+            };
+        }
+
+        for flow in self.stack.iter().rev() {
+            match flow {
+                ControlFlow::Function(flow) => {
+                    eprintln!("function:");
+                    bb!(flow, locals_block);
+                    bb!(flow, args_block);
+                    bb!(flow, body_block);
+                    bb!(flow, return_block);
+                }
+                ControlFlow::Scope(flow) => {
+                    eprint!("scope:");
+                    if flow.returned {
+                        eprint!(" returned");
+                    }
+                    if flow.thrown {
+                        eprint!(" thrown");
+                    }
+                    eprintln!();
+                    bb!(flow, init_block);
+                    bb!(flow, hoisted_block);
+                    bb!(flow, body_block);
+                    bb!(flow, cleanup_block);
+                }
+                ControlFlow::Branch(flow) => {
+                    eprintln!("branch:");
+                    bb!(flow, before_block);
+                    bb!(flow, after_block);
+                }
+                ControlFlow::LoopInit(flow) => {
+                    eprintln!("loop-init:");
+                    bb!(flow, branch_block);
+                    bb!(flow, insert_point);
+                }
+                ControlFlow::LoopTest(flow) => {
+                    eprintln!("loop-test:");
+                    bb!(flow, then_block);
+                    bb!(flow, else_block);
+                    bb!(flow, insert_point);
+                }
+                ControlFlow::LoopNext(flow) => {
+                    eprintln!("loop-next:");
+                    bb!(flow, branch_block);
+                    bb!(flow, insert_point);
+                }
+                ControlFlow::LoopBody(flow) => {
+                    eprintln!("loop-body:");
+                    bb!(flow, branch_block);
+                    bb!(flow, insert_point);
+                }
+                ControlFlow::Switch(flow) => {
+                    eprintln!("switch:");
+                    if flow.default_block != 0 {
+                        bb!(flow, default_block);
+                    }
+                    bb!(flow, end_block);
+                }
+                ControlFlow::CaseBranch(flow) => {
+                    eprintln!("case-branch:");
+                    bb!(flow, before_block);
+                    bb!(flow, after_block);
+                }
+                ControlFlow::Exception(flow) => {
+                    eprint!("exception:");
+                    if flow.thrown {
+                        eprint!(" thrown");
+                    }
+                    match flow.state {
+                        ExceptionState::Try => eprint!(" in-try"),
+                        ExceptionState::Catch => eprint!(" in-catch"),
+                        ExceptionState::Finally => eprint!(" in-finally"),
+                    }
+                    eprintln!();
+                    bb!(flow, try_block);
+                    bb!(flow, catch_block);
+                    bb!(flow, finally_block);
+                    bb!(flow, end_block);
+                }
+            }
+        }
+    }
+
+    fn print_branch_target_stack(stack: &[BranchTarget], buf: *mut std::ffi::c_char, len: usize) {
+        for target in stack.iter().rev() {
+            eprintln!("block={:?} symbol={}", bb2cstr!(target.block, buf, len), target.symbol);
+        }
+    }
 
     pub fn cleanup_block(&self) -> BasicBlock {
         if self.scope_index == 0 {
@@ -490,8 +610,11 @@ enum ControlFlow {
 
 /// Contains data used for building the root region of a function.
 pub struct FunctionFlow {
+    #[allow(unused)]
     pub locals_block: BasicBlock,
+    #[allow(unused)]
     pub args_block: BasicBlock,
+    #[allow(unused)]
     pub body_block: BasicBlock,
     pub return_block: BasicBlock,
 }
@@ -515,10 +638,10 @@ pub struct ScopeFlow {
     outer_index: usize,
 
     /// `true` if the scope flow contains return statements.
-    returned: bool,
+    pub returned: bool,
 
     /// `true` if the scope flow has uncaught exceptions.
-    thrown: bool,
+    pub thrown: bool,
 }
 
 pub struct BranchFlow {
@@ -566,6 +689,7 @@ pub struct CaseBranchFlow {
 }
 
 pub struct ExceptionFlow {
+    #[allow(unused)]
     pub try_block: BasicBlock,
     pub catch_block: BasicBlock,
     pub finally_block: BasicBlock,
@@ -586,7 +710,7 @@ enum ExceptionState {
     Finally,
 }
 
-struct BranchTarget {
-    block: BasicBlock,
-    symbol: Symbol,
+pub struct BranchTarget {
+    pub block: BasicBlock,
+    pub symbol: Symbol,
 }
