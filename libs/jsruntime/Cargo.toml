@@ -10,7 +10,7 @@ base = { path = "../base" }
 bitflags = "2.6.0"
 # TODO(issue#237): replace `bumpalo` with `jsgc = { path = "../jsgc" }`
 bumpalo = "3.16.0"
-indexmap = "2.4.0"
+indexmap = "2.5.0"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
 thiserror = "1.0.61"
