@@ -1,5 +1,9 @@
 use std::ffi::CStr;
 use std::io::Write;
+use std::ops::Deref;
+use std::ops::DerefMut;
+
+use indexmap::IndexMap;
 
 use jsparser::syntax::LoopFlags;
 use jsparser::Symbol;
@@ -17,13 +21,6 @@ use super::bridge;
 use super::control_flow::ControlFlowStack;
 use super::Locator;
 use super::Module;
-
-macro_rules! stack_dump_enabled {
-    () => {
-        cfg!(debug_assertions)
-            && std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP_STACK").is_some()
-    };
-}
 
 impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
@@ -45,15 +42,42 @@ impl<X> Runtime<X> {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum CompileError {}
-
+/// A Compiler targeting LLVM IR.
 struct Compiler<'r, 's> {
+    /// The pointer to the compiler peer.
     peer: *mut bridge::Compiler,
+
+    /// The function registry of the JavaScript program to compile.
     function_registry: &'r FunctionRegistry,
+
+    /// The scope tree of the JavaScript program to compile.
     scope_tree: &'s ScopeTree,
+
+    /// A stack for operands.
+    operand_stack: OperandStack,
+
+    /// A stack to hold sets of basic blocks which construct of a region in the control flow graph
+    /// (CFG) finally built.
     control_flow_stack: ControlFlowStack,
+
+    /// A stack to hold names of basic blocks representing the current nested structure of a
+    /// JavaScript program currently compiled.
+    ///
+    /// A CFG in LLVM IR cannot represent nested structures in a program but information about
+    /// nested structures of a program is useful in general when we debug the program.  A nested
+    /// structure at some point during compilation can be represented by using a stack.
     basic_block_name_stack: Option<BasicBlockNameStack>,
+
+    // The following variables must be reset in the end of compilation for each function.
+    locals: Vec<bridge::ValueIr>,
+    captures: IndexMap<u32, bridge::ValueIr>,
+
+    dump_buffer: Option<Vec<std::ffi::c_char>>,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CompileError {
+    // TODO: define errors
 }
 
 macro_rules! push_bb_name {
@@ -87,14 +111,30 @@ macro_rules! bb_name {
     };
 }
 
+macro_rules! dump_enabled {
+    () => {
+        cfg!(debug_assertions)
+            && std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP").is_some()
+    };
+}
+
 impl<'r, 's> Compiler<'r, 's> {
     pub fn new(function_registry: &'r FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
+        const DUMP_BUFFER_SIZE: usize = 512;
         Self {
             peer: unsafe { bridge::compiler_peer_new() },
             function_registry,
             scope_tree,
+            operand_stack: Default::default(),
             control_flow_stack: Default::default(),
             basic_block_name_stack: None,
+            locals: Default::default(),
+            captures: Default::default(),
+            dump_buffer: if dump_enabled!() {
+                Some(Vec::with_capacity(DUMP_BUFFER_SIZE))
+            } else {
+                None
+            },
         }
     }
 
@@ -130,29 +170,69 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn start_function(&mut self, symbol: Symbol, func_id: FunctionId) {
         logger::debug!(event = "start_function", ?symbol, ?func_id);
+
         let native = self.function_registry.get_native(func_id);
         unsafe {
             bridge::compiler_peer_start_function(self.peer, native.name.as_ptr());
         }
 
-        let locals_block = unsafe { bridge::compiler_peer_get_locals_block(self.peer) };
-        let args_block = unsafe { bridge::compiler_peer_get_args_block(self.peer) };
-        let body_block = unsafe { bridge::compiler_peer_get_body_block(self.peer) };
-        let return_block = unsafe { bridge::compiler_peer_get_return_block(self.peer) };
+        let locals_block = self.create_basic_block("locals");
+        let args_block = self.create_basic_block("args");
+        let body_block = self.create_basic_block("body");
+        let return_block = self.create_basic_block("return");
+
         self.control_flow_stack.push_function_flow(
             locals_block,
             args_block,
             body_block,
             return_block,
         );
+
+        self.set_locals_block(locals_block);
+
+        self.set_basic_block(body_block);
+        self.create_store_undefined_to_retv();
+        self.create_alloc_status();
+    }
+
+    fn set_locals_block(&mut self, block: bridge::BasicBlock) {
+        unsafe {
+            bridge::compiler_peer_set_locals_block(self.peer, block);
+        }
+    }
+
+    fn create_alloc_status(&mut self) {
+        unsafe {
+            bridge::compiler_peer_create_alloc_status(self.peer);
+        }
     }
 
     fn end_function(&mut self, optimize: bool) {
         logger::debug!(event = "end_function", optimize);
-        self.control_flow_stack.pop_function_flow();
+        let flow = self.control_flow_stack.pop_function_flow();
+
+        self.create_br(flow.return_block);
+        self.move_basic_block_after(flow.return_block);
+
+        self.set_basic_block(flow.locals_block);
+        self.create_br(flow.args_block);
+        self.move_basic_block_after(flow.args_block);
+
+        self.set_basic_block(flow.args_block);
+        self.create_br(flow.body_block);
+        self.move_basic_block_after(flow.body_block);
+
+        self.set_basic_block(flow.return_block);
+
         unsafe {
             bridge::compiler_peer_end_function(self.peer, optimize);
         }
+
+        self.locals.clear();
+
+        debug_assert!(self.captures.is_empty());
+        self.captures.clear();
+
         debug_assert!(self.control_flow_stack.is_empty());
         self.control_flow_stack.clear();
     }
@@ -290,36 +370,36 @@ impl<'r, 's> Compiler<'r, 's> {
             }
         }
 
-        if stack_dump_enabled!() {
-            unsafe {
-                bridge::compiler_peer_dump_stack(self.peer);
-            }
-            self.control_flow_stack.print();
+        if let Some(ref mut buf) = self.dump_buffer {
+            let size = buf.capacity();
+            let buf = buf.as_mut_ptr();
+
+            eprintln!("### control-flow-stack");
+            self.operand_stack.dump(buf, size);
+            eprintln!();
+
+            self.control_flow_stack.dump(buf, size);
         }
     }
 
     fn process_undefined(&mut self) {
-        unsafe {
-            bridge::compiler_peer_undefined(self.peer);
-        }
+        self.operand_stack.push(Operand::Undefined);
     }
 
     fn process_null(&mut self) {
-        unsafe {
-            bridge::compiler_peer_null(self.peer);
-        }
+        self.operand_stack.push(Operand::Null);
     }
 
     fn process_boolean(&mut self, value: bool) {
-        unsafe {
-            bridge::compiler_peer_boolean(self.peer, value);
-        }
+        self.operand_stack.push(Operand::Boolean(unsafe {
+            bridge::compiler_peer_get_boolean(self.peer, value)
+        }));
     }
 
     fn process_number(&mut self, value: f64) {
-        unsafe {
-            bridge::compiler_peer_number(self.peer, value);
-        }
+        self.operand_stack.push(Operand::Number(unsafe {
+            bridge::compiler_peer_get_number(self.peer, value)
+        }));
     }
 
     fn process_string(&mut self, _value: &[u16]) {
@@ -332,90 +412,480 @@ impl<'r, 's> Compiler<'r, 's> {
         } else {
             &self.function_registry.get_host(func_id).name
         };
+        self.operand_stack.push(Operand::Function(unsafe {
+            bridge::compiler_peer_get_function(self.peer, func_id.into(), name.as_ptr())
+        }));
+    }
+
+    fn get_basic_block(&mut self) -> bridge::BasicBlock {
         unsafe {
-            bridge::compiler_peer_function(self.peer, func_id.into(), name.as_ptr());
+            bridge::compiler_peer_get_basic_block(self.peer)
+        }
+    }
+
+    fn set_basic_block(&mut self, block: bridge::BasicBlock) {
+        unsafe {
+            bridge::compiler_peer_set_basic_block(self.peer, block);
+        }
+    }
+
+    fn pop_lambda(&mut self) -> bridge::LambdaIr {
+        match self.operand_stack.pop() {
+            Some(Operand::Function(lambda)) => lambda,
+            _ => unreachable!(),
+        }
+    }
+
+    fn pop_capture(&mut self) -> bridge::ValueIr {
+        match self.operand_stack.pop() {
+            Some(Operand::Capture(capture)) => capture,
+            _ => unreachable!(),
+        }
+    }
+
+    fn create_call_runtime_create_closure(&mut self, lambda: bridge::LambdaIr, num_captures: u16) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_call_runtime_create_closure(self.peer, lambda, num_captures)
+        }
+    }
+
+    fn create_load_captures_from_closure(&mut self, closure: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_load_captures_from_closure(self.peer, closure)
+        }
+    }
+
+    fn create_store_capture_ptr_to_captures(&mut self, capture: bridge::ValueIr, captures: bridge::ValueIr, index: u16) {
+        unsafe {
+            bridge::compiler_peer_create_store_capture_ptr_to_captures(self.peer, capture, captures, index);
         }
     }
 
     fn process_closure(&mut self, prologue: bool, num_captures: u16) {
-        let block = if prologue {
-            self.control_flow_stack.scope_flow().hoisted_block
-        } else {
-            0
-        };
-        unsafe {
-            // `num_captures` may be 0.
-            bridge::compiler_peer_closure(self.peer, block, num_captures);
+        debug_assert!(self.operand_stack.len() >= 1 + num_captures as usize);
+
+        let backup = self.get_basic_block();
+        if prologue {
+            let block = self.control_flow_stack.scope_flow().hoisted_block;
+            self.set_basic_block(block);
+        }
+
+        let lambda = self.pop_lambda();
+        let closure = self.create_call_runtime_create_closure(lambda, num_captures);
+
+        let captures = self.create_load_captures_from_closure(closure);
+        for i in 0..num_captures {
+            let capture = self.pop_capture();
+            self.create_store_capture_ptr_to_captures(capture, captures, i);
+        }
+
+        self.operand_stack.push(Operand::Closure(closure));
+
+        if prologue {
+            self.set_basic_block(backup);
         }
     }
 
     fn process_reference(&mut self, symbol: Symbol, locator: Locator) {
         debug_assert_ne!(locator, Locator::NONE);
-        unsafe {
-            bridge::compiler_peer_reference(self.peer, symbol.id(), locator);
-        }
+        self.operand_stack.push(Operand::Reference(symbol, locator));
     }
 
     fn process_exception(&mut self) {
-        unsafe {
-            bridge::compiler_peer_exception(self.peer);
-        }
+        // TODO: Should we check status_ at runtime?
+        self.operand_stack.push(Operand::Any(unsafe {
+            bridge::compiler_peer_get_exception(self.peer)
+        }));
     }
 
     fn process_allocate_locals(&mut self, num_locals: u16) {
         debug_assert!(num_locals > 0);
+
+        for i in 0..num_locals {
+            let local = self.create_local_variable(i);
+            self.locals.push(local);
+        }
+    }
+
+    fn create_local_variable(&mut self, index: u16) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_allocate_locals(self.peer, num_locals);
+            bridge::compiler_peer_create_local_variable(self.peer, index)
         }
     }
 
     fn process_mutable_binding(&mut self) {
+        const FLAGS: u8 = (bridge::VARIABLE_INITIALIZED | bridge::VARIABLE_MUTABLE) as u8;
+
+        let (operand, _) = self.dereference();
+        let (symbol, locator) = self.pop_reference();
+        debug_assert_eq!(locator.kind, bridge::LocatorKind_Local);
+
+        let variable = self.locals[locator.index as usize];
+        self.create_store_flags_to_variable(FLAGS, variable);
+        self.create_store_symbol_to_variable(symbol, variable);
+        self.create_store_operand_to_variable(operand, variable);
+    }
+
+    fn dereference(&mut self) -> (Operand, Option<(Symbol, Locator)>) {
+        logger::debug!(event = "dereference");
+
+        let operand = self.operand_stack.pop().unwrap();
+        match operand {
+            Operand::Reference(symbol, locator) => {
+                let value = self.create_get_value_ptr(locator);
+                (Operand::Any(value), Some((symbol, locator)))
+            }
+            _ => (operand, None),
+        }
+    }
+
+    fn create_get_value_ptr(&mut self, locator: Locator) -> bridge::ValueIr {
+        match locator.kind {
+            bridge::LocatorKind_Argument => self.create_get_argument_variable_ptr(locator.index),
+            bridge::LocatorKind_Local => self.locals[locator.index as usize],
+            bridge::LocatorKind_Capture => self.create_get_capture_variable_ptr(locator.index),
+            _ => unreachable!(),
+        }
+    }
+
+    fn pop_reference(&mut self) -> (Symbol, Locator) {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Reference(symbol, locator) => (symbol, locator),
+            _ => unreachable!(),
+        }
+    }
+
+    fn create_store_flags_to_variable(&mut self, flags: u8, variable: bridge::ValueIr) {
+        debug_assert_ne!(variable, 0);
         unsafe {
-            bridge::compiler_peer_declare_mutable(self.peer);
+            bridge::compiler_peer_create_store_flags_to_variable(self.peer, flags, variable)
+        }
+    }
+
+    fn create_store_symbol_to_variable(&mut self, symbol: Symbol, variable: bridge::ValueIr) {
+        debug_assert_ne!(variable, 0);
+        unsafe {
+            bridge::compiler_peer_create_store_symbol_to_variable(self.peer, symbol.id(), variable);
+        }
+    }
+
+    fn create_store_operand_to_variable(&mut self, operand: Operand, variable: bridge::ValueIr) {
+        match operand {
+            Operand::Undefined => unsafe {
+                bridge::compiler_peer_create_store_undefined_to_variable(self.peer, variable);
+            }
+            Operand::Null => unsafe {
+                bridge::compiler_peer_create_store_null_to_variable(self.peer, variable);
+            }
+            Operand::Boolean(value) => unsafe {
+                debug_assert_ne!(value, 0);
+                bridge::compiler_peer_create_store_boolean_to_variable(self.peer, value, variable);
+            }
+            Operand::Number(value) => unsafe {
+                debug_assert_ne!(value, 0);
+                bridge::compiler_peer_create_store_number_to_variable(self.peer, value, variable);
+            }
+            Operand::Closure(value) => unsafe {
+                debug_assert_ne!(value, 0);
+                bridge::compiler_peer_create_store_closure_to_variable(self.peer, value, variable);
+            }
+            Operand::Any(value) => self.create_store_value_to_variable(value, variable),
+            _ => unreachable!(),
+        }
+    }
+
+    fn create_store_value_to_variable(&mut self, value: bridge::ValueIr, variable: bridge::ValueIr) {
+        debug_assert_ne!(value, 0);
+        unsafe {
+            bridge::compiler_peer_create_store_value_to_variable(self.peer, value, variable);
         }
     }
 
     fn process_immutable_binding(&mut self) {
-        unsafe {
-            bridge::compiler_peer_declare_immutable(self.peer);
-        }
+        const FLAGS: u8 = bridge::VARIABLE_INITIALIZED as u8;
+
+        let (operand, _) = self.dereference();
+        let (symbol, locator) = self.pop_reference();
+        debug_assert_eq!(locator.kind, bridge::LocatorKind_Local);
+
+        let variable = self.locals[locator.index as usize];
+        self.create_store_flags_to_variable(FLAGS, variable);
+        self.create_store_symbol_to_variable(symbol, variable);
+        self.create_store_operand_to_variable(operand, variable);
     }
 
     fn process_declare_function(&mut self) {
+        const FLAGS: u8 = (bridge::VARIABLE_INITIALIZED | bridge::VARIABLE_MUTABLE) as u8;
+
         let block = self.control_flow_stack.scope_flow().hoisted_block;
-        unsafe {
-            bridge::compiler_peer_declare_function(self.peer, block);
-        }
+        debug_assert_ne!(block, 0);
+
+        let backup = self.get_basic_block();
+        self.set_basic_block(block);
+
+        let (operand, _) = self.dereference();
+        // TODO: operand must hold a lambda.
+        let (symbol, locator) = self.pop_reference();
+        debug_assert_eq!(locator.kind, bridge::LocatorKind_Local);
+
+        let variable = self.locals[locator.index as usize];
+        self.create_store_flags_to_variable(FLAGS, variable);
+        self.create_store_symbol_to_variable(symbol, variable);
+        self.create_store_operand_to_variable(operand, variable);
+
+        self.set_basic_block(backup);
     }
 
     fn process_declare_closure(&mut self) {
+        const FLAGS: u8 = (bridge::VARIABLE_INITIALIZED | bridge::VARIABLE_MUTABLE) as u8;
+
         let block = self.control_flow_stack.scope_flow().hoisted_block;
-        unsafe {
-            bridge::compiler_peer_declare_closure(self.peer, block);
-        }
+        debug_assert_ne!(block, 0);
+
+        let backup = self.get_basic_block();
+        self.set_basic_block(block);
+
+        let (operand, _) = self.dereference();
+        // TODO: operand must hold a closure.
+        let (symbol, locator) = self.pop_reference();
+        debug_assert_eq!(locator.kind, bridge::LocatorKind_Local);
+
+        let variable = self.locals[locator.index as usize];
+        self.create_store_flags_to_variable(FLAGS, variable);
+        self.create_store_symbol_to_variable(symbol, variable);
+        self.create_store_operand_to_variable(operand, variable);
+
+        self.set_basic_block(backup);
     }
 
     fn process_arguments(&mut self, nargs: u16) {
         if nargs > 0 {
-            unsafe {
-                bridge::compiler_peer_arguments(self.peer, nargs);
-            }
+            let argv = self.create_variables(nargs);
+            // TODO: REG_NAME("args.ptr")
+            self.operand_stack.push(Operand::Argv(argv));
+            self.swap();
         }
+    }
+
+    fn create_variables(&mut self, n: u16) -> bridge::ValueIr {
+        debug_assert!(n > 0);
+        unsafe {
+            bridge::compiler_peer_create_variables(self.peer, n)
+        }
+    }
+
+    fn swap(&mut self) {
+        logger::debug!(event = "swap");
+        debug_assert!(self.operand_stack.len() > 1);
+        let last_index = self.operand_stack.len() - 1;
+        self.operand_stack.swap(last_index - 1, last_index);
     }
 
     fn process_argument(&mut self, index: u16) {
-        unsafe {
-            bridge::compiler_peer_argument(self.peer, index);
+        let (operand, _) = self.dereference();
+        let argv = self.peek_argv();
+        let value_ptr = self.create_get_value_ptr_in_values(argv, index);
+        // TODO: REG_NAME("args." + llvm::Twine(index) + ".ptr")
+        self.create_store_operand_to_variable(operand, value_ptr);
+    }
+
+    fn peek_argv(&self) -> bridge::ValueIr {
+        match self.operand_stack.last().unwrap() {
+            Operand::Argv(value) => *value,
+            _ => unreachable!(),
         }
     }
 
-    fn process_call(&mut self, nargs: u16) {
-        let block = self.control_flow_stack.exception_block();
+    fn create_get_value_ptr_in_values(&mut self, values: bridge::ValueIr, index: u16) -> bridge::ValueIr {
+        debug_assert_ne!(values, 0);
         unsafe {
-            bridge::compiler_peer_call(self.peer, nargs, block);
+            bridge::compiler_peer_create_get_value_ptr_in_values(self.peer, values, index)
         }
+    }
+
+    fn process_call(&mut self, argc: u16) {
+        let argv = if argc > 0 {
+            self.pop_argv()
+        } else {
+            self.get_nullptr()
+        };
+
+        let (operand, _) = self.dereference();
+        let closure = match operand {
+            Operand::Closure(closure) => closure, // IIFE
+            Operand::Any(value) => self.create_load_closure_from_value_or_throw_type_error(value),
+            _ => {
+                self.process_number(1.);
+                self.process_throw();
+                return;
+            }
+        };
+
+        let retv = self.create_retv();
+
+        // TODO: REG_NAME("status")
+        let status = self.create_call_on_closure(closure, argc, argv, retv, c"");
+
+        self.create_check_status_for_exception(status, retv);
+
         // The function may throw an exception.
         self.control_flow_stack.set_thrown();
+
+        self.operand_stack.push(Operand::Any(retv));
+    }
+
+    fn create_retv(&mut self) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_retv(self.peer)
+        }
+    }
+
+    fn pop_argv(&mut self) -> bridge::ValueIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Argv(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_nullptr(&mut self) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_get_nullptr(self.peer)
+        }
+    }
+
+    fn create_call_on_closure(&mut self, closure: bridge::ValueIr, argc: u16, argv: bridge::ValueIr, retv: bridge::ValueIr, _name: &CStr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_call_on_closure(self.peer, closure, argc, argv, retv)
+        }
+    }
+
+    fn create_load_closure_from_value_or_throw_type_error(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        // TODO: REG_NAME("closure.ptr")
+        let closure = self.create_ptr(c"");
+
+        let kind = self.create_load_value_kind_from_value(value);
+        let then_block = self.create_basic_block("is_closure.then");
+        let else_block = self.create_basic_block("is_closure.else");
+        let end_block = self.create_basic_block("closure");
+
+        // if value.kind == ValueKind::Closure
+        let kind_closure = self.get_u8(bridge::ValueKind_Closure);
+        // TODO: REG_NAME("is_closure")
+        let is_closure = self.create_icmp_eq(kind, kind_closure, c"");
+        self.create_cond_br(is_closure, then_block, else_block);
+        // {
+        self.set_basic_block(then_block);
+        let ptr = self.create_load_closure_from_value(value);
+        self.create_store(ptr, closure);
+        self.create_br(end_block);
+        // } else {
+        self.set_basic_block(else_block);
+        // TODO: TypeError
+        self.process_number(1.);
+        self.process_throw();
+        self.create_br(end_block);
+        // }
+
+        self.set_basic_block(end_block);
+        // TODO: REG_NAME("closure")
+        self.create_load_ptr(closure, c"")
+    }
+
+    fn create_ptr(&mut self, _name: &CStr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_ptr(self.peer)
+        }
+    }
+
+    fn create_load_value_kind_from_value(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_load_value_kind_from_value(self.peer, value)
+        }
+    }
+
+    fn get_u8(&mut self, value: u8) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_get_u8(self.peer, value)
+        }
+    }
+
+    fn get_u32(&mut self, value: u32) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_get_u32(self.peer, value)
+        }
+    }
+
+    fn create_icmp_eq(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr, _name: &CStr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_icmp_eq(self.peer, lhs, rhs)
+        }
+    }
+
+    fn create_cond_br(&mut self, cond: bridge::ValueIr, then_block: bridge::BasicBlock, else_block: bridge::BasicBlock) {
+        unsafe {
+            bridge::compiler_peer_create_cond_br(self.peer, cond, then_block, else_block);
+        }
+    }
+
+    fn create_load_closure_from_value(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_load_closure_from_value(self.peer, value)
+        }
+    }
+
+    fn create_store(&mut self, value: bridge::ValueIr, dest: bridge::ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_store(self.peer, value, dest);
+        }
+    }
+
+    fn create_br(&mut self, block: bridge::BasicBlock) {
+        debug_assert_ne!(block, 0);
+        unsafe {
+            bridge::compiler_peer_create_br(self.peer, block);
+        }
+    }
+
+    fn create_load_ptr(&mut self, value: bridge::ValueIr, _name: &CStr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_load_ptr(self.peer, value)
+        }
+    }
+
+    // Handle an exception if it's thrown.
+    fn create_check_status_for_exception(&mut self, status: bridge::ValueIr, retv: bridge::ValueIr) {
+        let block = self.control_flow_stack.exception_block();
+        debug_assert_ne!(block, 0);
+
+        let status_exception = self.get_u32(bridge::STATUS_EXCEPTION);
+        let exception_block = self.create_basic_block("status.exception");
+        let normal_block = self.create_basic_block("status.normal");
+
+        // if status == Sttus::Exception
+        // TODO: REG_NAME("is_exception")
+        let is_exception = self.create_icmp_eq(status, status_exception, c"");
+        self.create_cond_br(is_exception, exception_block, normal_block);
+        // {
+        self.set_basic_block(exception_block);
+        // Store the exception.
+        self.create_store_status(bridge::STATUS_EXCEPTION);
+        self.create_store_retv(retv);
+        self.create_br(block);
+        // }
+
+        self.set_basic_block(normal_block);
+    }
+
+    fn create_store_status(&mut self, status: bridge::Status) {
+        unsafe {
+            bridge::compiler_peer_create_store_status(self.peer, status);
+        }
+    }
+
+    fn create_store_retv(&mut self, retv: bridge::ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_store_retv(self.peer, retv);
+        }
     }
 
     fn process_push_scope(&mut self, scope_ref: ScopeRef) {
@@ -435,26 +905,109 @@ impl<'r, 's> Compiler<'r, 's> {
             cleanup_block,
         );
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, init_block);
-            bridge::compiler_peer_move_basic_block_after(self.peer, init_block);
-            bridge::compiler_peer_set_basic_block(self.peer, body_block);
+        self.create_br(init_block);
+        self.move_basic_block_after(init_block);
+        self.set_basic_block(body_block);
 
-            bridge::compiler_peer_start_scope_cleanup_checker(self.peer, scope_ref.id());
-        }
+        self.start_scope_cleanup_checker(scope_ref);
 
+        let backup = self.get_basic_block();
+        self.set_basic_block(init_block);
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
             if binding.is_local() {
-                unsafe {
-                    bridge::compiler_peer_init_local(self.peer, binding.locator(), init_block);
-                }
+                let variable = self.locals[binding.locator().index as usize];
+                self.create_store_flags_to_variable(0, variable);
             }
             if binding.captured {
-                unsafe {
-                    bridge::compiler_peer_create_capture(self.peer, binding.locator(), init_block);
-                }
+                let locator = binding.locator();
+                let variable = match locator.kind {
+                    bridge::LocatorKind_Argument => self.create_get_argument_variable_ptr(locator.index),
+                    bridge::LocatorKind_Local => self.locals[locator.index as usize],
+                    _ => unreachable!(),
+                };
+
+                let capture = self.create_call_runtime_create_capture(variable);
+                let key = Self::compute_key_from_locator(locator);
+                debug_assert!(!self.captures.contains_key(&key));
+                self.captures.insert(key, capture);
             }
+        }
+        self.set_basic_block(backup);
+    }
+
+    fn compute_key_from_locator(locator: Locator) -> u32 {
+        (locator.kind as u32) << 16 | locator.index as u32
+    }
+
+    fn create_call_runtime_create_capture(&mut self, variable: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_call_runtime_create_capture(self.peer, variable)
+        }
+    }
+
+    fn start_scope_cleanup_checker(&mut self, scope_ref: ScopeRef) {
+        unsafe {
+            bridge::compiler_peer_start_scope_cleanup_checker(self.peer, scope_ref.id());
+        }
+    }
+
+    fn move_basic_block_after(&mut self, block: bridge::BasicBlock) {
+        debug_assert_ne!(block, 0);
+        unsafe {
+            bridge::compiler_peer_move_basic_block_after(self.peer, block);
+        }
+    }
+
+    fn escape_variable(&mut self, locator: Locator) {
+        debug_assert_ne!(locator.kind, bridge::LocatorKind_Capture);
+
+        let block = self.control_flow_stack.scope_flow().cleanup_block;
+        debug_assert_ne!(block, 0);
+
+        let backup = self.get_basic_block();
+        self.set_basic_block(block);
+
+        let key = Self::compute_key_from_locator(locator);
+        debug_assert!(self.captures.contains_key(&key));
+
+        let capture = self.captures.swap_remove(&key).unwrap();
+        let variable = self.create_get_variable_ptr(locator);
+        self.create_escape_variable(capture, variable);
+
+        self.set_basic_block(backup);
+    }
+
+    fn create_escape_variable(&mut self, capture: bridge::ValueIr, variable: bridge::ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_escape_variable(self.peer, capture, variable);
+        }
+    }
+
+    fn create_get_variable_ptr(&mut self, locator: Locator) -> bridge::ValueIr {
+        match locator.kind {
+            bridge::LocatorKind_Argument => self.create_get_argument_variable_ptr(locator.index),
+            bridge::LocatorKind_Local => self.locals[locator.index as usize],
+            bridge::LocatorKind_Capture => self.create_get_capture_variable_ptr(locator.index),
+            _ => unreachable!(),
+        }
+    }
+
+    fn create_get_argument_variable_ptr(&mut self, index: u16) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_get_argument_variable_ptr(self.peer, index)
+        }
+    }
+
+    fn create_get_capture_variable_ptr(&mut self, index: u16) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_get_capture_variable_ptr(self.peer, index)
+        }
+    }
+
+    fn end_scope_cleanup_checker(&mut self, scope_ref: ScopeRef) {
+        unsafe {
+            bridge::compiler_peer_end_scope_cleanup_checker(self.peer, scope_ref.id());
         }
     }
 
@@ -464,15 +1017,11 @@ impl<'r, 's> Compiler<'r, 's> {
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
             if binding.captured {
-                let block = self.control_flow_stack.scope_flow().cleanup_block;
-                unsafe {
-                    bridge::compiler_peer_escape_variable(self.peer, binding.locator(), block);
-                }
+                self.escape_variable(binding.locator());
             }
             if binding.is_local() {
-                unsafe {
-                    bridge::compiler_peer_tidy_local(self.peer, binding.locator());
-                }
+                // tidy local variable
+                // TODO: GC
             }
         }
 
@@ -480,24 +1029,19 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let flow = self.control_flow_stack.pop_scope_flow();
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, flow.cleanup_block);
-            bridge::compiler_peer_move_basic_block_after(self.peer, flow.cleanup_block);
+        self.create_br(flow.cleanup_block);
+        self.move_basic_block_after(flow.cleanup_block);
 
-            bridge::compiler_peer_set_basic_block(self.peer, flow.init_block);
-            bridge::compiler_peer_create_br(self.peer, flow.hoisted_block);
-            bridge::compiler_peer_move_basic_block_after(self.peer, flow.hoisted_block);
+        self.set_basic_block(flow.init_block);
+        self.create_br(flow.hoisted_block);
+        self.move_basic_block_after(flow.hoisted_block);
 
-            bridge::compiler_peer_set_basic_block(self.peer, flow.hoisted_block);
-            bridge::compiler_peer_create_br(self.peer, flow.body_block);
-            bridge::compiler_peer_move_basic_block_after(self.peer, flow.body_block);
+        self.set_basic_block(flow.hoisted_block);
+        self.create_br(flow.body_block);
+        self.move_basic_block_after(flow.body_block);
 
-            bridge::compiler_peer_set_basic_block(self.peer, flow.cleanup_block);
-        }
-
-        unsafe {
-            bridge::compiler_peer_end_scope_cleanup_checker(self.peer, scope_ref.id());
-        }
+        self.set_basic_block(flow.cleanup_block);
+        self.end_scope_cleanup_checker(scope_ref);
 
         let block = self.create_basic_block("block");
 
@@ -522,353 +1066,1144 @@ impl<'r, 's> Compiler<'r, 's> {
             );
         }
 
-        unsafe {
-            bridge::compiler_peer_move_basic_block_after(self.peer, block);
-            bridge::compiler_peer_set_basic_block(self.peer, block);
-        }
+        self.move_basic_block_after(block);
+        self.set_basic_block(block);
     }
 
     fn process_capture_variable(&mut self, declaration: bool) {
-        let block = if declaration {
-            self.control_flow_stack.scope_flow().hoisted_block
-        } else {
-            0
+        let backup = self.get_basic_block();
+        if declaration {
+            let block = self.control_flow_stack.scope_flow().hoisted_block;
+            self.set_basic_block(block);
+        }
+
+        let (_, locator) = self.pop_reference();
+        let capture = match locator.kind {
+            bridge::LocatorKind_Argument | bridge::LocatorKind_Local => {
+                let key = Self::compute_key_from_locator(locator);
+                debug_assert!(self.captures.contains_key(&key));
+                self.captures.get(&key).unwrap().clone()
+            }
+            bridge::LocatorKind_Capture => self.create_load_capture(locator.index),
+            _ => unreachable!(),
         };
-        unsafe {
-            bridge::compiler_peer_capture_variable(self.peer, block);
+
+        self.operand_stack.push(Operand::Capture(capture));
+
+        if declaration {
+            self.set_basic_block(backup);
         }
     }
 
+    fn create_load_capture(&mut self, index: u16) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_load_capture(self.peer, index)
+        }
+    }
+
+    // 13.4.2.1 Runtime Semantics: Evaluation
+    // 13.4.3.1 Runtime Semantics: Evaluation
+    // 13.4.4.1 Runtime Semantics: Evaluation
+    // 13.4.5.1 Runtime Semantics: Evaluation
+    fn process_incr_decr(&mut self, pos: char, op: char) {
+        let (operand, reference) = self.dereference();
+        let old_value = self.to_numeric(operand);
+        // TODO: BigInt
+        let one = self.get_number(1.0);
+        let new_value = if op == '+' {
+            // TODO: REG_NAME("incr")
+            self.create_fadd(old_value, one)
+        } else {
+            // TODO: REG_NAME("decr")
+            self.create_fsub(old_value, one)
+        };
+        match reference {
+            Some((symbol, locator)) if symbol != Symbol::NONE => {
+                debug_assert_ne!(locator.kind, bridge::LocatorKind_None);
+                self.operand_stack.push(Operand::Reference(symbol, locator));
+                self.operand_stack.push(Operand::Number(new_value));
+                self.process_assignment();
+                self.process_discard();
+            }
+            _ => {
+                // TODO: throw a ReferenceError at runtime
+            }
+        }
+        self.operand_stack.push(Operand::Number(if pos == '^' {
+            new_value
+        } else {
+            old_value
+        }));
+    }
+
+    fn get_number(&mut self, value: f64) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_get_number(self.peer, value)
+        }
+    }
+
+    // 7.1.4 ToNumber ( argument )
+    fn to_numeric(&mut self, operand: Operand) -> bridge::ValueIr {
+        match operand {
+            Operand::Undefined => unsafe {
+                bridge::compiler_peer_get_nan(self.peer)
+            },
+            Operand::Null => unsafe {
+                bridge::compiler_peer_get_zero(self.peer)
+            },
+            Operand::Boolean(value) => unsafe {
+                bridge::compiler_peer_create_ui_to_fp(self.peer, value)
+            },
+            Operand::Number(value) => value,
+            Operand::Function(_) | Operand::Closure(_) => unsafe {
+                bridge::compiler_peer_get_nan(self.peer)
+            },
+            Operand::Any(value) => unsafe {
+                bridge::compiler_peer_to_numeric(self.peer, value)
+            },
+            _ => unreachable!(),
+        }
+    }
+
+    // 13.4.2.1 Runtime Semantics: Evaluation
     fn process_postfix_increment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_postfix_increment(self.peer);
-        }
+        self.process_incr_decr('$', '+');
     }
 
+    // 13.4.3.1 Runtime Semantics: Evaluation
     fn process_postfix_decrement(&mut self) {
-        unsafe {
-            bridge::compiler_peer_postfix_decrement(self.peer);
-        }
+        self.process_incr_decr('$', '-');
     }
 
+    // 13.4.4.1 Runtime Semantics: Evaluation
     fn process_prefix_increment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_prefix_increment(self.peer);
-        }
+        self.process_incr_decr('^', '+');
     }
 
+    // 13.4.5.1 Runtime Semantics: Evaluation
     fn process_prefix_decrement(&mut self) {
-        unsafe {
-            bridge::compiler_peer_prefix_decrement(self.peer);
-        }
+        self.process_incr_decr('^', '-');
     }
 
+    // 13.5.1.2 Runtime Semantics: Evaluation
     fn process_delete(&mut self) {
         unimplemented!("delete operator");
     }
 
+    // 13.5.2.1 Runtime Semantics: Evaluation
     fn process_void(&mut self) {
-        unsafe {
-            bridge::compiler_peer_void(self.peer);
-        }
+        self.operand_stack.pop();
+        self.operand_stack.push(Operand::Undefined);
     }
 
+    // 13.5.3.1 Runtime Semantics: Evaluation
     fn process_typeof(&mut self) {
         // TODO: implement String before this
         unimplemented!("typeof operator");
     }
 
+    // 13.5.4.1 Runtime Semantics: Evaluation
     fn process_unary_plus(&mut self) {
-        unsafe {
-            bridge::compiler_peer_unary_plus(self.peer);
-        }
+        let (operand, _) = self.dereference();
+        let value = self.to_numeric(operand);
+        self.operand_stack.push(Operand::Number(value));
     }
 
+    // 13.5.5.1 Runtime Semantics: Evaluation
     fn process_unary_minus(&mut self) {
+        let (operand, _) = self.dereference();
+        let value = self.to_numeric(operand);
+        // TODO: BigInt
+        // 6.1.6.1.1 Number::unaryMinus ( x )
+        let value = self.create_fneg(value);
+        self.operand_stack.push(Operand::Number(value));
+    }
+
+    fn create_fneg(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_unary_minus(self.peer);
+            bridge::compiler_peer_create_fneg(self.peer, value)
         }
     }
 
+    // 13.5.6.1 Runtime Semantics: Evaluation
     fn process_bitwise_not(&mut self) {
+        let (operand, _) = self.dereference();
+        let number = self.to_numeric(operand);
+        // TODO: BigInt
+        let number = self.create_bitwise_not(number);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_bitwise_not(&mut self, number: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_bitwise_not(self.peer);
+            bridge::compiler_peer_create_bitwise_not(self.peer, number)
         }
     }
 
+    // 13.5.7.1 Runtime Semantics: Evaluation
     fn process_logical_not(&mut self) {
-        unsafe {
-            bridge::compiler_peer_logical_not(self.peer);
+        let (operand, _) = self.dereference();
+        let boolean = self.create_to_boolean(operand);
+        let boolean = self.create_logical_not(boolean);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    fn create_to_boolean(&mut self, operand: Operand) -> bridge::ValueIr {
+        match operand {
+            Operand::Undefined | Operand::Null => self.get_boolean(false),
+            Operand::Boolean(value) => value,
+            Operand::Number(value) => self.create_number_to_boolean(value),
+            Operand::Function(_) | Operand::Closure(_) => self.get_boolean(true),
+            Operand::Any(value) => unsafe {
+                bridge::compiler_peer_create_to_boolean(self.peer, value)
+            },
+            _ => unreachable!(),
         }
     }
 
+    fn get_boolean(&mut self, value: bool) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_get_boolean(self.peer, value)
+        }
+    }
+
+    fn create_number_to_boolean(&mut self, number: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_number_to_boolean(self.peer, number)
+        }
+    }
+
+    fn create_logical_not(&mut self, boolean: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_logical_not(self.peer, boolean)
+        }
+    }
+
+    // 13.6.1 Runtime Semantics: Evaluation
     fn process_exponentiation(&mut self) {
         unimplemented!("** operator");
     }
 
+    // 13.7.1 Runtime Semantics: Evaluation
     fn process_multiplication(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let number = self.create_fmul(lhs, rhs);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_fmul(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_multiplication(self.peer);
+            bridge::compiler_peer_create_fmul(self.peer, lhs, rhs)
         }
     }
 
+    // 13.7.1 Runtime Semantics: Evaluation
     fn process_division(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let number = self.create_fdiv(lhs, rhs);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_fdiv(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_division(self.peer);
+            bridge::compiler_peer_create_fdiv(self.peer, lhs, rhs)
         }
     }
 
+    // 13.7.1 Runtime Semantics: Evaluation
     fn process_remainder(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let number = self.create_frem(lhs, rhs);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_frem(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_remainder(self.peer);
+            bridge::compiler_peer_create_frem(self.peer, lhs, rhs)
         }
     }
 
+    // 13.8.1.1 Runtime Semantics: Evaluation
     fn process_addition(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let number = self.create_fadd(lhs, rhs);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_fadd(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_addition(self.peer);
+            bridge::compiler_peer_create_fadd(self.peer, lhs, rhs)
         }
     }
 
+    // 13.8.2.1 Runtime Semantics: Evaluation
     fn process_subtraction(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let number = self.create_fsub(lhs, rhs);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_fsub(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_subtraction(self.peer);
+            bridge::compiler_peer_create_fsub(self.peer, lhs, rhs)
         }
     }
 
+    // 13.9.1.1 Runtime Semantics: Evaluation
     fn process_left_shift(&mut self) {
+        // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+        // TODO: BigInt
+        let number = self.create_left_shift(lhs, rhs);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_left_shift(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_left_shift(self.peer);
+            bridge::compiler_peer_create_left_shift(self.peer, lhs, rhs)
         }
     }
 
+    // 13.9.2.1 Runtime Semantics: Evaluation
     fn process_signed_right_shift(&mut self) {
+        // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+        // TODO: BigInt
+        let number = self.create_signed_right_shift(lhs, rhs);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_signed_right_shift(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_signed_right_shift(self.peer);
+            bridge::compiler_peer_create_signed_right_shift(self.peer, lhs, rhs)
         }
     }
 
+    // 13.9.3.1 Runtime Semantics: Evaluation
     fn process_unsigned_right_shift(&mut self) {
+        // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+        // TODO: BigInt
+        let number = self.create_unsigned_right_shift(lhs, rhs);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_unsigned_right_shift(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_unsigned_right_shift(self.peer);
+            bridge::compiler_peer_create_unsigned_right_shift(self.peer, lhs, rhs)
         }
     }
 
+    // 13.10.1 Runtime Semantics: Evaluation
     fn process_less_than(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let boolean = self.create_less_than(lhs, rhs);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    fn create_less_than(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_less_than(self.peer);
+            bridge::compiler_peer_create_less_than(self.peer, lhs, rhs)
         }
     }
 
+    // 13.10.1 Runtime Semantics: Evaluation
     fn process_greater_than(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let boolean = self.create_greater_than(lhs, rhs);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    fn create_greater_than(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_greater_than(self.peer);
+            bridge::compiler_peer_create_greater_than(self.peer, lhs, rhs)
         }
     }
 
+    // 13.10.1 Runtime Semantics: Evaluation
     fn process_less_than_or_equal(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let boolean = self.create_less_than_or_equal(lhs, rhs);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    fn create_less_than_or_equal(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_less_than_or_equal(self.peer);
+            bridge::compiler_peer_create_less_than_or_equal(self.peer, lhs, rhs)
         }
     }
 
+    // 13.10.1 Runtime Semantics: Evaluation
     fn process_greater_than_or_equal(&mut self) {
+        self.swap();
+
+        let (lhs, _) = self.dereference();
+        let lhs = self.to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.to_numeric(rhs);
+
+        let boolean = self.create_greater_than_or_equal(lhs, rhs);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    fn create_greater_than_or_equal(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_greater_than_or_equal(self.peer);
+            bridge::compiler_peer_create_greater_than_or_equal(self.peer, lhs, rhs)
         }
     }
 
+    // 13.10.1 Runtime Semantics: Evaluation
     fn process_instanceof(&mut self) {
         unimplemented!("instanceof operator");
     }
 
+    // 13.10.1 Runtime Semantics: Evaluation
     fn process_in(&mut self) {
         unimplemented!("in operator");
     }
 
+    // 13.11.1 Runtime Semantics: Evaluation
     fn process_equality(&mut self) {
+        logger::debug!(event = "process_equality");
+
+        self.swap();
+
+        // TODO: comparing the references improves the performance.
+        let (lhs, _) = self.dereference();
+        let (rhs, _) = self.dereference();
+
+        let boolean = self.create_is_loosely_equal(lhs, rhs);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    // 7.2.13 IsLooselyEqual ( x, y )
+    fn create_is_loosely_equal(&mut self, lhs: Operand, rhs: Operand) -> bridge::ValueIr {
+        logger::debug!(event = "create_is_loosely_equal", ?lhs, ?rhs);
+        if let Operand::Any(lhs) = lhs {
+            // TODO: compile-time evaluation
+            let rhs = self.create_to_any(rhs);
+            unsafe {
+                return bridge::compiler_peer_create_is_loosely_equal(self.peer, lhs, rhs);
+            }
+        }
+        if let Operand::Any(rhs) = rhs {
+            // TODO: compile-time evaluation
+            let lhs = self.create_to_any(lhs);
+            unsafe {
+                return bridge::compiler_peer_create_is_loosely_equal(self.peer, lhs, rhs);
+            }
+        }
+
+        // 1. If Type(x) is Type(y), then Return IsStrictlyEqual(x, y).
+        if std::mem::discriminant(&lhs) == std::mem::discriminant(&rhs) {
+            return self.create_is_strictly_equal(lhs, rhs);
+        }
+
+        // 2. If x is null and y is undefined, return true.
+        if matches!(lhs, Operand::Null) && matches!(rhs, Operand::Undefined) {
+            return self.get_boolean(true);
+        }
+
+        // 3. If x is undefined and y is null, return true.
+        if matches!(lhs, Operand::Undefined) && matches!(rhs, Operand::Null) {
+            return self.get_boolean(true);
+        }
+
+        // TODO: 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
+        // TODO: 6. If x is a String and y is a Number, return ! IsLooselyEqual(! ToNumber(x), y).
+        // TODO: 7. If x is a BigInt and y is a String, then
+        // TODO: 8. If x is a String and y is a BigInt, return ! IsLooselyEqual(y, x).
+        // TODO
+        // TODO: 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
+        // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
+        // TODO: ...
+        let lhs = self.create_to_any(lhs);
+        let rhs = self.create_to_any(rhs);
         unsafe {
-            bridge::compiler_peer_equality(self.peer);
+            return bridge::compiler_peer_create_is_loosely_equal(self.peer, lhs, rhs);
         }
     }
 
+    fn create_to_any(&mut self, operand: Operand) -> bridge::ValueIr {
+        logger::debug!(event = "create_to_any", ?operand);
+        match operand {
+            Operand::Any(value) => value,
+            Operand::Undefined => unsafe {
+                bridge::compiler_peer_create_undefined_to_any(self.peer)
+            },
+            Operand::Null => unsafe {
+                bridge::compiler_peer_create_null_to_any(self.peer)
+            },
+            Operand::Boolean(value) => unsafe {
+                bridge::compiler_peer_create_boolean_to_any(self.peer, value)
+            },
+            Operand::Number(value) => unsafe {
+                bridge::compiler_peer_create_number_to_any(self.peer, value)
+            },
+            Operand::Closure(value) => unsafe {
+                bridge::compiler_peer_create_closure_to_any(self.peer, value)
+            },
+            _ => unreachable!(),
+        }
+    }
+
+    // 7.2.14 IsStrictlyEqual ( x, y )
+    fn create_is_strictly_equal(&mut self, lhs: Operand, rhs: Operand) -> bridge::ValueIr {
+        logger::debug!(event = "create_is_strictly_equal", ?lhs, ?rhs);
+        if let Operand::Any(lhs) = lhs {
+            return self.create_any_is_strictly_equal(lhs, rhs);
+        }
+        if let Operand::Any(rhs) = rhs {
+            return self.create_any_is_strictly_equal(rhs, lhs);
+        }
+        if std::mem::discriminant(&lhs) != std::mem::discriminant(&rhs) {
+            return self.get_boolean(false);
+        }
+        // TODO: BigInt
+        match (lhs, rhs) {
+            (Operand::Undefined, Operand::Undefined) => self.get_boolean(true),
+            (Operand::Null, Operand::Null) => self.get_boolean(true),
+            (Operand::Boolean(lhs), Operand::Boolean(rhs)) => self.create_is_same_boolean(lhs, rhs),
+            (Operand::Number(lhs), Operand::Number(rhs)) => self.create_is_same_number(lhs, rhs),
+            (Operand::Closure(lhs), Operand::Closure(rhs)) => self.create_is_same_closure(lhs, rhs),
+            _ => unreachable!(),
+        }
+    }
+
+    fn create_any_is_strictly_equal(&mut self, lhs: bridge::ValueIr, rhs: Operand) -> bridge::ValueIr {
+        logger::debug!(event = "create_any_is_strictly_equal", ?lhs, ?rhs);
+        match rhs {
+            Operand::Undefined => self.create_is_undefined(lhs),
+            Operand::Null => self.create_is_null(lhs),
+            Operand::Boolean(rhs) => self.create_is_same_boolean_value(lhs, rhs),
+            Operand::Number(rhs) => self.create_is_same_number_value(lhs, rhs),
+            Operand::Closure(rhs) => self.create_is_same_closure_value(lhs, rhs),
+            Operand::Any(rhs) => unsafe {
+                bridge::compiler_peer_create_is_strictly_equal(self.peer, lhs, rhs)
+            },
+            _ => unreachable!(),
+        }
+    }
+
+    fn create_is_undefined(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_is_undefined(self.peer, value)
+        }
+    }
+
+    fn create_is_null(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_is_null(self.peer, value)
+        }
+    }
+
+    fn create_is_same_boolean_value(&mut self, value: bridge::ValueIr, boolean: bridge::ValueIr) -> bridge::ValueIr {
+        let then_block = self.create_basic_block("is_boolean.then");
+        let else_block = self.create_basic_block("is_boolean.else");
+        let merge_block = self.create_basic_block("is_boolean");
+
+        // if value.kind == ValueKind::Boolean
+        let cond = self.create_is_boolean(value);
+        self.create_cond_br(cond, then_block, else_block);
+        // {
+        self.set_basic_block(then_block);
+        let then_value = unsafe {
+            bridge::compiler_peer_create_is_same_boolean_value(self.peer, value, boolean)
+        };
+        self.create_br(merge_block);
+        // } else {
+        self.set_basic_block(else_block);
+        let else_value = self.get_boolean(false);
+        self.create_br(merge_block);
+        // }
+        self.set_basic_block(merge_block);
+        self.create_boolean_ternary(then_value, then_block, else_value, else_block)
+    }
+
+    fn create_is_boolean(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_is_boolean(self.peer, value)
+        }
+    }
+
+    fn create_is_same_boolean(&mut self, a: bridge::ValueIr, b: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_is_same_boolean(self.peer, a, b)
+        }
+    }
+
+    fn create_is_same_number_value(&mut self, value: bridge::ValueIr, number: bridge::ValueIr) -> bridge::ValueIr {
+        logger::debug!(event = "create_is_same_number", ?value, ?number);
+
+        let then_block = self.create_basic_block("is_number.then");
+        let else_block = self.create_basic_block("is_number.else");
+        let merge_block = self.create_basic_block("is_number");
+
+        // if value.kind == ValueKind::Number
+        let cond = self.create_is_number(value);
+        self.create_cond_br(cond, then_block, else_block);
+        // {
+        self.set_basic_block(then_block);
+        let then_value = unsafe {
+            bridge::compiler_peer_create_is_same_number_value(self.peer, value, number)
+        };
+        self.create_br(merge_block);
+        // } else {
+        self.set_basic_block(else_block);
+        let else_value = self.get_boolean(false);
+        self.create_br(merge_block);
+        // }
+        self.set_basic_block(merge_block);
+        self.create_boolean_ternary(then_value, then_block, else_value, else_block)
+    }
+
+    fn create_is_number(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        logger::debug!(event = "create_is_number", ?value);
+        unsafe {
+            bridge::compiler_peer_create_is_number(self.peer, value)
+        }
+    }
+
+    fn create_is_same_number(&mut self, a: bridge::ValueIr, b: bridge::ValueIr) -> bridge::ValueIr {
+        logger::debug!(event = "create_is_same_number", ?a, ?b);
+        unsafe {
+            bridge::compiler_peer_create_is_same_number(self.peer, a, b)
+        }
+    }
+
+    fn create_is_same_closure_value(&mut self, value: bridge::ValueIr, closure: bridge::ValueIr) -> bridge::ValueIr {
+        let then_block = self.create_basic_block("is_closure.then");
+        let else_block = self.create_basic_block("is_closure.else");
+        let merge_block = self.create_basic_block("is_closure");
+
+        // if value.kind == ValueKind::Number
+        let cond = self.create_is_closure(value);
+        self.create_cond_br(cond, then_block, else_block);
+        // {
+        self.set_basic_block(then_block);
+        let then_value = unsafe {
+            bridge::compiler_peer_create_is_same_closure_value(self.peer, value, closure)
+        };
+        self.create_br(merge_block);
+        // } else {
+        self.set_basic_block(else_block);
+        let else_value = self.get_boolean(false);
+        self.create_br(merge_block);
+        // }
+        self.set_basic_block(merge_block);
+        self.create_boolean_ternary(then_value, then_block, else_value, else_block)
+    }
+
+    fn create_is_closure(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_is_closure(self.peer, value)
+        }
+    }
+
+    fn create_is_same_closure(&mut self, a: bridge::ValueIr, b: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_is_same_closure(self.peer, a, b)
+        }
+    }
+
+    // 13.11.1 Runtime Semantics: Evaluation
     fn process_inequality(&mut self) {
-        unsafe {
-            bridge::compiler_peer_inequality(self.peer);
-        }
+        self.swap();
+
+        // TODO: comparing references improves the performance.
+        let (lhs, _) = self.dereference();
+        let (rhs, _) = self.dereference();
+
+        let eq = self.create_is_loosely_equal(lhs, rhs);
+        let boolean = self.create_logical_not(eq);
+        self.operand_stack.push(Operand::Boolean(boolean));
     }
 
+    // 13.11.1 Runtime Semantics: Evaluation
     fn process_strict_equality(&mut self) {
-        unsafe {
-            bridge::compiler_peer_strict_equality(self.peer);
-        }
+        self.swap();
+
+        // TODO: comparing references improves the performance.
+        let (lhs, _) = self.dereference();
+        let (rhs, _) = self.dereference();
+
+        let boolean = self.create_is_strictly_equal(lhs, rhs);
+        self.operand_stack.push(Operand::Boolean(boolean));
     }
 
+    // 13.11.1 Runtime Semantics: Evaluation
     fn process_strict_inequality(&mut self) {
-        unsafe {
-            bridge::compiler_peer_strict_inequality(self.peer);
-        }
+        self.swap();
+
+        // TODO: comparing references improves the performance.
+        let (lhs, _) = self.dereference();
+        let (rhs, _) = self.dereference();
+
+        let eq = self.create_is_strictly_equal(lhs, rhs);
+        let boolean = self.create_logical_not(eq);
+        self.operand_stack.push(Operand::Boolean(boolean));
     }
 
+    // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_and(&mut self) {
+        // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+        self.swap();
+
+        let (lval, _) = self.dereference();
+        let (rval, _) = self.dereference();
+
+        // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+        let lnum = self.to_numeric(lval);
+        let rnum = self.to_numeric(rval);
+        // TODO: BigInt
+
+        let number = self.create_bitwise_and(lnum, rnum);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_bitwise_and(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_bitwise_and(self.peer);
+            bridge::compiler_peer_create_bitwise_and(self.peer, lhs, rhs)
         }
     }
 
+    // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_xor(&mut self) {
+        // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+        self.swap();
+
+        let (lval, _) = self.dereference();
+        let (rval, _) = self.dereference();
+
+        // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+        let lnum = self.to_numeric(lval);
+        let rnum = self.to_numeric(rval);
+        // TODO: BigInt
+
+        let number = self.create_bitwise_xor(lnum, rnum);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_bitwise_xor(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_bitwise_xor(self.peer);
+            bridge::compiler_peer_create_bitwise_xor(self.peer, lhs, rhs)
         }
     }
 
+    // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_or(&mut self) {
+        // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+        self.swap();
+
+        let (lval, _) = self.dereference();
+        let (rval, _) = self.dereference();
+
+        // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+        let lnum = self.to_numeric(lval);
+        let rnum = self.to_numeric(rval);
+        // TODO: BigInt
+
+        let number = self.create_bitwise_or(lnum, rnum);
+        self.operand_stack.push(Operand::Number(number));
+    }
+
+    fn create_bitwise_or(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_bitwise_or(self.peer);
+            bridge::compiler_peer_create_bitwise_or(self.peer, lhs, rhs)
         }
     }
 
     fn process_ternary(&mut self) {
         let else_branch = self.control_flow_stack.pop_branch_flow();
         let then_branch = self.control_flow_stack.pop_branch_flow();
-        unsafe {
-            bridge::compiler_peer_ternary(
-                self.peer,
-                then_branch.before_block,
-                then_branch.after_block,
-                else_branch.before_block,
-                else_branch.after_block,
-            );
+
+        let test_block = then_branch.before_block;
+        let then_head_block = then_branch.after_block;
+        let then_tail_block = else_branch.before_block;
+        let else_head_block = else_branch.after_block;
+        let else_tail_block = self.get_basic_block();
+
+        let (else_operand, _) = self.dereference();
+
+        self.set_basic_block(then_tail_block);
+        let (then_operand, _) = self.dereference();
+
+        self.set_basic_block(test_block);
+        let cond_value = self.pop_boolean();
+        self.create_cond_br(cond_value, then_head_block, else_head_block);
+
+        let block = self.create_basic_block("ternary");
+
+        if std::mem::discriminant(&then_operand) == std::mem::discriminant(&else_operand) {
+            self.set_basic_block(then_tail_block);
+            self.create_br(block);
+
+            self.set_basic_block(else_tail_block);
+            self.create_br(block);
+
+            self.set_basic_block(block);
+
+            // In this case, we can use the value of each item as is.
+            match (then_operand, else_operand) {
+                (Operand::Undefined, Operand::Undefined) => {
+                    self.process_undefined();
+                    return;
+                }
+                (Operand::Null, Operand::Null) => {
+                    self.process_null();
+                    return;
+                }
+                (Operand::Boolean(then_value), Operand::Boolean(else_value)) => {
+                    let boolean = self.create_boolean_ternary(then_value, then_tail_block, else_value, else_tail_block);
+                    self.operand_stack.push(Operand::Boolean(boolean));
+                    return;
+                }
+                (Operand::Number(then_value), Operand::Number(else_value)) => {
+                    let number = self.create_number_ternary(then_value, then_tail_block, else_value, else_tail_block);
+                    self.operand_stack.push(Operand::Number(number));
+                    return;
+                }
+                (Operand::Any(then_value), Operand::Any(else_value)) => {
+                    let any = self.create_any_ternary(then_value, then_tail_block, else_value, else_tail_block);
+                    self.operand_stack.push(Operand::Any(any));
+                    return;
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        // We have to convert the value before the branch in each block.
+
+        self.set_basic_block(then_tail_block);
+        let then_value = self.create_to_any(then_operand);
+        self.create_br(block);
+
+        self.set_basic_block(else_tail_block);
+        let else_value = self.create_to_any(else_operand);
+        self.create_br(block);
+
+        self.set_basic_block(block);
+        let any = self.create_any_ternary(then_value, then_tail_block, else_value, else_tail_block);
+        self.operand_stack.push(Operand::Any(any));
+    }
+
+    fn pop_boolean(&mut self) -> bridge::ValueIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Boolean(value) => value,
+            _ => unreachable!(),
         }
     }
 
+    fn create_boolean_ternary(&mut self, then_value: bridge::ValueIr, then_block: bridge::BasicBlock, else_value: bridge::ValueIr, else_block: bridge::BasicBlock) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_boolean_ternary(self.peer, then_value, then_block, else_value, else_block)
+        }
+    }
+
+    fn create_number_ternary(&mut self, then_value: bridge::ValueIr, then_block: bridge::BasicBlock, else_value: bridge::ValueIr, else_block: bridge::BasicBlock) -> bridge::ValueIr {
+        logger::debug!(event = "create_number_ternary", then_value, then_block, else_value, else_block);
+        unsafe {
+            bridge::compiler_peer_create_number_ternary(self.peer, then_value, then_block, else_value, else_block)
+        }
+    }
+
+    fn create_any_ternary(&mut self, then_value: bridge::ValueIr, then_block: bridge::BasicBlock, else_value: bridge::ValueIr, else_block: bridge::BasicBlock) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_any_ternary(self.peer, then_value, then_block, else_value, else_block)
+        }
+    }
+
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_assignment(self.peer);
-        }
+        let (rhs, _) = self.dereference();
+        let (_, locator) = self.pop_reference();
+
+        let variable = self.create_get_variable_ptr(locator);
+        // TODO: check the mutable flag
+        // auto* flags_ptr = CreateGetFlagsPtr(variable_ptr);
+
+        self.create_store_operand_to_variable(rhs.clone(), variable);
+
+        self.operand_stack.push(rhs);
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_exponentiation_assignment(&mut self) {
-        unimplemented!("**= operator");
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_exponentiation();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_multiplication_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_multiplication_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_multiplication();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_division_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_division_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_division();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_remainder_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_remainder_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_remainder();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_addition_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_addition_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_addition();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_subtraction_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_subtraction_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_subtraction();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_left_shift_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_left_shift_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_left_shift();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_signed_right_shift_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_signed_right_shift_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_signed_right_shift();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_unsigned_right_shift_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_unsigned_right_shift_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_unsigned_right_shift();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_bitwise_and_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_bitwise_and_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_bitwise_and();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_bitwise_xor_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_bitwise_xor_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_bitwise_xor();
+        self.process_assignment();
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
     fn process_bitwise_or_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_bitwise_or_assignment(self.peer);
-        }
+        let rhs = self.operand_stack.pop().unwrap();
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        self.operand_stack.push(rhs);
+        self.process_bitwise_or();
+        self.process_assignment();
     }
 
     fn process_truthy(&mut self) {
-        unsafe {
-            bridge::compiler_peer_truthy(self.peer);
-        }
+        let (operand, _) = self.dereference();
+        let boolean = self.create_to_boolean(operand);
+        self.operand_stack.push(Operand::Boolean(boolean));
     }
 
     fn process_falsy_short_circuit(&mut self) {
-        unsafe {
-            bridge::compiler_peer_falsy_short_circuit(self.peer);
-        }
+        let (operand, _) = self.dereference();
+        let boolean = self.create_to_boolean(operand.clone());
+        let boolean = self.create_logical_not(boolean);
+        self.operand_stack.push(Operand::Boolean(boolean));
         self.branch(); // then
+        self.operand_stack.push(operand);
         self.branch(); // else
     }
 
     fn process_truthy_short_circuit(&mut self) {
-        unsafe {
-            bridge::compiler_peer_truthy_short_circuit(self.peer);
-        }
+        let (operand, _) = self.dereference();
+        let boolean = self.create_to_boolean(operand.clone());
+        self.operand_stack.push(Operand::Boolean(boolean));
         self.branch(); // then
+        self.operand_stack.push(operand);
         self.branch(); // else
     }
 
     fn process_nullish_short_circuit(&mut self) {
-        unsafe {
-            bridge::compiler_peer_nullish_short_circuit(self.peer);
-        }
+        let (operand, _) = self.dereference();
+        let boolean = self.create_is_non_nullish(operand.clone());
+        self.operand_stack.push(Operand::Boolean(boolean));
         self.branch(); // then
+        self.operand_stack.push(operand);
         self.branch(); // else
     }
 
-    fn process_falsy_short_circuit_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_falsy_short_circuit_assignment(self.peer);
+    fn create_is_non_nullish(&mut self, operand: Operand) -> bridge::ValueIr {
+        match operand {
+            Operand::Undefined | Operand::Null => self.get_boolean(false),
+            Operand::Boolean(_) | Operand::Number(_) | Operand::Closure(_) => self.get_boolean(true),
+            Operand::Any(value) => unsafe {
+                bridge::compiler_peer_create_is_non_nullish(self.peer, value)
+            },
+            _ => unreachable!(),
         }
+    }
+
+    fn process_falsy_short_circuit_assignment(&mut self) {
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        let (operand, _) = self.dereference();
+        let boolean = self.create_to_boolean(operand.clone());
+        let boolean = self.create_logical_not(boolean);
+        self.operand_stack.push(Operand::Boolean(boolean));
         self.branch(); // then
+        self.operand_stack.push(operand);
         self.branch(); // else
     }
 
     fn process_truthy_short_circuit_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_truthy_short_circuit_assignment(self.peer);
-        }
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        let (operand, _) = self.dereference();
+        let boolean = self.create_to_boolean(operand.clone());
+        self.operand_stack.push(Operand::Boolean(boolean));
         self.branch(); // then
+        self.operand_stack.push(operand);
         self.branch(); // else
     }
 
     fn process_nullish_short_circuit_assignment(&mut self) {
-        unsafe {
-            bridge::compiler_peer_nullish_short_circuit_assignment(self.peer);
-        }
+        debug_assert!(matches!(self.operand_stack.last(), Some(Operand::Reference(..))));
+        self.operand_stack.duplicate();
+        let (operand, _) = self.dereference();
+        let boolean = self.create_is_non_nullish(operand.clone());
+        self.operand_stack.push(Operand::Boolean(boolean));
         self.branch(); // then
+        self.operand_stack.push(operand);
         self.branch(); // else
     }
 
@@ -883,21 +2218,67 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_if_else_statement(&mut self) {
         let else_branch = self.control_flow_stack.pop_branch_flow();
         let then_branch = self.control_flow_stack.pop_branch_flow();
-        unsafe {
-            bridge::compiler_peer_if_else_statement(
-                self.peer,
-                then_branch.before_block,
-                then_branch.after_block,
-                else_branch.before_block,
-                else_branch.after_block,
-            );
+
+        let test_block = then_branch.before_block;
+        let then_head_block = then_branch.after_block;
+        let then_tail_block = else_branch.before_block;
+        let else_head_block = else_branch.after_block;
+        let else_tail_block = self.get_basic_block();
+
+        let mut block = 0;
+
+        if self.is_basic_block_terminated(else_tail_block) {
+            // We should not append any instructions after a terminator instruction such as `ret`.
+        } else {
+            block = self.create_basic_block("block");
+            self.create_br(block);
+        }
+
+        if self.is_basic_block_terminated(then_tail_block) {
+            // We should not append any instructions after a terminator instruction such as `ret`.
+        } else {
+            if block == 0 {
+                block = self.create_basic_block("block");
+            }
+            self.set_basic_block(then_tail_block);
+            self.create_br(block);
+        }
+
+        let cond_value = self.pop_boolean();
+
+        self.set_basic_block(test_block);
+        self.create_cond_br(cond_value, then_head_block, else_head_block);
+
+        if block != 0 {
+            self.set_basic_block(block);
         }
     }
 
     fn process_if_statement(&mut self) {
         let branch = self.control_flow_stack.pop_branch_flow();
+
+        let test_block = branch.before_block;
+        let then_head_block = branch.after_block;
+        let then_tail_block = self.get_basic_block();
+        let block = self.create_basic_block("block");
+
+        if self.is_basic_block_terminated(then_tail_block) {
+            // We should not append any instructions after a terminator instruction such as `ret`.
+        } else {
+            self.create_br(block);
+        }
+
+        let cond_value = self.pop_boolean();
+
+        self.set_basic_block(test_block);
+        self.create_cond_br(cond_value, then_head_block, block);
+
+        self.set_basic_block(block);
+    }
+
+    fn is_basic_block_terminated(&mut self, block: bridge::BasicBlock) -> bool {
         unsafe {
-            bridge::compiler_peer_if_statement(self.peer, branch.before_block, branch.after_block);
+            bridge::compiler_peer_is_basic_block_terminated(self.peer, block)
         }
     }
 
@@ -923,10 +2304,8 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack
             .push_continue_target(loop_continue, Symbol::NONE);
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, loop_start);
-            bridge::compiler_peer_set_basic_block(self.peer, loop_start);
-        }
+        self.create_br(loop_start);
+        self.set_basic_block(loop_start);
     }
 
     fn process_while_loop(&mut self, id: u16) {
@@ -951,10 +2330,8 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack
             .push_continue_target(loop_continue, Symbol::NONE);
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, loop_start);
-            bridge::compiler_peer_set_basic_block(self.peer, loop_start);
-        }
+        self.create_br(loop_start);
+        self.set_basic_block(loop_start);
     }
 
     // TODO: rewrite using if and break
@@ -1047,50 +2424,37 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack
             .push_continue_target(loop_continue, Symbol::NONE);
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, loop_start);
-            bridge::compiler_peer_set_basic_block(self.peer, insert_point);
-        }
+        self.create_br(loop_start);
+        self.set_basic_block(insert_point);
     }
 
     fn process_loop_init(&mut self) {
         let loop_init = self.control_flow_stack.pop_loop_init_flow();
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, loop_init.branch_block);
-            bridge::compiler_peer_set_basic_block(self.peer, loop_init.insert_point);
-        }
+        self.create_br(loop_init.branch_block);
+        self.set_basic_block(loop_init.insert_point);
     }
 
     fn process_loop_test(&mut self) {
         let loop_test = self.control_flow_stack.pop_loop_test_flow();
-        unsafe {
-            // TODO: refactoring
-            bridge::compiler_peer_loop_test(
-                self.peer,
-                loop_test.then_block,
-                loop_test.else_block,
-                loop_test.insert_point,
-            );
-        }
+        let (operand, _) = self.dereference();
+        let cond = self.create_to_boolean(operand);
+        self.create_cond_br(cond, loop_test.then_block, loop_test.else_block);
+        self.set_basic_block(loop_test.insert_point);
     }
 
     fn process_loop_next(&mut self) {
         let loop_next = self.control_flow_stack.pop_loop_next_flow();
-        unsafe {
-            // Discard the evaluation result.
-            bridge::compiler_peer_discard(self.peer);
-            bridge::compiler_peer_create_br(self.peer, loop_next.branch_block);
-            bridge::compiler_peer_set_basic_block(self.peer, loop_next.insert_point);
-        }
+        // Discard the evaluation result.
+        self.process_discard();
+        self.create_br(loop_next.branch_block);
+        self.set_basic_block(loop_next.insert_point);
     }
 
     fn process_loop_body(&mut self) {
         let loop_body = self.control_flow_stack.pop_loop_body_flow();
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, loop_body.branch_block);
-            bridge::compiler_peer_move_basic_block_after(self.peer, loop_body.insert_point);
-            bridge::compiler_peer_set_basic_block(self.peer, loop_body.insert_point);
-        }
+        self.create_br(loop_body.branch_block);
+        self.move_basic_block_after(loop_body.insert_point);
+        self.set_basic_block(loop_body.insert_point);
     }
 
     fn process_loop_end(&mut self) {
@@ -1100,56 +2464,68 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_case_block(&mut self, id: u16, num_cases: u16) {
+        debug_assert!(num_cases > 0);
+
         push_bb_name!(self, "switch", id);
-        unsafe {
-            debug_assert!(num_cases > 0);
-            // TODO: refactoring
-            bridge::compiler_peer_case_block(self.peer, id, num_cases);
-        }
+
+        let (operand, _) = self.dereference();
+        // TODO: item.SetLabel("switch-value");
+        self.operand_stack.push(operand);
+        self.operand_stack.duplicate(); // Dup for test on CaseClause
+
+        let start_block = self.create_basic_block("start");
+        self.create_br(start_block);
+        self.set_basic_block(start_block);
+
         let end_block = self.create_basic_block("end");
         self.control_flow_stack.push_switch_flow(end_block);
         self.control_flow_stack
             .push_break_target(end_block, Symbol::NONE);
     }
 
-    fn process_case_clause(&mut self, has_statement: bool) {
+    fn process_case_clause(&mut self, _has_statement: bool) {
         let branch = self.control_flow_stack.pop_branch_flow();
-        let case_end_block = unsafe { bridge::compiler_peer_get_basic_block(self.peer) };
-        unsafe {
-            bridge::compiler_peer_case_clause(
-                self.peer,
-                has_statement,
-                branch.before_block,
-                branch.after_block,
-            );
-        }
-        self.control_flow_stack
-            .push_case_banch_flow(case_end_block, branch.after_block);
+
+        let test_block = branch.before_block;
+        let then_block = branch.after_block;
+        let else_block = self.create_basic_block("else");
+        let end_block = self.get_basic_block();
+
+        let cond = self.pop_boolean();
+
+        self.set_basic_block(test_block);
+        self.create_cond_br(cond, then_block, else_block);
+        self.set_basic_block(else_block);
+
+        self.operand_stack.duplicate();
+
+        self.control_flow_stack.push_case_banch_flow(end_block, then_block);
     }
 
-    fn process_default_clause(&mut self, has_statement: bool) {
+    fn process_default_clause(&mut self, _has_statement: bool) {
         let branch = self.control_flow_stack.pop_branch_flow();
-        let case_end_block = unsafe { bridge::compiler_peer_get_basic_block(self.peer) };
-        unsafe {
-            bridge::compiler_peer_default_clause(self.peer, has_statement, branch.before_block);
-        }
-        self.control_flow_stack
-            .push_case_banch_flow(case_end_block, branch.after_block);
-        self.control_flow_stack
-            .set_default_case_block(branch.after_block);
+
+        let test_block = branch.before_block;
+        let then_block = branch.after_block;
+        let end_block = self.get_basic_block();
+
+        self.set_basic_block(test_block);
+
+        self.operand_stack.duplicate();
+
+        self.control_flow_stack.push_case_banch_flow(end_block, then_block);
+        self.control_flow_stack.set_default_case_block(then_block);
     }
 
     fn process_switch(&mut self, _id: u16, num_cases: u16, _default_index: Option<u16>) {
         pop_bb_name!(self);
 
         self.control_flow_stack.pop_break_target();
-        let case_block = unsafe { bridge::compiler_peer_get_basic_block(self.peer) };
+        let case_block = self.get_basic_block();
 
         // Discard the switch-values
-        unsafe {
-            bridge::compiler_peer_discard(self.peer);
-            bridge::compiler_peer_discard(self.peer);
-        }
+        self.process_discard();
+        self.process_discard();
 
         // Connect the last basic blocks of each case/default clause to the first basic block of
         // the statement lists of the next case/default clause if it's not terminated.
@@ -1158,15 +2534,11 @@ impl<'r, 's> Compiler<'r, 's> {
         let mut fall_through_block = self.control_flow_stack.switch_flow().end_block;
         for _ in 0..num_cases {
             let case_branch = self.control_flow_stack.pop_case_branch_flow();
-            let terminated = unsafe {
-                bridge::compiler_peer_is_basic_block_terminated(self.peer, case_branch.before_block)
-            };
+            let terminated = self.is_basic_block_terminated(case_branch.before_block);
             if !terminated {
-                unsafe {
-                    bridge::compiler_peer_set_basic_block(self.peer, case_branch.before_block);
-                    bridge::compiler_peer_create_br(self.peer, fall_through_block);
-                    bridge::compiler_peer_move_basic_block_after(self.peer, fall_through_block);
-                }
+                self.set_basic_block(case_branch.before_block);
+                self.create_br(fall_through_block);
+                self.move_basic_block_after(fall_through_block);
             }
             fall_through_block = case_branch.after_block;
         }
@@ -1175,37 +2547,26 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // Create an unconditional jump to the statement of the default clause if it exists.
         // Otherwise, jump to the end block.
-        unsafe {
-            bridge::compiler_peer_set_basic_block(self.peer, case_block);
-            bridge::compiler_peer_create_br(
-                self.peer,
-                if switch.default_block != 0 {
-                    switch.default_block
-                } else {
-                    switch.end_block
-                },
-            );
-        }
+        self.set_basic_block(case_block);
+        self.create_br(if switch.default_block != 0 {
+            switch.default_block
+        } else {
+            switch.end_block
+        });
 
-        unsafe {
-            bridge::compiler_peer_move_basic_block_after(self.peer, switch.end_block);
-            bridge::compiler_peer_set_basic_block(self.peer, switch.end_block);
-        }
+        self.move_basic_block_after(switch.end_block);
+        self.set_basic_block(switch.end_block);
     }
 
     fn branch(&mut self) {
-        let before_block = unsafe { bridge::compiler_peer_get_basic_block(self.peer) };
+        let before_block = self.get_basic_block();
 
         // Push a newly created block.
         // This will be used in ConditionalExpression() in order to build a branch instruction.
         let after_block = self.create_basic_block("block");
+        self.set_basic_block(after_block);
 
-        unsafe {
-            bridge::compiler_peer_set_basic_block(self.peer, after_block);
-        }
-
-        self.control_flow_stack
-            .push_branch_flow(before_block, after_block);
+        self.control_flow_stack.push_branch_flow(before_block, after_block);
     }
 
     fn process_try(&mut self) {
@@ -1221,33 +2582,36 @@ impl<'r, 's> Compiler<'r, 's> {
             end_block,
         );
 
-        unsafe {
-            // Jump from the end of previous block to the beginning of the try block.
-            bridge::compiler_peer_create_br(self.peer, try_block);
-
-            bridge::compiler_peer_set_basic_block(self.peer, try_block);
-        }
+        // Jump from the end of previous block to the beginning of the try block.
+        self.create_br(try_block);
+        self.set_basic_block(try_block);
 
         push_bb_name!(self, "try");
+    }
+
+    fn create_store_normal_status(&mut self) {
+        unsafe {
+            bridge::compiler_peer_create_store_normal_status(self.peer);
+        }
     }
 
     fn process_catch(&mut self, nominal: bool) {
         pop_bb_name!(self);
 
         self.control_flow_stack.set_in_catch(nominal);
+
         let flow = self.control_flow_stack.exception_flow();
+        let finally_block = flow.finally_block;
+        let catch_block = flow.catch_block;
 
-        unsafe {
-            // Jump from the end of the try block to the beginning of the finally block.
-            bridge::compiler_peer_create_br(self.peer, flow.finally_block);
+        // Jump from the end of the try block to the beginning of the finally block.
+        self.create_br(finally_block);
+        self.move_basic_block_after(catch_block);
+        self.set_basic_block(catch_block);
 
-            bridge::compiler_peer_move_basic_block_after(self.peer, flow.catch_block);
-            bridge::compiler_peer_set_basic_block(self.peer, flow.catch_block);
-
-            if !nominal {
-                // TODO: Reset the status to Status::Normal.
-                bridge::compiler_peer_create_store_normal_status(self.peer);
-            }
+        if !nominal {
+            // TODO: Reset the status to Status::Normal.
+            self.create_store_normal_status();
         }
 
         push_bb_name!(self, "catch");
@@ -1257,16 +2621,14 @@ impl<'r, 's> Compiler<'r, 's> {
         pop_bb_name!(self);
 
         self.control_flow_stack.set_in_finally();
+
         let flow = self.control_flow_stack.exception_flow();
+        let finally_block = flow.finally_block;
 
-        unsafe {
-            // Jump from the end of the catch block to the beginning of the finally block.
-            bridge::compiler_peer_create_br(self.peer, flow.finally_block);
-
-            bridge::compiler_peer_move_basic_block_after(self.peer, flow.finally_block);
-
-            bridge::compiler_peer_set_basic_block(self.peer, flow.finally_block);
-        }
+        // Jump from the end of the catch block to the beginning of the finally block.
+        self.create_br(finally_block);
+        self.move_basic_block_after(finally_block);
+        self.set_basic_block(finally_block);
 
         push_bb_name!(self, "finally");
     }
@@ -1277,11 +2639,18 @@ impl<'r, 's> Compiler<'r, 's> {
         let flow = self.control_flow_stack.pop_exception_flow();
         let exception_block = self.control_flow_stack.exception_block();
 
-        unsafe {
-            bridge::compiler_peer_try_end(self.peer, exception_block, flow.end_block);
+        // Jump from the end of the finally block to the beginning of the outer catch block if
+        // there is an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
+        let cond = self.create_has_uncaught_exception();
+        self.create_cond_br(cond, exception_block, flow.end_block);
 
-            bridge::compiler_peer_move_basic_block_after(self.peer, flow.end_block);
-            bridge::compiler_peer_set_basic_block(self.peer, flow.end_block);
+        self.move_basic_block_after(flow.end_block);
+        self.set_basic_block(flow.end_block);
+    }
+
+    fn create_has_uncaught_exception(&mut self) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_has_uncaught_exception(self.peer)
         }
     }
 
@@ -1291,11 +2660,9 @@ impl<'r, 's> Compiler<'r, 's> {
         let start_block = self.create_basic_block("start");
         let end_block = self.create_basic_block("end");
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, start_block);
-            bridge::compiler_peer_move_basic_block_after(self.peer, end_block);
-            bridge::compiler_peer_set_basic_block(self.peer, start_block);
-        }
+        self.create_br(start_block);
+        self.move_basic_block_after(end_block);
+        self.set_basic_block(start_block);
 
         self.control_flow_stack.push_break_target(end_block, symbol);
 
@@ -1316,20 +2683,16 @@ impl<'r, 's> Compiler<'r, 's> {
         let break_target = self.control_flow_stack.pop_break_target();
         debug_assert_eq!(break_target.symbol, symbol);
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, break_target.block);
-            bridge::compiler_peer_move_basic_block_after(self.peer, break_target.block);
-            bridge::compiler_peer_set_basic_block(self.peer, break_target.block);
-        }
+        self.create_br(break_target.block);
+        self.move_basic_block_after(break_target.block);
+        self.set_basic_block(break_target.block);
     }
 
     fn process_continue(&mut self, symbol: Symbol) {
         let target_block = self.control_flow_stack.continue_target(symbol);
         debug_assert_ne!(target_block, 0);
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, target_block);
-        }
+        self.create_br(target_block);
 
         self.create_basic_block_for_deadcode();
     }
@@ -1338,56 +2701,87 @@ impl<'r, 's> Compiler<'r, 's> {
         let target_block = self.control_flow_stack.break_target(symbol);
         debug_assert_ne!(target_block, 0);
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, target_block);
-        }
+        self.create_br(target_block);
 
         self.create_basic_block_for_deadcode();
     }
 
     fn process_return(&mut self, n: u32) {
-        unsafe {
-            bridge::compiler_peer_return(self.peer, n as usize);
+        if n > 0 {
+            debug_assert_eq!(n, 1);
+            let (operand, _) = self.dereference();
+            self.create_store_operand_to_retv(operand);
         }
+
+        self.create_store_normal_status();
 
         self.control_flow_stack.set_returned();
         let next_block = self.control_flow_stack.cleanup_block();
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, next_block);
-        }
+        self.create_br(next_block);
 
         self.create_basic_block_for_deadcode();
     }
 
-    fn process_throw(&mut self) {
+    fn create_store_undefined_to_retv(&mut self) {
         unsafe {
-            bridge::compiler_peer_throw(self.peer);
+            bridge::compiler_peer_create_store_undefined_to_retv(self.peer);
         }
+    }
+
+    fn create_store_operand_to_retv(&mut self, operand: Operand) {
+        match operand {
+            Operand::Undefined => self.create_store_undefined_to_retv(),
+            Operand::Null => unsafe {
+                bridge::compiler_peer_create_store_null_to_retv(self.peer);
+            }
+            Operand::Boolean(value) => unsafe {
+                debug_assert_ne!(value, 0);
+                bridge::compiler_peer_create_store_boolean_to_retv(self.peer, value);
+            }
+            Operand::Number(value) => unsafe {
+                debug_assert_ne!(value, 0);
+                bridge::compiler_peer_create_store_number_to_retv(self.peer, value);
+            }
+            Operand::Closure(value) => unsafe {
+                debug_assert_ne!(value, 0);
+                bridge::compiler_peer_create_store_closure_to_retv(self.peer, value);
+            }
+            Operand::Any(value) => unsafe {
+                debug_assert_ne!(value, 0);
+                bridge::compiler_peer_create_store_value_to_retv(self.peer, value);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn create_store_exception_status(&mut self) {
+        unsafe {
+            bridge::compiler_peer_create_store_exception_status(self.peer);
+        }
+    }
+
+    fn process_throw(&mut self) {
+        let (operand, _) = self.dereference();
+        self.create_store_operand_to_retv(operand);
+        self.create_store_exception_status();
 
         self.control_flow_stack.set_thrown();
         let next_block = self.control_flow_stack.exception_block();
 
-        unsafe {
-            bridge::compiler_peer_create_br(self.peer, next_block);
-            bridge::compiler_peer_move_basic_block_after(self.peer, next_block);
-        }
+        self.create_br(next_block);
+        self.move_basic_block_after(next_block);
 
         self.create_basic_block_for_deadcode();
     }
 
     fn process_discard(&mut self) {
-        unsafe {
-            // TODO: the stack should be managed in the Rust side.
-            bridge::compiler_peer_discard(self.peer);
-        }
+        debug_assert!(!self.operand_stack.is_empty());
+        self.operand_stack.pop();
     }
 
     fn process_swap(&mut self) {
-        unsafe {
-            // TODO: the stack should be managed in the Rust side.
-            bridge::compiler_peer_swap(self.peer);
-        }
+        self.swap();
     }
 
     fn process_prepare_scope_cleanup_checker(&mut self, stack_size: u16) {
@@ -1430,6 +2824,88 @@ impl<'r, 's> Drop for Compiler<'r, 's> {
     fn drop(&mut self) {
         unsafe {
             bridge::compiler_peer_delete(self.peer);
+        }
+    }
+}
+
+struct OperandStack(Vec<Operand>);
+
+impl OperandStack {
+    fn new() -> Self {
+        Self(vec![])
+    }
+
+    fn duplicate(&mut self) {
+        let last = self.0.pop().unwrap();
+        self.push(last.clone());
+        self.push(last);
+    }
+}
+
+impl Default for OperandStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Deref for OperandStack {
+    type Target = Vec<Operand>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for OperandStack {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Dump for OperandStack {
+    fn dump(&self, buf: *mut std::ffi::c_char, len: usize) {
+        for operand in self.0.iter().rev() {
+            operand.dump(buf, len);
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum Operand {
+    Undefined,
+    Null,
+    Boolean(bridge::ValueIr),
+    Number(bridge::ValueIr),
+    Function(bridge::LambdaIr),
+    Closure(bridge::ValueIr),
+    Any(bridge::ValueIr),
+    Reference(Symbol, Locator),
+    Argv(bridge::ValueIr),
+    Capture(bridge::ValueIr),
+}
+
+impl Dump for Operand {
+    fn dump(&self, buf: *mut std::ffi::c_char, len: usize) {
+        macro_rules! ir2cstr {
+            ($value:expr) => {
+                unsafe {
+                    bridge::helper_peer_get_value_name_or_as_operand(*$value, buf, len);
+                    std::ffi::CStr::from_ptr(buf)
+                }
+            };
+        }
+
+        match self {
+            Self::Undefined => eprintln!("Undefined"),
+            Self::Null => eprintln!("Null"),
+            Self::Boolean(value) => eprintln!("Boolean({:?})", ir2cstr!(value)),
+            Self::Number(value) => eprintln!("Number({:?})", ir2cstr!(value)),
+            Self::Function(lambda) => eprintln!("Function({:?})", ir2cstr!(lambda)),
+            Self::Closure(value) => eprintln!("Closure({:?})", ir2cstr!(value)),
+            Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
+            Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
+            Self::Argv(value) => eprintln!("Argv({:?})", ir2cstr!(value)),
+            Self::Capture(value) => eprintln!("Capture({:?})", ir2cstr!(value)),
         }
     }
 }
@@ -1479,4 +2955,8 @@ impl Default for BasicBlockNameStack {
     fn default() -> Self {
         Self::new()
     }
+}
+
+pub trait Dump {
+    fn dump(&self, buf: *mut std::ffi::c_char, len: usize);
 }

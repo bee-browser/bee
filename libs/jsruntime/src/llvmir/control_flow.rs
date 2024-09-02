@@ -5,6 +5,7 @@ use jsparser::Symbol;
 
 use super::bridge;
 use super::bridge::BasicBlock;
+use super::compiler::Dump;
 
 macro_rules! bb2cstr {
     ($bb:expr, $buf:expr, $len:expr) => {
@@ -427,25 +428,7 @@ impl ControlFlowStack {
         self.exception_index = 0;
     }
 
-    pub fn print(&self) {
-        const BUF_SIZE: usize = 512;
-        let mut buf: Vec<std::ffi::c_char> = Vec::with_capacity(BUF_SIZE);
-        let buf = buf.as_mut_ptr();
-
-        eprintln!("### control-flow-stack");
-        self.print_stack(buf, BUF_SIZE);
-        eprintln!();
-
-        eprintln!("### break-stack");
-        Self::print_branch_target_stack(&self.break_stack, buf, BUF_SIZE);
-        eprintln!();
-
-        eprintln!("### continue-stack");
-        Self::print_branch_target_stack(&self.continue_stack, buf, BUF_SIZE);
-        eprintln!();
-    }
-
-    pub fn print_stack(&self, buf: *mut std::ffi::c_char, len: usize) {
+    fn print_stack(&self, buf: *mut std::ffi::c_char, len: usize) {
         macro_rules! bb {
             ($flow:expr, $bb:ident) => {
                 eprintln!(
@@ -603,6 +586,22 @@ impl ControlFlowStack {
             // self.scope_index == self.exception_index (== 0)
             _ => debug_assert_eq!(self.scope_index, 0),
         }
+    }
+}
+
+impl Dump for ControlFlowStack {
+    fn dump(&self, buf: *mut std::ffi::c_char, len: usize) {
+        eprintln!("### control-flow-stack");
+        self.print_stack(buf, len);
+        eprintln!();
+
+        eprintln!("### break-stack");
+        Self::print_branch_target_stack(&self.break_stack, buf, len);
+        eprintln!();
+
+        eprintln!("### continue-stack");
+        Self::print_branch_target_stack(&self.continue_stack, buf, len);
+        eprintln!();
     }
 }
 

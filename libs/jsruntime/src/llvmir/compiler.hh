@@ -6,7 +6,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -28,10 +27,6 @@
 class TypeHolder;
 struct Module;
 
-#define BB_NAME_PUSH(name) (enable_labels_ ? PushBasicBlockName(name) : (void)0)
-#define BB_NAME_POP() (enable_labels_ ? PopBasicBlockName() : (void)0)
-#define BB_NAME(s) (enable_labels_ ? MakeBasicBlockName(s).c_str() : "")
-#define BB_NAME_WITH_ID(name, id) (enable_labels_ ? (name + llvm::Twine(id)).str().c_str() : "")
 #define REG_NAME(expr) (enable_labels_ ? expr : "")
 
 class Compiler {
@@ -62,22 +57,6 @@ class Compiler {
     return builder_->GetInsertBlock();
   }
 
-  llvm::BasicBlock* GetLocalsBlock() const {
-    return locals_block_;
-  }
-
-  llvm::BasicBlock* GetArgsBlock() const {
-    return args_block_;
-  }
-
-  llvm::BasicBlock* GetBodyBlock() const {
-    return body_block_;
-  }
-
-  llvm::BasicBlock* GetReturnBlock() const {
-    return return_block_;
-  }
-
   void SetBasicBlock(llvm::BasicBlock* block) {
     assert(block != nullptr);
     builder_->SetInsertPoint(block);
@@ -93,6 +72,10 @@ class Compiler {
     return block->getTerminator() != nullptr;
   }
 
+  void SetLocalsBlock(llvm::BasicBlock* block) {
+    locals_block_ = block;
+  }
+
   void CreateBr(llvm::BasicBlock* block) {
     assert(block != nullptr);
     builder_->CreateBr(block);
@@ -102,92 +85,184 @@ class Compiler {
     builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
   }
 
-  void Undefined();
-  void Null();
-  void Boolean(bool value);
-  void Number(double value);
-  void Function(uint32_t func_id, const char* name);
-  void Closure(llvm::BasicBlock* block, uint16_t num_captures);
-  void Reference(uint32_t symbol, Locator locator);
-  void Exception();
-  void PostfixIncrement();
-  void PostfixDecrement();
-  void PrefixIncrement();
-  void PrefixDecrement();
-  void UnaryDelete();
-  void Void();
-  void Typeof();
-  void UnaryPlus();
-  void UnaryMinus();
-  void BitwiseNot();
-  void LogicalNot();
-  void Exponentiation();
-  void Multiplication();
-  void Division();
-  void Remainder();
-  void Addition();
-  void Subtraction();
-  void LeftShift();
-  void SignedRightShift();
-  void UnsignedRightShift();
-  void LessThan();
-  void GreaterThan();
-  void LessThanOrEqual();
-  void GreaterThanOrEqual();
-  void Instanceof();
-  void In();
-  void Equality();
-  void Inequality();
-  void StrictEquality();
-  void StrictInequality();
-  void BitwiseAnd();
-  void BitwiseXor();
-  void BitwiseOr();
-  void Ternary(llvm::BasicBlock* test_block,
-      llvm::BasicBlock* then_head_block,
-      llvm::BasicBlock* then_tail_block,
-      llvm::BasicBlock* else_head_block);
-  void Assignment();
-  void ExponentiationAssignment();
-  void MultiplicationAssignment();
-  void DivisionAssignment();
-  void RemainderAssignment();
-  void AdditionAssignment();
-  void SubtractionAssignment();
-  void LeftShiftAssignment();
-  void SignedRightShiftAssignment();
-  void UnsignedRightShiftAssignment();
-  void BitwiseAndAssignment();
-  void BitwiseXorAssignment();
-  void BitwiseOrAssignment();
-  void DeclareImmutable();
-  void DeclareMutable();
-  void DeclareFunction(llvm::BasicBlock* block);
-  void DeclareClosure(llvm::BasicBlock* block);
-  void Arguments(uint16_t argc);
-  void Argument(uint16_t index);
-  void Call(uint16_t argc, llvm::BasicBlock* block);
-  void Truthy();
-  void FalsyShortCircuit();
-  void TruthyShortCircuit();
-  void NullishShortCircuit();
-  void FalsyShortCircuitAssignment();
-  void TruthyShortCircuitAssignment();
-  void NullishShortCircuitAssignment();
-  void IfElseStatement(llvm::BasicBlock* test_block,
-      llvm::BasicBlock* then_head_block,
-      llvm::BasicBlock* then_tail_block,
-      llvm::BasicBlock* else_head_block);
-  void IfStatement(llvm::BasicBlock* test_block, llvm::BasicBlock* then_block);
-  void LoopTest(llvm::BasicBlock* then_block,
-      llvm::BasicBlock* else_block,
-      llvm::BasicBlock* insert_point);
-  void CaseBlock(uint16_t id, uint16_t num_cases);
-  void CaseClause(bool has_statement,
-      llvm::BasicBlock* before_block,
-      llvm::BasicBlock* after_block);
-  void DefaultClause(bool has_statement, llvm::BasicBlock* before_block);
-  void TryEnd(llvm::BasicBlock* exception_block, llvm::BasicBlock* end_block);
+  void CreateStoreExceptionStatus() {
+    builder_->CreateStore(builder_->getInt32(STATUS_EXCEPTION), status_);
+  }
+
+  llvm::Value* GetBoolean(bool value);
+  llvm::Value* GetNumber(double value);
+  llvm::Function* GetFunction(uint32_t func_id, const char* name);
+  llvm::Value* GetException();
+
+  llvm::Value* CreateFNeg(llvm::Value* value) {
+    return builder_->CreateFNeg(value, REG_NAME("neg"));
+  }
+
+  llvm::Value* CreateBitwiseNot(llvm::Value* number);
+  llvm::Value* CreateLogicalNot(llvm::Value* boolean);
+
+  llvm::Value* CreateNumberToBoolean(llvm::Value* number) {
+    auto* zero = llvm::ConstantFP::getZero(builder_->getDoubleTy());
+    // return number != 0.0
+    return builder_->CreateFCmpUNE(number, zero, REG_NAME("number_to_boolean"));
+  }
+
+  llvm::Value* CreateFMul(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFMul(lhs, rhs, REG_NAME("mul"));
+  }
+
+  llvm::Value* CreateFDiv(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFDiv(lhs, rhs, REG_NAME("div"));
+  }
+
+  llvm::Value* CreateFRem(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFRem(lhs, rhs, REG_NAME("rem"));
+  }
+
+  llvm::Value* CreateFAdd(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFAdd(lhs, rhs);
+  }
+
+  llvm::Value* CreateFSub(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFSub(lhs, rhs);
+  }
+
+  llvm::Value* CreateLeftShift(llvm::Value* lhs, llvm::Value* rhs);
+  llvm::Value* CreateSignedRightShift(llvm::Value* lhs, llvm::Value* rhs);
+  llvm::Value* CreateUnsignedRightShift(llvm::Value* lhs, llvm::Value* rhs);
+
+  llvm::Value* CreateLessThan(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFCmpOLT(lhs, rhs, REG_NAME("lt"));
+  }
+
+  llvm::Value* CreateGreaterThan(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFCmpOGT(lhs, rhs, REG_NAME("gt"));
+  }
+
+  llvm::Value* CreateLessThanOrEqual(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFCmpOLE(lhs, rhs, REG_NAME("le"));
+  }
+
+  llvm::Value* CreateGreaterThanOrEqual(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateFCmpOGE(lhs, rhs, REG_NAME("ge"));
+  }
+
+  llvm::Value* CreateBitwiseAnd(llvm::Value* lhs, llvm::Value* rhs) {
+    // 6.1.6.1.17 Number::bitwiseAND ( x, y )
+    return NumberBitwiseOp('&', lhs, rhs);
+  }
+
+  llvm::Value* CreateBitwiseXor(llvm::Value* lhs, llvm::Value* rhs) {
+    // 6.1.6.1.18 Number::bitwiseXOR ( x, y )
+    return NumberBitwiseOp('^', lhs, rhs);
+  }
+
+  llvm::Value* CreateBitwiseOr(llvm::Value* lhs, llvm::Value* rhs) {
+    // 6.1.6.1.19 Number::bitwiseOR ( x, y )
+    return NumberBitwiseOp('|', lhs, rhs);
+  }
+
+  llvm::Value* CreateVariables(uint16_t n) {
+    assert(n > 0);
+    return CreateAllocN(types_->CreateValueType(), n);
+  }
+
+  llvm::Value* CreateGetValuePtrInValues(llvm::Value* values, uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), values, index);
+  }
+
+  llvm::Value* CreateCallOnClosure(llvm::Value* closure, uint16_t argc, llvm::Value* argv, llvm::Value* retv);
+
+  llvm::Value* CreatePtr() {
+    return CreateAlloc1(builder_->getPtrTy());
+  }
+
+  llvm::Value* GetNullptr() {
+    return llvm::Constant::getNullValue(builder_->getPtrTy());
+  }
+
+  llvm::Value* GetU8(uint8_t value) {
+    return builder_->getInt8(value);
+  }
+
+  llvm::Value* GetU32(uint32_t value) {
+    return builder_->getInt32(value);
+  }
+
+  llvm::Value* CreateICmpEq(llvm::Value* lhs, llvm::Value* rhs) {
+    return builder_->CreateICmpEQ(lhs, rhs);
+  }
+
+  void CreateCondBr(llvm::Value* cond, llvm::BasicBlock* then_block, llvm::BasicBlock* else_block) {
+    builder_->CreateCondBr(cond, then_block, else_block);
+  }
+
+  void CreateStore(llvm::Value* value, llvm::Value* dest) {
+    builder_->CreateStore(value, dest);
+  }
+
+  llvm::Value* CreateLoadPtr(llvm::Value* value) {
+    return builder_->CreateLoad(builder_->getPtrTy(), value);
+  }
+
+  void CreateEscapeVariable(llvm::Value* capture, llvm::Value* variable);
+
+  void CreateAllocStatus() {
+    status_ = CreateAlloc1(builder_->getInt32Ty(), REG_NAME("status.ptr"));
+    builder_->CreateStore(builder_->getInt32(STATUS_UNSET), status_);
+  }
+
+  void CreateStoreStatus(Status status) {
+    builder_->CreateStore(builder_->getInt32(static_cast<uint32_t>(status)), status_);
+  }
+
+  void CreateStoreRetv(llvm::Value* retv) {
+    CreateStoreValueToVariable(retv, retv_);
+  }
+
+  llvm::Value* CreateLoadCapture(uintptr_t index) {
+    return CreateLoadCapturePtrFromCaptures(caps_, index);
+  }
+
+  llvm::Value* GetNan() {
+    return llvm::ConstantFP::getNaN(builder_->getDoubleTy());
+  }
+
+  llvm::Value* GetZero() {
+    return llvm::ConstantFP::getZero(builder_->getDoubleTy());
+  }
+
+  llvm::Value* CreateUIToFP(llvm::Value* value) {
+    return builder_->CreateUIToFP(value, builder_->getDoubleTy(), REG_NAME("ui2fp"));
+  }
+
+  llvm::Value* CreateBooleanTernary(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
+    auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("ternary"));
+    phi->addIncoming(then_value, then_block);
+    phi->addIncoming(else_value, else_block);
+    return phi;
+  }
+
+  llvm::Value* CreateNumberTernary(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
+    auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2, REG_NAME("ternary"));
+    phi->addIncoming(then_value, then_block);
+    phi->addIncoming(else_value, else_block);
+    return phi;
+  }
+
+  llvm::Value* CreateAnyTernary(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
+    auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("ternary"));
+    phi->addIncoming(then_value, then_block);
+    phi->addIncoming(else_value, else_block);
+    return phi;
+  }
+
+  llvm::Value* CreateHasUncaughtException() {
+    auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
+    return builder_->CreateICmpEQ(
+        status, builder_->getInt32(STATUS_EXCEPTION), REG_NAME("has_uncaught_exception"));
+  }
+
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
   void StartScopeCleanupChecker(uint16_t scope_id);
@@ -197,197 +272,46 @@ class Compiler {
       llvm::BasicBlock* block,
       llvm::BasicBlock* cleanup_block,
       llvm::BasicBlock* exception_block);
-  void AllocateLocals(uint16_t num_locals);
-  void InitLocal(Locator locator, llvm::BasicBlock* block);
-  void TidyLocal(Locator locator);
-  void CreateCapture(Locator locator, llvm::BasicBlock* block);
-  void CaptureVariable(llvm::BasicBlock* block);
-  void EscapeVariable(Locator locator, llvm::BasicBlock* block);
-  void Return(size_t n);
-  void Throw();
-  void Discard();
-  void Swap();
+  llvm::Value* CreateLocalVariable(uint16_t index);
+  llvm::Value* CreateRetv();
 
   void PrepareScopeCleanupChecker(uint32_t stack_size);
 
-  void DumpStack();
-
- private:
-  struct Reference {
-    uint32_t symbol;
-    union {
-      Locator locator;
-      uint32_t opaque;  // used for comparing the locator value.
-    };
-    Reference() : symbol(0), locator() {}
-    Reference(uint32_t symbol, Locator locator) : symbol(symbol), locator(locator) {}
-  };
-
-  struct Item {
-    enum Type {
-      Undefined,
-      Null,
-      Boolean,
-      Number,
-      Function,
-      Closure,
-      Any,  // undefined, boolean, number or object.
-      Reference,
-      Argv,
-      Capture,
-    } type;
-    union {
-      llvm::Value* value;
-      llvm::Function* func;
-      struct Reference reference;
-    };
-    const char* label = nullptr;
-
-    explicit Item(Type type) : type(type), value(nullptr) {}
-    explicit Item(llvm::Function* func) : type(Item::Function), func(func) {}
-    Item(Type type, llvm::Value* value) : type(type), value(value) {}
-    Item(uint32_t symbol, Locator locator) : type(Item::Reference), reference(symbol, locator) {}
-
-    inline void SetLabel(const char* label) {
-      this->label = label;
-    }
-  };
-
-  inline void PushUndefined() {
-    stack_.push_back(Item(Item::Undefined));
-  }
-
-  inline void PushNull() {
-    stack_.push_back(Item(Item::Null));
-  }
-
-  inline void PushBoolean(llvm::Value* value) {
-    stack_.push_back(Item(Item::Boolean, value));
-  }
-
-  inline void PushNumber(llvm::Value* value) {
-    stack_.push_back(Item(Item::Number, value));
-  }
-
-  inline void PushFunction(llvm::Function* func) {
-    stack_.push_back(Item(Item::Function, func));
-  }
-
-  inline void PushClosure(llvm::Value* value) {
-    stack_.push_back(Item(Item::Closure, value));
-  }
-
-  inline void PushAny(llvm::Value* value) {
-    stack_.push_back(Item(Item::Any, value));
-  }
-
-  inline void PushReference(uint32_t symbol, Locator locator) {
-    stack_.push_back(Item(symbol, locator));
-  }
-
-  inline void PushArgv(llvm::Value* value) {
-    stack_.push_back(Item(Item::Argv, value));
-  }
-
-  inline void PushCapture(llvm::Value* value) {
-    stack_.push_back(Item(Item::Capture, value));
-  }
-
-  inline Item PopItem() {
-    assert(!stack_.empty());
-    Item item = stack_.back();
-    stack_.pop_back();
-    return item;
-  }
-
-  inline llvm::Value* PopBoolean() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Boolean);
-    auto* value = item.value;
-    stack_.pop_back();
-    return value;
-  }
-
-  inline llvm::Function* PopFunction() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Function);
-    auto* func = item.func;
-    stack_.pop_back();
-    return func;
-  }
-
-  inline struct Reference PopReference() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Reference);
-    auto reference = item.reference;
-    stack_.pop_back();
-    return reference;
-  }
-
-  inline llvm::Value* PopArgv() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Argv);
-    auto* argv = item.value;
-    stack_.pop_back();
-    return argv;
-  }
-
-  inline llvm::Value* PopCapture() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Capture);
-    auto* capture_ptr = item.value;
-    stack_.pop_back();
-    return capture_ptr;
-  }
-
-  inline void Duplicate() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    stack_.push_back(item);
-  }
-
-  Item Dereference(struct Reference* ref = nullptr);
-  void IncrDecr(char pos, char op);
-  void NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y);
-  llvm::Value* ToNumeric(const Item& item);
+  llvm::Value* NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y);
   llvm::Value* ToNumeric(llvm::Value* value_ptr);
   llvm::Value* ToInt32(llvm::Value* number);
   llvm::Value* ToUint32(llvm::Value* number);
-  llvm::Value* ToAny(const Item& item);
+  llvm::Value* CreateUndefinedToAny();
+  llvm::Value* CreateNullToAny();
+  llvm::Value* CreateBooleanToAny(llvm::Value* boolean);
+  llvm::Value* CreateNumberToAny(llvm::Value* number);
+  llvm::Value* CreateClosureToAny(llvm::Value* closure);
   llvm::AllocaInst* CreateAlloc1(llvm::Type* ty, const llvm::Twine& name = "");
   llvm::AllocaInst* CreateAllocN(llvm::Type* ty, uint32_t n, const llvm::Twine& name = "");
   llvm::Function* CreateLambda(const char* name);
 
-  llvm::Value* CreateIsNonNullish(const Item& item);
   llvm::Value* CreateIsNonNullish(llvm::Value* value_ptr);
 
-  llvm::Value* CreateToBoolean(const Item& item);
   llvm::Value* CreateToBoolean(llvm::Value* value_ptr);
 
-  llvm::Value* CreateIsLooselyEqual(const Item& lhs, const Item& rhs);
-  llvm::Value* CreateIsLooselyEqual(llvm::Value* value_ptr, const Item& item);
   llvm::Value* CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y);
 
-  llvm::Value* CreateIsStrictlyEqual(const Item& lhs, const Item& rhs);
-  llvm::Value* CreateIsStrictlyEqual(llvm::Value* value_ptr, const Item& item);
   llvm::Value* CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y);
   llvm::Value* CreateIsUndefined(llvm::Value* value_ptr);
   llvm::Value* CreateIsNull(llvm::Value* value_ptr);
-  llvm::Value* CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value);
-  llvm::Value* CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value);
-  llvm::Value* CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* value);
+  llvm::Value* CreateIsBoolean(llvm::Value* value_ptr);
+  llvm::Value* CreateIsNumber(llvm::Value* value_ptr);
+  llvm::Value* CreateIsClosure(llvm::Value* value_ptr);
+  llvm::Value* CreateIsSameBoolean(llvm::Value* a, llvm::Value* b);
+  llvm::Value* CreateIsSameNumber(llvm::Value* a, llvm::Value* b);
+  llvm::Value* CreateIsSameClosure(llvm::Value* a, llvm::Value* b);
+  llvm::Value* CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* boolean);
+  llvm::Value* CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* number);
+  llvm::Value* CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* closure);
 
   llvm::Value* CreateCallRuntimeCreateCapture(llvm::Value* variable_ptr);
   llvm::Value* CreateCallRuntimeCreateClosure(llvm::Value* lambda, uint16_t num_captures);
   void CreateCallRuntimeAssert(llvm::Value* assertion, llvm::Value* msg);
-
-  llvm::Value* CreateGetVariablePtr(Locator locator);
-  llvm::Value* CreateGetValuePtr(Locator locator);
 
   // Naming convention for field accessors:
   //
@@ -415,19 +339,6 @@ class Compiler {
 
   inline llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
     return CreateGetArgumentVariablePtr(index);
-  }
-
-  // locals
-
-  // NOTE: No instruction is emitted.
-  inline llvm::Value* GetLocalVariablePtr(uint16_t index) {
-    assert(index < locals_.size());
-    return locals_[index];
-  }
-
-  // NOTE: No instruction is emitted.
-  inline llvm::Value* GetLocalValuePtr(uint16_t index) {
-    return GetLocalVariablePtr(index);
   }
 
   // captures
@@ -555,8 +466,6 @@ class Compiler {
     CreateStoreValueHolderToVariable(holder, variable_ptr);
   }
 
-  void CreateStoreItemToVariable(const Item& item, llvm::Value* variable_ptr);
-
   // value
   //
   // Redirect to the corresponding method for the Variable type.
@@ -653,8 +562,6 @@ class Compiler {
     CreateStoreValueHolderToValue(value, value_ptr);
   }
 
-  void CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr);
-
   // capture
 
   inline llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
@@ -715,6 +622,32 @@ class Compiler {
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("captures"));
   }
 
+  // retv
+
+  inline void CreateStoreUndefinedToRetv() {
+    CreateStoreUndefinedToVariable(retv_);
+  }
+
+  inline void CreateStoreNullToRetv() {
+    CreateStoreNullToVariable(retv_);
+  }
+
+  inline void CreateStoreBooleanToRetv(llvm::Value* value) {
+    CreateStoreBooleanToVariable(value, retv_);
+  }
+
+  inline void CreateStoreNumberToRetv(llvm::Value* value) {
+    CreateStoreNumberToVariable(value, retv_);
+  }
+
+  inline void CreateStoreClosureToRetv(llvm::Value* value) {
+    CreateStoreClosureToVariable(value, retv_);
+  }
+
+  inline void CreateStoreValueToRetv(llvm::Value* value) {
+    CreateStoreValueToVariable(value, retv_);
+  }
+
   // scope cleanup cheker
 
   void CreatePushOntoScopeCleanupStack(uint16_t scope_id);
@@ -746,12 +679,6 @@ class Compiler {
 
   // TODO: separate variables that must be reset in EndFunction() from others.
 
-  // Helper methods for Call().
-  llvm::Value* CreateLoadClosureFromValueOrThrowTypeError(llvm::Value* value_ptr);
-  void CreateCheckStatusForException(llvm::Value* status,
-      llvm::Value* ret,
-      llvm::BasicBlock* block);
-
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
@@ -760,9 +687,7 @@ class Compiler {
   // The following variables are reset for each function.
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* locals_block_ = nullptr;
-  llvm::BasicBlock* args_block_ = nullptr;
   llvm::BasicBlock* body_block_ = nullptr;
-  llvm::BasicBlock* return_block_ = nullptr;
   llvm::Value* exec_context_ = nullptr;
   llvm::Value* caps_ = nullptr;
   llvm::Value* argc_ = nullptr;
@@ -777,11 +702,6 @@ class Compiler {
   llvm::Value* scope_cleanup_stack_top_ = nullptr;
   uint16_t scope_cleanup_stack_size_ = 0;
 
-  // The following variables must be reset in the end of compilation for each function.
-  std::vector<llvm::Value*> locals_;
-  std::vector<Item> stack_;
-  std::unordered_map<uint32_t, llvm::Value*> captures_;
-
   // A cache of functions does not reset in the end of compilation for each function.
   std::unordered_map<std::string, llvm::Function*> functions_;
 
@@ -795,20 +715,4 @@ class Compiler {
   std::unique_ptr<llvm::StandardInstrumentations> si_;
 
   bool enable_labels_ = false;
-
-  inline void PushBasicBlockName(std::string&& name) {
-    assert(enable_labels_);
-    basic_block_name_stack_.push_back(std::move(name));
-  }
-
-  // TODO: detect an ill-nested block name
-  inline void PopBasicBlockName() {
-    assert(enable_labels_);
-    basic_block_name_stack_.pop_back();
-  }
-
-  std::string MakeBasicBlockName(const char* name) const;
-
-  // TODO: remove
-  std::vector<std::string> basic_block_name_stack_;
 };

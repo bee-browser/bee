@@ -4,6 +4,8 @@
 #include <cstdint>
 
 using BasicBlock = uintptr_t;
+using ValueIr = uintptr_t;
+using LambdaIr = uintptr_t;
 
 struct Closure;
 
@@ -138,105 +140,102 @@ void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);
 BasicBlock compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len);
 BasicBlock compiler_peer_get_basic_block(const Compiler* self);
-BasicBlock compiler_peer_get_locals_block(const Compiler* self);
-BasicBlock compiler_peer_get_args_block(const Compiler* self);
-BasicBlock compiler_peer_get_body_block(const Compiler* self);
-BasicBlock compiler_peer_get_return_block(const Compiler* self);
 void compiler_peer_set_basic_block(Compiler* self, BasicBlock block);
 void compiler_peer_move_basic_block_after(Compiler* self, BasicBlock block);
 bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock block);
+void compiler_peer_set_locals_block(Compiler* self, BasicBlock block);
 void compiler_peer_create_br(Compiler* self, BasicBlock block);
 void compiler_peer_create_store_normal_status(Compiler* self);
-void compiler_peer_undefined(Compiler* self);
-void compiler_peer_null(Compiler* self);
-void compiler_peer_boolean(Compiler* self, bool value);
-void compiler_peer_number(Compiler* self, double value);
-void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name);
-void compiler_peer_closure(Compiler* self, BasicBlock block, uint16_t num_captures);
-void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator);
-void compiler_peer_exception(Compiler* self);
-void compiler_peer_postfix_increment(Compiler* self);
-void compiler_peer_postfix_decrement(Compiler* self);
-void compiler_peer_prefix_increment(Compiler* self);
-void compiler_peer_prefix_decrement(Compiler* self);
-void compiler_peer_unary_delete(Compiler* self);
-void compiler_peer_void(Compiler* self);
-void compiler_peer_typeof(Compiler* self);
-void compiler_peer_unary_plus(Compiler* self);
-void compiler_peer_unary_minus(Compiler* self);
-void compiler_peer_bitwise_not(Compiler* self);
-void compiler_peer_logical_not(Compiler* self);
-void compiler_peer_exponentiation(Compiler* self);
-void compiler_peer_multiplication(Compiler* self);
-void compiler_peer_division(Compiler* self);
-void compiler_peer_remainder(Compiler* self);
-void compiler_peer_addition(Compiler* self);
-void compiler_peer_subtraction(Compiler* self);
-void compiler_peer_left_shift(Compiler* self);
-void compiler_peer_signed_right_shift(Compiler* self);
-void compiler_peer_unsigned_right_shift(Compiler* self);
-void compiler_peer_less_than(Compiler* self);
-void compiler_peer_greater_than(Compiler* self);
-void compiler_peer_less_than_or_equal(Compiler* self);
-void compiler_peer_greater_than_or_equal(Compiler* self);
-void compiler_peer_instanceof(Compiler* self);
-void compiler_peer_in(Compiler* self);
-void compiler_peer_equality(Compiler* self);
-void compiler_peer_inequality(Compiler* self);
-void compiler_peer_strict_equality(Compiler* self);
-void compiler_peer_strict_inequality(Compiler* self);
-void compiler_peer_bitwise_and(Compiler* self);
-void compiler_peer_bitwise_xor(Compiler* self);
-void compiler_peer_bitwise_or(Compiler* self);
-void compiler_peer_ternary(Compiler* self,
-    BasicBlock test_block,
-    BasicBlock then_head_block,
-    BasicBlock then_tail_block,
-    BasicBlock else_head_block);
-void compiler_peer_assignment(Compiler* self);
-void compiler_peer_exponentiation_assignment(Compiler* self);
-void compiler_peer_multiplication_assignment(Compiler* self);
-void compiler_peer_division_assignment(Compiler* self);
-void compiler_peer_remainder_assignment(Compiler* self);
-void compiler_peer_addition_assignment(Compiler* self);
-void compiler_peer_subtraction_assignment(Compiler* self);
-void compiler_peer_left_shift_assignment(Compiler* self);
-void compiler_peer_signed_right_shift_assignment(Compiler* self);
-void compiler_peer_unsigned_right_shift_assignment(Compiler* self);
-void compiler_peer_bitwise_and_assignment(Compiler* self);
-void compiler_peer_bitwise_xor_assignment(Compiler* self);
-void compiler_peer_bitwise_or_assignment(Compiler* self);
-void compiler_peer_declare_immutable(Compiler* self);
-void compiler_peer_declare_mutable(Compiler* self);
-void compiler_peer_declare_function(Compiler* self, BasicBlock block);
-void compiler_peer_declare_closure(Compiler* self, BasicBlock block);
-void compiler_peer_arguments(Compiler* self, uint16_t argc);
-void compiler_peer_argument(Compiler* self, uint16_t index);
-void compiler_peer_call(Compiler* self, uint16_t argc, BasicBlock block);
-void compiler_peer_truthy(Compiler* self);
-void compiler_peer_falsy_short_circuit(Compiler* self);
-void compiler_peer_truthy_short_circuit(Compiler* self);
-void compiler_peer_nullish_short_circuit(Compiler* self);
-void compiler_peer_falsy_short_circuit_assignment(Compiler* self);
-void compiler_peer_truthy_short_circuit_assignment(Compiler* self);
-void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
-void compiler_peer_if_else_statement(Compiler* self,
-    BasicBlock test_block,
-    BasicBlock then_head_block,
-    BasicBlock then_tail_block,
-    BasicBlock else_head_block);
-void compiler_peer_if_statement(Compiler* self, BasicBlock test_block, BasicBlock then_block);
-void compiler_peer_loop_test(Compiler* self,
-    BasicBlock then_block,
-    BasicBlock else_block,
-    BasicBlock insert_point);
-void compiler_peer_case_block(Compiler* self, uint16_t id, uint16_t num_cases);
-void compiler_peer_case_clause(Compiler* self,
-    bool has_statement,
-    BasicBlock before_block,
-    BasicBlock after_block);
-void compiler_peer_default_clause(Compiler* self, bool has_statement, BasicBlock before_block);
-void compiler_peer_try_end(Compiler* self, BasicBlock exception_block, BasicBlock end_block);
+void compiler_peer_create_store_exception_status(Compiler* self);
+ValueIr compiler_peer_get_boolean(Compiler* self, bool value);
+ValueIr compiler_peer_get_number(Compiler* self, double value);
+LambdaIr compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
+ValueIr compiler_peer_create_call_runtime_create_closure(Compiler* self, LambdaIr lambda, uint16_t num_captures);
+ValueIr compiler_peer_create_load_captures_from_closure(Compiler* self, ValueIr closure);
+void compiler_peer_create_store_capture_ptr_to_captures(Compiler* self, ValueIr capture, ValueIr captures, uint16_t i);
+ValueIr compiler_peer_get_exception(Compiler* self);
+ValueIr compiler_peer_create_fneg(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_bitwise_not(Compiler* self, ValueIr number);
+ValueIr compiler_peer_create_number_to_boolean(Compiler* self, ValueIr number);
+ValueIr compiler_peer_create_to_boolean(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_logical_not(Compiler* self, ValueIr boolean);
+ValueIr compiler_peer_create_fmul(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_fdiv(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_frem(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_fadd(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_fsub(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_left_shift(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_signed_right_shift(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_unsigned_right_shift(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_less_than(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_greater_than(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_less_than_or_equal(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_greater_than_or_equal(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_undefined_to_any(Compiler* self);
+ValueIr compiler_peer_create_null_to_any(Compiler* self);
+ValueIr compiler_peer_create_boolean_to_any(Compiler* self, ValueIr boolean);
+ValueIr compiler_peer_create_number_to_any(Compiler* self, ValueIr number);
+ValueIr compiler_peer_create_closure_to_any(Compiler* self, ValueIr closure);
+ValueIr compiler_peer_create_is_undefined(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_is_null(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_is_boolean(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_is_number(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_is_closure(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_is_same_boolean(Compiler* self, ValueIr a, ValueIr b);
+ValueIr compiler_peer_create_is_same_number(Compiler* self, ValueIr a, ValueIr b);
+ValueIr compiler_peer_create_is_same_closure(Compiler* self, ValueIr a, ValueIr b);
+ValueIr compiler_peer_create_is_same_boolean_value(Compiler* self, ValueIr value, ValueIr boolean);
+ValueIr compiler_peer_create_is_same_number_value(Compiler* self, ValueIr value, ValueIr number);
+ValueIr compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr value, ValueIr closure);
+ValueIr compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_bitwise_and(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_bitwise_xor(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_bitwise_or(Compiler* self, ValueIr lhs, ValueIr rhs);
+ValueIr compiler_peer_create_boolean_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block);
+ValueIr compiler_peer_create_number_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block);
+ValueIr compiler_peer_create_any_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block);
+void compiler_peer_create_store_flags_to_variable(Compiler* self, uint8_t flags, ValueIr variable);
+void compiler_peer_create_store_symbol_to_variable(Compiler* self, uint32_t symbol, ValueIr variable);
+void compiler_peer_create_store_undefined_to_variable(Compiler* self, ValueIr variable);
+void compiler_peer_create_store_null_to_variable(Compiler* self, ValueIr variable);
+void compiler_peer_create_store_boolean_to_variable(Compiler* self, ValueIr value, ValueIr variable);
+void compiler_peer_create_store_number_to_variable(Compiler* self, ValueIr value, ValueIr variable);
+void compiler_peer_create_store_closure_to_variable(Compiler* self, ValueIr value, ValueIr variable);
+void compiler_peer_create_store_value_to_variable(Compiler* self, ValueIr value, ValueIr variable);
+void compiler_peer_create_store_undefined_to_retv(Compiler* self);
+void compiler_peer_create_store_null_to_retv(Compiler* self);
+void compiler_peer_create_store_boolean_to_retv(Compiler* self, ValueIr value);
+void compiler_peer_create_store_number_to_retv(Compiler* self, ValueIr value);
+void compiler_peer_create_store_closure_to_retv(Compiler* self, ValueIr value);
+void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_variables(Compiler* self, uint16_t n);
+ValueIr compiler_peer_create_get_value_ptr_in_values(Compiler* self, ValueIr values, uint16_t index);
+ValueIr compiler_peer_create_call_on_closure(Compiler* self, ValueIr closure, uint16_t argc, ValueIr argv, ValueIr retv);
+ValueIr compiler_peer_create_ptr(Compiler* self);
+ValueIr compiler_peer_create_load_value_kind_from_value(Compiler* self, ValueIr value);
+ValueIr compiler_peer_get_nullptr(Compiler* self);
+ValueIr compiler_peer_get_u8(Compiler* self, uint8_t value);
+ValueIr compiler_peer_get_u32(Compiler* self, uint32_t value);
+ValueIr compiler_peer_create_icmp_eq(Compiler* self, ValueIr lhs, ValueIr rhs);
+void compiler_peer_create_cond_br(Compiler* self, ValueIr cond, BasicBlock then_block, BasicBlock else_block);
+ValueIr compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr value);
+void compiler_peer_create_store(Compiler* self, ValueIr value, ValueIr dest);
+ValueIr compiler_peer_create_load_ptr(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_call_runtime_create_capture(Compiler* self, ValueIr variable);
+ValueIr compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t index);
+void compiler_peer_create_escape_variable(Compiler* self, ValueIr capture, ValueIr variable);
+ValueIr compiler_peer_create_get_argument_variable_ptr(Compiler* self, uint16_t index);
+void compiler_peer_create_alloc_status(Compiler* self);
+void compiler_peer_create_store_status(Compiler* self, Status status);
+ValueIr compiler_peer_create_load_capture(Compiler* self, uint16_t index);
+ValueIr compiler_peer_get_nan(Compiler* self);
+ValueIr compiler_peer_get_zero(Compiler* self);
+ValueIr compiler_peer_create_ui_to_fp(Compiler* self, ValueIr value);
+ValueIr compiler_peer_to_numeric(Compiler* self, ValueIr value);
+void compiler_peer_create_store_retv(Compiler* self, ValueIr retv);
+ValueIr compiler_peer_create_is_non_nullish(Compiler* self, ValueIr value);
+ValueIr compiler_peer_create_has_uncaught_exception(Compiler* self);
 void compiler_peer_start_function(Compiler* self, const char* name);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_start_scope_cleanup_checker(Compiler* self, uint16_t scope_id);
@@ -247,18 +246,9 @@ void compiler_peer_handle_returned_thrown(Compiler* self,
     BasicBlock block,
     BasicBlock cleanup_block,
     BasicBlock exception_block);
-void compiler_peer_allocate_locals(Compiler* self, uint16_t num_locals);
-void compiler_peer_init_local(Compiler* self, Locator locator, BasicBlock block);
-void compiler_peer_tidy_local(Compiler* self, Locator locator);
-void compiler_peer_create_capture(Compiler* self, Locator locator, BasicBlock block);
-void compiler_peer_capture_variable(Compiler* self, BasicBlock block);
-void compiler_peer_escape_variable(Compiler* self, Locator locator, BasicBlock block);
-void compiler_peer_return(Compiler* self, size_t n);
-void compiler_peer_throw(Compiler* self);
-void compiler_peer_discard(Compiler* self);
-void compiler_peer_swap(Compiler* self);
+ValueIr compiler_peer_create_local_variable(Compiler* self, uint16_t index);
+ValueIr compiler_peer_create_retv(Compiler* self);
 void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
-void compiler_peer_dump_stack(Compiler* self);
 
 // Execution
 
@@ -275,3 +265,4 @@ Lambda executor_peer_get_native_function(Executor* self, const char* name);
 // Hepler Functions
 
 size_t helper_peer_get_basic_block_name_or_as_operand(BasicBlock block, char* buf, size_t len);
+size_t helper_peer_get_value_name_or_as_operand(ValueIr value, char* buf, size_t len);
