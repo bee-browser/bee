@@ -18,7 +18,6 @@ use jsparser::SymbolRegistry;
 use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;
-use super::Locator;
 use super::Runtime;
 use super::RuntimePref;
 use scope::ScopeTreeBuilder;
@@ -879,7 +878,7 @@ impl<'r> Analyzer<'r> {
                         reference.symbol,
                         Capture {
                             symbol: reference.symbol,
-                            target: Locator::NONE,
+                            target: Locator::None,
                         },
                     );
                     self.context_stack
@@ -1590,7 +1589,7 @@ pub enum CompileCommand {
 }
 
 impl CompileCommand {
-    const REFERENCE_PLACEHOLDER: Self = Self::Reference(Symbol::NONE, Locator::NONE);
+    const REFERENCE_PLACEHOLDER: Self = Self::Reference(Symbol::NONE, Locator::None);
 }
 
 impl From<UpdateOperator> for CompileCommand {
@@ -1671,6 +1670,49 @@ impl From<AssignmentOperator> for CompileCommand {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum Locator {
+    None,
+    Argument(u16),
+    Local(u16),
+    Capture(u16),
+}
+
+impl Locator {
+    const MAX_INDEX: usize = u16::MAX as usize;
+
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    pub fn is_argument(&self) -> bool {
+        matches!(self, Self::Argument(_))
+    }
+
+
+    pub fn is_local(&self) -> bool {
+        matches!(self, Self::Local(_))
+    }
+
+    pub fn is_capture(&self) -> bool {
+        matches!(self, Self::Capture(_))
+    }
+
+    fn checked_capture(index: usize) -> Option<Self> {
+        Self::ensure_index(index)?;
+        Some(Self::Capture(index as u16))
+    }
+
+    fn ensure_index(index: usize) -> Option<()> {
+        if index > Self::MAX_INDEX {
+            crate::logger::error!(err = "too large", index);
+            None
+        } else {
+            Some(())
+        }
+    }
+}
+
 /// A type representing information needed for resolving a reference to a symbol.
 #[derive(Debug)]
 struct Reference {
@@ -1720,7 +1762,7 @@ mod tests {
 
     macro_rules! locator {
         (local: $index:expr) => {
-            Locator::local($index)
+            Locator::Local($index)
         };
     }
 

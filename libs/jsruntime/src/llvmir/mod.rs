@@ -4,7 +4,6 @@ mod control_flow;
 mod executor;
 
 pub use bridge::runtime_bridge;
-pub use bridge::Locator;
 pub use bridge::ReturnValue;
 pub use bridge::Status;
 pub use bridge::Value;

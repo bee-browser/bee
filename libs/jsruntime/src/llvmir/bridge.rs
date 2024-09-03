@@ -11,57 +11,6 @@ macro_rules! into_runtime {
     };
 }
 
-impl Locator {
-    pub(crate) const NONE: Self = Self::new(LocatorKind_None, 0);
-
-    const MAX_INDEX: usize = u16::MAX as usize;
-
-    pub(crate) fn checked_argument(index: usize) -> Option<Self> {
-        Self::checked_new(LocatorKind_Argument, index)
-    }
-
-    pub(crate) fn checked_local(index: usize) -> Option<Self> {
-        Self::checked_new(LocatorKind_Local, index)
-    }
-
-    pub(crate) fn checked_capture(index: usize) -> Option<Self> {
-        Self::checked_new(LocatorKind_Capture, index)
-    }
-
-    pub(crate) const fn argument(index: u16) -> Self {
-        Self::new(LocatorKind_Argument, index)
-    }
-
-    pub(crate) const fn local(index: u16) -> Self {
-        Self::new(LocatorKind_Local, index)
-    }
-
-    const fn new(kind: LocatorKind, index: u16) -> Self {
-        Self { kind, index }
-    }
-
-    fn checked_new(kind: LocatorKind, index: usize) -> Option<Self> {
-        if index > Self::MAX_INDEX {
-            crate::logger::error!(err = "too large", index);
-            return None;
-        }
-        Some(Self::new(kind, index as u16))
-    }
-}
-
-impl std::fmt::Debug for Locator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let index = self.index;
-        match self.kind {
-            LocatorKind_None => write!(f, "Locator::None"),
-            LocatorKind_Argument => write!(f, "Locator::Argument({index})"),
-            LocatorKind_Local => write!(f, "Locator::Local({index})"),
-            LocatorKind_Capture => write!(f, "Locator::Capture({index})"),
-            _ => unreachable!(),
-        }
-    }
-}
-
 impl Value {
     pub const UNDEFINED: Self = Self {
         kind: ValueKind_Undefined,

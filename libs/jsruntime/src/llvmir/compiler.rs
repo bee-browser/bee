@@ -12,6 +12,7 @@ use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
 use crate::semantics::CompileCommand;
+use crate::semantics::Locator;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::Program;
@@ -19,7 +20,6 @@ use crate::Runtime;
 
 use super::bridge;
 use super::control_flow::ControlFlowStack;
-use super::Locator;
 use super::Module;
 
 impl<X> Runtime<X> {
@@ -70,7 +70,7 @@ struct Compiler<'r, 's> {
 
     // The following variables must be reset in the end of compilation for each function.
     locals: Vec<bridge::ValueIr>,
-    captures: IndexMap<u32, bridge::ValueIr>,
+    captures: IndexMap<Locator, bridge::ValueIr>,
 
     dump_buffer: Option<Vec<std::ffi::c_char>>,
 }
@@ -487,7 +487,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_reference(&mut self, symbol: Symbol, locator: Locator) {
-        debug_assert_ne!(locator, Locator::NONE);
+        debug_assert!(!matches!(locator, Locator::None));
         self.operand_stack.push(Operand::Reference(symbol, locator));
     }
 
@@ -518,9 +518,12 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let (operand, _) = self.dereference();
         let (symbol, locator) = self.pop_reference();
-        debug_assert_eq!(locator.kind, bridge::LocatorKind_Local);
 
-        let variable = self.locals[locator.index as usize];
+        let variable = match locator {
+            Locator::Local(index) => self.locals[index as usize],
+            _ => unreachable!(),
+        };
+
         self.create_store_flags_to_variable(FLAGS, variable);
         self.create_store_symbol_to_variable(symbol, variable);
         self.create_store_operand_to_variable(operand, variable);
@@ -540,10 +543,10 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn create_get_value_ptr(&mut self, locator: Locator) -> bridge::ValueIr {
-        match locator.kind {
-            bridge::LocatorKind_Argument => self.create_get_argument_variable_ptr(locator.index),
-            bridge::LocatorKind_Local => self.locals[locator.index as usize],
-            bridge::LocatorKind_Capture => self.create_get_capture_variable_ptr(locator.index),
+        match locator {
+            Locator::Argument(index) => self.create_get_argument_variable_ptr(index),
+            Locator::Local(index) => self.locals[index as usize],
+            Locator::Capture(index) => self.create_get_capture_variable_ptr(index),
             _ => unreachable!(),
         }
     }
@@ -606,9 +609,12 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let (operand, _) = self.dereference();
         let (symbol, locator) = self.pop_reference();
-        debug_assert_eq!(locator.kind, bridge::LocatorKind_Local);
 
-        let variable = self.locals[locator.index as usize];
+        let variable = match locator {
+            Locator::Local(index) => self.locals[index as usize],
+            _ => unreachable!(),
+        };
+
         self.create_store_flags_to_variable(FLAGS, variable);
         self.create_store_symbol_to_variable(symbol, variable);
         self.create_store_operand_to_variable(operand, variable);
@@ -626,9 +632,12 @@ impl<'r, 's> Compiler<'r, 's> {
         let (operand, _) = self.dereference();
         // TODO: operand must hold a lambda.
         let (symbol, locator) = self.pop_reference();
-        debug_assert_eq!(locator.kind, bridge::LocatorKind_Local);
 
-        let variable = self.locals[locator.index as usize];
+        let variable = match locator {
+            Locator::Local(index) => self.locals[index as usize],
+            _ => unreachable!(),
+        };
+
         self.create_store_flags_to_variable(FLAGS, variable);
         self.create_store_symbol_to_variable(symbol, variable);
         self.create_store_operand_to_variable(operand, variable);
@@ -648,9 +657,12 @@ impl<'r, 's> Compiler<'r, 's> {
         let (operand, _) = self.dereference();
         // TODO: operand must hold a closure.
         let (symbol, locator) = self.pop_reference();
-        debug_assert_eq!(locator.kind, bridge::LocatorKind_Local);
 
-        let variable = self.locals[locator.index as usize];
+        let variable = match locator {
+            Locator::Local(index) => self.locals[index as usize],
+            _ => unreachable!(),
+        };
+
         self.create_store_flags_to_variable(FLAGS, variable);
         self.create_store_symbol_to_variable(symbol, variable);
         self.create_store_operand_to_variable(operand, variable);
@@ -915,29 +927,23 @@ impl<'r, 's> Compiler<'r, 's> {
         self.set_basic_block(init_block);
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
-            if binding.is_local() {
-                let variable = self.locals[binding.locator().index as usize];
-                self.create_store_flags_to_variable(0, variable);
-            }
+            let locator = binding.locator();
             if binding.captured {
-                let locator = binding.locator();
-                let variable = match locator.kind {
-                    bridge::LocatorKind_Argument => self.create_get_argument_variable_ptr(locator.index),
-                    bridge::LocatorKind_Local => self.locals[locator.index as usize],
+                let variable = match locator {
+                    Locator::Argument(index) => self.create_get_argument_variable_ptr(index),
+                    Locator::Local(index) => self.locals[index as usize],
                     _ => unreachable!(),
                 };
-
                 let capture = self.create_call_runtime_create_capture(variable);
-                let key = Self::compute_key_from_locator(locator);
-                debug_assert!(!self.captures.contains_key(&key));
-                self.captures.insert(key, capture);
+                debug_assert!(!self.captures.contains_key(&locator));
+                self.captures.insert(locator, capture);
+            }
+            if let Locator::Local(index) = locator {
+                let variable = self.locals[index as usize];
+                self.create_store_flags_to_variable(0, variable);
             }
         }
         self.set_basic_block(backup);
-    }
-
-    fn compute_key_from_locator(locator: Locator) -> u32 {
-        (locator.kind as u32) << 16 | locator.index as u32
     }
 
     fn create_call_runtime_create_capture(&mut self, variable: bridge::ValueIr) -> bridge::ValueIr {
@@ -960,7 +966,8 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn escape_variable(&mut self, locator: Locator) {
-        debug_assert_ne!(locator.kind, bridge::LocatorKind_Capture);
+        debug_assert!(!locator.is_capture());
+        debug_assert!(self.captures.contains_key(&locator));
 
         let block = self.control_flow_stack.scope_flow().cleanup_block;
         debug_assert_ne!(block, 0);
@@ -968,10 +975,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let backup = self.get_basic_block();
         self.set_basic_block(block);
 
-        let key = Self::compute_key_from_locator(locator);
-        debug_assert!(self.captures.contains_key(&key));
-
-        let capture = self.captures.swap_remove(&key).unwrap();
+        let capture = self.captures.swap_remove(&locator).unwrap();
         let variable = self.create_get_variable_ptr(locator);
         self.create_escape_variable(capture, variable);
 
@@ -985,10 +989,10 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn create_get_variable_ptr(&mut self, locator: Locator) -> bridge::ValueIr {
-        match locator.kind {
-            bridge::LocatorKind_Argument => self.create_get_argument_variable_ptr(locator.index),
-            bridge::LocatorKind_Local => self.locals[locator.index as usize],
-            bridge::LocatorKind_Capture => self.create_get_capture_variable_ptr(locator.index),
+        match locator {
+            Locator::Argument(i) => self.create_get_argument_variable_ptr(i),
+            Locator::Local(i) => self.locals[i as usize],
+            Locator::Capture(i) => self.create_get_capture_variable_ptr(i),
             _ => unreachable!(),
         }
     }
@@ -1078,13 +1082,12 @@ impl<'r, 's> Compiler<'r, 's> {
         }
 
         let (_, locator) = self.pop_reference();
-        let capture = match locator.kind {
-            bridge::LocatorKind_Argument | bridge::LocatorKind_Local => {
-                let key = Self::compute_key_from_locator(locator);
-                debug_assert!(self.captures.contains_key(&key));
-                self.captures.get(&key).unwrap().clone()
+        let capture = match locator {
+            Locator::Argument(_) | Locator::Local(_) => {
+                debug_assert!(self.captures.contains_key(&locator));
+                self.captures.get(&locator).unwrap().clone()
             }
-            bridge::LocatorKind_Capture => self.create_load_capture(locator.index),
+            Locator::Capture(i) => self.create_load_capture(i),
             _ => unreachable!(),
         };
 
@@ -1119,7 +1122,7 @@ impl<'r, 's> Compiler<'r, 's> {
         };
         match reference {
             Some((symbol, locator)) if symbol != Symbol::NONE => {
-                debug_assert_ne!(locator.kind, bridge::LocatorKind_None);
+                debug_assert!(!locator.is_none());
                 self.operand_stack.push(Operand::Reference(symbol, locator));
                 self.operand_stack.push(Operand::Number(new_value));
                 self.process_assignment();

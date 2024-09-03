@@ -9,24 +9,6 @@ using LambdaIr = uintptr_t;
 
 struct Closure;
 
-enum class LocatorKind : uint16_t {
-  None,
-  Argument,
-  Local,
-  Capture,
-};
-
-static_assert(sizeof(LocatorKind) == sizeof(uint16_t), "size mismatched");
-
-// TODO: Changing the order of member variables causes performance regression in fib(41).
-// However, we don't know the exact reason at this point.  Deeper investigation is needed.
-struct Locator {
-  LocatorKind kind = LocatorKind::None;
-  uint16_t index = 0;
-};
-
-static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
-
 #define STATUS_UNSET_BIT 0x10
 #define STATUS_MASK 0x0F
 #define STATUS_NORMAL 0x00

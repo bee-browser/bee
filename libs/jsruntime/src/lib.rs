@@ -8,7 +8,6 @@ use jsparser::SymbolRegistry;
 use function::FunctionId;
 use function::FunctionRegistry;
 use llvmir::Executor;
-use llvmir::Locator;
 use llvmir::ReturnValue;
 use llvmir::Status;
 

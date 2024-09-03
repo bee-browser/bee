@@ -93,8 +93,8 @@ impl ScopeTree {
         let scope = &self.scopes[binding_ref.scope_index()];
         let binding = &scope.bindings[binding_ref.binding_index()];
         match binding.kind {
-            BindingKind::FormalParameter => Locator::argument(binding.index),
-            _ => Locator::local(binding.index),
+            BindingKind::FormalParameter => Locator::Argument(binding.index),
+            _ => Locator::Local(binding.index),
         }
     }
 
@@ -249,8 +249,8 @@ impl ScopeTreeBuilder {
         let scope = &self.scopes[binding_ref.scope_index()];
         let binding = &scope.bindings[binding_ref.binding_index()];
         match binding.kind {
-            BindingKind::FormalParameter => Locator::argument(binding.index),
-            _ => Locator::local(binding.index),
+            BindingKind::FormalParameter => Locator::Argument(binding.index),
+            _ => Locator::Local(binding.index),
         }
     }
 
@@ -353,8 +353,8 @@ impl Binding {
 
     pub fn locator(&self) -> Locator {
         match self.kind {
-            BindingKind::FormalParameter => Locator::argument(self.index),
-            _ => Locator::local(self.index),
+            BindingKind::FormalParameter => Locator::Argument(self.index),
+            _ => Locator::Local(self.index),
         }
     }
 }
