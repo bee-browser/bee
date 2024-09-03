@@ -155,7 +155,7 @@ llvm::Value* Compiler::CreateCallOnClosure(llvm::Value* closure, uint16_t argc, 
   auto* prototype = types_->CreateLambdaType();
   auto* lambda = CreateLoadLambdaFromClosure(closure);
   auto* caps = CreateLoadCapturesFromClosure(closure);
-  return builder_->CreateCall(prototype, lambda, {exec_context_, caps, types_->GetWord(argc), argv, retv});
+  return builder_->CreateCall(prototype, lambda, {exec_context_, caps, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
 }
 
 void Compiler::StartFunction(const char* name) {

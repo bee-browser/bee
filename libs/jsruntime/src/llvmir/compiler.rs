@@ -391,15 +391,13 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_boolean(&mut self, value: bool) {
-        self.operand_stack.push(Operand::Boolean(unsafe {
-            bridge::compiler_peer_get_boolean(self.peer, value)
-        }));
+        let boolean = self.get_boolean(value);
+        self.operand_stack.push(Operand::Boolean(boolean));
     }
 
     fn process_number(&mut self, value: f64) {
-        self.operand_stack.push(Operand::Number(unsafe {
-            bridge::compiler_peer_get_number(self.peer, value)
-        }));
+        let number = self.get_number(value);
+        self.operand_stack.push(Operand::Number(number));
     }
 
     fn process_string(&mut self, _value: &[u16]) {
@@ -672,17 +670,16 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_arguments(&mut self, nargs: u16) {
         if nargs > 0 {
-            let argv = self.create_variables(nargs);
-            // TODO: REG_NAME("args.ptr")
+            let argv = self.create_argv(nargs);
             self.operand_stack.push(Operand::Argv(argv));
             self.swap();
         }
     }
 
-    fn create_variables(&mut self, n: u16) -> bridge::ValueIr {
+    fn create_argv(&mut self, n: u16) -> bridge::ValueIr {
         debug_assert!(n > 0);
         unsafe {
-            bridge::compiler_peer_create_variables(self.peer, n)
+            bridge::compiler_peer_create_argv(self.peer, n)
         }
     }
 
@@ -696,9 +693,8 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_argument(&mut self, index: u16) {
         let (operand, _) = self.dereference();
         let argv = self.peek_argv();
-        let value_ptr = self.create_get_value_ptr_in_values(argv, index);
-        // TODO: REG_NAME("args." + llvm::Twine(index) + ".ptr")
-        self.create_store_operand_to_variable(operand, value_ptr);
+        let arg = self.create_get_arg_in_argv(argv, index);
+        self.create_store_operand_to_variable(operand, arg);
     }
 
     fn peek_argv(&self) -> bridge::ValueIr {
@@ -708,10 +704,10 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_get_value_ptr_in_values(&mut self, values: bridge::ValueIr, index: u16) -> bridge::ValueIr {
-        debug_assert_ne!(values, 0);
+    fn create_get_arg_in_argv(&mut self, argv: bridge::ValueIr, index: u16) -> bridge::ValueIr {
+        debug_assert_ne!(argv, 0);
         unsafe {
-            bridge::compiler_peer_create_get_value_ptr_in_values(self.peer, values, index)
+            bridge::compiler_peer_create_get_arg_in_argv(self.peer, argv, index)
         }
     }
 
@@ -735,8 +731,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let retv = self.create_retv();
 
-        // TODO: REG_NAME("status")
-        let status = self.create_call_on_closure(closure, argc, argv, retv, c"");
+        let status = self.create_call_on_closure(closure, argc, argv, retv);
 
         self.create_check_status_for_exception(status, retv);
 
@@ -765,71 +760,45 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_call_on_closure(&mut self, closure: bridge::ValueIr, argc: u16, argv: bridge::ValueIr, retv: bridge::ValueIr, _name: &CStr) -> bridge::ValueIr {
+    fn create_call_on_closure(&mut self, closure: bridge::ValueIr, argc: u16, argv: bridge::ValueIr, retv: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
             bridge::compiler_peer_create_call_on_closure(self.peer, closure, argc, argv, retv)
         }
     }
 
     fn create_load_closure_from_value_or_throw_type_error(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
-        // TODO: REG_NAME("closure.ptr")
-        let closure = self.create_ptr(c"");
+        let closure_ptr = self.create_closure_ptr();
 
-        let kind = self.create_load_value_kind_from_value(value);
         let then_block = self.create_basic_block("is_closure.then");
         let else_block = self.create_basic_block("is_closure.else");
         let end_block = self.create_basic_block("closure");
 
-        // if value.kind == ValueKind::Closure
-        let kind_closure = self.get_u8(bridge::ValueKind_Closure);
-        // TODO: REG_NAME("is_closure")
-        let is_closure = self.create_icmp_eq(kind, kind_closure, c"");
+        // if value.is_closure()
+        let is_closure = self.create_is_closure(value);
         self.create_cond_br(is_closure, then_block, else_block);
-        // {
-        self.set_basic_block(then_block);
-        let ptr = self.create_load_closure_from_value(value);
-        self.create_store(ptr, closure);
-        self.create_br(end_block);
-        // } else {
-        self.set_basic_block(else_block);
-        // TODO: TypeError
-        self.process_number(1.);
-        self.process_throw();
-        self.create_br(end_block);
-        // }
+        // then
+        {
+            self.set_basic_block(then_block);
+            let closure = self.create_load_closure_from_value(value);
+            self.create_store(closure, closure_ptr);
+            self.create_br(end_block);
+        }
+        // else
+        {
+            self.set_basic_block(else_block);
+            // TODO: TypeError
+            self.process_number(1.);
+            self.process_throw();
+            self.create_br(end_block);
+        }
 
         self.set_basic_block(end_block);
-        // TODO: REG_NAME("closure")
-        self.create_load_ptr(closure, c"")
+        self.create_load_closure(closure_ptr)
     }
 
-    fn create_ptr(&mut self, _name: &CStr) -> bridge::ValueIr {
+    fn create_closure_ptr(&mut self) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_create_ptr(self.peer)
-        }
-    }
-
-    fn create_load_value_kind_from_value(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
-        unsafe {
-            bridge::compiler_peer_create_load_value_kind_from_value(self.peer, value)
-        }
-    }
-
-    fn get_u8(&mut self, value: u8) -> bridge::ValueIr {
-        unsafe {
-            bridge::compiler_peer_get_u8(self.peer, value)
-        }
-    }
-
-    fn get_u32(&mut self, value: u32) -> bridge::ValueIr {
-        unsafe {
-            bridge::compiler_peer_get_u32(self.peer, value)
-        }
-    }
-
-    fn create_icmp_eq(&mut self, lhs: bridge::ValueIr, rhs: bridge::ValueIr, _name: &CStr) -> bridge::ValueIr {
-        unsafe {
-            bridge::compiler_peer_create_icmp_eq(self.peer, lhs, rhs)
+            bridge::compiler_peer_create_closure_ptr(self.peer)
         }
     }
 
@@ -858,45 +827,43 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_load_ptr(&mut self, value: bridge::ValueIr, _name: &CStr) -> bridge::ValueIr {
+    fn create_load_closure(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_create_load_ptr(self.peer, value)
+            bridge::compiler_peer_create_load_closure(self.peer, value)
         }
     }
 
     // Handle an exception if it's thrown.
     fn create_check_status_for_exception(&mut self, status: bridge::ValueIr, retv: bridge::ValueIr) {
-        let block = self.control_flow_stack.exception_block();
-        debug_assert_ne!(block, 0);
+        let exception_block = self.control_flow_stack.exception_block();
+        debug_assert_ne!(exception_block, 0);
 
-        let status_exception = self.get_u32(bridge::STATUS_EXCEPTION);
-        let exception_block = self.create_basic_block("status.exception");
-        let normal_block = self.create_basic_block("status.normal");
+        let then_block = self.create_basic_block("status.exception");
+        let else_block = self.create_basic_block("status.normal");
 
-        // if status == Sttus::Exception
-        // TODO: REG_NAME("is_exception")
-        let is_exception = self.create_icmp_eq(status, status_exception, c"");
-        self.create_cond_br(is_exception, exception_block, normal_block);
-        // {
-        self.set_basic_block(exception_block);
-        // Store the exception.
-        self.create_store_status(bridge::STATUS_EXCEPTION);
-        self.create_store_retv(retv);
-        self.create_br(block);
-        // }
+        // if status.is_exception()
+        let is_exception = self.create_is_exception_status(status);
+        self.create_cond_br(is_exception, then_block, else_block);
+        // then
+        {
+            self.set_basic_block(then_block);
+            self.create_store_exception_status();
+            self.create_store_value_to_retv(retv);
+            self.create_br(exception_block);
+        }
 
-        self.set_basic_block(normal_block);
+        self.set_basic_block(else_block);
     }
 
-    fn create_store_status(&mut self, status: bridge::Status) {
+    fn create_is_exception_status(&mut self, status: bridge::ValueIr) -> bridge::ValueIr {
         unsafe {
-            bridge::compiler_peer_create_store_status(self.peer, status);
+            bridge::compiler_peer_create_is_exception_status(self.peer, status)
         }
     }
 
-    fn create_store_retv(&mut self, retv: bridge::ValueIr) {
+    fn create_store_value_to_retv(&mut self, value: bridge::ValueIr) {
         unsafe {
-            bridge::compiler_peer_create_store_retv(self.peer, retv);
+            bridge::compiler_peer_create_store_value_to_retv(self.peer, value);
         }
     }
 
@@ -1112,13 +1079,10 @@ impl<'r, 's> Compiler<'r, 's> {
         let (operand, reference) = self.dereference();
         let old_value = self.to_numeric(operand);
         // TODO: BigInt
-        let one = self.get_number(1.0);
         let new_value = if op == '+' {
-            // TODO: REG_NAME("incr")
-            self.create_fadd(old_value, one)
+            self.create_incr(old_value)
         } else {
-            // TODO: REG_NAME("decr")
-            self.create_fsub(old_value, one)
+            self.create_decr(old_value)
         };
         match reference {
             Some((symbol, locator)) if symbol != Symbol::NONE => {
@@ -1137,6 +1101,18 @@ impl<'r, 's> Compiler<'r, 's> {
         } else {
             old_value
         }));
+    }
+
+    fn create_incr(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_incr(self.peer, value)
+        }
+    }
+
+    fn create_decr(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+        unsafe {
+            bridge::compiler_peer_create_decr(self.peer, value)
+        }
     }
 
     fn get_number(&mut self, value: f64) -> bridge::ValueIr {
@@ -2613,7 +2589,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.set_basic_block(catch_block);
 
         if !nominal {
-            // TODO: Reset the status to Status::Normal.
             self.create_store_normal_status();
         }
 

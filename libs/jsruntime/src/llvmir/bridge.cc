@@ -87,14 +87,6 @@ void compiler_peer_create_br(Compiler* self, BasicBlock block) {
   self->CreateBr(LLVM_BB(block));
 }
 
-void compiler_peer_create_store_normal_status(Compiler* self) {
-  self->CreateStoreNormalStatus();
-}
-
-void compiler_peer_create_store_exception_status(Compiler* self) {
-  self->CreateStoreExceptionStatus();
-}
-
 ValueIr compiler_peer_get_boolean(Compiler* self, bool value) {
   return PEER_VALUE(self->GetBoolean(value));
 }
@@ -319,64 +311,16 @@ void compiler_peer_create_store_value_to_variable(Compiler* self, ValueIr value,
   self->CreateStoreValueToVariable(LLVM_VALUE(value), LLVM_VALUE(variable));
 }
 
-void compiler_peer_create_store_undefined_to_retv(Compiler* self) {
-  self->CreateStoreUndefinedToRetv();
-}
-
-void compiler_peer_create_store_null_to_retv(Compiler* self) {
-  self->CreateStoreNullToRetv();
-}
-
-void compiler_peer_create_store_boolean_to_retv(Compiler* self, ValueIr value) {
-  self->CreateStoreBooleanToRetv(LLVM_VALUE(value));
-}
-
-void compiler_peer_create_store_number_to_retv(Compiler* self, ValueIr value) {
-  self->CreateStoreNumberToRetv(LLVM_VALUE(value));
-}
-
-void compiler_peer_create_store_closure_to_retv(Compiler* self, ValueIr value) {
-  self->CreateStoreClosureToRetv(LLVM_VALUE(value));
-}
-
-void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr value) {
-  self->CreateStoreValueToRetv(LLVM_VALUE(value));
-}
-
-ValueIr compiler_peer_create_variables(Compiler* self, uint16_t n) {
-  return PEER_VALUE(self->CreateVariables(n));
-}
-
-ValueIr compiler_peer_create_get_value_ptr_in_values(Compiler* self, ValueIr values, uint16_t index) {
-  return PEER_VALUE(self->CreateGetValuePtrInValues(LLVM_VALUE(values), index));
-}
-
 ValueIr compiler_peer_create_call_on_closure(Compiler* self, ValueIr closure, uint16_t argc, ValueIr argv, ValueIr retv) {
   return PEER_VALUE(self->CreateCallOnClosure(LLVM_VALUE(closure), argc, LLVM_VALUE(argv), LLVM_VALUE(retv)));
 }
 
-ValueIr compiler_peer_create_ptr(Compiler* self) {
-  return PEER_VALUE(self->CreatePtr());
-}
-
-ValueIr compiler_peer_create_load_value_kind_from_value(Compiler* self, ValueIr value) {
-  return PEER_VALUE(self->CreateLoadValueKindFromValue(LLVM_VALUE(value)));
+ValueIr compiler_peer_create_closure_ptr(Compiler* self) {
+  return PEER_VALUE(self->CreateClosurePtr());
 }
 
 ValueIr compiler_peer_get_nullptr(Compiler* self) {
   return PEER_VALUE(self->GetNullptr());
-}
-
-ValueIr compiler_peer_get_u8(Compiler* self, uint8_t value) {
-  return PEER_VALUE(self->GetU8(value));
-}
-
-ValueIr compiler_peer_get_u32(Compiler* self, uint32_t value) {
-  return PEER_VALUE(self->GetU32(value));
-}
-
-ValueIr compiler_peer_create_icmp_eq(Compiler* self, ValueIr lhs, ValueIr rhs) {
-  return PEER_VALUE(self->CreateICmpEq(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
 void compiler_peer_create_cond_br(Compiler* self, ValueIr cond, BasicBlock then_block, BasicBlock else_block) {
@@ -391,8 +335,8 @@ void compiler_peer_create_store(Compiler* self, ValueIr value, ValueIr dest) {
   self->CreateStore(LLVM_VALUE(value), LLVM_VALUE(dest));
 }
 
-ValueIr compiler_peer_create_load_ptr(Compiler* self, ValueIr value) {
-  return PEER_VALUE(self->CreateLoadPtr(LLVM_VALUE(value)));
+ValueIr compiler_peer_create_load_closure(Compiler* self, ValueIr closure_ptr) {
+  return PEER_VALUE(self->CreateLoadClosure(LLVM_VALUE(closure_ptr)));
 }
 
 ValueIr compiler_peer_create_call_runtime_create_capture(Compiler* self, ValueIr variable) {
@@ -405,22 +349,6 @@ ValueIr compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t i
 
 void compiler_peer_create_escape_variable(Compiler* self, ValueIr capture, ValueIr variable) {
   self->CreateEscapeVariable(LLVM_VALUE(capture), LLVM_VALUE(variable));
-}
-
-ValueIr compiler_peer_create_get_argument_variable_ptr(Compiler* self, uint16_t index) {
-  return PEER_VALUE(self->CreateGetArgumentVariablePtr(index));
-}
-
-void compiler_peer_create_alloc_status(Compiler* self) {
-  self->CreateAllocStatus();
-}
-
-void compiler_peer_create_store_status(Compiler* self, Status status) {
-  self->CreateStoreStatus(status);
-}
-
-void compiler_peer_create_store_retv(Compiler* self, ValueIr retv) {
-  self->CreateStoreRetv(LLVM_VALUE(retv));
 }
 
 ValueIr compiler_peer_create_load_capture(Compiler* self, uint16_t index) {
@@ -459,14 +387,6 @@ void compiler_peer_end_function(Compiler* self, bool optimize) {
   self->EndFunction(optimize);
 }
 
-void compiler_peer_start_scope_cleanup_checker(Compiler* self, uint16_t scope_id) {
-  self->StartScopeCleanupChecker(scope_id);
-}
-
-void compiler_peer_end_scope_cleanup_checker(Compiler* self, uint16_t scope_id) {
-  self->EndScopeCleanupChecker(scope_id);
-}
-
 void compiler_peer_handle_returned_thrown(Compiler* self,
     bool returned,
     bool thrown,
@@ -481,12 +401,90 @@ ValueIr compiler_peer_create_local_variable(Compiler* self, uint16_t index) {
   return PEER_VALUE(self->CreateLocalVariable(index));
 }
 
+// incr/decr
+
+ValueIr compiler_peer_create_incr(Compiler* self, ValueIr value) {
+  return PEER_VALUE(self->CreateIncr(LLVM_VALUE(value)));
+}
+
+ValueIr compiler_peer_create_decr(Compiler* self, ValueIr value) {
+  return PEER_VALUE(self->CreateDecr(LLVM_VALUE(value)));
+}
+
+// argv
+
+ValueIr compiler_peer_create_get_argument_variable_ptr(Compiler* self, uint16_t index) {
+  return PEER_VALUE(self->CreateGetArgumentVariablePtr(index));
+}
+
+ValueIr compiler_peer_create_argv(Compiler* self, uint16_t argc) {
+  return PEER_VALUE(self->CreateArgv(argc));
+}
+
+ValueIr compiler_peer_create_get_arg_in_argv(Compiler* self, ValueIr argv, uint16_t index) {
+  return PEER_VALUE(self->CreateGetArgInArgv(LLVM_VALUE(argv), index));
+}
+
+// retv
+
 ValueIr compiler_peer_create_retv(Compiler* self) {
   return PEER_VALUE(self->CreateRetv());
 }
 
+void compiler_peer_create_store_undefined_to_retv(Compiler* self) {
+  self->CreateStoreUndefinedToRetv();
+}
+
+void compiler_peer_create_store_null_to_retv(Compiler* self) {
+  self->CreateStoreNullToRetv();
+}
+
+void compiler_peer_create_store_boolean_to_retv(Compiler* self, ValueIr value) {
+  self->CreateStoreBooleanToRetv(LLVM_VALUE(value));
+}
+
+void compiler_peer_create_store_number_to_retv(Compiler* self, ValueIr value) {
+  self->CreateStoreNumberToRetv(LLVM_VALUE(value));
+}
+
+void compiler_peer_create_store_closure_to_retv(Compiler* self, ValueIr value) {
+  self->CreateStoreClosureToRetv(LLVM_VALUE(value));
+}
+
+void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr value) {
+  self->CreateStoreValueToRetv(LLVM_VALUE(value));
+}
+
+// status
+
+void compiler_peer_create_alloc_status(Compiler* self) {
+  self->CreateAllocStatus();
+}
+
+void compiler_peer_create_store_normal_status(Compiler* self) {
+  self->CreateStoreNormalStatus();
+}
+
+void compiler_peer_create_store_exception_status(Compiler* self) {
+  self->CreateStoreExceptionStatus();
+}
+
+ValueIr compiler_peer_create_is_exception_status(Compiler* self, ValueIr status) {
+  return PEER_VALUE(self->CreateIsExceptionStatus(LLVM_VALUE(status)));
+}
+
+// scope cleanup checker
+
 void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size) {
   self->PrepareScopeCleanupChecker(stack_size);
+}
+
+void compiler_peer_start_scope_cleanup_checker(Compiler* self, uint16_t scope_id) {
+  self->StartScopeCleanupChecker(scope_id);
+}
+
+void compiler_peer_end_scope_cleanup_checker(Compiler* self, uint16_t scope_id) {
+  self->EndScopeCleanupChecker(scope_id);
 }
 
 // executor

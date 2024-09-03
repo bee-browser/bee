@@ -81,14 +81,6 @@ class Compiler {
     builder_->CreateBr(block);
   }
 
-  void CreateStoreNormalStatus() {
-    builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
-  }
-
-  void CreateStoreExceptionStatus() {
-    builder_->CreateStore(builder_->getInt32(STATUS_EXCEPTION), status_);
-  }
-
   llvm::Value* GetBoolean(bool value);
   llvm::Value* GetNumber(double value);
   llvm::Function* GetFunction(uint32_t func_id, const char* name);
@@ -162,31 +154,18 @@ class Compiler {
     return NumberBitwiseOp('|', lhs, rhs);
   }
 
-  llvm::Value* CreateVariables(uint16_t n) {
-    assert(n > 0);
-    return CreateAllocN(types_->CreateValueType(), n);
-  }
-
   llvm::Value* CreateGetValuePtrInValues(llvm::Value* values, uint16_t index) {
     return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), values, index);
   }
 
   llvm::Value* CreateCallOnClosure(llvm::Value* closure, uint16_t argc, llvm::Value* argv, llvm::Value* retv);
 
-  llvm::Value* CreatePtr() {
-    return CreateAlloc1(builder_->getPtrTy());
+  llvm::Value* CreateClosurePtr() {
+    return CreateAlloc1(builder_->getPtrTy(), REG_NAME("closure.ptr"));
   }
 
   llvm::Value* GetNullptr() {
     return llvm::Constant::getNullValue(builder_->getPtrTy());
-  }
-
-  llvm::Value* GetU8(uint8_t value) {
-    return builder_->getInt8(value);
-  }
-
-  llvm::Value* GetU32(uint32_t value) {
-    return builder_->getInt32(value);
   }
 
   llvm::Value* CreateICmpEq(llvm::Value* lhs, llvm::Value* rhs) {
@@ -201,24 +180,11 @@ class Compiler {
     builder_->CreateStore(value, dest);
   }
 
-  llvm::Value* CreateLoadPtr(llvm::Value* value) {
-    return builder_->CreateLoad(builder_->getPtrTy(), value);
+  llvm::Value* CreateLoadClosure(llvm::Value* value) {
+    return builder_->CreateLoad(builder_->getPtrTy(), value, REG_NAME("closure"));
   }
 
   void CreateEscapeVariable(llvm::Value* capture, llvm::Value* variable);
-
-  void CreateAllocStatus() {
-    status_ = CreateAlloc1(builder_->getInt32Ty(), REG_NAME("status.ptr"));
-    builder_->CreateStore(builder_->getInt32(STATUS_UNSET), status_);
-  }
-
-  void CreateStoreStatus(Status status) {
-    builder_->CreateStore(builder_->getInt32(static_cast<uint32_t>(status)), status_);
-  }
-
-  void CreateStoreRetv(llvm::Value* retv) {
-    CreateStoreValueToVariable(retv, retv_);
-  }
 
   llvm::Value* CreateLoadCapture(uintptr_t index) {
     return CreateLoadCapturePtrFromCaptures(caps_, index);
@@ -273,7 +239,6 @@ class Compiler {
       llvm::BasicBlock* cleanup_block,
       llvm::BasicBlock* exception_block);
   llvm::Value* CreateLocalVariable(uint16_t index);
-  llvm::Value* CreateRetv();
 
   void PrepareScopeCleanupChecker(uint32_t stack_size);
 
@@ -622,7 +587,30 @@ class Compiler {
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("captures"));
   }
 
+  // incr/decr
+
+  llvm::Value* CreateIncr(llvm::Value* value) {
+    return builder_->CreateFAdd(value, GetNumber(1.0), REG_NAME("incr"));
+  }
+
+  llvm::Value* CreateDecr(llvm::Value* value) {
+    return builder_->CreateFSub(value, GetNumber(1.0), REG_NAME("decr"));
+  }
+
+  // argv
+
+  llvm::Value* CreateArgv(uint16_t argc) {
+    assert(argc > 0);
+    return CreateAllocN(types_->CreateValueType(), argc, REG_NAME("argv.ptr"));
+  }
+
+  llvm::Value* CreateGetArgInArgv(llvm::Value* argv, uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv, index, REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
+  }
+
   // retv
+
+  llvm::Value* CreateRetv();
 
   inline void CreateStoreUndefinedToRetv() {
     CreateStoreUndefinedToVariable(retv_);
@@ -646,6 +634,25 @@ class Compiler {
 
   inline void CreateStoreValueToRetv(llvm::Value* value) {
     CreateStoreValueToVariable(value, retv_);
+  }
+
+  // status
+
+  void CreateAllocStatus() {
+    status_ = CreateAlloc1(builder_->getInt32Ty(), REG_NAME("status.ptr"));
+    builder_->CreateStore(builder_->getInt32(STATUS_UNSET), status_);
+  }
+
+  void CreateStoreNormalStatus() {
+    builder_->CreateStore(builder_->getInt32(STATUS_NORMAL), status_);
+  }
+
+  void CreateStoreExceptionStatus() {
+    builder_->CreateStore(builder_->getInt32(STATUS_EXCEPTION), status_);
+  }
+
+  llvm::Value* CreateIsExceptionStatus(llvm::Value* status) {
+    return builder_->CreateICmpEQ(status, builder_->getInt32(STATUS_EXCEPTION), REG_NAME("is_exception"));
   }
 
   // scope cleanup cheker
