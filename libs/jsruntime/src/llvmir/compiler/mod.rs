@@ -26,6 +26,7 @@ use super::Module;
 
 use control_flow::ControlFlowStack;
 use peer::BasicBlock;
+use peer::BooleanIr;
 use peer::LambdaIr;
 use peer::ValueIr;
 
@@ -882,7 +883,7 @@ impl<'r, 's> Compiler<'r, 's> {
         match operand {
             Operand::Undefined => self.peer.get_nan(),
             Operand::Null => self.peer.get_zero(),
-            Operand::Boolean(value) => self.peer.create_ui_to_fp(value),
+            Operand::Boolean(value) => self.peer.create_boolean_to_number(value),
             Operand::Number(value) => value,
             Operand::Closure(_) => self.peer.get_nan(),
             Operand::Any(value) => self.peer.to_numeric(value),
@@ -961,7 +962,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
-    fn create_to_boolean(&mut self, operand: Operand) -> ValueIr {
+    fn create_to_boolean(&mut self, operand: Operand) -> BooleanIr {
         match operand {
             Operand::Undefined | Operand::Null => self.peer.get_boolean(false),
             Operand::Boolean(value) => value,
@@ -1179,7 +1180,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     // 7.2.13 IsLooselyEqual ( x, y )
-    fn create_is_loosely_equal(&mut self, lhs: Operand, rhs: Operand) -> ValueIr {
+    fn create_is_loosely_equal(&mut self, lhs: Operand, rhs: Operand) -> BooleanIr {
         logger::debug!(event = "create_is_loosely_equal", ?lhs, ?rhs);
         if let Operand::Any(lhs) = lhs {
             // TODO: compile-time evaluation
@@ -1234,7 +1235,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     // 7.2.14 IsStrictlyEqual ( x, y )
-    fn create_is_strictly_equal(&mut self, lhs: Operand, rhs: Operand) -> ValueIr {
+    fn create_is_strictly_equal(&mut self, lhs: Operand, rhs: Operand) -> BooleanIr {
         logger::debug!(event = "create_is_strictly_equal", ?lhs, ?rhs);
         if let Operand::Any(lhs) = lhs {
             return self.create_any_is_strictly_equal(lhs, rhs);
@@ -1256,7 +1257,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_any_is_strictly_equal(&mut self, lhs: ValueIr, rhs: Operand) -> ValueIr {
+    fn create_any_is_strictly_equal(&mut self, lhs: ValueIr, rhs: Operand) -> BooleanIr {
         logger::debug!(event = "create_any_is_strictly_equal", ?lhs, ?rhs);
         match rhs {
             Operand::Undefined => self.peer.create_is_undefined(lhs),
@@ -1269,7 +1270,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_is_same_boolean_value(&mut self, value: ValueIr, boolean: ValueIr) -> ValueIr {
+    fn create_is_same_boolean_value(&mut self, value: ValueIr, boolean: BooleanIr) -> BooleanIr {
         let then_block = self.create_basic_block("is_boolean.then");
         let else_block = self.create_basic_block("is_boolean.else");
         let merge_block = self.create_basic_block("is_boolean");
@@ -1290,7 +1291,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
     }
 
-    fn create_is_same_number_value(&mut self, value: ValueIr, number: ValueIr) -> ValueIr {
+    fn create_is_same_number_value(&mut self, value: ValueIr, number: ValueIr) -> BooleanIr {
         logger::debug!(event = "create_is_same_number", ?value, ?number);
 
         let then_block = self.create_basic_block("is_number.then");
@@ -1313,7 +1314,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
     }
 
-    fn create_is_same_closure_value(&mut self, value: ValueIr, closure: ValueIr) -> ValueIr {
+    fn create_is_same_closure_value(&mut self, value: ValueIr, closure: ValueIr) -> BooleanIr {
         let then_block = self.create_basic_block("is_closure.then");
         let else_block = self.create_basic_block("is_closure.else");
         let merge_block = self.create_basic_block("is_closure");
@@ -1497,7 +1498,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Any(any));
     }
 
-    fn pop_boolean(&mut self) -> ValueIr {
+    fn pop_boolean(&mut self) -> BooleanIr {
         match self.operand_stack.pop().unwrap() {
             Operand::Boolean(value) => value,
             _ => unreachable!(),
@@ -1672,7 +1673,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.branch(); // else
     }
 
-    fn create_is_non_nullish(&mut self, operand: Operand) -> ValueIr {
+    fn create_is_non_nullish(&mut self, operand: Operand) -> BooleanIr {
         match operand {
             Operand::Undefined | Operand::Null => self.peer.get_boolean(false),
             Operand::Boolean(_) | Operand::Number(_) | Operand::Closure(_) => self.peer.get_boolean(true),
@@ -2314,7 +2315,7 @@ impl Dump for OperandStack {
 enum Operand {
     Undefined,
     Null,
-    Boolean(ValueIr),
+    Boolean(BooleanIr),
     Number(ValueIr),
     Function(LambdaIr),
     Closure(ValueIr),

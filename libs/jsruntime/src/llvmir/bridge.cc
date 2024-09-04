@@ -11,6 +11,7 @@
 
 #define PEER_BB(bb) (reinterpret_cast<BasicBlock*>(bb))
 #define LLVM_BB(bb) (reinterpret_cast<llvm::BasicBlock*>(bb))
+#define PEER_BOOLEAN(value) (reinterpret_cast<BooleanIr*>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr*>(value))
 #define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
 #define PEER_LAMBDA(lambda) (reinterpret_cast<LambdaIr*>(lambda))
@@ -87,8 +88,8 @@ void compiler_peer_create_br(Compiler* self, BasicBlock* block) {
   self->CreateBr(LLVM_BB(block));
 }
 
-ValueIr* compiler_peer_get_boolean(Compiler* self, bool value) {
-  return PEER_VALUE(self->GetBoolean(value));
+BooleanIr* compiler_peer_get_boolean(Compiler* self, bool value) {
+  return PEER_BOOLEAN(self->GetBoolean(value));
 }
 
 ValueIr* compiler_peer_get_number(Compiler* self, double value) {
@@ -123,16 +124,16 @@ ValueIr* compiler_peer_create_bitwise_not(Compiler* self, ValueIr* number) {
   return PEER_VALUE(self->CreateBitwiseNot(LLVM_VALUE(number)));
 }
 
-ValueIr* compiler_peer_create_number_to_boolean(Compiler* self, ValueIr* number) {
-  return PEER_VALUE(self->CreateNumberToBoolean(LLVM_VALUE(number)));
+BooleanIr* compiler_peer_create_number_to_boolean(Compiler* self, ValueIr* number) {
+  return PEER_BOOLEAN(self->CreateNumberToBoolean(LLVM_VALUE(number)));
 }
 
-ValueIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value) {
-  return PEER_VALUE(self->CreateToBoolean(LLVM_VALUE(value)));
+BooleanIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateToBoolean(LLVM_VALUE(value)));
 }
 
-ValueIr* compiler_peer_create_logical_not(Compiler* self, ValueIr* boolean) {
-  return PEER_VALUE(self->CreateLogicalNot(LLVM_VALUE(boolean)));
+BooleanIr* compiler_peer_create_logical_not(Compiler* self, BooleanIr* boolean) {
+  return PEER_BOOLEAN(self->CreateLogicalNot(LLVM_VALUE(boolean)));
 }
 
 ValueIr* compiler_peer_create_fmul(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
@@ -167,24 +168,24 @@ ValueIr* compiler_peer_create_unsigned_right_shift(Compiler* self, ValueIr* lhs,
   return PEER_VALUE(self->CreateUnsignedRightShift(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-ValueIr* compiler_peer_create_less_than(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
-  return PEER_VALUE(self->CreateLessThan(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
+BooleanIr* compiler_peer_create_less_than(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
+  return PEER_BOOLEAN(self->CreateLessThan(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-ValueIr* compiler_peer_create_greater_than(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
-  return PEER_VALUE(self->CreateGreaterThan(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
+BooleanIr* compiler_peer_create_greater_than(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
+  return PEER_BOOLEAN(self->CreateGreaterThan(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-ValueIr* compiler_peer_create_less_than_or_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
-  return PEER_VALUE(self->CreateLessThanOrEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
+BooleanIr* compiler_peer_create_less_than_or_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
+  return PEER_BOOLEAN(self->CreateLessThanOrEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-ValueIr* compiler_peer_create_greater_than_or_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
-  return PEER_VALUE(self->CreateGreaterThanOrEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
+BooleanIr* compiler_peer_create_greater_than_or_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
+  return PEER_BOOLEAN(self->CreateGreaterThanOrEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-ValueIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
-  return PEER_VALUE(self->CreateIsLooselyEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
+BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
+  return PEER_BOOLEAN(self->CreateIsLooselyEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
 ValueIr* compiler_peer_create_undefined_to_any(Compiler* self) {
@@ -195,7 +196,7 @@ ValueIr* compiler_peer_create_null_to_any(Compiler* self) {
   return PEER_VALUE(self->CreateNullToAny());
 }
 
-ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, ValueIr* boolean) {
+ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, BooleanIr* boolean) {
   return PEER_VALUE(self->CreateBooleanToAny(LLVM_VALUE(boolean)));
 }
 
@@ -207,52 +208,52 @@ ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ValueIr* closure) {
   return PEER_VALUE(self->CreateClosureToAny(LLVM_VALUE(closure)));
 }
 
-ValueIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value) {
-  return PEER_VALUE(self->CreateIsUndefined(LLVM_VALUE(value)));
+BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateIsUndefined(LLVM_VALUE(value)));
 }
 
-ValueIr* compiler_peer_create_is_null(Compiler* self, ValueIr* value) {
-  return PEER_VALUE(self->CreateIsNull(LLVM_VALUE(value)));
+BooleanIr* compiler_peer_create_is_null(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateIsNull(LLVM_VALUE(value)));
 }
 
-ValueIr* compiler_peer_create_is_boolean(Compiler* self, ValueIr* value) {
-  return PEER_VALUE(self->CreateIsBoolean(LLVM_VALUE(value)));
+BooleanIr* compiler_peer_create_is_boolean(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateIsBoolean(LLVM_VALUE(value)));
 }
 
-ValueIr* compiler_peer_create_is_number(Compiler* self, ValueIr* value) {
-  return PEER_VALUE(self->CreateIsNumber(LLVM_VALUE(value)));
+BooleanIr* compiler_peer_create_is_number(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateIsNumber(LLVM_VALUE(value)));
 }
 
-ValueIr* compiler_peer_create_is_closure(Compiler* self, ValueIr* value) {
-  return PEER_VALUE(self->CreateIsClosure(LLVM_VALUE(value)));
+BooleanIr* compiler_peer_create_is_closure(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateIsClosure(LLVM_VALUE(value)));
 }
 
-ValueIr* compiler_peer_create_is_same_boolean(Compiler* self, ValueIr* a, ValueIr* b) {
-  return PEER_VALUE(self->CreateIsSameBoolean(LLVM_VALUE(a), LLVM_VALUE(b)));
+BooleanIr* compiler_peer_create_is_same_boolean(Compiler* self, BooleanIr* a, BooleanIr* b) {
+  return PEER_BOOLEAN(self->CreateIsSameBoolean(LLVM_VALUE(a), LLVM_VALUE(b)));
 }
 
-ValueIr* compiler_peer_create_is_same_number(Compiler* self, ValueIr* a, ValueIr* b) {
-  return PEER_VALUE(self->CreateIsSameNumber(LLVM_VALUE(a), LLVM_VALUE(b)));
+BooleanIr* compiler_peer_create_is_same_number(Compiler* self, ValueIr* a, ValueIr* b) {
+  return PEER_BOOLEAN(self->CreateIsSameNumber(LLVM_VALUE(a), LLVM_VALUE(b)));
 }
 
-ValueIr* compiler_peer_create_is_same_closure(Compiler* self, ValueIr* a, ValueIr* b) {
-  return PEER_VALUE(self->CreateIsSameClosure(LLVM_VALUE(a), LLVM_VALUE(b)));
+BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ValueIr* a, ValueIr* b) {
+  return PEER_BOOLEAN(self->CreateIsSameClosure(LLVM_VALUE(a), LLVM_VALUE(b)));
 }
 
-ValueIr* compiler_peer_create_is_same_boolean_value(Compiler* self, ValueIr* value, ValueIr* boolean) {
-  return PEER_VALUE(self->CreateIsSameBooleanValue(LLVM_VALUE(value), LLVM_VALUE(boolean)));
+BooleanIr* compiler_peer_create_is_same_boolean_value(Compiler* self, ValueIr* value, BooleanIr* boolean) {
+  return PEER_BOOLEAN(self->CreateIsSameBooleanValue(LLVM_VALUE(value), LLVM_VALUE(boolean)));
 }
 
-ValueIr* compiler_peer_create_is_same_number_value(Compiler* self, ValueIr* value, ValueIr* number) {
-  return PEER_VALUE(self->CreateIsSameNumberValue(LLVM_VALUE(value), LLVM_VALUE(number)));
+BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self, ValueIr* value, ValueIr* number) {
+  return PEER_BOOLEAN(self->CreateIsSameNumberValue(LLVM_VALUE(value), LLVM_VALUE(number)));
 }
 
-ValueIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ValueIr* closure) {
-  return PEER_VALUE(self->CreateIsSameClosureValue(LLVM_VALUE(value), LLVM_VALUE(closure)));
+BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ValueIr* closure) {
+  return PEER_BOOLEAN(self->CreateIsSameClosureValue(LLVM_VALUE(value), LLVM_VALUE(closure)));
 }
 
-ValueIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
-  return PEER_VALUE(self->CreateIsStrictlyEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
+BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
+  return PEER_BOOLEAN(self->CreateIsStrictlyEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
 ValueIr* compiler_peer_create_bitwise_and(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
@@ -267,8 +268,8 @@ ValueIr* compiler_peer_create_bitwise_or(Compiler* self, ValueIr* lhs, ValueIr* 
   return PEER_VALUE(self->CreateBitwiseOr(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-ValueIr* compiler_peer_create_boolean_ternary(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block) {
-  return PEER_VALUE(self->CreateBooleanTernary(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+BooleanIr* compiler_peer_create_boolean_ternary(Compiler* self, BooleanIr* then_value, BasicBlock* then_block, BooleanIr* else_value, BasicBlock* else_block) {
+  return PEER_BOOLEAN(self->CreateBooleanTernary(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
 ValueIr* compiler_peer_create_number_ternary(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block) {
@@ -295,7 +296,7 @@ void compiler_peer_create_store_null_to_variable(Compiler* self, ValueIr* variab
   self->CreateStoreNullToValue(LLVM_VALUE(variable));
 }
 
-void compiler_peer_create_store_boolean_to_variable(Compiler* self, ValueIr* value, ValueIr* variable) {
+void compiler_peer_create_store_boolean_to_variable(Compiler* self, BooleanIr* value, ValueIr* variable) {
   self->CreateStoreBooleanToVariable(LLVM_VALUE(value), LLVM_VALUE(variable));
 }
 
@@ -323,7 +324,7 @@ ValueIr* compiler_peer_get_nullptr(Compiler* self) {
   return PEER_VALUE(self->GetNullptr());
 }
 
-void compiler_peer_create_cond_br(Compiler* self, ValueIr* cond, BasicBlock* then_block, BasicBlock* else_block) {
+void compiler_peer_create_cond_br(Compiler* self, BooleanIr* cond, BasicBlock* then_block, BasicBlock* else_block) {
   self->CreateCondBr(LLVM_VALUE(cond), LLVM_BB(then_block), LLVM_BB(else_block));
 }
 
@@ -363,7 +364,7 @@ ValueIr* compiler_peer_get_zero(Compiler* self) {
   return PEER_VALUE(self->GetZero());
 }
 
-ValueIr* compiler_peer_create_ui_to_fp(Compiler* self, ValueIr* value) {
+ValueIr* compiler_peer_create_boolean_to_number(Compiler* self, BooleanIr* value) {
   return PEER_VALUE(self->CreateUIToFP(LLVM_VALUE(value)));
 }
 
@@ -371,12 +372,12 @@ ValueIr* compiler_peer_to_numeric(Compiler* self, ValueIr* value) {
   return PEER_VALUE(self->ToNumeric(LLVM_VALUE(value)));
 }
 
-ValueIr* compiler_peer_create_is_non_nullish(Compiler* self, ValueIr* value) {
-  return PEER_VALUE(self->CreateIsNonNullish(LLVM_VALUE(value)));
+BooleanIr* compiler_peer_create_is_non_nullish(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateIsNonNullish(LLVM_VALUE(value)));
 }
 
-ValueIr* compiler_peer_create_has_uncaught_exception(Compiler* self) {
-  return PEER_VALUE(self->CreateHasUncaughtException());
+BooleanIr* compiler_peer_create_has_uncaught_exception(Compiler* self) {
+  return PEER_BOOLEAN(self->CreateHasUncaughtException());
 }
 
 void compiler_peer_start_function(Compiler* self, const char* name) {
@@ -439,7 +440,7 @@ void compiler_peer_create_store_null_to_retv(Compiler* self) {
   self->CreateStoreNullToRetv();
 }
 
-void compiler_peer_create_store_boolean_to_retv(Compiler* self, ValueIr* value) {
+void compiler_peer_create_store_boolean_to_retv(Compiler* self, BooleanIr* value) {
   self->CreateStoreBooleanToRetv(LLVM_VALUE(value));
 }
 
@@ -469,8 +470,8 @@ void compiler_peer_create_store_exception_status(Compiler* self) {
   self->CreateStoreExceptionStatus();
 }
 
-ValueIr* compiler_peer_create_is_exception_status(Compiler* self, ValueIr* status) {
-  return PEER_VALUE(self->CreateIsExceptionStatus(LLVM_VALUE(status)));
+BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, ValueIr* status) {
+  return PEER_BOOLEAN(self->CreateIsExceptionStatus(LLVM_VALUE(status)));
 }
 
 // scope cleanup checker

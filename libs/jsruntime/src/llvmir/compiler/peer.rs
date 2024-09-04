@@ -17,7 +17,16 @@ pub struct BasicBlock(*mut bridge::BasicBlock);
 pub struct LambdaIr(*mut bridge::LambdaIr);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BooleanIr(*mut bridge::BooleanIr);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ValueIr(*mut bridge::ValueIr);
+
+macro_rules! boolean_ir {
+    ($inner:expr) => {
+        BooleanIr(unsafe { $inner })
+    };
+}
 
 macro_rules! value_ir {
     ($inner:expr) => {
@@ -126,8 +135,8 @@ impl Compiler {
         }
     }
 
-    pub fn get_boolean(&self, value: bool) -> ValueIr {
-        value_ir! {
+    pub fn get_boolean(&self, value: bool) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_get_boolean(self.0, value)
         }
     }
@@ -152,10 +161,10 @@ impl Compiler {
 
     // conversions
 
-    pub fn create_ui_to_fp(&self, value: ValueIr) -> ValueIr {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_boolean_to_number(&self, value: BooleanIr) -> ValueIr {
+        debug_assert_ne!(value, BooleanIr::NONE);
         value_ir! {
-            bridge::compiler_peer_create_ui_to_fp(self.0, value.0)
+            bridge::compiler_peer_create_boolean_to_number(self.0, value.0)
         }
     }
 
@@ -166,16 +175,16 @@ impl Compiler {
         }
     }
 
-    pub fn create_number_to_boolean(&self, value: ValueIr) -> ValueIr {
+    pub fn create_number_to_boolean(&self, value: ValueIr) -> BooleanIr {
         debug_assert_ne!(value, ValueIr::NONE);
-        value_ir! {
+        boolean_ir! {
             bridge::compiler_peer_create_number_to_boolean(self.0, value.0)
         }
     }
 
-    pub fn create_to_boolean(&self, value: ValueIr) -> ValueIr {
+    pub fn create_to_boolean(&self, value: ValueIr) -> BooleanIr {
         debug_assert_ne!(value, ValueIr::NONE);
-        value_ir! {
+        boolean_ir! {
             bridge::compiler_peer_create_to_boolean(self.0, value.0)
         }
     }
@@ -192,8 +201,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_boolean_to_any(&self, value: ValueIr) -> ValueIr {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_boolean_to_any(&self, value: BooleanIr) -> ValueIr {
+        debug_assert_ne!(value, BooleanIr::NONE);
         value_ir! {
             bridge::compiler_peer_create_boolean_to_any(self.0, value.0)
         }
@@ -236,8 +245,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_logical_not(&self, boolean: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_logical_not(&self, boolean: BooleanIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_logical_not(self.0, boolean.0)
         }
     }
@@ -292,26 +301,26 @@ impl Compiler {
         }
     }
 
-    pub fn create_less_than(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_less_than(&self, lhs: ValueIr, rhs: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_less_than(self.0, lhs.0, rhs.0)
         }
     }
 
-    pub fn create_greater_than(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_greater_than(&self, lhs: ValueIr, rhs: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_greater_than(self.0, lhs.0, rhs.0)
         }
     }
 
-    pub fn create_less_than_or_equal(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_less_than_or_equal(&self, lhs: ValueIr, rhs: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_less_than_or_equal(self.0, lhs.0, rhs.0)
         }
     }
 
-    pub fn create_greater_than_or_equal(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_greater_than_or_equal(&self, lhs: ValueIr, rhs: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_greater_than_or_equal(self.0, lhs.0, rhs.0)
         }
     }
@@ -350,89 +359,89 @@ impl Compiler {
 
     // equality
 
-    pub fn create_is_loosely_equal(&self, a: ValueIr, b: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_loosely_equal(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_loosely_equal(self.0, a.0, b.0)
         }
     }
 
-    pub fn create_is_strictly_equal(&self, a: ValueIr, b: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_strictly_equal(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_strictly_equal(self.0, a.0, b.0)
         }
     }
 
-    pub fn create_is_undefined(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_undefined(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_undefined(self.0, value.0)
         }
     }
 
-    pub fn create_is_null(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_null(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_null(self.0, value.0)
         }
     }
 
-    pub fn create_is_boolean(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_boolean(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_boolean(self.0, value.0)
         }
     }
 
-    pub fn create_is_same_boolean(&self, a: ValueIr, b: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_same_boolean(&self, a: BooleanIr, b: BooleanIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_same_boolean(self.0, a.0, b.0)
         }
     }
 
-    pub fn create_is_same_boolean_value(&self, variable: ValueIr, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_same_boolean_value(&self, variable: ValueIr, value: BooleanIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_same_boolean_value(self.0, variable.0, value.0)
         }
     }
 
-    pub fn create_is_number(&self, value: ValueIr) -> ValueIr {
+    pub fn create_is_number(&self, value: ValueIr) -> BooleanIr {
         logger::debug!(event = "create_is_number", ?value);
-        value_ir! {
+        boolean_ir! {
             bridge::compiler_peer_create_is_number(self.0, value.0)
         }
     }
 
-    pub fn create_is_same_number(&self, a: ValueIr, b: ValueIr) -> ValueIr {
+    pub fn create_is_same_number(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
         logger::debug!(event = "create_is_same_number", ?a, ?b);
-        value_ir! {
+        boolean_ir! {
             bridge::compiler_peer_create_is_same_number(self.0, a.0, b.0)
         }
     }
 
-    pub fn create_is_same_number_value(&self, variable: ValueIr, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_same_number_value(&self, variable: ValueIr, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_same_number_value(self.0, variable.0, value.0)
         }
     }
 
-    pub fn create_is_closure(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_closure(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_closure(self.0, value.0)
         }
     }
 
-    pub fn create_is_same_closure(&self, a: ValueIr, b: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_same_closure(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_same_closure(self.0, a.0, b.0)
         }
     }
 
-    pub fn create_is_same_closure_value(&self, variable: ValueIr, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_same_closure_value(&self, variable: ValueIr, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_same_closure_value(self.0, variable.0, value.0)
         }
     }
 
     // jump
 
-    pub fn create_cond_br(&self, cond: ValueIr, then_block: BasicBlock, else_block: BasicBlock) {
+    pub fn create_cond_br(&self, cond: BooleanIr, then_block: BasicBlock, else_block: BasicBlock) {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
         unsafe {
@@ -440,18 +449,18 @@ impl Compiler {
         }
     }
 
-    pub fn create_is_non_nullish(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_non_nullish(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_non_nullish(self.0, value.0)
         }
     }
 
     // phi
 
-    pub fn create_boolean_ternary(&self, then_value: ValueIr, then_block: BasicBlock, else_value: ValueIr, else_block: BasicBlock) -> ValueIr {
+    pub fn create_boolean_ternary(&self, then_value: BooleanIr, then_block: BasicBlock, else_value: BooleanIr, else_block: BasicBlock) -> BooleanIr {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
-        value_ir! {
+        boolean_ir! {
             bridge::compiler_peer_create_boolean_ternary(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
         }
     }
@@ -586,8 +595,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_store_boolean_to_retv(&self, value: ValueIr) {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_store_boolean_to_retv(&self, value: BooleanIr) {
+        debug_assert_ne!(value, BooleanIr::NONE);
         unsafe {
             bridge::compiler_peer_create_store_boolean_to_retv(self.0, value.0);
         }
@@ -622,8 +631,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_has_uncaught_exception(&self) -> ValueIr {
-        value_ir! {
+    pub fn create_has_uncaught_exception(&self) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_has_uncaught_exception(self.0)
         }
     }
@@ -648,8 +657,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_is_exception_status(&self, status: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_is_exception_status(&self, status: ValueIr) -> BooleanIr {
+        boolean_ir! {
             bridge::compiler_peer_create_is_exception_status(self.0, status.0)
         }
     }
@@ -688,8 +697,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_store_boolean_to_variable(&self, value: ValueIr, variable: ValueIr) {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_store_boolean_to_variable(&self, value: BooleanIr, variable: ValueIr) {
+        debug_assert_ne!(value, BooleanIr::NONE);
         unsafe {
             bridge::compiler_peer_create_store_boolean_to_variable(self.0, value.0, variable.0);
         }
@@ -786,6 +795,17 @@ impl BasicBlock {
 }
 
 impl LambdaIr {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            std::ffi::CStr::from_ptr(buf)
+        }
+    }
+}
+
+impl BooleanIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {

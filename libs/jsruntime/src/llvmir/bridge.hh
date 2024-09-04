@@ -6,6 +6,7 @@
 // opaque types
 struct BasicBlock;
 struct LambdaIr;
+struct BooleanIr;
 struct ValueIr;
 
 struct Closure;
@@ -135,10 +136,10 @@ void compiler_peer_move_basic_block_after(Compiler* self, BasicBlock* block);
 bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock* block);
 
 void compiler_peer_create_br(Compiler* self, BasicBlock* block);
-void compiler_peer_create_cond_br(Compiler* self, ValueIr* cond, BasicBlock* then_block, BasicBlock* else_block);
+void compiler_peer_create_cond_br(Compiler* self, BooleanIr* cond, BasicBlock* then_block, BasicBlock* else_block);
 
 ValueIr* compiler_peer_get_nullptr(Compiler* self);
-ValueIr* compiler_peer_get_boolean(Compiler* self, bool value);
+BooleanIr* compiler_peer_get_boolean(Compiler* self, bool value);
 ValueIr* compiler_peer_get_number(Compiler* self, double value);
 LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
 
@@ -150,10 +151,10 @@ ValueIr* compiler_peer_get_exception(Compiler* self);
 
 ValueIr* compiler_peer_create_fneg(Compiler* self, ValueIr* value);
 ValueIr* compiler_peer_create_bitwise_not(Compiler* self, ValueIr* number);
-ValueIr* compiler_peer_create_logical_not(Compiler* self, ValueIr* boolean);
+BooleanIr* compiler_peer_create_logical_not(Compiler* self, BooleanIr* boolean);
 
-ValueIr* compiler_peer_create_number_to_boolean(Compiler* self, ValueIr* number);
-ValueIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_number_to_boolean(Compiler* self, ValueIr* number);
+BooleanIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value);
 
 // binary operators
 ValueIr* compiler_peer_create_fmul(Compiler* self, ValueIr* lhs, ValueIr* rhs);
@@ -164,17 +165,17 @@ ValueIr* compiler_peer_create_fsub(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 ValueIr* compiler_peer_create_left_shift(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 ValueIr* compiler_peer_create_signed_right_shift(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 ValueIr* compiler_peer_create_unsigned_right_shift(Compiler* self, ValueIr* lhs, ValueIr* rhs);
-ValueIr* compiler_peer_create_less_than(Compiler* self, ValueIr* lhs, ValueIr* rhs);
-ValueIr* compiler_peer_create_greater_than(Compiler* self, ValueIr* lhs, ValueIr* rhs);
-ValueIr* compiler_peer_create_less_than_or_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
-ValueIr* compiler_peer_create_greater_than_or_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
+BooleanIr* compiler_peer_create_less_than(Compiler* self, ValueIr* lhs, ValueIr* rhs);
+BooleanIr* compiler_peer_create_greater_than(Compiler* self, ValueIr* lhs, ValueIr* rhs);
+BooleanIr* compiler_peer_create_less_than_or_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
+BooleanIr* compiler_peer_create_greater_than_or_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 ValueIr* compiler_peer_create_bitwise_and(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 ValueIr* compiler_peer_create_bitwise_xor(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 ValueIr* compiler_peer_create_bitwise_or(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 
 // equality/inequality operators
-ValueIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
-ValueIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
+BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
+BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 
 // incr/decr
 ValueIr* compiler_peer_create_incr(Compiler* self, ValueIr* value); // value + 1
@@ -183,26 +184,26 @@ ValueIr* compiler_peer_create_decr(Compiler* self, ValueIr* value); // value - 1
 // type conversions
 ValueIr* compiler_peer_create_undefined_to_any(Compiler* self);
 ValueIr* compiler_peer_create_null_to_any(Compiler* self);
-ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, ValueIr* boolean);
+ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, BooleanIr* boolean);
 ValueIr* compiler_peer_create_number_to_any(Compiler* self, ValueIr* number);
 ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ValueIr* closure);
 
-ValueIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
-ValueIr* compiler_peer_create_is_null(Compiler* self, ValueIr* value);
-ValueIr* compiler_peer_create_is_boolean(Compiler* self, ValueIr* value);
-ValueIr* compiler_peer_create_is_number(Compiler* self, ValueIr* value);
-ValueIr* compiler_peer_create_is_closure(Compiler* self, ValueIr* value);
-ValueIr* compiler_peer_create_is_non_nullish(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_null(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_boolean(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_number(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_closure(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_non_nullish(Compiler* self, ValueIr* value);
 
-ValueIr* compiler_peer_create_is_same_boolean(Compiler* self, ValueIr* a, ValueIr* b);
-ValueIr* compiler_peer_create_is_same_number(Compiler* self, ValueIr* a, ValueIr* b);
-ValueIr* compiler_peer_create_is_same_closure(Compiler* self, ValueIr* a, ValueIr* b);
+BooleanIr* compiler_peer_create_is_same_boolean(Compiler* self, BooleanIr* a, BooleanIr* b);
+BooleanIr* compiler_peer_create_is_same_number(Compiler* self, ValueIr* a, ValueIr* b);
+BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ValueIr* a, ValueIr* b);
 
-ValueIr* compiler_peer_create_is_same_boolean_value(Compiler* self, ValueIr* value, ValueIr* boolean);
-ValueIr* compiler_peer_create_is_same_number_value(Compiler* self, ValueIr* value, ValueIr* number);
-ValueIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ValueIr* closure);
+BooleanIr* compiler_peer_create_is_same_boolean_value(Compiler* self, ValueIr* value, BooleanIr* boolean);
+BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self, ValueIr* value, ValueIr* number);
+BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ValueIr* closure);
 
-ValueIr* compiler_peer_create_boolean_ternary(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block);
+BooleanIr* compiler_peer_create_boolean_ternary(Compiler* self, BooleanIr* then_value, BasicBlock* then_block, BooleanIr* else_value, BasicBlock* else_block);
 ValueIr* compiler_peer_create_number_ternary(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block);
 ValueIr* compiler_peer_create_any_ternary(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block);
 
@@ -210,7 +211,7 @@ void compiler_peer_create_store_flags_to_variable(Compiler* self, uint8_t flags,
 void compiler_peer_create_store_symbol_to_variable(Compiler* self, uint32_t symbol, ValueIr* variable);
 void compiler_peer_create_store_undefined_to_variable(Compiler* self, ValueIr* variable);
 void compiler_peer_create_store_null_to_variable(Compiler* self, ValueIr* variable);
-void compiler_peer_create_store_boolean_to_variable(Compiler* self, ValueIr* value, ValueIr* variable);
+void compiler_peer_create_store_boolean_to_variable(Compiler* self, BooleanIr* value, ValueIr* variable);
 void compiler_peer_create_store_number_to_variable(Compiler* self, ValueIr* value, ValueIr* variable);
 void compiler_peer_create_store_closure_to_variable(Compiler* self, ValueIr* value, ValueIr* variable);
 void compiler_peer_create_store_value_to_variable(Compiler* self, ValueIr* value, ValueIr* variable);
@@ -224,9 +225,9 @@ void compiler_peer_create_escape_variable(Compiler* self, ValueIr* capture, Valu
 ValueIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 ValueIr* compiler_peer_get_nan(Compiler* self);
 ValueIr* compiler_peer_get_zero(Compiler* self);
-ValueIr* compiler_peer_create_ui_to_fp(Compiler* self, ValueIr* value);
+ValueIr* compiler_peer_create_boolean_to_number(Compiler* self, BooleanIr* value);
 ValueIr* compiler_peer_to_numeric(Compiler* self, ValueIr* value);
-ValueIr* compiler_peer_create_has_uncaught_exception(Compiler* self);
+BooleanIr* compiler_peer_create_has_uncaught_exception(Compiler* self);
 void compiler_peer_handle_returned_thrown(Compiler* self,
     bool returned,
     bool thrown,
@@ -244,7 +245,7 @@ ValueIr* compiler_peer_create_get_arg_in_argv(Compiler* self, ValueIr* argv, uin
 ValueIr* compiler_peer_create_retv(Compiler* self);
 void compiler_peer_create_store_undefined_to_retv(Compiler* self);
 void compiler_peer_create_store_null_to_retv(Compiler* self);
-void compiler_peer_create_store_boolean_to_retv(Compiler* self, ValueIr* value);
+void compiler_peer_create_store_boolean_to_retv(Compiler* self, BooleanIr* value);
 void compiler_peer_create_store_number_to_retv(Compiler* self, ValueIr* value);
 void compiler_peer_create_store_closure_to_retv(Compiler* self, ValueIr* value);
 void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value);
@@ -253,7 +254,7 @@ void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value);
 void compiler_peer_create_alloc_status(Compiler* self);
 void compiler_peer_create_store_normal_status(Compiler* self);
 void compiler_peer_create_store_exception_status(Compiler* self);
-ValueIr* compiler_peer_create_is_exception_status(Compiler* self, ValueIr* status);
+BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, ValueIr* status);
 
 ValueIr* compiler_peer_create_closure_ptr(Compiler* self);
 ValueIr* compiler_peer_create_load_closure(Compiler* self, ValueIr* closure_ptr);
