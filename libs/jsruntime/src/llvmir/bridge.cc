@@ -13,7 +13,7 @@
 #define LLVM_BB(bb) (reinterpret_cast<llvm::BasicBlock*>(bb))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr>(value))
 #define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
-#define PEER_LAMBDA(lambda) (reinterpret_cast<LambdaIr>(lambda))
+#define PEER_LAMBDA(lambda) (reinterpret_cast<LambdaIr*>(lambda))
 #define LLVM_LAMBDA(lambda) (reinterpret_cast<llvm::Function*>(lambda))
 
 void llvmir_initialize() {
@@ -95,11 +95,11 @@ ValueIr compiler_peer_get_number(Compiler* self, double value) {
   return PEER_VALUE(self->GetNumber(value));
 }
 
-LambdaIr compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name) {
+LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name) {
   return PEER_LAMBDA(self->GetFunction(func_id, name));
 }
 
-ValueIr compiler_peer_create_call_runtime_create_closure(Compiler* self, LambdaIr lambda, uint16_t num_captures) {
+ValueIr compiler_peer_create_call_runtime_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures) {
   return PEER_VALUE(self->CreateCallRuntimeCreateClosure(LLVM_LAMBDA(lambda), num_captures));
 }
 

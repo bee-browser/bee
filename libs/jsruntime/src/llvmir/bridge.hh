@@ -5,8 +5,8 @@
 
 // opaque types
 struct BasicBlock;
+struct LambdaIr;
 using ValueIr = uintptr_t;
-using LambdaIr = uintptr_t;
 
 struct Closure;
 
@@ -140,9 +140,9 @@ void compiler_peer_create_cond_br(Compiler* self, ValueIr cond, BasicBlock* then
 ValueIr compiler_peer_get_nullptr(Compiler* self);
 ValueIr compiler_peer_get_boolean(Compiler* self, bool value);
 ValueIr compiler_peer_get_number(Compiler* self, double value);
-LambdaIr compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
+LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
 
-ValueIr compiler_peer_create_call_runtime_create_closure(Compiler* self, LambdaIr lambda, uint16_t num_captures);
+ValueIr compiler_peer_create_call_runtime_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures);
 ValueIr compiler_peer_create_load_captures_from_closure(Compiler* self, ValueIr closure);
 void compiler_peer_create_store_capture_ptr_to_captures(Compiler* self, ValueIr capture, ValueIr captures, uint16_t i);
 

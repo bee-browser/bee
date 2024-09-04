@@ -13,6 +13,9 @@ pub struct Compiler(*mut bridge::Compiler);
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BasicBlock(*mut bridge::BasicBlock);
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LambdaIr(*mut bridge::LambdaIr);
+
 impl Compiler {
     pub fn new() -> Self {
         Self(unsafe { bridge::compiler_peer_new() })
@@ -65,9 +68,9 @@ impl Compiler {
         }
     }
 
-    pub fn get_function(&self, func_id: FunctionId, name: &CStr) -> bridge::LambdaIr {
+    pub fn get_function(&self, func_id: FunctionId, name: &CStr) -> LambdaIr {
         unsafe {
-            bridge::compiler_peer_get_function(self.0, func_id.into(), name.as_ptr())
+            LambdaIr(bridge::compiler_peer_get_function(self.0, func_id.into(), name.as_ptr()))
         }
     }
 
@@ -468,9 +471,10 @@ impl Compiler {
         }
     }
 
-    pub fn create_call_runtime_create_closure(&self, lambda: bridge::LambdaIr, num_captures: u16) -> bridge::ValueIr {
+    pub fn create_call_runtime_create_closure(&self, lambda: LambdaIr, num_captures: u16) -> bridge::ValueIr {
+        debug_assert_ne!(lambda, LambdaIr::NONE);
         unsafe {
-            bridge::compiler_peer_create_call_runtime_create_closure(self.0, lambda, num_captures)
+            bridge::compiler_peer_create_call_runtime_create_closure(self.0, lambda.0, num_captures)
         }
     }
 
@@ -760,6 +764,17 @@ impl BasicBlock {
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
             bridge::helper_peer_get_basic_block_name_or_as_operand(self.0, buf, len);
+            std::ffi::CStr::from_ptr(buf)
+        }
+    }
+}
+
+impl LambdaIr {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_value_name_or_as_operand(self.0 as usize, buf, len); // TODO
             std::ffi::CStr::from_ptr(buf)
         }
     }

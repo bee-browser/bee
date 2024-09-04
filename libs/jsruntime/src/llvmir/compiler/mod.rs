@@ -26,6 +26,7 @@ use super::Module;
 
 use control_flow::ControlFlowStack;
 use peer::BasicBlock;
+use peer::LambdaIr;
 
 impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
@@ -396,7 +397,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Function(lambda));
     }
 
-    fn pop_lambda(&mut self) -> bridge::LambdaIr {
+    fn pop_lambda(&mut self) -> LambdaIr {
         match self.operand_stack.pop() {
             Some(Operand::Function(lambda)) => lambda,
             _ => unreachable!(),
@@ -2314,7 +2315,7 @@ enum Operand {
     Null,
     Boolean(bridge::ValueIr),
     Number(bridge::ValueIr),
-    Function(bridge::LambdaIr),
+    Function(LambdaIr),
     Closure(bridge::ValueIr),
     Any(bridge::ValueIr),
     Reference(Symbol, Locator),
@@ -2330,12 +2331,18 @@ impl Dump for Operand {
             };
         }
 
+        macro_rules! ir2cstr2 {
+            ($value:expr) => {
+                $value.get_name_or_as_operand(buf, len)
+            };
+        }
+
         match self {
             Self::Undefined => eprintln!("Undefined"),
             Self::Null => eprintln!("Null"),
             Self::Boolean(value) => eprintln!("Boolean({:?})", ir2cstr!(value)),
             Self::Number(value) => eprintln!("Number({:?})", ir2cstr!(value)),
-            Self::Function(lambda) => eprintln!("Function({:?})", ir2cstr!(lambda)),
+            Self::Function(lambda) => eprintln!("Function({:?})", ir2cstr2!(lambda)),
             Self::Closure(value) => eprintln!("Closure({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
