@@ -27,6 +27,7 @@ use super::Module;
 use control_flow::ControlFlowStack;
 use peer::BasicBlock;
 use peer::LambdaIr;
+use peer::ValueIr;
 
 impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
@@ -75,8 +76,8 @@ struct Compiler<'r, 's> {
     basic_block_name_stack: Option<BasicBlockNameStack>,
 
     // The following variables must be reset in the end of compilation for each function.
-    locals: Vec<bridge::ValueIr>,
-    captures: IndexMap<Locator, bridge::ValueIr>,
+    locals: Vec<ValueIr>,
+    captures: IndexMap<Locator, ValueIr>,
 
     dump_buffer: Option<Vec<std::ffi::c_char>>,
 }
@@ -404,7 +405,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn pop_capture(&mut self) -> bridge::ValueIr {
+    fn pop_capture(&mut self) -> ValueIr {
         match self.operand_stack.pop() {
             Some(Operand::Capture(capture)) => capture,
             _ => unreachable!(),
@@ -484,7 +485,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_get_value_ptr(&mut self, locator: Locator) -> bridge::ValueIr {
+    fn create_get_value_ptr(&mut self, locator: Locator) -> ValueIr {
         match locator {
             Locator::Argument(index) => self.peer.create_get_argument_variable_ptr(index),
             Locator::Local(index) => self.locals[index as usize],
@@ -500,7 +501,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_store_operand_to_variable(&mut self, operand: Operand, variable: bridge::ValueIr) {
+    fn create_store_operand_to_variable(&mut self, operand: Operand, variable: ValueIr) {
         match operand {
             Operand::Undefined => self.peer.create_store_undefined_to_variable(variable),
             Operand::Null => self.peer.create_store_null_to_variable(variable),
@@ -598,7 +599,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_store_operand_to_variable(operand, arg);
     }
 
-    fn peek_argv(&self) -> bridge::ValueIr {
+    fn peek_argv(&self) -> ValueIr {
         match self.operand_stack.last().unwrap() {
             Operand::Argv(value) => *value,
             _ => unreachable!(),
@@ -635,14 +636,14 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Any(retv));
     }
 
-    fn pop_argv(&mut self) -> bridge::ValueIr {
+    fn pop_argv(&mut self) -> ValueIr {
         match self.operand_stack.pop().unwrap() {
             Operand::Argv(value) => value,
             _ => unreachable!(),
         }
     }
 
-    fn create_load_closure_from_value_or_throw_type_error(&mut self, value: bridge::ValueIr) -> bridge::ValueIr {
+    fn create_load_closure_from_value_or_throw_type_error(&mut self, value: ValueIr) -> ValueIr {
         let closure_ptr = self.peer.create_closure_ptr();
 
         let then_block = self.create_basic_block("is_closure.then");
@@ -673,7 +674,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     // Handle an exception if it's thrown.
-    fn create_check_status_for_exception(&mut self, status: bridge::ValueIr, retv: bridge::ValueIr) {
+    fn create_check_status_for_exception(&mut self, status: ValueIr, retv: ValueIr) {
         let exception_block = self.control_flow_stack.exception_block();
 
         let then_block = self.create_basic_block("status.exception");
@@ -755,7 +756,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(backup);
     }
 
-    fn create_get_variable_ptr(&mut self, locator: Locator) -> bridge::ValueIr {
+    fn create_get_variable_ptr(&mut self, locator: Locator) -> ValueIr {
         match locator {
             Locator::Argument(i) => self.peer.create_get_argument_variable_ptr(i),
             Locator::Local(i) => self.locals[i as usize],
@@ -877,7 +878,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     // 7.1.4 ToNumber ( argument )
-    fn to_numeric(&mut self, operand: Operand) -> bridge::ValueIr {
+    fn to_numeric(&mut self, operand: Operand) -> ValueIr {
         match operand {
             Operand::Undefined => self.peer.get_nan(),
             Operand::Null => self.peer.get_zero(),
@@ -960,7 +961,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
-    fn create_to_boolean(&mut self, operand: Operand) -> bridge::ValueIr {
+    fn create_to_boolean(&mut self, operand: Operand) -> ValueIr {
         match operand {
             Operand::Undefined | Operand::Null => self.peer.get_boolean(false),
             Operand::Boolean(value) => value,
@@ -1178,7 +1179,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     // 7.2.13 IsLooselyEqual ( x, y )
-    fn create_is_loosely_equal(&mut self, lhs: Operand, rhs: Operand) -> bridge::ValueIr {
+    fn create_is_loosely_equal(&mut self, lhs: Operand, rhs: Operand) -> ValueIr {
         logger::debug!(event = "create_is_loosely_equal", ?lhs, ?rhs);
         if let Operand::Any(lhs) = lhs {
             // TODO: compile-time evaluation
@@ -1219,7 +1220,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_is_loosely_equal(lhs, rhs)
     }
 
-    fn create_to_any(&mut self, operand: Operand) -> bridge::ValueIr {
+    fn create_to_any(&mut self, operand: Operand) -> ValueIr {
         logger::debug!(event = "create_to_any", ?operand);
         match operand {
             Operand::Any(value) => value,
@@ -1233,7 +1234,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     // 7.2.14 IsStrictlyEqual ( x, y )
-    fn create_is_strictly_equal(&mut self, lhs: Operand, rhs: Operand) -> bridge::ValueIr {
+    fn create_is_strictly_equal(&mut self, lhs: Operand, rhs: Operand) -> ValueIr {
         logger::debug!(event = "create_is_strictly_equal", ?lhs, ?rhs);
         if let Operand::Any(lhs) = lhs {
             return self.create_any_is_strictly_equal(lhs, rhs);
@@ -1255,7 +1256,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_any_is_strictly_equal(&mut self, lhs: bridge::ValueIr, rhs: Operand) -> bridge::ValueIr {
+    fn create_any_is_strictly_equal(&mut self, lhs: ValueIr, rhs: Operand) -> ValueIr {
         logger::debug!(event = "create_any_is_strictly_equal", ?lhs, ?rhs);
         match rhs {
             Operand::Undefined => self.peer.create_is_undefined(lhs),
@@ -1268,7 +1269,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_is_same_boolean_value(&mut self, value: bridge::ValueIr, boolean: bridge::ValueIr) -> bridge::ValueIr {
+    fn create_is_same_boolean_value(&mut self, value: ValueIr, boolean: ValueIr) -> ValueIr {
         let then_block = self.create_basic_block("is_boolean.then");
         let else_block = self.create_basic_block("is_boolean.else");
         let merge_block = self.create_basic_block("is_boolean");
@@ -1289,7 +1290,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
     }
 
-    fn create_is_same_number_value(&mut self, value: bridge::ValueIr, number: bridge::ValueIr) -> bridge::ValueIr {
+    fn create_is_same_number_value(&mut self, value: ValueIr, number: ValueIr) -> ValueIr {
         logger::debug!(event = "create_is_same_number", ?value, ?number);
 
         let then_block = self.create_basic_block("is_number.then");
@@ -1312,7 +1313,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
     }
 
-    fn create_is_same_closure_value(&mut self, value: bridge::ValueIr, closure: bridge::ValueIr) -> bridge::ValueIr {
+    fn create_is_same_closure_value(&mut self, value: ValueIr, closure: ValueIr) -> ValueIr {
         let then_block = self.create_basic_block("is_closure.then");
         let else_block = self.create_basic_block("is_closure.else");
         let merge_block = self.create_basic_block("is_closure");
@@ -1496,7 +1497,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Any(any));
     }
 
-    fn pop_boolean(&mut self) -> bridge::ValueIr {
+    fn pop_boolean(&mut self) -> ValueIr {
         match self.operand_stack.pop().unwrap() {
             Operand::Boolean(value) => value,
             _ => unreachable!(),
@@ -1671,7 +1672,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.branch(); // else
     }
 
-    fn create_is_non_nullish(&mut self, operand: Operand) -> bridge::ValueIr {
+    fn create_is_non_nullish(&mut self, operand: Operand) -> ValueIr {
         match operand {
             Operand::Undefined | Operand::Null => self.peer.get_boolean(false),
             Operand::Boolean(_) | Operand::Number(_) | Operand::Closure(_) => self.peer.get_boolean(true),
@@ -2313,25 +2314,19 @@ impl Dump for OperandStack {
 enum Operand {
     Undefined,
     Null,
-    Boolean(bridge::ValueIr),
-    Number(bridge::ValueIr),
+    Boolean(ValueIr),
+    Number(ValueIr),
     Function(LambdaIr),
-    Closure(bridge::ValueIr),
-    Any(bridge::ValueIr),
+    Closure(ValueIr),
+    Any(ValueIr),
     Reference(Symbol, Locator),
-    Argv(bridge::ValueIr),
-    Capture(bridge::ValueIr),
+    Argv(ValueIr),
+    Capture(ValueIr),
 }
 
 impl Dump for Operand {
     fn dump(&self, buf: *mut std::ffi::c_char, len: usize) {
         macro_rules! ir2cstr {
-            ($value:expr) => {
-                peer::get_value_name_or_as_operand(*$value, buf, len)
-            };
-        }
-
-        macro_rules! ir2cstr2 {
             ($value:expr) => {
                 $value.get_name_or_as_operand(buf, len)
             };
@@ -2342,7 +2337,7 @@ impl Dump for Operand {
             Self::Null => eprintln!("Null"),
             Self::Boolean(value) => eprintln!("Boolean({:?})", ir2cstr!(value)),
             Self::Number(value) => eprintln!("Number({:?})", ir2cstr!(value)),
-            Self::Function(lambda) => eprintln!("Function({:?})", ir2cstr2!(lambda)),
+            Self::Function(lambda) => eprintln!("Function({:?})", ir2cstr!(lambda)),
             Self::Closure(value) => eprintln!("Closure({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
