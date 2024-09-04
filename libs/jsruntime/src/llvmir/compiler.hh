@@ -160,10 +160,6 @@ class Compiler {
 
   llvm::Value* CreateCallOnClosure(llvm::Value* closure, uint16_t argc, llvm::Value* argv, llvm::Value* retv);
 
-  llvm::Value* CreateClosurePtr() {
-    return CreateAlloc1(builder_->getPtrTy(), REG_NAME("closure.ptr"));
-  }
-
   llvm::Value* GetNullptr() {
     return llvm::Constant::getNullValue(builder_->getPtrTy());
   }
@@ -178,10 +174,6 @@ class Compiler {
 
   void CreateStore(llvm::Value* value, llvm::Value* dest) {
     builder_->CreateStore(value, dest);
-  }
-
-  llvm::Value* CreateLoadClosure(llvm::Value* value) {
-    return builder_->CreateLoad(builder_->getPtrTy(), value, REG_NAME("closure"));
   }
 
   void CreateEscapeVariable(llvm::Value* capture, llvm::Value* variable);
@@ -211,6 +203,13 @@ class Compiler {
 
   llvm::Value* CreateNumberTernary(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
     auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2, REG_NAME("ternary"));
+    phi->addIncoming(then_value, then_block);
+    phi->addIncoming(else_value, else_block);
+    return phi;
+  }
+
+  llvm::Value* CreateClosurePhi(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
+    auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("closure.phi"));
     phi->addIncoming(then_value, then_block);
     phi->addIncoming(else_value, else_block);
     return phi;
@@ -585,6 +584,11 @@ class Compiler {
   inline llvm::Value* CreateLoadCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("captures"));
+  }
+
+  inline void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr, llvm::Value* closure_ptr, uint16_t index) {
+    auto* ptr = CreateLoadCapturesFromClosure(closure_ptr);
+    CreateStoreCapturePtrToCaptures(capture_ptr, ptr, index);
   }
 
   // incr/decr

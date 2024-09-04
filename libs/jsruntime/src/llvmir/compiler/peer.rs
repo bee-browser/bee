@@ -23,6 +23,9 @@ pub struct BooleanIr(*mut bridge::BooleanIr);
 pub struct NumberIr(*mut bridge::NumberIr);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ClosureIr(*mut bridge::ClosureIr);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ValueIr(*mut bridge::ValueIr);
 
 macro_rules! boolean_ir {
@@ -34,6 +37,12 @@ macro_rules! boolean_ir {
 macro_rules! number_ir {
     ($inner:expr) => {
         NumberIr(unsafe { $inner })
+    };
+}
+
+macro_rules! closure_ir {
+    ($inner:expr) => {
+        ClosureIr(unsafe { $inner })
     };
 }
 
@@ -323,6 +332,72 @@ impl Compiler {
 
     // closure
 
+    pub fn get_closure_nullptr(&self) -> ClosureIr {
+        closure_ir! {
+            bridge::compiler_peer_get_closure_nullptr(self.0)
+        }
+    }
+
+    pub fn create_closure(&self, lambda: LambdaIr, num_captures: u16) -> ClosureIr {
+        debug_assert_ne!(lambda, LambdaIr::NONE);
+        closure_ir! {
+            bridge::compiler_peer_create_closure(self.0, lambda.0, num_captures)
+        }
+    }
+
+    pub fn create_store_capture_to_closure(&self, capture: ValueIr, closure: ClosureIr, index: u16) {
+        unsafe {
+            bridge::compiler_peer_create_store_capture_to_closure(self.0, capture.0, closure.0, index);
+        }
+    }
+
+    pub fn create_call_on_closure(&self, closure: ClosureIr, argc: u16, argv: ValueIr, retv: ValueIr) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_call_on_closure(self.0, closure.0, argc, argv.0, retv.0)
+        }
+    }
+
+    pub fn create_closure_phi(&self, then_value: ClosureIr, then_block: BasicBlock, else_value: ClosureIr, else_block: BasicBlock) -> ClosureIr {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        closure_ir! {
+            bridge::compiler_peer_create_closure_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+        }
+    }
+
+    pub fn create_closure_to_any(&self, value: ClosureIr) -> ValueIr {
+        debug_assert_ne!(value, ClosureIr::NONE);
+        value_ir! {
+            bridge::compiler_peer_create_closure_to_any(self.0, value.0)
+        }
+    }
+
+    // capture
+
+    pub fn create_capture(&self, variable: ValueIr) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_call_runtime_create_capture(self.0, variable.0)
+        }
+    }
+
+    pub fn create_escape_variable(&self, capture: ValueIr, variable: ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_escape_variable(self.0, capture.0, variable.0);
+        }
+    }
+
+    pub fn create_get_capture_variable_ptr(&self, index: u16) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_get_capture_variable_ptr(self.0, index)
+        }
+    }
+
+    pub fn create_load_capture(&self, index: u16) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_load_capture(self.0, index)
+        }
+    }
+
     // const values
 
     pub fn get_nullptr(&self) -> ValueIr {
@@ -356,13 +431,6 @@ impl Compiler {
     pub fn create_null_to_any(&self) -> ValueIr {
         value_ir! {
             bridge::compiler_peer_create_null_to_any(self.0)
-        }
-    }
-
-    pub fn create_closure_to_any(&self, value: ValueIr) -> ValueIr {
-        debug_assert_ne!(value, ValueIr::NONE);
-        value_ir! {
-            bridge::compiler_peer_create_closure_to_any(self.0, value.0)
         }
     }
 
@@ -445,13 +513,13 @@ impl Compiler {
         }
     }
 
-    pub fn create_is_same_closure(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
+    pub fn create_is_same_closure(&self, a: ClosureIr, b: ClosureIr) -> BooleanIr {
         boolean_ir! {
             bridge::compiler_peer_create_is_same_closure(self.0, a.0, b.0)
         }
     }
 
-    pub fn create_is_same_closure_value(&self, variable: ValueIr, value: ValueIr) -> BooleanIr {
+    pub fn create_is_same_closure_value(&self, variable: ValueIr, value: ClosureIr) -> BooleanIr {
         boolean_ir! {
             bridge::compiler_peer_create_is_same_closure_value(self.0, variable.0, value.0)
         }
@@ -491,74 +559,9 @@ impl Compiler {
         }
     }
 
-    // closure
-
-    pub fn create_closure_ptr(&self) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_closure_ptr(self.0)
-        }
-    }
-
-    pub fn create_call_on_closure(&self, closure: ValueIr, argc: u16, argv: ValueIr, retv: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_call_on_closure(self.0, closure.0, argc, argv.0, retv.0)
-        }
-    }
-
-    pub fn create_call_runtime_create_closure(&self, lambda: LambdaIr, num_captures: u16) -> ValueIr {
-        debug_assert_ne!(lambda, LambdaIr::NONE);
-        value_ir! {
-            bridge::compiler_peer_create_call_runtime_create_closure(self.0, lambda.0, num_captures)
-        }
-    }
-
-    pub fn create_load_captures_from_closure(&self, closure: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_load_captures_from_closure(self.0, closure.0)
-        }
-    }
-
-    pub fn create_store_capture_ptr_to_captures(&self, capture: ValueIr, captures: ValueIr, index: u16) {
-        unsafe {
-            bridge::compiler_peer_create_store_capture_ptr_to_captures(self.0, capture.0, captures.0, index);
-        }
-    }
-
-    pub fn create_load_closure_from_value(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_load_closure_from_value(&self, value: ValueIr) -> ClosureIr {
+        closure_ir! {
             bridge::compiler_peer_create_load_closure_from_value(self.0, value.0)
-        }
-    }
-
-    pub fn create_load_closure(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_load_closure(self.0, value.0)
-        }
-    }
-
-    // capture
-
-    pub fn create_capture(&self, variable: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_call_runtime_create_capture(self.0, variable.0)
-        }
-    }
-
-    pub fn create_escape_variable(&self, capture: ValueIr, variable: ValueIr) {
-        unsafe {
-            bridge::compiler_peer_create_escape_variable(self.0, capture.0, variable.0);
-        }
-    }
-
-    pub fn create_get_capture_variable_ptr(&self, index: u16) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_get_capture_variable_ptr(self.0, index)
-        }
-    }
-
-    pub fn create_load_capture(&self, index: u16) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_load_capture(self.0, index)
         }
     }
 
@@ -618,8 +621,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_store_closure_to_retv(&self, value: ValueIr) {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_store_closure_to_retv(&self, value: ClosureIr) {
+        debug_assert_ne!(value, ClosureIr::NONE);
         unsafe {
             bridge::compiler_peer_create_store_closure_to_retv(self.0, value.0);
         }
@@ -720,8 +723,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_store_closure_to_variable(&self, value: ValueIr, variable: ValueIr) {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_store_closure_to_variable(&self, value: ClosureIr, variable: ValueIr) {
+        debug_assert_ne!(value, ClosureIr::NONE);
         unsafe {
             bridge::compiler_peer_create_store_closure_to_variable(self.0, value.0, variable.0);
         }
@@ -752,12 +755,6 @@ impl Compiler {
     pub fn end_scope_cleanup_checker(&self, scope_ref: ScopeRef) {
         unsafe {
             bridge::compiler_peer_end_scope_cleanup_checker(self.0, scope_ref.id());
-        }
-    }
-
-    pub fn create_store(&self, value: ValueIr, dest: ValueIr) {
-        unsafe {
-            bridge::compiler_peer_create_store(self.0, value.0, dest.0);
         }
     }
 
@@ -826,6 +823,17 @@ impl BooleanIr {
 }
 
 impl NumberIr {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            std::ffi::CStr::from_ptr(buf)
+        }
+    }
+}
+
+impl ClosureIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {

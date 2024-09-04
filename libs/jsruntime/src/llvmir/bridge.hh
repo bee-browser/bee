@@ -3,13 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 
-// opaque types
-struct BasicBlock;
-struct LambdaIr;
-struct BooleanIr;
-struct NumberIr;
-struct ValueIr;
-
 struct Closure;
 
 #define STATUS_UNSET_BIT 0x10
@@ -116,7 +109,15 @@ void module_peer_delete(Module* self);
 
 // Compilation
 
+// opaque types
 class Compiler;
+struct BasicBlock;
+struct LambdaIr;
+struct BooleanIr;
+struct NumberIr;
+struct ClosureIr;
+struct ValueIr;
+
 Compiler* compiler_peer_new();
 void compiler_peer_delete(Compiler* self);
 
@@ -141,10 +142,6 @@ void compiler_peer_create_cond_br(Compiler* self, BooleanIr* cond, BasicBlock* t
 
 ValueIr* compiler_peer_get_nullptr(Compiler* self);
 LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
-
-ValueIr* compiler_peer_create_call_runtime_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures);
-ValueIr* compiler_peer_create_load_captures_from_closure(Compiler* self, ValueIr* closure);
-void compiler_peer_create_store_capture_ptr_to_captures(Compiler* self, ValueIr* capture, ValueIr* captures, uint16_t i);
 
 ValueIr* compiler_peer_get_exception(Compiler* self);
 
@@ -182,6 +179,18 @@ BooleanIr* compiler_peer_create_number_to_boolean(Compiler* self, NumberIr* numb
 ValueIr* compiler_peer_create_number_to_any(Compiler* self, NumberIr* number);
 
 // closure
+ClosureIr* compiler_peer_get_closure_nullptr(Compiler* self);
+ClosureIr* compiler_peer_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures);
+void compiler_peer_create_store_capture_to_closure(Compiler* self, ValueIr* capture, ClosureIr* closure, uint16_t index);
+ValueIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ValueIr* argv, ValueIr* retv);
+ClosureIr* compiler_peer_create_closure_phi(Compiler* self, ClosureIr* then_value, BasicBlock* then_block, ClosureIr* else_value, BasicBlock* else_block);
+ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* closure);
+
+// capture
+ValueIr* compiler_peer_create_call_runtime_create_capture(Compiler* self, ValueIr* variable);
+void compiler_peer_create_escape_variable(Compiler* self, ValueIr* capture, ValueIr* variable);
+ValueIr* compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t index);
+ValueIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
 // value
 BooleanIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value);
@@ -193,7 +202,6 @@ BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, 
 // type conversions
 ValueIr* compiler_peer_create_undefined_to_any(Compiler* self);
 ValueIr* compiler_peer_create_null_to_any(Compiler* self);
-ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ValueIr* closure);
 
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
 BooleanIr* compiler_peer_create_is_null(Compiler* self, ValueIr* value);
@@ -204,11 +212,11 @@ BooleanIr* compiler_peer_create_is_non_nullish(Compiler* self, ValueIr* value);
 
 BooleanIr* compiler_peer_create_is_same_boolean(Compiler* self, BooleanIr* a, BooleanIr* b);
 BooleanIr* compiler_peer_create_is_same_number(Compiler* self, NumberIr* a, NumberIr* b);
-BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ValueIr* a, ValueIr* b);
+BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ClosureIr* a, ClosureIr* b);
 
 BooleanIr* compiler_peer_create_is_same_boolean_value(Compiler* self, ValueIr* value, BooleanIr* boolean);
 BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self, ValueIr* value, NumberIr* number);
-BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ValueIr* closure);
+BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ClosureIr* closure);
 
 BooleanIr* compiler_peer_create_boolean_ternary(Compiler* self, BooleanIr* then_value, BasicBlock* then_block, BooleanIr* else_value, BasicBlock* else_block);
 ValueIr* compiler_peer_create_any_ternary(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block);
@@ -221,16 +229,10 @@ void compiler_peer_create_store_undefined_to_variable(Compiler* self, ValueIr* v
 void compiler_peer_create_store_null_to_variable(Compiler* self, ValueIr* variable);
 void compiler_peer_create_store_boolean_to_variable(Compiler* self, BooleanIr* value, ValueIr* variable);
 void compiler_peer_create_store_number_to_variable(Compiler* self, NumberIr* value, ValueIr* variable);
-void compiler_peer_create_store_closure_to_variable(Compiler* self, ValueIr* value, ValueIr* variable);
+void compiler_peer_create_store_closure_to_variable(Compiler* self, ClosureIr* value, ValueIr* variable);
 void compiler_peer_create_store_value_to_variable(Compiler* self, ValueIr* value, ValueIr* variable);
 
-ValueIr* compiler_peer_create_call_on_closure(Compiler* self, ValueIr* closure, uint16_t argc, ValueIr* argv, ValueIr* retv);
-ValueIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value);
-void compiler_peer_create_store(Compiler* self, ValueIr* value, ValueIr* dest);
-ValueIr* compiler_peer_create_call_runtime_create_capture(Compiler* self, ValueIr* variable);
-ValueIr* compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t index);
-void compiler_peer_create_escape_variable(Compiler* self, ValueIr* capture, ValueIr* variable);
-ValueIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
+ClosureIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value);
 BooleanIr* compiler_peer_create_has_uncaught_exception(Compiler* self);
 void compiler_peer_handle_returned_thrown(Compiler* self,
     bool returned,
@@ -251,7 +253,7 @@ void compiler_peer_create_store_undefined_to_retv(Compiler* self);
 void compiler_peer_create_store_null_to_retv(Compiler* self);
 void compiler_peer_create_store_boolean_to_retv(Compiler* self, BooleanIr* value);
 void compiler_peer_create_store_number_to_retv(Compiler* self, NumberIr* value);
-void compiler_peer_create_store_closure_to_retv(Compiler* self, ValueIr* value);
+void compiler_peer_create_store_closure_to_retv(Compiler* self, ClosureIr* value);
 void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value);
 
 // status
@@ -259,9 +261,6 @@ void compiler_peer_create_alloc_status(Compiler* self);
 void compiler_peer_create_store_normal_status(Compiler* self);
 void compiler_peer_create_store_exception_status(Compiler* self);
 BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, ValueIr* status);
-
-ValueIr* compiler_peer_create_closure_ptr(Compiler* self);
-ValueIr* compiler_peer_create_load_closure(Compiler* self, ValueIr* closure_ptr);
 
 // scope cleanup checker
 void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size);

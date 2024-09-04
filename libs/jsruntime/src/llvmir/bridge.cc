@@ -17,6 +17,7 @@
 
 #define PEER_BOOLEAN(value) (reinterpret_cast<BooleanIr*>(value))
 #define PEER_NUMBER(value) (reinterpret_cast<NumberIr*>(value))
+#define PEER_CLOSURE(value) (reinterpret_cast<ClosureIr*>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr*>(value))
 #define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
 
@@ -213,22 +214,34 @@ ValueIr* compiler_peer_create_number_to_any(Compiler* self, NumberIr* value) {
 
 // closure
 
+ClosureIr* compiler_peer_get_closure_nullptr(Compiler* self) {
+  return PEER_CLOSURE(self->GetNullptr());
+}
+
+ClosureIr* compiler_peer_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures) {
+  return PEER_CLOSURE(self->CreateCallRuntimeCreateClosure(LLVM_LAMBDA(lambda), num_captures));
+}
+
+void compiler_peer_create_store_capture_to_closure(Compiler* self, ValueIr* capture, ClosureIr* closure, uint16_t index) {
+  self->CreateStoreCapturePtrToClosure(LLVM_VALUE(capture), LLVM_VALUE(closure), index);
+}
+
+ValueIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ValueIr* argv, ValueIr* retv) {
+  return PEER_VALUE(self->CreateCallOnClosure(LLVM_VALUE(closure), argc, LLVM_VALUE(argv), LLVM_VALUE(retv)));
+}
+
+ClosureIr* compiler_peer_create_closure_phi(Compiler* self, ClosureIr* then_value, BasicBlock* then_block, ClosureIr* else_value, BasicBlock* else_block) {
+  return PEER_CLOSURE(self->CreateClosurePhi(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+}
+
+ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* value) {
+  return PEER_VALUE(self->CreateClosureToAny(LLVM_VALUE(value)));
+}
+
 // value
 
 LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name) {
   return PEER_LAMBDA(self->GetFunction(func_id, name));
-}
-
-ValueIr* compiler_peer_create_call_runtime_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures) {
-  return PEER_VALUE(self->CreateCallRuntimeCreateClosure(LLVM_LAMBDA(lambda), num_captures));
-}
-
-ValueIr* compiler_peer_create_load_captures_from_closure(Compiler* self, ValueIr* closure) {
-  return PEER_VALUE(self->CreateLoadCapturesFromClosure(LLVM_VALUE(closure)));
-}
-
-void compiler_peer_create_store_capture_ptr_to_captures(Compiler* self, ValueIr* capture, ValueIr* captures, uint16_t i) {
-  self->CreateStoreCapturePtrToCaptures(LLVM_VALUE(capture), LLVM_VALUE(captures), i);
 }
 
 ValueIr* compiler_peer_get_exception(Compiler* self) {
@@ -249,10 +262,6 @@ ValueIr* compiler_peer_create_undefined_to_any(Compiler* self) {
 
 ValueIr* compiler_peer_create_null_to_any(Compiler* self) {
   return PEER_VALUE(self->CreateNullToAny());
-}
-
-ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ValueIr* closure) {
-  return PEER_VALUE(self->CreateClosureToAny(LLVM_VALUE(closure)));
 }
 
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value) {
@@ -283,7 +292,7 @@ BooleanIr* compiler_peer_create_is_same_number(Compiler* self, NumberIr* a, Numb
   return PEER_BOOLEAN(self->CreateIsSameNumber(LLVM_VALUE(a), LLVM_VALUE(b)));
 }
 
-BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ValueIr* a, ValueIr* b) {
+BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ClosureIr* a, ClosureIr* b) {
   return PEER_BOOLEAN(self->CreateIsSameClosure(LLVM_VALUE(a), LLVM_VALUE(b)));
 }
 
@@ -295,7 +304,7 @@ BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self, ValueIr* va
   return PEER_BOOLEAN(self->CreateIsSameNumberValue(LLVM_VALUE(value), LLVM_VALUE(number)));
 }
 
-BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ValueIr* closure) {
+BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ClosureIr* closure) {
   return PEER_BOOLEAN(self->CreateIsSameClosureValue(LLVM_VALUE(value), LLVM_VALUE(closure)));
 }
 
@@ -335,20 +344,12 @@ void compiler_peer_create_store_number_to_variable(Compiler* self, NumberIr* val
   self->CreateStoreNumberToVariable(LLVM_VALUE(value), LLVM_VALUE(variable));
 }
 
-void compiler_peer_create_store_closure_to_variable(Compiler* self, ValueIr* value, ValueIr* variable) {
+void compiler_peer_create_store_closure_to_variable(Compiler* self, ClosureIr* value, ValueIr* variable) {
   self->CreateStoreClosureToVariable(LLVM_VALUE(value), LLVM_VALUE(variable));
 }
 
 void compiler_peer_create_store_value_to_variable(Compiler* self, ValueIr* value, ValueIr* variable) {
   self->CreateStoreValueToVariable(LLVM_VALUE(value), LLVM_VALUE(variable));
-}
-
-ValueIr* compiler_peer_create_call_on_closure(Compiler* self, ValueIr* closure, uint16_t argc, ValueIr* argv, ValueIr* retv) {
-  return PEER_VALUE(self->CreateCallOnClosure(LLVM_VALUE(closure), argc, LLVM_VALUE(argv), LLVM_VALUE(retv)));
-}
-
-ValueIr* compiler_peer_create_closure_ptr(Compiler* self) {
-  return PEER_VALUE(self->CreateClosurePtr());
 }
 
 ValueIr* compiler_peer_get_nullptr(Compiler* self) {
@@ -359,16 +360,8 @@ void compiler_peer_create_cond_br(Compiler* self, BooleanIr* cond, BasicBlock* t
   self->CreateCondBr(LLVM_VALUE(cond), LLVM_BB(then_block), LLVM_BB(else_block));
 }
 
-ValueIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value) {
-  return PEER_VALUE(self->CreateLoadClosureFromValue(LLVM_VALUE(value)));
-}
-
-void compiler_peer_create_store(Compiler* self, ValueIr* value, ValueIr* dest) {
-  self->CreateStore(LLVM_VALUE(value), LLVM_VALUE(dest));
-}
-
-ValueIr* compiler_peer_create_load_closure(Compiler* self, ValueIr* closure_ptr) {
-  return PEER_VALUE(self->CreateLoadClosure(LLVM_VALUE(closure_ptr)));
+ClosureIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value) {
+  return PEER_CLOSURE(self->CreateLoadClosureFromValue(LLVM_VALUE(value)));
 }
 
 ValueIr* compiler_peer_create_call_runtime_create_capture(Compiler* self, ValueIr* variable) {
@@ -457,7 +450,7 @@ void compiler_peer_create_store_number_to_retv(Compiler* self, NumberIr* value) 
   self->CreateStoreNumberToRetv(LLVM_VALUE(value));
 }
 
-void compiler_peer_create_store_closure_to_retv(Compiler* self, ValueIr* value) {
+void compiler_peer_create_store_closure_to_retv(Compiler* self, ClosureIr* value) {
   self->CreateStoreClosureToRetv(LLVM_VALUE(value));
 }
 

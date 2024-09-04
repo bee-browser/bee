@@ -27,6 +27,7 @@ use super::Module;
 use control_flow::ControlFlowStack;
 use peer::BasicBlock;
 use peer::BooleanIr;
+use peer::ClosureIr;
 use peer::LambdaIr;
 use peer::NumberIr;
 use peer::ValueIr;
@@ -424,12 +425,11 @@ impl<'r, 's> Compiler<'r, 's> {
         }
 
         let lambda = self.pop_lambda();
-        let closure = self.peer.create_call_runtime_create_closure(lambda, num_captures);
+        let closure = self.peer.create_closure(lambda, num_captures);
 
-        let captures = self.peer.create_load_captures_from_closure(closure);
         for i in 0..num_captures {
             let capture = self.pop_capture();
-            self.peer.create_store_capture_ptr_to_captures(capture, captures, i);
+            self.peer.create_store_capture_to_closure(capture, closure, i);
         }
 
         self.operand_stack.push(Operand::Closure(closure));
@@ -645,9 +645,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_load_closure_from_value_or_throw_type_error(&mut self, value: ValueIr) -> ValueIr {
-        let closure_ptr = self.peer.create_closure_ptr();
-
+    fn create_load_closure_from_value_or_throw_type_error(&mut self, value: ValueIr) -> ClosureIr {
         let then_block = self.create_basic_block("is_closure.then");
         let else_block = self.create_basic_block("is_closure.else");
         let end_block = self.create_basic_block("closure");
@@ -656,23 +654,24 @@ impl<'r, 's> Compiler<'r, 's> {
         let is_closure = self.peer.create_is_closure(value);
         self.peer.create_cond_br(is_closure, then_block, else_block);
         // then
-        {
+        let (then_value, then_block) = {
             self.peer.set_basic_block(then_block);
             let closure = self.peer.create_load_closure_from_value(value);
-            self.peer.create_store(closure, closure_ptr);
             self.peer.create_br(end_block);
-        }
+            (closure, self.peer.get_basic_block())
+        };
         // else
-        {
+        let (else_value, else_block) = {
             self.peer.set_basic_block(else_block);
             // TODO: TypeError
             self.process_number(1.);
             self.process_throw();
             self.peer.create_br(end_block);
-        }
+            (self.peer.get_closure_nullptr(), self.peer.get_basic_block())
+        };
 
         self.peer.set_basic_block(end_block);
-        self.peer.create_load_closure(closure_ptr)
+        self.peer.create_closure_phi(then_value, then_block, else_value, else_block)
     }
 
     // Handle an exception if it's thrown.
@@ -1315,7 +1314,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
     }
 
-    fn create_is_same_closure_value(&mut self, value: ValueIr, closure: ValueIr) -> BooleanIr {
+    fn create_is_same_closure_value(&mut self, value: ValueIr, closure: ClosureIr) -> BooleanIr {
         let then_block = self.create_basic_block("is_closure.then");
         let else_block = self.create_basic_block("is_closure.else");
         let merge_block = self.create_basic_block("is_closure");
@@ -2319,7 +2318,7 @@ enum Operand {
     Boolean(BooleanIr),
     Number(NumberIr),
     Function(LambdaIr),
-    Closure(ValueIr),
+    Closure(ClosureIr),
     Any(ValueIr),
     Reference(Symbol, Locator),
     Argv(ValueIr),
