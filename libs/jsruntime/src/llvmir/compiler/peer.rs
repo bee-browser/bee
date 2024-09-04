@@ -10,6 +10,9 @@ use super::Symbol;
 
 pub struct Compiler(*mut bridge::Compiler);
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BasicBlock(*mut bridge::BasicBlock);
+
 impl Compiler {
     pub fn new() -> Self {
         Self(unsafe { bridge::compiler_peer_new() })
@@ -55,9 +58,10 @@ impl Compiler {
         }
     }
 
-    pub fn set_locals_block(&self, block: bridge::BasicBlock) {
+    pub fn set_locals_block(&self, block: BasicBlock) {
+        debug_assert_ne!(block, BasicBlock::NONE);
         unsafe {
-            bridge::compiler_peer_set_locals_block(self.0, block);
+            bridge::compiler_peer_set_locals_block(self.0, block.0);
         }
     }
 
@@ -69,34 +73,36 @@ impl Compiler {
 
     // basic block
 
-    pub fn create_basic_block(&self, name: *const std::ffi::c_char, name_len: usize) -> bridge::BasicBlock {
+    pub fn create_basic_block(&self, name: *const std::ffi::c_char, name_len: usize) -> BasicBlock {
         unsafe {
-            bridge::compiler_peer_create_basic_block(self.0, name, name_len)
+            BasicBlock(bridge::compiler_peer_create_basic_block(self.0, name, name_len))
         }
     }
 
-    pub fn get_basic_block(&self) -> bridge::BasicBlock {
+    pub fn get_basic_block(&self) -> BasicBlock {
         unsafe {
-            bridge::compiler_peer_get_basic_block(self.0)
+            BasicBlock(bridge::compiler_peer_get_basic_block(self.0))
         }
     }
 
-    pub fn set_basic_block(&self, block: bridge::BasicBlock) {
+    pub fn set_basic_block(&self, block: BasicBlock) {
+        debug_assert_ne!(block, BasicBlock::NONE);
         unsafe {
-            bridge::compiler_peer_set_basic_block(self.0, block);
+            bridge::compiler_peer_set_basic_block(self.0, block.0);
         }
     }
 
-    pub fn move_basic_block_after(&self, block: bridge::BasicBlock) {
-        debug_assert_ne!(block, 0);
+    pub fn move_basic_block_after(&self, block: BasicBlock) {
+        debug_assert_ne!(block, BasicBlock::NONE);
         unsafe {
-            bridge::compiler_peer_move_basic_block_after(self.0, block);
+            bridge::compiler_peer_move_basic_block_after(self.0, block.0);
         }
     }
 
-    pub fn is_basic_block_terminated(&self, block: bridge::BasicBlock) -> bool {
+    pub fn is_basic_block_terminated(&self, block: BasicBlock) -> bool {
+        debug_assert_ne!(block, BasicBlock::NONE);
         unsafe {
-            bridge::compiler_peer_is_basic_block_terminated(self.0, block)
+            bridge::compiler_peer_is_basic_block_terminated(self.0, block.0)
         }
     }
 
@@ -190,10 +196,10 @@ impl Compiler {
 
     // jump
 
-    pub fn create_br(&self, block: bridge::BasicBlock) {
-        debug_assert_ne!(block, 0);
+    pub fn create_br(&self, block: BasicBlock) {
+        debug_assert_ne!(block, BasicBlock::NONE);
         unsafe {
-            bridge::compiler_peer_create_br(self.0, block);
+            bridge::compiler_peer_create_br(self.0, block.0);
         }
     }
 
@@ -407,9 +413,11 @@ impl Compiler {
 
     // jump
 
-    pub fn create_cond_br(&self, cond: bridge::ValueIr, then_block: bridge::BasicBlock, else_block: bridge::BasicBlock) {
+    pub fn create_cond_br(&self, cond: bridge::ValueIr, then_block: BasicBlock, else_block: BasicBlock) {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
         unsafe {
-            bridge::compiler_peer_create_cond_br(self.0, cond, then_block, else_block);
+            bridge::compiler_peer_create_cond_br(self.0, cond, then_block.0, else_block.0);
         }
     }
 
@@ -421,22 +429,28 @@ impl Compiler {
 
     // phi
 
-    pub fn create_boolean_ternary(&self, then_value: bridge::ValueIr, then_block: bridge::BasicBlock, else_value: bridge::ValueIr, else_block: bridge::BasicBlock) -> bridge::ValueIr {
+    pub fn create_boolean_ternary(&self, then_value: bridge::ValueIr, then_block: BasicBlock, else_value: bridge::ValueIr, else_block: BasicBlock) -> bridge::ValueIr {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
         unsafe {
-            bridge::compiler_peer_create_boolean_ternary(self.0, then_value, then_block, else_value, else_block)
+            bridge::compiler_peer_create_boolean_ternary(self.0, then_value, then_block.0, else_value, else_block.0)
         }
     }
 
-    pub fn create_number_ternary(&self, then_value: bridge::ValueIr, then_block: bridge::BasicBlock, else_value: bridge::ValueIr, else_block: bridge::BasicBlock) -> bridge::ValueIr {
-        logger::debug!(event = "create_number_ternary", then_value, then_block, else_value, else_block);
+    pub fn create_number_ternary(&self, then_value: bridge::ValueIr, then_block: BasicBlock, else_value: bridge::ValueIr, else_block: BasicBlock) -> bridge::ValueIr {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        logger::debug!(event = "create_number_ternary", ?then_value, ?then_block, ?else_value, ?else_block);
         unsafe {
-            bridge::compiler_peer_create_number_ternary(self.0, then_value, then_block, else_value, else_block)
+            bridge::compiler_peer_create_number_ternary(self.0, then_value, then_block.0, else_value, else_block.0)
         }
     }
 
-    pub fn create_any_ternary(&self, then_value: bridge::ValueIr, then_block: bridge::BasicBlock, else_value: bridge::ValueIr, else_block: bridge::BasicBlock) -> bridge::ValueIr {
+    pub fn create_any_ternary(&self, then_value: bridge::ValueIr, then_block: BasicBlock, else_value: bridge::ValueIr, else_block: BasicBlock) -> bridge::ValueIr {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
         unsafe {
-            bridge::compiler_peer_create_any_ternary(self.0, then_value, then_block, else_value, else_block)
+            bridge::compiler_peer_create_any_ternary(self.0, then_value, then_block.0, else_value, else_block.0)
         }
     }
 
@@ -709,15 +723,18 @@ impl Compiler {
         }
     }
 
-    pub fn handle_returned_thrown(&self, returned: bool, thrown: bool, block: bridge::BasicBlock, cleanup_block: bridge::BasicBlock, exception_block: bridge::BasicBlock) {
+    pub fn handle_returned_thrown(&self, returned: bool, thrown: bool, block: BasicBlock, cleanup_block: BasicBlock, exception_block: BasicBlock) {
+        debug_assert_ne!(block, BasicBlock::NONE);
+        // cleanup_block may NONE.
+        // exception_block may NONE.
         unsafe {
             bridge::compiler_peer_handle_returned_thrown(
                 self.0,
                 returned,
                 thrown,
-                block,
-                cleanup_block,
-                exception_block,
+                block.0,
+                cleanup_block.0,
+                exception_block.0,
             );
         }
     }
@@ -733,6 +750,17 @@ impl Drop for Compiler {
     fn drop(&mut self) {
         unsafe {
             bridge::compiler_peer_delete(self.0);
+        }
+    }
+}
+
+impl BasicBlock {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_basic_block_name_or_as_operand(self.0, buf, len);
+            std::ffi::CStr::from_ptr(buf)
         }
     }
 }

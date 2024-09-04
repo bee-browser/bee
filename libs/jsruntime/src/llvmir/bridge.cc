@@ -9,7 +9,7 @@
 #include "helper.hh"
 #include "module.hh"
 
-#define PEER_BB(bb) (reinterpret_cast<BasicBlock>(bb))
+#define PEER_BB(bb) (reinterpret_cast<BasicBlock*>(bb))
 #define LLVM_BB(bb) (reinterpret_cast<llvm::BasicBlock*>(bb))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr>(value))
 #define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
@@ -59,31 +59,31 @@ void compiler_peer_set_target_triple(Compiler* self, const char* triple) {
   self->SetTargetTriple(triple);
 }
 
-BasicBlock compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len) {
+BasicBlock* compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len) {
   return PEER_BB(self->CreateBasicBlock(name, name_len));
 }
 
-BasicBlock compiler_peer_get_basic_block(const Compiler* self) {
+BasicBlock* compiler_peer_get_basic_block(const Compiler* self) {
   return PEER_BB(self->GetBasicBlock());
 }
 
-void compiler_peer_set_basic_block(Compiler* self, BasicBlock block) {
+void compiler_peer_set_basic_block(Compiler* self, BasicBlock* block) {
   self->SetBasicBlock(LLVM_BB(block));
 }
 
-void compiler_peer_move_basic_block_after(Compiler* self, BasicBlock block) {
+void compiler_peer_move_basic_block_after(Compiler* self, BasicBlock* block) {
   self->MoveBasicBlockAfter(LLVM_BB(block));
 }
 
-bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock block) {
+bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock* block) {
   return self->IsBasicBlockTerminated(LLVM_BB(block));
 }
 
-void compiler_peer_set_locals_block(Compiler* self, BasicBlock block) {
+void compiler_peer_set_locals_block(Compiler* self, BasicBlock* block) {
   self->SetLocalsBlock(LLVM_BB(block));
 }
 
-void compiler_peer_create_br(Compiler* self, BasicBlock block) {
+void compiler_peer_create_br(Compiler* self, BasicBlock* block) {
   self->CreateBr(LLVM_BB(block));
 }
 
@@ -267,15 +267,15 @@ ValueIr compiler_peer_create_bitwise_or(Compiler* self, ValueIr lhs, ValueIr rhs
   return PEER_VALUE(self->CreateBitwiseOr(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-ValueIr compiler_peer_create_boolean_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block) {
+ValueIr compiler_peer_create_boolean_ternary(Compiler* self, ValueIr then_value, BasicBlock* then_block, ValueIr else_value, BasicBlock* else_block) {
   return PEER_VALUE(self->CreateBooleanTernary(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
-ValueIr compiler_peer_create_number_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block) {
+ValueIr compiler_peer_create_number_ternary(Compiler* self, ValueIr then_value, BasicBlock* then_block, ValueIr else_value, BasicBlock* else_block) {
   return PEER_VALUE(self->CreateNumberTernary(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
-ValueIr compiler_peer_create_any_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block) {
+ValueIr compiler_peer_create_any_ternary(Compiler* self, ValueIr then_value, BasicBlock* then_block, ValueIr else_value, BasicBlock* else_block) {
   return PEER_VALUE(self->CreateAnyTernary(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
@@ -323,7 +323,7 @@ ValueIr compiler_peer_get_nullptr(Compiler* self) {
   return PEER_VALUE(self->GetNullptr());
 }
 
-void compiler_peer_create_cond_br(Compiler* self, ValueIr cond, BasicBlock then_block, BasicBlock else_block) {
+void compiler_peer_create_cond_br(Compiler* self, ValueIr cond, BasicBlock* then_block, BasicBlock* else_block) {
   self->CreateCondBr(LLVM_VALUE(cond), LLVM_BB(then_block), LLVM_BB(else_block));
 }
 
@@ -390,9 +390,9 @@ void compiler_peer_end_function(Compiler* self, bool optimize) {
 void compiler_peer_handle_returned_thrown(Compiler* self,
     bool returned,
     bool thrown,
-    BasicBlock block,
-    BasicBlock cleanup_block,
-    BasicBlock exception_block) {
+    BasicBlock* block,
+    BasicBlock* cleanup_block,
+    BasicBlock* exception_block) {
   self->HandleReturnedThrown(
       returned, thrown, LLVM_BB(block), LLVM_BB(cleanup_block), LLVM_BB(exception_block));
 }
@@ -523,7 +523,7 @@ Lambda executor_peer_get_native_function(Executor* self, const char* name) {
 
 // helper functions
 
-size_t helper_peer_get_basic_block_name_or_as_operand(BasicBlock block, char* buf, size_t len) {
+size_t helper_peer_get_basic_block_name_or_as_operand(BasicBlock* block, char* buf, size_t len) {
   return GetNameOrAsOperand(LLVM_BB(block), buf, len);
 }
 

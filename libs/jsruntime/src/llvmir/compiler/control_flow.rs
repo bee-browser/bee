@@ -3,16 +3,12 @@ use std::cmp::Ordering;
 use base::macros::debug_assert_ne;
 use jsparser::Symbol;
 
-use super::bridge;
-use super::bridge::BasicBlock;
-use super::compiler::Dump;
+use super::BasicBlock;
+use super::Dump;
 
 macro_rules! bb2cstr {
     ($bb:expr, $buf:expr, $len:expr) => {
-        unsafe {
-            bridge::helper_peer_get_basic_block_name_or_as_operand($bb, $buf, $len);
-            std::ffi::CStr::from_ptr($buf)
-        }
+        $bb.get_name_or_as_operand($buf, $len)
     };
 }
 
@@ -57,10 +53,10 @@ impl ControlFlowStack {
         body_block: BasicBlock,
         return_block: BasicBlock,
     ) {
-        debug_assert_ne!(locals_block, 0);
-        debug_assert_ne!(args_block, 0);
-        debug_assert_ne!(body_block, 0);
-        debug_assert_ne!(return_block, 0);
+        debug_assert_ne!(locals_block, BasicBlock::NONE);
+        debug_assert_ne!(args_block, BasicBlock::NONE);
+        debug_assert_ne!(body_block, BasicBlock::NONE);
+        debug_assert_ne!(return_block, BasicBlock::NONE);
         self.stack.push(ControlFlow::Function(FunctionFlow {
             locals_block,
             args_block,
@@ -96,10 +92,10 @@ impl ControlFlowStack {
         body_block: BasicBlock,
         cleanup_block: BasicBlock,
     ) {
-        debug_assert_ne!(init_block, 0);
-        debug_assert_ne!(hoisted_block, 0);
-        debug_assert_ne!(body_block, 0);
-        debug_assert_ne!(cleanup_block, 0);
+        debug_assert_ne!(init_block, BasicBlock::NONE);
+        debug_assert_ne!(hoisted_block, BasicBlock::NONE);
+        debug_assert_ne!(body_block, BasicBlock::NONE);
+        debug_assert_ne!(cleanup_block, BasicBlock::NONE);
         let outer_index = self.scope_index;
         self.scope_index = self.stack.len();
         self.stack.push(ControlFlow::Scope(ScopeFlow {
@@ -150,8 +146,8 @@ impl ControlFlowStack {
     }
 
     pub fn push_branch_flow(&mut self, before_block: BasicBlock, after_block: BasicBlock) {
-        debug_assert_ne!(before_block, 0);
-        debug_assert_ne!(after_block, 0);
+        debug_assert_ne!(before_block, BasicBlock::NONE);
+        debug_assert_ne!(after_block, BasicBlock::NONE);
         self.stack.push(ControlFlow::Branch(BranchFlow {
             before_block,
             after_block,
@@ -166,8 +162,8 @@ impl ControlFlowStack {
     }
 
     pub fn push_loop_init_flow(&mut self, branch_block: BasicBlock, insert_point: BasicBlock) {
-        debug_assert_ne!(branch_block, 0);
-        debug_assert_ne!(insert_point, 0);
+        debug_assert_ne!(branch_block, BasicBlock::NONE);
+        debug_assert_ne!(insert_point, BasicBlock::NONE);
         self.stack.push(ControlFlow::LoopInit(LoopInitFlow {
             branch_block,
             insert_point,
@@ -187,9 +183,9 @@ impl ControlFlowStack {
         else_block: BasicBlock,
         insert_point: BasicBlock,
     ) {
-        debug_assert_ne!(then_block, 0);
-        debug_assert_ne!(else_block, 0);
-        debug_assert_ne!(insert_point, 0);
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        debug_assert_ne!(insert_point, BasicBlock::NONE);
         self.stack.push(ControlFlow::LoopTest(LoopTestFlow {
             then_block,
             else_block,
@@ -205,8 +201,8 @@ impl ControlFlowStack {
     }
 
     pub fn push_loop_next_flow(&mut self, branch_block: BasicBlock, insert_point: BasicBlock) {
-        debug_assert_ne!(branch_block, 0);
-        debug_assert_ne!(insert_point, 0);
+        debug_assert_ne!(branch_block, BasicBlock::NONE);
+        debug_assert_ne!(insert_point, BasicBlock::NONE);
         self.stack.push(ControlFlow::LoopNext(LoopNextFlow {
             branch_block,
             insert_point,
@@ -221,8 +217,8 @@ impl ControlFlowStack {
     }
 
     pub fn push_loop_body_flow(&mut self, branch_block: BasicBlock, insert_point: BasicBlock) {
-        debug_assert_ne!(branch_block, 0);
-        debug_assert_ne!(insert_point, 0);
+        debug_assert_ne!(branch_block, BasicBlock::NONE);
+        debug_assert_ne!(insert_point, BasicBlock::NONE);
         self.stack.push(ControlFlow::LoopBody(LoopBodyFlow {
             branch_block,
             insert_point,
@@ -237,12 +233,12 @@ impl ControlFlowStack {
     }
 
     pub fn push_switch_flow(&mut self, end_block: BasicBlock) {
-        debug_assert_ne!(end_block, 0);
+        debug_assert_ne!(end_block, BasicBlock::NONE);
         let outer_index = self.switch_index;
         self.switch_index = self.stack.len();
         self.stack.push(ControlFlow::Switch(SwitchFlow {
             end_block,
-            default_block: 0,
+            default_block: BasicBlock::NONE,
             outer_index,
         }));
     }
@@ -280,8 +276,8 @@ impl ControlFlowStack {
     }
 
     pub fn push_case_banch_flow(&mut self, before_block: BasicBlock, after_block: BasicBlock) {
-        debug_assert_ne!(before_block, 0);
-        debug_assert_ne!(after_block, 0);
+        debug_assert_ne!(before_block, BasicBlock::NONE);
+        debug_assert_ne!(after_block, BasicBlock::NONE);
         self.stack.push(ControlFlow::CaseBranch(CaseBranchFlow {
             before_block,
             after_block,
@@ -302,10 +298,10 @@ impl ControlFlowStack {
         finally_block: BasicBlock,
         end_block: BasicBlock,
     ) {
-        debug_assert_ne!(try_block, 0);
-        debug_assert_ne!(catch_block, 0);
-        debug_assert_ne!(finally_block, 0);
-        debug_assert_ne!(end_block, 0);
+        debug_assert_ne!(try_block, BasicBlock::NONE);
+        debug_assert_ne!(catch_block, BasicBlock::NONE);
+        debug_assert_ne!(finally_block, BasicBlock::NONE);
+        debug_assert_ne!(end_block, BasicBlock::NONE);
         let outer_index = self.exception_index;
         self.exception_index = self.stack.len();
         self.stack.push(ControlFlow::Exception(ExceptionFlow {
@@ -385,13 +381,13 @@ impl ControlFlowStack {
     }
 
     pub fn set_default_case_block(&mut self, block: BasicBlock) {
-        debug_assert_ne!(block, 0);
+        debug_assert_ne!(block, BasicBlock::NONE);
         debug_assert!(self.switch_index > 0);
         self.switch_flow_mut().default_block = block;
     }
 
     pub fn push_break_target(&mut self, block: BasicBlock, symbol: Symbol) {
-        debug_assert_ne!(block, 0);
+        debug_assert_ne!(block, BasicBlock::NONE);
         self.break_stack.push(BranchTarget { block, symbol });
     }
 
@@ -408,13 +404,13 @@ impl ControlFlowStack {
     }
 
     pub fn set_continue_target(&mut self, block: BasicBlock) {
-        debug_assert_ne!(block, 0);
+        debug_assert_ne!(block, BasicBlock::NONE);
         for target in self.continue_stack.iter_mut().rev() {
             if target.symbol == Symbol::NONE {
-                debug_assert_ne!(target.block, 0);
+                debug_assert_ne!(target.block, BasicBlock::NONE);
                 return;
             }
-            debug_assert_eq!(target.block, 0);
+            debug_assert_eq!(target.block, BasicBlock::NONE);
             target.block = block;
         }
     }
@@ -489,7 +485,7 @@ impl ControlFlowStack {
                 }
                 ControlFlow::Switch(flow) => {
                     eprintln!("switch:");
-                    if flow.default_block != 0 {
+                    if flow.default_block != BasicBlock::NONE {
                         bb!(flow, default_block);
                     }
                     bb!(flow, end_block);

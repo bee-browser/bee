@@ -3,7 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
-using BasicBlock = uintptr_t;
+// opaque types
+struct BasicBlock;
 using ValueIr = uintptr_t;
 using LambdaIr = uintptr_t;
 
@@ -124,17 +125,17 @@ void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);
 
 void compiler_peer_start_function(Compiler* self, const char* name);
-void compiler_peer_set_locals_block(Compiler* self, BasicBlock block);
+void compiler_peer_set_locals_block(Compiler* self, BasicBlock* block);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 
-BasicBlock compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len);
-BasicBlock compiler_peer_get_basic_block(const Compiler* self);
-void compiler_peer_set_basic_block(Compiler* self, BasicBlock block);
-void compiler_peer_move_basic_block_after(Compiler* self, BasicBlock block);
-bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock block);
+BasicBlock* compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len);
+BasicBlock* compiler_peer_get_basic_block(const Compiler* self);
+void compiler_peer_set_basic_block(Compiler* self, BasicBlock* block);
+void compiler_peer_move_basic_block_after(Compiler* self, BasicBlock* block);
+bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock* block);
 
-void compiler_peer_create_br(Compiler* self, BasicBlock block);
-void compiler_peer_create_cond_br(Compiler* self, ValueIr cond, BasicBlock then_block, BasicBlock else_block);
+void compiler_peer_create_br(Compiler* self, BasicBlock* block);
+void compiler_peer_create_cond_br(Compiler* self, ValueIr cond, BasicBlock* then_block, BasicBlock* else_block);
 
 ValueIr compiler_peer_get_nullptr(Compiler* self);
 ValueIr compiler_peer_get_boolean(Compiler* self, bool value);
@@ -201,9 +202,9 @@ ValueIr compiler_peer_create_is_same_boolean_value(Compiler* self, ValueIr value
 ValueIr compiler_peer_create_is_same_number_value(Compiler* self, ValueIr value, ValueIr number);
 ValueIr compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr value, ValueIr closure);
 
-ValueIr compiler_peer_create_boolean_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block);
-ValueIr compiler_peer_create_number_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block);
-ValueIr compiler_peer_create_any_ternary(Compiler* self, ValueIr then_value, BasicBlock then_block, ValueIr else_value, BasicBlock else_block);
+ValueIr compiler_peer_create_boolean_ternary(Compiler* self, ValueIr then_value, BasicBlock* then_block, ValueIr else_value, BasicBlock* else_block);
+ValueIr compiler_peer_create_number_ternary(Compiler* self, ValueIr then_value, BasicBlock* then_block, ValueIr else_value, BasicBlock* else_block);
+ValueIr compiler_peer_create_any_ternary(Compiler* self, ValueIr then_value, BasicBlock* then_block, ValueIr else_value, BasicBlock* else_block);
 
 void compiler_peer_create_store_flags_to_variable(Compiler* self, uint8_t flags, ValueIr variable);
 void compiler_peer_create_store_symbol_to_variable(Compiler* self, uint32_t symbol, ValueIr variable);
@@ -229,9 +230,9 @@ ValueIr compiler_peer_create_has_uncaught_exception(Compiler* self);
 void compiler_peer_handle_returned_thrown(Compiler* self,
     bool returned,
     bool thrown,
-    BasicBlock block,
-    BasicBlock cleanup_block,
-    BasicBlock exception_block);
+    BasicBlock* block,
+    BasicBlock* cleanup_block,
+    BasicBlock* exception_block);
 ValueIr compiler_peer_create_local_variable(Compiler* self, uint16_t index);
 
 // argv
@@ -276,5 +277,5 @@ Lambda executor_peer_get_native_function(Executor* self, const char* name);
 
 // Hepler Functions
 
-size_t helper_peer_get_basic_block_name_or_as_operand(BasicBlock block, char* buf, size_t len);
+size_t helper_peer_get_basic_block_name_or_as_operand(BasicBlock* block, char* buf, size_t len);
 size_t helper_peer_get_value_name_or_as_operand(ValueIr value, char* buf, size_t len);

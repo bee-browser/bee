@@ -1,3 +1,4 @@
+mod control_flow;
 mod peer;
 
 use std::ffi::CStr;
@@ -21,8 +22,10 @@ use crate::Program;
 use crate::Runtime;
 
 use super::bridge;
-use super::control_flow::ControlFlowStack;
 use super::Module;
+
+use control_flow::ControlFlowStack;
+use peer::BasicBlock;
 
 impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
@@ -353,7 +356,7 @@ impl<'r, 's> Compiler<'r, 's> {
             let size = buf.capacity();
             let buf = buf.as_mut_ptr();
 
-            eprintln!("### control-flow-stack");
+            eprintln!("### operand-stack");
             self.operand_stack.dump(buf, size);
             eprintln!();
 
@@ -528,7 +531,6 @@ impl<'r, 's> Compiler<'r, 's> {
         const FLAGS: u8 = (bridge::VARIABLE_INITIALIZED | bridge::VARIABLE_MUTABLE) as u8;
 
         let block = self.control_flow_stack.scope_flow().hoisted_block;
-        debug_assert_ne!(block, 0);
 
         let backup = self.peer.get_basic_block();
         self.peer.set_basic_block(block);
@@ -553,7 +555,6 @@ impl<'r, 's> Compiler<'r, 's> {
         const FLAGS: u8 = (bridge::VARIABLE_INITIALIZED | bridge::VARIABLE_MUTABLE) as u8;
 
         let block = self.control_flow_stack.scope_flow().hoisted_block;
-        debug_assert_ne!(block, 0);
 
         let backup = self.peer.get_basic_block();
         self.peer.set_basic_block(block);
@@ -673,7 +674,6 @@ impl<'r, 's> Compiler<'r, 's> {
     // Handle an exception if it's thrown.
     fn create_check_status_for_exception(&mut self, status: bridge::ValueIr, retv: bridge::ValueIr) {
         let exception_block = self.control_flow_stack.exception_block();
-        debug_assert_ne!(exception_block, 0);
 
         let then_block = self.create_basic_block("status.exception");
         let else_block = self.create_basic_block("status.normal");
@@ -743,7 +743,6 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.captures.contains_key(&locator));
 
         let block = self.control_flow_stack.scope_flow().cleanup_block;
-        debug_assert_ne!(block, 0);
 
         let backup = self.peer.get_basic_block();
         self.peer.set_basic_block(block);
@@ -801,12 +800,12 @@ impl<'r, 's> Compiler<'r, 's> {
         let cleanup_block = if flow.returned {
             self.control_flow_stack.cleanup_block()
         } else {
-            0
+            BasicBlock::NONE
         };
         let exception_block = if flow.thrown && !self.control_flow_stack.in_finally_block() {
             self.control_flow_stack.exception_block()
         } else {
-            0
+            BasicBlock::NONE
         };
         self.peer.handle_returned_thrown(
             flow.returned,
@@ -1732,7 +1731,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let else_head_block = else_branch.after_block;
         let else_tail_block = self.peer.get_basic_block();
 
-        let mut block = 0;
+        let mut block = BasicBlock::NONE;
 
         if self.peer.is_basic_block_terminated(else_tail_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
@@ -1744,7 +1743,7 @@ impl<'r, 's> Compiler<'r, 's> {
         if self.peer.is_basic_block_terminated(then_tail_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
-            if block == 0 {
+            if block == BasicBlock::NONE {
                 block = self.create_basic_block("block");
             }
             self.peer.set_basic_block(then_tail_block);
@@ -1756,7 +1755,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(test_block);
         self.peer.create_cond_br(cond_value, then_head_block, else_head_block);
 
-        if block != 0 {
+        if block != BasicBlock::NONE {
             self.peer.set_basic_block(block);
         }
     }
@@ -1846,18 +1845,18 @@ impl<'r, 's> Compiler<'r, 's> {
         let loop_init = if has_init {
             self.create_basic_block("loop-init")
         } else {
-            0
+            BasicBlock::NONE
         };
         let loop_test = if has_test {
             self.create_basic_block("loop-test")
         } else {
-            0
+            BasicBlock::NONE
         };
         let loop_body = self.create_basic_block("loop-body");
         let loop_next = if has_next {
             self.create_basic_block("loop-next")
         } else {
-            0
+            BasicBlock::NONE
         };
         let loop_end = self.create_basic_block("loop-end");
 
@@ -2049,7 +2048,7 @@ impl<'r, 's> Compiler<'r, 's> {
         // Create an unconditional jump to the statement of the default clause if it exists.
         // Otherwise, jump to the end block.
         self.peer.set_basic_block(case_block);
-        self.peer.create_br(if switch.default_block != 0 {
+        self.peer.create_br(if switch.default_block != BasicBlock::NONE {
             switch.default_block
         } else {
             switch.end_block
@@ -2157,7 +2156,7 @@ impl<'r, 's> Compiler<'r, 's> {
         if is_iteration_statement {
             // The `block` member variable will be updated in the method to handle the loop start
             // of the labeled iteration statement.
-            self.control_flow_stack.push_continue_target(0, symbol);
+            self.control_flow_stack.push_continue_target(BasicBlock::NONE, symbol);
         }
     }
 
@@ -2178,19 +2177,13 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_continue(&mut self, symbol: Symbol) {
         let target_block = self.control_flow_stack.continue_target(symbol);
-        debug_assert_ne!(target_block, 0);
-
         self.peer.create_br(target_block);
-
         self.create_basic_block_for_deadcode();
     }
 
     fn process_break(&mut self, symbol: Symbol) {
         let target_block = self.control_flow_stack.break_target(symbol);
-        debug_assert_ne!(target_block, 0);
-
         self.peer.create_br(target_block);
-
         self.create_basic_block_for_deadcode();
     }
 
@@ -2246,7 +2239,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.swap();
     }
 
-    fn create_basic_block(&mut self, name: &str) -> bridge::BasicBlock {
+    fn create_basic_block(&mut self, name: &str) -> BasicBlock {
         push_bb_name!(self, name);
         let (name, name_len) = bb_name!(self);
         let block = self.peer.create_basic_block(name, name_len);
