@@ -20,11 +20,20 @@ pub struct LambdaIr(*mut bridge::LambdaIr);
 pub struct BooleanIr(*mut bridge::BooleanIr);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct NumberIr(*mut bridge::NumberIr);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ValueIr(*mut bridge::ValueIr);
 
 macro_rules! boolean_ir {
     ($inner:expr) => {
         BooleanIr(unsafe { $inner })
+    };
+}
+
+macro_rules! number_ir {
+    ($inner:expr) => {
+        NumberIr(unsafe { $inner })
     };
 }
 
@@ -127,6 +136,193 @@ impl Compiler {
         }
     }
 
+    // boolean
+
+    pub fn get_boolean(&self, value: bool) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_get_boolean(self.0, value)
+        }
+    }
+
+    pub fn create_logical_not(&self, boolean: BooleanIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_logical_not(self.0, boolean.0)
+        }
+    }
+
+    pub fn create_boolean_to_number(&self, value: BooleanIr) -> NumberIr {
+        debug_assert_ne!(value, BooleanIr::NONE);
+        number_ir! {
+            bridge::compiler_peer_create_boolean_to_number(self.0, value.0)
+        }
+    }
+
+    pub fn create_boolean_to_any(&self, value: BooleanIr) -> ValueIr {
+        debug_assert_ne!(value, BooleanIr::NONE);
+        value_ir! {
+            bridge::compiler_peer_create_boolean_to_any(self.0, value.0)
+        }
+    }
+
+    // number
+
+    pub fn get_nan(&self) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_get_nan(self.0)
+        }
+    }
+
+    pub fn get_zero(&self) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_get_zero(self.0)
+        }
+    }
+
+    pub fn get_number(&self, value: f64) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_get_number(self.0, value)
+        }
+    }
+
+    pub fn create_bitwise_not(&self, value: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_bitwise_not(self.0, value.0)
+        }
+    }
+
+    pub fn create_fneg(&self, value: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_fneg(self.0, value.0)
+        }
+    }
+
+    pub fn create_fmul(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_fmul(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_fdiv(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_fdiv(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_frem(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_frem(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_fadd(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_fadd(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_fsub(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_fsub(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_left_shift(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_left_shift(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_signed_right_shift(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_signed_right_shift(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_unsigned_right_shift(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_unsigned_right_shift(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_bitwise_and(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_bitwise_and(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_bitwise_xor(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_bitwise_xor(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_bitwise_or(&self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_bitwise_or(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_incr(&self, value: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_incr(self.0, value.0)
+        }
+    }
+
+    pub fn create_decr(&self, value: NumberIr) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_decr(self.0, value.0)
+        }
+    }
+
+    pub fn create_less_than(&self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_less_than(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_greater_than(&self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_greater_than(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_less_than_or_equal(&self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_less_than_or_equal(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_greater_than_or_equal(&self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_greater_than_or_equal(self.0, lhs.0, rhs.0)
+        }
+    }
+
+    pub fn create_number_ternary(&self, then_value: NumberIr, then_block: BasicBlock, else_value: NumberIr, else_block: BasicBlock) -> NumberIr {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        logger::debug!(event = "create_number_ternary", ?then_value, ?then_block, ?else_value, ?else_block);
+        number_ir! {
+            bridge::compiler_peer_create_number_ternary(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+        }
+    }
+
+    pub fn create_number_to_boolean(&self, value: NumberIr) -> BooleanIr {
+        debug_assert_ne!(value, NumberIr::NONE);
+        boolean_ir! {
+            bridge::compiler_peer_create_number_to_boolean(self.0, value.0)
+        }
+    }
+
+    pub fn create_number_to_any(&self, value: NumberIr) -> ValueIr {
+        debug_assert_ne!(value, NumberIr::NONE);
+        value_ir! {
+            bridge::compiler_peer_create_number_to_any(self.0, value.0)
+        }
+    }
+
+    // closure
+
     // const values
 
     pub fn get_nullptr(&self) -> ValueIr {
@@ -135,50 +331,12 @@ impl Compiler {
         }
     }
 
-    pub fn get_boolean(&self, value: bool) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_get_boolean(self.0, value)
-        }
-    }
+    // value
 
-    pub fn get_zero(&self) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_get_zero(self.0)
-        }
-    }
-
-    pub fn get_nan(&self) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_get_nan(self.0)
-        }
-    }
-
-    pub fn get_number(&self, value: f64) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_get_number(self.0, value)
-        }
-    }
-
-    // conversions
-
-    pub fn create_boolean_to_number(&self, value: BooleanIr) -> ValueIr {
-        debug_assert_ne!(value, BooleanIr::NONE);
-        value_ir! {
-            bridge::compiler_peer_create_boolean_to_number(self.0, value.0)
-        }
-    }
-
-    pub fn to_numeric(&self, value: ValueIr) -> ValueIr {
+    pub fn to_numeric(&self, value: ValueIr) -> NumberIr {
         debug_assert_ne!(value, ValueIr::NONE);
-        value_ir! {
+        number_ir! {
             bridge::compiler_peer_to_numeric(self.0, value.0)
-        }
-    }
-
-    pub fn create_number_to_boolean(&self, value: ValueIr) -> BooleanIr {
-        debug_assert_ne!(value, ValueIr::NONE);
-        boolean_ir! {
-            bridge::compiler_peer_create_number_to_boolean(self.0, value.0)
         }
     }
 
@@ -201,20 +359,6 @@ impl Compiler {
         }
     }
 
-    pub fn create_boolean_to_any(&self, value: BooleanIr) -> ValueIr {
-        debug_assert_ne!(value, BooleanIr::NONE);
-        value_ir! {
-            bridge::compiler_peer_create_boolean_to_any(self.0, value.0)
-        }
-    }
-
-    pub fn create_number_to_any(&self, value: ValueIr) -> ValueIr {
-        debug_assert_ne!(value, ValueIr::NONE);
-        value_ir! {
-            bridge::compiler_peer_create_number_to_any(self.0, value.0)
-        }
-    }
-
     pub fn create_closure_to_any(&self, value: ValueIr) -> ValueIr {
         debug_assert_ne!(value, ValueIr::NONE);
         value_ir! {
@@ -228,132 +372,6 @@ impl Compiler {
         debug_assert_ne!(block, BasicBlock::NONE);
         unsafe {
             bridge::compiler_peer_create_br(self.0, block.0);
-        }
-    }
-
-    // unary operators
-
-    pub fn create_fneg(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_fneg(self.0, value.0)
-        }
-    }
-
-    pub fn create_bitwise_not(&self, number: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_bitwise_not(self.0, number.0)
-        }
-    }
-
-    pub fn create_logical_not(&self, boolean: BooleanIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_logical_not(self.0, boolean.0)
-        }
-    }
-
-    // binary operators
-
-    pub fn create_fmul(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_fmul(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_fdiv(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_fdiv(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_frem(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_frem(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_fadd(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_fadd(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_fsub(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_fsub(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_left_shift(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_left_shift(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_signed_right_shift(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_signed_right_shift(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_unsigned_right_shift(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_unsigned_right_shift(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_less_than(&self, lhs: ValueIr, rhs: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_less_than(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_greater_than(&self, lhs: ValueIr, rhs: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_greater_than(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_less_than_or_equal(&self, lhs: ValueIr, rhs: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_less_than_or_equal(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_greater_than_or_equal(&self, lhs: ValueIr, rhs: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_greater_than_or_equal(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_bitwise_and(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_bitwise_and(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_bitwise_xor(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_bitwise_xor(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    pub fn create_bitwise_or(&self, lhs: ValueIr, rhs: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_bitwise_or(self.0, lhs.0, rhs.0)
-        }
-    }
-
-    // incr/decr
-
-    pub fn create_incr(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_incr(self.0, value.0)
-        }
-    }
-
-    pub fn create_decr(&self, value: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_decr(self.0, value.0)
         }
     }
 
@@ -408,14 +426,14 @@ impl Compiler {
         }
     }
 
-    pub fn create_is_same_number(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
+    pub fn create_is_same_number(&self, a: NumberIr, b: NumberIr) -> BooleanIr {
         logger::debug!(event = "create_is_same_number", ?a, ?b);
         boolean_ir! {
             bridge::compiler_peer_create_is_same_number(self.0, a.0, b.0)
         }
     }
 
-    pub fn create_is_same_number_value(&self, variable: ValueIr, value: ValueIr) -> BooleanIr {
+    pub fn create_is_same_number_value(&self, variable: ValueIr, value: NumberIr) -> BooleanIr {
         boolean_ir! {
             bridge::compiler_peer_create_is_same_number_value(self.0, variable.0, value.0)
         }
@@ -462,15 +480,6 @@ impl Compiler {
         debug_assert_ne!(else_block, BasicBlock::NONE);
         boolean_ir! {
             bridge::compiler_peer_create_boolean_ternary(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
-        }
-    }
-
-    pub fn create_number_ternary(&self, then_value: ValueIr, then_block: BasicBlock, else_value: ValueIr, else_block: BasicBlock) -> ValueIr {
-        debug_assert_ne!(then_block, BasicBlock::NONE);
-        debug_assert_ne!(else_block, BasicBlock::NONE);
-        logger::debug!(event = "create_number_ternary", ?then_value, ?then_block, ?else_value, ?else_block);
-        value_ir! {
-            bridge::compiler_peer_create_number_ternary(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
         }
     }
 
@@ -602,8 +611,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_store_number_to_retv(&self, value: ValueIr) {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_store_number_to_retv(&self, value: NumberIr) {
+        debug_assert_ne!(value, NumberIr::NONE);
         unsafe {
             bridge::compiler_peer_create_store_number_to_retv(self.0, value.0);
         }
@@ -704,8 +713,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_store_number_to_variable(&self, value: ValueIr, variable: ValueIr) {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_store_number_to_variable(&self, value: NumberIr, variable: ValueIr) {
+        debug_assert_ne!(value, NumberIr::NONE);
         unsafe {
             bridge::compiler_peer_create_store_number_to_variable(self.0, value.0, variable.0);
         }
@@ -806,6 +815,17 @@ impl LambdaIr {
 }
 
 impl BooleanIr {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            std::ffi::CStr::from_ptr(buf)
+        }
+    }
+}
+
+impl NumberIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {

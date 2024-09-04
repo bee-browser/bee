@@ -28,6 +28,7 @@ use control_flow::ControlFlowStack;
 use peer::BasicBlock;
 use peer::BooleanIr;
 use peer::LambdaIr;
+use peer::NumberIr;
 use peer::ValueIr;
 
 impl<X> Runtime<X> {
@@ -879,7 +880,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     // 7.1.4 ToNumber ( argument )
-    fn to_numeric(&mut self, operand: Operand) -> ValueIr {
+    fn to_numeric(&mut self, operand: Operand) -> NumberIr {
         match operand {
             Operand::Undefined => self.peer.get_nan(),
             Operand::Null => self.peer.get_zero(),
@@ -1291,7 +1292,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
     }
 
-    fn create_is_same_number_value(&mut self, value: ValueIr, number: ValueIr) -> BooleanIr {
+    fn create_is_same_number_value(&mut self, value: ValueIr, number: NumberIr) -> BooleanIr {
         logger::debug!(event = "create_is_same_number", ?value, ?number);
 
         let then_block = self.create_basic_block("is_number.then");
@@ -2316,7 +2317,7 @@ enum Operand {
     Undefined,
     Null,
     Boolean(BooleanIr),
-    Number(ValueIr),
+    Number(NumberIr),
     Function(LambdaIr),
     Closure(ValueIr),
     Any(ValueIr),
