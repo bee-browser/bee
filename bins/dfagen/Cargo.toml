@@ -13,6 +13,6 @@ indexmap = { version = "2.5.0", features = ["serde"] }
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
 serde = { version = "1.0.209", features = ["derive", "rc"] }
-serde_json = "1.0.127"
+serde_json = "1.0.128"
 serde_yaml = "0.9.34"
 smallvec = "1.13.2"
