@@ -119,6 +119,7 @@ struct ClosureIr;
 struct ValueIr;
 struct ArgvIr;
 struct StatusIr;
+struct CaptureIr;
 
 Compiler* compiler_peer_new();
 void compiler_peer_delete(Compiler* self);
@@ -181,16 +182,16 @@ ValueIr* compiler_peer_create_number_to_any(Compiler* self, NumberIr* number);
 // closure
 ClosureIr* compiler_peer_get_closure_nullptr(Compiler* self);
 ClosureIr* compiler_peer_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures);
-void compiler_peer_create_store_capture_to_closure(Compiler* self, ValueIr* capture, ClosureIr* closure, uint16_t index);
+void compiler_peer_create_store_capture_to_closure(Compiler* self, CaptureIr* capture, ClosureIr* closure, uint16_t index);
 StatusIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ArgvIr* argv, ValueIr* retv);
 ClosureIr* compiler_peer_create_closure_phi(Compiler* self, ClosureIr* then_value, BasicBlock* then_block, ClosureIr* else_value, BasicBlock* else_block);
 ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* closure);
 
 // capture
-ValueIr* compiler_peer_create_call_runtime_create_capture(Compiler* self, ValueIr* variable);
-void compiler_peer_create_escape_variable(Compiler* self, ValueIr* capture, ValueIr* variable);
+CaptureIr* compiler_peer_create_capture(Compiler* self, ValueIr* variable);
+void compiler_peer_create_escape_variable(Compiler* self, CaptureIr* capture, ValueIr* variable);
 ValueIr* compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t index);
-ValueIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
+CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
 // value
 BooleanIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value);

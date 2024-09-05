@@ -28,6 +28,7 @@ use control_flow::ControlFlowStack;
 use peer::ArgvIr;
 use peer::BasicBlock;
 use peer::BooleanIr;
+use peer::CaptureIr;
 use peer::ClosureIr;
 use peer::LambdaIr;
 use peer::NumberIr;
@@ -82,7 +83,7 @@ struct Compiler<'r, 's> {
 
     // The following variables must be reset in the end of compilation for each function.
     locals: Vec<ValueIr>,
-    captures: IndexMap<Locator, ValueIr>,
+    captures: IndexMap<Locator, CaptureIr>,
 
     dump_buffer: Option<Vec<std::ffi::c_char>>,
 }
@@ -410,7 +411,7 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn pop_capture(&mut self) -> ValueIr {
+    fn pop_capture(&mut self) -> CaptureIr {
         match self.operand_stack.pop() {
             Some(Operand::Capture(capture)) => capture,
             _ => unreachable!(),
@@ -2325,7 +2326,7 @@ enum Operand {
     Any(ValueIr),
     Reference(Symbol, Locator),
     Argv(ArgvIr),
-    Capture(ValueIr),
+    Capture(CaptureIr),
 }
 
 impl Dump for Operand {

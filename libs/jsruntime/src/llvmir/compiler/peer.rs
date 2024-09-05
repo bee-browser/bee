@@ -34,6 +34,9 @@ pub struct ArgvIr(*mut bridge::ArgvIr);
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct StatusIr(*mut bridge::StatusIr);
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CaptureIr(*mut bridge::CaptureIr);
+
 macro_rules! boolean_ir {
     ($inner:expr) => {
         BooleanIr(unsafe { $inner })
@@ -67,6 +70,12 @@ macro_rules! argv_ir {
 macro_rules! status_ir {
     ($inner:expr) => {
         StatusIr(unsafe { $inner })
+    };
+}
+
+macro_rules! capture_ir {
+    ($inner:expr) => {
+        CaptureIr(unsafe { $inner })
     };
 }
 
@@ -351,7 +360,7 @@ impl Compiler {
         }
     }
 
-    pub fn create_store_capture_to_closure(&self, capture: ValueIr, closure: ClosureIr, index: u16) {
+    pub fn create_store_capture_to_closure(&self, capture: CaptureIr, closure: ClosureIr, index: u16) {
         unsafe {
             bridge::compiler_peer_create_store_capture_to_closure(self.0, capture.0, closure.0, index);
         }
@@ -380,13 +389,13 @@ impl Compiler {
 
     // capture
 
-    pub fn create_capture(&self, variable: ValueIr) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_call_runtime_create_capture(self.0, variable.0)
+    pub fn create_capture(&self, variable: ValueIr) -> CaptureIr {
+        capture_ir! {
+            bridge::compiler_peer_create_capture(self.0, variable.0)
         }
     }
 
-    pub fn create_escape_variable(&self, capture: ValueIr, variable: ValueIr) {
+    pub fn create_escape_variable(&self, capture: CaptureIr, variable: ValueIr) {
         unsafe {
             bridge::compiler_peer_create_escape_variable(self.0, capture.0, variable.0);
         }
@@ -398,8 +407,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_load_capture(&self, index: u16) -> ValueIr {
-        value_ir! {
+    pub fn create_load_capture(&self, index: u16) -> CaptureIr {
+        capture_ir! {
             bridge::compiler_peer_create_load_capture(self.0, index)
         }
     }
@@ -862,6 +871,15 @@ impl ValueIr {
 impl ArgvIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            std::ffi::CStr::from_ptr(buf)
+        }
+    }
+}
+
+impl CaptureIr {
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
             bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);

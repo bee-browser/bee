@@ -9,19 +9,20 @@
 #include "helper.hh"
 #include "module.hh"
 
-#define PEER_BB(bb) (reinterpret_cast<BasicBlock*>(bb))
 #define LLVM_BB(bb) (reinterpret_cast<llvm::BasicBlock*>(bb))
+#define PEER_BB(bb) (reinterpret_cast<BasicBlock*>(bb))
 
-#define PEER_LAMBDA(lambda) (reinterpret_cast<LambdaIr*>(lambda))
 #define LLVM_LAMBDA(lambda) (reinterpret_cast<llvm::Function*>(lambda))
+#define PEER_LAMBDA(lambda) (reinterpret_cast<LambdaIr*>(lambda))
 
+#define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
 #define PEER_BOOLEAN(value) (reinterpret_cast<BooleanIr*>(value))
 #define PEER_NUMBER(value) (reinterpret_cast<NumberIr*>(value))
 #define PEER_CLOSURE(value) (reinterpret_cast<ClosureIr*>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr*>(value))
 #define PEER_ARGV(value) (reinterpret_cast<ArgvIr*>(value))
 #define PEER_STATUS(value) (reinterpret_cast<StatusIr*>(value))
-#define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
+#define PEER_CAPTURE(value) (reinterpret_cast<CaptureIr*>(value))
 
 void llvmir_initialize() {
   // Uncomment if you want to enable LLVM_DEBUG().
@@ -216,7 +217,7 @@ ClosureIr* compiler_peer_create_closure(Compiler* self, LambdaIr* lambda, uint16
   return PEER_CLOSURE(self->CreateCallRuntimeCreateClosure(LLVM_LAMBDA(lambda), num_captures));
 }
 
-void compiler_peer_create_store_capture_to_closure(Compiler* self, ValueIr* capture, ClosureIr* closure, uint16_t index) {
+void compiler_peer_create_store_capture_to_closure(Compiler* self, CaptureIr* capture, ClosureIr* closure, uint16_t index) {
   self->CreateStoreCapturePtrToClosure(LLVM_VALUE(capture), LLVM_VALUE(closure), index);
 }
 
@@ -230,6 +231,24 @@ ClosureIr* compiler_peer_create_closure_phi(Compiler* self, ClosureIr* then_valu
 
 ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* value) {
   return PEER_VALUE(self->CreateClosureToAny(LLVM_VALUE(value)));
+}
+
+// capture
+
+CaptureIr* compiler_peer_create_capture(Compiler* self, ValueIr* variable) {
+  return PEER_CAPTURE(self->CreateCallRuntimeCreateCapture(LLVM_VALUE(variable)));
+}
+
+ValueIr* compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t index) {
+  return PEER_VALUE(self->CreateGetCaptureVariablePtr(index));
+}
+
+void compiler_peer_create_escape_variable(Compiler* self, CaptureIr* capture, ValueIr* variable) {
+  self->CreateEscapeVariable(LLVM_VALUE(capture), LLVM_VALUE(variable));
+}
+
+CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index) {
+  return PEER_CAPTURE(self->CreateLoadCapture(index));
 }
 
 // value
@@ -352,22 +371,6 @@ void compiler_peer_create_cond_br(Compiler* self, BooleanIr* cond, BasicBlock* t
 
 ClosureIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value) {
   return PEER_CLOSURE(self->CreateLoadClosureFromValue(LLVM_VALUE(value)));
-}
-
-ValueIr* compiler_peer_create_call_runtime_create_capture(Compiler* self, ValueIr* variable) {
-  return PEER_VALUE(self->CreateCallRuntimeCreateCapture(LLVM_VALUE(variable)));
-}
-
-ValueIr* compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t index) {
-  return PEER_VALUE(self->CreateGetCaptureVariablePtr(index));
-}
-
-void compiler_peer_create_escape_variable(Compiler* self, ValueIr* capture, ValueIr* variable) {
-  self->CreateEscapeVariable(LLVM_VALUE(capture), LLVM_VALUE(variable));
-}
-
-ValueIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index) {
-  return PEER_VALUE(self->CreateLoadCapture(index));
 }
 
 NumberIr* compiler_peer_to_numeric(Compiler* self, ValueIr* value) {
