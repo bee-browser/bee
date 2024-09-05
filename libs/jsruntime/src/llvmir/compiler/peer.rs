@@ -172,7 +172,88 @@ impl Compiler {
         }
     }
 
+    // jump
+
+    pub fn create_br(&self, block: BasicBlock) {
+        debug_assert_ne!(block, BasicBlock::NONE);
+        unsafe {
+            bridge::compiler_peer_create_br(self.0, block.0);
+        }
+    }
+
+    pub fn create_cond_br(&self, cond: BooleanIr, then_block: BasicBlock, else_block: BasicBlock) {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        unsafe {
+            bridge::compiler_peer_create_cond_br(self.0, cond.0, then_block.0, else_block.0);
+        }
+    }
+
+    pub fn handle_returned_thrown(&self, returned: bool, thrown: bool, block: BasicBlock, cleanup_block: BasicBlock, exception_block: BasicBlock) {
+        debug_assert_ne!(block, BasicBlock::NONE);
+        // cleanup_block may NONE.
+        // exception_block may NONE.
+        unsafe {
+            bridge::compiler_peer_handle_returned_thrown(
+                self.0,
+                returned,
+                thrown,
+                block.0,
+                cleanup_block.0,
+                exception_block.0,
+            );
+        }
+    }
+
+    // undefined
+
+    pub fn create_is_undefined(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_undefined(self.0, value.0)
+        }
+    }
+
+    // null
+
+    pub fn create_is_null(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_null(self.0, value.0)
+        }
+    }
+
+    pub fn create_is_non_nullish(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_non_nullish(self.0, value.0)
+        }
+    }
+
     // boolean
+
+    pub fn create_is_boolean(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_boolean(self.0, value.0)
+        }
+    }
+
+    pub fn create_is_same_boolean(&self, a: BooleanIr, b: BooleanIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_boolean(self.0, a.0, b.0)
+        }
+    }
+
+    pub fn create_number_to_boolean(&self, value: NumberIr) -> BooleanIr {
+        debug_assert_ne!(value, NumberIr::NONE);
+        boolean_ir! {
+            bridge::compiler_peer_create_number_to_boolean(self.0, value.0)
+        }
+    }
+
+    pub fn create_to_boolean(&self, value: ValueIr) -> BooleanIr {
+        debug_assert_ne!(value, ValueIr::NONE);
+        boolean_ir! {
+            bridge::compiler_peer_create_to_boolean(self.0, value.0)
+        }
+    }
 
     pub fn get_boolean(&self, value: bool) -> BooleanIr {
         boolean_ir! {
@@ -186,6 +267,32 @@ impl Compiler {
         }
     }
 
+    pub fn create_boolean_phi(&self, then_value: BooleanIr, then_block: BasicBlock, else_value: BooleanIr, else_block: BasicBlock) -> BooleanIr {
+        debug_assert_ne!(then_value, BooleanIr::NONE);
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_value, BooleanIr::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        boolean_ir! {
+            bridge::compiler_peer_create_boolean_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+        }
+    }
+
+    // number
+
+    pub fn create_is_number(&self, value: ValueIr) -> BooleanIr {
+        logger::debug!(event = "create_is_number", ?value);
+        boolean_ir! {
+            bridge::compiler_peer_create_is_number(self.0, value.0)
+        }
+    }
+
+    pub fn create_is_same_number(&self, a: NumberIr, b: NumberIr) -> BooleanIr {
+        logger::debug!(event = "create_is_same_number", ?a, ?b);
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_number(self.0, a.0, b.0)
+        }
+    }
+
     pub fn create_boolean_to_number(&self, value: BooleanIr) -> NumberIr {
         debug_assert_ne!(value, BooleanIr::NONE);
         number_ir! {
@@ -193,14 +300,12 @@ impl Compiler {
         }
     }
 
-    pub fn create_boolean_to_any(&self, value: BooleanIr) -> ValueIr {
-        debug_assert_ne!(value, BooleanIr::NONE);
-        value_ir! {
-            bridge::compiler_peer_create_boolean_to_any(self.0, value.0)
+    pub fn to_numeric(&self, value: ValueIr) -> NumberIr {
+        debug_assert_ne!(value, ValueIr::NONE);
+        number_ir! {
+            bridge::compiler_peer_to_numeric(self.0, value.0)
         }
     }
-
-    // number
 
     pub fn get_nan(&self) -> NumberIr {
         number_ir! {
@@ -331,21 +436,19 @@ impl Compiler {
         }
     }
 
-    pub fn create_number_to_boolean(&self, value: NumberIr) -> BooleanIr {
-        debug_assert_ne!(value, NumberIr::NONE);
-        boolean_ir! {
-            bridge::compiler_peer_create_number_to_boolean(self.0, value.0)
-        }
-    }
-
-    pub fn create_number_to_any(&self, value: NumberIr) -> ValueIr {
-        debug_assert_ne!(value, NumberIr::NONE);
-        value_ir! {
-            bridge::compiler_peer_create_number_to_any(self.0, value.0)
-        }
-    }
-
     // closure
+
+    pub fn create_is_closure(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_closure(self.0, value.0)
+        }
+    }
+
+    pub fn create_is_same_closure(&self, a: ClosureIr, b: ClosureIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_closure(self.0, a.0, b.0)
+        }
+    }
 
     pub fn get_closure_nullptr(&self) -> ClosureIr {
         closure_ir! {
@@ -380,52 +483,35 @@ impl Compiler {
         }
     }
 
-    pub fn create_closure_to_any(&self, value: ClosureIr) -> ValueIr {
-        debug_assert_ne!(value, ClosureIr::NONE);
-        value_ir! {
-            bridge::compiler_peer_create_closure_to_any(self.0, value.0)
-        }
-    }
-
-    // capture
-
-    pub fn create_capture(&self, variable: ValueIr) -> CaptureIr {
-        capture_ir! {
-            bridge::compiler_peer_create_capture(self.0, variable.0)
-        }
-    }
-
-    pub fn create_escape_variable(&self, capture: CaptureIr, variable: ValueIr) {
-        unsafe {
-            bridge::compiler_peer_create_escape_variable(self.0, capture.0, variable.0);
-        }
-    }
-
-    pub fn create_get_capture_variable_ptr(&self, index: u16) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_create_get_capture_variable_ptr(self.0, index)
-        }
-    }
-
-    pub fn create_load_capture(&self, index: u16) -> CaptureIr {
-        capture_ir! {
-            bridge::compiler_peer_create_load_capture(self.0, index)
-        }
-    }
-
     // value
 
-    pub fn to_numeric(&self, value: ValueIr) -> NumberIr {
-        debug_assert_ne!(value, ValueIr::NONE);
-        number_ir! {
-            bridge::compiler_peer_to_numeric(self.0, value.0)
+    pub fn create_is_loosely_equal(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_loosely_equal(self.0, a.0, b.0)
         }
     }
 
-    pub fn create_to_boolean(&self, value: ValueIr) -> BooleanIr {
-        debug_assert_ne!(value, ValueIr::NONE);
+    pub fn create_is_strictly_equal(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
         boolean_ir! {
-            bridge::compiler_peer_create_to_boolean(self.0, value.0)
+            bridge::compiler_peer_create_is_strictly_equal(self.0, a.0, b.0)
+        }
+    }
+
+    pub fn create_is_same_boolean_value(&self, variable: ValueIr, value: BooleanIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_boolean_value(self.0, variable.0, value.0)
+        }
+    }
+
+    pub fn create_is_same_number_value(&self, variable: ValueIr, value: NumberIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_number_value(self.0, variable.0, value.0)
+        }
+    }
+
+    pub fn create_is_same_closure_value(&self, variable: ValueIr, value: ClosureIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_closure_value(self.0, variable.0, value.0)
         }
     }
 
@@ -441,120 +527,24 @@ impl Compiler {
         }
     }
 
-    // jump
-
-    pub fn create_br(&self, block: BasicBlock) {
-        debug_assert_ne!(block, BasicBlock::NONE);
-        unsafe {
-            bridge::compiler_peer_create_br(self.0, block.0);
+    pub fn create_boolean_to_any(&self, value: BooleanIr) -> ValueIr {
+        debug_assert_ne!(value, BooleanIr::NONE);
+        value_ir! {
+            bridge::compiler_peer_create_boolean_to_any(self.0, value.0)
         }
     }
 
-    // equality
-
-    pub fn create_is_loosely_equal(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_loosely_equal(self.0, a.0, b.0)
+    pub fn create_number_to_any(&self, value: NumberIr) -> ValueIr {
+        debug_assert_ne!(value, NumberIr::NONE);
+        value_ir! {
+            bridge::compiler_peer_create_number_to_any(self.0, value.0)
         }
     }
 
-    pub fn create_is_strictly_equal(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_strictly_equal(self.0, a.0, b.0)
-        }
-    }
-
-    pub fn create_is_undefined(&self, value: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_undefined(self.0, value.0)
-        }
-    }
-
-    pub fn create_is_null(&self, value: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_null(self.0, value.0)
-        }
-    }
-
-    pub fn create_is_boolean(&self, value: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_boolean(self.0, value.0)
-        }
-    }
-
-    pub fn create_is_same_boolean(&self, a: BooleanIr, b: BooleanIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_same_boolean(self.0, a.0, b.0)
-        }
-    }
-
-    pub fn create_is_same_boolean_value(&self, variable: ValueIr, value: BooleanIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_same_boolean_value(self.0, variable.0, value.0)
-        }
-    }
-
-    pub fn create_is_number(&self, value: ValueIr) -> BooleanIr {
-        logger::debug!(event = "create_is_number", ?value);
-        boolean_ir! {
-            bridge::compiler_peer_create_is_number(self.0, value.0)
-        }
-    }
-
-    pub fn create_is_same_number(&self, a: NumberIr, b: NumberIr) -> BooleanIr {
-        logger::debug!(event = "create_is_same_number", ?a, ?b);
-        boolean_ir! {
-            bridge::compiler_peer_create_is_same_number(self.0, a.0, b.0)
-        }
-    }
-
-    pub fn create_is_same_number_value(&self, variable: ValueIr, value: NumberIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_same_number_value(self.0, variable.0, value.0)
-        }
-    }
-
-    pub fn create_is_closure(&self, value: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_closure(self.0, value.0)
-        }
-    }
-
-    pub fn create_is_same_closure(&self, a: ClosureIr, b: ClosureIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_same_closure(self.0, a.0, b.0)
-        }
-    }
-
-    pub fn create_is_same_closure_value(&self, variable: ValueIr, value: ClosureIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_same_closure_value(self.0, variable.0, value.0)
-        }
-    }
-
-    // jump
-
-    pub fn create_cond_br(&self, cond: BooleanIr, then_block: BasicBlock, else_block: BasicBlock) {
-        debug_assert_ne!(then_block, BasicBlock::NONE);
-        debug_assert_ne!(else_block, BasicBlock::NONE);
-        unsafe {
-            bridge::compiler_peer_create_cond_br(self.0, cond.0, then_block.0, else_block.0);
-        }
-    }
-
-    pub fn create_is_non_nullish(&self, value: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_is_non_nullish(self.0, value.0)
-        }
-    }
-
-    // phi
-
-    pub fn create_boolean_phi(&self, then_value: BooleanIr, then_block: BasicBlock, else_value: BooleanIr, else_block: BasicBlock) -> BooleanIr {
-        debug_assert_ne!(then_block, BasicBlock::NONE);
-        debug_assert_ne!(else_block, BasicBlock::NONE);
-        boolean_ir! {
-            bridge::compiler_peer_create_boolean_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+    pub fn create_closure_to_any(&self, value: ClosureIr) -> ValueIr {
+        debug_assert_ne!(value, ClosureIr::NONE);
+        value_ir! {
+            bridge::compiler_peer_create_closure_to_any(self.0, value.0)
         }
     }
 
@@ -563,6 +553,66 @@ impl Compiler {
         debug_assert_ne!(else_block, BasicBlock::NONE);
         value_ir! {
             bridge::compiler_peer_create_value_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+        }
+    }
+
+    pub fn create_local_variable(&self, index: u16) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_local_variable(self.0, index)
+        }
+    }
+
+    pub fn create_store_flags_to_variable(&self, flags: u8, variable: ValueIr) {
+        debug_assert_ne!(variable, ValueIr::NONE);
+        unsafe {
+            bridge::compiler_peer_create_store_flags_to_variable(self.0, flags, variable.0)
+        }
+    }
+
+    pub fn create_store_symbol_to_variable(&self, symbol: Symbol, variable: ValueIr) {
+        debug_assert_ne!(variable, ValueIr::NONE);
+        unsafe {
+            bridge::compiler_peer_create_store_symbol_to_variable(self.0, symbol.id(), variable.0);
+        }
+    }
+
+    pub fn create_store_undefined_to_variable(&self, variable: ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_store_undefined_to_variable(self.0, variable.0);
+        }
+    }
+
+    pub fn create_store_null_to_variable(&self, variable: ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_store_null_to_variable(self.0, variable.0);
+        }
+    }
+
+    pub fn create_store_boolean_to_variable(&self, value: BooleanIr, variable: ValueIr) {
+        debug_assert_ne!(value, BooleanIr::NONE);
+        unsafe {
+            bridge::compiler_peer_create_store_boolean_to_variable(self.0, value.0, variable.0);
+        }
+    }
+
+    pub fn create_store_number_to_variable(&self, value: NumberIr, variable: ValueIr) {
+        debug_assert_ne!(value, NumberIr::NONE);
+        unsafe {
+            bridge::compiler_peer_create_store_number_to_variable(self.0, value.0, variable.0);
+        }
+    }
+
+    pub fn create_store_closure_to_variable(&self, value: ClosureIr, variable: ValueIr) {
+        debug_assert_ne!(value, ClosureIr::NONE);
+        unsafe {
+            bridge::compiler_peer_create_store_closure_to_variable(self.0, value.0, variable.0);
+        }
+    }
+
+    pub fn create_store_value_to_variable(&self, value: ValueIr, variable: ValueIr) {
+        debug_assert_ne!(value, ValueIr::NONE);
+        unsafe {
+            bridge::compiler_peer_create_store_value_to_variable(self.0, value.0, variable.0);
         }
     }
 
@@ -648,17 +698,9 @@ impl Compiler {
         }
     }
 
-    // exception
-
     pub fn get_exception(&self) -> ValueIr {
         value_ir! {
             bridge::compiler_peer_get_exception(self.0)
-        }
-    }
-
-    pub fn create_has_uncaught_exception(&self) -> BooleanIr {
-        boolean_ir! {
-            bridge::compiler_peer_create_has_uncaught_exception(self.0)
         }
     }
 
@@ -688,65 +730,35 @@ impl Compiler {
         }
     }
 
-    // locals
+    pub fn create_has_uncaught_exception(&self) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_has_uncaught_exception(self.0)
+        }
+    }
 
-    pub fn create_local_variable(&self, index: u16) -> ValueIr {
+    // capture
+
+    pub fn create_capture(&self, variable: ValueIr) -> CaptureIr {
+        capture_ir! {
+            bridge::compiler_peer_create_capture(self.0, variable.0)
+        }
+    }
+
+    pub fn create_escape_variable(&self, capture: CaptureIr, variable: ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_escape_variable(self.0, capture.0, variable.0);
+        }
+    }
+
+    pub fn create_get_capture_variable_ptr(&self, index: u16) -> ValueIr {
         value_ir! {
-            bridge::compiler_peer_create_local_variable(self.0, index)
+            bridge::compiler_peer_create_get_capture_variable_ptr(self.0, index)
         }
     }
 
-    pub fn create_store_flags_to_variable(&self, flags: u8, variable: ValueIr) {
-        debug_assert_ne!(variable, ValueIr::NONE);
-        unsafe {
-            bridge::compiler_peer_create_store_flags_to_variable(self.0, flags, variable.0)
-        }
-    }
-
-    pub fn create_store_symbol_to_variable(&self, symbol: Symbol, variable: ValueIr) {
-        debug_assert_ne!(variable, ValueIr::NONE);
-        unsafe {
-            bridge::compiler_peer_create_store_symbol_to_variable(self.0, symbol.id(), variable.0);
-        }
-    }
-
-    pub fn create_store_undefined_to_variable(&self, variable: ValueIr) {
-        unsafe {
-            bridge::compiler_peer_create_store_undefined_to_variable(self.0, variable.0);
-        }
-    }
-
-    pub fn create_store_null_to_variable(&self, variable: ValueIr) {
-        unsafe {
-            bridge::compiler_peer_create_store_null_to_variable(self.0, variable.0);
-        }
-    }
-
-    pub fn create_store_boolean_to_variable(&self, value: BooleanIr, variable: ValueIr) {
-        debug_assert_ne!(value, BooleanIr::NONE);
-        unsafe {
-            bridge::compiler_peer_create_store_boolean_to_variable(self.0, value.0, variable.0);
-        }
-    }
-
-    pub fn create_store_number_to_variable(&self, value: NumberIr, variable: ValueIr) {
-        debug_assert_ne!(value, NumberIr::NONE);
-        unsafe {
-            bridge::compiler_peer_create_store_number_to_variable(self.0, value.0, variable.0);
-        }
-    }
-
-    pub fn create_store_closure_to_variable(&self, value: ClosureIr, variable: ValueIr) {
-        debug_assert_ne!(value, ClosureIr::NONE);
-        unsafe {
-            bridge::compiler_peer_create_store_closure_to_variable(self.0, value.0, variable.0);
-        }
-    }
-
-    pub fn create_store_value_to_variable(&self, value: ValueIr, variable: ValueIr) {
-        debug_assert_ne!(value, ValueIr::NONE);
-        unsafe {
-            bridge::compiler_peer_create_store_value_to_variable(self.0, value.0, variable.0);
+    pub fn create_load_capture(&self, index: u16) -> CaptureIr {
+        capture_ir! {
+            bridge::compiler_peer_create_load_capture(self.0, index)
         }
     }
 
@@ -768,22 +780,6 @@ impl Compiler {
     pub fn end_scope_cleanup_checker(&self, scope_ref: ScopeRef) {
         unsafe {
             bridge::compiler_peer_end_scope_cleanup_checker(self.0, scope_ref.id());
-        }
-    }
-
-    pub fn handle_returned_thrown(&self, returned: bool, thrown: bool, block: BasicBlock, cleanup_block: BasicBlock, exception_block: BasicBlock) {
-        debug_assert_ne!(block, BasicBlock::NONE);
-        // cleanup_block may NONE.
-        // exception_block may NONE.
-        unsafe {
-            bridge::compiler_peer_handle_returned_thrown(
-                self.0,
-                returned,
-                thrown,
-                block.0,
-                cleanup_block.0,
-                exception_block.0,
-            );
         }
     }
 }

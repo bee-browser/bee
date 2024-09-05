@@ -125,13 +125,15 @@ Compiler* compiler_peer_new();
 void compiler_peer_delete(Compiler* self);
 
 void compiler_peer_start(Compiler* self, bool enable_labels);
+Module* compiler_peer_end(Compiler* self);
 void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);
-Module* compiler_peer_end(Compiler* self);
 
+// function
 void compiler_peer_start_function(Compiler* self, const char* name);
-void compiler_peer_set_locals_block(Compiler* self, BasicBlock* block);
 void compiler_peer_end_function(Compiler* self, bool optimize);
+void compiler_peer_set_locals_block(Compiler* self, BasicBlock* block);
+LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
 
 // basic block
 BasicBlock* compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len);
@@ -140,21 +142,37 @@ void compiler_peer_set_basic_block(Compiler* self, BasicBlock* block);
 void compiler_peer_move_basic_block_after(Compiler* self, BasicBlock* block);
 bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock* block);
 
+// jump
 void compiler_peer_create_br(Compiler* self, BasicBlock* block);
 void compiler_peer_create_cond_br(Compiler* self, BooleanIr* cond, BasicBlock* then_block, BasicBlock* else_block);
+void compiler_peer_handle_returned_thrown(Compiler* self,
+    bool returned,
+    bool thrown,
+    BasicBlock* block,
+    BasicBlock* cleanup_block,
+    BasicBlock* exception_block);
 
-LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
+// undefined
+BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
 
-ValueIr* compiler_peer_get_exception(Compiler* self);
+// null
+BooleanIr* compiler_peer_create_is_null(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_non_nullish(Compiler* self, ValueIr* value);
 
 // boolean
+BooleanIr* compiler_peer_create_is_boolean(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_same_boolean(Compiler* self, BooleanIr* a, BooleanIr* b);
+BooleanIr* compiler_peer_create_number_to_boolean(Compiler* self, NumberIr* number);
+BooleanIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value);
 BooleanIr* compiler_peer_get_boolean(Compiler* self, bool value);
 BooleanIr* compiler_peer_create_logical_not(Compiler* self, BooleanIr* boolean);
 BooleanIr* compiler_peer_create_boolean_phi(Compiler* self, BooleanIr* then_value, BasicBlock* then_block, BooleanIr* else_value, BasicBlock* else_block);
-NumberIr* compiler_peer_create_boolean_to_number(Compiler* self, BooleanIr* value);
-ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, BooleanIr* boolean);
 
 // number
+BooleanIr* compiler_peer_create_is_number(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_same_number(Compiler* self, NumberIr* a, NumberIr* b);
+NumberIr* compiler_peer_create_boolean_to_number(Compiler* self, BooleanIr* value);
+NumberIr* compiler_peer_to_numeric(Compiler* self, ValueIr* value);
 NumberIr* compiler_peer_get_nan(Compiler* self);
 NumberIr* compiler_peer_get_zero(Compiler* self);
 NumberIr* compiler_peer_get_number(Compiler* self, double value);
@@ -176,53 +194,29 @@ BooleanIr* compiler_peer_create_greater_than(Compiler* self, NumberIr* lhs, Numb
 BooleanIr* compiler_peer_create_less_than_or_equal(Compiler* self, NumberIr* lhs, NumberIr* rhs);
 BooleanIr* compiler_peer_create_greater_than_or_equal(Compiler* self, NumberIr* lhs, NumberIr* rhs);
 NumberIr* compiler_peer_create_number_phi(Compiler* self, NumberIr* then_value, BasicBlock* then_block, NumberIr* else_value, BasicBlock* else_block);
-BooleanIr* compiler_peer_create_number_to_boolean(Compiler* self, NumberIr* number);
-ValueIr* compiler_peer_create_number_to_any(Compiler* self, NumberIr* number);
 
 // closure
+BooleanIr* compiler_peer_create_is_closure(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ClosureIr* a, ClosureIr* b);
 ClosureIr* compiler_peer_get_closure_nullptr(Compiler* self);
 ClosureIr* compiler_peer_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures);
 void compiler_peer_create_store_capture_to_closure(Compiler* self, CaptureIr* capture, ClosureIr* closure, uint16_t index);
 StatusIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ArgvIr* argv, ValueIr* retv);
 ClosureIr* compiler_peer_create_closure_phi(Compiler* self, ClosureIr* then_value, BasicBlock* then_block, ClosureIr* else_value, BasicBlock* else_block);
-ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* closure);
-
-// capture
-CaptureIr* compiler_peer_create_capture(Compiler* self, ValueIr* variable);
-void compiler_peer_create_escape_variable(Compiler* self, CaptureIr* capture, ValueIr* variable);
-ValueIr* compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t index);
-CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
 // value
-BooleanIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value);
-
-// equality/inequality operators
 BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
-
-// type conversions
-ValueIr* compiler_peer_create_undefined_to_any(Compiler* self);
-ValueIr* compiler_peer_create_null_to_any(Compiler* self);
-
-BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
-BooleanIr* compiler_peer_create_is_null(Compiler* self, ValueIr* value);
-BooleanIr* compiler_peer_create_is_boolean(Compiler* self, ValueIr* value);
-BooleanIr* compiler_peer_create_is_number(Compiler* self, ValueIr* value);
-BooleanIr* compiler_peer_create_is_closure(Compiler* self, ValueIr* value);
-BooleanIr* compiler_peer_create_is_non_nullish(Compiler* self, ValueIr* value);
-
-BooleanIr* compiler_peer_create_is_same_boolean(Compiler* self, BooleanIr* a, BooleanIr* b);
-BooleanIr* compiler_peer_create_is_same_number(Compiler* self, NumberIr* a, NumberIr* b);
-BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ClosureIr* a, ClosureIr* b);
-
 BooleanIr* compiler_peer_create_is_same_boolean_value(Compiler* self, ValueIr* value, BooleanIr* boolean);
 BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self, ValueIr* value, NumberIr* number);
 BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self, ValueIr* value, ClosureIr* closure);
-
+ValueIr* compiler_peer_create_undefined_to_any(Compiler* self);
+ValueIr* compiler_peer_create_null_to_any(Compiler* self);
+ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, BooleanIr* boolean);
+ValueIr* compiler_peer_create_number_to_any(Compiler* self, NumberIr* number);
+ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* closure);
 ValueIr* compiler_peer_create_value_phi(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block);
-
-NumberIr* compiler_peer_to_numeric(Compiler* self, ValueIr* value);
-
+ValueIr* compiler_peer_create_local_variable(Compiler* self, uint16_t index);
 void compiler_peer_create_store_flags_to_variable(Compiler* self, uint8_t flags, ValueIr* variable);
 void compiler_peer_create_store_symbol_to_variable(Compiler* self, uint32_t symbol, ValueIr* variable);
 void compiler_peer_create_store_undefined_to_variable(Compiler* self, ValueIr* variable);
@@ -231,16 +225,7 @@ void compiler_peer_create_store_boolean_to_variable(Compiler* self, BooleanIr* v
 void compiler_peer_create_store_number_to_variable(Compiler* self, NumberIr* value, ValueIr* variable);
 void compiler_peer_create_store_closure_to_variable(Compiler* self, ClosureIr* value, ValueIr* variable);
 void compiler_peer_create_store_value_to_variable(Compiler* self, ValueIr* value, ValueIr* variable);
-
 ClosureIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value);
-BooleanIr* compiler_peer_create_has_uncaught_exception(Compiler* self);
-void compiler_peer_handle_returned_thrown(Compiler* self,
-    bool returned,
-    bool thrown,
-    BasicBlock* block,
-    BasicBlock* cleanup_block,
-    BasicBlock* exception_block);
-ValueIr* compiler_peer_create_local_variable(Compiler* self, uint16_t index);
 
 // argv
 ArgvIr* compiler_peer_get_argv_nullptr(Compiler* self);
@@ -256,12 +241,20 @@ void compiler_peer_create_store_boolean_to_retv(Compiler* self, BooleanIr* value
 void compiler_peer_create_store_number_to_retv(Compiler* self, NumberIr* value);
 void compiler_peer_create_store_closure_to_retv(Compiler* self, ClosureIr* value);
 void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value);
+ValueIr* compiler_peer_get_exception(Compiler* self);
 
 // status
 void compiler_peer_create_alloc_status(Compiler* self);
 void compiler_peer_create_store_normal_status(Compiler* self);
 void compiler_peer_create_store_exception_status(Compiler* self);
 BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, StatusIr* status);
+BooleanIr* compiler_peer_create_has_uncaught_exception(Compiler* self);
+
+// capture
+CaptureIr* compiler_peer_create_capture(Compiler* self, ValueIr* variable);
+void compiler_peer_create_escape_variable(Compiler* self, CaptureIr* capture, ValueIr* variable);
+ValueIr* compiler_peer_create_get_capture_variable_ptr(Compiler* self, uint16_t index);
+CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
 // scope cleanup checker
 void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
