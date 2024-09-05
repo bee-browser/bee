@@ -31,6 +31,7 @@ use peer::BooleanIr;
 use peer::ClosureIr;
 use peer::LambdaIr;
 use peer::NumberIr;
+use peer::StatusIr;
 use peer::ValueIr;
 
 impl<X> Runtime<X> {
@@ -676,7 +677,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     // Handle an exception if it's thrown.
-    fn create_check_status_for_exception(&mut self, status: ValueIr, retv: ValueIr) {
+    fn create_check_status_for_exception(&mut self, status: StatusIr, retv: ValueIr) {
         let exception_block = self.control_flow_stack.exception_block();
 
         let then_block = self.create_basic_block("status.exception");

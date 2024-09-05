@@ -118,6 +118,7 @@ struct NumberIr;
 struct ClosureIr;
 struct ValueIr;
 struct ArgvIr;
+struct StatusIr;
 
 Compiler* compiler_peer_new();
 void compiler_peer_delete(Compiler* self);
@@ -181,7 +182,7 @@ ValueIr* compiler_peer_create_number_to_any(Compiler* self, NumberIr* number);
 ClosureIr* compiler_peer_get_closure_nullptr(Compiler* self);
 ClosureIr* compiler_peer_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures);
 void compiler_peer_create_store_capture_to_closure(Compiler* self, ValueIr* capture, ClosureIr* closure, uint16_t index);
-ValueIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ArgvIr* argv, ValueIr* retv);
+StatusIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ArgvIr* argv, ValueIr* retv);
 ClosureIr* compiler_peer_create_closure_phi(Compiler* self, ClosureIr* then_value, BasicBlock* then_block, ClosureIr* else_value, BasicBlock* else_block);
 ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* closure);
 
@@ -259,7 +260,7 @@ void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value);
 void compiler_peer_create_alloc_status(Compiler* self);
 void compiler_peer_create_store_normal_status(Compiler* self);
 void compiler_peer_create_store_exception_status(Compiler* self);
-BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, ValueIr* status);
+BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, StatusIr* status);
 
 // scope cleanup checker
 void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size);

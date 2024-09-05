@@ -20,6 +20,7 @@
 #define PEER_CLOSURE(value) (reinterpret_cast<ClosureIr*>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr*>(value))
 #define PEER_ARGV(value) (reinterpret_cast<ArgvIr*>(value))
+#define PEER_STATUS(value) (reinterpret_cast<StatusIr*>(value))
 #define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
 
 void llvmir_initialize() {
@@ -219,8 +220,8 @@ void compiler_peer_create_store_capture_to_closure(Compiler* self, ValueIr* capt
   self->CreateStoreCapturePtrToClosure(LLVM_VALUE(capture), LLVM_VALUE(closure), index);
 }
 
-ValueIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ArgvIr* argv, ValueIr* retv) {
-  return PEER_VALUE(self->CreateCallOnClosure(LLVM_VALUE(closure), argc, LLVM_VALUE(argv), LLVM_VALUE(retv)));
+StatusIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ArgvIr* argv, ValueIr* retv) {
+  return PEER_STATUS(self->CreateCallOnClosure(LLVM_VALUE(closure), argc, LLVM_VALUE(argv), LLVM_VALUE(retv)));
 }
 
 ClosureIr* compiler_peer_create_closure_phi(Compiler* self, ClosureIr* then_value, BasicBlock* then_block, ClosureIr* else_value, BasicBlock* else_block) {
@@ -465,7 +466,7 @@ void compiler_peer_create_store_exception_status(Compiler* self) {
   self->CreateStoreExceptionStatus();
 }
 
-BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, ValueIr* status) {
+BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, StatusIr* status) {
   return PEER_BOOLEAN(self->CreateIsExceptionStatus(LLVM_VALUE(status)));
 }
 

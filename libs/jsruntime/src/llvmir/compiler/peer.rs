@@ -31,6 +31,9 @@ pub struct ValueIr(*mut bridge::ValueIr);
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ArgvIr(*mut bridge::ArgvIr);
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct StatusIr(*mut bridge::StatusIr);
+
 macro_rules! boolean_ir {
     ($inner:expr) => {
         BooleanIr(unsafe { $inner })
@@ -58,6 +61,12 @@ macro_rules! value_ir {
 macro_rules! argv_ir {
     ($inner:expr) => {
         ArgvIr(unsafe { $inner })
+    };
+}
+
+macro_rules! status_ir {
+    ($inner:expr) => {
+        StatusIr(unsafe { $inner })
     };
 }
 
@@ -348,8 +357,8 @@ impl Compiler {
         }
     }
 
-    pub fn create_call_on_closure(&self, closure: ClosureIr, argc: u16, argv: ArgvIr, retv: ValueIr) -> ValueIr {
-        value_ir! {
+    pub fn create_call_on_closure(&self, closure: ClosureIr, argc: u16, argv: ArgvIr, retv: ValueIr) -> StatusIr {
+        status_ir! {
             bridge::compiler_peer_create_call_on_closure(self.0, closure.0, argc, argv.0, retv.0)
         }
     }
@@ -664,7 +673,7 @@ impl Compiler {
         }
     }
 
-    pub fn create_is_exception_status(&self, status: ValueIr) -> BooleanIr {
+    pub fn create_is_exception_status(&self, status: StatusIr) -> BooleanIr {
         boolean_ir! {
             bridge::compiler_peer_create_is_exception_status(self.0, status.0)
         }
