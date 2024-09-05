@@ -112,11 +112,11 @@ class Compiler {
   }
 
   llvm::Value* CreateFAdd(llvm::Value* lhs, llvm::Value* rhs) {
-    return builder_->CreateFAdd(lhs, rhs);
+    return builder_->CreateFAdd(lhs, rhs, REG_NAME("add"));
   }
 
   llvm::Value* CreateFSub(llvm::Value* lhs, llvm::Value* rhs) {
-    return builder_->CreateFSub(lhs, rhs);
+    return builder_->CreateFSub(lhs, rhs, REG_NAME("sub"));
   }
 
   llvm::Value* CreateLeftShift(llvm::Value* lhs, llvm::Value* rhs);
@@ -194,15 +194,15 @@ class Compiler {
     return builder_->CreateUIToFP(value, builder_->getDoubleTy(), REG_NAME("ui2fp"));
   }
 
-  llvm::Value* CreateBooleanTernary(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
-    auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("ternary"));
+  llvm::Value* CreateBooleanPhi(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
+    auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("boolean.phi"));
     phi->addIncoming(then_value, then_block);
     phi->addIncoming(else_value, else_block);
     return phi;
   }
 
-  llvm::Value* CreateNumberTernary(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
-    auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2, REG_NAME("ternary"));
+  llvm::Value* CreateNumberPhi(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
+    auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2, REG_NAME("number.phi"));
     phi->addIncoming(then_value, then_block);
     phi->addIncoming(else_value, else_block);
     return phi;
@@ -215,8 +215,8 @@ class Compiler {
     return phi;
   }
 
-  llvm::Value* CreateAnyTernary(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
-    auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("ternary"));
+  llvm::Value* CreateValuePhi(llvm::Value* then_value, llvm::BasicBlock* then_block, llvm::Value* else_value, llvm::BasicBlock* else_block) {
+    auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("value.phi"));
     phi->addIncoming(then_value, then_block);
     phi->addIncoming(else_value, else_block);
     return phi;
@@ -589,16 +589,6 @@ class Compiler {
   inline void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr, llvm::Value* closure_ptr, uint16_t index) {
     auto* ptr = CreateLoadCapturesFromClosure(closure_ptr);
     CreateStoreCapturePtrToCaptures(capture_ptr, ptr, index);
-  }
-
-  // incr/decr
-
-  llvm::Value* CreateIncr(llvm::Value* value) {
-    return builder_->CreateFAdd(value, GetNumber(1.0), REG_NAME("incr"));
-  }
-
-  llvm::Value* CreateDecr(llvm::Value* value) {
-    return builder_->CreateFSub(value, GetNumber(1.0), REG_NAME("decr"));
   }
 
   // argv

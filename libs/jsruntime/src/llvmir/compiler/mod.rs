@@ -25,6 +25,7 @@ use super::bridge;
 use super::Module;
 
 use control_flow::ControlFlowStack;
+use peer::ArgvIr;
 use peer::BasicBlock;
 use peer::BooleanIr;
 use peer::ClosureIr;
@@ -601,7 +602,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_store_operand_to_variable(operand, arg);
     }
 
-    fn peek_argv(&self) -> ValueIr {
+    fn peek_argv(&self) -> ArgvIr {
         match self.operand_stack.last().unwrap() {
             Operand::Argv(value) => *value,
             _ => unreachable!(),
@@ -612,7 +613,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let argv = if argc > 0 {
             self.pop_argv()
         } else {
-            self.peer.get_nullptr()
+            self.peer.get_argv_nullptr()
         };
 
         let (operand, _) = self.dereference();
@@ -638,7 +639,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Any(retv));
     }
 
-    fn pop_argv(&mut self) -> ValueIr {
+    fn pop_argv(&mut self) -> ArgvIr {
         match self.operand_stack.pop().unwrap() {
             Operand::Argv(value) => value,
             _ => unreachable!(),
@@ -854,10 +855,11 @@ impl<'r, 's> Compiler<'r, 's> {
         let (operand, reference) = self.dereference();
         let old_value = self.to_numeric(operand);
         // TODO: BigInt
+        let one = self.peer.get_number(1.0);
         let new_value = if op == '+' {
-            self.peer.create_incr(old_value)
+            self.peer.create_fadd(old_value, one)
         } else {
-            self.peer.create_decr(old_value)
+            self.peer.create_fsub(old_value, one)
         };
         match reference {
             Some((symbol, locator)) if symbol != Symbol::NONE => {
@@ -1288,7 +1290,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_br(merge_block);
         // }
         self.peer.set_basic_block(merge_block);
-        self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
+        self.peer.create_boolean_phi(then_value, then_block, else_value, else_block)
     }
 
     fn create_is_same_number_value(&mut self, value: ValueIr, number: NumberIr) -> BooleanIr {
@@ -1311,7 +1313,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_br(merge_block);
         // }
         self.peer.set_basic_block(merge_block);
-        self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
+        self.peer.create_boolean_phi(then_value, then_block, else_value, else_block)
     }
 
     fn create_is_same_closure_value(&mut self, value: ValueIr, closure: ClosureIr) -> BooleanIr {
@@ -1332,7 +1334,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_br(merge_block);
         // }
         self.peer.set_basic_block(merge_block);
-        self.peer.create_boolean_ternary(then_value, then_block, else_value, else_block)
+        self.peer.create_boolean_phi(then_value, then_block, else_value, else_block)
     }
 
     // 13.11.1 Runtime Semantics: Evaluation
@@ -1465,17 +1467,17 @@ impl<'r, 's> Compiler<'r, 's> {
                     return;
                 }
                 (Operand::Boolean(then_value), Operand::Boolean(else_value)) => {
-                    let boolean = self.peer.create_boolean_ternary(then_value, then_tail_block, else_value, else_tail_block);
+                    let boolean = self.peer.create_boolean_phi(then_value, then_tail_block, else_value, else_tail_block);
                     self.operand_stack.push(Operand::Boolean(boolean));
                     return;
                 }
                 (Operand::Number(then_value), Operand::Number(else_value)) => {
-                    let number = self.peer.create_number_ternary(then_value, then_tail_block, else_value, else_tail_block);
+                    let number = self.peer.create_number_phi(then_value, then_tail_block, else_value, else_tail_block);
                     self.operand_stack.push(Operand::Number(number));
                     return;
                 }
                 (Operand::Any(then_value), Operand::Any(else_value)) => {
-                    let any = self.peer.create_any_ternary(then_value, then_tail_block, else_value, else_tail_block);
+                    let any = self.peer.create_value_phi(then_value, then_tail_block, else_value, else_tail_block);
                     self.operand_stack.push(Operand::Any(any));
                     return;
                 }
@@ -1494,7 +1496,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_br(block);
 
         self.peer.set_basic_block(block);
-        let any = self.peer.create_any_ternary(then_value, then_tail_block, else_value, else_tail_block);
+        let any = self.peer.create_value_phi(then_value, then_tail_block, else_value, else_tail_block);
         self.operand_stack.push(Operand::Any(any));
     }
 
@@ -2321,7 +2323,7 @@ enum Operand {
     Closure(ClosureIr),
     Any(ValueIr),
     Reference(Symbol, Locator),
-    Argv(ValueIr),
+    Argv(ArgvIr),
     Capture(ValueIr),
 }
 

@@ -28,6 +28,9 @@ pub struct ClosureIr(*mut bridge::ClosureIr);
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ValueIr(*mut bridge::ValueIr);
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ArgvIr(*mut bridge::ArgvIr);
+
 macro_rules! boolean_ir {
     ($inner:expr) => {
         BooleanIr(unsafe { $inner })
@@ -49,6 +52,12 @@ macro_rules! closure_ir {
 macro_rules! value_ir {
     ($inner:expr) => {
         ValueIr(unsafe { $inner })
+    };
+}
+
+macro_rules! argv_ir {
+    ($inner:expr) => {
+        ArgvIr(unsafe { $inner })
     };
 }
 
@@ -271,18 +280,6 @@ impl Compiler {
         }
     }
 
-    pub fn create_incr(&self, value: NumberIr) -> NumberIr {
-        number_ir! {
-            bridge::compiler_peer_create_incr(self.0, value.0)
-        }
-    }
-
-    pub fn create_decr(&self, value: NumberIr) -> NumberIr {
-        number_ir! {
-            bridge::compiler_peer_create_decr(self.0, value.0)
-        }
-    }
-
     pub fn create_less_than(&self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
         boolean_ir! {
             bridge::compiler_peer_create_less_than(self.0, lhs.0, rhs.0)
@@ -307,12 +304,12 @@ impl Compiler {
         }
     }
 
-    pub fn create_number_ternary(&self, then_value: NumberIr, then_block: BasicBlock, else_value: NumberIr, else_block: BasicBlock) -> NumberIr {
+    pub fn create_number_phi(&self, then_value: NumberIr, then_block: BasicBlock, else_value: NumberIr, else_block: BasicBlock) -> NumberIr {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
-        logger::debug!(event = "create_number_ternary", ?then_value, ?then_block, ?else_value, ?else_block);
+        logger::debug!(event = "create_number_phi", ?then_value, ?then_block, ?else_value, ?else_block);
         number_ir! {
-            bridge::compiler_peer_create_number_ternary(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+            bridge::compiler_peer_create_number_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
         }
     }
 
@@ -351,7 +348,7 @@ impl Compiler {
         }
     }
 
-    pub fn create_call_on_closure(&self, closure: ClosureIr, argc: u16, argv: ValueIr, retv: ValueIr) -> ValueIr {
+    pub fn create_call_on_closure(&self, closure: ClosureIr, argc: u16, argv: ArgvIr, retv: ValueIr) -> ValueIr {
         value_ir! {
             bridge::compiler_peer_create_call_on_closure(self.0, closure.0, argc, argv.0, retv.0)
         }
@@ -395,14 +392,6 @@ impl Compiler {
     pub fn create_load_capture(&self, index: u16) -> ValueIr {
         value_ir! {
             bridge::compiler_peer_create_load_capture(self.0, index)
-        }
-    }
-
-    // const values
-
-    pub fn get_nullptr(&self) -> ValueIr {
-        value_ir! {
-            bridge::compiler_peer_get_nullptr(self.0)
         }
     }
 
@@ -543,19 +532,19 @@ impl Compiler {
 
     // phi
 
-    pub fn create_boolean_ternary(&self, then_value: BooleanIr, then_block: BasicBlock, else_value: BooleanIr, else_block: BasicBlock) -> BooleanIr {
+    pub fn create_boolean_phi(&self, then_value: BooleanIr, then_block: BasicBlock, else_value: BooleanIr, else_block: BasicBlock) -> BooleanIr {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
         boolean_ir! {
-            bridge::compiler_peer_create_boolean_ternary(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+            bridge::compiler_peer_create_boolean_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
         }
     }
 
-    pub fn create_any_ternary(&self, then_value: ValueIr, then_block: BasicBlock, else_value: ValueIr, else_block: BasicBlock) -> ValueIr {
+    pub fn create_value_phi(&self, then_value: ValueIr, then_block: BasicBlock, else_value: ValueIr, else_block: BasicBlock) -> ValueIr {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
         value_ir! {
-            bridge::compiler_peer_create_any_ternary(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+            bridge::compiler_peer_create_value_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
         }
     }
 
@@ -567,15 +556,21 @@ impl Compiler {
 
     // argv
 
-    pub fn create_argv(&self, argc: u16) -> ValueIr {
+    pub fn get_argv_nullptr(&self) -> ArgvIr {
+        argv_ir! {
+            bridge::compiler_peer_get_argv_nullptr(self.0)
+        }
+    }
+
+    pub fn create_argv(&self, argc: u16) -> ArgvIr {
         debug_assert!(argc > 0);
-        value_ir! {
+        argv_ir! {
             bridge::compiler_peer_create_argv(self.0, argc)
         }
     }
 
-    pub fn create_get_arg_in_argv(&self, argv: ValueIr, index: u16) -> ValueIr {
-        debug_assert_ne!(argv, ValueIr::NONE);
+    pub fn create_get_arg_in_argv(&self, argv: ArgvIr, index: u16) -> ValueIr {
+        debug_assert_ne!(argv, ArgvIr::NONE);
         value_ir! {
             bridge::compiler_peer_create_get_arg_in_argv(self.0, argv.0, index)
         }
@@ -850,6 +845,17 @@ impl ValueIr {
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
             bridge::helper_peer_get_value_name_or_as_operand(self.0, buf, len);
+            std::ffi::CStr::from_ptr(buf)
+        }
+    }
+}
+
+impl ArgvIr {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
             std::ffi::CStr::from_ptr(buf)
         }
     }

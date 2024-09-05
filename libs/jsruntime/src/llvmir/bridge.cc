@@ -19,6 +19,7 @@
 #define PEER_NUMBER(value) (reinterpret_cast<NumberIr*>(value))
 #define PEER_CLOSURE(value) (reinterpret_cast<ClosureIr*>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr*>(value))
+#define PEER_ARGV(value) (reinterpret_cast<ArgvIr*>(value))
 #define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
 
 void llvmir_initialize() {
@@ -176,14 +177,6 @@ NumberIr* compiler_peer_create_bitwise_or(Compiler* self, NumberIr* lhs, NumberI
   return PEER_NUMBER(self->CreateBitwiseOr(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-NumberIr* compiler_peer_create_incr(Compiler* self, NumberIr* value) {
-  return PEER_NUMBER(self->CreateIncr(LLVM_VALUE(value)));
-}
-
-NumberIr* compiler_peer_create_decr(Compiler* self, NumberIr* value) {
-  return PEER_NUMBER(self->CreateDecr(LLVM_VALUE(value)));
-}
-
 BooleanIr* compiler_peer_create_less_than(Compiler* self, NumberIr* lhs, NumberIr* rhs) {
   return PEER_BOOLEAN(self->CreateLessThan(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
@@ -200,8 +193,8 @@ BooleanIr* compiler_peer_create_greater_than_or_equal(Compiler* self, NumberIr* 
   return PEER_BOOLEAN(self->CreateGreaterThanOrEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-NumberIr* compiler_peer_create_number_ternary(Compiler* self, NumberIr* then_value, BasicBlock* then_block, NumberIr* else_value, BasicBlock* else_block) {
-  return PEER_NUMBER(self->CreateNumberTernary(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+NumberIr* compiler_peer_create_number_phi(Compiler* self, NumberIr* then_value, BasicBlock* then_block, NumberIr* else_value, BasicBlock* else_block) {
+  return PEER_NUMBER(self->CreateNumberPhi(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
 BooleanIr* compiler_peer_create_number_to_boolean(Compiler* self, NumberIr* value) {
@@ -226,7 +219,7 @@ void compiler_peer_create_store_capture_to_closure(Compiler* self, ValueIr* capt
   self->CreateStoreCapturePtrToClosure(LLVM_VALUE(capture), LLVM_VALUE(closure), index);
 }
 
-ValueIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ValueIr* argv, ValueIr* retv) {
+ValueIr* compiler_peer_create_call_on_closure(Compiler* self, ClosureIr* closure, uint16_t argc, ArgvIr* argv, ValueIr* retv) {
   return PEER_VALUE(self->CreateCallOnClosure(LLVM_VALUE(closure), argc, LLVM_VALUE(argv), LLVM_VALUE(retv)));
 }
 
@@ -312,12 +305,12 @@ BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, 
   return PEER_BOOLEAN(self->CreateIsStrictlyEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
-BooleanIr* compiler_peer_create_boolean_ternary(Compiler* self, BooleanIr* then_value, BasicBlock* then_block, BooleanIr* else_value, BasicBlock* else_block) {
-  return PEER_BOOLEAN(self->CreateBooleanTernary(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+BooleanIr* compiler_peer_create_boolean_phi(Compiler* self, BooleanIr* then_value, BasicBlock* then_block, BooleanIr* else_value, BasicBlock* else_block) {
+  return PEER_BOOLEAN(self->CreateBooleanPhi(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
-ValueIr* compiler_peer_create_any_ternary(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block) {
-  return PEER_VALUE(self->CreateAnyTernary(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+ValueIr* compiler_peer_create_value_phi(Compiler* self, ValueIr* then_value, BasicBlock* then_block, ValueIr* else_value, BasicBlock* else_block) {
+  return PEER_VALUE(self->CreateValuePhi(LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
 void compiler_peer_create_store_flags_to_variable(Compiler* self, uint8_t flags, ValueIr* variable) {
@@ -350,10 +343,6 @@ void compiler_peer_create_store_closure_to_variable(Compiler* self, ClosureIr* v
 
 void compiler_peer_create_store_value_to_variable(Compiler* self, ValueIr* value, ValueIr* variable) {
   self->CreateStoreValueToVariable(LLVM_VALUE(value), LLVM_VALUE(variable));
-}
-
-ValueIr* compiler_peer_get_nullptr(Compiler* self) {
-  return PEER_VALUE(self->GetNullptr());
 }
 
 void compiler_peer_create_cond_br(Compiler* self, BooleanIr* cond, BasicBlock* then_block, BasicBlock* else_block) {
@@ -416,16 +405,20 @@ ValueIr* compiler_peer_create_local_variable(Compiler* self, uint16_t index) {
 
 // argv
 
+ArgvIr* compiler_peer_get_argv_nullptr(Compiler* self) {
+  return PEER_ARGV(self->GetNullptr());
+}
+
+ArgvIr* compiler_peer_create_argv(Compiler* self, uint16_t argc) {
+  return PEER_ARGV(self->CreateArgv(argc));
+}
+
+ValueIr* compiler_peer_create_get_arg_in_argv(Compiler* self, ArgvIr* argv, uint16_t index) {
+  return PEER_VALUE(self->CreateGetArgInArgv(LLVM_VALUE(argv), index));
+}
+
 ValueIr* compiler_peer_create_get_argument_variable_ptr(Compiler* self, uint16_t index) {
   return PEER_VALUE(self->CreateGetArgumentVariablePtr(index));
-}
-
-ValueIr* compiler_peer_create_argv(Compiler* self, uint16_t argc) {
-  return PEER_VALUE(self->CreateArgv(argc));
-}
-
-ValueIr* compiler_peer_create_get_arg_in_argv(Compiler* self, ValueIr* argv, uint16_t index) {
-  return PEER_VALUE(self->CreateGetArgInArgv(LLVM_VALUE(argv), index));
 }
 
 // retv
