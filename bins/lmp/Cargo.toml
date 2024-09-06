@@ -6,7 +6,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-anyhow = "1.0.86"
+anyhow = "1.0.87"
 clap = { version = "4.5.17", features = ["env", "derive", "wrap_help"] }
 layout = { path = "../../libs/layout", features = ["service"] }
 serde_json = "1.0.128"
