@@ -1,26 +1,23 @@
-mod bridge;
-mod compiler;
-mod executor;
 mod function;
+mod llvmir;
 mod logger;
 mod semantics;
 
 use jsparser::SymbolRegistry;
 
-use bridge::ReturnValue;
-use bridge::Status;
-use executor::Executor;
 use function::FunctionId;
 use function::FunctionRegistry;
+use llvmir::Executor;
+use llvmir::ReturnValue;
+use llvmir::Status;
 
-pub use bridge::Value;
-pub use compiler::CompileError;
+pub use llvmir::CompileError;
+pub use llvmir::Module;
+pub use llvmir::Value;
 pub use semantics::Program;
 
 pub fn initialize() {
-    unsafe {
-        bridge::llvmir_initialize();
-    }
+    llvmir::initialize();
 }
 
 /// Runtime preferences.
@@ -61,7 +58,7 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let runtime_bridge = bridge::runtime_bridge::<X>();
+        let runtime_bridge = llvmir::runtime_bridge::<X>();
         Self {
             pref: Default::default(),
             symbol_registry: Default::default(),
@@ -136,26 +133,6 @@ where
 {
     fn default() -> Self {
         Runtime::with_extension(Default::default())
-    }
-}
-
-pub struct Module {
-    peer: *mut bridge::Module,
-}
-
-impl Module {
-    pub fn print(&self, stderr: bool) {
-        unsafe {
-            bridge::module_peer_print(self.peer, stderr);
-        }
-    }
-}
-
-impl Drop for Module {
-    fn drop(&mut self) {
-        unsafe {
-            bridge::module_peer_delete(self.peer);
-        }
     }
 }
 

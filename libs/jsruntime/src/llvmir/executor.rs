@@ -1,9 +1,10 @@
 use std::ffi::CStr;
 use std::ffi::CString;
 
-use crate::bridge;
 use crate::HostLambda;
-use crate::Module;
+
+use super::bridge;
+use super::Module;
 
 pub struct Executor {
     peer: *mut bridge::Executor,

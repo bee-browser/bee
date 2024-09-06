@@ -5,9 +5,9 @@ TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 CODEGEN_TARGETS := \
   runtime.hh \
-  llvmir/executor.codegen.cc \
-  llvmir/type_holder.cc \
-  llvmir/type_holder.hh
+  executor.codegen.cc \
+  type_holder.cc \
+  type_holder.hh
 
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)

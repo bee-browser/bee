@@ -36,7 +36,7 @@ functions:
   - name: create_capture
     args:
       - name: target
-        type: '&mut Variable'
+        type: '&mut Value'
     ret: '&mut Capture'
   - name: create_closure
     args:
