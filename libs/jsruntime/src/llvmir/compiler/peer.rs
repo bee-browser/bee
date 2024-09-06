@@ -6,7 +6,6 @@ use crate::Module;
 use super::bridge;
 use super::FunctionId;
 use super::ScopeRef;
-use super::Symbol;
 
 pub struct Compiler(*mut bridge::Compiler);
 
@@ -92,9 +91,7 @@ impl Compiler {
 
     pub fn end_compile(&self) -> Module {
         Module {
-            peer: unsafe {
-                bridge::compiler_peer_end(self.0)
-            },
+            peer: unsafe { bridge::compiler_peer_end(self.0) },
         }
     }
 
@@ -133,7 +130,11 @@ impl Compiler {
 
     pub fn get_function(&self, func_id: FunctionId, name: &CStr) -> LambdaIr {
         unsafe {
-            LambdaIr(bridge::compiler_peer_get_function(self.0, func_id.into(), name.as_ptr()))
+            LambdaIr(bridge::compiler_peer_get_function(
+                self.0,
+                func_id.into(),
+                name.as_ptr(),
+            ))
         }
     }
 
@@ -141,14 +142,14 @@ impl Compiler {
 
     pub fn create_basic_block(&self, name: *const std::ffi::c_char, name_len: usize) -> BasicBlock {
         unsafe {
-            BasicBlock(bridge::compiler_peer_create_basic_block(self.0, name, name_len))
+            BasicBlock(bridge::compiler_peer_create_basic_block(
+                self.0, name, name_len,
+            ))
         }
     }
 
     pub fn get_basic_block(&self) -> BasicBlock {
-        unsafe {
-            BasicBlock(bridge::compiler_peer_get_basic_block(self.0))
-        }
+        unsafe { BasicBlock(bridge::compiler_peer_get_basic_block(self.0)) }
     }
 
     pub fn set_basic_block(&self, block: BasicBlock) {
@@ -167,9 +168,7 @@ impl Compiler {
 
     pub fn is_basic_block_terminated(&self, block: BasicBlock) -> bool {
         debug_assert_ne!(block, BasicBlock::NONE);
-        unsafe {
-            bridge::compiler_peer_is_basic_block_terminated(self.0, block.0)
-        }
+        unsafe { bridge::compiler_peer_is_basic_block_terminated(self.0, block.0) }
     }
 
     // jump
@@ -189,7 +188,14 @@ impl Compiler {
         }
     }
 
-    pub fn handle_returned_thrown(&self, returned: bool, thrown: bool, block: BasicBlock, cleanup_block: BasicBlock, exception_block: BasicBlock) {
+    pub fn handle_returned_thrown(
+        &self,
+        returned: bool,
+        thrown: bool,
+        block: BasicBlock,
+        cleanup_block: BasicBlock,
+        exception_block: BasicBlock,
+    ) {
         debug_assert_ne!(block, BasicBlock::NONE);
         // cleanup_block may NONE.
         // exception_block may NONE.
@@ -267,7 +273,13 @@ impl Compiler {
         }
     }
 
-    pub fn create_boolean_phi(&self, then_value: BooleanIr, then_block: BasicBlock, else_value: BooleanIr, else_block: BasicBlock) -> BooleanIr {
+    pub fn create_boolean_phi(
+        &self,
+        then_value: BooleanIr,
+        then_block: BasicBlock,
+        else_value: BooleanIr,
+        else_block: BasicBlock,
+    ) -> BooleanIr {
         debug_assert_ne!(then_value, BooleanIr::NONE);
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_value, BooleanIr::NONE);
@@ -427,10 +439,22 @@ impl Compiler {
         }
     }
 
-    pub fn create_number_phi(&self, then_value: NumberIr, then_block: BasicBlock, else_value: NumberIr, else_block: BasicBlock) -> NumberIr {
+    pub fn create_number_phi(
+        &self,
+        then_value: NumberIr,
+        then_block: BasicBlock,
+        else_value: NumberIr,
+        else_block: BasicBlock,
+    ) -> NumberIr {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
-        logger::debug!(event = "create_number_phi", ?then_value, ?then_block, ?else_value, ?else_block);
+        logger::debug!(
+            event = "create_number_phi",
+            ?then_value,
+            ?then_block,
+            ?else_value,
+            ?else_block
+        );
         number_ir! {
             bridge::compiler_peer_create_number_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
         }
@@ -463,19 +487,38 @@ impl Compiler {
         }
     }
 
-    pub fn create_store_capture_to_closure(&self, capture: CaptureIr, closure: ClosureIr, index: u16) {
+    pub fn create_store_capture_to_closure(
+        &self,
+        capture: CaptureIr,
+        closure: ClosureIr,
+        index: u16,
+    ) {
         unsafe {
-            bridge::compiler_peer_create_store_capture_to_closure(self.0, capture.0, closure.0, index);
+            bridge::compiler_peer_create_store_capture_to_closure(
+                self.0, capture.0, closure.0, index,
+            );
         }
     }
 
-    pub fn create_call_on_closure(&self, closure: ClosureIr, argc: u16, argv: ArgvIr, retv: ValueIr) -> StatusIr {
+    pub fn create_call_on_closure(
+        &self,
+        closure: ClosureIr,
+        argc: u16,
+        argv: ArgvIr,
+        retv: ValueIr,
+    ) -> StatusIr {
         status_ir! {
             bridge::compiler_peer_create_call_on_closure(self.0, closure.0, argc, argv.0, retv.0)
         }
     }
 
-    pub fn create_closure_phi(&self, then_value: ClosureIr, then_block: BasicBlock, else_value: ClosureIr, else_block: BasicBlock) -> ClosureIr {
+    pub fn create_closure_phi(
+        &self,
+        then_value: ClosureIr,
+        then_block: BasicBlock,
+        else_value: ClosureIr,
+        else_block: BasicBlock,
+    ) -> ClosureIr {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
         closure_ir! {
@@ -497,21 +540,21 @@ impl Compiler {
         }
     }
 
-    pub fn create_is_same_boolean_value(&self, variable: ValueIr, value: BooleanIr) -> BooleanIr {
+    pub fn create_is_same_boolean_value(&self, any: ValueIr, boolean: BooleanIr) -> BooleanIr {
         boolean_ir! {
-            bridge::compiler_peer_create_is_same_boolean_value(self.0, variable.0, value.0)
+            bridge::compiler_peer_create_is_same_boolean_value(self.0, any.0, boolean.0)
         }
     }
 
-    pub fn create_is_same_number_value(&self, variable: ValueIr, value: NumberIr) -> BooleanIr {
+    pub fn create_is_same_number_value(&self, any: ValueIr, number: NumberIr) -> BooleanIr {
         boolean_ir! {
-            bridge::compiler_peer_create_is_same_number_value(self.0, variable.0, value.0)
+            bridge::compiler_peer_create_is_same_number_value(self.0, any.0, number.0)
         }
     }
 
-    pub fn create_is_same_closure_value(&self, variable: ValueIr, value: ClosureIr) -> BooleanIr {
+    pub fn create_is_same_closure_value(&self, any: ValueIr, closure: ClosureIr) -> BooleanIr {
         boolean_ir! {
-            bridge::compiler_peer_create_is_same_closure_value(self.0, variable.0, value.0)
+            bridge::compiler_peer_create_is_same_closure_value(self.0, any.0, closure.0)
         }
     }
 
@@ -548,7 +591,13 @@ impl Compiler {
         }
     }
 
-    pub fn create_value_phi(&self, then_value: ValueIr, then_block: BasicBlock, else_value: ValueIr, else_block: BasicBlock) -> ValueIr {
+    pub fn create_value_phi(
+        &self,
+        then_value: ValueIr,
+        then_block: BasicBlock,
+        else_value: ValueIr,
+        else_block: BasicBlock,
+    ) -> ValueIr {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
         value_ir! {
@@ -556,63 +605,55 @@ impl Compiler {
         }
     }
 
-    pub fn create_local_variable(&self, index: u16) -> ValueIr {
+    pub fn create_local_value(&self, index: u16) -> ValueIr {
         value_ir! {
-            bridge::compiler_peer_create_local_variable(self.0, index)
+            bridge::compiler_peer_create_local_value(self.0, index)
         }
     }
 
-    pub fn create_store_flags_to_variable(&self, flags: u8, variable: ValueIr) {
-        debug_assert_ne!(variable, ValueIr::NONE);
+    pub fn create_store_none_to_value(&self, dest: ValueIr) {
         unsafe {
-            bridge::compiler_peer_create_store_flags_to_variable(self.0, flags, variable.0)
+            bridge::compiler_peer_create_store_none_to_value(self.0, dest.0);
         }
     }
 
-    pub fn create_store_symbol_to_variable(&self, symbol: Symbol, variable: ValueIr) {
-        debug_assert_ne!(variable, ValueIr::NONE);
+    pub fn create_store_undefined_to_value(&self, dest: ValueIr) {
         unsafe {
-            bridge::compiler_peer_create_store_symbol_to_variable(self.0, symbol.id(), variable.0);
+            bridge::compiler_peer_create_store_undefined_to_value(self.0, dest.0);
         }
     }
 
-    pub fn create_store_undefined_to_variable(&self, variable: ValueIr) {
+    pub fn create_store_null_to_value(&self, dest: ValueIr) {
         unsafe {
-            bridge::compiler_peer_create_store_undefined_to_variable(self.0, variable.0);
+            bridge::compiler_peer_create_store_null_to_value(self.0, dest.0);
         }
     }
 
-    pub fn create_store_null_to_variable(&self, variable: ValueIr) {
-        unsafe {
-            bridge::compiler_peer_create_store_null_to_variable(self.0, variable.0);
-        }
-    }
-
-    pub fn create_store_boolean_to_variable(&self, value: BooleanIr, variable: ValueIr) {
+    pub fn create_store_boolean_to_value(&self, value: BooleanIr, dest: ValueIr) {
         debug_assert_ne!(value, BooleanIr::NONE);
         unsafe {
-            bridge::compiler_peer_create_store_boolean_to_variable(self.0, value.0, variable.0);
+            bridge::compiler_peer_create_store_boolean_to_value(self.0, value.0, dest.0);
         }
     }
 
-    pub fn create_store_number_to_variable(&self, value: NumberIr, variable: ValueIr) {
+    pub fn create_store_number_to_value(&self, value: NumberIr, dest: ValueIr) {
         debug_assert_ne!(value, NumberIr::NONE);
         unsafe {
-            bridge::compiler_peer_create_store_number_to_variable(self.0, value.0, variable.0);
+            bridge::compiler_peer_create_store_number_to_value(self.0, value.0, dest.0);
         }
     }
 
-    pub fn create_store_closure_to_variable(&self, value: ClosureIr, variable: ValueIr) {
+    pub fn create_store_closure_to_value(&self, value: ClosureIr, dest: ValueIr) {
         debug_assert_ne!(value, ClosureIr::NONE);
         unsafe {
-            bridge::compiler_peer_create_store_closure_to_variable(self.0, value.0, variable.0);
+            bridge::compiler_peer_create_store_closure_to_value(self.0, value.0, dest.0);
         }
     }
 
-    pub fn create_store_value_to_variable(&self, value: ValueIr, variable: ValueIr) {
+    pub fn create_store_value_to_value(&self, value: ValueIr, dest: ValueIr) {
         debug_assert_ne!(value, ValueIr::NONE);
         unsafe {
-            bridge::compiler_peer_create_store_value_to_variable(self.0, value.0, variable.0);
+            bridge::compiler_peer_create_store_value_to_value(self.0, value.0, dest.0);
         }
     }
 
@@ -638,15 +679,16 @@ impl Compiler {
     }
 
     pub fn create_get_arg_in_argv(&self, argv: ArgvIr, index: u16) -> ValueIr {
+        logger::debug!(event = "create_get_arg_in_argv", ?argv, index);
         debug_assert_ne!(argv, ArgvIr::NONE);
         value_ir! {
             bridge::compiler_peer_create_get_arg_in_argv(self.0, argv.0, index)
         }
     }
 
-    pub fn create_get_argument_variable_ptr(&self, index: u16) -> ValueIr {
+    pub fn create_get_argument_value_ptr(&self, index: u16) -> ValueIr {
         value_ir! {
-            bridge::compiler_peer_create_get_argument_variable_ptr(self.0, index)
+            bridge::compiler_peer_create_get_argument_value_ptr(self.0, index)
         }
     }
 
@@ -738,21 +780,21 @@ impl Compiler {
 
     // capture
 
-    pub fn create_capture(&self, variable: ValueIr) -> CaptureIr {
+    pub fn create_capture(&self, value: ValueIr) -> CaptureIr {
         capture_ir! {
-            bridge::compiler_peer_create_capture(self.0, variable.0)
+            bridge::compiler_peer_create_capture(self.0, value.0)
         }
     }
 
-    pub fn create_escape_variable(&self, capture: CaptureIr, variable: ValueIr) {
+    pub fn create_escape_value(&self, capture: CaptureIr, value: ValueIr) {
         unsafe {
-            bridge::compiler_peer_create_escape_variable(self.0, capture.0, variable.0);
+            bridge::compiler_peer_create_escape_value(self.0, capture.0, value.0);
         }
     }
 
-    pub fn create_get_capture_variable_ptr(&self, index: u16) -> ValueIr {
+    pub fn create_get_capture_value_ptr(&self, index: u16) -> ValueIr {
         value_ir! {
-            bridge::compiler_peer_create_get_capture_variable_ptr(self.0, index)
+            bridge::compiler_peer_create_get_capture_value_ptr(self.0, index)
         }
     }
 
@@ -814,7 +856,11 @@ impl LambdaIr {
 
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
-            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            bridge::helper_peer_get_value_name_or_as_operand(
+                self.0 as *mut bridge::ValueIr,
+                buf,
+                len,
+            );
             std::ffi::CStr::from_ptr(buf)
         }
     }
@@ -825,7 +871,11 @@ impl BooleanIr {
 
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
-            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            bridge::helper_peer_get_value_name_or_as_operand(
+                self.0 as *mut bridge::ValueIr,
+                buf,
+                len,
+            );
             std::ffi::CStr::from_ptr(buf)
         }
     }
@@ -836,7 +886,11 @@ impl NumberIr {
 
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
-            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            bridge::helper_peer_get_value_name_or_as_operand(
+                self.0 as *mut bridge::ValueIr,
+                buf,
+                len,
+            );
             std::ffi::CStr::from_ptr(buf)
         }
     }
@@ -847,7 +901,11 @@ impl ClosureIr {
 
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
-            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            bridge::helper_peer_get_value_name_or_as_operand(
+                self.0 as *mut bridge::ValueIr,
+                buf,
+                len,
+            );
             std::ffi::CStr::from_ptr(buf)
         }
     }
@@ -869,7 +927,11 @@ impl ArgvIr {
 
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
-            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            bridge::helper_peer_get_value_name_or_as_operand(
+                self.0 as *mut bridge::ValueIr,
+                buf,
+                len,
+            );
             std::ffi::CStr::from_ptr(buf)
         }
     }
@@ -878,7 +940,11 @@ impl ArgvIr {
 impl CaptureIr {
     pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
         unsafe {
-            bridge::helper_peer_get_value_name_or_as_operand(self.0 as *mut bridge::ValueIr, buf, len);
+            bridge::helper_peer_get_value_name_or_as_operand(
+                self.0 as *mut bridge::ValueIr,
+                buf,
+                len,
+            );
             std::ffi::CStr::from_ptr(buf)
         }
     }

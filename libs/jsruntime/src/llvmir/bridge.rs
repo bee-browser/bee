@@ -83,6 +83,7 @@ impl std::fmt::Debug for Value {
         // `unsafe` is needed for accessing the `holder` field.
         unsafe {
             match self.kind {
+                ValueKind_None => write!(f, "none"),
                 ValueKind_Undefined => write!(f, "undefined"),
                 ValueKind_Null => write!(f, "null"),
                 ValueKind_Boolean if self.holder.boolean => write!(f, "true"),
@@ -112,7 +113,7 @@ impl std::fmt::Debug for Value {
 
 impl Capture {
     fn is_escaped(&self) -> bool {
-        self.target as *const Variable == &self.escaped
+        self.target as *const Value == &self.escaped
     }
 }
 
@@ -313,10 +314,7 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
     }
 }
 
-unsafe extern "C" fn runtime_create_capture<X>(
-    context: usize,
-    target: *mut Variable,
-) -> *mut Capture {
+unsafe extern "C" fn runtime_create_capture<X>(context: usize, target: *mut Value) -> *mut Capture {
     const LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::size_of::<Capture>(),

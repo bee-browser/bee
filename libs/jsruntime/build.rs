@@ -9,7 +9,6 @@ static LLVMIR_SOURCE_FILES: &[&str] = &[
     "src/llvmir/bridge.hh",
     "src/llvmir/runtime.hh",
     "src/llvmir/bridge.cc",
-    "src/llvmir/compiler.cc",
     "src/llvmir/compiler.hh",
     "src/llvmir/executor.cc",
     "src/llvmir/executor.codegen.cc",

@@ -1689,7 +1689,6 @@ impl Locator {
         matches!(self, Self::Argument(_))
     }
 
-
     pub fn is_local(&self) -> bool {
         matches!(self, Self::Local(_))
     }
