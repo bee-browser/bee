@@ -333,6 +333,7 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::SetupScopeCleanupChecker(stack_size) => {
                 self.process_setup_scope_cleanup_checker(*stack_size)
             }
+            CompileCommand::PlaceHolder => unreachable!(),
         }
 
         if let Some(ref mut buf) = self.dump_buffer {

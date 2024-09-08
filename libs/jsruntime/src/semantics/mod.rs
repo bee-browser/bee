@@ -771,49 +771,31 @@ impl<'r> Analyzer<'r> {
 
         // Register `undefined`.
         let symbol = Symbol::UNDEFINED;
-        // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+        context.put_reference(symbol, self.scope_tree_builder.current());
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_immutable(symbol, context.num_locals);
-        context.references.push(Reference {
-            symbol,
-            scope_ref: self.scope_tree_builder.current(),
-            from: ReferenceFrom::Command(command_index),
-        });
         context.num_locals += 1;
 
         // Register `Infinity`.
         let symbol = Symbol::INFINITY;
-        // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+        context.put_reference(symbol, self.scope_tree_builder.current());
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_immutable(symbol, context.num_locals);
-        context.references.push(Reference {
-            symbol,
-            scope_ref: self.scope_tree_builder.current(),
-            from: ReferenceFrom::Command(command_index),
-        });
         context.num_locals += 1;
 
         // Register `NaN`.
         let symbol = Symbol::NAN;
-        // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+        context.put_reference(symbol, self.scope_tree_builder.current());
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_immutable(symbol, context.num_locals);
-        context.references.push(Reference {
-            symbol,
-            scope_ref: self.scope_tree_builder.current(),
-            from: ReferenceFrom::Command(command_index),
-        });
         context.num_locals += 1;
     }
 
@@ -823,16 +805,10 @@ impl<'r> Analyzer<'r> {
 
         for (func_id, host_func) in self.function_registry.enumerate_host_function() {
             let symbol = self.symbol_registry.intern_cstr(&host_func.name);
-            // The locator will be computed in `resolve_references()`.
-            let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+            context.put_reference(symbol, self.scope_tree_builder.current());
             context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
             self.scope_tree_builder
                 .add_immutable(symbol, context.num_locals);
-            context.references.push(Reference {
-                symbol,
-                scope_ref: self.scope_tree_builder.current(),
-                from: ReferenceFrom::Command(command_index),
-            });
             context.num_locals += 1;
         }
     }
@@ -1042,9 +1018,23 @@ impl FunctionContext {
         // TODO: type inference
     }
 
+    fn put_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
+        // The placeholder command will be replaced with a `CompileCommand::Reference` in
+        // `resolve_reference()`.
+        let command_index = self.put_command(CompileCommand::PlaceHolder);
+        self.references.push(Reference {
+            symbol,
+            scope_ref,
+            from: ReferenceFrom::Command(command_index),
+        });
+    }
+
     fn process_argument_list_head(&mut self, empty: bool, _spread: bool) {
         // TODO: spread
-        let index = self.put_command(CompileCommand::Nop);
+
+        // The placeholder command will be replaced with `CompileCommand::Arguments` in in
+        // `process_call_expression()`.
+        let index = self.put_command(CompileCommand::PlaceHolder);
         let nargs = if empty {
             0
         } else {
@@ -1059,11 +1049,12 @@ impl FunctionContext {
         // TODO: spread
         let tuple = self.nargs_stack.last_mut().unwrap();
         self.commands.push(CompileCommand::Argument(tuple.1));
-        self.nargs_stack.last_mut().unwrap().1 += 1;
+        tuple.1 += 1;
     }
 
     fn process_call_expression(&mut self) {
         let (index, nargs) = self.nargs_stack.pop().unwrap();
+        debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
         self.commands[index] = CompileCommand::Arguments(nargs);
         self.commands.push(CompileCommand::Call(nargs));
     }
@@ -1073,31 +1064,21 @@ impl FunctionContext {
             // Set undefined as the initial value.
             self.commands.push(CompileCommand::Undefined);
         }
-        // The command will be set later.
-        let command_index = self.put_command(CompileCommand::Nop);
+        // We put a placeholder command here because we don't know whether this binding is mutable
+        // or not at this point.  The placeholder command will be replaced in
+        // `process_mutable_bindings()` or `process_immutable_bindings()`.
+        let command_index = self.put_command(CompileCommand::PlaceHolder);
         self.pending_lexical_bindings.push(command_index);
         // TODO: type info
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
-        // The locator will be updated later.
-        let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-        self.references.push(Reference {
-            symbol,
-            scope_ref,
-            from: ReferenceFrom::Command(command_index),
-        });
+        self.put_reference(symbol, scope_ref)
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
         if self.in_body {
-            // The locator will be updated later.
-            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-            self.references.push(Reference {
-                symbol,
-                scope_ref: builder.current(),
-                from: ReferenceFrom::Command(command_index),
-            });
+            self.put_reference(symbol, builder.current());
             // The BindingKind may change later by `builder.set_immutable()`.
             builder.add_mutable(symbol, self.num_locals);
             self.num_locals += 1;
@@ -1138,7 +1119,7 @@ impl FunctionContext {
     fn process_mutable_bindings(&mut self, n: u32) {
         debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
         for i in self.pending_lexical_bindings.iter().cloned() {
-            debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
+            debug_assert!(matches!(self.commands[i], CompileCommand::PlaceHolder));
             self.commands[i] = CompileCommand::MutableBinding;
         }
         self.pending_lexical_bindings.clear();
@@ -1147,7 +1128,7 @@ impl FunctionContext {
     fn process_immutable_bindings(&mut self, n: u32) {
         debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
         for i in self.pending_lexical_bindings.iter().cloned() {
-            debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
+            debug_assert!(matches!(self.commands[i], CompileCommand::PlaceHolder));
             self.commands[i] = CompileCommand::ImmutableBinding;
         }
         self.pending_lexical_bindings.clear();
@@ -1161,12 +1142,7 @@ impl FunctionContext {
     ) {
         for capture in captures.iter().rev() {
             // `capture.target` has not been resolved at this point...
-            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-            self.references.push(Reference {
-                symbol: capture.symbol,
-                scope_ref,
-                from: ReferenceFrom::Command(command_index),
-            });
+            self.put_reference(capture.symbol, scope_ref);
             self.commands.push(CompileCommand::CaptureVariable(true));
         }
         self.commands.push(CompileCommand::Function(func_id));
@@ -1188,12 +1164,7 @@ impl FunctionContext {
         }
         for capture in captures.iter().rev() {
             // `capture.target` has not been resolved at this point...
-            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-            self.references.push(Reference {
-                symbol: capture.symbol,
-                scope_ref,
-                from: ReferenceFrom::Command(command_index),
-            });
+            self.put_reference(capture.symbol, scope_ref);
             self.commands.push(CompileCommand::CaptureVariable(false));
         }
         self.commands.push(CompileCommand::Function(func_id));
@@ -1204,9 +1175,9 @@ impl FunctionContext {
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
         self.start_scope(scope_ref);
 
-        // Push `Nop` as a placeholder.
-        // It will be replaced with an appropriate command in process_loop_end().
-        let start_index = self.put_command(CompileCommand::Nop);
+        // The placeholder command will be replaced with an appropriate command in
+        // `process_loop_end()`.
+        let start_index = self.put_command(CompileCommand::PlaceHolder);
         self.loop_stack.push(LoopContext { start_index });
     }
 
@@ -1235,6 +1206,7 @@ impl FunctionContext {
     fn process_loop_end(&mut self, command: CompileCommand) {
         self.put_command(CompileCommand::LoopEnd);
         let LoopContext { start_index } = self.loop_stack.pop().unwrap();
+        debug_assert!(matches!(self.commands[start_index], CompileCommand::PlaceHolder));
         self.commands[start_index] = command;
 
         self.end_scope();
@@ -1262,7 +1234,8 @@ impl FunctionContext {
         // Step#3..7 in 14.12.4 Runtime Semantics: Evaluation
         self.start_scope(scope_ref);
 
-        let case_block_index = self.put_command(CompileCommand::Nop);
+        // The placeholder command will be replaced in `process_switch_statement()`.
+        let case_block_index = self.put_command(CompileCommand::PlaceHolder);
         self.switch_stack.push(SwitchContext {
             case_block_index,
             ..Default::default()
@@ -1293,19 +1266,19 @@ impl FunctionContext {
     }
 
     fn process_switch_statement(&mut self) {
-        let context = self.switch_stack.pop().unwrap();
+        let SwitchContext { case_block_index, default_index, num_cases } = self.switch_stack.pop().unwrap();
 
         let id = self.num_switch_statements;
-        let n = context.num_cases;
 
-        if n == 0 {
+        debug_assert!(matches!(self.commands[case_block_index], CompileCommand::PlaceHolder));
+        if num_cases == 0 {
             // empty case block
             // Discard the `switchValue`.
-            self.commands[context.case_block_index] = CompileCommand::Discard;
+            self.commands[case_block_index] = CompileCommand::Discard;
         } else {
-            self.commands[context.case_block_index] = CompileCommand::CaseBlock(id, n);
-            let i = context.default_index;
-            self.put_command(CompileCommand::Switch(id, n, i));
+            self.commands[case_block_index] = CompileCommand::CaseBlock(id, num_cases);
+            let i = default_index;
+            self.put_command(CompileCommand::Switch(id, num_cases, i));
             self.num_switch_statements += 1;
         }
 
@@ -1314,10 +1287,9 @@ impl FunctionContext {
     }
 
     fn process_label(&mut self, symbol: Symbol) {
-        // Push `Nop` as a placeholder.
-        // It will be replaced with `CompileCommand::LabelStart(..)` in
+        // The placeholder command will be replaced with `CompileCommand::LabelStart` in
         // `process_labelled_statement()`.
-        let start_index = self.put_command(CompileCommand::Nop);
+        let start_index = self.put_command(CompileCommand::PlaceHolder);
         self.label_stack.push(LabelContext {
             start_index,
             symbol,
@@ -1327,6 +1299,7 @@ impl FunctionContext {
     fn process_labelled_statement(&mut self, symbol: Symbol, is_iteration_statement: bool) {
         let label = self.label_stack.pop().unwrap();
         debug_assert_eq!(label.symbol, symbol);
+        debug_assert!(matches!(self.commands[label.start_index], CompileCommand::PlaceHolder));
         self.commands[label.start_index] =
             CompileCommand::LabelStart(symbol, is_iteration_statement);
         self.put_command(CompileCommand::LabelEnd(symbol, is_iteration_statement));
@@ -1572,10 +1545,10 @@ pub enum CompileCommand {
     Duplicate(u8), // 0 or 1
 
     SetupScopeCleanupChecker(u16),
-}
 
-impl CompileCommand {
-    const REFERENCE_PLACEHOLDER: Self = Self::Reference(Symbol::NONE, Locator::None);
+    // A special command used as a placeholder in a command list, which will be replaced actual
+    // command later.  The final command list must not contain placeholder commands.
+    PlaceHolder,
 }
 
 impl From<UpdateOperator> for CompileCommand {
