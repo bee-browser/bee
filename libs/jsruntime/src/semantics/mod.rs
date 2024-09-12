@@ -60,6 +60,7 @@ impl Program {
 }
 
 /// A type representing a JavaScript function after the semantic analysis.
+#[derive(Default)]
 pub struct FunctionRecipe {
     /// TODO: remove?
     pub symbol: Symbol,
@@ -133,24 +134,13 @@ impl<'r> Analyzer<'r> {
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
     ) -> Self {
-        let id = function_registry.create_native_function();
+        let _ = function_registry.create_native_function();
         Self {
             runtime_pref,
             symbol_registry,
             function_registry,
-            context_stack: vec![FunctionContext {
-                // `commands[0]` will be replaced with `AllocateLocals` in `accept()` if the
-                // function has local variables.
-                commands: vec![CompileCommand::Nop],
-                in_body: true,
-                ..Default::default()
-            }],
-            functions: vec![FunctionRecipe {
-                symbol: Symbol::NONE,
-                id,
-                commands: vec![],
-                captures: vec![],
-            }],
+            context_stack: vec![],
+            functions: vec![],
             scope_tree_builder: Default::default(),
             use_global_bindings: false,
         }
@@ -533,7 +523,7 @@ impl<'r> Analyzer<'r> {
         // TODO
     }
 
-    fn handle_function_declaration(&mut self) {
+    fn end_function_scope(&mut self) -> usize {
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope();
 
@@ -555,6 +545,13 @@ impl<'r> Analyzer<'r> {
         func.commands = context.commands;
         func.captures = context.captures.into_values().collect();
 
+        func_index
+    }
+
+    fn handle_function_declaration(&mut self) {
+        let func_index = self.end_function_scope();
+        let func = &self.functions[func_index];
+
         self.context_stack
             .last_mut()
             .unwrap()
@@ -565,22 +562,9 @@ impl<'r> Analyzer<'r> {
             );
     }
 
-    // TODO: reduce code clone took from handle_function_declaration().
     fn handle_function_expression(&mut self, named: bool) {
-        let mut context = self.context_stack.pop().unwrap();
-        context.end_scope();
-
-        self.scope_tree_builder.pop();
-        self.resolve_references(&mut context);
-
-        if context.num_locals > 0 {
-            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
-        }
-
-        let func_index = context.func_index;
-        let func = &mut self.functions[func_index];
-        func.commands = context.commands;
-        func.captures = context.captures.into_values().collect();
+        let func_index = self.end_function_scope();
+        let func = &self.functions[func_index];
 
         self.context_stack
             .last_mut()
@@ -598,20 +582,8 @@ impl<'r> Analyzer<'r> {
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a binding in a lexically enclosing environment.
 
-        let mut context = self.context_stack.pop().unwrap();
-        context.end_scope();
-
-        self.scope_tree_builder.pop();
-        self.resolve_references(&mut context);
-
-        if context.num_locals > 0 {
-            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
-        }
-
-        let func_index = context.func_index;
-        let func = &mut self.functions[func_index];
-        func.commands = context.commands;
-        func.captures = context.captures.into_values().collect();
+        let func_index = self.end_function_scope();
+        let func = &self.functions[func_index];
 
         self.context_stack
             .last_mut()
@@ -722,7 +694,7 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
     }
 
-    fn handle_function_context(&mut self) {
+    fn start_function_scope(&mut self, in_body: bool) {
         let scope_ref = self.scope_tree_builder.push_function();
 
         // TODO: the compilation should fail if the following condition is unmet.
@@ -731,11 +703,12 @@ impl<'r> Analyzer<'r> {
         let mut context = FunctionContext {
             func_index,
             scope_ref,
-            // `commands[0]` will be replaced with `AllocateLocals` if the function has local
-            // variables.
-            commands: vec![CompileCommand::Nop],
+            in_body,
             ..Default::default()
         };
+        // `commands[0]` will be replaced with `AllocateLocals` if the function has local
+        // variables.
+        context.commands.push(CompileCommand::Nop);
         if self.runtime_pref.enable_scope_cleanup_checker {
             // Put a placeholder command which will be replaced with `SetupScopeCleanupChecker`.
             let index = context.put_command(CompileCommand::Nop);
@@ -744,12 +717,11 @@ impl<'r> Analyzer<'r> {
         context.start_scope(scope_ref);
         self.context_stack.push(context);
         // Push a placeholder data which will be filled later.
-        self.functions.push(FunctionRecipe {
-            symbol: Symbol::NONE,
-            id: FunctionId::MAIN,
-            commands: vec![],
-            captures: Default::default(),
-        });
+        self.functions.push(Default::default());
+    }
+
+    fn handle_function_context(&mut self) {
+        self.start_function_scope(false);
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
@@ -880,11 +852,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
     fn start(&mut self) {
         logger::debug!(event = "start");
-        let scope_ref = self.scope_tree_builder.push_function();
-
-        let context = self.context_stack.last_mut().unwrap();
-        context.scope_ref = scope_ref;
-        context.start_scope(scope_ref);
+        self.start_function_scope(true);
 
         if self.use_global_bindings {
             self.put_global_bindings();
@@ -905,6 +873,12 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
         if context.num_locals > 0 {
             context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
+
+        if self.runtime_pref.enable_scope_cleanup_checker {
+            let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
+            debug_assert!(stack_size > 0);
+            context.commands[1] = CompileCommand::PrepareScopeCleanupChecker(stack_size);
         }
 
         self.functions[context.func_index].commands = context.commands;
@@ -1731,6 +1705,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(4),
+                    CompileCommand::PrepareScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -1757,6 +1732,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(4),
+                    CompileCommand::PrepareScopeCleanupChecker(2),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,

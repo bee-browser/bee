@@ -1,7 +1,7 @@
 use std::ffi::CString;
 
 /// The identifier of a function.
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Default, Eq, PartialEq)]
 pub struct FunctionId(u32);
 
 impl FunctionId {
