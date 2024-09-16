@@ -176,7 +176,7 @@ impl<'r> Analyzer<'r> {
             Node::CallExpression => self.handle_call_expression(),
             Node::UpdateExpression(op) => self.handle_operator(op.into()),
             Node::UnaryExpression(op) => self.handle_operator(op.into()),
-            Node::BinaryExpression(op) => self.handle_binary_expression(op.into()),
+            Node::BinaryExpression(op) => self.handle_binary_expression(op),
             Node::LogicalExpression(_op) => self.handle_conditional_expression(),
             Node::ConditionalExpression => self.handle_conditional_expression(),
             Node::AssignmentExpression(AssignmentOperator::Assignment) => {
@@ -762,10 +762,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn put_command(&mut self, command: CompileCommand) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(command);
+        self.context_stack.last_mut().unwrap().put_command(command);
     }
 
     // TODO: global object
@@ -1571,7 +1568,7 @@ pub enum CompileCommand {
 
     Discard,
     Swap,
-    Duplicate(u8),  // 0 or 1
+    Duplicate(u8), // 0 or 1
 
     PrepareScopeCleanupChecker(u16),
 }
