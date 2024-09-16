@@ -303,10 +303,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_operator(&mut self, op: CompileCommand) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(op);
+        self.put_command(op);
     }
 
     fn handle_binary_expression(&mut self, op: BinaryOperator) {
@@ -331,10 +328,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_conditional_expression(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Ternary);
+        self.put_command(CompileCommand::Ternary);
     }
 
     fn handle_conditional_assignment(&mut self) {
@@ -370,24 +364,15 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_expression_statement(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Discard);
+        self.put_command(CompileCommand::Discard);
     }
 
     fn handle_if_else_statement(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::IfElseStatement);
+        self.put_command(CompileCommand::IfElseStatement);
     }
 
     fn handle_if_statement(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::IfStatement);
+        self.put_command(CompileCommand::IfStatement);
     }
 
     fn handle_do_while_statement(&mut self) {
@@ -418,24 +403,15 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_continue_statement(&mut self, symbol: Symbol) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Continue(symbol));
+        self.put_command(CompileCommand::Continue(symbol));
     }
 
     fn handle_break_statement(&mut self, symbol: Symbol) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Break(symbol));
+        self.put_command(CompileCommand::Break(symbol));
     }
 
     fn handle_return_statement(&mut self, n: u32) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Return(n));
+        self.put_command(CompileCommand::Return(n));
     }
 
     fn handle_switch_statement(&mut self) {
@@ -655,52 +631,37 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_else_block(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Else);
+        self.put_command(CompileCommand::Else);
     }
 
     fn handle_falsy_short_circuit(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::FalsyShortCircuit);
+        self.put_command(CompileCommand::FalsyShortCircuit);
     }
 
     fn handle_truthy_short_circuit(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::TruthyShortCircuit);
+        self.put_command(CompileCommand::TruthyShortCircuit);
     }
 
     fn handle_nullish_short_circuit(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::NullishShortCircuit);
+        self.put_command(CompileCommand::NullishShortCircuit);
     }
 
     fn handle_falsy_short_circuit_assignment(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::FalsyShortCircuitAssignment);
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::Duplicate(0));
+        context.put_command(CompileCommand::FalsyShortCircuit);
     }
 
     fn handle_truthy_short_circuit_assignment(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::TruthyShortCircuitAssignment);
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::Duplicate(0));
+        context.put_command(CompileCommand::TruthyShortCircuit);
     }
 
     fn handle_nullish_short_circuit_assignment(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::NullishShortCircuitAssignment);
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::Duplicate(0));
+        context.put_command(CompileCommand::NullishShortCircuit);
     }
 
     fn handle_loop_start(&mut self) {
@@ -798,6 +759,13 @@ impl<'r> Analyzer<'r> {
         self.functions[func_index].symbol = symbol;
         self.functions[func_index].id = id;
         context.in_body = true;
+    }
+
+    fn put_command(&mut self, command: CompileCommand) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(command);
     }
 
     // TODO: global object
@@ -1562,9 +1530,6 @@ pub enum CompileCommand {
     FalsyShortCircuit,
     TruthyShortCircuit,
     NullishShortCircuit,
-    FalsyShortCircuitAssignment,
-    TruthyShortCircuitAssignment,
-    NullishShortCircuitAssignment,
 
     // conditional
     Truthy,

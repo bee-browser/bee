@@ -293,15 +293,6 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::FalsyShortCircuit => self.process_falsy_short_circuit(),
             CompileCommand::TruthyShortCircuit => self.process_truthy_short_circuit(),
             CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
-            CompileCommand::FalsyShortCircuitAssignment => {
-                self.process_falsy_short_circuit_assignment()
-            }
-            CompileCommand::TruthyShortCircuitAssignment => {
-                self.process_truthy_short_circuit_assignment()
-            }
-            CompileCommand::NullishShortCircuitAssignment => {
-                self.process_nullish_short_circuit_assignment()
-            }
             CompileCommand::Then => self.process_then(),
             CompileCommand::Else => self.process_else(),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
@@ -1525,49 +1516,6 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Any(value) => self.peer.create_is_non_nullish(value),
             _ => unreachable!(),
         }
-    }
-
-    fn process_falsy_short_circuit_assignment(&mut self) {
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.duplicate(0);
-        let (operand, _) = self.dereference();
-        let boolean = self.create_to_boolean(operand.clone());
-        let boolean = self.peer.create_logical_not(boolean);
-        self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
-        self.operand_stack.push(operand);
-        self.branch(); // else
-    }
-
-    fn process_truthy_short_circuit_assignment(&mut self) {
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.duplicate(0);
-        let (operand, _) = self.dereference();
-        let boolean = self.create_to_boolean(operand.clone());
-        self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
-        self.operand_stack.push(operand);
-        self.branch(); // else
-    }
-
-    fn process_nullish_short_circuit_assignment(&mut self) {
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.duplicate(0);
-        let (operand, _) = self.dereference();
-        let boolean = self.create_is_non_nullish(operand.clone());
-        self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
-        self.operand_stack.push(operand);
-        self.branch(); // else
     }
 
     fn process_then(&mut self) {
