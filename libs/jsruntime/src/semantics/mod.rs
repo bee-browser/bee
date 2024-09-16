@@ -288,7 +288,7 @@ impl<'r> Analyzer<'r> {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_arguments(empty, spread)
+            .process_argument_list_head(empty, spread)
     }
 
     fn handle_argument_list_item(&mut self, spread: bool) {
@@ -1042,12 +1042,13 @@ impl FunctionContext {
         // TODO: type inference
     }
 
-    fn put_arguments(&mut self, empty: bool, _spread: bool) {
+    fn process_argument_list_head(&mut self, empty: bool, _spread: bool) {
         // TODO: spread
         let index = self.put_command(CompileCommand::Nop);
         let nargs = if empty {
             0
         } else {
+            self.commands.push(CompileCommand::Swap);
             self.commands.push(CompileCommand::Argument(0));
             1
         };

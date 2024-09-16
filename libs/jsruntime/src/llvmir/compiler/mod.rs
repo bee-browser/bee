@@ -547,7 +547,6 @@ impl<'r, 's> Compiler<'r, 's> {
         if nargs > 0 {
             let argv = self.peer.create_argv(nargs);
             self.operand_stack.push(Operand::Argv(argv));
-            self.swap();
         }
     }
 
