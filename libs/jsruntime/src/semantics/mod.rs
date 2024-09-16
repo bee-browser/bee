@@ -174,11 +174,14 @@ impl<'r> Analyzer<'r> {
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
             Node::Arguments => (), // nop
             Node::CallExpression => self.handle_call_expression(),
-            Node::UpdateExpression(op) => self.handle_operator(op),
-            Node::UnaryExpression(op) => self.handle_operator(op),
-            Node::BinaryExpression(op) => self.handle_operator(op),
+            Node::UpdateExpression(op) => self.handle_operator(op.into()),
+            Node::UnaryExpression(op) => self.handle_operator(op.into()),
+            Node::BinaryExpression(op) => self.handle_binary_expression(op),
             Node::LogicalExpression(_op) => self.handle_conditional_expression(),
             Node::ConditionalExpression => self.handle_conditional_expression(),
+            Node::AssignmentExpression(AssignmentOperator::Assignment) => {
+                self.handle_operator(CompileCommand::Assignment)
+            }
             Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => {
                 self.handle_conditional_assignment()
             }
@@ -188,7 +191,7 @@ impl<'r> Analyzer<'r> {
             Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => {
                 self.handle_conditional_assignment()
             }
-            Node::AssignmentExpression(op) => self.handle_operator(op),
+            Node::AssignmentExpression(op) => self.handle_shorthand_assignment_expression(op),
             Node::SequenceExpression => self.handle_sequence_expression(),
             Node::BlockStatement => (), // nop
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
@@ -299,14 +302,22 @@ impl<'r> Analyzer<'r> {
             .process_call_expression();
     }
 
-    fn handle_operator<T>(&mut self, op: T)
-    where
-        T: Into<CompileCommand>,
-    {
+    fn handle_operator(&mut self, op: CompileCommand) {
+        self.put_command(op);
+    }
+
+    fn handle_binary_expression(&mut self, op: BinaryOperator) {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_command(op.into());
+            .process_binary_expression(op);
+    }
+
+    fn handle_shorthand_assignment_expression(&mut self, op: AssignmentOperator) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_shorthand_assignment_expression(op);
     }
 
     fn handle_sequence_expression(&mut self) {
@@ -317,10 +328,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_conditional_expression(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Ternary);
+        self.put_command(CompileCommand::Ternary);
     }
 
     fn handle_conditional_assignment(&mut self) {
@@ -356,24 +364,15 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_expression_statement(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Discard);
+        self.put_command(CompileCommand::Discard);
     }
 
     fn handle_if_else_statement(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::IfElseStatement);
+        self.put_command(CompileCommand::IfElseStatement);
     }
 
     fn handle_if_statement(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::IfStatement);
+        self.put_command(CompileCommand::IfStatement);
     }
 
     fn handle_do_while_statement(&mut self) {
@@ -404,24 +403,15 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_continue_statement(&mut self, symbol: Symbol) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Continue(symbol));
+        self.put_command(CompileCommand::Continue(symbol));
     }
 
     fn handle_break_statement(&mut self, symbol: Symbol) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Break(symbol));
+        self.put_command(CompileCommand::Break(symbol));
     }
 
     fn handle_return_statement(&mut self, n: u32) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Return(n));
+        self.put_command(CompileCommand::Return(n));
     }
 
     fn handle_switch_statement(&mut self) {
@@ -641,52 +631,37 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_else_block(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Else);
+        self.put_command(CompileCommand::Else);
     }
 
     fn handle_falsy_short_circuit(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::FalsyShortCircuit);
+        self.put_command(CompileCommand::FalsyShortCircuit);
     }
 
     fn handle_truthy_short_circuit(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::TruthyShortCircuit);
+        self.put_command(CompileCommand::TruthyShortCircuit);
     }
 
     fn handle_nullish_short_circuit(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::NullishShortCircuit);
+        self.put_command(CompileCommand::NullishShortCircuit);
     }
 
     fn handle_falsy_short_circuit_assignment(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::FalsyShortCircuitAssignment);
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::Duplicate(0));
+        context.put_command(CompileCommand::FalsyShortCircuit);
     }
 
     fn handle_truthy_short_circuit_assignment(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::TruthyShortCircuitAssignment);
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::Duplicate(0));
+        context.put_command(CompileCommand::TruthyShortCircuit);
     }
 
     fn handle_nullish_short_circuit_assignment(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::NullishShortCircuitAssignment);
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::Duplicate(0));
+        context.put_command(CompileCommand::NullishShortCircuit);
     }
 
     fn handle_loop_start(&mut self) {
@@ -784,6 +759,10 @@ impl<'r> Analyzer<'r> {
         self.functions[func_index].symbol = symbol;
         self.functions[func_index].id = id;
         context.in_body = true;
+    }
+
+    fn put_command(&mut self, command: CompileCommand) {
+        self.context_stack.last_mut().unwrap().put_command(command);
     }
 
     // TODO: global object
@@ -1128,6 +1107,26 @@ impl FunctionContext {
             self.formal_parameters.push(symbol);
             builder.add_formal_parameter(symbol, i);
         }
+    }
+
+    fn process_binary_expression(&mut self, op: BinaryOperator) {
+        // When a compiler processes the following command, the RHS has been placed on the LHS on
+        // the stack of the compiler.  Swap them so that the LHS is evaluated before the RHS.
+        self.put_command(CompileCommand::Swap);
+        self.put_command(op.into());
+    }
+
+    // Every shorthand assignment operator except for short-circuit assignment operators are
+    // expanded to a simple binary operator and an assignment operator.
+    fn process_shorthand_assignment_expression(&mut self, op: AssignmentOperator) {
+        // When a compiler processes the following command, the RHS has been placed on the LHS on
+        // the stack of the compiler.  Duplicate the LHS and push it onto the stack.
+        self.put_command(CompileCommand::Duplicate(1));
+        // Now, the duplicate LHS has been placed on the RHS.  And the LHS will be evaluated before
+        // the RHS.  We don't need to put a CompileCommand::Swap command and just put the operator.
+        self.put_command(op.into());
+        // Finally, we put the assignment operator.
+        self.put_command(CompileCommand::Assignment);
     }
 
     fn process_sequence_expression(&mut self) {
@@ -1523,26 +1522,11 @@ pub enum CompileCommand {
 
     // assignment operators
     Assignment,
-    MultiplicationAssignment,
-    DivisionAssignment,
-    RemainderAssignment,
-    AdditionAssignment,
-    SubtractionAssignment,
-    LeftShiftAssignment,
-    SignedRightShiftAssignment,
-    UnsignedRightShiftAssignment,
-    BitwiseAndAssignment,
-    BitwiseXorAssignment,
-    BitwiseOrAssignment,
-    ExponentiationAssignment,
 
     // short-circuit
     FalsyShortCircuit,
     TruthyShortCircuit,
     NullishShortCircuit,
-    FalsyShortCircuitAssignment,
-    TruthyShortCircuitAssignment,
-    NullishShortCircuitAssignment,
 
     // conditional
     Truthy,
@@ -1584,6 +1568,7 @@ pub enum CompileCommand {
 
     Discard,
     Swap,
+    Duplicate(u8), // 0 or 1
 
     PrepareScopeCleanupChecker(u16),
 }
@@ -1646,22 +1631,22 @@ impl From<BinaryOperator> for CompileCommand {
     }
 }
 
+// Convert '=<binary-op>' into '<binary-op>'.
 impl From<AssignmentOperator> for CompileCommand {
     fn from(value: AssignmentOperator) -> Self {
         match value {
-            AssignmentOperator::Assignment => Self::Assignment,
-            AssignmentOperator::MultiplicationAssignment => Self::MultiplicationAssignment,
-            AssignmentOperator::DivisionAssignment => Self::DivisionAssignment,
-            AssignmentOperator::RemainderAssignment => Self::RemainderAssignment,
-            AssignmentOperator::AdditionAssignment => Self::AdditionAssignment,
-            AssignmentOperator::SubtractionAssignment => Self::SubtractionAssignment,
-            AssignmentOperator::LeftShiftAssignment => Self::LeftShiftAssignment,
-            AssignmentOperator::SignedRightShiftAssignment => Self::SignedRightShiftAssignment,
-            AssignmentOperator::UnsignedRightShiftAssignment => Self::UnsignedRightShiftAssignment,
-            AssignmentOperator::BitwiseAndAssignment => Self::BitwiseAndAssignment,
-            AssignmentOperator::BitwiseXorAssignment => Self::BitwiseXorAssignment,
-            AssignmentOperator::BitwiseOrAssignment => Self::BitwiseOrAssignment,
-            AssignmentOperator::ExponentiationAssignment => Self::ExponentiationAssignment,
+            AssignmentOperator::MultiplicationAssignment => Self::Multiplication,
+            AssignmentOperator::DivisionAssignment => Self::Division,
+            AssignmentOperator::RemainderAssignment => Self::Remainder,
+            AssignmentOperator::AdditionAssignment => Self::Addition,
+            AssignmentOperator::SubtractionAssignment => Self::Subtraction,
+            AssignmentOperator::LeftShiftAssignment => Self::LeftShift,
+            AssignmentOperator::SignedRightShiftAssignment => Self::SignedRightShift,
+            AssignmentOperator::UnsignedRightShiftAssignment => Self::UnsignedRightShift,
+            AssignmentOperator::BitwiseAndAssignment => Self::BitwiseAnd,
+            AssignmentOperator::BitwiseXorAssignment => Self::BitwiseXor,
+            AssignmentOperator::BitwiseOrAssignment => Self::BitwiseOr,
+            AssignmentOperator::ExponentiationAssignment => Self::Exponentiation,
             // There is no corresponding command for `&&=`, `||=` and `??=`.
             // These are converted into the corresponding conditional expression for short-circuit
             // evaluation of the LHS.
@@ -1815,6 +1800,48 @@ mod tests {
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
                     CompileCommand::PopScope(scope_ref!(3)),
+                    CompileCommand::PopScope(scope_ref!(1)),
+                ]
+            );
+        });
+    }
+
+    #[test]
+    fn test_binary_operator() {
+        test("1 + 2", |_reg, program| {
+            assert_eq!(
+                program.functions[0].commands,
+                [
+                    CompileCommand::Nop,
+                    CompileCommand::PushScope(scope_ref!(1)),
+                    CompileCommand::Number(1.0),
+                    CompileCommand::Number(2.0),
+                    CompileCommand::Swap,
+                    CompileCommand::Addition,
+                    CompileCommand::Discard,
+                    CompileCommand::PopScope(scope_ref!(1)),
+                ]
+            );
+        });
+    }
+
+    #[test]
+    fn test_shorthand_assignment_operator() {
+        test("let a = 1; a += 2", |reg, program| {
+            assert_eq!(
+                program.functions[0].commands,
+                [
+                    CompileCommand::AllocateLocals(1),
+                    CompileCommand::PushScope(scope_ref!(1)),
+                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
+                    CompileCommand::Number(1.0),
+                    CompileCommand::MutableBinding,
+                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
+                    CompileCommand::Number(2.0),
+                    CompileCommand::Duplicate(1),
+                    CompileCommand::Addition,
+                    CompileCommand::Assignment,
+                    CompileCommand::Discard,
                     CompileCommand::PopScope(scope_ref!(1)),
                 ]
             );

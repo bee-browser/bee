@@ -289,35 +289,10 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::BitwiseOr => self.process_bitwise_or(),
             CompileCommand::Ternary => self.process_ternary(),
             CompileCommand::Assignment => self.process_assignment(),
-            CompileCommand::ExponentiationAssignment => self.process_exponentiation_assignment(),
-            CompileCommand::MultiplicationAssignment => self.process_multiplication_assignment(),
-            CompileCommand::DivisionAssignment => self.process_division_assignment(),
-            CompileCommand::RemainderAssignment => self.process_remainder_assignment(),
-            CompileCommand::AdditionAssignment => self.process_addition_assignment(),
-            CompileCommand::SubtractionAssignment => self.process_subtraction_assignment(),
-            CompileCommand::LeftShiftAssignment => self.process_left_shift_assignment(),
-            CompileCommand::SignedRightShiftAssignment => {
-                self.process_signed_right_shift_assignment()
-            }
-            CompileCommand::UnsignedRightShiftAssignment => {
-                self.process_unsigned_right_shift_assignment()
-            }
-            CompileCommand::BitwiseAndAssignment => self.process_bitwise_and_assignment(),
-            CompileCommand::BitwiseXorAssignment => self.process_bitwise_xor_assignment(),
-            CompileCommand::BitwiseOrAssignment => self.process_bitwise_or_assignment(),
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::FalsyShortCircuit => self.process_falsy_short_circuit(),
             CompileCommand::TruthyShortCircuit => self.process_truthy_short_circuit(),
             CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
-            CompileCommand::FalsyShortCircuitAssignment => {
-                self.process_falsy_short_circuit_assignment()
-            }
-            CompileCommand::TruthyShortCircuitAssignment => {
-                self.process_truthy_short_circuit_assignment()
-            }
-            CompileCommand::NullishShortCircuitAssignment => {
-                self.process_nullish_short_circuit_assignment()
-            }
             CompileCommand::Then => self.process_then(),
             CompileCommand::Else => self.process_else(),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
@@ -354,6 +329,7 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Throw => self.process_throw(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
+            CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
             CompileCommand::PrepareScopeCleanupChecker(stack_size) => {
                 self.peer.process_prepare_scope_cleanup_checker(*stack_size)
             }
@@ -580,6 +556,13 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.operand_stack.len() > 1);
         let last_index = self.operand_stack.len() - 1;
         self.operand_stack.swap(last_index - 1, last_index);
+    }
+
+    fn duplicate(&mut self, offset: u8) {
+        logger::debug!(event = "duplicate", offset);
+        debug_assert!(self.operand_stack.len() > offset as usize);
+        let index = self.operand_stack.len() - 1 - offset as usize;
+        self.operand_stack.duplicate(index);
     }
 
     fn process_argument(&mut self, index: u16) {
@@ -962,8 +945,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_multiplication(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -976,8 +957,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_division(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -990,8 +969,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_remainder(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1004,8 +981,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.8.1.1 Runtime Semantics: Evaluation
     fn process_addition(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1018,8 +993,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.8.2.1 Runtime Semantics: Evaluation
     fn process_subtraction(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1033,8 +1006,6 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.9.1.1 Runtime Semantics: Evaluation
     fn process_left_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1050,8 +1021,6 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.9.2.1 Runtime Semantics: Evaluation
     fn process_signed_right_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1067,8 +1036,6 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.9.3.1 Runtime Semantics: Evaluation
     fn process_unsigned_right_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1083,8 +1050,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_less_than(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1097,8 +1062,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_greater_than(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1111,8 +1074,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_less_than_or_equal(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1125,8 +1086,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_greater_than_or_equal(&mut self) {
-        self.swap();
-
         let (lhs, _) = self.dereference();
         let lhs = self.to_numeric(lhs);
 
@@ -1150,8 +1109,6 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.11.1 Runtime Semantics: Evaluation
     fn process_equality(&mut self) {
         logger::debug!(event = "process_equality");
-
-        self.swap();
 
         // TODO: comparing the references improves the performance.
         let (lhs, _) = self.dereference();
@@ -1328,8 +1285,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.11.1 Runtime Semantics: Evaluation
     fn process_inequality(&mut self) {
-        self.swap();
-
         // TODO: comparing references improves the performance.
         let (lhs, _) = self.dereference();
         let (rhs, _) = self.dereference();
@@ -1341,8 +1296,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.11.1 Runtime Semantics: Evaluation
     fn process_strict_equality(&mut self) {
-        self.swap();
-
         // TODO: comparing references improves the performance.
         let (lhs, _) = self.dereference();
         let (rhs, _) = self.dereference();
@@ -1353,8 +1306,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     // 13.11.1 Runtime Semantics: Evaluation
     fn process_strict_inequality(&mut self) {
-        self.swap();
-
         // TODO: comparing references improves the performance.
         let (lhs, _) = self.dereference();
         let (rhs, _) = self.dereference();
@@ -1367,8 +1318,6 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_and(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        self.swap();
-
         let (lval, _) = self.dereference();
         let (rval, _) = self.dereference();
 
@@ -1384,8 +1333,6 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_xor(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        self.swap();
-
         let (lval, _) = self.dereference();
         let (rval, _) = self.dereference();
 
@@ -1401,8 +1348,6 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_or(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        self.swap();
-
         let (lval, _) = self.dereference();
         let (rval, _) = self.dereference();
 
@@ -1528,162 +1473,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(rhs);
     }
 
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_exponentiation_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_exponentiation();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_multiplication_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_multiplication();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_division_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_division();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_remainder_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_remainder();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_addition_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_addition();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_subtraction_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_subtraction();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_left_shift_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_left_shift();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_signed_right_shift_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_signed_right_shift();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_unsigned_right_shift_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_unsigned_right_shift();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_bitwise_and_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_bitwise_and();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_bitwise_xor_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_bitwise_xor();
-        self.process_assignment();
-    }
-
-    // 13.15.2 Runtime Semantics: Evaluation
-    fn process_bitwise_or_assignment(&mut self) {
-        let rhs = self.operand_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        self.operand_stack.push(rhs);
-        self.process_bitwise_or();
-        self.process_assignment();
-    }
-
     fn process_truthy(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand);
@@ -1727,49 +1516,6 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Any(value) => self.peer.create_is_non_nullish(value),
             _ => unreachable!(),
         }
-    }
-
-    fn process_falsy_short_circuit_assignment(&mut self) {
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        let (operand, _) = self.dereference();
-        let boolean = self.create_to_boolean(operand.clone());
-        let boolean = self.peer.create_logical_not(boolean);
-        self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
-        self.operand_stack.push(operand);
-        self.branch(); // else
-    }
-
-    fn process_truthy_short_circuit_assignment(&mut self) {
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        let (operand, _) = self.dereference();
-        let boolean = self.create_to_boolean(operand.clone());
-        self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
-        self.operand_stack.push(operand);
-        self.branch(); // else
-    }
-
-    fn process_nullish_short_circuit_assignment(&mut self) {
-        debug_assert!(matches!(
-            self.operand_stack.last(),
-            Some(Operand::Reference(..))
-        ));
-        self.operand_stack.duplicate();
-        let (operand, _) = self.dereference();
-        let boolean = self.create_is_non_nullish(operand.clone());
-        self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
-        self.operand_stack.push(operand);
-        self.branch(); // else
     }
 
     fn process_then(&mut self) {
@@ -2032,7 +1778,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (operand, _) = self.dereference();
         // TODO: item.SetLabel("switch-value");
         self.operand_stack.push(operand);
-        self.operand_stack.duplicate(); // Dup for test on CaseClause
+        self.duplicate(0); // Dup for test on CaseClause
 
         let start_block = self.create_basic_block("start");
         self.peer.create_br(start_block);
@@ -2058,7 +1804,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_cond_br(cond, then_block, else_block);
         self.peer.set_basic_block(else_block);
 
-        self.operand_stack.duplicate();
+        self.duplicate(0);
 
         self.control_flow_stack
             .push_case_banch_flow(end_block, then_block);
@@ -2073,7 +1819,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.set_basic_block(test_block);
 
-        self.operand_stack.duplicate();
+        self.duplicate(0);
 
         self.control_flow_stack
             .push_case_banch_flow(end_block, then_block);
@@ -2308,6 +2054,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.swap();
     }
 
+    fn process_duplicate(&mut self, offset: u8) {
+        self.duplicate(offset);
+    }
+
     fn create_basic_block(&mut self, name: &str) -> BasicBlock {
         push_bb_name!(self, name);
         let (name, name_len) = bb_name!(self);
@@ -2342,10 +2092,9 @@ impl OperandStack {
         Self(vec![])
     }
 
-    fn duplicate(&mut self) {
-        let last = self.0.pop().unwrap();
-        self.push(last.clone());
-        self.push(last);
+    fn duplicate(&mut self, index: usize) {
+        let dup = self.0[index].clone();
+        self.push(dup);
     }
 }
 
