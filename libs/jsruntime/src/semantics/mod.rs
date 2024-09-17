@@ -1763,6 +1763,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Nop,
+                    CompileCommand::PrepareScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
@@ -1782,6 +1783,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(1),
+                    CompileCommand::PrepareScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Number(1.0),
