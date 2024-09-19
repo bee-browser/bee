@@ -5,6 +5,7 @@
 /vendor/include
 /vendor/lib
 /vendor/share
+/vendor/**/compile_commands.json
 .DS_Store
 .env
 .envrc
