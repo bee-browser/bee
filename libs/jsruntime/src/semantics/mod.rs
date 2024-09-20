@@ -878,7 +878,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         if self.runtime_pref.enable_scope_cleanup_checker {
             let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
             debug_assert!(stack_size > 0);
-            context.commands[1] = CompileCommand::PrepareScopeCleanupChecker(stack_size);
+            context.commands[1] = CompileCommand::SetupScopeCleanupChecker(stack_size);
         }
 
         self.functions[context.func_index].commands = context.commands;
@@ -1705,7 +1705,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(4),
-                    CompileCommand::PrepareScopeCleanupChecker(1),
+                    CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -1732,7 +1732,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(4),
-                    CompileCommand::PrepareScopeCleanupChecker(2),
+                    CompileCommand::SetupScopeCleanupChecker(2),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -1763,7 +1763,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Nop,
-                    CompileCommand::PrepareScopeCleanupChecker(1),
+                    CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
@@ -1783,7 +1783,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(1),
-                    CompileCommand::PrepareScopeCleanupChecker(1),
+                    CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Number(1.0),
