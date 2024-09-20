@@ -275,9 +275,9 @@ ValueIr* compiler_peer_create_get_capture_value_ptr(Compiler* self, uint16_t ind
 CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
 // scope cleanup checker
-void compiler_peer_prepare_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
-void compiler_peer_start_scope_cleanup_checker(Compiler* self, uint16_t scope_id);
-void compiler_peer_end_scope_cleanup_checker(Compiler* self, uint16_t scope_id);
+void compiler_peer_setup_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
+void compiler_peer_perform_scope_cleanup_precheck(Compiler* self, uint16_t scope_id);
+void compiler_peer_perform_scope_cleanup_postcheck(Compiler* self, uint16_t scope_id);
 
 // Execution
 

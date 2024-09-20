@@ -547,7 +547,7 @@ impl<'r> Analyzer<'r> {
         if self.runtime_pref.enable_scope_cleanup_checker {
             let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
             debug_assert!(stack_size > 0);
-            context.commands[1] = CompileCommand::PrepareScopeCleanupChecker(stack_size);
+            context.commands[1] = CompileCommand::SetupScopeCleanupChecker(stack_size);
         }
 
         let func_index = context.func_index;
@@ -737,7 +737,7 @@ impl<'r> Analyzer<'r> {
             ..Default::default()
         };
         if self.runtime_pref.enable_scope_cleanup_checker {
-            // Put a placeholder command which will be replaced with `PrepareScopeCleanupChecker`.
+            // Put a placeholder command which will be replaced with `SetupScopeCleanupChecker`.
             let index = context.put_command(CompileCommand::Nop);
             debug_assert_eq!(index, 1);
         }
@@ -1571,7 +1571,7 @@ pub enum CompileCommand {
     Swap,
     Duplicate(u8), // 0 or 1
 
-    PrepareScopeCleanupChecker(u16),
+    SetupScopeCleanupChecker(u16),
 }
 
 impl CompileCommand {

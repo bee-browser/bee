@@ -330,8 +330,8 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
-            CompileCommand::PrepareScopeCleanupChecker(stack_size) => {
-                self.peer.process_prepare_scope_cleanup_checker(*stack_size)
+            CompileCommand::SetupScopeCleanupChecker(stack_size) => {
+                self.process_setup_scope_cleanup_checker(*stack_size)
             }
         }
 
@@ -688,8 +688,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(init_block);
         self.peer.set_basic_block(body_block);
 
-        self.peer.start_scope_cleanup_checker(scope_ref);
-
         let backup = self.peer.get_basic_block();
         self.peer.set_basic_block(init_block);
         let scope = self.scope_tree.scope(scope_ref);
@@ -713,25 +711,35 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(backup);
     }
 
-    fn escape_value(&mut self, locator: Locator) {
-        debug_assert!(!locator.is_capture());
-        debug_assert!(self.captures.contains_key(&locator));
-
-        let block = self.control_flow_stack.scope_flow().cleanup_block;
-
-        let backup = self.peer.get_basic_block();
-        self.peer.set_basic_block(block);
-
-        let capture = self.captures.swap_remove(&locator).unwrap();
-        let value = self.create_get_value_ptr(locator);
-        self.peer.create_escape_value(capture, value);
-
-        self.peer.set_basic_block(backup);
-    }
-
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
+        // Create additional blocks of the scope region before pop_bb_name!().
+        // Because these constitute the scope region.
+        let precheck_block = self.create_basic_block("precheck");
+        let postcheck_block = self.create_basic_block("postcheck");
+        let ctrl_block = self.create_basic_block("ctrl");
+        let exit_block = self.create_basic_block("exit");
+
+        let flow = self.control_flow_stack.pop_scope_flow();
+
+        self.peer.create_br(flow.cleanup_block);
+        self.peer.move_basic_block_after(flow.cleanup_block);
+
+        self.peer.set_basic_block(flow.init_block);
+        self.peer.create_br(precheck_block);
+        self.peer.move_basic_block_after(precheck_block);
+
+        self.peer.set_basic_block(precheck_block);
+        self.peer.perform_scope_cleanup_precheck(scope_ref);
+        self.peer.create_br(flow.hoisted_block);
+        self.peer.move_basic_block_after(flow.hoisted_block);
+
+        self.peer.set_basic_block(flow.hoisted_block);
+        self.peer.create_br(flow.body_block);
+        self.peer.move_basic_block_after(flow.body_block);
+
+        self.peer.set_basic_block(flow.cleanup_block);
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
             if binding.captured {
@@ -742,26 +750,15 @@ impl<'r, 's> Compiler<'r, 's> {
                 // TODO: GC
             }
         }
+        self.peer.create_br(postcheck_block);
+        self.peer.move_basic_block_after(postcheck_block);
 
-        pop_bb_name!(self);
+        self.peer.set_basic_block(postcheck_block);
+        self.peer.perform_scope_cleanup_postcheck(scope_ref);
+        self.peer.create_br(ctrl_block);
+        self.peer.move_basic_block_after(ctrl_block);
 
-        let flow = self.control_flow_stack.pop_scope_flow();
-
-        self.peer.create_br(flow.cleanup_block);
-        self.peer.move_basic_block_after(flow.cleanup_block);
-
-        self.peer.set_basic_block(flow.init_block);
-        self.peer.create_br(flow.hoisted_block);
-        self.peer.move_basic_block_after(flow.hoisted_block);
-
-        self.peer.set_basic_block(flow.hoisted_block);
-        self.peer.create_br(flow.body_block);
-        self.peer.move_basic_block_after(flow.body_block);
-
-        self.peer.set_basic_block(flow.cleanup_block);
-        self.peer.end_scope_cleanup_checker(scope_ref);
-
-        let block = self.create_basic_block("block");
+        self.peer.set_basic_block(ctrl_block);
 
         let cleanup_block = if flow.returned {
             self.control_flow_stack.cleanup_block()
@@ -776,13 +773,23 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.handle_returned_thrown(
             flow.returned,
             flow.thrown,
-            block,
+            exit_block,
             cleanup_block,
             exception_block,
         );
 
-        self.peer.move_basic_block_after(block);
-        self.peer.set_basic_block(block);
+        self.peer.move_basic_block_after(exit_block);
+        self.peer.set_basic_block(exit_block);
+
+        pop_bb_name!(self);
+    }
+
+    fn escape_value(&mut self, locator: Locator) {
+        debug_assert!(!locator.is_capture());
+        debug_assert!(self.captures.contains_key(&locator));
+        let capture = self.captures.swap_remove(&locator).unwrap();
+        let value = self.create_get_value_ptr(locator);
+        self.peer.create_escape_value(capture, value);
     }
 
     fn process_capture_value(&mut self, declaration: bool) {
@@ -2055,6 +2062,10 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_duplicate(&mut self, offset: u8) {
         self.duplicate(offset);
+    }
+
+    fn process_setup_scope_cleanup_checker(&mut self, stack_size: u16) {
+        self.peer.setup_scope_cleanup_checker(stack_size)
     }
 
     fn create_basic_block(&mut self, name: &str) -> BasicBlock {

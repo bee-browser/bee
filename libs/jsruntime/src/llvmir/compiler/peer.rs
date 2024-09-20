@@ -806,22 +806,22 @@ impl Compiler {
 
     // scope cleanup checker
 
-    pub fn process_prepare_scope_cleanup_checker(&self, stack_size: u16) {
+    pub fn setup_scope_cleanup_checker(&self, stack_size: u16) {
         debug_assert!(stack_size > 0);
         unsafe {
-            bridge::compiler_peer_prepare_scope_cleanup_checker(self.0, stack_size);
+            bridge::compiler_peer_setup_scope_cleanup_checker(self.0, stack_size);
         }
     }
 
-    pub fn start_scope_cleanup_checker(&self, scope_ref: ScopeRef) {
+    pub fn perform_scope_cleanup_precheck(&self, scope_ref: ScopeRef) {
         unsafe {
-            bridge::compiler_peer_start_scope_cleanup_checker(self.0, scope_ref.id());
+            bridge::compiler_peer_perform_scope_cleanup_precheck(self.0, scope_ref.id());
         }
     }
 
-    pub fn end_scope_cleanup_checker(&self, scope_ref: ScopeRef) {
+    pub fn perform_scope_cleanup_postcheck(&self, scope_ref: ScopeRef) {
         unsafe {
-            bridge::compiler_peer_end_scope_cleanup_checker(self.0, scope_ref.id());
+            bridge::compiler_peer_perform_scope_cleanup_postcheck(self.0, scope_ref.id());
         }
     }
 }

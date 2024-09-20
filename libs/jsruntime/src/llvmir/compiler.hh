@@ -691,7 +691,7 @@ class Compiler {
 
   // scope cleanup checker
 
-  void PrepareScopeCleanupChecker(uint32_t stack_size) {
+  void SetupScopeCleanupChecker(uint32_t stack_size) {
     scope_cleanup_stack_type_ = llvm::ArrayType::get(builder_->getInt16Ty(), stack_size);
     scope_cleanup_stack_ =
         CreateAllocN(builder_->getInt16Ty(), stack_size, REG_NAME("scope_cleanup_stack"));
@@ -701,7 +701,7 @@ class Compiler {
     scope_cleanup_stack_size_ = stack_size;
   }
 
-  void StartScopeCleanupChecker(uint16_t scope_id) {
+  void PerformScopeCleanupPrecheck(uint16_t scope_id) {
     if (IsScopeCleanupCheckerEnabled()) {
       // We assumed here that the control flow does not enter into a scope which is already
       // entered.  However, it may be better to check that explicitly here before pushing the scope
@@ -711,7 +711,7 @@ class Compiler {
     }
   }
 
-  void EndScopeCleanupChecker(uint16_t scope_id) {
+  void PerformScopeCleanupPostcheck(uint16_t scope_id) {
     if (IsScopeCleanupCheckerEnabled()) {
       CreateAssertScopeCleanupStackHasItem();
       auto* popped = CreatePopFromScopeCleanupStack();
