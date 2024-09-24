@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use rustc_hash::FxHashMap;
 
 use base::macros::debug_assert_ne;
 use jsparser::Symbol;
@@ -12,11 +12,24 @@ macro_rules! bb2cstr {
     };
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct ExitId(u8);
+
+impl ExitId {
+    pub fn depth(&self) -> u32 {
+        // See the definition of the flow selector in compiler.hh
+        (self.0 as u32) << 8
+    }
+}
+
 #[derive(Default)]
 pub struct ControlFlowStack {
     stack: Vec<ControlFlow>,
-    break_stack: Vec<BranchTarget>,
-    continue_stack: Vec<BranchTarget>,
+
+    // TODO: Currently, we use a separate stack for non-local exits.  However, we can probably
+    // reuse the control flow stack for this purpose with a small modification.
+    exit_stack: Vec<ExitTarget>,
+    exit_label_map: FxHashMap<Symbol, usize>,
 
     // The index of the top-most scope flow on the stack.
     // It's used for building the flow chain from the top-most to the bottom-most.
@@ -33,17 +46,7 @@ pub struct ControlFlowStack {
 
 impl ControlFlowStack {
     pub fn is_empty(&self) -> bool {
-        self.stack.is_empty() && self.break_stack.is_empty() && self.continue_stack.is_empty()
-    }
-
-    pub fn in_finally_block(&self) -> bool {
-        if self.exception_index == 0 {
-            return false;
-        }
-        match self.stack.last() {
-            Some(ControlFlow::Exception(flow)) => matches!(flow.state, ExceptionState::Finally),
-            _ => false,
-        }
+        self.stack.is_empty() && self.exit_stack.is_empty()
     }
 
     pub fn push_function_flow(
@@ -104,8 +107,6 @@ impl ControlFlowStack {
             body_block,
             cleanup_block,
             outer_index,
-            returned: false,
-            thrown: false,
         }));
     }
 
@@ -113,12 +114,6 @@ impl ControlFlowStack {
         match self.stack.pop() {
             Some(ControlFlow::Scope(flow)) => {
                 self.scope_index = flow.outer_index;
-                if flow.returned {
-                    self.propagate_returned();
-                }
-                if flow.thrown {
-                    self.propagate_thrown();
-                }
                 flow
             }
             _ => unreachable!(),
@@ -130,16 +125,6 @@ impl ControlFlowStack {
             .get(self.scope_index)
             .and_then(|flow| match flow {
                 ControlFlow::Scope(ref flow) => Some(flow),
-                _ => None,
-            })
-            .unwrap()
-    }
-
-    fn scope_flow_mut(&mut self) -> &mut ScopeFlow {
-        self.stack
-            .get_mut(self.scope_index)
-            .and_then(|flow| match flow {
-                ControlFlow::Scope(ref mut flow) => Some(flow),
                 _ => None,
             })
             .unwrap()
@@ -311,7 +296,6 @@ impl ControlFlowStack {
             end_block,
             outer_index,
             state: ExceptionState::Try,
-            thrown: false,
         }));
     }
 
@@ -324,10 +308,6 @@ impl ControlFlowStack {
 
                 // Any exception flow is enclosed by a scope flow.
                 debug_assert!(matches!(self.stack.last(), Some(ControlFlow::Scope(_))));
-
-                if flow.thrown {
-                    self.propagate_thrown();
-                }
 
                 flow
             }
@@ -355,24 +335,10 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn set_returned(&mut self) {
-        debug_assert!(self.scope_index > 0);
-        self.scope_flow_mut().returned = true;
-    }
-
-    pub fn set_thrown(&mut self) {
-        debug_assert!(self.scope_index > 0);
-        debug_assert!(self.scope_index > self.exception_index);
-        self.scope_flow_mut().thrown = true;
-    }
-
-    pub fn set_in_catch(&mut self, nominal: bool) {
+    pub fn set_in_catch(&mut self, _nominal: bool) {
         debug_assert!(matches!(self.stack.last(), Some(ControlFlow::Exception(_))));
         let flow = self.exception_flow_mut();
         flow.state = ExceptionState::Catch;
-        if !nominal {
-            flow.thrown = false;
-        }
     }
 
     pub fn set_in_finally(&mut self) {
@@ -386,39 +352,55 @@ impl ControlFlowStack {
         self.switch_flow_mut().default_block = block;
     }
 
-    pub fn push_break_target(&mut self, block: BasicBlock, symbol: Symbol) {
+    pub fn push_exit_target(&mut self, block: BasicBlock, breakable: bool) {
         debug_assert_ne!(block, BasicBlock::NONE);
-        self.break_stack.push(BranchTarget { block, symbol });
+        // TODO: should treat as a compilation error.
+        assert!(self.exit_stack.len() <= u8::MAX as usize);
+        self.exit_stack.push(ExitTarget { block, breakable });
     }
 
-    pub fn pop_break_target(&mut self) -> BranchTarget {
-        self.break_stack.pop().unwrap()
+    pub fn set_exit_label(&mut self, label: Symbol) {
+        debug_assert_ne!(label, Symbol::NONE);
+        debug_assert!(!self.exit_stack.is_empty());
+        let index = self.exit_stack.len() - 1;
+        self.exit_label_map.insert(label, index);
     }
 
-    pub fn push_continue_target(&mut self, block: BasicBlock, symbol: Symbol) {
-        self.continue_stack.push(BranchTarget { block, symbol });
+    pub fn pop_exit_target(&mut self) -> BasicBlock {
+        debug_assert!(!self.exit_stack.is_empty());
+        let index = self.exit_stack.len() - 1;
+        self.exit_label_map.retain(|_, v| *v != index); // TODO: inefficient...
+        self.exit_stack.pop().unwrap().block
     }
 
-    pub fn pop_continue_target(&mut self) -> BranchTarget {
-        self.continue_stack.pop().unwrap()
+    pub fn exit_id(&self) -> ExitId {
+        debug_assert!(!self.exit_stack.is_empty());
+        ExitId((self.exit_stack.len() - 1) as u8)
     }
 
-    pub fn set_continue_target(&mut self, block: BasicBlock) {
-        debug_assert_ne!(block, BasicBlock::NONE);
-        for target in self.continue_stack.iter_mut().rev() {
-            if target.symbol == Symbol::NONE {
-                debug_assert_ne!(target.block, BasicBlock::NONE);
-                return;
-            }
-            debug_assert_eq!(target.block, BasicBlock::NONE);
-            target.block = block;
+    pub fn exit_id_for_label(&self, label: Symbol) -> ExitId {
+        debug_assert!(!self.exit_stack.is_empty());
+        if label == Symbol::NONE {
+            self.exit_stack
+                .iter()
+                .enumerate()
+                .rev()
+                .find_map(|(index, target)| target.breakable.then_some(ExitId(index as u8)))
+                .unwrap()
+        } else {
+            ExitId(*self.exit_label_map.get(&label).unwrap() as u8)
         }
+    }
+
+    pub fn exit_block(&self) -> BasicBlock {
+        debug_assert!(!self.exit_stack.is_empty());
+        self.exit_stack.last().unwrap().block
     }
 
     pub fn clear(&mut self) {
         self.stack.clear();
-        self.break_stack.clear();
-        self.continue_stack.clear();
+        self.exit_stack.clear();
+        self.exit_label_map.clear();
         self.scope_index = 0;
         self.switch_index = 0;
         self.exception_index = 0;
@@ -445,12 +427,6 @@ impl ControlFlowStack {
                 }
                 ControlFlow::Scope(flow) => {
                     eprint!("scope:");
-                    if flow.returned {
-                        eprint!(" returned");
-                    }
-                    if flow.thrown {
-                        eprint!(" thrown");
-                    }
                     eprintln!();
                     bb!(flow, init_block);
                     bb!(flow, hoisted_block);
@@ -497,9 +473,6 @@ impl ControlFlowStack {
                 }
                 ControlFlow::Exception(flow) => {
                     eprint!("exception:");
-                    if flow.thrown {
-                        eprint!(" thrown");
-                    }
                     match flow.state {
                         ExceptionState::Try => eprint!(" in-try"),
                         ExceptionState::Catch => eprint!(" in-catch"),
@@ -515,13 +488,10 @@ impl ControlFlowStack {
         }
     }
 
-    fn print_branch_target_stack(stack: &[BranchTarget], buf: *mut std::ffi::c_char, len: usize) {
-        for target in stack.iter().rev() {
-            eprintln!(
-                "block={:?} symbol={}",
-                bb2cstr!(target.block, buf, len),
-                target.symbol
-            );
+    fn print_exit_stack(&self, buf: *mut std::ffi::c_char, len: usize) {
+        for target in self.exit_stack.iter().rev() {
+            let block = bb2cstr!(target.block, buf, len);
+            eprintln!("block={block:?} breakable={}", target.breakable);
         }
     }
 
@@ -545,44 +515,6 @@ impl ControlFlowStack {
             self.cleanup_block()
         }
     }
-
-    pub fn break_target(&self, symbol: Symbol) -> BasicBlock {
-        Self::target_block(&self.break_stack, symbol)
-    }
-
-    pub fn continue_target(&self, symbol: Symbol) -> BasicBlock {
-        Self::target_block(&self.continue_stack, symbol)
-    }
-
-    fn target_block(stack: &[BranchTarget], symbol: Symbol) -> BasicBlock {
-        if symbol == Symbol::NONE {
-            stack.last().unwrap().block
-        } else {
-            stack
-                .iter()
-                .rev()
-                .find(|target| target.symbol == symbol)
-                .map(|target| target.block)
-                .unwrap()
-        }
-    }
-
-    pub fn propagate_returned(&mut self) {
-        if self.scope_index > 0 {
-            self.set_returned()
-        }
-    }
-
-    pub fn propagate_thrown(&mut self) {
-        match self.scope_index.cmp(&self.exception_index) {
-            // self.scope_index > self.exception_index
-            Ordering::Greater => self.scope_flow_mut().thrown = true,
-            // self.scope_index < self.exception_index
-            Ordering::Less => self.exception_flow_mut().thrown = true,
-            // self.scope_index == self.exception_index (== 0)
-            _ => debug_assert_eq!(self.scope_index, 0),
-        }
-    }
 }
 
 impl Dump for ControlFlowStack {
@@ -591,12 +523,8 @@ impl Dump for ControlFlowStack {
         self.print_stack(buf, len);
         eprintln!();
 
-        eprintln!("### break-stack");
-        Self::print_branch_target_stack(&self.break_stack, buf, len);
-        eprintln!();
-
-        eprintln!("### continue-stack");
-        Self::print_branch_target_stack(&self.continue_stack, buf, len);
+        eprintln!("### exit-stack");
+        self.print_exit_stack(buf, len);
         eprintln!();
     }
 }
@@ -642,12 +570,6 @@ pub struct ScopeFlow {
 
     /// The index of the enclosing outer scope flow.
     outer_index: usize,
-
-    /// `true` if the scope flow contains return statements.
-    pub returned: bool,
-
-    /// `true` if the scope flow has uncaught exceptions.
-    pub thrown: bool,
 }
 
 pub struct BranchFlow {
@@ -705,9 +627,6 @@ pub struct ExceptionFlow {
     outer_index: usize,
 
     state: ExceptionState,
-
-    // `true` if the scope flow has uncaught exceptions.
-    thrown: bool,
 }
 
 enum ExceptionState {
@@ -716,7 +635,7 @@ enum ExceptionState {
     Finally,
 }
 
-pub struct BranchTarget {
-    pub block: BasicBlock,
-    pub symbol: Symbol,
+struct ExitTarget {
+    block: BasicBlock,
+    breakable: bool,
 }

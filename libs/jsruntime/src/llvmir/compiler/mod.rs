@@ -81,6 +81,8 @@ struct Compiler<'r, 's> {
     /// structure at some point during compilation can be represented by using a stack.
     basic_block_name_stack: Option<BasicBlockNameStack>,
 
+    pending_labels: Vec<Symbol>,
+
     // The following values must be reset in the end of compilation for each function.
     locals: Vec<ValueIr>,
     captures: IndexMap<Locator, CaptureIr>,
@@ -140,6 +142,7 @@ impl<'r, 's> Compiler<'r, 's> {
             operand_stack: Default::default(),
             control_flow_stack: Default::default(),
             basic_block_name_stack: None,
+            pending_labels: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
             dump_buffer: if dump_enabled!() {
@@ -191,15 +194,22 @@ impl<'r, 's> Compiler<'r, 's> {
             return_block,
         );
 
+        assert!(self.pending_labels.is_empty());
+        self.control_flow_stack
+            .push_exit_target(return_block, false);
+
         self.peer.set_locals_block(locals_block);
 
         self.peer.set_basic_block(body_block);
         self.peer.create_store_undefined_to_retv();
         self.peer.create_alloc_status();
+        self.peer.create_alloc_flow_selector();
     }
 
     fn end_function(&mut self, optimize: bool) {
         logger::debug!(event = "end_function", optimize);
+
+        self.control_flow_stack.pop_exit_target();
         let flow = self.control_flow_stack.pop_function_flow();
 
         self.peer.create_br(flow.return_block);
@@ -333,6 +343,7 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::SetupScopeCleanupChecker(stack_size) => {
                 self.process_setup_scope_cleanup_checker(*stack_size)
             }
+            CompileCommand::PlaceHolder => unreachable!(),
         }
 
         if let Some(ref mut buf) = self.dump_buffer {
@@ -602,9 +613,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.create_check_status_for_exception(status, retv);
 
-        // The function may throw an exception.
-        self.control_flow_stack.set_thrown();
-
         self.operand_stack.push(Operand::Any(retv));
     }
 
@@ -660,6 +668,7 @@ impl<'r, 's> Compiler<'r, 's> {
         {
             self.peer.set_basic_block(then_block);
             self.peer.create_store_exception_status();
+            self.peer.create_set_flow_selector_throw();
             self.peer.create_store_value_to_retv(retv);
             self.peer.create_br(exception_block);
         }
@@ -683,6 +692,9 @@ impl<'r, 's> Compiler<'r, 's> {
             body_block,
             cleanup_block,
         );
+
+        self.control_flow_stack
+            .push_exit_target(cleanup_block, false);
 
         self.peer.create_br(init_block);
         self.peer.move_basic_block_after(init_block);
@@ -720,6 +732,9 @@ impl<'r, 's> Compiler<'r, 's> {
         let postcheck_block = self.create_basic_block("postcheck");
         let ctrl_block = self.create_basic_block("ctrl");
         let exit_block = self.create_basic_block("exit");
+
+        self.control_flow_stack.pop_exit_target();
+        let parent_exit_block = self.control_flow_stack.exit_block();
 
         let flow = self.control_flow_stack.pop_scope_flow();
 
@@ -759,24 +774,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(ctrl_block);
 
         self.peer.set_basic_block(ctrl_block);
-
-        let cleanup_block = if flow.returned {
-            self.control_flow_stack.cleanup_block()
-        } else {
-            BasicBlock::NONE
-        };
-        let exception_block = if flow.thrown && !self.control_flow_stack.in_finally_block() {
-            self.control_flow_stack.exception_block()
-        } else {
-            BasicBlock::NONE
-        };
-        self.peer.handle_returned_thrown(
-            flow.returned,
-            flow.thrown,
-            exit_block,
-            cleanup_block,
-            exception_block,
-        );
+        let is_normal = self.peer.create_is_flow_selector_normal();
+        self.peer
+            .create_cond_br(is_normal, exit_block, parent_exit_block);
 
         self.peer.move_basic_block_after(exit_block);
         self.peer.set_basic_block(exit_block);
@@ -1598,25 +1598,23 @@ impl<'r, 's> Compiler<'r, 's> {
         push_bb_name!(self, "do-while", id);
 
         let loop_body = self.create_basic_block("loop-body");
+        let loop_ctrl = self.create_basic_block("loop-ctrl");
         let loop_test = self.create_basic_block("loop-test");
-        let loop_end = self.create_basic_block("loop-end");
+        let loop_exit = self.create_basic_block("loop-exit");
 
         let loop_start = loop_body;
         let loop_continue = loop_test;
-        let loop_break = loop_end;
+        let loop_break = loop_exit;
 
         self.control_flow_stack
-            .push_loop_test_flow(loop_body, loop_end, loop_end);
+            .push_loop_test_flow(loop_body, loop_exit, loop_exit);
         self.control_flow_stack
-            .push_loop_body_flow(loop_test, loop_test);
-
-        self.control_flow_stack.set_continue_target(loop_continue);
-        self.control_flow_stack
-            .push_break_target(loop_break, Symbol::NONE);
-        self.control_flow_stack
-            .push_continue_target(loop_continue, Symbol::NONE);
+            .push_loop_body_flow(loop_ctrl, loop_test);
 
         self.peer.create_br(loop_start);
+
+        self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
+
         self.peer.set_basic_block(loop_start);
     }
 
@@ -1625,24 +1623,22 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let loop_test = self.create_basic_block("loop-test");
         let loop_body = self.create_basic_block("loop-body");
-        let loop_end = self.create_basic_block("loop-end");
+        let loop_ctrl = self.create_basic_block("loop-ctrl");
+        let loop_exit = self.create_basic_block("loop-exit");
 
         let loop_start = loop_test;
         let loop_continue = loop_test;
-        let loop_break = loop_end;
+        let loop_break = loop_exit;
 
         self.control_flow_stack
-            .push_loop_body_flow(loop_test, loop_end);
+            .push_loop_body_flow(loop_ctrl, loop_exit);
         self.control_flow_stack
-            .push_loop_test_flow(loop_body, loop_end, loop_body);
-
-        self.control_flow_stack.set_continue_target(loop_continue);
-        self.control_flow_stack
-            .push_break_target(loop_break, Symbol::NONE);
-        self.control_flow_stack
-            .push_continue_target(loop_continue, Symbol::NONE);
+            .push_loop_test_flow(loop_body, loop_exit, loop_body);
 
         self.peer.create_br(loop_start);
+
+        self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
+
         self.peer.set_basic_block(loop_start);
     }
 
@@ -1665,28 +1661,21 @@ impl<'r, 's> Compiler<'r, 's> {
             BasicBlock::NONE
         };
         let loop_body = self.create_basic_block("loop-body");
+        let loop_ctrl = self.create_basic_block("loop-ctrl");
         let loop_next = if has_next {
             self.create_basic_block("loop-next")
         } else {
             BasicBlock::NONE
         };
-        let loop_end = self.create_basic_block("loop-end");
+        let loop_exit = self.create_basic_block("loop-exit");
 
         let mut loop_start = loop_body;
         let mut loop_continue = loop_body;
-        let loop_break = loop_end;
+        let loop_break = loop_exit;
         let mut insert_point = loop_body;
 
-        if has_next {
-            self.control_flow_stack
-                .push_loop_body_flow(loop_next, loop_end);
-        } else if has_test {
-            self.control_flow_stack
-                .push_loop_body_flow(loop_test, loop_end);
-        } else {
-            self.control_flow_stack
-                .push_loop_body_flow(loop_body, loop_end);
-        }
+        self.control_flow_stack
+            .push_loop_body_flow(loop_ctrl, loop_exit);
 
         if has_next {
             if has_test {
@@ -1703,10 +1692,10 @@ impl<'r, 's> Compiler<'r, 's> {
         if has_test {
             if has_next {
                 self.control_flow_stack
-                    .push_loop_test_flow(loop_body, loop_end, loop_next);
+                    .push_loop_test_flow(loop_body, loop_exit, loop_next);
             } else {
                 self.control_flow_stack
-                    .push_loop_test_flow(loop_body, loop_end, loop_body);
+                    .push_loop_test_flow(loop_body, loop_exit, loop_body);
             }
             loop_start = loop_test;
             if !has_next {
@@ -1730,14 +1719,48 @@ impl<'r, 's> Compiler<'r, 's> {
             insert_point = loop_init;
         }
 
-        self.control_flow_stack.set_continue_target(loop_continue);
-        self.control_flow_stack
-            .push_break_target(loop_break, Symbol::NONE);
-        self.control_flow_stack
-            .push_continue_target(loop_continue, Symbol::NONE);
-
         self.peer.create_br(loop_start);
+
+        self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
+
         self.peer.set_basic_block(insert_point);
+    }
+
+    fn build_loop_ctrl_block(
+        &mut self,
+        loop_ctrl: BasicBlock,
+        loop_continue: BasicBlock,
+        loop_break: BasicBlock,
+    ) {
+        let set_normal_block = self.create_basic_block("loop-ctrl.set_normal");
+        let break_or_continue_block = self.create_basic_block("loop-ctrl.break_or_continue");
+
+        self.control_flow_stack.push_exit_target(loop_ctrl, true);
+        for label in std::mem::take(&mut self.pending_labels).into_iter() {
+            self.control_flow_stack.set_exit_label(label);
+        }
+        let exit_id = self.control_flow_stack.exit_id();
+
+        self.peer.set_basic_block(loop_ctrl);
+        let is_normal_or_continue = self
+            .peer
+            .create_is_flow_selector_normal_or_continue(exit_id.depth());
+        let is_break_or_continue = self
+            .peer
+            .create_is_flow_selector_break_or_continue(exit_id.depth());
+        self.peer.create_cond_br(
+            is_break_or_continue,
+            set_normal_block,
+            break_or_continue_block,
+        );
+
+        self.peer.set_basic_block(set_normal_block);
+        self.peer.create_set_flow_selector_normal();
+        self.peer.create_br(break_or_continue_block);
+
+        self.peer.set_basic_block(break_or_continue_block);
+        self.peer
+            .create_cond_br(is_normal_or_continue, loop_continue, loop_break);
     }
 
     fn process_loop_init(&mut self) {
@@ -1772,8 +1795,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_loop_end(&mut self) {
         pop_bb_name!(self);
-        self.control_flow_stack.pop_break_target();
-        self.control_flow_stack.pop_continue_target();
+        self.control_flow_stack.pop_exit_target();
     }
 
     fn process_case_block(&mut self, id: u16, num_cases: u16) {
@@ -1781,19 +1803,33 @@ impl<'r, 's> Compiler<'r, 's> {
 
         push_bb_name!(self, "switch", id);
 
+        let start_block = self.create_basic_block("start");
+        let ctrl_block = self.create_basic_block("ctrl");
+        let set_normal_block = self.create_basic_block("ctrl.set_normal");
+        let end_block = self.create_basic_block("end");
+
+        self.control_flow_stack.push_switch_flow(end_block);
+        self.control_flow_stack.push_exit_target(ctrl_block, true);
+        debug_assert!(self.pending_labels.is_empty());
+        let exit_id = self.control_flow_stack.exit_id();
+
         let (operand, _) = self.dereference();
         // TODO: item.SetLabel("switch-value");
         self.operand_stack.push(operand);
         self.duplicate(0); // Dup for test on CaseClause
 
-        let start_block = self.create_basic_block("start");
         self.peer.create_br(start_block);
-        self.peer.set_basic_block(start_block);
 
-        let end_block = self.create_basic_block("end");
-        self.control_flow_stack.push_switch_flow(end_block);
-        self.control_flow_stack
-            .push_break_target(end_block, Symbol::NONE);
+        self.peer.set_basic_block(ctrl_block);
+        let is_break = self.peer.create_is_flow_selector_break(exit_id.depth());
+        self.peer
+            .create_cond_br(is_break, set_normal_block, end_block);
+
+        self.peer.set_basic_block(set_normal_block);
+        self.peer.create_set_flow_selector_normal();
+        self.peer.create_br(end_block);
+
+        self.peer.set_basic_block(start_block);
     }
 
     fn process_case_clause(&mut self, _has_statement: bool) {
@@ -1835,7 +1871,6 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_switch(&mut self, _id: u16, num_cases: u16, _default_index: Option<u16>) {
         pop_bb_name!(self);
 
-        self.control_flow_stack.pop_break_target();
         let case_block = self.peer.get_basic_block();
 
         // Discard the switch-values
@@ -1860,6 +1895,7 @@ impl<'r, 's> Compiler<'r, 's> {
             fall_through_block = case_branch.after_block;
         }
 
+        self.control_flow_stack.pop_exit_target();
         let switch = self.control_flow_stack.pop_switch_flow();
 
         // Create an unconditional jump to the statement of the default clause if it exists.
@@ -1900,9 +1936,11 @@ impl<'r, 's> Compiler<'r, 's> {
             finally_block,
             end_block,
         );
+        self.control_flow_stack.push_exit_target(catch_block, false);
 
         // Jump from the end of previous block to the beginning of the try block.
         self.peer.create_br(try_block);
+
         self.peer.set_basic_block(try_block);
 
         push_bb_name!(self, "try");
@@ -1917,6 +1955,10 @@ impl<'r, 's> Compiler<'r, 's> {
         let finally_block = flow.finally_block;
         let catch_block = flow.catch_block;
 
+        self.control_flow_stack.pop_exit_target();
+        self.control_flow_stack
+            .push_exit_target(finally_block, false);
+
         // Jump from the end of the try block to the beginning of the finally block.
         self.peer.create_br(finally_block);
         self.peer.move_basic_block_after(catch_block);
@@ -1924,6 +1966,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         if !nominal {
             self.peer.create_store_normal_status();
+            self.peer.create_set_flow_selector_normal();
         }
 
         push_bb_name!(self, "catch");
@@ -1937,6 +1980,8 @@ impl<'r, 's> Compiler<'r, 's> {
         let flow = self.control_flow_stack.exception_flow();
         let finally_block = flow.finally_block;
 
+        self.control_flow_stack.pop_exit_target();
+
         // Jump from the end of the catch block to the beginning of the finally block.
         self.peer.create_br(finally_block);
         self.peer.move_basic_block_after(finally_block);
@@ -1949,62 +1994,69 @@ impl<'r, 's> Compiler<'r, 's> {
         pop_bb_name!(self);
 
         let flow = self.control_flow_stack.pop_exception_flow();
-        let exception_block = self.control_flow_stack.exception_block();
+        let parent_exit_block = self.control_flow_stack.exit_block();
 
         // Jump from the end of the finally block to the beginning of the outer catch block if
         // there is an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
-        let cond = self.peer.create_has_uncaught_exception();
+        let is_normal = self.peer.create_is_flow_selector_normal();
         self.peer
-            .create_cond_br(cond, exception_block, flow.end_block);
+            .create_cond_br(is_normal, flow.end_block, parent_exit_block);
 
         self.peer.move_basic_block_after(flow.end_block);
         self.peer.set_basic_block(flow.end_block);
     }
 
-    fn process_label_start(&mut self, symbol: Symbol, is_iteration_statement: bool) {
-        debug_assert_ne!(symbol, Symbol::NONE);
-
-        let start_block = self.create_basic_block("start");
-        let end_block = self.create_basic_block("end");
-
-        self.peer.create_br(start_block);
-        self.peer.move_basic_block_after(end_block);
-        self.peer.set_basic_block(start_block);
-
-        self.control_flow_stack.push_break_target(end_block, symbol);
+    fn process_label_start(&mut self, label: Symbol, is_iteration_statement: bool) {
+        debug_assert_ne!(label, Symbol::NONE);
 
         if is_iteration_statement {
-            // The `block` member value will be updated in the method to handle the loop start
-            // of the labeled iteration statement.
-            self.control_flow_stack
-                .push_continue_target(BasicBlock::NONE, symbol);
+            // Special treatments are needed for iteration statements.
+            // See `build_loop_ctrl_block()` for details.
+            if is_iteration_statement {
+                debug_assert!(!self.pending_labels.contains(&label));
+                self.pending_labels.push(label);
+            }
+        } else {
+            let start_block = self.create_basic_block("start");
+            let end_block = self.create_basic_block("end");
+
+            self.peer.create_br(start_block);
+            self.peer.move_basic_block_after(end_block);
+            self.peer.set_basic_block(start_block);
+
+            self.control_flow_stack.push_exit_target(end_block, false);
+            self.control_flow_stack.set_exit_label(label);
         }
     }
 
-    fn process_label_end(&mut self, symbol: Symbol, is_iteration_statement: bool) {
-        debug_assert_ne!(symbol, Symbol::NONE);
+    fn process_label_end(&mut self, label: Symbol, is_iteration_statement: bool) {
+        debug_assert_ne!(label, Symbol::NONE);
 
         if is_iteration_statement {
-            self.control_flow_stack.pop_continue_target();
+            debug_assert!(self.pending_labels.is_empty());
+        } else {
+            let end_block = self.control_flow_stack.pop_exit_target();
+            self.peer.create_br(end_block);
+            self.peer.move_basic_block_after(end_block);
+            self.peer.set_basic_block(end_block);
         }
-
-        let break_target = self.control_flow_stack.pop_break_target();
-        debug_assert_eq!(break_target.symbol, symbol);
-
-        self.peer.create_br(break_target.block);
-        self.peer.move_basic_block_after(break_target.block);
-        self.peer.set_basic_block(break_target.block);
     }
 
-    fn process_continue(&mut self, symbol: Symbol) {
-        let target_block = self.control_flow_stack.continue_target(symbol);
-        self.peer.create_br(target_block);
+    fn process_continue(&mut self, label: Symbol) {
+        let exit_id = self.control_flow_stack.exit_id_for_label(label);
+        self.peer.create_set_flow_selector_continue(exit_id.depth());
+
+        let block = self.control_flow_stack.exit_block();
+        self.peer.create_br(block);
         self.create_basic_block_for_deadcode();
     }
 
-    fn process_break(&mut self, symbol: Symbol) {
-        let target_block = self.control_flow_stack.break_target(symbol);
-        self.peer.create_br(target_block);
+    fn process_break(&mut self, label: Symbol) {
+        let exit_id = self.control_flow_stack.exit_id_for_label(label);
+        self.peer.create_set_flow_selector_break(exit_id.depth());
+
+        let block = self.control_flow_stack.exit_block();
+        self.peer.create_br(block);
         self.create_basic_block_for_deadcode();
     }
 
@@ -2016,8 +2068,8 @@ impl<'r, 's> Compiler<'r, 's> {
         }
 
         self.peer.create_store_normal_status();
+        self.peer.create_set_flow_selector_return();
 
-        self.control_flow_stack.set_returned();
         let next_block = self.control_flow_stack.cleanup_block();
 
         self.peer.create_br(next_block);
@@ -2041,8 +2093,8 @@ impl<'r, 's> Compiler<'r, 's> {
         let (operand, _) = self.dereference();
         self.create_store_operand_to_retv(operand);
         self.peer.create_store_exception_status();
+        self.peer.create_set_flow_selector_throw();
 
-        self.control_flow_stack.set_thrown();
         let next_block = self.control_flow_stack.exception_block();
 
         self.peer.create_br(next_block);

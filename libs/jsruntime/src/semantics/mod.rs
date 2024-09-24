@@ -60,6 +60,7 @@ impl Program {
 }
 
 /// A type representing a JavaScript function after the semantic analysis.
+#[derive(Default)]
 pub struct FunctionRecipe {
     /// TODO: remove?
     pub symbol: Symbol,
@@ -133,24 +134,13 @@ impl<'r> Analyzer<'r> {
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
     ) -> Self {
-        let id = function_registry.create_native_function();
+        let _ = function_registry.create_native_function();
         Self {
             runtime_pref,
             symbol_registry,
             function_registry,
-            context_stack: vec![FunctionContext {
-                // `commands[0]` will be replaced with `AllocateLocals` in `accept()` if the
-                // function has local variables.
-                commands: vec![CompileCommand::Nop],
-                in_body: true,
-                ..Default::default()
-            }],
-            functions: vec![FunctionRecipe {
-                symbol: Symbol::NONE,
-                id,
-                commands: vec![],
-                captures: vec![],
-            }],
+            context_stack: vec![],
+            functions: vec![],
             scope_tree_builder: Default::default(),
             use_global_bindings: false,
         }
@@ -533,7 +523,7 @@ impl<'r> Analyzer<'r> {
         // TODO
     }
 
-    fn handle_function_declaration(&mut self) {
+    fn end_function_scope(&mut self) -> usize {
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope();
 
@@ -555,6 +545,13 @@ impl<'r> Analyzer<'r> {
         func.commands = context.commands;
         func.captures = context.captures.into_values().collect();
 
+        func_index
+    }
+
+    fn handle_function_declaration(&mut self) {
+        let func_index = self.end_function_scope();
+        let func = &self.functions[func_index];
+
         self.context_stack
             .last_mut()
             .unwrap()
@@ -565,22 +562,9 @@ impl<'r> Analyzer<'r> {
             );
     }
 
-    // TODO: reduce code clone took from handle_function_declaration().
     fn handle_function_expression(&mut self, named: bool) {
-        let mut context = self.context_stack.pop().unwrap();
-        context.end_scope();
-
-        self.scope_tree_builder.pop();
-        self.resolve_references(&mut context);
-
-        if context.num_locals > 0 {
-            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
-        }
-
-        let func_index = context.func_index;
-        let func = &mut self.functions[func_index];
-        func.commands = context.commands;
-        func.captures = context.captures.into_values().collect();
+        let func_index = self.end_function_scope();
+        let func = &self.functions[func_index];
 
         self.context_stack
             .last_mut()
@@ -598,20 +582,8 @@ impl<'r> Analyzer<'r> {
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a binding in a lexically enclosing environment.
 
-        let mut context = self.context_stack.pop().unwrap();
-        context.end_scope();
-
-        self.scope_tree_builder.pop();
-        self.resolve_references(&mut context);
-
-        if context.num_locals > 0 {
-            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
-        }
-
-        let func_index = context.func_index;
-        let func = &mut self.functions[func_index];
-        func.commands = context.commands;
-        func.captures = context.captures.into_values().collect();
+        let func_index = self.end_function_scope();
+        let func = &self.functions[func_index];
 
         self.context_stack
             .last_mut()
@@ -722,7 +694,7 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
     }
 
-    fn handle_function_context(&mut self) {
+    fn start_function_scope(&mut self, in_body: bool) {
         let scope_ref = self.scope_tree_builder.push_function();
 
         // TODO: the compilation should fail if the following condition is unmet.
@@ -731,11 +703,12 @@ impl<'r> Analyzer<'r> {
         let mut context = FunctionContext {
             func_index,
             scope_ref,
-            // `commands[0]` will be replaced with `AllocateLocals` if the function has local
-            // variables.
-            commands: vec![CompileCommand::Nop],
+            in_body,
             ..Default::default()
         };
+        // `commands[0]` will be replaced with `AllocateLocals` if the function has local
+        // variables.
+        context.commands.push(CompileCommand::Nop);
         if self.runtime_pref.enable_scope_cleanup_checker {
             // Put a placeholder command which will be replaced with `SetupScopeCleanupChecker`.
             let index = context.put_command(CompileCommand::Nop);
@@ -744,12 +717,11 @@ impl<'r> Analyzer<'r> {
         context.start_scope(scope_ref);
         self.context_stack.push(context);
         // Push a placeholder data which will be filled later.
-        self.functions.push(FunctionRecipe {
-            symbol: Symbol::NONE,
-            id: FunctionId::MAIN,
-            commands: vec![],
-            captures: Default::default(),
-        });
+        self.functions.push(Default::default());
+    }
+
+    fn handle_function_context(&mut self) {
+        self.start_function_scope(false);
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
@@ -771,49 +743,31 @@ impl<'r> Analyzer<'r> {
 
         // Register `undefined`.
         let symbol = Symbol::UNDEFINED;
-        // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+        context.put_reference(symbol, self.scope_tree_builder.current());
         context.put_lexical_binding(false);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_immutable(symbol, context.num_locals);
-        context.references.push(Reference {
-            symbol,
-            scope_ref: self.scope_tree_builder.current(),
-            from: ReferenceFrom::Command(command_index),
-        });
         context.num_locals += 1;
 
         // Register `Infinity`.
         let symbol = Symbol::INFINITY;
-        // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+        context.put_reference(symbol, self.scope_tree_builder.current());
         context.put_number(f64::INFINITY);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_immutable(symbol, context.num_locals);
-        context.references.push(Reference {
-            symbol,
-            scope_ref: self.scope_tree_builder.current(),
-            from: ReferenceFrom::Command(command_index),
-        });
         context.num_locals += 1;
 
         // Register `NaN`.
         let symbol = Symbol::NAN;
-        // The locator will be computed in `resolve_references()`.
-        let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+        context.put_reference(symbol, self.scope_tree_builder.current());
         context.put_number(f64::NAN);
         context.put_lexical_binding(true);
         context.process_immutable_bindings(1);
         self.scope_tree_builder
             .add_immutable(symbol, context.num_locals);
-        context.references.push(Reference {
-            symbol,
-            scope_ref: self.scope_tree_builder.current(),
-            from: ReferenceFrom::Command(command_index),
-        });
         context.num_locals += 1;
     }
 
@@ -823,16 +777,10 @@ impl<'r> Analyzer<'r> {
 
         for (func_id, host_func) in self.function_registry.enumerate_host_function() {
             let symbol = self.symbol_registry.intern_cstr(&host_func.name);
-            // The locator will be computed in `resolve_references()`.
-            let command_index = context.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
+            context.put_reference(symbol, self.scope_tree_builder.current());
             context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
             self.scope_tree_builder
                 .add_immutable(symbol, context.num_locals);
-            context.references.push(Reference {
-                symbol,
-                scope_ref: self.scope_tree_builder.current(),
-                from: ReferenceFrom::Command(command_index),
-            });
             context.num_locals += 1;
         }
     }
@@ -904,11 +852,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
     fn start(&mut self) {
         logger::debug!(event = "start");
-        let scope_ref = self.scope_tree_builder.push_function();
-
-        let context = self.context_stack.last_mut().unwrap();
-        context.scope_ref = scope_ref;
-        context.start_scope(scope_ref);
+        self.start_function_scope(true);
 
         if self.use_global_bindings {
             self.put_global_bindings();
@@ -929,6 +873,12 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
         if context.num_locals > 0 {
             context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+        }
+
+        if self.runtime_pref.enable_scope_cleanup_checker {
+            let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
+            debug_assert!(stack_size > 0);
+            context.commands[1] = CompileCommand::SetupScopeCleanupChecker(stack_size);
         }
 
         self.functions[context.func_index].commands = context.commands;
@@ -1042,9 +992,23 @@ impl FunctionContext {
         // TODO: type inference
     }
 
+    fn put_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
+        // The placeholder command will be replaced with a `CompileCommand::Reference` in
+        // `resolve_reference()`.
+        let command_index = self.put_command(CompileCommand::PlaceHolder);
+        self.references.push(Reference {
+            symbol,
+            scope_ref,
+            from: ReferenceFrom::Command(command_index),
+        });
+    }
+
     fn process_argument_list_head(&mut self, empty: bool, _spread: bool) {
         // TODO: spread
-        let index = self.put_command(CompileCommand::Nop);
+
+        // The placeholder command will be replaced with `CompileCommand::Arguments` in in
+        // `process_call_expression()`.
+        let index = self.put_command(CompileCommand::PlaceHolder);
         let nargs = if empty {
             0
         } else {
@@ -1059,11 +1023,12 @@ impl FunctionContext {
         // TODO: spread
         let tuple = self.nargs_stack.last_mut().unwrap();
         self.commands.push(CompileCommand::Argument(tuple.1));
-        self.nargs_stack.last_mut().unwrap().1 += 1;
+        tuple.1 += 1;
     }
 
     fn process_call_expression(&mut self) {
         let (index, nargs) = self.nargs_stack.pop().unwrap();
+        debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
         self.commands[index] = CompileCommand::Arguments(nargs);
         self.commands.push(CompileCommand::Call(nargs));
     }
@@ -1073,31 +1038,21 @@ impl FunctionContext {
             // Set undefined as the initial value.
             self.commands.push(CompileCommand::Undefined);
         }
-        // The command will be set later.
-        let command_index = self.put_command(CompileCommand::Nop);
+        // We put a placeholder command here because we don't know whether this binding is mutable
+        // or not at this point.  The placeholder command will be replaced in
+        // `process_mutable_bindings()` or `process_immutable_bindings()`.
+        let command_index = self.put_command(CompileCommand::PlaceHolder);
         self.pending_lexical_bindings.push(command_index);
         // TODO: type info
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
-        // The locator will be updated later.
-        let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-        self.references.push(Reference {
-            symbol,
-            scope_ref,
-            from: ReferenceFrom::Command(command_index),
-        });
+        self.put_reference(symbol, scope_ref)
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
         if self.in_body {
-            // The locator will be updated later.
-            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-            self.references.push(Reference {
-                symbol,
-                scope_ref: builder.current(),
-                from: ReferenceFrom::Command(command_index),
-            });
+            self.put_reference(symbol, builder.current());
             // The BindingKind may change later by `builder.set_immutable()`.
             builder.add_mutable(symbol, self.num_locals);
             self.num_locals += 1;
@@ -1138,7 +1093,7 @@ impl FunctionContext {
     fn process_mutable_bindings(&mut self, n: u32) {
         debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
         for i in self.pending_lexical_bindings.iter().cloned() {
-            debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
+            debug_assert!(matches!(self.commands[i], CompileCommand::PlaceHolder));
             self.commands[i] = CompileCommand::MutableBinding;
         }
         self.pending_lexical_bindings.clear();
@@ -1147,7 +1102,7 @@ impl FunctionContext {
     fn process_immutable_bindings(&mut self, n: u32) {
         debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
         for i in self.pending_lexical_bindings.iter().cloned() {
-            debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
+            debug_assert!(matches!(self.commands[i], CompileCommand::PlaceHolder));
             self.commands[i] = CompileCommand::ImmutableBinding;
         }
         self.pending_lexical_bindings.clear();
@@ -1161,12 +1116,7 @@ impl FunctionContext {
     ) {
         for capture in captures.iter().rev() {
             // `capture.target` has not been resolved at this point...
-            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-            self.references.push(Reference {
-                symbol: capture.symbol,
-                scope_ref,
-                from: ReferenceFrom::Command(command_index),
-            });
+            self.put_reference(capture.symbol, scope_ref);
             self.commands.push(CompileCommand::CaptureVariable(true));
         }
         self.commands.push(CompileCommand::Function(func_id));
@@ -1188,12 +1138,7 @@ impl FunctionContext {
         }
         for capture in captures.iter().rev() {
             // `capture.target` has not been resolved at this point...
-            let command_index = self.put_command(CompileCommand::REFERENCE_PLACEHOLDER);
-            self.references.push(Reference {
-                symbol: capture.symbol,
-                scope_ref,
-                from: ReferenceFrom::Command(command_index),
-            });
+            self.put_reference(capture.symbol, scope_ref);
             self.commands.push(CompileCommand::CaptureVariable(false));
         }
         self.commands.push(CompileCommand::Function(func_id));
@@ -1204,9 +1149,9 @@ impl FunctionContext {
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
         self.start_scope(scope_ref);
 
-        // Push `Nop` as a placeholder.
-        // It will be replaced with an appropriate command in process_loop_end().
-        let start_index = self.put_command(CompileCommand::Nop);
+        // The placeholder command will be replaced with an appropriate command in
+        // `process_loop_end()`.
+        let start_index = self.put_command(CompileCommand::PlaceHolder);
         self.loop_stack.push(LoopContext { start_index });
     }
 
@@ -1235,6 +1180,10 @@ impl FunctionContext {
     fn process_loop_end(&mut self, command: CompileCommand) {
         self.put_command(CompileCommand::LoopEnd);
         let LoopContext { start_index } = self.loop_stack.pop().unwrap();
+        debug_assert!(matches!(
+            self.commands[start_index],
+            CompileCommand::PlaceHolder
+        ));
         self.commands[start_index] = command;
 
         self.end_scope();
@@ -1262,7 +1211,8 @@ impl FunctionContext {
         // Step#3..7 in 14.12.4 Runtime Semantics: Evaluation
         self.start_scope(scope_ref);
 
-        let case_block_index = self.put_command(CompileCommand::Nop);
+        // The placeholder command will be replaced in `process_switch_statement()`.
+        let case_block_index = self.put_command(CompileCommand::PlaceHolder);
         self.switch_stack.push(SwitchContext {
             case_block_index,
             ..Default::default()
@@ -1293,19 +1243,26 @@ impl FunctionContext {
     }
 
     fn process_switch_statement(&mut self) {
-        let context = self.switch_stack.pop().unwrap();
+        let SwitchContext {
+            case_block_index,
+            default_index,
+            num_cases,
+        } = self.switch_stack.pop().unwrap();
 
         let id = self.num_switch_statements;
-        let n = context.num_cases;
 
-        if n == 0 {
+        debug_assert!(matches!(
+            self.commands[case_block_index],
+            CompileCommand::PlaceHolder
+        ));
+        if num_cases == 0 {
             // empty case block
             // Discard the `switchValue`.
-            self.commands[context.case_block_index] = CompileCommand::Discard;
+            self.commands[case_block_index] = CompileCommand::Discard;
         } else {
-            self.commands[context.case_block_index] = CompileCommand::CaseBlock(id, n);
-            let i = context.default_index;
-            self.put_command(CompileCommand::Switch(id, n, i));
+            self.commands[case_block_index] = CompileCommand::CaseBlock(id, num_cases);
+            let i = default_index;
+            self.put_command(CompileCommand::Switch(id, num_cases, i));
             self.num_switch_statements += 1;
         }
 
@@ -1314,10 +1271,9 @@ impl FunctionContext {
     }
 
     fn process_label(&mut self, symbol: Symbol) {
-        // Push `Nop` as a placeholder.
-        // It will be replaced with `CompileCommand::LabelStart(..)` in
+        // The placeholder command will be replaced with `CompileCommand::LabelStart` in
         // `process_labelled_statement()`.
-        let start_index = self.put_command(CompileCommand::Nop);
+        let start_index = self.put_command(CompileCommand::PlaceHolder);
         self.label_stack.push(LabelContext {
             start_index,
             symbol,
@@ -1327,6 +1283,10 @@ impl FunctionContext {
     fn process_labelled_statement(&mut self, symbol: Symbol, is_iteration_statement: bool) {
         let label = self.label_stack.pop().unwrap();
         debug_assert_eq!(label.symbol, symbol);
+        debug_assert!(matches!(
+            self.commands[label.start_index],
+            CompileCommand::PlaceHolder
+        ));
         self.commands[label.start_index] =
             CompileCommand::LabelStart(symbol, is_iteration_statement);
         self.put_command(CompileCommand::LabelEnd(symbol, is_iteration_statement));
@@ -1572,10 +1532,10 @@ pub enum CompileCommand {
     Duplicate(u8), // 0 or 1
 
     SetupScopeCleanupChecker(u16),
-}
 
-impl CompileCommand {
-    const REFERENCE_PLACEHOLDER: Self = Self::Reference(Symbol::NONE, Locator::None);
+    // A special command used as a placeholder in a command list, which will be replaced actual
+    // command later.  The final command list must not contain placeholder commands.
+    PlaceHolder,
 }
 
 impl From<UpdateOperator> for CompileCommand {
@@ -1758,6 +1718,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(4),
+                    CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -1784,6 +1745,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(4),
+                    CompileCommand::SetupScopeCleanupChecker(2),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -1814,6 +1776,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Nop,
+                    CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
@@ -1833,6 +1796,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(1),
+                    CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Number(1.0),

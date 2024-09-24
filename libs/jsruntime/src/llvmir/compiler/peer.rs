@@ -188,29 +188,6 @@ impl Compiler {
         }
     }
 
-    pub fn handle_returned_thrown(
-        &self,
-        returned: bool,
-        thrown: bool,
-        block: BasicBlock,
-        cleanup_block: BasicBlock,
-        exception_block: BasicBlock,
-    ) {
-        debug_assert_ne!(block, BasicBlock::NONE);
-        // cleanup_block may NONE.
-        // exception_block may NONE.
-        unsafe {
-            bridge::compiler_peer_handle_returned_thrown(
-                self.0,
-                returned,
-                thrown,
-                block.0,
-                cleanup_block.0,
-                exception_block.0,
-            );
-        }
-    }
-
     // undefined
 
     pub fn create_is_undefined(&self, value: ValueIr) -> BooleanIr {
@@ -772,9 +749,95 @@ impl Compiler {
         }
     }
 
-    pub fn create_has_uncaught_exception(&self) -> BooleanIr {
+    // flow selector
+    //
+    // `break` and `continue` statements are generated unconditional branches in simple situation,
+    // but conditional branches must be generated in complex situations.
+    //
+    // Let think about the following program:
+    //
+    //   for (;;) {
+    //     let x;
+    //     if (v == 0)
+    //       return;
+    //     // compute something using `x`.
+    //     break;
+    //   }
+    //
+    // The `x` variable defined in the scope of the for-loop body and it can be collected as
+    // garbage once the execution goes out from the scope.  Depending on the algorithm of GC to
+    // use, the runtime must do something for GC when the execution goes out from the scope.  In
+    // this case, the control flow of the `return` and `break` statements are not determined at
+    // compile time.  And a new variable must be needed in order to determine the control flow at
+    // runtime.
+    //
+    // TODO: It might be possible to reuse the status variable instead of introducing the flow
+    // selector.  The both are single variables inside a lambda and have common some values
+    // partially.  If the status variable is reused, it must not be a single global variable.
+    // Because the execution may suspend by `await`.
+    //
+    // TODO: This design is inefficient in a performance point of view, but it makes it possible to
+    // support various GC algorithms.  In addition, we can optimize the runtime cost by removing
+    // scope sub-graphs in CFG if those has no lexical variables.  We can detect such lexical scopes
+    // in the semantic analysis phase.
+
+    pub fn create_alloc_flow_selector(&self) {
+        unsafe {
+            bridge::compiler_peer_create_alloc_flow_selector(self.0);
+        }
+    }
+
+    pub fn create_set_flow_selector_normal(&self) {
+        unsafe {
+            bridge::compiler_peer_create_set_flow_selector_normal(self.0);
+        }
+    }
+
+    pub fn create_set_flow_selector_return(&self) {
+        unsafe {
+            bridge::compiler_peer_create_set_flow_selector_return(self.0);
+        }
+    }
+
+    pub fn create_set_flow_selector_throw(&self) {
+        unsafe {
+            bridge::compiler_peer_create_set_flow_selector_throw(self.0);
+        }
+    }
+
+    pub fn create_set_flow_selector_break(&self, depth: u32) {
+        unsafe {
+            bridge::compiler_peer_create_set_flow_selector_break(self.0, depth);
+        }
+    }
+
+    pub fn create_set_flow_selector_continue(&self, depth: u32) {
+        unsafe {
+            bridge::compiler_peer_create_set_flow_selector_continue(self.0, depth);
+        }
+    }
+
+    pub fn create_is_flow_selector_normal(&self) -> BooleanIr {
         boolean_ir! {
-            bridge::compiler_peer_create_has_uncaught_exception(self.0)
+            bridge::compiler_peer_create_is_flow_selector_normal(self.0)
+        }
+    }
+
+    pub fn create_is_flow_selector_normal_or_continue(&self, depth: u32) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_flow_selector_normal_or_continue(self.0, depth)
+        }
+    }
+
+    pub fn create_is_flow_selector_break_or_continue(&self, depth: u32) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_flow_selector_break_or_continue(self.0, depth)
+        }
+    }
+
+    pub fn create_is_flow_selector_break(&self, depth: u32) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_flow_selector_break(self.0, depth)
         }
     }
 
