@@ -152,6 +152,7 @@ format-js:
 vendor:
 	@$(MAKE) -s -C vendor clean
 	@$(MAKE) -s -C vendor install
+	@mv vendor/src/llvm/llvm-project/compile_commands.json ./
 
 .PHONY: $(BUILD_TARGETS)
 $(BUILD_TARGETS):

@@ -5,11 +5,12 @@
 /vendor/include
 /vendor/lib
 /vendor/share
-/vendor/**/compile_commands.json
 .DS_Store
+.clangd
 .env
 .envrc
 cobertura.xml
+compile_commands.json
 flamegraph.svg
 memory-profiling_*
 perf.data
