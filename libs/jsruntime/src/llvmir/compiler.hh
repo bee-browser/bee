@@ -44,6 +44,24 @@ struct Module;
 
 #define REG_NAME(expr) (enable_labels_ ? expr : "")
 
+// DO NOT CHANGE THE FOLLOWING VALUES.
+// The implementation heavily depends on the values.
+#define FLOW_SELECTOR_KIND_RETURN   0x00000000
+#define FLOW_SELECTOR_KIND_THROW    0x00000001
+#define FLOW_SELECTOR_KIND_BREAK    0x00000002
+#define FLOW_SELECTOR_KIND_CONTINUE 0x00000003
+#define FLOW_SELECTOR_KIND_NORMAL   0x000000FF
+
+#define FLOW_SELECTOR_WEIGHT_MASK   0x0000FF00
+
+#define DEFINE_FLOW_SELECTOR(extra, depth, kind) ((extra) | (depth) | FLOW_SELECTOR_KIND_##kind)
+
+#define FLOW_SELECTOR_NORMAL          DEFINE_FLOW_SELECTOR(0x00010000, 0x0000FF00, NORMAL)
+#define FLOW_SELECTOR_RETURN          DEFINE_FLOW_SELECTOR(0x00000000, 0x00000000, RETURN)
+#define FLOW_SELECTOR_THROW           DEFINE_FLOW_SELECTOR(0x00000000, 0x00000000, THROW)
+#define FLOW_SELECTOR_BREAK(depth)    DEFINE_FLOW_SELECTOR(0x00000000,      depth, BREAK)
+#define FLOW_SELECTOR_CONTINUE(depth) DEFINE_FLOW_SELECTOR(0x00000000,      depth, CONTINUE)
+
 class Compiler {
  public:
   Compiler() {
@@ -194,29 +212,6 @@ class Compiler {
       llvm::BasicBlock* then_block,
       llvm::BasicBlock* else_block) {
     builder_->CreateCondBr(cond, then_block, else_block);
-  }
-
-  void HandleReturnedThrown(bool returned,
-      bool thrown,
-      llvm::BasicBlock* block,
-      llvm::BasicBlock* cleanup_block,
-      llvm::BasicBlock* exception_block) {
-    assert(block != nullptr);
-    // cleanup_block may be nullptr.
-    // exception_block may be nullptr.
-
-    if (!returned && !thrown) {
-      builder_->CreateBr(block);
-    } else {
-      auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
-      auto* switch_inst = builder_->CreateSwitch(status, block);
-      if (cleanup_block != nullptr) {
-        switch_inst->addCase(builder_->getInt32(STATUS_NORMAL), cleanup_block);
-      }
-      if (exception_block != nullptr) {
-        switch_inst->addCase(builder_->getInt32(STATUS_EXCEPTION), exception_block);
-      }
-    }
   }
 
   // undefined
@@ -660,10 +655,53 @@ class Compiler {
         status, builder_->getInt32(STATUS_EXCEPTION), REG_NAME("is_exception"));
   }
 
-  llvm::Value* CreateHasUncaughtException() {
-    auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
-    return builder_->CreateICmpEQ(
-        status, builder_->getInt32(STATUS_EXCEPTION), REG_NAME("has_uncaught_exception"));
+  // flow selector
+
+  void CreateAllocFlowSelector() {
+    flow_selector_ = CreateAlloc1(builder_->getInt32Ty(), REG_NAME("flow_selector.ptr"));
+    builder_->CreateStore(builder_->getInt32(FLOW_SELECTOR_NORMAL), flow_selector_);
+  }
+
+  void CreateSetFlowSelectorNormal() {
+    builder_->CreateStore(builder_->getInt32(FLOW_SELECTOR_NORMAL), flow_selector_);
+  }
+
+  void CreateSetFlowSelectorReturn() {
+    builder_->CreateStore(builder_->getInt32(FLOW_SELECTOR_RETURN), flow_selector_);
+  }
+
+  void CreateSetFlowSelectorThrow() {
+    builder_->CreateStore(builder_->getInt32(FLOW_SELECTOR_THROW), flow_selector_);
+  }
+
+  void CreateSetFlowSelectorBreak(uint32_t depth) {
+    builder_->CreateStore(builder_->getInt32(FLOW_SELECTOR_BREAK(depth)), flow_selector_);
+  }
+
+  void CreateSetFlowSelectorContinue(uint32_t depth) {
+    builder_->CreateStore(builder_->getInt32(FLOW_SELECTOR_CONTINUE(depth)), flow_selector_);
+  }
+
+  llvm::Value* CreateIsFlowSelectorNormal() {
+    auto* value = builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
+    return builder_->CreateICmpEQ(value, builder_->getInt32(FLOW_SELECTOR_NORMAL), REG_NAME("flow_selector.is_normal"));
+  }
+
+  llvm::Value* CreateIsFlowSelectorNormalOrContinue(uint32_t depth) {
+    auto* value = builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
+    return builder_->CreateICmpUGT(value, builder_->getInt32(FLOW_SELECTOR_BREAK(depth)), REG_NAME("flow_selector.is_normal_or_continue"));
+  }
+
+  llvm::Value* CreateIsFlowSelectorBreakOrContinue(uint32_t depth) {
+    auto* value = builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
+    auto* value_depth = builder_->CreateAnd(value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK), REG_NAME("flow_selector.depth"));
+    return builder_->CreateICmpEQ(value_depth, builder_->getInt32(depth), REG_NAME("flow_selector.is_break_or_continue"));
+  }
+
+  llvm::Value* CreateIsFlowSelectorBreak(uint32_t depth) {
+    auto* value = builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
+    auto* value_depth = builder_->CreateAnd(value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK), REG_NAME("flow_selector.depth"));
+    return builder_->CreateICmpEQ(value_depth, builder_->getInt32(depth), REG_NAME("flow_selector.is_break"));
   }
 
   // capture
@@ -976,10 +1014,7 @@ class Compiler {
     auto* top = CreateLoadScopeCleanupStackTop();
     auto* assertion = builder_->CreateICmpULE(top, builder_->getInt32(scope_cleanup_stack_size_),
         REG_NAME("assertion.scope_cleanup_stack.size"));
-    auto* msg = builder_->CreateGlobalString(
-        "assertion failure: scope_cleanup_stack_top_ <= scoke_cleanup_stack_size_",
-        REG_NAME("assertion.msg.scope_cleanup_stack.size"));
-    CreateAssert(assertion, msg);
+    CreateAssert(assertion, "scope_cleanup_stack_top_ <= scoke_cleanup_stack_size_");
   }
 
   // assert(popped == scope_id);
@@ -987,10 +1022,8 @@ class Compiler {
     auto* assertion = builder_->CreateICmpEQ(
         actual, builder_->getInt16(expected), REG_NAME("assertion.scope_cleanup_stack.popped"));
     std::stringstream ss;
-    ss << "assertion failure: popped == " << expected;
-    auto* msg = builder_->CreateGlobalString(
-        ss.str(), REG_NAME("assertion.msg.scope_cleanup_stack.popped"));
-    CreateAssert(assertion, msg);
+    ss << "popped == " << expected;
+    CreateAssert(assertion, ss.str().c_str());
   }
 
   // assert(scope_cleanup_stack_top_ == 0);
@@ -998,9 +1031,7 @@ class Compiler {
     auto* top = CreateLoadScopeCleanupStackTop();
     auto* assertion = builder_->CreateICmpEQ(
         top, builder_->getInt32(0), REG_NAME("assertion.scope_cleanup_stack.is_empty"));
-    auto* msg = builder_->CreateGlobalString("assertion failure: scope_cleanup_stack_top_ == 0",
-        REG_NAME("assertion.msg.scope_cleanup_stack.is_empty"));
-    CreateAssert(assertion, msg);
+    CreateAssert(assertion, "scope_cleanup_stack_top_ == 0");
   }
 
   // assert(scope_cleanup_stack_top_ != 0);
@@ -1008,9 +1039,7 @@ class Compiler {
     auto* top = CreateLoadScopeCleanupStackTop();
     auto* assertion = builder_->CreateICmpNE(
         top, builder_->getInt32(0), REG_NAME("assertion.scope_cleanup_stack.has_item"));
-    auto* msg = builder_->CreateGlobalString("assertion failure: scope_cleanup_stack_top_ != 0",
-        REG_NAME("assertion.msg.scope_cleanup_stack.has_item"));
-    CreateAssert(assertion, msg);
+    CreateAssert(assertion, "scope_cleanup_stack_top_ != 0");
   }
 
   bool IsScopeCleanupCheckerEnabled() const {
@@ -1035,9 +1064,16 @@ class Compiler {
 
   // helpers
 
-  void CreateAssert(llvm::Value* assertion, llvm::Value* msg) {
+  void CreateAssert(llvm::Value* assertion, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.assert.msg"));
     auto* func = types_->CreateRuntimeAssert();
-    builder_->CreateCall(func, {exec_context_, assertion, msg});
+    builder_->CreateCall(func, {exec_context_, assertion, msg_value});
+  }
+
+  void CreatePrintU32(llvm::Value* value, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_u32.msg"));
+    auto* func = types_->CreateRuntimePrintU32();
+    builder_->CreateCall(func, {exec_context_, value, msg_value});
   }
 
   // TODO: separate values that must be reset in EndFunction() from others.
@@ -1057,6 +1093,7 @@ class Compiler {
   llvm::Value* retv_ = nullptr;
   // Holds one of STATUS_XXX values, not Status::*.
   llvm::Value* status_ = nullptr;
+  llvm::Value* flow_selector_ = nullptr;
 
   // scope cleanup checker
   llvm::Type* scope_cleanup_stack_type_ = nullptr;

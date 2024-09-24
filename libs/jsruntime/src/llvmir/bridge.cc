@@ -122,16 +122,6 @@ void compiler_peer_create_cond_br(Compiler* self,
   self->CreateCondBr(LLVM_VALUE(cond), LLVM_BB(then_block), LLVM_BB(else_block));
 }
 
-void compiler_peer_handle_returned_thrown(Compiler* self,
-    bool returned,
-    bool thrown,
-    BasicBlock* block,
-    BasicBlock* cleanup_block,
-    BasicBlock* exception_block) {
-  self->HandleReturnedThrown(
-      returned, thrown, LLVM_BB(block), LLVM_BB(cleanup_block), LLVM_BB(exception_block));
-}
-
 // undefined
 
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value) {
@@ -498,8 +488,46 @@ BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, StatusIr* st
   return PEER_BOOLEAN(self->CreateIsExceptionStatus(LLVM_VALUE(status)));
 }
 
-BooleanIr* compiler_peer_create_has_uncaught_exception(Compiler* self) {
-  return PEER_BOOLEAN(self->CreateHasUncaughtException());
+// flow selector
+
+void compiler_peer_create_alloc_flow_selector(Compiler* self) {
+  self->CreateAllocFlowSelector();
+}
+
+void compiler_peer_create_set_flow_selector_normal(Compiler* self) {
+  self->CreateSetFlowSelectorNormal();
+}
+
+void compiler_peer_create_set_flow_selector_return(Compiler* self) {
+  self->CreateSetFlowSelectorReturn();
+}
+
+void compiler_peer_create_set_flow_selector_throw(Compiler* self) {
+  self->CreateSetFlowSelectorThrow();
+}
+
+void compiler_peer_create_set_flow_selector_break(Compiler* self, uint32_t depth) {
+  self->CreateSetFlowSelectorBreak(depth);
+}
+
+void compiler_peer_create_set_flow_selector_continue(Compiler* self, uint32_t depth) {
+  self->CreateSetFlowSelectorContinue(depth);
+}
+
+BooleanIr* compiler_peer_create_is_flow_selector_normal(Compiler* self) {
+  return PEER_BOOLEAN(self->CreateIsFlowSelectorNormal());
+}
+
+BooleanIr* compiler_peer_create_is_flow_selector_normal_or_continue(Compiler* self, uint32_t depth) {
+  return PEER_BOOLEAN(self->CreateIsFlowSelectorNormalOrContinue(depth));
+}
+
+BooleanIr* compiler_peer_create_is_flow_selector_break_or_continue(Compiler* self, uint32_t depth) {
+  return PEER_BOOLEAN(self->CreateIsFlowSelectorBreakOrContinue(depth));
+}
+
+BooleanIr* compiler_peer_create_is_flow_selector_break(Compiler* self, uint32_t depth) {
+  return PEER_BOOLEAN(self->CreateIsFlowSelectorBreak(depth));
 }
 
 // capture

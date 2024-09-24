@@ -53,6 +53,8 @@ typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value*
 
 // TODO(issue#237): GcCell
 struct Capture {
+  // NOTE: The `target` may point to the `escaped`.  In this case, the `target` must be updated if
+  // the capture is moved during GC, so that the `target` points to the `escaped` correctly.
   Value* target;
   Value escaped;
 };
@@ -133,12 +135,6 @@ void compiler_peer_create_cond_br(Compiler* self,
     BooleanIr* cond,
     BasicBlock* then_block,
     BasicBlock* else_block);
-void compiler_peer_handle_returned_thrown(Compiler* self,
-    bool returned,
-    bool thrown,
-    BasicBlock* block,
-    BasicBlock* cleanup_block,
-    BasicBlock* exception_block);
 
 // undefined
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
@@ -252,6 +248,8 @@ ValueIr* compiler_peer_create_get_arg_in_argv(Compiler* self, ArgvIr* argv, uint
 ValueIr* compiler_peer_create_get_argument_value_ptr(Compiler* self, uint16_t index);
 
 // retv
+//
+// The `retv` variable holds either a returned or thrown value.
 ValueIr* compiler_peer_create_retv(Compiler* self);
 void compiler_peer_create_store_undefined_to_retv(Compiler* self);
 void compiler_peer_create_store_null_to_retv(Compiler* self);
@@ -262,11 +260,26 @@ void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value);
 ValueIr* compiler_peer_get_exception(Compiler* self);
 
 // status
+//
+// TODO: Currently, each lambda has its own status variable.  However, it might be possible to use
+// a single global variable shared by all lambdas.  Because the execution model of JavaScript is a
+// single threaded model.
 void compiler_peer_create_alloc_status(Compiler* self);
 void compiler_peer_create_store_normal_status(Compiler* self);
 void compiler_peer_create_store_exception_status(Compiler* self);
 BooleanIr* compiler_peer_create_is_exception_status(Compiler* self, StatusIr* status);
-BooleanIr* compiler_peer_create_has_uncaught_exception(Compiler* self);
+
+// flow selector
+void compiler_peer_create_alloc_flow_selector(Compiler* self);
+void compiler_peer_create_set_flow_selector_normal(Compiler* self);
+void compiler_peer_create_set_flow_selector_return(Compiler* self);
+void compiler_peer_create_set_flow_selector_throw(Compiler* self);
+void compiler_peer_create_set_flow_selector_break(Compiler* self, uint32_t depth);
+void compiler_peer_create_set_flow_selector_continue(Compiler* self, uint32_t depth);
+BooleanIr* compiler_peer_create_is_flow_selector_normal(Compiler* self);
+BooleanIr* compiler_peer_create_is_flow_selector_normal_or_continue(Compiler* self, uint32_t depth);
+BooleanIr* compiler_peer_create_is_flow_selector_break_or_continue(Compiler* self, uint32_t depth);
+BooleanIr* compiler_peer_create_is_flow_selector_break(Compiler* self, uint32_t depth);
 
 // capture
 CaptureIr* compiler_peer_create_capture(Compiler* self, ValueIr* value);

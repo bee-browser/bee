@@ -177,6 +177,7 @@ pub fn runtime_bridge<X>() -> Runtime {
         create_capture: Some(runtime_create_capture::<X>),
         create_closure: Some(runtime_create_closure::<X>),
         assert: Some(runtime_assert),
+        print_u32: Some(runtime_print_u32),
     }
 }
 
@@ -377,6 +378,20 @@ unsafe extern "C" fn runtime_assert(
     msg: *const std::os::raw::c_char,
 ) {
     if !assertion {
-        panic!("{:?}", std::ffi::CStr::from_ptr(msg));
+        let msg = std::ffi::CStr::from_ptr(msg);
+        panic!("runtime_assert: {msg:?}");
+    }
+}
+
+unsafe extern "C" fn runtime_print_u32(
+    _context: usize,
+    value: u32,
+    msg: *const std::os::raw::c_char,
+) {
+    let msg = std::ffi::CStr::from_ptr(msg);
+    if msg.is_empty() {
+        crate::logger::debug!("runtime_print_u32: {value:08X}");
+    } else {
+        crate::logger::debug!("runtime_print_u32: {value:08X}: {msg:?}");
     }
 }

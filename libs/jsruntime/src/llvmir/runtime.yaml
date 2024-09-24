@@ -51,3 +51,9 @@ functions:
         type: bool
       - name: msg
         type: '&std::ffi::CStr'
+  - name: print_u32
+    args:
+      - name: value
+        type: 'u32'
+      - name: msg
+        type: '&std::ffi::CStr'
