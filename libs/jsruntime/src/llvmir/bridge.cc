@@ -518,11 +518,13 @@ BooleanIr* compiler_peer_create_is_flow_selector_normal(Compiler* self) {
   return PEER_BOOLEAN(self->CreateIsFlowSelectorNormal());
 }
 
-BooleanIr* compiler_peer_create_is_flow_selector_normal_or_continue(Compiler* self, uint32_t depth) {
+BooleanIr* compiler_peer_create_is_flow_selector_normal_or_continue(Compiler* self,
+    uint32_t depth) {
   return PEER_BOOLEAN(self->CreateIsFlowSelectorNormalOrContinue(depth));
 }
 
-BooleanIr* compiler_peer_create_is_flow_selector_break_or_continue(Compiler* self, uint32_t depth) {
+BooleanIr* compiler_peer_create_is_flow_selector_break_or_continue(Compiler* self,
+    uint32_t depth) {
   return PEER_BOOLEAN(self->CreateIsFlowSelectorBreakOrContinue(depth));
 }
 

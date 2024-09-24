@@ -277,7 +277,8 @@ void compiler_peer_create_set_flow_selector_throw(Compiler* self);
 void compiler_peer_create_set_flow_selector_break(Compiler* self, uint32_t depth);
 void compiler_peer_create_set_flow_selector_continue(Compiler* self, uint32_t depth);
 BooleanIr* compiler_peer_create_is_flow_selector_normal(Compiler* self);
-BooleanIr* compiler_peer_create_is_flow_selector_normal_or_continue(Compiler* self, uint32_t depth);
+BooleanIr* compiler_peer_create_is_flow_selector_normal_or_continue(Compiler* self,
+    uint32_t depth);
 BooleanIr* compiler_peer_create_is_flow_selector_break_or_continue(Compiler* self, uint32_t depth);
 BooleanIr* compiler_peer_create_is_flow_selector_break(Compiler* self, uint32_t depth);
 

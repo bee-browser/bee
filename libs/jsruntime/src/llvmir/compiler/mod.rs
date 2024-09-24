@@ -195,7 +195,8 @@ impl<'r, 's> Compiler<'r, 's> {
         );
 
         assert!(self.pending_labels.is_empty());
-        self.control_flow_stack.push_exit_target(return_block, false);
+        self.control_flow_stack
+            .push_exit_target(return_block, false);
 
         self.peer.set_locals_block(locals_block);
 
@@ -692,7 +693,8 @@ impl<'r, 's> Compiler<'r, 's> {
             cleanup_block,
         );
 
-        self.control_flow_stack.push_exit_target(cleanup_block, false);
+        self.control_flow_stack
+            .push_exit_target(cleanup_block, false);
 
         self.peer.create_br(init_block);
         self.peer.move_basic_block_after(init_block);
@@ -773,7 +775,8 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.set_basic_block(ctrl_block);
         let is_normal = self.peer.create_is_flow_selector_normal();
-        self.peer.create_cond_br(is_normal, exit_block, parent_exit_block);
+        self.peer
+            .create_cond_br(is_normal, exit_block, parent_exit_block);
 
         self.peer.move_basic_block_after(exit_block);
         self.peer.set_basic_block(exit_block);
@@ -1723,7 +1726,12 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(insert_point);
     }
 
-    fn build_loop_ctrl_block(&mut self, loop_ctrl: BasicBlock, loop_continue: BasicBlock, loop_break: BasicBlock) {
+    fn build_loop_ctrl_block(
+        &mut self,
+        loop_ctrl: BasicBlock,
+        loop_continue: BasicBlock,
+        loop_break: BasicBlock,
+    ) {
         let set_normal_block = self.create_basic_block("loop-ctrl.set_normal");
         let break_or_continue_block = self.create_basic_block("loop-ctrl.break_or_continue");
 
@@ -1734,16 +1742,25 @@ impl<'r, 's> Compiler<'r, 's> {
         let exit_id = self.control_flow_stack.exit_id();
 
         self.peer.set_basic_block(loop_ctrl);
-        let is_normal_or_continue = self.peer.create_is_flow_selector_normal_or_continue(exit_id.depth());
-        let is_break_or_continue = self.peer.create_is_flow_selector_break_or_continue(exit_id.depth());
-        self.peer.create_cond_br(is_break_or_continue, set_normal_block, break_or_continue_block);
+        let is_normal_or_continue = self
+            .peer
+            .create_is_flow_selector_normal_or_continue(exit_id.depth());
+        let is_break_or_continue = self
+            .peer
+            .create_is_flow_selector_break_or_continue(exit_id.depth());
+        self.peer.create_cond_br(
+            is_break_or_continue,
+            set_normal_block,
+            break_or_continue_block,
+        );
 
         self.peer.set_basic_block(set_normal_block);
         self.peer.create_set_flow_selector_normal();
         self.peer.create_br(break_or_continue_block);
 
         self.peer.set_basic_block(break_or_continue_block);
-        self.peer.create_cond_br(is_normal_or_continue, loop_continue, loop_break);
+        self.peer
+            .create_cond_br(is_normal_or_continue, loop_continue, loop_break);
     }
 
     fn process_loop_init(&mut self) {
@@ -1805,7 +1822,8 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.set_basic_block(ctrl_block);
         let is_break = self.peer.create_is_flow_selector_break(exit_id.depth());
-        self.peer.create_cond_br(is_break, set_normal_block, end_block);
+        self.peer
+            .create_cond_br(is_break, set_normal_block, end_block);
 
         self.peer.set_basic_block(set_normal_block);
         self.peer.create_set_flow_selector_normal();
@@ -1938,7 +1956,8 @@ impl<'r, 's> Compiler<'r, 's> {
         let catch_block = flow.catch_block;
 
         self.control_flow_stack.pop_exit_target();
-        self.control_flow_stack.push_exit_target(finally_block, false);
+        self.control_flow_stack
+            .push_exit_target(finally_block, false);
 
         // Jump from the end of the try block to the beginning of the finally block.
         self.peer.create_br(finally_block);
@@ -1980,7 +1999,8 @@ impl<'r, 's> Compiler<'r, 's> {
         // Jump from the end of the finally block to the beginning of the outer catch block if
         // there is an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
         let is_normal = self.peer.create_is_flow_selector_normal();
-        self.peer.create_cond_br(is_normal, flow.end_block, parent_exit_block);
+        self.peer
+            .create_cond_br(is_normal, flow.end_block, parent_exit_block);
 
         self.peer.move_basic_block_after(flow.end_block);
         self.peer.set_basic_block(flow.end_block);

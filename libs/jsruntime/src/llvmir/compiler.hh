@@ -46,21 +46,21 @@ struct Module;
 
 // DO NOT CHANGE THE FOLLOWING VALUES.
 // The implementation heavily depends on the values.
-#define FLOW_SELECTOR_KIND_RETURN   0x00000000
-#define FLOW_SELECTOR_KIND_THROW    0x00000001
-#define FLOW_SELECTOR_KIND_BREAK    0x00000002
+#define FLOW_SELECTOR_KIND_RETURN 0x00000000
+#define FLOW_SELECTOR_KIND_THROW 0x00000001
+#define FLOW_SELECTOR_KIND_BREAK 0x00000002
 #define FLOW_SELECTOR_KIND_CONTINUE 0x00000003
-#define FLOW_SELECTOR_KIND_NORMAL   0x000000FF
+#define FLOW_SELECTOR_KIND_NORMAL 0x000000FF
 
-#define FLOW_SELECTOR_WEIGHT_MASK   0x0000FF00
+#define FLOW_SELECTOR_WEIGHT_MASK 0x0000FF00
 
 #define DEFINE_FLOW_SELECTOR(extra, depth, kind) ((extra) | (depth) | FLOW_SELECTOR_KIND_##kind)
 
-#define FLOW_SELECTOR_NORMAL          DEFINE_FLOW_SELECTOR(0x00010000, 0x0000FF00, NORMAL)
-#define FLOW_SELECTOR_RETURN          DEFINE_FLOW_SELECTOR(0x00000000, 0x00000000, RETURN)
-#define FLOW_SELECTOR_THROW           DEFINE_FLOW_SELECTOR(0x00000000, 0x00000000, THROW)
-#define FLOW_SELECTOR_BREAK(depth)    DEFINE_FLOW_SELECTOR(0x00000000,      depth, BREAK)
-#define FLOW_SELECTOR_CONTINUE(depth) DEFINE_FLOW_SELECTOR(0x00000000,      depth, CONTINUE)
+#define FLOW_SELECTOR_NORMAL DEFINE_FLOW_SELECTOR(0x00010000, 0x0000FF00, NORMAL)
+#define FLOW_SELECTOR_RETURN DEFINE_FLOW_SELECTOR(0x00000000, 0x00000000, RETURN)
+#define FLOW_SELECTOR_THROW DEFINE_FLOW_SELECTOR(0x00000000, 0x00000000, THROW)
+#define FLOW_SELECTOR_BREAK(depth) DEFINE_FLOW_SELECTOR(0x00000000, depth, BREAK)
+#define FLOW_SELECTOR_CONTINUE(depth) DEFINE_FLOW_SELECTOR(0x00000000, depth, CONTINUE)
 
 class Compiler {
  public:
@@ -683,25 +683,35 @@ class Compiler {
   }
 
   llvm::Value* CreateIsFlowSelectorNormal() {
-    auto* value = builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
-    return builder_->CreateICmpEQ(value, builder_->getInt32(FLOW_SELECTOR_NORMAL), REG_NAME("flow_selector.is_normal"));
+    auto* value =
+        builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
+    return builder_->CreateICmpEQ(
+        value, builder_->getInt32(FLOW_SELECTOR_NORMAL), REG_NAME("flow_selector.is_normal"));
   }
 
   llvm::Value* CreateIsFlowSelectorNormalOrContinue(uint32_t depth) {
-    auto* value = builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
-    return builder_->CreateICmpUGT(value, builder_->getInt32(FLOW_SELECTOR_BREAK(depth)), REG_NAME("flow_selector.is_normal_or_continue"));
+    auto* value =
+        builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
+    return builder_->CreateICmpUGT(value, builder_->getInt32(FLOW_SELECTOR_BREAK(depth)),
+        REG_NAME("flow_selector.is_normal_or_continue"));
   }
 
   llvm::Value* CreateIsFlowSelectorBreakOrContinue(uint32_t depth) {
-    auto* value = builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
-    auto* value_depth = builder_->CreateAnd(value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK), REG_NAME("flow_selector.depth"));
-    return builder_->CreateICmpEQ(value_depth, builder_->getInt32(depth), REG_NAME("flow_selector.is_break_or_continue"));
+    auto* value =
+        builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
+    auto* value_depth = builder_->CreateAnd(
+        value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK), REG_NAME("flow_selector.depth"));
+    return builder_->CreateICmpEQ(
+        value_depth, builder_->getInt32(depth), REG_NAME("flow_selector.is_break_or_continue"));
   }
 
   llvm::Value* CreateIsFlowSelectorBreak(uint32_t depth) {
-    auto* value = builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
-    auto* value_depth = builder_->CreateAnd(value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK), REG_NAME("flow_selector.depth"));
-    return builder_->CreateICmpEQ(value_depth, builder_->getInt32(depth), REG_NAME("flow_selector.is_break"));
+    auto* value =
+        builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
+    auto* value_depth = builder_->CreateAnd(
+        value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK), REG_NAME("flow_selector.depth"));
+    return builder_->CreateICmpEQ(
+        value_depth, builder_->getInt32(depth), REG_NAME("flow_selector.is_break"));
   }
 
   // capture

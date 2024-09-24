@@ -1180,7 +1180,10 @@ impl FunctionContext {
     fn process_loop_end(&mut self, command: CompileCommand) {
         self.put_command(CompileCommand::LoopEnd);
         let LoopContext { start_index } = self.loop_stack.pop().unwrap();
-        debug_assert!(matches!(self.commands[start_index], CompileCommand::PlaceHolder));
+        debug_assert!(matches!(
+            self.commands[start_index],
+            CompileCommand::PlaceHolder
+        ));
         self.commands[start_index] = command;
 
         self.end_scope();
@@ -1240,11 +1243,18 @@ impl FunctionContext {
     }
 
     fn process_switch_statement(&mut self) {
-        let SwitchContext { case_block_index, default_index, num_cases } = self.switch_stack.pop().unwrap();
+        let SwitchContext {
+            case_block_index,
+            default_index,
+            num_cases,
+        } = self.switch_stack.pop().unwrap();
 
         let id = self.num_switch_statements;
 
-        debug_assert!(matches!(self.commands[case_block_index], CompileCommand::PlaceHolder));
+        debug_assert!(matches!(
+            self.commands[case_block_index],
+            CompileCommand::PlaceHolder
+        ));
         if num_cases == 0 {
             // empty case block
             // Discard the `switchValue`.
@@ -1273,7 +1283,10 @@ impl FunctionContext {
     fn process_labelled_statement(&mut self, symbol: Symbol, is_iteration_statement: bool) {
         let label = self.label_stack.pop().unwrap();
         debug_assert_eq!(label.symbol, symbol);
-        debug_assert!(matches!(self.commands[label.start_index], CompileCommand::PlaceHolder));
+        debug_assert!(matches!(
+            self.commands[label.start_index],
+            CompileCommand::PlaceHolder
+        ));
         self.commands[label.start_index] =
             CompileCommand::LabelStart(symbol, is_iteration_statement);
         self.put_command(CompileCommand::LabelEnd(symbol, is_iteration_statement));
