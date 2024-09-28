@@ -128,7 +128,10 @@ macro_rules! bb_name {
 
 macro_rules! dump_enabled {
     () => {
-        cfg!(debug_assertions) && std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP").is_some()
+        cfg!(debug_assertions) && matches!(
+            std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP"),
+            Some(v) if v == "1",
+        )
     };
 }
 
