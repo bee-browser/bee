@@ -2450,7 +2450,7 @@ where
     //   await UnaryExpression[?Yield, +Await]
     fn process_await(&mut self) -> Result<(), Error> {
         self.enqueue(Node::AwaitExpression);
-        self.replace(2,Detail::Expression);
+        self.replace(2, Detail::Expression);
         Ok(())
     }
 
