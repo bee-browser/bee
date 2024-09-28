@@ -15,7 +15,12 @@ struct CommandLine {
     /// The type of the source text.
     ///
     /// Specify `module` explicitly when the source text read from STDIN is parsed as a module.
-    #[arg(global = true, long = "as", default_value = "auto", value_name = "SOURCE_TYPE")]
+    #[arg(
+        global = true,
+        long = "as",
+        default_value = "auto",
+        value_name = "SOURCE_TYPE"
+    )]
     parse_as: SourceType,
 
     /// Enables the scope cleanup checker.
