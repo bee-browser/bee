@@ -611,7 +611,10 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_await_expression(&mut self) {
-        self.context_stack.last_mut().unwrap().put_command(CompileCommand::Await);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::Await);
     }
 
     fn handle_then_block(&mut self) {
