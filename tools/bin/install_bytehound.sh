@@ -99,7 +99,7 @@ trap "cleanup" EXIT
 WORKDIR=$(mktemp -d --suffix=_bee_bytehound)
 
 cat <<'EOF' >$WORKDIR/Dockerfile
-FROM node:slim AS build
+FROM node AS build
 COPY build.sh /
 RUN sh -x /build.sh
 
