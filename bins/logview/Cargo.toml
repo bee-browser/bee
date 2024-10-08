@@ -10,7 +10,7 @@ anyhow = "1.0.89"
 async-stream = "0.3.6"
 axum = "0.7.7"
 bytes = "1.7.2"
-clap = { version = "4.5.19", features = ["derive"] }
+clap = { version = "4.5.20", features = ["derive"] }
 logging = { path = "../../libs/logging" }
 mime = "0.3.17"
 mustache = "0.9.0"
