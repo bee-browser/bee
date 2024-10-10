@@ -1,6 +1,7 @@
 'use strict';
 
 import * as path from '@std/path';
+import * as io from '@std/io';
 import { parseCommand } from '../lib/cli.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
@@ -20,7 +21,7 @@ Deno.exit(await run(args, options));
 
 // TODO: slow...
 async function run(args, options) {
-  const newContent = await Deno.readAll(Deno.stdin);
+  const newContent = await io.readAll(Deno.stdin);
   const file = path.resolve(args.file);
   try {
     const oldContent = await Deno.readFile(file);

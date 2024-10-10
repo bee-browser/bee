@@ -1,5 +1,7 @@
+import * as io from '@std/io';
+
 const decoder = new TextDecoder('utf-8');
-const json = await decoder.decode(await Deno.readAll(Deno.stdin));
+const json = await decoder.decode(await io.readAll(Deno.stdin));
 const entries = JSON.parse(json);
 
 const nodes = [{
