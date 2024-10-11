@@ -18,7 +18,7 @@ thiserror = "1.0.64"
 
 [build-dependencies]
 bindgen = "0.70.1"
-cc = { version = "1.1.28", features = ["parallel"] }
+cc = { version = "1.1.29", features = ["parallel"] }
 duct = "0.13.7"
 
 [dev-dependencies]
