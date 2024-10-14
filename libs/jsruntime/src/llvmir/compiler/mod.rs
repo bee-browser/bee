@@ -1254,6 +1254,9 @@ impl<'r, 's> Compiler<'r, 's> {
             (Operand::Closure(lhs), Operand::Closure(rhs)) => {
                 self.peer.create_is_same_closure(lhs, rhs)
             }
+            (Operand::Promise(lhs), Operand::Promise(rhs)) => {
+                self.peer.create_is_same_promise(lhs, rhs)
+            }
             _ => unreachable!(),
         }
     }
@@ -1266,6 +1269,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Boolean(rhs) => self.create_is_same_boolean_value(lhs, rhs),
             Operand::Number(rhs) => self.create_is_same_number_value(lhs, rhs),
             Operand::Closure(rhs) => self.create_is_same_closure_value(lhs, rhs),
+            Operand::Promise(rhs) => self.create_is_same_promise_value(lhs, rhs),
             Operand::Any(rhs) => self.peer.create_is_strictly_equal(lhs, rhs),
             _ => unreachable!(),
         }
@@ -1328,6 +1332,28 @@ impl<'r, 's> Compiler<'r, 's> {
         // {
         self.peer.set_basic_block(then_block);
         let then_value = self.peer.create_is_same_closure_value(value, closure);
+        self.peer.create_br(merge_block);
+        // } else {
+        self.peer.set_basic_block(else_block);
+        let else_value = self.peer.get_boolean(false);
+        self.peer.create_br(merge_block);
+        // }
+        self.peer.set_basic_block(merge_block);
+        self.peer
+            .create_boolean_phi(then_value, then_block, else_value, else_block)
+    }
+
+    fn create_is_same_promise_value(&mut self, value: ValueIr, promise: PromiseIr) -> BooleanIr {
+        let then_block = self.create_basic_block("is_promise.then");
+        let else_block = self.create_basic_block("is_promise.else");
+        let merge_block = self.create_basic_block("is_promise");
+
+        // if value.kind == ValueKind::Promise
+        let cond = self.peer.create_is_promise(value);
+        self.peer.create_cond_br(cond, then_block, else_block);
+        // {
+        self.peer.set_basic_block(then_block);
+        let then_value = self.peer.create_is_same_promise_value(value, promise);
         self.peer.create_br(merge_block);
         // } else {
         self.peer.set_basic_block(else_block);
@@ -2186,14 +2212,54 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_await(&mut self, _next_state: u32) {
-        let operand = self.operand_stack.pop().unwrap();
-        // TODO: promise
-        let result = self.create_to_any(operand);
-
         let promise = self.peer.create_load_promise_from_value(self.locals[3]);
-        self.peer.create_emit_promise_resolved(promise, result);
 
-        // TODO: register Promise.resolve(operand);
+        match self.operand_stack.pop().unwrap() {
+            Operand::Undefined => {
+                let result = self.peer.create_undefined_to_any();
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Null => {
+                let result = self.peer.create_null_to_any();
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Boolean(value) => {
+                let result = self.peer.create_boolean_to_any(value);
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Number(value) => {
+                let result = self.peer.create_number_to_any(value);
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Closure(value) => {
+                let result = self.peer.create_closure_to_any(value);
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Promise(value) => {
+                self.peer.create_await_promise(value, promise);
+            }
+            Operand::Any(value) => {
+                let then_block = self.create_basic_block("is_promise.then");
+                let else_block = self.create_basic_block("is_promise.else");
+                let block = self.create_basic_block("block");
+                // if value.is_promise()
+                let is_promise = self.peer.create_is_promise(value);
+                self.peer.create_cond_br(is_promise, then_block, else_block);
+                // {
+                self.peer.set_basic_block(then_block);
+                let target = self.peer.create_load_promise_from_value(value);
+                self.peer.create_await_promise(target, promise);
+                self.peer.create_br(block);
+                // } else {
+                self.peer.set_basic_block(else_block);
+                self.peer.create_emit_promise_resolved(promise, value);
+                self.peer.create_br(block);
+                // }
+                self.peer.set_basic_block(block);
+            }
+            _ => unreachable!(),
+        }
+
         self.peer.create_suspend();
 
         // resume block

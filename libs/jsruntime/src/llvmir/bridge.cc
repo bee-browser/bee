@@ -341,6 +341,32 @@ ClosureIr* compiler_peer_create_closure_phi(Compiler* self,
       LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
+// promise
+
+BooleanIr* compiler_peer_create_is_promise(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateIsPromise(LLVM_VALUE(value)));
+}
+
+BooleanIr* compiler_peer_create_is_same_promise(Compiler* self, PromiseIr* a, PromiseIr* b) {
+  return PEER_BOOLEAN(self->CreateIsSamePromise(LLVM_VALUE(a), LLVM_VALUE(b)));
+}
+
+PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine) {
+  return PEER_PROMISE(self->CreateRegisterPromise(LLVM_VALUE(coroutine)));
+}
+
+void compiler_peer_create_await_promise(Compiler* self, PromiseIr* promise, PromiseIr* awaiting) {
+  self->CreateAwaitPromise(LLVM_VALUE(promise), LLVM_VALUE(awaiting));
+}
+
+void compiler_peer_create_resume(Compiler* self, PromiseIr* promise) {
+  self->CreateResume(LLVM_VALUE(promise));
+}
+
+void compiler_peer_create_emit_promise_resolved(Compiler* self, PromiseIr* promise, ValueIr* result) {
+  self->CreateEmitPromiseResolved(LLVM_VALUE(promise), LLVM_VALUE(result));
+}
+
 // value
 
 BooleanIr* compiler_peer_create_has_value(Compiler* self, ValueIr* value) {
@@ -371,6 +397,12 @@ BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self,
     ValueIr* value,
     ClosureIr* closure) {
   return PEER_BOOLEAN(self->CreateIsSameClosureValue(LLVM_VALUE(value), LLVM_VALUE(closure)));
+}
+
+BooleanIr* compiler_peer_create_is_same_promise_value(Compiler* self,
+    ValueIr* value,
+    PromiseIr* promise) {
+  return PEER_BOOLEAN(self->CreateIsSamePromiseValue(LLVM_VALUE(value), LLVM_VALUE(promise)));
 }
 
 ValueIr* compiler_peer_create_undefined_to_any(Compiler* self) {
@@ -590,20 +622,6 @@ CoroutineIr* compiler_peer_create_coroutine(Compiler* self, ClosureIr* closure, 
 
 void compiler_peer_create_suspend(Compiler* self) {
   self->CreateSuspend();
-}
-
-// promise
-
-PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine) {
-  return PEER_PROMISE(self->CreateRegisterPromise(LLVM_VALUE(coroutine)));
-}
-
-void compiler_peer_create_resume(Compiler* self, PromiseIr* promise) {
-  self->CreateResume(LLVM_VALUE(promise));
-}
-
-void compiler_peer_create_emit_promise_resolved(Compiler* self, PromiseIr* promise, ValueIr* result) {
-  self->CreateEmitPromiseResolved(LLVM_VALUE(promise), LLVM_VALUE(result));
 }
 
 // scope cleanup checker

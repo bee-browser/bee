@@ -57,6 +57,12 @@ functions:
       - name: coroutine
         type: '&mut Coroutine'
     ret: 'u32'
+  - name: await_promise
+    args:
+      - name: promise
+        type: u32
+      - name: awaiting
+        type: u32
   - name: resume
     args:
       - name: promise_id

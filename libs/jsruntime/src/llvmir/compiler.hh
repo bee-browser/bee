@@ -474,6 +474,38 @@ class Compiler {
     return phi;
   }
 
+  // promise
+
+  llvm::Value* CreateIsPromise(llvm::Value* value_ptr) {
+    auto* kind = CreateLoadValueKindFromValue(value_ptr);
+    return builder_->CreateICmpEQ(
+        kind, builder_->getInt8(kValueKindPromise), REG_NAME("is_promise"));
+  }
+
+  llvm::Value* CreateIsSamePromise(llvm::Value* a, llvm::Value* b) {
+    return builder_->CreateICmpEQ(a, b, REG_NAME("is_same_promise"));
+  }
+
+  llvm::Value* CreateRegisterPromise(llvm::Value* coroutine) {
+    auto* func = types_->CreateRuntimeRegisterPromise();
+    return builder_->CreateCall(func, {exec_context_, coroutine}, REG_NAME("promise"));
+  }
+
+  void CreateAwaitPromise(llvm::Value* promise, llvm::Value* awaiting) {
+    auto* func = types_->CreateRuntimeAwaitPromise();
+    builder_->CreateCall(func, {exec_context_, promise, awaiting});
+  }
+
+  void CreateResume(llvm::Value* promise) {
+    auto* func = types_->CreateRuntimeResume();
+    builder_->CreateCall(func, {exec_context_, promise});
+  }
+
+  void CreateEmitPromiseResolved(llvm::Value* promise, llvm::Value* result) {
+    auto* func = types_->CreateRuntimeEmitPromiseResolved();
+    builder_->CreateCall(func, {exec_context_, promise, result});
+  }
+
   // value
 
   llvm::Value* CreateHasValue(llvm::Value* value) {
@@ -508,6 +540,11 @@ class Compiler {
   llvm::Value* CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* closure) {
     auto* value = CreateLoadClosureFromValue(value_ptr);
     return builder_->CreateICmpEQ(value, closure, REG_NAME("is_same_closure_value"));
+  }
+
+  llvm::Value* CreateIsSamePromiseValue(llvm::Value* value_ptr, llvm::Value* promise) {
+    auto* value = CreateLoadPromiseFromValue(value_ptr);
+    return builder_->CreateICmpEQ(value, promise, REG_NAME("is_same_promise_value"));
   }
 
   llvm::Value* CreateUndefinedToAny() {
@@ -779,23 +816,6 @@ class Compiler {
     builder_->CreateRet(builder_->getInt32(STATUS_SUSPEND));
   }
 
-  // promise
-
-  llvm::Value* CreateRegisterPromise(llvm::Value* coroutine) {
-    auto* func = types_->CreateRuntimeRegisterPromise();
-    return builder_->CreateCall(func, {exec_context_, coroutine}, REG_NAME("promise"));
-  }
-
-  void CreateResume(llvm::Value* promise) {
-    auto* func = types_->CreateRuntimeResume();
-    builder_->CreateCall(func, {exec_context_, promise});
-  }
-
-  void CreateEmitPromiseResolved(llvm::Value* promise, llvm::Value* result) {
-    auto* func = types_->CreateRuntimeEmitPromiseResolved();
-    builder_->CreateCall(func, {exec_context_, promise, result});
-  }
-
   // scope cleanup checker
 
   void SetupScopeCleanupChecker(uint32_t stack_size) {
@@ -848,6 +868,7 @@ class Compiler {
   static constexpr uint8_t kValueKindBoolean = static_cast<uint8_t>(ValueKind::Boolean);
   static constexpr uint8_t kValueKindNumber = static_cast<uint8_t>(ValueKind::Number);
   static constexpr uint8_t kValueKindClosure = static_cast<uint8_t>(ValueKind::Closure);
+  static constexpr uint8_t kValueKindPromise = static_cast<uint8_t>(ValueKind::Promise);
 
   void CreateStore(llvm::Value* value, llvm::Value* dest) {
     builder_->CreateStore(value, dest);
