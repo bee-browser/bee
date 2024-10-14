@@ -259,7 +259,7 @@
 - rule: HoistableDeclaration -> GeneratorDeclaration
   action: undefined
 - rule: HoistableDeclaration -> AsyncFunctionDeclaration
-  action: undefined
+  action: process_hoistable_declaration
 - rule: HoistableDeclaration -> AsyncGeneratorDeclaration
   action: undefined
 - rule: ClassDeclaration -> CLASS BindingIdentifier ClassTail
@@ -307,7 +307,7 @@
 - rule: HoistableDeclaration_Await_Default -> GeneratorDeclaration_Await_Default
   action: undefined
 - rule: HoistableDeclaration_Await_Default -> AsyncFunctionDeclaration_Await_Default
-  action: undefined
+  action: process_hoistable_declaration
 - rule: >-
     HoistableDeclaration_Await_Default ->
     AsyncGeneratorDeclaration_Await_Default
@@ -499,9 +499,9 @@
   action: undefined
 - rule: >-
     AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
-    BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE
-    AsyncFunctionBody RBRACE
-  action: undefined
+    BindingIdentifier _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await
+    RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
+  action: process_async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
     BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE
@@ -548,7 +548,7 @@
 - rule: HoistableDeclaration_Await -> GeneratorDeclaration_Await
   action: undefined
 - rule: HoistableDeclaration_Await -> AsyncFunctionDeclaration_Await
-  action: undefined
+  action: process_hoistable_declaration
 - rule: HoistableDeclaration_Await -> AsyncGeneratorDeclaration_Await
   action: undefined
 - rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
@@ -576,13 +576,14 @@
   action: undefined
 - rule: >-
     AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE
-    AsyncFunctionBody RBRACE
-  action: undefined
+    FUNCTION BindingIdentifier_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN
+    FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody
+    RBRACE
+  action: process_async_function_declaration
 - rule: >-
     AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody
-    RBRACE
+    FUNCTION _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
   action: undefined
 - rule: >-
     AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
@@ -1062,8 +1063,10 @@
   action: nop
 - rule: GeneratorBody -> FunctionBody_Yield
   action: undefined
+- rule: _ASYNC_FUNCTION_CONTEXT_ -> (empty)
+  action: process_async_function_context
 - rule: AsyncFunctionBody -> FunctionBody_Await
-  action: undefined
+  action: nop
 - rule: AsyncGeneratorBody -> FunctionBody_Yield_Await
   action: undefined
 - rule: ClassHeritage -> EXTENDS LeftHandSideExpression
@@ -1213,9 +1216,10 @@
   action: undefined
 - rule: >-
     AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
-    BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE
-    AsyncFunctionBody RBRACE
-  action: undefined
+    BindingIdentifier_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN
+    FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody
+    RBRACE
+  action: process_async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await
@@ -3600,7 +3604,7 @@
 - rule: HoistableDeclaration_Yield -> GeneratorDeclaration_Yield
   action: undefined
 - rule: HoistableDeclaration_Yield -> AsyncFunctionDeclaration_Yield
-  action: undefined
+  action: process_hoistable_declaration
 - rule: HoistableDeclaration_Yield -> AsyncGeneratorDeclaration_Yield
   action: undefined
 - rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
@@ -3723,7 +3727,7 @@
 - rule: HoistableDeclaration_Yield_Await -> GeneratorDeclaration_Yield_Await
   action: undefined
 - rule: HoistableDeclaration_Yield_Await -> AsyncFunctionDeclaration_Yield_Await
-  action: undefined
+  action: process_hoistable_declaration
 - rule: HoistableDeclaration_Yield_Await -> AsyncGeneratorDeclaration_Yield_Await
   action: undefined
 - rule: >-
@@ -4095,9 +4099,10 @@
   action: undefined
 - rule: >-
     AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
-    BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE
-    AsyncFunctionBody RBRACE
-  action: undefined
+    BindingIdentifier_Yield _ASYNC_FUNCTION_CONTEXT_ LPAREN
+    FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody
+    RBRACE
+  action: process_async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await
@@ -4188,9 +4193,10 @@
   action: undefined
 - rule: >-
     AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN
-    LBRACE AsyncFunctionBody RBRACE
-  action: undefined
+    FUNCTION BindingIdentifier_Yield_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN
+    FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody
+    RBRACE
+  action: process_async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     FUNCTION MUL BindingIdentifier_Yield_Await LPAREN

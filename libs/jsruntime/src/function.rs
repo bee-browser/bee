@@ -5,35 +5,40 @@ use std::ffi::CString;
 pub struct FunctionId(u32);
 
 impl FunctionId {
-    const HOST_BIT: u32 = 0x80000000;
-    const VALUE_MASK: u32 = !Self::HOST_BIT;
+    const HOST_BIT: u32      = 1 << 31;
+    const COROUTINE_BIT: u32 = 1 << 30;
+
+    const VALUE_MASK: u32 = !(Self::HOST_BIT | Self::COROUTINE_BIT);
     const MAX_INDEX: usize = Self::VALUE_MASK as usize;
 
-    pub const MAIN: Self = Self::native(0);
+    pub const MAIN: Self = Self::native(0, false); // TODO: modules including await expression.
 
-    #[inline(always)]
     pub const fn is_native(&self) -> bool {
         (self.0 & Self::HOST_BIT) == 0
     }
 
-    #[inline(always)]
     pub const fn is_host(&self) -> bool {
         (self.0 & Self::HOST_BIT) != 0
     }
 
-    #[inline(always)]
-    const fn native(index: usize) -> Self {
-        debug_assert!(index <= Self::MAX_INDEX);
-        Self(index as u32)
+    pub const fn is_coroutine(&self) -> bool {
+        (self.0 & Self::COROUTINE_BIT) != 0
     }
 
-    #[inline(always)]
+    const fn native(index: usize, coroutine: bool) -> Self {
+        debug_assert!(index <= Self::MAX_INDEX);
+        Self(if coroutine {
+            index as u32 | Self::COROUTINE_BIT
+        } else {
+            index as u32
+        })
+    }
+
     const fn host(index: usize) -> Self {
         debug_assert!(index <= Self::MAX_INDEX);
         Self(index as u32 | Self::HOST_BIT)
     }
 
-    #[inline(always)]
     const fn index(&self) -> usize {
         (self.0 & Self::VALUE_MASK) as usize
     }
@@ -55,10 +60,14 @@ impl std::fmt::Debug for FunctionId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let index = self.index();
         if self.is_native() {
-            write!(f, "FunctionId::Native({index})")
+            write!(f, "FunctionId::Native")?;
         } else {
-            write!(f, "FunctionId::Host({index})")
+            write!(f, "FunctionId::Host")?;
         }
+        if self.is_coroutine() {
+            write!(f, "Coroutine")?;
+        }
+        write!(f, "({index})")
     }
 }
 
@@ -85,12 +94,12 @@ impl FunctionRegistry {
         &self.host_functions[id.index()]
     }
 
-    pub fn create_native_function(&mut self) -> FunctionId {
+    pub fn create_native_function(&mut self, coroutine: bool) -> FunctionId {
         let index = self.native_functions.len();
         assert!(index <= FunctionId::MAX_INDEX);
         let name = CString::new(format!("fn{index}")).unwrap();
         self.native_functions.push(NativeFunction { name });
-        FunctionId::native(index)
+        FunctionId::native(index, coroutine)
     }
 
     pub fn register_host_function(&mut self, name: &str) -> FunctionId {
@@ -125,6 +134,6 @@ mod tests {
     #[test]
     fn test_function_id_max() {
         // TODO: checking at compile time is better.
-        assert_eq!(FunctionId::MAX_INDEX, (FunctionId::HOST_BIT - 1) as usize);
+        assert_eq!(FunctionId::MAX_INDEX, (FunctionId::COROUTINE_BIT - 1) as usize);
     }
 }

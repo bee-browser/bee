@@ -30,9 +30,12 @@ use peer::BasicBlock;
 use peer::BooleanIr;
 use peer::CaptureIr;
 use peer::ClosureIr;
+use peer::CoroutineIr;
 use peer::LambdaIr;
 use peer::NumberIr;
+use peer::PromiseIr;
 use peer::StatusIr;
+use peer::SwitchIr;
 use peer::ValueIr;
 
 impl<X> Runtime<X> {
@@ -49,7 +52,7 @@ impl<X> Runtime<X> {
             for command in func.commands.iter() {
                 compiler.process_command(command);
             }
-            compiler.end_function(optimize);
+            compiler.end_function(func.id, optimize);
         }
         Ok(compiler.end_compile())
     }
@@ -186,12 +189,14 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.start_function(&native.name);
 
         let locals_block = self.create_basic_block("locals");
+        let init_block = self.create_basic_block("init");
         let args_block = self.create_basic_block("args");
         let body_block = self.create_basic_block("body");
         let return_block = self.create_basic_block("return");
 
         self.control_flow_stack.push_function_flow(
             locals_block,
+            init_block,
             args_block,
             body_block,
             return_block,
@@ -203,14 +208,20 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.set_locals_block(locals_block);
 
-        self.peer.set_basic_block(body_block);
+        self.peer.set_basic_block(init_block);
         self.peer.create_store_undefined_to_retv();
         self.peer.create_alloc_status();
         self.peer.create_alloc_flow_selector();
+
+        self.peer.set_basic_block(body_block);
     }
 
-    fn end_function(&mut self, optimize: bool) {
-        logger::debug!(event = "end_function", optimize);
+    fn end_function(&mut self, func_id: FunctionId, optimize: bool) {
+        logger::debug!(event = "end_function", ?func_id, optimize);
+
+        let dormant_block = func_id
+            .is_coroutine()
+            .then(|| self.control_flow_stack.pop_coroutine_flow().dormant_block);
 
         self.control_flow_stack.pop_exit_target();
         let flow = self.control_flow_stack.pop_function_flow();
@@ -219,6 +230,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(flow.return_block);
 
         self.peer.set_basic_block(flow.locals_block);
+        self.peer.create_br(flow.init_block);
+        self.peer.move_basic_block_after(flow.init_block);
+
+        self.peer.set_basic_block(flow.init_block);
         self.peer.create_br(flow.args_block);
         self.peer.move_basic_block_after(flow.args_block);
 
@@ -227,6 +242,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(flow.body_block);
 
         self.peer.set_basic_block(flow.return_block);
+        if let Some(block) = dormant_block {
+            self.peer.move_basic_block_after(block);
+        }
 
         self.peer.end_function(optimize);
 
@@ -252,6 +270,8 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Closure(prologue, num_captures) => {
                 self.process_closure(*prologue, *num_captures)
             }
+            CompileCommand::Coroutine(num_locals) => self.process_coroutine(*num_locals),
+            CompileCommand::Promise => self.process_promise(),
             CompileCommand::Reference(symbol, locator) => self.process_reference(*symbol, *locator),
             CompileCommand::Exception => self.process_exception(),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
@@ -340,7 +360,10 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Break(symbol) => self.process_break(*symbol),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Throw => self.process_throw(),
-            CompileCommand::Await => self.process_await(),
+            CompileCommand::Environment(num_locals) => self.process_environment(*num_locals),
+            CompileCommand::JumpTable(num_states) => self.process_jump_table(*num_states),
+            CompileCommand::Await(next_state) => self.process_await(*next_state),
+            CompileCommand::Resume => self.process_resume(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
@@ -433,6 +456,26 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
+    fn pop_closure(&mut self) -> ClosureIr {
+        match self.operand_stack.pop() {
+            Some(Operand::Closure(closure)) => closure,
+            _ => unreachable!(),
+        }
+    }
+
+    fn process_coroutine(&mut self, num_locals: u16) {
+        debug_assert!(num_locals >= 3);
+        let closure = self.pop_closure();
+        let coroutine = self.peer.create_coroutine(closure, num_locals);
+        self.operand_stack.push(Operand::Coroutine(coroutine));
+    }
+
+    fn process_promise(&mut self) {
+        let coroutine = self.pop_coroutine();
+        let promise = self.peer.create_register_promise(coroutine);
+        self.operand_stack.push(Operand::Promise(promise));
+    }
+
     fn process_reference(&mut self, symbol: Symbol, locator: Locator) {
         debug_assert!(!matches!(locator, Locator::None));
         self.operand_stack.push(Operand::Reference(symbol, locator));
@@ -446,7 +489,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_allocate_locals(&mut self, num_locals: u16) {
         debug_assert!(num_locals > 0);
-
         for i in 0..num_locals {
             let local = self.peer.create_local_value(i);
             self.locals.push(local);
@@ -501,6 +543,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Boolean(value) => self.peer.create_store_boolean_to_value(value, dest),
             Operand::Number(value) => self.peer.create_store_number_to_value(value, dest),
             Operand::Closure(value) => self.peer.create_store_closure_to_value(value, dest),
+            Operand::Promise(value) => self.peer.create_store_promise_to_value(value, dest),
             Operand::Any(value) => self.peer.create_store_value_to_value(value, dest),
             _ => unreachable!(),
         }
@@ -708,8 +751,11 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(init_block);
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
+            if binding.is_hidden() {
+                continue;
+            }
             let locator = binding.locator();
-            if binding.captured {
+            if binding.is_captured() {
                 let value = match locator {
                     Locator::Argument(index) => self.peer.create_get_argument_value_ptr(index),
                     Locator::Local(index) => self.locals[index as usize],
@@ -761,7 +807,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(flow.cleanup_block);
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
-            if binding.captured {
+            if binding.is_captured() {
                 self.escape_value(binding.locator());
             }
             if binding.is_local() {
@@ -2088,6 +2134,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Boolean(value) => self.peer.create_store_boolean_to_retv(value),
             Operand::Number(value) => self.peer.create_store_number_to_retv(value),
             Operand::Closure(value) => self.peer.create_store_closure_to_retv(value),
+            Operand::Promise(value) => self.peer.create_store_promise_to_retv(value),
             Operand::Any(value) => self.peer.create_store_value_to_retv(value),
             _ => unreachable!(),
         }
@@ -2107,8 +2154,90 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_basic_block_for_deadcode();
     }
 
-    fn process_await(&mut self) {
-        // TODO
+    fn process_environment(&mut self, num_locals: u16) {
+        debug_assert!(num_locals >= 3);
+        let flow = self.control_flow_stack.function_flow();
+        let backup = self.peer.get_basic_block();
+        // The ##coroutine function takes no argument and the `argv` formal parameter of the
+        // generated lambda is used for specifying the heap-allocated environment which hold the
+        // local variables for the generated lambda.  In the `bb.args` block, we load the pointer
+        // to each local variable instead.
+        self.peer.set_basic_block(flow.args_block);
+        for i in 0..num_locals {
+            let local = self.peer.create_get_argument_value_ptr(i);
+            self.locals.push(local);
+        }
+        self.peer.set_basic_block(backup);
+    }
+
+    fn process_jump_table(&mut self, num_states: u32) {
+        debug_assert!(num_states >= 2);
+        let initial_block = self.create_basic_block("co.initial");
+        let dormant_block = self.create_basic_block("co.dormant");
+        let inst = self.peer.create_switch(self.locals[0], dormant_block, num_states);
+        self.peer.create_add_case(inst, 0, initial_block);
+
+        self.peer.set_basic_block(dormant_block);
+        self.peer.create_unreachable(c"dormant coroutine was called");
+
+        self.peer.set_basic_block(initial_block);
+
+        self.control_flow_stack.push_coroutine_flow(inst, dormant_block, num_states);
+    }
+
+    fn process_await(&mut self, _next_state: u32) {
+        let operand = self.operand_stack.pop().unwrap();
+        // TODO: promise
+        let result = self.create_to_any(operand);
+
+        let promise = self.peer.create_load_promise_from_value(self.locals[3]);
+        self.peer.create_emit_promise_resolved(promise, result);
+
+        // TODO: register Promise.resolve(operand);
+        self.peer.create_suspend();
+
+        // resume block
+        let block = self.create_basic_block("resume");
+        let inst = self.control_flow_stack.coroutine_switch_inst();
+        let state = self.control_flow_stack.coroutine_next_state();
+        self.peer.create_add_case(inst, state, block);
+        self.peer.set_basic_block(block);
+
+        let has_error_block = self.create_basic_block("has_error");
+        let result_block = self.create_basic_block("result");
+
+        // if ##error.has_value()
+        let has_error = self.peer.create_has_value(self.locals[2]);
+        self.peer.create_cond_br(has_error, has_error_block, result_block);
+        {
+            // throw ##error;
+            self.peer.set_basic_block(has_error_block);
+            self.operand_stack.push(Operand::Any(self.locals[2]));
+            self.process_throw();
+            self.peer.create_br(result_block);
+        }
+
+        self.peer.set_basic_block(result_block);
+        self.operand_stack.push(Operand::Any(self.locals[1]));
+    }
+
+    fn process_resume(&mut self) {
+        let promise_id = self.pop_promise();
+        self.peer.create_resume(promise_id);
+    }
+
+    fn pop_coroutine(&mut self) -> CoroutineIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Coroutine(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn pop_promise(&mut self) -> PromiseIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Promise(value) => value,
+            _ => unreachable!(),
+        }
     }
 
     fn process_discard(&mut self) {
@@ -2204,6 +2333,8 @@ enum Operand {
     Number(NumberIr),
     Function(LambdaIr),
     Closure(ClosureIr),
+    Coroutine(CoroutineIr),
+    Promise(PromiseIr),
     Any(ValueIr),
     Reference(Symbol, Locator),
     Argv(ArgvIr),
@@ -2223,8 +2354,10 @@ impl Dump for Operand {
             Self::Null => eprintln!("Null"),
             Self::Boolean(value) => eprintln!("Boolean({:?})", ir2cstr!(value)),
             Self::Number(value) => eprintln!("Number({:?})", ir2cstr!(value)),
-            Self::Function(lambda) => eprintln!("Function({:?})", ir2cstr!(lambda)),
+            Self::Function(value) => eprintln!("Function({:?})", ir2cstr!(value)),
             Self::Closure(value) => eprintln!("Closure({:?})", ir2cstr!(value)),
+            Self::Coroutine(value) => eprintln!("Coroutine({:?})", ir2cstr!(value)),
+            Self::Promise(value) => eprintln!("Promise({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
             Self::Argv(value) => eprintln!("Argv({:?})", ir2cstr!(value)),
