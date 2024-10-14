@@ -3,6 +3,8 @@ mod compiler;
 mod executor;
 
 pub use bridge::runtime_bridge;
+pub use bridge::Coroutine;
+pub use bridge::CoroutineStatus;
 pub use bridge::ReturnValue;
 pub use bridge::Status;
 pub use bridge::Value;

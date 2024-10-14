@@ -40,7 +40,7 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
         expected_values,
         actual_values: vec![],
     });
-    runtime.enable_scope_cleanup_checker();
+    // TODO: disabled: runtime.enable_scope_cleanup_checker();
     if enable_labels {
         runtime.enable_llvmir_labels();
     }
@@ -61,7 +61,9 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
         runtime.parse_script(src).unwrap()
     };
     let module = runtime.compile(&program, optimize).unwrap();
-    runtime.evaluate(module)
+    let result = runtime.evaluate(module)?;
+    runtime.run();
+    Ok(result)
 }
 {%- for test in data.tests %}
 

@@ -10,7 +10,6 @@ pub struct Symbol(u32);
 impl Symbol {
     pub const NONE: Symbol = Symbol(0);
 
-    #[inline]
     pub fn id(&self) -> u32 {
         self.0
     }
