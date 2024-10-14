@@ -544,6 +544,44 @@ impl Compiler {
         }
     }
 
+    // promise
+
+    pub fn create_is_promise(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_promise(self.0, value.0)
+        }
+    }
+
+    pub fn create_is_same_promise(&self, a: PromiseIr, b: PromiseIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_promise(self.0, a.0, b.0)
+        }
+    }
+
+    pub fn create_register_promise(&self, coroutine: CoroutineIr) -> PromiseIr {
+        promise_ir! {
+            bridge::compiler_peer_create_register_promise(self.0, coroutine.0)
+        }
+    }
+
+    pub fn create_await_promise(&self, promise: PromiseIr, awaiting: PromiseIr) {
+        unsafe {
+            bridge::compiler_peer_create_await_promise(self.0, promise.0, awaiting.0);
+        }
+    }
+
+    pub fn create_resume(&self, promise: PromiseIr) {
+        unsafe {
+            bridge::compiler_peer_create_resume(self.0, promise.0);
+        }
+    }
+
+    pub fn create_emit_promise_resolved(&self, promise: PromiseIr, result: ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_emit_promise_resolved(self.0, promise.0, result.0);
+        }
+    }
+
     // value
 
     pub fn create_has_value(&self, value: ValueIr) -> BooleanIr {
@@ -579,6 +617,12 @@ impl Compiler {
     pub fn create_is_same_closure_value(&self, any: ValueIr, closure: ClosureIr) -> BooleanIr {
         boolean_ir! {
             bridge::compiler_peer_create_is_same_closure_value(self.0, any.0, closure.0)
+        }
+    }
+
+    pub fn create_is_same_promise_value(&self, any: ValueIr, promise: PromiseIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_promise_value(self.0, any.0, promise.0)
         }
     }
 
@@ -946,26 +990,6 @@ impl Compiler {
     pub fn create_suspend(&self) {
         unsafe {
             bridge::compiler_peer_create_suspend(self.0);
-        }
-    }
-
-    // promise
-
-    pub fn create_register_promise(&self, coroutine: CoroutineIr) -> PromiseIr {
-        promise_ir! {
-            bridge::compiler_peer_create_register_promise(self.0, coroutine.0)
-        }
-    }
-
-    pub fn create_resume(&self, promise: PromiseIr) {
-        unsafe {
-            bridge::compiler_peer_create_resume(self.0, promise.0);
-        }
-    }
-
-    pub fn create_emit_promise_resolved(&self, promise: PromiseIr, result: ValueIr) {
-        unsafe {
-            bridge::compiler_peer_create_emit_promise_resolved(self.0, promise.0, result.0);
         }
     }
 
