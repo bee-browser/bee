@@ -214,6 +214,19 @@ class Compiler {
     builder_->CreateCondBr(cond, then_block, else_block);
   }
 
+  // switch
+
+  llvm::SwitchInst* CreateSwitch(llvm::Value* value, llvm::BasicBlock* block, uint32_t num_cases) {
+    // TODO: use integer for representing the state.
+    auto* number = CreateLoadNumberFromValue(value);
+    auto* state = ToInt32(number);
+    return builder_->CreateSwitch(state, block, num_cases);
+  }
+
+  void CreateAddCase(llvm::SwitchInst* inst, uint32_t value, llvm::BasicBlock* block) {
+    inst->addCase(builder_->getInt32(value), block);
+  }
+
   // undefined
 
   llvm::Value* CreateIsUndefined(llvm::Value* value_ptr) {
@@ -434,7 +447,7 @@ class Compiler {
         func, {exec_context_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
   }
 
-  inline void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr,
+  void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr,
       llvm::Value* closure_ptr,
       uint16_t index) {
     auto* ptr = CreateLoadCapturesFromClosure(closure_ptr);
@@ -448,8 +461,7 @@ class Compiler {
     auto* prototype = types_->CreateLambdaType();
     auto* lambda = CreateLoadLambdaFromClosure(closure);
     auto* caps = CreateLoadCapturesFromClosure(closure);
-    return builder_->CreateCall(prototype, lambda,
-        {exec_context_, caps, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
+    return builder_->CreateCall(prototype, lambda, {exec_context_, caps, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
   }
 
   llvm::Value* CreateClosurePhi(llvm::Value* then_value,
@@ -464,16 +476,21 @@ class Compiler {
 
   // value
 
+  llvm::Value* CreateHasValue(llvm::Value* value) {
+    auto* kind = CreateLoadValueKindFromValue(value);
+    return builder_->CreateICmpNE(kind, builder_->getInt8(kValueKindNone), REG_NAME("value.has_value"));
+  }
+
   // 7.2.13 IsLooselyEqual ( x, y )
   llvm::Value* CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y) {
-    // TODO: Create inline instructions if runtime_is_loosely_equal() is slow.
+    // TODO: Create instructions if runtime_is_loosely_equal() is slow.
     auto* func = types_->CreateRuntimeIsLooselyEqual();
     return builder_->CreateCall(func, {exec_context_, x, y}, REG_NAME("is_loosely_equal.retval"));
   }
 
   // 7.2.14 IsStrictlyEqual ( x, y )
   llvm::Value* CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
-    // TODO: Create inline instructions if runtime_is_strictly_equal() is slow.
+    // TODO: Create instructions if runtime_is_strictly_equal() is slow.
     auto* func = types_->CreateRuntimeIsStrictlyEqual();
     return builder_->CreateCall(func, {exec_context_, x, y}, REG_NAME("is_strictly_equal.retval"));
   }
@@ -538,49 +555,59 @@ class Compiler {
         types_->CreateValueType(), REG_NAME("local" + llvm::Twine(index) + ".ptr"));
   }
 
-  inline void CreateStoreNoneToValue(llvm::Value* dest) {
+  void CreateStoreNoneToValue(llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::None, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
-  inline void CreateStoreUndefinedToValue(llvm::Value* dest) {
+  void CreateStoreUndefinedToValue(llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Undefined, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
-  inline void CreateStoreNullToValue(llvm::Value* dest) {
+  void CreateStoreNullToValue(llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Null, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
-  inline void CreateStoreBooleanToValue(llvm::Value* value, llvm::Value* dest) {
+  void CreateStoreBooleanToValue(llvm::Value* value, llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Boolean, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
-  inline void CreateStoreNumberToValue(llvm::Value* value, llvm::Value* dest) {
+  void CreateStoreNumberToValue(llvm::Value* value, llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Number, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
-  inline void CreateStoreClosureToValue(llvm::Value* value, llvm::Value* dest) {
+  void CreateStoreClosureToValue(llvm::Value* value, llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Closure, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
-  inline void CreateStoreValueToValue(llvm::Value* value_ptr, llvm::Value* dest) {
+  void CreateStorePromiseToValue(llvm::Value* value, llvm::Value* dest) {
+    CreateStoreValueKindToValue(ValueKind::Promise, dest);
+    CreateStoreValueHolderToValue(value, dest);
+  }
+
+  void CreateStoreValueToValue(llvm::Value* value_ptr, llvm::Value* dest) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
     CreateStoreValueKindToValue(kind, dest);
     auto* holder = CreateLoadValueHolderFromValue(value_ptr);
     CreateStoreValueHolderToValue(holder, dest);
   }
 
-  inline llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("value.closure"));
+  }
+
+  llvm::Value* CreateLoadPromiseFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("value.promise"));
   }
 
   // argv
@@ -595,7 +622,7 @@ class Compiler {
         types_->CreateValueType(), argv, index, REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
   }
 
-  inline llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
+  llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
     return builder_->CreateConstInBoundsGEP1_32(
         types_->CreateValueType(), argv_, index, REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
   }
@@ -606,27 +633,31 @@ class Compiler {
     return CreateAlloc1(types_->CreateValueType(), REG_NAME("retv.ptr"));
   }
 
-  inline void CreateStoreUndefinedToRetv() {
+  void CreateStoreUndefinedToRetv() {
     CreateStoreUndefinedToValue(retv_);
   }
 
-  inline void CreateStoreNullToRetv() {
+  void CreateStoreNullToRetv() {
     CreateStoreNullToValue(retv_);
   }
 
-  inline void CreateStoreBooleanToRetv(llvm::Value* value) {
+  void CreateStoreBooleanToRetv(llvm::Value* value) {
     CreateStoreBooleanToValue(value, retv_);
   }
 
-  inline void CreateStoreNumberToRetv(llvm::Value* value) {
+  void CreateStoreNumberToRetv(llvm::Value* value) {
     CreateStoreNumberToValue(value, retv_);
   }
 
-  inline void CreateStoreClosureToRetv(llvm::Value* value) {
+  void CreateStoreClosureToRetv(llvm::Value* value) {
     CreateStoreClosureToValue(value, retv_);
   }
 
-  inline void CreateStoreValueToRetv(llvm::Value* value) {
+  void CreateStorePromiseToRetv(llvm::Value* value) {
+    CreateStorePromiseToValue(value, retv_);
+  }
+
+  void CreateStoreValueToRetv(llvm::Value* value) {
     CreateStoreValueToValue(value, retv_);
   }
 
@@ -728,13 +759,41 @@ class Compiler {
     builder_->CreateMemCpy(escaped_ptr, align, value, align, types_->GetWord(sizeof(Value)));
   }
 
-  inline llvm::Value* CreateGetCaptureValuePtr(uint16_t index) {
+  llvm::Value* CreateGetCaptureValuePtr(uint16_t index) {
     auto* ptr = CreateLoadCapturePtrFromCaptures(caps_, index);
     return CreateLoadTargetFromCapture(ptr);
   }
 
   llvm::Value* CreateLoadCapture(uintptr_t index) {
     return CreateLoadCapturePtrFromCaptures(caps_, index);
+  }
+
+  // coroutine
+
+  llvm::Value* CreateCoroutine(llvm::Value* closure, uint16_t num_locals) {
+    auto* func = types_->CreateRuntimeCreateCoroutine();
+    return builder_->CreateCall(func, {exec_context_, closure, builder_->getInt16(num_locals)}, REG_NAME("coroutine"));
+  }
+
+  void CreateSuspend() {
+    builder_->CreateRet(builder_->getInt32(STATUS_SUSPEND));
+  }
+
+  // promise
+
+  llvm::Value* CreateRegisterPromise(llvm::Value* coroutine) {
+    auto* func = types_->CreateRuntimeRegisterPromise();
+    return builder_->CreateCall(func, {exec_context_, coroutine}, REG_NAME("promise"));
+  }
+
+  void CreateResume(llvm::Value* promise) {
+    auto* func = types_->CreateRuntimeResume();
+    builder_->CreateCall(func, {exec_context_, promise});
+  }
+
+  void CreateEmitPromiseResolved(llvm::Value* promise, llvm::Value* result) {
+    auto* func = types_->CreateRuntimeEmitPromiseResolved();
+    builder_->CreateCall(func, {exec_context_, promise, result});
   }
 
   // scope cleanup checker
@@ -767,7 +826,23 @@ class Compiler {
     }
   }
 
+  // print
+
+  void CreatePrintValue(llvm::Value* value, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_value.msg"));
+    auto* func = types_->CreateRuntimePrintValue();
+    builder_->CreateCall(func, {exec_context_, value, msg_value});
+  }
+
+  // unreachable
+
+  void CreateUnreachable(const char* msg = "") {
+    CreateAssert(builder_->getFalse(), msg);
+    builder_->CreateUnreachable();
+  }
+
  private:
+  static constexpr uint8_t kValueKindNone = static_cast<uint8_t>(ValueKind::None);
   static constexpr uint8_t kValueKindUndefined = static_cast<uint8_t>(ValueKind::Undefined);
   static constexpr uint8_t kValueKindNull = static_cast<uint8_t>(ValueKind::Null);
   static constexpr uint8_t kValueKindBoolean = static_cast<uint8_t>(ValueKind::Boolean);
@@ -805,7 +880,7 @@ class Compiler {
   llvm::Value* ToInt32(llvm::Value* number) {
     // Skip the first step.
     // We assumed that `number` holds a number value.
-    // TODO: Create inline instructions if runtime_to_int32() is slow.
+    // TODO: Create instructions if runtime_to_int32() is slow.
     auto* func = types_->CreateRuntimeToInt32();
     return builder_->CreateCall(func, {exec_context_, number}, REG_NAME("int32"));
   }
@@ -814,7 +889,7 @@ class Compiler {
   llvm::Value* ToUint32(llvm::Value* number) {
     // Skip the first step.
     // We assumed that `number` holds a number value.
-    // TODO: Create inline instructions if runtime_to_uint32() is slow.
+    // TODO: Create instructions if runtime_to_uint32() is slow.
     auto* func = types_->CreateRuntimeToUint32();
     return builder_->CreateCall(func, {exec_context_, number}, REG_NAME("uint32"));
   }
@@ -869,105 +944,105 @@ class Compiler {
 
   // value
 
-  inline llvm::Value* CreateGetValueKindPtrOfValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateGetValueKindPtrOfValue(llvm::Value* value_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateValueType(), value_ptr, 0, REG_NAME("value.kind.ptr"));
   }
 
-  inline llvm::Value* CreateGetValueHolderPtrOfValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateGetValueHolderPtrOfValue(llvm::Value* value_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateValueType(), value_ptr, 1, REG_NAME("value.holder.ptr"));
   }
 
-  inline llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueKindPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt8Ty(), ptr, REG_NAME("value.kind"));
   }
 
-  inline llvm::Value* CreateLoadValueHolderFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadValueHolderFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt64Ty(), ptr, REG_NAME("value.holder"));
   }
 
-  inline llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("value.boolean"));
   }
 
-  inline llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("value.number"));
   }
 
-  inline void CreateStoreValueKindToValue(ValueKind value, llvm::Value* dest) {
+  void CreateStoreValueKindToValue(ValueKind value, llvm::Value* dest) {
     CreateStoreValueKindToValue(builder_->getInt8(static_cast<uint8_t>(value)), dest);
   }
 
-  inline void CreateStoreValueKindToValue(llvm::Value* value, llvm::Value* dest) {
+  void CreateStoreValueKindToValue(llvm::Value* value, llvm::Value* dest) {
     auto* ptr = CreateGetValueKindPtrOfValue(dest);
     builder_->CreateStore(value, ptr);
   }
 
-  inline void CreateStoreValueHolderToValue(llvm::Value* holder, llvm::Value* dest) {
+  void CreateStoreValueHolderToValue(llvm::Value* holder, llvm::Value* dest) {
     auto* ptr = CreateGetValueHolderPtrOfValue(dest);
     builder_->CreateStore(holder, ptr);
   }
 
   // closure
 
-  inline llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateClosureType(), closure_ptr, 0, REG_NAME("closure.lambda.ptr"));
   }
 
-  inline llvm::Value* CreateGetNumCapturesPtrOfClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateGetNumCapturesPtrOfClosure(llvm::Value* closure_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateClosureType(), closure_ptr, 1, REG_NAME("closure.num_captures.ptr"));
   }
 
-  inline llvm::Value* CreateGetCapturesPtrOfClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateGetCapturesPtrOfClosure(llvm::Value* closure_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateClosureType(), closure_ptr, 2, REG_NAME("closure.captures.ptr"));
   }
 
-  inline llvm::Value* CreateLoadLambdaFromClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateLoadLambdaFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetLambdaPtrOfClosure(closure_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("closure.lambda"));
   }
 
-  inline llvm::Value* CreateLoadNumCapturesFromClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateLoadNumCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetNumCapturesPtrOfClosure(closure_ptr);
     return builder_->CreateLoad(builder_->getInt16Ty(), ptr, REG_NAME("closure.num_captures"));
   }
 
-  inline llvm::Value* CreateLoadCapturesFromClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateLoadCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("closure.captures"));
   }
 
   // capture
 
-  inline llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
+  llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateCaptureType(), capture_ptr, 0, REG_NAME("capture.target.ptr"));
   }
 
-  inline llvm::Value* CreateGetEscapedPtrOfCapture(llvm::Value* capture_ptr) {
+  llvm::Value* CreateGetEscapedPtrOfCapture(llvm::Value* capture_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateCaptureType(), capture_ptr, 1, REG_NAME("capture.escaped.ptr"));
   }
 
-  inline llvm::Value* CreateLoadTargetFromCapture(llvm::Value* capture_ptr) {
+  llvm::Value* CreateLoadTargetFromCapture(llvm::Value* capture_ptr) {
     auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("capture.target"));
   }
 
-  inline void CreateStoreTargetToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
+  void CreateStoreTargetToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
     builder_->CreateStore(value_ptr, ptr);
   }
 
-  inline void CreateStoreEscapedToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
+  void CreateStoreEscapedToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
     auto align = llvm::Align(sizeof(double));
     builder_->CreateMemCpy(ptr, align, value_ptr, align, types_->GetWord(sizeof(Value)));
@@ -975,17 +1050,17 @@ class Compiler {
 
   // captures
 
-  inline llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
+  llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
     return builder_->CreateConstInBoundsGEP1_32(
         builder_->getPtrTy(), captures, index, REG_NAME("caps." + llvm::Twine(index) + ".ptr"));
   }
 
-  inline llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
+  llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("caps." + llvm::Twine(index)));
   }
 
-  inline void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
+  void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
       llvm::Value* captures,
       uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);

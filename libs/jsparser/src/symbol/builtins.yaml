@@ -1,3 +1,11 @@
+# Hidden symbols at first.
+- '##coroutine'
+- '##state'
+- '##result'
+- '##error'
+- '##promise'
+
+# Reserved words defined in the ECMA-262 specification.
 - Infinity
 - NaN
 - async

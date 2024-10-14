@@ -163,6 +163,7 @@ class Transpiler {
           //rewriteCPEAAPL,
           addActions,
           modifyFunctionDeclaration,
+          modifyAsyncFunctionDeclaration,
           modifyIfStatement,
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
@@ -592,6 +593,7 @@ function addActions(rules) {
 
   const ACTIONS = [
     '_FUNCTION_CONTEXT_',
+    '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
     '_ANONYMOUS_FUNCTION_SIGNATURE_',
     '_ELSE_BLOCK_',
@@ -630,30 +632,42 @@ function addActions(rules) {
 }
 
 function modifyFunctionDeclaration(rules) {
-  // The action will be inserted before the token.
   const TARGETS = [
     {
-      token: '`(`',
+      term: '`(`',
       action: '_FUNCTION_CONTEXT_',
+      insertBefore: true,
     },
     {
-      token: '`{`',
+      term: '`{`',
       action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
     },
   ];
-
   log.debug('Modifying FunctionDeclaration...');
-
   const rule = rules.find((rule) => rule.name === 'FunctionDeclaration[Yield, Await, Default]');
   assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
 
-  for (let i = 0; i < rule.values.length; ++i) {
-    for (const target of TARGETS) {
-      const [head, tail] = rule.values[i].split(target.token);
-      rule.values[i] = [head, target.action, target.token, tail].join(' ');
-    }
-  }
-
+function modifyAsyncFunctionDeclaration(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_ASYNC_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying AsyncFunctionDeclaration...');
+  const rule = rules.find((rule) => rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 

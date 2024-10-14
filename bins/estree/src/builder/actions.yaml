@@ -469,8 +469,9 @@
     LBRACE GeneratorBody RBRACE
   action: generator_declaration
 - rule: >-
-    AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier LPAREN
-    FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier
@@ -544,11 +545,13 @@
   action: anonymous_generator_declaration
 - rule: >-
     AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
-    BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    BindingIdentifier_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
-    AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN
-    FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: anonymous_async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
@@ -963,6 +966,8 @@
   action: nop
 - rule: GeneratorBody -> FunctionBody_Yield
   action: nop
+- rule: _ASYNC_FUNCTION_CONTEXT_ -> (empty)
+  action: nop
 - rule: AsyncFunctionBody -> FunctionBody_Await
   action: nop
 - rule: AsyncGeneratorBody -> FunctionBody_Yield_Await
@@ -1113,7 +1118,8 @@
   action: generator_declaration
 - rule: >-
     AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
-    BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    BindingIdentifier_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
@@ -3708,7 +3714,8 @@
   action: generator_declaration
 - rule: >-
     AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
-    BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    BindingIdentifier_Yield _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
@@ -3791,8 +3798,8 @@
   action: generator_declaration
 - rule: >-
     AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
-    BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody
-    RBRACE
+    BindingIdentifier_Yield_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
     AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL

@@ -5,6 +5,7 @@ use jsparser::Symbol;
 
 use super::BasicBlock;
 use super::Dump;
+use super::SwitchIr;
 
 macro_rules! bb2cstr {
     ($bb:expr, $buf:expr, $len:expr) => {
@@ -52,16 +53,19 @@ impl ControlFlowStack {
     pub fn push_function_flow(
         &mut self,
         locals_block: BasicBlock,
+        init_block: BasicBlock,
         args_block: BasicBlock,
         body_block: BasicBlock,
         return_block: BasicBlock,
     ) {
         debug_assert_ne!(locals_block, BasicBlock::NONE);
+        debug_assert_ne!(init_block, BasicBlock::NONE);
         debug_assert_ne!(args_block, BasicBlock::NONE);
         debug_assert_ne!(body_block, BasicBlock::NONE);
         debug_assert_ne!(return_block, BasicBlock::NONE);
         self.stack.push(ControlFlow::Function(FunctionFlow {
             locals_block,
+            init_block,
             args_block,
             body_block,
             return_block,
@@ -86,6 +90,44 @@ impl ControlFlowStack {
             ControlFlow::Function(ref flow) => flow,
             _ => unreachable!(),
         }
+    }
+
+    pub fn push_coroutine_flow(&mut self, switch_inst: SwitchIr, dormant_block: BasicBlock, num_states: u32) {
+        self.stack.push(ControlFlow::Coroutine(CoroutineFlow {
+            switch_inst,
+            dormant_block,
+            num_states,
+            next_state: 1,
+        }));
+    }
+
+    pub fn pop_coroutine_flow(&mut self) -> CoroutineFlow {
+        match self.stack.pop() {
+            Some(ControlFlow::Coroutine(flow)) => {
+                debug_assert_eq!(flow.next_state, flow.num_states - 1);
+                flow
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn coroutine_switch_inst(&self) -> SwitchIr {
+        debug_assert!(self.stack.len() >= 2);
+        match self.stack[1] {
+            ControlFlow::Coroutine(ref flow) => flow.switch_inst,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn coroutine_next_state(&mut self) -> u32 {
+        debug_assert!(self.stack.len() >= 2);
+        let flow = match self.stack[1] {
+            ControlFlow::Coroutine(ref mut flow) => flow,
+            _ => unreachable!(),
+        };
+        let next_state = flow.next_state;
+        flow.next_state += 1;
+        next_state
     }
 
     pub fn push_scope_flow(
@@ -425,6 +467,9 @@ impl ControlFlowStack {
                     bb!(flow, body_block);
                     bb!(flow, return_block);
                 }
+                ControlFlow::Coroutine(flow) => {
+                    eprintln!("coroutine: state={}/{}", flow.next_state, flow.num_states);
+                }
                 ControlFlow::Scope(flow) => {
                     eprint!("scope:");
                     eprintln!();
@@ -531,6 +576,7 @@ impl Dump for ControlFlowStack {
 
 enum ControlFlow {
     Function(FunctionFlow),
+    Coroutine(CoroutineFlow),
     Scope(ScopeFlow),
     Branch(BranchFlow),
     LoopInit(LoopInitFlow),
@@ -547,10 +593,19 @@ pub struct FunctionFlow {
     #[allow(unused)]
     pub locals_block: BasicBlock,
     #[allow(unused)]
+    pub init_block: BasicBlock,
+    #[allow(unused)]
     pub args_block: BasicBlock,
     #[allow(unused)]
     pub body_block: BasicBlock,
     pub return_block: BasicBlock,
+}
+
+pub struct CoroutineFlow {
+    switch_inst: SwitchIr,
+    pub dormant_block: BasicBlock,
+    num_states: u32,
+    next_state: u32,
 }
 
 /// Contains data used for building a region representing a lexical scope.

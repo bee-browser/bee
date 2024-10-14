@@ -1,5 +1,6 @@
 mod scope;
 
+use bitflags::bitflags;
 use indexmap::IndexMap;
 
 use jsparser::syntax::AssignmentOperator;
@@ -147,7 +148,8 @@ impl<'r> Analyzer<'r> {
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
     ) -> Self {
-        let _ = function_registry.create_native_function();
+        // TODO: modules including await expressions.
+        let _ = function_registry.create_native_function(false);
         Self {
             runtime_pref,
             symbol_registry,
@@ -161,6 +163,30 @@ impl<'r> Analyzer<'r> {
 
     pub fn use_global_bindings(&mut self) {
         self.use_global_bindings = true;
+    }
+
+    fn set_in_body(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .flags
+            .insert(FunctionContextFlags::IN_BODY);
+    }
+
+    fn set_async(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .flags
+            .insert(FunctionContextFlags::ASYNC);
+    }
+
+    fn is_async(&self) -> bool {
+        self.context_stack
+            .last()
+            .unwrap()
+            .flags
+            .contains(FunctionContextFlags::ASYNC)
     }
 
     /// Handles an AST node coming from a parser.
@@ -232,6 +258,7 @@ impl<'r> Analyzer<'r> {
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
+            Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
             Node::FunctionExpression(named) => self.handle_function_expression(named),
             Node::ArrowFunction => self.handle_arrow_function(),
             Node::AwaitExpression => self.handle_await_expression(),
@@ -253,6 +280,7 @@ impl<'r> Analyzer<'r> {
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
+            Node::AsyncFunctionContext => self.handle_async_function_context(),
             Node::FunctionSignature(symbol) => self.handle_function_signature(symbol),
         }
     }
@@ -545,13 +573,24 @@ impl<'r> Analyzer<'r> {
         self.resolve_references(&mut context);
 
         if context.num_locals > 0 {
-            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+            if context.flags.contains(FunctionContextFlags::COROUTINE) {
+                // The local variables allocated on the heap will be passed as arguments for the
+                // coroutine.  Load the local variables from the environment at first.
+                context.commands[0] = CompileCommand::Environment(context.num_locals);
+            } else {
+                context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
+            }
+        }
+
+        if context.flags.contains(FunctionContextFlags::COROUTINE) {
+            debug_assert!(context.coroutine.state <= u16::MAX as u32);
+            context.commands[1] = CompileCommand::JumpTable(context.coroutine.state + 2);
         }
 
         if self.runtime_pref.enable_scope_cleanup_checker {
             let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
             debug_assert!(stack_size > 0);
-            context.commands[1] = CompileCommand::SetupScopeCleanupChecker(stack_size);
+            context.commands[2] = CompileCommand::SetupScopeCleanupChecker(stack_size);
         }
 
         let func_index = context.func_index;
@@ -574,6 +613,39 @@ impl<'r> Analyzer<'r> {
                 func.id,
                 &func.captures,
             );
+    }
+
+    fn handle_async_function_declaration(&mut self) {
+        // Local variables used in the coroutine will be allocated on the heap because these must
+        // be held across suspend points.
+        //
+        // TODO: Some of the local variables can be placed on the stack.
+        let num_locals = self.context_stack.last().unwrap().num_locals;
+        debug_assert!(num_locals >= 3);
+
+        // const ##coroutine = runtime.create_coroutine(() => { ... }, NUM_LOCALS);
+        self.handle_function_expression(false);
+        self.put_command(CompileCommand::Coroutine(num_locals));
+        self.put_command(CompileCommand::Promise);
+
+        // Translate the bottom-half of the ramp function.
+        //
+        // The compile commands actually generated are different, but here is the conceptual code:
+        //
+        //   function async_func() {
+        //     // The top-half has been processed in handle_function_signature() and ##coroutine
+        //     // has been declared at this point.
+        //
+        //     const ##promiseId = runtime.register_promise(##coroutine);
+        //     runtime.resume(##promiseId);
+        //     return ##promiseId;
+        //   }
+        self.put_command(CompileCommand::Duplicate(0));
+        self.put_command(CompileCommand::Resume);
+        self.put_command(CompileCommand::Return(1));
+
+        // Node::FunctionDeclaration for the outer ramp function.
+        self.handle_function_declaration();
     }
 
     fn handle_function_expression(&mut self, named: bool) {
@@ -611,10 +683,17 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_await_expression(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Await);
+        let next_state = self.context_stack.last().unwrap().coroutine.state + 1;
+
+        // ##state = next_state;
+        self.handle_identifier_reference(Symbol::HIDDEN_STATE);
+        self.handle_number(next_state as f64);
+        self.handle_operator(CompileCommand::Assignment);
+        self.handle_expression_statement();
+
+        self.put_command(CompileCommand::Await(next_state));
+
+        self.context_stack.last_mut().unwrap().coroutine.state = next_state;
     }
 
     fn handle_then_block(&mut self) {
@@ -715,7 +794,7 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
     }
 
-    fn start_function_scope(&mut self, in_body: bool) {
+    fn start_function_scope(&mut self) {
         let scope_ref = self.scope_tree_builder.push_function();
 
         // TODO: the compilation should fail if the following condition is unmet.
@@ -724,16 +803,17 @@ impl<'r> Analyzer<'r> {
         let mut context = FunctionContext {
             func_index,
             scope_ref,
-            in_body,
             ..Default::default()
         };
         // `commands[0]` will be replaced with `AllocateLocals` if the function has local
         // variables.
         context.commands.push(CompileCommand::Nop);
+        // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
+        context.commands.push(CompileCommand::Nop);
         if self.runtime_pref.enable_scope_cleanup_checker {
             // Put a placeholder command which will be replaced with `SetupScopeCleanupChecker`.
             let index = context.put_command(CompileCommand::Nop);
-            debug_assert_eq!(index, 1);
+            debug_assert_eq!(index, 2);
         }
         context.start_scope(scope_ref);
         self.context_stack.push(context);
@@ -742,16 +822,85 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_function_context(&mut self) {
-        self.start_function_scope(false);
+        self.start_function_scope();
+    }
+
+    fn handle_async_function_context(&mut self) {
+        self.start_function_scope();
+        self.set_async();
+    }
+
+    fn set_function_symbol(&mut self, symbol: Symbol) {
+        let id = self.function_registry.create_native_function(symbol == Symbol::HIDDEN_COROUTINE);
+        let func_index = self.context_stack.last().unwrap().func_index;
+        self.functions[func_index].symbol = symbol;
+        self.functions[func_index].id = id;
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
+        self.set_function_symbol(symbol);
+        self.set_in_body();
+
+        // The async function is translated into a ramp function where an inner function is defined
+        // with the async function body of the async function.  The async function body will be
+        // rewritten as a coroutine implemented using a state machine.
+        //
+        // For example, the following async function:
+        //
+        //   async function async_func() {
+        //     <async-function-body>
+        //   }
+        //
+        // is translated into:
+        //
+        //   // The ramp function translated from the original async function.
+        //   function async_func() {
+        //     // The inner coroutine function translated from the original async function body.
+        //     const ##coroutine = runtime.create_coroutine(() => {
+        //       // Hidden variables (##state, ##result and ##error) are used for implementing the
+        //       // state machine.  Appropriate values have been set to the hidden variables at
+        //       // this point.  So, there is no initialization for the hidden variables in the
+        //       // function body.
+        //
+        //       // Jump to the entry basic block for each state.
+        //       <jump-table for ##state>
+        //
+        //       {
+        //         <modified async-function-body>
+        //       }
+        //     }, NUM_LOCALS);
+        //
+        //     // The bottom-half of the translation will be processed in
+        //     // handle_async_function_declaration().
+        //   }
+        //
+        // NOTE: We never optimize an async function which has no await expression in the body.
+        // Such an async function should be rewritten as a normal function by developers who
+        // maintain it.
+        if self.is_async() {
+            self.handle_binding_identifier(Symbol::HIDDEN_COROUTINE);
+            self.handle_function_context();
+            self.scope_tree_builder.set_coroutine();
+            self.handle_formal_parameters(0);
+            self.handle_function_signature(Symbol::HIDDEN_COROUTINE);
+            self.start_coroutine_body();
+        }
+    }
+
+    fn start_coroutine_body(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        let id = self.function_registry.create_native_function();
-        let func_index = context.func_index;
-        self.functions[func_index].symbol = symbol;
-        self.functions[func_index].id = id;
-        context.in_body = true;
+
+        // Add the hidden variables to the function scope of ##coroutine().
+        self.scope_tree_builder.add_hidden(Symbol::HIDDEN_STATE, context.num_locals);
+        context.num_locals += 1;
+        self.scope_tree_builder.add_hidden(Symbol::HIDDEN_RESULT, context.num_locals);
+        context.num_locals += 1;
+        self.scope_tree_builder.add_hidden(Symbol::HIDDEN_ERROR, context.num_locals);
+        context.num_locals += 1;
+        self.scope_tree_builder.add_hidden(Symbol::HIDDEN_PROMISE, context.num_locals);
+        context.num_locals += 1;
+
+        context.flags.insert(FunctionContextFlags::COROUTINE);
     }
 
     fn put_command(&mut self, command: CompileCommand) {
@@ -815,7 +964,7 @@ impl<'r> Analyzer<'r> {
     // TODO: refactoring
     fn resolve_reference(&mut self, context: &mut FunctionContext, reference: &Reference) {
         let binding_ref = self.scope_tree_builder.resolve_reference(reference);
-        logger::debug!(event = "resolve-reference", ?reference, ?binding_ref);
+        logger::debug!(event = "resolve_reference", ?reference, ?binding_ref);
 
         if binding_ref == BindingRef::NONE {
             // This is a reference to a free variable.
@@ -873,7 +1022,9 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
     fn start(&mut self) {
         logger::debug!(event = "start");
-        self.start_function_scope(true);
+        self.start_function_scope();
+
+        self.set_in_body();
 
         if self.use_global_bindings {
             self.put_global_bindings();
@@ -899,7 +1050,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         if self.runtime_pref.enable_scope_cleanup_checker {
             let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
             debug_assert!(stack_size > 0);
-            context.commands[1] = CompileCommand::SetupScopeCleanupChecker(stack_size);
+            context.commands[2] = CompileCommand::SetupScopeCleanupChecker(stack_size);
         }
 
         self.functions[context.func_index].commands = context.commands;
@@ -967,6 +1118,8 @@ struct FunctionContext {
     /// A stack to hold [`TryContext`]s.
     try_stack: Vec<TryContext>,
 
+    coroutine: CoroutineContext,
+
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<(usize, u16)>,
 
@@ -982,8 +1135,21 @@ struct FunctionContext {
     num_for_statements: u16,
     num_switch_statements: u16,
 
-    /// `false` while analyzing formal parameters, `true` while analyzing the function body.
-    in_body: bool,
+    flags: FunctionContextFlags,
+}
+
+bitflags! {
+    #[derive(Debug, Default)]
+    struct FunctionContextFlags: u8 {
+        /// Enabled while analyzing the function body.
+        const IN_BODY   = 0b00000001;
+
+        /// Enabled if the context is the ramp function for an async function.
+        const ASYNC     = 0b00000010;
+
+        /// Enabled if the context is the coroutine function for an async function.
+        const COROUTINE = 0b00000100;
+    }
 }
 
 impl FunctionContext {
@@ -1072,7 +1238,7 @@ impl FunctionContext {
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
-        if self.in_body {
+        if self.flags.contains(FunctionContextFlags::IN_BODY) {
             self.put_reference(symbol, builder.current());
             // The BindingKind may change later by `builder.set_immutable()`.
             builder.add_mutable(symbol, self.num_locals);
@@ -1408,6 +1574,11 @@ struct TryContext {
     finally_index: usize,
 }
 
+#[derive(Default)]
+struct CoroutineContext {
+    state: u32,
+}
+
 /// A compile command.
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
@@ -1420,6 +1591,8 @@ pub enum CompileCommand {
     String(Vec<u16>),
     Function(FunctionId),
     Closure(bool, u16),
+    Coroutine(u16),
+    Promise,
     Reference(Symbol, Locator),
     Exception,
 
@@ -1548,7 +1721,11 @@ pub enum CompileCommand {
     Return(u32),
     Throw,
 
-    Await,
+    // coroutine
+    Environment(u16),
+    JumpTable(u32),
+    Await(u32),
+    Resume,
 
     Discard,
     Swap,
@@ -1741,6 +1918,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(4),
+                    CompileCommand::Nop,
                     CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
@@ -1768,6 +1946,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(4),
+                    CompileCommand::Nop,
                     CompileCommand::SetupScopeCleanupChecker(2),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
@@ -1799,6 +1978,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Nop,
+                    CompileCommand::Nop,
                     CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Number(1.0),
@@ -1819,6 +1999,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(1),
+                    CompileCommand::Nop,
                     CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),

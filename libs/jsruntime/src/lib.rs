@@ -2,6 +2,7 @@ mod function;
 mod llvmir;
 mod logger;
 mod semantics;
+mod tasklet;
 
 use jsparser::SymbolRegistry;
 
@@ -53,6 +54,7 @@ pub struct Runtime<X> {
     executor: Executor,
     // TODO: GcArena
     allocator: bumpalo::Bump,
+    tasklet_system: tasklet::System,
     extension: X,
 }
 
@@ -65,6 +67,7 @@ impl<X> Runtime<X> {
             function_registry: FunctionRegistry::new(),
             executor: Executor::with_runtime_bridge(&runtime_bridge),
             allocator: bumpalo::Bump::new(),
+            tasklet_system: tasklet::System::new(),
             extension,
         }
     }
@@ -120,6 +123,11 @@ impl<X> Runtime<X> {
             None => unreachable!(),
         };
         ret.into_result(status)
+    }
+
+    pub fn run(&mut self) {
+        let runtime = self as *mut Runtime<X> as *mut std::ffi::c_void; // TODO
+        self.tasklet_system.run(runtime);
     }
 
     fn allocator(&self) -> &bumpalo::Bump {

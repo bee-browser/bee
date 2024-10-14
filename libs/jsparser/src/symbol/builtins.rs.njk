@@ -8,14 +8,27 @@ use super::SymbolRegistry;
 
 impl Symbol {
     {%- for symbol in data %}
-    pub const {{ symbol | upper }}: Self = Self({{ loop.index0 + 1 }});
+    {%- if symbol.startsWith('##') %}
+    pub const HIDDEN_{{ symbol | constantCase }}: Self = Self({{ loop.index }});
+    {%- else %}
+    {#- Use `upper` instead of `constantCase` so that 'NaN' is converted into 'NAN'. #}
+    pub const {{ symbol | upper }}: Self = Self({{ loop.index }});
+    {%- endif %}
     {%- endfor %}
+
+    pub fn is_hidden(&self) -> bool {
+        self.0 <= {{ data | select('startsWith', '##') | length }}
+    }
 }
 
 impl SymbolRegistry {
     pub(super) fn register_builtin_symbols(&mut self) {
         {%- for symbol in data %}
+        {%- if symbol.startsWith('##') %}
+        self.register_builtin_symbol(Symbol::HIDDEN_{{ symbol | constantCase }}, "{{ symbol }}");
+        {%- else %}
         self.register_builtin_symbol(Symbol::{{ symbol | upper }}, "{{ symbol }}");
+        {%- endif %}
         {%- endfor %}
     }
 

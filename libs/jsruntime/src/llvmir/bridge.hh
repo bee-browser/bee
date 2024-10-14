@@ -9,11 +9,13 @@ struct Closure;
 #define STATUS_MASK 0x0F
 #define STATUS_NORMAL 0x00
 #define STATUS_EXCEPTION 0x01
+#define STATUS_SUSPEND 0x02
 #define STATUS_UNSET (STATUS_UNSET_BIT | STATUS_NORMAL)
 
 enum class Status : uint32_t {
   Normal = STATUS_NORMAL,
   Exception = STATUS_EXCEPTION,
+  Suspend = STATUS_SUSPEND,
 };
 
 static_assert(sizeof(Status) == sizeof(uint32_t), "size mismatched");
@@ -27,6 +29,7 @@ enum class ValueKind : uint8_t {
   Boolean,
   Number,
   Closure,
+  Promise,
 };
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
@@ -37,6 +40,7 @@ union ValueHolder {
   double number;
   // TODO(issue#237): GcCellRef
   Closure* closure;
+  uint32_t promise;
 };
 
 static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
@@ -84,6 +88,19 @@ struct Closure {
 
 static_assert(sizeof(Closure) == sizeof(uint64_t) * 3, "size mismatched");
 
+// TODO(issue#237): GcCell
+struct Coroutine {
+  // The closure of the coroutine.
+  // TODO(issue#237): GcCellRef
+  Closure* closure;
+
+  // The number of local variables.
+  uint16_t num_locals;
+
+  // Local variables used in the coroutine.
+  Value locals[8];
+};
+
 #include "runtime.hh"
 
 void llvmir_initialize();
@@ -103,10 +120,13 @@ struct LambdaIr;
 struct BooleanIr;
 struct NumberIr;
 struct ClosureIr;
+struct CoroutineIr;
+struct PromiseIr;
 struct ValueIr;
 struct ArgvIr;
 struct StatusIr;
 struct CaptureIr;
+struct SwitchIr;
 
 Compiler* compiler_peer_new();
 void compiler_peer_delete(Compiler* self);
@@ -135,6 +155,10 @@ void compiler_peer_create_cond_br(Compiler* self,
     BooleanIr* cond,
     BasicBlock* then_block,
     BasicBlock* else_block);
+
+// switch
+SwitchIr* compiler_peer_create_switch(Compiler* self, ValueIr* value, BasicBlock* block, uint32_t num_cases);
+void compiler_peer_create_add_case(Compiler* self, SwitchIr* switch_ir, uint32_t value, BasicBlock* block);
 
 // undefined
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
@@ -210,6 +234,7 @@ ClosureIr* compiler_peer_create_closure_phi(Compiler* self,
     BasicBlock* else_block);
 
 // value
+BooleanIr* compiler_peer_create_has_value(Compiler* self, ValueIr* value);
 BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 BooleanIr* compiler_peer_create_is_same_boolean_value(Compiler* self,
@@ -238,8 +263,10 @@ void compiler_peer_create_store_null_to_value(Compiler* self, ValueIr* dest);
 void compiler_peer_create_store_boolean_to_value(Compiler* self, BooleanIr* value, ValueIr* dest);
 void compiler_peer_create_store_number_to_value(Compiler* self, NumberIr* value, ValueIr* dest);
 void compiler_peer_create_store_closure_to_value(Compiler* self, ClosureIr* value, ValueIr* dest);
+void compiler_peer_create_store_promise_to_value(Compiler* self, PromiseIr* value, ValueIr* dest);
 void compiler_peer_create_store_value_to_value(Compiler* self, ValueIr* value, ValueIr* dest);
 ClosureIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value);
+PromiseIr* compiler_peer_create_load_promise_from_value(Compiler* self, ValueIr* value);
 
 // argv
 ArgvIr* compiler_peer_get_argv_nullptr(Compiler* self);
@@ -256,6 +283,7 @@ void compiler_peer_create_store_null_to_retv(Compiler* self);
 void compiler_peer_create_store_boolean_to_retv(Compiler* self, BooleanIr* value);
 void compiler_peer_create_store_number_to_retv(Compiler* self, NumberIr* value);
 void compiler_peer_create_store_closure_to_retv(Compiler* self, ClosureIr* value);
+void compiler_peer_create_store_promise_to_retv(Compiler* self, PromiseIr* value);
 void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value);
 ValueIr* compiler_peer_get_exception(Compiler* self);
 
@@ -288,10 +316,25 @@ void compiler_peer_create_escape_value(Compiler* self, CaptureIr* capture, Value
 ValueIr* compiler_peer_create_get_capture_value_ptr(Compiler* self, uint16_t index);
 CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
+// coroutine
+CoroutineIr* compiler_peer_create_coroutine(Compiler* self, ClosureIr* closure, uint16_t num_locals);
+void compiler_peer_create_suspend(Compiler* self);
+
+// promise
+PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine);
+void compiler_peer_create_resume(Compiler* self, PromiseIr* promise);
+void compiler_peer_create_emit_promise_resolved(Compiler* self, PromiseIr* promise, ValueIr* result);
+
 // scope cleanup checker
 void compiler_peer_setup_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
 void compiler_peer_perform_scope_cleanup_precheck(Compiler* self, uint16_t scope_id);
 void compiler_peer_perform_scope_cleanup_postcheck(Compiler* self, uint16_t scope_id);
+
+// print
+void compiler_peer_create_print_value(Compiler* self, ValueIr* value, const char* msg);
+
+// unreachable
+void compiler_peer_create_unreachable(Compiler* self, const char* msg);
 
 // Execution
 

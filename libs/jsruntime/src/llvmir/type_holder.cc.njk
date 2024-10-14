@@ -62,6 +62,21 @@ llvm::StructType* TypeHolder::CreateClosureType() {
   return closure_type_;
 }
 
+llvm::StructType* TypeHolder::CreateCoroutineType() {
+  if (coroutine_type_ == nullptr) {
+    coroutine_type_ = llvm::StructType::create(context_, "Coroutine");
+    coroutine_type_->setBody({
+        // closure
+        builder_.getPtrTy(),
+        // num_locals
+        builder_.getInt16Ty(),
+        // locals[]
+        CreateValueType(),
+    });
+  }
+  return coroutine_type_;
+}
+
 llvm::FunctionType* TypeHolder::CreateLambdaType() {
   if (lambda_type_ == nullptr) {
     lambda_type_ = llvm::FunctionType::get(

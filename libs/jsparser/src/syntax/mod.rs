@@ -207,8 +207,10 @@ pub enum Node<'s> {
     FormalParameter,
     FormalParameters(u32),
     FunctionContext,
+    AsyncFunctionContext,
     FunctionSignature(Symbol),
     FunctionDeclaration,
+    AsyncFunctionDeclaration,
     FunctionExpression(bool),
     ArrowFunction,
     AwaitExpression,
@@ -546,6 +548,12 @@ where
     // _FUNCTION_CONTEXT_
     fn process_function_context(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FunctionContext);
+        Ok(())
+    }
+
+    // _ASYNC_FUNCTION_CONTEXT_
+    fn process_async_function_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncFunctionContext);
         Ok(())
     }
 
@@ -2445,6 +2453,15 @@ where
     }
 
     // 15.8 Async Function Definitions
+
+    // AsyncFunctionDeclaration[Yield, Await, Default] :
+    //   async [no LineTerminator here] function BindingIdentifier[?Yield, ?Await]
+    //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
+    fn process_async_function_declaration(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncFunctionDeclaration);
+        self.replace(9, Detail::Declaration);
+        Ok(())
+    }
 
     // AwaitExpression[Yield] :
     //   await UnaryExpression[?Yield, +Await]

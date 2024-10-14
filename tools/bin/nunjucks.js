@@ -46,8 +46,11 @@ Custom @data:
   @template
     Relatie path to the template file from the project root.
 
-HELPERS:
+FILTERS:
   * npm:change-case
+
+TESTS:
+  * startsWith
 
 EXAMPLES:
   The following commands output the same result:
@@ -67,7 +70,8 @@ async function run(args, options) {
   const env = new nunjucks.Environment(new nunjucks.FileSystemLoader(options.partialDirs), {
     autoescape: options.escape,
   });
-  registerHelpers(env);
+  registerFilters(env);
+  registerTests(env);
   console.log(
     env.renderString(template, {
       data,
@@ -78,10 +82,19 @@ async function run(args, options) {
   return 0;
 }
 
-function registerHelpers(env) {
+function registerFilters(env) {
   for (var name in changeCase) {
     env.addFilter(name, changeCase[name]);
   }
+}
+
+function registerTests(env) {
+  env.addTest('startsWith', (value, prefix) => {
+    if (typeof value !== 'string') {
+      return false;
+    }
+    return value.startsWith(prefix);
+  });
 }
 
 async function loadJson(data, options) {

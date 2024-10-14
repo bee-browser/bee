@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <llvm/Support/TargetSelect.h>
+#include <sys/types.h>
 
 #include "compiler.hh"
 #include "executor.hh"
@@ -19,10 +20,15 @@
 #define PEER_BOOLEAN(value) (reinterpret_cast<BooleanIr*>(value))
 #define PEER_NUMBER(value) (reinterpret_cast<NumberIr*>(value))
 #define PEER_CLOSURE(value) (reinterpret_cast<ClosureIr*>(value))
+#define PEER_COROUTINE(value) (reinterpret_cast<CoroutineIr*>(value))
+#define PEER_PROMISE(value) (reinterpret_cast<PromiseIr*>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr*>(value))
 #define PEER_ARGV(value) (reinterpret_cast<ArgvIr*>(value))
 #define PEER_STATUS(value) (reinterpret_cast<StatusIr*>(value))
 #define PEER_CAPTURE(value) (reinterpret_cast<CaptureIr*>(value))
+
+#define LLVM_SWITCH(inst) (reinterpret_cast<llvm::SwitchInst*>(inst))
+#define PEER_SWITCH(inst) (reinterpret_cast<SwitchIr*>(inst))
 
 void llvmir_initialize() {
   // Uncomment if you want to enable LLVM_DEBUG().
@@ -120,6 +126,16 @@ void compiler_peer_create_cond_br(Compiler* self,
     BasicBlock* then_block,
     BasicBlock* else_block) {
   self->CreateCondBr(LLVM_VALUE(cond), LLVM_BB(then_block), LLVM_BB(else_block));
+}
+
+// switch
+
+SwitchIr* compiler_peer_create_switch(Compiler* self, ValueIr* value, BasicBlock* block, uint32_t num_cases) {
+  return PEER_SWITCH(self->CreateSwitch(LLVM_VALUE(value), LLVM_BB(block), num_cases));
+}
+
+void compiler_peer_create_add_case(Compiler* self, SwitchIr* inst, uint32_t value, BasicBlock* block) {
+  self->CreateAddCase(LLVM_SWITCH(inst), value, LLVM_BB(block));
 }
 
 // undefined
@@ -327,6 +343,10 @@ ClosureIr* compiler_peer_create_closure_phi(Compiler* self,
 
 // value
 
+BooleanIr* compiler_peer_create_has_value(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateHasValue(LLVM_VALUE(value)));
+}
+
 BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
   return PEER_BOOLEAN(self->CreateIsLooselyEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
@@ -410,12 +430,20 @@ void compiler_peer_create_store_closure_to_value(Compiler* self, ClosureIr* valu
   self->CreateStoreClosureToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
 }
 
+void compiler_peer_create_store_promise_to_value(Compiler* self, PromiseIr* value, ValueIr* dest) {
+  self->CreateStorePromiseToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
+}
+
 void compiler_peer_create_store_value_to_value(Compiler* self, ValueIr* value, ValueIr* dest) {
   self->CreateStoreValueToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
 }
 
 ClosureIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value) {
   return PEER_CLOSURE(self->CreateLoadClosureFromValue(LLVM_VALUE(value)));
+}
+
+PromiseIr* compiler_peer_create_load_promise_from_value(Compiler* self, ValueIr* value) {
+  return PEER_PROMISE(self->CreateLoadPromiseFromValue(LLVM_VALUE(value)));
 }
 
 // argv
@@ -460,6 +488,10 @@ void compiler_peer_create_store_number_to_retv(Compiler* self, NumberIr* value) 
 
 void compiler_peer_create_store_closure_to_retv(Compiler* self, ClosureIr* value) {
   self->CreateStoreClosureToRetv(LLVM_VALUE(value));
+}
+
+void compiler_peer_create_store_promise_to_retv(Compiler* self, PromiseIr* value) {
+  self->CreateStorePromiseToRetv(LLVM_VALUE(value));
 }
 
 void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value) {
@@ -550,6 +582,30 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index) {
   return PEER_CAPTURE(self->CreateLoadCapture(index));
 }
 
+// coroutine
+
+CoroutineIr* compiler_peer_create_coroutine(Compiler* self, ClosureIr* closure, uint16_t num_locals) {
+  return PEER_COROUTINE(self->CreateCoroutine(LLVM_VALUE(closure), num_locals));
+}
+
+void compiler_peer_create_suspend(Compiler* self) {
+  self->CreateSuspend();
+}
+
+// promise
+
+PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine) {
+  return PEER_PROMISE(self->CreateRegisterPromise(LLVM_VALUE(coroutine)));
+}
+
+void compiler_peer_create_resume(Compiler* self, PromiseIr* promise) {
+  self->CreateResume(LLVM_VALUE(promise));
+}
+
+void compiler_peer_create_emit_promise_resolved(Compiler* self, PromiseIr* promise, ValueIr* result) {
+  self->CreateEmitPromiseResolved(LLVM_VALUE(promise), LLVM_VALUE(result));
+}
+
 // scope cleanup checker
 
 void compiler_peer_setup_scope_cleanup_checker(Compiler* self, uint16_t stack_size) {
@@ -562,6 +618,19 @@ void compiler_peer_perform_scope_cleanup_precheck(Compiler* self, uint16_t scope
 
 void compiler_peer_perform_scope_cleanup_postcheck(Compiler* self, uint16_t scope_id) {
   self->PerformScopeCleanupPostcheck(scope_id);
+}
+
+// print
+
+void compiler_peer_create_print_value(Compiler* self, ValueIr* value, const char* msg) {
+  assert(msg != nullptr);
+  self->CreatePrintValue(LLVM_VALUE(value), msg);
+}
+
+// unreachable
+
+void compiler_peer_create_unreachable(Compiler* self, const char* msg) {
+  self->CreateUnreachable(msg);
 }
 
 // executor

@@ -12,6 +12,11 @@ macro_rules! into_runtime {
 }
 
 impl Value {
+    pub const NONE: Self = Self {
+        kind: ValueKind_None,
+        holder: ValueHolder { opaque: 0 },
+    };
+
     pub const UNDEFINED: Self = Self {
         kind: ValueKind_Undefined,
         holder: ValueHolder { opaque: 0 },
@@ -105,7 +110,8 @@ impl std::fmt::Debug for Value {
                     }
                     write!(f, "])")
                 }
-                _ => unreachable!(),
+                ValueKind_Promise => write!(f, "promise({:04X})", self.holder.promise),
+                _ => unreachable!("invalid kind: {:?}", self.kind),
             }
         }
     }
@@ -166,6 +172,38 @@ where
     }
 }
 
+impl Closure {
+    fn call(runtime: *mut std::ffi::c_void, closure: *mut Closure, argc: usize, argv: *mut Value, retv: *mut Value) -> Status {
+        unsafe {
+            let lambda = (*closure).lambda.unwrap();
+            lambda(runtime, (*closure).captures as *mut std::ffi::c_void, argc, argv, retv)
+        }
+    }
+}
+
+impl Coroutine {
+    pub fn resume(runtime: *mut std::ffi::c_void, coroutine: *mut Coroutine, result: Value, error: Value) -> CoroutineStatus {
+        unsafe {
+            (*coroutine).locals[1] = result;
+            (*coroutine).locals[2] = error;
+            let mut retv = Value::NONE;
+            let status = Closure::call(runtime, (*coroutine).closure, 0, (*coroutine).locals[..].as_mut_ptr(), &mut retv as *mut Value);
+            match status {
+                STATUS_NORMAL => CoroutineStatus::Done(retv),
+                STATUS_EXCEPTION => CoroutineStatus::Error(retv),
+                STATUS_SUSPEND => CoroutineStatus::Suspend,
+                _ => unreachable!(),
+            }
+        }
+    }
+}
+
+pub enum CoroutineStatus {
+    Done(Value),
+    Error(Value),
+    Suspend,
+}
+
 pub fn runtime_bridge<X>() -> Runtime {
     Runtime {
         to_boolean: Some(runtime_to_boolean),
@@ -176,8 +214,13 @@ pub fn runtime_bridge<X>() -> Runtime {
         is_strictly_equal: Some(runtime_is_strictly_equal),
         create_capture: Some(runtime_create_capture::<X>),
         create_closure: Some(runtime_create_closure::<X>),
+        create_coroutine: Some(runtime_create_coroutine::<X>),
+        register_promise: Some(runtime_register_promise::<X>),
+        resume: Some(runtime_resume::<X>),
+        emit_promise_resolved: Some(runtime_emit_promise_resolved::<X>),
         assert: Some(runtime_assert),
         print_u32: Some(runtime_print_u32),
+        print_value: Some(runtime_print_value),
     }
 }
 
@@ -192,7 +235,8 @@ unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
         ValueKind_Number if value.holder.number.is_nan() => false,
         ValueKind_Number => true,
         ValueKind_Closure => true,
-        _ => unreachable!(),
+        ValueKind_Promise => true,
+        _ => unreachable!("invalid value: {value:?}"),
     }
 }
 
@@ -207,7 +251,8 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
         ValueKind_Boolean => 0.0,
         ValueKind_Number => value.holder.number,
         ValueKind_Closure => f64::NAN,
-        _ => unreachable!(),
+        ValueKind_Promise => f64::NAN,
+        _ => unreachable!("invalid value: {value:?}"),
     }
 }
 
@@ -311,7 +356,8 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
         ValueKind_Boolean => x.holder.boolean == y.holder.boolean,
         ValueKind_Number => x.holder.number == y.holder.number,
         ValueKind_Closure => x.holder.closure == y.holder.closure,
-        _ => unreachable!(),
+        ValueKind_Promise => x.holder.promise == y.holder.promise,
+        _ => unreachable!("invalid value: {x:?}"),
     }
 }
 
@@ -372,6 +418,55 @@ unsafe extern "C" fn runtime_create_closure<X>(
     closure
 }
 
+unsafe extern "C" fn runtime_create_coroutine<X>(context: usize, closure: *mut Closure, num_locals: u16) -> *mut Coroutine {
+    const BASE_LAYOUT: std::alloc::Layout = unsafe {
+        std::alloc::Layout::from_size_align_unchecked(
+            std::mem::offset_of!(Coroutine, locals),
+            std::mem::align_of::<Coroutine>(),
+        )
+    };
+
+    debug_assert!(num_locals >= 4);
+    let locals_layout = std::alloc::Layout::array::<Value>(num_locals as usize).unwrap();
+    let (layout, _) = BASE_LAYOUT.extend(locals_layout).unwrap();
+
+    let runtime = into_runtime!(context, X);
+    let allocator = runtime.allocator();
+
+    // TODO: GC
+    let ptr = allocator.alloc_layout(layout);
+
+    let coroutine = ptr.cast::<Coroutine>().as_ptr();
+    (*coroutine).closure = closure;
+    (*coroutine).num_locals = num_locals;
+    (*coroutine).locals[0] = 0.into(); // ##state = 0
+    (*coroutine).locals[1] = Value::NONE; // ##result = none
+    (*coroutine).locals[2] = Value::NONE; // ##error = none
+    (*coroutine).locals[3] = Value::NONE; // ##promise = none
+    // Other local variables will be initialized in the coroutine.
+
+    coroutine
+}
+
+unsafe extern "C" fn runtime_register_promise<X>(context: usize, coroutine: *mut Coroutine) -> u32 {
+    let runtime = into_runtime!(context, X);
+    let promise = runtime.tasklet_system.register_promise(coroutine);
+    (*coroutine).locals[3].kind = ValueKind_Promise;
+    (*coroutine).locals[3].holder.promise = promise.into();
+    promise.into()
+}
+
+unsafe extern "C" fn runtime_resume<X>(context: usize, promise: u32) {
+    let runtime = into_runtime!(context, X);
+    runtime.tasklet_system.process_promise(context as *mut std::ffi::c_void, promise.into(), Value::NONE, Value::NONE);
+}
+
+unsafe extern "C" fn runtime_emit_promise_resolved<X>(context: usize, promise: u32, result: *const Value) {
+    let runtime = into_runtime!(context, X);
+    let cloned = (*result).clone();
+    runtime.tasklet_system.emit_promise_resolved(promise.into(), cloned);
+}
+
 unsafe extern "C" fn runtime_assert(
     _context: usize,
     assertion: bool,
@@ -393,5 +488,19 @@ unsafe extern "C" fn runtime_print_u32(
         crate::logger::debug!("runtime_print_u32: {value:08X}");
     } else {
         crate::logger::debug!("runtime_print_u32: {value:08X}: {msg:?}");
+    }
+}
+
+unsafe extern "C" fn runtime_print_value(
+    _context: usize,
+    value: *const Value,
+    msg: *const std::os::raw::c_char,
+) {
+    let value = &*value;
+    let msg = std::ffi::CStr::from_ptr(msg);
+    if msg.is_empty() {
+        crate::logger::debug!("runtime_print_value: {value:?}");
+    } else {
+        crate::logger::debug!("runtime_print_value: {value:?}: {msg:?}");
     }
 }
