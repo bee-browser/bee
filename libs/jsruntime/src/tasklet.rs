@@ -58,10 +58,20 @@ impl System {
     // promises
 
     pub fn register_promise(&mut self, coroutine: *mut Coroutine) -> PromiseId {
+        crate::logger::debug!(event = "register_promise", ?coroutine);
         let promise_id = PromiseId(NonZeroU32::new(self.next_promise_id).unwrap());
         self.promises.insert(promise_id, Promise::new(coroutine));
         self.next_promise_id += 1;
         promise_id
+    }
+
+    pub fn await_promise(&mut self, promise_id: PromiseId, awaiting: PromiseId) {
+        crate::logger::debug!(event = "await_promise", ?promise_id, ?awaiting);
+        debug_assert!(self.promises.contains_key(&promise_id));
+        debug_assert!(self.promises.contains_key(&awaiting));
+        let promise = self.promises.get_mut(&promise_id).unwrap();
+        debug_assert!(promise.awaiting.is_none());
+        promise.awaiting = Some(awaiting);
     }
 
     pub fn emit_promise_resolved(&mut self, promise_id: PromiseId, result: Value) {
@@ -70,31 +80,30 @@ impl System {
     }
 
     pub fn emit_promise_rejected(&mut self, promise_id: PromiseId, error: Value) {
+        crate::logger::debug!(event = "emit_promise_rejected", ?promise_id, ?error);
         self.messages.push_back(Message::PromiseRejected { promise_id, error });
     }
 
     pub fn process_promise(&mut self, runtime: *mut std::ffi::c_void, promise_id: PromiseId, result: Value, error: Value) {
         crate::logger::debug!(event = "process_promise", ?promise_id, ?result, ?error);
-        if let Some(promise) = self.promises.get(&promise_id) {
-            match Coroutine::resume(runtime, promise.coroutine, result, error) {
-                CoroutineStatus::Done(result) => {
-                    if let Some(promise_id) = promise.awaiting {
-                        self.emit_promise_resolved(promise_id, result);
-                    }
-                    self.promises.remove(&promise_id);
+        debug_assert!(self.promises.contains_key(&promise_id));
+        let promise = self.promises.get(&promise_id).unwrap();
+        match Coroutine::resume(runtime, promise.coroutine, result, error) {
+            CoroutineStatus::Done(result) => {
+                if let Some(promise_id) = promise.awaiting {
+                    self.emit_promise_resolved(promise_id, result);
                 }
-                CoroutineStatus::Error(error) => {
-                    if let Some(promise_id) = promise.awaiting {
-                        self.emit_promise_rejected(promise_id, error);
-                    } else {
-                        crate::logger::warn!(?promise_id, "unhandled promise");
-                    }
-                    self.promises.remove(&promise_id);
-                }
-                CoroutineStatus::Suspend => (),
+                self.promises.remove(&promise_id);
             }
-        } else {
-            crate::logger::warn!(?promise_id, "promise not found");
+            CoroutineStatus::Error(error) => {
+                if let Some(promise_id) = promise.awaiting {
+                    self.emit_promise_rejected(promise_id, error);
+                } else {
+                    crate::logger::warn!(?promise_id, "unhandled promise");
+                }
+                self.promises.remove(&promise_id);
+            }
+            CoroutineStatus::Suspend => (),
         }
     }
 }

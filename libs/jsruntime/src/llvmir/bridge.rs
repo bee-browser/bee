@@ -216,6 +216,7 @@ pub fn runtime_bridge<X>() -> Runtime {
         create_closure: Some(runtime_create_closure::<X>),
         create_coroutine: Some(runtime_create_coroutine::<X>),
         register_promise: Some(runtime_register_promise::<X>),
+        await_promise: Some(runtime_await_promise::<X>),
         resume: Some(runtime_resume::<X>),
         emit_promise_resolved: Some(runtime_emit_promise_resolved::<X>),
         assert: Some(runtime_assert),
@@ -459,6 +460,11 @@ unsafe extern "C" fn runtime_register_promise<X>(context: usize, coroutine: *mut
 unsafe extern "C" fn runtime_resume<X>(context: usize, promise: u32) {
     let runtime = into_runtime!(context, X);
     runtime.tasklet_system.process_promise(context as *mut std::ffi::c_void, promise.into(), Value::NONE, Value::NONE);
+}
+
+unsafe extern "C" fn runtime_await_promise<X>(context: usize, promise: u32, awaiting: u32) {
+    let runtime = into_runtime!(context, X);
+    runtime.tasklet_system.await_promise(promise.into(), awaiting.into());
 }
 
 unsafe extern "C" fn runtime_emit_promise_resolved<X>(context: usize, promise: u32, result: *const Value) {

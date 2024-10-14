@@ -233,6 +233,14 @@ ClosureIr* compiler_peer_create_closure_phi(Compiler* self,
     ClosureIr* else_value,
     BasicBlock* else_block);
 
+// promise
+BooleanIr* compiler_peer_create_is_promise(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_same_promise(Compiler* self, PromiseIr* a, PromiseIr* b);
+PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine);
+void compiler_peer_create_await_promise(Compiler* self, PromiseIr* promise, PromiseIr* awaiting);
+void compiler_peer_create_resume(Compiler* self, PromiseIr* promise);
+void compiler_peer_create_emit_promise_resolved(Compiler* self, PromiseIr* promise, ValueIr* result);
+
 // value
 BooleanIr* compiler_peer_create_has_value(Compiler* self, ValueIr* value);
 BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
@@ -246,6 +254,9 @@ BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self,
 BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self,
     ValueIr* value,
     ClosureIr* closure);
+BooleanIr* compiler_peer_create_is_same_promise_value(Compiler* self,
+    ValueIr* value,
+    PromiseIr* promise);
 ValueIr* compiler_peer_create_undefined_to_any(Compiler* self);
 ValueIr* compiler_peer_create_null_to_any(Compiler* self);
 ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, BooleanIr* boolean);
@@ -319,11 +330,6 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 // coroutine
 CoroutineIr* compiler_peer_create_coroutine(Compiler* self, ClosureIr* closure, uint16_t num_locals);
 void compiler_peer_create_suspend(Compiler* self);
-
-// promise
-PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine);
-void compiler_peer_create_resume(Compiler* self, PromiseIr* promise);
-void compiler_peer_create_emit_promise_resolved(Compiler* self, PromiseIr* promise, ValueIr* result);
 
 // scope cleanup checker
 void compiler_peer_setup_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
