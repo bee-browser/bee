@@ -75,27 +75,26 @@ impl System {
 
     pub fn process_promise(&mut self, runtime: *mut std::ffi::c_void, promise_id: PromiseId, result: Value, error: Value) {
         crate::logger::debug!(event = "process_promise", ?promise_id, ?result, ?error);
-        match self.promises.get(&promise_id) {
-            Some(promise) => {
-                match Coroutine::resume(runtime, promise.coroutine, result, error) {
-                    CoroutineStatus::Done(result) => {
-                        if let Some(promise_id) = promise.awaiting {
-                            self.emit_promise_resolved(promise_id, result);
-                        }
-                        self.promises.remove(&promise_id);
+        if let Some(promise) = self.promises.get(&promise_id) {
+            match Coroutine::resume(runtime, promise.coroutine, result, error) {
+                CoroutineStatus::Done(result) => {
+                    if let Some(promise_id) = promise.awaiting {
+                        self.emit_promise_resolved(promise_id, result);
                     }
-                    CoroutineStatus::Error(error) => {
-                        if let Some(promise_id) = promise.awaiting {
-                            self.emit_promise_rejected(promise_id, error);
-                        }
-                        self.promises.remove(&promise_id);
-                    }
-                    CoroutineStatus::Suspend => (),
+                    self.promises.remove(&promise_id);
                 }
+                CoroutineStatus::Error(error) => {
+                    if let Some(promise_id) = promise.awaiting {
+                        self.emit_promise_rejected(promise_id, error);
+                    } else {
+                        crate::logger::warn!(?promise_id, "unhandled promise");
+                    }
+                    self.promises.remove(&promise_id);
+                }
+                CoroutineStatus::Suspend => (),
             }
-            None => {
-                crate::logger::warn!("promise not found: {promise_id:?}");
-            }
+        } else {
+            crate::logger::warn!(?promise_id, "promise not found");
         }
     }
 }
