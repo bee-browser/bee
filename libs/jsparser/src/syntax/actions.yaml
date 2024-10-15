@@ -2072,7 +2072,7 @@
 - rule: PrimaryExpression_Await -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Await -> AsyncFunctionExpression
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Await -> AsyncGeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Await -> REGULAR_EXPRESSION_LITERAL
@@ -2493,14 +2493,16 @@
     FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
   action: undefined
 - rule: >-
-    AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN
-    FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
-  action: undefined
+    AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
+  action: process_anonymous_async_function_expression
 - rule: >-
     AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
-    BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE
-    AsyncFunctionBody RBRACE
-  action: undefined
+    BindingIdentifier_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN
+    FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody
+    RBRACE
+  action: process_async_function_expression
 - rule: >-
     AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
     LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
@@ -2830,7 +2832,7 @@
 - rule: PrimaryExpression -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression -> AsyncFunctionExpression
-  action: undefined
+  action: nop
 - rule: PrimaryExpression -> AsyncGeneratorExpression
   action: undefined
 - rule: PrimaryExpression -> REGULAR_EXPRESSION_LITERAL
@@ -3053,7 +3055,7 @@
 - rule: PrimaryExpression_Yield -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield -> AsyncFunctionExpression
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield -> AsyncGeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield -> REGULAR_EXPRESSION_LITERAL
@@ -3115,7 +3117,7 @@
 - rule: PrimaryExpression_Yield_Await -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> AsyncFunctionExpression
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield_Await -> AsyncGeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> REGULAR_EXPRESSION_LITERAL
