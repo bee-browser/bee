@@ -1,15 +1,15 @@
-print(1); ///#0=1
+print(0); ///#0=0
 a();
-print(4); ///#3=4
+print(3); ///#3=3
 
 async function a() {
-  print(2); ///#1=2
+  print(1); ///#1=1
   await b();
-  print(6); ///#5=6
+  print(5); ///#5=5
 }
 
 async function b() {
-  print(3); ///#2=3
+  print(2); ///#2=2
   await 0;
-  print(5); ///#4=5
+  print(4); ///#4=4
 }

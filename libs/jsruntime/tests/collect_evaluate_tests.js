@@ -42,7 +42,7 @@ async function main(args, options) {
       .map((line) => line.split('///#')[1].trim().split('='))
       .reduce((acc, [i, v]) => { acc[i] = v; return acc; }, []);
     const throws = lines.find((line) => line.includes('///!'))?.split('///!')[1].trim();
-    const name = test.endsWith('.js') ? path.basename(test, '.js') : path.basename(test, '.mjs');
+    const name = path.basename(test).replace('.', '_');
     const module = test.endsWith('.js') ? false : true;
     tests.push({
       filename: test,
