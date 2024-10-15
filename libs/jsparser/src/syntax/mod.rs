@@ -212,6 +212,7 @@ pub enum Node<'s> {
     FunctionDeclaration,
     AsyncFunctionDeclaration,
     FunctionExpression(bool),
+    AsyncFunctionExpression(bool),
     ArrowFunction,
     AwaitExpression,
     ThenBlock,
@@ -2239,15 +2240,6 @@ where
         Ok(())
     }
 
-    // 15.9 Async Arrow Function Definitions
-
-    // CoverCallExpressionAndAsyncArrowHead[Yield, Await] :
-    //   MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
-    fn process_cover_call_expression_and_async_arrow_head(&mut self) -> Result<(), Error> {
-        self.replace(2, Detail::CoverCallExpressionAndAsyncArrowHead);
-        Ok(())
-    }
-
     // 15.1 Parameter Lists
 
     // FormalParameters[Yield, Await] :
@@ -2463,11 +2455,38 @@ where
         Ok(())
     }
 
+    // AsyncFunctionExpression :
+    //   async [no LineTerminator here] function BindingIdentifier[~Yield, +Await]
+    //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
+    fn process_async_function_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncFunctionExpression(true));
+        self.replace(9, Detail::Expression);
+        Ok(())
+    }
+
+    // AsyncFunctionExpression :
+    //   async [no LineTerminator here] function
+    //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
+    fn process_anonymous_async_function_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncFunctionExpression(false));
+        self.replace(8, Detail::Expression);
+        Ok(())
+    }
+
     // AwaitExpression[Yield] :
     //   await UnaryExpression[?Yield, +Await]
     fn process_await(&mut self) -> Result<(), Error> {
         self.enqueue(Node::AwaitExpression);
         self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // 15.9 Async Arrow Function Definitions
+
+    // CoverCallExpressionAndAsyncArrowHead[Yield, Await] :
+    //   MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+    fn process_cover_call_expression_and_async_arrow_head(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::CoverCallExpressionAndAsyncArrowHead);
         Ok(())
     }
 

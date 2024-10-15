@@ -168,6 +168,7 @@ class Transpiler {
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
           modifyFunctionExpression,
+          modifyAsyncFunctionExpression,
           modifyArrowFunction,
           modifyDoWhileStatement,
           modifyWhileStatement,
@@ -781,6 +782,26 @@ function modifyFunctionExpression(rules) {
   ];
   log.debug('Modifying FunctionExpression...');
   const rule = rules.find((rule) => rule.name === 'FunctionExpression');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyAsyncFunctionExpression(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_ASYNC_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying AsyncFunctionExpression...');
+  const rule = rules.find((rule) => rule.name === 'AsyncFunctionExpression');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;

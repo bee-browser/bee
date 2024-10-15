@@ -2289,12 +2289,13 @@
     RPAREN LBRACE GeneratorBody RBRACE
   action: generator_expression
 - rule: >-
-    AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN
-    FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION _ASYNC_FUNCTION_CONTEXT_
+    LPAREN FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
   action: anonymous_async_function_expression
 - rule: >-
     AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await
-    LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN FormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: async_function_expression
 - rule: >-
     AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN
