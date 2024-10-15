@@ -1,8 +1,8 @@
-print(1); ///#0=1
+print(0); ///#0=0
 a();
-print(3); ///#2=3
+print(2); ///#2=2
 
 async function a() {
-  print(2); ///#1=2
+  print(1); ///#1=1
   throw 100;
 }

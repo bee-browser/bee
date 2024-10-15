@@ -981,7 +981,7 @@ impl Compiler {
     // coroutine
 
     pub fn create_coroutine(&self, closure: ClosureIr, num_locals: u16) -> CoroutineIr {
-        debug_assert!(num_locals >= 3);
+        debug_assert!(num_locals >= 4);
         coroutine_ir! {
             bridge::compiler_peer_create_coroutine(self.0, closure.0, num_locals)
         }
