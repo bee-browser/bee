@@ -31,7 +31,7 @@ impl<X> Runtime<X> {
     /// Parses a given source text as a script.
     pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "script");
-        let mut analyzer = Analyzer::new(
+        let mut analyzer = Analyzer::new_for_script(
             &self.pref,
             &mut self.symbol_registry,
             &mut self.function_registry,
@@ -44,7 +44,7 @@ impl<X> Runtime<X> {
     /// Parses a given source text as a module.
     pub fn parse_module(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "module");
-        let mut analyzer = Analyzer::new(
+        let mut analyzer = Analyzer::new_for_module(
             &self.pref,
             &mut self.symbol_registry,
             &mut self.function_registry,
@@ -139,14 +139,34 @@ struct Analyzer<'r> {
     scope_tree_builder: ScopeTreeBuilder,
 
     use_global_bindings: bool,
+
+    module: bool,
 }
 
 impl<'r> Analyzer<'r> {
     /// Creates a semantic analyzer.
-    pub fn new(
+    fn new_for_script(
         runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
+    ) -> Self {
+        Self::new(runtime_pref, symbol_registry, function_registry, false)
+    }
+
+    /// Creates a semantic analyzer.
+    fn new_for_module(
+        runtime_pref: &'r RuntimePref,
+        symbol_registry: &'r mut SymbolRegistry,
+        function_registry: &'r mut FunctionRegistry,
+    ) -> Self {
+        Self::new(runtime_pref, symbol_registry, function_registry, true)
+    }
+
+    fn new(
+        runtime_pref: &'r RuntimePref,
+        symbol_registry: &'r mut SymbolRegistry,
+        function_registry: &'r mut FunctionRegistry,
+        module: bool,
     ) -> Self {
         // TODO: modules including await expressions.
         let _ = function_registry.create_native_function(false);
@@ -158,10 +178,11 @@ impl<'r> Analyzer<'r> {
             functions: vec![],
             scope_tree_builder: Default::default(),
             use_global_bindings: false,
+            module,
         }
     }
 
-    pub fn use_global_bindings(&mut self) {
+    fn use_global_bindings(&mut self) {
         self.use_global_bindings = true;
     }
 
@@ -616,12 +637,19 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_async_function_declaration(&mut self) {
+        self.end_coroutine_body();
+
+        // Node::FunctionDeclaration for the outer ramp function.
+        self.handle_function_declaration();
+    }
+
+    fn end_coroutine_body(&mut self) {
         // Local variables used in the coroutine will be allocated on the heap because these must
         // be held across suspend points.
         //
         // TODO: Some of the local variables can be placed on the stack.
         let num_locals = self.context_stack.last().unwrap().num_locals;
-        debug_assert!(num_locals >= 3);
+        debug_assert!(num_locals >= 4);
 
         // const ##coroutine = runtime.create_coroutine(() => { ... }, NUM_LOCALS);
         self.handle_function_expression(false);
@@ -643,9 +671,6 @@ impl<'r> Analyzer<'r> {
         self.put_command(CompileCommand::Duplicate(0));
         self.put_command(CompileCommand::Resume);
         self.put_command(CompileCommand::Return(1));
-
-        // Node::FunctionDeclaration for the outer ramp function.
-        self.handle_function_declaration();
     }
 
     fn handle_function_expression(&mut self, named: bool) {
@@ -841,53 +866,52 @@ impl<'r> Analyzer<'r> {
         self.set_function_symbol(symbol);
         self.set_in_body();
 
-        // The async function is translated into a ramp function where an inner function is defined
-        // with the async function body of the async function.  The async function body will be
-        // rewritten as a coroutine implemented using a state machine.
-        //
-        // For example, the following async function:
-        //
-        //   async function async_func() {
-        //     <async-function-body>
-        //   }
-        //
-        // is translated into:
-        //
-        //   // The ramp function translated from the original async function.
-        //   function async_func() {
-        //     // The inner coroutine function translated from the original async function body.
-        //     const ##coroutine = runtime.create_coroutine(() => {
-        //       // Hidden variables (##state, ##result and ##error) are used for implementing the
-        //       // state machine.  Appropriate values have been set to the hidden variables at
-        //       // this point.  So, there is no initialization for the hidden variables in the
-        //       // function body.
-        //
-        //       // Jump to the entry basic block for each state.
-        //       <jump-table for ##state>
-        //
-        //       {
-        //         <modified async-function-body>
-        //       }
-        //     }, NUM_LOCALS);
-        //
-        //     // The bottom-half of the translation will be processed in
-        //     // handle_async_function_declaration().
-        //   }
-        //
-        // NOTE: We never optimize an async function which has no await expression in the body.
-        // Such an async function should be rewritten as a normal function by developers who
-        // maintain it.
         if self.is_async() {
-            self.handle_binding_identifier(Symbol::HIDDEN_COROUTINE);
-            self.handle_function_context();
-            self.scope_tree_builder.set_coroutine();
-            self.handle_formal_parameters(0);
-            self.handle_function_signature(Symbol::HIDDEN_COROUTINE);
             self.start_coroutine_body();
         }
     }
 
+    // The async function is translated into a ramp function where an inner function is defined
+    // with the async function body of the async function.  The async function body will be
+    //rewritten as a coroutine implemented using a state machine.
+    //
+    // For example, the following async function:
+    //
+    //   async function async_func() {
+    //     <async-function-body>
+    //   }
+    //
+    // is translated into:
+    //
+    //   // The ramp function translated from the original async function.
+    //   function async_func() {
+    //     // The inner coroutine function translated from the original async function body.
+    //     const ##coroutine = runtime.create_coroutine(() => {
+    //       // Hidden variables (##state, ##result and ##error) are used for implementing the
+    //       // state machine.  Appropriate values have been set to the hidden variables at
+    //       // this point.  So, there is no initialization for the hidden variables in the
+    //       // function body.
+    //
+    //       // Jump to the entry basic block for each state.
+    //       <jump-table for ##state>
+    //
+    //       {
+    //         <modified async-function-body>
+    //       }
+    //     }, NUM_LOCALS);
+    //
+    //     // The bottom-half of the translation will be processed in
+    //     // handle_async_function_declaration().
+    //   }
+    //
+    // NOTE: We never optimize an async function which has no await expression in the body.  Such
+    // an async function should be rewritten as a normal function by developers who maintain it.
     fn start_coroutine_body(&mut self) {
+        self.handle_function_context();
+        self.scope_tree_builder.set_coroutine();
+        self.handle_formal_parameters(0);
+        self.handle_function_signature(Symbol::HIDDEN_COROUTINE);
+
         let context = self.context_stack.last_mut().unwrap();
 
         // Add the hidden variables to the function scope of ##coroutine().
@@ -1031,10 +1055,19 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         }
 
         self.register_host_functions();
+
+        // The module is always treated as an async function body.
+        if self.module {
+            self.start_coroutine_body();
+        }
     }
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
+
+        if self.module {
+            self.end_coroutine_body();
+        }
 
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope();
@@ -2027,7 +2060,7 @@ mod tests {
         let result = Parser::for_script(
             regc,
             Processor::new(
-                Analyzer::new(&runtime_pref, &mut symbol_registry, &mut function_registry),
+                Analyzer::new_for_script(&runtime_pref, &mut symbol_registry, &mut function_registry),
                 false,
             ),
         )

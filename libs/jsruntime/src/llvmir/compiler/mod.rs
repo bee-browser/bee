@@ -464,7 +464,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_coroutine(&mut self, num_locals: u16) {
-        debug_assert!(num_locals >= 3);
+        debug_assert!(num_locals >= 4);
         let closure = self.pop_closure();
         let coroutine = self.peer.create_coroutine(closure, num_locals);
         self.operand_stack.push(Operand::Coroutine(coroutine));
@@ -2181,7 +2181,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_environment(&mut self, num_locals: u16) {
-        debug_assert!(num_locals >= 3);
+        debug_assert!(num_locals >= 4);
         let flow = self.control_flow_stack.function_flow();
         let backup = self.peer.get_basic_block();
         // The ##coroutine function takes no argument and the `argv` formal parameter of the
