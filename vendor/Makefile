@@ -1,7 +1,7 @@
 export PROJDIR := $(abspath ..)
 
 # TODO: Is there any way to manage versions of packages installed by `cargo install`?
-ADDR2LINE_VERSION := 0.24.1
+ADDR2LINE_VERSION := 0.24.2
 
 # On my environment, the maximum size of memory usage of a linker is smaller than 10GB.
 LLVM_LINK_MAX_RAM_USAGE := $(shell deno eval -p '10 * 1024 * 1024 * 1024')
