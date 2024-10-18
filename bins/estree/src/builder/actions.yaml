@@ -14,6 +14,8 @@
   action: null
 - rule: ArrowFormalParameters_Yield_Await -> LPAREN UniqueFormalParameters_Yield_Await RPAREN
   action: null
+- rule: AsyncArrowHead -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ArrowFormalParameters_Await
+  action: null
 - rule: ScriptBody -> StatementList
   action: nop
 - rule: ModuleBody -> ModuleItemList
@@ -582,11 +584,11 @@
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction_In_Await -> CoverCallExpressionAndAsyncArrowHead_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
+    AsyncArrowFunction_In_Await -> AsyncArrowHeadCCEAAAH_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: async_arrow_function_expression
 - rule: LeftHandSideExpression_Await -> NewExpression_Await
   action: nop
@@ -1154,7 +1156,7 @@
   action: convert_to_expression
 - rule: AsyncConciseBody_In -> LBRACE AsyncFunctionBody RBRACE
   action: function_body_block
-- rule: CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await Arguments_Await
+- rule: AsyncArrowHeadCCEAAAH_Await -> CoverCallExpressionAndAsyncArrowHead_Await
   action: nop
 - rule: NewExpression_Await -> MemberExpression_Await
   action: nop
@@ -1364,11 +1366,11 @@
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction_In -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW
-    AsyncConciseBody_In
+    AsyncArrowFunction_In -> AsyncArrowHeadCCEAAAH (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: async_arrow_function_expression
 - rule: LeftHandSideExpression -> NewExpression
   action: nop
@@ -1484,6 +1486,8 @@
   action: nop
 - rule: ExpressionBody_In_Await -> AssignmentExpression_In_Await
   action: nop
+- rule: CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await Arguments_Await
+  action: nop
 - rule: MemberExpression_Await -> PrimaryExpression_Await
   action: nop
 - rule: MemberExpression_Await -> MemberExpression_Await LBRACK Expression_In_Await RBRACK
@@ -1500,16 +1504,16 @@
   action: new_expression_arguments
 - rule: MemberExpression_Await -> MemberExpression_Await DOT PRIVATE_IDENTIFIER
   action: member_expression_private
+- rule: SuperCall_Await -> SUPER Arguments_Await
+  action: call_expression_super
+- rule: ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await RPAREN
+  action: import_expression
 - rule: Arguments_Await -> LPAREN RPAREN
   action: arguments_empty
 - rule: Arguments_Await -> LPAREN ArgumentList_Await RPAREN
   action: arguments
 - rule: Arguments_Await -> LPAREN ArgumentList_Await COMMA RPAREN
   action: arguments_comma
-- rule: SuperCall_Await -> SUPER Arguments_Await
-  action: call_expression_super
-- rule: ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await RPAREN
-  action: import_expression
 - rule: TemplateLiteral_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Await_Tagged -> SubstitutionTemplate_Await_Tagged
@@ -1701,11 +1705,12 @@
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
+    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction_In_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
+    AsyncArrowFunction_In_Yield -> AsyncArrowHeadCCEAAAH_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: async_arrow_function_expression
 - rule: LeftHandSideExpression_Yield -> NewExpression_Yield
   action: nop
@@ -1752,11 +1757,12 @@
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
+    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction_In_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
+    AsyncArrowFunction_In_Yield_Await -> AsyncArrowHeadCCEAAAH_Yield_Await
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: async_arrow_function_expression
 - rule: LeftHandSideExpression_Yield_Await -> NewExpression_Yield_Await
   action: nop
@@ -1772,7 +1778,7 @@
   action: create_list
 - rule: ArrowParameters -> CoverParenthesizedExpressionAndArrowParameterList
   action: arrow_parameters
-- rule: CoverCallExpressionAndAsyncArrowHead -> MemberExpression Arguments
+- rule: AsyncArrowHeadCCEAAAH -> CoverCallExpressionAndAsyncArrowHead
   action: nop
 - rule: NewExpression -> MemberExpression
   action: nop
@@ -1990,7 +1996,7 @@
   action: arrow_parameters
 - rule: AsyncArrowBindingIdentifier_Yield -> BindingIdentifier_Yield_Await
   action: nop
-- rule: CoverCallExpressionAndAsyncArrowHead_Yield -> MemberExpression_Yield Arguments_Yield
+- rule: AsyncArrowHeadCCEAAAH_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
   action: nop
 - rule: NewExpression_Yield -> MemberExpression_Yield
   action: nop
@@ -2034,9 +2040,7 @@
   action: create_list
 - rule: ArrowParameters_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
   action: arrow_parameters
-- rule: >-
-    CoverCallExpressionAndAsyncArrowHead_Yield_Await -> MemberExpression_Yield_Await
-    Arguments_Yield_Await
+- rule: AsyncArrowHeadCCEAAAH_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await
   action: nop
 - rule: NewExpression_Yield_Await -> MemberExpression_Yield_Await
   action: nop
@@ -2094,6 +2098,8 @@
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS
     BindingPattern RPAREN
   action: cpeaapl_expr_rest
+- rule: CoverCallExpressionAndAsyncArrowHead -> MemberExpression Arguments
+  action: nop
 - rule: MemberExpression -> PrimaryExpression
   action: nop
 - rule: MemberExpression -> MemberExpression LBRACK Expression_In RBRACK
@@ -2110,16 +2116,16 @@
   action: new_expression_arguments
 - rule: MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
   action: member_expression_private
+- rule: SuperCall -> SUPER Arguments
+  action: call_expression_super
+- rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
+  action: import_expression
 - rule: Arguments -> LPAREN RPAREN
   action: arguments_empty
 - rule: Arguments -> LPAREN ArgumentList RPAREN
   action: arguments
 - rule: Arguments -> LPAREN ArgumentList COMMA RPAREN
   action: arguments_comma
-- rule: SuperCall -> SUPER Arguments
-  action: call_expression_super
-- rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
-  action: import_expression
 - rule: TemplateLiteral_Tagged -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Tagged -> SubstitutionTemplate_Tagged
@@ -2156,11 +2162,11 @@
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW
-    AsyncConciseBody
+    AsyncArrowFunction -> AsyncArrowHeadCCEAAAH (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
   action: async_arrow_function_expression
 - rule: Initializer -> ASSIGN AssignmentExpression
   action: initializer
@@ -2400,6 +2406,8 @@
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA
     ELLIPSIS BindingPattern_Yield RPAREN
   action: cpeaapl_expr_rest
+- rule: CoverCallExpressionAndAsyncArrowHead_Yield -> MemberExpression_Yield Arguments_Yield
+  action: nop
 - rule: MemberExpression_Yield -> PrimaryExpression_Yield
   action: nop
 - rule: MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield RBRACK
@@ -2416,16 +2424,16 @@
   action: new_expression_arguments
 - rule: MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER
   action: member_expression_private
+- rule: SuperCall_Yield -> SUPER Arguments_Yield
+  action: call_expression_super
+- rule: ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN
+  action: import_expression
 - rule: Arguments_Yield -> LPAREN RPAREN
   action: arguments_empty
 - rule: Arguments_Yield -> LPAREN ArgumentList_Yield RPAREN
   action: arguments
 - rule: Arguments_Yield -> LPAREN ArgumentList_Yield COMMA RPAREN
   action: arguments_comma
-- rule: SuperCall_Yield -> SUPER Arguments_Yield
-  action: call_expression_super
-- rule: ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN
-  action: import_expression
 - rule: Expression_In_Yield -> AssignmentExpression_In_Yield
   action: nop
 - rule: Expression_In_Yield -> Expression_In_Yield COMMA AssignmentExpression_In_Yield
@@ -2494,6 +2502,10 @@
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await COMMA ELLIPSIS BindingPattern_Yield_Await RPAREN
   action: cpeaapl_expr_rest
+- rule: >-
+    CoverCallExpressionAndAsyncArrowHead_Yield_Await -> MemberExpression_Yield_Await
+    Arguments_Yield_Await
+  action: nop
 - rule: MemberExpression_Yield_Await -> PrimaryExpression_Yield_Await
   action: nop
 - rule: >-
@@ -2512,16 +2524,16 @@
   action: new_expression_arguments
 - rule: MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT PRIVATE_IDENTIFIER
   action: member_expression_private
+- rule: SuperCall_Yield_Await -> SUPER Arguments_Yield_Await
+  action: call_expression_super
+- rule: ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await RPAREN
+  action: import_expression
 - rule: Arguments_Yield_Await -> LPAREN RPAREN
   action: arguments_empty
 - rule: Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await RPAREN
   action: arguments
 - rule: Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await COMMA RPAREN
   action: arguments_comma
-- rule: SuperCall_Yield_Await -> SUPER Arguments_Yield_Await
-  action: call_expression_super
-- rule: ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await RPAREN
-  action: import_expression
 - rule: Expression_In_Yield_Await -> AssignmentExpression_In_Yield_Await
   action: nop
 - rule: >-
@@ -2746,11 +2758,11 @@
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction_Await -> CoverCallExpressionAndAsyncArrowHead_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
+    AsyncArrowFunction_Await -> AsyncArrowHeadCCEAAAH_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
   action: async_arrow_function_expression
 - rule: Initializer_Await -> ASSIGN AssignmentExpression_Await
   action: initializer
@@ -4832,11 +4844,11 @@
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
+    AsyncArrowFunction_Yield -> AsyncArrowHeadCCEAAAH_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
   action: async_arrow_function_expression
 - rule: Initializer_Yield -> ASSIGN AssignmentExpression_Yield
   action: initializer
@@ -4865,11 +4877,12 @@
   action: arrow_function_expression
 - rule: >-
     AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
+    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
+    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
+    AsyncArrowFunction_Yield_Await -> AsyncArrowHeadCCEAAAH_Yield_Await (!LINE_TERMINATOR_SEQUENCE)
+    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
   action: async_arrow_function_expression
 - rule: Initializer_Yield_Await -> ASSIGN AssignmentExpression_Yield_Await
   action: initializer

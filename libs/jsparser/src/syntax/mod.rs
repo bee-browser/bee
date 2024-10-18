@@ -121,6 +121,7 @@ enum Detail {
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
     ConciseBody,
+    AsyncConciseBody,
     StatementList,
     CoverCallExpressionAndAsyncArrowHead,
     ModuleItemList,
@@ -214,6 +215,7 @@ pub enum Node<'s> {
     FunctionExpression(bool),
     AsyncFunctionExpression(bool),
     ArrowFunction,
+    AsyncArrowFunction,
     AwaitExpression,
     ThenBlock,
     ElseBlock,
@@ -1522,9 +1524,9 @@ where
     // LexicalBinding[In, Yield, Await] :
     //   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
     fn process_lexical_binding_identifier_with_initializer(&mut self) -> Result<(), Error> {
-        let symbol = match self.stack[self.stack.len() - 2].detail {
-            Detail::BindingIdentifier(symbol) => symbol,
-            _ => unreachable!(),
+        let symbol = match &self.stack[self.stack.len() - 2].detail {
+            Detail::BindingIdentifier(symbol) => *symbol,
+            detail => unreachable!("{detail:?}"),
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
@@ -2374,9 +2376,13 @@ where
     // ArrowParameters[Yield, Await] :
     //   BindingIdentifier[?Yield, ?Await]
     fn process_arrow_parameters_binding_identifier(&mut self) -> Result<(), Error> {
-        let i = self.enqueue(Node::FunctionContext);
+        self.process_single_arrow_parameter(Node::FunctionContext)
+    }
+
+    fn process_single_arrow_parameter(&mut self, context_node: Node<'s>) -> Result<(), Error> {
+        let i = self.enqueue(context_node);
         debug_assert!(i > 0);
-        self.nodes.swap(i - 1, i); // swap BindingIdentifier and FunctionContext.
+        self.nodes.swap(i - 1, i); // swap BindingIdentifier and context_node.
         self.enqueue(Node::FormalParameter);
         self.enqueue(Node::FormalParameters(1));
         let bound_names = match self.top().detail {
@@ -2482,6 +2488,73 @@ where
     }
 
     // 15.9 Async Arrow Function Definitions
+
+    // AsyncArrowFunction[In, Yield, Await] :
+    //   async [no LineTerminator here] AsyncArrowBindingIdentifier[?Yield]
+    //   [no LineTerminator here] => AsyncConciseBody[?In]
+    fn process_async_arrow_function(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncArrowFunction);
+        self.replace(4, Detail::Expression);
+        Ok(())
+    }
+
+    // AsyncArrowFunction[In, Yield, Await] :
+    //   AsyncArrowHeadCCEAAAH[?Yield, ?Await] [no LineTerminator here] =>
+    //   AsyncConciseBody[?In]
+    fn process_async_arrow_function_cceaaah(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncArrowFunction);
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
+
+    // AsyncConciseBody[In] :
+    //   [lookahead ≠ {] ExpressionBody[?In, +Await]
+    fn process_async_concise_body_expression_body(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ReturnStatement(1));
+        self.replace(1, Detail::AsyncConciseBody);
+        Ok(())
+    }
+
+    // AsyncConciseBody[In] :
+    //   { AsyncFunctionBody }
+    fn process_async_concise_body_async_function_body(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::AsyncConciseBody);
+        Ok(())
+    }
+
+    // AsyncArrowBindingIdentifier[Yield] :
+    //   BindingIdentifier[?Yield, +Await]
+    fn process_async_arrow_binding_identifier(&mut self) -> Result<(), Error> {
+        self.process_single_arrow_parameter(Node::AsyncFunctionContext)
+    }
+
+    // AsyncArrowHeadCCEAAAH[Yield, Await] :
+    //   CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
+    fn process_async_arrow_head_cceaaah(&mut self) -> Result<(), Error> {
+        self.refine_async_arrow_head()
+    }
+
+    fn refine_async_arrow_head(&mut self) -> Result<(), Error> {
+        let syntax = self.pop();
+        self.tokens.truncate(syntax.tokens_range.start);
+        self.nodes.truncate(syntax.nodes_range.start);
+        self.enqueue(Node::AsyncFunctionContext);
+        self.refine(&syntax, GoalSymbol::AsyncArrowHead)
+    }
+
+    // AsyncArrowHead :
+    //   async [no LineTerminator here] ArrowFormalParameters[~Yield, +Await]
+    fn process_async_arrow_head(&mut self) -> Result<(), Error> {
+        let formal_parameters = self.pop();
+        let tokens_end = self.tokens.len();
+        let nodes_end = self.nodes.len();
+        let syntax = self.top_mut();
+        syntax.detail = formal_parameters.detail;
+        syntax.tokens_range.end = tokens_end;
+        syntax.nodes_range.end = nodes_end;
+        syntax.source_range.end = formal_parameters.source_range.end;
+        Ok(())
+    }
 
     // CoverCallExpressionAndAsyncArrowHead[Yield, Await] :
     //   MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
