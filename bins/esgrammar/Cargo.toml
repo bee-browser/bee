@@ -6,7 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.89"
+anyhow = "1.0.90"
 clap = { version = "4.5.20", features = ["derive"] }
 htmlparser = { path = "../../libs/htmlparser" }
 toydom = { path = "../../libs/toydom" }
