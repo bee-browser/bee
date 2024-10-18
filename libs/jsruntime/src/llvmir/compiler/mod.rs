@@ -2214,7 +2214,8 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_await(&mut self, _next_state: u32) {
         let promise = self.peer.create_load_promise_from_value(self.locals[3]);
 
-        match self.operand_stack.pop().unwrap() {
+        let (operand, _) = self.dereference();
+        match operand {
             Operand::Undefined => {
                 let result = self.peer.create_undefined_to_any();
                 self.peer.create_emit_promise_resolved(promise, result);
@@ -2257,7 +2258,7 @@ impl<'r, 's> Compiler<'r, 's> {
                 // }
                 self.peer.set_basic_block(block);
             }
-            _ => unreachable!(),
+            _ => unreachable!("{operand:?}"),
         }
 
         self.peer.create_suspend();

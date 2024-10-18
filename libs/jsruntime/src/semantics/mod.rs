@@ -283,6 +283,7 @@ impl<'r> Analyzer<'r> {
             Node::FunctionExpression(named) => self.handle_function_expression(named),
             Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
             Node::ArrowFunction => self.handle_arrow_function(),
+            Node::AsyncArrowFunction => self.handle_async_arrow_function(),
             Node::AwaitExpression => self.handle_await_expression(),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
@@ -713,6 +714,13 @@ impl<'r> Analyzer<'r> {
                 &func.captures,
                 false,
             );
+    }
+
+    fn handle_async_arrow_function(&mut self) {
+        self.end_coroutine_body();
+
+        // Node::ArrowFunction for the outer ramp function.
+        self.handle_arrow_function()
     }
 
     fn handle_await_expression(&mut self) {

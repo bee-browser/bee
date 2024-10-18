@@ -170,6 +170,7 @@ class Transpiler {
           modifyFunctionExpression,
           modifyAsyncFunctionExpression,
           modifyArrowFunction,
+          modifyAsyncArrowFunction,
           modifyDoWhileStatement,
           modifyWhileStatement,
           modifySwitchStatement,
@@ -820,6 +821,34 @@ function modifyArrowFunction(rules) {
   const rule = rules.find((rule) => rule.name === 'ArrowFunction[In, Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyAsyncArrowFunction(rules) {
+  const TARGETS = [
+    // _ASYNC_FUNCION_CONTEXT_ will be inserted in the syntax module.
+    {
+      term: '`=>`',
+      action: '_ANONYMOUS_FUNCTION_SIGNATURE_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying AsyncArrowFunction...');
+  const rule = rules.find((rule) => rule.name === 'AsyncArrowFunction[In, Yield, Await]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+
+  rule.values = rule.values.map((value) => {
+    return value.replace(
+      'CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]',
+      'AsyncArrowHeadCCEAAAH[?Yield, ?Await]');
+  });
+
+  rules.push({
+    name: 'AsyncArrowHeadCCEAAAH[Yield, Await]',
+    values: ['CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]'],
+  });
+
   return rules;
 }
 
