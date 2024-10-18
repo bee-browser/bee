@@ -35,8 +35,8 @@ GOAL_SYMBOLS := \
   ArrowFormalParameters \
   ArrowFormalParameters_Yield \
   ArrowFormalParameters_Await \
-  ArrowFormalParameters_Yield_Await
-
+  ArrowFormalParameters_Yield_Await \
+  AsyncArrowHead
 
 # targets
 
