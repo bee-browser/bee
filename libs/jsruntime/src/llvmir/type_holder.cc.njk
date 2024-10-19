@@ -57,6 +57,8 @@ llvm::StructType* TypeHolder::CreateClosureType() {
         builder_.getInt16Ty(),
         // captures
         builder_.getPtrTy(),
+        // storage[]
+        CreateCaptureType(),
     });
   }
   return closure_type_;

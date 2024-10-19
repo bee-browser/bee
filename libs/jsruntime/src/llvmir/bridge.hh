@@ -83,10 +83,11 @@ struct Closure {
   // checking whether `captures` is empty or not.
   Capture** captures;
 
-  // `Capture* storage[num_captures]` is placed here if it's not empty.
+  // A variable-length list of captures.
+  Capture storage[32];
 };
 
-static_assert(sizeof(Closure) == sizeof(uint64_t) * 3, "size mismatched");
+static_assert(offsetof(Closure, storage) == sizeof(uint64_t) * 3, "size mismatched");
 
 // TODO(issue#237): GcCell
 struct Coroutine {
@@ -97,9 +98,11 @@ struct Coroutine {
   // The number of local variables.
   uint16_t num_locals;
 
-  // Local variables used in the coroutine.
-  Value locals[8];
+  // A variable-length list of local variables used in the coroutine.
+  Value locals[32];
 };
+
+static_assert(offsetof(Coroutine, locals) == sizeof(uint64_t) * 2, "size mismatched");
 
 #include "runtime.hh"
 
