@@ -2,7 +2,8 @@
 
 ## How to write a test for `Runtime::evaluate()`
 
-Add a JavaScript file `evaluate_<test-name>.js` and put JavaScript code:
+Add a JavaScript file `scripts/test_name.js` or `modules/test_name.mjs` and put JavaScript
+code:
 
 ```javascript
 print(undefined); ///=Value::UNDEFINED
@@ -18,6 +19,9 @@ as template parameters for [`evaluate.rs.njk`](./evalute.rs.njk) and rendered in
 
 An uncaught exception is expressed in a special line comment starting with `///!`.
 `collect_evaluate_test.js` also collects its value.
+
+For testing `async` functions, use `///#<index>=<expected-value>` instead.  This set the expected
+value at the specified position in the list of expected values.
 
 When you modify a test, you **MUST** run `make codegen` in order to create or update `evalute.rs`.
 Then, `make test`.
