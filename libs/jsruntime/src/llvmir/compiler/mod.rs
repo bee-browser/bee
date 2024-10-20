@@ -2200,15 +2200,19 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(num_states >= 2);
         let initial_block = self.create_basic_block("co.initial");
         let dormant_block = self.create_basic_block("co.dormant");
-        let inst = self.peer.create_switch(self.locals[0], dormant_block, num_states);
+        let inst = self
+            .peer
+            .create_switch(self.locals[0], dormant_block, num_states);
         self.peer.create_add_case(inst, 0, initial_block);
 
         self.peer.set_basic_block(dormant_block);
-        self.peer.create_unreachable(c"dormant coroutine was called");
+        self.peer
+            .create_unreachable(c"dormant coroutine was called");
 
         self.peer.set_basic_block(initial_block);
 
-        self.control_flow_stack.push_coroutine_flow(inst, dormant_block, num_states);
+        self.control_flow_stack
+            .push_coroutine_flow(inst, dormant_block, num_states);
     }
 
     fn process_await(&mut self, _next_state: u32) {
@@ -2275,7 +2279,8 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // if ##error.has_value()
         let has_error = self.peer.create_has_value(self.locals[2]);
-        self.peer.create_cond_br(has_error, has_error_block, result_block);
+        self.peer
+            .create_cond_br(has_error, has_error_block, result_block);
         {
             // throw ##error;
             self.peer.set_basic_block(has_error_block);

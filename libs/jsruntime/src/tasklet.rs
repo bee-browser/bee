@@ -16,9 +16,9 @@ impl From<u32> for PromiseId {
     }
 }
 
-impl Into<u32> for PromiseId {
-    fn into(self) -> u32 {
-        self.0.get()
+impl From<PromiseId> for u32 {
+    fn from(value: PromiseId) -> Self {
+        value.0.get()
     }
 }
 
@@ -76,15 +76,23 @@ impl System {
 
     pub fn emit_promise_resolved(&mut self, promise_id: PromiseId, result: Value) {
         crate::logger::debug!(event = "emit_promise_resolved", ?promise_id, ?result);
-        self.messages.push_back(Message::PromiseResolved { promise_id, result });
+        self.messages
+            .push_back(Message::PromiseResolved { promise_id, result });
     }
 
     pub fn emit_promise_rejected(&mut self, promise_id: PromiseId, error: Value) {
         crate::logger::debug!(event = "emit_promise_rejected", ?promise_id, ?error);
-        self.messages.push_back(Message::PromiseRejected { promise_id, error });
+        self.messages
+            .push_back(Message::PromiseRejected { promise_id, error });
     }
 
-    pub fn process_promise(&mut self, runtime: *mut std::ffi::c_void, promise_id: PromiseId, result: Value, error: Value) {
+    pub fn process_promise(
+        &mut self,
+        runtime: *mut std::ffi::c_void,
+        promise_id: PromiseId,
+        result: Value,
+        error: Value,
+    ) {
         crate::logger::debug!(event = "process_promise", ?promise_id, ?result, ?error);
         debug_assert!(self.promises.contains_key(&promise_id));
         let promise = self.promises.get(&promise_id).unwrap();
@@ -119,7 +127,7 @@ enum Message {
     PromiseRejected {
         promise_id: PromiseId,
         error: Value,
-    }
+    },
 }
 
 // promise
