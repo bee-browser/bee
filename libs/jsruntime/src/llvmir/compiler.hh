@@ -461,7 +461,8 @@ class Compiler {
     auto* prototype = types_->CreateLambdaType();
     auto* lambda = CreateLoadLambdaFromClosure(closure);
     auto* caps = CreateLoadCapturesFromClosure(closure);
-    return builder_->CreateCall(prototype, lambda, {exec_context_, caps, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
+    return builder_->CreateCall(prototype, lambda,
+        {exec_context_, caps, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
   }
 
   llvm::Value* CreateClosurePhi(llvm::Value* then_value,
@@ -510,7 +511,8 @@ class Compiler {
 
   llvm::Value* CreateHasValue(llvm::Value* value) {
     auto* kind = CreateLoadValueKindFromValue(value);
-    return builder_->CreateICmpNE(kind, builder_->getInt8(kValueKindNone), REG_NAME("value.has_value"));
+    return builder_->CreateICmpNE(
+        kind, builder_->getInt8(kValueKindNone), REG_NAME("value.has_value"));
   }
 
   // 7.2.13 IsLooselyEqual ( x, y )
@@ -809,7 +811,8 @@ class Compiler {
 
   llvm::Value* CreateCoroutine(llvm::Value* closure, uint16_t num_locals) {
     auto* func = types_->CreateRuntimeCreateCoroutine();
-    return builder_->CreateCall(func, {exec_context_, closure, builder_->getInt16(num_locals)}, REG_NAME("coroutine"));
+    return builder_->CreateCall(
+        func, {exec_context_, closure, builder_->getInt16(num_locals)}, REG_NAME("coroutine"));
   }
 
   void CreateSuspend() {

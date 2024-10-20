@@ -872,7 +872,9 @@ impl<'r> Analyzer<'r> {
     }
 
     fn set_function_symbol(&mut self, symbol: Symbol) {
-        let id = self.function_registry.create_native_function(symbol == Symbol::HIDDEN_COROUTINE);
+        let id = self
+            .function_registry
+            .create_native_function(symbol == Symbol::HIDDEN_COROUTINE);
         let func_index = self.context_stack.last().unwrap().func_index;
         self.functions[func_index].symbol = symbol;
         self.functions[func_index].id = id;
@@ -931,13 +933,17 @@ impl<'r> Analyzer<'r> {
         let context = self.context_stack.last_mut().unwrap();
 
         // Add the hidden variables to the function scope of ##coroutine().
-        self.scope_tree_builder.add_hidden(Symbol::HIDDEN_STATE, context.num_locals);
+        self.scope_tree_builder
+            .add_hidden(Symbol::HIDDEN_STATE, context.num_locals);
         context.num_locals += 1;
-        self.scope_tree_builder.add_hidden(Symbol::HIDDEN_RESULT, context.num_locals);
+        self.scope_tree_builder
+            .add_hidden(Symbol::HIDDEN_RESULT, context.num_locals);
         context.num_locals += 1;
-        self.scope_tree_builder.add_hidden(Symbol::HIDDEN_ERROR, context.num_locals);
+        self.scope_tree_builder
+            .add_hidden(Symbol::HIDDEN_ERROR, context.num_locals);
         context.num_locals += 1;
-        self.scope_tree_builder.add_hidden(Symbol::HIDDEN_PROMISE, context.num_locals);
+        self.scope_tree_builder
+            .add_hidden(Symbol::HIDDEN_PROMISE, context.num_locals);
         context.num_locals += 1;
 
         context.flags.insert(FunctionContextFlags::COROUTINE);
@@ -2076,7 +2082,11 @@ mod tests {
         let result = Parser::for_script(
             regc,
             Processor::new(
-                Analyzer::new_for_script(&runtime_pref, &mut symbol_registry, &mut function_registry),
+                Analyzer::new_for_script(
+                    &runtime_pref,
+                    &mut symbol_registry,
+                    &mut function_registry,
+                ),
                 false,
             ),
         )

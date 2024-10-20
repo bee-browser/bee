@@ -130,11 +130,17 @@ void compiler_peer_create_cond_br(Compiler* self,
 
 // switch
 
-SwitchIr* compiler_peer_create_switch(Compiler* self, ValueIr* value, BasicBlock* block, uint32_t num_cases) {
+SwitchIr* compiler_peer_create_switch(Compiler* self,
+    ValueIr* value,
+    BasicBlock* block,
+    uint32_t num_cases) {
   return PEER_SWITCH(self->CreateSwitch(LLVM_VALUE(value), LLVM_BB(block), num_cases));
 }
 
-void compiler_peer_create_add_case(Compiler* self, SwitchIr* inst, uint32_t value, BasicBlock* block) {
+void compiler_peer_create_add_case(Compiler* self,
+    SwitchIr* inst,
+    uint32_t value,
+    BasicBlock* block) {
   self->CreateAddCase(LLVM_SWITCH(inst), value, LLVM_BB(block));
 }
 
@@ -363,7 +369,9 @@ void compiler_peer_create_resume(Compiler* self, PromiseIr* promise) {
   self->CreateResume(LLVM_VALUE(promise));
 }
 
-void compiler_peer_create_emit_promise_resolved(Compiler* self, PromiseIr* promise, ValueIr* result) {
+void compiler_peer_create_emit_promise_resolved(Compiler* self,
+    PromiseIr* promise,
+    ValueIr* result) {
   self->CreateEmitPromiseResolved(LLVM_VALUE(promise), LLVM_VALUE(result));
 }
 
@@ -616,7 +624,9 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index) {
 
 // coroutine
 
-CoroutineIr* compiler_peer_create_coroutine(Compiler* self, ClosureIr* closure, uint16_t num_locals) {
+CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
+    ClosureIr* closure,
+    uint16_t num_locals) {
   return PEER_COROUTINE(self->CreateCoroutine(LLVM_VALUE(closure), num_locals));
 }
 

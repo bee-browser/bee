@@ -160,8 +160,14 @@ void compiler_peer_create_cond_br(Compiler* self,
     BasicBlock* else_block);
 
 // switch
-SwitchIr* compiler_peer_create_switch(Compiler* self, ValueIr* value, BasicBlock* block, uint32_t num_cases);
-void compiler_peer_create_add_case(Compiler* self, SwitchIr* switch_ir, uint32_t value, BasicBlock* block);
+SwitchIr* compiler_peer_create_switch(Compiler* self,
+    ValueIr* value,
+    BasicBlock* block,
+    uint32_t num_cases);
+void compiler_peer_create_add_case(Compiler* self,
+    SwitchIr* switch_ir,
+    uint32_t value,
+    BasicBlock* block);
 
 // undefined
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
@@ -242,7 +248,9 @@ BooleanIr* compiler_peer_create_is_same_promise(Compiler* self, PromiseIr* a, Pr
 PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine);
 void compiler_peer_create_await_promise(Compiler* self, PromiseIr* promise, PromiseIr* awaiting);
 void compiler_peer_create_resume(Compiler* self, PromiseIr* promise);
-void compiler_peer_create_emit_promise_resolved(Compiler* self, PromiseIr* promise, ValueIr* result);
+void compiler_peer_create_emit_promise_resolved(Compiler* self,
+    PromiseIr* promise,
+    ValueIr* result);
 
 // value
 BooleanIr* compiler_peer_create_has_value(Compiler* self, ValueIr* value);
@@ -331,7 +339,9 @@ ValueIr* compiler_peer_create_get_capture_value_ptr(Compiler* self, uint16_t ind
 CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
 // coroutine
-CoroutineIr* compiler_peer_create_coroutine(Compiler* self, ClosureIr* closure, uint16_t num_locals);
+CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
+    ClosureIr* closure,
+    uint16_t num_locals);
 void compiler_peer_create_suspend(Compiler* self);
 
 // scope cleanup checker

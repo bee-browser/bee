@@ -5,7 +5,7 @@ use std::ffi::CString;
 pub struct FunctionId(u32);
 
 impl FunctionId {
-    const HOST_BIT: u32      = 1 << 31;
+    const HOST_BIT: u32 = 1 << 31;
     const COROUTINE_BIT: u32 = 1 << 30;
 
     const VALUE_MASK: u32 = !(Self::HOST_BIT | Self::COROUTINE_BIT);
@@ -134,6 +134,9 @@ mod tests {
     #[test]
     fn test_function_id_max() {
         // TODO: checking at compile time is better.
-        assert_eq!(FunctionId::MAX_INDEX, (FunctionId::COROUTINE_BIT - 1) as usize);
+        assert_eq!(
+            FunctionId::MAX_INDEX,
+            (FunctionId::COROUTINE_BIT - 1) as usize
+        );
     }
 }

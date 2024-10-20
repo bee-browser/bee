@@ -667,7 +667,9 @@ function modifyAsyncFunctionDeclaration(rules) {
     },
   ];
   log.debug('Modifying AsyncFunctionDeclaration...');
-  const rule = rules.find((rule) => rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]');
+  const rule = rules.find((rule) =>
+    rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]'
+  );
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;
@@ -841,7 +843,8 @@ function modifyAsyncArrowFunction(rules) {
   rule.values = rule.values.map((value) => {
     return value.replace(
       'CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]',
-      'AsyncArrowHeadCCEAAAH[?Yield, ?Await]');
+      'AsyncArrowHeadCCEAAAH[?Yield, ?Await]',
+    );
   });
 
   rules.push({

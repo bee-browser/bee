@@ -173,21 +173,44 @@ where
 }
 
 impl Closure {
-    fn call(runtime: *mut std::ffi::c_void, closure: *mut Closure, argc: usize, argv: *mut Value, retv: *mut Value) -> Status {
+    fn call(
+        runtime: *mut std::ffi::c_void,
+        closure: *mut Closure,
+        argc: usize,
+        argv: *mut Value,
+        retv: *mut Value,
+    ) -> Status {
         unsafe {
             let lambda = (*closure).lambda.unwrap();
-            lambda(runtime, (*closure).captures as *mut std::ffi::c_void, argc, argv, retv)
+            lambda(
+                runtime,
+                (*closure).captures as *mut std::ffi::c_void,
+                argc,
+                argv,
+                retv,
+            )
         }
     }
 }
 
 impl Coroutine {
-    pub fn resume(runtime: *mut std::ffi::c_void, coroutine: *mut Coroutine, result: Value, error: Value) -> CoroutineStatus {
+    pub fn resume(
+        runtime: *mut std::ffi::c_void,
+        coroutine: *mut Coroutine,
+        result: Value,
+        error: Value,
+    ) -> CoroutineStatus {
         unsafe {
             (*coroutine).locals[1] = result;
             (*coroutine).locals[2] = error;
             let mut retv = Value::NONE;
-            let status = Closure::call(runtime, (*coroutine).closure, 0, (*coroutine).locals[..].as_mut_ptr(), &mut retv as *mut Value);
+            let status = Closure::call(
+                runtime,
+                (*coroutine).closure,
+                0,
+                (*coroutine).locals[..].as_mut_ptr(),
+                &mut retv as *mut Value,
+            );
             match status {
                 STATUS_NORMAL => CoroutineStatus::Done(retv),
                 STATUS_EXCEPTION => CoroutineStatus::Error(retv),
@@ -419,7 +442,11 @@ unsafe extern "C" fn runtime_create_closure<X>(
     closure
 }
 
-unsafe extern "C" fn runtime_create_coroutine<X>(context: usize, closure: *mut Closure, num_locals: u16) -> *mut Coroutine {
+unsafe extern "C" fn runtime_create_coroutine<X>(
+    context: usize,
+    closure: *mut Closure,
+    num_locals: u16,
+) -> *mut Coroutine {
     const BASE_LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::offset_of!(Coroutine, locals),
@@ -444,7 +471,7 @@ unsafe extern "C" fn runtime_create_coroutine<X>(context: usize, closure: *mut C
     (*coroutine).locals[1] = Value::NONE; // ##result = none
     (*coroutine).locals[2] = Value::NONE; // ##error = none
     (*coroutine).locals[3] = Value::NONE; // ##promise = none
-    // Other local variables will be initialized in the coroutine.
+                                          // Other local variables will be initialized in the coroutine.
 
     coroutine
 }
@@ -459,18 +486,31 @@ unsafe extern "C" fn runtime_register_promise<X>(context: usize, coroutine: *mut
 
 unsafe extern "C" fn runtime_resume<X>(context: usize, promise: u32) {
     let runtime = into_runtime!(context, X);
-    runtime.tasklet_system.process_promise(context as *mut std::ffi::c_void, promise.into(), Value::NONE, Value::NONE);
+    runtime.tasklet_system.process_promise(
+        context as *mut std::ffi::c_void,
+        promise.into(),
+        Value::NONE,
+        Value::NONE,
+    );
 }
 
 unsafe extern "C" fn runtime_await_promise<X>(context: usize, promise: u32, awaiting: u32) {
     let runtime = into_runtime!(context, X);
-    runtime.tasklet_system.await_promise(promise.into(), awaiting.into());
+    runtime
+        .tasklet_system
+        .await_promise(promise.into(), awaiting.into());
 }
 
-unsafe extern "C" fn runtime_emit_promise_resolved<X>(context: usize, promise: u32, result: *const Value) {
+unsafe extern "C" fn runtime_emit_promise_resolved<X>(
+    context: usize,
+    promise: u32,
+    result: *const Value,
+) {
     let runtime = into_runtime!(context, X);
-    let cloned = (*result).clone();
-    runtime.tasklet_system.emit_promise_resolved(promise.into(), cloned);
+    let cloned = *result;
+    runtime
+        .tasklet_system
+        .emit_promise_resolved(promise.into(), cloned);
 }
 
 unsafe extern "C" fn runtime_assert(

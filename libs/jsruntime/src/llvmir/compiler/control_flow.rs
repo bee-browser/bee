@@ -92,7 +92,12 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn push_coroutine_flow(&mut self, switch_inst: SwitchIr, dormant_block: BasicBlock, num_states: u32) {
+    pub fn push_coroutine_flow(
+        &mut self,
+        switch_inst: SwitchIr,
+        dormant_block: BasicBlock,
+        num_states: u32,
+    ) {
         self.stack.push(ControlFlow::Coroutine(CoroutineFlow {
             switch_inst,
             dormant_block,
