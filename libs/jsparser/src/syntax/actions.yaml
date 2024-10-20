@@ -1671,9 +1671,9 @@
 - rule: OptionalChain_Await -> OptionalChain_Await DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: StatementList_Await -> StatementListItem_Await
-  action: nop
+  action: process_statement_list_head
 - rule: StatementList_Await -> StatementList_Await StatementListItem_Await
-  action: undefined
+  action: process_statement_list_item
 - rule: >-
     DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await _LOOP_BODY_ WHILE
     LPAREN Expression_In_Await RPAREN SEMICOLON
