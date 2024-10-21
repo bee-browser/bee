@@ -846,7 +846,9 @@ impl<'r> Analyzer<'r> {
         // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
         context.commands.push(CompileCommand::Nop);
         if self.runtime_pref.enable_scope_cleanup_checker {
-            context.commands.push(CompileCommand::EnableScopeCleanupChecker);
+            context
+                .commands
+                .push(CompileCommand::EnableScopeCleanupChecker);
         }
         context.start_scope(scope_ref);
         self.context_stack.push(context);

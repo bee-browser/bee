@@ -446,7 +446,7 @@ class Compiler {
   void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr,
       llvm::Value* closure_ptr,
       uint16_t index) {
-    auto* ptr = CreateLoadCapturesFromClosure(closure_ptr);
+    auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
     CreateStoreCapturePtrToCaptures(capture_ptr, ptr, index);
   }
 
@@ -456,7 +456,7 @@ class Compiler {
       llvm::Value* retv) {
     auto* prototype = types_->CreateLambdaType();
     auto* lambda = CreateLoadLambdaFromClosure(closure);
-    auto* caps = CreateLoadCapturesFromClosure(closure);
+    auto* caps = CreateGetCapturesPtrOfClosure(closure);
     return builder_->CreateCall(prototype, lambda,
         {exec_context_, caps, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
   }
@@ -1026,11 +1026,6 @@ class Compiler {
   llvm::Value* CreateLoadNumCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetNumCapturesPtrOfClosure(closure_ptr);
     return builder_->CreateLoad(builder_->getInt16Ty(), ptr, REG_NAME("closure.num_captures"));
-  }
-
-  llvm::Value* CreateLoadCapturesFromClosure(llvm::Value* closure_ptr) {
-    auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("closure.captures"));
   }
 
   // capture

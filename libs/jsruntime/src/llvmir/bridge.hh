@@ -70,24 +70,21 @@ struct Closure {
   // A pointer to a function compiled from a JavaScript function.
   Lambda lambda;
 
-  // The number of elements in `storage[]`.
+  // The number of captures.
   //
   // Usually, this field does not used in the compiled function, but we add this field here for
   // debugging purposes.  If we need to reduce the heap memory usage and `Closure`s dominant, we
   // can remove this field.
   uint16_t num_captures;
+
   // uint8_t padding[6];
 
-  // Using the following definition instead of `Capture* captures[]`, we can avoid accessing the
-  // `num_captures` field and comparison and conditional branch instructions that are needed for
-  // checking whether `captures` is empty or not.
-  Capture** captures;
-
-  // A variable-length list of captures.
-  Capture storage[32];
+  // A variable-length list of captures used in the lambda function.
+  // TODO(issue#237): GcCellRef
+  Capture* captures[32];
 };
 
-static_assert(offsetof(Closure, storage) == sizeof(uint64_t) * 3, "size mismatched");
+static_assert(offsetof(Closure, captures) == sizeof(uint64_t) * 2, "size mismatched");
 
 // TODO(issue#237): GcCell
 struct Coroutine {
@@ -97,6 +94,8 @@ struct Coroutine {
 
   // The number of local variables.
   uint16_t num_locals;
+
+  // uint8_t padding[6];
 
   // A variable-length list of local variables used in the coroutine.
   Value locals[32];
