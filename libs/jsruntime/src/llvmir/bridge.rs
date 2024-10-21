@@ -98,8 +98,8 @@ impl std::fmt::Debug for Value {
                     let lambda = (*self.holder.closure).lambda.unwrap();
                     write!(f, "closure({lambda:?}, [")?;
                     let len = (*self.holder.closure).num_captures as usize;
-                    let data = (*self.holder.closure).captures;
-                    let mut captures = std::slice::from_raw_parts_mut(data, len)
+                    let data = (*self.holder.closure).captures.as_ptr();
+                    let mut captures = std::slice::from_raw_parts(data, len)
                         .iter()
                         .map(|capture| capture.as_ref().unwrap());
                     if let Some(capture) = captures.next() {
@@ -184,7 +184,7 @@ impl Closure {
             let lambda = (*closure).lambda.unwrap();
             lambda(
                 runtime,
-                (*closure).captures as *mut std::ffi::c_void,
+                (*closure).captures.as_ptr() as *mut std::ffi::c_void,
                 argc,
                 argv,
                 retv,
@@ -414,13 +414,13 @@ unsafe extern "C" fn runtime_create_closure<X>(
 ) -> *mut Closure {
     const BASE_LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
-            std::mem::size_of::<Closure>(),
+            std::mem::offset_of!(Closure, captures),
             std::mem::align_of::<Closure>(),
         )
     };
 
     let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
-    let (layout, offset) = BASE_LAYOUT.extend(storage_layout).unwrap();
+    let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
     let runtime = into_runtime!(context, X);
     let allocator = runtime.allocator();
@@ -431,13 +431,8 @@ unsafe extern "C" fn runtime_create_closure<X>(
     let closure = ptr.cast::<Closure>().as_ptr();
     (*closure).lambda = lambda;
     (*closure).num_captures = num_captures;
-    if num_captures == 0 {
-        (*closure).captures = std::ptr::null_mut();
-    } else {
-        (*closure).captures = ptr.as_ptr().wrapping_add(offset).cast::<*mut Capture>();
-    }
 
-    // `closure.storage[]` will be filled with actual pointers to `Captures`.
+    // `closure.captures[]` will be filled with actual pointers to `Captures`.
 
     closure
 }
@@ -471,7 +466,8 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     (*coroutine).locals[1] = Value::NONE; // ##result = none
     (*coroutine).locals[2] = Value::NONE; // ##error = none
     (*coroutine).locals[3] = Value::NONE; // ##promise = none
-                                          // Other local variables will be initialized in the coroutine.
+
+    // Other local variables will be initialized in the coroutine.
 
     coroutine
 }
