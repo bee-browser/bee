@@ -9,7 +9,7 @@ publish = false
 anyhow = "1.0.90"
 async-stream = "0.3.6"
 axum = "0.7.7"
-bytes = "1.7.2"
+bytes = "1.8.0"
 clap = { version = "4.5.20", features = ["derive"] }
 logging = { path = "../../libs/logging" }
 mime = "0.3.17"
