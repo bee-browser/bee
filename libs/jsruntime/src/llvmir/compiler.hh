@@ -136,14 +136,10 @@ class Compiler {
     argv_ = function_->getArg(3);
     retv_ = function_->getArg(4);
 
-    ClearScopeCleanupStack();
+    ResetScopeCleanupChecker();
   }
 
   void EndFunction(bool optimize) {
-    if (IsScopeCleanupCheckerEnabled()) {
-      CreateAssertScopeCleanupStackIsEmpty();
-    }
-
     auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
     // Convert STATUS_XXX into Status.
     auto* masked =
@@ -821,32 +817,25 @@ class Compiler {
 
   // scope cleanup checker
 
-  void SetupScopeCleanupChecker(uint32_t stack_size) {
-    scope_cleanup_stack_type_ = llvm::ArrayType::get(builder_->getInt16Ty(), stack_size);
-    scope_cleanup_stack_ =
-        CreateAllocN(builder_->getInt16Ty(), stack_size, REG_NAME("scope_cleanup_stack"));
-    scope_cleanup_stack_top_ =
-        CreateAlloc1(builder_->getInt32Ty(), REG_NAME("scope_cleanup_stack_top"));
-    builder_->CreateStore(builder_->getInt32(0), scope_cleanup_stack_top_);
-    scope_cleanup_stack_size_ = stack_size;
+  void EnableScopeCleanupChecker() {
+    scope_id_ = CreateAlloc1(builder_->getInt16Ty(), REG_NAME("scope_id.ptr"));
+    builder_->CreateStore(builder_->getInt16(0), scope_id_);
   }
 
-  void PerformScopeCleanupPrecheck(uint16_t scope_id) {
-    if (IsScopeCleanupCheckerEnabled()) {
-      // We assumed here that the control flow does not enter into a scope which is already
-      // entered.  However, it may be better to check that explicitly here before pushing the scope
-      // ID.
-      CreateAssertScopeCleanupStackBounds();
-      CreatePushOntoScopeCleanupStack(scope_id);
-    }
+  void SetScopeIdForChecker(uint16_t scope_id) {
+    assert(IsScopeCleanupCheckerEnabled());
+    builder_->CreateStore(builder_->getInt16(scope_id), scope_id_);
   }
 
-  void PerformScopeCleanupPostcheck(uint16_t scope_id) {
-    if (IsScopeCleanupCheckerEnabled()) {
-      CreateAssertScopeCleanupStackHasItem();
-      auto* popped = CreatePopFromScopeCleanupStack();
-      CreateAssertScopeCleanupStackPoppedValue(popped, scope_id);
-    }
+  // assert(scope_id == expected)
+  void AssertScopeId(uint16_t expected) {
+    assert(IsScopeCleanupCheckerEnabled());
+    auto* scope_id = builder_->CreateLoad(builder_->getInt16Ty(), scope_id_, REG_NAME("scope_id"));
+    auto* assertion = builder_->CreateICmpEQ(
+        scope_id, builder_->getInt16(expected), REG_NAME("assertion.scope_id"));
+    std::stringstream ss;
+    ss << "scope_id == " << expected;
+    CreateAssert(assertion, ss.str().c_str());
   }
 
   // print
@@ -1091,84 +1080,14 @@ class Compiler {
     builder_->CreateStore(capture_ptr, ptr);
   }
 
-  // scope cleanup cheker
-
-  void CreatePushOntoScopeCleanupStack(uint16_t scope_id) {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    // scope_cleanup_stack_[scope_cleanup_stack_top_] = scope_id;
-    auto* ptr = builder_->CreateInBoundsGEP(scope_cleanup_stack_type_, scope_cleanup_stack_,
-        {builder_->getInt32(0), top}, REG_NAME("scope_cleanup_stack.pushed.ptr"));
-    builder_->CreateStore(builder_->getInt16(scope_id), ptr);
-    // scope_cleanup_stack_top_++;
-    auto* incr =
-        builder_->CreateAdd(top, builder_->getInt32(1), REG_NAME("scope_cleanup_stack.top.incr"));
-    CreateStoreScopeCleanupStackTop(incr);
-  }
-
-  llvm::Value* CreatePopFromScopeCleanupStack() {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    // scope_cleanup_stack_top_--;
-    auto* decr =
-        builder_->CreateSub(top, builder_->getInt32(1), REG_NAME("scope_cleanup_stack.top.decr"));
-    CreateStoreScopeCleanupStackTop(decr);
-    // return scope_cleanup_stack_[scope_cleanup_stack_top_];
-    auto* ptr = builder_->CreateInBoundsGEP(scope_cleanup_stack_type_, scope_cleanup_stack_,
-        {builder_->getInt32(0), decr}, REG_NAME("scope_cleanup_stack.popped.ptr"));
-    return builder_->CreateLoad(
-        builder_->getInt16Ty(), ptr, REG_NAME("scope_cleanup_stack.popped"));
-  }
-
-  // assert(scope_cleanup_stack_top_ <= scope_cleanup_stack_size_);
-  void CreateAssertScopeCleanupStackBounds() {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    auto* assertion = builder_->CreateICmpULE(top, builder_->getInt32(scope_cleanup_stack_size_),
-        REG_NAME("assertion.scope_cleanup_stack.size"));
-    CreateAssert(assertion, "scope_cleanup_stack_top_ <= scoke_cleanup_stack_size_");
-  }
-
-  // assert(popped == scope_id);
-  void CreateAssertScopeCleanupStackPoppedValue(llvm::Value* actual, uint16_t expected) {
-    auto* assertion = builder_->CreateICmpEQ(
-        actual, builder_->getInt16(expected), REG_NAME("assertion.scope_cleanup_stack.popped"));
-    std::stringstream ss;
-    ss << "popped == " << expected;
-    CreateAssert(assertion, ss.str().c_str());
-  }
-
-  // assert(scope_cleanup_stack_top_ == 0);
-  void CreateAssertScopeCleanupStackIsEmpty() {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    auto* assertion = builder_->CreateICmpEQ(
-        top, builder_->getInt32(0), REG_NAME("assertion.scope_cleanup_stack.is_empty"));
-    CreateAssert(assertion, "scope_cleanup_stack_top_ == 0");
-  }
-
-  // assert(scope_cleanup_stack_top_ != 0);
-  void CreateAssertScopeCleanupStackHasItem() {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    auto* assertion = builder_->CreateICmpNE(
-        top, builder_->getInt32(0), REG_NAME("assertion.scope_cleanup_stack.has_item"));
-    CreateAssert(assertion, "scope_cleanup_stack_top_ != 0");
-  }
+  // scope cleanup checker
 
   bool IsScopeCleanupCheckerEnabled() const {
-    return scope_cleanup_stack_ != nullptr;
+    return scope_id_ != nullptr;
   }
 
-  llvm::Value* CreateLoadScopeCleanupStackTop() {
-    return builder_->CreateLoad(
-        builder_->getInt32Ty(), scope_cleanup_stack_top_, REG_NAME("scope_cleanup_stack.top"));
-  }
-
-  void CreateStoreScopeCleanupStackTop(llvm::Value* value) {
-    builder_->CreateStore(value, scope_cleanup_stack_top_);
-  }
-
-  void ClearScopeCleanupStack() {
-    scope_cleanup_stack_type_ = nullptr;
-    scope_cleanup_stack_ = nullptr;
-    scope_cleanup_stack_top_ = nullptr;
-    scope_cleanup_stack_size_ = 0;
+  void ResetScopeCleanupChecker() {
+    scope_id_ = nullptr;
   }
 
   // helpers
@@ -1205,10 +1124,7 @@ class Compiler {
   llvm::Value* flow_selector_ = nullptr;
 
   // scope cleanup checker
-  llvm::Type* scope_cleanup_stack_type_ = nullptr;
-  llvm::Value* scope_cleanup_stack_ = nullptr;
-  llvm::Value* scope_cleanup_stack_top_ = nullptr;
-  uint16_t scope_cleanup_stack_size_ = 0;
+  llvm::Value* scope_id_ = nullptr;
 
   // A cache of functions does not reset in the end of compilation for each function.
   std::unordered_map<std::string, llvm::Function*> functions_;

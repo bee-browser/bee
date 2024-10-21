@@ -5,6 +5,7 @@ use jsparser::Symbol;
 
 use super::BasicBlock;
 use super::Dump;
+use super::ScopeRef;
 use super::SwitchIr;
 
 macro_rules! bb2cstr {
@@ -48,6 +49,10 @@ pub struct ControlFlowStack {
 impl ControlFlowStack {
     pub fn is_empty(&self) -> bool {
         self.stack.is_empty() && self.exit_stack.is_empty()
+    }
+
+    pub fn has_scope_flow(&self) -> bool {
+        self.scope_index != 0
     }
 
     pub fn push_function_flow(
@@ -137,6 +142,7 @@ impl ControlFlowStack {
 
     pub fn push_scope_flow(
         &mut self,
+        scope_ref: ScopeRef,
         init_block: BasicBlock,
         hoisted_block: BasicBlock,
         body_block: BasicBlock,
@@ -149,6 +155,7 @@ impl ControlFlowStack {
         let outer_index = self.scope_index;
         self.scope_index = self.stack.len();
         self.stack.push(ControlFlow::Scope(ScopeFlow {
+            scope_ref,
             init_block,
             hoisted_block,
             body_block,
@@ -615,6 +622,9 @@ pub struct CoroutineFlow {
 
 /// Contains data used for building a region representing a lexical scope.
 pub struct ScopeFlow {
+    /// The reference to the scope in the scope tree.
+    pub scope_ref: ScopeRef,
+
     /// The entry block of the scope flow.
     pub init_block: BasicBlock,
 

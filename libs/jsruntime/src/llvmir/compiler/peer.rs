@@ -995,22 +995,21 @@ impl Compiler {
 
     // scope cleanup checker
 
-    pub fn setup_scope_cleanup_checker(&self, stack_size: u16) {
-        debug_assert!(stack_size > 0);
+    pub fn enable_scope_cleanup_checker(&self) {
         unsafe {
-            bridge::compiler_peer_setup_scope_cleanup_checker(self.0, stack_size);
+            bridge::compiler_peer_enable_scope_cleanup_checker(self.0);
         }
     }
 
-    pub fn perform_scope_cleanup_precheck(&self, scope_ref: ScopeRef) {
+    pub fn set_scope_id_for_checker(&self, scope_ref: ScopeRef) {
         unsafe {
-            bridge::compiler_peer_perform_scope_cleanup_precheck(self.0, scope_ref.id());
+            bridge::compiler_peer_set_scope_id_for_checker(self.0, scope_ref.id());
         }
     }
 
-    pub fn perform_scope_cleanup_postcheck(&self, scope_ref: ScopeRef) {
+    pub fn assert_scope_id(&self, expected: ScopeRef) {
         unsafe {
-            bridge::compiler_peer_perform_scope_cleanup_postcheck(self.0, scope_ref.id());
+            bridge::compiler_peer_assert_scope_id(self.0, expected.id());
         }
     }
 

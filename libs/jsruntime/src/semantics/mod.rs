@@ -610,12 +610,6 @@ impl<'r> Analyzer<'r> {
             context.commands[1] = CompileCommand::JumpTable(context.coroutine.state + 2);
         }
 
-        if self.runtime_pref.enable_scope_cleanup_checker {
-            let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
-            debug_assert!(stack_size > 0);
-            context.commands[2] = CompileCommand::SetupScopeCleanupChecker(stack_size);
-        }
-
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
         func.commands = context.commands;
@@ -852,9 +846,7 @@ impl<'r> Analyzer<'r> {
         // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
         context.commands.push(CompileCommand::Nop);
         if self.runtime_pref.enable_scope_cleanup_checker {
-            // Put a placeholder command which will be replaced with `SetupScopeCleanupChecker`.
-            let index = context.put_command(CompileCommand::Nop);
-            debug_assert_eq!(index, 2);
+            context.commands.push(CompileCommand::EnableScopeCleanupChecker);
         }
         context.start_scope(scope_ref);
         self.context_stack.push(context);
@@ -1102,12 +1094,6 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
             context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
         }
 
-        if self.runtime_pref.enable_scope_cleanup_checker {
-            let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
-            debug_assert!(stack_size > 0);
-            context.commands[2] = CompileCommand::SetupScopeCleanupChecker(stack_size);
-        }
-
         self.functions[context.func_index].commands = context.commands;
         self.functions[context.func_index].captures = context.captures.into_values().collect();
 
@@ -1181,7 +1167,8 @@ struct FunctionContext {
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
 
-    /// A reference to a function scope in the scope tree.
+    /// A reference to the function scope in the scope tree.
+    #[allow(unused)]
     scope_ref: ScopeRef,
 
     num_locals: u16,
@@ -1786,7 +1773,8 @@ pub enum CompileCommand {
     Swap,
     Duplicate(u8), // 0 or 1
 
-    SetupScopeCleanupChecker(u16),
+    // scope cleanup checker
+    EnableScopeCleanupChecker,
 
     // A special command used as a placeholder in a command list, which will be replaced actual
     // command later.  The final command list must not contain placeholder commands.
@@ -1974,7 +1962,7 @@ mod tests {
                 [
                     CompileCommand::AllocateLocals(4),
                     CompileCommand::Nop,
-                    CompileCommand::SetupScopeCleanupChecker(1),
+                    CompileCommand::EnableScopeCleanupChecker,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -2002,7 +1990,7 @@ mod tests {
                 [
                     CompileCommand::AllocateLocals(4),
                     CompileCommand::Nop,
-                    CompileCommand::SetupScopeCleanupChecker(2),
+                    CompileCommand::EnableScopeCleanupChecker,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Undefined,
@@ -2034,7 +2022,7 @@ mod tests {
                 [
                     CompileCommand::Nop,
                     CompileCommand::Nop,
-                    CompileCommand::SetupScopeCleanupChecker(1),
+                    CompileCommand::EnableScopeCleanupChecker,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
@@ -2055,7 +2043,7 @@ mod tests {
                 [
                     CompileCommand::AllocateLocals(1),
                     CompileCommand::Nop,
-                    CompileCommand::SetupScopeCleanupChecker(1),
+                    CompileCommand::EnableScopeCleanupChecker,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
                     CompileCommand::Number(1.0),

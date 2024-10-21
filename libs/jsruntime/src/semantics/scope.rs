@@ -221,7 +221,8 @@ impl ScopeTreeBuilder {
         scope.bindings[binding_ref.binding_index()].set_captured();
     }
 
-    pub fn max_stack_size(&self, scope_ref: ScopeRef) -> u16 {
+    #[allow(unused)]
+    pub fn max_scope_depth(&self, scope_ref: ScopeRef) -> u16 {
         let scope = &self.scopes[scope_ref.index()];
         debug_assert!(scope.max_child_block_depth >= scope.depth);
         scope.max_child_block_depth - scope.depth + 1

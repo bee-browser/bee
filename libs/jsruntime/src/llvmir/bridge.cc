@@ -636,16 +636,16 @@ void compiler_peer_create_suspend(Compiler* self) {
 
 // scope cleanup checker
 
-void compiler_peer_setup_scope_cleanup_checker(Compiler* self, uint16_t stack_size) {
-  self->SetupScopeCleanupChecker(stack_size);
+void compiler_peer_enable_scope_cleanup_checker(Compiler* self) {
+  self->EnableScopeCleanupChecker();
 }
 
-void compiler_peer_perform_scope_cleanup_precheck(Compiler* self, uint16_t scope_id) {
-  self->PerformScopeCleanupPrecheck(scope_id);
+void compiler_peer_set_scope_id_for_checker(Compiler* self, uint16_t scope_id) {
+  self->SetScopeIdForChecker(scope_id);
 }
 
-void compiler_peer_perform_scope_cleanup_postcheck(Compiler* self, uint16_t scope_id) {
-  self->PerformScopeCleanupPostcheck(scope_id);
+void compiler_peer_assert_scope_id(Compiler* self, uint16_t expected) {
+  self->AssertScopeId(expected);
 }
 
 // print

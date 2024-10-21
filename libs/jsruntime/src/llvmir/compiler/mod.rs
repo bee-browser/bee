@@ -91,6 +91,8 @@ struct Compiler<'r, 's> {
     captures: IndexMap<Locator, CaptureIr>,
 
     dump_buffer: Option<Vec<std::ffi::c_char>>,
+
+    enable_scope_cleanup_checker: bool,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -156,6 +158,7 @@ impl<'r, 's> Compiler<'r, 's> {
             } else {
                 None
             },
+            enable_scope_cleanup_checker: false,
         }
     }
 
@@ -244,6 +247,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(flow.return_block);
         if let Some(block) = dormant_block {
             self.peer.move_basic_block_after(block);
+        }
+
+        if self.enable_scope_cleanup_checker {
+            self.peer.assert_scope_id(ScopeRef::NONE);
         }
 
         self.peer.end_function(optimize);
@@ -367,8 +374,8 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
-            CompileCommand::SetupScopeCleanupChecker(stack_size) => {
-                self.process_setup_scope_cleanup_checker(*stack_size)
+            CompileCommand::EnableScopeCleanupChecker => {
+                self.process_enable_scope_cleanup_checker()
             }
             CompileCommand::PlaceHolder => unreachable!(),
         }
@@ -734,6 +741,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let cleanup_block = self.create_basic_block("cleanup");
 
         self.control_flow_stack.push_scope_flow(
+            scope_ref,
             init_block,
             hoisted_block,
             body_block,
@@ -787,6 +795,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let parent_exit_block = self.control_flow_stack.exit_block();
 
         let flow = self.control_flow_stack.pop_scope_flow();
+        debug_assert_eq!(flow.scope_ref, scope_ref);
 
         self.peer.create_br(flow.cleanup_block);
         self.peer.move_basic_block_after(flow.cleanup_block);
@@ -796,7 +805,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(precheck_block);
 
         self.peer.set_basic_block(precheck_block);
-        self.peer.perform_scope_cleanup_precheck(scope_ref);
+        if self.enable_scope_cleanup_checker {
+            self.peer.set_scope_id_for_checker(scope_ref);
+        }
         self.peer.create_br(flow.hoisted_block);
         self.peer.move_basic_block_after(flow.hoisted_block);
 
@@ -819,7 +830,15 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(postcheck_block);
 
         self.peer.set_basic_block(postcheck_block);
-        self.peer.perform_scope_cleanup_postcheck(scope_ref);
+        if self.enable_scope_cleanup_checker {
+            self.peer.assert_scope_id(scope_ref);
+            if self.control_flow_stack.has_scope_flow() {
+                let outer_scope_ref = self.control_flow_stack.scope_flow().scope_ref;
+                self.peer.set_scope_id_for_checker(outer_scope_ref);
+            } else {
+                self.peer.set_scope_id_for_checker(ScopeRef::NONE);
+            }
+        }
         self.peer.create_br(ctrl_block);
         self.peer.move_basic_block_after(ctrl_block);
 
@@ -2325,8 +2344,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.duplicate(offset);
     }
 
-    fn process_setup_scope_cleanup_checker(&mut self, stack_size: u16) {
-        self.peer.setup_scope_cleanup_checker(stack_size)
+    fn process_enable_scope_cleanup_checker(&mut self) {
+        self.peer.enable_scope_cleanup_checker();
+        self.enable_scope_cleanup_checker = true;
     }
 
     fn create_basic_block(&mut self, name: &str) -> BasicBlock {
