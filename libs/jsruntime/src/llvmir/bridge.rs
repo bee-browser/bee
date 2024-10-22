@@ -3,6 +3,8 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
+use crate::tasklet::PromiseId;
+
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
 
 macro_rules! into_runtime {
@@ -44,6 +46,13 @@ impl Value {
         }
     }
 
+    pub const fn promise(promise: u32) -> Self {
+        Self {
+            kind: ValueKind_Promise,
+            holder: ValueHolder { promise },
+        }
+    }
+
     pub fn into_result(self, status: Status) -> Result<Value, Value> {
         match status {
             Status_Normal => Ok(self),
@@ -80,6 +89,12 @@ impl From<i32> for Value {
 impl From<u32> for Value {
     fn from(value: u32) -> Self {
         Self::from(value as f64)
+    }
+}
+
+impl From<PromiseId> for Value {
+    fn from(value: PromiseId) -> Self {
+        Self::promise(value.into())
     }
 }
 
@@ -172,43 +187,23 @@ where
     }
 }
 
-impl Closure {
-    fn call(
-        runtime: *mut std::ffi::c_void,
-        closure: *mut Closure,
-        argc: usize,
-        argv: *mut Value,
-        retv: *mut Value,
-    ) -> Status {
-        unsafe {
-            let lambda = (*closure).lambda.unwrap();
-            lambda(
-                runtime,
-                (*closure).captures.as_ptr() as *mut std::ffi::c_void,
-                argc,
-                argv,
-                retv,
-            )
-        }
-    }
-}
-
 impl Coroutine {
     pub fn resume(
-        runtime: *mut std::ffi::c_void,
+        gctx: *mut std::ffi::c_void,
         coroutine: *mut Coroutine,
-        result: Value,
-        error: Value,
+        promise_id: PromiseId,
+        result: &Value,
+        error: &Value,
     ) -> CoroutineStatus {
         unsafe {
-            (*coroutine).locals[1] = result;
-            (*coroutine).locals[2] = error;
+            let lambda = (*(*coroutine).closure).lambda.unwrap();
+            let mut args = [promise_id.into(), *result, *error];
             let mut retv = Value::NONE;
-            let status = Closure::call(
-                runtime,
-                (*coroutine).closure,
-                0,
-                (*coroutine).locals[..].as_mut_ptr(),
+            let status = lambda(
+                gctx,
+                coroutine as *mut std::ffi::c_void,
+                args.len(),
+                args.as_mut_ptr(),
                 &mut retv as *mut Value,
             );
             match status {
@@ -431,8 +426,7 @@ unsafe extern "C" fn runtime_create_closure<X>(
     let closure = ptr.cast::<Closure>().as_ptr();
     (*closure).lambda = lambda;
     (*closure).num_captures = num_captures;
-
-    // `closure.captures[]` will be filled with actual pointers to `Captures`.
+    // `(*closure).captures[]` will be filled with actual pointers to `Captures`.
 
     closure
 }
@@ -449,7 +443,6 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
         )
     };
 
-    debug_assert!(num_locals >= 4);
     let locals_layout = std::alloc::Layout::array::<Value>(num_locals as usize).unwrap();
     let (layout, _) = BASE_LAYOUT.extend(locals_layout).unwrap();
 
@@ -461,23 +454,16 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
 
     let coroutine = ptr.cast::<Coroutine>().as_ptr();
     (*coroutine).closure = closure;
+    (*coroutine).state = 0;
     (*coroutine).num_locals = num_locals;
-    (*coroutine).locals[0] = 0.into(); // ##state = 0
-    (*coroutine).locals[1] = Value::NONE; // ##result = none
-    (*coroutine).locals[2] = Value::NONE; // ##error = none
-    (*coroutine).locals[3] = Value::NONE; // ##promise = none
-
-    // Other local variables will be initialized in the coroutine.
+    // `(*coroutine).locals[]` will be initialized in the coroutine.
 
     coroutine
 }
 
 unsafe extern "C" fn runtime_register_promise<X>(context: usize, coroutine: *mut Coroutine) -> u32 {
     let runtime = into_runtime!(context, X);
-    let promise = runtime.tasklet_system.register_promise(coroutine);
-    (*coroutine).locals[3].kind = ValueKind_Promise;
-    (*coroutine).locals[3].holder.promise = promise.into();
-    promise.into()
+    runtime.tasklet_system.register_promise(coroutine).into()
 }
 
 unsafe extern "C" fn runtime_resume<X>(context: usize, promise: u32) {
@@ -485,8 +471,8 @@ unsafe extern "C" fn runtime_resume<X>(context: usize, promise: u32) {
     runtime.tasklet_system.process_promise(
         context as *mut std::ffi::c_void,
         promise.into(),
-        Value::NONE,
-        Value::NONE,
+        &Value::NONE,
+        &Value::NONE,
     );
 }
 

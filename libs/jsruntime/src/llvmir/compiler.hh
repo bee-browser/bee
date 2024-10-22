@@ -130,11 +130,14 @@ class Compiler {
   void StartFunction(const char* name) {
     function_ = CreateLambda(name);
 
-    exec_context_ = function_->getArg(0);
-    caps_ = function_->getArg(1);
+    gctx_ = function_->getArg(0);
+    lctx_ = function_->getArg(1);
     argc_ = function_->getArg(2);
     argv_ = function_->getArg(3);
     retv_ = function_->getArg(4);
+
+    // captures_ will be overridden if this lambda function is a coroutine.
+    captures_ = lctx_;
 
     ResetScopeCleanupChecker();
   }
@@ -210,19 +213,6 @@ class Compiler {
     builder_->CreateCondBr(cond, then_block, else_block);
   }
 
-  // switch
-
-  llvm::SwitchInst* CreateSwitch(llvm::Value* value, llvm::BasicBlock* block, uint32_t num_cases) {
-    // TODO: use integer for representing the state.
-    auto* number = CreateLoadNumberFromValue(value);
-    auto* state = ToInt32(number);
-    return builder_->CreateSwitch(state, block, num_cases);
-  }
-
-  void CreateAddCase(llvm::SwitchInst* inst, uint32_t value, llvm::BasicBlock* block) {
-    inst->addCase(builder_->getInt32(value), block);
-  }
-
   // undefined
 
   llvm::Value* CreateIsUndefined(llvm::Value* value_ptr) {
@@ -265,7 +255,7 @@ class Compiler {
   // 7.1.2 ToBoolean ( argument )
   llvm::Value* CreateToBoolean(llvm::Value* value_ptr) {
     auto* func = types_->CreateRuntimeToBoolean();
-    return builder_->CreateCall(func, {exec_context_, value_ptr}, REG_NAME("boolean"));
+    return builder_->CreateCall(func, {gctx_, value_ptr}, REG_NAME("boolean"));
   }
 
   llvm::Value* GetBoolean(bool value) {
@@ -305,7 +295,7 @@ class Compiler {
   // 7.1.4 ToNumber ( argument )
   llvm::Value* ToNumeric(llvm::Value* value_ptr) {
     auto* call = types_->CreateRuntimeToNumeric();
-    return builder_->CreateCall(call, {exec_context_, value_ptr}, REG_NAME("numeric"));
+    return builder_->CreateCall(call, {gctx_, value_ptr}, REG_NAME("numeric"));
   }
 
   llvm::Value* GetNan() {
@@ -440,7 +430,7 @@ class Compiler {
   llvm::Value* CreateClosure(llvm::Value* lambda, uint16_t num_captures) {
     auto* func = types_->CreateRuntimeCreateClosure();
     return builder_->CreateCall(
-        func, {exec_context_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
+        func, {gctx_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
   }
 
   void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr,
@@ -456,9 +446,9 @@ class Compiler {
       llvm::Value* retv) {
     auto* prototype = types_->CreateLambdaType();
     auto* lambda = CreateLoadLambdaFromClosure(closure);
-    auto* caps = CreateGetCapturesPtrOfClosure(closure);
-    return builder_->CreateCall(prototype, lambda,
-        {exec_context_, caps, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
+    auto* lctx = CreateGetCapturesPtrOfClosure(closure);
+    return builder_->CreateCall(
+        prototype, lambda, {gctx_, lctx, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
   }
 
   llvm::Value* CreateClosurePhi(llvm::Value* then_value,
@@ -485,22 +475,22 @@ class Compiler {
 
   llvm::Value* CreateRegisterPromise(llvm::Value* coroutine) {
     auto* func = types_->CreateRuntimeRegisterPromise();
-    return builder_->CreateCall(func, {exec_context_, coroutine}, REG_NAME("promise"));
+    return builder_->CreateCall(func, {gctx_, coroutine}, REG_NAME("promise"));
   }
 
   void CreateAwaitPromise(llvm::Value* promise, llvm::Value* awaiting) {
     auto* func = types_->CreateRuntimeAwaitPromise();
-    builder_->CreateCall(func, {exec_context_, promise, awaiting});
+    builder_->CreateCall(func, {gctx_, promise, awaiting});
   }
 
   void CreateResume(llvm::Value* promise) {
     auto* func = types_->CreateRuntimeResume();
-    builder_->CreateCall(func, {exec_context_, promise});
+    builder_->CreateCall(func, {gctx_, promise});
   }
 
   void CreateEmitPromiseResolved(llvm::Value* promise, llvm::Value* result) {
     auto* func = types_->CreateRuntimeEmitPromiseResolved();
-    builder_->CreateCall(func, {exec_context_, promise, result});
+    builder_->CreateCall(func, {gctx_, promise, result});
   }
 
   // value
@@ -515,14 +505,14 @@ class Compiler {
   llvm::Value* CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y) {
     // TODO: Create instructions if runtime_is_loosely_equal() is slow.
     auto* func = types_->CreateRuntimeIsLooselyEqual();
-    return builder_->CreateCall(func, {exec_context_, x, y}, REG_NAME("is_loosely_equal.retval"));
+    return builder_->CreateCall(func, {gctx_, x, y}, REG_NAME("is_loosely_equal.retval"));
   }
 
   // 7.2.14 IsStrictlyEqual ( x, y )
   llvm::Value* CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
     // TODO: Create instructions if runtime_is_strictly_equal() is slow.
     auto* func = types_->CreateRuntimeIsStrictlyEqual();
-    return builder_->CreateCall(func, {exec_context_, x, y}, REG_NAME("is_strictly_equal.retval"));
+    return builder_->CreateCall(func, {gctx_, x, y}, REG_NAME("is_strictly_equal.retval"));
   }
 
   llvm::Value* CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* boolean) {
@@ -784,7 +774,7 @@ class Compiler {
 
   llvm::Value* CreateCapture(llvm::Value* value_ptr) {
     auto* func = types_->CreateRuntimeCreateCapture();
-    return builder_->CreateCall(func, {exec_context_, value_ptr}, REG_NAME("capture.ptr"));
+    return builder_->CreateCall(func, {gctx_, value_ptr}, REG_NAME("capture.ptr"));
   }
 
   void CreateEscapeValue(llvm::Value* capture, llvm::Value* value) {
@@ -795,12 +785,12 @@ class Compiler {
   }
 
   llvm::Value* CreateGetCaptureValuePtr(uint16_t index) {
-    auto* ptr = CreateLoadCapturePtrFromCaptures(caps_, index);
+    auto* ptr = CreateLoadCapturePtrFromCaptures(captures_, index);
     return CreateLoadTargetFromCapture(ptr);
   }
 
   llvm::Value* CreateLoadCapture(uintptr_t index) {
-    return CreateLoadCapturePtrFromCaptures(caps_, index);
+    return CreateLoadCapturePtrFromCaptures(captures_, index);
   }
 
   // coroutine
@@ -808,11 +798,72 @@ class Compiler {
   llvm::Value* CreateCoroutine(llvm::Value* closure, uint16_t num_locals) {
     auto* func = types_->CreateRuntimeCreateCoroutine();
     return builder_->CreateCall(
-        func, {exec_context_, closure, builder_->getInt16(num_locals)}, REG_NAME("coroutine"));
+        func, {gctx_, closure, builder_->getInt16(num_locals)}, REG_NAME("coroutine"));
+  }
+
+  llvm::SwitchInst* CreateSwitchForCoroutine(llvm::BasicBlock* block, uint32_t num_states) {
+    auto* state = CreateLoadStateFromCoroutine();
+    return builder_->CreateSwitch(state, block, num_states);
+  }
+
+  void CreateAddStateForCoroutine(llvm::SwitchInst* inst,
+      uint32_t state,
+      llvm::BasicBlock* block) {
+    inst->addCase(builder_->getInt32(state), block);
   }
 
   void CreateSuspend() {
     builder_->CreateRet(builder_->getInt32(STATUS_SUSPEND));
+  }
+
+  void CreateSetCoroutineState(uint32_t state) {
+    auto* ptr = CreateGetStatePtrOfCoroutine();
+    builder_->CreateStore(builder_->getInt32(state), ptr);
+  }
+
+  void CreateSetCapturesForCoroutine() {
+    captures_ = CreateGetCapturesPtrOfCoroutine();
+  }
+
+  llvm::Value* CreateGetLocalPtrFromCoroutine(uint16_t index) {
+    auto* ptr = CreateGetLocalsPtrOfCoroutine();
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), ptr, index,
+        REG_NAME("co.locals." + llvm::Twine(index) + ".ptr"));
+  }
+
+  llvm::Value* CreateGetClosurePtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 0, REG_NAME("co.closure.ptr"));
+  }
+
+  llvm::Value* CreateGetStatePtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 1, REG_NAME("co.state.ptr"));
+  }
+
+  llvm::Value* CreateGetNumLocalsPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 2, REG_NAME("co.num_locals.ptr"));
+  }
+
+  llvm::Value* CreateGetLocalsPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 3, REG_NAME("co.locals.ptr"));
+  }
+
+  llvm::Value* CreateLoadClosureFromCoroutine() {
+    auto* ptr = CreateGetClosurePtrOfCoroutine();
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("co.closure"));
+  }
+
+  llvm::Value* CreateLoadStateFromCoroutine() {
+    auto* ptr = CreateGetStatePtrOfCoroutine();
+    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("co.state"));
+  }
+
+  llvm::Value* CreateGetCapturesPtrOfCoroutine() {
+    auto* closure = CreateLoadClosureFromCoroutine();
+    return CreateGetCapturesPtrOfClosure(closure);
   }
 
   // scope cleanup checker
@@ -843,7 +894,7 @@ class Compiler {
   void CreatePrintValue(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_value.msg"));
     auto* func = types_->CreateRuntimePrintValue();
-    builder_->CreateCall(func, {exec_context_, value, msg_value});
+    builder_->CreateCall(func, {gctx_, value, msg_value});
   }
 
   // unreachable
@@ -895,7 +946,7 @@ class Compiler {
     // We assumed that `number` holds a number value.
     // TODO: Create instructions if runtime_to_int32() is slow.
     auto* func = types_->CreateRuntimeToInt32();
-    return builder_->CreateCall(func, {exec_context_, number}, REG_NAME("int32"));
+    return builder_->CreateCall(func, {gctx_, number}, REG_NAME("int32"));
   }
 
   // 7.1.7 ToUint32 ( argument )
@@ -904,7 +955,7 @@ class Compiler {
     // We assumed that `number` holds a number value.
     // TODO: Create instructions if runtime_to_uint32() is slow.
     auto* func = types_->CreateRuntimeToUint32();
-    return builder_->CreateCall(func, {exec_context_, number}, REG_NAME("uint32"));
+    return builder_->CreateCall(func, {gctx_, number}, REG_NAME("uint32"));
   }
 
   llvm::AllocaInst* CreateAlloc1(llvm::Type* ty, const llvm::Twine& name) {
@@ -932,8 +983,8 @@ class Compiler {
     auto* prototype = types_->CreateLambdaType();
     auto* lambda =
         llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
-    lambda->getArg(0)->setName(REG_NAME("ctx"));
-    lambda->getArg(1)->setName(REG_NAME("caps"));
+    lambda->getArg(0)->setName(REG_NAME("gctx"));
+    lambda->getArg(1)->setName(REG_NAME("lctx"));
     lambda->getArg(2)->setName(REG_NAME("argc"));
     lambda->getArg(3)->setName(REG_NAME("argv"));
     lambda->getArg(4)->setName(REG_NAME("retv"));
@@ -1059,13 +1110,14 @@ class Compiler {
   // captures
 
   llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(
-        builder_->getPtrTy(), captures, index, REG_NAME("caps." + llvm::Twine(index) + ".ptr"));
+    return builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, index,
+        REG_NAME("captures." + llvm::Twine(index) + ".ptr"));
   }
 
   llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("caps." + llvm::Twine(index)));
+    return builder_->CreateLoad(
+        builder_->getPtrTy(), ptr, REG_NAME("captures." + llvm::Twine(index)));
   }
 
   void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
@@ -1090,13 +1142,13 @@ class Compiler {
   void CreateAssert(llvm::Value* assertion, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.assert.msg"));
     auto* func = types_->CreateRuntimeAssert();
-    builder_->CreateCall(func, {exec_context_, assertion, msg_value});
+    builder_->CreateCall(func, {gctx_, assertion, msg_value});
   }
 
   void CreatePrintU32(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_u32.msg"));
     auto* func = types_->CreateRuntimePrintU32();
-    builder_->CreateCall(func, {exec_context_, value, msg_value});
+    builder_->CreateCall(func, {gctx_, value, msg_value});
   }
 
   // TODO: separate values that must be reset in EndFunction() from others.
@@ -1109,11 +1161,12 @@ class Compiler {
   // The following values are reset for each function.
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* locals_block_ = nullptr;
-  llvm::Value* exec_context_ = nullptr;
-  llvm::Value* caps_ = nullptr;
+  llvm::Value* gctx_ = nullptr;
+  llvm::Value* lctx_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
   llvm::Value* retv_ = nullptr;
+  llvm::Value* captures_ = nullptr;
   // Holds one of STATUS_XXX values, not Status::*.
   llvm::Value* status_ = nullptr;
   llvm::Value* flow_selector_ = nullptr;

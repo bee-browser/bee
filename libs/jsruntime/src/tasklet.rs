@@ -46,11 +46,17 @@ impl System {
     fn handle_message(&mut self, runtime: *mut std::ffi::c_void, msg: Message) {
         crate::logger::debug!(event = "handle_message", ?msg);
         match msg {
-            Message::PromiseResolved { promise_id, result } => {
-                self.process_promise(runtime, promise_id, result, Value::NONE);
+            Message::PromiseResolved {
+                promise_id,
+                ref result,
+            } => {
+                self.process_promise(runtime, promise_id, result, &Value::NONE);
             }
-            Message::PromiseRejected { promise_id, error } => {
-                self.process_promise(runtime, promise_id, Value::NONE, error);
+            Message::PromiseRejected {
+                promise_id,
+                ref error,
+            } => {
+                self.process_promise(runtime, promise_id, &Value::NONE, error);
             }
         }
     }
@@ -88,15 +94,15 @@ impl System {
 
     pub fn process_promise(
         &mut self,
-        runtime: *mut std::ffi::c_void,
+        gctx: *mut std::ffi::c_void,
         promise_id: PromiseId,
-        result: Value,
-        error: Value,
+        result: &Value,
+        error: &Value,
     ) {
         crate::logger::debug!(event = "process_promise", ?promise_id, ?result, ?error);
         debug_assert!(self.promises.contains_key(&promise_id));
         let promise = self.promises.get(&promise_id).unwrap();
-        match Coroutine::resume(runtime, promise.coroutine, result, error) {
+        match Coroutine::resume(gctx, promise.coroutine, promise_id, result, error) {
             CoroutineStatus::Done(result) => {
                 if let Some(promise_id) = promise.awaiting {
                     self.emit_promise_resolved(promise_id, result);

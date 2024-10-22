@@ -471,7 +471,6 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_coroutine(&mut self, num_locals: u16) {
-        debug_assert!(num_locals >= 4);
         let closure = self.pop_closure();
         let coroutine = self.peer.create_coroutine(closure, num_locals);
         self.operand_stack.push(Operand::Coroutine(coroutine));
@@ -495,7 +494,6 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_allocate_locals(&mut self, num_locals: u16) {
-        debug_assert!(num_locals > 0);
         for i in 0..num_locals {
             let local = self.peer.create_local_value(i);
             self.locals.push(local);
@@ -753,10 +751,9 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.create_br(init_block);
         self.peer.move_basic_block_after(init_block);
-        self.peer.set_basic_block(body_block);
 
-        let backup = self.peer.get_basic_block();
         self.peer.set_basic_block(init_block);
+
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
             if binding.is_hidden() {
@@ -778,7 +775,8 @@ impl<'r, 's> Compiler<'r, 's> {
                 self.peer.create_store_none_to_value(value);
             }
         }
-        self.peer.set_basic_block(backup);
+
+        self.peer.set_basic_block(body_block);
     }
 
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
@@ -2200,18 +2198,20 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_environment(&mut self, num_locals: u16) {
-        debug_assert!(num_locals >= 4);
         let flow = self.control_flow_stack.function_flow();
         let backup = self.peer.get_basic_block();
+
         // The ##coroutine function takes no argument and the `argv` formal parameter of the
         // generated lambda is used for specifying the heap-allocated environment which hold the
         // local variables for the generated lambda.  In the `bb.args` block, we load the pointer
         // to each local variable instead.
-        self.peer.set_basic_block(flow.args_block);
+        self.peer.set_basic_block(flow.init_block);
+        self.peer.create_set_captures_for_coroutine();
         for i in 0..num_locals {
-            let local = self.peer.create_get_argument_value_ptr(i);
+            let local = self.peer.create_get_local_ptr_from_coroutine(i);
             self.locals.push(local);
         }
+
         self.peer.set_basic_block(backup);
     }
 
@@ -2221,8 +2221,9 @@ impl<'r, 's> Compiler<'r, 's> {
         let dormant_block = self.create_basic_block("co.dormant");
         let inst = self
             .peer
-            .create_switch(self.locals[0], dormant_block, num_states);
-        self.peer.create_add_case(inst, 0, initial_block);
+            .create_switch_for_coroutine(dormant_block, num_states);
+        self.peer
+            .create_add_state_for_coroutine(inst, 0, initial_block);
 
         self.peer.set_basic_block(dormant_block);
         self.peer
@@ -2234,8 +2235,11 @@ impl<'r, 's> Compiler<'r, 's> {
             .push_coroutine_flow(inst, dormant_block, num_states);
     }
 
-    fn process_await(&mut self, _next_state: u32) {
-        let promise = self.peer.create_load_promise_from_value(self.locals[3]);
+    fn process_await(&mut self, next_state: u32) {
+        self.peer.create_set_coroutine_state(next_state);
+
+        let promise = self.peer.create_get_argument_value_ptr(0); // ##promise
+        let promise = self.peer.create_load_promise_from_value(promise);
 
         let (operand, _) = self.dereference();
         match operand {
@@ -2290,26 +2294,28 @@ impl<'r, 's> Compiler<'r, 's> {
         let block = self.create_basic_block("resume");
         let inst = self.control_flow_stack.coroutine_switch_inst();
         let state = self.control_flow_stack.coroutine_next_state();
-        self.peer.create_add_case(inst, state, block);
+        self.peer.create_add_state_for_coroutine(inst, state, block);
         self.peer.set_basic_block(block);
 
         let has_error_block = self.create_basic_block("has_error");
         let result_block = self.create_basic_block("result");
 
         // if ##error.has_value()
-        let has_error = self.peer.create_has_value(self.locals[2]);
+        let error = self.peer.create_get_argument_value_ptr(2); // ##error
+        let has_error = self.peer.create_has_value(error);
         self.peer
             .create_cond_br(has_error, has_error_block, result_block);
         {
             // throw ##error;
             self.peer.set_basic_block(has_error_block);
-            self.operand_stack.push(Operand::Any(self.locals[2]));
+            self.operand_stack.push(Operand::Any(error));
             self.process_throw();
             self.peer.create_br(result_block);
         }
 
         self.peer.set_basic_block(result_block);
-        self.operand_stack.push(Operand::Any(self.locals[1]));
+        let result = self.peer.create_get_argument_value_ptr(1); // ##result
+        self.operand_stack.push(Operand::Any(result));
     }
 
     fn process_resume(&mut self) {

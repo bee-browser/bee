@@ -108,9 +108,9 @@ impl<X> Runtime<X> {
         let status = match self.executor.get_native_function(&main.name) {
             Some(main) => unsafe {
                 main(
-                    // ctx
+                    // gctx
                     self as *mut Self as *mut std::ffi::c_void,
-                    // caps
+                    // lctx
                     std::ptr::null_mut(),
                     // argc
                     0,

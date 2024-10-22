@@ -68,6 +68,8 @@ llvm::StructType* TypeHolder::CreateCoroutineType() {
     coroutine_type_->setBody({
         // closure
         builder_.getPtrTy(),
+        // state
+        builder_.getInt32Ty(),
         // num_locals
         builder_.getInt16Ty(),
         // locals[]
@@ -83,9 +85,9 @@ llvm::FunctionType* TypeHolder::CreateLambdaType() {
         // status code
         builder_.getInt32Ty(),
         {
-            // ctx (pointer to the exec context)
+            // gctx (pointer to the global context)
             builder_.getPtrTy(),
-            // caps (pointer to a list of captures)
+            // lctx (pointer to the local context)
             builder_.getPtrTy(),
             // argc
             GetWordType(),
