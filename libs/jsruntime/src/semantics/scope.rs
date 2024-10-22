@@ -194,6 +194,7 @@ impl ScopeTreeBuilder {
         scope.num_locals += 1;
     }
 
+    #[allow(unused)]
     pub fn add_hidden(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
         debug_assert!(!scope.is_sorted());

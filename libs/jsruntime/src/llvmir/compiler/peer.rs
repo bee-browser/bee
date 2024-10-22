@@ -215,20 +215,6 @@ impl Compiler {
         }
     }
 
-    // switch
-
-    pub fn create_switch(&self, value: ValueIr, block: BasicBlock, num_cases: u32) -> SwitchIr {
-        switch_ir! {
-            bridge::compiler_peer_create_switch(self.0, value.0, block.0, num_cases)
-        }
-    }
-
-    pub fn create_add_case(&self, inst: SwitchIr, value: u32, block: BasicBlock) {
-        unsafe {
-            bridge::compiler_peer_create_add_case(self.0, inst.0, value, block.0);
-        }
-    }
-
     // undefined
 
     pub fn create_is_undefined(&self, value: ValueIr) -> BooleanIr {
@@ -981,15 +967,44 @@ impl Compiler {
     // coroutine
 
     pub fn create_coroutine(&self, closure: ClosureIr, num_locals: u16) -> CoroutineIr {
-        debug_assert!(num_locals >= 4);
         coroutine_ir! {
             bridge::compiler_peer_create_coroutine(self.0, closure.0, num_locals)
+        }
+    }
+
+    pub fn create_switch_for_coroutine(&self, block: BasicBlock, num_states: u32) -> SwitchIr {
+        switch_ir! {
+            bridge::compiler_peer_create_switch_for_coroutine(self.0, block.0, num_states)
+        }
+    }
+
+    pub fn create_add_state_for_coroutine(&self, inst: SwitchIr, state: u32, block: BasicBlock) {
+        unsafe {
+            bridge::compiler_peer_create_add_state_for_coroutine(self.0, inst.0, state, block.0);
         }
     }
 
     pub fn create_suspend(&self) {
         unsafe {
             bridge::compiler_peer_create_suspend(self.0);
+        }
+    }
+
+    pub fn create_set_coroutine_state(&self, state: u32) {
+        unsafe {
+            bridge::compiler_peer_create_set_coroutine_state(self.0, state);
+        }
+    }
+
+    pub fn create_set_captures_for_coroutine(&self) {
+        unsafe {
+            bridge::compiler_peer_create_set_captures_for_coroutine(self.0);
+        }
+    }
+
+    pub fn create_get_local_ptr_from_coroutine(&self, index: u16) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_get_local_ptr_from_coroutine(self.0, index)
         }
     }
 

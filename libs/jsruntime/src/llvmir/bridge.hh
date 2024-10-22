@@ -53,7 +53,12 @@ struct Value {
 
 static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 
-typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
+// The actual type of `lctx` varies depending on usage of the lambda function:
+//
+//   Regular functions: Capture**
+//   Coroutine functions: Coroutine*
+//
+typedef Status (*Lambda)(void* gctx, void* lctx, size_t argc, Value* argv, Value* ret);
 
 // TODO(issue#237): GcCell
 struct Capture {
@@ -77,14 +82,10 @@ struct Closure {
   // can remove this field.
   uint16_t num_captures;
 
-  // uint8_t padding[6];
-
   // A variable-length list of captures used in the lambda function.
   // TODO(issue#237): GcCellRef
   Capture* captures[32];
 };
-
-static_assert(offsetof(Closure, captures) == sizeof(uint64_t) * 2, "size mismatched");
 
 // TODO(issue#237): GcCell
 struct Coroutine {
@@ -92,16 +93,15 @@ struct Coroutine {
   // TODO(issue#237): GcCellRef
   Closure* closure;
 
+  // The state of the coroutine.
+  uint32_t state;
+
   // The number of local variables.
   uint16_t num_locals;
-
-  // uint8_t padding[6];
 
   // A variable-length list of local variables used in the coroutine.
   Value locals[32];
 };
-
-static_assert(offsetof(Coroutine, locals) == sizeof(uint64_t) * 2, "size mismatched");
 
 #include "runtime.hh"
 
@@ -157,16 +157,6 @@ void compiler_peer_create_cond_br(Compiler* self,
     BooleanIr* cond,
     BasicBlock* then_block,
     BasicBlock* else_block);
-
-// switch
-SwitchIr* compiler_peer_create_switch(Compiler* self,
-    ValueIr* value,
-    BasicBlock* block,
-    uint32_t num_cases);
-void compiler_peer_create_add_case(Compiler* self,
-    SwitchIr* switch_ir,
-    uint32_t value,
-    BasicBlock* block);
 
 // undefined
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
@@ -341,7 +331,17 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
     ClosureIr* closure,
     uint16_t num_locals);
+SwitchIr* compiler_peer_create_switch_for_coroutine(Compiler* self,
+    BasicBlock* block,
+    uint32_t num_states);
+void compiler_peer_create_add_state_for_coroutine(Compiler* self,
+    SwitchIr* switch_ir,
+    uint32_t state,
+    BasicBlock* block);
 void compiler_peer_create_suspend(Compiler* self);
+void compiler_peer_create_set_coroutine_state(Compiler* self, uint32_t state);
+void compiler_peer_create_set_captures_for_coroutine(Compiler* self);
+ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint16_t index);
 
 // scope cleanup checker
 void compiler_peer_enable_scope_cleanup_checker(Compiler* self);

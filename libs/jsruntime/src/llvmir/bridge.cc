@@ -128,22 +128,6 @@ void compiler_peer_create_cond_br(Compiler* self,
   self->CreateCondBr(LLVM_VALUE(cond), LLVM_BB(then_block), LLVM_BB(else_block));
 }
 
-// switch
-
-SwitchIr* compiler_peer_create_switch(Compiler* self,
-    ValueIr* value,
-    BasicBlock* block,
-    uint32_t num_cases) {
-  return PEER_SWITCH(self->CreateSwitch(LLVM_VALUE(value), LLVM_BB(block), num_cases));
-}
-
-void compiler_peer_create_add_case(Compiler* self,
-    SwitchIr* inst,
-    uint32_t value,
-    BasicBlock* block) {
-  self->CreateAddCase(LLVM_SWITCH(inst), value, LLVM_BB(block));
-}
-
 // undefined
 
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value) {
@@ -630,8 +614,33 @@ CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
   return PEER_COROUTINE(self->CreateCoroutine(LLVM_VALUE(closure), num_locals));
 }
 
+SwitchIr* compiler_peer_create_switch_for_coroutine(Compiler* self,
+    BasicBlock* block,
+    uint32_t num_states) {
+  return PEER_SWITCH(self->CreateSwitchForCoroutine(LLVM_BB(block), num_states));
+}
+
+void compiler_peer_create_add_state_for_coroutine(Compiler* self,
+    SwitchIr* inst,
+    uint32_t state,
+    BasicBlock* block) {
+  self->CreateAddStateForCoroutine(LLVM_SWITCH(inst), state, LLVM_BB(block));
+}
+
 void compiler_peer_create_suspend(Compiler* self) {
   self->CreateSuspend();
+}
+
+void compiler_peer_create_set_coroutine_state(Compiler* self, uint32_t state) {
+  self->CreateSetCoroutineState(state);
+}
+
+void compiler_peer_create_set_captures_for_coroutine(Compiler* self) {
+  self->CreateSetCapturesForCoroutine();
+}
+
+ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint16_t index) {
+  return PEER_VALUE(self->CreateGetLocalPtrFromCoroutine(index));
 }
 
 // scope cleanup checker
