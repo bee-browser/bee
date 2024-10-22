@@ -6,7 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.90"
+anyhow = "1.0.91"
 async-stream = "0.3.6"
 axum = "0.7.7"
 bytes = "1.8.0"
