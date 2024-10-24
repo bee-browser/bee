@@ -40,7 +40,7 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
         expected_values,
         actual_values: vec![],
     });
-    // TODO: disabled: runtime.enable_scope_cleanup_checker();
+    runtime.enable_scope_cleanup_checker();
     if enable_labels {
         runtime.enable_llvmir_labels();
     }

@@ -99,6 +99,9 @@ struct Coroutine {
   // The number of local variables.
   uint16_t num_locals;
 
+  // The current scope id used by the scope cleanup checker.
+  uint16_t scope_id;
+
   // A variable-length list of local variables used in the coroutine.
   Value locals[32];
 };
@@ -344,7 +347,7 @@ void compiler_peer_create_set_captures_for_coroutine(Compiler* self);
 ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint16_t index);
 
 // scope cleanup checker
-void compiler_peer_enable_scope_cleanup_checker(Compiler* self);
+void compiler_peer_enable_scope_cleanup_checker(Compiler* self, bool is_coroutine);
 void compiler_peer_set_scope_id_for_checker(Compiler* self, uint16_t scope_id);
 void compiler_peer_assert_scope_id(Compiler* self, uint16_t expected);
 

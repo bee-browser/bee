@@ -120,6 +120,7 @@ pub struct Capture {
 ///
 /// A semantic analyzer analyzes semantics of a JavaScript program.
 struct Analyzer<'r> {
+    #[allow(unused)]
     runtime_pref: &'r RuntimePref,
 
     /// A mutable reference to a symbol registry.
@@ -829,11 +830,6 @@ impl<'r> Analyzer<'r> {
         context.commands.push(CompileCommand::Nop);
         // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
         context.commands.push(CompileCommand::Nop);
-        if self.runtime_pref.enable_scope_cleanup_checker {
-            context
-                .commands
-                .push(CompileCommand::EnableScopeCleanupChecker);
-        }
         context.start_scope(scope_ref);
         self.context_stack.push(context);
         // Push a placeholder data which will be filled later.
@@ -1752,9 +1748,6 @@ pub enum CompileCommand {
     Swap,
     Duplicate(u8), // 0 or 1
 
-    // scope cleanup checker
-    EnableScopeCleanupChecker,
-
     // A special command used as a placeholder in a command list, which will be replaced actual
     // command later.  The final command list must not contain placeholder commands.
     PlaceHolder,
@@ -1955,7 +1948,6 @@ mod tests {
                     [
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::Nop,
-                        CompileCommand::EnableScopeCleanupChecker,
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 0)),
                         CompileCommand::Undefined,
@@ -1986,7 +1978,6 @@ mod tests {
                     [
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::Nop,
-                        CompileCommand::EnableScopeCleanupChecker,
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 0)),
                         CompileCommand::Undefined,
@@ -2019,7 +2010,6 @@ mod tests {
                 [
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
-                    CompileCommand::EnableScopeCleanupChecker,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
@@ -2040,7 +2030,6 @@ mod tests {
                 [
                     CompileCommand::AllocateLocals(1),
                     CompileCommand::Nop,
-                    CompileCommand::EnableScopeCleanupChecker,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 0)),
                     CompileCommand::Number(1.0),
@@ -2066,7 +2055,6 @@ mod tests {
                 [
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
-                    CompileCommand::EnableScopeCleanupChecker,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Function(program.functions[1].id),
                     CompileCommand::Closure(false, 0),
@@ -2083,7 +2071,6 @@ mod tests {
                 [
                     CompileCommand::Environment(0),
                     CompileCommand::JumpTable(3),
-                    CompileCommand::EnableScopeCleanupChecker,
                     CompileCommand::PushScope(scope_ref!(2)),
                     CompileCommand::Number(0.0),
                     CompileCommand::Await(1),

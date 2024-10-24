@@ -846,9 +846,14 @@ class Compiler {
         types_->CreateCoroutineType(), lctx_, 2, REG_NAME("co.num_locals.ptr"));
   }
 
+  llvm::Value* CreateGetScopeIdPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 3, REG_NAME("co.scope_id.ptr"));
+  }
+
   llvm::Value* CreateGetLocalsPtrOfCoroutine() {
     return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 3, REG_NAME("co.locals.ptr"));
+        types_->CreateCoroutineType(), lctx_, 4, REG_NAME("co.locals.ptr"));
   }
 
   llvm::Value* CreateLoadClosureFromCoroutine() {
@@ -868,9 +873,13 @@ class Compiler {
 
   // scope cleanup checker
 
-  void EnableScopeCleanupChecker() {
-    scope_id_ = CreateAlloc1(builder_->getInt16Ty(), REG_NAME("scope_id.ptr"));
-    builder_->CreateStore(builder_->getInt16(0), scope_id_);
+  void EnableScopeCleanupChecker(bool is_coroutine) {
+    if (is_coroutine) {
+      scope_id_ = CreateGetScopeIdPtrOfCoroutine();
+    } else {
+      scope_id_ = CreateAlloc1(builder_->getInt16Ty(), REG_NAME("scope_id.ptr"));
+      builder_->CreateStore(builder_->getInt16(0), scope_id_);
+    }
   }
 
   void SetScopeIdForChecker(uint16_t scope_id) {

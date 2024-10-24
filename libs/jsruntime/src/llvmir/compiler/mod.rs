@@ -44,6 +44,9 @@ impl<X> Runtime<X> {
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
         let mut compiler = Compiler::new(&self.function_registry, &program.scope_tree);
+        if self.pref.enable_scope_cleanup_checker {
+            compiler.enable_scope_cleanup_checker();
+        }
         compiler.start_compile(self.pref.enable_llvmir_labels);
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
@@ -162,6 +165,10 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
+    fn enable_scope_cleanup_checker(&mut self) {
+        self.enable_scope_cleanup_checker = true;
+    }
+
     fn start_compile(&mut self, enable_labels: bool) {
         logger::debug!(event = "start_compile", enable_labels);
         if enable_labels {
@@ -215,6 +222,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_store_undefined_to_retv();
         self.peer.create_alloc_status();
         self.peer.create_alloc_flow_selector();
+        if self.enable_scope_cleanup_checker {
+            self.peer.enable_scope_cleanup_checker(func_id.is_coroutine());
+        }
 
         self.peer.set_basic_block(body_block);
     }
@@ -374,9 +384,6 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
-            CompileCommand::EnableScopeCleanupChecker => {
-                self.process_enable_scope_cleanup_checker()
-            }
             CompileCommand::PlaceHolder => unreachable!(),
         }
 
@@ -2348,11 +2355,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_duplicate(&mut self, offset: u8) {
         self.duplicate(offset);
-    }
-
-    fn process_enable_scope_cleanup_checker(&mut self) {
-        self.peer.enable_scope_cleanup_checker();
-        self.enable_scope_cleanup_checker = true;
     }
 
     fn create_basic_block(&mut self, name: &str) -> BasicBlock {

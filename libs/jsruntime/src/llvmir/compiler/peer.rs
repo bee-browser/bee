@@ -1010,9 +1010,9 @@ impl Compiler {
 
     // scope cleanup checker
 
-    pub fn enable_scope_cleanup_checker(&self) {
+    pub fn enable_scope_cleanup_checker(&self, is_coroutine: bool) {
         unsafe {
-            bridge::compiler_peer_enable_scope_cleanup_checker(self.0);
+            bridge::compiler_peer_enable_scope_cleanup_checker(self.0, is_coroutine);
         }
     }
 
