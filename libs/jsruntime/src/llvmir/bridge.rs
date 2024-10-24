@@ -456,6 +456,7 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     (*coroutine).closure = closure;
     (*coroutine).state = 0;
     (*coroutine).num_locals = num_locals;
+    (*coroutine).scope_id = 0;
     // `(*coroutine).locals[]` will be initialized in the coroutine.
 
     coroutine

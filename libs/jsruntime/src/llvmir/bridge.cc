@@ -645,8 +645,8 @@ ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint1
 
 // scope cleanup checker
 
-void compiler_peer_enable_scope_cleanup_checker(Compiler* self) {
-  self->EnableScopeCleanupChecker();
+void compiler_peer_enable_scope_cleanup_checker(Compiler* self, bool is_coroutine) {
+  self->EnableScopeCleanupChecker(is_coroutine);
 }
 
 void compiler_peer_set_scope_id_for_checker(Compiler* self, uint16_t scope_id) {
