@@ -1,6 +1,6 @@
 use std::ffi::CStr;
-use std::ffi::CString;
 
+use crate::FunctionId;
 use crate::HostLambda;
 
 use super::bridge;
@@ -20,10 +20,9 @@ impl Executor {
         Self { peer }
     }
 
-    pub fn register_host_function(&self, name: &str, func: HostLambda) {
-        let name = CString::new(name).unwrap();
+    pub fn register_host_function(&self, func_id: FunctionId, func: HostLambda) {
         unsafe {
-            bridge::executor_peer_register_host_function(self.peer, name.as_ptr(), Some(func));
+            bridge::executor_peer_register_host_function(self.peer, func_id.into(), Some(func));
         }
     }
 
@@ -41,8 +40,8 @@ impl Executor {
         unsafe { CStr::from_ptr(bridge::executor_peer_get_target_triple(self.peer)) }
     }
 
-    pub fn get_native_function(&self, name: &CStr) -> bridge::Lambda {
-        unsafe { bridge::executor_peer_get_native_function(self.peer, name.as_ptr()) }
+    pub fn get_native_function(&self, func_id: FunctionId) -> bridge::Lambda {
+        unsafe { bridge::executor_peer_get_native_function(self.peer, func_id.into()) }
     }
 }
 

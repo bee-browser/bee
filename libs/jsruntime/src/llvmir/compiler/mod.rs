@@ -67,6 +67,7 @@ struct Compiler<'r, 's> {
     peer: peer::Compiler,
 
     /// The function registry of the JavaScript program to compile.
+    #[allow(unused)]
     function_registry: &'r FunctionRegistry,
 
     /// The scope tree of the JavaScript program to compile.
@@ -195,8 +196,7 @@ impl<'r, 's> Compiler<'r, 's> {
     fn start_function(&mut self, symbol: Symbol, func_id: FunctionId) {
         logger::debug!(event = "start_function", ?symbol, ?func_id);
 
-        let native = self.function_registry.get_native(func_id);
-        self.peer.start_function(&native.name);
+        self.peer.start_function(func_id);
 
         let locals_block = self.create_basic_block("locals");
         let init_block = self.create_basic_block("init");
@@ -223,7 +223,8 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_alloc_status();
         self.peer.create_alloc_flow_selector();
         if self.enable_scope_cleanup_checker {
-            self.peer.enable_scope_cleanup_checker(func_id.is_coroutine());
+            self.peer
+                .enable_scope_cleanup_checker(func_id.is_coroutine());
         }
 
         self.peer.set_basic_block(body_block);
@@ -422,12 +423,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_function(&mut self, func_id: FunctionId) {
-        let name = if func_id.is_native() {
-            &self.function_registry.get_native(func_id).name
-        } else {
-            &self.function_registry.get_host(func_id).name
-        };
-        let lambda = self.peer.get_function(func_id, name);
+        let lambda = self.peer.get_function(func_id);
         self.operand_stack.push(Operand::Function(lambda));
     }
 

@@ -94,18 +94,17 @@ impl<X> Runtime<X> {
         R: Clone + ReturnValue,
     {
         let symbol = self.symbol_registry.intern_str(name);
-        let func_id = self.function_registry.register_host_function(name);
+        let func_id = self.function_registry.register_host_function(symbol);
         self.executor
-            .register_host_function(name, into_host_lambda(host_fn));
+            .register_host_function(func_id, into_host_lambda(host_fn));
         logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "evaluate");
         self.executor.register_module(module);
-        let main = self.function_registry.get_native(FunctionId::MAIN);
         let mut ret = Value::UNDEFINED;
-        let status = match self.executor.get_native_function(&main.name) {
+        let status = match self.executor.get_native_function(FunctionId::MAIN) {
             Some(main) => unsafe {
                 main(
                     // gctx

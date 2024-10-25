@@ -142,10 +142,10 @@ void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);
 
 // function
-void compiler_peer_start_function(Compiler* self, const char* name);
+void compiler_peer_start_function(Compiler* self, uint32_t func_id);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_set_locals_block(Compiler* self, BasicBlock* block);
-LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
+LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id);
 
 // basic block
 BasicBlock* compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len);
@@ -363,11 +363,11 @@ class Executor;
 Executor* executor_peer_new();
 void executor_peer_delete(Executor* self);
 void executor_peer_register_runtime(Executor* self, const Runtime* runtime);
-void executor_peer_register_host_function(Executor* self, const char* name, Lambda func);
+void executor_peer_register_host_function(Executor* self, uint32_t func_id, Lambda func);
 void executor_peer_register_module(Executor* self, Module* mod);
 const char* executor_peer_get_data_layout(const Executor* self);
 const char* executor_peer_get_target_triple(const Executor* self);
-Lambda executor_peer_get_native_function(Executor* self, const char* name);
+Lambda executor_peer_get_native_function(Executor* self, uint32_t func_id);
 
 // Hepler Functions
 

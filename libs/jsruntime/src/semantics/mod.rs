@@ -961,11 +961,10 @@ impl<'r> Analyzer<'r> {
         let context = self.context_stack.last_mut().unwrap();
 
         for (func_id, host_func) in self.function_registry.enumerate_host_function() {
-            let symbol = self.symbol_registry.intern_cstr(&host_func.name);
-            context.put_reference(symbol, self.scope_tree_builder.current());
+            context.put_reference(host_func.symbol, self.scope_tree_builder.current());
             context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
             self.scope_tree_builder
-                .add_immutable(symbol, context.num_locals);
+                .add_immutable(host_func.symbol, context.num_locals);
             context.num_locals += 1;
         }
     }

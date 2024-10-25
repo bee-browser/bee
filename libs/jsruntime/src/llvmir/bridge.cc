@@ -77,8 +77,8 @@ void compiler_peer_set_target_triple(Compiler* self, const char* triple) {
   self->SetTargetTriple(triple);
 }
 
-void compiler_peer_start_function(Compiler* self, const char* name) {
-  self->StartFunction(name);
+void compiler_peer_start_function(Compiler* self, uint32_t func_id) {
+  self->StartFunction(func_id);
 }
 
 void compiler_peer_end_function(Compiler* self, bool optimize) {
@@ -89,8 +89,8 @@ void compiler_peer_set_locals_block(Compiler* self, BasicBlock* block) {
   self->SetLocalsBlock(LLVM_BB(block));
 }
 
-LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name) {
-  return PEER_LAMBDA(self->GetFunction(func_id, name));
+LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id) {
+  return PEER_LAMBDA(self->GetFunction(func_id));
 }
 
 // basic block
@@ -684,8 +684,8 @@ void executor_peer_register_runtime(Executor* self, const Runtime* runtime) {
   self->RegisterRuntime(runtime);
 }
 
-void executor_peer_register_host_function(Executor* self, const char* name, Lambda lambda) {
-  self->RegisterHostFunction(name, lambda);
+void executor_peer_register_host_function(Executor* self, uint32_t func_id, Lambda lambda) {
+  self->RegisterHostFunction(func_id, lambda);
 }
 
 void executor_peer_register_module(Executor* self, Module* mod) {
@@ -700,8 +700,8 @@ const char* executor_peer_get_target_triple(const Executor* self) {
   return self->target_triple().getTriple().c_str();
 }
 
-Lambda executor_peer_get_native_function(Executor* self, const char* name) {
-  return self->GetNativeFunction(name);
+Lambda executor_peer_get_native_function(Executor* self, uint32_t func_id) {
+  return self->GetNativeFunction(func_id);
 }
 
 // helper functions

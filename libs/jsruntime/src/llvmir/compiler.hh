@@ -127,8 +127,8 @@ class Compiler {
 
   // function
 
-  void StartFunction(const char* name) {
-    function_ = CreateLambda(name);
+  void StartFunction(uint32_t func_id) {
+    function_ = CreateLambda(func_id);
 
     gctx_ = function_->getArg(0);
     lctx_ = function_->getArg(1);
@@ -165,9 +165,8 @@ class Compiler {
     locals_block_ = block;
   }
 
-  llvm::Function* GetFunction(uint32_t func_id, const char* name) {
-    UNUSED(func_id);
-    return CreateLambda(name);
+  llvm::Function* GetFunction(uint32_t func_id) {
+    return CreateLambda(func_id);
   }
 
   // basic block
@@ -983,13 +982,14 @@ class Compiler {
     return alloca;
   }
 
-  llvm::Function* CreateLambda(const char* name) {
-    const auto& found = functions_.find(name);
+  llvm::Function* CreateLambda(uint32_t func_id) {
+    const auto& found = functions_.find(func_id);
     if (found != functions_.end()) {
       return found->second;
     }
 
     auto* prototype = types_->CreateLambdaType();
+    auto name = llvm::Twine("fn") + llvm::Twine(func_id);
     auto* lambda =
         llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
     lambda->getArg(0)->setName(REG_NAME("gctx"));
@@ -997,7 +997,7 @@ class Compiler {
     lambda->getArg(2)->setName(REG_NAME("argc"));
     lambda->getArg(3)->setName(REG_NAME("argv"));
     lambda->getArg(4)->setName(REG_NAME("retv"));
-    functions_[name] = lambda;
+    functions_[func_id] = lambda;
     return lambda;
   }
 
@@ -1184,7 +1184,7 @@ class Compiler {
   llvm::Value* scope_id_ = nullptr;
 
   // A cache of functions does not reset in the end of compilation for each function.
-  std::unordered_map<std::string, llvm::Function*> functions_;
+  std::unordered_map<uint32_t, llvm::Function*> functions_;
 
   // for optimization
   std::unique_ptr<llvm::FunctionPassManager> fpm_;

@@ -45,6 +45,18 @@ pub struct CaptureIr(*mut bridge::CaptureIr);
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SwitchIr(*mut bridge::SwitchIr);
 
+macro_rules! basic_block {
+    ($inner:expr) => {
+        BasicBlock(unsafe { $inner })
+    };
+}
+
+macro_rules! lambda_ir {
+    ($inner:expr) => {
+        LambdaIr(unsafe { $inner })
+    };
+}
+
 macro_rules! boolean_ir {
     ($inner:expr) => {
         BooleanIr(unsafe { $inner })
@@ -136,9 +148,9 @@ impl Compiler {
 
     // function
 
-    pub fn start_function(&self, name: &CStr) {
+    pub fn start_function(&self, func_id: FunctionId) {
         unsafe {
-            bridge::compiler_peer_start_function(self.0, name.as_ptr());
+            bridge::compiler_peer_start_function(self.0, func_id.into());
         }
     }
 
@@ -155,28 +167,20 @@ impl Compiler {
         }
     }
 
-    pub fn get_function(&self, func_id: FunctionId, name: &CStr) -> LambdaIr {
-        unsafe {
-            LambdaIr(bridge::compiler_peer_get_function(
-                self.0,
-                func_id.into(),
-                name.as_ptr(),
-            ))
-        }
+    pub fn get_function(&self, func_id: FunctionId) -> LambdaIr {
+        lambda_ir!(bridge::compiler_peer_get_function(self.0, func_id.into()))
     }
 
     // basic block
 
     pub fn create_basic_block(&self, name: *const std::ffi::c_char, name_len: usize) -> BasicBlock {
-        unsafe {
-            BasicBlock(bridge::compiler_peer_create_basic_block(
-                self.0, name, name_len,
-            ))
-        }
+        basic_block!(bridge::compiler_peer_create_basic_block(
+            self.0, name, name_len
+        ))
     }
 
     pub fn get_basic_block(&self) -> BasicBlock {
-        unsafe { BasicBlock(bridge::compiler_peer_get_basic_block(self.0)) }
+        basic_block!(bridge::compiler_peer_get_basic_block(self.0))
     }
 
     pub fn set_basic_block(&self, block: BasicBlock) {

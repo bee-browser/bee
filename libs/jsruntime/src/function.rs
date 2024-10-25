@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use jsparser::Symbol;
 
 /// The identifier of a function.
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
@@ -84,29 +84,17 @@ impl FunctionRegistry {
         }
     }
 
-    pub fn get_native(&self, id: FunctionId) -> &NativeFunction {
-        debug_assert!(id.is_native());
-        &self.native_functions[id.index()]
-    }
-
-    pub fn get_host(&self, id: FunctionId) -> &HostFunction {
-        debug_assert!(id.is_host());
-        &self.host_functions[id.index()]
-    }
-
     pub fn create_native_function(&mut self, coroutine: bool) -> FunctionId {
         let index = self.native_functions.len();
         assert!(index <= FunctionId::MAX_INDEX);
-        let name = CString::new(format!("fn{index}")).unwrap();
-        self.native_functions.push(NativeFunction { name });
+        self.native_functions.push(NativeFunction {});
         FunctionId::native(index, coroutine)
     }
 
-    pub fn register_host_function(&mut self, name: &str) -> FunctionId {
+    pub fn register_host_function(&mut self, symbol: Symbol) -> FunctionId {
         let index = self.host_functions.len();
         assert!(index <= FunctionId::MAX_INDEX);
-        let name = CString::new(name).unwrap();
-        self.host_functions.push(HostFunction { name });
+        self.host_functions.push(HostFunction { symbol });
         FunctionId::host(index)
     }
 
@@ -120,11 +108,10 @@ impl FunctionRegistry {
 
 pub struct NativeFunction {
     // [[ECMAScriptCode]]
-    pub name: CString,
 }
 
 pub struct HostFunction {
-    pub name: CString,
+    pub symbol: Symbol,
 }
 
 #[cfg(test)]
