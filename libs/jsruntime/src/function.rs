@@ -72,38 +72,47 @@ impl std::fmt::Debug for FunctionId {
 }
 
 pub struct FunctionRegistry {
-    native_functions: Vec<NativeFunction>,
-    host_functions: Vec<HostFunction>,
+    functions: Vec<Function>,
 }
 
 impl FunctionRegistry {
     pub fn new() -> Self {
         Self {
-            native_functions: vec![],
-            host_functions: vec![],
+            functions: vec![],
         }
     }
 
     pub fn create_native_function(&mut self, coroutine: bool) -> FunctionId {
-        let index = self.native_functions.len();
+        let index = self.functions.len();
         assert!(index <= FunctionId::MAX_INDEX);
-        self.native_functions.push(NativeFunction {});
+        self.functions.push(Function::Native(NativeFunction {}));
         FunctionId::native(index, coroutine)
     }
 
     pub fn register_host_function(&mut self, symbol: Symbol) -> FunctionId {
-        let index = self.host_functions.len();
+        let index = self.functions.len();
         assert!(index <= FunctionId::MAX_INDEX);
-        self.host_functions.push(HostFunction { symbol });
+        self.functions.push(Function::Host(HostFunction { symbol }));
         FunctionId::host(index)
     }
 
     pub fn enumerate_host_function(&self) -> impl Iterator<Item = (FunctionId, &HostFunction)> {
-        self.host_functions.iter().enumerate().map(|(index, func)| {
-            debug_assert!(index <= FunctionId::MAX_INDEX);
-            (FunctionId::host(index), func)
-        })
+        self.functions
+            .iter()
+            .enumerate()
+            .filter_map(|(index, func)| {
+                debug_assert!(index <= FunctionId::MAX_INDEX);
+                match func {
+                    Function::Host(func) => Some((FunctionId::host(index), func)),
+                    _ => None,
+                }
+            })
     }
+}
+
+enum Function {
+    Native(NativeFunction),
+    Host(HostFunction),
 }
 
 pub struct NativeFunction {
