@@ -830,44 +830,39 @@ class Compiler {
         REG_NAME("co.locals." + llvm::Twine(index) + ".ptr"));
   }
 
-  llvm::Value* CreateGetClosurePtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 0, REG_NAME("co.closure.ptr"));
+  void CreateWriteBooleanToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.boolean.ptr"));
+    builder_->CreateStore(value, ptr);
   }
 
-  llvm::Value* CreateGetStatePtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 1, REG_NAME("co.state.ptr"));
+  llvm::Value* CreateReadBooleanFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.boolean.ptr"));
+    return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("scratch.boolean"));
   }
 
-  llvm::Value* CreateGetNumLocalsPtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 2, REG_NAME("co.num_locals.ptr"));
+  void CreateWriteNumberToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.number.ptr"));
+    builder_->CreateStore(value, ptr);
   }
 
-  llvm::Value* CreateGetScopeIdPtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 3, REG_NAME("co.scope_id.ptr"));
+  llvm::Value* CreateReadNumberFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.number.ptr"));
+    return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("scratch.number"));
   }
 
-  llvm::Value* CreateGetLocalsPtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 4, REG_NAME("co.locals.ptr"));
+  void CreateWriteValueToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), scratch_ptr, offset, REG_NAME("scratch.value.ptr"));
+    CreateStoreValueToValue(value, ptr);
   }
 
-  llvm::Value* CreateLoadClosureFromCoroutine() {
-    auto* ptr = CreateGetClosurePtrOfCoroutine();
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("co.closure"));
-  }
-
-  llvm::Value* CreateLoadStateFromCoroutine() {
-    auto* ptr = CreateGetStatePtrOfCoroutine();
-    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("co.state"));
-  }
-
-  llvm::Value* CreateGetCapturesPtrOfCoroutine() {
-    auto* closure = CreateLoadClosureFromCoroutine();
-    return CreateGetCapturesPtrOfClosure(closure);
+  llvm::Value* CreateReadValueFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), scratch_ptr, offset, REG_NAME("scratch.value.ptr"));
   }
 
   // scope cleanup checker
@@ -1136,6 +1131,67 @@ class Compiler {
     builder_->CreateStore(capture_ptr, ptr);
   }
 
+  // coroutine
+
+  llvm::Value* CreateGetClosurePtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 0, REG_NAME("co.closure.ptr"));
+  }
+
+  llvm::Value* CreateGetStatePtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 1, REG_NAME("co.state.ptr"));
+  }
+
+  llvm::Value* CreateGetNumLocalsPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 2, REG_NAME("co.num_locals.ptr"));
+  }
+
+  llvm::Value* CreateGetScopeIdPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 3, REG_NAME("co.scope_id.ptr"));
+  }
+
+  llvm::Value* CreateGetScrachBufferLenPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 4, REG_NAME("co.locals.scratch_buffer_len.ptr"));
+  }
+
+  llvm::Value* CreateGetLocalsPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), lctx_, 5, REG_NAME("co.locals.ptr"));
+  }
+
+  llvm::Value* CreateLoadClosureFromCoroutine() {
+    auto* ptr = CreateGetClosurePtrOfCoroutine();
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("co.closure"));
+  }
+
+  llvm::Value* CreateLoadStateFromCoroutine() {
+    auto* ptr = CreateGetStatePtrOfCoroutine();
+    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("co.state"));
+  }
+
+  llvm::Value* CreateLoadNumLocalsFromCoroutine() {
+    auto* ptr = CreateGetNumLocalsPtrOfCoroutine();
+    return builder_->CreateLoad(builder_->getInt16Ty(), ptr, REG_NAME("co.num_locals"));
+  }
+
+  llvm::Value* CreateGetCapturesPtrOfCoroutine() {
+    auto* closure = CreateLoadClosureFromCoroutine();
+    return CreateGetCapturesPtrOfClosure(closure);
+  }
+
+  llvm::Value* CreateGetScratchBufferPtrOfCoroutine() {
+    auto* num_locals = CreateLoadNumLocalsFromCoroutine();
+    auto* num_locals_usize = builder_->CreateSExt(num_locals, types_->GetWordType(), REG_NAME("num_locals.usize"));
+    auto* base_offset = types_->GetWord(offsetof(Coroutine, locals));
+    auto* locals_in_bytes = builder_->CreateMul(types_->GetWord(sizeof(Value)), num_locals_usize, REG_NAME("co.locals.in_bytes"));
+    auto* offset = builder_->CreateAdd(base_offset, locals_in_bytes, REG_NAME("co.scratch_buffer.offset"));
+    return builder_->CreateInBoundsPtrAdd(lctx_, offset, REG_NAME("co.scratch_buffer.ptr"));
+  }
+
   // scope cleanup checker
 
   bool IsScopeCleanupCheckerEnabled() const {
@@ -1157,6 +1213,12 @@ class Compiler {
   void CreatePrintU32(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_u32.msg"));
     auto* func = types_->CreateRuntimePrintU32();
+    builder_->CreateCall(func, {gctx_, value, msg_value});
+  }
+
+  void CreatePrintF64(llvm::Value* value, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_f64.msg"));
+    auto* func = types_->CreateRuntimePrintF64();
     builder_->CreateCall(func, {gctx_, value, msg_value});
   }
 

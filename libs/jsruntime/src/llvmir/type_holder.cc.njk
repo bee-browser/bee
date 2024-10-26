@@ -74,6 +74,8 @@ llvm::StructType* TypeHolder::CreateCoroutineType() {
         builder_.getInt16Ty(),
         // scope_id
         builder_.getInt16Ty(),
+        // scrach_buffer_len,
+        builder_.getInt16Ty(),
         // locals[]
         CreateValueType(),
     });

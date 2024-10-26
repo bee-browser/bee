@@ -85,6 +85,12 @@ functions:
         type: u32
       - name: msg
         type: '&std::ffi::CStr'
+  - name: print_f64
+    args:
+      - name: value
+        type: f64
+      - name: msg
+        type: '&std::ffi::CStr'
   - name: print_value
     args:
       - name: value

@@ -239,6 +239,7 @@ pub fn runtime_bridge<X>() -> Runtime {
         emit_promise_resolved: Some(runtime_emit_promise_resolved::<X>),
         assert: Some(runtime_assert),
         print_u32: Some(runtime_print_u32),
+        print_f64: Some(runtime_print_f64),
         print_value: Some(runtime_print_value),
     }
 }
@@ -446,6 +447,11 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     let locals_layout = std::alloc::Layout::array::<Value>(num_locals as usize).unwrap();
     let (layout, _) = BASE_LAYOUT.extend(locals_layout).unwrap();
 
+    // TODO: compute the size of the scratch buffer.
+    // TODO: compile the coroutine before the ramp function.
+    let scratch_buffer_layout = std::alloc::Layout::array::<f64>(32).unwrap();
+    let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
+
     let runtime = into_runtime!(context, X);
     let allocator = runtime.allocator();
 
@@ -517,6 +523,19 @@ unsafe extern "C" fn runtime_print_u32(
         crate::logger::debug!("runtime_print_u32: {value:08X}");
     } else {
         crate::logger::debug!("runtime_print_u32: {value:08X}: {msg:?}");
+    }
+}
+
+unsafe extern "C" fn runtime_print_f64(
+    _context: usize,
+    value: f64,
+    msg: *const std::os::raw::c_char,
+) {
+    let msg = std::ffi::CStr::from_ptr(msg);
+    if msg.is_empty() {
+        crate::logger::debug!("runtime_print_f64: {value}");
+    } else {
+        crate::logger::debug!("runtime_print_f64: {value}: {msg:?}");
     }
 }
 

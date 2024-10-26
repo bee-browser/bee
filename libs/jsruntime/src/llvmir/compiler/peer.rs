@@ -1012,6 +1012,42 @@ impl Compiler {
         }
     }
 
+    pub fn create_write_boolean_to_scratch_buffer(&self, offset: u32, value: BooleanIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_boolean_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_boolean_from_scratch_buffer(&self, offset: u32) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_read_boolean_from_scratch_buffer(self.0, offset)
+        }
+    }
+
+    pub fn create_write_number_to_scratch_buffer(&self, offset: u32, value: NumberIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_number_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_number_from_scratch_buffer(&self, offset: u32) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_read_number_from_scratch_buffer(self.0, offset)
+        }
+    }
+
+    pub fn create_write_value_to_scratch_buffer(&self, offset: u32, value: ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_value_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_value_from_scratch_buffer(&self, offset: u32) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_read_value_from_scratch_buffer(self.0, offset)
+        }
+    }
+
     // scope cleanup checker
 
     pub fn enable_scope_cleanup_checker(&self, is_coroutine: bool) {

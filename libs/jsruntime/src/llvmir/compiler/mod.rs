@@ -23,6 +23,8 @@ use crate::Runtime;
 
 use super::bridge;
 use super::Module;
+use super::bridge::Value;
+use super::bridge::ValueHolder;
 
 use control_flow::ControlFlowStack;
 use peer::ArgvIr;
@@ -37,6 +39,9 @@ use peer::PromiseIr;
 use peer::StatusIr;
 use peer::SwitchIr;
 use peer::ValueIr;
+
+const VALUE_SIZE: u32 = size_of::<Value>() as u32;
+const VALUE_HOLDER_SIZE: u32 = size_of::<ValueHolder>() as u32;
 
 impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
@@ -2239,8 +2244,42 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_await(&mut self, next_state: u32) {
+        self.resolve_promise();
+        self.save_operands_to_scratch_buffer();
         self.peer.create_set_coroutine_state(next_state);
+        self.peer.create_suspend();
 
+        // resume block
+        let block = self.create_basic_block("resume");
+        let inst = self.control_flow_stack.coroutine_switch_inst();
+        let state = self.control_flow_stack.coroutine_next_state();
+        self.peer.create_add_state_for_coroutine(inst, state, block);
+        self.peer.set_basic_block(block);
+
+        self.load_operands_from_scratch_buffer();
+
+        let has_error_block = self.create_basic_block("has_error");
+        let result_block = self.create_basic_block("result");
+
+        // if ##error.has_value()
+        let error = self.peer.create_get_argument_value_ptr(2); // ##error
+        let has_error = self.peer.create_has_value(error);
+        self.peer
+            .create_cond_br(has_error, has_error_block, result_block);
+        {
+            // throw ##error;
+            self.peer.set_basic_block(has_error_block);
+            self.operand_stack.push(Operand::Any(error));
+            self.process_throw();
+            self.peer.create_br(result_block);
+        }
+
+        self.peer.set_basic_block(result_block);
+        let result = self.peer.create_get_argument_value_ptr(1); // ##result
+        self.operand_stack.push(Operand::Any(result));
+    }
+
+    fn resolve_promise(&mut self) {
         let promise = self.peer.create_get_argument_value_ptr(0); // ##promise
         let promise = self.peer.create_load_promise_from_value(promise);
 
@@ -2290,35 +2329,63 @@ impl<'r, 's> Compiler<'r, 's> {
             }
             _ => unreachable!("{operand:?}"),
         }
+    }
 
-        self.peer.create_suspend();
-
-        // resume block
-        let block = self.create_basic_block("resume");
-        let inst = self.control_flow_stack.coroutine_switch_inst();
-        let state = self.control_flow_stack.coroutine_next_state();
-        self.peer.create_add_state_for_coroutine(inst, state, block);
-        self.peer.set_basic_block(block);
-
-        let has_error_block = self.create_basic_block("has_error");
-        let result_block = self.create_basic_block("result");
-
-        // if ##error.has_value()
-        let error = self.peer.create_get_argument_value_ptr(2); // ##error
-        let has_error = self.peer.create_has_value(error);
-        self.peer
-            .create_cond_br(has_error, has_error_block, result_block);
-        {
-            // throw ##error;
-            self.peer.set_basic_block(has_error_block);
-            self.operand_stack.push(Operand::Any(error));
-            self.process_throw();
-            self.peer.create_br(result_block);
+    // TODO(perf): Currently, we have to save all values (except for special cases) on the operand
+    // stack into the scratch buffer before the execution of the coroutine suspends.  However, we
+    // don't need to save some of them.  For example, there may be constant values on the operand
+    // stack.  Additionally, there may be values which will be computed to constant values after
+    // the LLVM IR compiler performs constant folding in optimization passes.
+    //
+    // NOTE: It's best to implement a special pass to determine which value on the operand stack
+    // has to be saved, but we don't like to tightly depend on LLVM.  Because we plan to replace it
+    // with another library written in Rust such as Cranelift in the future.
+    fn save_operands_to_scratch_buffer(&mut self) {
+        let mut offset = 0u32;
+        for operand in self.operand_stack.iter() {
+            match operand {
+                Operand::Undefined => (),
+                Operand::Null => (),
+                Operand::Boolean(value) => {
+                    self.peer.create_write_boolean_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Number(value) => {
+                    self.peer.create_write_number_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Any(value) => {
+                    self.peer.create_write_value_to_scratch_buffer(offset, *value);
+                    offset += VALUE_SIZE;
+                }
+                Operand::Reference(..) => (),
+                _ => unreachable!("{operand:?}"),
+            }
         }
+    }
 
-        self.peer.set_basic_block(result_block);
-        let result = self.peer.create_get_argument_value_ptr(1); // ##result
-        self.operand_stack.push(Operand::Any(result));
+    fn load_operands_from_scratch_buffer(&mut self) {
+        let mut offset = 0u32;
+        for operand in self.operand_stack.iter_mut() {
+            match operand {
+                Operand::Undefined => (),
+                Operand::Null => (),
+                Operand::Boolean(ref mut value) => {
+                    *value = self.peer.create_read_boolean_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Number(ref mut value) => {
+                    *value = self.peer.create_read_number_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Any(ref mut value) => {
+                    *value = self.peer.create_read_value_from_scratch_buffer(offset);
+                    offset += VALUE_SIZE;
+                }
+                Operand::Reference(..) => (),
+                _ => unreachable!("{operand:?}"),
+            }
+        }
     }
 
     fn process_resume(&mut self) {

@@ -102,8 +102,13 @@ struct Coroutine {
   // The current scope id used by the scope cleanup checker.
   uint16_t scope_id;
 
+  // The size of the scratch buffer in bytes.
+  uint16_t scratch_buffer_len;
+
   // A variable-length list of local variables used in the coroutine.
   Value locals[32];
+
+  // The scratch_buffer starts from &locals[num_locals].
 };
 
 #include "runtime.hh"
@@ -345,6 +350,12 @@ void compiler_peer_create_suspend(Compiler* self);
 void compiler_peer_create_set_coroutine_state(Compiler* self, uint32_t state);
 void compiler_peer_create_set_captures_for_coroutine(Compiler* self);
 ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint16_t index);
+void compiler_peer_create_write_boolean_to_scratch_buffer(Compiler* self, uint32_t offset, BooleanIr* value);
+BooleanIr* compiler_peer_create_read_boolean_from_scratch_buffer(Compiler* self, uint32_t offset);
+void compiler_peer_create_write_number_to_scratch_buffer(Compiler* self, uint32_t offset, NumberIr* value);
+NumberIr* compiler_peer_create_read_number_from_scratch_buffer(Compiler* self, uint32_t offset);
+void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self, uint32_t offset, ValueIr* value);
+ValueIr* compiler_peer_create_read_value_from_scratch_buffer(Compiler* self, uint32_t offset);
 
 // scope cleanup checker
 void compiler_peer_enable_scope_cleanup_checker(Compiler* self, bool is_coroutine);
