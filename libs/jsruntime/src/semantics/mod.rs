@@ -1414,7 +1414,7 @@ impl FunctionContext {
         // Step#3..7 in 14.12.4 Runtime Semantics: Evaluation
         self.start_scope(scope_ref);
 
-        // The placeholder command will be replaced in `process_switch_statement()`.
+        // The placeholder commands will be replaced in `process_switch_statement()`.
         let case_block_index = self.put_command(CompileCommand::PlaceHolder);
         self.switch_stack.push(SwitchContext {
             case_block_index,
@@ -1423,6 +1423,8 @@ impl FunctionContext {
     }
 
     fn process_case_selector(&mut self) {
+        // Make a duplicate of the `switchValue` for the evaluation on the case selector.
+        self.put_command(CompileCommand::Duplicate(1));
         self.put_command(CompileCommand::StrictEquality);
         self.put_command(CompileCommand::Then);
     }
@@ -1433,7 +1435,6 @@ impl FunctionContext {
     }
 
     fn process_default_selector(&mut self) {
-        self.put_command(CompileCommand::Discard);
         // TODO: refactoring
         self.put_command(CompileCommand::Then);
     }
@@ -1459,13 +1460,13 @@ impl FunctionContext {
             CompileCommand::PlaceHolder
         ));
         if num_cases == 0 {
-            // empty case block
-            // Discard the `switchValue`.
+            // An empty case block.  Just discard the `switchValue`.
             self.commands[case_block_index] = CompileCommand::Discard;
         } else {
             self.commands[case_block_index] = CompileCommand::CaseBlock(id, num_cases);
-            let i = default_index;
-            self.put_command(CompileCommand::Switch(id, num_cases, i));
+            // Discard the `switchValue` remaining on the stack.
+            self.put_command(CompileCommand::Discard);
+            self.put_command(CompileCommand::Switch(id, num_cases, default_index));
             self.num_switch_statements += 1;
         }
 

@@ -1900,11 +1900,6 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.pending_labels.is_empty());
         let exit_id = self.control_flow_stack.exit_id();
 
-        let (operand, _) = self.dereference();
-        // TODO: item.SetLabel("switch-value");
-        self.operand_stack.push(operand);
-        self.duplicate(0); // Dup for test on CaseClause
-
         self.peer.create_br(start_block);
 
         self.peer.set_basic_block(ctrl_block);
@@ -1933,8 +1928,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_cond_br(cond, then_block, else_block);
         self.peer.set_basic_block(else_block);
 
-        self.duplicate(0);
-
         self.control_flow_stack
             .push_case_banch_flow(end_block, then_block);
     }
@@ -1948,8 +1941,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.set_basic_block(test_block);
 
-        self.duplicate(0);
-
         self.control_flow_stack
             .push_case_banch_flow(end_block, then_block);
         self.control_flow_stack.set_default_case_block(then_block);
@@ -1959,10 +1950,6 @@ impl<'r, 's> Compiler<'r, 's> {
         pop_bb_name!(self);
 
         let case_block = self.peer.get_basic_block();
-
-        // Discard the switch-values
-        self.process_discard();
-        self.process_discard();
 
         // Connect the last basic blocks of each case/default clause to the first basic block of
         // the statement lists of the next case/default clause if it's not terminated.
