@@ -200,6 +200,33 @@ impl ControlFlowStack {
         }
     }
 
+    pub fn push_then_else_flow(&mut self, then_block: BasicBlock, else_block: BasicBlock) {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        self.stack.push(ControlFlow::ThenElse(ThenElseFlow {
+            then_block,
+            else_block,
+        }));
+    }
+
+    pub fn pop_then_else_flow(&mut self) -> ThenElseFlow {
+        match self.stack.pop() {
+            Some(ControlFlow::ThenElse(flow)) => flow,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn update_then_block(&mut self, then_block: BasicBlock) -> BasicBlock {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        match self.stack.last_mut() {
+            Some(ControlFlow::ThenElse(flow)) => {
+                flow.then_block = then_block;
+                flow.else_block
+            }
+            _ => unreachable!(),
+        }
+    }
+
     pub fn push_loop_init_flow(&mut self, branch_block: BasicBlock, insert_point: BasicBlock) {
         debug_assert_ne!(branch_block, BasicBlock::NONE);
         debug_assert_ne!(insert_point, BasicBlock::NONE);
@@ -490,6 +517,11 @@ impl ControlFlowStack {
                     bb!(flow, body_block);
                     bb!(flow, cleanup_block);
                 }
+                ControlFlow::ThenElse(flow) => {
+                    eprintln!("then-else:");
+                    bb!(flow, then_block);
+                    bb!(flow, else_block);
+                }
                 ControlFlow::Branch(flow) => {
                     eprintln!("branch:");
                     bb!(flow, before_block);
@@ -591,6 +623,7 @@ enum ControlFlow {
     Coroutine(CoroutineFlow),
     Scope(ScopeFlow),
     Branch(BranchFlow),
+    ThenElse(ThenElseFlow),
     LoopInit(LoopInitFlow),
     LoopTest(LoopTestFlow),
     LoopNext(LoopNextFlow),
@@ -645,6 +678,11 @@ pub struct ScopeFlow {
 pub struct BranchFlow {
     pub before_block: BasicBlock,
     pub after_block: BasicBlock,
+}
+
+pub struct ThenElseFlow {
+    pub then_block: BasicBlock,
+    pub else_block: BasicBlock,
 }
 
 pub struct LoopInitFlow {

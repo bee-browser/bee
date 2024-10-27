@@ -719,7 +719,7 @@ impl<'r> Analyzer<'r> {
     fn handle_then_block(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
         context.put_command(CompileCommand::Truthy);
-        context.put_command(CompileCommand::Then);
+        context.put_command(CompileCommand::IfThen);
     }
 
     fn handle_else_block(&mut self) {
@@ -1701,6 +1701,7 @@ pub enum CompileCommand {
 
     // conditional
     Truthy,
+    IfThen,
     Then,
     Else,
     IfElseStatement,

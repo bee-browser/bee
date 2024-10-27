@@ -345,10 +345,11 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::BitwiseOr => self.process_bitwise_or(),
             CompileCommand::Ternary => self.process_ternary(),
             CompileCommand::Assignment => self.process_assignment(),
-            CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::FalsyShortCircuit => self.process_falsy_short_circuit(),
             CompileCommand::TruthyShortCircuit => self.process_truthy_short_circuit(),
             CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
+            CompileCommand::Truthy => self.process_truthy(),
+            CompileCommand::IfThen => self.process_if_then(),
             CompileCommand::Then => self.process_then(),
             CompileCommand::Else => self.process_else(),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
@@ -1468,32 +1469,22 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_ternary(&mut self) {
-        let else_branch = self.control_flow_stack.pop_branch_flow();
-        let then_branch = self.control_flow_stack.pop_branch_flow();
-
-        let test_block = then_branch.before_block;
-        let then_head_block = then_branch.after_block;
-        let then_tail_block = else_branch.before_block;
-        let else_head_block = else_branch.after_block;
-        let else_tail_block = self.peer.get_basic_block();
+        let flow = self.control_flow_stack.pop_then_else_flow();
+        let then_block = flow.then_block;
+        let else_block = self.peer.get_basic_block();
 
         let (else_operand, _) = self.dereference();
 
-        self.peer.set_basic_block(then_tail_block);
+        self.peer.set_basic_block(then_block);
         let (then_operand, _) = self.dereference();
-
-        self.peer.set_basic_block(test_block);
-        let cond_value = self.pop_boolean();
-        self.peer
-            .create_cond_br(cond_value, then_head_block, else_head_block);
 
         let block = self.create_basic_block("ternary");
 
         if std::mem::discriminant(&then_operand) == std::mem::discriminant(&else_operand) {
-            self.peer.set_basic_block(then_tail_block);
+            self.peer.set_basic_block(then_block);
             self.peer.create_br(block);
 
-            self.peer.set_basic_block(else_tail_block);
+            self.peer.set_basic_block(else_block);
             self.peer.create_br(block);
 
             self.peer.set_basic_block(block);
@@ -1511,9 +1502,9 @@ impl<'r, 's> Compiler<'r, 's> {
                 (Operand::Boolean(then_value), Operand::Boolean(else_value)) => {
                     let boolean = self.peer.create_boolean_phi(
                         then_value,
-                        then_tail_block,
+                        then_block,
                         else_value,
-                        else_tail_block,
+                        else_block,
                     );
                     self.operand_stack.push(Operand::Boolean(boolean));
                     return;
@@ -1521,9 +1512,9 @@ impl<'r, 's> Compiler<'r, 's> {
                 (Operand::Number(then_value), Operand::Number(else_value)) => {
                     let number = self.peer.create_number_phi(
                         then_value,
-                        then_tail_block,
+                        then_block,
                         else_value,
-                        else_tail_block,
+                        else_block,
                     );
                     self.operand_stack.push(Operand::Number(number));
                     return;
@@ -1531,9 +1522,9 @@ impl<'r, 's> Compiler<'r, 's> {
                 (Operand::Any(then_value), Operand::Any(else_value)) => {
                     let any = self.peer.create_value_phi(
                         then_value,
-                        then_tail_block,
+                        then_block,
                         else_value,
-                        else_tail_block,
+                        else_block,
                     );
                     self.operand_stack.push(Operand::Any(any));
                     return;
@@ -1544,18 +1535,16 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // We have to convert the value before the branch in each block.
 
-        self.peer.set_basic_block(then_tail_block);
+        self.peer.set_basic_block(then_block);
         let then_value = self.create_to_any(then_operand);
         self.peer.create_br(block);
 
-        self.peer.set_basic_block(else_tail_block);
+        self.peer.set_basic_block(else_block);
         let else_value = self.create_to_any(else_operand);
         self.peer.create_br(block);
 
         self.peer.set_basic_block(block);
-        let any =
-            self.peer
-                .create_value_phi(then_value, then_tail_block, else_value, else_tail_block);
+        let any = self.peer.create_value_phi(then_value, then_block, else_value, else_block);
         self.operand_stack.push(Operand::Any(any));
     }
 
@@ -1580,38 +1569,32 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(rhs);
     }
 
-    fn process_truthy(&mut self) {
-        let (operand, _) = self.dereference();
-        let boolean = self.create_to_boolean(operand);
-        self.operand_stack.push(Operand::Boolean(boolean));
-    }
-
     fn process_falsy_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand.clone());
         let boolean = self.peer.create_logical_not(boolean);
         self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
+        self.process_if_then();
         self.operand_stack.push(operand);
-        self.branch(); // else
+        self.process_else();
     }
 
     fn process_truthy_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand.clone());
         self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
+        self.process_if_then();
         self.operand_stack.push(operand);
-        self.branch(); // else
+        self.process_else();
     }
 
     fn process_nullish_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_is_non_nullish(operand.clone());
         self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
+        self.process_if_then();
         self.operand_stack.push(operand);
-        self.branch(); // else
+        self.process_else();
     }
 
     fn create_is_non_nullish(&mut self, operand: Operand) -> BooleanIr {
@@ -1625,48 +1608,54 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
+    fn process_truthy(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.create_to_boolean(operand);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    fn process_if_then(&mut self) {
+        let cond_value = self.pop_boolean();
+        let then_block = self.create_basic_block("then");
+        let else_block = self.create_basic_block("else");
+        self.peer.create_cond_br(cond_value, then_block, else_block);
+        self.peer.set_basic_block(then_block);
+        self.control_flow_stack.push_then_else_flow(then_block, else_block);
+    }
+
     fn process_then(&mut self) {
         self.branch();
     }
 
     fn process_else(&mut self) {
-        self.branch();
+        let then_block = self.peer.get_basic_block();
+        let else_block = self.control_flow_stack.update_then_block(then_block);
+        self.peer.move_basic_block_after(else_block);
+        self.peer.set_basic_block(else_block);
     }
 
     fn process_if_else_statement(&mut self) {
-        let else_branch = self.control_flow_stack.pop_branch_flow();
-        let then_branch = self.control_flow_stack.pop_branch_flow();
-
-        let test_block = then_branch.before_block;
-        let then_head_block = then_branch.after_block;
-        let then_tail_block = else_branch.before_block;
-        let else_head_block = else_branch.after_block;
-        let else_tail_block = self.peer.get_basic_block();
+        let flow = self.control_flow_stack.pop_then_else_flow();
+        let else_block = self.peer.get_basic_block();
 
         let mut block = BasicBlock::NONE;
 
-        if self.peer.is_basic_block_terminated(else_tail_block) {
+        if self.peer.is_basic_block_terminated(else_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
-            block = self.create_basic_block("block");
+            block = self.create_basic_block("merge");
             self.peer.create_br(block);
         }
 
-        if self.peer.is_basic_block_terminated(then_tail_block) {
+        if self.peer.is_basic_block_terminated(flow.then_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
             if block == BasicBlock::NONE {
-                block = self.create_basic_block("block");
+                block = self.create_basic_block("merge");
             }
-            self.peer.set_basic_block(then_tail_block);
+            self.peer.set_basic_block(flow.then_block);
             self.peer.create_br(block);
         }
-
-        let cond_value = self.pop_boolean();
-
-        self.peer.set_basic_block(test_block);
-        self.peer
-            .create_cond_br(cond_value, then_head_block, else_head_block);
 
         if block != BasicBlock::NONE {
             self.peer.set_basic_block(block);
@@ -1674,23 +1663,20 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_if_statement(&mut self) {
-        let branch = self.control_flow_stack.pop_branch_flow();
+        let flow = self.control_flow_stack.pop_then_else_flow();
+        let then_block = self.peer.get_basic_block();
 
-        let test_block = branch.before_block;
-        let then_head_block = branch.after_block;
-        let then_tail_block = self.peer.get_basic_block();
-        let block = self.create_basic_block("block");
+        let block = self.create_basic_block("merge");
 
-        if self.peer.is_basic_block_terminated(then_tail_block) {
+        if self.peer.is_basic_block_terminated(then_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
             self.peer.create_br(block);
         }
 
-        let cond_value = self.pop_boolean();
-
-        self.peer.set_basic_block(test_block);
-        self.peer.create_cond_br(cond_value, then_head_block, block);
+        self.peer.move_basic_block_after(flow.else_block);
+        self.peer.set_basic_block(flow.else_block);
+        self.peer.create_br(block);
 
         self.peer.set_basic_block(block);
     }
