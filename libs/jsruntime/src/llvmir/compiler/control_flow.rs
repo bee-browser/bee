@@ -343,7 +343,11 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn update_case_flow(&mut self, clause_end_block: BasicBlock, clause_has_statement: bool) -> BasicBlock {
+    pub fn update_case_flow(
+        &mut self,
+        clause_end_block: BasicBlock,
+        clause_has_statement: bool,
+    ) -> BasicBlock {
         debug_assert_ne!(clause_end_block, BasicBlock::NONE);
         match self.stack.last_mut() {
             Some(ControlFlow::Case(flow)) => {

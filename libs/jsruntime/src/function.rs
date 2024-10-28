@@ -77,9 +77,7 @@ pub struct FunctionRegistry {
 
 impl FunctionRegistry {
     pub fn new() -> Self {
-        Self {
-            functions: vec![],
-        }
+        Self { functions: vec![] }
     }
 
     pub fn create_native_function(&mut self, coroutine: bool) -> FunctionId {

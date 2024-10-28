@@ -22,9 +22,9 @@ use crate::Program;
 use crate::Runtime;
 
 use super::bridge;
-use super::Module;
 use super::bridge::Value;
 use super::bridge::ValueHolder;
+use super::Module;
 
 use control_flow::ControlFlowStack;
 use peer::ArgvIr;
@@ -1498,32 +1498,23 @@ impl<'r, 's> Compiler<'r, 's> {
                     return;
                 }
                 (Operand::Boolean(then_value), Operand::Boolean(else_value)) => {
-                    let boolean = self.peer.create_boolean_phi(
-                        then_value,
-                        then_block,
-                        else_value,
-                        else_block,
-                    );
+                    let boolean = self
+                        .peer
+                        .create_boolean_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Boolean(boolean));
                     return;
                 }
                 (Operand::Number(then_value), Operand::Number(else_value)) => {
-                    let number = self.peer.create_number_phi(
-                        then_value,
-                        then_block,
-                        else_value,
-                        else_block,
-                    );
+                    let number = self
+                        .peer
+                        .create_number_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Number(number));
                     return;
                 }
                 (Operand::Any(then_value), Operand::Any(else_value)) => {
-                    let any = self.peer.create_value_phi(
-                        then_value,
-                        then_block,
-                        else_value,
-                        else_block,
-                    );
+                    let any = self
+                        .peer
+                        .create_value_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Any(any));
                     return;
                 }
@@ -1542,7 +1533,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_br(block);
 
         self.peer.set_basic_block(block);
-        let any = self.peer.create_value_phi(then_value, then_block, else_value, else_block);
+        let any = self
+            .peer
+            .create_value_phi(then_value, then_block, else_value, else_block);
         self.operand_stack.push(Operand::Any(any));
     }
 
@@ -1618,7 +1611,8 @@ impl<'r, 's> Compiler<'r, 's> {
         let else_block = self.create_basic_block("else");
         self.peer.create_cond_br(cond_value, then_block, else_block);
         self.peer.set_basic_block(then_block);
-        self.control_flow_stack.push_then_else_flow(then_block, else_block);
+        self.control_flow_stack
+            .push_then_else_flow(then_block, else_block);
     }
 
     fn process_else(&mut self) {
@@ -1912,22 +1906,28 @@ impl<'r, 's> Compiler<'r, 's> {
         let clause_start_block = self.create_basic_block("case.clause");
         let next_case_block = self.create_basic_block("case");
         let cond_value = self.pop_boolean();
-        self.peer.create_cond_br(cond_value, clause_start_block, next_case_block);
+        self.peer
+            .create_cond_br(cond_value, clause_start_block, next_case_block);
         self.peer.set_basic_block(clause_start_block);
-        self.control_flow_stack.push_case_flow(next_case_block, clause_start_block);
+        self.control_flow_stack
+            .push_case_flow(next_case_block, clause_start_block);
     }
 
     fn process_default(&mut self) {
         let next_case_block = self.peer.get_basic_block();
         let clause_start_block = self.create_basic_block("default.clause");
         self.peer.set_basic_block(clause_start_block);
-        self.control_flow_stack.push_case_flow(next_case_block, clause_start_block);
-        self.control_flow_stack.set_default_case_block(clause_start_block)
+        self.control_flow_stack
+            .push_case_flow(next_case_block, clause_start_block);
+        self.control_flow_stack
+            .set_default_case_block(clause_start_block)
     }
 
     fn process_case_clause(&mut self, has_statement: bool) {
         let clause_end_block = self.peer.get_basic_block();
-        let next_case_block = self.control_flow_stack.update_case_flow(clause_end_block, has_statement);
+        let next_case_block = self
+            .control_flow_stack
+            .update_case_flow(clause_end_block, has_statement);
         self.peer.set_basic_block(next_case_block);
     }
 
@@ -1944,9 +1944,7 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert_ne!(fall_through_block, BasicBlock::NONE);
         for _ in 0..num_cases {
             let flow = self.control_flow_stack.pop_case_flow();
-            let terminated = self
-                .peer
-                .is_basic_block_terminated(flow.clause_end_block);
+            let terminated = self.peer.is_basic_block_terminated(flow.clause_end_block);
             if !terminated {
                 self.peer.set_basic_block(flow.clause_end_block);
                 self.peer.create_br(fall_through_block);
@@ -2295,15 +2293,18 @@ impl<'r, 's> Compiler<'r, 's> {
                 Operand::Undefined => (),
                 Operand::Null => (),
                 Operand::Boolean(value) => {
-                    self.peer.create_write_boolean_to_scratch_buffer(offset, *value);
+                    self.peer
+                        .create_write_boolean_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Number(value) => {
-                    self.peer.create_write_number_to_scratch_buffer(offset, *value);
+                    self.peer
+                        .create_write_number_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Any(value) => {
-                    self.peer.create_write_value_to_scratch_buffer(offset, *value);
+                    self.peer
+                        .create_write_value_to_scratch_buffer(offset, *value);
                     offset += VALUE_SIZE;
                 }
                 Operand::Reference(..) => (),

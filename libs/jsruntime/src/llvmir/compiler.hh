@@ -832,37 +832,43 @@ class Compiler {
 
   void CreateWriteBooleanToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.boolean.ptr"));
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.boolean.ptr"));
     builder_->CreateStore(value, ptr);
   }
 
   llvm::Value* CreateReadBooleanFromScratchBuffer(uint32_t offset) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.boolean.ptr"));
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.boolean.ptr"));
     return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("scratch.boolean"));
   }
 
   void CreateWriteNumberToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.number.ptr"));
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.number.ptr"));
     builder_->CreateStore(value, ptr);
   }
 
   llvm::Value* CreateReadNumberFromScratchBuffer(uint32_t offset) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateConstInBoundsGEP1_32(builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.number.ptr"));
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.number.ptr"));
     return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("scratch.number"));
   }
 
   void CreateWriteValueToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), scratch_ptr, offset, REG_NAME("scratch.value.ptr"));
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        types_->CreateValueType(), scratch_ptr, offset, REG_NAME("scratch.value.ptr"));
     CreateStoreValueToValue(value, ptr);
   }
 
   llvm::Value* CreateReadValueFromScratchBuffer(uint32_t offset) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), scratch_ptr, offset, REG_NAME("scratch.value.ptr"));
+    return builder_->CreateConstInBoundsGEP1_32(
+        types_->CreateValueType(), scratch_ptr, offset, REG_NAME("scratch.value.ptr"));
   }
 
   // scope cleanup checker
@@ -1185,10 +1191,13 @@ class Compiler {
 
   llvm::Value* CreateGetScratchBufferPtrOfCoroutine() {
     auto* num_locals = CreateLoadNumLocalsFromCoroutine();
-    auto* num_locals_usize = builder_->CreateSExt(num_locals, types_->GetWordType(), REG_NAME("num_locals.usize"));
+    auto* num_locals_usize =
+        builder_->CreateSExt(num_locals, types_->GetWordType(), REG_NAME("num_locals.usize"));
     auto* base_offset = types_->GetWord(offsetof(Coroutine, locals));
-    auto* locals_in_bytes = builder_->CreateMul(types_->GetWord(sizeof(Value)), num_locals_usize, REG_NAME("co.locals.in_bytes"));
-    auto* offset = builder_->CreateAdd(base_offset, locals_in_bytes, REG_NAME("co.scratch_buffer.offset"));
+    auto* locals_in_bytes = builder_->CreateMul(
+        types_->GetWord(sizeof(Value)), num_locals_usize, REG_NAME("co.locals.in_bytes"));
+    auto* offset =
+        builder_->CreateAdd(base_offset, locals_in_bytes, REG_NAME("co.scratch_buffer.offset"));
     return builder_->CreateInBoundsPtrAdd(lctx_, offset, REG_NAME("co.scratch_buffer.ptr"));
   }
 

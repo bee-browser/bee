@@ -643,7 +643,9 @@ ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint1
   return PEER_VALUE(self->CreateGetLocalPtrFromCoroutine(index));
 }
 
-void compiler_peer_create_write_boolean_to_scratch_buffer(Compiler* self, uint32_t offset, BooleanIr* value) {
+void compiler_peer_create_write_boolean_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    BooleanIr* value) {
   self->CreateWriteBooleanToScratchBuffer(offset, LLVM_VALUE(value));
 }
 
@@ -651,7 +653,9 @@ BooleanIr* compiler_peer_create_read_boolean_from_scratch_buffer(Compiler* self,
   return PEER_BOOLEAN(self->CreateReadBooleanFromScratchBuffer(offset));
 }
 
-void compiler_peer_create_write_number_to_scratch_buffer(Compiler* self, uint32_t offset, NumberIr* value) {
+void compiler_peer_create_write_number_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    NumberIr* value) {
   self->CreateWriteNumberToScratchBuffer(offset, LLVM_VALUE(value));
 }
 
@@ -659,7 +663,9 @@ NumberIr* compiler_peer_create_read_number_from_scratch_buffer(Compiler* self, u
   return PEER_NUMBER(self->CreateReadNumberFromScratchBuffer(offset));
 }
 
-void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self, uint32_t offset, ValueIr* value) {
+void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    ValueIr* value) {
   self->CreateWriteValueToScratchBuffer(offset, LLVM_VALUE(value));
 }
 
