@@ -1217,17 +1217,6 @@ impl ValueIr {
 
 impl ArgvIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
-
-    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
-        unsafe {
-            bridge::helper_peer_get_value_name_or_as_operand(
-                self.0 as *mut bridge::ValueIr,
-                buf,
-                len,
-            );
-            std::ffi::CStr::from_ptr(buf)
-        }
-    }
 }
 
 impl CaptureIr {

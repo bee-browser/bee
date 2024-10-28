@@ -1138,7 +1138,7 @@ struct FunctionContext {
     coroutine: CoroutineContext,
 
     /// A stack to hold the number of arguments of a function call.
-    nargs_stack: Vec<(usize, u16)>,
+    nargs_stack: Vec<u16>,
 
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
@@ -1210,31 +1210,16 @@ impl FunctionContext {
 
     fn process_argument_list_head(&mut self, empty: bool, _spread: bool) {
         // TODO: spread
-
-        // The placeholder command will be replaced with `CompileCommand::Arguments` in in
-        // `process_call_expression()`.
-        let index = self.put_command(CompileCommand::PlaceHolder);
-        let nargs = if empty {
-            0
-        } else {
-            self.commands.push(CompileCommand::Swap);
-            self.commands.push(CompileCommand::Argument(0));
-            1
-        };
-        self.nargs_stack.push((index, nargs));
+        self.nargs_stack.push(if empty { 0 } else { 1 });
     }
 
     fn put_argument(&mut self, _spread: bool) {
         // TODO: spread
-        let tuple = self.nargs_stack.last_mut().unwrap();
-        self.commands.push(CompileCommand::Argument(tuple.1));
-        tuple.1 += 1;
+        *self.nargs_stack.last_mut().unwrap() += 1;
     }
 
     fn process_call_expression(&mut self) {
-        let (index, nargs) = self.nargs_stack.pop().unwrap();
-        debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
-        self.commands[index] = CompileCommand::Arguments(nargs);
+        let nargs = self.nargs_stack.pop().unwrap();
         self.commands.push(CompileCommand::Call(nargs));
     }
 
@@ -1619,8 +1604,6 @@ pub enum CompileCommand {
     ImmutableBinding,
     DeclareFunction,
     DeclareClosure,
-    Arguments(u16),
-    Argument(u16),
     Call(u16),
     PushScope(ScopeRef),
     PopScope(ScopeRef),

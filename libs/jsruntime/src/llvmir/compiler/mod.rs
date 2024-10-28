@@ -27,7 +27,6 @@ use super::bridge::ValueHolder;
 use super::Module;
 
 use control_flow::ControlFlowStack;
-use peer::ArgvIr;
 use peer::BasicBlock;
 use peer::BooleanIr;
 use peer::CaptureIr;
@@ -319,8 +318,6 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::ImmutableBinding => self.process_immutable_binding(),
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::DeclareClosure => self.process_declare_closure(),
-            CompileCommand::Arguments(nargs) => self.process_arguments(*nargs),
-            CompileCommand::Argument(index) => self.process_argument(*index),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
@@ -637,13 +634,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(backup);
     }
 
-    fn process_arguments(&mut self, nargs: u16) {
-        if nargs > 0 {
-            let argv = self.peer.create_argv(nargs);
-            self.operand_stack.push(Operand::Argv(argv));
-        }
-    }
-
     fn swap(&mut self) {
         logger::debug!(event = "swap");
         debug_assert!(self.operand_stack.len() > 1);
@@ -658,23 +648,15 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.duplicate(index);
     }
 
-    fn process_argument(&mut self, index: u16) {
-        let (operand, _) = self.dereference();
-        let argv = self.peek_argv();
-        let arg = self.peer.create_get_arg_in_argv(argv, index);
-        self.create_store_operand_to_value(operand, arg);
-    }
-
-    fn peek_argv(&self) -> ArgvIr {
-        match self.operand_stack.last().unwrap() {
-            Operand::Argv(value) => *value,
-            _ => unreachable!(),
-        }
-    }
-
     fn process_call(&mut self, argc: u16) {
         let argv = if argc > 0 {
-            self.pop_argv()
+            let argv = self.peer.create_argv(argc);
+            for i in (0..argc).rev() {
+                let (operand, _) = self.dereference();
+                let ptr = self.peer.create_get_arg_in_argv(argv, i);
+                self.create_store_operand_to_value(operand, ptr);
+            }
+            argv
         } else {
             self.peer.get_argv_nullptr()
         };
@@ -697,13 +679,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_check_status_for_exception(status, retv);
 
         self.operand_stack.push(Operand::Any(retv));
-    }
-
-    fn pop_argv(&mut self) -> ArgvIr {
-        match self.operand_stack.pop().unwrap() {
-            Operand::Argv(value) => value,
-            _ => unreachable!(),
-        }
     }
 
     fn create_load_closure_from_value_or_throw_type_error(&mut self, value: ValueIr) -> ClosureIr {
@@ -2477,7 +2452,6 @@ enum Operand {
     Promise(PromiseIr),
     Any(ValueIr),
     Reference(Symbol, Locator),
-    Argv(ArgvIr),
     Capture(CaptureIr),
 }
 
@@ -2500,7 +2474,6 @@ impl Dump for Operand {
             Self::Promise(value) => eprintln!("Promise({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
-            Self::Argv(value) => eprintln!("Argv({:?})", ir2cstr!(value)),
             Self::Capture(value) => eprintln!("Capture({:?})", ir2cstr!(value)),
         }
     }
