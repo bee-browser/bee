@@ -338,7 +338,8 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 // coroutine
 CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
     ClosureIr* closure,
-    uint16_t num_locals);
+    uint16_t num_locals,
+    uint16_t scratch_buffer_len);
 SwitchIr* compiler_peer_create_switch_for_coroutine(Compiler* self,
     BasicBlock* block,
     uint32_t num_states);

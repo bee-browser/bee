@@ -794,10 +794,13 @@ class Compiler {
 
   // coroutine
 
-  llvm::Value* CreateCoroutine(llvm::Value* closure, uint16_t num_locals) {
+  llvm::Value* CreateCoroutine(llvm::Value* closure,
+      uint16_t num_locals,
+      uint16_t scratch_buffer_len) {
     auto* func = types_->CreateRuntimeCreateCoroutine();
-    return builder_->CreateCall(
-        func, {gctx_, closure, builder_->getInt16(num_locals)}, REG_NAME("coroutine"));
+    return builder_->CreateCall(func,
+        {gctx_, closure, builder_->getInt16(num_locals), builder_->getInt16(scratch_buffer_len)},
+        REG_NAME("coroutine"));
   }
 
   llvm::SwitchInst* CreateSwitchForCoroutine(llvm::BasicBlock* block, uint32_t num_states) {

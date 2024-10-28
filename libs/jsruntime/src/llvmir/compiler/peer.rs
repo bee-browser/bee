@@ -970,9 +970,14 @@ impl Compiler {
 
     // coroutine
 
-    pub fn create_coroutine(&self, closure: ClosureIr, num_locals: u16) -> CoroutineIr {
+    pub fn create_coroutine(
+        &self,
+        closure: ClosureIr,
+        num_locals: u16,
+        scratch_buffer_len: u16,
+    ) -> CoroutineIr {
         coroutine_ir! {
-            bridge::compiler_peer_create_coroutine(self.0, closure.0, num_locals)
+            bridge::compiler_peer_create_coroutine(self.0, closure.0, num_locals, scratch_buffer_len)
         }
     }
 

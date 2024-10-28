@@ -51,6 +51,8 @@ functions:
         type: '&mut Closure'
       - name: num_locals
         type: u16
+      - name: scratch_buffer_len
+        type: u16
     ret: '&mut Coroutine'
   - name: register_promise
     args:

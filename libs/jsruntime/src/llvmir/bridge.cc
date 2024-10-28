@@ -610,8 +610,10 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index) {
 
 CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
     ClosureIr* closure,
-    uint16_t num_locals) {
-  return PEER_COROUTINE(self->CreateCoroutine(LLVM_VALUE(closure), num_locals));
+    uint16_t num_locals,
+    uint16_t scratch_buffer_len) {
+  return PEER_COROUTINE(
+      self->CreateCoroutine(LLVM_VALUE(closure), num_locals, scratch_buffer_len));
 }
 
 SwitchIr* compiler_peer_create_switch_for_coroutine(Compiler* self,

@@ -48,14 +48,19 @@ impl<X> Runtime<X> {
         logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(&self.function_registry, &program.scope_tree);
+        let mut compiler = Compiler::new(&mut self.function_registry, &program.scope_tree);
         if self.pref.enable_scope_cleanup_checker {
             compiler.enable_scope_cleanup_checker();
         }
         compiler.start_compile(self.pref.enable_llvmir_labels);
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
-        for func in program.functions.iter() {
+        // Compile native functions in reverse order in order to compile a coroutine function
+        // before its ramp function so that the size of the scratch buffer for the coroutine
+        // function is available when the ramp function is compiled.
+        //
+        // TODO: We should manage dependencies between functions in a more general way.
+        for func in program.functions.iter().rev() {
             compiler.start_function(func.symbol, func.id);
             for command in func.commands.iter() {
                 compiler.process_command(command);
@@ -73,7 +78,7 @@ struct Compiler<'r, 's> {
 
     /// The function registry of the JavaScript program to compile.
     #[allow(unused)]
-    function_registry: &'r FunctionRegistry,
+    function_registry: &'r mut FunctionRegistry,
 
     /// The scope tree of the JavaScript program to compile.
     scope_tree: &'s ScopeTree,
@@ -98,6 +103,8 @@ struct Compiler<'r, 's> {
     // The following values must be reset in the end of compilation for each function.
     locals: Vec<ValueIr>,
     captures: IndexMap<Locator, CaptureIr>,
+
+    max_scratch_buffer_len: u32,
 
     dump_buffer: Option<Vec<std::ffi::c_char>>,
 
@@ -150,7 +157,7 @@ macro_rules! dump_enabled {
 }
 
 impl<'r, 's> Compiler<'r, 's> {
-    pub fn new(function_registry: &'r FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
+    pub fn new(function_registry: &'r mut FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
         const DUMP_BUFFER_SIZE: usize = 512;
         Self {
             peer: Default::default(),
@@ -162,6 +169,7 @@ impl<'r, 's> Compiler<'r, 's> {
             pending_labels: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
+            max_scratch_buffer_len: 0,
             dump_buffer: if dump_enabled!() {
                 Some(Vec::with_capacity(DUMP_BUFFER_SIZE))
             } else {
@@ -278,6 +286,13 @@ impl<'r, 's> Compiler<'r, 's> {
 
         debug_assert!(self.control_flow_stack.is_empty());
         self.control_flow_stack.clear();
+
+        if func_id.is_coroutine() {
+            self.function_registry
+                .get_native_mut(func_id)
+                .scratch_buffer_len = self.max_scratch_buffer_len;
+        }
+        self.max_scratch_buffer_len = 0;
     }
 
     fn process_command(&mut self, command: &CompileCommand) {
@@ -293,7 +308,9 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Closure(prologue, num_captures) => {
                 self.process_closure(*prologue, *num_captures)
             }
-            CompileCommand::Coroutine(num_locals) => self.process_coroutine(*num_locals),
+            CompileCommand::Coroutine(func_id, num_locals) => {
+                self.process_coroutine(*func_id, *num_locals)
+            }
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Reference(symbol, locator) => self.process_reference(*symbol, *locator),
             CompileCommand::Exception => self.process_exception(),
@@ -477,9 +494,16 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn process_coroutine(&mut self, num_locals: u16) {
+    fn process_coroutine(&mut self, func_id: FunctionId, num_locals: u16) {
+        let scrach_buffer_len = self
+            .function_registry
+            .get_native(func_id)
+            .scratch_buffer_len;
+        debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();
-        let coroutine = self.peer.create_coroutine(closure, num_locals);
+        let coroutine = self
+            .peer
+            .create_coroutine(closure, num_locals, scrach_buffer_len as u16);
         self.operand_stack.push(Operand::Coroutine(coroutine));
     }
 
@@ -2311,6 +2335,10 @@ impl<'r, 's> Compiler<'r, 's> {
                 _ => unreachable!("{operand:?}"),
             }
         }
+
+        // TODO: Should return a compile error.
+        assert!(offset <= u16::MAX as u32);
+        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset);
     }
 
     fn load_operands_from_scratch_buffer(&mut self) {

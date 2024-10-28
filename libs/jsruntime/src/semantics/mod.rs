@@ -76,7 +76,7 @@ impl Program {
 /// A type representing a JavaScript function after the semantic analysis.
 #[derive(Default)]
 pub struct FunctionRecipe {
-    /// TODO: remove?
+    // TODO: remove?
     pub symbol: Symbol,
 
     /// The function ID of the function.
@@ -653,9 +653,11 @@ impl<'r> Analyzer<'r> {
         // be held across suspend points.
         //
         // TODO: Some of the local variables can be placed on the stack.
-        let num_locals = self.context_stack.last().unwrap().num_locals;
+        let context = self.context_stack.last().unwrap();
+        let func_id = self.functions[context.func_index].id;
+        let num_locals = context.num_locals;
         self.handle_function_expression(false);
-        self.put_command(CompileCommand::Coroutine(num_locals));
+        self.put_command(CompileCommand::Coroutine(func_id, num_locals));
         self.put_command(CompileCommand::Promise);
         self.put_command(CompileCommand::Duplicate(0));
         self.put_command(CompileCommand::Resume);
@@ -1607,7 +1609,7 @@ pub enum CompileCommand {
     String(Vec<u16>),
     Function(FunctionId),
     Closure(bool, u16),
-    Coroutine(u16),
+    Coroutine(FunctionId, u16),
     Promise,
     Reference(Symbol, Locator),
     Exception,
@@ -2058,7 +2060,7 @@ mod tests {
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Function(program.functions[1].id),
                     CompileCommand::Closure(false, 0),
-                    CompileCommand::Coroutine(0),
+                    CompileCommand::Coroutine(program.functions[1].id, 0),
                     CompileCommand::Promise,
                     CompileCommand::Duplicate(0),
                     CompileCommand::Resume,

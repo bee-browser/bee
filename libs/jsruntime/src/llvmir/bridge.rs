@@ -436,6 +436,7 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     context: usize,
     closure: *mut Closure,
     num_locals: u16,
+    scratch_buffer_len: u16,
 ) -> *mut Coroutine {
     const BASE_LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
@@ -444,12 +445,14 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
         )
     };
 
+    // num_locals may be 0.
     let locals_layout = std::alloc::Layout::array::<Value>(num_locals as usize).unwrap();
     let (layout, _) = BASE_LAYOUT.extend(locals_layout).unwrap();
 
-    // TODO: compute the size of the scratch buffer.
-    // TODO: compile the coroutine before the ramp function.
-    let scratch_buffer_layout = std::alloc::Layout::array::<f64>(32).unwrap();
+    // scratch_buffer_len may be 0.
+    debug_assert_eq!(scratch_buffer_len as usize % size_of::<u64>(), 0);
+    let n = scratch_buffer_len as usize / size_of::<u64>();
+    let scratch_buffer_layout = std::alloc::Layout::array::<u64>(n).unwrap();
     let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
     let runtime = into_runtime!(context, X);
@@ -463,6 +466,7 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     (*coroutine).state = 0;
     (*coroutine).num_locals = num_locals;
     (*coroutine).scope_id = 0;
+    (*coroutine).scratch_buffer_len = scratch_buffer_len;
     // `(*coroutine).locals[]` will be initialized in the coroutine.
 
     coroutine

@@ -83,7 +83,9 @@ impl FunctionRegistry {
     pub fn create_native_function(&mut self, coroutine: bool) -> FunctionId {
         let index = self.functions.len();
         assert!(index <= FunctionId::MAX_INDEX);
-        self.functions.push(Function::Native(NativeFunction {}));
+        self.functions.push(Function::Native(NativeFunction {
+            scratch_buffer_len: 0,
+        }));
         FunctionId::native(index, coroutine)
     }
 
@@ -92,6 +94,22 @@ impl FunctionRegistry {
         assert!(index <= FunctionId::MAX_INDEX);
         self.functions.push(Function::Host(HostFunction { symbol }));
         FunctionId::host(index)
+    }
+
+    pub fn get_native(&self, func_id: FunctionId) -> &NativeFunction {
+        debug_assert!(func_id.is_native());
+        match self.functions.get(func_id.index()) {
+            Some(Function::Native(func)) => func,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn get_native_mut(&mut self, func_id: FunctionId) -> &mut NativeFunction {
+        debug_assert!(func_id.is_native());
+        match self.functions.get_mut(func_id.index()) {
+            Some(Function::Native(func)) => func,
+            _ => unreachable!(),
+        }
     }
 
     pub fn enumerate_host_function(&self) -> impl Iterator<Item = (FunctionId, &HostFunction)> {
@@ -115,6 +133,7 @@ enum Function {
 
 pub struct NativeFunction {
     // [[ECMAScriptCode]]
+    pub scratch_buffer_len: u32,
 }
 
 pub struct HostFunction {
