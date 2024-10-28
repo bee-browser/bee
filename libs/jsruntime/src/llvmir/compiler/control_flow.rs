@@ -184,22 +184,6 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn push_branch_flow(&mut self, before_block: BasicBlock, after_block: BasicBlock) {
-        debug_assert_ne!(before_block, BasicBlock::NONE);
-        debug_assert_ne!(after_block, BasicBlock::NONE);
-        self.stack.push(ControlFlow::Branch(BranchFlow {
-            before_block,
-            after_block,
-        }));
-    }
-
-    pub fn pop_branch_flow(&mut self) -> BranchFlow {
-        match self.stack.pop() {
-            Some(ControlFlow::Branch(flow)) => flow,
-            _ => unreachable!(),
-        }
-    }
-
     pub fn push_then_else_flow(&mut self, then_block: BasicBlock, else_block: BasicBlock) {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
@@ -341,18 +325,32 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn push_case_banch_flow(&mut self, before_block: BasicBlock, after_block: BasicBlock) {
-        debug_assert_ne!(before_block, BasicBlock::NONE);
-        debug_assert_ne!(after_block, BasicBlock::NONE);
-        self.stack.push(ControlFlow::CaseBranch(CaseBranchFlow {
-            before_block,
-            after_block,
+    pub fn push_case_flow(&mut self, next_case_block: BasicBlock, clause_start_block: BasicBlock) {
+        debug_assert_ne!(next_case_block, BasicBlock::NONE);
+        debug_assert_ne!(clause_start_block, BasicBlock::NONE);
+        self.stack.push(ControlFlow::Case(CaseFlow {
+            next_case_block,
+            clause_start_block,
+            clause_end_block: BasicBlock::NONE,
+            clause_has_statement: false,
         }));
     }
 
-    pub fn pop_case_branch_flow(&mut self) -> CaseBranchFlow {
+    pub fn pop_case_flow(&mut self) -> CaseFlow {
         match self.stack.pop() {
-            Some(ControlFlow::CaseBranch(flow)) => flow,
+            Some(ControlFlow::Case(flow)) => flow,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn update_case_flow(&mut self, clause_end_block: BasicBlock, clause_has_statement: bool) -> BasicBlock {
+        debug_assert_ne!(clause_end_block, BasicBlock::NONE);
+        match self.stack.last_mut() {
+            Some(ControlFlow::Case(flow)) => {
+                flow.clause_end_block = clause_end_block;
+                flow.clause_has_statement = clause_has_statement;
+                flow.next_case_block
+            }
             _ => unreachable!(),
         }
     }
@@ -522,11 +520,6 @@ impl ControlFlowStack {
                     bb!(flow, then_block);
                     bb!(flow, else_block);
                 }
-                ControlFlow::Branch(flow) => {
-                    eprintln!("branch:");
-                    bb!(flow, before_block);
-                    bb!(flow, after_block);
-                }
                 ControlFlow::LoopInit(flow) => {
                     eprintln!("loop-init:");
                     bb!(flow, branch_block);
@@ -555,10 +548,17 @@ impl ControlFlowStack {
                     }
                     bb!(flow, end_block);
                 }
-                ControlFlow::CaseBranch(flow) => {
-                    eprintln!("case-branch:");
-                    bb!(flow, before_block);
-                    bb!(flow, after_block);
+                ControlFlow::Case(flow) => {
+                    if flow.clause_has_statement {
+                        eprintln!("case: has-statement");
+                    } else {
+                        eprintln!("case:");
+                    }
+                    bb!(flow, next_case_block);
+                    bb!(flow, clause_start_block);
+                    if flow.clause_end_block != BasicBlock::NONE {
+                        bb!(flow, clause_end_block);
+                    }
                 }
                 ControlFlow::Exception(flow) => {
                     eprint!("exception:");
@@ -622,14 +622,13 @@ enum ControlFlow {
     Function(FunctionFlow),
     Coroutine(CoroutineFlow),
     Scope(ScopeFlow),
-    Branch(BranchFlow),
     ThenElse(ThenElseFlow),
     LoopInit(LoopInitFlow),
     LoopTest(LoopTestFlow),
     LoopNext(LoopNextFlow),
     LoopBody(LoopBodyFlow),
     Switch(SwitchFlow),
-    CaseBranch(CaseBranchFlow),
+    Case(CaseFlow),
     Exception(ExceptionFlow),
 }
 
@@ -675,11 +674,6 @@ pub struct ScopeFlow {
     outer_index: usize,
 }
 
-pub struct BranchFlow {
-    pub before_block: BasicBlock,
-    pub after_block: BasicBlock,
-}
-
 pub struct ThenElseFlow {
     pub then_block: BasicBlock,
     pub else_block: BasicBlock,
@@ -712,16 +706,11 @@ pub struct SwitchFlow {
     outer_index: usize,
 }
 
-pub struct CaseBranchFlow {
-    /// The last basic block in the statement lists of a case/default clause before the branch.
-    ///
-    /// This will be connected to `after_block` if it's not terminated and there is a subsequent
-    /// case/default clause in the current `SelectFlow`.  If it's not terminated and there is no
-    /// subsequent case/default clause, it will be connected to `SelectFlow::end_block`.
-    pub before_block: BasicBlock,
-
-    /// The first basic block in the statement lists of a case/default clause after the branch.
-    pub after_block: BasicBlock,
+pub struct CaseFlow {
+    pub next_case_block: BasicBlock,
+    pub clause_start_block: BasicBlock,
+    pub clause_end_block: BasicBlock,
+    pub clause_has_statement: bool,
 }
 
 pub struct ExceptionFlow {

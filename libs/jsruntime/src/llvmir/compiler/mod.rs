@@ -350,7 +350,6 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::IfThen => self.process_if_then(),
-            CompileCommand::Then => self.process_then(),
             CompileCommand::Else => self.process_else(),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
             CompileCommand::IfStatement => self.process_if_statement(),
@@ -363,10 +362,9 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
             CompileCommand::CaseBlock(id, num_cases) => self.process_case_block(*id, *num_cases),
+            CompileCommand::Case => self.process_case(),
+            CompileCommand::Default => self.process_default(),
             CompileCommand::CaseClause(has_statement) => self.process_case_clause(*has_statement),
-            CompileCommand::DefaultClause(has_statement) => {
-                self.process_default_clause(*has_statement)
-            }
             CompileCommand::Switch(id, num_cases, default_index) => {
                 self.process_switch(*id, *num_cases, *default_index)
             }
@@ -1623,10 +1621,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack.push_then_else_flow(then_block, else_block);
     }
 
-    fn process_then(&mut self) {
-        self.branch();
-    }
-
     fn process_else(&mut self) {
         let then_block = self.peer.get_basic_block();
         let else_block = self.control_flow_stack.update_then_block(then_block);
@@ -1890,7 +1884,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         push_bb_name!(self, "switch", id);
 
-        let start_block = self.create_basic_block("start");
+        let case_block = self.create_basic_block("case");
         let ctrl_block = self.create_basic_block("ctrl");
         let set_normal_block = self.create_basic_block("ctrl.set_normal");
         let end_block = self.create_basic_block("end");
@@ -1900,7 +1894,7 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.pending_labels.is_empty());
         let exit_id = self.control_flow_stack.exit_id();
 
-        self.peer.create_br(start_block);
+        self.peer.create_br(case_block);
 
         self.peer.set_basic_block(ctrl_block);
         let is_break = self.peer.create_is_flow_selector_break(exit_id.depth());
@@ -1911,62 +1905,55 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_set_flow_selector_normal();
         self.peer.create_br(end_block);
 
-        self.peer.set_basic_block(start_block);
+        self.peer.set_basic_block(case_block);
     }
 
-    fn process_case_clause(&mut self, _has_statement: bool) {
-        let branch = self.control_flow_stack.pop_branch_flow();
-
-        let test_block = branch.before_block;
-        let then_block = branch.after_block;
-        let else_block = self.create_basic_block("else");
-        let end_block = self.peer.get_basic_block();
-
-        let cond = self.pop_boolean();
-
-        self.peer.set_basic_block(test_block);
-        self.peer.create_cond_br(cond, then_block, else_block);
-        self.peer.set_basic_block(else_block);
-
-        self.control_flow_stack
-            .push_case_banch_flow(end_block, then_block);
+    fn process_case(&mut self) {
+        let clause_start_block = self.create_basic_block("case.clause");
+        let next_case_block = self.create_basic_block("case");
+        let cond_value = self.pop_boolean();
+        self.peer.create_cond_br(cond_value, clause_start_block, next_case_block);
+        self.peer.set_basic_block(clause_start_block);
+        self.control_flow_stack.push_case_flow(next_case_block, clause_start_block);
     }
 
-    fn process_default_clause(&mut self, _has_statement: bool) {
-        let branch = self.control_flow_stack.pop_branch_flow();
+    fn process_default(&mut self) {
+        let next_case_block = self.peer.get_basic_block();
+        let clause_start_block = self.create_basic_block("default.clause");
+        self.peer.set_basic_block(clause_start_block);
+        self.control_flow_stack.push_case_flow(next_case_block, clause_start_block);
+        self.control_flow_stack.set_default_case_block(clause_start_block)
+    }
 
-        let test_block = branch.before_block;
-        let then_block = branch.after_block;
-        let end_block = self.peer.get_basic_block();
-
-        self.peer.set_basic_block(test_block);
-
-        self.control_flow_stack
-            .push_case_banch_flow(end_block, then_block);
-        self.control_flow_stack.set_default_case_block(then_block);
+    fn process_case_clause(&mut self, has_statement: bool) {
+        let clause_end_block = self.peer.get_basic_block();
+        let next_case_block = self.control_flow_stack.update_case_flow(clause_end_block, has_statement);
+        self.peer.set_basic_block(next_case_block);
     }
 
     fn process_switch(&mut self, _id: u16, num_cases: u16, _default_index: Option<u16>) {
         pop_bb_name!(self);
 
-        let case_block = self.peer.get_basic_block();
+        let last_case_block = self.peer.get_basic_block();
 
         // Connect the last basic blocks of each case/default clause to the first basic block of
         // the statement lists of the next case/default clause if it's not terminated.
         //
         // The last basic blocks has been stored in the control flow stack in reverse order.
         let mut fall_through_block = self.control_flow_stack.switch_flow().end_block;
+        debug_assert_ne!(fall_through_block, BasicBlock::NONE);
         for _ in 0..num_cases {
-            let case_branch = self.control_flow_stack.pop_case_branch_flow();
+            let flow = self.control_flow_stack.pop_case_flow();
             let terminated = self
                 .peer
-                .is_basic_block_terminated(case_branch.before_block);
+                .is_basic_block_terminated(flow.clause_end_block);
             if !terminated {
-                self.peer.set_basic_block(case_branch.before_block);
+                self.peer.set_basic_block(flow.clause_end_block);
                 self.peer.create_br(fall_through_block);
                 self.peer.move_basic_block_after(fall_through_block);
             }
-            fall_through_block = case_branch.after_block;
+            fall_through_block = flow.clause_start_block;
+            debug_assert_ne!(fall_through_block, BasicBlock::NONE);
         }
 
         self.control_flow_stack.pop_exit_target();
@@ -1974,7 +1961,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // Create an unconditional jump to the statement of the default clause if it exists.
         // Otherwise, jump to the end block.
-        self.peer.set_basic_block(case_block);
+        self.peer.set_basic_block(last_case_block);
         self.peer
             .create_br(if switch.default_block != BasicBlock::NONE {
                 switch.default_block
@@ -1984,18 +1971,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.move_basic_block_after(switch.end_block);
         self.peer.set_basic_block(switch.end_block);
-    }
-
-    fn branch(&mut self) {
-        let before_block = self.peer.get_basic_block();
-
-        // Push a newly created block.
-        // This will be used in ConditionalExpression() in order to build a branch instruction.
-        let after_block = self.create_basic_block("block");
-        self.peer.set_basic_block(after_block);
-
-        self.control_flow_stack
-            .push_branch_flow(before_block, after_block);
     }
 
     fn process_try(&mut self) {

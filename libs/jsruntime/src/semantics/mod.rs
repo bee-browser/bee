@@ -1426,7 +1426,7 @@ impl FunctionContext {
         // Make a duplicate of the `switchValue` for the evaluation on the case selector.
         self.put_command(CompileCommand::Duplicate(1));
         self.put_command(CompileCommand::StrictEquality);
-        self.put_command(CompileCommand::Then);
+        self.put_command(CompileCommand::Case);
     }
 
     fn process_case_clause(&mut self, has_statement: bool) {
@@ -1435,12 +1435,11 @@ impl FunctionContext {
     }
 
     fn process_default_selector(&mut self) {
-        // TODO: refactoring
-        self.put_command(CompileCommand::Then);
+        self.put_command(CompileCommand::Default);
     }
 
     fn process_default_clause(&mut self, has_statement: bool) {
-        self.put_command(CompileCommand::DefaultClause(has_statement));
+        self.put_command(CompileCommand::CaseClause(has_statement));
         let context = self.switch_stack.last_mut().unwrap();
         context.default_index = Some(context.num_cases);
         context.num_cases += 1;
@@ -1703,7 +1702,6 @@ pub enum CompileCommand {
     // conditional
     Truthy,
     IfThen,
-    Then,
     Else,
     IfElseStatement,
     IfStatement,
@@ -1720,8 +1718,9 @@ pub enum CompileCommand {
 
     // switch
     CaseBlock(u16, u16),
+    Case,
+    Default,
     CaseClause(bool),
-    DefaultClause(bool),
     Switch(u16, u16, Option<u16>),
 
     // label
