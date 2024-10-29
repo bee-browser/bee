@@ -474,24 +474,17 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
 
 unsafe extern "C" fn runtime_register_promise<X>(context: usize, coroutine: *mut Coroutine) -> u32 {
     let runtime = into_runtime!(context, X);
-    runtime.tasklet_system.register_promise(coroutine).into()
+    runtime.register_promise(coroutine).into()
 }
 
 unsafe extern "C" fn runtime_resume<X>(context: usize, promise: u32) {
     let runtime = into_runtime!(context, X);
-    runtime.tasklet_system.process_promise(
-        context as *mut std::ffi::c_void,
-        promise.into(),
-        &Value::NONE,
-        &Value::NONE,
-    );
+    runtime.process_promise(promise.into(), &Value::NONE, &Value::NONE);
 }
 
 unsafe extern "C" fn runtime_await_promise<X>(context: usize, promise: u32, awaiting: u32) {
     let runtime = into_runtime!(context, X);
-    runtime
-        .tasklet_system
-        .await_promise(promise.into(), awaiting.into());
+    runtime.await_promise(promise.into(), awaiting.into());
 }
 
 unsafe extern "C" fn runtime_emit_promise_resolved<X>(
@@ -501,9 +494,7 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
 ) {
     let runtime = into_runtime!(context, X);
     let cloned = *result;
-    runtime
-        .tasklet_system
-        .emit_promise_resolved(promise.into(), cloned);
+    runtime.emit_promise_resolved(promise.into(), cloned);
 }
 
 unsafe extern "C" fn runtime_assert(

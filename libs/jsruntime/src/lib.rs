@@ -124,11 +124,6 @@ impl<X> Runtime<X> {
         ret.into_result(status)
     }
 
-    pub fn run(&mut self) {
-        let runtime = self as *mut Runtime<X> as *mut std::ffi::c_void; // TODO
-        self.tasklet_system.run(runtime);
-    }
-
     fn allocator(&self) -> &bumpalo::Bump {
         &self.allocator
     }
