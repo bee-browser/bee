@@ -1027,7 +1027,6 @@ dependencies = [
  "clap",
  "jsruntime",
  "logging",
- "tokio",
 ]
 
 [[package]]
