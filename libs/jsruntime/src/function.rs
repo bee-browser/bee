@@ -11,7 +11,7 @@ impl FunctionId {
     const VALUE_MASK: u32 = !(Self::HOST_BIT | Self::COROUTINE_BIT);
     const MAX_INDEX: usize = Self::VALUE_MASK as usize;
 
-    pub const MAIN: Self = Self::native(0, false); // TODO: modules including await expression.
+    pub const MAIN: Self = Self::native(0, false);
 
     pub const fn is_native(&self) -> bool {
         (self.0 & Self::HOST_BIT) == 0

@@ -76,7 +76,6 @@ struct Compiler<'r, 's> {
     peer: peer::Compiler,
 
     /// The function registry of the JavaScript program to compile.
-    #[allow(unused)]
     function_registry: &'r mut FunctionRegistry,
 
     /// The scope tree of the JavaScript program to compile.
