@@ -665,6 +665,26 @@ NumberIr* compiler_peer_create_read_number_from_scratch_buffer(Compiler* self, u
   return PEER_NUMBER(self->CreateReadNumberFromScratchBuffer(offset));
 }
 
+void compiler_peer_create_write_closure_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    ClosureIr* value) {
+  self->CreateWriteClosureToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+ClosureIr* compiler_peer_create_read_closure_from_scratch_buffer(Compiler* self, uint32_t offset) {
+  return PEER_CLOSURE(self->CreateReadClosureFromScratchBuffer(offset));
+}
+
+void compiler_peer_create_write_promise_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    PromiseIr* value) {
+  self->CreateWritePromiseToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+PromiseIr* compiler_peer_create_read_promise_from_scratch_buffer(Compiler* self, uint32_t offset) {
+  return PEER_PROMISE(self->CreateReadPromiseFromScratchBuffer(offset));
+}
+
 void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self,
     uint32_t offset,
     ValueIr* value) {

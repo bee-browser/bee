@@ -1041,6 +1041,30 @@ impl Compiler {
         }
     }
 
+    pub fn create_write_closure_to_scratch_buffer(&self, offset: u32, value: ClosureIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_closure_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_closure_from_scratch_buffer(&self, offset: u32) -> ClosureIr {
+        closure_ir! {
+            bridge::compiler_peer_create_read_closure_from_scratch_buffer(self.0, offset)
+        }
+    }
+
+    pub fn create_write_promise_to_scratch_buffer(&self, offset: u32, value: PromiseIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_promise_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_promise_from_scratch_buffer(&self, offset: u32) -> PromiseIr {
+        promise_ir! {
+            bridge::compiler_peer_create_read_promise_from_scratch_buffer(self.0, offset)
+        }
+    }
+
     pub fn create_write_value_to_scratch_buffer(&self, offset: u32, value: ValueIr) {
         unsafe {
             bridge::compiler_peer_create_write_value_to_scratch_buffer(self.0, offset, value.0);

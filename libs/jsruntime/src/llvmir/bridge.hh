@@ -359,6 +359,14 @@ void compiler_peer_create_write_number_to_scratch_buffer(Compiler* self,
     uint32_t offset,
     NumberIr* value);
 NumberIr* compiler_peer_create_read_number_from_scratch_buffer(Compiler* self, uint32_t offset);
+void compiler_peer_create_write_closure_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    ClosureIr* value);
+ClosureIr* compiler_peer_create_read_closure_from_scratch_buffer(Compiler* self, uint32_t offset);
+void compiler_peer_create_write_promise_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    PromiseIr* value);
+PromiseIr* compiler_peer_create_read_promise_from_scratch_buffer(Compiler* self, uint32_t offset);
 void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self,
     uint32_t offset,
     ValueIr* value);

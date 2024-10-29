@@ -861,6 +861,34 @@ class Compiler {
     return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("scratch.number"));
   }
 
+  void CreateWriteClosureToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.closure.ptr"));
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateReadClosureFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.closure.ptr"));
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("scratch.closure"));
+  }
+
+  void CreateWritePromiseToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.promise.ptr"));
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateReadPromiseFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateConstInBoundsGEP1_32(
+        builder_->getInt64Ty(), scratch_ptr, offset, REG_NAME("scratch.promise.ptr"));
+    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("scratch.promise"));
+  }
+
   void CreateWriteValueToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
     auto* ptr = builder_->CreateConstInBoundsGEP1_32(

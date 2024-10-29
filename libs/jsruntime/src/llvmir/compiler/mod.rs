@@ -2301,6 +2301,17 @@ impl<'r, 's> Compiler<'r, 's> {
                         .create_write_number_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
+                Operand::Closure(value) => {
+                    // TODO(issue#237): GcCellRef
+                    self.peer
+                        .create_write_closure_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Promise(value) => {
+                    self.peer
+                        .create_write_promise_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
                 Operand::Any(value) => {
                     self.peer
                         .create_write_value_to_scratch_buffer(offset, *value);
@@ -2328,6 +2339,15 @@ impl<'r, 's> Compiler<'r, 's> {
                 }
                 Operand::Number(ref mut value) => {
                     *value = self.peer.create_read_number_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Closure(ref mut value) => {
+                    // TODO(issue#237): GcCellRef
+                    *value = self.peer.create_read_closure_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Promise(ref mut value) => {
+                    *value = self.peer.create_read_promise_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Any(ref mut value) => {
