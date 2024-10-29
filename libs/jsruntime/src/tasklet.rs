@@ -77,7 +77,17 @@ impl System {
         debug_assert!(self.promises.contains_key(&awaiting));
         let promise = self.promises.get_mut(&promise_id).unwrap();
         debug_assert!(promise.awaiting.is_none());
-        promise.awaiting = Some(awaiting);
+        match promise.state {
+            PromiseState::Pending => promise.awaiting = Some(awaiting),
+            PromiseState::Resolved(result) => {
+                self.emit_promise_resolved(awaiting, result);
+                self.promises.remove(&promise_id);
+            }
+            PromiseState::Rejected(error) => {
+                self.emit_promise_rejected(awaiting, error);
+                self.promises.remove(&promise_id);
+            }
+        }
     }
 
     pub fn emit_promise_resolved(&mut self, promise_id: PromiseId, result: Value) {
@@ -100,24 +110,35 @@ impl System {
         error: &Value,
     ) {
         crate::logger::debug!(event = "process_promise", ?promise_id, ?result, ?error);
-        debug_assert!(self.promises.contains_key(&promise_id));
-        let promise = self.promises.get(&promise_id).unwrap();
-        match Coroutine::resume(gctx, promise.coroutine, promise_id, result, error) {
-            CoroutineStatus::Done(result) => {
-                if let Some(promise_id) = promise.awaiting {
-                    self.emit_promise_resolved(promise_id, result);
-                }
-                self.promises.remove(&promise_id);
-            }
-            CoroutineStatus::Error(error) => {
-                if let Some(promise_id) = promise.awaiting {
-                    self.emit_promise_rejected(promise_id, error);
-                } else {
-                    crate::logger::warn!(?promise_id, "unhandled promise");
-                }
-                self.promises.remove(&promise_id);
-            }
+        let coroutine = self.promises.get(&promise_id).unwrap().coroutine;
+        match Coroutine::resume(gctx, coroutine, promise_id, result, error) {
+            CoroutineStatus::Done(result) => self.resolve_promise(promise_id, result),
+            CoroutineStatus::Error(error) => self.reject_promise(promise_id, error),
             CoroutineStatus::Suspend => (),
+        }
+    }
+
+    fn resolve_promise(&mut self, promise_id: PromiseId, result: Value) {
+        crate::logger::debug!(event = "resolve_promise", ?promise_id, ?result);
+        let promise = self.promises.get_mut(&promise_id).unwrap();
+        debug_assert!(matches!(promise.state, PromiseState::Pending));
+        if let Some(awaiting) = promise.awaiting {
+            self.promises.remove(&promise_id);
+            self.emit_promise_resolved(awaiting, result);
+        } else {
+            promise.state = PromiseState::Resolved(result);
+        }
+    }
+
+    fn reject_promise(&mut self, promise_id: PromiseId, error: Value) {
+        crate::logger::debug!(event = "reject_promise", ?promise_id, ?error);
+        let promise = self.promises.get_mut(&promise_id).unwrap();
+        debug_assert!(matches!(promise.state, PromiseState::Pending));
+        if let Some(awaiting) = promise.awaiting {
+            self.promises.remove(&promise_id);
+            self.emit_promise_rejected(awaiting, error);
+        } else {
+            promise.state = PromiseState::Rejected(error);
         }
     }
 }
@@ -143,6 +164,7 @@ struct Promise {
     // TODO(issue#237): GcCellRef
     coroutine: *mut Coroutine,
     awaiting: Option<PromiseId>,
+    state: PromiseState,
 }
 
 impl Promise {
@@ -150,6 +172,13 @@ impl Promise {
         Self {
             coroutine,
             awaiting: None,
+            state: PromiseState::Pending,
         }
     }
+}
+
+enum PromiseState {
+    Pending,
+    Resolved(Value),
+    Rejected(Value),
 }
