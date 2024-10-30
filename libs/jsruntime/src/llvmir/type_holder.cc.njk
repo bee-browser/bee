@@ -89,15 +89,15 @@ llvm::FunctionType* TypeHolder::CreateLambdaType() {
         // status code
         builder_.getInt32Ty(),
         {
-            // gctx (pointer to the global context)
+            // runtime (pointer to the runtime)
             builder_.getPtrTy(),
-            // lctx (pointer to the local context)
+            // context (pointer to a contextual data)
             builder_.getPtrTy(),
             // argc
             GetWordType(),
             // argv (pointer to a list of values)
             builder_.getPtrTy(),
-            // ret (pointer to a return value)
+            // retv (pointer to a return value)
             builder_.getPtrTy(),
         },
         false);

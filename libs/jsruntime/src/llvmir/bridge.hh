@@ -53,12 +53,12 @@ struct Value {
 
 static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 
-// The actual type of `lctx` varies depending on usage of the lambda function:
+// The actual type of `context` varies depending on usage of the lambda function:
 //
 //   Regular functions: Capture**
 //   Coroutine functions: Coroutine*
 //
-typedef Status (*Lambda)(void* gctx, void* lctx, size_t argc, Value* argv, Value* ret);
+typedef Status (*Lambda)(void* runtime, void* context, size_t argc, Value* argv, Value* ret);
 
 // TODO(issue#237): GcCell
 struct Capture {

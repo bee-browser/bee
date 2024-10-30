@@ -4,12 +4,13 @@
 #![allow(non_upper_case_globals)]
 
 use crate::tasklet::PromiseId;
+use crate::VoidPtr;
 
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
 
 macro_rules! into_runtime {
-    ($context:expr, $extension:ident) => {
-        &mut *($context as *mut crate::Runtime<$extension>)
+    ($runtime:expr, $extension:ident) => {
+        &mut *($runtime as *mut crate::Runtime<$extension>)
     };
 }
 
@@ -189,7 +190,7 @@ where
 
 impl Coroutine {
     pub fn resume(
-        gctx: *mut std::ffi::c_void,
+        runtime: VoidPtr,
         coroutine: *mut Coroutine,
         promise_id: PromiseId,
         result: &Value,
@@ -200,8 +201,8 @@ impl Coroutine {
             let mut args = [promise_id.into(), *result, *error];
             let mut retv = Value::NONE;
             let status = lambda(
-                gctx,
-                coroutine as *mut std::ffi::c_void,
+                runtime,
+                coroutine as VoidPtr,
                 args.len(),
                 args.as_mut_ptr(),
                 &mut retv as *mut Value,
@@ -245,7 +246,7 @@ pub fn runtime_bridge<X>() -> Runtime {
 }
 
 // 7.1.2 ToBoolean ( argument )
-unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
+unsafe extern "C" fn runtime_to_boolean(_runtime: VoidPtr, value: *const Value) -> bool {
     let value = &*value;
     match value.kind {
         ValueKind_Undefined => false,
@@ -262,7 +263,7 @@ unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
 
 // 7.1.3 ToNumeric ( value )
 // 7.1.4 ToNumber ( argument )
-unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
+unsafe extern "C" fn runtime_to_numeric(_runtime: VoidPtr, value: *const Value) -> f64 {
     let value = &*value;
     match value.kind {
         ValueKind_Undefined => f64::NAN,
@@ -277,7 +278,7 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
 }
 
 // 7.1.6 ToInt32 ( argument )
-unsafe extern "C" fn runtime_to_int32(_: usize, value: f64) -> i32 {
+unsafe extern "C" fn runtime_to_int32(_runtime: VoidPtr, value: f64) -> i32 {
     const EXP2_31: f64 = (2u64 << 31) as f64;
     const EXP2_32: f64 = (2u64 << 32) as f64;
 
@@ -302,7 +303,7 @@ unsafe extern "C" fn runtime_to_int32(_: usize, value: f64) -> i32 {
 }
 
 // 7.1.7 ToUint32 ( argument )
-unsafe extern "C" fn runtime_to_uint32(_: usize, value: f64) -> u32 {
+unsafe extern "C" fn runtime_to_uint32(_runtime: VoidPtr, value: f64) -> u32 {
     const EXP2_31: f64 = (2u64 << 31) as f64;
     const EXP2_32: f64 = (2u64 << 32) as f64;
 
@@ -328,7 +329,7 @@ unsafe extern "C" fn runtime_to_uint32(_: usize, value: f64) -> u32 {
 
 // 7.2.13 IsLooselyEqual ( x, y )
 unsafe extern "C" fn runtime_is_loosely_equal(
-    runtime: usize,
+    runtime: VoidPtr,
     a: *const Value,
     b: *const Value,
 ) -> bool {
@@ -364,7 +365,11 @@ unsafe extern "C" fn runtime_is_loosely_equal(
 }
 
 // 7.2.14 IsStrictlyEqual ( x, y )
-unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *const Value) -> bool {
+unsafe extern "C" fn runtime_is_strictly_equal(
+    _runtime: VoidPtr,
+    a: *const Value,
+    b: *const Value,
+) -> bool {
     let x = &*a;
     let y = &*b;
     if x.kind != y.kind {
@@ -381,7 +386,10 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
     }
 }
 
-unsafe extern "C" fn runtime_create_capture<X>(context: usize, target: *mut Value) -> *mut Capture {
+unsafe extern "C" fn runtime_create_capture<X>(
+    runtime: VoidPtr,
+    target: *mut Value,
+) -> *mut Capture {
     const LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::size_of::<Capture>(),
@@ -389,7 +397,7 @@ unsafe extern "C" fn runtime_create_capture<X>(context: usize, target: *mut Valu
         )
     };
 
-    let runtime = into_runtime!(context, X);
+    let runtime = into_runtime!(runtime, X);
     let allocator = runtime.allocator();
 
     // TODO: GC
@@ -404,7 +412,7 @@ unsafe extern "C" fn runtime_create_capture<X>(context: usize, target: *mut Valu
 }
 
 unsafe extern "C" fn runtime_create_closure<X>(
-    context: usize,
+    runtime: VoidPtr,
     lambda: Lambda,
     num_captures: u16,
 ) -> *mut Closure {
@@ -418,7 +426,7 @@ unsafe extern "C" fn runtime_create_closure<X>(
     let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
     let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
-    let runtime = into_runtime!(context, X);
+    let runtime = into_runtime!(runtime, X);
     let allocator = runtime.allocator();
 
     // TODO: GC
@@ -433,7 +441,7 @@ unsafe extern "C" fn runtime_create_closure<X>(
 }
 
 unsafe extern "C" fn runtime_create_coroutine<X>(
-    context: usize,
+    runtime: VoidPtr,
     closure: *mut Closure,
     num_locals: u16,
     scratch_buffer_len: u16,
@@ -455,7 +463,7 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     let scratch_buffer_layout = std::alloc::Layout::array::<u64>(n).unwrap();
     let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
-    let runtime = into_runtime!(context, X);
+    let runtime = into_runtime!(runtime, X);
     let allocator = runtime.allocator();
 
     // TODO: GC
@@ -472,33 +480,36 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     coroutine
 }
 
-unsafe extern "C" fn runtime_register_promise<X>(context: usize, coroutine: *mut Coroutine) -> u32 {
-    let runtime = into_runtime!(context, X);
+unsafe extern "C" fn runtime_register_promise<X>(
+    runtime: VoidPtr,
+    coroutine: *mut Coroutine,
+) -> u32 {
+    let runtime = into_runtime!(runtime, X);
     runtime.register_promise(coroutine).into()
 }
 
-unsafe extern "C" fn runtime_resume<X>(context: usize, promise: u32) {
-    let runtime = into_runtime!(context, X);
+unsafe extern "C" fn runtime_resume<X>(runtime: VoidPtr, promise: u32) {
+    let runtime = into_runtime!(runtime, X);
     runtime.process_promise(promise.into(), &Value::NONE, &Value::NONE);
 }
 
-unsafe extern "C" fn runtime_await_promise<X>(context: usize, promise: u32, awaiting: u32) {
-    let runtime = into_runtime!(context, X);
+unsafe extern "C" fn runtime_await_promise<X>(runtime: VoidPtr, promise: u32, awaiting: u32) {
+    let runtime = into_runtime!(runtime, X);
     runtime.await_promise(promise.into(), awaiting.into());
 }
 
 unsafe extern "C" fn runtime_emit_promise_resolved<X>(
-    context: usize,
+    runtime: VoidPtr,
     promise: u32,
     result: *const Value,
 ) {
-    let runtime = into_runtime!(context, X);
+    let runtime = into_runtime!(runtime, X);
     let cloned = *result;
     runtime.emit_promise_resolved(promise.into(), cloned);
 }
 
 unsafe extern "C" fn runtime_assert(
-    _context: usize,
+    _runtime: VoidPtr,
     assertion: bool,
     msg: *const std::os::raw::c_char,
 ) {
@@ -509,7 +520,7 @@ unsafe extern "C" fn runtime_assert(
 }
 
 unsafe extern "C" fn runtime_print_u32(
-    _context: usize,
+    _runtime: VoidPtr,
     value: u32,
     msg: *const std::os::raw::c_char,
 ) {
@@ -522,7 +533,7 @@ unsafe extern "C" fn runtime_print_u32(
 }
 
 unsafe extern "C" fn runtime_print_f64(
-    _context: usize,
+    _runtime: VoidPtr,
     value: f64,
     msg: *const std::os::raw::c_char,
 ) {
@@ -535,7 +546,7 @@ unsafe extern "C" fn runtime_print_f64(
 }
 
 unsafe extern "C" fn runtime_print_value(
-    _context: usize,
+    _runtime: VoidPtr,
     value: *const Value,
     msg: *const std::os::raw::c_char,
 ) {

@@ -45,8 +45,7 @@ impl<X> Runtime<X> {
     pub fn process_promise(&mut self, promise_id: PromiseId, result: &Value, error: &Value) {
         crate::logger::debug!(event = "process_promise", ?promise_id, ?result, ?error);
         let coroutine = self.tasklet_system.get_coroutine(promise_id);
-        let gctx = self as *mut Self as *mut std::ffi::c_void;
-        match Coroutine::resume(gctx, coroutine, promise_id, result, error) {
+        match Coroutine::resume(self.as_void_ptr(), coroutine, promise_id, result, error) {
             CoroutineStatus::Done(result) => {
                 self.tasklet_system.resolve_promise(promise_id, result)
             }

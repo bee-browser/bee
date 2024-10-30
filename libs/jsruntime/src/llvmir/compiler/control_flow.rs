@@ -184,18 +184,18 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn push_then_else_flow(&mut self, then_block: BasicBlock, else_block: BasicBlock) {
+    pub fn push_if_then_else_flow(&mut self, then_block: BasicBlock, else_block: BasicBlock) {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         debug_assert_ne!(else_block, BasicBlock::NONE);
-        self.stack.push(ControlFlow::ThenElse(ThenElseFlow {
+        self.stack.push(ControlFlow::IfThenElse(IfThenElseFlow {
             then_block,
             else_block,
         }));
     }
 
-    pub fn pop_then_else_flow(&mut self) -> ThenElseFlow {
+    pub fn pop_if_then_else_flow(&mut self) -> IfThenElseFlow {
         match self.stack.pop() {
-            Some(ControlFlow::ThenElse(flow)) => flow,
+            Some(ControlFlow::IfThenElse(flow)) => flow,
             _ => unreachable!(),
         }
     }
@@ -203,7 +203,7 @@ impl ControlFlowStack {
     pub fn update_then_block(&mut self, then_block: BasicBlock) -> BasicBlock {
         debug_assert_ne!(then_block, BasicBlock::NONE);
         match self.stack.last_mut() {
-            Some(ControlFlow::ThenElse(flow)) => {
+            Some(ControlFlow::IfThenElse(flow)) => {
                 flow.then_block = then_block;
                 flow.else_block
             }
@@ -519,7 +519,7 @@ impl ControlFlowStack {
                     bb!(flow, body_block);
                     bb!(flow, cleanup_block);
                 }
-                ControlFlow::ThenElse(flow) => {
+                ControlFlow::IfThenElse(flow) => {
                     eprintln!("then-else:");
                     bb!(flow, then_block);
                     bb!(flow, else_block);
@@ -626,7 +626,7 @@ enum ControlFlow {
     Function(FunctionFlow),
     Coroutine(CoroutineFlow),
     Scope(ScopeFlow),
-    ThenElse(ThenElseFlow),
+    IfThenElse(IfThenElseFlow),
     LoopInit(LoopInitFlow),
     LoopTest(LoopTestFlow),
     LoopNext(LoopNextFlow),
@@ -678,7 +678,7 @@ pub struct ScopeFlow {
     outer_index: usize,
 }
 
-pub struct ThenElseFlow {
+pub struct IfThenElseFlow {
     pub then_block: BasicBlock,
     pub else_block: BasicBlock,
 }

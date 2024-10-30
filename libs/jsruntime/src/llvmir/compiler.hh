@@ -65,10 +65,10 @@ struct Module;
 class Compiler {
  public:
   Compiler() {
-    context_ = std::make_unique<llvm::LLVMContext>();
-    module_ = std::make_unique<llvm::Module>("<main>", *context_);
-    builder_ = std::make_unique<llvm::IRBuilder<>>(*context_);
-    types_ = std::make_unique<TypeHolder>(*context_, *module_, *builder_);
+    llvmctx_ = std::make_unique<llvm::LLVMContext>();
+    module_ = std::make_unique<llvm::Module>("<main>", *llvmctx_);
+    builder_ = std::make_unique<llvm::IRBuilder<>>(*llvmctx_);
+    types_ = std::make_unique<TypeHolder>(*llvmctx_, *module_, *builder_);
 
     // Took from toy.cpp in the Kaleidoscope tutorial.
     fpm_ = std::make_unique<llvm::FunctionPassManager>();
@@ -77,7 +77,7 @@ class Compiler {
     cgam_ = std::make_unique<llvm::CGSCCAnalysisManager>();
     mam_ = std::make_unique<llvm::ModuleAnalysisManager>();
     pic_ = std::make_unique<llvm::PassInstrumentationCallbacks>();
-    si_ = std::make_unique<llvm::StandardInstrumentations>(*context_, true);  // with debug logs
+    si_ = std::make_unique<llvm::StandardInstrumentations>(*llvmctx_, true);  // with debug logs
     si_->registerCallbacks(*pic_, mam_.get());
 
     fpm_->addPass(llvm::PromotePass());
@@ -109,7 +109,7 @@ class Compiler {
       std::abort();
     }
 
-    llvm::orc::ThreadSafeModule mod(std::move(module_), std::move(context_));
+    llvm::orc::ThreadSafeModule mod(std::move(module_), std::move(llvmctx_));
     return new Module(std::move(mod));
   }
 
@@ -130,14 +130,14 @@ class Compiler {
   void StartFunction(uint32_t func_id) {
     function_ = CreateLambda(func_id);
 
-    gctx_ = function_->getArg(0);
-    lctx_ = function_->getArg(1);
+    runtime_ = function_->getArg(0);
+    context_ = function_->getArg(1);
     argc_ = function_->getArg(2);
     argv_ = function_->getArg(3);
     retv_ = function_->getArg(4);
 
     // captures_ will be overridden if this lambda function is a coroutine.
-    captures_ = lctx_;
+    captures_ = context_;
 
     ResetScopeCleanupChecker();
   }
@@ -172,12 +172,12 @@ class Compiler {
   // basic block
 
   llvm::BasicBlock* CreateBasicBlock(const char* name) {
-    return llvm::BasicBlock::Create(*context_, name, function_);
+    return llvm::BasicBlock::Create(*llvmctx_, name, function_);
   }
 
   llvm::BasicBlock* CreateBasicBlock(const char* name, size_t name_len) {
     return llvm::BasicBlock::Create(
-        *context_, llvm::Twine(llvm::StringRef(name, name_len)), function_);
+        *llvmctx_, llvm::Twine(llvm::StringRef(name, name_len)), function_);
   }
 
   llvm::BasicBlock* GetBasicBlock() const {
@@ -254,11 +254,11 @@ class Compiler {
   // 7.1.2 ToBoolean ( argument )
   llvm::Value* CreateToBoolean(llvm::Value* value_ptr) {
     auto* func = types_->CreateRuntimeToBoolean();
-    return builder_->CreateCall(func, {gctx_, value_ptr}, REG_NAME("boolean"));
+    return builder_->CreateCall(func, {runtime_, value_ptr}, REG_NAME("boolean"));
   }
 
   llvm::Value* GetBoolean(bool value) {
-    return llvm::ConstantInt::getBool(*context_, value);
+    return llvm::ConstantInt::getBool(*llvmctx_, value);
   }
 
   llvm::Value* CreateLogicalNot(llvm::Value* boolean) {
@@ -294,7 +294,7 @@ class Compiler {
   // 7.1.4 ToNumber ( argument )
   llvm::Value* ToNumeric(llvm::Value* value_ptr) {
     auto* call = types_->CreateRuntimeToNumeric();
-    return builder_->CreateCall(call, {gctx_, value_ptr}, REG_NAME("numeric"));
+    return builder_->CreateCall(call, {runtime_, value_ptr}, REG_NAME("numeric"));
   }
 
   llvm::Value* GetNan() {
@@ -306,7 +306,7 @@ class Compiler {
   }
 
   llvm::Value* GetNumber(double value) {
-    return llvm::ConstantFP::get(*context_, llvm::APFloat(value));
+    return llvm::ConstantFP::get(*llvmctx_, llvm::APFloat(value));
   }
 
   // 6.1.6.1.2 Number::bitwiseNOT ( x )
@@ -429,7 +429,7 @@ class Compiler {
   llvm::Value* CreateClosure(llvm::Value* lambda, uint16_t num_captures) {
     auto* func = types_->CreateRuntimeCreateClosure();
     return builder_->CreateCall(
-        func, {gctx_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
+        func, {runtime_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
   }
 
   void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr,
@@ -445,9 +445,9 @@ class Compiler {
       llvm::Value* retv) {
     auto* prototype = types_->CreateLambdaType();
     auto* lambda = CreateLoadLambdaFromClosure(closure);
-    auto* lctx = CreateGetCapturesPtrOfClosure(closure);
-    return builder_->CreateCall(
-        prototype, lambda, {gctx_, lctx, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
+    auto* context = CreateGetCapturesPtrOfClosure(closure);
+    return builder_->CreateCall(prototype, lambda,
+        {runtime_, context, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
   }
 
   llvm::Value* CreateClosurePhi(llvm::Value* then_value,
@@ -474,22 +474,22 @@ class Compiler {
 
   llvm::Value* CreateRegisterPromise(llvm::Value* coroutine) {
     auto* func = types_->CreateRuntimeRegisterPromise();
-    return builder_->CreateCall(func, {gctx_, coroutine}, REG_NAME("promise"));
+    return builder_->CreateCall(func, {runtime_, coroutine}, REG_NAME("promise"));
   }
 
   void CreateAwaitPromise(llvm::Value* promise, llvm::Value* awaiting) {
     auto* func = types_->CreateRuntimeAwaitPromise();
-    builder_->CreateCall(func, {gctx_, promise, awaiting});
+    builder_->CreateCall(func, {runtime_, promise, awaiting});
   }
 
   void CreateResume(llvm::Value* promise) {
     auto* func = types_->CreateRuntimeResume();
-    builder_->CreateCall(func, {gctx_, promise});
+    builder_->CreateCall(func, {runtime_, promise});
   }
 
   void CreateEmitPromiseResolved(llvm::Value* promise, llvm::Value* result) {
     auto* func = types_->CreateRuntimeEmitPromiseResolved();
-    builder_->CreateCall(func, {gctx_, promise, result});
+    builder_->CreateCall(func, {runtime_, promise, result});
   }
 
   // value
@@ -504,14 +504,14 @@ class Compiler {
   llvm::Value* CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y) {
     // TODO: Create instructions if runtime_is_loosely_equal() is slow.
     auto* func = types_->CreateRuntimeIsLooselyEqual();
-    return builder_->CreateCall(func, {gctx_, x, y}, REG_NAME("is_loosely_equal.retval"));
+    return builder_->CreateCall(func, {runtime_, x, y}, REG_NAME("is_loosely_equal.retval"));
   }
 
   // 7.2.14 IsStrictlyEqual ( x, y )
   llvm::Value* CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
     // TODO: Create instructions if runtime_is_strictly_equal() is slow.
     auto* func = types_->CreateRuntimeIsStrictlyEqual();
-    return builder_->CreateCall(func, {gctx_, x, y}, REG_NAME("is_strictly_equal.retval"));
+    return builder_->CreateCall(func, {runtime_, x, y}, REG_NAME("is_strictly_equal.retval"));
   }
 
   llvm::Value* CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* boolean) {
@@ -773,7 +773,7 @@ class Compiler {
 
   llvm::Value* CreateCapture(llvm::Value* value_ptr) {
     auto* func = types_->CreateRuntimeCreateCapture();
-    return builder_->CreateCall(func, {gctx_, value_ptr}, REG_NAME("capture.ptr"));
+    return builder_->CreateCall(func, {runtime_, value_ptr}, REG_NAME("capture.ptr"));
   }
 
   void CreateEscapeValue(llvm::Value* capture, llvm::Value* value) {
@@ -799,7 +799,8 @@ class Compiler {
       uint16_t scratch_buffer_len) {
     auto* func = types_->CreateRuntimeCreateCoroutine();
     return builder_->CreateCall(func,
-        {gctx_, closure, builder_->getInt16(num_locals), builder_->getInt16(scratch_buffer_len)},
+        {runtime_, closure, builder_->getInt16(num_locals),
+            builder_->getInt16(scratch_buffer_len)},
         REG_NAME("coroutine"));
   }
 
@@ -934,7 +935,7 @@ class Compiler {
   void CreatePrintValue(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_value.msg"));
     auto* func = types_->CreateRuntimePrintValue();
-    builder_->CreateCall(func, {gctx_, value, msg_value});
+    builder_->CreateCall(func, {runtime_, value, msg_value});
   }
 
   // unreachable
@@ -986,7 +987,7 @@ class Compiler {
     // We assumed that `number` holds a number value.
     // TODO: Create instructions if runtime_to_int32() is slow.
     auto* func = types_->CreateRuntimeToInt32();
-    return builder_->CreateCall(func, {gctx_, number}, REG_NAME("int32"));
+    return builder_->CreateCall(func, {runtime_, number}, REG_NAME("int32"));
   }
 
   // 7.1.7 ToUint32 ( argument )
@@ -995,7 +996,7 @@ class Compiler {
     // We assumed that `number` holds a number value.
     // TODO: Create instructions if runtime_to_uint32() is slow.
     auto* func = types_->CreateRuntimeToUint32();
-    return builder_->CreateCall(func, {gctx_, number}, REG_NAME("uint32"));
+    return builder_->CreateCall(func, {runtime_, number}, REG_NAME("uint32"));
   }
 
   llvm::AllocaInst* CreateAlloc1(llvm::Type* ty, const llvm::Twine& name) {
@@ -1024,8 +1025,8 @@ class Compiler {
     auto name = llvm::Twine("fn") + llvm::Twine(func_id);
     auto* lambda =
         llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
-    lambda->getArg(0)->setName(REG_NAME("gctx"));
-    lambda->getArg(1)->setName(REG_NAME("lctx"));
+    lambda->getArg(0)->setName(REG_NAME("runtime"));
+    lambda->getArg(1)->setName(REG_NAME("context"));
     lambda->getArg(2)->setName(REG_NAME("argc"));
     lambda->getArg(3)->setName(REG_NAME("argv"));
     lambda->getArg(4)->setName(REG_NAME("retv"));
@@ -1172,32 +1173,32 @@ class Compiler {
 
   llvm::Value* CreateGetClosurePtrOfCoroutine() {
     return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 0, REG_NAME("co.closure.ptr"));
+        types_->CreateCoroutineType(), context_, 0, REG_NAME("co.closure.ptr"));
   }
 
   llvm::Value* CreateGetStatePtrOfCoroutine() {
     return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 1, REG_NAME("co.state.ptr"));
+        types_->CreateCoroutineType(), context_, 1, REG_NAME("co.state.ptr"));
   }
 
   llvm::Value* CreateGetNumLocalsPtrOfCoroutine() {
     return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 2, REG_NAME("co.num_locals.ptr"));
+        types_->CreateCoroutineType(), context_, 2, REG_NAME("co.num_locals.ptr"));
   }
 
   llvm::Value* CreateGetScopeIdPtrOfCoroutine() {
     return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 3, REG_NAME("co.scope_id.ptr"));
+        types_->CreateCoroutineType(), context_, 3, REG_NAME("co.scope_id.ptr"));
   }
 
   llvm::Value* CreateGetScrachBufferLenPtrOfCoroutine() {
     return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 4, REG_NAME("co.locals.scratch_buffer_len.ptr"));
+        types_->CreateCoroutineType(), context_, 4, REG_NAME("co.locals.scratch_buffer_len.ptr"));
   }
 
   llvm::Value* CreateGetLocalsPtrOfCoroutine() {
     return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), lctx_, 5, REG_NAME("co.locals.ptr"));
+        types_->CreateCoroutineType(), context_, 5, REG_NAME("co.locals.ptr"));
   }
 
   llvm::Value* CreateLoadClosureFromCoroutine() {
@@ -1229,7 +1230,7 @@ class Compiler {
     auto* offsetof_locals = types_->GetWord(offsetof(Coroutine, locals));
     auto* offset = builder_->CreateAdd(
         offsetof_locals, sizeof_locals, REG_NAME("co.scratch_buffer.offsetof"));
-    return builder_->CreateInBoundsPtrAdd(lctx_, offset, REG_NAME("co.scratch_buffer.ptr"));
+    return builder_->CreateInBoundsPtrAdd(context_, offset, REG_NAME("co.scratch_buffer.ptr"));
   }
 
   // scope cleanup checker
@@ -1247,24 +1248,24 @@ class Compiler {
   void CreateAssert(llvm::Value* assertion, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.assert.msg"));
     auto* func = types_->CreateRuntimeAssert();
-    builder_->CreateCall(func, {gctx_, assertion, msg_value});
+    builder_->CreateCall(func, {runtime_, assertion, msg_value});
   }
 
   void CreatePrintU32(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_u32.msg"));
     auto* func = types_->CreateRuntimePrintU32();
-    builder_->CreateCall(func, {gctx_, value, msg_value});
+    builder_->CreateCall(func, {runtime_, value, msg_value});
   }
 
   void CreatePrintF64(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_f64.msg"));
     auto* func = types_->CreateRuntimePrintF64();
-    builder_->CreateCall(func, {gctx_, value, msg_value});
+    builder_->CreateCall(func, {runtime_, value, msg_value});
   }
 
   // TODO: separate values that must be reset in EndFunction() from others.
 
-  std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
+  std::unique_ptr<llvm::LLVMContext> llvmctx_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
   std::unique_ptr<TypeHolder> types_ = nullptr;
@@ -1272,8 +1273,8 @@ class Compiler {
   // The following values are reset for each function.
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* locals_block_ = nullptr;
-  llvm::Value* gctx_ = nullptr;
-  llvm::Value* lctx_ = nullptr;
+  llvm::Value* runtime_ = nullptr;
+  llvm::Value* context_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
   llvm::Value* retv_ = nullptr;

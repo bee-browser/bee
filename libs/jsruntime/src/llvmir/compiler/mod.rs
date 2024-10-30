@@ -1465,7 +1465,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_ternary(&mut self) {
-        let flow = self.control_flow_stack.pop_then_else_flow();
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
         let then_block = flow.then_block;
         let else_block = self.peer.get_basic_block();
 
@@ -1610,7 +1610,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_cond_br(cond_value, then_block, else_block);
         self.peer.set_basic_block(then_block);
         self.control_flow_stack
-            .push_then_else_flow(then_block, else_block);
+            .push_if_then_else_flow(then_block, else_block);
     }
 
     fn process_else(&mut self) {
@@ -1621,7 +1621,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_if_else_statement(&mut self) {
-        let flow = self.control_flow_stack.pop_then_else_flow();
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
         let else_block = self.peer.get_basic_block();
 
         let mut block = BasicBlock::NONE;
@@ -1649,7 +1649,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_if_statement(&mut self) {
-        let flow = self.control_flow_stack.pop_then_else_flow();
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
         let then_block = self.peer.get_basic_block();
 
         let block = self.create_basic_block("merge");

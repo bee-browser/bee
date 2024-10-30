@@ -37,7 +37,7 @@ async function main(args, options) {
   const runtimeSpec = yaml.parse(runtimeYaml);
 
   for (const func of runtimeSpec.functions) {
-    func.args = [{ name: 'context', type: 'opaque' }].concat(func.args).map(({ name, type }) => {
+    func.args = [{ name: 'runtime', type: 'VoidPtr' }].concat(func.args).map(({ name, type }) => {
       return { name, type, ctype: makeCType(type), llvmir_type: makeLLVMIRType(type) };
     });
     func.c_type = makeCFunc(func);
@@ -73,7 +73,7 @@ function makeLLVMIRType(type) {
     case '&mut Value':
     case '*mut Value':
     case 'Lambda':
-    case 'opaque':
+    case 'VoidPtr':
       return 'builder_.getPtrTy()';
     case undefined:
       return 'builder_.getVoidTy()';
@@ -112,8 +112,8 @@ function makeCType(type) {
       return 'Value*';
     case 'Lambda':
       return 'Lambda';
-    case 'opaque':
-      return 'uintptr_t';
+    case 'VoidPtr':
+      return 'void*';
     case undefined:
       return 'void';
     default:
