@@ -643,10 +643,17 @@ impl<'r> Analyzer<'r> {
     //     // The top-half has been processed in handle_function_signature() and the coroutine
     //     // has eixsted on the operand stack at this point.
     //
-    //     const promiseId_onOperandStack = runtime.register_promise(
-    //       runtime.create_coroutine((##promise, ##result, ##error) => { ... }, NUM_LOCALS));
-    //     runtime.resume(promiseId_onOperandStack);
-    //     return promiseId_onOperandStack;
+    //     const promise_onOperandStack = runtime.register_promise(
+    //       runtime.create_coroutine(
+    //         (##promise, ##result, ##error) => {
+    //           ...
+    //         },
+    //         NUM_LOCALS,
+    //         SCRATCH_BUFFER_LEN,
+    //       ),
+    //     );
+    //     runtime.resume(promise_onOperandStack);
+    //     return promise_onOperandStack;
     //   }
     fn end_coroutine_body(&mut self) {
         // Local variables used in the coroutine will be allocated on the heap because these must
