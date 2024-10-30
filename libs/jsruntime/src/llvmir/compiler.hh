@@ -502,14 +502,14 @@ class Compiler {
 
   // 7.2.13 IsLooselyEqual ( x, y )
   llvm::Value* CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y) {
-    // TODO: Create instructions if runtime_is_loosely_equal() is slow.
+    // TODO: Create inline instructions if runtime_is_loosely_equal() is slow.
     auto* func = types_->CreateRuntimeIsLooselyEqual();
     return builder_->CreateCall(func, {runtime_, x, y}, REG_NAME("is_loosely_equal.retval"));
   }
 
   // 7.2.14 IsStrictlyEqual ( x, y )
   llvm::Value* CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
-    // TODO: Create instructions if runtime_is_strictly_equal() is slow.
+    // TODO: Create inline instructions if runtime_is_strictly_equal() is slow.
     auto* func = types_->CreateRuntimeIsStrictlyEqual();
     return builder_->CreateCall(func, {runtime_, x, y}, REG_NAME("is_strictly_equal.retval"));
   }
@@ -985,7 +985,7 @@ class Compiler {
   llvm::Value* ToInt32(llvm::Value* number) {
     // Skip the first step.
     // We assumed that `number` holds a number value.
-    // TODO: Create instructions if runtime_to_int32() is slow.
+    // TODO: Create inline instructions if runtime_to_int32() is slow.
     auto* func = types_->CreateRuntimeToInt32();
     return builder_->CreateCall(func, {runtime_, number}, REG_NAME("int32"));
   }
@@ -994,7 +994,7 @@ class Compiler {
   llvm::Value* ToUint32(llvm::Value* number) {
     // Skip the first step.
     // We assumed that `number` holds a number value.
-    // TODO: Create instructions if runtime_to_uint32() is slow.
+    // TODO: Create inline instructions if runtime_to_uint32() is slow.
     auto* func = types_->CreateRuntimeToUint32();
     return builder_->CreateCall(func, {runtime_, number}, REG_NAME("uint32"));
   }

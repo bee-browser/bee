@@ -7,7 +7,7 @@
 
 namespace {
 
-// TODO: inefficient.  use a fixed size buffer for formatting func_id.
+// TODO(perf): Inefficient.  Use a fixed size buffer for formatting func_id.
 std::string FuncIdToName(uint32_t func_id) {
   std::stringstream ss;
   ss << "fn" << func_id;
