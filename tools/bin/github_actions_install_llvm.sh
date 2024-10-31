@@ -4,7 +4,7 @@ PROGNAME=$(basename $0)
 BASE_DIR=$(cd $(dirname $0); pwd)
 
 # TODO: update by `make update-deps`
-LLVM_VERSION=18
+LLVM_VERSION=19
 LLVM_SH_URL='https://apt.llvm.org/llvm.sh'
 
 COMPONENTS='core orcjit x86'
