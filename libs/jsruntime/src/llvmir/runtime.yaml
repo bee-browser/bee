@@ -67,7 +67,7 @@ functions:
         type: u32
   - name: resume
     args:
-      - name: promise_id
+      - name: promise
         type: u32
   - name: emit_promise_resolved
     args:

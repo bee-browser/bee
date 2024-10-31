@@ -2360,8 +2360,8 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_resume(&mut self) {
-        let promise_id = self.pop_promise();
-        self.peer.create_resume(promise_id);
+        let promise = self.pop_promise();
+        self.peer.create_resume(promise);
     }
 
     fn pop_coroutine(&mut self) -> CoroutineIr {

@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
-use crate::tasklet::PromiseId;
+use crate::tasklet::Promise;
 use crate::VoidPtr;
 
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
@@ -93,8 +93,8 @@ impl From<u32> for Value {
     }
 }
 
-impl From<PromiseId> for Value {
-    fn from(value: PromiseId) -> Self {
+impl From<Promise> for Value {
+    fn from(value: Promise) -> Self {
         Self::promise(value.into())
     }
 }
@@ -192,13 +192,13 @@ impl Coroutine {
     pub fn resume(
         runtime: VoidPtr,
         coroutine: *mut Coroutine,
-        promise_id: PromiseId,
+        promise: Promise,
         result: &Value,
         error: &Value,
     ) -> CoroutineStatus {
         unsafe {
             let lambda = (*(*coroutine).closure).lambda.unwrap();
-            let mut args = [promise_id.into(), *result, *error];
+            let mut args = [promise.into(), *result, *error];
             let mut retv = Value::NONE;
             let status = lambda(
                 runtime,

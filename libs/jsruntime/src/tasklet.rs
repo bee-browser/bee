@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::num::NonZeroU32;
 
 use rustc_hash::FxHashMap;
 
@@ -20,65 +19,61 @@ impl<X> Runtime<X> {
         crate::logger::debug!(event = "handle_message", ?msg);
         match msg {
             Message::PromiseResolved {
-                promise_id,
+                promise,
                 ref result,
-            } => self.process_promise(promise_id, result, &Value::NONE),
-            Message::PromiseRejected {
-                promise_id,
-                ref error,
-            } => self.process_promise(promise_id, &Value::NONE, error),
+            } => self.process_promise(promise, result, &Value::NONE),
+            Message::PromiseRejected { promise, ref error } => {
+                self.process_promise(promise, &Value::NONE, error)
+            }
         }
     }
 
     // promise
 
-    pub fn register_promise(&mut self, coroutine: *mut Coroutine) -> PromiseId {
+    pub fn register_promise(&mut self, coroutine: *mut Coroutine) -> Promise {
         crate::logger::debug!(event = "register_promise", ?coroutine);
         self.tasklet_system.register_promise(coroutine)
     }
 
-    pub fn await_promise(&mut self, promise_id: PromiseId, awaiting: PromiseId) {
-        crate::logger::debug!(event = "await_promise", ?promise_id, ?awaiting);
-        self.tasklet_system.await_promise(promise_id, awaiting);
+    pub fn await_promise(&mut self, promise: Promise, awaiting: Promise) {
+        crate::logger::debug!(event = "await_promise", ?promise, ?awaiting);
+        self.tasklet_system.await_promise(promise, awaiting);
     }
 
-    pub fn process_promise(&mut self, promise_id: PromiseId, result: &Value, error: &Value) {
-        crate::logger::debug!(event = "process_promise", ?promise_id, ?result, ?error);
-        let coroutine = self.tasklet_system.get_coroutine(promise_id);
-        match Coroutine::resume(self.as_void_ptr(), coroutine, promise_id, result, error) {
-            CoroutineStatus::Done(result) => {
-                self.tasklet_system.resolve_promise(promise_id, result)
-            }
-            CoroutineStatus::Error(error) => self.tasklet_system.reject_promise(promise_id, error),
+    pub fn process_promise(&mut self, promise: Promise, result: &Value, error: &Value) {
+        crate::logger::debug!(event = "process_promise", ?promise, ?result, ?error);
+        let coroutine = self.tasklet_system.get_coroutine(promise);
+        match Coroutine::resume(self.as_void_ptr(), coroutine, promise, result, error) {
+            CoroutineStatus::Done(result) => self.tasklet_system.resolve_promise(promise, result),
+            CoroutineStatus::Error(error) => self.tasklet_system.reject_promise(promise, error),
             CoroutineStatus::Suspend => (),
         }
     }
 
-    pub fn emit_promise_resolved(&mut self, promise_id: PromiseId, result: Value) {
-        self.tasklet_system
-            .emit_promise_resolved(promise_id, result);
+    pub fn emit_promise_resolved(&mut self, promise: Promise, result: Value) {
+        self.tasklet_system.emit_promise_resolved(promise, result);
     }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct PromiseId(NonZeroU32);
+pub struct Promise(u32);
 
-impl From<u32> for PromiseId {
+impl From<u32> for Promise {
     fn from(value: u32) -> Self {
-        Self(NonZeroU32::new(value).unwrap())
+        Self(value)
     }
 }
 
-impl From<PromiseId> for u32 {
-    fn from(value: PromiseId) -> Self {
-        value.0.get()
+impl From<Promise> for u32 {
+    fn from(value: Promise) -> Self {
+        value.0
     }
 }
 
 pub struct System {
     messages: VecDeque<Message>,
-    promises: FxHashMap<PromiseId, Promise>,
-    next_promise_id: u32,
+    promises: FxHashMap<Promise, PromiseDriver>,
+    next_promise: u32,
 }
 
 impl System {
@@ -86,78 +81,89 @@ impl System {
         Self {
             messages: Default::default(),
             promises: Default::default(),
-            next_promise_id: 1,
+            next_promise: 0,
         }
     }
 
     // promises
 
-    fn register_promise(&mut self, coroutine: *mut Coroutine) -> PromiseId {
-        let promise_id = PromiseId(NonZeroU32::new(self.next_promise_id).unwrap());
-        self.promises.insert(promise_id, Promise::new(coroutine));
-        self.next_promise_id += 1;
-        promise_id
+    fn register_promise(&mut self, coroutine: *mut Coroutine) -> Promise {
+        let promise = self.new_promise();
+        self.promises.insert(promise, PromiseDriver::new(coroutine));
+        promise
     }
 
-    fn await_promise(&mut self, promise_id: PromiseId, awaiting: PromiseId) {
-        debug_assert!(self.promises.contains_key(&promise_id));
+    fn new_promise(&mut self) -> Promise {
+        assert!(self.promises.len() < u32::MAX as usize);
+        loop {
+            let promise = Promise(self.next_promise);
+            if !self.promises.contains_key(&promise) {
+                return promise;
+            }
+            self.next_promise = self.next_promise.wrapping_add(1);
+        }
+        // never reach here
+    }
+
+    fn await_promise(&mut self, promise: Promise, awaiting: Promise) {
+        debug_assert!(self.promises.contains_key(&promise));
         debug_assert!(self.promises.contains_key(&awaiting));
-        let promise = self.promises.get_mut(&promise_id).unwrap();
-        debug_assert!(promise.awaiting.is_none());
-        match promise.state {
-            PromiseState::Pending => promise.awaiting = Some(awaiting),
+        let driver = self.promises.get_mut(&promise).unwrap();
+        debug_assert!(driver.awaiting.is_none());
+        match driver.state {
+            PromiseState::Pending => driver.awaiting = Some(awaiting),
             PromiseState::Resolved(result) => {
                 self.emit_promise_resolved(awaiting, result);
-                self.promises.remove(&promise_id);
+                self.promises.remove(&promise);
             }
             PromiseState::Rejected(error) => {
                 self.emit_promise_rejected(awaiting, error);
-                self.promises.remove(&promise_id);
+                self.promises.remove(&promise);
             }
         }
     }
 
-    fn get_coroutine(&self, promise_id: PromiseId) -> *mut Coroutine {
-        self.promises.get(&promise_id).unwrap().coroutine
+    fn get_coroutine(&self, promise: Promise) -> *mut Coroutine {
+        self.promises.get(&promise).unwrap().coroutine
     }
 
-    fn emit_promise_resolved(&mut self, promise_id: PromiseId, result: Value) {
-        crate::logger::debug!(event = "emit_promise_resolved", ?promise_id, ?result);
+    fn emit_promise_resolved(&mut self, promise: Promise, result: Value) {
+        crate::logger::debug!(event = "emit_promise_resolved", ?promise, ?result);
         self.messages
-            .push_back(Message::PromiseResolved { promise_id, result });
+            .push_back(Message::PromiseResolved { promise, result });
     }
 
-    fn emit_promise_rejected(&mut self, promise_id: PromiseId, error: Value) {
-        crate::logger::debug!(event = "emit_promise_rejected", ?promise_id, ?error);
+    fn emit_promise_rejected(&mut self, promise: Promise, error: Value) {
+        crate::logger::debug!(event = "emit_promise_rejected", ?promise, ?error);
         self.messages
-            .push_back(Message::PromiseRejected { promise_id, error });
+            .push_back(Message::PromiseRejected { promise, error });
     }
 
     fn next_msg(&mut self) -> Option<Message> {
         self.messages.pop_front()
     }
 
-    fn resolve_promise(&mut self, promise_id: PromiseId, result: Value) {
-        crate::logger::debug!(event = "resolve_promise", ?promise_id, ?result);
-        let promise = self.promises.get_mut(&promise_id).unwrap();
-        debug_assert!(matches!(promise.state, PromiseState::Pending));
-        if let Some(awaiting) = promise.awaiting {
-            self.promises.remove(&promise_id);
+    fn resolve_promise(&mut self, promise: Promise, result: Value) {
+        crate::logger::debug!(event = "resolve_promise", ?promise, ?result);
+        let driver = self.promises.get_mut(&promise).unwrap();
+        debug_assert!(matches!(driver.state, PromiseState::Pending));
+        if let Some(awaiting) = driver.awaiting {
+            self.promises.remove(&promise);
             self.emit_promise_resolved(awaiting, result);
         } else {
-            promise.state = PromiseState::Resolved(result);
+            driver.state = PromiseState::Resolved(result);
         }
     }
 
-    fn reject_promise(&mut self, promise_id: PromiseId, error: Value) {
-        crate::logger::debug!(event = "reject_promise", ?promise_id, ?error);
-        let promise = self.promises.get_mut(&promise_id).unwrap();
-        debug_assert!(matches!(promise.state, PromiseState::Pending));
-        if let Some(awaiting) = promise.awaiting {
-            self.promises.remove(&promise_id);
+    fn reject_promise(&mut self, promise: Promise, error: Value) {
+        crate::logger::debug!(event = "reject_promise", ?promise, ?error);
+        let driver = self.promises.get_mut(&promise).unwrap();
+        debug_assert!(matches!(driver.state, PromiseState::Pending));
+        if let Some(awaiting) = driver.awaiting {
+            self.promises.remove(&promise);
             self.emit_promise_rejected(awaiting, error);
         } else {
-            promise.state = PromiseState::Rejected(error);
+            driver.state = PromiseState::Rejected(error);
         }
     }
 }
@@ -166,27 +172,21 @@ impl System {
 
 #[derive(Debug)]
 enum Message {
-    PromiseResolved {
-        promise_id: PromiseId,
-        result: Value,
-    },
-    PromiseRejected {
-        promise_id: PromiseId,
-        error: Value,
-    },
+    PromiseResolved { promise: Promise, result: Value },
+    PromiseRejected { promise: Promise, error: Value },
 }
 
 // promise
 
 // TODO: should the coroutine be separated from the promise?
-struct Promise {
+struct PromiseDriver {
     // TODO(issue#237): GcCellRef
     coroutine: *mut Coroutine,
-    awaiting: Option<PromiseId>,
+    awaiting: Option<Promise>,
     state: PromiseState,
 }
 
-impl Promise {
+impl PromiseDriver {
     fn new(coroutine: *mut Coroutine) -> Self {
         Self {
             coroutine,
