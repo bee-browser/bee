@@ -3,15 +3,23 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
+use crate::tasklet::Promise;
+use crate::VoidPtr;
+
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
 
 macro_rules! into_runtime {
-    ($context:expr, $extension:ident) => {
-        &mut *($context as *mut crate::Runtime<$extension>)
+    ($runtime:expr, $extension:ident) => {
+        &mut *($runtime as *mut crate::Runtime<$extension>)
     };
 }
 
 impl Value {
+    pub const NONE: Self = Self {
+        kind: ValueKind_None,
+        holder: ValueHolder { opaque: 0 },
+    };
+
     pub const UNDEFINED: Self = Self {
         kind: ValueKind_Undefined,
         holder: ValueHolder { opaque: 0 },
@@ -36,6 +44,13 @@ impl Value {
         Self {
             kind: ValueKind_Number,
             holder: ValueHolder { number },
+        }
+    }
+
+    pub const fn promise(promise: u32) -> Self {
+        Self {
+            kind: ValueKind_Promise,
+            holder: ValueHolder { promise },
         }
     }
 
@@ -78,6 +93,12 @@ impl From<u32> for Value {
     }
 }
 
+impl From<Promise> for Value {
+    fn from(value: Promise) -> Self {
+        Self::promise(value.into())
+    }
+}
+
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // `unsafe` is needed for accessing the `holder` field.
@@ -93,8 +114,8 @@ impl std::fmt::Debug for Value {
                     let lambda = (*self.holder.closure).lambda.unwrap();
                     write!(f, "closure({lambda:?}, [")?;
                     let len = (*self.holder.closure).num_captures as usize;
-                    let data = (*self.holder.closure).captures;
-                    let mut captures = std::slice::from_raw_parts_mut(data, len)
+                    let data = (*self.holder.closure).captures.as_ptr();
+                    let mut captures = std::slice::from_raw_parts(data, len)
                         .iter()
                         .map(|capture| capture.as_ref().unwrap());
                     if let Some(capture) = captures.next() {
@@ -105,7 +126,8 @@ impl std::fmt::Debug for Value {
                     }
                     write!(f, "])")
                 }
-                _ => unreachable!(),
+                ValueKind_Promise => write!(f, "promise({:04X})", self.holder.promise),
+                _ => unreachable!("invalid kind: {:?}", self.kind),
             }
         }
     }
@@ -166,6 +188,41 @@ where
     }
 }
 
+impl Coroutine {
+    pub fn resume(
+        runtime: VoidPtr,
+        coroutine: *mut Coroutine,
+        promise: Promise,
+        result: &Value,
+        error: &Value,
+    ) -> CoroutineStatus {
+        unsafe {
+            let lambda = (*(*coroutine).closure).lambda.unwrap();
+            let mut args = [promise.into(), *result, *error];
+            let mut retv = Value::NONE;
+            let status = lambda(
+                runtime,
+                coroutine as VoidPtr,
+                args.len(),
+                args.as_mut_ptr(),
+                &mut retv as *mut Value,
+            );
+            match status {
+                STATUS_NORMAL => CoroutineStatus::Done(retv),
+                STATUS_EXCEPTION => CoroutineStatus::Error(retv),
+                STATUS_SUSPEND => CoroutineStatus::Suspend,
+                _ => unreachable!(),
+            }
+        }
+    }
+}
+
+pub enum CoroutineStatus {
+    Done(Value),
+    Error(Value),
+    Suspend,
+}
+
 pub fn runtime_bridge<X>() -> Runtime {
     Runtime {
         to_boolean: Some(runtime_to_boolean),
@@ -176,13 +233,20 @@ pub fn runtime_bridge<X>() -> Runtime {
         is_strictly_equal: Some(runtime_is_strictly_equal),
         create_capture: Some(runtime_create_capture::<X>),
         create_closure: Some(runtime_create_closure::<X>),
+        create_coroutine: Some(runtime_create_coroutine::<X>),
+        register_promise: Some(runtime_register_promise::<X>),
+        await_promise: Some(runtime_await_promise::<X>),
+        resume: Some(runtime_resume::<X>),
+        emit_promise_resolved: Some(runtime_emit_promise_resolved::<X>),
         assert: Some(runtime_assert),
         print_u32: Some(runtime_print_u32),
+        print_f64: Some(runtime_print_f64),
+        print_value: Some(runtime_print_value),
     }
 }
 
 // 7.1.2 ToBoolean ( argument )
-unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
+unsafe extern "C" fn runtime_to_boolean(_runtime: VoidPtr, value: *const Value) -> bool {
     let value = &*value;
     match value.kind {
         ValueKind_Undefined => false,
@@ -192,13 +256,14 @@ unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
         ValueKind_Number if value.holder.number.is_nan() => false,
         ValueKind_Number => true,
         ValueKind_Closure => true,
-        _ => unreachable!(),
+        ValueKind_Promise => true,
+        _ => unreachable!("invalid value: {value:?}"),
     }
 }
 
 // 7.1.3 ToNumeric ( value )
 // 7.1.4 ToNumber ( argument )
-unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
+unsafe extern "C" fn runtime_to_numeric(_runtime: VoidPtr, value: *const Value) -> f64 {
     let value = &*value;
     match value.kind {
         ValueKind_Undefined => f64::NAN,
@@ -207,12 +272,13 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
         ValueKind_Boolean => 0.0,
         ValueKind_Number => value.holder.number,
         ValueKind_Closure => f64::NAN,
-        _ => unreachable!(),
+        ValueKind_Promise => f64::NAN,
+        _ => unreachable!("invalid value: {value:?}"),
     }
 }
 
 // 7.1.6 ToInt32 ( argument )
-unsafe extern "C" fn runtime_to_int32(_: usize, value: f64) -> i32 {
+unsafe extern "C" fn runtime_to_int32(_runtime: VoidPtr, value: f64) -> i32 {
     const EXP2_31: f64 = (2u64 << 31) as f64;
     const EXP2_32: f64 = (2u64 << 32) as f64;
 
@@ -237,7 +303,7 @@ unsafe extern "C" fn runtime_to_int32(_: usize, value: f64) -> i32 {
 }
 
 // 7.1.7 ToUint32 ( argument )
-unsafe extern "C" fn runtime_to_uint32(_: usize, value: f64) -> u32 {
+unsafe extern "C" fn runtime_to_uint32(_runtime: VoidPtr, value: f64) -> u32 {
     const EXP2_31: f64 = (2u64 << 31) as f64;
     const EXP2_32: f64 = (2u64 << 32) as f64;
 
@@ -263,7 +329,7 @@ unsafe extern "C" fn runtime_to_uint32(_: usize, value: f64) -> u32 {
 
 // 7.2.13 IsLooselyEqual ( x, y )
 unsafe extern "C" fn runtime_is_loosely_equal(
-    runtime: usize,
+    runtime: VoidPtr,
     a: *const Value,
     b: *const Value,
 ) -> bool {
@@ -299,7 +365,11 @@ unsafe extern "C" fn runtime_is_loosely_equal(
 }
 
 // 7.2.14 IsStrictlyEqual ( x, y )
-unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *const Value) -> bool {
+unsafe extern "C" fn runtime_is_strictly_equal(
+    _runtime: VoidPtr,
+    a: *const Value,
+    b: *const Value,
+) -> bool {
     let x = &*a;
     let y = &*b;
     if x.kind != y.kind {
@@ -311,11 +381,15 @@ unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *co
         ValueKind_Boolean => x.holder.boolean == y.holder.boolean,
         ValueKind_Number => x.holder.number == y.holder.number,
         ValueKind_Closure => x.holder.closure == y.holder.closure,
-        _ => unreachable!(),
+        ValueKind_Promise => x.holder.promise == y.holder.promise,
+        _ => unreachable!("invalid value: {x:?}"),
     }
 }
 
-unsafe extern "C" fn runtime_create_capture<X>(context: usize, target: *mut Value) -> *mut Capture {
+unsafe extern "C" fn runtime_create_capture<X>(
+    runtime: VoidPtr,
+    target: *mut Value,
+) -> *mut Capture {
     const LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::size_of::<Capture>(),
@@ -323,7 +397,7 @@ unsafe extern "C" fn runtime_create_capture<X>(context: usize, target: *mut Valu
         )
     };
 
-    let runtime = into_runtime!(context, X);
+    let runtime = into_runtime!(runtime, X);
     let allocator = runtime.allocator();
 
     // TODO: GC
@@ -338,21 +412,21 @@ unsafe extern "C" fn runtime_create_capture<X>(context: usize, target: *mut Valu
 }
 
 unsafe extern "C" fn runtime_create_closure<X>(
-    context: usize,
+    runtime: VoidPtr,
     lambda: Lambda,
     num_captures: u16,
 ) -> *mut Closure {
     const BASE_LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
-            std::mem::size_of::<Closure>(),
+            std::mem::offset_of!(Closure, captures),
             std::mem::align_of::<Closure>(),
         )
     };
 
     let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
-    let (layout, offset) = BASE_LAYOUT.extend(storage_layout).unwrap();
+    let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
-    let runtime = into_runtime!(context, X);
+    let runtime = into_runtime!(runtime, X);
     let allocator = runtime.allocator();
 
     // TODO: GC
@@ -361,19 +435,81 @@ unsafe extern "C" fn runtime_create_closure<X>(
     let closure = ptr.cast::<Closure>().as_ptr();
     (*closure).lambda = lambda;
     (*closure).num_captures = num_captures;
-    if num_captures == 0 {
-        (*closure).captures = std::ptr::null_mut();
-    } else {
-        (*closure).captures = ptr.as_ptr().wrapping_add(offset).cast::<*mut Capture>();
-    }
-
-    // `closure.storage[]` will be filled with actual pointers to `Captures`.
+    // `(*closure).captures[]` will be filled with actual pointers to `Captures`.
 
     closure
 }
 
+unsafe extern "C" fn runtime_create_coroutine<X>(
+    runtime: VoidPtr,
+    closure: *mut Closure,
+    num_locals: u16,
+    scratch_buffer_len: u16,
+) -> *mut Coroutine {
+    const BASE_LAYOUT: std::alloc::Layout = unsafe {
+        std::alloc::Layout::from_size_align_unchecked(
+            std::mem::offset_of!(Coroutine, locals),
+            std::mem::align_of::<Coroutine>(),
+        )
+    };
+
+    // num_locals may be 0.
+    let locals_layout = std::alloc::Layout::array::<Value>(num_locals as usize).unwrap();
+    let (layout, _) = BASE_LAYOUT.extend(locals_layout).unwrap();
+
+    // scratch_buffer_len may be 0.
+    debug_assert_eq!(scratch_buffer_len as usize % size_of::<u64>(), 0);
+    let n = scratch_buffer_len as usize / size_of::<u64>();
+    let scratch_buffer_layout = std::alloc::Layout::array::<u64>(n).unwrap();
+    let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
+
+    let runtime = into_runtime!(runtime, X);
+    let allocator = runtime.allocator();
+
+    // TODO: GC
+    let ptr = allocator.alloc_layout(layout);
+
+    let coroutine = ptr.cast::<Coroutine>().as_ptr();
+    (*coroutine).closure = closure;
+    (*coroutine).state = 0;
+    (*coroutine).num_locals = num_locals;
+    (*coroutine).scope_id = 0;
+    (*coroutine).scratch_buffer_len = scratch_buffer_len;
+    // `(*coroutine).locals[]` will be initialized in the coroutine.
+
+    coroutine
+}
+
+unsafe extern "C" fn runtime_register_promise<X>(
+    runtime: VoidPtr,
+    coroutine: *mut Coroutine,
+) -> u32 {
+    let runtime = into_runtime!(runtime, X);
+    runtime.register_promise(coroutine).into()
+}
+
+unsafe extern "C" fn runtime_resume<X>(runtime: VoidPtr, promise: u32) {
+    let runtime = into_runtime!(runtime, X);
+    runtime.process_promise(promise.into(), &Value::NONE, &Value::NONE);
+}
+
+unsafe extern "C" fn runtime_await_promise<X>(runtime: VoidPtr, promise: u32, awaiting: u32) {
+    let runtime = into_runtime!(runtime, X);
+    runtime.await_promise(promise.into(), awaiting.into());
+}
+
+unsafe extern "C" fn runtime_emit_promise_resolved<X>(
+    runtime: VoidPtr,
+    promise: u32,
+    result: *const Value,
+) {
+    let runtime = into_runtime!(runtime, X);
+    let cloned = *result;
+    runtime.emit_promise_resolved(promise.into(), cloned);
+}
+
 unsafe extern "C" fn runtime_assert(
-    _context: usize,
+    _runtime: VoidPtr,
     assertion: bool,
     msg: *const std::os::raw::c_char,
 ) {
@@ -384,7 +520,7 @@ unsafe extern "C" fn runtime_assert(
 }
 
 unsafe extern "C" fn runtime_print_u32(
-    _context: usize,
+    _runtime: VoidPtr,
     value: u32,
     msg: *const std::os::raw::c_char,
 ) {
@@ -393,5 +529,32 @@ unsafe extern "C" fn runtime_print_u32(
         crate::logger::debug!("runtime_print_u32: {value:08X}");
     } else {
         crate::logger::debug!("runtime_print_u32: {value:08X}: {msg:?}");
+    }
+}
+
+unsafe extern "C" fn runtime_print_f64(
+    _runtime: VoidPtr,
+    value: f64,
+    msg: *const std::os::raw::c_char,
+) {
+    let msg = std::ffi::CStr::from_ptr(msg);
+    if msg.is_empty() {
+        crate::logger::debug!("runtime_print_f64: {value}");
+    } else {
+        crate::logger::debug!("runtime_print_f64: {value}: {msg:?}");
+    }
+}
+
+unsafe extern "C" fn runtime_print_value(
+    _runtime: VoidPtr,
+    value: *const Value,
+    msg: *const std::os::raw::c_char,
+) {
+    let value = &*value;
+    let msg = std::ffi::CStr::from_ptr(msg);
+    if msg.is_empty() {
+        crate::logger::debug!("runtime_print_value: {value:?}");
+    } else {
+        crate::logger::debug!("runtime_print_value: {value:?}: {msg:?}");
     }
 }

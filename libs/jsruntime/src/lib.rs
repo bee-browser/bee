@@ -2,6 +2,7 @@ mod function;
 mod llvmir;
 mod logger;
 mod semantics;
+mod tasklet;
 
 use jsparser::SymbolRegistry;
 
@@ -15,6 +16,8 @@ pub use llvmir::CompileError;
 pub use llvmir::Module;
 pub use llvmir::Value;
 pub use semantics::Program;
+
+type VoidPtr = *mut std::ffi::c_void;
 
 pub fn initialize() {
     llvmir::initialize();
@@ -53,6 +56,7 @@ pub struct Runtime<X> {
     executor: Executor,
     // TODO: GcArena
     allocator: bumpalo::Bump,
+    tasklet_system: tasklet::System,
     extension: X,
 }
 
@@ -65,6 +69,7 @@ impl<X> Runtime<X> {
             function_registry: FunctionRegistry::new(),
             executor: Executor::with_runtime_bridge(&runtime_bridge),
             allocator: bumpalo::Bump::new(),
+            tasklet_system: tasklet::System::new(),
             extension,
         }
     }
@@ -91,35 +96,38 @@ impl<X> Runtime<X> {
         R: Clone + ReturnValue,
     {
         let symbol = self.symbol_registry.intern_str(name);
-        let func_id = self.function_registry.register_host_function(name);
+        let func_id = self.function_registry.register_host_function(symbol);
         self.executor
-            .register_host_function(name, into_host_lambda(host_fn));
+            .register_host_function(func_id, into_host_lambda(host_fn));
         logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "evaluate");
         self.executor.register_module(module);
-        let main = self.function_registry.get_native(FunctionId::MAIN);
-        let mut ret = Value::UNDEFINED;
-        let status = match self.executor.get_native_function(&main.name) {
+        let mut retv = Value::UNDEFINED;
+        let status = match self.executor.get_native_function(FunctionId::MAIN) {
             Some(main) => unsafe {
                 main(
-                    // ctx
-                    self as *mut Self as *mut std::ffi::c_void,
-                    // caps
+                    // runtime
+                    self.as_void_ptr(),
+                    // context
                     std::ptr::null_mut(),
                     // argc
                     0,
                     // argv
                     std::ptr::null_mut(),
-                    // ret
-                    &mut ret as *mut Value,
+                    // retv
+                    &mut retv as *mut Value,
                 )
             },
             None => unreachable!(),
         };
-        ret.into_result(status)
+        retv.into_result(status)
+    }
+
+    fn as_void_ptr(&mut self) -> VoidPtr {
+        self as *mut Self as VoidPtr
     }
 
     fn allocator(&self) -> &bumpalo::Bump {
@@ -138,13 +146,7 @@ where
 
 // See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 
-type HostLambda = unsafe extern "C" fn(
-    *mut std::ffi::c_void,
-    *mut std::ffi::c_void,
-    usize,
-    *mut Value,
-    *mut Value,
-) -> Status;
+type HostLambda = unsafe extern "C" fn(VoidPtr, VoidPtr, usize, *mut Value, *mut Value) -> Status;
 
 // This function generates a wrapper function for each `host_func` at compile time.
 #[inline(always)]
@@ -159,11 +161,11 @@ where
 }
 
 unsafe extern "C" fn host_fn_wrapper<F, R, X>(
-    ctx: *mut std::ffi::c_void,
-    _caps: *mut std::ffi::c_void,
+    runtime: VoidPtr,
+    _context: VoidPtr,
     argc: usize,
     argv: *mut Value,
-    ret: *mut Value,
+    retv: *mut Value,
 ) -> Status
 where
     F: Fn(&mut Runtime<X>, &[Value]) -> R + Send + Sync + 'static,
@@ -171,10 +173,10 @@ where
 {
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
-    let runtime = &mut *(ctx as *mut Runtime<X>);
+    let runtime = &mut *(runtime as *mut Runtime<X>);
     let args = std::slice::from_raw_parts(argv as *const Value, argc);
-    // TODO: the return value is copied twice.  that's inefficient.
-    let retval = host_fn(runtime, args);
-    *ret = retval.value();
-    retval.status()
+    // TODO: The return value is copied twice.  That's inefficient.
+    let result = host_fn(runtime, args);
+    *retv = result.value();
+    result.status()
 }

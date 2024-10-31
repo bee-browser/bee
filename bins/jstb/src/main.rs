@@ -12,6 +12,17 @@ struct CommandLine {
     #[command(subcommand)]
     command: Command,
 
+    /// The type of the source text.
+    ///
+    /// Specify `module` explicitly when the source text read from STDIN is parsed as a module.
+    #[arg(
+        global = true,
+        long = "as",
+        default_value = "auto",
+        value_name = "SOURCE_TYPE"
+    )]
+    parse_as: SourceType,
+
     /// Enables the scope cleanup checker.
     #[arg(global = true, long)]
     scope_cleanup_checker: bool,
@@ -65,6 +76,20 @@ struct Run {
     no_optimize: bool,
 }
 
+#[derive(clap::ValueEnum, Clone)]
+enum SourceType {
+    /// Parse as a script if the file extension of the input file is "js".
+    /// Parse as a module if the file extension of the input file is "mjs".
+    /// Otherwise, parse as a script.
+    Auto,
+
+    /// Parse as a script.
+    Script,
+
+    /// Parse as a module.
+    Module,
+}
+
 fn main() -> Result<()> {
     logging::init();
 
@@ -80,9 +105,26 @@ fn main() -> Result<()> {
 
     let source = read_source(cl.source.as_ref())?;
 
+    // This is not a good practice, but we define a macro instead of a function in order to avoid
+    // code clones.  By using the macro, we can avoid additional `use` directives needed for the
+    // return type.
+    macro_rules! parse {
+        ($source:expr, $cl:expr) => {
+            match $cl.parse_as {
+                SourceType::Auto => match $cl.source.as_ref().and_then(|path| path.extension()) {
+                    Some(ext) if ext == "js" => runtime.parse_script($source),
+                    Some(ext) if ext == "mjs" => runtime.parse_module($source),
+                    _ => runtime.parse_script($source),
+                },
+                SourceType::Script => runtime.parse_script($source),
+                SourceType::Module => runtime.parse_module($source),
+            }
+        };
+    }
+
     match cl.command {
         Command::Parse(args) => {
-            let program = runtime.parse_script(&source)?;
+            let program = parse!(&source, cl)?;
             for kind in args.print.chars() {
                 match kind {
                     'f' => {
@@ -99,15 +141,16 @@ fn main() -> Result<()> {
         }
         Command::Compile(args) => {
             runtime.enable_llvmir_labels();
-            let program = runtime.parse_script(&source)?;
+            let program = parse!(&source, cl)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
             module.print(false); // to STDOUT
         }
         Command::Run(args) => {
-            let program = runtime.parse_script(&source)?;
+            let program = parse!(&source, cl)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
-            if let Err(v) = runtime.evaluate(module) {
-                println!("Uncaught {v:?}");
+            match runtime.evaluate(module) {
+                Ok(_) => runtime.run(),
+                Err(v) => println!("Uncaught {v:?}"),
             }
         }
     }

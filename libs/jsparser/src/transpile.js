@@ -163,11 +163,14 @@ class Transpiler {
           //rewriteCPEAAPL,
           addActions,
           modifyFunctionDeclaration,
+          modifyAsyncFunctionDeclaration,
           modifyIfStatement,
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
           modifyFunctionExpression,
+          modifyAsyncFunctionExpression,
           modifyArrowFunction,
+          modifyAsyncArrowFunction,
           modifyDoWhileStatement,
           modifyWhileStatement,
           modifySwitchStatement,
@@ -592,6 +595,7 @@ function addActions(rules) {
 
   const ACTIONS = [
     '_FUNCTION_CONTEXT_',
+    '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
     '_ANONYMOUS_FUNCTION_SIGNATURE_',
     '_ELSE_BLOCK_',
@@ -630,30 +634,44 @@ function addActions(rules) {
 }
 
 function modifyFunctionDeclaration(rules) {
-  // The action will be inserted before the token.
   const TARGETS = [
     {
-      token: '`(`',
+      term: '`(`',
       action: '_FUNCTION_CONTEXT_',
+      insertBefore: true,
     },
     {
-      token: '`{`',
+      term: '`{`',
       action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
     },
   ];
-
   log.debug('Modifying FunctionDeclaration...');
-
   const rule = rules.find((rule) => rule.name === 'FunctionDeclaration[Yield, Await, Default]');
   assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
 
-  for (let i = 0; i < rule.values.length; ++i) {
-    for (const target of TARGETS) {
-      const [head, tail] = rule.values[i].split(target.token);
-      rule.values[i] = [head, target.action, target.token, tail].join(' ');
-    }
-  }
-
+function modifyAsyncFunctionDeclaration(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_ASYNC_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying AsyncFunctionDeclaration...');
+  const rule = rules.find((rule) =>
+    rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]'
+  );
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
@@ -772,6 +790,26 @@ function modifyFunctionExpression(rules) {
   return rules;
 }
 
+function modifyAsyncFunctionExpression(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_ASYNC_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying AsyncFunctionExpression...');
+  const rule = rules.find((rule) => rule.name === 'AsyncFunctionExpression');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
 function modifyArrowFunction(rules) {
   const TARGETS = [
     // _FUNCION_CONTEXT_ will be inserted in the syntax module.
@@ -785,6 +823,35 @@ function modifyArrowFunction(rules) {
   const rule = rules.find((rule) => rule.name === 'ArrowFunction[In, Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyAsyncArrowFunction(rules) {
+  const TARGETS = [
+    // _ASYNC_FUNCION_CONTEXT_ will be inserted in the syntax module.
+    {
+      term: '`=>`',
+      action: '_ANONYMOUS_FUNCTION_SIGNATURE_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying AsyncArrowFunction...');
+  const rule = rules.find((rule) => rule.name === 'AsyncArrowFunction[In, Yield, Await]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+
+  rule.values = rule.values.map((value) => {
+    return value.replace(
+      'CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]',
+      'AsyncArrowHeadCCEAAAH[?Yield, ?Await]',
+    );
+  });
+
+  rules.push({
+    name: 'AsyncArrowHeadCCEAAAH[Yield, Await]',
+    values: ['CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]'],
+  });
+
   return rules;
 }
 

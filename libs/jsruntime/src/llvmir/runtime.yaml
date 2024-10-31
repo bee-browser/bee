@@ -41,10 +41,40 @@ functions:
   - name: create_closure
     args:
       - name: lambda
-        type: 'Lambda'
+        type: Lambda
       - name: num_captures
-        type: 'u16'
+        type: u16
     ret: '&mut Closure'
+  - name: create_coroutine
+    args:
+      - name: closure
+        type: '&mut Closure'
+      - name: num_locals
+        type: u16
+      - name: scratch_buffer_len
+        type: u16
+    ret: '&mut Coroutine'
+  - name: register_promise
+    args:
+      - name: coroutine
+        type: '&mut Coroutine'
+    ret: 'u32'
+  - name: await_promise
+    args:
+      - name: promise
+        type: u32
+      - name: awaiting
+        type: u32
+  - name: resume
+    args:
+      - name: promise
+        type: u32
+  - name: emit_promise_resolved
+    args:
+      - name: promise
+        type: u32
+      - name: result
+        type: '&Value'
   - name: assert
     args:
       - name: assertion
@@ -54,6 +84,18 @@ functions:
   - name: print_u32
     args:
       - name: value
-        type: 'u32'
+        type: u32
+      - name: msg
+        type: '&std::ffi::CStr'
+  - name: print_f64
+    args:
+      - name: value
+        type: f64
+      - name: msg
+        type: '&std::ffi::CStr'
+  - name: print_value
+    args:
+      - name: value
+        type: '&Value'
       - name: msg
         type: '&std::ffi::CStr'

@@ -22,34 +22,49 @@ use crate::Program;
 use crate::Runtime;
 
 use super::bridge;
+use super::bridge::Value;
+use super::bridge::ValueHolder;
 use super::Module;
 
 use control_flow::ControlFlowStack;
-use peer::ArgvIr;
 use peer::BasicBlock;
 use peer::BooleanIr;
 use peer::CaptureIr;
 use peer::ClosureIr;
+use peer::CoroutineIr;
 use peer::LambdaIr;
 use peer::NumberIr;
+use peer::PromiseIr;
 use peer::StatusIr;
+use peer::SwitchIr;
 use peer::ValueIr;
+
+const VALUE_SIZE: u32 = size_of::<Value>() as u32;
+const VALUE_HOLDER_SIZE: u32 = size_of::<ValueHolder>() as u32;
 
 impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
         logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(&self.function_registry, &program.scope_tree);
+        let mut compiler = Compiler::new(&mut self.function_registry, &program.scope_tree);
+        if self.pref.enable_scope_cleanup_checker {
+            compiler.enable_scope_cleanup_checker();
+        }
         compiler.start_compile(self.pref.enable_llvmir_labels);
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
-        for func in program.functions.iter() {
+        // Compile native functions in reverse order in order to compile a coroutine function
+        // before its ramp function so that the size of the scratch buffer for the coroutine
+        // function is available when the ramp function is compiled.
+        //
+        // TODO: We should manage dependencies between functions in a more general way.
+        for func in program.functions.iter().rev() {
             compiler.start_function(func.symbol, func.id);
             for command in func.commands.iter() {
                 compiler.process_command(command);
             }
-            compiler.end_function(optimize);
+            compiler.end_function(func.id, optimize);
         }
         Ok(compiler.end_compile())
     }
@@ -61,7 +76,7 @@ struct Compiler<'r, 's> {
     peer: peer::Compiler,
 
     /// The function registry of the JavaScript program to compile.
-    function_registry: &'r FunctionRegistry,
+    function_registry: &'r mut FunctionRegistry,
 
     /// The scope tree of the JavaScript program to compile.
     scope_tree: &'s ScopeTree,
@@ -87,7 +102,11 @@ struct Compiler<'r, 's> {
     locals: Vec<ValueIr>,
     captures: IndexMap<Locator, CaptureIr>,
 
+    max_scratch_buffer_len: u32,
+
     dump_buffer: Option<Vec<std::ffi::c_char>>,
+
+    enable_scope_cleanup_checker: bool,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -128,12 +147,15 @@ macro_rules! bb_name {
 
 macro_rules! dump_enabled {
     () => {
-        cfg!(debug_assertions) && std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP").is_some()
+        cfg!(debug_assertions) && matches!(
+            std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP"),
+            Some(v) if v == "1",
+        )
     };
 }
 
 impl<'r, 's> Compiler<'r, 's> {
-    pub fn new(function_registry: &'r FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
+    pub fn new(function_registry: &'r mut FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
         const DUMP_BUFFER_SIZE: usize = 512;
         Self {
             peer: Default::default(),
@@ -145,12 +167,18 @@ impl<'r, 's> Compiler<'r, 's> {
             pending_labels: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
+            max_scratch_buffer_len: 0,
             dump_buffer: if dump_enabled!() {
                 Some(Vec::with_capacity(DUMP_BUFFER_SIZE))
             } else {
                 None
             },
+            enable_scope_cleanup_checker: false,
         }
+    }
+
+    fn enable_scope_cleanup_checker(&mut self) {
+        self.enable_scope_cleanup_checker = true;
     }
 
     fn start_compile(&mut self, enable_labels: bool) {
@@ -179,16 +207,17 @@ impl<'r, 's> Compiler<'r, 's> {
     fn start_function(&mut self, symbol: Symbol, func_id: FunctionId) {
         logger::debug!(event = "start_function", ?symbol, ?func_id);
 
-        let native = self.function_registry.get_native(func_id);
-        self.peer.start_function(&native.name);
+        self.peer.start_function(func_id);
 
         let locals_block = self.create_basic_block("locals");
+        let init_block = self.create_basic_block("init");
         let args_block = self.create_basic_block("args");
         let body_block = self.create_basic_block("body");
         let return_block = self.create_basic_block("return");
 
         self.control_flow_stack.push_function_flow(
             locals_block,
+            init_block,
             args_block,
             body_block,
             return_block,
@@ -200,14 +229,24 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.set_locals_block(locals_block);
 
-        self.peer.set_basic_block(body_block);
+        self.peer.set_basic_block(init_block);
         self.peer.create_store_undefined_to_retv();
         self.peer.create_alloc_status();
         self.peer.create_alloc_flow_selector();
+        if self.enable_scope_cleanup_checker {
+            self.peer
+                .enable_scope_cleanup_checker(func_id.is_coroutine());
+        }
+
+        self.peer.set_basic_block(body_block);
     }
 
-    fn end_function(&mut self, optimize: bool) {
-        logger::debug!(event = "end_function", optimize);
+    fn end_function(&mut self, func_id: FunctionId, optimize: bool) {
+        logger::debug!(event = "end_function", ?func_id, optimize);
+
+        let dormant_block = func_id
+            .is_coroutine()
+            .then(|| self.control_flow_stack.pop_coroutine_flow().dormant_block);
 
         self.control_flow_stack.pop_exit_target();
         let flow = self.control_flow_stack.pop_function_flow();
@@ -216,6 +255,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(flow.return_block);
 
         self.peer.set_basic_block(flow.locals_block);
+        self.peer.create_br(flow.init_block);
+        self.peer.move_basic_block_after(flow.init_block);
+
+        self.peer.set_basic_block(flow.init_block);
         self.peer.create_br(flow.args_block);
         self.peer.move_basic_block_after(flow.args_block);
 
@@ -224,6 +267,13 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(flow.body_block);
 
         self.peer.set_basic_block(flow.return_block);
+        if let Some(block) = dormant_block {
+            self.peer.move_basic_block_after(block);
+        }
+
+        if self.enable_scope_cleanup_checker {
+            self.peer.assert_scope_id(ScopeRef::NONE);
+        }
 
         self.peer.end_function(optimize);
 
@@ -234,6 +284,13 @@ impl<'r, 's> Compiler<'r, 's> {
 
         debug_assert!(self.control_flow_stack.is_empty());
         self.control_flow_stack.clear();
+
+        if func_id.is_coroutine() {
+            self.function_registry
+                .get_native_mut(func_id)
+                .scratch_buffer_len = self.max_scratch_buffer_len;
+        }
+        self.max_scratch_buffer_len = 0;
     }
 
     fn process_command(&mut self, command: &CompileCommand) {
@@ -249,6 +306,10 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Closure(prologue, num_captures) => {
                 self.process_closure(*prologue, *num_captures)
             }
+            CompileCommand::Coroutine(func_id, num_locals) => {
+                self.process_coroutine(*func_id, *num_locals)
+            }
+            CompileCommand::Promise => self.process_promise(),
             CompileCommand::Reference(symbol, locator) => self.process_reference(*symbol, *locator),
             CompileCommand::Exception => self.process_exception(),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
@@ -256,8 +317,6 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::ImmutableBinding => self.process_immutable_binding(),
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::DeclareClosure => self.process_declare_closure(),
-            CompileCommand::Arguments(nargs) => self.process_arguments(*nargs),
-            CompileCommand::Argument(index) => self.process_argument(*index),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
@@ -299,11 +358,11 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::BitwiseOr => self.process_bitwise_or(),
             CompileCommand::Ternary => self.process_ternary(),
             CompileCommand::Assignment => self.process_assignment(),
-            CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::FalsyShortCircuit => self.process_falsy_short_circuit(),
             CompileCommand::TruthyShortCircuit => self.process_truthy_short_circuit(),
             CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
-            CompileCommand::Then => self.process_then(),
+            CompileCommand::Truthy => self.process_truthy(),
+            CompileCommand::IfThen => self.process_if_then(),
             CompileCommand::Else => self.process_else(),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
             CompileCommand::IfStatement => self.process_if_statement(),
@@ -316,10 +375,9 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
             CompileCommand::CaseBlock(id, num_cases) => self.process_case_block(*id, *num_cases),
+            CompileCommand::Case => self.process_case(),
+            CompileCommand::Default => self.process_default(),
             CompileCommand::CaseClause(has_statement) => self.process_case_clause(*has_statement),
-            CompileCommand::DefaultClause(has_statement) => {
-                self.process_default_clause(*has_statement)
-            }
             CompileCommand::Switch(id, num_cases, default_index) => {
                 self.process_switch(*id, *num_cases, *default_index)
             }
@@ -337,12 +395,13 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Break(symbol) => self.process_break(*symbol),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Throw => self.process_throw(),
+            CompileCommand::Environment(num_locals) => self.process_environment(*num_locals),
+            CompileCommand::JumpTable(num_states) => self.process_jump_table(*num_states),
+            CompileCommand::Await(next_state) => self.process_await(*next_state),
+            CompileCommand::Resume => self.process_resume(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
-            CompileCommand::SetupScopeCleanupChecker(stack_size) => {
-                self.process_setup_scope_cleanup_checker(*stack_size)
-            }
             CompileCommand::PlaceHolder => unreachable!(),
         }
 
@@ -381,12 +440,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_function(&mut self, func_id: FunctionId) {
-        let name = if func_id.is_native() {
-            &self.function_registry.get_native(func_id).name
-        } else {
-            &self.function_registry.get_host(func_id).name
-        };
-        let lambda = self.peer.get_function(func_id, name);
+        let lambda = self.peer.get_function(func_id);
         self.operand_stack.push(Operand::Function(lambda));
     }
 
@@ -429,6 +483,32 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
+    fn pop_closure(&mut self) -> ClosureIr {
+        match self.operand_stack.pop() {
+            Some(Operand::Closure(closure)) => closure,
+            _ => unreachable!(),
+        }
+    }
+
+    fn process_coroutine(&mut self, func_id: FunctionId, num_locals: u16) {
+        let scrach_buffer_len = self
+            .function_registry
+            .get_native(func_id)
+            .scratch_buffer_len;
+        debug_assert!(scrach_buffer_len <= u16::MAX as u32);
+        let closure = self.pop_closure();
+        let coroutine = self
+            .peer
+            .create_coroutine(closure, num_locals, scrach_buffer_len as u16);
+        self.operand_stack.push(Operand::Coroutine(coroutine));
+    }
+
+    fn process_promise(&mut self) {
+        let coroutine = self.pop_coroutine();
+        let promise = self.peer.create_register_promise(coroutine);
+        self.operand_stack.push(Operand::Promise(promise));
+    }
+
     fn process_reference(&mut self, symbol: Symbol, locator: Locator) {
         debug_assert!(!matches!(locator, Locator::None));
         self.operand_stack.push(Operand::Reference(symbol, locator));
@@ -441,8 +521,6 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_allocate_locals(&mut self, num_locals: u16) {
-        debug_assert!(num_locals > 0);
-
         for i in 0..num_locals {
             let local = self.peer.create_local_value(i);
             self.locals.push(local);
@@ -497,6 +575,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Boolean(value) => self.peer.create_store_boolean_to_value(value, dest),
             Operand::Number(value) => self.peer.create_store_number_to_value(value, dest),
             Operand::Closure(value) => self.peer.create_store_closure_to_value(value, dest),
+            Operand::Promise(value) => self.peer.create_store_promise_to_value(value, dest),
             Operand::Any(value) => self.peer.create_store_value_to_value(value, dest),
             _ => unreachable!(),
         }
@@ -554,13 +633,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(backup);
     }
 
-    fn process_arguments(&mut self, nargs: u16) {
-        if nargs > 0 {
-            let argv = self.peer.create_argv(nargs);
-            self.operand_stack.push(Operand::Argv(argv));
-        }
-    }
-
     fn swap(&mut self) {
         logger::debug!(event = "swap");
         debug_assert!(self.operand_stack.len() > 1);
@@ -575,23 +647,15 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.duplicate(index);
     }
 
-    fn process_argument(&mut self, index: u16) {
-        let (operand, _) = self.dereference();
-        let argv = self.peek_argv();
-        let arg = self.peer.create_get_arg_in_argv(argv, index);
-        self.create_store_operand_to_value(operand, arg);
-    }
-
-    fn peek_argv(&self) -> ArgvIr {
-        match self.operand_stack.last().unwrap() {
-            Operand::Argv(value) => *value,
-            _ => unreachable!(),
-        }
-    }
-
     fn process_call(&mut self, argc: u16) {
         let argv = if argc > 0 {
-            self.pop_argv()
+            let argv = self.peer.create_argv(argc);
+            for i in (0..argc).rev() {
+                let (operand, _) = self.dereference();
+                let ptr = self.peer.create_get_arg_in_argv(argv, i);
+                self.create_store_operand_to_value(operand, ptr);
+            }
+            argv
         } else {
             self.peer.get_argv_nullptr()
         };
@@ -614,13 +678,6 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_check_status_for_exception(status, retv);
 
         self.operand_stack.push(Operand::Any(retv));
-    }
-
-    fn pop_argv(&mut self) -> ArgvIr {
-        match self.operand_stack.pop().unwrap() {
-            Operand::Argv(value) => value,
-            _ => unreachable!(),
-        }
     }
 
     fn create_load_closure_from_value_or_throw_type_error(&mut self, value: ValueIr) -> ClosureIr {
@@ -687,6 +744,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let cleanup_block = self.create_basic_block("cleanup");
 
         self.control_flow_stack.push_scope_flow(
+            scope_ref,
             init_block,
             hoisted_block,
             body_block,
@@ -698,14 +756,16 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.create_br(init_block);
         self.peer.move_basic_block_after(init_block);
-        self.peer.set_basic_block(body_block);
 
-        let backup = self.peer.get_basic_block();
         self.peer.set_basic_block(init_block);
+
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
+            if binding.is_hidden() {
+                continue;
+            }
             let locator = binding.locator();
-            if binding.captured {
+            if binding.is_captured() {
                 let value = match locator {
                     Locator::Argument(index) => self.peer.create_get_argument_value_ptr(index),
                     Locator::Local(index) => self.locals[index as usize],
@@ -720,7 +780,8 @@ impl<'r, 's> Compiler<'r, 's> {
                 self.peer.create_store_none_to_value(value);
             }
         }
-        self.peer.set_basic_block(backup);
+
+        self.peer.set_basic_block(body_block);
     }
 
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
@@ -737,6 +798,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let parent_exit_block = self.control_flow_stack.exit_block();
 
         let flow = self.control_flow_stack.pop_scope_flow();
+        debug_assert_eq!(flow.scope_ref, scope_ref);
 
         self.peer.create_br(flow.cleanup_block);
         self.peer.move_basic_block_after(flow.cleanup_block);
@@ -746,7 +808,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(precheck_block);
 
         self.peer.set_basic_block(precheck_block);
-        self.peer.perform_scope_cleanup_precheck(scope_ref);
+        if self.enable_scope_cleanup_checker {
+            self.peer.set_scope_id_for_checker(scope_ref);
+        }
         self.peer.create_br(flow.hoisted_block);
         self.peer.move_basic_block_after(flow.hoisted_block);
 
@@ -757,7 +821,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.set_basic_block(flow.cleanup_block);
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
-            if binding.captured {
+            if binding.is_captured() {
                 self.escape_value(binding.locator());
             }
             if binding.is_local() {
@@ -769,7 +833,15 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.move_basic_block_after(postcheck_block);
 
         self.peer.set_basic_block(postcheck_block);
-        self.peer.perform_scope_cleanup_postcheck(scope_ref);
+        if self.enable_scope_cleanup_checker {
+            self.peer.assert_scope_id(scope_ref);
+            if self.control_flow_stack.has_scope_flow() {
+                let outer_scope_ref = self.control_flow_stack.scope_flow().scope_ref;
+                self.peer.set_scope_id_for_checker(outer_scope_ref);
+            } else {
+                self.peer.set_scope_id_for_checker(ScopeRef::NONE);
+            }
+        }
         self.peer.create_br(ctrl_block);
         self.peer.move_basic_block_after(ctrl_block);
 
@@ -1204,6 +1276,9 @@ impl<'r, 's> Compiler<'r, 's> {
             (Operand::Closure(lhs), Operand::Closure(rhs)) => {
                 self.peer.create_is_same_closure(lhs, rhs)
             }
+            (Operand::Promise(lhs), Operand::Promise(rhs)) => {
+                self.peer.create_is_same_promise(lhs, rhs)
+            }
             _ => unreachable!(),
         }
     }
@@ -1216,6 +1291,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Boolean(rhs) => self.create_is_same_boolean_value(lhs, rhs),
             Operand::Number(rhs) => self.create_is_same_number_value(lhs, rhs),
             Operand::Closure(rhs) => self.create_is_same_closure_value(lhs, rhs),
+            Operand::Promise(rhs) => self.create_is_same_promise_value(lhs, rhs),
             Operand::Any(rhs) => self.peer.create_is_strictly_equal(lhs, rhs),
             _ => unreachable!(),
         }
@@ -1278,6 +1354,28 @@ impl<'r, 's> Compiler<'r, 's> {
         // {
         self.peer.set_basic_block(then_block);
         let then_value = self.peer.create_is_same_closure_value(value, closure);
+        self.peer.create_br(merge_block);
+        // } else {
+        self.peer.set_basic_block(else_block);
+        let else_value = self.peer.get_boolean(false);
+        self.peer.create_br(merge_block);
+        // }
+        self.peer.set_basic_block(merge_block);
+        self.peer
+            .create_boolean_phi(then_value, then_block, else_value, else_block)
+    }
+
+    fn create_is_same_promise_value(&mut self, value: ValueIr, promise: PromiseIr) -> BooleanIr {
+        let then_block = self.create_basic_block("is_promise.then");
+        let else_block = self.create_basic_block("is_promise.else");
+        let merge_block = self.create_basic_block("is_promise");
+
+        // if value.kind == ValueKind::Promise
+        let cond = self.peer.create_is_promise(value);
+        self.peer.create_cond_br(cond, then_block, else_block);
+        // {
+        self.peer.set_basic_block(then_block);
+        let then_value = self.peer.create_is_same_promise_value(value, promise);
         self.peer.create_br(merge_block);
         // } else {
         self.peer.set_basic_block(else_block);
@@ -1367,32 +1465,22 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_ternary(&mut self) {
-        let else_branch = self.control_flow_stack.pop_branch_flow();
-        let then_branch = self.control_flow_stack.pop_branch_flow();
-
-        let test_block = then_branch.before_block;
-        let then_head_block = then_branch.after_block;
-        let then_tail_block = else_branch.before_block;
-        let else_head_block = else_branch.after_block;
-        let else_tail_block = self.peer.get_basic_block();
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
+        let then_block = flow.then_block;
+        let else_block = self.peer.get_basic_block();
 
         let (else_operand, _) = self.dereference();
 
-        self.peer.set_basic_block(then_tail_block);
+        self.peer.set_basic_block(then_block);
         let (then_operand, _) = self.dereference();
-
-        self.peer.set_basic_block(test_block);
-        let cond_value = self.pop_boolean();
-        self.peer
-            .create_cond_br(cond_value, then_head_block, else_head_block);
 
         let block = self.create_basic_block("ternary");
 
         if std::mem::discriminant(&then_operand) == std::mem::discriminant(&else_operand) {
-            self.peer.set_basic_block(then_tail_block);
+            self.peer.set_basic_block(then_block);
             self.peer.create_br(block);
 
-            self.peer.set_basic_block(else_tail_block);
+            self.peer.set_basic_block(else_block);
             self.peer.create_br(block);
 
             self.peer.set_basic_block(block);
@@ -1408,32 +1496,23 @@ impl<'r, 's> Compiler<'r, 's> {
                     return;
                 }
                 (Operand::Boolean(then_value), Operand::Boolean(else_value)) => {
-                    let boolean = self.peer.create_boolean_phi(
-                        then_value,
-                        then_tail_block,
-                        else_value,
-                        else_tail_block,
-                    );
+                    let boolean = self
+                        .peer
+                        .create_boolean_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Boolean(boolean));
                     return;
                 }
                 (Operand::Number(then_value), Operand::Number(else_value)) => {
-                    let number = self.peer.create_number_phi(
-                        then_value,
-                        then_tail_block,
-                        else_value,
-                        else_tail_block,
-                    );
+                    let number = self
+                        .peer
+                        .create_number_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Number(number));
                     return;
                 }
                 (Operand::Any(then_value), Operand::Any(else_value)) => {
-                    let any = self.peer.create_value_phi(
-                        then_value,
-                        then_tail_block,
-                        else_value,
-                        else_tail_block,
-                    );
+                    let any = self
+                        .peer
+                        .create_value_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Any(any));
                     return;
                 }
@@ -1443,18 +1522,18 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // We have to convert the value before the branch in each block.
 
-        self.peer.set_basic_block(then_tail_block);
+        self.peer.set_basic_block(then_block);
         let then_value = self.create_to_any(then_operand);
         self.peer.create_br(block);
 
-        self.peer.set_basic_block(else_tail_block);
+        self.peer.set_basic_block(else_block);
         let else_value = self.create_to_any(else_operand);
         self.peer.create_br(block);
 
         self.peer.set_basic_block(block);
-        let any =
-            self.peer
-                .create_value_phi(then_value, then_tail_block, else_value, else_tail_block);
+        let any = self
+            .peer
+            .create_value_phi(then_value, then_block, else_value, else_block);
         self.operand_stack.push(Operand::Any(any));
     }
 
@@ -1479,38 +1558,32 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(rhs);
     }
 
-    fn process_truthy(&mut self) {
-        let (operand, _) = self.dereference();
-        let boolean = self.create_to_boolean(operand);
-        self.operand_stack.push(Operand::Boolean(boolean));
-    }
-
     fn process_falsy_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand.clone());
         let boolean = self.peer.create_logical_not(boolean);
         self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
+        self.process_if_then();
         self.operand_stack.push(operand);
-        self.branch(); // else
+        self.process_else();
     }
 
     fn process_truthy_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand.clone());
         self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
+        self.process_if_then();
         self.operand_stack.push(operand);
-        self.branch(); // else
+        self.process_else();
     }
 
     fn process_nullish_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_is_non_nullish(operand.clone());
         self.operand_stack.push(Operand::Boolean(boolean));
-        self.branch(); // then
+        self.process_if_then();
         self.operand_stack.push(operand);
-        self.branch(); // else
+        self.process_else();
     }
 
     fn create_is_non_nullish(&mut self, operand: Operand) -> BooleanIr {
@@ -1524,48 +1597,51 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn process_then(&mut self) {
-        self.branch();
+    fn process_truthy(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.create_to_boolean(operand);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    fn process_if_then(&mut self) {
+        let cond_value = self.pop_boolean();
+        let then_block = self.create_basic_block("then");
+        let else_block = self.create_basic_block("else");
+        self.peer.create_cond_br(cond_value, then_block, else_block);
+        self.peer.set_basic_block(then_block);
+        self.control_flow_stack
+            .push_if_then_else_flow(then_block, else_block);
     }
 
     fn process_else(&mut self) {
-        self.branch();
+        let then_block = self.peer.get_basic_block();
+        let else_block = self.control_flow_stack.update_then_block(then_block);
+        self.peer.move_basic_block_after(else_block);
+        self.peer.set_basic_block(else_block);
     }
 
     fn process_if_else_statement(&mut self) {
-        let else_branch = self.control_flow_stack.pop_branch_flow();
-        let then_branch = self.control_flow_stack.pop_branch_flow();
-
-        let test_block = then_branch.before_block;
-        let then_head_block = then_branch.after_block;
-        let then_tail_block = else_branch.before_block;
-        let else_head_block = else_branch.after_block;
-        let else_tail_block = self.peer.get_basic_block();
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
+        let else_block = self.peer.get_basic_block();
 
         let mut block = BasicBlock::NONE;
 
-        if self.peer.is_basic_block_terminated(else_tail_block) {
+        if self.peer.is_basic_block_terminated(else_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
-            block = self.create_basic_block("block");
+            block = self.create_basic_block("merge");
             self.peer.create_br(block);
         }
 
-        if self.peer.is_basic_block_terminated(then_tail_block) {
+        if self.peer.is_basic_block_terminated(flow.then_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
             if block == BasicBlock::NONE {
-                block = self.create_basic_block("block");
+                block = self.create_basic_block("merge");
             }
-            self.peer.set_basic_block(then_tail_block);
+            self.peer.set_basic_block(flow.then_block);
             self.peer.create_br(block);
         }
-
-        let cond_value = self.pop_boolean();
-
-        self.peer.set_basic_block(test_block);
-        self.peer
-            .create_cond_br(cond_value, then_head_block, else_head_block);
 
         if block != BasicBlock::NONE {
             self.peer.set_basic_block(block);
@@ -1573,23 +1649,20 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_if_statement(&mut self) {
-        let branch = self.control_flow_stack.pop_branch_flow();
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
+        let then_block = self.peer.get_basic_block();
 
-        let test_block = branch.before_block;
-        let then_head_block = branch.after_block;
-        let then_tail_block = self.peer.get_basic_block();
-        let block = self.create_basic_block("block");
+        let block = self.create_basic_block("merge");
 
-        if self.peer.is_basic_block_terminated(then_tail_block) {
+        if self.peer.is_basic_block_terminated(then_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
             self.peer.create_br(block);
         }
 
-        let cond_value = self.pop_boolean();
-
-        self.peer.set_basic_block(test_block);
-        self.peer.create_cond_br(cond_value, then_head_block, block);
+        self.peer.move_basic_block_after(flow.else_block);
+        self.peer.set_basic_block(flow.else_block);
+        self.peer.create_br(block);
 
         self.peer.set_basic_block(block);
     }
@@ -1803,7 +1876,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         push_bb_name!(self, "switch", id);
 
-        let start_block = self.create_basic_block("start");
+        let case_block = self.create_basic_block("case");
         let ctrl_block = self.create_basic_block("ctrl");
         let set_normal_block = self.create_basic_block("ctrl.set_normal");
         let end_block = self.create_basic_block("end");
@@ -1813,12 +1886,7 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.pending_labels.is_empty());
         let exit_id = self.control_flow_stack.exit_id();
 
-        let (operand, _) = self.dereference();
-        // TODO: item.SetLabel("switch-value");
-        self.operand_stack.push(operand);
-        self.duplicate(0); // Dup for test on CaseClause
-
-        self.peer.create_br(start_block);
+        self.peer.create_br(case_block);
 
         self.peer.set_basic_block(ctrl_block);
         let is_break = self.peer.create_is_flow_selector_break(exit_id.depth());
@@ -1829,70 +1897,59 @@ impl<'r, 's> Compiler<'r, 's> {
         self.peer.create_set_flow_selector_normal();
         self.peer.create_br(end_block);
 
-        self.peer.set_basic_block(start_block);
+        self.peer.set_basic_block(case_block);
     }
 
-    fn process_case_clause(&mut self, _has_statement: bool) {
-        let branch = self.control_flow_stack.pop_branch_flow();
-
-        let test_block = branch.before_block;
-        let then_block = branch.after_block;
-        let else_block = self.create_basic_block("else");
-        let end_block = self.peer.get_basic_block();
-
-        let cond = self.pop_boolean();
-
-        self.peer.set_basic_block(test_block);
-        self.peer.create_cond_br(cond, then_block, else_block);
-        self.peer.set_basic_block(else_block);
-
-        self.duplicate(0);
-
+    fn process_case(&mut self) {
+        let clause_start_block = self.create_basic_block("case.clause");
+        let next_case_block = self.create_basic_block("case");
+        let cond_value = self.pop_boolean();
+        self.peer
+            .create_cond_br(cond_value, clause_start_block, next_case_block);
+        self.peer.set_basic_block(clause_start_block);
         self.control_flow_stack
-            .push_case_banch_flow(end_block, then_block);
+            .push_case_flow(next_case_block, clause_start_block);
     }
 
-    fn process_default_clause(&mut self, _has_statement: bool) {
-        let branch = self.control_flow_stack.pop_branch_flow();
-
-        let test_block = branch.before_block;
-        let then_block = branch.after_block;
-        let end_block = self.peer.get_basic_block();
-
-        self.peer.set_basic_block(test_block);
-
-        self.duplicate(0);
-
+    fn process_default(&mut self) {
+        let next_case_block = self.peer.get_basic_block();
+        let clause_start_block = self.create_basic_block("default.clause");
+        self.peer.set_basic_block(clause_start_block);
         self.control_flow_stack
-            .push_case_banch_flow(end_block, then_block);
-        self.control_flow_stack.set_default_case_block(then_block);
+            .push_case_flow(next_case_block, clause_start_block);
+        self.control_flow_stack
+            .set_default_case_block(clause_start_block)
+    }
+
+    fn process_case_clause(&mut self, has_statement: bool) {
+        let clause_end_block = self.peer.get_basic_block();
+        let next_case_block = self
+            .control_flow_stack
+            .update_case_flow(clause_end_block, has_statement);
+        self.peer.set_basic_block(next_case_block);
     }
 
     fn process_switch(&mut self, _id: u16, num_cases: u16, _default_index: Option<u16>) {
         pop_bb_name!(self);
 
-        let case_block = self.peer.get_basic_block();
-
-        // Discard the switch-values
-        self.process_discard();
-        self.process_discard();
+        let last_case_block = self.peer.get_basic_block();
 
         // Connect the last basic blocks of each case/default clause to the first basic block of
         // the statement lists of the next case/default clause if it's not terminated.
         //
         // The last basic blocks has been stored in the control flow stack in reverse order.
         let mut fall_through_block = self.control_flow_stack.switch_flow().end_block;
+        debug_assert_ne!(fall_through_block, BasicBlock::NONE);
         for _ in 0..num_cases {
-            let case_branch = self.control_flow_stack.pop_case_branch_flow();
-            let terminated = self
-                .peer
-                .is_basic_block_terminated(case_branch.before_block);
+            let flow = self.control_flow_stack.pop_case_flow();
+            let terminated = self.peer.is_basic_block_terminated(flow.clause_end_block);
             if !terminated {
-                self.peer.set_basic_block(case_branch.before_block);
+                self.peer.set_basic_block(flow.clause_end_block);
                 self.peer.create_br(fall_through_block);
                 self.peer.move_basic_block_after(fall_through_block);
             }
-            fall_through_block = case_branch.after_block;
+            fall_through_block = flow.clause_start_block;
+            debug_assert_ne!(fall_through_block, BasicBlock::NONE);
         }
 
         self.control_flow_stack.pop_exit_target();
@@ -1900,7 +1957,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // Create an unconditional jump to the statement of the default clause if it exists.
         // Otherwise, jump to the end block.
-        self.peer.set_basic_block(case_block);
+        self.peer.set_basic_block(last_case_block);
         self.peer
             .create_br(if switch.default_block != BasicBlock::NONE {
                 switch.default_block
@@ -1910,18 +1967,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.peer.move_basic_block_after(switch.end_block);
         self.peer.set_basic_block(switch.end_block);
-    }
-
-    fn branch(&mut self) {
-        let before_block = self.peer.get_basic_block();
-
-        // Push a newly created block.
-        // This will be used in ConditionalExpression() in order to build a branch instruction.
-        let after_block = self.create_basic_block("block");
-        self.peer.set_basic_block(after_block);
-
-        self.control_flow_stack
-            .push_branch_flow(before_block, after_block);
     }
 
     fn process_try(&mut self) {
@@ -2084,6 +2129,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Boolean(value) => self.peer.create_store_boolean_to_retv(value),
             Operand::Number(value) => self.peer.create_store_number_to_retv(value),
             Operand::Closure(value) => self.peer.create_store_closure_to_retv(value),
+            Operand::Promise(value) => self.peer.create_store_promise_to_retv(value),
             Operand::Any(value) => self.peer.create_store_value_to_retv(value),
             _ => unreachable!(),
         }
@@ -2103,6 +2149,234 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_basic_block_for_deadcode();
     }
 
+    fn process_environment(&mut self, num_locals: u16) {
+        let flow = self.control_flow_stack.function_flow();
+        let backup = self.peer.get_basic_block();
+
+        // Local variables and captured variables living outer scopes are loaded here from the
+        // `Coroutine` data passed via the `env` argument of the coroutine lambda function to be
+        // generated by the compiler.
+        self.peer.set_basic_block(flow.init_block);
+        self.peer.create_set_captures_for_coroutine();
+        for i in 0..num_locals {
+            let local = self.peer.create_get_local_ptr_from_coroutine(i);
+            self.locals.push(local);
+        }
+
+        self.peer.set_basic_block(backup);
+    }
+
+    fn process_jump_table(&mut self, num_states: u32) {
+        debug_assert!(num_states >= 2);
+        let initial_block = self.create_basic_block("co.initial");
+        let done_block = self.create_basic_block("co.done");
+        let inst = self
+            .peer
+            .create_switch_for_coroutine(done_block, num_states);
+        self.peer
+            .create_add_state_for_coroutine(inst, 0, initial_block);
+
+        self.peer.set_basic_block(done_block);
+        self.peer
+            .create_unreachable(c"the coroutine has already done");
+
+        self.peer.set_basic_block(initial_block);
+
+        self.control_flow_stack
+            .push_coroutine_flow(inst, done_block, num_states);
+    }
+
+    fn process_await(&mut self, next_state: u32) {
+        self.resolve_promise();
+        self.save_operands_to_scratch_buffer();
+        self.peer.create_set_coroutine_state(next_state);
+        self.peer.create_suspend();
+
+        // resume block
+        let block = self.create_basic_block("resume");
+        let inst = self.control_flow_stack.coroutine_switch_inst();
+        let state = self.control_flow_stack.coroutine_next_state();
+        self.peer.create_add_state_for_coroutine(inst, state, block);
+        self.peer.set_basic_block(block);
+
+        self.load_operands_from_scratch_buffer();
+
+        let has_error_block = self.create_basic_block("has_error");
+        let result_block = self.create_basic_block("result");
+
+        // if ##error.has_value()
+        let error = self.peer.create_get_argument_value_ptr(2); // ##error
+        let has_error = self.peer.create_has_value(error);
+        self.peer
+            .create_cond_br(has_error, has_error_block, result_block);
+        {
+            // throw ##error;
+            self.peer.set_basic_block(has_error_block);
+            self.operand_stack.push(Operand::Any(error));
+            self.process_throw();
+            self.peer.create_br(result_block);
+        }
+
+        self.peer.set_basic_block(result_block);
+        let result = self.peer.create_get_argument_value_ptr(1); // ##result
+        self.operand_stack.push(Operand::Any(result));
+    }
+
+    fn resolve_promise(&mut self) {
+        let promise = self.peer.create_get_argument_value_ptr(0); // ##promise
+        let promise = self.peer.create_load_promise_from_value(promise);
+
+        let (operand, _) = self.dereference();
+        match operand {
+            Operand::Undefined => {
+                let result = self.peer.create_undefined_to_any();
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Null => {
+                let result = self.peer.create_null_to_any();
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Boolean(value) => {
+                let result = self.peer.create_boolean_to_any(value);
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Number(value) => {
+                let result = self.peer.create_number_to_any(value);
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Closure(value) => {
+                let result = self.peer.create_closure_to_any(value);
+                self.peer.create_emit_promise_resolved(promise, result);
+            }
+            Operand::Promise(value) => {
+                self.peer.create_await_promise(value, promise);
+            }
+            Operand::Any(value) => {
+                let then_block = self.create_basic_block("is_promise.then");
+                let else_block = self.create_basic_block("is_promise.else");
+                let block = self.create_basic_block("block");
+                // if value.is_promise()
+                let is_promise = self.peer.create_is_promise(value);
+                self.peer.create_cond_br(is_promise, then_block, else_block);
+                // {
+                self.peer.set_basic_block(then_block);
+                let target = self.peer.create_load_promise_from_value(value);
+                self.peer.create_await_promise(target, promise);
+                self.peer.create_br(block);
+                // } else {
+                self.peer.set_basic_block(else_block);
+                self.peer.create_emit_promise_resolved(promise, value);
+                self.peer.create_br(block);
+                // }
+                self.peer.set_basic_block(block);
+            }
+            _ => unreachable!("{operand:?}"),
+        }
+    }
+
+    // TODO(perf): Currently, we have to save all values (except for special cases) on the operand
+    // stack into the scratch buffer before the execution of the coroutine suspends.  However, we
+    // don't need to save some of them.  For example, there may be constant values on the operand
+    // stack.  Additionally, there may be values which will be computed to constant values after
+    // the LLVM IR compiler performs constant folding in optimization passes.
+    //
+    // NOTE: It's best to implement a special pass to determine which value on the operand stack
+    // has to be saved, but we don't like to tightly depend on LLVM.  Because we plan to replace it
+    // with another library written in Rust such as Cranelift in the future.
+    fn save_operands_to_scratch_buffer(&mut self) {
+        let mut offset = 0u32;
+        for operand in self.operand_stack.iter() {
+            match operand {
+                Operand::Undefined => (),
+                Operand::Null => (),
+                Operand::Boolean(value) => {
+                    self.peer
+                        .create_write_boolean_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Number(value) => {
+                    self.peer
+                        .create_write_number_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Closure(value) => {
+                    // TODO(issue#237): GcCellRef
+                    self.peer
+                        .create_write_closure_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Promise(value) => {
+                    self.peer
+                        .create_write_promise_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Any(value) => {
+                    self.peer
+                        .create_write_value_to_scratch_buffer(offset, *value);
+                    offset += VALUE_SIZE;
+                }
+                Operand::Reference(..) => (),
+                _ => unreachable!("{operand:?}"),
+            }
+        }
+
+        // TODO: Should return a compile error.
+        assert!(offset <= u16::MAX as u32);
+        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset);
+    }
+
+    fn load_operands_from_scratch_buffer(&mut self) {
+        let mut offset = 0u32;
+        for operand in self.operand_stack.iter_mut() {
+            match operand {
+                Operand::Undefined => (),
+                Operand::Null => (),
+                Operand::Boolean(ref mut value) => {
+                    *value = self.peer.create_read_boolean_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Number(ref mut value) => {
+                    *value = self.peer.create_read_number_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Closure(ref mut value) => {
+                    // TODO(issue#237): GcCellRef
+                    *value = self.peer.create_read_closure_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Promise(ref mut value) => {
+                    *value = self.peer.create_read_promise_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Any(ref mut value) => {
+                    *value = self.peer.create_read_value_from_scratch_buffer(offset);
+                    offset += VALUE_SIZE;
+                }
+                Operand::Reference(..) => (),
+                _ => unreachable!("{operand:?}"),
+            }
+        }
+    }
+
+    fn process_resume(&mut self) {
+        let promise = self.pop_promise();
+        self.peer.create_resume(promise);
+    }
+
+    fn pop_coroutine(&mut self) -> CoroutineIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Coroutine(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn pop_promise(&mut self) -> PromiseIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Promise(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
     fn process_discard(&mut self) {
         debug_assert!(!self.operand_stack.is_empty());
         self.operand_stack.pop();
@@ -2114,10 +2388,6 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_duplicate(&mut self, offset: u8) {
         self.duplicate(offset);
-    }
-
-    fn process_setup_scope_cleanup_checker(&mut self, stack_size: u16) {
-        self.peer.setup_scope_cleanup_checker(stack_size)
     }
 
     fn create_basic_block(&mut self, name: &str) -> BasicBlock {
@@ -2196,9 +2466,10 @@ enum Operand {
     Number(NumberIr),
     Function(LambdaIr),
     Closure(ClosureIr),
+    Coroutine(CoroutineIr),
+    Promise(PromiseIr),
     Any(ValueIr),
     Reference(Symbol, Locator),
-    Argv(ArgvIr),
     Capture(CaptureIr),
 }
 
@@ -2215,11 +2486,12 @@ impl Dump for Operand {
             Self::Null => eprintln!("Null"),
             Self::Boolean(value) => eprintln!("Boolean({:?})", ir2cstr!(value)),
             Self::Number(value) => eprintln!("Number({:?})", ir2cstr!(value)),
-            Self::Function(lambda) => eprintln!("Function({:?})", ir2cstr!(lambda)),
+            Self::Function(value) => eprintln!("Function({:?})", ir2cstr!(value)),
             Self::Closure(value) => eprintln!("Closure({:?})", ir2cstr!(value)),
+            Self::Coroutine(value) => eprintln!("Coroutine({:?})", ir2cstr!(value)),
+            Self::Promise(value) => eprintln!("Promise({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
-            Self::Argv(value) => eprintln!("Argv({:?})", ir2cstr!(value)),
             Self::Capture(value) => eprintln!("Capture({:?})", ir2cstr!(value)),
         }
     }

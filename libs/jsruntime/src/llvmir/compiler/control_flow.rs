@@ -5,6 +5,8 @@ use jsparser::Symbol;
 
 use super::BasicBlock;
 use super::Dump;
+use super::ScopeRef;
+use super::SwitchIr;
 
 macro_rules! bb2cstr {
     ($bb:expr, $buf:expr, $len:expr) => {
@@ -49,19 +51,26 @@ impl ControlFlowStack {
         self.stack.is_empty() && self.exit_stack.is_empty()
     }
 
+    pub fn has_scope_flow(&self) -> bool {
+        self.scope_index != 0
+    }
+
     pub fn push_function_flow(
         &mut self,
         locals_block: BasicBlock,
+        init_block: BasicBlock,
         args_block: BasicBlock,
         body_block: BasicBlock,
         return_block: BasicBlock,
     ) {
         debug_assert_ne!(locals_block, BasicBlock::NONE);
+        debug_assert_ne!(init_block, BasicBlock::NONE);
         debug_assert_ne!(args_block, BasicBlock::NONE);
         debug_assert_ne!(body_block, BasicBlock::NONE);
         debug_assert_ne!(return_block, BasicBlock::NONE);
         self.stack.push(ControlFlow::Function(FunctionFlow {
             locals_block,
+            init_block,
             args_block,
             body_block,
             return_block,
@@ -88,8 +97,52 @@ impl ControlFlowStack {
         }
     }
 
+    pub fn push_coroutine_flow(
+        &mut self,
+        switch_inst: SwitchIr,
+        dormant_block: BasicBlock,
+        num_states: u32,
+    ) {
+        self.stack.push(ControlFlow::Coroutine(CoroutineFlow {
+            switch_inst,
+            dormant_block,
+            num_states,
+            next_state: 1,
+        }));
+    }
+
+    pub fn pop_coroutine_flow(&mut self) -> CoroutineFlow {
+        match self.stack.pop() {
+            Some(ControlFlow::Coroutine(flow)) => {
+                debug_assert_eq!(flow.next_state, flow.num_states - 1);
+                flow
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn coroutine_switch_inst(&self) -> SwitchIr {
+        debug_assert!(self.stack.len() >= 2);
+        match self.stack[1] {
+            ControlFlow::Coroutine(ref flow) => flow.switch_inst,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn coroutine_next_state(&mut self) -> u32 {
+        debug_assert!(self.stack.len() >= 2);
+        let flow = match self.stack[1] {
+            ControlFlow::Coroutine(ref mut flow) => flow,
+            _ => unreachable!(),
+        };
+        let next_state = flow.next_state;
+        flow.next_state += 1;
+        next_state
+    }
+
     pub fn push_scope_flow(
         &mut self,
+        scope_ref: ScopeRef,
         init_block: BasicBlock,
         hoisted_block: BasicBlock,
         body_block: BasicBlock,
@@ -102,6 +155,7 @@ impl ControlFlowStack {
         let outer_index = self.scope_index;
         self.scope_index = self.stack.len();
         self.stack.push(ControlFlow::Scope(ScopeFlow {
+            scope_ref,
             init_block,
             hoisted_block,
             body_block,
@@ -130,18 +184,29 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn push_branch_flow(&mut self, before_block: BasicBlock, after_block: BasicBlock) {
-        debug_assert_ne!(before_block, BasicBlock::NONE);
-        debug_assert_ne!(after_block, BasicBlock::NONE);
-        self.stack.push(ControlFlow::Branch(BranchFlow {
-            before_block,
-            after_block,
+    pub fn push_if_then_else_flow(&mut self, then_block: BasicBlock, else_block: BasicBlock) {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        self.stack.push(ControlFlow::IfThenElse(IfThenElseFlow {
+            then_block,
+            else_block,
         }));
     }
 
-    pub fn pop_branch_flow(&mut self) -> BranchFlow {
+    pub fn pop_if_then_else_flow(&mut self) -> IfThenElseFlow {
         match self.stack.pop() {
-            Some(ControlFlow::Branch(flow)) => flow,
+            Some(ControlFlow::IfThenElse(flow)) => flow,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn update_then_block(&mut self, then_block: BasicBlock) -> BasicBlock {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        match self.stack.last_mut() {
+            Some(ControlFlow::IfThenElse(flow)) => {
+                flow.then_block = then_block;
+                flow.else_block
+            }
             _ => unreachable!(),
         }
     }
@@ -260,18 +325,36 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn push_case_banch_flow(&mut self, before_block: BasicBlock, after_block: BasicBlock) {
-        debug_assert_ne!(before_block, BasicBlock::NONE);
-        debug_assert_ne!(after_block, BasicBlock::NONE);
-        self.stack.push(ControlFlow::CaseBranch(CaseBranchFlow {
-            before_block,
-            after_block,
+    pub fn push_case_flow(&mut self, next_case_block: BasicBlock, clause_start_block: BasicBlock) {
+        debug_assert_ne!(next_case_block, BasicBlock::NONE);
+        debug_assert_ne!(clause_start_block, BasicBlock::NONE);
+        self.stack.push(ControlFlow::Case(CaseFlow {
+            next_case_block,
+            clause_start_block,
+            clause_end_block: BasicBlock::NONE,
+            clause_has_statement: false,
         }));
     }
 
-    pub fn pop_case_branch_flow(&mut self) -> CaseBranchFlow {
+    pub fn pop_case_flow(&mut self) -> CaseFlow {
         match self.stack.pop() {
-            Some(ControlFlow::CaseBranch(flow)) => flow,
+            Some(ControlFlow::Case(flow)) => flow,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn update_case_flow(
+        &mut self,
+        clause_end_block: BasicBlock,
+        clause_has_statement: bool,
+    ) -> BasicBlock {
+        debug_assert_ne!(clause_end_block, BasicBlock::NONE);
+        match self.stack.last_mut() {
+            Some(ControlFlow::Case(flow)) => {
+                flow.clause_end_block = clause_end_block;
+                flow.clause_has_statement = clause_has_statement;
+                flow.next_case_block
+            }
             _ => unreachable!(),
         }
     }
@@ -425,6 +508,9 @@ impl ControlFlowStack {
                     bb!(flow, body_block);
                     bb!(flow, return_block);
                 }
+                ControlFlow::Coroutine(flow) => {
+                    eprintln!("coroutine: state={}/{}", flow.next_state, flow.num_states);
+                }
                 ControlFlow::Scope(flow) => {
                     eprint!("scope:");
                     eprintln!();
@@ -433,10 +519,10 @@ impl ControlFlowStack {
                     bb!(flow, body_block);
                     bb!(flow, cleanup_block);
                 }
-                ControlFlow::Branch(flow) => {
-                    eprintln!("branch:");
-                    bb!(flow, before_block);
-                    bb!(flow, after_block);
+                ControlFlow::IfThenElse(flow) => {
+                    eprintln!("then-else:");
+                    bb!(flow, then_block);
+                    bb!(flow, else_block);
                 }
                 ControlFlow::LoopInit(flow) => {
                     eprintln!("loop-init:");
@@ -466,10 +552,17 @@ impl ControlFlowStack {
                     }
                     bb!(flow, end_block);
                 }
-                ControlFlow::CaseBranch(flow) => {
-                    eprintln!("case-branch:");
-                    bb!(flow, before_block);
-                    bb!(flow, after_block);
+                ControlFlow::Case(flow) => {
+                    if flow.clause_has_statement {
+                        eprintln!("case: has-statement");
+                    } else {
+                        eprintln!("case:");
+                    }
+                    bb!(flow, next_case_block);
+                    bb!(flow, clause_start_block);
+                    if flow.clause_end_block != BasicBlock::NONE {
+                        bb!(flow, clause_end_block);
+                    }
                 }
                 ControlFlow::Exception(flow) => {
                     eprint!("exception:");
@@ -531,14 +624,15 @@ impl Dump for ControlFlowStack {
 
 enum ControlFlow {
     Function(FunctionFlow),
+    Coroutine(CoroutineFlow),
     Scope(ScopeFlow),
-    Branch(BranchFlow),
+    IfThenElse(IfThenElseFlow),
     LoopInit(LoopInitFlow),
     LoopTest(LoopTestFlow),
     LoopNext(LoopNextFlow),
     LoopBody(LoopBodyFlow),
     Switch(SwitchFlow),
-    CaseBranch(CaseBranchFlow),
+    Case(CaseFlow),
     Exception(ExceptionFlow),
 }
 
@@ -547,14 +641,26 @@ pub struct FunctionFlow {
     #[allow(unused)]
     pub locals_block: BasicBlock,
     #[allow(unused)]
+    pub init_block: BasicBlock,
+    #[allow(unused)]
     pub args_block: BasicBlock,
     #[allow(unused)]
     pub body_block: BasicBlock,
     pub return_block: BasicBlock,
 }
 
+pub struct CoroutineFlow {
+    switch_inst: SwitchIr,
+    pub dormant_block: BasicBlock,
+    num_states: u32,
+    next_state: u32,
+}
+
 /// Contains data used for building a region representing a lexical scope.
 pub struct ScopeFlow {
+    /// The reference to the scope in the scope tree.
+    pub scope_ref: ScopeRef,
+
     /// The entry block of the scope flow.
     pub init_block: BasicBlock,
 
@@ -572,9 +678,9 @@ pub struct ScopeFlow {
     outer_index: usize,
 }
 
-pub struct BranchFlow {
-    pub before_block: BasicBlock,
-    pub after_block: BasicBlock,
+pub struct IfThenElseFlow {
+    pub then_block: BasicBlock,
+    pub else_block: BasicBlock,
 }
 
 pub struct LoopInitFlow {
@@ -604,16 +710,11 @@ pub struct SwitchFlow {
     outer_index: usize,
 }
 
-pub struct CaseBranchFlow {
-    /// The last basic block in the statement lists of a case/default clause before the branch.
-    ///
-    /// This will be connected to `after_block` if it's not terminated and there is a subsequent
-    /// case/default clause in the current `SelectFlow`.  If it's not terminated and there is no
-    /// subsequent case/default clause, it will be connected to `SelectFlow::end_block`.
-    pub before_block: BasicBlock,
-
-    /// The first basic block in the statement lists of a case/default clause after the branch.
-    pub after_block: BasicBlock,
+pub struct CaseFlow {
+    pub next_case_block: BasicBlock,
+    pub clause_start_block: BasicBlock,
+    pub clause_end_block: BasicBlock,
+    pub clause_has_statement: bool,
 }
 
 pub struct ExceptionFlow {

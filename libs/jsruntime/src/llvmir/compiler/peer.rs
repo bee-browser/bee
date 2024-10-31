@@ -25,6 +25,12 @@ pub struct NumberIr(*mut bridge::NumberIr);
 pub struct ClosureIr(*mut bridge::ClosureIr);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CoroutineIr(*mut bridge::CoroutineIr);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PromiseIr(*mut bridge::PromiseIr);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ValueIr(*mut bridge::ValueIr);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -35,6 +41,21 @@ pub struct StatusIr(*mut bridge::StatusIr);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CaptureIr(*mut bridge::CaptureIr);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SwitchIr(*mut bridge::SwitchIr);
+
+macro_rules! basic_block {
+    ($inner:expr) => {
+        BasicBlock(unsafe { $inner })
+    };
+}
+
+macro_rules! lambda_ir {
+    ($inner:expr) => {
+        LambdaIr(unsafe { $inner })
+    };
+}
 
 macro_rules! boolean_ir {
     ($inner:expr) => {
@@ -51,6 +72,18 @@ macro_rules! number_ir {
 macro_rules! closure_ir {
     ($inner:expr) => {
         ClosureIr(unsafe { $inner })
+    };
+}
+
+macro_rules! coroutine_ir {
+    ($inner:expr) => {
+        CoroutineIr(unsafe { $inner })
+    };
+}
+
+macro_rules! promise_ir {
+    ($inner:expr) => {
+        PromiseIr(unsafe { $inner })
     };
 }
 
@@ -75,6 +108,12 @@ macro_rules! status_ir {
 macro_rules! capture_ir {
     ($inner:expr) => {
         CaptureIr(unsafe { $inner })
+    };
+}
+
+macro_rules! switch_ir {
+    ($inner:expr) => {
+        SwitchIr(unsafe { $inner })
     };
 }
 
@@ -109,9 +148,9 @@ impl Compiler {
 
     // function
 
-    pub fn start_function(&self, name: &CStr) {
+    pub fn start_function(&self, func_id: FunctionId) {
         unsafe {
-            bridge::compiler_peer_start_function(self.0, name.as_ptr());
+            bridge::compiler_peer_start_function(self.0, func_id.into());
         }
     }
 
@@ -128,28 +167,20 @@ impl Compiler {
         }
     }
 
-    pub fn get_function(&self, func_id: FunctionId, name: &CStr) -> LambdaIr {
-        unsafe {
-            LambdaIr(bridge::compiler_peer_get_function(
-                self.0,
-                func_id.into(),
-                name.as_ptr(),
-            ))
-        }
+    pub fn get_function(&self, func_id: FunctionId) -> LambdaIr {
+        lambda_ir!(bridge::compiler_peer_get_function(self.0, func_id.into()))
     }
 
     // basic block
 
     pub fn create_basic_block(&self, name: *const std::ffi::c_char, name_len: usize) -> BasicBlock {
-        unsafe {
-            BasicBlock(bridge::compiler_peer_create_basic_block(
-                self.0, name, name_len,
-            ))
-        }
+        basic_block!(bridge::compiler_peer_create_basic_block(
+            self.0, name, name_len
+        ))
     }
 
     pub fn get_basic_block(&self) -> BasicBlock {
-        unsafe { BasicBlock(bridge::compiler_peer_get_basic_block(self.0)) }
+        basic_block!(bridge::compiler_peer_get_basic_block(self.0))
     }
 
     pub fn set_basic_block(&self, block: BasicBlock) {
@@ -503,7 +534,51 @@ impl Compiler {
         }
     }
 
+    // promise
+
+    pub fn create_is_promise(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_promise(self.0, value.0)
+        }
+    }
+
+    pub fn create_is_same_promise(&self, a: PromiseIr, b: PromiseIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_promise(self.0, a.0, b.0)
+        }
+    }
+
+    pub fn create_register_promise(&self, coroutine: CoroutineIr) -> PromiseIr {
+        promise_ir! {
+            bridge::compiler_peer_create_register_promise(self.0, coroutine.0)
+        }
+    }
+
+    pub fn create_await_promise(&self, promise: PromiseIr, awaiting: PromiseIr) {
+        unsafe {
+            bridge::compiler_peer_create_await_promise(self.0, promise.0, awaiting.0);
+        }
+    }
+
+    pub fn create_resume(&self, promise: PromiseIr) {
+        unsafe {
+            bridge::compiler_peer_create_resume(self.0, promise.0);
+        }
+    }
+
+    pub fn create_emit_promise_resolved(&self, promise: PromiseIr, result: ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_emit_promise_resolved(self.0, promise.0, result.0);
+        }
+    }
+
     // value
+
+    pub fn create_has_value(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_has_value(self.0, value.0)
+        }
+    }
 
     pub fn create_is_loosely_equal(&self, a: ValueIr, b: ValueIr) -> BooleanIr {
         boolean_ir! {
@@ -532,6 +607,12 @@ impl Compiler {
     pub fn create_is_same_closure_value(&self, any: ValueIr, closure: ClosureIr) -> BooleanIr {
         boolean_ir! {
             bridge::compiler_peer_create_is_same_closure_value(self.0, any.0, closure.0)
+        }
+    }
+
+    pub fn create_is_same_promise_value(&self, any: ValueIr, promise: PromiseIr) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_is_same_promise_value(self.0, any.0, promise.0)
         }
     }
 
@@ -627,6 +708,13 @@ impl Compiler {
         }
     }
 
+    pub fn create_store_promise_to_value(&self, value: PromiseIr, dest: ValueIr) {
+        debug_assert_ne!(value, PromiseIr::NONE);
+        unsafe {
+            bridge::compiler_peer_create_store_promise_to_value(self.0, value.0, dest.0);
+        }
+    }
+
     pub fn create_store_value_to_value(&self, value: ValueIr, dest: ValueIr) {
         debug_assert_ne!(value, ValueIr::NONE);
         unsafe {
@@ -637,6 +725,12 @@ impl Compiler {
     pub fn create_load_closure_from_value(&self, value: ValueIr) -> ClosureIr {
         closure_ir! {
             bridge::compiler_peer_create_load_closure_from_value(self.0, value.0)
+        }
+    }
+
+    pub fn create_load_promise_from_value(&self, value: ValueIr) -> PromiseIr {
+        promise_ir! {
+            bridge::compiler_peer_create_load_promise_from_value(self.0, value.0)
         }
     }
 
@@ -707,6 +801,13 @@ impl Compiler {
         debug_assert_ne!(value, ClosureIr::NONE);
         unsafe {
             bridge::compiler_peer_create_store_closure_to_retv(self.0, value.0);
+        }
+    }
+
+    pub fn create_store_promise_to_retv(&self, value: PromiseIr) {
+        debug_assert_ne!(value, PromiseIr::NONE);
+        unsafe {
+            bridge::compiler_peer_create_store_promise_to_retv(self.0, value.0);
         }
     }
 
@@ -867,24 +968,149 @@ impl Compiler {
         }
     }
 
+    // coroutine
+
+    pub fn create_coroutine(
+        &self,
+        closure: ClosureIr,
+        num_locals: u16,
+        scratch_buffer_len: u16,
+    ) -> CoroutineIr {
+        coroutine_ir! {
+            bridge::compiler_peer_create_coroutine(self.0, closure.0, num_locals, scratch_buffer_len)
+        }
+    }
+
+    pub fn create_switch_for_coroutine(&self, block: BasicBlock, num_states: u32) -> SwitchIr {
+        switch_ir! {
+            bridge::compiler_peer_create_switch_for_coroutine(self.0, block.0, num_states)
+        }
+    }
+
+    pub fn create_add_state_for_coroutine(&self, inst: SwitchIr, state: u32, block: BasicBlock) {
+        unsafe {
+            bridge::compiler_peer_create_add_state_for_coroutine(self.0, inst.0, state, block.0);
+        }
+    }
+
+    pub fn create_suspend(&self) {
+        unsafe {
+            bridge::compiler_peer_create_suspend(self.0);
+        }
+    }
+
+    pub fn create_set_coroutine_state(&self, state: u32) {
+        unsafe {
+            bridge::compiler_peer_create_set_coroutine_state(self.0, state);
+        }
+    }
+
+    pub fn create_set_captures_for_coroutine(&self) {
+        unsafe {
+            bridge::compiler_peer_create_set_captures_for_coroutine(self.0);
+        }
+    }
+
+    pub fn create_get_local_ptr_from_coroutine(&self, index: u16) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_get_local_ptr_from_coroutine(self.0, index)
+        }
+    }
+
+    pub fn create_write_boolean_to_scratch_buffer(&self, offset: u32, value: BooleanIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_boolean_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_boolean_from_scratch_buffer(&self, offset: u32) -> BooleanIr {
+        boolean_ir! {
+            bridge::compiler_peer_create_read_boolean_from_scratch_buffer(self.0, offset)
+        }
+    }
+
+    pub fn create_write_number_to_scratch_buffer(&self, offset: u32, value: NumberIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_number_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_number_from_scratch_buffer(&self, offset: u32) -> NumberIr {
+        number_ir! {
+            bridge::compiler_peer_create_read_number_from_scratch_buffer(self.0, offset)
+        }
+    }
+
+    pub fn create_write_closure_to_scratch_buffer(&self, offset: u32, value: ClosureIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_closure_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_closure_from_scratch_buffer(&self, offset: u32) -> ClosureIr {
+        closure_ir! {
+            bridge::compiler_peer_create_read_closure_from_scratch_buffer(self.0, offset)
+        }
+    }
+
+    pub fn create_write_promise_to_scratch_buffer(&self, offset: u32, value: PromiseIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_promise_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_promise_from_scratch_buffer(&self, offset: u32) -> PromiseIr {
+        promise_ir! {
+            bridge::compiler_peer_create_read_promise_from_scratch_buffer(self.0, offset)
+        }
+    }
+
+    pub fn create_write_value_to_scratch_buffer(&self, offset: u32, value: ValueIr) {
+        unsafe {
+            bridge::compiler_peer_create_write_value_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_value_from_scratch_buffer(&self, offset: u32) -> ValueIr {
+        value_ir! {
+            bridge::compiler_peer_create_read_value_from_scratch_buffer(self.0, offset)
+        }
+    }
+
     // scope cleanup checker
 
-    pub fn setup_scope_cleanup_checker(&self, stack_size: u16) {
-        debug_assert!(stack_size > 0);
+    pub fn enable_scope_cleanup_checker(&self, is_coroutine: bool) {
         unsafe {
-            bridge::compiler_peer_setup_scope_cleanup_checker(self.0, stack_size);
+            bridge::compiler_peer_enable_scope_cleanup_checker(self.0, is_coroutine);
         }
     }
 
-    pub fn perform_scope_cleanup_precheck(&self, scope_ref: ScopeRef) {
+    pub fn set_scope_id_for_checker(&self, scope_ref: ScopeRef) {
         unsafe {
-            bridge::compiler_peer_perform_scope_cleanup_precheck(self.0, scope_ref.id());
+            bridge::compiler_peer_set_scope_id_for_checker(self.0, scope_ref.id());
         }
     }
 
-    pub fn perform_scope_cleanup_postcheck(&self, scope_ref: ScopeRef) {
+    pub fn assert_scope_id(&self, expected: ScopeRef) {
         unsafe {
-            bridge::compiler_peer_perform_scope_cleanup_postcheck(self.0, scope_ref.id());
+            bridge::compiler_peer_assert_scope_id(self.0, expected.id());
+        }
+    }
+
+    // print
+
+    #[allow(unused)]
+    pub fn create_print_value(&self, value: ValueIr, msg: &CStr) {
+        unsafe {
+            bridge::compiler_peer_create_print_value(self.0, value.0, msg.as_ptr());
+        }
+    }
+
+    // unreachable
+
+    pub fn create_unreachable(&self, msg: &CStr) {
+        unsafe {
+            bridge::compiler_peer_create_unreachable(self.0, msg.as_ptr());
         }
     }
 }
@@ -974,6 +1200,34 @@ impl ClosureIr {
     }
 }
 
+impl CoroutineIr {
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_value_name_or_as_operand(
+                self.0 as *mut bridge::ValueIr,
+                buf,
+                len,
+            );
+            std::ffi::CStr::from_ptr(buf)
+        }
+    }
+}
+
+impl PromiseIr {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            bridge::helper_peer_get_value_name_or_as_operand(
+                self.0 as *mut bridge::ValueIr,
+                buf,
+                len,
+            );
+            std::ffi::CStr::from_ptr(buf)
+        }
+    }
+}
+
 impl ValueIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 
@@ -987,17 +1241,6 @@ impl ValueIr {
 
 impl ArgvIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
-
-    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
-        unsafe {
-            bridge::helper_peer_get_value_name_or_as_operand(
-                self.0 as *mut bridge::ValueIr,
-                buf,
-                len,
-            );
-            std::ffi::CStr::from_ptr(buf)
-        }
-    }
 }
 
 impl CaptureIr {

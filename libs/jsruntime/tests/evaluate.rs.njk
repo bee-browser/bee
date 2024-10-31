@@ -35,7 +35,7 @@ impl Drop for Validator {
     }
 }
 
-fn evaluate(src: &str, optimize: bool, enable_labels: bool, expected_values: Vec<Value>) -> Result<Value, Value> {
+fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expected_values: Vec<Value>) -> Result<Value, Value> {
     let mut runtime = Runtime::with_extension(Validator {
         expected_values,
         actual_values: vec![],
@@ -55,9 +55,15 @@ fn evaluate(src: &str, optimize: bool, enable_labels: bool, expected_values: Vec
         #[allow(clippy::clone_on_copy)]
         runtime.extension_mut().actual_values.push(args[0].clone());
     });
-    let program = runtime.parse_script(src).unwrap();
+    let program = if module {
+        runtime.parse_module(src).unwrap()
+    } else {
+        runtime.parse_script(src).unwrap()
+    };
     let module = runtime.compile(&program, optimize).unwrap();
-    runtime.evaluate(module)
+    let result = runtime.evaluate(module)?;
+    runtime.run();
+    Ok(result)
 }
 {%- for test in data.tests %}
 
@@ -77,8 +83,8 @@ fn {{ test.name }}_with_labels() {
 }
 
 fn {{ test.name }}(optimize: bool, enable_labels: bool) {
-    let src = include_str!("{{ test.name }}.js");
-    let result = evaluate(src, optimize, enable_labels, vec![
+    let src = include_str!("{{ test.filename }}");
+    let result = evaluate(src, {{ test.module }}, optimize, enable_labels, vec![
         {%- for expected in test.expectedValues %}
         {%- if expected === "Value::UNDEFINED" %}
         {{ expected }},

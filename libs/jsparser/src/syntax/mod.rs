@@ -121,8 +121,10 @@ enum Detail {
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
     ConciseBody,
+    AsyncConciseBody,
     StatementList,
     CoverCallExpressionAndAsyncArrowHead,
+    ModuleItemList,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -206,10 +208,15 @@ pub enum Node<'s> {
     FormalParameter,
     FormalParameters(u32),
     FunctionContext,
+    AsyncFunctionContext,
     FunctionSignature(Symbol),
     FunctionDeclaration,
+    AsyncFunctionDeclaration,
     FunctionExpression(bool),
+    AsyncFunctionExpression(bool),
     ArrowFunction,
+    AsyncArrowFunction,
+    AwaitExpression,
     ThenBlock,
     ElseBlock,
     FalsyShortCircuit,
@@ -544,6 +551,12 @@ where
     // _FUNCTION_CONTEXT_
     fn process_function_context(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FunctionContext);
+        Ok(())
+    }
+
+    // _ASYNC_FUNCTION_CONTEXT_
+    fn process_async_function_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncFunctionContext);
         Ok(())
     }
 
@@ -1511,9 +1524,9 @@ where
     // LexicalBinding[In, Yield, Await] :
     //   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
     fn process_lexical_binding_identifier_with_initializer(&mut self) -> Result<(), Error> {
-        let symbol = match self.stack[self.stack.len() - 2].detail {
-            Detail::BindingIdentifier(symbol) => symbol,
-            _ => unreachable!(),
+        let symbol = match &self.stack[self.stack.len() - 2].detail {
+            Detail::BindingIdentifier(symbol) => *symbol,
+            detail => unreachable!("{detail:?}"),
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
@@ -2229,15 +2242,6 @@ where
         Ok(())
     }
 
-    // 15.9 Async Arrow Function Definitions
-
-    // CoverCallExpressionAndAsyncArrowHead[Yield, Await] :
-    //   MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
-    fn process_cover_call_expression_and_async_arrow_head(&mut self) -> Result<(), Error> {
-        self.replace(2, Detail::CoverCallExpressionAndAsyncArrowHead);
-        Ok(())
-    }
-
     // 15.1 Parameter Lists
 
     // FormalParameters[Yield, Await] :
@@ -2372,9 +2376,13 @@ where
     // ArrowParameters[Yield, Await] :
     //   BindingIdentifier[?Yield, ?Await]
     fn process_arrow_parameters_binding_identifier(&mut self) -> Result<(), Error> {
-        let i = self.enqueue(Node::FunctionContext);
+        self.process_single_arrow_parameter(Node::FunctionContext)
+    }
+
+    fn process_single_arrow_parameter(&mut self, context_node: Node<'s>) -> Result<(), Error> {
+        let i = self.enqueue(context_node);
         debug_assert!(i > 0);
-        self.nodes.swap(i - 1, i); // swap BindingIdentifier and FunctionContext.
+        self.nodes.swap(i - 1, i); // swap BindingIdentifier and context_node.
         self.enqueue(Node::FormalParameter);
         self.enqueue(Node::FormalParameters(1));
         let bound_names = match self.top().detail {
@@ -2442,6 +2450,119 @@ where
         Ok(())
     }
 
+    // 15.8 Async Function Definitions
+
+    // AsyncFunctionDeclaration[Yield, Await, Default] :
+    //   async [no LineTerminator here] function BindingIdentifier[?Yield, ?Await]
+    //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
+    fn process_async_function_declaration(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncFunctionDeclaration);
+        self.replace(9, Detail::Declaration);
+        Ok(())
+    }
+
+    // AsyncFunctionExpression :
+    //   async [no LineTerminator here] function BindingIdentifier[~Yield, +Await]
+    //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
+    fn process_async_function_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncFunctionExpression(true));
+        self.replace(9, Detail::Expression);
+        Ok(())
+    }
+
+    // AsyncFunctionExpression :
+    //   async [no LineTerminator here] function
+    //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
+    fn process_anonymous_async_function_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncFunctionExpression(false));
+        self.replace(8, Detail::Expression);
+        Ok(())
+    }
+
+    // AwaitExpression[Yield] :
+    //   await UnaryExpression[?Yield, +Await]
+    fn process_await(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AwaitExpression);
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // 15.9 Async Arrow Function Definitions
+
+    // AsyncArrowFunction[In, Yield, Await] :
+    //   async [no LineTerminator here] AsyncArrowBindingIdentifier[?Yield]
+    //   [no LineTerminator here] => AsyncConciseBody[?In]
+    fn process_async_arrow_function(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncArrowFunction);
+        self.replace(4, Detail::Expression);
+        Ok(())
+    }
+
+    // AsyncArrowFunction[In, Yield, Await] :
+    //   AsyncArrowHeadCCEAAAH[?Yield, ?Await] [no LineTerminator here] =>
+    //   AsyncConciseBody[?In]
+    fn process_async_arrow_function_cceaaah(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AsyncArrowFunction);
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
+
+    // AsyncConciseBody[In] :
+    //   [lookahead ≠ {] ExpressionBody[?In, +Await]
+    fn process_async_concise_body_expression_body(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ReturnStatement(1));
+        self.replace(1, Detail::AsyncConciseBody);
+        Ok(())
+    }
+
+    // AsyncConciseBody[In] :
+    //   { AsyncFunctionBody }
+    fn process_async_concise_body_async_function_body(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::AsyncConciseBody);
+        Ok(())
+    }
+
+    // AsyncArrowBindingIdentifier[Yield] :
+    //   BindingIdentifier[?Yield, +Await]
+    fn process_async_arrow_binding_identifier(&mut self) -> Result<(), Error> {
+        self.process_single_arrow_parameter(Node::AsyncFunctionContext)
+    }
+
+    // AsyncArrowHeadCCEAAAH[Yield, Await] :
+    //   CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
+    fn process_async_arrow_head_cceaaah(&mut self) -> Result<(), Error> {
+        self.refine_async_arrow_head()
+    }
+
+    fn refine_async_arrow_head(&mut self) -> Result<(), Error> {
+        let syntax = self.pop();
+        self.tokens.truncate(syntax.tokens_range.start);
+        self.nodes.truncate(syntax.nodes_range.start);
+        self.enqueue(Node::AsyncFunctionContext);
+        self.refine(&syntax, GoalSymbol::AsyncArrowHead)
+    }
+
+    // AsyncArrowHead :
+    //   async [no LineTerminator here] ArrowFormalParameters[~Yield, +Await]
+    fn process_async_arrow_head(&mut self) -> Result<(), Error> {
+        let formal_parameters = self.pop();
+        let tokens_end = self.tokens.len();
+        let nodes_end = self.nodes.len();
+        let syntax = self.top_mut();
+        syntax.detail = formal_parameters.detail;
+        syntax.tokens_range.end = tokens_end;
+        syntax.nodes_range.end = nodes_end;
+        syntax.source_range.end = formal_parameters.source_range.end;
+        Ok(())
+    }
+
+    // CoverCallExpressionAndAsyncArrowHead[Yield, Await] :
+    //   MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+    fn process_cover_call_expression_and_async_arrow_head(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::CoverCallExpressionAndAsyncArrowHead);
+        Ok(())
+    }
+
     // 16.1 Scripts
 
     // Script :
@@ -2454,6 +2575,36 @@ where
     //   ScriptBody
     fn process_script(&mut self) -> Result<(), Error> {
         self.pop();
+        Ok(())
+    }
+
+    // 16.2 Modules
+
+    // Module :
+    //   [empty]
+    fn process_empty_module(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    // Module :
+    //   ModuleBody
+    fn process_module(&mut self) -> Result<(), Error> {
+        self.pop();
+        Ok(())
+    }
+
+    // ModuleItemList :
+    //   ModuleItem
+    fn process_module_item_list_head(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::ModuleItemList;
+        Ok(())
+    }
+
+    // ModuleItemList :
+    //   ModuleItemList ModuleItem
+    fn process_module_item_list_item(&mut self) -> Result<(), Error> {
+        self.pop();
+        self.update_ends();
         Ok(())
     }
 }

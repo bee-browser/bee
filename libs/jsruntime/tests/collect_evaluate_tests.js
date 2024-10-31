@@ -35,11 +35,20 @@ async function main(args, options) {
     log.debug(`Reading ${test}...`);
     const script = await Deno.readTextFile(test);
     const lines = script.split('\n').map((line) => line.trim());
-    const expectedValues = lines.filter((line) => line.includes('///=')).map((line) => line.split('///=')[1].trim());
+    const sequencedValues = lines.filter((line) => line.includes('///='))
+      .map((line) => line.split('///=')[1].trim());
+    const orderedValues = lines
+      .filter((line) => line.includes('///#'))
+      .map((line) => line.split('///#')[1].trim().split('='))
+      .reduce((acc, [i, v]) => { acc[i] = v; return acc; }, []);
     const throws = lines.find((line) => line.includes('///!'))?.split('///!')[1].trim();
+    const name = path.basename(test).replace('.', '_');
+    const module = test.endsWith('.js') ? false : true;
     tests.push({
-      name: path.basename(test, '.js'),
-      expectedValues,
+      filename: test,
+      name,
+      module,
+      expectedValues: sequencedValues.length > 0 ? sequencedValues : orderedValues,
       throws,
     });
   }

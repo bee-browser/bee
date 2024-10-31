@@ -55,11 +55,32 @@ llvm::StructType* TypeHolder::CreateClosureType() {
         builder_.getPtrTy(),
         // num_captures
         builder_.getInt16Ty(),
-        // captures
+        // captures[]
         builder_.getPtrTy(),
     });
   }
   return closure_type_;
+}
+
+llvm::StructType* TypeHolder::CreateCoroutineType() {
+  if (coroutine_type_ == nullptr) {
+    coroutine_type_ = llvm::StructType::create(context_, "Coroutine");
+    coroutine_type_->setBody({
+        // closure
+        builder_.getPtrTy(),
+        // state
+        builder_.getInt32Ty(),
+        // num_locals
+        builder_.getInt16Ty(),
+        // scope_id
+        builder_.getInt16Ty(),
+        // scrach_buffer_len,
+        builder_.getInt16Ty(),
+        // locals[]
+        CreateValueType(),
+    });
+  }
+  return coroutine_type_;
 }
 
 llvm::FunctionType* TypeHolder::CreateLambdaType() {
@@ -68,15 +89,15 @@ llvm::FunctionType* TypeHolder::CreateLambdaType() {
         // status code
         builder_.getInt32Ty(),
         {
-            // ctx (pointer to the exec context)
+            // runtime (pointer to the runtime)
             builder_.getPtrTy(),
-            // caps (pointer to a list of captures)
+            // context (pointer to a contextual data)
             builder_.getPtrTy(),
             // argc
             GetWordType(),
             // argv (pointer to a list of values)
             builder_.getPtrTy(),
-            // ret (pointer to a return value)
+            // retv (pointer to a return value)
             builder_.getPtrTy(),
         },
         false);

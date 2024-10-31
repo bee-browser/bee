@@ -24,9 +24,9 @@ class Executor {
   ~Executor() = default;
 
   void RegisterRuntime(const Runtime* runtime);
-  void RegisterHostFunction(const char* name, Lambda lambda);
+  void RegisterHostFunction(uint32_t func_id, Lambda lambda);
   void RegisterModule(Module* mod);
-  Lambda GetNativeFunction(const char* name);
+  Lambda GetNativeFunction(uint32_t func_id);
 
   llvm::orc::ExecutionSession& exec_session() {
     return jit_->getExecutionSession();

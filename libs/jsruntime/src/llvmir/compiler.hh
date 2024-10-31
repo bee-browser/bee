@@ -65,10 +65,10 @@ struct Module;
 class Compiler {
  public:
   Compiler() {
-    context_ = std::make_unique<llvm::LLVMContext>();
-    module_ = std::make_unique<llvm::Module>("<main>", *context_);
-    builder_ = std::make_unique<llvm::IRBuilder<>>(*context_);
-    types_ = std::make_unique<TypeHolder>(*context_, *module_, *builder_);
+    llvmctx_ = std::make_unique<llvm::LLVMContext>();
+    module_ = std::make_unique<llvm::Module>("<main>", *llvmctx_);
+    builder_ = std::make_unique<llvm::IRBuilder<>>(*llvmctx_);
+    types_ = std::make_unique<TypeHolder>(*llvmctx_, *module_, *builder_);
 
     // Took from toy.cpp in the Kaleidoscope tutorial.
     fpm_ = std::make_unique<llvm::FunctionPassManager>();
@@ -77,7 +77,7 @@ class Compiler {
     cgam_ = std::make_unique<llvm::CGSCCAnalysisManager>();
     mam_ = std::make_unique<llvm::ModuleAnalysisManager>();
     pic_ = std::make_unique<llvm::PassInstrumentationCallbacks>();
-    si_ = std::make_unique<llvm::StandardInstrumentations>(*context_, true);  // with debug logs
+    si_ = std::make_unique<llvm::StandardInstrumentations>(*llvmctx_, true);  // with debug logs
     si_->registerCallbacks(*pic_, mam_.get());
 
     fpm_->addPass(llvm::PromotePass());
@@ -109,7 +109,7 @@ class Compiler {
       std::abort();
     }
 
-    llvm::orc::ThreadSafeModule mod(std::move(module_), std::move(context_));
+    llvm::orc::ThreadSafeModule mod(std::move(module_), std::move(llvmctx_));
     return new Module(std::move(mod));
   }
 
@@ -127,23 +127,22 @@ class Compiler {
 
   // function
 
-  void StartFunction(const char* name) {
-    function_ = CreateLambda(name);
+  void StartFunction(uint32_t func_id) {
+    function_ = CreateLambda(func_id);
 
-    exec_context_ = function_->getArg(0);
-    caps_ = function_->getArg(1);
+    runtime_ = function_->getArg(0);
+    context_ = function_->getArg(1);
     argc_ = function_->getArg(2);
     argv_ = function_->getArg(3);
     retv_ = function_->getArg(4);
 
-    ClearScopeCleanupStack();
+    // captures_ will be overridden if this lambda function is a coroutine.
+    captures_ = context_;
+
+    ResetScopeCleanupChecker();
   }
 
   void EndFunction(bool optimize) {
-    if (IsScopeCleanupCheckerEnabled()) {
-      CreateAssertScopeCleanupStackIsEmpty();
-    }
-
     auto* status = builder_->CreateLoad(builder_->getInt32Ty(), status_, REG_NAME("status"));
     // Convert STATUS_XXX into Status.
     auto* masked =
@@ -166,20 +165,19 @@ class Compiler {
     locals_block_ = block;
   }
 
-  llvm::Function* GetFunction(uint32_t func_id, const char* name) {
-    UNUSED(func_id);
-    return CreateLambda(name);
+  llvm::Function* GetFunction(uint32_t func_id) {
+    return CreateLambda(func_id);
   }
 
   // basic block
 
   llvm::BasicBlock* CreateBasicBlock(const char* name) {
-    return llvm::BasicBlock::Create(*context_, name, function_);
+    return llvm::BasicBlock::Create(*llvmctx_, name, function_);
   }
 
   llvm::BasicBlock* CreateBasicBlock(const char* name, size_t name_len) {
     return llvm::BasicBlock::Create(
-        *context_, llvm::Twine(llvm::StringRef(name, name_len)), function_);
+        *llvmctx_, llvm::Twine(llvm::StringRef(name, name_len)), function_);
   }
 
   llvm::BasicBlock* GetBasicBlock() const {
@@ -256,11 +254,11 @@ class Compiler {
   // 7.1.2 ToBoolean ( argument )
   llvm::Value* CreateToBoolean(llvm::Value* value_ptr) {
     auto* func = types_->CreateRuntimeToBoolean();
-    return builder_->CreateCall(func, {exec_context_, value_ptr}, REG_NAME("boolean"));
+    return builder_->CreateCall(func, {runtime_, value_ptr}, REG_NAME("boolean"));
   }
 
   llvm::Value* GetBoolean(bool value) {
-    return llvm::ConstantInt::getBool(*context_, value);
+    return llvm::ConstantInt::getBool(*llvmctx_, value);
   }
 
   llvm::Value* CreateLogicalNot(llvm::Value* boolean) {
@@ -296,7 +294,7 @@ class Compiler {
   // 7.1.4 ToNumber ( argument )
   llvm::Value* ToNumeric(llvm::Value* value_ptr) {
     auto* call = types_->CreateRuntimeToNumeric();
-    return builder_->CreateCall(call, {exec_context_, value_ptr}, REG_NAME("numeric"));
+    return builder_->CreateCall(call, {runtime_, value_ptr}, REG_NAME("numeric"));
   }
 
   llvm::Value* GetNan() {
@@ -308,7 +306,7 @@ class Compiler {
   }
 
   llvm::Value* GetNumber(double value) {
-    return llvm::ConstantFP::get(*context_, llvm::APFloat(value));
+    return llvm::ConstantFP::get(*llvmctx_, llvm::APFloat(value));
   }
 
   // 6.1.6.1.2 Number::bitwiseNOT ( x )
@@ -431,13 +429,13 @@ class Compiler {
   llvm::Value* CreateClosure(llvm::Value* lambda, uint16_t num_captures) {
     auto* func = types_->CreateRuntimeCreateClosure();
     return builder_->CreateCall(
-        func, {exec_context_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
+        func, {runtime_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
   }
 
-  inline void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr,
+  void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr,
       llvm::Value* closure_ptr,
       uint16_t index) {
-    auto* ptr = CreateLoadCapturesFromClosure(closure_ptr);
+    auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
     CreateStoreCapturePtrToCaptures(capture_ptr, ptr, index);
   }
 
@@ -447,9 +445,9 @@ class Compiler {
       llvm::Value* retv) {
     auto* prototype = types_->CreateLambdaType();
     auto* lambda = CreateLoadLambdaFromClosure(closure);
-    auto* caps = CreateLoadCapturesFromClosure(closure);
+    auto* context = CreateGetCapturesPtrOfClosure(closure);
     return builder_->CreateCall(prototype, lambda,
-        {exec_context_, caps, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
+        {runtime_, context, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
   }
 
   llvm::Value* CreateClosurePhi(llvm::Value* then_value,
@@ -462,20 +460,58 @@ class Compiler {
     return phi;
   }
 
+  // promise
+
+  llvm::Value* CreateIsPromise(llvm::Value* value_ptr) {
+    auto* kind = CreateLoadValueKindFromValue(value_ptr);
+    return builder_->CreateICmpEQ(
+        kind, builder_->getInt8(kValueKindPromise), REG_NAME("is_promise"));
+  }
+
+  llvm::Value* CreateIsSamePromise(llvm::Value* a, llvm::Value* b) {
+    return builder_->CreateICmpEQ(a, b, REG_NAME("is_same_promise"));
+  }
+
+  llvm::Value* CreateRegisterPromise(llvm::Value* coroutine) {
+    auto* func = types_->CreateRuntimeRegisterPromise();
+    return builder_->CreateCall(func, {runtime_, coroutine}, REG_NAME("promise"));
+  }
+
+  void CreateAwaitPromise(llvm::Value* promise, llvm::Value* awaiting) {
+    auto* func = types_->CreateRuntimeAwaitPromise();
+    builder_->CreateCall(func, {runtime_, promise, awaiting});
+  }
+
+  void CreateResume(llvm::Value* promise) {
+    auto* func = types_->CreateRuntimeResume();
+    builder_->CreateCall(func, {runtime_, promise});
+  }
+
+  void CreateEmitPromiseResolved(llvm::Value* promise, llvm::Value* result) {
+    auto* func = types_->CreateRuntimeEmitPromiseResolved();
+    builder_->CreateCall(func, {runtime_, promise, result});
+  }
+
   // value
+
+  llvm::Value* CreateHasValue(llvm::Value* value) {
+    auto* kind = CreateLoadValueKindFromValue(value);
+    return builder_->CreateICmpNE(
+        kind, builder_->getInt8(kValueKindNone), REG_NAME("value.has_value"));
+  }
 
   // 7.2.13 IsLooselyEqual ( x, y )
   llvm::Value* CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y) {
     // TODO: Create inline instructions if runtime_is_loosely_equal() is slow.
     auto* func = types_->CreateRuntimeIsLooselyEqual();
-    return builder_->CreateCall(func, {exec_context_, x, y}, REG_NAME("is_loosely_equal.retval"));
+    return builder_->CreateCall(func, {runtime_, x, y}, REG_NAME("is_loosely_equal.retval"));
   }
 
   // 7.2.14 IsStrictlyEqual ( x, y )
   llvm::Value* CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
     // TODO: Create inline instructions if runtime_is_strictly_equal() is slow.
     auto* func = types_->CreateRuntimeIsStrictlyEqual();
-    return builder_->CreateCall(func, {exec_context_, x, y}, REG_NAME("is_strictly_equal.retval"));
+    return builder_->CreateCall(func, {runtime_, x, y}, REG_NAME("is_strictly_equal.retval"));
   }
 
   llvm::Value* CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* boolean) {
@@ -491,6 +527,11 @@ class Compiler {
   llvm::Value* CreateIsSameClosureValue(llvm::Value* value_ptr, llvm::Value* closure) {
     auto* value = CreateLoadClosureFromValue(value_ptr);
     return builder_->CreateICmpEQ(value, closure, REG_NAME("is_same_closure_value"));
+  }
+
+  llvm::Value* CreateIsSamePromiseValue(llvm::Value* value_ptr, llvm::Value* promise) {
+    auto* value = CreateLoadPromiseFromValue(value_ptr);
+    return builder_->CreateICmpEQ(value, promise, REG_NAME("is_same_promise_value"));
   }
 
   llvm::Value* CreateUndefinedToAny() {
@@ -538,49 +579,59 @@ class Compiler {
         types_->CreateValueType(), REG_NAME("local" + llvm::Twine(index) + ".ptr"));
   }
 
-  inline void CreateStoreNoneToValue(llvm::Value* dest) {
+  void CreateStoreNoneToValue(llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::None, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
-  inline void CreateStoreUndefinedToValue(llvm::Value* dest) {
+  void CreateStoreUndefinedToValue(llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Undefined, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
-  inline void CreateStoreNullToValue(llvm::Value* dest) {
+  void CreateStoreNullToValue(llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Null, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
-  inline void CreateStoreBooleanToValue(llvm::Value* value, llvm::Value* dest) {
+  void CreateStoreBooleanToValue(llvm::Value* value, llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Boolean, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
-  inline void CreateStoreNumberToValue(llvm::Value* value, llvm::Value* dest) {
+  void CreateStoreNumberToValue(llvm::Value* value, llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Number, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
-  inline void CreateStoreClosureToValue(llvm::Value* value, llvm::Value* dest) {
+  void CreateStoreClosureToValue(llvm::Value* value, llvm::Value* dest) {
     CreateStoreValueKindToValue(ValueKind::Closure, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
-  inline void CreateStoreValueToValue(llvm::Value* value_ptr, llvm::Value* dest) {
+  void CreateStorePromiseToValue(llvm::Value* value, llvm::Value* dest) {
+    CreateStoreValueKindToValue(ValueKind::Promise, dest);
+    CreateStoreValueHolderToValue(value, dest);
+  }
+
+  void CreateStoreValueToValue(llvm::Value* value_ptr, llvm::Value* dest) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
     CreateStoreValueKindToValue(kind, dest);
     auto* holder = CreateLoadValueHolderFromValue(value_ptr);
     CreateStoreValueHolderToValue(holder, dest);
   }
 
-  inline llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("value.closure"));
+  }
+
+  llvm::Value* CreateLoadPromiseFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("value.promise"));
   }
 
   // argv
@@ -595,7 +646,7 @@ class Compiler {
         types_->CreateValueType(), argv, index, REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
   }
 
-  inline llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
+  llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
     return builder_->CreateConstInBoundsGEP1_32(
         types_->CreateValueType(), argv_, index, REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
   }
@@ -606,27 +657,31 @@ class Compiler {
     return CreateAlloc1(types_->CreateValueType(), REG_NAME("retv.ptr"));
   }
 
-  inline void CreateStoreUndefinedToRetv() {
+  void CreateStoreUndefinedToRetv() {
     CreateStoreUndefinedToValue(retv_);
   }
 
-  inline void CreateStoreNullToRetv() {
+  void CreateStoreNullToRetv() {
     CreateStoreNullToValue(retv_);
   }
 
-  inline void CreateStoreBooleanToRetv(llvm::Value* value) {
+  void CreateStoreBooleanToRetv(llvm::Value* value) {
     CreateStoreBooleanToValue(value, retv_);
   }
 
-  inline void CreateStoreNumberToRetv(llvm::Value* value) {
+  void CreateStoreNumberToRetv(llvm::Value* value) {
     CreateStoreNumberToValue(value, retv_);
   }
 
-  inline void CreateStoreClosureToRetv(llvm::Value* value) {
+  void CreateStoreClosureToRetv(llvm::Value* value) {
     CreateStoreClosureToValue(value, retv_);
   }
 
-  inline void CreateStoreValueToRetv(llvm::Value* value) {
+  void CreateStorePromiseToRetv(llvm::Value* value) {
+    CreateStorePromiseToValue(value, retv_);
+  }
+
+  void CreateStoreValueToRetv(llvm::Value* value) {
     CreateStoreValueToValue(value, retv_);
   }
 
@@ -718,7 +773,7 @@ class Compiler {
 
   llvm::Value* CreateCapture(llvm::Value* value_ptr) {
     auto* func = types_->CreateRuntimeCreateCapture();
-    return builder_->CreateCall(func, {exec_context_, value_ptr}, REG_NAME("capture.ptr"));
+    return builder_->CreateCall(func, {runtime_, value_ptr}, REG_NAME("capture.ptr"));
   }
 
   void CreateEscapeValue(llvm::Value* capture, llvm::Value* value) {
@@ -728,51 +783,176 @@ class Compiler {
     builder_->CreateMemCpy(escaped_ptr, align, value, align, types_->GetWord(sizeof(Value)));
   }
 
-  inline llvm::Value* CreateGetCaptureValuePtr(uint16_t index) {
-    auto* ptr = CreateLoadCapturePtrFromCaptures(caps_, index);
+  llvm::Value* CreateGetCaptureValuePtr(uint16_t index) {
+    auto* ptr = CreateLoadCapturePtrFromCaptures(captures_, index);
     return CreateLoadTargetFromCapture(ptr);
   }
 
   llvm::Value* CreateLoadCapture(uintptr_t index) {
-    return CreateLoadCapturePtrFromCaptures(caps_, index);
+    return CreateLoadCapturePtrFromCaptures(captures_, index);
+  }
+
+  // coroutine
+
+  llvm::Value* CreateCoroutine(llvm::Value* closure,
+      uint16_t num_locals,
+      uint16_t scratch_buffer_len) {
+    auto* func = types_->CreateRuntimeCreateCoroutine();
+    return builder_->CreateCall(func,
+        {runtime_, closure, builder_->getInt16(num_locals),
+            builder_->getInt16(scratch_buffer_len)},
+        REG_NAME("coroutine"));
+  }
+
+  llvm::SwitchInst* CreateSwitchForCoroutine(llvm::BasicBlock* block, uint32_t num_states) {
+    auto* state = CreateLoadStateFromCoroutine();
+    return builder_->CreateSwitch(state, block, num_states);
+  }
+
+  void CreateAddStateForCoroutine(llvm::SwitchInst* inst,
+      uint32_t state,
+      llvm::BasicBlock* block) {
+    inst->addCase(builder_->getInt32(state), block);
+  }
+
+  void CreateSuspend() {
+    builder_->CreateRet(builder_->getInt32(STATUS_SUSPEND));
+  }
+
+  void CreateSetCoroutineState(uint32_t state) {
+    auto* ptr = CreateGetStatePtrOfCoroutine();
+    builder_->CreateStore(builder_->getInt32(state), ptr);
+  }
+
+  void CreateSetCapturesForCoroutine() {
+    captures_ = CreateGetCapturesPtrOfCoroutine();
+  }
+
+  llvm::Value* CreateGetLocalPtrFromCoroutine(uint16_t index) {
+    auto* ptr = CreateGetLocalsPtrOfCoroutine();
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), ptr, index,
+        REG_NAME("co.locals." + llvm::Twine(index) + ".ptr"));
+  }
+
+  void CreateWriteBooleanToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.boolean.ptr"));
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateReadBooleanFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.boolean.ptr"));
+    return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("scratch.boolean"));
+  }
+
+  void CreateWriteNumberToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.number.ptr"));
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateReadNumberFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.number.ptr"));
+    return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("scratch.number"));
+  }
+
+  void CreateWriteClosureToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.closure.ptr"));
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateReadClosureFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.closure.ptr"));
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("scratch.closure"));
+  }
+
+  void CreateWritePromiseToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.promise.ptr"));
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateReadPromiseFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.promise.ptr"));
+    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("scratch.promise"));
+  }
+
+  void CreateWriteValueToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.value.ptr"));
+    CreateStoreValueToValue(value, ptr);
+  }
+
+  llvm::Value* CreateReadValueFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    return builder_->CreateInBoundsPtrAdd(
+        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.value.ptr"));
   }
 
   // scope cleanup checker
 
-  void SetupScopeCleanupChecker(uint32_t stack_size) {
-    scope_cleanup_stack_type_ = llvm::ArrayType::get(builder_->getInt16Ty(), stack_size);
-    scope_cleanup_stack_ =
-        CreateAllocN(builder_->getInt16Ty(), stack_size, REG_NAME("scope_cleanup_stack"));
-    scope_cleanup_stack_top_ =
-        CreateAlloc1(builder_->getInt32Ty(), REG_NAME("scope_cleanup_stack_top"));
-    builder_->CreateStore(builder_->getInt32(0), scope_cleanup_stack_top_);
-    scope_cleanup_stack_size_ = stack_size;
-  }
-
-  void PerformScopeCleanupPrecheck(uint16_t scope_id) {
-    if (IsScopeCleanupCheckerEnabled()) {
-      // We assumed here that the control flow does not enter into a scope which is already
-      // entered.  However, it may be better to check that explicitly here before pushing the scope
-      // ID.
-      CreateAssertScopeCleanupStackBounds();
-      CreatePushOntoScopeCleanupStack(scope_id);
+  void EnableScopeCleanupChecker(bool is_coroutine) {
+    if (is_coroutine) {
+      scope_id_ = CreateGetScopeIdPtrOfCoroutine();
+    } else {
+      scope_id_ = CreateAlloc1(builder_->getInt16Ty(), REG_NAME("scope_id.ptr"));
+      builder_->CreateStore(builder_->getInt16(0), scope_id_);
     }
   }
 
-  void PerformScopeCleanupPostcheck(uint16_t scope_id) {
-    if (IsScopeCleanupCheckerEnabled()) {
-      CreateAssertScopeCleanupStackHasItem();
-      auto* popped = CreatePopFromScopeCleanupStack();
-      CreateAssertScopeCleanupStackPoppedValue(popped, scope_id);
-    }
+  void SetScopeIdForChecker(uint16_t scope_id) {
+    assert(IsScopeCleanupCheckerEnabled());
+    builder_->CreateStore(builder_->getInt16(scope_id), scope_id_);
+  }
+
+  // assert(scope_id == expected)
+  void AssertScopeId(uint16_t expected) {
+    assert(IsScopeCleanupCheckerEnabled());
+    auto* scope_id = builder_->CreateLoad(builder_->getInt16Ty(), scope_id_, REG_NAME("scope_id"));
+    auto* assertion = builder_->CreateICmpEQ(
+        scope_id, builder_->getInt16(expected), REG_NAME("assertion.scope_id"));
+    std::stringstream ss;
+    ss << "scope_id == " << expected;
+    CreateAssert(assertion, ss.str().c_str());
+  }
+
+  // print
+
+  void CreatePrintValue(llvm::Value* value, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_value.msg"));
+    auto* func = types_->CreateRuntimePrintValue();
+    builder_->CreateCall(func, {runtime_, value, msg_value});
+  }
+
+  // unreachable
+
+  void CreateUnreachable(const char* msg = "") {
+    CreateAssert(builder_->getFalse(), msg);
+    builder_->CreateUnreachable();
   }
 
  private:
+  static constexpr uint8_t kValueKindNone = static_cast<uint8_t>(ValueKind::None);
   static constexpr uint8_t kValueKindUndefined = static_cast<uint8_t>(ValueKind::Undefined);
   static constexpr uint8_t kValueKindNull = static_cast<uint8_t>(ValueKind::Null);
   static constexpr uint8_t kValueKindBoolean = static_cast<uint8_t>(ValueKind::Boolean);
   static constexpr uint8_t kValueKindNumber = static_cast<uint8_t>(ValueKind::Number);
   static constexpr uint8_t kValueKindClosure = static_cast<uint8_t>(ValueKind::Closure);
+  static constexpr uint8_t kValueKindPromise = static_cast<uint8_t>(ValueKind::Promise);
 
   void CreateStore(llvm::Value* value, llvm::Value* dest) {
     builder_->CreateStore(value, dest);
@@ -807,7 +987,7 @@ class Compiler {
     // We assumed that `number` holds a number value.
     // TODO: Create inline instructions if runtime_to_int32() is slow.
     auto* func = types_->CreateRuntimeToInt32();
-    return builder_->CreateCall(func, {exec_context_, number}, REG_NAME("int32"));
+    return builder_->CreateCall(func, {runtime_, number}, REG_NAME("int32"));
   }
 
   // 7.1.7 ToUint32 ( argument )
@@ -816,7 +996,7 @@ class Compiler {
     // We assumed that `number` holds a number value.
     // TODO: Create inline instructions if runtime_to_uint32() is slow.
     auto* func = types_->CreateRuntimeToUint32();
-    return builder_->CreateCall(func, {exec_context_, number}, REG_NAME("uint32"));
+    return builder_->CreateCall(func, {runtime_, number}, REG_NAME("uint32"));
   }
 
   llvm::AllocaInst* CreateAlloc1(llvm::Type* ty, const llvm::Twine& name) {
@@ -835,21 +1015,22 @@ class Compiler {
     return alloca;
   }
 
-  llvm::Function* CreateLambda(const char* name) {
-    const auto& found = functions_.find(name);
+  llvm::Function* CreateLambda(uint32_t func_id) {
+    const auto& found = functions_.find(func_id);
     if (found != functions_.end()) {
       return found->second;
     }
 
     auto* prototype = types_->CreateLambdaType();
+    auto name = llvm::Twine("fn") + llvm::Twine(func_id);
     auto* lambda =
         llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
-    lambda->getArg(0)->setName(REG_NAME("ctx"));
-    lambda->getArg(1)->setName(REG_NAME("caps"));
+    lambda->getArg(0)->setName(REG_NAME("runtime"));
+    lambda->getArg(1)->setName(REG_NAME("context"));
     lambda->getArg(2)->setName(REG_NAME("argc"));
     lambda->getArg(3)->setName(REG_NAME("argv"));
     lambda->getArg(4)->setName(REG_NAME("retv"));
-    functions_[name] = lambda;
+    functions_[func_id] = lambda;
     return lambda;
   }
 
@@ -869,105 +1050,100 @@ class Compiler {
 
   // value
 
-  inline llvm::Value* CreateGetValueKindPtrOfValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateGetValueKindPtrOfValue(llvm::Value* value_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateValueType(), value_ptr, 0, REG_NAME("value.kind.ptr"));
   }
 
-  inline llvm::Value* CreateGetValueHolderPtrOfValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateGetValueHolderPtrOfValue(llvm::Value* value_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateValueType(), value_ptr, 1, REG_NAME("value.holder.ptr"));
   }
 
-  inline llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueKindPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt8Ty(), ptr, REG_NAME("value.kind"));
   }
 
-  inline llvm::Value* CreateLoadValueHolderFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadValueHolderFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt64Ty(), ptr, REG_NAME("value.holder"));
   }
 
-  inline llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("value.boolean"));
   }
 
-  inline llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
+  llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("value.number"));
   }
 
-  inline void CreateStoreValueKindToValue(ValueKind value, llvm::Value* dest) {
+  void CreateStoreValueKindToValue(ValueKind value, llvm::Value* dest) {
     CreateStoreValueKindToValue(builder_->getInt8(static_cast<uint8_t>(value)), dest);
   }
 
-  inline void CreateStoreValueKindToValue(llvm::Value* value, llvm::Value* dest) {
+  void CreateStoreValueKindToValue(llvm::Value* value, llvm::Value* dest) {
     auto* ptr = CreateGetValueKindPtrOfValue(dest);
     builder_->CreateStore(value, ptr);
   }
 
-  inline void CreateStoreValueHolderToValue(llvm::Value* holder, llvm::Value* dest) {
+  void CreateStoreValueHolderToValue(llvm::Value* holder, llvm::Value* dest) {
     auto* ptr = CreateGetValueHolderPtrOfValue(dest);
     builder_->CreateStore(holder, ptr);
   }
 
   // closure
 
-  inline llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateClosureType(), closure_ptr, 0, REG_NAME("closure.lambda.ptr"));
   }
 
-  inline llvm::Value* CreateGetNumCapturesPtrOfClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateGetNumCapturesPtrOfClosure(llvm::Value* closure_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateClosureType(), closure_ptr, 1, REG_NAME("closure.num_captures.ptr"));
   }
 
-  inline llvm::Value* CreateGetCapturesPtrOfClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateGetCapturesPtrOfClosure(llvm::Value* closure_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateClosureType(), closure_ptr, 2, REG_NAME("closure.captures.ptr"));
   }
 
-  inline llvm::Value* CreateLoadLambdaFromClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateLoadLambdaFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetLambdaPtrOfClosure(closure_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("closure.lambda"));
   }
 
-  inline llvm::Value* CreateLoadNumCapturesFromClosure(llvm::Value* closure_ptr) {
+  llvm::Value* CreateLoadNumCapturesFromClosure(llvm::Value* closure_ptr) {
     auto* ptr = CreateGetNumCapturesPtrOfClosure(closure_ptr);
     return builder_->CreateLoad(builder_->getInt16Ty(), ptr, REG_NAME("closure.num_captures"));
   }
 
-  inline llvm::Value* CreateLoadCapturesFromClosure(llvm::Value* closure_ptr) {
-    auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("closure.captures"));
-  }
-
   // capture
 
-  inline llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
+  llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateCaptureType(), capture_ptr, 0, REG_NAME("capture.target.ptr"));
   }
 
-  inline llvm::Value* CreateGetEscapedPtrOfCapture(llvm::Value* capture_ptr) {
+  llvm::Value* CreateGetEscapedPtrOfCapture(llvm::Value* capture_ptr) {
     return builder_->CreateStructGEP(
         types_->CreateCaptureType(), capture_ptr, 1, REG_NAME("capture.escaped.ptr"));
   }
 
-  inline llvm::Value* CreateLoadTargetFromCapture(llvm::Value* capture_ptr) {
+  llvm::Value* CreateLoadTargetFromCapture(llvm::Value* capture_ptr) {
     auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("capture.target"));
   }
 
-  inline void CreateStoreTargetToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
+  void CreateStoreTargetToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetTargetPtrOfCapture(capture_ptr);
     builder_->CreateStore(value_ptr, ptr);
   }
 
-  inline void CreateStoreEscapedToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
+  void CreateStoreEscapedToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
     auto align = llvm::Align(sizeof(double));
     builder_->CreateMemCpy(ptr, align, value_ptr, align, types_->GetWord(sizeof(Value)));
@@ -975,101 +1151,96 @@ class Compiler {
 
   // captures
 
-  inline llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(
-        builder_->getPtrTy(), captures, index, REG_NAME("caps." + llvm::Twine(index) + ".ptr"));
+  llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
+    return builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, index,
+        REG_NAME("captures." + llvm::Twine(index) + ".ptr"));
   }
 
-  inline llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
+  llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
-    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("caps." + llvm::Twine(index)));
+    return builder_->CreateLoad(
+        builder_->getPtrTy(), ptr, REG_NAME("captures." + llvm::Twine(index)));
   }
 
-  inline void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
+  void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
       llvm::Value* captures,
       uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
     builder_->CreateStore(capture_ptr, ptr);
   }
 
-  // scope cleanup cheker
+  // coroutine
 
-  void CreatePushOntoScopeCleanupStack(uint16_t scope_id) {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    // scope_cleanup_stack_[scope_cleanup_stack_top_] = scope_id;
-    auto* ptr = builder_->CreateInBoundsGEP(scope_cleanup_stack_type_, scope_cleanup_stack_,
-        {builder_->getInt32(0), top}, REG_NAME("scope_cleanup_stack.pushed.ptr"));
-    builder_->CreateStore(builder_->getInt16(scope_id), ptr);
-    // scope_cleanup_stack_top_++;
-    auto* incr =
-        builder_->CreateAdd(top, builder_->getInt32(1), REG_NAME("scope_cleanup_stack.top.incr"));
-    CreateStoreScopeCleanupStackTop(incr);
+  llvm::Value* CreateGetClosurePtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), context_, 0, REG_NAME("co.closure.ptr"));
   }
 
-  llvm::Value* CreatePopFromScopeCleanupStack() {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    // scope_cleanup_stack_top_--;
-    auto* decr =
-        builder_->CreateSub(top, builder_->getInt32(1), REG_NAME("scope_cleanup_stack.top.decr"));
-    CreateStoreScopeCleanupStackTop(decr);
-    // return scope_cleanup_stack_[scope_cleanup_stack_top_];
-    auto* ptr = builder_->CreateInBoundsGEP(scope_cleanup_stack_type_, scope_cleanup_stack_,
-        {builder_->getInt32(0), decr}, REG_NAME("scope_cleanup_stack.popped.ptr"));
-    return builder_->CreateLoad(
-        builder_->getInt16Ty(), ptr, REG_NAME("scope_cleanup_stack.popped"));
+  llvm::Value* CreateGetStatePtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), context_, 1, REG_NAME("co.state.ptr"));
   }
 
-  // assert(scope_cleanup_stack_top_ <= scope_cleanup_stack_size_);
-  void CreateAssertScopeCleanupStackBounds() {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    auto* assertion = builder_->CreateICmpULE(top, builder_->getInt32(scope_cleanup_stack_size_),
-        REG_NAME("assertion.scope_cleanup_stack.size"));
-    CreateAssert(assertion, "scope_cleanup_stack_top_ <= scoke_cleanup_stack_size_");
+  llvm::Value* CreateGetNumLocalsPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), context_, 2, REG_NAME("co.num_locals.ptr"));
   }
 
-  // assert(popped == scope_id);
-  void CreateAssertScopeCleanupStackPoppedValue(llvm::Value* actual, uint16_t expected) {
-    auto* assertion = builder_->CreateICmpEQ(
-        actual, builder_->getInt16(expected), REG_NAME("assertion.scope_cleanup_stack.popped"));
-    std::stringstream ss;
-    ss << "popped == " << expected;
-    CreateAssert(assertion, ss.str().c_str());
+  llvm::Value* CreateGetScopeIdPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), context_, 3, REG_NAME("co.scope_id.ptr"));
   }
 
-  // assert(scope_cleanup_stack_top_ == 0);
-  void CreateAssertScopeCleanupStackIsEmpty() {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    auto* assertion = builder_->CreateICmpEQ(
-        top, builder_->getInt32(0), REG_NAME("assertion.scope_cleanup_stack.is_empty"));
-    CreateAssert(assertion, "scope_cleanup_stack_top_ == 0");
+  llvm::Value* CreateGetScrachBufferLenPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), context_, 4, REG_NAME("co.locals.scratch_buffer_len.ptr"));
   }
 
-  // assert(scope_cleanup_stack_top_ != 0);
-  void CreateAssertScopeCleanupStackHasItem() {
-    auto* top = CreateLoadScopeCleanupStackTop();
-    auto* assertion = builder_->CreateICmpNE(
-        top, builder_->getInt32(0), REG_NAME("assertion.scope_cleanup_stack.has_item"));
-    CreateAssert(assertion, "scope_cleanup_stack_top_ != 0");
+  llvm::Value* CreateGetLocalsPtrOfCoroutine() {
+    return builder_->CreateStructGEP(
+        types_->CreateCoroutineType(), context_, 5, REG_NAME("co.locals.ptr"));
   }
+
+  llvm::Value* CreateLoadClosureFromCoroutine() {
+    auto* ptr = CreateGetClosurePtrOfCoroutine();
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("co.closure"));
+  }
+
+  llvm::Value* CreateLoadStateFromCoroutine() {
+    auto* ptr = CreateGetStatePtrOfCoroutine();
+    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("co.state"));
+  }
+
+  llvm::Value* CreateLoadNumLocalsFromCoroutine() {
+    auto* ptr = CreateGetNumLocalsPtrOfCoroutine();
+    return builder_->CreateLoad(builder_->getInt16Ty(), ptr, REG_NAME("co.num_locals"));
+  }
+
+  llvm::Value* CreateGetCapturesPtrOfCoroutine() {
+    auto* closure = CreateLoadClosureFromCoroutine();
+    return CreateGetCapturesPtrOfClosure(closure);
+  }
+
+  llvm::Value* CreateGetScratchBufferPtrOfCoroutine() {
+    auto* num_locals = CreateLoadNumLocalsFromCoroutine();
+    auto* num_locals_usize =
+        builder_->CreateSExt(num_locals, types_->GetWordType(), REG_NAME("co.num_locals.usize"));
+    auto* sizeof_locals = builder_->CreateMul(
+        types_->GetWord(sizeof(Value)), num_locals_usize, REG_NAME("co.locals.sizeof"));
+    auto* offsetof_locals = types_->GetWord(offsetof(Coroutine, locals));
+    auto* offset = builder_->CreateAdd(
+        offsetof_locals, sizeof_locals, REG_NAME("co.scratch_buffer.offsetof"));
+    return builder_->CreateInBoundsPtrAdd(context_, offset, REG_NAME("co.scratch_buffer.ptr"));
+  }
+
+  // scope cleanup checker
 
   bool IsScopeCleanupCheckerEnabled() const {
-    return scope_cleanup_stack_ != nullptr;
+    return scope_id_ != nullptr;
   }
 
-  llvm::Value* CreateLoadScopeCleanupStackTop() {
-    return builder_->CreateLoad(
-        builder_->getInt32Ty(), scope_cleanup_stack_top_, REG_NAME("scope_cleanup_stack.top"));
-  }
-
-  void CreateStoreScopeCleanupStackTop(llvm::Value* value) {
-    builder_->CreateStore(value, scope_cleanup_stack_top_);
-  }
-
-  void ClearScopeCleanupStack() {
-    scope_cleanup_stack_type_ = nullptr;
-    scope_cleanup_stack_ = nullptr;
-    scope_cleanup_stack_top_ = nullptr;
-    scope_cleanup_stack_size_ = 0;
+  void ResetScopeCleanupChecker() {
+    scope_id_ = nullptr;
   }
 
   // helpers
@@ -1077,18 +1248,24 @@ class Compiler {
   void CreateAssert(llvm::Value* assertion, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.assert.msg"));
     auto* func = types_->CreateRuntimeAssert();
-    builder_->CreateCall(func, {exec_context_, assertion, msg_value});
+    builder_->CreateCall(func, {runtime_, assertion, msg_value});
   }
 
   void CreatePrintU32(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_u32.msg"));
     auto* func = types_->CreateRuntimePrintU32();
-    builder_->CreateCall(func, {exec_context_, value, msg_value});
+    builder_->CreateCall(func, {runtime_, value, msg_value});
+  }
+
+  void CreatePrintF64(llvm::Value* value, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_f64.msg"));
+    auto* func = types_->CreateRuntimePrintF64();
+    builder_->CreateCall(func, {runtime_, value, msg_value});
   }
 
   // TODO: separate values that must be reset in EndFunction() from others.
 
-  std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
+  std::unique_ptr<llvm::LLVMContext> llvmctx_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
   std::unique_ptr<TypeHolder> types_ = nullptr;
@@ -1096,23 +1273,21 @@ class Compiler {
   // The following values are reset for each function.
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* locals_block_ = nullptr;
-  llvm::Value* exec_context_ = nullptr;
-  llvm::Value* caps_ = nullptr;
+  llvm::Value* runtime_ = nullptr;
+  llvm::Value* context_ = nullptr;
   llvm::Value* argc_ = nullptr;
   llvm::Value* argv_ = nullptr;
   llvm::Value* retv_ = nullptr;
+  llvm::Value* captures_ = nullptr;
   // Holds one of STATUS_XXX values, not Status::*.
   llvm::Value* status_ = nullptr;
   llvm::Value* flow_selector_ = nullptr;
 
   // scope cleanup checker
-  llvm::Type* scope_cleanup_stack_type_ = nullptr;
-  llvm::Value* scope_cleanup_stack_ = nullptr;
-  llvm::Value* scope_cleanup_stack_top_ = nullptr;
-  uint16_t scope_cleanup_stack_size_ = 0;
+  llvm::Value* scope_id_ = nullptr;
 
   // A cache of functions does not reset in the end of compilation for each function.
-  std::unordered_map<std::string, llvm::Function*> functions_;
+  std::unordered_map<uint32_t, llvm::Function*> functions_;
 
   // for optimization
   std::unique_ptr<llvm::FunctionPassManager> fpm_;

@@ -89,15 +89,6 @@ impl ScopeTree {
         scope.bindings[binding_ref.binding_index()].symbol
     }
 
-    pub fn compute_locator(&self, binding_ref: BindingRef) -> Locator {
-        let scope = &self.scopes[binding_ref.scope_index()];
-        let binding = &scope.bindings[binding_ref.binding_index()];
-        match binding.kind {
-            BindingKind::FormalParameter => Locator::Argument(binding.index),
-            _ => Locator::Local(binding.index),
-        }
-    }
-
     #[allow(unused)]
     pub fn print(&self, indent: &str) {
         for (index, scope) in self.scopes.iter().enumerate().skip(1) {
@@ -120,6 +111,12 @@ impl ScopeTreeBuilder {
 
     pub fn push_function(&mut self) -> ScopeRef {
         self.push(ScopeFlags::FUNCTION, "")
+    }
+
+    pub fn set_coroutine(&mut self) {
+        let scope = &mut self.scopes[self.current.index()];
+        debug_assert!(scope.is_function());
+        scope.flags.insert(ScopeFlags::COROUTINE);
     }
 
     pub fn push_block(&mut self, label: &'static str) -> ScopeRef {
@@ -168,7 +165,7 @@ impl ScopeTreeBuilder {
             symbol,
             index: index as u16,
             kind: BindingKind::FormalParameter,
-            captured: false,
+            flags: BindingFlags::empty(),
         });
         scope.num_formal_parameters += 1;
     }
@@ -180,7 +177,7 @@ impl ScopeTreeBuilder {
             symbol,
             index,
             kind: BindingKind::Mutable,
-            captured: false,
+            flags: BindingFlags::empty(),
         });
         scope.num_locals += 1;
     }
@@ -192,7 +189,20 @@ impl ScopeTreeBuilder {
             symbol,
             index,
             kind: BindingKind::Immutable,
-            captured: false,
+            flags: BindingFlags::empty(),
+        });
+        scope.num_locals += 1;
+    }
+
+    #[allow(unused)]
+    pub fn add_hidden(&mut self, symbol: Symbol, index: u16) {
+        let scope = &mut self.scopes[self.current.index()];
+        debug_assert!(!scope.is_sorted());
+        scope.bindings.push(Binding {
+            symbol,
+            index,
+            kind: BindingKind::Mutable,
+            flags: BindingFlags::HIDDEN,
         });
         scope.num_locals += 1;
     }
@@ -209,10 +219,11 @@ impl ScopeTreeBuilder {
     pub fn set_captured(&mut self, binding_ref: BindingRef) {
         let scope = &mut self.scopes[binding_ref.scope_index()];
         debug_assert!(scope.is_sorted());
-        scope.bindings[binding_ref.binding_index()].captured = true;
+        scope.bindings[binding_ref.binding_index()].set_captured();
     }
 
-    pub fn max_stack_size(&self, scope_ref: ScopeRef) -> u16 {
+    #[allow(unused)]
+    pub fn max_scope_depth(&self, scope_ref: ScopeRef) -> u16 {
         let scope = &self.scopes[scope_ref.index()];
         debug_assert!(scope.max_child_block_depth >= scope.depth);
         scope.max_child_block_depth - scope.depth + 1
@@ -299,6 +310,10 @@ impl Scope {
         self.flags.contains(ScopeFlags::FUNCTION)
     }
 
+    pub fn is_coroutine(&self) -> bool {
+        self.flags.contains(ScopeFlags::COROUTINE)
+    }
+
     fn is_sorted(&self) -> bool {
         self.flags.contains(ScopeFlags::SORTED)
     }
@@ -315,7 +330,9 @@ impl<'a> std::fmt::Display for ScopePrinter<'a> {
         if !self.scope.is_sorted() {
             write!(f, "*")?;
         }
-        if self.scope.is_function() {
+        if self.scope.is_coroutine() {
+            write!(f, "C")?;
+        } else if self.scope.is_function() {
             write!(f, "F")?;
         } else {
             write!(f, "B")?;
@@ -333,8 +350,9 @@ impl<'a> std::fmt::Display for ScopePrinter<'a> {
 
 bitflags! {
     struct ScopeFlags: u8 {
-        const FUNCTION = 0b01;
-        const SORTED   = 0b10;
+        const FUNCTION  = 0b00000001;
+        const COROUTINE = 0b00000010;
+        const SORTED    = 0b10000000;
     }
 }
 
@@ -343,7 +361,7 @@ pub struct Binding {
     pub symbol: Symbol,
     pub index: u16,
     pub kind: BindingKind,
-    pub captured: bool,
+    flags: BindingFlags,
 }
 
 impl Binding {
@@ -357,25 +375,48 @@ impl Binding {
             _ => Locator::Local(self.index),
         }
     }
+
+    pub fn is_captured(&self) -> bool {
+        self.flags.contains(BindingFlags::CAPTURED)
+    }
+
+    fn set_captured(&mut self) {
+        self.flags.insert(BindingFlags::CAPTURED)
+    }
+
+    pub fn is_hidden(&self) -> bool {
+        self.flags.contains(BindingFlags::HIDDEN)
+    }
 }
 
 impl std::fmt::Display for Binding {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_captured() {
+            write!(f, "*")?;
+        }
+        if self.is_hidden() {
+            write!(f, "?")?;
+        }
         match self.kind {
             BindingKind::FormalParameter => write!(f, "P@{}:{}", self.index, self.symbol)?,
             BindingKind::Mutable => write!(f, "M@{}:{}", self.index, self.symbol)?,
             BindingKind::Immutable => write!(f, "I@{}:{}", self.index, self.symbol)?,
         }
-        if self.captured {
-            write!(f, "*")?;
-        }
         Ok(())
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum BindingKind {
     FormalParameter,
     Mutable,
     Immutable,
+}
+
+bitflags! {
+    #[derive(Debug)]
+    struct BindingFlags: u8 {
+        const CAPTURED = 0b00000001;
+        const HIDDEN   = 0b10000000;
+    }
 }

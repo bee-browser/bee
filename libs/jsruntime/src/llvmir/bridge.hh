@@ -9,11 +9,13 @@ struct Closure;
 #define STATUS_MASK 0x0F
 #define STATUS_NORMAL 0x00
 #define STATUS_EXCEPTION 0x01
+#define STATUS_SUSPEND 0x02
 #define STATUS_UNSET (STATUS_UNSET_BIT | STATUS_NORMAL)
 
 enum class Status : uint32_t {
   Normal = STATUS_NORMAL,
   Exception = STATUS_EXCEPTION,
+  Suspend = STATUS_SUSPEND,
 };
 
 static_assert(sizeof(Status) == sizeof(uint32_t), "size mismatched");
@@ -27,6 +29,7 @@ enum class ValueKind : uint8_t {
   Boolean,
   Number,
   Closure,
+  Promise,
 };
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
@@ -37,6 +40,7 @@ union ValueHolder {
   double number;
   // TODO(issue#237): GcCellRef
   Closure* closure;
+  uint32_t promise;
 };
 
 static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
@@ -49,7 +53,12 @@ struct Value {
 
 static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 
-typedef Status (*Lambda)(void* ctx, void* caps, size_t argc, Value* argv, Value* ret);
+// The actual type of `context` varies depending on usage of the lambda function:
+//
+//   Regular functions: Capture**
+//   Coroutine functions: Coroutine*
+//
+typedef Status (*Lambda)(void* runtime, void* context, size_t argc, Value* argv, Value* ret);
 
 // TODO(issue#237): GcCell
 struct Capture {
@@ -66,23 +75,41 @@ struct Closure {
   // A pointer to a function compiled from a JavaScript function.
   Lambda lambda;
 
-  // The number of elements in `storage[]`.
+  // The number of captures.
   //
   // Usually, this field does not used in the compiled function, but we add this field here for
   // debugging purposes.  If we need to reduce the heap memory usage and `Closure`s dominant, we
   // can remove this field.
   uint16_t num_captures;
-  // uint8_t padding[6];
 
-  // Using the following definition instead of `Capture* captures[]`, we can avoid accessing the
-  // `num_captures` field and comparison and conditional branch instructions that are needed for
-  // checking whether `captures` is empty or not.
-  Capture** captures;
-
-  // `Capture* storage[num_captures]` is placed here if it's not empty.
+  // A variable-length list of captures used in the lambda function.
+  // TODO(issue#237): GcCellRef
+  Capture* captures[32];
 };
 
-static_assert(sizeof(Closure) == sizeof(uint64_t) * 3, "size mismatched");
+// TODO(issue#237): GcCell
+struct Coroutine {
+  // The closure of the coroutine.
+  // TODO(issue#237): GcCellRef
+  Closure* closure;
+
+  // The state of the coroutine.
+  uint32_t state;
+
+  // The number of local variables.
+  uint16_t num_locals;
+
+  // The current scope id used by the scope cleanup checker.
+  uint16_t scope_id;
+
+  // The size of the scratch buffer in bytes.
+  uint16_t scratch_buffer_len;
+
+  // A variable-length list of local variables used in the coroutine.
+  Value locals[32];
+
+  // The scratch_buffer starts from &locals[num_locals].
+};
 
 #include "runtime.hh"
 
@@ -103,10 +130,13 @@ struct LambdaIr;
 struct BooleanIr;
 struct NumberIr;
 struct ClosureIr;
+struct CoroutineIr;
+struct PromiseIr;
 struct ValueIr;
 struct ArgvIr;
 struct StatusIr;
 struct CaptureIr;
+struct SwitchIr;
 
 Compiler* compiler_peer_new();
 void compiler_peer_delete(Compiler* self);
@@ -117,10 +147,10 @@ void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);
 
 // function
-void compiler_peer_start_function(Compiler* self, const char* name);
+void compiler_peer_start_function(Compiler* self, uint32_t func_id);
 void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_set_locals_block(Compiler* self, BasicBlock* block);
-LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name);
+LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id);
 
 // basic block
 BasicBlock* compiler_peer_create_basic_block(Compiler* self, const char* name, size_t name_len);
@@ -209,7 +239,18 @@ ClosureIr* compiler_peer_create_closure_phi(Compiler* self,
     ClosureIr* else_value,
     BasicBlock* else_block);
 
+// promise
+BooleanIr* compiler_peer_create_is_promise(Compiler* self, ValueIr* value);
+BooleanIr* compiler_peer_create_is_same_promise(Compiler* self, PromiseIr* a, PromiseIr* b);
+PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine);
+void compiler_peer_create_await_promise(Compiler* self, PromiseIr* promise, PromiseIr* awaiting);
+void compiler_peer_create_resume(Compiler* self, PromiseIr* promise);
+void compiler_peer_create_emit_promise_resolved(Compiler* self,
+    PromiseIr* promise,
+    ValueIr* result);
+
 // value
+BooleanIr* compiler_peer_create_has_value(Compiler* self, ValueIr* value);
 BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 BooleanIr* compiler_peer_create_is_same_boolean_value(Compiler* self,
@@ -221,6 +262,9 @@ BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self,
 BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self,
     ValueIr* value,
     ClosureIr* closure);
+BooleanIr* compiler_peer_create_is_same_promise_value(Compiler* self,
+    ValueIr* value,
+    PromiseIr* promise);
 ValueIr* compiler_peer_create_undefined_to_any(Compiler* self);
 ValueIr* compiler_peer_create_null_to_any(Compiler* self);
 ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, BooleanIr* boolean);
@@ -238,8 +282,10 @@ void compiler_peer_create_store_null_to_value(Compiler* self, ValueIr* dest);
 void compiler_peer_create_store_boolean_to_value(Compiler* self, BooleanIr* value, ValueIr* dest);
 void compiler_peer_create_store_number_to_value(Compiler* self, NumberIr* value, ValueIr* dest);
 void compiler_peer_create_store_closure_to_value(Compiler* self, ClosureIr* value, ValueIr* dest);
+void compiler_peer_create_store_promise_to_value(Compiler* self, PromiseIr* value, ValueIr* dest);
 void compiler_peer_create_store_value_to_value(Compiler* self, ValueIr* value, ValueIr* dest);
 ClosureIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value);
+PromiseIr* compiler_peer_create_load_promise_from_value(Compiler* self, ValueIr* value);
 
 // argv
 ArgvIr* compiler_peer_get_argv_nullptr(Compiler* self);
@@ -256,6 +302,7 @@ void compiler_peer_create_store_null_to_retv(Compiler* self);
 void compiler_peer_create_store_boolean_to_retv(Compiler* self, BooleanIr* value);
 void compiler_peer_create_store_number_to_retv(Compiler* self, NumberIr* value);
 void compiler_peer_create_store_closure_to_retv(Compiler* self, ClosureIr* value);
+void compiler_peer_create_store_promise_to_retv(Compiler* self, PromiseIr* value);
 void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value);
 ValueIr* compiler_peer_get_exception(Compiler* self);
 
@@ -288,10 +335,53 @@ void compiler_peer_create_escape_value(Compiler* self, CaptureIr* capture, Value
 ValueIr* compiler_peer_create_get_capture_value_ptr(Compiler* self, uint16_t index);
 CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
+// coroutine
+CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
+    ClosureIr* closure,
+    uint16_t num_locals,
+    uint16_t scratch_buffer_len);
+SwitchIr* compiler_peer_create_switch_for_coroutine(Compiler* self,
+    BasicBlock* block,
+    uint32_t num_states);
+void compiler_peer_create_add_state_for_coroutine(Compiler* self,
+    SwitchIr* switch_ir,
+    uint32_t state,
+    BasicBlock* block);
+void compiler_peer_create_suspend(Compiler* self);
+void compiler_peer_create_set_coroutine_state(Compiler* self, uint32_t state);
+void compiler_peer_create_set_captures_for_coroutine(Compiler* self);
+ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint16_t index);
+void compiler_peer_create_write_boolean_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    BooleanIr* value);
+BooleanIr* compiler_peer_create_read_boolean_from_scratch_buffer(Compiler* self, uint32_t offset);
+void compiler_peer_create_write_number_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    NumberIr* value);
+NumberIr* compiler_peer_create_read_number_from_scratch_buffer(Compiler* self, uint32_t offset);
+void compiler_peer_create_write_closure_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    ClosureIr* value);
+ClosureIr* compiler_peer_create_read_closure_from_scratch_buffer(Compiler* self, uint32_t offset);
+void compiler_peer_create_write_promise_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    PromiseIr* value);
+PromiseIr* compiler_peer_create_read_promise_from_scratch_buffer(Compiler* self, uint32_t offset);
+void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    ValueIr* value);
+ValueIr* compiler_peer_create_read_value_from_scratch_buffer(Compiler* self, uint32_t offset);
+
 // scope cleanup checker
-void compiler_peer_setup_scope_cleanup_checker(Compiler* self, uint16_t stack_size);
-void compiler_peer_perform_scope_cleanup_precheck(Compiler* self, uint16_t scope_id);
-void compiler_peer_perform_scope_cleanup_postcheck(Compiler* self, uint16_t scope_id);
+void compiler_peer_enable_scope_cleanup_checker(Compiler* self, bool is_coroutine);
+void compiler_peer_set_scope_id_for_checker(Compiler* self, uint16_t scope_id);
+void compiler_peer_assert_scope_id(Compiler* self, uint16_t expected);
+
+// print
+void compiler_peer_create_print_value(Compiler* self, ValueIr* value, const char* msg);
+
+// unreachable
+void compiler_peer_create_unreachable(Compiler* self, const char* msg);
 
 // Execution
 
@@ -299,11 +389,11 @@ class Executor;
 Executor* executor_peer_new();
 void executor_peer_delete(Executor* self);
 void executor_peer_register_runtime(Executor* self, const Runtime* runtime);
-void executor_peer_register_host_function(Executor* self, const char* name, Lambda func);
+void executor_peer_register_host_function(Executor* self, uint32_t func_id, Lambda func);
 void executor_peer_register_module(Executor* self, Module* mod);
 const char* executor_peer_get_data_layout(const Executor* self);
 const char* executor_peer_get_target_triple(const Executor* self);
-Lambda executor_peer_get_native_function(Executor* self, const char* name);
+Lambda executor_peer_get_native_function(Executor* self, uint32_t func_id);
 
 // Hepler Functions
 

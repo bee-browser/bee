@@ -1,5 +1,6 @@
 mod scope;
 
+use bitflags::bitflags;
 use indexmap::IndexMap;
 
 use jsparser::syntax::AssignmentOperator;
@@ -30,7 +31,7 @@ impl<X> Runtime<X> {
     /// Parses a given source text as a script.
     pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "script");
-        let mut analyzer = Analyzer::new(
+        let mut analyzer = Analyzer::new_for_script(
             &self.pref,
             &mut self.symbol_registry,
             &mut self.function_registry,
@@ -38,6 +39,19 @@ impl<X> Runtime<X> {
         analyzer.use_global_bindings();
         let processor = Processor::new(analyzer, false);
         Parser::for_script(source, processor).parse()
+    }
+
+    /// Parses a given source text as a module.
+    pub fn parse_module(&mut self, source: &str) -> Result<Program, Error> {
+        logger::debug!(event = "parse", source_kind = "module");
+        let mut analyzer = Analyzer::new_for_module(
+            &self.pref,
+            &mut self.symbol_registry,
+            &mut self.function_registry,
+        );
+        analyzer.use_global_bindings();
+        let processor = Processor::new(analyzer, true);
+        Parser::for_module(source, processor).parse()
     }
 }
 
@@ -62,7 +76,7 @@ impl Program {
 /// A type representing a JavaScript function after the semantic analysis.
 #[derive(Default)]
 pub struct FunctionRecipe {
-    /// TODO: remove?
+    // TODO: remove?
     pub symbol: Symbol,
 
     /// The function ID of the function.
@@ -106,6 +120,7 @@ pub struct Capture {
 ///
 /// A semantic analyzer analyzes semantics of a JavaScript program.
 struct Analyzer<'r> {
+    #[allow(unused)]
     runtime_pref: &'r RuntimePref,
 
     /// A mutable reference to a symbol registry.
@@ -125,16 +140,37 @@ struct Analyzer<'r> {
     scope_tree_builder: ScopeTreeBuilder,
 
     use_global_bindings: bool,
+
+    module: bool,
 }
 
 impl<'r> Analyzer<'r> {
     /// Creates a semantic analyzer.
-    pub fn new(
+    fn new_for_script(
         runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
         function_registry: &'r mut FunctionRegistry,
     ) -> Self {
-        let _ = function_registry.create_native_function();
+        Self::new(runtime_pref, symbol_registry, function_registry, false)
+    }
+
+    /// Creates a semantic analyzer.
+    fn new_for_module(
+        runtime_pref: &'r RuntimePref,
+        symbol_registry: &'r mut SymbolRegistry,
+        function_registry: &'r mut FunctionRegistry,
+    ) -> Self {
+        Self::new(runtime_pref, symbol_registry, function_registry, true)
+    }
+
+    fn new(
+        runtime_pref: &'r RuntimePref,
+        symbol_registry: &'r mut SymbolRegistry,
+        function_registry: &'r mut FunctionRegistry,
+        module: bool,
+    ) -> Self {
+        // TODO: modules including await expressions.
+        let _ = function_registry.create_native_function(false);
         Self {
             runtime_pref,
             symbol_registry,
@@ -143,11 +179,36 @@ impl<'r> Analyzer<'r> {
             functions: vec![],
             scope_tree_builder: Default::default(),
             use_global_bindings: false,
+            module,
         }
     }
 
-    pub fn use_global_bindings(&mut self) {
+    fn use_global_bindings(&mut self) {
         self.use_global_bindings = true;
+    }
+
+    fn set_in_body(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .flags
+            .insert(FunctionContextFlags::IN_BODY);
+    }
+
+    fn set_async(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .flags
+            .insert(FunctionContextFlags::ASYNC);
+    }
+
+    fn is_async(&self) -> bool {
+        self.context_stack
+            .last()
+            .unwrap()
+            .flags
+            .contains(FunctionContextFlags::ASYNC)
     }
 
     /// Handles an AST node coming from a parser.
@@ -219,8 +280,12 @@ impl<'r> Analyzer<'r> {
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
+            Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
             Node::FunctionExpression(named) => self.handle_function_expression(named),
+            Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
             Node::ArrowFunction => self.handle_arrow_function(),
+            Node::AsyncArrowFunction => self.handle_async_arrow_function(),
+            Node::AwaitExpression => self.handle_await_expression(),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
@@ -239,6 +304,7 @@ impl<'r> Analyzer<'r> {
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
+            Node::AsyncFunctionContext => self.handle_async_function_context(),
             Node::FunctionSignature(symbol) => self.handle_function_signature(symbol),
         }
     }
@@ -530,14 +596,14 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
         self.resolve_references(&mut context);
 
-        if context.num_locals > 0 {
+        if context.flags.contains(FunctionContextFlags::COROUTINE) {
+            // The local variables allocated on the heap will be passed as arguments for the
+            // coroutine.  Load the local variables from the environment at first.
+            context.commands[0] = CompileCommand::Environment(context.num_locals);
+            debug_assert!(context.coroutine.state <= u16::MAX as u32);
+            context.commands[1] = CompileCommand::JumpTable(context.coroutine.state + 2);
+        } else {
             context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
-        }
-
-        if self.runtime_pref.enable_scope_cleanup_checker {
-            let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
-            debug_assert!(stack_size > 0);
-            context.commands[1] = CompileCommand::SetupScopeCleanupChecker(stack_size);
         }
 
         let func_index = context.func_index;
@@ -562,6 +628,13 @@ impl<'r> Analyzer<'r> {
             );
     }
 
+    fn handle_async_function_declaration(&mut self) {
+        self.end_coroutine_body();
+
+        // Node::FunctionDeclaration for the outer ramp function.
+        self.handle_function_declaration();
+    }
+
     fn handle_function_expression(&mut self, named: bool) {
         let func_index = self.end_function_scope();
         let func = &self.functions[func_index];
@@ -575,6 +648,13 @@ impl<'r> Analyzer<'r> {
                 &func.captures,
                 named,
             );
+    }
+
+    fn handle_async_function_expression(&mut self, named: bool) {
+        self.end_coroutine_body();
+
+        // Node::FunctionExpression for the outer ramp function.
+        self.handle_function_expression(named);
     }
 
     fn handle_arrow_function(&mut self) {
@@ -596,10 +676,23 @@ impl<'r> Analyzer<'r> {
             );
     }
 
+    fn handle_async_arrow_function(&mut self) {
+        self.end_coroutine_body();
+
+        // Node::ArrowFunction for the outer ramp function.
+        self.handle_arrow_function()
+    }
+
+    fn handle_await_expression(&mut self) {
+        let next_state = self.context_stack.last().unwrap().coroutine.state + 1;
+        self.put_command(CompileCommand::Await(next_state));
+        self.context_stack.last_mut().unwrap().coroutine.state = next_state;
+    }
+
     fn handle_then_block(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
         context.put_command(CompileCommand::Truthy);
-        context.put_command(CompileCommand::Then);
+        context.put_command(CompileCommand::IfThen);
     }
 
     fn handle_else_block(&mut self) {
@@ -694,7 +787,7 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
     }
 
-    fn start_function_scope(&mut self, in_body: bool) {
+    fn start_function_scope(&mut self) {
         let scope_ref = self.scope_tree_builder.push_function();
 
         // TODO: the compilation should fail if the following condition is unmet.
@@ -703,17 +796,13 @@ impl<'r> Analyzer<'r> {
         let mut context = FunctionContext {
             func_index,
             scope_ref,
-            in_body,
             ..Default::default()
         };
         // `commands[0]` will be replaced with `AllocateLocals` if the function has local
         // variables.
         context.commands.push(CompileCommand::Nop);
-        if self.runtime_pref.enable_scope_cleanup_checker {
-            // Put a placeholder command which will be replaced with `SetupScopeCleanupChecker`.
-            let index = context.put_command(CompileCommand::Nop);
-            debug_assert_eq!(index, 1);
-        }
+        // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
+        context.commands.push(CompileCommand::Nop);
         context.start_scope(scope_ref);
         self.context_stack.push(context);
         // Push a placeholder data which will be filled later.
@@ -721,16 +810,70 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_function_context(&mut self) {
-        self.start_function_scope(false);
+        self.start_function_scope();
+    }
+
+    fn handle_async_function_context(&mut self) {
+        self.start_function_scope();
+        self.set_async();
+    }
+
+    fn set_function_symbol(&mut self, symbol: Symbol) {
+        let id = self
+            .function_registry
+            .create_native_function(symbol == Symbol::HIDDEN_COROUTINE);
+        let func_index = self.context_stack.last().unwrap().func_index;
+        self.functions[func_index].symbol = symbol;
+        self.functions[func_index].id = id;
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
+        self.set_function_symbol(symbol);
+        self.set_in_body();
+
+        if self.is_async() {
+            self.start_coroutine_body();
+        }
+    }
+
+    // The async function is translated into a ramp function.  The ramp function creates a
+    // coroutine every time it's called.  The coroutine function body is built from the async
+    // function body.  It will be rewritten into a state machine for the coroutine.
+    //
+    // See //libs/jsruntime/docs/internals.md for details.
+    //
+    // TODO(perf): We never optimize an async function which has no await expression in the body.
+    // Such an async function don't need to be rewritten into a state machine.
+    fn start_coroutine_body(&mut self) {
+        self.handle_function_context();
+        self.scope_tree_builder.set_coroutine();
+        self.handle_binding_identifier(Symbol::HIDDEN_PROMISE);
+        self.handle_formal_parameter();
+        self.handle_binding_identifier(Symbol::HIDDEN_RESULT);
+        self.handle_formal_parameter();
+        self.handle_binding_identifier(Symbol::HIDDEN_ERROR);
+        self.handle_formal_parameter();
+        self.handle_formal_parameters(3);
+        self.handle_function_signature(Symbol::HIDDEN_COROUTINE);
+
         let context = self.context_stack.last_mut().unwrap();
-        let id = self.function_registry.create_native_function();
-        let func_index = context.func_index;
-        self.functions[func_index].symbol = symbol;
-        self.functions[func_index].id = id;
-        context.in_body = true;
+
+        context.flags.insert(FunctionContextFlags::COROUTINE);
+    }
+
+    // Generate compile commands for the bottom-half of the coroutine.
+    // See //libs/jsruntime/docs/internals.md.
+    fn end_coroutine_body(&mut self) {
+        // TODO(perf): Some of the local variables can be placed on the stack.
+        let context = self.context_stack.last().unwrap();
+        let func_id = self.functions[context.func_index].id;
+        let num_locals = context.num_locals;
+        self.handle_function_expression(false);
+        self.put_command(CompileCommand::Coroutine(func_id, num_locals));
+        self.put_command(CompileCommand::Promise);
+        self.put_command(CompileCommand::Duplicate(0));
+        self.put_command(CompileCommand::Resume);
+        self.put_command(CompileCommand::Return(1));
     }
 
     fn put_command(&mut self, command: CompileCommand) {
@@ -776,11 +919,10 @@ impl<'r> Analyzer<'r> {
         let context = self.context_stack.last_mut().unwrap();
 
         for (func_id, host_func) in self.function_registry.enumerate_host_function() {
-            let symbol = self.symbol_registry.intern_cstr(&host_func.name);
-            context.put_reference(symbol, self.scope_tree_builder.current());
+            context.put_reference(host_func.symbol, self.scope_tree_builder.current());
             context.process_closure_declaration(self.scope_tree_builder.current(), func_id, &[]);
             self.scope_tree_builder
-                .add_immutable(symbol, context.num_locals);
+                .add_immutable(host_func.symbol, context.num_locals);
             context.num_locals += 1;
         }
     }
@@ -794,7 +936,7 @@ impl<'r> Analyzer<'r> {
     // TODO: refactoring
     fn resolve_reference(&mut self, context: &mut FunctionContext, reference: &Reference) {
         let binding_ref = self.scope_tree_builder.resolve_reference(reference);
-        logger::debug!(event = "resolve-reference", ?reference, ?binding_ref);
+        logger::debug!(event = "resolve_reference", ?reference, ?binding_ref);
 
         if binding_ref == BindingRef::NONE {
             // This is a reference to a free variable.
@@ -852,17 +994,28 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
     fn start(&mut self) {
         logger::debug!(event = "start");
-        self.start_function_scope(true);
+        self.start_function_scope();
+
+        self.set_in_body();
 
         if self.use_global_bindings {
             self.put_global_bindings();
         }
 
         self.register_host_functions();
+
+        // The module is always treated as an async function body.
+        if self.module {
+            self.start_coroutine_body();
+        }
     }
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
+
+        if self.module {
+            self.end_coroutine_body();
+        }
 
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope();
@@ -871,15 +1024,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         self.resolve_references(&mut context);
         debug_assert!(context.captures.is_empty());
 
-        if context.num_locals > 0 {
-            context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
-        }
-
-        if self.runtime_pref.enable_scope_cleanup_checker {
-            let stack_size = self.scope_tree_builder.max_stack_size(context.scope_ref);
-            debug_assert!(stack_size > 0);
-            context.commands[1] = CompileCommand::SetupScopeCleanupChecker(stack_size);
-        }
+        context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
 
         self.functions[context.func_index].commands = context.commands;
         self.functions[context.func_index].captures = context.captures.into_values().collect();
@@ -946,13 +1091,16 @@ struct FunctionContext {
     /// A stack to hold [`TryContext`]s.
     try_stack: Vec<TryContext>,
 
+    coroutine: CoroutineContext,
+
     /// A stack to hold the number of arguments of a function call.
-    nargs_stack: Vec<(usize, u16)>,
+    nargs_stack: Vec<u16>,
 
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
 
-    /// A reference to a function scope in the scope tree.
+    /// A reference to the function scope in the scope tree.
+    #[allow(unused)]
     scope_ref: ScopeRef,
 
     num_locals: u16,
@@ -961,8 +1109,21 @@ struct FunctionContext {
     num_for_statements: u16,
     num_switch_statements: u16,
 
-    /// `false` while analyzing formal parameters, `true` while analyzing the function body.
-    in_body: bool,
+    flags: FunctionContextFlags,
+}
+
+bitflags! {
+    #[derive(Debug, Default)]
+    struct FunctionContextFlags: u8 {
+        /// Enabled while analyzing the function body.
+        const IN_BODY   = 0b00000001;
+
+        /// Enabled if the context is the ramp function for an async function.
+        const ASYNC     = 0b00000010;
+
+        /// Enabled if the context is the coroutine function for an async function.
+        const COROUTINE = 0b00000100;
+    }
 }
 
 impl FunctionContext {
@@ -1005,31 +1166,16 @@ impl FunctionContext {
 
     fn process_argument_list_head(&mut self, empty: bool, _spread: bool) {
         // TODO: spread
-
-        // The placeholder command will be replaced with `CompileCommand::Arguments` in in
-        // `process_call_expression()`.
-        let index = self.put_command(CompileCommand::PlaceHolder);
-        let nargs = if empty {
-            0
-        } else {
-            self.commands.push(CompileCommand::Swap);
-            self.commands.push(CompileCommand::Argument(0));
-            1
-        };
-        self.nargs_stack.push((index, nargs));
+        self.nargs_stack.push(if empty { 0 } else { 1 });
     }
 
     fn put_argument(&mut self, _spread: bool) {
         // TODO: spread
-        let tuple = self.nargs_stack.last_mut().unwrap();
-        self.commands.push(CompileCommand::Argument(tuple.1));
-        tuple.1 += 1;
+        *self.nargs_stack.last_mut().unwrap() += 1;
     }
 
     fn process_call_expression(&mut self) {
-        let (index, nargs) = self.nargs_stack.pop().unwrap();
-        debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
-        self.commands[index] = CompileCommand::Arguments(nargs);
+        let nargs = self.nargs_stack.pop().unwrap();
         self.commands.push(CompileCommand::Call(nargs));
     }
 
@@ -1051,7 +1197,7 @@ impl FunctionContext {
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
-        if self.in_body {
+        if self.flags.contains(FunctionContextFlags::IN_BODY) {
             self.put_reference(symbol, builder.current());
             // The BindingKind may change later by `builder.set_immutable()`.
             builder.add_mutable(symbol, self.num_locals);
@@ -1211,7 +1357,7 @@ impl FunctionContext {
         // Step#3..7 in 14.12.4 Runtime Semantics: Evaluation
         self.start_scope(scope_ref);
 
-        // The placeholder command will be replaced in `process_switch_statement()`.
+        // The placeholder commands will be replaced in `process_switch_statement()`.
         let case_block_index = self.put_command(CompileCommand::PlaceHolder);
         self.switch_stack.push(SwitchContext {
             case_block_index,
@@ -1220,8 +1366,10 @@ impl FunctionContext {
     }
 
     fn process_case_selector(&mut self) {
+        // Make a duplicate of the `switchValue` for the evaluation on the case selector.
+        self.put_command(CompileCommand::Duplicate(1));
         self.put_command(CompileCommand::StrictEquality);
-        self.put_command(CompileCommand::Then);
+        self.put_command(CompileCommand::Case);
     }
 
     fn process_case_clause(&mut self, has_statement: bool) {
@@ -1230,13 +1378,11 @@ impl FunctionContext {
     }
 
     fn process_default_selector(&mut self) {
-        self.put_command(CompileCommand::Discard);
-        // TODO: refactoring
-        self.put_command(CompileCommand::Then);
+        self.put_command(CompileCommand::Default);
     }
 
     fn process_default_clause(&mut self, has_statement: bool) {
-        self.put_command(CompileCommand::DefaultClause(has_statement));
+        self.put_command(CompileCommand::CaseClause(has_statement));
         let context = self.switch_stack.last_mut().unwrap();
         context.default_index = Some(context.num_cases);
         context.num_cases += 1;
@@ -1256,13 +1402,13 @@ impl FunctionContext {
             CompileCommand::PlaceHolder
         ));
         if num_cases == 0 {
-            // empty case block
-            // Discard the `switchValue`.
+            // An empty case block.  Just discard the `switchValue`.
             self.commands[case_block_index] = CompileCommand::Discard;
         } else {
             self.commands[case_block_index] = CompileCommand::CaseBlock(id, num_cases);
-            let i = default_index;
-            self.put_command(CompileCommand::Switch(id, num_cases, i));
+            // Discard the `switchValue` remaining on the stack.
+            self.put_command(CompileCommand::Discard);
+            self.put_command(CompileCommand::Switch(id, num_cases, default_index));
             self.num_switch_statements += 1;
         }
 
@@ -1387,6 +1533,11 @@ struct TryContext {
     finally_index: usize,
 }
 
+#[derive(Default)]
+struct CoroutineContext {
+    state: u32,
+}
+
 /// A compile command.
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
@@ -1399,6 +1550,8 @@ pub enum CompileCommand {
     String(Vec<u16>),
     Function(FunctionId),
     Closure(bool, u16),
+    Coroutine(FunctionId, u16),
+    Promise,
     Reference(Symbol, Locator),
     Exception,
 
@@ -1407,8 +1560,6 @@ pub enum CompileCommand {
     ImmutableBinding,
     DeclareFunction,
     DeclareClosure,
-    Arguments(u16),
-    Argument(u16),
     Call(u16),
     PushScope(ScopeRef),
     PopScope(ScopeRef),
@@ -1491,7 +1642,7 @@ pub enum CompileCommand {
 
     // conditional
     Truthy,
-    Then,
+    IfThen,
     Else,
     IfElseStatement,
     IfStatement,
@@ -1508,8 +1659,9 @@ pub enum CompileCommand {
 
     // switch
     CaseBlock(u16, u16),
+    Case,
+    Default,
     CaseClause(bool),
-    DefaultClause(bool),
     Switch(u16, u16, Option<u16>),
 
     // label
@@ -1527,11 +1679,15 @@ pub enum CompileCommand {
     Return(u32),
     Throw,
 
+    // coroutine
+    Environment(u16),
+    JumpTable(u32),
+    Await(u32),
+    Resume,
+
     Discard,
     Swap,
     Duplicate(u8), // 0 or 1
-
-    SetupScopeCleanupChecker(u16),
 
     // A special command used as a placeholder in a command list, which will be replaced actual
     // command later.  The final command list must not contain placeholder commands.
@@ -1711,72 +1867,90 @@ mod tests {
         };
     }
 
+    macro_rules! script {
+        ($src:literal) => {
+            Source::Script($src)
+        };
+    }
+
+    macro_rules! module {
+        ($src:literal) => {
+            Source::Module($src)
+        };
+    }
+
     #[test]
     fn test_lexical_declarations() {
-        test("let a, b = 2; const c = 3, d = 4;", |reg, program| {
-            assert_eq!(
-                program.functions[0].commands,
-                [
-                    CompileCommand::AllocateLocals(4),
-                    CompileCommand::SetupScopeCleanupChecker(1),
-                    CompileCommand::PushScope(scope_ref!(1)),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
-                    CompileCommand::Undefined,
-                    CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 1)),
-                    CompileCommand::Number(2.0),
-                    CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "c"), locator!(local: 2)),
-                    CompileCommand::Number(3.0),
-                    CompileCommand::ImmutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "d"), locator!(local: 3)),
-                    CompileCommand::Number(4.0),
-                    CompileCommand::ImmutableBinding,
-                    CompileCommand::PopScope(scope_ref!(1)),
-                ]
-            );
-        });
+        test(
+            script!("let a, b = 2; const c = 3, d = 4;"),
+            |program, sreg, _freg| {
+                assert_eq!(
+                    program.functions[0].commands,
+                    [
+                        CompileCommand::AllocateLocals(4),
+                        CompileCommand::Nop,
+                        CompileCommand::PushScope(scope_ref!(1)),
+                        CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 0)),
+                        CompileCommand::Undefined,
+                        CompileCommand::MutableBinding,
+                        CompileCommand::Reference(symbol!(sreg, "b"), locator!(local: 1)),
+                        CompileCommand::Number(2.0),
+                        CompileCommand::MutableBinding,
+                        CompileCommand::Reference(symbol!(sreg, "c"), locator!(local: 2)),
+                        CompileCommand::Number(3.0),
+                        CompileCommand::ImmutableBinding,
+                        CompileCommand::Reference(symbol!(sreg, "d"), locator!(local: 3)),
+                        CompileCommand::Number(4.0),
+                        CompileCommand::ImmutableBinding,
+                        CompileCommand::PopScope(scope_ref!(1)),
+                    ]
+                );
+            },
+        );
     }
 
     #[test]
     fn test_lexical_declarations_in_scopes() {
-        test("let a; { let a; } { let a, b; }", |reg, program| {
-            assert_eq!(
-                program.functions[0].commands,
-                [
-                    CompileCommand::AllocateLocals(4),
-                    CompileCommand::SetupScopeCleanupChecker(2),
-                    CompileCommand::PushScope(scope_ref!(1)),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
-                    CompileCommand::Undefined,
-                    CompileCommand::MutableBinding,
-                    CompileCommand::PushScope(scope_ref!(2)),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 1)),
-                    CompileCommand::Undefined,
-                    CompileCommand::MutableBinding,
-                    CompileCommand::PopScope(scope_ref!(2)),
-                    CompileCommand::PushScope(scope_ref!(3)),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 2)),
-                    CompileCommand::Undefined,
-                    CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 3)),
-                    CompileCommand::Undefined,
-                    CompileCommand::MutableBinding,
-                    CompileCommand::PopScope(scope_ref!(3)),
-                    CompileCommand::PopScope(scope_ref!(1)),
-                ]
-            );
-        });
+        test(
+            script!("let a; { let a; } { let a, b; }"),
+            |program, sreg, _freg| {
+                assert_eq!(
+                    program.functions[0].commands,
+                    [
+                        CompileCommand::AllocateLocals(4),
+                        CompileCommand::Nop,
+                        CompileCommand::PushScope(scope_ref!(1)),
+                        CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 0)),
+                        CompileCommand::Undefined,
+                        CompileCommand::MutableBinding,
+                        CompileCommand::PushScope(scope_ref!(2)),
+                        CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 1)),
+                        CompileCommand::Undefined,
+                        CompileCommand::MutableBinding,
+                        CompileCommand::PopScope(scope_ref!(2)),
+                        CompileCommand::PushScope(scope_ref!(3)),
+                        CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 2)),
+                        CompileCommand::Undefined,
+                        CompileCommand::MutableBinding,
+                        CompileCommand::Reference(symbol!(sreg, "b"), locator!(local: 3)),
+                        CompileCommand::Undefined,
+                        CompileCommand::MutableBinding,
+                        CompileCommand::PopScope(scope_ref!(3)),
+                        CompileCommand::PopScope(scope_ref!(1)),
+                    ]
+                );
+            },
+        );
     }
 
     #[test]
     fn test_binary_operator() {
-        test("1 + 2", |_reg, program| {
+        test(script!("1 + 2"), |program, _sreg, _freg| {
             assert_eq!(
                 program.functions[0].commands,
                 [
+                    CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
-                    CompileCommand::SetupScopeCleanupChecker(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
@@ -1791,17 +1965,17 @@ mod tests {
 
     #[test]
     fn test_shorthand_assignment_operator() {
-        test("let a = 1; a += 2", |reg, program| {
+        test(script!("let a = 1; a += 2"), |program, sreg, _freg| {
             assert_eq!(
                 program.functions[0].commands,
                 [
                     CompileCommand::AllocateLocals(1),
-                    CompileCommand::SetupScopeCleanupChecker(1),
+                    CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
+                    CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 0)),
                     CompileCommand::Number(1.0),
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0)),
+                    CompileCommand::Reference(symbol!(sreg, "a"), locator!(local: 0)),
                     CompileCommand::Number(2.0),
                     CompileCommand::Duplicate(1),
                     CompileCommand::Addition,
@@ -1813,24 +1987,81 @@ mod tests {
         });
     }
 
-    fn test(regc: &str, validate: fn(symbol_registry: &SymbolRegistry, program: &Program)) {
+    #[test]
+    fn test_await() {
+        test(module!("await 0"), |program, _sreg, _freg| {
+            assert_eq!(program.functions.len(), 2);
+            assert_eq!(
+                program.functions[0].commands,
+                [
+                    CompileCommand::AllocateLocals(0),
+                    CompileCommand::Nop,
+                    CompileCommand::PushScope(scope_ref!(1)),
+                    CompileCommand::Function(program.functions[1].id),
+                    CompileCommand::Closure(false, 0),
+                    CompileCommand::Coroutine(program.functions[1].id, 0),
+                    CompileCommand::Promise,
+                    CompileCommand::Duplicate(0),
+                    CompileCommand::Resume,
+                    CompileCommand::Return(1),
+                    CompileCommand::PopScope(scope_ref!(1)),
+                ],
+            );
+            assert_eq!(
+                program.functions[1].commands,
+                [
+                    CompileCommand::Environment(0),
+                    CompileCommand::JumpTable(3),
+                    CompileCommand::PushScope(scope_ref!(2)),
+                    CompileCommand::Number(0.0),
+                    CompileCommand::Await(1),
+                    CompileCommand::Discard,
+                    CompileCommand::PopScope(scope_ref!(2)),
+                ],
+            );
+        });
+    }
+
+    fn test(src: Source, validate: fn(&Program, &SymbolRegistry, &FunctionRegistry)) {
         let runtime_pref = RuntimePref {
             enable_scope_cleanup_checker: true,
             ..Default::default()
         };
         let mut symbol_registry = Default::default();
         let mut function_registry = FunctionRegistry::new();
-        let result = Parser::for_script(
-            regc,
-            Processor::new(
-                Analyzer::new(&runtime_pref, &mut symbol_registry, &mut function_registry),
-                false,
+        let mut parser = match src {
+            Source::Script(src) => Parser::for_script(
+                src,
+                Processor::new(
+                    Analyzer::new_for_script(
+                        &runtime_pref,
+                        &mut symbol_registry,
+                        &mut function_registry,
+                    ),
+                    false,
+                ),
             ),
-        )
-        .parse();
+            Source::Module(src) => Parser::for_module(
+                src,
+                Processor::new(
+                    Analyzer::new_for_module(
+                        &runtime_pref,
+                        &mut symbol_registry,
+                        &mut function_registry,
+                    ),
+                    true,
+                ),
+            ),
+        };
+        let result = parser.parse();
         assert!(result.is_ok());
         if let Ok(program) = result {
-            validate(&symbol_registry, &program)
+            validate(&program, &symbol_registry, &function_registry)
         }
+    }
+
+    enum Source {
+        Script(&'static str),
+        Module(&'static str),
     }
 }

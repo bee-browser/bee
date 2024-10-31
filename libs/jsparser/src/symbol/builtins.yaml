@@ -1,3 +1,11 @@
+# Hidden symbols must be defined before others.
+# Hidden symbols must start with `##`.
+- '##coroutine'
+- '##promise'
+- '##result'
+- '##error'
+
+# Reserved words defined in the ECMA-262 specification.
 - Infinity
 - NaN
 - async

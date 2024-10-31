@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <llvm/Support/TargetSelect.h>
+#include <sys/types.h>
 
 #include "compiler.hh"
 #include "executor.hh"
@@ -19,10 +20,15 @@
 #define PEER_BOOLEAN(value) (reinterpret_cast<BooleanIr*>(value))
 #define PEER_NUMBER(value) (reinterpret_cast<NumberIr*>(value))
 #define PEER_CLOSURE(value) (reinterpret_cast<ClosureIr*>(value))
+#define PEER_COROUTINE(value) (reinterpret_cast<CoroutineIr*>(value))
+#define PEER_PROMISE(value) (reinterpret_cast<PromiseIr*>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIr*>(value))
 #define PEER_ARGV(value) (reinterpret_cast<ArgvIr*>(value))
 #define PEER_STATUS(value) (reinterpret_cast<StatusIr*>(value))
 #define PEER_CAPTURE(value) (reinterpret_cast<CaptureIr*>(value))
+
+#define LLVM_SWITCH(inst) (reinterpret_cast<llvm::SwitchInst*>(inst))
+#define PEER_SWITCH(inst) (reinterpret_cast<SwitchIr*>(inst))
 
 void llvmir_initialize() {
   // Uncomment if you want to enable LLVM_DEBUG().
@@ -71,8 +77,8 @@ void compiler_peer_set_target_triple(Compiler* self, const char* triple) {
   self->SetTargetTriple(triple);
 }
 
-void compiler_peer_start_function(Compiler* self, const char* name) {
-  self->StartFunction(name);
+void compiler_peer_start_function(Compiler* self, uint32_t func_id) {
+  self->StartFunction(func_id);
 }
 
 void compiler_peer_end_function(Compiler* self, bool optimize) {
@@ -83,8 +89,8 @@ void compiler_peer_set_locals_block(Compiler* self, BasicBlock* block) {
   self->SetLocalsBlock(LLVM_BB(block));
 }
 
-LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id, const char* name) {
-  return PEER_LAMBDA(self->GetFunction(func_id, name));
+LambdaIr* compiler_peer_get_function(Compiler* self, uint32_t func_id) {
+  return PEER_LAMBDA(self->GetFunction(func_id));
 }
 
 // basic block
@@ -325,7 +331,39 @@ ClosureIr* compiler_peer_create_closure_phi(Compiler* self,
       LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
+// promise
+
+BooleanIr* compiler_peer_create_is_promise(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateIsPromise(LLVM_VALUE(value)));
+}
+
+BooleanIr* compiler_peer_create_is_same_promise(Compiler* self, PromiseIr* a, PromiseIr* b) {
+  return PEER_BOOLEAN(self->CreateIsSamePromise(LLVM_VALUE(a), LLVM_VALUE(b)));
+}
+
+PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* coroutine) {
+  return PEER_PROMISE(self->CreateRegisterPromise(LLVM_VALUE(coroutine)));
+}
+
+void compiler_peer_create_await_promise(Compiler* self, PromiseIr* promise, PromiseIr* awaiting) {
+  self->CreateAwaitPromise(LLVM_VALUE(promise), LLVM_VALUE(awaiting));
+}
+
+void compiler_peer_create_resume(Compiler* self, PromiseIr* promise) {
+  self->CreateResume(LLVM_VALUE(promise));
+}
+
+void compiler_peer_create_emit_promise_resolved(Compiler* self,
+    PromiseIr* promise,
+    ValueIr* result) {
+  self->CreateEmitPromiseResolved(LLVM_VALUE(promise), LLVM_VALUE(result));
+}
+
 // value
+
+BooleanIr* compiler_peer_create_has_value(Compiler* self, ValueIr* value) {
+  return PEER_BOOLEAN(self->CreateHasValue(LLVM_VALUE(value)));
+}
 
 BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs) {
   return PEER_BOOLEAN(self->CreateIsLooselyEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
@@ -351,6 +389,12 @@ BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self,
     ValueIr* value,
     ClosureIr* closure) {
   return PEER_BOOLEAN(self->CreateIsSameClosureValue(LLVM_VALUE(value), LLVM_VALUE(closure)));
+}
+
+BooleanIr* compiler_peer_create_is_same_promise_value(Compiler* self,
+    ValueIr* value,
+    PromiseIr* promise) {
+  return PEER_BOOLEAN(self->CreateIsSamePromiseValue(LLVM_VALUE(value), LLVM_VALUE(promise)));
 }
 
 ValueIr* compiler_peer_create_undefined_to_any(Compiler* self) {
@@ -410,12 +454,20 @@ void compiler_peer_create_store_closure_to_value(Compiler* self, ClosureIr* valu
   self->CreateStoreClosureToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
 }
 
+void compiler_peer_create_store_promise_to_value(Compiler* self, PromiseIr* value, ValueIr* dest) {
+  self->CreateStorePromiseToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
+}
+
 void compiler_peer_create_store_value_to_value(Compiler* self, ValueIr* value, ValueIr* dest) {
   self->CreateStoreValueToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
 }
 
 ClosureIr* compiler_peer_create_load_closure_from_value(Compiler* self, ValueIr* value) {
   return PEER_CLOSURE(self->CreateLoadClosureFromValue(LLVM_VALUE(value)));
+}
+
+PromiseIr* compiler_peer_create_load_promise_from_value(Compiler* self, ValueIr* value) {
+  return PEER_PROMISE(self->CreateLoadPromiseFromValue(LLVM_VALUE(value)));
 }
 
 // argv
@@ -460,6 +512,10 @@ void compiler_peer_create_store_number_to_retv(Compiler* self, NumberIr* value) 
 
 void compiler_peer_create_store_closure_to_retv(Compiler* self, ClosureIr* value) {
   self->CreateStoreClosureToRetv(LLVM_VALUE(value));
+}
+
+void compiler_peer_create_store_promise_to_retv(Compiler* self, PromiseIr* value) {
+  self->CreateStorePromiseToRetv(LLVM_VALUE(value));
 }
 
 void compiler_peer_create_store_value_to_retv(Compiler* self, ValueIr* value) {
@@ -550,18 +606,120 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index) {
   return PEER_CAPTURE(self->CreateLoadCapture(index));
 }
 
+// coroutine
+
+CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
+    ClosureIr* closure,
+    uint16_t num_locals,
+    uint16_t scratch_buffer_len) {
+  return PEER_COROUTINE(
+      self->CreateCoroutine(LLVM_VALUE(closure), num_locals, scratch_buffer_len));
+}
+
+SwitchIr* compiler_peer_create_switch_for_coroutine(Compiler* self,
+    BasicBlock* block,
+    uint32_t num_states) {
+  return PEER_SWITCH(self->CreateSwitchForCoroutine(LLVM_BB(block), num_states));
+}
+
+void compiler_peer_create_add_state_for_coroutine(Compiler* self,
+    SwitchIr* inst,
+    uint32_t state,
+    BasicBlock* block) {
+  self->CreateAddStateForCoroutine(LLVM_SWITCH(inst), state, LLVM_BB(block));
+}
+
+void compiler_peer_create_suspend(Compiler* self) {
+  self->CreateSuspend();
+}
+
+void compiler_peer_create_set_coroutine_state(Compiler* self, uint32_t state) {
+  self->CreateSetCoroutineState(state);
+}
+
+void compiler_peer_create_set_captures_for_coroutine(Compiler* self) {
+  self->CreateSetCapturesForCoroutine();
+}
+
+ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint16_t index) {
+  return PEER_VALUE(self->CreateGetLocalPtrFromCoroutine(index));
+}
+
+void compiler_peer_create_write_boolean_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    BooleanIr* value) {
+  self->CreateWriteBooleanToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+BooleanIr* compiler_peer_create_read_boolean_from_scratch_buffer(Compiler* self, uint32_t offset) {
+  return PEER_BOOLEAN(self->CreateReadBooleanFromScratchBuffer(offset));
+}
+
+void compiler_peer_create_write_number_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    NumberIr* value) {
+  self->CreateWriteNumberToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+NumberIr* compiler_peer_create_read_number_from_scratch_buffer(Compiler* self, uint32_t offset) {
+  return PEER_NUMBER(self->CreateReadNumberFromScratchBuffer(offset));
+}
+
+void compiler_peer_create_write_closure_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    ClosureIr* value) {
+  self->CreateWriteClosureToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+ClosureIr* compiler_peer_create_read_closure_from_scratch_buffer(Compiler* self, uint32_t offset) {
+  return PEER_CLOSURE(self->CreateReadClosureFromScratchBuffer(offset));
+}
+
+void compiler_peer_create_write_promise_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    PromiseIr* value) {
+  self->CreateWritePromiseToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+PromiseIr* compiler_peer_create_read_promise_from_scratch_buffer(Compiler* self, uint32_t offset) {
+  return PEER_PROMISE(self->CreateReadPromiseFromScratchBuffer(offset));
+}
+
+void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self,
+    uint32_t offset,
+    ValueIr* value) {
+  self->CreateWriteValueToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+ValueIr* compiler_peer_create_read_value_from_scratch_buffer(Compiler* self, uint32_t offset) {
+  return PEER_VALUE(self->CreateReadValueFromScratchBuffer(offset));
+}
+
 // scope cleanup checker
 
-void compiler_peer_setup_scope_cleanup_checker(Compiler* self, uint16_t stack_size) {
-  self->SetupScopeCleanupChecker(stack_size);
+void compiler_peer_enable_scope_cleanup_checker(Compiler* self, bool is_coroutine) {
+  self->EnableScopeCleanupChecker(is_coroutine);
 }
 
-void compiler_peer_perform_scope_cleanup_precheck(Compiler* self, uint16_t scope_id) {
-  self->PerformScopeCleanupPrecheck(scope_id);
+void compiler_peer_set_scope_id_for_checker(Compiler* self, uint16_t scope_id) {
+  self->SetScopeIdForChecker(scope_id);
 }
 
-void compiler_peer_perform_scope_cleanup_postcheck(Compiler* self, uint16_t scope_id) {
-  self->PerformScopeCleanupPostcheck(scope_id);
+void compiler_peer_assert_scope_id(Compiler* self, uint16_t expected) {
+  self->AssertScopeId(expected);
+}
+
+// print
+
+void compiler_peer_create_print_value(Compiler* self, ValueIr* value, const char* msg) {
+  assert(msg != nullptr);
+  self->CreatePrintValue(LLVM_VALUE(value), msg);
+}
+
+// unreachable
+
+void compiler_peer_create_unreachable(Compiler* self, const char* msg) {
+  self->CreateUnreachable(msg);
 }
 
 // executor
@@ -578,8 +736,8 @@ void executor_peer_register_runtime(Executor* self, const Runtime* runtime) {
   self->RegisterRuntime(runtime);
 }
 
-void executor_peer_register_host_function(Executor* self, const char* name, Lambda lambda) {
-  self->RegisterHostFunction(name, lambda);
+void executor_peer_register_host_function(Executor* self, uint32_t func_id, Lambda lambda) {
+  self->RegisterHostFunction(func_id, lambda);
 }
 
 void executor_peer_register_module(Executor* self, Module* mod) {
@@ -594,8 +752,8 @@ const char* executor_peer_get_target_triple(const Executor* self) {
   return self->target_triple().getTriple().c_str();
 }
 
-Lambda executor_peer_get_native_function(Executor* self, const char* name) {
-  return self->GetNativeFunction(name);
+Lambda executor_peer_get_native_function(Executor* self, uint32_t func_id) {
+  return self->GetNativeFunction(func_id);
 }
 
 // helper functions
