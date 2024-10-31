@@ -6,6 +6,10 @@ resolver = "2"
 panic = "abort"
 strip = true
 
+[profile.release-lto]
+inherits = "release"
+lto = true
+
 [profile.profiling]
 inherits = "release"
 debug = true

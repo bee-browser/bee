@@ -87,6 +87,7 @@ clean: $(CLEAN_TARGETS)
 	cargo clean --profile=dev
 	cargo clean --profile=profiling
 	cargo clean --profile=release
+	cargo clean --profile=release-lto
 
 .PHONY: clean-all
 clean-all: $(CLEAN_TARGETS)
