@@ -635,42 +635,6 @@ impl<'r> Analyzer<'r> {
         self.handle_function_declaration();
     }
 
-    // Translate the bottom-half of the ramp function.
-    //
-    // The compile commands actually generated are different, but here is the conceptual code:
-    //
-    //   function async_func() {
-    //     // The top-half has been processed in handle_function_signature() and the coroutine
-    //     // has eixsted on the operand stack at this point.
-    //
-    //     const promise_onOperandStack = runtime.register_promise(
-    //       runtime.create_coroutine(
-    //         (##promise, ##result, ##error) => {
-    //           ...
-    //         },
-    //         NUM_LOCALS,
-    //         SCRATCH_BUFFER_LEN,
-    //       ),
-    //     );
-    //     runtime.resume(promise_onOperandStack);
-    //     return promise_onOperandStack;
-    //   }
-    fn end_coroutine_body(&mut self) {
-        // Local variables used in the coroutine will be allocated on the heap because these must
-        // be held across suspend points.
-        //
-        // TODO: Some of the local variables can be placed on the stack.
-        let context = self.context_stack.last().unwrap();
-        let func_id = self.functions[context.func_index].id;
-        let num_locals = context.num_locals;
-        self.handle_function_expression(false);
-        self.put_command(CompileCommand::Coroutine(func_id, num_locals));
-        self.put_command(CompileCommand::Promise);
-        self.put_command(CompileCommand::Duplicate(0));
-        self.put_command(CompileCommand::Resume);
-        self.put_command(CompileCommand::Return(1));
-    }
-
     fn handle_function_expression(&mut self, named: bool) {
         let func_index = self.end_function_scope();
         let func = &self.functions[func_index];
@@ -872,44 +836,14 @@ impl<'r> Analyzer<'r> {
         }
     }
 
-    // The async function is translated into a ramp function where an inner function is defined
-    // with the async function body of the async function.  The async function body will be
-    //rewritten as a coroutine implemented using a state machine.
+    // The async function is translated into a ramp function.  The ramp function creates a
+    // coroutine every time it's called.  The coroutine function body is built from the async
+    // function body.  It will be rewritten into a state machine for the coroutine.
     //
-    // For example, the following async function:
+    // See //libs/jsruntime/docs/internals.md for details.
     //
-    //   async function async_func() {
-    //     <async-function-body>
-    //   }
-    //
-    // is translated into:
-    //
-    //   // The ramp function translated from the original async function.
-    //   function async_func() {
-    //     // The inner coroutine function translated from the original async function body.
-    //     const closure_onOperandStack = runtime.create_closure(
-    //       // ##promise: The promise ID of the coroutine.
-    //       // ##result: Available if a promise is fulfilled.
-    //       // ##error: Available if a promise is rejected.
-    //       (##promise, ##result, ##error) => {
-    //         // Load local variables and captures from the coroutine environment.
-    //
-    //         // Jump to the entry basic block for each coroutine state.
-    //         <jump-table for coroutine.state>
-    //
-    //         {
-    //           <modified async-function-body>
-    //         }
-    //       },
-    //       NUM_CAPTURES
-    //     );
-    //
-    //     // The bottom-half of the translation will be processed in
-    //     // handle_async_function_declaration().
-    //   }
-    //
-    // NOTE: We never optimize an async function which has no await expression in the body.  Such
-    // an async function should be rewritten as a normal function by developers who maintain it.
+    // TODO(perf): We never optimize an async function which has no await expression in the body.
+    // Such an async function don't need to be rewritten into a state machine.
     fn start_coroutine_body(&mut self) {
         self.handle_function_context();
         self.scope_tree_builder.set_coroutine();
@@ -925,6 +859,21 @@ impl<'r> Analyzer<'r> {
         let context = self.context_stack.last_mut().unwrap();
 
         context.flags.insert(FunctionContextFlags::COROUTINE);
+    }
+
+    // Generate compile commands for the bottom-half of the coroutine.
+    // See //libs/jsruntime/docs/internals.md.
+    fn end_coroutine_body(&mut self) {
+        // TODO(perf): Some of the local variables can be placed on the stack.
+        let context = self.context_stack.last().unwrap();
+        let func_id = self.functions[context.func_index].id;
+        let num_locals = context.num_locals;
+        self.handle_function_expression(false);
+        self.put_command(CompileCommand::Coroutine(func_id, num_locals));
+        self.put_command(CompileCommand::Promise);
+        self.put_command(CompileCommand::Duplicate(0));
+        self.put_command(CompileCommand::Resume);
+        self.put_command(CompileCommand::Return(1));
     }
 
     fn put_command(&mut self, command: CompileCommand) {
