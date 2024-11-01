@@ -10,7 +10,7 @@ flagset = "0.4.6"
 htmltokenizer = { path = "../htmltokenizer" }
 logging = { path = "../logging" }
 phf = { version = "0.11.2", features = ["macros"] }
-thiserror = "1.0.65"
+thiserror = "1.0.66"
 unicase = "2.8.0"
 
 [dev-dependencies]
