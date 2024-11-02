@@ -938,6 +938,13 @@ class Compiler {
     builder_->CreateCall(func, {runtime_, value, msg_value});
   }
 
+  // debugger
+
+  void CreateDebugger() {
+    auto* func = types_->CreateRuntimeLaunchDebugger();
+    builder_->CreateCall(func, {runtime_});
+  }
+
   // unreachable
 
   void CreateUnreachable(const char* msg = "") {

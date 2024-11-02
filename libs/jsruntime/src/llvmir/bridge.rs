@@ -242,6 +242,7 @@ pub fn runtime_bridge<X>() -> Runtime {
         print_u32: Some(runtime_print_u32),
         print_f64: Some(runtime_print_f64),
         print_value: Some(runtime_print_value),
+        launch_debugger: Some(runtime_launch_debugger),
     }
 }
 
@@ -557,4 +558,9 @@ unsafe extern "C" fn runtime_print_value(
     } else {
         crate::logger::debug!("runtime_print_value: {value:?}: {msg:?}");
     }
+}
+
+unsafe extern "C" fn runtime_launch_debugger(_runtime: VoidPtr) {
+    crate::logger::debug!("runtime_launch_debugger");
+    // TODO(feat): Support debuggers such as Chrome DevTools.
 }

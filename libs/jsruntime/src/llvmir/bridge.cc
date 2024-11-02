@@ -716,6 +716,12 @@ void compiler_peer_create_print_value(Compiler* self, ValueIr* value, const char
   self->CreatePrintValue(LLVM_VALUE(value), msg);
 }
 
+// debugger
+
+void compiler_peer_create_debugger(Compiler* self) {
+  self->CreateDebugger();
+}
+
 // unreachable
 
 void compiler_peer_create_unreachable(Compiler* self, const char* msg) {
