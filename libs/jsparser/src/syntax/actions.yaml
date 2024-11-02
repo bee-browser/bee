@@ -153,7 +153,7 @@
 - rule: Statement -> TryStatement
   action: process_statement
 - rule: Statement -> DebuggerStatement
-  action: undefined
+  action: process_statement
 - rule: Declaration -> HoistableDeclaration
   action: process_declaration
 - rule: Declaration -> ClassDeclaration
@@ -257,7 +257,7 @@
     Finally
   action: process_try_statement
 - rule: DebuggerStatement -> DEBUGGER SEMICOLON
-  action: undefined
+  action: process_debugger_statement
 - rule: HoistableDeclaration -> FunctionDeclaration
   action: process_hoistable_declaration
 - rule: HoistableDeclaration -> GeneratorDeclaration
@@ -373,7 +373,7 @@
 - rule: Statement_Await -> TryStatement_Await
   action: process_statement
 - rule: Statement_Await -> DebuggerStatement
-  action: undefined
+  action: process_statement
 - rule: BindingIdentifier -> Identifier
   action: process_binding_identifier_except_for_arguments_eval_in_strict
 - rule: BindingIdentifier -> YIELD
@@ -2912,7 +2912,7 @@
 - rule: Statement_Return -> TryStatement_Return
   action: process_statement
 - rule: Statement_Return -> DebuggerStatement
-  action: undefined
+  action: process_statement
 - rule: StatementListItem_Yield_Return -> Statement_Yield_Return
   action: nop
 - rule: StatementListItem_Yield_Return -> Declaration_Yield
@@ -3284,7 +3284,7 @@
 - rule: Statement_Yield_Return -> TryStatement_Yield_Return
   action: process_statement
 - rule: Statement_Yield_Return -> DebuggerStatement
-  action: undefined
+  action: process_statement
 - rule: Declaration_Yield -> HoistableDeclaration_Yield
   action: process_declaration
 - rule: Declaration_Yield -> ClassDeclaration_Yield
@@ -3318,7 +3318,7 @@
 - rule: Statement_Await_Return -> TryStatement_Await_Return
   action: process_statement
 - rule: Statement_Await_Return -> DebuggerStatement
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> BlockStatement_Yield_Await_Return
   action: process_statement
 - rule: Statement_Yield_Await_Return -> VariableStatement_Yield_Await
@@ -3346,7 +3346,7 @@
 - rule: Statement_Yield_Await_Return -> TryStatement_Yield_Await_Return
   action: process_statement
 - rule: Statement_Yield_Await_Return -> DebuggerStatement
-  action: undefined
+  action: process_statement
 - rule: Declaration_Yield_Await -> HoistableDeclaration_Yield_Await
   action: process_declaration
 - rule: Declaration_Yield_Await -> ClassDeclaration_Yield_Await

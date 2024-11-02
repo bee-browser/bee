@@ -117,7 +117,7 @@ enum Detail {
     LabelledStatement(LabelledItem),
     ThrowStatement,
     TryStatement,
-    //DebuggerStatement,
+    DebuggerStatement,
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
     ConciseBody,
@@ -205,6 +205,7 @@ pub enum Node<'s> {
     TryBlock,
     CatchBlock,
     FinallyBlock,
+    DebuggerStatement,
     FormalParameter,
     FormalParameters(u32),
     FunctionContext,
@@ -2239,6 +2240,16 @@ where
     // _FINALLY_BLOCK_
     fn process_finally_block(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FinallyBlock);
+        Ok(())
+    }
+
+    // 14.16 The debugger Statement
+
+    // DebuggerStatement :
+    //   debugger ;
+    fn process_debugger_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::DebuggerStatement);
+        self.replace(2, Detail::DebuggerStatement);
         Ok(())
     }
 

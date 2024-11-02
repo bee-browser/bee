@@ -273,10 +273,11 @@ impl<'r> Analyzer<'r> {
             Node::TryStatement => self.handle_try_statement(),
             Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
             Node::FinallyClause => self.handle_finally_clause(),
+            Node::CatchParameter => self.handle_catch_parameter(),
             Node::TryBlock => self.handle_try_block(),
             Node::CatchBlock => self.handle_catch_block(),
             Node::FinallyBlock => self.handle_finally_block(),
-            Node::CatchParameter => self.handle_catch_parameter(),
+            Node::DebuggerStatement => self.handle_debugger_statement(),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
@@ -550,6 +551,13 @@ impl<'r> Analyzer<'r> {
             .process_finally_clause();
     }
 
+    fn handle_catch_parameter(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_catch_parameter();
+    }
+
     fn handle_try_block(&mut self) {
         self.context_stack.last_mut().unwrap().process_try_block();
     }
@@ -574,11 +582,11 @@ impl<'r> Analyzer<'r> {
         self.scope_tree_builder.pop();
     }
 
-    fn handle_catch_parameter(&mut self) {
+    fn handle_debugger_statement(&mut self) {
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_catch_parameter();
+            .put_command(CompileCommand::Debugger);
     }
 
     fn handle_formal_parameter(&mut self) {
@@ -1688,6 +1696,9 @@ pub enum CompileCommand {
     Discard,
     Swap,
     Duplicate(u8), // 0 or 1
+
+    // debugger
+    Debugger,
 
     // A special command used as a placeholder in a command list, which will be replaced actual
     // command later.  The final command list must not contain placeholder commands.

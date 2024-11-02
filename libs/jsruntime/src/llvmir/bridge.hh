@@ -380,6 +380,9 @@ void compiler_peer_assert_scope_id(Compiler* self, uint16_t expected);
 // print
 void compiler_peer_create_print_value(Compiler* self, ValueIr* value, const char* msg);
 
+// debugger
+void compiler_peer_create_debugger(Compiler* self);
+
 // unreachable
 void compiler_peer_create_unreachable(Compiler* self, const char* msg);
 

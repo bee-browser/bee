@@ -402,6 +402,7 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
+            CompileCommand::Debugger => self.process_debugger(),
             CompileCommand::PlaceHolder => unreachable!(),
         }
 
@@ -2388,6 +2389,10 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_duplicate(&mut self, offset: u8) {
         self.duplicate(offset);
+    }
+
+    fn process_debugger(&mut self) {
+        self.peer.create_debugger();
     }
 
     fn create_basic_block(&mut self, name: &str) -> BasicBlock {

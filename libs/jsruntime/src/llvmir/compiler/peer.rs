@@ -1106,6 +1106,14 @@ impl Compiler {
         }
     }
 
+    // debugger
+
+    pub fn create_debugger(&self) {
+        unsafe {
+            bridge::compiler_peer_create_debugger(self.0);
+        }
+    }
+
     // unreachable
 
     pub fn create_unreachable(&self, msg: &CStr) {
