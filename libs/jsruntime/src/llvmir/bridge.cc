@@ -1,9 +1,9 @@
 #include "bridge.hh"
 
-#include <cstdint>
-
 #include <llvm/Support/TargetSelect.h>
 #include <sys/types.h>
+
+#include <cstdint>
 
 #include "compiler.hh"
 #include "executor.hh"
@@ -122,9 +122,9 @@ void compiler_peer_create_br(Compiler* self, BasicBlock* block) {
 }
 
 void compiler_peer_create_cond_br(Compiler* self,
-    BooleanIr* cond,
-    BasicBlock* then_block,
-    BasicBlock* else_block) {
+                                  BooleanIr* cond,
+                                  BasicBlock* then_block,
+                                  BasicBlock* else_block) {
   self->CreateCondBr(LLVM_VALUE(cond), LLVM_BB(then_block), LLVM_BB(else_block));
 }
 
@@ -171,12 +171,12 @@ BooleanIr* compiler_peer_create_logical_not(Compiler* self, BooleanIr* boolean) 
 }
 
 BooleanIr* compiler_peer_create_boolean_phi(Compiler* self,
-    BooleanIr* then_value,
-    BasicBlock* then_block,
-    BooleanIr* else_value,
-    BasicBlock* else_block) {
-  return PEER_BOOLEAN(self->CreateBooleanPhi(
-      LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+                                            BooleanIr* then_value,
+                                            BasicBlock* then_block,
+                                            BooleanIr* else_value,
+                                            BasicBlock* else_block) {
+  return PEER_BOOLEAN(self->CreateBooleanPhi(LLVM_VALUE(then_value), LLVM_BB(then_block),
+                                             LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
 // number
@@ -274,18 +274,18 @@ BooleanIr* compiler_peer_create_less_than_or_equal(Compiler* self, NumberIr* lhs
 }
 
 BooleanIr* compiler_peer_create_greater_than_or_equal(Compiler* self,
-    NumberIr* lhs,
-    NumberIr* rhs) {
+                                                      NumberIr* lhs,
+                                                      NumberIr* rhs) {
   return PEER_BOOLEAN(self->CreateGreaterThanOrEqual(LLVM_VALUE(lhs), LLVM_VALUE(rhs)));
 }
 
 NumberIr* compiler_peer_create_number_phi(Compiler* self,
-    NumberIr* then_value,
-    BasicBlock* then_block,
-    NumberIr* else_value,
-    BasicBlock* else_block) {
-  return PEER_NUMBER(self->CreateNumberPhi(
-      LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+                                          NumberIr* then_value,
+                                          BasicBlock* then_block,
+                                          NumberIr* else_value,
+                                          BasicBlock* else_block) {
+  return PEER_NUMBER(self->CreateNumberPhi(LLVM_VALUE(then_value), LLVM_BB(then_block),
+                                           LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
 // closure
@@ -307,28 +307,28 @@ ClosureIr* compiler_peer_create_closure(Compiler* self, LambdaIr* lambda, uint16
 }
 
 void compiler_peer_create_store_capture_to_closure(Compiler* self,
-    CaptureIr* capture,
-    ClosureIr* closure,
-    uint16_t index) {
+                                                   CaptureIr* capture,
+                                                   ClosureIr* closure,
+                                                   uint16_t index) {
   self->CreateStoreCapturePtrToClosure(LLVM_VALUE(capture), LLVM_VALUE(closure), index);
 }
 
 StatusIr* compiler_peer_create_call_on_closure(Compiler* self,
-    ClosureIr* closure,
-    uint16_t argc,
-    ArgvIr* argv,
-    ValueIr* retv) {
+                                               ClosureIr* closure,
+                                               uint16_t argc,
+                                               ArgvIr* argv,
+                                               ValueIr* retv) {
   return PEER_STATUS(
       self->CreateCallOnClosure(LLVM_VALUE(closure), argc, LLVM_VALUE(argv), LLVM_VALUE(retv)));
 }
 
 ClosureIr* compiler_peer_create_closure_phi(Compiler* self,
-    ClosureIr* then_value,
-    BasicBlock* then_block,
-    ClosureIr* else_value,
-    BasicBlock* else_block) {
-  return PEER_CLOSURE(self->CreateClosurePhi(
-      LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+                                            ClosureIr* then_value,
+                                            BasicBlock* then_block,
+                                            ClosureIr* else_value,
+                                            BasicBlock* else_block) {
+  return PEER_CLOSURE(self->CreateClosurePhi(LLVM_VALUE(then_value), LLVM_BB(then_block),
+                                             LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
 // promise
@@ -354,8 +354,8 @@ void compiler_peer_create_resume(Compiler* self, PromiseIr* promise) {
 }
 
 void compiler_peer_create_emit_promise_resolved(Compiler* self,
-    PromiseIr* promise,
-    ValueIr* result) {
+                                                PromiseIr* promise,
+                                                ValueIr* result) {
   self->CreateEmitPromiseResolved(LLVM_VALUE(promise), LLVM_VALUE(result));
 }
 
@@ -374,26 +374,26 @@ BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, 
 }
 
 BooleanIr* compiler_peer_create_is_same_boolean_value(Compiler* self,
-    ValueIr* value,
-    BooleanIr* boolean) {
+                                                      ValueIr* value,
+                                                      BooleanIr* boolean) {
   return PEER_BOOLEAN(self->CreateIsSameBooleanValue(LLVM_VALUE(value), LLVM_VALUE(boolean)));
 }
 
 BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self,
-    ValueIr* value,
-    NumberIr* number) {
+                                                     ValueIr* value,
+                                                     NumberIr* number) {
   return PEER_BOOLEAN(self->CreateIsSameNumberValue(LLVM_VALUE(value), LLVM_VALUE(number)));
 }
 
 BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self,
-    ValueIr* value,
-    ClosureIr* closure) {
+                                                      ValueIr* value,
+                                                      ClosureIr* closure) {
   return PEER_BOOLEAN(self->CreateIsSameClosureValue(LLVM_VALUE(value), LLVM_VALUE(closure)));
 }
 
 BooleanIr* compiler_peer_create_is_same_promise_value(Compiler* self,
-    ValueIr* value,
-    PromiseIr* promise) {
+                                                      ValueIr* value,
+                                                      PromiseIr* promise) {
   return PEER_BOOLEAN(self->CreateIsSamePromiseValue(LLVM_VALUE(value), LLVM_VALUE(promise)));
 }
 
@@ -418,12 +418,12 @@ ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* value) {
 }
 
 ValueIr* compiler_peer_create_value_phi(Compiler* self,
-    ValueIr* then_value,
-    BasicBlock* then_block,
-    ValueIr* else_value,
-    BasicBlock* else_block) {
-  return PEER_VALUE(self->CreateValuePhi(
-      LLVM_VALUE(then_value), LLVM_BB(then_block), LLVM_VALUE(else_value), LLVM_BB(else_block)));
+                                        ValueIr* then_value,
+                                        BasicBlock* then_block,
+                                        ValueIr* else_value,
+                                        BasicBlock* else_block) {
+  return PEER_VALUE(self->CreateValuePhi(LLVM_VALUE(then_value), LLVM_BB(then_block),
+                                         LLVM_VALUE(else_value), LLVM_BB(else_block)));
 }
 
 ValueIr* compiler_peer_create_local_value(Compiler* self, uint16_t index) {
@@ -575,12 +575,12 @@ BooleanIr* compiler_peer_create_is_flow_selector_normal(Compiler* self) {
 }
 
 BooleanIr* compiler_peer_create_is_flow_selector_normal_or_continue(Compiler* self,
-    uint32_t depth) {
+                                                                    uint32_t depth) {
   return PEER_BOOLEAN(self->CreateIsFlowSelectorNormalOrContinue(depth));
 }
 
 BooleanIr* compiler_peer_create_is_flow_selector_break_or_continue(Compiler* self,
-    uint32_t depth) {
+                                                                   uint32_t depth) {
   return PEER_BOOLEAN(self->CreateIsFlowSelectorBreakOrContinue(depth));
 }
 
@@ -609,23 +609,23 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index) {
 // coroutine
 
 CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
-    ClosureIr* closure,
-    uint16_t num_locals,
-    uint16_t scratch_buffer_len) {
+                                            ClosureIr* closure,
+                                            uint16_t num_locals,
+                                            uint16_t scratch_buffer_len) {
   return PEER_COROUTINE(
       self->CreateCoroutine(LLVM_VALUE(closure), num_locals, scratch_buffer_len));
 }
 
 SwitchIr* compiler_peer_create_switch_for_coroutine(Compiler* self,
-    BasicBlock* block,
-    uint32_t num_states) {
+                                                    BasicBlock* block,
+                                                    uint32_t num_states) {
   return PEER_SWITCH(self->CreateSwitchForCoroutine(LLVM_BB(block), num_states));
 }
 
 void compiler_peer_create_add_state_for_coroutine(Compiler* self,
-    SwitchIr* inst,
-    uint32_t state,
-    BasicBlock* block) {
+                                                  SwitchIr* inst,
+                                                  uint32_t state,
+                                                  BasicBlock* block) {
   self->CreateAddStateForCoroutine(LLVM_SWITCH(inst), state, LLVM_BB(block));
 }
 
@@ -646,8 +646,8 @@ ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint1
 }
 
 void compiler_peer_create_write_boolean_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    BooleanIr* value) {
+                                                          uint32_t offset,
+                                                          BooleanIr* value) {
   self->CreateWriteBooleanToScratchBuffer(offset, LLVM_VALUE(value));
 }
 
@@ -656,8 +656,8 @@ BooleanIr* compiler_peer_create_read_boolean_from_scratch_buffer(Compiler* self,
 }
 
 void compiler_peer_create_write_number_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    NumberIr* value) {
+                                                         uint32_t offset,
+                                                         NumberIr* value) {
   self->CreateWriteNumberToScratchBuffer(offset, LLVM_VALUE(value));
 }
 
@@ -666,8 +666,8 @@ NumberIr* compiler_peer_create_read_number_from_scratch_buffer(Compiler* self, u
 }
 
 void compiler_peer_create_write_closure_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    ClosureIr* value) {
+                                                          uint32_t offset,
+                                                          ClosureIr* value) {
   self->CreateWriteClosureToScratchBuffer(offset, LLVM_VALUE(value));
 }
 
@@ -676,8 +676,8 @@ ClosureIr* compiler_peer_create_read_closure_from_scratch_buffer(Compiler* self,
 }
 
 void compiler_peer_create_write_promise_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    PromiseIr* value) {
+                                                          uint32_t offset,
+                                                          PromiseIr* value) {
   self->CreateWritePromiseToScratchBuffer(offset, LLVM_VALUE(value));
 }
 
@@ -686,8 +686,8 @@ PromiseIr* compiler_peer_create_read_promise_from_scratch_buffer(Compiler* self,
 }
 
 void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    ValueIr* value) {
+                                                        uint32_t offset,
+                                                        ValueIr* value) {
   self->CreateWriteValueToScratchBuffer(offset, LLVM_VALUE(value));
 }
 

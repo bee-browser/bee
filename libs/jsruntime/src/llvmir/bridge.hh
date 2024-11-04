@@ -162,9 +162,9 @@ bool compiler_peer_is_basic_block_terminated(Compiler* self, BasicBlock* block);
 // jump
 void compiler_peer_create_br(Compiler* self, BasicBlock* block);
 void compiler_peer_create_cond_br(Compiler* self,
-    BooleanIr* cond,
-    BasicBlock* then_block,
-    BasicBlock* else_block);
+                                  BooleanIr* cond,
+                                  BasicBlock* then_block,
+                                  BasicBlock* else_block);
 
 // undefined
 BooleanIr* compiler_peer_create_is_undefined(Compiler* self, ValueIr* value);
@@ -181,10 +181,10 @@ BooleanIr* compiler_peer_create_to_boolean(Compiler* self, ValueIr* value);
 BooleanIr* compiler_peer_get_boolean(Compiler* self, bool value);
 BooleanIr* compiler_peer_create_logical_not(Compiler* self, BooleanIr* boolean);
 BooleanIr* compiler_peer_create_boolean_phi(Compiler* self,
-    BooleanIr* then_value,
-    BasicBlock* then_block,
-    BooleanIr* else_value,
-    BasicBlock* else_block);
+                                            BooleanIr* then_value,
+                                            BasicBlock* then_block,
+                                            BooleanIr* else_value,
+                                            BasicBlock* else_block);
 
 // number
 BooleanIr* compiler_peer_create_is_number(Compiler* self, ValueIr* value);
@@ -211,13 +211,13 @@ BooleanIr* compiler_peer_create_less_than(Compiler* self, NumberIr* lhs, NumberI
 BooleanIr* compiler_peer_create_greater_than(Compiler* self, NumberIr* lhs, NumberIr* rhs);
 BooleanIr* compiler_peer_create_less_than_or_equal(Compiler* self, NumberIr* lhs, NumberIr* rhs);
 BooleanIr* compiler_peer_create_greater_than_or_equal(Compiler* self,
-    NumberIr* lhs,
-    NumberIr* rhs);
+                                                      NumberIr* lhs,
+                                                      NumberIr* rhs);
 NumberIr* compiler_peer_create_number_phi(Compiler* self,
-    NumberIr* then_value,
-    BasicBlock* then_block,
-    NumberIr* else_value,
-    BasicBlock* else_block);
+                                          NumberIr* then_value,
+                                          BasicBlock* then_block,
+                                          NumberIr* else_value,
+                                          BasicBlock* else_block);
 
 // closure
 BooleanIr* compiler_peer_create_is_closure(Compiler* self, ValueIr* value);
@@ -225,19 +225,19 @@ BooleanIr* compiler_peer_create_is_same_closure(Compiler* self, ClosureIr* a, Cl
 ClosureIr* compiler_peer_get_closure_nullptr(Compiler* self);
 ClosureIr* compiler_peer_create_closure(Compiler* self, LambdaIr* lambda, uint16_t num_captures);
 void compiler_peer_create_store_capture_to_closure(Compiler* self,
-    CaptureIr* capture,
-    ClosureIr* closure,
-    uint16_t index);
+                                                   CaptureIr* capture,
+                                                   ClosureIr* closure,
+                                                   uint16_t index);
 StatusIr* compiler_peer_create_call_on_closure(Compiler* self,
-    ClosureIr* closure,
-    uint16_t argc,
-    ArgvIr* argv,
-    ValueIr* retv);
+                                               ClosureIr* closure,
+                                               uint16_t argc,
+                                               ArgvIr* argv,
+                                               ValueIr* retv);
 ClosureIr* compiler_peer_create_closure_phi(Compiler* self,
-    ClosureIr* then_value,
-    BasicBlock* then_block,
-    ClosureIr* else_value,
-    BasicBlock* else_block);
+                                            ClosureIr* then_value,
+                                            BasicBlock* then_block,
+                                            ClosureIr* else_value,
+                                            BasicBlock* else_block);
 
 // promise
 BooleanIr* compiler_peer_create_is_promise(Compiler* self, ValueIr* value);
@@ -246,35 +246,35 @@ PromiseIr* compiler_peer_create_register_promise(Compiler* self, CoroutineIr* co
 void compiler_peer_create_await_promise(Compiler* self, PromiseIr* promise, PromiseIr* awaiting);
 void compiler_peer_create_resume(Compiler* self, PromiseIr* promise);
 void compiler_peer_create_emit_promise_resolved(Compiler* self,
-    PromiseIr* promise,
-    ValueIr* result);
+                                                PromiseIr* promise,
+                                                ValueIr* result);
 
 // value
 BooleanIr* compiler_peer_create_has_value(Compiler* self, ValueIr* value);
 BooleanIr* compiler_peer_create_is_loosely_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 BooleanIr* compiler_peer_create_is_strictly_equal(Compiler* self, ValueIr* lhs, ValueIr* rhs);
 BooleanIr* compiler_peer_create_is_same_boolean_value(Compiler* self,
-    ValueIr* value,
-    BooleanIr* boolean);
+                                                      ValueIr* value,
+                                                      BooleanIr* boolean);
 BooleanIr* compiler_peer_create_is_same_number_value(Compiler* self,
-    ValueIr* value,
-    NumberIr* number);
+                                                     ValueIr* value,
+                                                     NumberIr* number);
 BooleanIr* compiler_peer_create_is_same_closure_value(Compiler* self,
-    ValueIr* value,
-    ClosureIr* closure);
+                                                      ValueIr* value,
+                                                      ClosureIr* closure);
 BooleanIr* compiler_peer_create_is_same_promise_value(Compiler* self,
-    ValueIr* value,
-    PromiseIr* promise);
+                                                      ValueIr* value,
+                                                      PromiseIr* promise);
 ValueIr* compiler_peer_create_undefined_to_any(Compiler* self);
 ValueIr* compiler_peer_create_null_to_any(Compiler* self);
 ValueIr* compiler_peer_create_boolean_to_any(Compiler* self, BooleanIr* boolean);
 ValueIr* compiler_peer_create_number_to_any(Compiler* self, NumberIr* number);
 ValueIr* compiler_peer_create_closure_to_any(Compiler* self, ClosureIr* closure);
 ValueIr* compiler_peer_create_value_phi(Compiler* self,
-    ValueIr* then_value,
-    BasicBlock* then_block,
-    ValueIr* else_value,
-    BasicBlock* else_block);
+                                        ValueIr* then_value,
+                                        BasicBlock* then_block,
+                                        ValueIr* else_value,
+                                        BasicBlock* else_block);
 ValueIr* compiler_peer_create_local_value(Compiler* self, uint16_t index);
 void compiler_peer_create_store_none_to_value(Compiler* self, ValueIr* dest);
 void compiler_peer_create_store_undefined_to_value(Compiler* self, ValueIr* dest);
@@ -325,7 +325,7 @@ void compiler_peer_create_set_flow_selector_break(Compiler* self, uint32_t depth
 void compiler_peer_create_set_flow_selector_continue(Compiler* self, uint32_t depth);
 BooleanIr* compiler_peer_create_is_flow_selector_normal(Compiler* self);
 BooleanIr* compiler_peer_create_is_flow_selector_normal_or_continue(Compiler* self,
-    uint32_t depth);
+                                                                    uint32_t depth);
 BooleanIr* compiler_peer_create_is_flow_selector_break_or_continue(Compiler* self, uint32_t depth);
 BooleanIr* compiler_peer_create_is_flow_selector_break(Compiler* self, uint32_t depth);
 
@@ -337,39 +337,39 @@ CaptureIr* compiler_peer_create_load_capture(Compiler* self, uint16_t index);
 
 // coroutine
 CoroutineIr* compiler_peer_create_coroutine(Compiler* self,
-    ClosureIr* closure,
-    uint16_t num_locals,
-    uint16_t scratch_buffer_len);
+                                            ClosureIr* closure,
+                                            uint16_t num_locals,
+                                            uint16_t scratch_buffer_len);
 SwitchIr* compiler_peer_create_switch_for_coroutine(Compiler* self,
-    BasicBlock* block,
-    uint32_t num_states);
+                                                    BasicBlock* block,
+                                                    uint32_t num_states);
 void compiler_peer_create_add_state_for_coroutine(Compiler* self,
-    SwitchIr* switch_ir,
-    uint32_t state,
-    BasicBlock* block);
+                                                  SwitchIr* switch_ir,
+                                                  uint32_t state,
+                                                  BasicBlock* block);
 void compiler_peer_create_suspend(Compiler* self);
 void compiler_peer_create_set_coroutine_state(Compiler* self, uint32_t state);
 void compiler_peer_create_set_captures_for_coroutine(Compiler* self);
 ValueIr* compiler_peer_create_get_local_ptr_from_coroutine(Compiler* self, uint16_t index);
 void compiler_peer_create_write_boolean_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    BooleanIr* value);
+                                                          uint32_t offset,
+                                                          BooleanIr* value);
 BooleanIr* compiler_peer_create_read_boolean_from_scratch_buffer(Compiler* self, uint32_t offset);
 void compiler_peer_create_write_number_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    NumberIr* value);
+                                                         uint32_t offset,
+                                                         NumberIr* value);
 NumberIr* compiler_peer_create_read_number_from_scratch_buffer(Compiler* self, uint32_t offset);
 void compiler_peer_create_write_closure_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    ClosureIr* value);
+                                                          uint32_t offset,
+                                                          ClosureIr* value);
 ClosureIr* compiler_peer_create_read_closure_from_scratch_buffer(Compiler* self, uint32_t offset);
 void compiler_peer_create_write_promise_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    PromiseIr* value);
+                                                          uint32_t offset,
+                                                          PromiseIr* value);
 PromiseIr* compiler_peer_create_read_promise_from_scratch_buffer(Compiler* self, uint32_t offset);
 void compiler_peer_create_write_value_to_scratch_buffer(Compiler* self,
-    uint32_t offset,
-    ValueIr* value);
+                                                        uint32_t offset,
+                                                        ValueIr* value);
 ValueIr* compiler_peer_create_read_value_from_scratch_buffer(Compiler* self, uint32_t offset);
 
 // scope cleanup checker

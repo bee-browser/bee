@@ -8,12 +8,8 @@ Language: Cpp
 Standard: Cpp11
 InsertBraces: true
 InsertNewlineAtEOF: true
+IncludeBlocks: Regroup
 
-AlignAfterOpenBracket: DontAlign
-AlignEscapedNewlines: DontAlign
-AlignOperands: false
 AllowShortFunctionsOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-SortIncludes: false
-DerivePointerAlignment: false

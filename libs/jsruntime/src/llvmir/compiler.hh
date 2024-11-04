@@ -176,8 +176,8 @@ class Compiler {
   }
 
   llvm::BasicBlock* CreateBasicBlock(const char* name, size_t name_len) {
-    return llvm::BasicBlock::Create(
-        *llvmctx_, llvm::Twine(llvm::StringRef(name, name_len)), function_);
+    return llvm::BasicBlock::Create(*llvmctx_, llvm::Twine(llvm::StringRef(name, name_len)),
+                                    function_);
   }
 
   llvm::BasicBlock* GetBasicBlock() const {
@@ -207,8 +207,8 @@ class Compiler {
   }
 
   void CreateCondBr(llvm::Value* cond,
-      llvm::BasicBlock* then_block,
-      llvm::BasicBlock* else_block) {
+                    llvm::BasicBlock* then_block,
+                    llvm::BasicBlock* else_block) {
     builder_->CreateCondBr(cond, then_block, else_block);
   }
 
@@ -216,8 +216,8 @@ class Compiler {
 
   llvm::Value* CreateIsUndefined(llvm::Value* value_ptr) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
-    return builder_->CreateICmpEQ(
-        kind, builder_->getInt8(kValueKindUndefined), REG_NAME("is_undefined"));
+    return builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindUndefined),
+                                  REG_NAME("is_undefined"));
   }
 
   // null
@@ -229,16 +229,16 @@ class Compiler {
 
   llvm::Value* CreateIsNonNullish(llvm::Value* value_ptr) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
-    return builder_->CreateICmpUGT(
-        kind, builder_->getInt8(kValueKindNull), REG_NAME("is_non_nullish"));
+    return builder_->CreateICmpUGT(kind, builder_->getInt8(kValueKindNull),
+                                   REG_NAME("is_non_nullish"));
   }
 
   // boolean
 
   llvm::Value* CreateIsBoolean(llvm::Value* value_ptr) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
-    return builder_->CreateICmpEQ(
-        kind, builder_->getInt8(kValueKindBoolean), REG_NAME("is_boolean"));
+    return builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindBoolean),
+                                  REG_NAME("is_boolean"));
   }
 
   llvm::Value* CreateIsSameBoolean(llvm::Value* a, llvm::Value* b) {
@@ -266,9 +266,9 @@ class Compiler {
   }
 
   llvm::Value* CreateBooleanPhi(llvm::Value* then_value,
-      llvm::BasicBlock* then_block,
-      llvm::Value* else_value,
-      llvm::BasicBlock* else_block) {
+                                llvm::BasicBlock* then_block,
+                                llvm::Value* else_value,
+                                llvm::BasicBlock* else_block) {
     auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2, REG_NAME("boolean.phi"));
     phi->addIncoming(then_value, then_block);
     phi->addIncoming(else_value, else_block);
@@ -279,8 +279,8 @@ class Compiler {
 
   llvm::Value* CreateIsNumber(llvm::Value* value_ptr) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
-    return builder_->CreateICmpEQ(
-        kind, builder_->getInt8(kValueKindNumber), REG_NAME("is_number"));
+    return builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindNumber),
+                                  REG_NAME("is_number"));
   }
 
   llvm::Value* CreateIsSameNumber(llvm::Value* a, llvm::Value* b) {
@@ -399,9 +399,9 @@ class Compiler {
   }
 
   llvm::Value* CreateNumberPhi(llvm::Value* then_value,
-      llvm::BasicBlock* then_block,
-      llvm::Value* else_value,
-      llvm::BasicBlock* else_block) {
+                               llvm::BasicBlock* then_block,
+                               llvm::Value* else_value,
+                               llvm::BasicBlock* else_block) {
     auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2, REG_NAME("number.phi"));
     phi->addIncoming(then_value, then_block);
     phi->addIncoming(else_value, else_block);
@@ -418,8 +418,8 @@ class Compiler {
 
   llvm::Value* CreateIsClosure(llvm::Value* value_ptr) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
-    return builder_->CreateICmpEQ(
-        kind, builder_->getInt8(kValueKindClosure), REG_NAME("is_closure"));
+    return builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindClosure),
+                                  REG_NAME("is_closure"));
   }
 
   llvm::Value* CreateIsSameClosure(llvm::Value* a, llvm::Value* b) {
@@ -428,32 +428,33 @@ class Compiler {
 
   llvm::Value* CreateClosure(llvm::Value* lambda, uint16_t num_captures) {
     auto* func = types_->CreateRuntimeCreateClosure();
-    return builder_->CreateCall(
-        func, {runtime_, lambda, builder_->getInt16(num_captures)}, REG_NAME("closure.ptr"));
+    return builder_->CreateCall(func, {runtime_, lambda, builder_->getInt16(num_captures)},
+                                REG_NAME("closure.ptr"));
   }
 
   void CreateStoreCapturePtrToClosure(llvm::Value* capture_ptr,
-      llvm::Value* closure_ptr,
-      uint16_t index) {
+                                      llvm::Value* closure_ptr,
+                                      uint16_t index) {
     auto* ptr = CreateGetCapturesPtrOfClosure(closure_ptr);
     CreateStoreCapturePtrToCaptures(capture_ptr, ptr, index);
   }
 
   llvm::Value* CreateCallOnClosure(llvm::Value* closure,
-      uint16_t argc,
-      llvm::Value* argv,
-      llvm::Value* retv) {
+                                   uint16_t argc,
+                                   llvm::Value* argv,
+                                   llvm::Value* retv) {
     auto* prototype = types_->CreateLambdaType();
     auto* lambda = CreateLoadLambdaFromClosure(closure);
     auto* context = CreateGetCapturesPtrOfClosure(closure);
     return builder_->CreateCall(prototype, lambda,
-        {runtime_, context, types_->GetWord(argc), argv, retv}, REG_NAME("status"));
+                                {runtime_, context, types_->GetWord(argc), argv, retv},
+                                REG_NAME("status"));
   }
 
   llvm::Value* CreateClosurePhi(llvm::Value* then_value,
-      llvm::BasicBlock* then_block,
-      llvm::Value* else_value,
-      llvm::BasicBlock* else_block) {
+                                llvm::BasicBlock* then_block,
+                                llvm::Value* else_value,
+                                llvm::BasicBlock* else_block) {
     auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("closure.phi"));
     phi->addIncoming(then_value, then_block);
     phi->addIncoming(else_value, else_block);
@@ -464,8 +465,8 @@ class Compiler {
 
   llvm::Value* CreateIsPromise(llvm::Value* value_ptr) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
-    return builder_->CreateICmpEQ(
-        kind, builder_->getInt8(kValueKindPromise), REG_NAME("is_promise"));
+    return builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindPromise),
+                                  REG_NAME("is_promise"));
   }
 
   llvm::Value* CreateIsSamePromise(llvm::Value* a, llvm::Value* b) {
@@ -496,8 +497,8 @@ class Compiler {
 
   llvm::Value* CreateHasValue(llvm::Value* value) {
     auto* kind = CreateLoadValueKindFromValue(value);
-    return builder_->CreateICmpNE(
-        kind, builder_->getInt8(kValueKindNone), REG_NAME("value.has_value"));
+    return builder_->CreateICmpNE(kind, builder_->getInt8(kValueKindNone),
+                                  REG_NAME("value.has_value"));
   }
 
   // 7.2.13 IsLooselyEqual ( x, y )
@@ -565,9 +566,9 @@ class Compiler {
   }
 
   llvm::Value* CreateValuePhi(llvm::Value* then_value,
-      llvm::BasicBlock* then_block,
-      llvm::Value* else_value,
-      llvm::BasicBlock* else_block) {
+                              llvm::BasicBlock* then_block,
+                              llvm::Value* else_value,
+                              llvm::BasicBlock* else_block) {
     auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("value.phi"));
     phi->addIncoming(then_value, then_block);
     phi->addIncoming(else_value, else_block);
@@ -575,8 +576,8 @@ class Compiler {
   }
 
   llvm::Value* CreateLocalValue(uint16_t index) {
-    return CreateAlloc1(
-        types_->CreateValueType(), REG_NAME("local" + llvm::Twine(index) + ".ptr"));
+    return CreateAlloc1(types_->CreateValueType(),
+                        REG_NAME("local" + llvm::Twine(index) + ".ptr"));
   }
 
   void CreateStoreNoneToValue(llvm::Value* dest) {
@@ -642,13 +643,13 @@ class Compiler {
   }
 
   llvm::Value* CreateGetArgInArgv(llvm::Value* argv, uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(
-        types_->CreateValueType(), argv, index, REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv, index,
+                                                REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
   }
 
   llvm::Value* CreateGetArgumentValuePtr(uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(
-        types_->CreateValueType(), argv_, index, REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
+    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv_, index,
+                                                REG_NAME("argv." + llvm::Twine(index) + ".ptr"));
   }
 
   // retv
@@ -706,8 +707,8 @@ class Compiler {
   }
 
   llvm::Value* CreateIsExceptionStatus(llvm::Value* status) {
-    return builder_->CreateICmpEQ(
-        status, builder_->getInt32(STATUS_EXCEPTION), REG_NAME("is_exception"));
+    return builder_->CreateICmpEQ(status, builder_->getInt32(STATUS_EXCEPTION),
+                                  REG_NAME("is_exception"));
   }
 
   // flow selector
@@ -740,33 +741,33 @@ class Compiler {
   llvm::Value* CreateIsFlowSelectorNormal() {
     auto* value =
         builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
-    return builder_->CreateICmpEQ(
-        value, builder_->getInt32(FLOW_SELECTOR_NORMAL), REG_NAME("flow_selector.is_normal"));
+    return builder_->CreateICmpEQ(value, builder_->getInt32(FLOW_SELECTOR_NORMAL),
+                                  REG_NAME("flow_selector.is_normal"));
   }
 
   llvm::Value* CreateIsFlowSelectorNormalOrContinue(uint32_t depth) {
     auto* value =
         builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
     return builder_->CreateICmpUGT(value, builder_->getInt32(FLOW_SELECTOR_BREAK(depth)),
-        REG_NAME("flow_selector.is_normal_or_continue"));
+                                   REG_NAME("flow_selector.is_normal_or_continue"));
   }
 
   llvm::Value* CreateIsFlowSelectorBreakOrContinue(uint32_t depth) {
     auto* value =
         builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
-    auto* value_depth = builder_->CreateAnd(
-        value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK), REG_NAME("flow_selector.depth"));
-    return builder_->CreateICmpEQ(
-        value_depth, builder_->getInt32(depth), REG_NAME("flow_selector.is_break_or_continue"));
+    auto* value_depth = builder_->CreateAnd(value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK),
+                                            REG_NAME("flow_selector.depth"));
+    return builder_->CreateICmpEQ(value_depth, builder_->getInt32(depth),
+                                  REG_NAME("flow_selector.is_break_or_continue"));
   }
 
   llvm::Value* CreateIsFlowSelectorBreak(uint32_t depth) {
     auto* value =
         builder_->CreateLoad(builder_->getInt32Ty(), flow_selector_, REG_NAME("flow_selector"));
-    auto* value_depth = builder_->CreateAnd(
-        value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK), REG_NAME("flow_selector.depth"));
-    return builder_->CreateICmpEQ(
-        value_depth, builder_->getInt32(depth), REG_NAME("flow_selector.is_break"));
+    auto* value_depth = builder_->CreateAnd(value, builder_->getInt32(FLOW_SELECTOR_WEIGHT_MASK),
+                                            REG_NAME("flow_selector.depth"));
+    return builder_->CreateICmpEQ(value_depth, builder_->getInt32(depth),
+                                  REG_NAME("flow_selector.is_break"));
   }
 
   // capture
@@ -795,13 +796,13 @@ class Compiler {
   // coroutine
 
   llvm::Value* CreateCoroutine(llvm::Value* closure,
-      uint16_t num_locals,
-      uint16_t scratch_buffer_len) {
+                               uint16_t num_locals,
+                               uint16_t scratch_buffer_len) {
     auto* func = types_->CreateRuntimeCreateCoroutine();
     return builder_->CreateCall(func,
-        {runtime_, closure, builder_->getInt16(num_locals),
-            builder_->getInt16(scratch_buffer_len)},
-        REG_NAME("coroutine"));
+                                {runtime_, closure, builder_->getInt16(num_locals),
+                                 builder_->getInt16(scratch_buffer_len)},
+                                REG_NAME("coroutine"));
   }
 
   llvm::SwitchInst* CreateSwitchForCoroutine(llvm::BasicBlock* block, uint32_t num_states) {
@@ -810,8 +811,8 @@ class Compiler {
   }
 
   void CreateAddStateForCoroutine(llvm::SwitchInst* inst,
-      uint32_t state,
-      llvm::BasicBlock* block) {
+                                  uint32_t state,
+                                  llvm::BasicBlock* block) {
     inst->addCase(builder_->getInt32(state), block);
   }
 
@@ -830,77 +831,78 @@ class Compiler {
 
   llvm::Value* CreateGetLocalPtrFromCoroutine(uint16_t index) {
     auto* ptr = CreateGetLocalsPtrOfCoroutine();
-    return builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), ptr, index,
+    return builder_->CreateConstInBoundsGEP1_32(
+        types_->CreateValueType(), ptr, index,
         REG_NAME("co.locals." + llvm::Twine(index) + ".ptr"));
   }
 
   void CreateWriteBooleanToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.boolean.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.boolean.ptr"));
     builder_->CreateStore(value, ptr);
   }
 
   llvm::Value* CreateReadBooleanFromScratchBuffer(uint32_t offset) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.boolean.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.boolean.ptr"));
     return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("scratch.boolean"));
   }
 
   void CreateWriteNumberToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.number.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.number.ptr"));
     builder_->CreateStore(value, ptr);
   }
 
   llvm::Value* CreateReadNumberFromScratchBuffer(uint32_t offset) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.number.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.number.ptr"));
     return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("scratch.number"));
   }
 
   void CreateWriteClosureToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.closure.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.closure.ptr"));
     builder_->CreateStore(value, ptr);
   }
 
   llvm::Value* CreateReadClosureFromScratchBuffer(uint32_t offset) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.closure.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.closure.ptr"));
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("scratch.closure"));
   }
 
   void CreateWritePromiseToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.promise.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.promise.ptr"));
     builder_->CreateStore(value, ptr);
   }
 
   llvm::Value* CreateReadPromiseFromScratchBuffer(uint32_t offset) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.promise.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.promise.ptr"));
     return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("scratch.promise"));
   }
 
   void CreateWriteValueToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    auto* ptr = builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.value.ptr"));
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.value.ptr"));
     CreateStoreValueToValue(value, ptr);
   }
 
   llvm::Value* CreateReadValueFromScratchBuffer(uint32_t offset) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
-    return builder_->CreateInBoundsPtrAdd(
-        scratch_ptr, builder_->getInt32(offset), REG_NAME("scratch.value.ptr"));
+    return builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                          REG_NAME("scratch.value.ptr"));
   }
 
   // scope cleanup checker
@@ -923,8 +925,8 @@ class Compiler {
   void AssertScopeId(uint16_t expected) {
     assert(IsScopeCleanupCheckerEnabled());
     auto* scope_id = builder_->CreateLoad(builder_->getInt16Ty(), scope_id_, REG_NAME("scope_id"));
-    auto* assertion = builder_->CreateICmpEQ(
-        scope_id, builder_->getInt16(expected), REG_NAME("assertion.scope_id"));
+    auto* assertion = builder_->CreateICmpEQ(scope_id, builder_->getInt16(expected),
+                                             REG_NAME("assertion.scope_id"));
     std::stringstream ss;
     ss << "scope_id == " << expected;
     CreateAssert(assertion, ss.str().c_str());
@@ -1058,13 +1060,13 @@ class Compiler {
   // value
 
   llvm::Value* CreateGetValueKindPtrOfValue(llvm::Value* value_ptr) {
-    return builder_->CreateStructGEP(
-        types_->CreateValueType(), value_ptr, 0, REG_NAME("value.kind.ptr"));
+    return builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0,
+                                     REG_NAME("value.kind.ptr"));
   }
 
   llvm::Value* CreateGetValueHolderPtrOfValue(llvm::Value* value_ptr) {
-    return builder_->CreateStructGEP(
-        types_->CreateValueType(), value_ptr, 1, REG_NAME("value.holder.ptr"));
+    return builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1,
+                                     REG_NAME("value.holder.ptr"));
   }
 
   llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
@@ -1104,18 +1106,18 @@ class Compiler {
   // closure
 
   llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(
-        types_->CreateClosureType(), closure_ptr, 0, REG_NAME("closure.lambda.ptr"));
+    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 0,
+                                     REG_NAME("closure.lambda.ptr"));
   }
 
   llvm::Value* CreateGetNumCapturesPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(
-        types_->CreateClosureType(), closure_ptr, 1, REG_NAME("closure.num_captures.ptr"));
+    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 1,
+                                     REG_NAME("closure.num_captures.ptr"));
   }
 
   llvm::Value* CreateGetCapturesPtrOfClosure(llvm::Value* closure_ptr) {
-    return builder_->CreateStructGEP(
-        types_->CreateClosureType(), closure_ptr, 2, REG_NAME("closure.captures.ptr"));
+    return builder_->CreateStructGEP(types_->CreateClosureType(), closure_ptr, 2,
+                                     REG_NAME("closure.captures.ptr"));
   }
 
   llvm::Value* CreateLoadLambdaFromClosure(llvm::Value* closure_ptr) {
@@ -1131,13 +1133,13 @@ class Compiler {
   // capture
 
   llvm::Value* CreateGetTargetPtrOfCapture(llvm::Value* capture_ptr) {
-    return builder_->CreateStructGEP(
-        types_->CreateCaptureType(), capture_ptr, 0, REG_NAME("capture.target.ptr"));
+    return builder_->CreateStructGEP(types_->CreateCaptureType(), capture_ptr, 0,
+                                     REG_NAME("capture.target.ptr"));
   }
 
   llvm::Value* CreateGetEscapedPtrOfCapture(llvm::Value* capture_ptr) {
-    return builder_->CreateStructGEP(
-        types_->CreateCaptureType(), capture_ptr, 1, REG_NAME("capture.escaped.ptr"));
+    return builder_->CreateStructGEP(types_->CreateCaptureType(), capture_ptr, 1,
+                                     REG_NAME("capture.escaped.ptr"));
   }
 
   llvm::Value* CreateLoadTargetFromCapture(llvm::Value* capture_ptr) {
@@ -1159,19 +1161,20 @@ class Compiler {
   // captures
 
   llvm::Value* CreateGetCapturePtrPtrOfCaptures(llvm::Value* captures, uint16_t index) {
-    return builder_->CreateConstInBoundsGEP1_32(builder_->getPtrTy(), captures, index,
+    return builder_->CreateConstInBoundsGEP1_32(
+        builder_->getPtrTy(), captures, index,
         REG_NAME("captures." + llvm::Twine(index) + ".ptr"));
   }
 
   llvm::Value* CreateLoadCapturePtrFromCaptures(llvm::Value* captures, uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
-    return builder_->CreateLoad(
-        builder_->getPtrTy(), ptr, REG_NAME("captures." + llvm::Twine(index)));
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr,
+                                REG_NAME("captures." + llvm::Twine(index)));
   }
 
   void CreateStoreCapturePtrToCaptures(llvm::Value* capture_ptr,
-      llvm::Value* captures,
-      uint16_t index) {
+                                       llvm::Value* captures,
+                                       uint16_t index) {
     auto* ptr = CreateGetCapturePtrPtrOfCaptures(captures, index);
     builder_->CreateStore(capture_ptr, ptr);
   }
@@ -1179,33 +1182,33 @@ class Compiler {
   // coroutine
 
   llvm::Value* CreateGetClosurePtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), context_, 0, REG_NAME("co.closure.ptr"));
+    return builder_->CreateStructGEP(types_->CreateCoroutineType(), context_, 0,
+                                     REG_NAME("co.closure.ptr"));
   }
 
   llvm::Value* CreateGetStatePtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), context_, 1, REG_NAME("co.state.ptr"));
+    return builder_->CreateStructGEP(types_->CreateCoroutineType(), context_, 1,
+                                     REG_NAME("co.state.ptr"));
   }
 
   llvm::Value* CreateGetNumLocalsPtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), context_, 2, REG_NAME("co.num_locals.ptr"));
+    return builder_->CreateStructGEP(types_->CreateCoroutineType(), context_, 2,
+                                     REG_NAME("co.num_locals.ptr"));
   }
 
   llvm::Value* CreateGetScopeIdPtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), context_, 3, REG_NAME("co.scope_id.ptr"));
+    return builder_->CreateStructGEP(types_->CreateCoroutineType(), context_, 3,
+                                     REG_NAME("co.scope_id.ptr"));
   }
 
   llvm::Value* CreateGetScrachBufferLenPtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), context_, 4, REG_NAME("co.locals.scratch_buffer_len.ptr"));
+    return builder_->CreateStructGEP(types_->CreateCoroutineType(), context_, 4,
+                                     REG_NAME("co.locals.scratch_buffer_len.ptr"));
   }
 
   llvm::Value* CreateGetLocalsPtrOfCoroutine() {
-    return builder_->CreateStructGEP(
-        types_->CreateCoroutineType(), context_, 5, REG_NAME("co.locals.ptr"));
+    return builder_->CreateStructGEP(types_->CreateCoroutineType(), context_, 5,
+                                     REG_NAME("co.locals.ptr"));
   }
 
   llvm::Value* CreateLoadClosureFromCoroutine() {
@@ -1232,11 +1235,11 @@ class Compiler {
     auto* num_locals = CreateLoadNumLocalsFromCoroutine();
     auto* num_locals_usize =
         builder_->CreateSExt(num_locals, types_->GetWordType(), REG_NAME("co.num_locals.usize"));
-    auto* sizeof_locals = builder_->CreateMul(
-        types_->GetWord(sizeof(Value)), num_locals_usize, REG_NAME("co.locals.sizeof"));
+    auto* sizeof_locals = builder_->CreateMul(types_->GetWord(sizeof(Value)), num_locals_usize,
+                                              REG_NAME("co.locals.sizeof"));
     auto* offsetof_locals = types_->GetWord(offsetof(Coroutine, locals));
-    auto* offset = builder_->CreateAdd(
-        offsetof_locals, sizeof_locals, REG_NAME("co.scratch_buffer.offsetof"));
+    auto* offset = builder_->CreateAdd(offsetof_locals, sizeof_locals,
+                                       REG_NAME("co.scratch_buffer.offsetof"));
     return builder_->CreateInBoundsPtrAdd(context_, offset, REG_NAME("co.scratch_buffer.ptr"));
   }
 

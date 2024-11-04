@@ -8,7 +8,7 @@
 #pragma GCC diagnostic ignored "-Wredundant-move"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <llvm/ADT/StringRef.h>
-#include "llvm/ExecutionEngine/Orc/LLJIT.h"
+#include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #pragma GCC diagnostic pop
 
 #include "bridge.hh"
