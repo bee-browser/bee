@@ -124,7 +124,7 @@ update-deps-deno:
 
 .PHONY: update-devcontainer
 update-devcontainer:
-	@sh .devcontainer/update-dockerfile-env.sh -c
+	@sh tools/bin/update_devcontainer_dockerfile.sh -c
 
 .PHONY: doc
 doc:

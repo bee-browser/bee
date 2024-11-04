@@ -44,5 +44,5 @@ ENV PATH=/usr/local/deno/bin:$PATH
 #
 # The only way to solve this issue is providing the values for the environment
 # variables from somewhere outside the system.
-ENV RUSTC_COMMIT_HASH="051478957371ee0084a7c0913941d2a8c4757bb9"
-ENV RUST_TOOLCHAIN_PATH="/usr/local/rustup/toolchains/1.80.0-x86_64-unknown-linux-gnu"
+ENV RUSTC_COMMIT_HASH="eeb90cda1969383f56a2637cbd3037bdf598841c"
+ENV RUST_TOOLCHAIN_PATH="/usr/local/rustup/toolchains/1.81.0-x86_64-unknown-linux-gnu"
