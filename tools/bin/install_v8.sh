@@ -21,6 +21,7 @@ error() {
 }
 
 CLEAN=
+ENGINE=v8
 
 help() {
   cat <<EOF >&2
@@ -34,12 +35,16 @@ OPTIONS:
   -c, --clean
     Remove the 'node' image.
 
+  -d, --debug
+    Install v8-debug instead v8.
+
 ARGUMENTS:
   <install-dir>
-    The path to a folder where 'v8' and 'v8.d' will be installed.
+    The path to a folder where 'v8[-debug]' and 'v8[-debug].d' will be installed.
 
 DESCRIPTION:
-  This script installs the 'v8' command and the 'v8.d' folder into <install-dir>/bin/.
+  This script installs the 'v8[-debug]' command and the 'v8[-debug].d' folder into
+  <install-dir>/bin/.
 
   For downloading a pre-built binaries, 'jsvu' is used inside a Docker container created from the
   'node' image.
@@ -55,6 +60,10 @@ do
       ;;
     '-c' | '--clean')
       CLEAN=1
+      shift
+      ;;
+    '-d' | '--debug')
+      ENGINE=v8-debug
       shift
       ;;
     *)
@@ -89,21 +98,21 @@ case $ARCH in
     error "unsupported development environment: $ARCH"
 esac
 
-rm -fr $INSTALL_DIR/bin/v8.d
+rm -fr $INSTALL_DIR/bin/$ENGINE.d
 
-SCRIPT="npx -y jsvu --os=$OS --engines=v8"
-SCRIPT="$SCRIPT && cp -f -R -v /root/.jsvu/engines/v8 /outdir/v8.d"
-SCRIPT="$SCRIPT && chown $(id -u):$(id -g) /outdir/v8.d"
+SCRIPT="npx -y jsvu --os=$OS --engines=$ENGINE"
+SCRIPT="$SCRIPT && cp -f -R -v /root/.jsvu/engines/$ENGINE /outdir/$ENGINE.d"
+SCRIPT="$SCRIPT && chown $(id -u):$(id -g) /outdir/$ENGINE.d"
 
 mkdir -p $INSTALL_DIR/bin
-$DOCKER run --rm -t --mount type=bind,source="$INSTALL_DIR/bin",target=/outdir node bash -c "$SCRIPT"
+$DOCKER run --rm -t --mount type=bind,source="$INSTALL_DIR/bin",target=/outdir node bash -ex -c "$SCRIPT"
 
-cat <<EOF >$INSTALL_DIR/bin/v8
+cat <<EOF >$INSTALL_DIR/bin/$ENGINE
 #!/bin/sh
-exec $INSTALL_DIR/bin/v8.d/v8 --snapshot_blob="$INSTALL_DIR/bin/v8.d/snapshot_blob.bin" "\$@"
+exec $INSTALL_DIR/bin/$ENGINE.d/$ENGINE --snapshot_blob="$INSTALL_DIR/bin/$ENGINE.d/snapshot_blob.bin" "\$@"
 EOF
 
-chmod +x $INSTALL_DIR/bin/v8
+chmod +x $INSTALL_DIR/bin/$ENGINE
 
 # tests
-test $($INSTALL_DIR/bin/v8 -e 'print(0)' | grep '0')
+test $($INSTALL_DIR/bin/$ENGINE -e 'print(0)' | grep '0')
