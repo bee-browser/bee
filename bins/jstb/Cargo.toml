@@ -6,7 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.92"
+anyhow = "1.0.93"
 clap = { version = "4.5.20", features = ["env", "derive", "wrap_help"] }
 jsruntime = { path = "../../libs/jsruntime" }
 logging = { path = "../../libs/logging" }
