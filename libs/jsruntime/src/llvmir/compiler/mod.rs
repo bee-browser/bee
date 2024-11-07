@@ -20,10 +20,9 @@ use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::Program;
 use crate::Runtime;
+use crate::Value;
 
 use super::bridge;
-use super::bridge::Value;
-use super::bridge::ValueHolder;
 use super::Module;
 
 use control_flow::ControlFlowStack;
@@ -40,7 +39,7 @@ use peer::SwitchIr;
 use peer::ValueIr;
 
 const VALUE_SIZE: u32 = size_of::<Value>() as u32;
-const VALUE_HOLDER_SIZE: u32 = size_of::<ValueHolder>() as u32;
+const VALUE_HOLDER_SIZE: u32 = size_of::<u64>() as u32;
 
 impl<X> Runtime<X> {
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {

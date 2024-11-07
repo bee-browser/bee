@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
-use crate::tasklet::Promise;
+use crate::types;
 use crate::VoidPtr;
 
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
@@ -14,213 +14,11 @@ macro_rules! into_runtime {
     };
 }
 
-impl Value {
-    pub const NONE: Self = Self {
-        kind: ValueKind_None,
-        holder: ValueHolder { opaque: 0 },
+macro_rules! into_value {
+    ($value:expr) => {
+        // TODO: remove type cast
+        &*($value as *const crate::types::Value)
     };
-
-    pub const UNDEFINED: Self = Self {
-        kind: ValueKind_Undefined,
-        holder: ValueHolder { opaque: 0 },
-    };
-
-    pub const NULL: Self = Self {
-        kind: ValueKind_Null,
-        holder: ValueHolder { opaque: 0 },
-    };
-
-    pub const TRUE: Self = Self::boolean(true);
-    pub const FALSE: Self = Self::boolean(false);
-
-    pub const fn boolean(boolean: bool) -> Self {
-        Self {
-            kind: ValueKind_Boolean,
-            holder: ValueHolder { boolean },
-        }
-    }
-
-    pub const fn number(number: f64) -> Self {
-        Self {
-            kind: ValueKind_Number,
-            holder: ValueHolder { number },
-        }
-    }
-
-    pub const fn promise(promise: u32) -> Self {
-        Self {
-            kind: ValueKind_Promise,
-            holder: ValueHolder { promise },
-        }
-    }
-
-    pub fn into_result(self, status: Status) -> Result<Value, Value> {
-        match status {
-            Status_Normal => Ok(self),
-            Status_Exception => Err(self),
-            _ => unreachable!(),
-        }
-    }
-}
-
-impl From<()> for Value {
-    fn from(_: ()) -> Self {
-        Self::UNDEFINED
-    }
-}
-
-impl From<bool> for Value {
-    fn from(value: bool) -> Self {
-        Self::boolean(value)
-    }
-}
-
-impl From<f64> for Value {
-    fn from(value: f64) -> Self {
-        Self::number(value)
-    }
-}
-
-impl From<i32> for Value {
-    fn from(value: i32) -> Self {
-        Self::from(value as f64)
-    }
-}
-
-impl From<u32> for Value {
-    fn from(value: u32) -> Self {
-        Self::from(value as f64)
-    }
-}
-
-impl From<Promise> for Value {
-    fn from(value: Promise) -> Self {
-        Self::promise(value.into())
-    }
-}
-
-impl std::fmt::Debug for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // `unsafe` is needed for accessing the `holder` field.
-        unsafe {
-            match self.kind {
-                ValueKind_None => write!(f, "none"),
-                ValueKind_Undefined => write!(f, "undefined"),
-                ValueKind_Null => write!(f, "null"),
-                ValueKind_Boolean if self.holder.boolean => write!(f, "true"),
-                ValueKind_Boolean => write!(f, "false"),
-                ValueKind_Number => write!(f, "{}", self.holder.number),
-                ValueKind_Closure => {
-                    let lambda = (*self.holder.closure).lambda.unwrap();
-                    write!(f, "closure({lambda:?}, [")?;
-                    let len = (*self.holder.closure).num_captures as usize;
-                    let data = (*self.holder.closure).captures.as_ptr();
-                    let mut captures = std::slice::from_raw_parts(data, len)
-                        .iter()
-                        .map(|capture| capture.as_ref().unwrap());
-                    if let Some(capture) = captures.next() {
-                        write!(f, "{capture:?}")?;
-                        for capture in captures {
-                            write!(f, ", {capture:?}")?;
-                        }
-                    }
-                    write!(f, "])")
-                }
-                ValueKind_Promise => write!(f, "promise({:04X})", self.holder.promise),
-                _ => unreachable!("invalid kind: {:?}", self.kind),
-            }
-        }
-    }
-}
-
-impl Capture {
-    fn is_escaped(&self) -> bool {
-        self.target as *const Value == &self.escaped
-    }
-}
-
-impl std::fmt::Debug for Capture {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.is_escaped() {
-            write!(f, "capture(escaped: {:?})", self.target)
-        } else {
-            write!(f, "capture(onstack: {:?})", self.target)
-        }
-    }
-}
-
-pub trait ReturnValue {
-    fn status(&self) -> Status;
-    fn value(&self) -> Value;
-}
-
-impl<T> ReturnValue for T
-where
-    T: Clone + Into<Value>,
-{
-    fn status(&self) -> Status {
-        Status_Normal
-    }
-
-    fn value(&self) -> Value {
-        self.clone().into()
-    }
-}
-
-impl<T, E> ReturnValue for Result<T, E>
-where
-    T: Clone + Into<Value>,
-    E: Clone + Into<Value>,
-{
-    fn status(&self) -> Status {
-        if self.is_ok() {
-            Status_Normal
-        } else {
-            Status_Exception
-        }
-    }
-
-    fn value(&self) -> Value {
-        match self {
-            Ok(v) => v.clone().into(),
-            Err(err) => err.clone().into(),
-        }
-    }
-}
-
-impl Coroutine {
-    pub fn resume(
-        runtime: VoidPtr,
-        coroutine: *mut Coroutine,
-        promise: Promise,
-        result: &Value,
-        error: &Value,
-    ) -> CoroutineStatus {
-        unsafe {
-            let lambda = (*(*coroutine).closure).lambda.unwrap();
-            let mut args = [promise.into(), *result, *error];
-            let mut retv = Value::NONE;
-            let status = lambda(
-                runtime,
-                coroutine as VoidPtr,
-                args.len(),
-                args.as_mut_ptr(),
-                &mut retv as *mut Value,
-            );
-            match status {
-                STATUS_NORMAL => CoroutineStatus::Done(retv),
-                STATUS_EXCEPTION => CoroutineStatus::Error(retv),
-                STATUS_SUSPEND => CoroutineStatus::Suspend,
-                _ => unreachable!(),
-            }
-        }
-    }
-}
-
-pub enum CoroutineStatus {
-    Done(Value),
-    Error(Value),
-    Suspend,
 }
 
 pub fn runtime_bridge<X>() -> Runtime {
@@ -248,33 +46,33 @@ pub fn runtime_bridge<X>() -> Runtime {
 
 // 7.1.2 ToBoolean ( argument )
 unsafe extern "C" fn runtime_to_boolean(_runtime: VoidPtr, value: *const Value) -> bool {
-    let value = &*value;
-    match value.kind {
-        ValueKind_Undefined => false,
-        ValueKind_Null => false,
-        ValueKind_Boolean => value.holder.boolean,
-        ValueKind_Number if value.holder.number == 0.0 => false,
-        ValueKind_Number if value.holder.number.is_nan() => false,
-        ValueKind_Number => true,
-        ValueKind_Closure => true,
-        ValueKind_Promise => true,
-        _ => unreachable!("invalid value: {value:?}"),
+    let value = into_value!(value);
+    match value {
+        types::Value::None => unreachable!("Value::None"),
+        types::Value::Undefined => false,
+        types::Value::Null => false,
+        types::Value::Boolean(value) => *value,
+        types::Value::Number(value) if *value == 0.0 => false,
+        types::Value::Number(value) if value.is_nan() => false,
+        types::Value::Number(_) => true,
+        types::Value::Closure(_) => true,
+        types::Value::Promise(_) => true,
     }
 }
 
 // 7.1.3 ToNumeric ( value )
 // 7.1.4 ToNumber ( argument )
 unsafe extern "C" fn runtime_to_numeric(_runtime: VoidPtr, value: *const Value) -> f64 {
-    let value = &*value;
-    match value.kind {
-        ValueKind_Undefined => f64::NAN,
-        ValueKind_Null => 0.0,
-        ValueKind_Boolean if value.holder.boolean => 1.0,
-        ValueKind_Boolean => 0.0,
-        ValueKind_Number => value.holder.number,
-        ValueKind_Closure => f64::NAN,
-        ValueKind_Promise => f64::NAN,
-        _ => unreachable!("invalid value: {value:?}"),
+    let value = into_value!(value);
+    match value {
+        types::Value::None => unreachable!("Value::None"),
+        types::Value::Undefined => f64::NAN,
+        types::Value::Null => 0.0,
+        types::Value::Boolean(value) if *value => 1.0,
+        types::Value::Boolean(_) => 0.0,
+        types::Value::Number(value) => *value,
+        types::Value::Closure(_) => f64::NAN,
+        types::Value::Promise(_) => f64::NAN,
     }
 }
 
@@ -334,35 +132,43 @@ unsafe extern "C" fn runtime_is_loosely_equal(
     a: *const Value,
     b: *const Value,
 ) -> bool {
-    let x = &*a;
-    let y = &*b;
+    let x = into_value!(a);
+    debug_assert!(!matches!(x, types::Value::None));
+
+    let y = into_value!(b);
+    debug_assert!(!matches!(y, types::Value::None));
+
+    let x_kind = std::mem::discriminant(x);
+    let y_kind = std::mem::discriminant(y);
+
     // 1. If Type(x) is Type(y)
-    if x.kind == y.kind {
+    if x_kind == y_kind {
         // a. Return IsStrictlyEqual(x, y).
         return runtime_is_strictly_equal(runtime, a, b);
     }
-    // 2. If x is null and y is undefined, return true.
-    if x.kind == ValueKind_Null && y.kind == ValueKind_Undefined {
-        return true;
+
+    match (x, y) {
+        // 2. If x is null and y is undefined, return true.
+        (types::Value::Null, types::Value::Undefined) => true,
+        // 3. If x is undefined and y is null, return true.
+        (types::Value::Undefined, types::Value::Null) => true,
+        // TODO: 4. NOTE: This step is replaced in section B.3.6.2.
+        // TODO: 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
+        // TODO: 6. If x is a String and y is a Number, return ! IsLooselyEqual(! ToNumber(x), y).
+        // TODO: 7. If x is a BigInt and y is a String, then
+        // TODO: 8. If x is a String and y is a BigInt, return ! IsLooselyEqual(y, x).
+        // TODO: 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
+        // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
+        // ...
+        _ => {
+            let xnum = runtime_to_numeric(runtime, a);
+            let ynum = runtime_to_numeric(runtime, b);
+            if xnum.is_nan() || ynum.is_nan() {
+                return false;
+            }
+            xnum == ynum
+        }
     }
-    // 3. If x is undefined and y is null, return true.
-    if x.kind == ValueKind_Undefined && y.kind == ValueKind_Null {
-        return true;
-    }
-    // TODO: 4. NOTE: This step is replaced in section B.3.6.2.
-    // TODO: 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
-    // TODO: 6. If x is a String and y is a Number, return ! IsLooselyEqual(! ToNumber(x), y).
-    // TODO: 7. If x is a BigInt and y is a String, then
-    // TODO: 8. If x is a String and y is a BigInt, return ! IsLooselyEqual(y, x).
-    // TODO: 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
-    // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
-    // ...
-    let xnum = runtime_to_numeric(runtime, x);
-    let ynum = runtime_to_numeric(runtime, y);
-    if xnum.is_nan() || ynum.is_nan() {
-        return false;
-    }
-    xnum == ynum
 }
 
 // 7.2.14 IsStrictlyEqual ( x, y )
@@ -371,20 +177,13 @@ unsafe extern "C" fn runtime_is_strictly_equal(
     a: *const Value,
     b: *const Value,
 ) -> bool {
-    let x = &*a;
-    let y = &*b;
-    if x.kind != y.kind {
-        return false;
-    }
-    match x.kind {
-        ValueKind_Undefined => true,
-        ValueKind_Null => true,
-        ValueKind_Boolean => x.holder.boolean == y.holder.boolean,
-        ValueKind_Number => x.holder.number == y.holder.number,
-        ValueKind_Closure => x.holder.closure == y.holder.closure,
-        ValueKind_Promise => x.holder.promise == y.holder.promise,
-        _ => unreachable!("invalid value: {x:?}"),
-    }
+    let x = into_value!(a);
+    debug_assert!(!matches!(x, types::Value::None));
+
+    let y = into_value!(b);
+    debug_assert!(!matches!(y, types::Value::None));
+
+    x == y
 }
 
 unsafe extern "C" fn runtime_create_capture<X>(
@@ -393,8 +192,8 @@ unsafe extern "C" fn runtime_create_capture<X>(
 ) -> *mut Capture {
     const LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
-            std::mem::size_of::<Capture>(),
-            std::mem::align_of::<Capture>(),
+            std::mem::size_of::<types::Capture>(),
+            std::mem::align_of::<types::Capture>(),
         )
     };
 
@@ -404,12 +203,14 @@ unsafe extern "C" fn runtime_create_capture<X>(
     // TODO: GC
     let ptr = allocator.alloc_layout(LAYOUT);
 
-    let capture = ptr.cast::<Capture>().as_ptr();
-    (*capture).target = target;
+    let capture = ptr.cast::<types::Capture>().as_ptr();
+    // TODO: remove type cast
+    (*capture).target = target as *mut types::Value;
 
     // `capture.escaped` will be filled with an actual value.
 
-    capture
+    // TODO: remove type cast
+    capture as *mut types::Capture as *mut Capture
 }
 
 unsafe extern "C" fn runtime_create_closure<X>(
@@ -419,12 +220,12 @@ unsafe extern "C" fn runtime_create_closure<X>(
 ) -> *mut Closure {
     const BASE_LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
-            std::mem::offset_of!(Closure, captures),
-            std::mem::align_of::<Closure>(),
+            std::mem::offset_of!(types::Closure, captures),
+            std::mem::align_of::<types::Closure>(),
         )
     };
 
-    let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
+    let storage_layout = std::alloc::Layout::array::<*mut types::Capture>(num_captures as usize).unwrap();
     let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
     let runtime = into_runtime!(runtime, X);
@@ -433,12 +234,13 @@ unsafe extern "C" fn runtime_create_closure<X>(
     // TODO: GC
     let ptr = allocator.alloc_layout(layout);
 
-    let closure = ptr.cast::<Closure>().as_ptr();
+    let closure = ptr.cast::<types::Closure>().as_ptr();
     (*closure).lambda = lambda;
     (*closure).num_captures = num_captures;
     // `(*closure).captures[]` will be filled with actual pointers to `Captures`.
 
-    closure
+    // TODO: remove type cast
+    closure as *mut types::Closure as *mut Closure
 }
 
 unsafe extern "C" fn runtime_create_coroutine<X>(
@@ -449,13 +251,13 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
 ) -> *mut Coroutine {
     const BASE_LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
-            std::mem::offset_of!(Coroutine, locals),
-            std::mem::align_of::<Coroutine>(),
+            std::mem::offset_of!(types::Coroutine, locals),
+            std::mem::align_of::<types::Coroutine>(),
         )
     };
 
     // num_locals may be 0.
-    let locals_layout = std::alloc::Layout::array::<Value>(num_locals as usize).unwrap();
+    let locals_layout = std::alloc::Layout::array::<types::Value>(num_locals as usize).unwrap();
     let (layout, _) = BASE_LAYOUT.extend(locals_layout).unwrap();
 
     // scratch_buffer_len may be 0.
@@ -470,15 +272,17 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     // TODO: GC
     let ptr = allocator.alloc_layout(layout);
 
-    let coroutine = ptr.cast::<Coroutine>().as_ptr();
-    (*coroutine).closure = closure;
+    let coroutine = ptr.cast::<types::Coroutine>().as_ptr();
+    // TODO: remove type cast
+    (*coroutine).closure = closure as *mut types::Closure;
     (*coroutine).state = 0;
     (*coroutine).num_locals = num_locals;
     (*coroutine).scope_id = 0;
     (*coroutine).scratch_buffer_len = scratch_buffer_len;
     // `(*coroutine).locals[]` will be initialized in the coroutine.
 
-    coroutine
+    // TODO: remove type cast
+    coroutine as *mut types::Coroutine as *mut Coroutine
 }
 
 unsafe extern "C" fn runtime_register_promise<X>(
@@ -486,12 +290,13 @@ unsafe extern "C" fn runtime_register_promise<X>(
     coroutine: *mut Coroutine,
 ) -> u32 {
     let runtime = into_runtime!(runtime, X);
-    runtime.register_promise(coroutine).into()
+    // TODO: remove type cast
+    runtime.register_promise(coroutine as *mut types::Coroutine).into()
 }
 
 unsafe extern "C" fn runtime_resume<X>(runtime: VoidPtr, promise: u32) {
     let runtime = into_runtime!(runtime, X);
-    runtime.process_promise(promise.into(), &Value::NONE, &Value::NONE);
+    runtime.process_promise(promise.into(), &types::Value::None, &types::Value::None);
 }
 
 unsafe extern "C" fn runtime_await_promise<X>(runtime: VoidPtr, promise: u32, awaiting: u32) {
@@ -505,7 +310,7 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
     result: *const Value,
 ) {
     let runtime = into_runtime!(runtime, X);
-    let cloned = *result;
+    let cloned = into_value!(result).clone();
     runtime.emit_promise_resolved(promise.into(), cloned);
 }
 
@@ -551,7 +356,7 @@ unsafe extern "C" fn runtime_print_value(
     value: *const Value,
     msg: *const std::os::raw::c_char,
 ) {
-    let value = &*value;
+    let value = into_value!(value);
     let msg = std::ffi::CStr::from_ptr(msg);
     if msg.is_empty() {
         crate::logger::debug!("runtime_print_value: {value:?}");

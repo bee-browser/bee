@@ -1,1 +1,1 @@
-throw undefined; ///!Value::UNDEFINED
+throw undefined; ///!undefined

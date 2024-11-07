@@ -1,11 +1,11 @@
-print(void undefined); ///=Value::UNDEFINED
-print(void null); ///=Value::UNDEFINED
-print(void true); ///=Value::UNDEFINED
-print(void false); ///=Value::UNDEFINED
-print(void 0); ///=Value::UNDEFINED
-print(void NaN); ///=Value::UNDEFINED
-print(void Infinity); ///=Value::UNDEFINED
-print(void void 0); ///=Value::UNDEFINED
+print(void undefined); ///=undefined
+print(void null); ///=undefined
+print(void true); ///=undefined
+print(void false); ///=undefined
+print(void 0); ///=undefined
+print(void NaN); ///=undefined
+print(void Infinity); ///=undefined
+print(void void 0); ///=undefined
 
 const a = 1;
-print(void a); ///=Value::UNDEFINED
+print(void a); ///=undefined

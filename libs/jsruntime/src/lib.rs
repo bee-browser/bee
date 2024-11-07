@@ -3,18 +3,19 @@ mod llvmir;
 mod logger;
 mod semantics;
 mod tasklet;
+mod types;
 
 use jsparser::SymbolRegistry;
 
 use function::FunctionId;
 use function::FunctionRegistry;
 use llvmir::Executor;
-use llvmir::ReturnValue;
+use types::ReturnValue;
 use llvmir::Status;
 
 pub use llvmir::CompileError;
 pub use llvmir::Module;
-pub use llvmir::Value;
+pub use types::Value;
 pub use semantics::Program;
 
 type VoidPtr = *mut std::ffi::c_void;
@@ -105,7 +106,7 @@ impl<X> Runtime<X> {
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "evaluate");
         self.executor.register_module(module);
-        let mut retv = Value::UNDEFINED;
+        let mut retv = Value::Undefined;
         let status = match self.executor.get_native_function(FunctionId::MAIN) {
             Some(main) => unsafe {
                 main(
@@ -118,7 +119,8 @@ impl<X> Runtime<X> {
                     // argv
                     std::ptr::null_mut(),
                     // retv
-                    &mut retv as *mut Value,
+                    // TODO: remove type cast
+                    &mut retv as *mut Value as *mut llvmir::bridge::Value,
                 )
             },
             None => unreachable!(),
@@ -146,7 +148,8 @@ where
 
 // See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 
-type HostLambda = unsafe extern "C" fn(VoidPtr, VoidPtr, usize, *mut Value, *mut Value) -> Status;
+// TODO: remove llvmir::bridge::Value
+type HostLambda = unsafe extern "C" fn(VoidPtr, VoidPtr, usize, *mut llvmir::bridge::Value, *mut llvmir::bridge::Value) -> Status;
 
 // This function generates a wrapper function for each `host_func` at compile time.
 #[inline(always)]
@@ -164,8 +167,9 @@ unsafe extern "C" fn host_fn_wrapper<F, R, X>(
     runtime: VoidPtr,
     _context: VoidPtr,
     argc: usize,
-    argv: *mut Value,
-    retv: *mut Value,
+    // TODO: remove llvmir::bridge::Value
+    argv: *mut llvmir::bridge::Value,
+    retv: *mut llvmir::bridge::Value,
 ) -> Status
 where
     F: Fn(&mut Runtime<X>, &[Value]) -> R + Send + Sync + 'static,
@@ -177,6 +181,8 @@ where
     let args = std::slice::from_raw_parts(argv as *const Value, argc);
     // TODO: The return value is copied twice.  That's inefficient.
     let result = host_fn(runtime, args);
+    // TODO: remove type cast
+    let retv = &mut *(retv as *mut Value);
     *retv = result.value();
     result.status()
 }

@@ -1,5 +1,5 @@
 let a, b = 2;
-print(a); ///=Value::UNDEFINED
+print(a); ///=undefined
 print(b); ///=2
 
 a = 1;

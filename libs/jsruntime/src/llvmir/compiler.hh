@@ -780,8 +780,7 @@ class Compiler {
   void CreateEscapeValue(llvm::Value* capture, llvm::Value* value) {
     auto* escaped_ptr = CreateGetEscapedPtrOfCapture(capture);
     CreateStoreTargetToCapture(escaped_ptr, capture);
-    auto align = llvm::Align(sizeof(double));
-    builder_->CreateMemCpy(escaped_ptr, align, value, align, types_->GetWord(sizeof(Value)));
+    CreateMemCpyValue(escaped_ptr, value);
   }
 
   llvm::Value* CreateGetCaptureValuePtr(uint16_t index) {
@@ -1103,6 +1102,20 @@ class Compiler {
     builder_->CreateStore(holder, ptr);
   }
 
+  void CreateMemCpyValue(llvm::Value* dst, llvm::Value* src) {
+    auto* layout = module_->getDataLayout().getStructLayout(types_->CreateValueType());
+    // TODO: can computed at compile-time
+    auto align = layout->getAlignment();
+    auto* size = types_->GetWord(layout->getSizeInBytes());
+    builder_->CreateMemCpy(dst, align, src, align, size);
+  }
+
+  llvm::Value* GetSizeofValue() {
+    auto* layout = module_->getDataLayout().getStructLayout(types_->CreateValueType());
+    // TODO: can computed at compile-time
+    return types_->GetWord(layout->getSizeInBytes());
+  }
+
   // closure
 
   llvm::Value* CreateGetLambdaPtrOfClosure(llvm::Value* closure_ptr) {
@@ -1154,8 +1167,7 @@ class Compiler {
 
   void CreateStoreEscapedToCapture(llvm::Value* value_ptr, llvm::Value* capture_ptr) {
     auto* ptr = CreateGetEscapedPtrOfCapture(capture_ptr);
-    auto align = llvm::Align(sizeof(double));
-    builder_->CreateMemCpy(ptr, align, value_ptr, align, types_->GetWord(sizeof(Value)));
+    CreateMemCpyValue(ptr, value_ptr);
   }
 
   // captures
@@ -1235,9 +1247,10 @@ class Compiler {
     auto* num_locals = CreateLoadNumLocalsFromCoroutine();
     auto* num_locals_usize =
         builder_->CreateSExt(num_locals, types_->GetWordType(), REG_NAME("co.num_locals.usize"));
-    auto* sizeof_locals = builder_->CreateMul(types_->GetWord(sizeof(Value)), num_locals_usize,
-                                              REG_NAME("co.locals.sizeof"));
-    auto* offsetof_locals = types_->GetWord(offsetof(Coroutine, locals));
+    auto* sizeof_locals = builder_->CreateMul(GetSizeofValue(), num_locals_usize, REG_NAME("co.locals.sizeof"));
+    auto* layout = module_->getDataLayout().getStructLayout(types_->CreateCoroutineType());
+    // TODO: can computed at compile-time
+    auto* offsetof_locals = types_->GetWord(layout->getElementOffset(5));
     auto* offset = builder_->CreateAdd(offsetof_locals, sizeof_locals,
                                        REG_NAME("co.scratch_buffer.offsetof"));
     return builder_->CreateInBoundsPtrAdd(context_, offset, REG_NAME("co.scratch_buffer.ptr"));

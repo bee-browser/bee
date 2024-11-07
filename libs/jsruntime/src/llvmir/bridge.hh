@@ -3,7 +3,10 @@
 #include <cstddef>
 #include <cstdint>
 
+struct Capture;
 struct Closure;
+struct Coroutine;
+struct Value;
 
 #define STATUS_UNSET_BIT 0x10
 #define STATUS_MASK 0x0F
@@ -20,6 +23,7 @@ enum class Status : uint32_t {
 
 static_assert(sizeof(Status) == sizeof(uint32_t), "size mismatched");
 
+// TODO: generate from the Rust type.
 enum class ValueKind : uint8_t {
   // DO NOT CHANGE THE ORDER OF THE FOLLOWING ENUM VARIANTS.
   // Some operations heavily rely on the order.
@@ -34,82 +38,13 @@ enum class ValueKind : uint8_t {
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
 
-union ValueHolder {
-  uintptr_t opaque;
-  bool boolean;
-  double number;
-  // TODO(issue#237): GcCellRef
-  Closure* closure;
-  uint32_t promise;
-};
-
-static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
-
-// Can be copied as Value.
-struct Value {
-  ValueKind kind;
-  ValueHolder holder;
-};
-
-static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
-
 // The actual type of `context` varies depending on usage of the lambda function:
 //
 //   Regular functions: Capture**
 //   Coroutine functions: Coroutine*
 //
+// TODO: move to types.rs
 typedef Status (*Lambda)(void* runtime, void* context, size_t argc, Value* argv, Value* ret);
-
-// TODO(issue#237): GcCell
-struct Capture {
-  // NOTE: The `target` may point to the `escaped`.  In this case, the `target` must be updated if
-  // the capture is moved during GC, so that the `target` points to the `escaped` correctly.
-  Value* target;
-  Value escaped;
-};
-
-static_assert(sizeof(Capture) == sizeof(uint64_t) * 3, "size mismatched");
-
-// TODO(issue#237): GcCell
-struct Closure {
-  // A pointer to a function compiled from a JavaScript function.
-  Lambda lambda;
-
-  // The number of captures.
-  //
-  // Usually, this field does not used in the compiled function, but we add this field here for
-  // debugging purposes.  If we need to reduce the heap memory usage and `Closure`s dominant, we
-  // can remove this field.
-  uint16_t num_captures;
-
-  // A variable-length list of captures used in the lambda function.
-  // TODO(issue#237): GcCellRef
-  Capture* captures[32];
-};
-
-// TODO(issue#237): GcCell
-struct Coroutine {
-  // The closure of the coroutine.
-  // TODO(issue#237): GcCellRef
-  Closure* closure;
-
-  // The state of the coroutine.
-  uint32_t state;
-
-  // The number of local variables.
-  uint16_t num_locals;
-
-  // The current scope id used by the scope cleanup checker.
-  uint16_t scope_id;
-
-  // The size of the scratch buffer in bytes.
-  uint16_t scratch_buffer_len;
-
-  // A variable-length list of local variables used in the coroutine.
-  Value locals[32];
-
-  // The scratch_buffer starts from &locals[num_locals].
-};
 
 #include "runtime.hh"
 
