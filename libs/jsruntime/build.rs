@@ -6,9 +6,11 @@ use duct::cmd;
 static CBINDGEN_TOML: &str = "src/llvmir/cbindgen.toml";
 
 static BRIDGE_SOURCE_FILES: &[&str] = &[
-    "src/llvmir/mod.rs",
+    "src/llvmir/bridge.rs",
+    "src/llvmir/compiler/bridge.rs",
     "src/llvmir/executor/bridge.rs",
     "src/llvmir/module/bridge.rs",
+    "src/types.rs",
 ];
 
 static LLVM_COMPONENTS: &[&str] = &["core", "orcjit", "x86"];
