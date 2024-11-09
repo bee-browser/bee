@@ -992,7 +992,6 @@ dependencies = [
  "duct",
  "indexmap",
  "jsparser",
- "libc",
  "logging",
  "paste",
  "rustc-hash",

@@ -12,7 +12,6 @@ bitflags = "2.6.0"
 bumpalo = "3.16.0"
 indexmap = "2.6.0"
 jsparser = { path = "../jsparser", features = ["location"] }
-libc = "0.2.162"
 logging = { path = "../logging" }
 paste = "1.0.15"
 rustc-hash = "2.0.0"
