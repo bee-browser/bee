@@ -1,5 +1,5 @@
+mod bridge;
 mod control_flow;
-mod peer;
 
 use std::ffi::CStr;
 use std::io::Write;
@@ -22,21 +22,21 @@ use crate::Program;
 use crate::Runtime;
 use crate::Value;
 
-use super::bridge;
 use super::Module;
 
+use bridge::BasicBlock;
+use bridge::BooleanIr;
+use bridge::CaptureIr;
+use bridge::ClosureIr;
+use bridge::CompilerBridge;
+use bridge::CoroutineIr;
+use bridge::LambdaIr;
+use bridge::NumberIr;
+use bridge::PromiseIr;
+use bridge::StatusIr;
+use bridge::SwitchIr;
+use bridge::ValueIr;
 use control_flow::ControlFlowStack;
-use peer::BasicBlock;
-use peer::BooleanIr;
-use peer::CaptureIr;
-use peer::ClosureIr;
-use peer::CoroutineIr;
-use peer::LambdaIr;
-use peer::NumberIr;
-use peer::PromiseIr;
-use peer::StatusIr;
-use peer::SwitchIr;
-use peer::ValueIr;
 
 const VALUE_SIZE: u32 = size_of::<Value>() as u32;
 const VALUE_HOLDER_SIZE: u32 = size_of::<u64>() as u32;
@@ -72,7 +72,7 @@ impl<X> Runtime<X> {
 /// A Compiler targeting LLVM IR.
 struct Compiler<'r, 's> {
     /// The pointer to the compiler peer.
-    peer: peer::Compiler,
+    bridge: CompilerBridge,
 
     /// The function registry of the JavaScript program to compile.
     function_registry: &'r mut FunctionRegistry,
@@ -157,7 +157,7 @@ impl<'r, 's> Compiler<'r, 's> {
     pub fn new(function_registry: &'r mut FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
         const DUMP_BUFFER_SIZE: usize = 512;
         Self {
-            peer: Default::default(),
+            bridge: Default::default(),
             function_registry,
             scope_tree,
             operand_stack: Default::default(),
@@ -185,28 +185,28 @@ impl<'r, 's> Compiler<'r, 's> {
         if enable_labels {
             self.basic_block_name_stack = Some(Default::default());
         }
-        self.peer.start_compile(enable_labels);
+        self.bridge.start_compile(enable_labels);
     }
 
     fn end_compile(&self) -> Module {
         logger::debug!(event = "end_compile");
-        self.peer.end_compile()
+        self.bridge.end_compile()
     }
 
     fn set_data_layout(&self, data_layout: &CStr) {
         logger::debug!(event = "set_data_layout", ?data_layout);
-        self.peer.set_data_layout(data_layout);
+        self.bridge.set_data_layout(data_layout);
     }
 
     fn set_target_triple(&self, triple: &CStr) {
         logger::debug!(event = "set_target_triple", ?triple);
-        self.peer.set_target_triple(triple);
+        self.bridge.set_target_triple(triple);
     }
 
     fn start_function(&mut self, symbol: Symbol, func_id: FunctionId) {
         logger::debug!(event = "start_function", ?symbol, ?func_id);
 
-        self.peer.start_function(func_id);
+        self.bridge.start_function(func_id);
 
         let locals_block = self.create_basic_block("locals");
         let init_block = self.create_basic_block("init");
@@ -226,18 +226,18 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack
             .push_exit_target(return_block, false);
 
-        self.peer.set_locals_block(locals_block);
+        self.bridge.set_locals_block(locals_block);
 
-        self.peer.set_basic_block(init_block);
-        self.peer.create_store_undefined_to_retv();
-        self.peer.create_alloc_status();
-        self.peer.create_alloc_flow_selector();
+        self.bridge.set_basic_block(init_block);
+        self.bridge.create_store_undefined_to_retv();
+        self.bridge.create_alloc_status();
+        self.bridge.create_alloc_flow_selector();
         if self.enable_scope_cleanup_checker {
-            self.peer
+            self.bridge
                 .enable_scope_cleanup_checker(func_id.is_coroutine());
         }
 
-        self.peer.set_basic_block(body_block);
+        self.bridge.set_basic_block(body_block);
     }
 
     fn end_function(&mut self, func_id: FunctionId, optimize: bool) {
@@ -250,31 +250,31 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack.pop_exit_target();
         let flow = self.control_flow_stack.pop_function_flow();
 
-        self.peer.create_br(flow.return_block);
-        self.peer.move_basic_block_after(flow.return_block);
+        self.bridge.create_br(flow.return_block);
+        self.bridge.move_basic_block_after(flow.return_block);
 
-        self.peer.set_basic_block(flow.locals_block);
-        self.peer.create_br(flow.init_block);
-        self.peer.move_basic_block_after(flow.init_block);
+        self.bridge.set_basic_block(flow.locals_block);
+        self.bridge.create_br(flow.init_block);
+        self.bridge.move_basic_block_after(flow.init_block);
 
-        self.peer.set_basic_block(flow.init_block);
-        self.peer.create_br(flow.args_block);
-        self.peer.move_basic_block_after(flow.args_block);
+        self.bridge.set_basic_block(flow.init_block);
+        self.bridge.create_br(flow.args_block);
+        self.bridge.move_basic_block_after(flow.args_block);
 
-        self.peer.set_basic_block(flow.args_block);
-        self.peer.create_br(flow.body_block);
-        self.peer.move_basic_block_after(flow.body_block);
+        self.bridge.set_basic_block(flow.args_block);
+        self.bridge.create_br(flow.body_block);
+        self.bridge.move_basic_block_after(flow.body_block);
 
-        self.peer.set_basic_block(flow.return_block);
+        self.bridge.set_basic_block(flow.return_block);
         if let Some(block) = dormant_block {
-            self.peer.move_basic_block_after(block);
+            self.bridge.move_basic_block_after(block);
         }
 
         if self.enable_scope_cleanup_checker {
-            self.peer.assert_scope_id(ScopeRef::NONE);
+            self.bridge.assert_scope_id(ScopeRef::NONE);
         }
 
-        self.peer.end_function(optimize);
+        self.bridge.end_function(optimize);
 
         self.locals.clear();
 
@@ -426,12 +426,12 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_boolean(&mut self, value: bool) {
-        let boolean = self.peer.get_boolean(value);
+        let boolean = self.bridge.get_boolean(value);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
     fn process_number(&mut self, value: f64) {
-        let number = self.peer.get_number(value);
+        let number = self.bridge.get_number(value);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -440,7 +440,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_function(&mut self, func_id: FunctionId) {
-        let lambda = self.peer.get_function(func_id);
+        let lambda = self.bridge.get_function(func_id);
         self.operand_stack.push(Operand::Function(lambda));
     }
 
@@ -461,25 +461,25 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_closure(&mut self, prologue: bool, num_captures: u16) {
         debug_assert!(self.operand_stack.len() > num_captures as usize);
 
-        let backup = self.peer.get_basic_block();
+        let backup = self.bridge.get_basic_block();
         if prologue {
             let block = self.control_flow_stack.scope_flow().hoisted_block;
-            self.peer.set_basic_block(block);
+            self.bridge.set_basic_block(block);
         }
 
         let lambda = self.pop_lambda();
-        let closure = self.peer.create_closure(lambda, num_captures);
+        let closure = self.bridge.create_closure(lambda, num_captures);
 
         for i in 0..num_captures {
             let capture = self.pop_capture();
-            self.peer
+            self.bridge
                 .create_store_capture_to_closure(capture, closure, i);
         }
 
         self.operand_stack.push(Operand::Closure(closure));
 
         if prologue {
-            self.peer.set_basic_block(backup);
+            self.bridge.set_basic_block(backup);
         }
     }
 
@@ -498,14 +498,14 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();
         let coroutine = self
-            .peer
+            .bridge
             .create_coroutine(closure, num_locals, scrach_buffer_len as u16);
         self.operand_stack.push(Operand::Coroutine(coroutine));
     }
 
     fn process_promise(&mut self) {
         let coroutine = self.pop_coroutine();
-        let promise = self.peer.create_register_promise(coroutine);
+        let promise = self.bridge.create_register_promise(coroutine);
         self.operand_stack.push(Operand::Promise(promise));
     }
 
@@ -517,12 +517,12 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_exception(&mut self) {
         // TODO: Should we check status_ at runtime?
         self.operand_stack
-            .push(Operand::Any(self.peer.get_exception()));
+            .push(Operand::Any(self.bridge.get_exception()));
     }
 
     fn process_allocate_locals(&mut self, num_locals: u16) {
         for i in 0..num_locals {
-            let local = self.peer.create_local_value(i);
+            let local = self.bridge.create_local_value(i);
             self.locals.push(local);
         }
     }
@@ -554,9 +554,9 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn create_get_value_ptr(&mut self, locator: Locator) -> ValueIr {
         match locator {
-            Locator::Argument(index) => self.peer.create_get_argument_value_ptr(index),
+            Locator::Argument(index) => self.bridge.create_get_argument_value_ptr(index),
             Locator::Local(index) => self.locals[index as usize],
-            Locator::Capture(index) => self.peer.create_get_capture_value_ptr(index),
+            Locator::Capture(index) => self.bridge.create_get_capture_value_ptr(index),
             _ => unreachable!(),
         }
     }
@@ -570,13 +570,13 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn create_store_operand_to_value(&mut self, operand: Operand, dest: ValueIr) {
         match operand {
-            Operand::Undefined => self.peer.create_store_undefined_to_value(dest),
-            Operand::Null => self.peer.create_store_null_to_value(dest),
-            Operand::Boolean(value) => self.peer.create_store_boolean_to_value(value, dest),
-            Operand::Number(value) => self.peer.create_store_number_to_value(value, dest),
-            Operand::Closure(value) => self.peer.create_store_closure_to_value(value, dest),
-            Operand::Promise(value) => self.peer.create_store_promise_to_value(value, dest),
-            Operand::Any(value) => self.peer.create_store_value_to_value(value, dest),
+            Operand::Undefined => self.bridge.create_store_undefined_to_value(dest),
+            Operand::Null => self.bridge.create_store_null_to_value(dest),
+            Operand::Boolean(value) => self.bridge.create_store_boolean_to_value(value, dest),
+            Operand::Number(value) => self.bridge.create_store_number_to_value(value, dest),
+            Operand::Closure(value) => self.bridge.create_store_closure_to_value(value, dest),
+            Operand::Promise(value) => self.bridge.create_store_promise_to_value(value, dest),
+            Operand::Any(value) => self.bridge.create_store_value_to_value(value, dest),
             _ => unreachable!(),
         }
     }
@@ -596,8 +596,8 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_declare_function(&mut self) {
         let block = self.control_flow_stack.scope_flow().hoisted_block;
 
-        let backup = self.peer.get_basic_block();
-        self.peer.set_basic_block(block);
+        let backup = self.bridge.get_basic_block();
+        self.bridge.set_basic_block(block);
 
         let (operand, _) = self.dereference();
         // TODO: operand must hold a lambda.
@@ -610,14 +610,14 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.create_store_operand_to_value(operand, value);
 
-        self.peer.set_basic_block(backup);
+        self.bridge.set_basic_block(backup);
     }
 
     fn process_declare_closure(&mut self) {
         let block = self.control_flow_stack.scope_flow().hoisted_block;
 
-        let backup = self.peer.get_basic_block();
-        self.peer.set_basic_block(block);
+        let backup = self.bridge.get_basic_block();
+        self.bridge.set_basic_block(block);
 
         let (operand, _) = self.dereference();
         // TODO: operand must hold a closure.
@@ -630,7 +630,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.create_store_operand_to_value(operand, value);
 
-        self.peer.set_basic_block(backup);
+        self.bridge.set_basic_block(backup);
     }
 
     fn swap(&mut self) {
@@ -649,15 +649,15 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_call(&mut self, argc: u16) {
         let argv = if argc > 0 {
-            let argv = self.peer.create_argv(argc);
+            let argv = self.bridge.create_argv(argc);
             for i in (0..argc).rev() {
                 let (operand, _) = self.dereference();
-                let ptr = self.peer.create_get_arg_in_argv(argv, i);
+                let ptr = self.bridge.create_get_arg_in_argv(argv, i);
                 self.create_store_operand_to_value(operand, ptr);
             }
             argv
         } else {
-            self.peer.get_argv_nullptr()
+            self.bridge.get_argv_nullptr()
         };
 
         let (operand, _) = self.dereference();
@@ -671,9 +671,11 @@ impl<'r, 's> Compiler<'r, 's> {
             }
         };
 
-        let retv = self.peer.create_retv();
+        let retv = self.bridge.create_retv();
 
-        let status = self.peer.create_call_on_closure(closure, argc, argv, retv);
+        let status = self
+            .bridge
+            .create_call_on_closure(closure, argc, argv, retv);
 
         self.create_check_status_for_exception(status, retv);
 
@@ -686,27 +688,31 @@ impl<'r, 's> Compiler<'r, 's> {
         let end_block = self.create_basic_block("closure");
 
         // if value.is_closure()
-        let is_closure = self.peer.create_is_closure(value);
-        self.peer.create_cond_br(is_closure, then_block, else_block);
+        let is_closure = self.bridge.create_is_closure(value);
+        self.bridge
+            .create_cond_br(is_closure, then_block, else_block);
         // then
         let (then_value, then_block) = {
-            self.peer.set_basic_block(then_block);
-            let closure = self.peer.create_load_closure_from_value(value);
-            self.peer.create_br(end_block);
-            (closure, self.peer.get_basic_block())
+            self.bridge.set_basic_block(then_block);
+            let closure = self.bridge.create_load_closure_from_value(value);
+            self.bridge.create_br(end_block);
+            (closure, self.bridge.get_basic_block())
         };
         // else
         let (else_value, else_block) = {
-            self.peer.set_basic_block(else_block);
+            self.bridge.set_basic_block(else_block);
             // TODO: TypeError
             self.process_number(1.);
             self.process_throw();
-            self.peer.create_br(end_block);
-            (self.peer.get_closure_nullptr(), self.peer.get_basic_block())
+            self.bridge.create_br(end_block);
+            (
+                self.bridge.get_closure_nullptr(),
+                self.bridge.get_basic_block(),
+            )
         };
 
-        self.peer.set_basic_block(end_block);
-        self.peer
+        self.bridge.set_basic_block(end_block);
+        self.bridge
             .create_closure_phi(then_value, then_block, else_value, else_block)
     }
 
@@ -718,19 +724,19 @@ impl<'r, 's> Compiler<'r, 's> {
         let else_block = self.create_basic_block("status.normal");
 
         // if status.is_exception()
-        let is_exception = self.peer.create_is_exception_status(status);
-        self.peer
+        let is_exception = self.bridge.create_is_exception_status(status);
+        self.bridge
             .create_cond_br(is_exception, then_block, else_block);
         // then
         {
-            self.peer.set_basic_block(then_block);
-            self.peer.create_store_exception_status();
-            self.peer.create_set_flow_selector_throw();
-            self.peer.create_store_value_to_retv(retv);
-            self.peer.create_br(exception_block);
+            self.bridge.set_basic_block(then_block);
+            self.bridge.create_store_exception_status();
+            self.bridge.create_set_flow_selector_throw();
+            self.bridge.create_store_value_to_retv(retv);
+            self.bridge.create_br(exception_block);
         }
 
-        self.peer.set_basic_block(else_block);
+        self.bridge.set_basic_block(else_block);
     }
 
     fn process_push_scope(&mut self, scope_ref: ScopeRef) {
@@ -754,10 +760,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack
             .push_exit_target(cleanup_block, false);
 
-        self.peer.create_br(init_block);
-        self.peer.move_basic_block_after(init_block);
+        self.bridge.create_br(init_block);
+        self.bridge.move_basic_block_after(init_block);
 
-        self.peer.set_basic_block(init_block);
+        self.bridge.set_basic_block(init_block);
 
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
@@ -767,21 +773,21 @@ impl<'r, 's> Compiler<'r, 's> {
             let locator = binding.locator();
             if binding.is_captured() {
                 let value = match locator {
-                    Locator::Argument(index) => self.peer.create_get_argument_value_ptr(index),
+                    Locator::Argument(index) => self.bridge.create_get_argument_value_ptr(index),
                     Locator::Local(index) => self.locals[index as usize],
                     _ => unreachable!(),
                 };
-                let capture = self.peer.create_capture(value);
+                let capture = self.bridge.create_capture(value);
                 debug_assert!(!self.captures.contains_key(&locator));
                 self.captures.insert(locator, capture);
             }
             if let Locator::Local(index) = locator {
                 let value = self.locals[index as usize];
-                self.peer.create_store_none_to_value(value);
+                self.bridge.create_store_none_to_value(value);
             }
         }
 
-        self.peer.set_basic_block(body_block);
+        self.bridge.set_basic_block(body_block);
     }
 
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
@@ -800,25 +806,25 @@ impl<'r, 's> Compiler<'r, 's> {
         let flow = self.control_flow_stack.pop_scope_flow();
         debug_assert_eq!(flow.scope_ref, scope_ref);
 
-        self.peer.create_br(flow.cleanup_block);
-        self.peer.move_basic_block_after(flow.cleanup_block);
+        self.bridge.create_br(flow.cleanup_block);
+        self.bridge.move_basic_block_after(flow.cleanup_block);
 
-        self.peer.set_basic_block(flow.init_block);
-        self.peer.create_br(precheck_block);
-        self.peer.move_basic_block_after(precheck_block);
+        self.bridge.set_basic_block(flow.init_block);
+        self.bridge.create_br(precheck_block);
+        self.bridge.move_basic_block_after(precheck_block);
 
-        self.peer.set_basic_block(precheck_block);
+        self.bridge.set_basic_block(precheck_block);
         if self.enable_scope_cleanup_checker {
-            self.peer.set_scope_id_for_checker(scope_ref);
+            self.bridge.set_scope_id_for_checker(scope_ref);
         }
-        self.peer.create_br(flow.hoisted_block);
-        self.peer.move_basic_block_after(flow.hoisted_block);
+        self.bridge.create_br(flow.hoisted_block);
+        self.bridge.move_basic_block_after(flow.hoisted_block);
 
-        self.peer.set_basic_block(flow.hoisted_block);
-        self.peer.create_br(flow.body_block);
-        self.peer.move_basic_block_after(flow.body_block);
+        self.bridge.set_basic_block(flow.hoisted_block);
+        self.bridge.create_br(flow.body_block);
+        self.bridge.move_basic_block_after(flow.body_block);
 
-        self.peer.set_basic_block(flow.cleanup_block);
+        self.bridge.set_basic_block(flow.cleanup_block);
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
             if binding.is_captured() {
@@ -829,29 +835,29 @@ impl<'r, 's> Compiler<'r, 's> {
                 // TODO: GC
             }
         }
-        self.peer.create_br(postcheck_block);
-        self.peer.move_basic_block_after(postcheck_block);
+        self.bridge.create_br(postcheck_block);
+        self.bridge.move_basic_block_after(postcheck_block);
 
-        self.peer.set_basic_block(postcheck_block);
+        self.bridge.set_basic_block(postcheck_block);
         if self.enable_scope_cleanup_checker {
-            self.peer.assert_scope_id(scope_ref);
+            self.bridge.assert_scope_id(scope_ref);
             if self.control_flow_stack.has_scope_flow() {
                 let outer_scope_ref = self.control_flow_stack.scope_flow().scope_ref;
-                self.peer.set_scope_id_for_checker(outer_scope_ref);
+                self.bridge.set_scope_id_for_checker(outer_scope_ref);
             } else {
-                self.peer.set_scope_id_for_checker(ScopeRef::NONE);
+                self.bridge.set_scope_id_for_checker(ScopeRef::NONE);
             }
         }
-        self.peer.create_br(ctrl_block);
-        self.peer.move_basic_block_after(ctrl_block);
+        self.bridge.create_br(ctrl_block);
+        self.bridge.move_basic_block_after(ctrl_block);
 
-        self.peer.set_basic_block(ctrl_block);
-        let is_normal = self.peer.create_is_flow_selector_normal();
-        self.peer
+        self.bridge.set_basic_block(ctrl_block);
+        let is_normal = self.bridge.create_is_flow_selector_normal();
+        self.bridge
             .create_cond_br(is_normal, exit_block, parent_exit_block);
 
-        self.peer.move_basic_block_after(exit_block);
-        self.peer.set_basic_block(exit_block);
+        self.bridge.move_basic_block_after(exit_block);
+        self.bridge.set_basic_block(exit_block);
 
         pop_bb_name!(self);
     }
@@ -861,14 +867,14 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.captures.contains_key(&locator));
         let capture = self.captures.swap_remove(&locator).unwrap();
         let value = self.create_get_value_ptr(locator);
-        self.peer.create_escape_value(capture, value);
+        self.bridge.create_escape_value(capture, value);
     }
 
     fn process_capture_value(&mut self, declaration: bool) {
-        let backup = self.peer.get_basic_block();
+        let backup = self.bridge.get_basic_block();
         if declaration {
             let block = self.control_flow_stack.scope_flow().hoisted_block;
-            self.peer.set_basic_block(block);
+            self.bridge.set_basic_block(block);
         }
 
         let (_, locator) = self.pop_reference();
@@ -877,14 +883,14 @@ impl<'r, 's> Compiler<'r, 's> {
                 debug_assert!(self.captures.contains_key(&locator));
                 *self.captures.get(&locator).unwrap()
             }
-            Locator::Capture(i) => self.peer.create_load_capture(i),
+            Locator::Capture(i) => self.bridge.create_load_capture(i),
             _ => unreachable!(),
         };
 
         self.operand_stack.push(Operand::Capture(capture));
 
         if declaration {
-            self.peer.set_basic_block(backup);
+            self.bridge.set_basic_block(backup);
         }
     }
 
@@ -896,11 +902,11 @@ impl<'r, 's> Compiler<'r, 's> {
         let (operand, reference) = self.dereference();
         let old_value = self.to_numeric(operand);
         // TODO: BigInt
-        let one = self.peer.get_number(1.0);
+        let one = self.bridge.get_number(1.0);
         let new_value = if op == '+' {
-            self.peer.create_fadd(old_value, one)
+            self.bridge.create_fadd(old_value, one)
         } else {
-            self.peer.create_fsub(old_value, one)
+            self.bridge.create_fsub(old_value, one)
         };
         match reference {
             Some((symbol, locator)) if symbol != Symbol::NONE => {
@@ -924,12 +930,12 @@ impl<'r, 's> Compiler<'r, 's> {
     // 7.1.4 ToNumber ( argument )
     fn to_numeric(&self, operand: Operand) -> NumberIr {
         match operand {
-            Operand::Undefined => self.peer.get_nan(),
-            Operand::Null => self.peer.get_zero(),
-            Operand::Boolean(value) => self.peer.create_boolean_to_number(value),
+            Operand::Undefined => self.bridge.get_nan(),
+            Operand::Null => self.bridge.get_zero(),
+            Operand::Boolean(value) => self.bridge.create_boolean_to_number(value),
             Operand::Number(value) => value,
-            Operand::Closure(_) => self.peer.get_nan(),
-            Operand::Any(value) => self.peer.to_numeric(value),
+            Operand::Closure(_) => self.bridge.get_nan(),
+            Operand::Any(value) => self.bridge.to_numeric(value),
             _ => unreachable!(),
         }
     }
@@ -984,7 +990,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let value = self.to_numeric(operand);
         // TODO: BigInt
         // 6.1.6.1.1 Number::unaryMinus ( x )
-        let value = self.peer.create_fneg(value);
+        let value = self.bridge.create_fneg(value);
         self.operand_stack.push(Operand::Number(value));
     }
 
@@ -993,7 +999,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (operand, _) = self.dereference();
         let number = self.to_numeric(operand);
         // TODO: BigInt
-        let number = self.peer.create_bitwise_not(number);
+        let number = self.bridge.create_bitwise_not(number);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1001,17 +1007,17 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_logical_not(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand);
-        let boolean = self.peer.create_logical_not(boolean);
+        let boolean = self.bridge.create_logical_not(boolean);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
     fn create_to_boolean(&mut self, operand: Operand) -> BooleanIr {
         match operand {
-            Operand::Undefined | Operand::Null => self.peer.get_boolean(false),
+            Operand::Undefined | Operand::Null => self.bridge.get_boolean(false),
             Operand::Boolean(value) => value,
-            Operand::Number(value) => self.peer.create_number_to_boolean(value),
-            Operand::Closure(_) => self.peer.get_boolean(true),
-            Operand::Any(value) => self.peer.create_to_boolean(value),
+            Operand::Number(value) => self.bridge.create_number_to_boolean(value),
+            Operand::Closure(_) => self.bridge.get_boolean(true),
+            Operand::Any(value) => self.bridge.create_to_boolean(value),
             _ => unreachable!(),
         }
     }
@@ -1029,7 +1035,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let number = self.peer.create_fmul(lhs, rhs);
+        let number = self.bridge.create_fmul(lhs, rhs);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1041,7 +1047,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let number = self.peer.create_fdiv(lhs, rhs);
+        let number = self.bridge.create_fdiv(lhs, rhs);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1053,7 +1059,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let number = self.peer.create_frem(lhs, rhs);
+        let number = self.bridge.create_frem(lhs, rhs);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1065,7 +1071,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let number = self.peer.create_fadd(lhs, rhs);
+        let number = self.bridge.create_fadd(lhs, rhs);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1077,7 +1083,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let number = self.peer.create_fsub(lhs, rhs);
+        let number = self.bridge.create_fsub(lhs, rhs);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1092,7 +1098,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
-        let number = self.peer.create_left_shift(lhs, rhs);
+        let number = self.bridge.create_left_shift(lhs, rhs);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1107,7 +1113,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
-        let number = self.peer.create_signed_right_shift(lhs, rhs);
+        let number = self.bridge.create_signed_right_shift(lhs, rhs);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1122,7 +1128,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
-        let number = self.peer.create_unsigned_right_shift(lhs, rhs);
+        let number = self.bridge.create_unsigned_right_shift(lhs, rhs);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1134,7 +1140,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let boolean = self.peer.create_less_than(lhs, rhs);
+        let boolean = self.bridge.create_less_than(lhs, rhs);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
@@ -1146,7 +1152,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let boolean = self.peer.create_greater_than(lhs, rhs);
+        let boolean = self.bridge.create_greater_than(lhs, rhs);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
@@ -1158,7 +1164,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let boolean = self.peer.create_less_than_or_equal(lhs, rhs);
+        let boolean = self.bridge.create_less_than_or_equal(lhs, rhs);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
@@ -1170,7 +1176,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
         let rhs = self.to_numeric(rhs);
 
-        let boolean = self.peer.create_greater_than_or_equal(lhs, rhs);
+        let boolean = self.bridge.create_greater_than_or_equal(lhs, rhs);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
@@ -1202,12 +1208,12 @@ impl<'r, 's> Compiler<'r, 's> {
         if let Operand::Any(lhs) = lhs {
             // TODO: compile-time evaluation
             let rhs = self.create_to_any(rhs);
-            return self.peer.create_is_loosely_equal(lhs, rhs);
+            return self.bridge.create_is_loosely_equal(lhs, rhs);
         }
         if let Operand::Any(rhs) = rhs {
             // TODO: compile-time evaluation
             let lhs = self.create_to_any(lhs);
-            return self.peer.create_is_loosely_equal(lhs, rhs);
+            return self.bridge.create_is_loosely_equal(lhs, rhs);
         }
 
         // 1. If Type(x) is Type(y), then Return IsStrictlyEqual(x, y).
@@ -1217,12 +1223,12 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // 2. If x is null and y is undefined, return true.
         if matches!(lhs, Operand::Null) && matches!(rhs, Operand::Undefined) {
-            return self.peer.get_boolean(true);
+            return self.bridge.get_boolean(true);
         }
 
         // 3. If x is undefined and y is null, return true.
         if matches!(lhs, Operand::Undefined) && matches!(rhs, Operand::Null) {
-            return self.peer.get_boolean(true);
+            return self.bridge.get_boolean(true);
         }
 
         // TODO: 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
@@ -1235,18 +1241,18 @@ impl<'r, 's> Compiler<'r, 's> {
         // TODO: ...
         let lhs = self.create_to_any(lhs);
         let rhs = self.create_to_any(rhs);
-        self.peer.create_is_loosely_equal(lhs, rhs)
+        self.bridge.create_is_loosely_equal(lhs, rhs)
     }
 
     fn create_to_any(&mut self, operand: Operand) -> ValueIr {
         logger::debug!(event = "create_to_any", ?operand);
         match operand {
             Operand::Any(value) => value,
-            Operand::Undefined => self.peer.create_undefined_to_any(),
-            Operand::Null => self.peer.create_null_to_any(),
-            Operand::Boolean(value) => self.peer.create_boolean_to_any(value),
-            Operand::Number(value) => self.peer.create_number_to_any(value),
-            Operand::Closure(value) => self.peer.create_closure_to_any(value),
+            Operand::Undefined => self.bridge.create_undefined_to_any(),
+            Operand::Null => self.bridge.create_null_to_any(),
+            Operand::Boolean(value) => self.bridge.create_boolean_to_any(value),
+            Operand::Number(value) => self.bridge.create_number_to_any(value),
+            Operand::Closure(value) => self.bridge.create_closure_to_any(value),
             _ => unreachable!(),
         }
     }
@@ -1261,23 +1267,23 @@ impl<'r, 's> Compiler<'r, 's> {
             return self.create_any_is_strictly_equal(rhs, lhs);
         }
         if std::mem::discriminant(&lhs) != std::mem::discriminant(&rhs) {
-            return self.peer.get_boolean(false);
+            return self.bridge.get_boolean(false);
         }
         // TODO: BigInt
         match (lhs, rhs) {
-            (Operand::Undefined, Operand::Undefined) => self.peer.get_boolean(true),
-            (Operand::Null, Operand::Null) => self.peer.get_boolean(true),
+            (Operand::Undefined, Operand::Undefined) => self.bridge.get_boolean(true),
+            (Operand::Null, Operand::Null) => self.bridge.get_boolean(true),
             (Operand::Boolean(lhs), Operand::Boolean(rhs)) => {
-                self.peer.create_is_same_boolean(lhs, rhs)
+                self.bridge.create_is_same_boolean(lhs, rhs)
             }
             (Operand::Number(lhs), Operand::Number(rhs)) => {
-                self.peer.create_is_same_number(lhs, rhs)
+                self.bridge.create_is_same_number(lhs, rhs)
             }
             (Operand::Closure(lhs), Operand::Closure(rhs)) => {
-                self.peer.create_is_same_closure(lhs, rhs)
+                self.bridge.create_is_same_closure(lhs, rhs)
             }
             (Operand::Promise(lhs), Operand::Promise(rhs)) => {
-                self.peer.create_is_same_promise(lhs, rhs)
+                self.bridge.create_is_same_promise(lhs, rhs)
             }
             _ => unreachable!(),
         }
@@ -1286,13 +1292,13 @@ impl<'r, 's> Compiler<'r, 's> {
     fn create_any_is_strictly_equal(&mut self, lhs: ValueIr, rhs: Operand) -> BooleanIr {
         logger::debug!(event = "create_any_is_strictly_equal", ?lhs, ?rhs);
         match rhs {
-            Operand::Undefined => self.peer.create_is_undefined(lhs),
-            Operand::Null => self.peer.create_is_null(lhs),
+            Operand::Undefined => self.bridge.create_is_undefined(lhs),
+            Operand::Null => self.bridge.create_is_null(lhs),
             Operand::Boolean(rhs) => self.create_is_same_boolean_value(lhs, rhs),
             Operand::Number(rhs) => self.create_is_same_number_value(lhs, rhs),
             Operand::Closure(rhs) => self.create_is_same_closure_value(lhs, rhs),
             Operand::Promise(rhs) => self.create_is_same_promise_value(lhs, rhs),
-            Operand::Any(rhs) => self.peer.create_is_strictly_equal(lhs, rhs),
+            Operand::Any(rhs) => self.bridge.create_is_strictly_equal(lhs, rhs),
             _ => unreachable!(),
         }
     }
@@ -1303,19 +1309,19 @@ impl<'r, 's> Compiler<'r, 's> {
         let merge_block = self.create_basic_block("is_boolean");
 
         // if value.kind == ValueKind::Boolean
-        let cond = self.peer.create_is_boolean(value);
-        self.peer.create_cond_br(cond, then_block, else_block);
+        let cond = self.bridge.create_is_boolean(value);
+        self.bridge.create_cond_br(cond, then_block, else_block);
         // {
-        self.peer.set_basic_block(then_block);
-        let then_value = self.peer.create_is_same_boolean_value(value, boolean);
-        self.peer.create_br(merge_block);
+        self.bridge.set_basic_block(then_block);
+        let then_value = self.bridge.create_is_same_boolean_value(value, boolean);
+        self.bridge.create_br(merge_block);
         // } else {
-        self.peer.set_basic_block(else_block);
-        let else_value = self.peer.get_boolean(false);
-        self.peer.create_br(merge_block);
+        self.bridge.set_basic_block(else_block);
+        let else_value = self.bridge.get_boolean(false);
+        self.bridge.create_br(merge_block);
         // }
-        self.peer.set_basic_block(merge_block);
-        self.peer
+        self.bridge.set_basic_block(merge_block);
+        self.bridge
             .create_boolean_phi(then_value, then_block, else_value, else_block)
     }
 
@@ -1327,19 +1333,19 @@ impl<'r, 's> Compiler<'r, 's> {
         let merge_block = self.create_basic_block("is_number");
 
         // if value.kind == ValueKind::Number
-        let cond = self.peer.create_is_number(value);
-        self.peer.create_cond_br(cond, then_block, else_block);
+        let cond = self.bridge.create_is_number(value);
+        self.bridge.create_cond_br(cond, then_block, else_block);
         // {
-        self.peer.set_basic_block(then_block);
-        let then_value = self.peer.create_is_same_number_value(value, number);
-        self.peer.create_br(merge_block);
+        self.bridge.set_basic_block(then_block);
+        let then_value = self.bridge.create_is_same_number_value(value, number);
+        self.bridge.create_br(merge_block);
         // } else {
-        self.peer.set_basic_block(else_block);
-        let else_value = self.peer.get_boolean(false);
-        self.peer.create_br(merge_block);
+        self.bridge.set_basic_block(else_block);
+        let else_value = self.bridge.get_boolean(false);
+        self.bridge.create_br(merge_block);
         // }
-        self.peer.set_basic_block(merge_block);
-        self.peer
+        self.bridge.set_basic_block(merge_block);
+        self.bridge
             .create_boolean_phi(then_value, then_block, else_value, else_block)
     }
 
@@ -1349,19 +1355,19 @@ impl<'r, 's> Compiler<'r, 's> {
         let merge_block = self.create_basic_block("is_closure");
 
         // if value.kind == ValueKind::Number
-        let cond = self.peer.create_is_closure(value);
-        self.peer.create_cond_br(cond, then_block, else_block);
+        let cond = self.bridge.create_is_closure(value);
+        self.bridge.create_cond_br(cond, then_block, else_block);
         // {
-        self.peer.set_basic_block(then_block);
-        let then_value = self.peer.create_is_same_closure_value(value, closure);
-        self.peer.create_br(merge_block);
+        self.bridge.set_basic_block(then_block);
+        let then_value = self.bridge.create_is_same_closure_value(value, closure);
+        self.bridge.create_br(merge_block);
         // } else {
-        self.peer.set_basic_block(else_block);
-        let else_value = self.peer.get_boolean(false);
-        self.peer.create_br(merge_block);
+        self.bridge.set_basic_block(else_block);
+        let else_value = self.bridge.get_boolean(false);
+        self.bridge.create_br(merge_block);
         // }
-        self.peer.set_basic_block(merge_block);
-        self.peer
+        self.bridge.set_basic_block(merge_block);
+        self.bridge
             .create_boolean_phi(then_value, then_block, else_value, else_block)
     }
 
@@ -1371,19 +1377,19 @@ impl<'r, 's> Compiler<'r, 's> {
         let merge_block = self.create_basic_block("is_promise");
 
         // if value.kind == ValueKind::Promise
-        let cond = self.peer.create_is_promise(value);
-        self.peer.create_cond_br(cond, then_block, else_block);
+        let cond = self.bridge.create_is_promise(value);
+        self.bridge.create_cond_br(cond, then_block, else_block);
         // {
-        self.peer.set_basic_block(then_block);
-        let then_value = self.peer.create_is_same_promise_value(value, promise);
-        self.peer.create_br(merge_block);
+        self.bridge.set_basic_block(then_block);
+        let then_value = self.bridge.create_is_same_promise_value(value, promise);
+        self.bridge.create_br(merge_block);
         // } else {
-        self.peer.set_basic_block(else_block);
-        let else_value = self.peer.get_boolean(false);
-        self.peer.create_br(merge_block);
+        self.bridge.set_basic_block(else_block);
+        let else_value = self.bridge.get_boolean(false);
+        self.bridge.create_br(merge_block);
         // }
-        self.peer.set_basic_block(merge_block);
-        self.peer
+        self.bridge.set_basic_block(merge_block);
+        self.bridge
             .create_boolean_phi(then_value, then_block, else_value, else_block)
     }
 
@@ -1394,7 +1400,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
 
         let eq = self.create_is_loosely_equal(lhs, rhs);
-        let boolean = self.peer.create_logical_not(eq);
+        let boolean = self.bridge.create_logical_not(eq);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
@@ -1415,7 +1421,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let (rhs, _) = self.dereference();
 
         let eq = self.create_is_strictly_equal(lhs, rhs);
-        let boolean = self.peer.create_logical_not(eq);
+        let boolean = self.bridge.create_logical_not(eq);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 
@@ -1430,7 +1436,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let rnum = self.to_numeric(rval);
         // TODO: BigInt
 
-        let number = self.peer.create_bitwise_and(lnum, rnum);
+        let number = self.bridge.create_bitwise_and(lnum, rnum);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1445,7 +1451,7 @@ impl<'r, 's> Compiler<'r, 's> {
         let rnum = self.to_numeric(rval);
         // TODO: BigInt
 
-        let number = self.peer.create_bitwise_xor(lnum, rnum);
+        let number = self.bridge.create_bitwise_xor(lnum, rnum);
         self.operand_stack.push(Operand::Number(number));
     }
 
@@ -1460,30 +1466,30 @@ impl<'r, 's> Compiler<'r, 's> {
         let rnum = self.to_numeric(rval);
         // TODO: BigInt
 
-        let number = self.peer.create_bitwise_or(lnum, rnum);
+        let number = self.bridge.create_bitwise_or(lnum, rnum);
         self.operand_stack.push(Operand::Number(number));
     }
 
     fn process_ternary(&mut self) {
         let flow = self.control_flow_stack.pop_if_then_else_flow();
         let then_block = flow.then_block;
-        let else_block = self.peer.get_basic_block();
+        let else_block = self.bridge.get_basic_block();
 
         let (else_operand, _) = self.dereference();
 
-        self.peer.set_basic_block(then_block);
+        self.bridge.set_basic_block(then_block);
         let (then_operand, _) = self.dereference();
 
         let block = self.create_basic_block("ternary");
 
         if std::mem::discriminant(&then_operand) == std::mem::discriminant(&else_operand) {
-            self.peer.set_basic_block(then_block);
-            self.peer.create_br(block);
+            self.bridge.set_basic_block(then_block);
+            self.bridge.create_br(block);
 
-            self.peer.set_basic_block(else_block);
-            self.peer.create_br(block);
+            self.bridge.set_basic_block(else_block);
+            self.bridge.create_br(block);
 
-            self.peer.set_basic_block(block);
+            self.bridge.set_basic_block(block);
 
             // In this case, we can use the value of each item as is.
             match (then_operand, else_operand) {
@@ -1497,21 +1503,21 @@ impl<'r, 's> Compiler<'r, 's> {
                 }
                 (Operand::Boolean(then_value), Operand::Boolean(else_value)) => {
                     let boolean = self
-                        .peer
+                        .bridge
                         .create_boolean_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Boolean(boolean));
                     return;
                 }
                 (Operand::Number(then_value), Operand::Number(else_value)) => {
                     let number = self
-                        .peer
+                        .bridge
                         .create_number_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Number(number));
                     return;
                 }
                 (Operand::Any(then_value), Operand::Any(else_value)) => {
                     let any = self
-                        .peer
+                        .bridge
                         .create_value_phi(then_value, then_block, else_value, else_block);
                     self.operand_stack.push(Operand::Any(any));
                     return;
@@ -1522,17 +1528,17 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // We have to convert the value before the branch in each block.
 
-        self.peer.set_basic_block(then_block);
+        self.bridge.set_basic_block(then_block);
         let then_value = self.create_to_any(then_operand);
-        self.peer.create_br(block);
+        self.bridge.create_br(block);
 
-        self.peer.set_basic_block(else_block);
+        self.bridge.set_basic_block(else_block);
         let else_value = self.create_to_any(else_operand);
-        self.peer.create_br(block);
+        self.bridge.create_br(block);
 
-        self.peer.set_basic_block(block);
+        self.bridge.set_basic_block(block);
         let any = self
-            .peer
+            .bridge
             .create_value_phi(then_value, then_block, else_value, else_block);
         self.operand_stack.push(Operand::Any(any));
     }
@@ -1561,7 +1567,7 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_falsy_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand.clone());
-        let boolean = self.peer.create_logical_not(boolean);
+        let boolean = self.bridge.create_logical_not(boolean);
         self.operand_stack.push(Operand::Boolean(boolean));
         self.process_if_then();
         self.operand_stack.push(operand);
@@ -1588,11 +1594,11 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn create_is_non_nullish(&mut self, operand: Operand) -> BooleanIr {
         match operand {
-            Operand::Undefined | Operand::Null => self.peer.get_boolean(false),
+            Operand::Undefined | Operand::Null => self.bridge.get_boolean(false),
             Operand::Boolean(_) | Operand::Number(_) | Operand::Closure(_) => {
-                self.peer.get_boolean(true)
+                self.bridge.get_boolean(true)
             }
-            Operand::Any(value) => self.peer.create_is_non_nullish(value),
+            Operand::Any(value) => self.bridge.create_is_non_nullish(value),
             _ => unreachable!(),
         }
     }
@@ -1607,64 +1613,65 @@ impl<'r, 's> Compiler<'r, 's> {
         let cond_value = self.pop_boolean();
         let then_block = self.create_basic_block("then");
         let else_block = self.create_basic_block("else");
-        self.peer.create_cond_br(cond_value, then_block, else_block);
-        self.peer.set_basic_block(then_block);
+        self.bridge
+            .create_cond_br(cond_value, then_block, else_block);
+        self.bridge.set_basic_block(then_block);
         self.control_flow_stack
             .push_if_then_else_flow(then_block, else_block);
     }
 
     fn process_else(&mut self) {
-        let then_block = self.peer.get_basic_block();
+        let then_block = self.bridge.get_basic_block();
         let else_block = self.control_flow_stack.update_then_block(then_block);
-        self.peer.move_basic_block_after(else_block);
-        self.peer.set_basic_block(else_block);
+        self.bridge.move_basic_block_after(else_block);
+        self.bridge.set_basic_block(else_block);
     }
 
     fn process_if_else_statement(&mut self) {
         let flow = self.control_flow_stack.pop_if_then_else_flow();
-        let else_block = self.peer.get_basic_block();
+        let else_block = self.bridge.get_basic_block();
 
         let mut block = BasicBlock::NONE;
 
-        if self.peer.is_basic_block_terminated(else_block) {
+        if self.bridge.is_basic_block_terminated(else_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
             block = self.create_basic_block("merge");
-            self.peer.create_br(block);
+            self.bridge.create_br(block);
         }
 
-        if self.peer.is_basic_block_terminated(flow.then_block) {
+        if self.bridge.is_basic_block_terminated(flow.then_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
             if block == BasicBlock::NONE {
                 block = self.create_basic_block("merge");
             }
-            self.peer.set_basic_block(flow.then_block);
-            self.peer.create_br(block);
+            self.bridge.set_basic_block(flow.then_block);
+            self.bridge.create_br(block);
         }
 
         if block != BasicBlock::NONE {
-            self.peer.set_basic_block(block);
+            self.bridge.set_basic_block(block);
         }
     }
 
     fn process_if_statement(&mut self) {
         let flow = self.control_flow_stack.pop_if_then_else_flow();
-        let then_block = self.peer.get_basic_block();
+        let then_block = self.bridge.get_basic_block();
 
         let block = self.create_basic_block("merge");
 
-        if self.peer.is_basic_block_terminated(then_block) {
+        if self.bridge.is_basic_block_terminated(then_block) {
             // We should not append any instructions after a terminator instruction such as `ret`.
         } else {
-            self.peer.create_br(block);
+            self.bridge.create_br(block);
         }
 
-        self.peer.move_basic_block_after(flow.else_block);
-        self.peer.set_basic_block(flow.else_block);
-        self.peer.create_br(block);
+        self.bridge.move_basic_block_after(flow.else_block);
+        self.bridge.set_basic_block(flow.else_block);
+        self.bridge.create_br(block);
 
-        self.peer.set_basic_block(block);
+        self.bridge.set_basic_block(block);
     }
 
     fn process_do_while_loop(&mut self, id: u16) {
@@ -1684,11 +1691,11 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack
             .push_loop_body_flow(loop_ctrl, loop_test);
 
-        self.peer.create_br(loop_start);
+        self.bridge.create_br(loop_start);
 
         self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
 
-        self.peer.set_basic_block(loop_start);
+        self.bridge.set_basic_block(loop_start);
     }
 
     fn process_while_loop(&mut self, id: u16) {
@@ -1708,11 +1715,11 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack
             .push_loop_test_flow(loop_body, loop_exit, loop_body);
 
-        self.peer.create_br(loop_start);
+        self.bridge.create_br(loop_start);
 
         self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
 
-        self.peer.set_basic_block(loop_start);
+        self.bridge.set_basic_block(loop_start);
     }
 
     // TODO: rewrite using if and break
@@ -1792,11 +1799,11 @@ impl<'r, 's> Compiler<'r, 's> {
             insert_point = loop_init;
         }
 
-        self.peer.create_br(loop_start);
+        self.bridge.create_br(loop_start);
 
         self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
 
-        self.peer.set_basic_block(insert_point);
+        self.bridge.set_basic_block(insert_point);
     }
 
     fn build_loop_ctrl_block(
@@ -1814,56 +1821,56 @@ impl<'r, 's> Compiler<'r, 's> {
         }
         let exit_id = self.control_flow_stack.exit_id();
 
-        self.peer.set_basic_block(loop_ctrl);
+        self.bridge.set_basic_block(loop_ctrl);
         let is_normal_or_continue = self
-            .peer
+            .bridge
             .create_is_flow_selector_normal_or_continue(exit_id.depth());
         let is_break_or_continue = self
-            .peer
+            .bridge
             .create_is_flow_selector_break_or_continue(exit_id.depth());
-        self.peer.create_cond_br(
+        self.bridge.create_cond_br(
             is_break_or_continue,
             set_normal_block,
             break_or_continue_block,
         );
 
-        self.peer.set_basic_block(set_normal_block);
-        self.peer.create_set_flow_selector_normal();
-        self.peer.create_br(break_or_continue_block);
+        self.bridge.set_basic_block(set_normal_block);
+        self.bridge.create_set_flow_selector_normal();
+        self.bridge.create_br(break_or_continue_block);
 
-        self.peer.set_basic_block(break_or_continue_block);
-        self.peer
+        self.bridge.set_basic_block(break_or_continue_block);
+        self.bridge
             .create_cond_br(is_normal_or_continue, loop_continue, loop_break);
     }
 
     fn process_loop_init(&mut self) {
         let loop_init = self.control_flow_stack.pop_loop_init_flow();
-        self.peer.create_br(loop_init.branch_block);
-        self.peer.set_basic_block(loop_init.insert_point);
+        self.bridge.create_br(loop_init.branch_block);
+        self.bridge.set_basic_block(loop_init.insert_point);
     }
 
     fn process_loop_test(&mut self) {
         let loop_test = self.control_flow_stack.pop_loop_test_flow();
         let (operand, _) = self.dereference();
         let cond = self.create_to_boolean(operand);
-        self.peer
+        self.bridge
             .create_cond_br(cond, loop_test.then_block, loop_test.else_block);
-        self.peer.set_basic_block(loop_test.insert_point);
+        self.bridge.set_basic_block(loop_test.insert_point);
     }
 
     fn process_loop_next(&mut self) {
         let loop_next = self.control_flow_stack.pop_loop_next_flow();
         // Discard the evaluation result.
         self.process_discard();
-        self.peer.create_br(loop_next.branch_block);
-        self.peer.set_basic_block(loop_next.insert_point);
+        self.bridge.create_br(loop_next.branch_block);
+        self.bridge.set_basic_block(loop_next.insert_point);
     }
 
     fn process_loop_body(&mut self) {
         let loop_body = self.control_flow_stack.pop_loop_body_flow();
-        self.peer.create_br(loop_body.branch_block);
-        self.peer.move_basic_block_after(loop_body.insert_point);
-        self.peer.set_basic_block(loop_body.insert_point);
+        self.bridge.create_br(loop_body.branch_block);
+        self.bridge.move_basic_block_after(loop_body.insert_point);
+        self.bridge.set_basic_block(loop_body.insert_point);
     }
 
     fn process_loop_end(&mut self) {
@@ -1886,35 +1893,35 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.pending_labels.is_empty());
         let exit_id = self.control_flow_stack.exit_id();
 
-        self.peer.create_br(case_block);
+        self.bridge.create_br(case_block);
 
-        self.peer.set_basic_block(ctrl_block);
-        let is_break = self.peer.create_is_flow_selector_break(exit_id.depth());
-        self.peer
+        self.bridge.set_basic_block(ctrl_block);
+        let is_break = self.bridge.create_is_flow_selector_break(exit_id.depth());
+        self.bridge
             .create_cond_br(is_break, set_normal_block, end_block);
 
-        self.peer.set_basic_block(set_normal_block);
-        self.peer.create_set_flow_selector_normal();
-        self.peer.create_br(end_block);
+        self.bridge.set_basic_block(set_normal_block);
+        self.bridge.create_set_flow_selector_normal();
+        self.bridge.create_br(end_block);
 
-        self.peer.set_basic_block(case_block);
+        self.bridge.set_basic_block(case_block);
     }
 
     fn process_case(&mut self) {
         let clause_start_block = self.create_basic_block("case.clause");
         let next_case_block = self.create_basic_block("case");
         let cond_value = self.pop_boolean();
-        self.peer
+        self.bridge
             .create_cond_br(cond_value, clause_start_block, next_case_block);
-        self.peer.set_basic_block(clause_start_block);
+        self.bridge.set_basic_block(clause_start_block);
         self.control_flow_stack
             .push_case_flow(next_case_block, clause_start_block);
     }
 
     fn process_default(&mut self) {
-        let next_case_block = self.peer.get_basic_block();
+        let next_case_block = self.bridge.get_basic_block();
         let clause_start_block = self.create_basic_block("default.clause");
-        self.peer.set_basic_block(clause_start_block);
+        self.bridge.set_basic_block(clause_start_block);
         self.control_flow_stack
             .push_case_flow(next_case_block, clause_start_block);
         self.control_flow_stack
@@ -1922,17 +1929,17 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_case_clause(&mut self, has_statement: bool) {
-        let clause_end_block = self.peer.get_basic_block();
+        let clause_end_block = self.bridge.get_basic_block();
         let next_case_block = self
             .control_flow_stack
             .update_case_flow(clause_end_block, has_statement);
-        self.peer.set_basic_block(next_case_block);
+        self.bridge.set_basic_block(next_case_block);
     }
 
     fn process_switch(&mut self, _id: u16, num_cases: u16, _default_index: Option<u16>) {
         pop_bb_name!(self);
 
-        let last_case_block = self.peer.get_basic_block();
+        let last_case_block = self.bridge.get_basic_block();
 
         // Connect the last basic blocks of each case/default clause to the first basic block of
         // the statement lists of the next case/default clause if it's not terminated.
@@ -1942,11 +1949,11 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert_ne!(fall_through_block, BasicBlock::NONE);
         for _ in 0..num_cases {
             let flow = self.control_flow_stack.pop_case_flow();
-            let terminated = self.peer.is_basic_block_terminated(flow.clause_end_block);
+            let terminated = self.bridge.is_basic_block_terminated(flow.clause_end_block);
             if !terminated {
-                self.peer.set_basic_block(flow.clause_end_block);
-                self.peer.create_br(fall_through_block);
-                self.peer.move_basic_block_after(fall_through_block);
+                self.bridge.set_basic_block(flow.clause_end_block);
+                self.bridge.create_br(fall_through_block);
+                self.bridge.move_basic_block_after(fall_through_block);
             }
             fall_through_block = flow.clause_start_block;
             debug_assert_ne!(fall_through_block, BasicBlock::NONE);
@@ -1957,16 +1964,16 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // Create an unconditional jump to the statement of the default clause if it exists.
         // Otherwise, jump to the end block.
-        self.peer.set_basic_block(last_case_block);
-        self.peer
+        self.bridge.set_basic_block(last_case_block);
+        self.bridge
             .create_br(if switch.default_block != BasicBlock::NONE {
                 switch.default_block
             } else {
                 switch.end_block
             });
 
-        self.peer.move_basic_block_after(switch.end_block);
-        self.peer.set_basic_block(switch.end_block);
+        self.bridge.move_basic_block_after(switch.end_block);
+        self.bridge.set_basic_block(switch.end_block);
     }
 
     fn process_try(&mut self) {
@@ -1984,9 +1991,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack.push_exit_target(catch_block, false);
 
         // Jump from the end of previous block to the beginning of the try block.
-        self.peer.create_br(try_block);
+        self.bridge.create_br(try_block);
 
-        self.peer.set_basic_block(try_block);
+        self.bridge.set_basic_block(try_block);
 
         push_bb_name!(self, "try");
     }
@@ -2005,13 +2012,13 @@ impl<'r, 's> Compiler<'r, 's> {
             .push_exit_target(finally_block, false);
 
         // Jump from the end of the try block to the beginning of the finally block.
-        self.peer.create_br(finally_block);
-        self.peer.move_basic_block_after(catch_block);
-        self.peer.set_basic_block(catch_block);
+        self.bridge.create_br(finally_block);
+        self.bridge.move_basic_block_after(catch_block);
+        self.bridge.set_basic_block(catch_block);
 
         if !nominal {
-            self.peer.create_store_normal_status();
-            self.peer.create_set_flow_selector_normal();
+            self.bridge.create_store_normal_status();
+            self.bridge.create_set_flow_selector_normal();
         }
 
         push_bb_name!(self, "catch");
@@ -2028,9 +2035,9 @@ impl<'r, 's> Compiler<'r, 's> {
         self.control_flow_stack.pop_exit_target();
 
         // Jump from the end of the catch block to the beginning of the finally block.
-        self.peer.create_br(finally_block);
-        self.peer.move_basic_block_after(finally_block);
-        self.peer.set_basic_block(finally_block);
+        self.bridge.create_br(finally_block);
+        self.bridge.move_basic_block_after(finally_block);
+        self.bridge.set_basic_block(finally_block);
 
         push_bb_name!(self, "finally");
     }
@@ -2043,12 +2050,12 @@ impl<'r, 's> Compiler<'r, 's> {
 
         // Jump from the end of the finally block to the beginning of the outer catch block if
         // there is an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
-        let is_normal = self.peer.create_is_flow_selector_normal();
-        self.peer
+        let is_normal = self.bridge.create_is_flow_selector_normal();
+        self.bridge
             .create_cond_br(is_normal, flow.end_block, parent_exit_block);
 
-        self.peer.move_basic_block_after(flow.end_block);
-        self.peer.set_basic_block(flow.end_block);
+        self.bridge.move_basic_block_after(flow.end_block);
+        self.bridge.set_basic_block(flow.end_block);
     }
 
     fn process_label_start(&mut self, label: Symbol, is_iteration_statement: bool) {
@@ -2065,9 +2072,9 @@ impl<'r, 's> Compiler<'r, 's> {
             let start_block = self.create_basic_block("start");
             let end_block = self.create_basic_block("end");
 
-            self.peer.create_br(start_block);
-            self.peer.move_basic_block_after(end_block);
-            self.peer.set_basic_block(start_block);
+            self.bridge.create_br(start_block);
+            self.bridge.move_basic_block_after(end_block);
+            self.bridge.set_basic_block(start_block);
 
             self.control_flow_stack.push_exit_target(end_block, false);
             self.control_flow_stack.set_exit_label(label);
@@ -2081,27 +2088,28 @@ impl<'r, 's> Compiler<'r, 's> {
             debug_assert!(self.pending_labels.is_empty());
         } else {
             let end_block = self.control_flow_stack.pop_exit_target();
-            self.peer.create_br(end_block);
-            self.peer.move_basic_block_after(end_block);
-            self.peer.set_basic_block(end_block);
+            self.bridge.create_br(end_block);
+            self.bridge.move_basic_block_after(end_block);
+            self.bridge.set_basic_block(end_block);
         }
     }
 
     fn process_continue(&mut self, label: Symbol) {
         let exit_id = self.control_flow_stack.exit_id_for_label(label);
-        self.peer.create_set_flow_selector_continue(exit_id.depth());
+        self.bridge
+            .create_set_flow_selector_continue(exit_id.depth());
 
         let block = self.control_flow_stack.exit_block();
-        self.peer.create_br(block);
+        self.bridge.create_br(block);
         self.create_basic_block_for_deadcode();
     }
 
     fn process_break(&mut self, label: Symbol) {
         let exit_id = self.control_flow_stack.exit_id_for_label(label);
-        self.peer.create_set_flow_selector_break(exit_id.depth());
+        self.bridge.create_set_flow_selector_break(exit_id.depth());
 
         let block = self.control_flow_stack.exit_block();
-        self.peer.create_br(block);
+        self.bridge.create_br(block);
         self.create_basic_block_for_deadcode();
     }
 
@@ -2112,25 +2120,25 @@ impl<'r, 's> Compiler<'r, 's> {
             self.create_store_operand_to_retv(operand);
         }
 
-        self.peer.create_store_normal_status();
-        self.peer.create_set_flow_selector_return();
+        self.bridge.create_store_normal_status();
+        self.bridge.create_set_flow_selector_return();
 
         let next_block = self.control_flow_stack.cleanup_block();
 
-        self.peer.create_br(next_block);
+        self.bridge.create_br(next_block);
 
         self.create_basic_block_for_deadcode();
     }
 
     fn create_store_operand_to_retv(&mut self, operand: Operand) {
         match operand {
-            Operand::Undefined => self.peer.create_store_undefined_to_retv(),
-            Operand::Null => self.peer.create_store_null_to_retv(),
-            Operand::Boolean(value) => self.peer.create_store_boolean_to_retv(value),
-            Operand::Number(value) => self.peer.create_store_number_to_retv(value),
-            Operand::Closure(value) => self.peer.create_store_closure_to_retv(value),
-            Operand::Promise(value) => self.peer.create_store_promise_to_retv(value),
-            Operand::Any(value) => self.peer.create_store_value_to_retv(value),
+            Operand::Undefined => self.bridge.create_store_undefined_to_retv(),
+            Operand::Null => self.bridge.create_store_null_to_retv(),
+            Operand::Boolean(value) => self.bridge.create_store_boolean_to_retv(value),
+            Operand::Number(value) => self.bridge.create_store_number_to_retv(value),
+            Operand::Closure(value) => self.bridge.create_store_closure_to_retv(value),
+            Operand::Promise(value) => self.bridge.create_store_promise_to_retv(value),
+            Operand::Any(value) => self.bridge.create_store_value_to_retv(value),
             _ => unreachable!(),
         }
     }
@@ -2138,32 +2146,32 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_throw(&mut self) {
         let (operand, _) = self.dereference();
         self.create_store_operand_to_retv(operand);
-        self.peer.create_store_exception_status();
-        self.peer.create_set_flow_selector_throw();
+        self.bridge.create_store_exception_status();
+        self.bridge.create_set_flow_selector_throw();
 
         let next_block = self.control_flow_stack.exception_block();
 
-        self.peer.create_br(next_block);
-        self.peer.move_basic_block_after(next_block);
+        self.bridge.create_br(next_block);
+        self.bridge.move_basic_block_after(next_block);
 
         self.create_basic_block_for_deadcode();
     }
 
     fn process_environment(&mut self, num_locals: u16) {
         let flow = self.control_flow_stack.function_flow();
-        let backup = self.peer.get_basic_block();
+        let backup = self.bridge.get_basic_block();
 
         // Local variables and captured variables living outer scopes are loaded here from the
         // `Coroutine` data passed via the `env` argument of the coroutine lambda function to be
         // generated by the compiler.
-        self.peer.set_basic_block(flow.init_block);
-        self.peer.create_set_captures_for_coroutine();
+        self.bridge.set_basic_block(flow.init_block);
+        self.bridge.create_set_captures_for_coroutine();
         for i in 0..num_locals {
-            let local = self.peer.create_get_local_ptr_from_coroutine(i);
+            let local = self.bridge.create_get_local_ptr_from_coroutine(i);
             self.locals.push(local);
         }
 
-        self.peer.set_basic_block(backup);
+        self.bridge.set_basic_block(backup);
     }
 
     fn process_jump_table(&mut self, num_states: u32) {
@@ -2171,16 +2179,16 @@ impl<'r, 's> Compiler<'r, 's> {
         let initial_block = self.create_basic_block("co.initial");
         let done_block = self.create_basic_block("co.done");
         let inst = self
-            .peer
+            .bridge
             .create_switch_for_coroutine(done_block, num_states);
-        self.peer
+        self.bridge
             .create_add_state_for_coroutine(inst, 0, initial_block);
 
-        self.peer.set_basic_block(done_block);
-        self.peer
+        self.bridge.set_basic_block(done_block);
+        self.bridge
             .create_unreachable(c"the coroutine has already done");
 
-        self.peer.set_basic_block(initial_block);
+        self.bridge.set_basic_block(initial_block);
 
         self.control_flow_stack
             .push_coroutine_flow(inst, done_block, num_states);
@@ -2189,15 +2197,16 @@ impl<'r, 's> Compiler<'r, 's> {
     fn process_await(&mut self, next_state: u32) {
         self.resolve_promise();
         self.save_operands_to_scratch_buffer();
-        self.peer.create_set_coroutine_state(next_state);
-        self.peer.create_suspend();
+        self.bridge.create_set_coroutine_state(next_state);
+        self.bridge.create_suspend();
 
         // resume block
         let block = self.create_basic_block("resume");
         let inst = self.control_flow_stack.coroutine_switch_inst();
         let state = self.control_flow_stack.coroutine_next_state();
-        self.peer.create_add_state_for_coroutine(inst, state, block);
-        self.peer.set_basic_block(block);
+        self.bridge
+            .create_add_state_for_coroutine(inst, state, block);
+        self.bridge.set_basic_block(block);
 
         self.load_operands_from_scratch_buffer();
 
@@ -2205,70 +2214,71 @@ impl<'r, 's> Compiler<'r, 's> {
         let result_block = self.create_basic_block("result");
 
         // if ##error.has_value()
-        let error = self.peer.create_get_argument_value_ptr(2); // ##error
-        let has_error = self.peer.create_has_value(error);
-        self.peer
+        let error = self.bridge.create_get_argument_value_ptr(2); // ##error
+        let has_error = self.bridge.create_has_value(error);
+        self.bridge
             .create_cond_br(has_error, has_error_block, result_block);
         {
             // throw ##error;
-            self.peer.set_basic_block(has_error_block);
+            self.bridge.set_basic_block(has_error_block);
             self.operand_stack.push(Operand::Any(error));
             self.process_throw();
-            self.peer.create_br(result_block);
+            self.bridge.create_br(result_block);
         }
 
-        self.peer.set_basic_block(result_block);
-        let result = self.peer.create_get_argument_value_ptr(1); // ##result
+        self.bridge.set_basic_block(result_block);
+        let result = self.bridge.create_get_argument_value_ptr(1); // ##result
         self.operand_stack.push(Operand::Any(result));
     }
 
     fn resolve_promise(&mut self) {
-        let promise = self.peer.create_get_argument_value_ptr(0); // ##promise
-        let promise = self.peer.create_load_promise_from_value(promise);
+        let promise = self.bridge.create_get_argument_value_ptr(0); // ##promise
+        let promise = self.bridge.create_load_promise_from_value(promise);
 
         let (operand, _) = self.dereference();
         match operand {
             Operand::Undefined => {
-                let result = self.peer.create_undefined_to_any();
-                self.peer.create_emit_promise_resolved(promise, result);
+                let result = self.bridge.create_undefined_to_any();
+                self.bridge.create_emit_promise_resolved(promise, result);
             }
             Operand::Null => {
-                let result = self.peer.create_null_to_any();
-                self.peer.create_emit_promise_resolved(promise, result);
+                let result = self.bridge.create_null_to_any();
+                self.bridge.create_emit_promise_resolved(promise, result);
             }
             Operand::Boolean(value) => {
-                let result = self.peer.create_boolean_to_any(value);
-                self.peer.create_emit_promise_resolved(promise, result);
+                let result = self.bridge.create_boolean_to_any(value);
+                self.bridge.create_emit_promise_resolved(promise, result);
             }
             Operand::Number(value) => {
-                let result = self.peer.create_number_to_any(value);
-                self.peer.create_emit_promise_resolved(promise, result);
+                let result = self.bridge.create_number_to_any(value);
+                self.bridge.create_emit_promise_resolved(promise, result);
             }
             Operand::Closure(value) => {
-                let result = self.peer.create_closure_to_any(value);
-                self.peer.create_emit_promise_resolved(promise, result);
+                let result = self.bridge.create_closure_to_any(value);
+                self.bridge.create_emit_promise_resolved(promise, result);
             }
             Operand::Promise(value) => {
-                self.peer.create_await_promise(value, promise);
+                self.bridge.create_await_promise(value, promise);
             }
             Operand::Any(value) => {
                 let then_block = self.create_basic_block("is_promise.then");
                 let else_block = self.create_basic_block("is_promise.else");
                 let block = self.create_basic_block("block");
                 // if value.is_promise()
-                let is_promise = self.peer.create_is_promise(value);
-                self.peer.create_cond_br(is_promise, then_block, else_block);
+                let is_promise = self.bridge.create_is_promise(value);
+                self.bridge
+                    .create_cond_br(is_promise, then_block, else_block);
                 // {
-                self.peer.set_basic_block(then_block);
-                let target = self.peer.create_load_promise_from_value(value);
-                self.peer.create_await_promise(target, promise);
-                self.peer.create_br(block);
+                self.bridge.set_basic_block(then_block);
+                let target = self.bridge.create_load_promise_from_value(value);
+                self.bridge.create_await_promise(target, promise);
+                self.bridge.create_br(block);
                 // } else {
-                self.peer.set_basic_block(else_block);
-                self.peer.create_emit_promise_resolved(promise, value);
-                self.peer.create_br(block);
+                self.bridge.set_basic_block(else_block);
+                self.bridge.create_emit_promise_resolved(promise, value);
+                self.bridge.create_br(block);
                 // }
-                self.peer.set_basic_block(block);
+                self.bridge.set_basic_block(block);
             }
             _ => unreachable!("{operand:?}"),
         }
@@ -2290,28 +2300,28 @@ impl<'r, 's> Compiler<'r, 's> {
                 Operand::Undefined => (),
                 Operand::Null => (),
                 Operand::Boolean(value) => {
-                    self.peer
+                    self.bridge
                         .create_write_boolean_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Number(value) => {
-                    self.peer
+                    self.bridge
                         .create_write_number_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
-                    self.peer
+                    self.bridge
                         .create_write_closure_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Promise(value) => {
-                    self.peer
+                    self.bridge
                         .create_write_promise_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Any(value) => {
-                    self.peer
+                    self.bridge
                         .create_write_value_to_scratch_buffer(offset, *value);
                     offset += VALUE_SIZE;
                 }
@@ -2332,24 +2342,24 @@ impl<'r, 's> Compiler<'r, 's> {
                 Operand::Undefined => (),
                 Operand::Null => (),
                 Operand::Boolean(ref mut value) => {
-                    *value = self.peer.create_read_boolean_from_scratch_buffer(offset);
+                    *value = self.bridge.create_read_boolean_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Number(ref mut value) => {
-                    *value = self.peer.create_read_number_from_scratch_buffer(offset);
+                    *value = self.bridge.create_read_number_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Closure(ref mut value) => {
                     // TODO(issue#237): GcCellRef
-                    *value = self.peer.create_read_closure_from_scratch_buffer(offset);
+                    *value = self.bridge.create_read_closure_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Promise(ref mut value) => {
-                    *value = self.peer.create_read_promise_from_scratch_buffer(offset);
+                    *value = self.bridge.create_read_promise_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
                 Operand::Any(ref mut value) => {
-                    *value = self.peer.create_read_value_from_scratch_buffer(offset);
+                    *value = self.bridge.create_read_value_from_scratch_buffer(offset);
                     offset += VALUE_SIZE;
                 }
                 Operand::Reference(..) => (),
@@ -2360,7 +2370,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_resume(&mut self) {
         let promise = self.pop_promise();
-        self.peer.create_resume(promise);
+        self.bridge.create_resume(promise);
     }
 
     fn pop_coroutine(&mut self) -> CoroutineIr {
@@ -2391,13 +2401,13 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_debugger(&mut self) {
-        self.peer.create_debugger();
+        self.bridge.create_debugger();
     }
 
     fn create_basic_block(&mut self, name: &str) -> BasicBlock {
         push_bb_name!(self, name);
         let (name, name_len) = bb_name!(self);
-        let block = self.peer.create_basic_block(name, name_len);
+        let block = self.bridge.create_basic_block(name, name_len);
         pop_bb_name!(self);
         block
     }
@@ -2417,7 +2427,7 @@ impl<'r, 's> Compiler<'r, 's> {
     // At this point, we don't know whether this is a common method or not...
     fn create_basic_block_for_deadcode(&mut self) {
         let block = self.create_basic_block("deadcode");
-        self.peer.set_basic_block(block);
+        self.bridge.set_basic_block(block);
     }
 }
 

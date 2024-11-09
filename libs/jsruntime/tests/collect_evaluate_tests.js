@@ -32,18 +32,20 @@ Deno.exit(await main(args, options));
 async function main(args, options) {
   function mapValue(value) {
     switch (value) {
+      case undefined:
+        return undefined;
       case 'undefined':
         return 'Value::Undefined';
       case 'null':
         return 'Value::Null';
       case 'NaN':
-        return 'f64::NAN';
+        return 'Value::Number(f64::NAN)';
       case 'Infinity':
-        return 'f64::INFINITY';
+        return 'Value::Number(f64::INFINITY)';
       case '-Infinity':
-        return '-f64::INFINITY';
+        return 'Value::Number(-f64::INFINITY)';
       default:
-        return value;
+        return `Value::from(${value})`;
     }
   }
 

@@ -3,44 +3,56 @@ use std::path::PathBuf;
 
 use duct::cmd;
 
+static CBINDGEN_TOML: &str = "src/llvmir/cbindgen.toml";
+
+static BRIDGE_SOURCE_FILES: &[&str] = &[
+    "src/llvmir/mod.rs",
+    "src/llvmir/executor/bridge.rs",
+    "src/llvmir/module/bridge.rs",
+];
+
 static LLVM_COMPONENTS: &[&str] = &["core", "orcjit", "x86"];
 
 static LLVMIR_SOURCE_FILES: &[&str] = &[
     "src/llvmir/bridge.hh",
-    "src/llvmir/runtime.hh",
-    "src/llvmir/bridge.cc",
-    "src/llvmir/compiler.hh",
-    "src/llvmir/executor.cc",
-    "src/llvmir/executor.codegen.cc",
-    "src/llvmir/executor.hh",
-    "src/llvmir/helper.cc",
-    "src/llvmir/helper.hh",
-    "src/llvmir/macros.hh",
-    "src/llvmir/module.hh",
-    "src/llvmir/type_holder.hh",
-    "src/llvmir/type_holder.cc",
+    "src/llvmir/compiler/impl.hh",
+    "src/llvmir/compiler/peer.cc",
+    "src/llvmir/compiler/type_holder.hh",
+    "src/llvmir/compiler/type_holder.cc",
+    "src/llvmir/executor/impl.codegen.hh",
+    "src/llvmir/executor/impl.hh",
+    "src/llvmir/executor/peer.cc",
+    "src/llvmir/module/impl.hh",
+    "src/llvmir/module/peer.cc",
+    "src/llvmir/peer.cc",
 ];
 
 fn main() {
     let profile = std::env::var("PROFILE").unwrap();
+    let crate_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let out_dir = PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
 
-    // Generate bindings for Rust.
-    let input_file = "src/llvmir/bridge.hh";
-    let output_file = out_dir.join("bridge.rs");
-    bindgen::Builder::default()
-        .header(input_file)
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        // TODO: Using rustified enum types causes performance regression in fib(41).
-        // However, wedon't know the exact reason at this point.  Deeper investigation is needed.
-        .derive_debug(false)
-        .derive_eq(true)
-        .generate()
-        .expect("Unable to generate bindings for Rust")
-        .write_to_file(output_file)
-        .expect("Couldn't write bindings for Rust");
+    // Generate bridge.hh for LLVM IR bridge.
 
-    // Build LLVM-IR glue.
+    let config = cbindgen::Config::from_file(CBINDGEN_TOML).expect("Unable to load cbindgen.toml");
+
+    cbindgen::Builder::new()
+        .with_config(config)
+        .with_crate(crate_dir)
+        .generate()
+        .expect("Unable to generate bindings")
+        .write_to_file("src/llvmir/bridge.hh");
+
+    // Rebuild when cbindgen.toml change.
+    println!("cargo::rerun-if-changed={CBINDGEN_TOML}");
+
+    // Rebuild when any of BRIDGE_SOURCE_FILES change.
+    for src in BRIDGE_SOURCE_FILES {
+        println!("cargo::rerun-if-changed={src}");
+    }
+
+    // Build LLVM IR bridge.
+
     let llvm_config = LlvmConfig::new();
     let cc_files = LLVMIR_SOURCE_FILES
         .iter()

@@ -4,6 +4,7 @@ use rustc_hash::FxHashMap;
 
 use crate::types::Coroutine;
 use crate::types::CoroutineStatus;
+use crate::types::Promise;
 use crate::Runtime;
 use crate::Value;
 
@@ -55,21 +56,6 @@ impl<X> Runtime<X> {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct Promise(u32);
-
-impl From<u32> for Promise {
-    fn from(value: u32) -> Self {
-        Self(value)
-    }
-}
-
-impl From<Promise> for u32 {
-    fn from(value: Promise) -> Self {
-        value.0
-    }
-}
-
 pub struct System {
     messages: VecDeque<Message>,
     promises: FxHashMap<Promise, PromiseDriver>,
@@ -96,7 +82,7 @@ impl System {
     fn new_promise(&mut self) -> Promise {
         assert!(self.promises.len() < u32::MAX as usize);
         loop {
-            let promise = Promise(self.next_promise);
+            let promise = self.next_promise.into();
             if !self.promises.contains_key(&promise) {
                 return promise;
             }

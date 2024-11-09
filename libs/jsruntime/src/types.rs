@@ -1,14 +1,8 @@
 use std::ffi::c_void;
-use std::marker::PhantomPinned;
 use std::mem::offset_of;
 use std::ptr::addr_eq;
 
-use crate::llvmir::bridge::Lambda;
-use crate::llvmir::bridge::Status;
-use crate::llvmir::bridge::STATUS_NORMAL;
-use crate::llvmir::bridge::STATUS_EXCEPTION;
-use crate::llvmir::bridge::STATUS_SUSPEND;
-use crate::tasklet::Promise;
+use crate::Runtime;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
 // memory layout of a type you want to change.  It's recommended to use compile-time assertions
@@ -37,8 +31,8 @@ static_assertions::const_assert_eq!(align_of::<Value>(), 8);
 impl Value {
     pub fn into_result(self, status: Status) -> Result<Value, Value> {
         match status {
-            STATUS_NORMAL => Ok(self),
-            STATUS_EXCEPTION => Err(self),
+            Status::Normal => Ok(self),
+            Status::Exception => Err(self),
             _ => unreachable!(),
         }
     }
@@ -76,7 +70,7 @@ impl From<u32> for Value {
 
 impl From<Promise> for Value {
     fn from(value: Promise) -> Self {
-        Self::Promise(value.into())
+        Self::Promise(value)
     }
 }
 
@@ -88,7 +82,7 @@ impl std::fmt::Debug for Value {
             Self::Null => write!(f, "null"),
             Self::Boolean(value) => write!(f, "{value}"),
             Self::Number(value) => write!(f, "{value}"),
-            Self::Closure(value) => write!(f, "{:?}", &*value),
+            Self::Closure(value) => write!(f, "{:?}", unsafe { value.as_ref().unwrap() }),
             Self::Promise(value) => write!(f, "{value:?}"),
         }
     }
@@ -119,7 +113,7 @@ static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
 
 impl std::fmt::Debug for Closure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let lambda = self.lambda.unwrap();
+        let lambda = self.lambda;
         write!(f, "closure({lambda:?}, [")?;
         let len = self.num_captures as usize;
         let data = self.captures.as_ptr();
@@ -142,9 +136,13 @@ impl std::fmt::Debug for Closure {
 // TODO(issue#237): GcCell
 #[repr(C)]
 pub struct Capture {
+    /// A captured value.
+    ///
+    /// This may point to the `escaped`.
     pub target: *mut Value,
+
+    /// Data storage for escaped value.
     pub escaped: Value,
-    _pinned: PhantomPinned,
 }
 
 static_assertions::const_assert_eq!(size_of::<Capture>(), 24);
@@ -169,6 +167,8 @@ impl std::fmt::Debug for Capture {
 }
 
 /// A data type to represent a coroutine.
+///
+/// The scratch_buffer starts from `&Coroutine::locals[Coroutine::num_locals]`.
 //
 // TODO(issue#237): GcCell
 #[repr(C)]
@@ -191,9 +191,9 @@ pub struct Coroutine {
     pub scratch_buffer_len: u16,
 
     /// A variable-length list of local variables used in the coroutine.
+    ///
+    /// `Capture::target` may point to one of `locals[]`.
     pub locals: [Value; 32],
-
-    // The scratch_buffer starts from &locals[num_locals].
 }
 
 static_assertions::const_assert_eq!(align_of::<Coroutine>(), 8);
@@ -207,21 +207,20 @@ impl Coroutine {
         error: &Value,
     ) -> CoroutineStatus {
         unsafe {
-            let lambda = (&*(*coroutine).closure).lambda.unwrap();
+            let lambda = (*(*coroutine).closure).lambda;
             let mut args = [promise.into(), result.clone(), error.clone()];
             let mut retv = Value::None;
             let status = lambda(
                 runtime,
                 coroutine as *mut c_void,
-                args.len(),
-                args.as_mut_ptr() as *mut Value as *mut crate::llvmir::bridge::Value,
-                &mut retv as *mut Value as *mut crate::llvmir::bridge::Value,
+                args.len() as u16,
+                args.as_mut_ptr(),
+                &mut retv as *mut Value,
             );
             match status {
-                STATUS_NORMAL => CoroutineStatus::Done(retv),
-                STATUS_EXCEPTION => CoroutineStatus::Error(retv),
-                STATUS_SUSPEND => CoroutineStatus::Suspend,
-                _ => unreachable!(),
+                Status::Normal => CoroutineStatus::Done(retv),
+                Status::Exception => CoroutineStatus::Error(retv),
+                Status::Suspend => CoroutineStatus::Suspend,
             }
         }
     }
@@ -244,7 +243,7 @@ where
     T: Clone + Into<Value>,
 {
     fn status(&self) -> Status {
-        STATUS_NORMAL
+        Status::Normal
     }
 
     fn value(&self) -> Value {
@@ -259,9 +258,9 @@ where
 {
     fn status(&self) -> Status {
         if self.is_ok() {
-            STATUS_NORMAL
+            Status::Normal
         } else {
-            STATUS_EXCEPTION
+            Status::Exception
         }
     }
 
@@ -270,5 +269,84 @@ where
             Ok(v) => v.clone().into(),
             Err(err) => err.clone().into(),
         }
+    }
+}
+
+/// Lambda function.
+///
+/// The actual type of `context` varies depending on usage of the lambda function:
+///
+/// * Regular functions: Capture**
+/// * Coroutine functions: Coroutine*
+///
+pub type Lambda = unsafe extern "C" fn(
+    runtime: *mut c_void,
+    context: *mut c_void,
+    args: u16,
+    argv: *mut Value,
+    retv: *mut Value,
+) -> Status;
+
+// See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+
+// This function generates a wrapper function for each `host_fn` at compile time.
+pub fn into_lambda<F, R, X>(host_fn: F) -> Lambda
+where
+    F: Fn(&mut Runtime<X>, &[Value]) -> R + Send + Sync + 'static,
+    R: Clone + ReturnValue,
+{
+    debug_assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
+    std::mem::forget(host_fn);
+    host_fn_wrapper::<F, R, X>
+}
+
+unsafe extern "C" fn host_fn_wrapper<F, R, X>(
+    runtime: *mut c_void,
+    _context: *mut c_void,
+    argc: u16,
+    argv: *mut Value,
+    retv: *mut Value,
+) -> Status
+where
+    F: Fn(&mut Runtime<X>, &[Value]) -> R + Send + Sync + 'static,
+    R: Clone + ReturnValue,
+{
+    #[allow(clippy::uninit_assumed_init)]
+    let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
+    let runtime = &mut *(runtime as *mut Runtime<X>);
+    let args = std::slice::from_raw_parts(argv as *const Value, argc as usize);
+    // TODO: The return value is copied twice.  That's inefficient.
+    let result = host_fn(runtime, args);
+    let retv = &mut *retv;
+    *retv = result.value();
+    result.status()
+}
+
+/// The return value type of `Lambda` function.
+#[repr(u32)]
+pub enum Status {
+    Normal,
+    Exception,
+    Suspend,
+}
+
+static_assertions::const_assert_eq!(size_of::<Status>(), 4);
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[repr(C)]
+pub struct Promise(u32);
+
+static_assertions::const_assert_eq!(size_of::<Promise>(), 4);
+static_assertions::const_assert_eq!(align_of::<Promise>(), 4);
+
+impl From<u32> for Promise {
+    fn from(value: u32) -> Self {
+        Self(value)
+    }
+}
+
+impl From<Promise> for u32 {
+    fn from(value: Promise) -> Self {
+        value.0
     }
 }

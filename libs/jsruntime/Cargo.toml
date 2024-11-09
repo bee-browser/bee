@@ -12,13 +12,15 @@ bitflags = "2.6.0"
 bumpalo = "3.16.0"
 indexmap = "2.6.0"
 jsparser = { path = "../jsparser", features = ["location"] }
+libc = "0.2.162"
 logging = { path = "../logging" }
+paste = "1.0.15"
 rustc-hash = "2.0.0"
 static_assertions = "1.1.0"
 thiserror = "2.0.1"
 
 [build-dependencies]
-bindgen = "0.70.1"
+cbindgen = { git = "https://github.com/masnagam/cbindgen.git", branch = "fix-issue-43" }
 cc = { version = "1.1.37", features = ["parallel"] }
 duct = "0.13.7"
 

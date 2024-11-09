@@ -34,15 +34,18 @@
 #include <llvm/Transforms/Utils/Mem2Reg.h>
 #pragma GCC diagnostic pop
 
-#include "bridge.hh"
-#include "macros.hh"
-#include "module.hh"
+#include "../module/impl.hh"
 #include "type_holder.hh"
 
-class TypeHolder;
-struct Module;
-
+#define UNUSED(var) ((void)(var))
 #define REG_NAME(expr) (enable_labels_ ? expr : "")
+
+#define STATUS_UNSET_BIT 0x10
+#define STATUS_MASK 0x0F
+#define STATUS_NORMAL 0x00
+#define STATUS_EXCEPTION 0x01
+#define STATUS_SUSPEND 0x02
+#define STATUS_UNSET (STATUS_UNSET_BIT | STATUS_NORMAL)
 
 // DO NOT CHANGE THE FOLLOWING VALUES.
 // The implementation heavily depends on the values.
@@ -581,40 +584,40 @@ class Compiler {
   }
 
   void CreateStoreNoneToValue(llvm::Value* dest) {
-    CreateStoreValueKindToValue(ValueKind::None, dest);
+    CreateStoreValueKindToValue(kValueKindNone, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
   void CreateStoreUndefinedToValue(llvm::Value* dest) {
-    CreateStoreValueKindToValue(ValueKind::Undefined, dest);
+    CreateStoreValueKindToValue(kValueKindUndefined, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
   void CreateStoreNullToValue(llvm::Value* dest) {
-    CreateStoreValueKindToValue(ValueKind::Null, dest);
+    CreateStoreValueKindToValue(kValueKindNull, dest);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), dest);
   }
 
   void CreateStoreBooleanToValue(llvm::Value* value, llvm::Value* dest) {
-    CreateStoreValueKindToValue(ValueKind::Boolean, dest);
+    CreateStoreValueKindToValue(kValueKindBoolean, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
   void CreateStoreNumberToValue(llvm::Value* value, llvm::Value* dest) {
-    CreateStoreValueKindToValue(ValueKind::Number, dest);
+    CreateStoreValueKindToValue(kValueKindNumber, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
   void CreateStoreClosureToValue(llvm::Value* value, llvm::Value* dest) {
-    CreateStoreValueKindToValue(ValueKind::Closure, dest);
+    CreateStoreValueKindToValue(kValueKindClosure, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
   void CreateStorePromiseToValue(llvm::Value* value, llvm::Value* dest) {
-    CreateStoreValueKindToValue(ValueKind::Promise, dest);
+    CreateStoreValueKindToValue(kValueKindPromise, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
@@ -953,14 +956,43 @@ class Compiler {
     builder_->CreateUnreachable();
   }
 
+  // helper functions
+
+  // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+  // based-on: Value::getNameOrAsOperand().
+  static std::string GetNameOrAsOperand(llvm::Value* value) {
+    assert(value != nullptr);
+
+    auto name = value->getName();
+    if (!name.empty()) {
+      return std::string(name);
+    }
+
+    std::string buffer;
+    llvm::raw_string_ostream os(buffer);
+    value->printAsOperand(os);
+    return buffer;
+  }
+
+  static size_t GetNameOrAsOperand(llvm::Value* value, char* buf, size_t len) {
+    assert(value != nullptr);
+    assert(buf != nullptr);
+    assert(len > 1);
+    auto s = GetNameOrAsOperand(value);
+    auto nwritten = std::min(s.size(), len - 1);
+    memcpy(buf, s.data(), nwritten);
+    buf[nwritten] = '\0';
+    return nwritten;
+  }
+
  private:
-  static constexpr uint8_t kValueKindNone = static_cast<uint8_t>(ValueKind::None);
-  static constexpr uint8_t kValueKindUndefined = static_cast<uint8_t>(ValueKind::Undefined);
-  static constexpr uint8_t kValueKindNull = static_cast<uint8_t>(ValueKind::Null);
-  static constexpr uint8_t kValueKindBoolean = static_cast<uint8_t>(ValueKind::Boolean);
-  static constexpr uint8_t kValueKindNumber = static_cast<uint8_t>(ValueKind::Number);
-  static constexpr uint8_t kValueKindClosure = static_cast<uint8_t>(ValueKind::Closure);
-  static constexpr uint8_t kValueKindPromise = static_cast<uint8_t>(ValueKind::Promise);
+  static constexpr uint8_t kValueKindNone = static_cast<uint8_t>(Value::Tag::None);
+  static constexpr uint8_t kValueKindUndefined = static_cast<uint8_t>(Value::Tag::Undefined);
+  static constexpr uint8_t kValueKindNull = static_cast<uint8_t>(Value::Tag::Null);
+  static constexpr uint8_t kValueKindBoolean = static_cast<uint8_t>(Value::Tag::Boolean);
+  static constexpr uint8_t kValueKindNumber = static_cast<uint8_t>(Value::Tag::Number);
+  static constexpr uint8_t kValueKindClosure = static_cast<uint8_t>(Value::Tag::Closure);
+  static constexpr uint8_t kValueKindPromise = static_cast<uint8_t>(Value::Tag::Promise);
 
   void CreateStore(llvm::Value* value, llvm::Value* dest) {
     builder_->CreateStore(value, dest);
@@ -1088,8 +1120,8 @@ class Compiler {
     return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("value.number"));
   }
 
-  void CreateStoreValueKindToValue(ValueKind value, llvm::Value* dest) {
-    CreateStoreValueKindToValue(builder_->getInt8(static_cast<uint8_t>(value)), dest);
+  void CreateStoreValueKindToValue(uint8_t value, llvm::Value* dest) {
+    CreateStoreValueKindToValue(builder_->getInt8(value), dest);
   }
 
   void CreateStoreValueKindToValue(llvm::Value* value, llvm::Value* dest) {
@@ -1103,17 +1135,13 @@ class Compiler {
   }
 
   void CreateMemCpyValue(llvm::Value* dst, llvm::Value* src) {
-    auto* layout = module_->getDataLayout().getStructLayout(types_->CreateValueType());
-    // TODO: can computed at compile-time
-    auto align = layout->getAlignment();
-    auto* size = types_->GetWord(layout->getSizeInBytes());
+    auto align = llvm::Align(alignof(Value));
+    auto* size = GetSizeofValue();
     builder_->CreateMemCpy(dst, align, src, align, size);
   }
 
   llvm::Value* GetSizeofValue() {
-    auto* layout = module_->getDataLayout().getStructLayout(types_->CreateValueType());
-    // TODO: can computed at compile-time
-    return types_->GetWord(layout->getSizeInBytes());
+    return types_->GetWord(sizeof(Value));
   }
 
   // closure
@@ -1247,10 +1275,9 @@ class Compiler {
     auto* num_locals = CreateLoadNumLocalsFromCoroutine();
     auto* num_locals_usize =
         builder_->CreateSExt(num_locals, types_->GetWordType(), REG_NAME("co.num_locals.usize"));
-    auto* sizeof_locals = builder_->CreateMul(GetSizeofValue(), num_locals_usize, REG_NAME("co.locals.sizeof"));
-    auto* layout = module_->getDataLayout().getStructLayout(types_->CreateCoroutineType());
-    // TODO: can computed at compile-time
-    auto* offsetof_locals = types_->GetWord(layout->getElementOffset(5));
+    auto* sizeof_locals =
+        builder_->CreateMul(GetSizeofValue(), num_locals_usize, REG_NAME("co.locals.sizeof"));
+    auto* offsetof_locals = types_->GetWord(offsetof(Coroutine, locals));
     auto* offset = builder_->CreateAdd(offsetof_locals, sizeof_locals,
                                        REG_NAME("co.scratch_buffer.offsetof"));
     return builder_->CreateInBoundsPtrAdd(context_, offset, REG_NAME("co.scratch_buffer.ptr"));

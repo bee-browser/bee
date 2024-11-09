@@ -4,10 +4,9 @@ PROJ_DIR := $(realpath ../../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 CODEGEN_TARGETS := \
-  runtime.hh \
-  executor.codegen.cc \
-  type_holder.cc \
-  type_holder.hh
+  compiler/type_holder.cc \
+  compiler/type_holder.hh \
+  executor/impl.codegen.hh
 
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
