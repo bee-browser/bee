@@ -1,2 +1,1 @@
-# FIXME: `deno` started to crash during `make codegen` since 2.0.1.
-deno 2.0.0
+deno 2.0.6
