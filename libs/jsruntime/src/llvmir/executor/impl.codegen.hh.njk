@@ -3,20 +3,12 @@
 // This file was automagically generated with:
 // template: {{ template }}
 
-#include "executor.hh"
-
-#include <cmath>
-#include <cstring>
-#include <limits>
-
-static llvm::ExitOnError ExitOnErr;
-
 // TODO: link libm directly
 extern "C" double runtime_fmod(double a, double b) {
   return std::fmod(a, b);
 }
 
-void Executor::RegisterRuntime(const Runtime* runtime) {
+void Executor::RegisterRuntimeFunctions(const RuntimeFunctions* functions) {
   llvm::orc::SymbolMap symbols;
   symbols[exec_session().intern("fmod")] = {
     llvm::orc::ExecutorAddr::fromPtr(runtime_fmod),
@@ -32,7 +24,7 @@ void Executor::RegisterRuntime(const Runtime* runtime) {
   };
   {%- for function in data.functions %}
   symbols[exec_session().intern("runtime_{{ function.name }}")] = {
-    llvm::orc::ExecutorAddr::fromPtr(runtime->{{ function.name }}),
+    llvm::orc::ExecutorAddr::fromPtr(functions->{{ function.name }}),
     llvm::JITSymbolFlags::Exported,
   };
   {%- endfor %}

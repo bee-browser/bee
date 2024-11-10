@@ -1,0 +1,8 @@
+language = "C++"
+pragma_once = true
+sys_includes = ["cstddef", "cstdint"]
+no_includes = true
+usize_is_size_t = true
+
+# Needed for generating forward declarations properly.
+style = "both"

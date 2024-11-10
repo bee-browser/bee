@@ -30,18 +30,40 @@ if (options.debug) {
 Deno.exit(await main(args, options));
 
 async function main(args, options) {
+  function mapValue(value) {
+    switch (value) {
+      case undefined:
+        return undefined;
+      case 'undefined':
+        return 'Value::Undefined';
+      case 'null':
+        return 'Value::Null';
+      case 'NaN':
+        return 'Value::Number(f64::NAN)';
+      case 'Infinity':
+        return 'Value::Number(f64::INFINITY)';
+      case '-Infinity':
+        return 'Value::Number(-f64::INFINITY)';
+      default:
+        return `Value::from(${value})`;
+    }
+  }
+
   const tests = [];
   for (const test of args.tests) {
     log.debug(`Reading ${test}...`);
     const script = await Deno.readTextFile(test);
     const lines = script.split('\n').map((line) => line.trim());
-    const sequencedValues = lines.filter((line) => line.includes('///='))
-      .map((line) => line.split('///=')[1].trim());
+    const sequencedValues = lines
+      .filter((line) => line.includes('///='))
+      .map((line) => line.split('///=')[1].trim())
+      .map(mapValue);
     const orderedValues = lines
       .filter((line) => line.includes('///#'))
       .map((line) => line.split('///#')[1].trim().split('='))
+      .map(([i, v]) => [i, mapValue(v)])
       .reduce((acc, [i, v]) => { acc[i] = v; return acc; }, []);
-    const throws = lines.find((line) => line.includes('///!'))?.split('///!')[1].trim();
+    const throws = mapValue(lines.find((line) => line.includes('///!'))?.split('///!')[1].trim());
     const name = path.basename(test).replace('.', '_');
     const module = test.endsWith('.js') ? false : true;
     tests.push({

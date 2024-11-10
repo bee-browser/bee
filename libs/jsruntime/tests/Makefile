@@ -8,7 +8,11 @@ CODEGEN_TARGETS := evaluate.rs
 EVALUATE_TESTS := $(wildcard scripts/*.js) $(wildcard modules/*.mjs)
 
 .PHONY: codegen
-codegen: evaluate.rs
+codegen: $(CODEGEN_TARGETS)
+
+.PHONY: clean
+clean:
+	@rm -f $(CODEGEN_TARGETS)
 
 evaluate.rs: evaluate.rs.njk $(EVALUATE_TESTS) collect_evaluate_tests.js
 	@echo 'Generating $(abspath $@)...'

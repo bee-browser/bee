@@ -3,21 +3,21 @@ mod llvmir;
 mod logger;
 mod semantics;
 mod tasklet;
+mod types;
+
+use std::ffi::c_void;
 
 use jsparser::SymbolRegistry;
 
 use function::FunctionId;
 use function::FunctionRegistry;
 use llvmir::Executor;
-use llvmir::ReturnValue;
-use llvmir::Status;
+use types::ReturnValue;
 
 pub use llvmir::CompileError;
 pub use llvmir::Module;
-pub use llvmir::Value;
 pub use semantics::Program;
-
-type VoidPtr = *mut std::ffi::c_void;
+pub use types::Value;
 
 pub fn initialize() {
     llvmir::initialize();
@@ -62,12 +62,12 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let runtime_bridge = llvmir::runtime_bridge::<X>();
+        let functions = llvmir::RuntimeFunctions::new::<X>();
         Self {
             pref: Default::default(),
             symbol_registry: Default::default(),
             function_registry: FunctionRegistry::new(),
-            executor: Executor::with_runtime_bridge(&runtime_bridge),
+            executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
             tasklet_system: tasklet::System::new(),
             extension,
@@ -98,14 +98,14 @@ impl<X> Runtime<X> {
         let symbol = self.symbol_registry.intern_str(name);
         let func_id = self.function_registry.register_host_function(symbol);
         self.executor
-            .register_host_function(func_id, into_host_lambda(host_fn));
+            .register_host_function(func_id, types::into_lambda(host_fn));
         logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "evaluate");
         self.executor.register_module(module);
-        let mut retv = Value::UNDEFINED;
+        let mut retv = Value::Undefined;
         let status = match self.executor.get_native_function(FunctionId::MAIN) {
             Some(main) => unsafe {
                 main(
@@ -118,7 +118,7 @@ impl<X> Runtime<X> {
                     // argv
                     std::ptr::null_mut(),
                     // retv
-                    &mut retv as *mut Value,
+                    &mut retv,
                 )
             },
             None => unreachable!(),
@@ -126,8 +126,8 @@ impl<X> Runtime<X> {
         retv.into_result(status)
     }
 
-    fn as_void_ptr(&mut self) -> VoidPtr {
-        self as *mut Self as VoidPtr
+    fn as_void_ptr(&mut self) -> *mut c_void {
+        self as *mut Self as *mut c_void
     }
 
     fn allocator(&self) -> &bumpalo::Bump {
@@ -142,41 +142,4 @@ where
     fn default() -> Self {
         Runtime::with_extension(Default::default())
     }
-}
-
-// See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-
-type HostLambda = unsafe extern "C" fn(VoidPtr, VoidPtr, usize, *mut Value, *mut Value) -> Status;
-
-// This function generates a wrapper function for each `host_func` at compile time.
-#[inline(always)]
-fn into_host_lambda<F, R, X>(host_fn: F) -> HostLambda
-where
-    F: Fn(&mut Runtime<X>, &[Value]) -> R + Send + Sync + 'static,
-    R: Clone + ReturnValue,
-{
-    debug_assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
-    std::mem::forget(host_fn);
-    host_fn_wrapper::<F, R, X>
-}
-
-unsafe extern "C" fn host_fn_wrapper<F, R, X>(
-    runtime: VoidPtr,
-    _context: VoidPtr,
-    argc: usize,
-    argv: *mut Value,
-    retv: *mut Value,
-) -> Status
-where
-    F: Fn(&mut Runtime<X>, &[Value]) -> R + Send + Sync + 'static,
-    R: Clone + ReturnValue,
-{
-    #[allow(clippy::uninit_assumed_init)]
-    let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
-    let runtime = &mut *(runtime as *mut Runtime<X>);
-    let args = std::slice::from_raw_parts(argv as *const Value, argc);
-    // TODO: The return value is copied twice.  That's inefficient.
-    let result = host_fn(runtime, args);
-    *retv = result.value();
-    result.status()
 }

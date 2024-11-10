@@ -1,5 +1,5 @@
-/src/llvmir/runtime.hh
-/src/llvmir/executor.codegen.cc
-/src/llvmir/type_holder.cc
-/src/llvmir/type_holder.hh
+/src/llvmir/bridge.hh
+/src/llvmir/compiler/type_holder.cc
+/src/llvmir/compiler/type_holder.hh
+/src/llvmir/executor/impl.codegen.hh
 /tests/evaluate.rs

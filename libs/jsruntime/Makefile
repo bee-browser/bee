@@ -15,6 +15,7 @@ codegen:
 .PHONY: clean
 clean:
 	@$(MAKE) -s -C src/llvmir clean
+	@$(MAKE) -s -C tests clean
 
 .PHONY: bench
 bench:

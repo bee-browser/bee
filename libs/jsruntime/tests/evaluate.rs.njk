@@ -86,26 +86,14 @@ fn {{ test.name }}(optimize: bool, enable_labels: bool) {
     let src = include_str!("{{ test.filename }}");
     let result = evaluate(src, {{ test.module }}, optimize, enable_labels, vec![
         {%- for expected in test.expectedValues %}
-        {%- if expected === "Value::UNDEFINED" %}
         {{ expected }},
-        {%- elif expected === "Value::NULL" %}
-        {{ expected }},
-        {%- else %}
-        Value::from({{ expected }}),
-        {%- endif %}
         {%- endfor %}
     ]);
     {%- if test.throws %}
     assert_matches!(result, Err(actual) => {
         // Some cases including `f64::NAN` fail in `assert_eq!()`.
         let actual = format!("{actual:?}");
-        {%- if test.throws === "Value::UNDEFINED" %}
         let expected = format!("{:?}", {{ test.throws }});
-        {%- elif test.throws === "Value::NULL" %}
-        let expected = format!("{:?}", {{ test.throws }});
-        {%- else %}
-        let expected = format!("{:?}", Value::from({{ test.throws }}));
-        {%- endif %}
         assert_eq!(actual, expected);
     });
     {%- else %}

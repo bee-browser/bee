@@ -1,8 +1,8 @@
 test(await undefined, await null, await true, await 1, await x, y(), await 300);
 
 async function test(undef, nul, bool, number, closure, promise, last) {
-  print(undef);         ///=Value::UNDEFINED
-  print(nul);           ///=Value::NULL
+  print(undef);         ///=undefined
+  print(nul);           ///=null
   print(bool);          ///=true
   print(number);        ///=1
   closure();            ///=100
