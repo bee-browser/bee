@@ -1,6 +1,6 @@
 # BEE
 
-> Browser Engine for Embedding
+> A web browser engine to be embedded within applications
 
 [![ci](https://github.com/bee-browser/bee/actions/workflows/ci.yml/badge.svg)](https://github.com/bee-browser/bee/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/bee-browser/bee/graph/badge.svg?token=ZU1I8W30M9)](https://codecov.io/gh/bee-browser/bee)
@@ -8,7 +8,7 @@
 
 ## What's BEE?
 
-BEE is a web browser engine intended to be embedded into other applications.
+BEE is a web browser engine intended to be embedded within applications.
 
 ## Development
 

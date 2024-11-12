@@ -1,9 +1,12 @@
 [package]
 name = "jsparser"
-version = "0.0.0"
-edition = "2021"
-authors = ["BEE project contributors"]
-publish = false
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+version.workspace = true
 
 [features]
 location = []
