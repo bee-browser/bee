@@ -11,7 +11,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.93"
 base = { path = "../../libs/base" }
-clap = { version = "4.5.20", features = ["derive", "env"] }
+clap = { version = "4.5.21", features = ["derive", "env"] }
 indexmap = { version = "2.6.0", features = ["serde"] }
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
