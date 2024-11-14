@@ -53,7 +53,7 @@ jobs:
       - name: Generate code coverage
         run: |
           make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json' TEST262_ARGS=''
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         with:
           files: codecov.json
           fail_ci_if_error: true
