@@ -498,6 +498,10 @@ class Compiler {
 
   // value
 
+  llvm::Value* CreateIsNullptr(llvm::Value* value) {
+    return builder_->CreateICmpEQ(value, GetNullptr(), REG_NAME("value.is_nullptr"));
+  }
+
   llvm::Value* CreateHasValue(llvm::Value* value) {
     auto* kind = CreateLoadValueKindFromValue(value);
     return builder_->CreateICmpNE(kind, builder_->getInt8(kValueKindNone),
@@ -905,6 +909,18 @@ class Compiler {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
     return builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
                                           REG_NAME("scratch.value.ptr"));
+  }
+
+  // object
+
+  llvm::Value* CreateGet(uint32_t symbol) {
+    auto* func = types_->CreateRuntimeGet();
+    return builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol)}, REG_NAME("get." + llvm::Twine(symbol) + ".ptr"));
+  }
+
+  void CreateSet(uint32_t symbol, llvm::Value* value) {
+    auto* func = types_->CreateRuntimeSet();
+    builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol), value});
   }
 
   // scope cleanup checker

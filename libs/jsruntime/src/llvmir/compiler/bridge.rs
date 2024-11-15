@@ -4,6 +4,8 @@ use std::ffi::CStr;
 
 use paste::paste;
 
+use jsparser::Symbol;
+
 use crate::llvmir::module::Module;
 use crate::llvmir::module::ModulePeer;
 use crate::logger;
@@ -508,6 +510,12 @@ impl CompilerBridge {
 
     // value
 
+    pub fn create_is_nullptr(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_is_nullptr(self.0, value.0)
+        }
+    }
+
     pub fn create_has_value(&self, value: ValueIr) -> BooleanIr {
         boolean_ir! {
             compiler_peer_create_has_value(self.0, value.0)
@@ -1011,6 +1019,20 @@ impl CompilerBridge {
         }
     }
 
+    // object
+
+    pub fn create_get(&self, symbol: Symbol) -> ValueIr {
+        value_ir! {
+            compiler_peer_create_get(self.0, symbol.id())
+        }
+    }
+
+    pub fn create_set(&self, symbol: Symbol, value: ValueIr) {
+        unsafe {
+            compiler_peer_create_set(self.0, symbol.id(), value.0);
+        }
+    }
+
     // scope cleanup checker
 
     pub fn enable_scope_cleanup_checker(&self, is_coroutine: bool) {
@@ -1418,6 +1440,7 @@ extern "C" {
 
     // value
 
+    fn compiler_peer_create_is_nullptr(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_has_value(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_is_loosely_equal(
         peer: CompilerPeer,
@@ -1641,6 +1664,11 @@ extern "C" {
         peer: CompilerPeer,
         offset: u32,
     ) -> ValueIrPtr;
+
+    // object
+
+    fn compiler_peer_create_get(peer: CompilerPeer, symbol: u32) -> ValueIrPtr;
+    fn compiler_peer_create_set(peer: CompilerPeer, symbol: u32, value: ValueIrPtr);
 
     // scope cleanup checker
 

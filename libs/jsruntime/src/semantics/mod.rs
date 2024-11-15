@@ -16,11 +16,12 @@ use jsparser::Processor;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
-use super::logger;
-use super::FunctionId;
-use super::FunctionRegistry;
-use super::Runtime;
-use super::RuntimePref;
+use crate::logger;
+use crate::FunctionId;
+use crate::FunctionRegistry;
+use crate::Runtime;
+use crate::RuntimePref;
+
 use scope::ScopeTreeBuilder;
 
 pub use scope::BindingRef;
@@ -946,44 +947,36 @@ impl<'r> Analyzer<'r> {
         let binding_ref = self.scope_tree_builder.resolve_reference(reference);
         logger::debug!(event = "resolve_reference", ?reference, ?binding_ref);
 
-        if binding_ref == BindingRef::NONE {
-            // This is a reference to a free variable.
-            let capture_index = match context.captures.get_full(&reference.symbol) {
-                Some((capture_index, ..)) => capture_index,
-                None => {
-                    let (capture_index, _) = context.captures.insert_full(
-                        reference.symbol,
-                        Capture {
-                            symbol: reference.symbol,
-                            target: Locator::None,
-                        },
-                    );
-                    self.context_stack
-                        .last_mut()
-                        .unwrap()
-                        .references
-                        .push(Reference {
-                            symbol: reference.symbol,
-                            scope_ref: self.scope_tree_builder.current(),
-                            from: ReferenceFrom::Capture(context.func_index, capture_index),
-                        });
-                    capture_index
-                }
-            };
-            let locator = Locator::checked_capture(capture_index).unwrap();
-            match reference.from {
-                ReferenceFrom::Command(command_index) => {
-                    context.commands[command_index] =
-                        CompileCommand::Reference(reference.symbol, locator);
-                }
-                ReferenceFrom::Capture(func_index, capture_index) => {
-                    self.functions[func_index].captures[capture_index].target = locator;
-                }
+        let locator = match (binding_ref, self.context_stack.is_empty()) {
+            (BindingRef::NONE, true) => Locator::Global,
+            (BindingRef::NONE, false) => {
+                // This is a reference to a free variable.
+                let capture_index = match context.captures.get_full(&reference.symbol) {
+                    Some((capture_index, ..)) => capture_index,
+                    None => {
+                        let (capture_index, _) = context.captures.insert_full(
+                            reference.symbol,
+                            Capture {
+                                symbol: reference.symbol,
+                                target: Locator::None,
+                            },
+                        );
+                        self.context_stack
+                            .last_mut()
+                            .unwrap()
+                            .references
+                            .push(Reference {
+                                symbol: reference.symbol,
+                                scope_ref: self.scope_tree_builder.current(),
+                                from: ReferenceFrom::Capture(context.func_index, capture_index),
+                            });
+                        capture_index
+                    }
+                };
+                Locator::checked_capture(capture_index).unwrap()
             }
-            return;
-        }
-
-        let locator = self.scope_tree_builder.compute_locator(binding_ref);
+            _ => self.scope_tree_builder.compute_locator(binding_ref),
+        };
         match reference.from {
             ReferenceFrom::Command(command_index) => {
                 context.commands[command_index] =
@@ -991,7 +984,9 @@ impl<'r> Analyzer<'r> {
             }
             ReferenceFrom::Capture(func_index, capture_index) => {
                 self.functions[func_index].captures[capture_index].target = locator;
-                self.scope_tree_builder.set_captured(binding_ref);
+                if binding_ref != BindingRef::NONE {
+                    self.scope_tree_builder.set_captured(binding_ref);
+                }
             }
         }
     }
@@ -1789,6 +1784,7 @@ pub enum Locator {
     Argument(u16),
     Local(u16),
     Capture(u16),
+    Global,
 }
 
 impl Locator {

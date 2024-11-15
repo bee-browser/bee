@@ -244,11 +244,13 @@ impl ScopeTreeBuilder {
                     return BindingRef::checked_new(scope_ref, index).unwrap();
                 }
                 Err(_) => {
+                    if scope.is_function() {
+                        // Reference to a free variable.
+                        return BindingRef::NONE;
+                    }
                     scope_ref = scope.outer;
                     if scope_ref == ScopeRef::NONE {
-                        panic!("{reference:?}");
-                    }
-                    if scope.is_function() {
+                        // Reference to a property of the global object.
                         return BindingRef::NONE;
                     }
                 }

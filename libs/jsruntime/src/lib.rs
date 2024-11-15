@@ -1,6 +1,7 @@
 mod function;
 mod llvmir;
 mod logger;
+mod objects;
 mod semantics;
 mod tasklet;
 mod types;
@@ -12,6 +13,7 @@ use jsparser::SymbolRegistry;
 use function::FunctionId;
 use function::FunctionRegistry;
 use llvmir::Executor;
+use objects::Object;
 use types::ReturnValue;
 
 pub use llvmir::CompileError;
@@ -57,6 +59,7 @@ pub struct Runtime<X> {
     // TODO: GcArena
     allocator: bumpalo::Bump,
     tasklet_system: tasklet::System,
+    global_object: Object,
     extension: X,
 }
 
@@ -70,6 +73,7 @@ impl<X> Runtime<X> {
             executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
             tasklet_system: tasklet::System::new(),
+            global_object: Default::default(),
             extension,
         }
     }
@@ -132,6 +136,14 @@ impl<X> Runtime<X> {
 
     fn allocator(&self) -> &bumpalo::Bump {
         &self.allocator
+    }
+
+    fn global_object(&self) -> &Object {
+        &self.global_object
+    }
+
+    fn global_object_mut(&mut self) -> &mut Object {
+        &mut self.global_object
     }
 }
 

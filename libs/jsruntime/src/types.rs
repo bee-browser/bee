@@ -292,7 +292,7 @@ pub type Lambda = unsafe extern "C" fn(
 // This function generates a wrapper function for each `host_fn` at compile time.
 pub fn into_lambda<F, R, X>(host_fn: F) -> Lambda
 where
-    F: Fn(&mut Runtime<X>, &[Value]) -> R + Send + Sync + 'static,
+    F: Fn(&mut Runtime<X>, &[Value]) -> R + 'static,
     R: Clone + ReturnValue,
 {
     debug_assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
@@ -308,7 +308,7 @@ unsafe extern "C" fn host_fn_wrapper<F, R, X>(
     retv: *mut Value,
 ) -> Status
 where
-    F: Fn(&mut Runtime<X>, &[Value]) -> R + Send + Sync + 'static,
+    F: Fn(&mut Runtime<X>, &[Value]) -> R + 'static,
     R: Clone + ReturnValue,
 {
     #[allow(clippy::uninit_assumed_init)]

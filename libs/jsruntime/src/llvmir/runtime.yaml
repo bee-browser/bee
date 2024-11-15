@@ -75,6 +75,19 @@ functions:
         type: u32
       - name: result
         type: '&Value'
+  - name: get
+    args:
+      - name: symbol
+        type: u32
+      # TODO(perf): add arguments for inline caching
+    ret: '&Value'
+  - name: set
+    args:
+      - name: symbol
+        type: u32
+      - name: value
+        type: '&Value'
+      # TODO(perf): add arguments for inline caching
   - name: assert
     args:
       - name: assertion

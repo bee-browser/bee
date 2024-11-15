@@ -536,7 +536,7 @@ impl<'r, 's> Compiler<'r, 's> {
             _ => unreachable!(),
         };
 
-        self.create_store_operand_to_value(operand, value);
+        self.create_store_operand_to_value(&operand, value);
     }
 
     fn dereference(&mut self) -> (Operand, Option<(Symbol, Locator)>) {
@@ -545,19 +545,41 @@ impl<'r, 's> Compiler<'r, 's> {
         let operand = self.operand_stack.pop().unwrap();
         match operand {
             Operand::Reference(symbol, locator) => {
-                let value = self.create_get_value_ptr(locator);
+                let value = self.create_get_value_ptr(symbol, locator);
                 (Operand::Any(value), Some((symbol, locator)))
             }
             _ => (operand, None),
         }
     }
 
-    fn create_get_value_ptr(&mut self, locator: Locator) -> ValueIr {
+    fn create_get_value_ptr(&mut self, symbol: Symbol, locator: Locator) -> ValueIr {
         match locator {
+            Locator::None => unreachable!(),
             Locator::Argument(index) => self.bridge.create_get_argument_value_ptr(index),
             Locator::Local(index) => self.locals[index as usize],
             Locator::Capture(index) => self.bridge.create_get_capture_value_ptr(index),
-            _ => unreachable!(),
+            Locator::Global => {
+                let then_block = self.create_basic_block("is_nullptr.then");
+                let else_block = self.create_basic_block("is_nullptr.else");
+                let end_block = self.create_basic_block("value_ptr");
+
+                let value = self.bridge.create_get(symbol);
+                // if value.is_nullptr()
+                let is_nullptr = self.bridge.create_is_nullptr(value);
+                self.bridge.create_cond_br(is_nullptr, then_block, else_block);
+                // then
+                self.bridge.set_basic_block(then_block);
+                // TODO(feat): ReferenceError
+                self.process_number(1000.);
+                self.process_throw();
+                self.bridge.create_br(end_block);
+                // else
+                self.bridge.set_basic_block(else_block);
+                self.bridge.create_br(end_block);
+
+                self.bridge.set_basic_block(end_block);
+                value
+            }
         }
     }
 
@@ -568,15 +590,15 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_store_operand_to_value(&mut self, operand: Operand, dest: ValueIr) {
+    fn create_store_operand_to_value(&mut self, operand: &Operand, dest: ValueIr) {
         match operand {
             Operand::Undefined => self.bridge.create_store_undefined_to_value(dest),
             Operand::Null => self.bridge.create_store_null_to_value(dest),
-            Operand::Boolean(value) => self.bridge.create_store_boolean_to_value(value, dest),
-            Operand::Number(value) => self.bridge.create_store_number_to_value(value, dest),
-            Operand::Closure(value) => self.bridge.create_store_closure_to_value(value, dest),
-            Operand::Promise(value) => self.bridge.create_store_promise_to_value(value, dest),
-            Operand::Any(value) => self.bridge.create_store_value_to_value(value, dest),
+            Operand::Boolean(value) => self.bridge.create_store_boolean_to_value(*value, dest),
+            Operand::Number(value) => self.bridge.create_store_number_to_value(*value, dest),
+            Operand::Closure(value) => self.bridge.create_store_closure_to_value(*value, dest),
+            Operand::Promise(value) => self.bridge.create_store_promise_to_value(*value, dest),
+            Operand::Any(value) => self.bridge.create_store_value_to_value(*value, dest),
             _ => unreachable!(),
         }
     }
@@ -590,7 +612,7 @@ impl<'r, 's> Compiler<'r, 's> {
             _ => unreachable!(),
         };
 
-        self.create_store_operand_to_value(operand, value);
+        self.create_store_operand_to_value(&operand, value);
     }
 
     fn process_declare_function(&mut self) {
@@ -608,7 +630,7 @@ impl<'r, 's> Compiler<'r, 's> {
             _ => unreachable!(),
         };
 
-        self.create_store_operand_to_value(operand, value);
+        self.create_store_operand_to_value(&operand, value);
 
         self.bridge.set_basic_block(backup);
     }
@@ -628,7 +650,7 @@ impl<'r, 's> Compiler<'r, 's> {
             _ => unreachable!(),
         };
 
-        self.create_store_operand_to_value(operand, value);
+        self.create_store_operand_to_value(&operand, value);
 
         self.bridge.set_basic_block(backup);
     }
@@ -653,7 +675,7 @@ impl<'r, 's> Compiler<'r, 's> {
             for i in (0..argc).rev() {
                 let (operand, _) = self.dereference();
                 let ptr = self.bridge.create_get_arg_in_argv(argv, i);
-                self.create_store_operand_to_value(operand, ptr);
+                self.create_store_operand_to_value(&operand, ptr);
             }
             argv
         } else {
@@ -701,8 +723,8 @@ impl<'r, 's> Compiler<'r, 's> {
         // else
         let (else_value, else_block) = {
             self.bridge.set_basic_block(else_block);
-            // TODO: TypeError
-            self.process_number(1.);
+            // TODO(feat): TypeError
+            self.process_number(1001.);
             self.process_throw();
             self.bridge.create_br(end_block);
             (
@@ -866,7 +888,7 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(!locator.is_capture());
         debug_assert!(self.captures.contains_key(&locator));
         let capture = self.captures.swap_remove(&locator).unwrap();
-        let value = self.create_get_value_ptr(locator);
+        let value = self.create_get_value_ptr(Symbol::NONE, locator);
         self.bridge.create_escape_value(capture, value);
     }
 
@@ -917,7 +939,7 @@ impl<'r, 's> Compiler<'r, 's> {
                 self.process_discard();
             }
             _ => {
-                // TODO: throw a ReferenceError at runtime
+                // TODO(feat): throw a ReferenceError at runtime
             }
         }
         self.operand_stack.push(Operand::Number(if pos == '^' {
@@ -1207,12 +1229,12 @@ impl<'r, 's> Compiler<'r, 's> {
         logger::debug!(event = "create_is_loosely_equal", ?lhs, ?rhs);
         if let Operand::Any(lhs) = lhs {
             // TODO: compile-time evaluation
-            let rhs = self.create_to_any(rhs);
+            let rhs = self.create_to_any(&rhs);
             return self.bridge.create_is_loosely_equal(lhs, rhs);
         }
         if let Operand::Any(rhs) = rhs {
             // TODO: compile-time evaluation
-            let lhs = self.create_to_any(lhs);
+            let lhs = self.create_to_any(&lhs);
             return self.bridge.create_is_loosely_equal(lhs, rhs);
         }
 
@@ -1239,20 +1261,20 @@ impl<'r, 's> Compiler<'r, 's> {
         // TODO: 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
         // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
         // TODO: ...
-        let lhs = self.create_to_any(lhs);
-        let rhs = self.create_to_any(rhs);
+        let lhs = self.create_to_any(&lhs);
+        let rhs = self.create_to_any(&rhs);
         self.bridge.create_is_loosely_equal(lhs, rhs)
     }
 
-    fn create_to_any(&mut self, operand: Operand) -> ValueIr {
+    fn create_to_any(&mut self, operand: &Operand) -> ValueIr {
         logger::debug!(event = "create_to_any", ?operand);
         match operand {
-            Operand::Any(value) => value,
+            Operand::Any(value) => *value,
             Operand::Undefined => self.bridge.create_undefined_to_any(),
             Operand::Null => self.bridge.create_null_to_any(),
-            Operand::Boolean(value) => self.bridge.create_boolean_to_any(value),
-            Operand::Number(value) => self.bridge.create_number_to_any(value),
-            Operand::Closure(value) => self.bridge.create_closure_to_any(value),
+            Operand::Boolean(value) => self.bridge.create_boolean_to_any(*value),
+            Operand::Number(value) => self.bridge.create_number_to_any(*value),
+            Operand::Closure(value) => self.bridge.create_closure_to_any(*value),
             _ => unreachable!(),
         }
     }
@@ -1529,11 +1551,11 @@ impl<'r, 's> Compiler<'r, 's> {
         // We have to convert the value before the branch in each block.
 
         self.bridge.set_basic_block(then_block);
-        let then_value = self.create_to_any(then_operand);
+        let then_value = self.create_to_any(&then_operand);
         self.bridge.create_br(block);
 
         self.bridge.set_basic_block(else_block);
-        let else_value = self.create_to_any(else_operand);
+        let else_value = self.create_to_any(&else_operand);
         self.bridge.create_br(block);
 
         self.bridge.set_basic_block(block);
@@ -1553,13 +1575,21 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.15.2 Runtime Semantics: Evaluation
     fn process_assignment(&mut self) {
         let (rhs, _) = self.dereference();
-        let (_, locator) = self.pop_reference();
+        let (symbol, locator) = self.pop_reference();
 
-        let value = self.create_get_value_ptr(locator);
-        // TODO: check the mutable flag
-        // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
-
-        self.create_store_operand_to_value(rhs.clone(), value);
+        match locator {
+            Locator::Global => {
+                let value = self.create_to_any(&rhs);
+                // TODO(feat): ReferenceError, TypeError
+                self.bridge.create_set(symbol, value);
+            }
+            _ => {
+                let value = self.create_get_value_ptr(symbol, locator);
+                // TODO: check the mutable flag
+                // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
+                self.create_store_operand_to_value(&rhs, value);
+            }
+        }
 
         self.operand_stack.push(rhs);
     }
@@ -2117,7 +2147,7 @@ impl<'r, 's> Compiler<'r, 's> {
         if n > 0 {
             debug_assert_eq!(n, 1);
             let (operand, _) = self.dereference();
-            self.create_store_operand_to_retv(operand);
+            self.create_store_operand_to_retv(&operand);
         }
 
         self.bridge.create_store_normal_status();
@@ -2130,22 +2160,22 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_basic_block_for_deadcode();
     }
 
-    fn create_store_operand_to_retv(&mut self, operand: Operand) {
+    fn create_store_operand_to_retv(&mut self, operand: &Operand) {
         match operand {
             Operand::Undefined => self.bridge.create_store_undefined_to_retv(),
             Operand::Null => self.bridge.create_store_null_to_retv(),
-            Operand::Boolean(value) => self.bridge.create_store_boolean_to_retv(value),
-            Operand::Number(value) => self.bridge.create_store_number_to_retv(value),
-            Operand::Closure(value) => self.bridge.create_store_closure_to_retv(value),
-            Operand::Promise(value) => self.bridge.create_store_promise_to_retv(value),
-            Operand::Any(value) => self.bridge.create_store_value_to_retv(value),
+            Operand::Boolean(value) => self.bridge.create_store_boolean_to_retv(*value),
+            Operand::Number(value) => self.bridge.create_store_number_to_retv(*value),
+            Operand::Closure(value) => self.bridge.create_store_closure_to_retv(*value),
+            Operand::Promise(value) => self.bridge.create_store_promise_to_retv(*value),
+            Operand::Any(value) => self.bridge.create_store_value_to_retv(*value),
             _ => unreachable!(),
         }
     }
 
     fn process_throw(&mut self) {
         let (operand, _) = self.dereference();
-        self.create_store_operand_to_retv(operand);
+        self.create_store_operand_to_retv(&operand);
         self.bridge.create_store_exception_status();
         self.bridge.create_set_flow_selector_throw();
 

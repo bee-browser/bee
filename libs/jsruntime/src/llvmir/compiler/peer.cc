@@ -361,6 +361,10 @@ void compiler_peer_create_emit_promise_resolved(CompilerPeer peer,
 
 // value
 
+BooleanIrPtr compiler_peer_create_is_nullptr(CompilerPeer peer, ValueIrPtr value) {
+  return PEER_BOOLEAN(IMPL(peer)->CreateIsNullptr(LLVM_VALUE(value)));
+}
+
 BooleanIrPtr compiler_peer_create_has_value(CompilerPeer peer, ValueIrPtr value) {
   return PEER_BOOLEAN(IMPL(peer)->CreateHasValue(LLVM_VALUE(value)));
 }
@@ -717,6 +721,17 @@ void compiler_peer_create_write_value_to_scratch_buffer(CompilerPeer peer,
 ValueIrPtr compiler_peer_create_read_value_from_scratch_buffer(CompilerPeer peer,
                                                                uint32_t offset) {
   return PEER_VALUE(IMPL(peer)->CreateReadValueFromScratchBuffer(offset));
+}
+
+// object
+
+ValueIrPtr compiler_peer_create_get(CompilerPeer peer, uint32_t symbol) {
+  return PEER_VALUE(IMPL(peer)->CreateGet(symbol));
+}
+
+void compiler_peer_create_set(CompilerPeer peer, uint32_t symbol, ValueIrPtr value) {
+  assert(value != nullptr);
+  IMPL(peer)->CreateSet(symbol, LLVM_VALUE(value));
 }
 
 // scope cleanup checker

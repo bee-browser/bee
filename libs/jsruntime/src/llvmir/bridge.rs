@@ -1,6 +1,8 @@
 use std::ffi::c_char;
 use std::ffi::c_void;
 
+use jsparser::Symbol;
+
 use crate::logger;
 use crate::types::Capture;
 use crate::types::Closure;
@@ -29,6 +31,8 @@ pub struct RuntimeFunctions {
     await_promise: unsafe extern "C" fn(*mut c_void, u32, u32),
     resume: unsafe extern "C" fn(*mut c_void, u32),
     emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    get: unsafe extern "C" fn(*mut c_void, u32) -> *const Value,
+    set: unsafe extern "C" fn(*mut c_void, u32, *const Value),
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
@@ -52,6 +56,8 @@ impl RuntimeFunctions {
             await_promise: runtime_await_promise::<X>,
             resume: runtime_resume::<X>,
             emit_promise_resolved: runtime_emit_promise_resolved::<X>,
+            get: runtime_get::<X>,
+            set: runtime_set::<X>,
             assert: runtime_assert,
             print_u32: runtime_print_u32,
             print_f64: runtime_print_f64,
@@ -335,6 +341,24 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
     let runtime = into_runtime!(runtime, X);
     let cloned = into_value!(result).clone();
     runtime.emit_promise_resolved(promise.into(), cloned);
+}
+
+unsafe extern "C" fn runtime_get<X>(runtime: *mut c_void, symbol: u32) -> *const Value {
+    debug_assert_ne!(symbol, 0);
+    let runtime = into_runtime!(runtime, X);
+    let symbol = Symbol::from(symbol);
+    match runtime.global_object().get(symbol) {
+        Some(value) => value,
+        None => std::ptr::null(),
+    }
+}
+
+unsafe extern "C" fn runtime_set<X>(runtime: *mut c_void, symbol: u32, value: *const Value) {
+    debug_assert_ne!(symbol, 0);
+    let runtime = into_runtime!(runtime, X);
+    let symbol = Symbol::from(symbol);
+    let value = value.as_ref().unwrap();
+    runtime.global_object_mut().set(symbol, value);
 }
 
 unsafe extern "C" fn runtime_assert(
