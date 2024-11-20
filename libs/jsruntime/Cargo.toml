@@ -29,7 +29,7 @@ duct = "0.13.7"
 [dev-dependencies]
 assert_matches = "1.5.0"
 criterion = "0.5.1"
-ctor = "0.2.8"
+ctor = "0.2.9"
 
 [[bench]]
 name = "jsruntime-bench"
