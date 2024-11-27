@@ -13,7 +13,7 @@ bitflags = "2.6.0"
 chrono = { version = "0.4.38", default-features = false, features = ["clock"] }
 ctor = "0.2.9"
 is-terminal = "0.4.13"
-tracing = "0.1.40"
+tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 
 [dev-dependencies]
