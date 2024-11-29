@@ -128,7 +128,7 @@ impl std::fmt::Display for Rule {
 
 struct Label<'a>(&'a Rule, usize);
 
-impl<'a> std::fmt::Display for Label<'a> {
+impl std::fmt::Display for Label<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} ->", self.0.name)?;
         for (i, term) in self.0.production.iter().enumerate() {

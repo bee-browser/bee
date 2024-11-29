@@ -120,7 +120,7 @@ where
     }
 }
 
-impl<'a, T> VisualRenderer for JsonRenderer<'a, T>
+impl<T> VisualRenderer for JsonRenderer<'_, T>
 where
     T: JsonSink,
 {

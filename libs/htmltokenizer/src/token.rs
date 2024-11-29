@@ -34,7 +34,7 @@ impl<'a> Token<'a> {
     }
 }
 
-impl<'a> std::fmt::Debug for Token<'a> {
+impl std::fmt::Debug for Token<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Token::Doctype(ref doctype) => {
@@ -166,7 +166,7 @@ impl<'a, 'b> Attrs<'a, 'b> {
     }
 }
 
-impl<'a, 'b> Iterator for Attrs<'a, 'b> {
+impl<'a> Iterator for Attrs<'a, '_> {
     type Item = (&'a str, &'a str);
 
     fn next(&mut self) -> Option<Self::Item> {

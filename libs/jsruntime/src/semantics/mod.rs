@@ -997,7 +997,7 @@ impl<'r> Analyzer<'r> {
     }
 }
 
-impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
+impl<'s> NodeHandler<'s> for Analyzer<'_> {
     type Artifact = Program;
 
     fn start(&mut self) {

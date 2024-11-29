@@ -161,7 +161,7 @@ impl<'a> TreeValidator<'a> {
     }
 }
 
-impl<'a> DomTreeBuilder for TreeValidator<'a> {
+impl DomTreeBuilder for TreeValidator<'_> {
     type NodeId = usize;
 
     delegate! {
