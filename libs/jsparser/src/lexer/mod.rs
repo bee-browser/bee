@@ -27,7 +27,7 @@ impl<'s> Lexer<'s> {
     ///
     /// The initial goal symbol of the created JavaScript lexer is [`Goal::Div`].
     #[inline(always)]
-    pub fn new(src: &'s str) -> Lexer {
+    pub fn new(src: &'s str) -> Self {
         Lexer {
             cursor: SourceCursor::new(src),
             goal: Goal::Div,
@@ -95,7 +95,7 @@ pub struct Token<'s> {
     flags: TokenFlags,
 }
 
-impl<'s> Token<'s> {
+impl Token<'_> {
     /// A token used for automatic semicolon insertion.
     pub(crate) const AUTO_SEMICOLON: Token<'static> = Token {
         lexeme: ";",
@@ -158,7 +158,7 @@ impl<'s> Token<'s> {
     }
 }
 
-impl<'s> Default for Token<'s> {
+impl Default for Token<'_> {
     fn default() -> Self {
         Token {
             lexeme: "",

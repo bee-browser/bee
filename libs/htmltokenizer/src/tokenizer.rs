@@ -3616,7 +3616,7 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-impl<'a> Default for Tokenizer<'a> {
+impl Default for Tokenizer<'_> {
     fn default() -> Self {
         Self::new()
     }

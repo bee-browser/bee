@@ -2719,7 +2719,7 @@ impl<'s, 'p, H> Refinery<'s, 'p, H> {
     }
 }
 
-impl<'s, 'p, H> SyntaxHandler<'s> for Refinery<'s, 'p, H>
+impl<'s, H> SyntaxHandler<'s> for Refinery<'s, '_, H>
 where
     H: NodeHandler<'s>,
 {

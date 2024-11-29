@@ -40,14 +40,14 @@ pub enum Error {
     SyntaxError,
 }
 
-pub fn for_script<'s, H>(src: &'s str, handler: H) -> Parser<'s, syntax::Processor<H>>
+pub fn for_script<'s, H>(src: &'s str, handler: H) -> Parser<'s, syntax::Processor<'s, H>>
 where
     H: NodeHandler<'s>,
 {
     Parser::for_script(src, syntax::Processor::new(handler, false))
 }
 
-pub fn for_module<'s, H>(src: &'s str, handler: H) -> Parser<'s, syntax::Processor<H>>
+pub fn for_module<'s, H>(src: &'s str, handler: H) -> Parser<'s, syntax::Processor<'s, H>>
 where
     H: NodeHandler<'s>,
 {

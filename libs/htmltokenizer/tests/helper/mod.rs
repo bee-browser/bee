@@ -61,7 +61,7 @@ impl<'a> Validator<'a> {
     }
 }
 
-impl<'a> Validator<'a> {
+impl Validator<'_> {
     fn handle_doctype(&mut self, doctype: Doctype) {
         self.output.push(Output::Doctype {
             name: doctype.name.map(|s| s.to_string()),

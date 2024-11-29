@@ -324,7 +324,7 @@ struct ScopePrinter<'a> {
     scope: &'a Scope,
 }
 
-impl<'a> std::fmt::Display for ScopePrinter<'a> {
+impl std::fmt::Display for ScopePrinter<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:indent$}", "", indent = self.scope.depth as usize)?;
         if !self.scope.is_sorted() {
