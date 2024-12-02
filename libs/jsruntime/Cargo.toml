@@ -17,7 +17,7 @@ indexmap = "2.6.0"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
 paste = "1.0.15"
-rustc-hash = "2.0.0"
+rustc-hash = "2.1.0"
 static_assertions = "1.1.0"
 thiserror = "2.0.3"
 
