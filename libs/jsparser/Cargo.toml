@@ -17,7 +17,7 @@ indexmap = "2.7.0"
 logging = { path = "../../libs/logging" }
 phf = { version = "0.11.2", features = ["macros"] }
 smallvec = "1.13.2"
-thiserror = "2.0.3"
+thiserror = "2.0.4"
 unicode-id-start = "1.3.1"
 
 [dev-dependencies]
