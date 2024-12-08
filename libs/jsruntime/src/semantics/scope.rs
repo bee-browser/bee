@@ -89,6 +89,45 @@ impl ScopeTree {
         scope.bindings[binding_ref.binding_index()].symbol
     }
 
+    pub fn find_binding(&self, scope_ref: ScopeRef, symbol: Symbol) -> BindingRef {
+        let mut scope_ref = scope_ref;
+        loop {
+            let scope = &self.scopes[scope_ref.index()];
+            debug_assert!(scope.is_sorted());
+            match scope
+                .bindings
+                .binary_search_by_key(&symbol, |binding| binding.symbol)
+            {
+                Ok(index) => {
+                    // TODO: should return an error
+                    return BindingRef::checked_new(scope_ref, index).unwrap();
+                }
+                Err(_) => {
+                    if scope.is_function() {
+                        // Reference to a free variable.
+                        return BindingRef::NONE;
+                    }
+                    scope_ref = scope.outer;
+                    if scope_ref == ScopeRef::NONE {
+                        // Reference to a property of the global object.
+                        return BindingRef::NONE;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn compute_locator(&self, binding_ref: BindingRef) -> Locator {
+        let scope = &self.scopes[binding_ref.scope_index()];
+        let binding = &scope.bindings[binding_ref.binding_index()];
+        match binding.kind {
+            BindingKind::FormalParameter => Locator::Argument(binding.index),
+            BindingKind::Mutable | BindingKind::Immutable => Locator::Local(binding.index),
+            BindingKind::Capture => Locator::Capture(binding.index),
+            BindingKind::Global => Locator::Global,
+        }
+    }
+
     #[allow(unused)]
     pub fn print(&self, indent: &str) {
         for (index, scope) in self.scopes.iter().enumerate().skip(1) {
@@ -130,6 +169,7 @@ impl ScopeTreeBuilder {
             bindings: vec![],
             num_formal_parameters: 0,
             num_locals: 0,
+            num_captures: 0,
             outer: self.current,
             depth: self.depth,
             max_child_block_depth: self.depth,
@@ -216,6 +256,35 @@ impl ScopeTreeBuilder {
         }
     }
 
+    pub fn add_capture(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
+        let scope = &mut self.scopes[scope_ref.index()];
+        debug_assert!(scope.is_function());
+        scope.bindings.push(Binding {
+            symbol,
+            index: scope.num_captures,
+            kind: BindingKind::Capture,
+            flags: BindingFlags::empty(),
+        });
+        scope.num_captures += 1;
+        scope
+            .bindings
+            .sort_unstable_by_key(|binding| binding.symbol); // TODO(perf)
+    }
+
+    pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
+        let scope = &mut self.scopes[scope_ref.index()];
+        debug_assert!(scope.is_function());
+        scope.bindings.push(Binding {
+            symbol,
+            index: 0, // TODO
+            kind: BindingKind::Global,
+            flags: BindingFlags::empty(),
+        });
+        scope
+            .bindings
+            .sort_unstable_by_key(|binding| binding.symbol); // TODO(perf)
+    }
+
     pub fn set_captured(&mut self, binding_ref: BindingRef) {
         let scope = &mut self.scopes[binding_ref.scope_index()];
         debug_assert!(scope.is_sorted());
@@ -258,15 +327,6 @@ impl ScopeTreeBuilder {
         }
     }
 
-    pub fn compute_locator(&self, binding_ref: BindingRef) -> Locator {
-        let scope = &self.scopes[binding_ref.scope_index()];
-        let binding = &scope.bindings[binding_ref.binding_index()];
-        match binding.kind {
-            BindingKind::FormalParameter => Locator::Argument(binding.index),
-            _ => Locator::Local(binding.index),
-        }
-    }
-
     pub fn build(&mut self) -> ScopeTree {
         ScopeTree {
             scopes: std::mem::take(&mut self.scopes),
@@ -290,6 +350,7 @@ pub struct Scope {
     pub bindings: Vec<Binding>,
     pub num_formal_parameters: u16,
     pub num_locals: u16,
+    pub num_captures: u16,
     outer: ScopeRef,
     depth: u16,
     max_child_block_depth: u16,
@@ -302,6 +363,7 @@ impl Scope {
         bindings: vec![],
         num_formal_parameters: 0,
         num_locals: 0,
+        num_captures: 0,
         outer: ScopeRef::NONE,
         depth: 0,
         max_child_block_depth: 0,
@@ -368,13 +430,19 @@ pub struct Binding {
 
 impl Binding {
     pub fn is_local(&self) -> bool {
-        !matches!(self.kind, BindingKind::FormalParameter)
+        matches!(self.kind, BindingKind::Immutable | BindingKind::Mutable)
+    }
+
+    pub fn is_capture(&self) -> bool {
+        matches!(self.kind, BindingKind::Capture)
     }
 
     pub fn locator(&self) -> Locator {
         match self.kind {
             BindingKind::FormalParameter => Locator::Argument(self.index),
-            _ => Locator::Local(self.index),
+            BindingKind::Mutable | BindingKind::Immutable => Locator::Local(self.index),
+            BindingKind::Capture => Locator::Capture(self.index),
+            BindingKind::Global => Locator::Global,
         }
     }
 
@@ -403,6 +471,8 @@ impl std::fmt::Display for Binding {
             BindingKind::FormalParameter => write!(f, "P@{}:{}", self.index, self.symbol)?,
             BindingKind::Mutable => write!(f, "M@{}:{}", self.index, self.symbol)?,
             BindingKind::Immutable => write!(f, "I@{}:{}", self.index, self.symbol)?,
+            BindingKind::Capture => write!(f, "C@{}:{}", self.index, self.symbol)?,
+            BindingKind::Global => write!(f, "G@{}:{}", self.index, self.symbol)?,
         }
         Ok(())
     }
@@ -413,6 +483,8 @@ pub enum BindingKind {
     FormalParameter,
     Mutable,
     Immutable,
+    Capture,
+    Global,
 }
 
 bitflags! {

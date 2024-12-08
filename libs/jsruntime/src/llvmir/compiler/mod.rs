@@ -14,6 +14,7 @@ use jsparser::Symbol;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::logger;
+use crate::semantics::BindingRef;
 use crate::semantics::CompileCommand;
 use crate::semantics::Locator;
 use crate::semantics::ScopeRef;
@@ -302,14 +303,14 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::String(value) => self.process_string(value),
             CompileCommand::Function(func_id) => self.process_function(*func_id),
-            CompileCommand::Closure(prologue, num_captures) => {
-                self.process_closure(*prologue, *num_captures)
+            CompileCommand::Closure(prologue, func_scope_ref) => {
+                self.process_closure(*prologue, *func_scope_ref)
             }
             CompileCommand::Coroutine(func_id, num_locals) => {
                 self.process_coroutine(*func_id, *num_locals)
             }
             CompileCommand::Promise => self.process_promise(),
-            CompileCommand::Reference(symbol, locator) => self.process_reference(*symbol, *locator),
+            CompileCommand::Reference(symbol) => self.process_reference(*symbol),
             CompileCommand::Exception => self.process_exception(),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableBinding => self.process_mutable_binding(),
@@ -319,9 +320,6 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
-            CompileCommand::CaptureVariable(declaration) => {
-                self.process_capture_value(*declaration)
-            }
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -451,29 +449,34 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn pop_capture(&mut self) -> CaptureIr {
-        match self.operand_stack.pop() {
-            Some(Operand::Capture(capture)) => capture,
-            _ => unreachable!(),
-        }
-    }
-
-    fn process_closure(&mut self, prologue: bool, num_captures: u16) {
-        debug_assert!(self.operand_stack.len() > num_captures as usize);
-
+    fn process_closure(&mut self, prologue: bool, func_scope_ref: ScopeRef) {
         let backup = self.bridge.get_basic_block();
         if prologue {
             let block = self.control_flow_stack.scope_flow().hoisted_block;
             self.bridge.set_basic_block(block);
         }
 
-        let lambda = self.pop_lambda();
-        let closure = self.bridge.create_closure(lambda, num_captures);
+        let scope = self.scope_tree.scope(func_scope_ref);
+        debug_assert!(scope.is_function());
 
-        for i in 0..num_captures {
-            let capture = self.pop_capture();
+        let lambda = self.pop_lambda();
+        let closure = self.bridge.create_closure(lambda, scope.num_captures);
+
+        let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
+        for binding in scope.bindings.iter().filter(|binding| binding.is_capture()) {
+            let binding_ref = self.scope_tree.find_binding(scope_ref, binding.symbol);
+            debug_assert_ne!(binding_ref, BindingRef::NONE);
+            let locator = self.scope_tree.compute_locator(binding_ref);
+            let capture = match locator {
+                Locator::Argument(_) | Locator::Local(_) => {
+                    debug_assert!(self.captures.contains_key(&locator));
+                    *self.captures.get(&locator).unwrap()
+                }
+                Locator::Capture(i) => self.bridge.create_load_capture(i),
+                _ => unreachable!(),
+            };
             self.bridge
-                .create_store_capture_to_closure(capture, closure, i);
+                .create_store_capture_to_closure(capture, closure, binding.index);
         }
 
         self.operand_stack.push(Operand::Closure(closure));
@@ -509,8 +512,12 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Promise(promise));
     }
 
-    fn process_reference(&mut self, symbol: Symbol, locator: Locator) {
-        debug_assert!(!matches!(locator, Locator::None));
+    fn process_reference(&mut self, symbol: Symbol) {
+        let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
+        // TODO(perf)
+        let binding_ref = self.scope_tree.find_binding(scope_ref, symbol);
+        debug_assert_ne!(binding_ref, BindingRef::NONE);
+        let locator = self.scope_tree.compute_locator(binding_ref);
         self.operand_stack.push(Operand::Reference(symbol, locator));
     }
 
@@ -566,7 +573,8 @@ impl<'r, 's> Compiler<'r, 's> {
                 let value = self.bridge.create_get(symbol);
                 // if value.is_nullptr()
                 let is_nullptr = self.bridge.create_is_nullptr(value);
-                self.bridge.create_cond_br(is_nullptr, then_block, else_block);
+                self.bridge
+                    .create_cond_br(is_nullptr, then_block, else_block);
                 // then
                 self.bridge.set_basic_block(then_block);
                 // TODO(feat): ReferenceError
@@ -890,30 +898,6 @@ impl<'r, 's> Compiler<'r, 's> {
         let capture = self.captures.swap_remove(&locator).unwrap();
         let value = self.create_get_value_ptr(Symbol::NONE, locator);
         self.bridge.create_escape_value(capture, value);
-    }
-
-    fn process_capture_value(&mut self, declaration: bool) {
-        let backup = self.bridge.get_basic_block();
-        if declaration {
-            let block = self.control_flow_stack.scope_flow().hoisted_block;
-            self.bridge.set_basic_block(block);
-        }
-
-        let (_, locator) = self.pop_reference();
-        let capture = match locator {
-            Locator::Argument(_) | Locator::Local(_) => {
-                debug_assert!(self.captures.contains_key(&locator));
-                *self.captures.get(&locator).unwrap()
-            }
-            Locator::Capture(i) => self.bridge.create_load_capture(i),
-            _ => unreachable!(),
-        };
-
-        self.operand_stack.push(Operand::Capture(capture));
-
-        if declaration {
-            self.bridge.set_basic_block(backup);
-        }
     }
 
     // 13.4.2.1 Runtime Semantics: Evaluation
@@ -2514,7 +2498,6 @@ enum Operand {
     Promise(PromiseIr),
     Any(ValueIr),
     Reference(Symbol, Locator),
-    Capture(CaptureIr),
 }
 
 impl Dump for Operand {
@@ -2536,7 +2519,6 @@ impl Dump for Operand {
             Self::Promise(value) => eprintln!("Promise({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
-            Self::Capture(value) => eprintln!("Capture({:?})", ir2cstr!(value)),
         }
     }
 }

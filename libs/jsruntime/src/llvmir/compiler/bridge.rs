@@ -1183,15 +1183,6 @@ impl ArgvIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 }
 
-impl CaptureIr {
-    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
-        unsafe {
-            compiler_peer_get_value_name_or_as_operand(self.0 as ValueIrPtr, buf, len);
-            CStr::from_ptr(buf)
-        }
-    }
-}
-
 // DO NOT USE MACROS FOR THE FOLLOWING TYPE DEFINITIONS.
 // cbindgen does not support macro expansions.
 type CompilerPeer = *mut c_void;

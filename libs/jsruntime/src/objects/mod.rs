@@ -65,9 +65,11 @@ impl Object {
     pub fn set(&mut self, symbol: Symbol, value: &Value) {
         self.properties
             .entry(symbol)
-            .and_modify(|e| *e = Property::Data {
-                value: value.clone(),
-                flags: PropertyFlags::empty(),
+            .and_modify(|e| {
+                *e = Property::Data {
+                    value: value.clone(),
+                    flags: PropertyFlags::empty(),
+                }
             })
             .or_insert(Property::Data {
                 value: value.clone(),

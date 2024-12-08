@@ -915,7 +915,8 @@ class Compiler {
 
   llvm::Value* CreateGet(uint32_t symbol) {
     auto* func = types_->CreateRuntimeGet();
-    return builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol)}, REG_NAME("get." + llvm::Twine(symbol) + ".ptr"));
+    return builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol)},
+                                REG_NAME("get." + llvm::Twine(symbol) + ".ptr"));
   }
 
   void CreateSet(uint32_t symbol, llvm::Value* value) {
