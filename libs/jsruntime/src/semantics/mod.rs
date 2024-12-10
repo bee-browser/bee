@@ -32,12 +32,11 @@ impl<X> Runtime<X> {
     /// Parses a given source text as a script.
     pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "script");
-        let mut analyzer = Analyzer::new_for_script(
+        let analyzer = Analyzer::new_for_script(
             &self.pref,
             &mut self.symbol_registry,
             &mut self.function_registry,
         );
-        analyzer.use_global_bindings();
         let processor = Processor::new(analyzer, false);
         Parser::for_script(source, processor).parse()
     }
@@ -45,12 +44,11 @@ impl<X> Runtime<X> {
     /// Parses a given source text as a module.
     pub fn parse_module(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "module");
-        let mut analyzer = Analyzer::new_for_module(
+        let analyzer = Analyzer::new_for_module(
             &self.pref,
             &mut self.symbol_registry,
             &mut self.function_registry,
         );
-        analyzer.use_global_bindings();
         let processor = Processor::new(analyzer, true);
         Parser::for_module(source, processor).parse()
     }
@@ -125,8 +123,6 @@ struct Analyzer<'r> {
     /// A scope tree builder used for building the scope tree of the JavaScript program.
     scope_tree_builder: ScopeTreeBuilder,
 
-    use_global_bindings: bool,
-
     module: bool,
 }
 
@@ -164,13 +160,8 @@ impl<'r> Analyzer<'r> {
             context_stack: vec![],
             functions: vec![],
             scope_tree_builder: Default::default(),
-            use_global_bindings: false,
             module,
         }
-    }
-
-    fn use_global_bindings(&mut self) {
-        self.use_global_bindings = true;
     }
 
     fn set_in_body(&mut self) {
@@ -893,53 +884,6 @@ impl<'r> Analyzer<'r> {
         self.context_stack.last_mut().unwrap().put_command(command);
     }
 
-    // TODO: global object
-    fn put_global_bindings(&mut self) {
-        let context = self.context_stack.last_mut().unwrap();
-
-        // Register `undefined`.
-        let symbol = Symbol::UNDEFINED;
-        context.put_reference(symbol, self.scope_tree_builder.current());
-        context.put_lexical_binding(false);
-        context.process_immutable_bindings(1);
-        self.scope_tree_builder
-            .add_immutable(symbol, context.num_locals);
-        context.num_locals += 1;
-
-        // Register `Infinity`.
-        let symbol = Symbol::INFINITY;
-        context.put_reference(symbol, self.scope_tree_builder.current());
-        context.put_number(f64::INFINITY);
-        context.put_lexical_binding(true);
-        context.process_immutable_bindings(1);
-        self.scope_tree_builder
-            .add_immutable(symbol, context.num_locals);
-        context.num_locals += 1;
-
-        // Register `NaN`.
-        let symbol = Symbol::NAN;
-        context.put_reference(symbol, self.scope_tree_builder.current());
-        context.put_number(f64::NAN);
-        context.put_lexical_binding(true);
-        context.process_immutable_bindings(1);
-        self.scope_tree_builder
-            .add_immutable(symbol, context.num_locals);
-        context.num_locals += 1;
-    }
-
-    // TODO: global object
-    fn register_host_functions(&mut self) {
-        let context = self.context_stack.last_mut().unwrap();
-
-        for (func_id, host_func) in self.function_registry.enumerate_host_function() {
-            context.put_reference(host_func.symbol, self.scope_tree_builder.current());
-            context.process_closure_declaration(self.scope_tree_builder.current(), func_id);
-            self.scope_tree_builder
-                .add_immutable(host_func.symbol, context.num_locals);
-            context.num_locals += 1;
-        }
-    }
-
     fn resolve_references(&mut self, context: &mut FunctionContext) -> Vec<Reference> {
         let mut unresolved_reference = vec![];
         for reference in std::mem::take(&mut context.references).into_iter() {
@@ -968,12 +912,6 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         self.start_function_scope();
 
         self.set_in_body();
-
-        if self.use_global_bindings {
-            self.put_global_bindings();
-        }
-
-        self.register_host_functions();
 
         // The module is always treated as an async function body.
         if self.module {

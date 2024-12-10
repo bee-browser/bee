@@ -222,18 +222,6 @@ impl ScopeTreeBuilder {
         scope.num_locals += 1;
     }
 
-    pub fn add_immutable(&mut self, symbol: Symbol, index: u16) {
-        let scope = &mut self.scopes[self.current.index()];
-        debug_assert!(!scope.is_sorted());
-        scope.bindings.push(Binding {
-            symbol,
-            index,
-            kind: BindingKind::Immutable,
-            flags: BindingFlags::empty(),
-        });
-        scope.num_locals += 1;
-    }
-
     #[allow(unused)]
     pub fn add_hidden(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];

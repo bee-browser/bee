@@ -53,8 +53,8 @@ impl Object {
     // In JIT-compiled code, we need a `nullptr` check if we choose `Option::None`.
     // If we choose `&Value::None`, we always need a memory access for the discriminant check of
     // the value but no `nullptr` access happens.
-    pub fn get(&self, symbol: Symbol) -> Option<&Value> {
-        match self.properties.get(&symbol) {
+    pub fn get(&self, name: Symbol) -> Option<&Value> {
+        match self.properties.get(&name) {
             Some(Property::Data { ref value, .. }) => Some(value),
             Some(Property::Accessor { .. }) => todo!(),
             None => None,
@@ -62,9 +62,9 @@ impl Object {
     }
 
     // TODO(feat): strict, writable
-    pub fn set(&mut self, symbol: Symbol, value: &Value) {
+    pub fn set(&mut self, name: Symbol, value: &Value) {
         self.properties
-            .entry(symbol)
+            .entry(name)
             .and_modify(|e| {
                 *e = Property::Data {
                     value: value.clone(),
@@ -75,5 +75,37 @@ impl Object {
                 value: value.clone(),
                 flags: PropertyFlags::empty(),
             });
+    }
+
+    pub fn define_own_property(&mut self, name: Symbol, prop: Property) {
+        self.properties.insert(name, prop);
+    }
+}
+
+// 19 The Global Object
+impl Object {
+    pub fn define_builtin_global_properties(&mut self) {
+        // TODO: 19.1.1 globalThis
+
+        // 19.1.2 Infinity
+        self.define_own_property(Symbol::INFINITY, Property::Data {
+            value: Value::Number(f64::INFINITY),
+            // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
+            flags: PropertyFlags::empty(),
+        });
+
+        // 19.1.3 NaN
+        self.define_own_property(Symbol::NAN, Property::Data {
+            value: Value::Number(f64::NAN),
+            // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
+            flags: PropertyFlags::empty(),
+        });
+
+        // 19.1.4 undefined
+        self.define_own_property(Symbol::UNDEFINED, Property::Data {
+            value: Value::Undefined,
+            // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
+            flags: PropertyFlags::empty(),
+        });
     }
 }

@@ -9,6 +9,7 @@ use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Value;
+use crate::Runtime;
 
 pub fn initialize() {
     unsafe {
@@ -246,33 +247,38 @@ unsafe extern "C" fn runtime_create_capture<X>(
     capture
 }
 
+impl<X> Runtime<X> {
+    pub(crate) fn create_closure(&mut self, lambda: Lambda, num_captures: u16) -> *mut Closure {
+        const BASE_LAYOUT: std::alloc::Layout = unsafe {
+            std::alloc::Layout::from_size_align_unchecked(
+                std::mem::offset_of!(Closure, captures),
+                std::mem::align_of::<Closure>(),
+            )
+        };
+
+        let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
+        let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
+
+        let allocator = self.allocator();
+
+        // TODO: GC
+        let ptr = allocator.alloc_layout(layout);
+
+        let closure = unsafe { ptr.cast::<Closure>().as_mut() };
+        closure.lambda = lambda;
+        closure.num_captures = num_captures;
+        // `closure.captures[]` will be filled with actual pointers to `Captures`.
+
+        closure as *mut Closure
+    }
+}
+
 unsafe extern "C" fn runtime_create_closure<X>(
     runtime: *mut c_void,
     lambda: Lambda,
     num_captures: u16,
 ) -> *mut Closure {
-    const BASE_LAYOUT: std::alloc::Layout = unsafe {
-        std::alloc::Layout::from_size_align_unchecked(
-            std::mem::offset_of!(Closure, captures),
-            std::mem::align_of::<Closure>(),
-        )
-    };
-
-    let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
-    let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
-
-    let runtime = into_runtime!(runtime, X);
-    let allocator = runtime.allocator();
-
-    // TODO: GC
-    let ptr = allocator.alloc_layout(layout);
-
-    let closure = ptr.cast::<Closure>().as_ptr();
-    (*closure).lambda = lambda;
-    (*closure).num_captures = num_captures;
-    // `(*closure).captures[]` will be filled with actual pointers to `Captures`.
-
-    closure
+    into_runtime!(runtime, X).create_closure(lambda, num_captures)
 }
 
 unsafe extern "C" fn runtime_create_coroutine<X>(

@@ -66,6 +66,10 @@ pub struct Runtime<X> {
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
         let functions = llvmir::RuntimeFunctions::new::<X>();
+
+        let mut global_object = Object::default();
+        global_object.define_builtin_global_properties();
+
         Self {
             pref: Default::default(),
             symbol_registry: Default::default(),
@@ -73,7 +77,7 @@ impl<X> Runtime<X> {
             executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
             tasklet_system: tasklet::System::new(),
-            global_object: Default::default(),
+            global_object,
             extension,
         }
     }
@@ -101,9 +105,14 @@ impl<X> Runtime<X> {
     {
         let symbol = self.symbol_registry.intern_str(name);
         let func_id = self.function_registry.register_host_function(symbol);
-        self.executor
-            .register_host_function(func_id, types::into_lambda(host_fn));
+        let lambda = types::into_lambda(host_fn);
+        self.executor.register_host_function(func_id, lambda);
         logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
+        let closure = self.create_closure(lambda, 0);
+        self.global_object.define_own_property(symbol, objects::Property::Data {
+            value: Value::Closure(closure),
+            flags: objects::PropertyFlags::empty(),
+        });
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
