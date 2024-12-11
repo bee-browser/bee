@@ -256,7 +256,8 @@ impl<X> Runtime<X> {
             )
         };
 
-        let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
+        let storage_layout =
+            std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
         let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
         let allocator = self.allocator();

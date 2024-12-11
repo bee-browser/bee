@@ -284,6 +284,7 @@ impl<'r> Analyzer<'r> {
             Node::FunctionContext => self.handle_function_context(),
             Node::AsyncFunctionContext => self.handle_async_function_context(),
             Node::FunctionSignature(symbol) => self.handle_function_signature(symbol),
+            Node::Dereference => self.handle_dereference(),
         }
     }
 
@@ -878,6 +879,10 @@ impl<'r> Analyzer<'r> {
         self.put_command(CompileCommand::Duplicate(0));
         self.put_command(CompileCommand::Resume);
         self.put_command(CompileCommand::Return(1));
+    }
+
+    fn handle_dereference(&mut self) {
+        self.put_command(CompileCommand::Dereference);
     }
 
     fn put_command(&mut self, command: CompileCommand) {
@@ -1588,6 +1593,7 @@ pub enum CompileCommand {
     Discard,
     Swap,
     Duplicate(u8), // 0 or 1
+    Dereference,
 
     // debugger
     Debugger,

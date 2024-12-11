@@ -235,6 +235,7 @@ pub enum Node<'s> {
     LoopBody,
     StartBlockScope,
     EndBlockScope,
+    Dereference,
 }
 
 #[derive(Clone, Copy)]
@@ -529,6 +530,12 @@ where
     // BindingIdentifier_Yield_Await : await
     fn syntax_error(&mut self) -> Result<(), Error> {
         Err(Error::SyntaxError)
+    }
+
+    // _DEREFERENCE_
+    fn process_dereference(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Dereference);
+        Ok(())
     }
 
     // _THEN_BLOCK_

@@ -109,10 +109,13 @@ impl<X> Runtime<X> {
         self.executor.register_host_function(func_id, lambda);
         logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
         let closure = self.create_closure(lambda, 0);
-        self.global_object.define_own_property(symbol, objects::Property::Data {
-            value: Value::Closure(closure),
-            flags: objects::PropertyFlags::empty(),
-        });
+        self.global_object.define_own_property(
+            symbol,
+            objects::Property::Data {
+                value: Value::Closure(closure),
+                flags: objects::PropertyFlags::empty(),
+            },
+        );
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {

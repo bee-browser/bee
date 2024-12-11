@@ -1,3 +1,5 @@
+print(null ?? undefined); ///=undefined
+print(undefined ?? null); ///=null
 print(undefined ?? 1); ///=1
 print(null ?? 1); ///=1
 print(0 ?? 1); ///=0

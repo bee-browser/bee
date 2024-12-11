@@ -88,24 +88,33 @@ impl Object {
         // TODO: 19.1.1 globalThis
 
         // 19.1.2 Infinity
-        self.define_own_property(Symbol::INFINITY, Property::Data {
-            value: Value::Number(f64::INFINITY),
-            // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
-            flags: PropertyFlags::empty(),
-        });
+        self.define_own_property(
+            Symbol::INFINITY,
+            Property::Data {
+                value: Value::Number(f64::INFINITY),
+                // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
+                flags: PropertyFlags::empty(),
+            },
+        );
 
         // 19.1.3 NaN
-        self.define_own_property(Symbol::NAN, Property::Data {
-            value: Value::Number(f64::NAN),
-            // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
-            flags: PropertyFlags::empty(),
-        });
+        self.define_own_property(
+            Symbol::NAN,
+            Property::Data {
+                value: Value::Number(f64::NAN),
+                // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
+                flags: PropertyFlags::empty(),
+            },
+        );
 
         // 19.1.4 undefined
-        self.define_own_property(Symbol::UNDEFINED, Property::Data {
-            value: Value::Undefined,
-            // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
-            flags: PropertyFlags::empty(),
-        });
+        self.define_own_property(
+            Symbol::UNDEFINED,
+            Property::Data {
+                value: Value::Undefined,
+                // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
+                flags: PropertyFlags::empty(),
+            },
+        );
     }
 }

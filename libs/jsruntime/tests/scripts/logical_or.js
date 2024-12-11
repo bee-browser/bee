@@ -7,6 +7,11 @@ print(0 || 0); ///=0
 print(0 || 1); ///=1
 print(1 || 0); ///=1
 
+// short-circuit expressions using different types.
+print(false || undefined); ///=undefined
+print(false || null); ///=null
+print(false || 0); ///=0
+
 let a;
 
 a = 0;

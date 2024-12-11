@@ -338,15 +338,17 @@
   action: process_assignment_operator
 - rule: >-
     AssignmentExpression_In_Await -> LeftHandSideExpression_Await AND_ASSIGN
-    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await _DEREFERENCE_
   action: process_logical_and_assignment
 - rule: >-
     AssignmentExpression_In_Await -> LeftHandSideExpression_Await OR_ASSIGN
     _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
+    _DEREFERENCE_
   action: process_logical_or_assignment
 - rule: >-
     AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN
     _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
+    _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: Statement_Await -> BlockStatement_Await
   action: process_statement
@@ -611,8 +613,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
-    CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_
-    AssignmentExpression_In_Await
+    CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await _DEREFERENCE_ COLON
+    _ELSE_BLOCK_ AssignmentExpression_In_Await _DEREFERENCE_
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE)
@@ -660,6 +662,8 @@
   action: nop
 - rule: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
   action: process_falsy_short_circuit_assignment
+- rule: _DEREFERENCE_ -> (empty)
+  action: process_dereference
 - rule: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
   action: process_truthy_short_circuit_assignment
 - rule: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
@@ -926,15 +930,15 @@
   action: process_assignment_operator
 - rule: >-
     AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN
-    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In _DEREFERENCE_
   action: process_logical_and_assignment
 - rule: >-
     AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN
-    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In _DEREFERENCE_
   action: process_logical_or_assignment
 - rule: >-
     AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN
-    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: >-
     DoWhileStatement -> DO _LOOP_START_ Statement _LOOP_BODY_ WHILE LPAREN
@@ -1407,15 +1411,17 @@
   action: process_assignment_operator
 - rule: >-
     AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AND_ASSIGN
-    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield _DEREFERENCE_
   action: process_logical_and_assignment
 - rule: >-
     AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield OR_ASSIGN
     _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
+    _DEREFERENCE_
   action: process_logical_or_assignment
 - rule: >-
     AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN
     _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
+    _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: BindingRestProperty_Await -> ELLIPSIS BindingIdentifier_Await
   action: undefined
@@ -1464,24 +1470,24 @@
 - rule: >-
     AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await
     AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
-    AssignmentExpression_In_Yield_Await
+    AssignmentExpression_In_Yield_Await _DEREFERENCE_
   action: process_logical_and_assignment
 - rule: >-
     AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await
     OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
-    AssignmentExpression_In_Yield_Await
+    AssignmentExpression_In_Yield_Await _DEREFERENCE_
   action: process_logical_or_assignment
 - rule: >-
     AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await
     NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
-    AssignmentExpression_In_Yield_Await
+    AssignmentExpression_In_Yield_Await _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: ConditionalExpression_In -> ShortCircuitExpression_In
   action: nop
 - rule: >-
     ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL
-    _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_
-    AssignmentExpression_In
+    _THEN_BLOCK_ AssignmentExpression_In _DEREFERENCE_ COLON _ELSE_BLOCK_
+    AssignmentExpression_In _DEREFERENCE_
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -1576,11 +1582,11 @@
   action: nop
 - rule: >-
     LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR
-    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Await
+    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Await _DEREFERENCE_
   action: process_logical_or
 - rule: >-
     CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH
-    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Await
+    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Await _DEREFERENCE_
   action: process_nullish_coalescing
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN
@@ -1835,8 +1841,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
-    CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_
-    AssignmentExpression_In_Yield
+    CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield _DEREFERENCE_ COLON
+    _ELSE_BLOCK_ AssignmentExpression_In_Yield _DEREFERENCE_
   action: process_conditional_expression
 - rule: YieldExpression_In -> YIELD
   action: undefined
@@ -1893,8 +1899,8 @@
 - rule: >-
     ConditionalExpression_In_Yield_Await ->
     ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_
-    AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_
-    AssignmentExpression_In_Yield_Await
+    AssignmentExpression_In_Yield_Await _DEREFERENCE_ COLON _ELSE_BLOCK_
+    AssignmentExpression_In_Yield_Await _DEREFERENCE_
   action: process_conditional_expression
 - rule: YieldExpression_In_Await -> YIELD
   action: undefined
@@ -1977,15 +1983,15 @@
   action: process_assignment_operator
 - rule: >-
     AssignmentExpression -> LeftHandSideExpression AND_ASSIGN
-    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression _DEREFERENCE_
   action: process_logical_and_assignment
 - rule: >-
     AssignmentExpression -> LeftHandSideExpression OR_ASSIGN
-    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression _DEREFERENCE_
   action: process_logical_or_assignment
 - rule: >-
     AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN
-    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: VariableDeclaration -> BindingIdentifier
   action: undefined
@@ -2047,7 +2053,7 @@
   action: nop
 - rule: >-
     LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND
-    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Await
+    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Await _DEREFERENCE_
   action: process_logical_and
 - rule: _TRUTHY_SHORT_CIRCUIT_ -> (empty)
   action: process_truthy_short_circuit
@@ -2263,11 +2269,11 @@
   action: nop
 - rule: >-
     LogicalORExpression_In -> LogicalORExpression_In OR _TRUTHY_SHORT_CIRCUIT_
-    LogicalANDExpression_In
+    LogicalANDExpression_In _DEREFERENCE_
   action: process_logical_or
 - rule: >-
     CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH
-    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In
+    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In _DEREFERENCE_
   action: process_nullish_coalescing
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In
@@ -2351,7 +2357,8 @@
   action: nop
 - rule: >-
     ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_
-    AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression
+    AssignmentExpression_In _DEREFERENCE_ COLON _ELSE_BLOCK_
+    AssignmentExpression _DEREFERENCE_
   action: process_conditional_expression
 - rule: >-
     ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -2548,15 +2555,15 @@
   action: process_assignment_operator
 - rule: >-
     AssignmentExpression_Await -> LeftHandSideExpression_Await AND_ASSIGN
-    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await _DEREFERENCE_
   action: process_logical_and_assignment
 - rule: >-
     AssignmentExpression_Await -> LeftHandSideExpression_Await OR_ASSIGN
-    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await _DEREFERENCE_
   action: process_logical_or_assignment
 - rule: >-
     AssignmentExpression_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN
-    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: VariableDeclaration_Await -> BindingIdentifier_Await
   action: undefined
@@ -2588,11 +2595,11 @@
   action: nop
 - rule: >-
     LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR
-    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield
+    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield _DEREFERENCE_
   action: process_logical_or
 - rule: >-
     CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH
-    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield
+    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield _DEREFERENCE_
   action: process_nullish_coalescing
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN
@@ -2694,11 +2701,12 @@
   action: nop
 - rule: >-
     LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR
-    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield_Await
+    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield_Await _DEREFERENCE_
   action: process_logical_or
 - rule: >-
     CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await
     NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await
+    _DEREFERENCE_
   action: process_nullish_coalescing
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
@@ -2819,7 +2827,7 @@
   action: nop
 - rule: >-
     LogicalANDExpression_In -> LogicalANDExpression_In AND _FALSY_SHORT_CIRCUIT_
-    BitwiseORExpression_In
+    BitwiseORExpression_In _DEREFERENCE_
   action: process_logical_and
 - rule: CoalesceExpressionHead_In -> CoalesceExpression_In
   action: nop
@@ -3014,8 +3022,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL
-    _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_
-    AssignmentExpression_Await
+    _THEN_BLOCK_ AssignmentExpression_In_Await _DEREFERENCE_ COLON _ELSE_BLOCK_
+    AssignmentExpression_Await _DEREFERENCE_
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE)
@@ -3043,7 +3051,7 @@
   action: nop
 - rule: >-
     LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND
-    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield
+    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield _DEREFERENCE_
   action: process_logical_and
 - rule: CoalesceExpressionHead_In_Yield -> CoalesceExpression_In_Yield
   action: nop
@@ -3105,7 +3113,7 @@
   action: nop
 - rule: >-
     LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await
-    AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await
+    AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await _DEREFERENCE_
   action: process_logical_and
 - rule: CoalesceExpressionHead_In_Yield_Await -> CoalesceExpression_In_Yield_Await
   action: nop
@@ -3209,11 +3217,11 @@
   action: nop
 - rule: >-
     LogicalORExpression -> LogicalORExpression OR _TRUTHY_SHORT_CIRCUIT_
-    LogicalANDExpression
+    LogicalANDExpression _DEREFERENCE_
   action: process_logical_or
 - rule: >-
     CoalesceExpression -> CoalesceExpressionHead NULLISH _NULLISH_SHORT_CIRCUIT_
-    BitwiseORExpression
+    BitwiseORExpression _DEREFERENCE_
   action: process_nullish_coalescing
 - rule: ExpressionBody -> AssignmentExpression
   action: nop
@@ -3519,7 +3527,7 @@
   action: nop
 - rule: >-
     LogicalANDExpression -> LogicalANDExpression AND _FALSY_SHORT_CIRCUIT_
-    BitwiseORExpression
+    BitwiseORExpression _DEREFERENCE_
   action: process_logical_and
 - rule: CoalesceExpressionHead -> CoalesceExpression
   action: nop
@@ -3801,11 +3809,11 @@
   action: nop
 - rule: >-
     LogicalORExpression_Await -> LogicalORExpression_Await OR
-    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Await
+    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Await _DEREFERENCE_
   action: process_logical_or
 - rule: >-
     CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH
-    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Await
+    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Await _DEREFERENCE_
   action: process_nullish_coalescing
 - rule: BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
   action: nop
@@ -4239,7 +4247,7 @@
   action: nop
 - rule: >-
     LogicalANDExpression_Await -> LogicalANDExpression_Await AND
-    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Await
+    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Await _DEREFERENCE_
   action: process_logical_and
 - rule: CoalesceExpressionHead_Await -> CoalesceExpression_Await
   action: nop
@@ -5236,15 +5244,15 @@
   action: process_assignment_operator
 - rule: >-
     AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN
-    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield _DEREFERENCE_
   action: process_logical_and_assignment
 - rule: >-
     AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN
-    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield _DEREFERENCE_
   action: process_logical_or_assignment
 - rule: >-
     AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN
-    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: VariableDeclaration_Yield -> BindingIdentifier_Yield
   action: undefined
@@ -5287,15 +5295,17 @@
 - rule: >-
     AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await
     AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
+    _DEREFERENCE_
   action: process_logical_and_assignment
 - rule: >-
     AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await
     OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
+    _DEREFERENCE_
   action: process_logical_or_assignment
 - rule: >-
     AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await
     NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
-    AssignmentExpression_Yield_Await
+    AssignmentExpression_Yield_Await _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await
   action: undefined
@@ -5393,8 +5403,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL
-    _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_
-    AssignmentExpression_Yield
+    _THEN_BLOCK_ AssignmentExpression_In_Yield _DEREFERENCE_ COLON _ELSE_BLOCK_
+    AssignmentExpression_Yield _DEREFERENCE_
   action: process_conditional_expression
 - rule: YieldExpression -> YIELD
   action: undefined
@@ -5432,8 +5442,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await
-    CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON
-    _ELSE_BLOCK_ AssignmentExpression_Yield_Await
+    CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await _DEREFERENCE_
+    COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await _DEREFERENCE_
   action: process_conditional_expression
 - rule: YieldExpression_Await -> YIELD
   action: undefined
@@ -5609,21 +5619,21 @@
   action: nop
 - rule: >-
     LogicalORExpression_Yield -> LogicalORExpression_Yield OR
-    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield
+    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield _DEREFERENCE_
   action: process_logical_or
 - rule: >-
     CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH
-    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield
+    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield _DEREFERENCE_
   action: process_nullish_coalescing
 - rule: LogicalORExpression_Yield_Await -> LogicalANDExpression_Yield_Await
   action: nop
 - rule: >-
     LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR
-    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield_Await
+    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield_Await _DEREFERENCE_
   action: process_logical_or
 - rule: >-
     CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH
-    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await
+    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await _DEREFERENCE_
   action: process_nullish_coalescing
 - rule: UnaryExpression_Yield -> UpdateExpression_Yield
   action: nop
@@ -5691,7 +5701,7 @@
   action: nop
 - rule: >-
     LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND
-    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield
+    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield _DEREFERENCE_
   action: process_logical_and
 - rule: CoalesceExpressionHead_Yield -> CoalesceExpression_Yield
   action: nop
@@ -5707,7 +5717,7 @@
   action: nop
 - rule: >-
     LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND
-    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await
+    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await _DEREFERENCE_
   action: process_logical_and
 - rule: CoalesceExpressionHead_Yield_Await -> CoalesceExpression_Yield_Await
   action: nop

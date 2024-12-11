@@ -621,6 +621,7 @@ function addActions(rules) {
     '_TRY_BLOCK_',
     '_CATCH_BLOCK_',
     '_FINALLY_BLOCK_',
+    '_DEREFERENCE_',
   ];
 
   for (const action of ACTIONS) {
@@ -704,7 +705,7 @@ function modifyConditionalExpression(rules) {
   rule = rules.find((rule) => rule.name === 'ConditionalExpression[In, Yield, Await]');
   assert(rule !== undefined);
   assert(rule.values.length === 2);
-  const [cond, thenBlock, elseBlock] = rule
+  const [cond, thenExpr, elseExpr] = rule
     .values[1]
     .split(/`\?`|`\:`/)
     .map((term) => term.trim());
@@ -712,10 +713,19 @@ function modifyConditionalExpression(rules) {
     cond,
     '`?`',
     '_THEN_BLOCK_',
-    thenBlock,
+    thenExpr,
+    // Insert the _DEREFERENCE_ actions just after the expression in order to perform dereference
+    // on the expression before processing the _ELSE_BLOCK_ action.  The _ELSE_BLOCK_ action
+    // creates a basic block and switches the current basic block to it.  So, the dereference has
+    // to be perform before that.
+    //
+    // For similar reasons, the _DEREFERENCE_ actions are inserted into other production rules as
+    // well.
+    '_DEREFERENCE_',
     '`:`',
     '_ELSE_BLOCK_',
-    elseBlock,
+    elseExpr,
+    '_DEREFERENCE_',
   ].join(' ');
 
   return rules;
@@ -725,33 +735,93 @@ function modifyShortCircuitExpressions(rules) {
   const TARGETS = [
     {
       rule: 'LogicalANDExpression[In, Yield, Await]',
-      op: '`&&`',
-      action: '_FALSY_SHORT_CIRCUIT_',
+      targets: [
+        {
+          term: '`&&` BitwiseORExpression[?In, ?Yield, ?Await]',
+          action: '_DEREFERENCE_',
+          insertBefore: false,
+        },
+        {
+          term: '`&&`',
+          action: '_FALSY_SHORT_CIRCUIT_',
+          insertBefore: false,
+        },
+      ],
     },
     {
       rule: 'LogicalORExpression[In, Yield, Await]',
-      op: '`||`',
-      action: '_TRUTHY_SHORT_CIRCUIT_',
+      targets: [
+        {
+          term: '`||` LogicalANDExpression[?In, ?Yield, ?Await]',
+          action: '_DEREFERENCE_',
+          insertBefore: false,
+        },
+        {
+          term: '`||`',
+          action: '_TRUTHY_SHORT_CIRCUIT_',
+          insertBefore: false,
+        },
+      ],
     },
     {
       rule: 'CoalesceExpression[In, Yield, Await]',
-      op: '`??`',
-      action: '_NULLISH_SHORT_CIRCUIT_',
+      targets: [
+        {
+          term: '`??` BitwiseORExpression[?In, ?Yield, ?Await]',
+          action: '_DEREFERENCE_',
+          insertBefore: false,
+        },
+        {
+          term: '`??`',
+          action: '_NULLISH_SHORT_CIRCUIT_',
+          insertBefore: false,
+        },
+      ],
     },
     {
       rule: 'AssignmentExpression[In, Yield, Await]',
-      op: '`&&=`',
-      action: '_FALSY_SHORT_CIRCUIT_ASSIGNMENT_',
+      targets: [
+        {
+          term: '`&&=` AssignmentExpression[?In, ?Yield, ?Await]',
+          action: '_DEREFERENCE_',
+          insertBefore: false,
+        },
+        {
+          term: '`&&=`',
+          action: '_FALSY_SHORT_CIRCUIT_ASSIGNMENT_',
+          insertBefore: false,
+        },
+      ],
     },
     {
       rule: 'AssignmentExpression[In, Yield, Await]',
-      op: '`||=`',
-      action: '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
+      targets: [
+        {
+          term: '`||=` AssignmentExpression[?In, ?Yield, ?Await]',
+          action: '_DEREFERENCE_',
+          insertBefore: false,
+        },
+        {
+          term: '`||=`',
+          action: '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
+          insertBefore: false,
+        },
+      ],
     },
     {
       rule: 'AssignmentExpression[In, Yield, Await]',
-      op: '`??=`',
-      action: '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
+      targets: [
+        {
+          term: '`??=` AssignmentExpression[?In, ?Yield, ?Await]',
+          action: '_DEREFERENCE_',
+          insertBefore: false,
+        },
+        {
+          term: '`??=`',
+          action: '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
+          insertBefore: false,
+        },
+      ],
     },
   ];
 
@@ -759,11 +829,7 @@ function modifyShortCircuitExpressions(rules) {
     log.debug(`Modifying ${target.rule}...`);
     const rule = rules.find((rule) => rule.name === target.rule);
     assert(rule !== undefined);
-    const index = rule.values.findIndex((production) => production.includes(target.op));
-    assert(index !== -1);
-    const [lhs, rhs] = rule.values[index].split(target.op).map((term) => term.trim());
-    // Insert target.action for the short-circuit evaluation of the LHS.
-    rule.values[index] = [lhs, target.op, target.action, rhs].join(' ');
+    modifyTargetsInRule(rule, target.targets);
   }
 
   return rules;
