@@ -18,10 +18,6 @@ void executor_peer_register_runtime_functions(ExecutorPeer peer,
   IMPL(peer)->RegisterRuntimeFunctions(functions);
 }
 
-void executor_peer_register_host_function(ExecutorPeer peer, uint32_t func_id, Lambda lambda) {
-  IMPL(peer)->RegisterHostFunction(func_id, lambda);
-}
-
 void executor_peer_register_module(ExecutorPeer peer, ModulePeer mod) {
   IMPL(peer)->RegisterModule(reinterpret_cast<Module*>(mod));
 }

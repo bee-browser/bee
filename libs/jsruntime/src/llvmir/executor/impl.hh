@@ -44,16 +44,6 @@ class Executor {
 
   void RegisterRuntimeFunctions(const RuntimeFunctions* functions);
 
-  void RegisterHostFunction(uint32_t func_id, Lambda lambda) {
-    llvm::orc::SymbolMap symbols;
-    auto name = FuncIdToName(func_id);
-    symbols[exec_session().intern(name)] = {
-        llvm::orc::ExecutorAddr::fromPtr(lambda),
-        llvm::JITSymbolFlags::Exported,
-    };
-    ExitOnErr(main_jd().define(llvm::orc::absoluteSymbols(std::move(symbols))));
-  }
-
   void RegisterModule(Module* mod) {
     ExitOnErr(jit_->addIRModule(std::move(mod->mod)));
   }

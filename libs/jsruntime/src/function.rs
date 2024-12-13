@@ -1,25 +1,14 @@
-use jsparser::Symbol;
-
 /// The identifier of a function.
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
 pub struct FunctionId(u32);
 
 impl FunctionId {
-    const HOST_BIT: u32 = 1 << 31;
-    const COROUTINE_BIT: u32 = 1 << 30;
+    const COROUTINE_BIT: u32 = 1 << 31;
 
-    const VALUE_MASK: u32 = !(Self::HOST_BIT | Self::COROUTINE_BIT);
+    const VALUE_MASK: u32 = !(Self::COROUTINE_BIT);
     const MAX_INDEX: usize = Self::VALUE_MASK as usize;
 
     pub const MAIN: Self = Self::native(0, false);
-
-    pub const fn is_native(&self) -> bool {
-        (self.0 & Self::HOST_BIT) == 0
-    }
-
-    pub const fn is_host(&self) -> bool {
-        (self.0 & Self::HOST_BIT) != 0
-    }
 
     pub const fn is_coroutine(&self) -> bool {
         (self.0 & Self::COROUTINE_BIT) != 0
@@ -32,11 +21,6 @@ impl FunctionId {
         } else {
             index as u32
         })
-    }
-
-    const fn host(index: usize) -> Self {
-        debug_assert!(index <= Self::MAX_INDEX);
-        Self(index as u32 | Self::HOST_BIT)
     }
 
     const fn index(&self) -> usize {
@@ -59,11 +43,7 @@ impl From<FunctionId> for u32 {
 impl std::fmt::Debug for FunctionId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let index = self.index();
-        if self.is_native() {
-            write!(f, "FunctionId::Native")?;
-        } else {
-            write!(f, "FunctionId::Host")?;
-        }
+        write!(f, "FunctionId::Native")?;
         if self.is_coroutine() {
             write!(f, "Coroutine")?;
         }
@@ -89,15 +69,7 @@ impl FunctionRegistry {
         FunctionId::native(index, coroutine)
     }
 
-    pub fn register_host_function(&mut self, symbol: Symbol) -> FunctionId {
-        let index = self.functions.len();
-        assert!(index <= FunctionId::MAX_INDEX);
-        self.functions.push(Function::Host(HostFunction { symbol }));
-        FunctionId::host(index)
-    }
-
     pub fn get_native(&self, func_id: FunctionId) -> &NativeFunction {
-        debug_assert!(func_id.is_native());
         match self.functions.get(func_id.index()) {
             Some(Function::Native(func)) => func,
             _ => unreachable!(),
@@ -105,39 +77,20 @@ impl FunctionRegistry {
     }
 
     pub fn get_native_mut(&mut self, func_id: FunctionId) -> &mut NativeFunction {
-        debug_assert!(func_id.is_native());
         match self.functions.get_mut(func_id.index()) {
             Some(Function::Native(func)) => func,
             _ => unreachable!(),
         }
     }
-
-    pub fn enumerate_host_function(&self) -> impl Iterator<Item = (FunctionId, &HostFunction)> {
-        self.functions
-            .iter()
-            .enumerate()
-            .filter_map(|(index, func)| {
-                debug_assert!(index <= FunctionId::MAX_INDEX);
-                match func {
-                    Function::Host(func) => Some((FunctionId::host(index), func)),
-                    _ => None,
-                }
-            })
-    }
 }
 
 enum Function {
     Native(NativeFunction),
-    Host(HostFunction),
 }
 
 pub struct NativeFunction {
     // [[ECMAScriptCode]]
     pub scratch_buffer_len: u32,
-}
-
-pub struct HostFunction {
-    pub symbol: Symbol,
 }
 
 #[cfg(test)]

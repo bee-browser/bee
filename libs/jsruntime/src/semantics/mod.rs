@@ -55,8 +55,25 @@ impl<X> Runtime<X> {
 }
 
 /// A type representing a JavaScript program after the semantic analysis.
+///
+/// The program mainly consists of two kind of data.
+///
+/// 1. Compile commands for each JavaScript function
+/// 2. Analytics data
+///
+/// Some of synthesized attributes (known as S-attributes) are computed during the semantic
+/// analysis and values are embedded in each compile command.  The others will be computed in a
+/// state machine that interprets the compile commands.
+///
+/// Inherited attributes are computed and stored into the analytics data.  And the values will be
+/// used in the state machine.
+///
+/// In our processing model, a parser outputs stream of Nodes in the syntax tree in the buttom-up
+/// order and it doesn't create the AST.  So, it's impossible to compute a inherited attribute
+/// value before a parent node comes from the parser.  The computation has to be postponed.  This
+/// is why we need to introduce the analytics data.
 pub struct Program {
-    pub functions: Vec<FunctionRecipe>,
+    pub functions: Vec<Function>,
     pub scope_tree: ScopeTree,
 }
 
@@ -74,7 +91,7 @@ impl Program {
 
 /// A type representing a JavaScript function after the semantic analysis.
 #[derive(Default)]
-pub struct FunctionRecipe {
+pub struct Function {
     // TODO: remove?
     pub symbol: Symbol,
 
@@ -88,7 +105,7 @@ pub struct FunctionRecipe {
     pub scope_ref: ScopeRef,
 }
 
-impl FunctionRecipe {
+impl Function {
     pub fn print(&self, indent: &str) {
         println!("{indent}function: {:?}", self.id);
         if !self.commands.is_empty() {
@@ -117,8 +134,8 @@ struct Analyzer<'r> {
     /// JavaScript functions.
     context_stack: Vec<FunctionContext>,
 
-    /// A list of [`FunctionRecipe`]s.
-    functions: Vec<FunctionRecipe>,
+    /// A list of [`Function`]s.
+    functions: Vec<Function>,
 
     /// A scope tree builder used for building the scope tree of the JavaScript program.
     scope_tree_builder: ScopeTreeBuilder,

@@ -104,10 +104,8 @@ impl<X> Runtime<X> {
         R: Clone + ReturnValue,
     {
         let symbol = self.symbol_registry.intern_str(name);
-        let func_id = self.function_registry.register_host_function(symbol);
+        logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
-        self.executor.register_host_function(func_id, lambda);
-        logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
         let closure = self.create_closure(lambda, 0);
         self.global_object.define_own_property(
             symbol,
