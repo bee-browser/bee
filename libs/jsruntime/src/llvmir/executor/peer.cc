@@ -30,6 +30,6 @@ const char* executor_peer_get_target_triple(const ExecutorPeer peer) {
   return IMPL(peer)->target_triple().getTriple().c_str();
 }
 
-Lambda executor_peer_get_native_function(ExecutorPeer peer, uint32_t func_id) {
-  return IMPL(peer)->GetNativeFunction(func_id);
+Lambda executor_peer_get_lambda(ExecutorPeer peer, uint32_t id) {
+  return IMPL(peer)->GetLambda(id);
 }

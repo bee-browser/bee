@@ -33,9 +33,9 @@ impl ExecutorBridge {
         unsafe { CStr::from_ptr(executor_peer_get_target_triple(self.0)) }
     }
 
-    pub fn get_native_function(&self, lambda_id: LambdaId) -> Option<Lambda> {
+    pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
         unsafe {
-            std::mem::transmute::<Lambda, Option<Lambda>>(executor_peer_get_native_function(
+            std::mem::transmute::<Lambda, Option<Lambda>>(executor_peer_get_lambda(
                 self.0,
                 lambda_id.into(),
             ))
@@ -61,5 +61,5 @@ extern "C" {
     fn executor_peer_register_module(peer: ExecutorPeer, module: ModulePeer);
     fn executor_peer_get_data_layout(peer: ExecutorPeer) -> *const c_char;
     fn executor_peer_get_target_triple(peer: ExecutorPeer) -> *const c_char;
-    fn executor_peer_get_native_function(peer: ExecutorPeer, lambda_id: u32) -> Lambda;
+    fn executor_peer_get_lambda(peer: ExecutorPeer, lambda_id: u32) -> Lambda;
 }

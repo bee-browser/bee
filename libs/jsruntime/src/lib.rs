@@ -120,7 +120,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "evaluate");
         self.executor.register_module(module);
         let mut retv = Value::Undefined;
-        let status = match self.executor.get_native_function(LambdaId::MAIN) {
+        let status = match self.executor.get_lambda(LambdaId::MAIN) {
             Some(main) => unsafe {
                 main(
                     // runtime

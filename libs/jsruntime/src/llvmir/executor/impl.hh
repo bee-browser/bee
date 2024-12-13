@@ -20,10 +20,10 @@
 
 namespace {
 
-// TODO(perf): Inefficient.  Use a fixed size buffer for formatting func_id.
-std::string FuncIdToName(uint32_t func_id) {
+// TODO(perf): Inefficient.  Use a fixed size buffer for formatting `id`.
+std::string IdToName(uint32_t id) {
   std::stringstream ss;
-  ss << "fn" << func_id;
+  ss << "fn" << id;
   return ss.str();
 }
 
@@ -48,8 +48,8 @@ class Executor {
     ExitOnErr(jit_->addIRModule(std::move(mod->mod)));
   }
 
-  Lambda GetNativeFunction(uint32_t func_id) {
-    auto name = FuncIdToName(func_id);
+  Lambda GetLambda(uint32_t id) {
+    auto name = IdToName(id);
     auto addr = ExitOnErr(jit_->lookup(name));
     return addr.toPtr<Lambda>();
   }
