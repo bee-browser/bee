@@ -11,8 +11,8 @@ use indexmap::IndexMap;
 use jsparser::syntax::LoopFlags;
 use jsparser::Symbol;
 
-use crate::function::FunctionId;
-use crate::function::FunctionRegistry;
+use crate::lambda::LambdaId;
+use crate::lambda::LambdaRegistry;
 use crate::logger;
 use crate::semantics::BindingRef;
 use crate::semantics::CompileCommand;
@@ -47,7 +47,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(&mut self.function_registry, &program.scope_tree);
+        let mut compiler = Compiler::new(&mut self.lambda_registry, &program.scope_tree);
         if self.pref.enable_scope_cleanup_checker {
             compiler.enable_scope_cleanup_checker();
         }
@@ -76,7 +76,7 @@ struct Compiler<'r, 's> {
     bridge: CompilerBridge,
 
     /// The function registry of the JavaScript program to compile.
-    function_registry: &'r mut FunctionRegistry,
+    lambda_registry: &'r mut LambdaRegistry,
 
     /// The scope tree of the JavaScript program to compile.
     scope_tree: &'s ScopeTree,
@@ -155,11 +155,11 @@ macro_rules! dump_enabled {
 }
 
 impl<'r, 's> Compiler<'r, 's> {
-    pub fn new(function_registry: &'r mut FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
+    pub fn new(lambda_registry: &'r mut LambdaRegistry, scope_tree: &'s ScopeTree) -> Self {
         const DUMP_BUFFER_SIZE: usize = 512;
         Self {
             bridge: Default::default(),
-            function_registry,
+            lambda_registry,
             scope_tree,
             operand_stack: Default::default(),
             control_flow_stack: Default::default(),
@@ -204,10 +204,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.set_target_triple(triple);
     }
 
-    fn start_function(&mut self, symbol: Symbol, func_id: FunctionId) {
-        logger::debug!(event = "start_function", ?symbol, ?func_id);
+    fn start_function(&mut self, symbol: Symbol, lambda_id: LambdaId) {
+        logger::debug!(event = "start_function", ?symbol, ?lambda_id);
 
-        self.bridge.start_function(func_id);
+        self.bridge.start_function(lambda_id);
 
         let locals_block = self.create_basic_block("locals");
         let init_block = self.create_basic_block("init");
@@ -235,16 +235,16 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.create_alloc_flow_selector();
         if self.enable_scope_cleanup_checker {
             self.bridge
-                .enable_scope_cleanup_checker(func_id.is_coroutine());
+                .enable_scope_cleanup_checker(lambda_id.is_coroutine());
         }
 
         self.bridge.set_basic_block(body_block);
     }
 
-    fn end_function(&mut self, func_id: FunctionId, optimize: bool) {
-        logger::debug!(event = "end_function", ?func_id, optimize);
+    fn end_function(&mut self, lambda_id: LambdaId, optimize: bool) {
+        logger::debug!(event = "end_function", ?lambda_id, optimize);
 
-        let dormant_block = func_id
+        let dormant_block = lambda_id
             .is_coroutine()
             .then(|| self.control_flow_stack.pop_coroutine_flow().dormant_block);
 
@@ -285,9 +285,9 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.control_flow_stack.is_empty());
         self.control_flow_stack.clear();
 
-        if func_id.is_coroutine() {
-            self.function_registry
-                .get_native_mut(func_id)
+        if lambda_id.is_coroutine() {
+            self.lambda_registry
+                .get_native_mut(lambda_id)
                 .scratch_buffer_len = self.max_scratch_buffer_len;
         }
         self.max_scratch_buffer_len = 0;
@@ -302,12 +302,12 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Boolean(value) => self.process_boolean(*value),
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::String(value) => self.process_string(value),
-            CompileCommand::Function(func_id) => self.process_function(*func_id),
+            CompileCommand::Function(lambda_id) => self.process_function(*lambda_id),
             CompileCommand::Closure(prologue, func_scope_ref) => {
                 self.process_closure(*prologue, *func_scope_ref)
             }
-            CompileCommand::Coroutine(func_id, num_locals) => {
-                self.process_coroutine(*func_id, *num_locals)
+            CompileCommand::Coroutine(lambda_id, num_locals) => {
+                self.process_coroutine(*lambda_id, *num_locals)
             }
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Reference(symbol) => self.process_reference(*symbol),
@@ -438,8 +438,8 @@ impl<'r, 's> Compiler<'r, 's> {
         unimplemented!("string literal");
     }
 
-    fn process_function(&mut self, func_id: FunctionId) {
-        let lambda = self.bridge.get_function(func_id);
+    fn process_function(&mut self, lambda_id: LambdaId) {
+        let lambda = self.bridge.get_function(lambda_id);
         self.operand_stack.push(Operand::Function(lambda));
     }
 
@@ -494,10 +494,10 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn process_coroutine(&mut self, func_id: FunctionId, num_locals: u16) {
+    fn process_coroutine(&mut self, lambda_id: LambdaId, num_locals: u16) {
         let scrach_buffer_len = self
-            .function_registry
-            .get_native(func_id)
+            .lambda_registry
+            .get_native(lambda_id)
             .scratch_buffer_len;
         debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();

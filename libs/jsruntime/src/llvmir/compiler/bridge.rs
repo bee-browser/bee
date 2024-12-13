@@ -10,7 +10,7 @@ use crate::llvmir::module::Module;
 use crate::llvmir::module::ModulePeer;
 use crate::logger;
 use crate::semantics::ScopeRef;
-use crate::FunctionId;
+use crate::LambdaId;
 
 pub struct CompilerBridge(CompilerPeer);
 
@@ -88,9 +88,9 @@ impl CompilerBridge {
 
     // function
 
-    pub fn start_function(&self, func_id: FunctionId) {
+    pub fn start_function(&self, lambda_id: LambdaId) {
         unsafe {
-            compiler_peer_start_function(self.0, func_id.into());
+            compiler_peer_start_function(self.0, lambda_id.into());
         }
     }
 
@@ -107,8 +107,8 @@ impl CompilerBridge {
         }
     }
 
-    pub fn get_function(&self, func_id: FunctionId) -> LambdaIr {
-        lambda_ir!(compiler_peer_get_function(self.0, func_id.into()))
+    pub fn get_function(&self, lambda_id: LambdaId) -> LambdaIr {
+        lambda_ir!(compiler_peer_get_function(self.0, lambda_id.into()))
     }
 
     // basic block
@@ -1210,10 +1210,10 @@ extern "C" {
 
     // function
 
-    fn compiler_peer_start_function(peer: CompilerPeer, func_id: u32);
+    fn compiler_peer_start_function(peer: CompilerPeer, lambda_id: u32);
     fn compiler_peer_end_function(peer: CompilerPeer, optimize: bool);
     fn compiler_peer_set_locals_block(peer: CompilerPeer, block: BasicBlockPtr);
-    fn compiler_peer_get_function(peer: CompilerPeer, func_id: u32) -> LambdaIrPtr;
+    fn compiler_peer_get_function(peer: CompilerPeer, lambda_id: u32) -> LambdaIrPtr;
 
     // basic block
 

@@ -1,4 +1,4 @@
-mod function;
+mod lambda;
 mod llvmir;
 mod logger;
 mod objects;
@@ -10,8 +10,8 @@ use std::ffi::c_void;
 
 use jsparser::SymbolRegistry;
 
-use function::FunctionId;
-use function::FunctionRegistry;
+use lambda::LambdaId;
+use lambda::LambdaRegistry;
 use llvmir::Executor;
 use objects::Object;
 use types::ReturnValue;
@@ -54,7 +54,7 @@ impl BasicRuntime {
 pub struct Runtime<X> {
     pref: RuntimePref,
     symbol_registry: SymbolRegistry,
-    function_registry: FunctionRegistry,
+    lambda_registry: LambdaRegistry,
     executor: Executor,
     // TODO: GcArena
     allocator: bumpalo::Bump,
@@ -73,7 +73,7 @@ impl<X> Runtime<X> {
         Self {
             pref: Default::default(),
             symbol_registry: Default::default(),
-            function_registry: FunctionRegistry::new(),
+            lambda_registry: LambdaRegistry::new(),
             executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
             tasklet_system: tasklet::System::new(),
@@ -120,7 +120,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "evaluate");
         self.executor.register_module(module);
         let mut retv = Value::Undefined;
-        let status = match self.executor.get_native_function(FunctionId::MAIN) {
+        let status = match self.executor.get_native_function(LambdaId::MAIN) {
             Some(main) => unsafe {
                 main(
                     // runtime

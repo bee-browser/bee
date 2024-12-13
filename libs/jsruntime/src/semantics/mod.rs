@@ -17,8 +17,8 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use crate::logger;
-use crate::FunctionId;
-use crate::FunctionRegistry;
+use crate::LambdaId;
+use crate::LambdaRegistry;
 use crate::Runtime;
 use crate::RuntimePref;
 
@@ -35,7 +35,7 @@ impl<X> Runtime<X> {
         let analyzer = Analyzer::new_for_script(
             &self.pref,
             &mut self.symbol_registry,
-            &mut self.function_registry,
+            &mut self.lambda_registry,
         );
         let processor = Processor::new(analyzer, false);
         Parser::for_script(source, processor).parse()
@@ -47,7 +47,7 @@ impl<X> Runtime<X> {
         let analyzer = Analyzer::new_for_module(
             &self.pref,
             &mut self.symbol_registry,
-            &mut self.function_registry,
+            &mut self.lambda_registry,
         );
         let processor = Processor::new(analyzer, true);
         Parser::for_module(source, processor).parse()
@@ -96,7 +96,7 @@ pub struct Function {
     pub symbol: Symbol,
 
     /// The function ID of the function.
-    pub id: FunctionId,
+    pub id: LambdaId,
 
     /// A list of [`CompileCommand`]s generated from the function definition.
     pub commands: Vec<CompileCommand>,
@@ -128,7 +128,7 @@ struct Analyzer<'r> {
     symbol_registry: &'r mut SymbolRegistry,
 
     /// A mutable reference to a function registry.
-    function_registry: &'r mut FunctionRegistry,
+    lambda_registry: &'r mut LambdaRegistry,
 
     /// A stack to keep the analysis data for outer JavaScript functions when analyzing nested
     /// JavaScript functions.
@@ -148,32 +148,32 @@ impl<'r> Analyzer<'r> {
     fn new_for_script(
         runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
-        function_registry: &'r mut FunctionRegistry,
+        lambda_registry: &'r mut LambdaRegistry,
     ) -> Self {
-        Self::new(runtime_pref, symbol_registry, function_registry, false)
+        Self::new(runtime_pref, symbol_registry, lambda_registry, false)
     }
 
     /// Creates a semantic analyzer.
     fn new_for_module(
         runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
-        function_registry: &'r mut FunctionRegistry,
+        lambda_registry: &'r mut LambdaRegistry,
     ) -> Self {
-        Self::new(runtime_pref, symbol_registry, function_registry, true)
+        Self::new(runtime_pref, symbol_registry, lambda_registry, true)
     }
 
     fn new(
         runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
-        function_registry: &'r mut FunctionRegistry,
+        lambda_registry: &'r mut LambdaRegistry,
         module: bool,
     ) -> Self {
         // TODO: modules including await expressions.
-        let _ = function_registry.create_native_function(false);
+        let _ = lambda_registry.create_native_function(false);
         Self {
             runtime_pref,
             symbol_registry,
-            function_registry,
+            lambda_registry,
             context_stack: vec![],
             functions: vec![],
             scope_tree_builder: Default::default(),
@@ -842,7 +842,7 @@ impl<'r> Analyzer<'r> {
 
     fn set_function_symbol(&mut self, symbol: Symbol) {
         let id = self
-            .function_registry
+            .lambda_registry
             .create_native_function(symbol == Symbol::HIDDEN_COROUTINE);
         let func_index = self.context_stack.last().unwrap().func_index;
         self.functions[func_index].symbol = symbol;
@@ -888,10 +888,10 @@ impl<'r> Analyzer<'r> {
     fn end_coroutine_body(&mut self) {
         // TODO(perf): Some of the local variables can be placed on the stack.
         let context = self.context_stack.last().unwrap();
-        let func_id = self.functions[context.func_index].id;
+        let lambda_id = self.functions[context.func_index].id;
         let num_locals = context.num_locals;
         self.handle_function_expression(false);
-        self.put_command(CompileCommand::Coroutine(func_id, num_locals));
+        self.put_command(CompileCommand::Coroutine(lambda_id, num_locals));
         self.put_command(CompileCommand::Promise);
         self.put_command(CompileCommand::Duplicate(0));
         self.put_command(CompileCommand::Resume);
@@ -1192,8 +1192,8 @@ impl FunctionContext {
         self.pending_lexical_bindings.clear();
     }
 
-    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, func_id: FunctionId) {
-        self.commands.push(CompileCommand::Function(func_id));
+    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
+        self.commands.push(CompileCommand::Function(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands.push(CompileCommand::DeclareClosure);
     }
@@ -1201,14 +1201,14 @@ impl FunctionContext {
     fn process_closure_expression(
         &mut self,
         scope_ref: ScopeRef,
-        func_id: FunctionId,
+        lambda_id: LambdaId,
         named: bool,
     ) {
         if named {
             // Remove the BindingIdentifier of the function.
             self.put_command(CompileCommand::Discard);
         }
-        self.commands.push(CompileCommand::Function(func_id));
+        self.commands.push(CompileCommand::Function(lambda_id));
         self.commands
             .push(CompileCommand::Closure(false, scope_ref));
     }
@@ -1471,9 +1471,9 @@ pub enum CompileCommand {
     Boolean(bool),
     Number(f64),
     String(Vec<u16>),
-    Function(FunctionId),
+    Function(LambdaId),
     Closure(bool, ScopeRef),
-    Coroutine(FunctionId, u16),
+    Coroutine(LambdaId, u16),
     Promise,
     Reference(Symbol),
     Exception,
@@ -1921,13 +1921,13 @@ mod tests {
         });
     }
 
-    fn test(src: Source, validate: fn(&Program, &SymbolRegistry, &FunctionRegistry)) {
+    fn test(src: Source, validate: fn(&Program, &SymbolRegistry, &LambdaRegistry)) {
         let runtime_pref = RuntimePref {
             enable_scope_cleanup_checker: true,
             ..Default::default()
         };
         let mut symbol_registry = Default::default();
-        let mut function_registry = FunctionRegistry::new();
+        let mut lambda_registry = LambdaRegistry::new();
         let mut parser = match src {
             Source::Script(src) => Parser::for_script(
                 src,
@@ -1935,7 +1935,7 @@ mod tests {
                     Analyzer::new_for_script(
                         &runtime_pref,
                         &mut symbol_registry,
-                        &mut function_registry,
+                        &mut lambda_registry,
                     ),
                     false,
                 ),
@@ -1946,7 +1946,7 @@ mod tests {
                     Analyzer::new_for_module(
                         &runtime_pref,
                         &mut symbol_registry,
-                        &mut function_registry,
+                        &mut lambda_registry,
                     ),
                     true,
                 ),
@@ -1955,7 +1955,7 @@ mod tests {
         let result = parser.parse();
         assert!(result.is_ok());
         if let Ok(program) = result {
-            validate(&program, &symbol_registry, &function_registry)
+            validate(&program, &symbol_registry, &lambda_registry)
         }
     }
 

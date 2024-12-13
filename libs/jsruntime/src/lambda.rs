@@ -1,8 +1,8 @@
-/// The identifier of a function.
+/// The identifier of a lambda function.
 #[derive(Clone, Copy, Default, Eq, PartialEq)]
-pub struct FunctionId(u32);
+pub struct LambdaId(u32);
 
-impl FunctionId {
+impl LambdaId {
     const COROUTINE_BIT: u32 = 1 << 31;
 
     const VALUE_MASK: u32 = !(Self::COROUTINE_BIT);
@@ -28,22 +28,22 @@ impl FunctionId {
     }
 }
 
-impl From<u32> for FunctionId {
+impl From<u32> for LambdaId {
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
-impl From<FunctionId> for u32 {
-    fn from(value: FunctionId) -> Self {
+impl From<LambdaId> for u32 {
+    fn from(value: LambdaId) -> Self {
         value.0
     }
 }
 
-impl std::fmt::Debug for FunctionId {
+impl std::fmt::Debug for LambdaId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let index = self.index();
-        write!(f, "FunctionId::Native")?;
+        write!(f, "LambdaId::Native")?;
         if self.is_coroutine() {
             write!(f, "Coroutine")?;
         }
@@ -51,32 +51,32 @@ impl std::fmt::Debug for FunctionId {
     }
 }
 
-pub struct FunctionRegistry {
+pub struct LambdaRegistry {
     functions: Vec<Function>,
 }
 
-impl FunctionRegistry {
+impl LambdaRegistry {
     pub fn new() -> Self {
         Self { functions: vec![] }
     }
 
-    pub fn create_native_function(&mut self, coroutine: bool) -> FunctionId {
+    pub fn create_native_function(&mut self, coroutine: bool) -> LambdaId {
         let index = self.functions.len();
-        assert!(index <= FunctionId::MAX_INDEX);
+        assert!(index <= LambdaId::MAX_INDEX);
         self.functions.push(Function::Native(NativeFunction {
             scratch_buffer_len: 0,
         }));
-        FunctionId::native(index, coroutine)
+        LambdaId::native(index, coroutine)
     }
 
-    pub fn get_native(&self, func_id: FunctionId) -> &NativeFunction {
+    pub fn get_native(&self, func_id: LambdaId) -> &NativeFunction {
         match self.functions.get(func_id.index()) {
             Some(Function::Native(func)) => func,
             _ => unreachable!(),
         }
     }
 
-    pub fn get_native_mut(&mut self, func_id: FunctionId) -> &mut NativeFunction {
+    pub fn get_native_mut(&mut self, func_id: LambdaId) -> &mut NativeFunction {
         match self.functions.get_mut(func_id.index()) {
             Some(Function::Native(func)) => func,
             _ => unreachable!(),
@@ -100,9 +100,6 @@ mod tests {
     #[test]
     fn test_function_id_max() {
         // TODO: checking at compile time is better.
-        assert_eq!(
-            FunctionId::MAX_INDEX,
-            (FunctionId::COROUTINE_BIT - 1) as usize
-        );
+        assert_eq!(LambdaId::MAX_INDEX, (LambdaId::COROUTINE_BIT - 1) as usize);
     }
 }
