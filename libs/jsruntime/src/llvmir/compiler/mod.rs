@@ -234,8 +234,8 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.create_alloc_status();
         self.bridge.create_alloc_flow_selector();
         if self.enable_scope_cleanup_checker {
-            self.bridge
-                .enable_scope_cleanup_checker(lambda_id.is_coroutine());
+            let is_coroutine = self.lambda_registry.get(lambda_id).is_coroutine;
+            self.bridge.enable_scope_cleanup_checker(is_coroutine);
         }
 
         self.bridge.set_basic_block(body_block);
@@ -244,8 +244,10 @@ impl<'r, 's> Compiler<'r, 's> {
     fn end_function(&mut self, lambda_id: LambdaId, optimize: bool) {
         logger::debug!(event = "end_function", ?lambda_id, optimize);
 
-        let dormant_block = lambda_id
-            .is_coroutine()
+        let dormant_block = self
+            .lambda_registry
+            .get(lambda_id)
+            .is_coroutine
             .then(|| self.control_flow_stack.pop_coroutine_flow().dormant_block);
 
         self.control_flow_stack.pop_exit_target();
@@ -285,10 +287,9 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.control_flow_stack.is_empty());
         self.control_flow_stack.clear();
 
-        if lambda_id.is_coroutine() {
-            self.lambda_registry
-                .get_native_mut(lambda_id)
-                .scratch_buffer_len = self.max_scratch_buffer_len;
+        let info = self.lambda_registry.get_mut(lambda_id);
+        if info.is_coroutine {
+            info.scratch_buffer_len = self.max_scratch_buffer_len;
         }
         self.max_scratch_buffer_len = 0;
     }
@@ -495,10 +496,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_coroutine(&mut self, lambda_id: LambdaId, num_locals: u16) {
-        let scrach_buffer_len = self
-            .lambda_registry
-            .get_native(lambda_id)
-            .scratch_buffer_len;
+        let scrach_buffer_len = self.lambda_registry.get(lambda_id).scratch_buffer_len;
         debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();
         let coroutine = self

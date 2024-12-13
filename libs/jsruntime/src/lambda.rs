@@ -1,30 +1,17 @@
 /// The identifier of a lambda function.
-#[derive(Clone, Copy, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct LambdaId(u32);
 
 impl LambdaId {
-    const COROUTINE_BIT: u32 = 1 << 31;
+    pub const MAIN: Self = Self(0);
 
-    const VALUE_MASK: u32 = !(Self::COROUTINE_BIT);
-    const MAX_INDEX: usize = Self::VALUE_MASK as usize;
-
-    pub const MAIN: Self = Self::native(0, false);
-
-    pub const fn is_coroutine(&self) -> bool {
-        (self.0 & Self::COROUTINE_BIT) != 0
-    }
-
-    const fn native(index: usize, coroutine: bool) -> Self {
-        debug_assert!(index <= Self::MAX_INDEX);
-        Self(if coroutine {
-            index as u32 | Self::COROUTINE_BIT
-        } else {
-            index as u32
-        })
+    const fn new(index: usize) -> Self {
+        debug_assert!(index <= u32::MAX as usize);
+        Self(index as u32)
     }
 
     const fn index(&self) -> usize {
-        (self.0 & Self::VALUE_MASK) as usize
+        self.0 as usize
     }
 }
 
@@ -40,66 +27,35 @@ impl From<LambdaId> for u32 {
     }
 }
 
-impl std::fmt::Debug for LambdaId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let index = self.index();
-        write!(f, "LambdaId::Native")?;
-        if self.is_coroutine() {
-            write!(f, "Coroutine")?;
-        }
-        write!(f, "({index})")
-    }
-}
-
 pub struct LambdaRegistry {
-    functions: Vec<Function>,
+    entries: Vec<LambdaInfo>,
 }
 
 impl LambdaRegistry {
     pub fn new() -> Self {
-        Self { functions: vec![] }
+        Self { entries: vec![] }
     }
 
-    pub fn create_native_function(&mut self, coroutine: bool) -> LambdaId {
-        let index = self.functions.len();
-        assert!(index <= LambdaId::MAX_INDEX);
-        self.functions.push(Function::Native(NativeFunction {
+    pub fn register(&mut self, is_coroutine: bool) -> LambdaId {
+        let index = self.entries.len();
+        self.entries.push(LambdaInfo {
             scratch_buffer_len: 0,
-        }));
-        LambdaId::native(index, coroutine)
+            is_coroutine,
+        });
+        LambdaId::new(index)
     }
 
-    pub fn get_native(&self, func_id: LambdaId) -> &NativeFunction {
-        match self.functions.get(func_id.index()) {
-            Some(Function::Native(func)) => func,
-            _ => unreachable!(),
-        }
+    pub fn get(&self, id: LambdaId) -> &LambdaInfo {
+        self.entries.get(id.index()).unwrap()
     }
 
-    pub fn get_native_mut(&mut self, func_id: LambdaId) -> &mut NativeFunction {
-        match self.functions.get_mut(func_id.index()) {
-            Some(Function::Native(func)) => func,
-            _ => unreachable!(),
-        }
+    pub fn get_mut(&mut self, id: LambdaId) -> &mut LambdaInfo {
+        self.entries.get_mut(id.index()).unwrap()
     }
 }
 
-enum Function {
-    Native(NativeFunction),
-}
-
-pub struct NativeFunction {
+pub struct LambdaInfo {
     // [[ECMAScriptCode]]
     pub scratch_buffer_len: u32,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_function_id_max() {
-        // TODO: checking at compile time is better.
-        assert_eq!(LambdaId::MAX_INDEX, (LambdaId::COROUTINE_BIT - 1) as usize);
-    }
+    pub is_coroutine: bool,
 }

@@ -169,7 +169,7 @@ impl<'r> Analyzer<'r> {
         module: bool,
     ) -> Self {
         // TODO: modules including await expressions.
-        let _ = lambda_registry.create_native_function(false);
+        let _ = lambda_registry.register(false);
         Self {
             runtime_pref,
             symbol_registry,
@@ -841,12 +841,12 @@ impl<'r> Analyzer<'r> {
     }
 
     fn set_function_symbol(&mut self, symbol: Symbol) {
-        let id = self
+        let lambda_id = self
             .lambda_registry
-            .create_native_function(symbol == Symbol::HIDDEN_COROUTINE);
+            .register(symbol == Symbol::HIDDEN_COROUTINE);
         let func_index = self.context_stack.last().unwrap().func_index;
         self.functions[func_index].symbol = symbol;
-        self.functions[func_index].id = id;
+        self.functions[func_index].id = lambda_id;
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
