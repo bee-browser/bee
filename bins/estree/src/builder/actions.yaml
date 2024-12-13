@@ -204,11 +204,9 @@
     ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE,
     LET LBRACK]) Expression_In SEMICOLON
   action: expression_statement
-- rule: >-
-    IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_
-    Statement
+- rule: IfStatement -> IF LPAREN Expression_In RPAREN _THEN_ Statement ELSE _ELSE_ Statement
   action: if_else_statement
-- rule: 'IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])'
+- rule: 'IfStatement -> IF LPAREN Expression_In RPAREN _THEN_ Statement (?![ELSE])'
   action: if_statement
 - rule: BreakableStatement -> IterationStatement
   action: nop
@@ -424,9 +422,9 @@
   action: nop
 - rule: Expression_In -> Expression_In COMMA AssignmentExpression_In
   action: sequence_expression
-- rule: _THEN_BLOCK_ -> (empty)
+- rule: _THEN_ -> (empty)
   action: nop
-- rule: _ELSE_BLOCK_ -> (empty)
+- rule: _ELSE_ -> (empty)
   action: nop
 - rule: IterationStatement -> DoWhileStatement
   action: nop
@@ -575,8 +573,8 @@
 - rule: ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
   action: nop
 - rule: >-
-    ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL _THEN_BLOCK_
-    AssignmentExpression_In_Await _DEREFERENCE_ COLON _ELSE_BLOCK_ AssignmentExpression_In_Await
+    ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL _THEN_
+    AssignmentExpression_In_Await _DEREFERENCE_ COLON _ELSE_ AssignmentExpression_In_Await
     _DEREFERENCE_
   action: conditional_expression
 - rule: >-
@@ -636,12 +634,10 @@
     LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
   action: expression_statement
 - rule: >-
-    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE
-    _ELSE_BLOCK_ Statement_Await
+    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_ Statement_Await ELSE _ELSE_
+    Statement_Await
   action: if_else_statement
-- rule: >-
-    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await
-    (?![ELSE])
+- rule: 'IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_ Statement_Await (?![ELSE])'
   action: if_statement
 - rule: BreakableStatement_Await -> IterationStatement_Await
   action: nop
@@ -1360,8 +1356,8 @@
 - rule: ConditionalExpression_In -> ShortCircuitExpression_In
   action: nop
 - rule: >-
-    ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_
-    AssignmentExpression_In _DEREFERENCE_ COLON _ELSE_BLOCK_ AssignmentExpression_In _DEREFERENCE_
+    ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_
+    AssignmentExpression_In _DEREFERENCE_ COLON _ELSE_ AssignmentExpression_In _DEREFERENCE_
   action: conditional_expression
 - rule: >-
     ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -1693,8 +1689,8 @@
 - rule: ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
   action: nop
 - rule: >-
-    ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_
-    AssignmentExpression_In_Yield _DEREFERENCE_ COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield
+    ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_
+    AssignmentExpression_In_Yield _DEREFERENCE_ COLON _ELSE_ AssignmentExpression_In_Yield
     _DEREFERENCE_
   action: conditional_expression
 - rule: YieldExpression_In -> YIELD
@@ -1742,7 +1738,7 @@
   action: nop
 - rule: >-
     ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL
-    _THEN_BLOCK_ AssignmentExpression_In_Yield_Await _DEREFERENCE_ COLON _ELSE_BLOCK_
+    _THEN_ AssignmentExpression_In_Yield_Await _DEREFERENCE_ COLON _ELSE_
     AssignmentExpression_In_Yield_Await _DEREFERENCE_
   action: conditional_expression
 - rule: YieldExpression_In_Await -> YIELD
@@ -2157,8 +2153,8 @@
 - rule: ConditionalExpression -> ShortCircuitExpression
   action: nop
 - rule: >-
-    ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_
-    AssignmentExpression_In _DEREFERENCE_ COLON _ELSE_BLOCK_ AssignmentExpression _DEREFERENCE_
+    ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_ AssignmentExpression_In
+    _DEREFERENCE_ COLON _ELSE_ AssignmentExpression _DEREFERENCE_
   action: conditional_expression
 - rule: >-
     ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -2753,8 +2749,8 @@
 - rule: ConditionalExpression_Await -> ShortCircuitExpression_Await
   action: nop
 - rule: >-
-    ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_
-    AssignmentExpression_In_Await _DEREFERENCE_ COLON _ELSE_BLOCK_ AssignmentExpression_Await
+    ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_
+    AssignmentExpression_In_Await _DEREFERENCE_ COLON _ELSE_ AssignmentExpression_Await
     _DEREFERENCE_
   action: conditional_expression
 - rule: >-
@@ -2950,10 +2946,10 @@
 - rule: BlockStatement_Return -> Block_Return
   action: nop
 - rule: >-
-    IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE
-    _ELSE_BLOCK_ Statement_Return
+    IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_ Statement_Return ELSE _ELSE_
+    Statement_Return
   action: if_else_statement
-- rule: 'IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])'
+- rule: 'IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_ Statement_Return (?![ELSE])'
   action: if_statement
 - rule: BreakableStatement_Return -> IterationStatement_Return
   action: nop
@@ -3262,12 +3258,12 @@
     LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
   action: expression_statement
 - rule: >-
-    IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_
-    Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return
+    IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_ Statement_Yield_Return
+    ELSE _ELSE_ Statement_Yield_Return
   action: if_else_statement
 - rule: >-
-    IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_
-    Statement_Yield_Return (?![ELSE])
+    IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_ Statement_Yield_Return
+    (?![ELSE])
   action: if_statement
 - rule: BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
   action: nop
@@ -3320,12 +3316,12 @@
 - rule: BlockStatement_Await_Return -> Block_Await_Return
   action: nop
 - rule: >-
-    IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_
-    Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return
+    IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_ Statement_Await_Return
+    ELSE _ELSE_ Statement_Await_Return
   action: if_else_statement
 - rule: >-
-    IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_
-    Statement_Await_Return (?![ELSE])
+    IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_ Statement_Await_Return
+    (?![ELSE])
   action: if_statement
 - rule: BreakableStatement_Await_Return -> IterationStatement_Await_Return
   action: nop
@@ -3360,11 +3356,11 @@
     FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON
   action: expression_statement
 - rule: >-
-    IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_
-    Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return
+    IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_
+    Statement_Yield_Await_Return ELSE _ELSE_ Statement_Yield_Await_Return
   action: if_else_statement
 - rule: >-
-    IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_
+    IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_
     Statement_Yield_Await_Return (?![ELSE])
   action: if_statement
 - rule: BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
@@ -4838,8 +4834,8 @@
 - rule: ConditionalExpression_Yield -> ShortCircuitExpression_Yield
   action: nop
 - rule: >-
-    ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_
-    AssignmentExpression_In_Yield _DEREFERENCE_ COLON _ELSE_BLOCK_ AssignmentExpression_Yield
+    ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_
+    AssignmentExpression_In_Yield _DEREFERENCE_ COLON _ELSE_ AssignmentExpression_Yield
     _DEREFERENCE_
   action: conditional_expression
 - rule: YieldExpression -> YIELD
@@ -4871,9 +4867,9 @@
 - rule: ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await
   action: nop
 - rule: >-
-    ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL
-    _THEN_BLOCK_ AssignmentExpression_In_Yield_Await _DEREFERENCE_ COLON _ELSE_BLOCK_
-    AssignmentExpression_Yield_Await _DEREFERENCE_
+    ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_
+    AssignmentExpression_In_Yield_Await _DEREFERENCE_ COLON _ELSE_ AssignmentExpression_Yield_Await
+    _DEREFERENCE_
   action: conditional_expression
 - rule: YieldExpression_Await -> YIELD
   action: yield_expression_no_argument

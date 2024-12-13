@@ -264,8 +264,8 @@ impl<'r> Analyzer<'r> {
             Node::ArrowFunction => self.handle_arrow_function(),
             Node::AsyncArrowFunction => self.handle_async_arrow_function(),
             Node::AwaitExpression => self.handle_await_expression(),
-            Node::ThenBlock => self.handle_then_block(),
-            Node::ElseBlock => self.handle_else_block(),
+            Node::Then => self.handle_then(),
+            Node::Else => self.handle_else(),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
             Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
             Node::NullishShortCircuit => self.handle_nullish_short_circuit(),
@@ -694,13 +694,13 @@ impl<'r> Analyzer<'r> {
         self.context_stack.last_mut().unwrap().coroutine.state = next_state;
     }
 
-    fn handle_then_block(&mut self) {
+    fn handle_then(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
         context.put_command(CompileCommand::Truthy);
         context.put_command(CompileCommand::IfThen);
     }
 
-    fn handle_else_block(&mut self) {
+    fn handle_else(&mut self) {
         self.put_command(CompileCommand::Else);
     }
 

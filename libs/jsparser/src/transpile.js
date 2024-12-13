@@ -598,8 +598,8 @@ function addActions(rules) {
     '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
     '_ANONYMOUS_FUNCTION_SIGNATURE_',
-    '_ELSE_BLOCK_',
-    '_THEN_BLOCK_',
+    '_ELSE_',
+    '_THEN_',
     '_BLOCK_SCOPE_',
     '_FALSY_SHORT_CIRCUIT_',
     '_TRUTHY_SHORT_CIRCUIT_',
@@ -687,12 +687,12 @@ function modifyIfStatement(rules) {
 
   rule.values[0] = rule
     .values[0]
-    .replace('`)` Statement[', '`)` _THEN_BLOCK_ Statement[')
-    .replace('`else` Statement[', '`else` _ELSE_BLOCK_ Statement[');
+    .replace('`)` Statement[', '`)` _THEN_ Statement[')
+    .replace('`else` Statement[', '`else` _ELSE_ Statement[');
 
   rule.values[1] = rule
     .values[1]
-    .replace('`)` Statement[', '`)` _THEN_BLOCK_ Statement[');
+    .replace('`)` Statement[', '`)` _THEN_ Statement[');
 
   return rules;
 }
@@ -712,10 +712,10 @@ function modifyConditionalExpression(rules) {
   rule.values[1] = [
     cond,
     '`?`',
-    '_THEN_BLOCK_',
+    '_THEN_',
     thenExpr,
     // Insert the _DEREFERENCE_ actions just after the expression in order to perform dereference
-    // on the expression before processing the _ELSE_BLOCK_ action.  The _ELSE_BLOCK_ action
+    // on the expression before processing the _ELSE_ action.  The _ELSE_ action
     // creates a basic block and switches the current basic block to it.  So, the dereference has
     // to be perform before that.
     //
@@ -723,7 +723,7 @@ function modifyConditionalExpression(rules) {
     // well.
     '_DEREFERENCE_',
     '`:`',
-    '_ELSE_BLOCK_',
+    '_ELSE_',
     elseExpr,
     '_DEREFERENCE_',
   ].join(' ');
