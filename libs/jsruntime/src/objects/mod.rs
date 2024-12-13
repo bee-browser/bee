@@ -18,6 +18,7 @@ pub enum Property {
     },
 
     /// A accessor property
+    #[allow(unused)]
     Accessor {
         /// Flags for boolean attributes.
         flags: PropertyFlags,
@@ -65,10 +66,20 @@ impl Object {
     pub fn set(&mut self, name: Symbol, value: &Value) {
         self.properties
             .entry(name)
-            .and_modify(|e| {
-                *e = Property::Data {
-                    value: value.clone(),
-                    flags: PropertyFlags::empty(),
+            .and_modify(|prop| match prop {
+                Property::Data {
+                    ref mut value,
+                    flags,
+                } => {
+                    debug_assert!(flags.contains(PropertyFlags::WRITABLE));
+                    *value = value.clone();
+                }
+                Property::Accessor { flags } => {
+                    debug_assert!(flags.contains(PropertyFlags::WRITABLE));
+                    *prop = Property::Data {
+                        value: value.clone(),
+                        flags: PropertyFlags::empty(),
+                    }
                 }
             })
             .or_insert(Property::Data {
