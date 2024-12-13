@@ -14,6 +14,8 @@ use lambda::LambdaId;
 use lambda::LambdaRegistry;
 use llvmir::Executor;
 use objects::Object;
+use objects::Property;
+use objects::PropertyFlags;
 use types::ReturnValue;
 
 pub use llvmir::CompileError;
@@ -107,13 +109,11 @@ impl<X> Runtime<X> {
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
         let closure = self.create_closure(lambda, 0);
-        self.global_object.define_own_property(
-            symbol,
-            objects::Property::Data {
-                value: Value::Closure(closure),
-                flags: objects::PropertyFlags::empty(),
-            },
-        );
+        let value = Value::Closure(closure);
+        // TODO: add `flags` to the arguments.
+        let flags = PropertyFlags::empty();
+        let prop = Property::Data { value, flags };
+        self.global_object.define_own_property(symbol, prop);
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {

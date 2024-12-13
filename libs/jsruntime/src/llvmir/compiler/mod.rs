@@ -466,6 +466,8 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         for binding in scope.bindings.iter().filter(|binding| binding.is_capture()) {
+            // TODO(perf): improve if `find_binding()` is the primary case of performance
+            // bottleneck.
             let binding_ref = self.scope_tree.find_binding(scope_ref, binding.symbol);
             debug_assert_ne!(binding_ref, BindingRef::NONE);
             let locator = self.scope_tree.compute_locator(binding_ref);
@@ -513,7 +515,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_reference(&mut self, symbol: Symbol) {
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
-        // TODO(perf)
+        // TODO(perf): improve if `find_binding()` is the primary case of performance bottleneck.
         let binding_ref = self.scope_tree.find_binding(scope_ref, symbol);
         debug_assert_ne!(binding_ref, BindingRef::NONE);
         let locator = self.scope_tree.compute_locator(binding_ref);
@@ -565,6 +567,8 @@ impl<'r, 's> Compiler<'r, 's> {
             Locator::Local(index) => self.locals[index as usize],
             Locator::Capture(index) => self.bridge.create_get_capture_value_ptr(index),
             Locator::Global => {
+                // TODO(perf): return the value directly if it's a read-only global property.
+
                 let then_block = self.create_basic_block("is_nullptr.then");
                 let else_block = self.create_basic_block("is_nullptr.else");
                 let end_block = self.create_basic_block("value_ptr");
@@ -1568,7 +1572,7 @@ impl<'r, 's> Compiler<'r, 's> {
             }
             _ => {
                 let value = self.create_get_value_ptr(symbol, locator);
-                // TODO: check the mutable flag
+                // TODO: throw a TypeError in the strict mode.
                 // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
                 self.create_store_operand_to_value(&rhs, value);
             }

@@ -959,7 +959,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         self.functions[context.func_index].commands = context.commands;
         self.functions[context.func_index].scope_ref = context.scope_ref;
 
-        // References to global variables.
+        // References to global properties.
         let mut added = FxHashSet::default();
         for reference in unresolved_references.iter() {
             match reference.func_scope_ref {
