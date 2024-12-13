@@ -18,10 +18,6 @@ void executor_peer_register_runtime_functions(ExecutorPeer peer,
   IMPL(peer)->RegisterRuntimeFunctions(functions);
 }
 
-void executor_peer_register_host_function(ExecutorPeer peer, uint32_t func_id, Lambda lambda) {
-  IMPL(peer)->RegisterHostFunction(func_id, lambda);
-}
-
 void executor_peer_register_module(ExecutorPeer peer, ModulePeer mod) {
   IMPL(peer)->RegisterModule(reinterpret_cast<Module*>(mod));
 }
@@ -34,6 +30,6 @@ const char* executor_peer_get_target_triple(const ExecutorPeer peer) {
   return IMPL(peer)->target_triple().getTriple().c_str();
 }
 
-Lambda executor_peer_get_native_function(ExecutorPeer peer, uint32_t func_id) {
-  return IMPL(peer)->GetNativeFunction(func_id);
+Lambda executor_peer_get_lambda(ExecutorPeer peer, uint32_t id) {
+  return IMPL(peer)->GetLambda(id);
 }

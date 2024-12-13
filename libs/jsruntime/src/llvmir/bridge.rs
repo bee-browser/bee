@@ -1,12 +1,15 @@
 use std::ffi::c_char;
 use std::ffi::c_void;
 
+use jsparser::Symbol;
+
 use crate::logger;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Value;
+use crate::Runtime;
 
 pub fn initialize() {
     unsafe {
@@ -29,6 +32,8 @@ pub struct RuntimeFunctions {
     await_promise: unsafe extern "C" fn(*mut c_void, u32, u32),
     resume: unsafe extern "C" fn(*mut c_void, u32),
     emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    get: unsafe extern "C" fn(*mut c_void, u32) -> *const Value,
+    set: unsafe extern "C" fn(*mut c_void, u32, *const Value),
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
@@ -52,6 +57,8 @@ impl RuntimeFunctions {
             await_promise: runtime_await_promise::<X>,
             resume: runtime_resume::<X>,
             emit_promise_resolved: runtime_emit_promise_resolved::<X>,
+            get: runtime_get::<X>,
+            set: runtime_set::<X>,
             assert: runtime_assert,
             print_u32: runtime_print_u32,
             print_f64: runtime_print_f64,
@@ -240,33 +247,39 @@ unsafe extern "C" fn runtime_create_capture<X>(
     capture
 }
 
+impl<X> Runtime<X> {
+    pub(crate) fn create_closure(&mut self, lambda: Lambda, num_captures: u16) -> *mut Closure {
+        const BASE_LAYOUT: std::alloc::Layout = unsafe {
+            std::alloc::Layout::from_size_align_unchecked(
+                std::mem::offset_of!(Closure, captures),
+                std::mem::align_of::<Closure>(),
+            )
+        };
+
+        let storage_layout =
+            std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
+        let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
+
+        let allocator = self.allocator();
+
+        // TODO: GC
+        let ptr = allocator.alloc_layout(layout);
+
+        let closure = unsafe { ptr.cast::<Closure>().as_mut() };
+        closure.lambda = lambda;
+        closure.num_captures = num_captures;
+        // `closure.captures[]` will be filled with actual pointers to `Captures`.
+
+        closure as *mut Closure
+    }
+}
+
 unsafe extern "C" fn runtime_create_closure<X>(
     runtime: *mut c_void,
     lambda: Lambda,
     num_captures: u16,
 ) -> *mut Closure {
-    const BASE_LAYOUT: std::alloc::Layout = unsafe {
-        std::alloc::Layout::from_size_align_unchecked(
-            std::mem::offset_of!(Closure, captures),
-            std::mem::align_of::<Closure>(),
-        )
-    };
-
-    let storage_layout = std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
-    let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
-
-    let runtime = into_runtime!(runtime, X);
-    let allocator = runtime.allocator();
-
-    // TODO: GC
-    let ptr = allocator.alloc_layout(layout);
-
-    let closure = ptr.cast::<Closure>().as_ptr();
-    (*closure).lambda = lambda;
-    (*closure).num_captures = num_captures;
-    // `(*closure).captures[]` will be filled with actual pointers to `Captures`.
-
-    closure
+    into_runtime!(runtime, X).create_closure(lambda, num_captures)
 }
 
 unsafe extern "C" fn runtime_create_coroutine<X>(
@@ -335,6 +348,24 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
     let runtime = into_runtime!(runtime, X);
     let cloned = into_value!(result).clone();
     runtime.emit_promise_resolved(promise.into(), cloned);
+}
+
+unsafe extern "C" fn runtime_get<X>(runtime: *mut c_void, symbol: u32) -> *const Value {
+    debug_assert_ne!(symbol, 0);
+    let runtime = into_runtime!(runtime, X);
+    let symbol = Symbol::from(symbol);
+    match runtime.global_object().get(symbol) {
+        Some(value) => value,
+        None => std::ptr::null(),
+    }
+}
+
+unsafe extern "C" fn runtime_set<X>(runtime: *mut c_void, symbol: u32, value: *const Value) {
+    debug_assert_ne!(symbol, 0);
+    let runtime = into_runtime!(runtime, X);
+    let symbol = Symbol::from(symbol);
+    let value = value.as_ref().unwrap();
+    runtime.global_object_mut().set(symbol, value);
 }
 
 unsafe extern "C" fn runtime_assert(

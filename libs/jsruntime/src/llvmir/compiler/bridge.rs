@@ -4,11 +4,13 @@ use std::ffi::CStr;
 
 use paste::paste;
 
+use jsparser::Symbol;
+
 use crate::llvmir::module::Module;
 use crate::llvmir::module::ModulePeer;
 use crate::logger;
 use crate::semantics::ScopeRef;
-use crate::FunctionId;
+use crate::LambdaId;
 
 pub struct CompilerBridge(CompilerPeer);
 
@@ -86,9 +88,9 @@ impl CompilerBridge {
 
     // function
 
-    pub fn start_function(&self, func_id: FunctionId) {
+    pub fn start_function(&self, lambda_id: LambdaId) {
         unsafe {
-            compiler_peer_start_function(self.0, func_id.into());
+            compiler_peer_start_function(self.0, lambda_id.into());
         }
     }
 
@@ -105,8 +107,8 @@ impl CompilerBridge {
         }
     }
 
-    pub fn get_function(&self, func_id: FunctionId) -> LambdaIr {
-        lambda_ir!(compiler_peer_get_function(self.0, func_id.into()))
+    pub fn get_function(&self, lambda_id: LambdaId) -> LambdaIr {
+        lambda_ir!(compiler_peer_get_function(self.0, lambda_id.into()))
     }
 
     // basic block
@@ -507,6 +509,12 @@ impl CompilerBridge {
     }
 
     // value
+
+    pub fn create_is_nullptr(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_is_nullptr(self.0, value.0)
+        }
+    }
 
     pub fn create_has_value(&self, value: ValueIr) -> BooleanIr {
         boolean_ir! {
@@ -1011,6 +1019,20 @@ impl CompilerBridge {
         }
     }
 
+    // object
+
+    pub fn create_get(&self, symbol: Symbol) -> ValueIr {
+        value_ir! {
+            compiler_peer_create_get(self.0, symbol.id())
+        }
+    }
+
+    pub fn create_set(&self, symbol: Symbol, value: ValueIr) {
+        unsafe {
+            compiler_peer_create_set(self.0, symbol.id(), value.0);
+        }
+    }
+
     // scope cleanup checker
 
     pub fn enable_scope_cleanup_checker(&self, is_coroutine: bool) {
@@ -1161,15 +1183,6 @@ impl ArgvIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 }
 
-impl CaptureIr {
-    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
-        unsafe {
-            compiler_peer_get_value_name_or_as_operand(self.0 as ValueIrPtr, buf, len);
-            CStr::from_ptr(buf)
-        }
-    }
-}
-
 // DO NOT USE MACROS FOR THE FOLLOWING TYPE DEFINITIONS.
 // cbindgen does not support macro expansions.
 type CompilerPeer = *mut c_void;
@@ -1197,10 +1210,10 @@ extern "C" {
 
     // function
 
-    fn compiler_peer_start_function(peer: CompilerPeer, func_id: u32);
+    fn compiler_peer_start_function(peer: CompilerPeer, lambda_id: u32);
     fn compiler_peer_end_function(peer: CompilerPeer, optimize: bool);
     fn compiler_peer_set_locals_block(peer: CompilerPeer, block: BasicBlockPtr);
-    fn compiler_peer_get_function(peer: CompilerPeer, func_id: u32) -> LambdaIrPtr;
+    fn compiler_peer_get_function(peer: CompilerPeer, lambda_id: u32) -> LambdaIrPtr;
 
     // basic block
 
@@ -1418,6 +1431,7 @@ extern "C" {
 
     // value
 
+    fn compiler_peer_create_is_nullptr(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_has_value(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_is_loosely_equal(
         peer: CompilerPeer,
@@ -1641,6 +1655,11 @@ extern "C" {
         peer: CompilerPeer,
         offset: u32,
     ) -> ValueIrPtr;
+
+    // object
+
+    fn compiler_peer_create_get(peer: CompilerPeer, symbol: u32) -> ValueIrPtr;
+    fn compiler_peer_create_set(peer: CompilerPeer, symbol: u32, value: ValueIrPtr);
 
     // scope cleanup checker
 

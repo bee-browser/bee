@@ -11,9 +11,10 @@ use indexmap::IndexMap;
 use jsparser::syntax::LoopFlags;
 use jsparser::Symbol;
 
-use crate::function::FunctionId;
-use crate::function::FunctionRegistry;
+use crate::lambda::LambdaId;
+use crate::lambda::LambdaRegistry;
 use crate::logger;
+use crate::semantics::BindingRef;
 use crate::semantics::CompileCommand;
 use crate::semantics::Locator;
 use crate::semantics::ScopeRef;
@@ -46,7 +47,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(&mut self.function_registry, &program.scope_tree);
+        let mut compiler = Compiler::new(&mut self.lambda_registry, &program.scope_tree);
         if self.pref.enable_scope_cleanup_checker {
             compiler.enable_scope_cleanup_checker();
         }
@@ -75,7 +76,7 @@ struct Compiler<'r, 's> {
     bridge: CompilerBridge,
 
     /// The function registry of the JavaScript program to compile.
-    function_registry: &'r mut FunctionRegistry,
+    lambda_registry: &'r mut LambdaRegistry,
 
     /// The scope tree of the JavaScript program to compile.
     scope_tree: &'s ScopeTree,
@@ -154,11 +155,11 @@ macro_rules! dump_enabled {
 }
 
 impl<'r, 's> Compiler<'r, 's> {
-    pub fn new(function_registry: &'r mut FunctionRegistry, scope_tree: &'s ScopeTree) -> Self {
+    pub fn new(lambda_registry: &'r mut LambdaRegistry, scope_tree: &'s ScopeTree) -> Self {
         const DUMP_BUFFER_SIZE: usize = 512;
         Self {
             bridge: Default::default(),
-            function_registry,
+            lambda_registry,
             scope_tree,
             operand_stack: Default::default(),
             control_flow_stack: Default::default(),
@@ -203,10 +204,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.set_target_triple(triple);
     }
 
-    fn start_function(&mut self, symbol: Symbol, func_id: FunctionId) {
-        logger::debug!(event = "start_function", ?symbol, ?func_id);
+    fn start_function(&mut self, symbol: Symbol, lambda_id: LambdaId) {
+        logger::debug!(event = "start_function", ?symbol, ?lambda_id);
 
-        self.bridge.start_function(func_id);
+        self.bridge.start_function(lambda_id);
 
         let locals_block = self.create_basic_block("locals");
         let init_block = self.create_basic_block("init");
@@ -233,18 +234,20 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.create_alloc_status();
         self.bridge.create_alloc_flow_selector();
         if self.enable_scope_cleanup_checker {
-            self.bridge
-                .enable_scope_cleanup_checker(func_id.is_coroutine());
+            let is_coroutine = self.lambda_registry.get(lambda_id).is_coroutine;
+            self.bridge.enable_scope_cleanup_checker(is_coroutine);
         }
 
         self.bridge.set_basic_block(body_block);
     }
 
-    fn end_function(&mut self, func_id: FunctionId, optimize: bool) {
-        logger::debug!(event = "end_function", ?func_id, optimize);
+    fn end_function(&mut self, lambda_id: LambdaId, optimize: bool) {
+        logger::debug!(event = "end_function", ?lambda_id, optimize);
 
-        let dormant_block = func_id
-            .is_coroutine()
+        let dormant_block = self
+            .lambda_registry
+            .get(lambda_id)
+            .is_coroutine
             .then(|| self.control_flow_stack.pop_coroutine_flow().dormant_block);
 
         self.control_flow_stack.pop_exit_target();
@@ -284,10 +287,9 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.control_flow_stack.is_empty());
         self.control_flow_stack.clear();
 
-        if func_id.is_coroutine() {
-            self.function_registry
-                .get_native_mut(func_id)
-                .scratch_buffer_len = self.max_scratch_buffer_len;
+        let info = self.lambda_registry.get_mut(lambda_id);
+        if info.is_coroutine {
+            info.scratch_buffer_len = self.max_scratch_buffer_len;
         }
         self.max_scratch_buffer_len = 0;
     }
@@ -301,15 +303,15 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Boolean(value) => self.process_boolean(*value),
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::String(value) => self.process_string(value),
-            CompileCommand::Function(func_id) => self.process_function(*func_id),
-            CompileCommand::Closure(prologue, num_captures) => {
-                self.process_closure(*prologue, *num_captures)
+            CompileCommand::Function(lambda_id) => self.process_function(*lambda_id),
+            CompileCommand::Closure(prologue, func_scope_ref) => {
+                self.process_closure(*prologue, *func_scope_ref)
             }
-            CompileCommand::Coroutine(func_id, num_locals) => {
-                self.process_coroutine(*func_id, *num_locals)
+            CompileCommand::Coroutine(lambda_id, num_locals) => {
+                self.process_coroutine(*lambda_id, *num_locals)
             }
             CompileCommand::Promise => self.process_promise(),
-            CompileCommand::Reference(symbol, locator) => self.process_reference(*symbol, *locator),
+            CompileCommand::Reference(symbol) => self.process_reference(*symbol),
             CompileCommand::Exception => self.process_exception(),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableBinding => self.process_mutable_binding(),
@@ -319,9 +321,6 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
-            CompileCommand::CaptureVariable(declaration) => {
-                self.process_capture_value(*declaration)
-            }
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -401,6 +400,7 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
+            CompileCommand::Dereference => self.process_dereference(),
             CompileCommand::Debugger => self.process_debugger(),
             CompileCommand::PlaceHolder => unreachable!(),
         }
@@ -439,8 +439,8 @@ impl<'r, 's> Compiler<'r, 's> {
         unimplemented!("string literal");
     }
 
-    fn process_function(&mut self, func_id: FunctionId) {
-        let lambda = self.bridge.get_function(func_id);
+    fn process_function(&mut self, lambda_id: LambdaId) {
+        let lambda = self.bridge.get_function(lambda_id);
         self.operand_stack.push(Operand::Function(lambda));
     }
 
@@ -451,29 +451,36 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn pop_capture(&mut self) -> CaptureIr {
-        match self.operand_stack.pop() {
-            Some(Operand::Capture(capture)) => capture,
-            _ => unreachable!(),
-        }
-    }
-
-    fn process_closure(&mut self, prologue: bool, num_captures: u16) {
-        debug_assert!(self.operand_stack.len() > num_captures as usize);
-
+    fn process_closure(&mut self, prologue: bool, func_scope_ref: ScopeRef) {
         let backup = self.bridge.get_basic_block();
         if prologue {
             let block = self.control_flow_stack.scope_flow().hoisted_block;
             self.bridge.set_basic_block(block);
         }
 
-        let lambda = self.pop_lambda();
-        let closure = self.bridge.create_closure(lambda, num_captures);
+        let scope = self.scope_tree.scope(func_scope_ref);
+        debug_assert!(scope.is_function());
 
-        for i in 0..num_captures {
-            let capture = self.pop_capture();
+        let lambda = self.pop_lambda();
+        let closure = self.bridge.create_closure(lambda, scope.num_captures);
+
+        let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
+        for binding in scope.bindings.iter().filter(|binding| binding.is_capture()) {
+            // TODO(perf): improve if `find_binding()` is the primary case of performance
+            // bottleneck.
+            let binding_ref = self.scope_tree.find_binding(scope_ref, binding.symbol);
+            debug_assert_ne!(binding_ref, BindingRef::NONE);
+            let locator = self.scope_tree.compute_locator(binding_ref);
+            let capture = match locator {
+                Locator::Argument(_) | Locator::Local(_) => {
+                    debug_assert!(self.captures.contains_key(&locator));
+                    *self.captures.get(&locator).unwrap()
+                }
+                Locator::Capture(i) => self.bridge.create_load_capture(i),
+                _ => unreachable!(),
+            };
             self.bridge
-                .create_store_capture_to_closure(capture, closure, i);
+                .create_store_capture_to_closure(capture, closure, binding.index);
         }
 
         self.operand_stack.push(Operand::Closure(closure));
@@ -490,11 +497,8 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn process_coroutine(&mut self, func_id: FunctionId, num_locals: u16) {
-        let scrach_buffer_len = self
-            .function_registry
-            .get_native(func_id)
-            .scratch_buffer_len;
+    fn process_coroutine(&mut self, lambda_id: LambdaId, num_locals: u16) {
+        let scrach_buffer_len = self.lambda_registry.get(lambda_id).scratch_buffer_len;
         debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();
         let coroutine = self
@@ -509,8 +513,12 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Promise(promise));
     }
 
-    fn process_reference(&mut self, symbol: Symbol, locator: Locator) {
-        debug_assert!(!matches!(locator, Locator::None));
+    fn process_reference(&mut self, symbol: Symbol) {
+        let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
+        // TODO(perf): improve if `find_binding()` is the primary case of performance bottleneck.
+        let binding_ref = self.scope_tree.find_binding(scope_ref, symbol);
+        debug_assert_ne!(binding_ref, BindingRef::NONE);
+        let locator = self.scope_tree.compute_locator(binding_ref);
         self.operand_stack.push(Operand::Reference(symbol, locator));
     }
 
@@ -536,7 +544,7 @@ impl<'r, 's> Compiler<'r, 's> {
             _ => unreachable!(),
         };
 
-        self.create_store_operand_to_value(operand, value);
+        self.create_store_operand_to_value(&operand, value);
     }
 
     fn dereference(&mut self) -> (Operand, Option<(Symbol, Locator)>) {
@@ -545,19 +553,44 @@ impl<'r, 's> Compiler<'r, 's> {
         let operand = self.operand_stack.pop().unwrap();
         match operand {
             Operand::Reference(symbol, locator) => {
-                let value = self.create_get_value_ptr(locator);
+                let value = self.create_get_value_ptr(symbol, locator);
                 (Operand::Any(value), Some((symbol, locator)))
             }
             _ => (operand, None),
         }
     }
 
-    fn create_get_value_ptr(&mut self, locator: Locator) -> ValueIr {
+    fn create_get_value_ptr(&mut self, symbol: Symbol, locator: Locator) -> ValueIr {
         match locator {
+            Locator::None => unreachable!(),
             Locator::Argument(index) => self.bridge.create_get_argument_value_ptr(index),
             Locator::Local(index) => self.locals[index as usize],
             Locator::Capture(index) => self.bridge.create_get_capture_value_ptr(index),
-            _ => unreachable!(),
+            Locator::Global => {
+                // TODO(perf): return the value directly if it's a read-only global property.
+
+                let then_block = self.create_basic_block("is_nullptr.then");
+                let else_block = self.create_basic_block("is_nullptr.else");
+                let end_block = self.create_basic_block("value_ptr");
+
+                let value = self.bridge.create_get(symbol);
+                // if value.is_nullptr()
+                let is_nullptr = self.bridge.create_is_nullptr(value);
+                self.bridge
+                    .create_cond_br(is_nullptr, then_block, else_block);
+                // then
+                self.bridge.set_basic_block(then_block);
+                // TODO(feat): ReferenceError
+                self.process_number(1000.);
+                self.process_throw();
+                self.bridge.create_br(end_block);
+                // else
+                self.bridge.set_basic_block(else_block);
+                self.bridge.create_br(end_block);
+
+                self.bridge.set_basic_block(end_block);
+                value
+            }
         }
     }
 
@@ -568,15 +601,15 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn create_store_operand_to_value(&mut self, operand: Operand, dest: ValueIr) {
+    fn create_store_operand_to_value(&mut self, operand: &Operand, dest: ValueIr) {
         match operand {
             Operand::Undefined => self.bridge.create_store_undefined_to_value(dest),
             Operand::Null => self.bridge.create_store_null_to_value(dest),
-            Operand::Boolean(value) => self.bridge.create_store_boolean_to_value(value, dest),
-            Operand::Number(value) => self.bridge.create_store_number_to_value(value, dest),
-            Operand::Closure(value) => self.bridge.create_store_closure_to_value(value, dest),
-            Operand::Promise(value) => self.bridge.create_store_promise_to_value(value, dest),
-            Operand::Any(value) => self.bridge.create_store_value_to_value(value, dest),
+            Operand::Boolean(value) => self.bridge.create_store_boolean_to_value(*value, dest),
+            Operand::Number(value) => self.bridge.create_store_number_to_value(*value, dest),
+            Operand::Closure(value) => self.bridge.create_store_closure_to_value(*value, dest),
+            Operand::Promise(value) => self.bridge.create_store_promise_to_value(*value, dest),
+            Operand::Any(value) => self.bridge.create_store_value_to_value(*value, dest),
             _ => unreachable!(),
         }
     }
@@ -590,7 +623,7 @@ impl<'r, 's> Compiler<'r, 's> {
             _ => unreachable!(),
         };
 
-        self.create_store_operand_to_value(operand, value);
+        self.create_store_operand_to_value(&operand, value);
     }
 
     fn process_declare_function(&mut self) {
@@ -608,7 +641,7 @@ impl<'r, 's> Compiler<'r, 's> {
             _ => unreachable!(),
         };
 
-        self.create_store_operand_to_value(operand, value);
+        self.create_store_operand_to_value(&operand, value);
 
         self.bridge.set_basic_block(backup);
     }
@@ -628,7 +661,7 @@ impl<'r, 's> Compiler<'r, 's> {
             _ => unreachable!(),
         };
 
-        self.create_store_operand_to_value(operand, value);
+        self.create_store_operand_to_value(&operand, value);
 
         self.bridge.set_basic_block(backup);
     }
@@ -653,7 +686,7 @@ impl<'r, 's> Compiler<'r, 's> {
             for i in (0..argc).rev() {
                 let (operand, _) = self.dereference();
                 let ptr = self.bridge.create_get_arg_in_argv(argv, i);
-                self.create_store_operand_to_value(operand, ptr);
+                self.create_store_operand_to_value(&operand, ptr);
             }
             argv
         } else {
@@ -701,8 +734,8 @@ impl<'r, 's> Compiler<'r, 's> {
         // else
         let (else_value, else_block) = {
             self.bridge.set_basic_block(else_block);
-            // TODO: TypeError
-            self.process_number(1.);
+            // TODO(feat): TypeError
+            self.process_number(1001.);
             self.process_throw();
             self.bridge.create_br(end_block);
             (
@@ -866,32 +899,8 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(!locator.is_capture());
         debug_assert!(self.captures.contains_key(&locator));
         let capture = self.captures.swap_remove(&locator).unwrap();
-        let value = self.create_get_value_ptr(locator);
+        let value = self.create_get_value_ptr(Symbol::NONE, locator);
         self.bridge.create_escape_value(capture, value);
-    }
-
-    fn process_capture_value(&mut self, declaration: bool) {
-        let backup = self.bridge.get_basic_block();
-        if declaration {
-            let block = self.control_flow_stack.scope_flow().hoisted_block;
-            self.bridge.set_basic_block(block);
-        }
-
-        let (_, locator) = self.pop_reference();
-        let capture = match locator {
-            Locator::Argument(_) | Locator::Local(_) => {
-                debug_assert!(self.captures.contains_key(&locator));
-                *self.captures.get(&locator).unwrap()
-            }
-            Locator::Capture(i) => self.bridge.create_load_capture(i),
-            _ => unreachable!(),
-        };
-
-        self.operand_stack.push(Operand::Capture(capture));
-
-        if declaration {
-            self.bridge.set_basic_block(backup);
-        }
     }
 
     // 13.4.2.1 Runtime Semantics: Evaluation
@@ -917,7 +926,7 @@ impl<'r, 's> Compiler<'r, 's> {
                 self.process_discard();
             }
             _ => {
-                // TODO: throw a ReferenceError at runtime
+                // TODO(feat): throw a ReferenceError at runtime
             }
         }
         self.operand_stack.push(Operand::Number(if pos == '^' {
@@ -1207,12 +1216,12 @@ impl<'r, 's> Compiler<'r, 's> {
         logger::debug!(event = "create_is_loosely_equal", ?lhs, ?rhs);
         if let Operand::Any(lhs) = lhs {
             // TODO: compile-time evaluation
-            let rhs = self.create_to_any(rhs);
+            let rhs = self.create_to_any(&rhs);
             return self.bridge.create_is_loosely_equal(lhs, rhs);
         }
         if let Operand::Any(rhs) = rhs {
             // TODO: compile-time evaluation
-            let lhs = self.create_to_any(lhs);
+            let lhs = self.create_to_any(&lhs);
             return self.bridge.create_is_loosely_equal(lhs, rhs);
         }
 
@@ -1239,20 +1248,20 @@ impl<'r, 's> Compiler<'r, 's> {
         // TODO: 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
         // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
         // TODO: ...
-        let lhs = self.create_to_any(lhs);
-        let rhs = self.create_to_any(rhs);
+        let lhs = self.create_to_any(&lhs);
+        let rhs = self.create_to_any(&rhs);
         self.bridge.create_is_loosely_equal(lhs, rhs)
     }
 
-    fn create_to_any(&mut self, operand: Operand) -> ValueIr {
+    fn create_to_any(&mut self, operand: &Operand) -> ValueIr {
         logger::debug!(event = "create_to_any", ?operand);
         match operand {
-            Operand::Any(value) => value,
+            Operand::Any(value) => *value,
             Operand::Undefined => self.bridge.create_undefined_to_any(),
             Operand::Null => self.bridge.create_null_to_any(),
-            Operand::Boolean(value) => self.bridge.create_boolean_to_any(value),
-            Operand::Number(value) => self.bridge.create_number_to_any(value),
-            Operand::Closure(value) => self.bridge.create_closure_to_any(value),
+            Operand::Boolean(value) => self.bridge.create_boolean_to_any(*value),
+            Operand::Number(value) => self.bridge.create_number_to_any(*value),
+            Operand::Closure(value) => self.bridge.create_closure_to_any(*value),
             _ => unreachable!(),
         }
     }
@@ -1529,11 +1538,11 @@ impl<'r, 's> Compiler<'r, 's> {
         // We have to convert the value before the branch in each block.
 
         self.bridge.set_basic_block(then_block);
-        let then_value = self.create_to_any(then_operand);
+        let then_value = self.create_to_any(&then_operand);
         self.bridge.create_br(block);
 
         self.bridge.set_basic_block(else_block);
-        let else_value = self.create_to_any(else_operand);
+        let else_value = self.create_to_any(&else_operand);
         self.bridge.create_br(block);
 
         self.bridge.set_basic_block(block);
@@ -1553,13 +1562,21 @@ impl<'r, 's> Compiler<'r, 's> {
     // 13.15.2 Runtime Semantics: Evaluation
     fn process_assignment(&mut self) {
         let (rhs, _) = self.dereference();
-        let (_, locator) = self.pop_reference();
+        let (symbol, locator) = self.pop_reference();
 
-        let value = self.create_get_value_ptr(locator);
-        // TODO: check the mutable flag
-        // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
-
-        self.create_store_operand_to_value(rhs.clone(), value);
+        match locator {
+            Locator::Global => {
+                let value = self.create_to_any(&rhs);
+                // TODO(feat): ReferenceError, TypeError
+                self.bridge.create_set(symbol, value);
+            }
+            _ => {
+                let value = self.create_get_value_ptr(symbol, locator);
+                // TODO: throw a TypeError in the strict mode.
+                // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
+                self.create_store_operand_to_value(&rhs, value);
+            }
+        }
 
         self.operand_stack.push(rhs);
     }
@@ -2117,7 +2134,7 @@ impl<'r, 's> Compiler<'r, 's> {
         if n > 0 {
             debug_assert_eq!(n, 1);
             let (operand, _) = self.dereference();
-            self.create_store_operand_to_retv(operand);
+            self.create_store_operand_to_retv(&operand);
         }
 
         self.bridge.create_store_normal_status();
@@ -2130,22 +2147,22 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_basic_block_for_deadcode();
     }
 
-    fn create_store_operand_to_retv(&mut self, operand: Operand) {
+    fn create_store_operand_to_retv(&mut self, operand: &Operand) {
         match operand {
             Operand::Undefined => self.bridge.create_store_undefined_to_retv(),
             Operand::Null => self.bridge.create_store_null_to_retv(),
-            Operand::Boolean(value) => self.bridge.create_store_boolean_to_retv(value),
-            Operand::Number(value) => self.bridge.create_store_number_to_retv(value),
-            Operand::Closure(value) => self.bridge.create_store_closure_to_retv(value),
-            Operand::Promise(value) => self.bridge.create_store_promise_to_retv(value),
-            Operand::Any(value) => self.bridge.create_store_value_to_retv(value),
+            Operand::Boolean(value) => self.bridge.create_store_boolean_to_retv(*value),
+            Operand::Number(value) => self.bridge.create_store_number_to_retv(*value),
+            Operand::Closure(value) => self.bridge.create_store_closure_to_retv(*value),
+            Operand::Promise(value) => self.bridge.create_store_promise_to_retv(*value),
+            Operand::Any(value) => self.bridge.create_store_value_to_retv(*value),
             _ => unreachable!(),
         }
     }
 
     fn process_throw(&mut self) {
         let (operand, _) = self.dereference();
-        self.create_store_operand_to_retv(operand);
+        self.create_store_operand_to_retv(&operand);
         self.bridge.create_store_exception_status();
         self.bridge.create_set_flow_selector_throw();
 
@@ -2400,6 +2417,11 @@ impl<'r, 's> Compiler<'r, 's> {
         self.duplicate(offset);
     }
 
+    fn process_dereference(&mut self) {
+        let (operand, _) = self.dereference();
+        self.operand_stack.push(operand);
+    }
+
     fn process_debugger(&mut self) {
         self.bridge.create_debugger();
     }
@@ -2484,7 +2506,6 @@ enum Operand {
     Promise(PromiseIr),
     Any(ValueIr),
     Reference(Symbol, Locator),
-    Capture(CaptureIr),
 }
 
 impl Dump for Operand {
@@ -2506,7 +2527,6 @@ impl Dump for Operand {
             Self::Promise(value) => eprintln!("Promise({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
-            Self::Capture(value) => eprintln!("Capture({:?})", ir2cstr!(value)),
         }
     }
 }

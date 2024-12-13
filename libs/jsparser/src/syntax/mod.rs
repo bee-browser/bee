@@ -218,8 +218,8 @@ pub enum Node<'s> {
     ArrowFunction,
     AsyncArrowFunction,
     AwaitExpression,
-    ThenBlock,
-    ElseBlock,
+    Then,
+    Else,
     FalsyShortCircuit,
     TruthyShortCircuit,
     NullishShortCircuit,
@@ -235,6 +235,7 @@ pub enum Node<'s> {
     LoopBody,
     StartBlockScope,
     EndBlockScope,
+    Dereference,
 }
 
 #[derive(Clone, Copy)]
@@ -531,15 +532,21 @@ where
         Err(Error::SyntaxError)
     }
 
-    // _THEN_BLOCK_
-    fn process_then_block(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ThenBlock);
+    // _DEREFERENCE_
+    fn process_dereference(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Dereference);
         Ok(())
     }
 
-    // _ELSE_BLOCK_
-    fn process_else_block(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ElseBlock);
+    // _THEN_
+    fn process_then(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Then);
+        Ok(())
+    }
+
+    // _ELSE_
+    fn process_else(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Else);
         Ok(())
     }
 

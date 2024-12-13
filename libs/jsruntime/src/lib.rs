@@ -1,6 +1,7 @@
-mod function;
+mod lambda;
 mod llvmir;
 mod logger;
+mod objects;
 mod semantics;
 mod tasklet;
 mod types;
@@ -9,9 +10,12 @@ use std::ffi::c_void;
 
 use jsparser::SymbolRegistry;
 
-use function::FunctionId;
-use function::FunctionRegistry;
+use lambda::LambdaId;
+use lambda::LambdaRegistry;
 use llvmir::Executor;
+use objects::Object;
+use objects::Property;
+use objects::PropertyFlags;
 use types::ReturnValue;
 
 pub use llvmir::CompileError;
@@ -52,24 +56,30 @@ impl BasicRuntime {
 pub struct Runtime<X> {
     pref: RuntimePref,
     symbol_registry: SymbolRegistry,
-    function_registry: FunctionRegistry,
+    lambda_registry: LambdaRegistry,
     executor: Executor,
     // TODO: GcArena
     allocator: bumpalo::Bump,
     tasklet_system: tasklet::System,
+    global_object: Object,
     extension: X,
 }
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
         let functions = llvmir::RuntimeFunctions::new::<X>();
+
+        let mut global_object = Object::default();
+        global_object.define_builtin_global_properties();
+
         Self {
             pref: Default::default(),
             symbol_registry: Default::default(),
-            function_registry: FunctionRegistry::new(),
+            lambda_registry: LambdaRegistry::new(),
             executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
             tasklet_system: tasklet::System::new(),
+            global_object,
             extension,
         }
     }
@@ -96,17 +106,21 @@ impl<X> Runtime<X> {
         R: Clone + ReturnValue,
     {
         let symbol = self.symbol_registry.intern_str(name);
-        let func_id = self.function_registry.register_host_function(symbol);
-        self.executor
-            .register_host_function(func_id, types::into_lambda(host_fn));
-        logger::debug!(event = "register_host_function", name, ?symbol, ?func_id);
+        logger::debug!(event = "register_host_function", name, ?symbol);
+        let lambda = types::into_lambda(host_fn);
+        let closure = self.create_closure(lambda, 0);
+        let value = Value::Closure(closure);
+        // TODO: add `flags` to the arguments.
+        let flags = PropertyFlags::empty();
+        let prop = Property::Data { value, flags };
+        self.global_object.define_own_property(symbol, prop);
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "evaluate");
         self.executor.register_module(module);
         let mut retv = Value::Undefined;
-        let status = match self.executor.get_native_function(FunctionId::MAIN) {
+        let status = match self.executor.get_lambda(LambdaId::MAIN) {
             Some(main) => unsafe {
                 main(
                     // runtime
@@ -132,6 +146,14 @@ impl<X> Runtime<X> {
 
     fn allocator(&self) -> &bumpalo::Bump {
         &self.allocator
+    }
+
+    fn global_object(&self) -> &Object {
+        &self.global_object
+    }
+
+    fn global_object_mut(&mut self) -> &mut Object {
+        &mut self.global_object
     }
 }
 

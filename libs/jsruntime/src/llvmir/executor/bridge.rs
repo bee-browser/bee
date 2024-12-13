@@ -6,7 +6,7 @@ use crate::llvmir::module::Module;
 use crate::llvmir::module::ModulePeer;
 use crate::llvmir::RuntimeFunctions;
 use crate::types::Lambda;
-use crate::FunctionId;
+use crate::LambdaId;
 
 pub struct ExecutorBridge(ExecutorPeer);
 
@@ -17,12 +17,6 @@ impl ExecutorBridge {
             executor_peer_register_runtime_functions(peer, functions);
             peer
         })
-    }
-
-    pub fn register_host_function(&self, func_id: FunctionId, lambda: Lambda) {
-        unsafe {
-            executor_peer_register_host_function(self.0, func_id.into(), lambda);
-        }
     }
 
     pub fn register_module(&self, module: Module) {
@@ -39,11 +33,11 @@ impl ExecutorBridge {
         unsafe { CStr::from_ptr(executor_peer_get_target_triple(self.0)) }
     }
 
-    pub fn get_native_function(&self, func_id: FunctionId) -> Option<Lambda> {
+    pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
         unsafe {
-            std::mem::transmute::<Lambda, Option<Lambda>>(executor_peer_get_native_function(
+            std::mem::transmute::<Lambda, Option<Lambda>>(executor_peer_get_lambda(
                 self.0,
-                func_id.into(),
+                lambda_id.into(),
             ))
         }
     }
@@ -64,9 +58,8 @@ extern "C" {
     fn executor_peer_new() -> ExecutorPeer;
     fn executor_peer_delete(peer: ExecutorPeer);
     fn executor_peer_register_runtime_functions(peer: ExecutorPeer, functions: &RuntimeFunctions);
-    fn executor_peer_register_host_function(peer: ExecutorPeer, func_id: u32, func: Lambda);
     fn executor_peer_register_module(peer: ExecutorPeer, module: ModulePeer);
     fn executor_peer_get_data_layout(peer: ExecutorPeer) -> *const c_char;
     fn executor_peer_get_target_triple(peer: ExecutorPeer) -> *const c_char;
-    fn executor_peer_get_native_function(peer: ExecutorPeer, func_id: u32) -> Lambda;
+    fn executor_peer_get_lambda(peer: ExecutorPeer, lambda_id: u32) -> Lambda;
 }
