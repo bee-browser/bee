@@ -8,16 +8,15 @@ use smallvec::smallvec;
 use smallvec::SmallVec;
 
 use crate::parser::GoalSymbol;
+use crate::Error;
+use crate::Location;
 use crate::Parser;
-
-use super::Error;
-use super::Location;
-use super::ProductionRule;
-use super::Symbol;
-use super::SymbolRegistry;
-use super::SyntaxHandler;
-use super::Token;
-use super::TokenKind;
+use crate::ProductionRule;
+use crate::Symbol;
+use crate::SymbolRegistry;
+use crate::SyntaxHandler;
+use crate::Token;
+use crate::TokenKind;
 
 const MAX_ITERATION_STATEMENT_DEPTH: usize = u16::MAX as usize;
 const MAX_SWITCH_STATEMENT_DEPTH: usize = u16::MAX as usize;
@@ -87,8 +86,8 @@ enum Detail {
     Expression,
     Initializer,
     Block,
-    LexicalBinding(LexicalDeclarationSemantics),
-    BindingList(LexicalDeclarationSemantics),
+    Binding(DeclarationSemantics),
+    BindingList(DeclarationSemantics),
     LetDeclaration(#[allow(unused)] SmallVec<[Symbol; 4]>), // TODO: SS
     ConstDeclaration(#[allow(unused)] SmallVec<[Symbol; 4]>), // TODO: SS
     SingleNameBinding(Symbol, bool),
@@ -100,7 +99,7 @@ enum Detail {
     CatchClause,
     FinallyClause,
     BlockStatement,
-    //VariableStatement,
+    VariableStatement(#[allow(unused)] SmallVec<[Symbol; 4]>), // TODO: SS
     EmptyStatement,
     ExpressionStatement,
     IfStatement,
@@ -134,7 +133,7 @@ enum LabelledItem {
 }
 
 #[derive(Debug)]
-struct LexicalDeclarationSemantics {
+struct DeclarationSemantics {
     bound_names: SmallVec<[Symbol; 4]>,
     has_initializer: bool,
 }
@@ -178,6 +177,8 @@ pub enum Node<'s> {
     LexicalBinding(bool),
     LetDeclaration(u32),
     ConstDeclaration(u32),
+    VariableDeclaration(bool),
+    VariableStatement(u32),
     BindingElement(bool),
     EmptyStatement,
     ExpressionStatement,
@@ -1435,15 +1436,17 @@ where
         Ok(())
     }
 
+    // 14.3 Declarations and the Variable Statement
+
     // 14.3.1 Let and Const Declarations
 
     // LexicalDeclaration[In, Yield, Await] :
     //   let BindingList[?In, ?Yield, ?Await] ;
     fn process_let_declaration(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
-        let bound_names = match self.stack[index].detail {
+        let bound_names = match &mut self.stack[index].detail {
             Detail::BindingList(ref mut list) => std::mem::take(&mut list.bound_names),
-            _ => unreachable!(),
+            detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::LetDeclaration(bound_names.len() as u32));
         self.replace(3, Detail::LetDeclaration(bound_names));
@@ -1454,12 +1457,12 @@ where
     //   const BindingList[?In, ?Yield, ?Await] ;
     fn process_const_declaration(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
-        let (bound_names, has_initializer) = match self.stack[index].detail {
+        let (bound_names, has_initializer) = match &mut self.stack[index].detail {
             Detail::BindingList(ref mut list) => {
                 let bound_names = std::mem::take(&mut list.bound_names);
                 (bound_names, list.has_initializer)
             }
-            _ => unreachable!(),
+            detail => unreachable!("{detail:?}"),
         };
         // 14.3.1.1 Static Semantics: Early Errors
         ensure!(has_initializer);
@@ -1473,22 +1476,22 @@ where
     fn process_binding_list_head(&mut self) -> Result<(), Error> {
         let mut syntax = self.pop();
         syntax.detail = Detail::BindingList(match syntax.detail {
-            Detail::LexicalBinding(decl) => decl,
-            _ => unreachable!(),
+            Detail::Binding(decl) => decl,
+            detail => unreachable!("{detail:?}"),
         });
         self.push(syntax);
         Ok(())
     }
 
     // BindingList[In, Yield, Await] :
-    //   BindingList[?In, ?Yield, ?Await] COMMA LexicalBinding[?In, ?Yield, ?Await]
+    //   BindingList[?In, ?Yield, ?Await] , LexicalBinding[?In, ?Yield, ?Await]
     fn process_binding_list_item(&mut self) -> Result<(), Error> {
         let decl = match self.pop().detail {
-            Detail::LexicalBinding(decl) => decl,
-            _ => unreachable!(),
+            Detail::Binding(decl) => decl,
+            detail => unreachable!("{detail:?}"),
         };
         self.pop(); // Token(,)
-        match self.top_mut().detail {
+        match &mut self.top_mut().detail {
             Detail::BindingList(ref mut list) => {
                 for name in decl.bound_names.into_iter() {
                     // 14.3.1.1 Static Semantics: Early Errors
@@ -1499,7 +1502,7 @@ where
                     list.has_initializer = false;
                 }
             }
-            _ => unreachable!(),
+            detail => unreachable!("{detail:?}"),
         }
         self.update_ends();
         Ok(())
@@ -1508,9 +1511,9 @@ where
     // LexicalBinding[In, Yield, Await] :
     //   BindingIdentifier[?Yield, ?Await]
     fn process_lexical_binding_identifier(&mut self) -> Result<(), Error> {
-        let symbol = match self.top().detail {
-            Detail::BindingIdentifier(symbol) => symbol,
-            _ => unreachable!(),
+        let symbol = match &self.top().detail {
+            Detail::BindingIdentifier(symbol) => *symbol,
+            detail => unreachable!("{detail:?}"),
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
@@ -1520,7 +1523,7 @@ where
         self.enqueue(Node::LexicalBinding(HAS_INITIALIZER));
         self.replace(
             1,
-            Detail::LexicalBinding(LexicalDeclarationSemantics {
+            Detail::Binding(DeclarationSemantics {
                 bound_names: smallvec![symbol],
                 has_initializer: HAS_INITIALIZER,
             }),
@@ -1544,13 +1547,88 @@ where
         self.enqueue(Node::LexicalBinding(HAS_INITIALIZER));
         self.replace(
             2,
-            Detail::LexicalBinding(LexicalDeclarationSemantics {
+            Detail::Binding(DeclarationSemantics {
                 bound_names: smallvec![symbol],
                 has_initializer: HAS_INITIALIZER,
             }),
         );
 
         Ok(())
+    }
+
+    // 14.3.2 Variable Statement
+
+    // VariableStatement[Yield, Await] :
+    //   var VariableDeclarationList[+In, ?Yield, ?Await] ;
+    fn process_variable_statement(&mut self) -> Result<(), Error> {
+        let index = self.stack.len() - 2;
+        let bound_names = match &mut self.stack[index].detail {
+            Detail::BindingList(ref mut list) => std::mem::take(&mut list.bound_names),
+            detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::VariableStatement(bound_names.len() as u32));
+        self.replace(3, Detail::VariableStatement(bound_names));
+        Ok(())
+    }
+
+    // VariableDeclarationList[In, Yield, Await] :
+    //   VariableDeclaration[?In, ?Yield, ?Await]
+    fn process_variable_declaration_list_head(&mut self) -> Result<(), Error> {
+        self.process_binding_list_head()
+    }
+
+    // VariableDeclarationList[In, Yield, Await] :
+    //   VariableDeclarationList[?In, ?Yield, ?Await] , VariableDeclaration[?In, ?Yield, ?Await]
+    fn process_variable_declaration_list_item(&mut self) -> Result<(), Error> {
+        self.process_binding_list_item()
+    }
+
+    // VariableDeclaration[In, Yield, Await] :
+    //   BindingIdentifier[?Yield, ?Await]
+    fn process_variable_declaration_no_init(&mut self) -> Result<(), Error> {
+        let symbol = match &self.top().detail {
+            Detail::BindingIdentifier(symbol) => *symbol,
+            detail => unreachable!("{detail:?}"),
+        };
+
+        const HAS_INITIALIZER: bool = false;
+        self.enqueue(Node::VariableDeclaration(HAS_INITIALIZER));
+        self.replace(
+            1,
+            Detail::Binding(DeclarationSemantics {
+                bound_names: smallvec![symbol],
+                has_initializer: HAS_INITIALIZER,
+            }),
+        );
+
+        Ok(())
+    }
+
+    // VariableDeclaration[In, Yield, Await] :
+    //   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
+    fn process_variable_declaration(&mut self) -> Result<(), Error> {
+        let symbol = match &self.stack[self.stack.len() - 2].detail {
+            Detail::BindingIdentifier(symbol) => *symbol,
+            detail => unreachable!("{detail:?}"),
+        };
+
+        const HAS_INITIALIZER: bool = true;
+        self.enqueue(Node::VariableDeclaration(HAS_INITIALIZER));
+        self.replace(
+            2,
+            Detail::Binding(DeclarationSemantics {
+                bound_names: smallvec![symbol],
+                has_initializer: HAS_INITIALIZER,
+            }),
+        );
+
+        Ok(())
+    }
+
+    // VariableDeclaration[In, Yield, Await] :
+    //   BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
+    fn process_variable_declaration_pattern(&mut self) -> Result<(), Error> {
+        unimplemented!();
     }
 
     // 14.3.3 Destructuring Binding Patterns
