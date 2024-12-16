@@ -1062,6 +1062,13 @@ impl CompilerBridge {
         }
     }
 
+    #[allow(unused)]
+    pub fn create_print_message(&self, msg: &CStr) {
+        unsafe {
+            compiler_peer_create_print_message(self.0, msg.as_ptr());
+        }
+    }
+
     // debugger
 
     pub fn create_debugger(&self) {
@@ -1670,6 +1677,7 @@ extern "C" {
     // print
 
     fn compiler_peer_create_print_value(peer: CompilerPeer, value: ValueIrPtr, msg: *const c_char);
+    fn compiler_peer_create_print_message(peer: CompilerPeer, msg: *const c_char);
 
     // debugger
 

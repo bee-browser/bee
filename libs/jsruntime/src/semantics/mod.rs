@@ -17,10 +17,14 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use crate::logger;
+use crate::objects::Object;
+use crate::objects::Property;
+use crate::objects::PropertyFlags;
 use crate::LambdaId;
 use crate::LambdaRegistry;
 use crate::Runtime;
 use crate::RuntimePref;
+use crate::Value;
 
 use scope::ScopeTreeBuilder;
 
@@ -36,6 +40,7 @@ impl<X> Runtime<X> {
             &self.pref,
             &mut self.symbol_registry,
             &mut self.lambda_registry,
+            &mut self.global_object,
         );
         let processor = Processor::new(analyzer, false);
         Parser::for_script(source, processor).parse()
@@ -48,6 +53,7 @@ impl<X> Runtime<X> {
             &self.pref,
             &mut self.symbol_registry,
             &mut self.lambda_registry,
+            &mut self.global_object,
         );
         let processor = Processor::new(analyzer, true);
         Parser::for_module(source, processor).parse()
@@ -103,6 +109,9 @@ pub struct Function {
 
     /// The reference to the function scope.
     pub scope_ref: ScopeRef,
+
+    /// The number of local variables except for temporal variables created by a compiler.
+    pub num_locals: u16,
 }
 
 impl Function {
@@ -130,6 +139,9 @@ struct Analyzer<'r> {
     /// A mutable reference to a function registry.
     lambda_registry: &'r mut LambdaRegistry,
 
+    /// A mutable reference to a JavaScript global object.
+    global_object: &'r mut Object,
+
     /// A stack to keep the analysis data for outer JavaScript functions when analyzing nested
     /// JavaScript functions.
     context_stack: Vec<FunctionContext>,
@@ -149,8 +161,15 @@ impl<'r> Analyzer<'r> {
         runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
         lambda_registry: &'r mut LambdaRegistry,
+        global_object: &'r mut Object,
     ) -> Self {
-        Self::new(runtime_pref, symbol_registry, lambda_registry, false)
+        Self::new(
+            runtime_pref,
+            symbol_registry,
+            lambda_registry,
+            global_object,
+            false,
+        )
     }
 
     /// Creates a semantic analyzer.
@@ -158,14 +177,22 @@ impl<'r> Analyzer<'r> {
         runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
         lambda_registry: &'r mut LambdaRegistry,
+        global_object: &'r mut Object,
     ) -> Self {
-        Self::new(runtime_pref, symbol_registry, lambda_registry, true)
+        Self::new(
+            runtime_pref,
+            symbol_registry,
+            lambda_registry,
+            global_object,
+            true,
+        )
     }
 
     fn new(
         runtime_pref: &'r RuntimePref,
         symbol_registry: &'r mut SymbolRegistry,
         lambda_registry: &'r mut LambdaRegistry,
+        global_object: &'r mut Object,
         module: bool,
     ) -> Self {
         // TODO: modules including await expressions.
@@ -174,6 +201,7 @@ impl<'r> Analyzer<'r> {
             runtime_pref,
             symbol_registry,
             lambda_registry,
+            global_object,
             context_stack: vec![],
             functions: vec![],
             scope_tree_builder: Default::default(),
@@ -242,6 +270,8 @@ impl<'r> Analyzer<'r> {
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
             Node::LetDeclaration(n) => self.handle_let_declaration(n),
             Node::ConstDeclaration(n) => self.handle_const_declaration(n),
+            Node::VariableDeclaration(init) => self.handle_variable_declaration(init),
+            Node::VariableStatement(n) => self.handle_variable_statement(n),
             Node::BindingElement(init) => self.handle_binding_element(init),
             Node::EmptyStatement => (), // nop
             Node::ExpressionStatement => self.handle_expression_statement(),
@@ -397,18 +427,33 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_let_declaration(&mut self, n: u32) {
+        let builder = &mut self.scope_tree_builder;
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_mutable_bindings(n);
+            .process_mutable_bindings(n, builder);
     }
 
     fn handle_const_declaration(&mut self, n: u32) {
-        self.scope_tree_builder.set_immutable(n);
+        let builder = &mut self.scope_tree_builder;
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_immutable_bindings(n);
+            .process_immutable_bindings(n, builder);
+    }
+
+    fn handle_variable_declaration(&mut self, init: bool) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_non_lexical_binding(init);
+    }
+
+    fn handle_variable_statement(&mut self, n: u32) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_variable_statement(n);
     }
 
     fn handle_binding_element(&mut self, _init: bool) {
@@ -550,7 +595,7 @@ impl<'r> Analyzer<'r> {
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_catch_parameter();
+            .process_catch_parameter(&mut self.scope_tree_builder);
     }
 
     fn handle_try_block(&mut self) {
@@ -588,15 +633,32 @@ impl<'r> Analyzer<'r> {
         // TODO
     }
 
-    fn handle_formal_parameters(&mut self, _n: u32) {
-        // TODO
+    fn handle_formal_parameters(&mut self, n: u32) {
+        let builder = &mut self.scope_tree_builder;
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_formal_parameters(n, builder);
     }
 
     fn end_function_scope(&mut self) -> usize {
         let mut context = self.context_stack.pop().unwrap();
+        debug_assert!(context.symbol_stack.is_empty());
+
         let func_scope_ref = context.end_scope();
+        // DO NOT CALL `self.scope_tree_builder.pop()` HERE.
+
+        // Add Function-scoped variables defined by "VariableStatement"s to the function scope.
+        for symbol in context.function_scoped_symbols.iter().cloned() {
+            self.scope_tree_builder
+                .add_function_scoped_mutable(symbol, context.num_locals);
+            context.num_locals += 1;
+        }
 
         self.scope_tree_builder.pop();
+
+        // The reference resolution must be performed after the function-scoped variables are added
+        // to the function scope.
         let unresolved_reference = self.resolve_references(&mut context);
 
         if context.flags.contains(FunctionContextFlags::COROUTINE) {
@@ -613,6 +675,7 @@ impl<'r> Analyzer<'r> {
         let func = &mut self.functions[func_index];
         func.commands = context.commands;
         func.scope_ref = context.scope_ref;
+        func.num_locals = context.num_locals;
 
         let context = self.context_stack.last_mut().unwrap();
         let scope_ref = self.scope_tree_builder.current();
@@ -815,20 +878,29 @@ impl<'r> Analyzer<'r> {
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
         let func_index = self.functions.len();
+
+        // Push a placeholder data which will be filled later.
+        self.functions.push(Default::default());
+
         let mut context = FunctionContext {
             func_index,
             scope_ref,
             ..Default::default()
         };
+
         // `commands[0]` will be replaced with `AllocateLocals` if the function has local
         // variables.
         context.commands.push(CompileCommand::Nop);
+
         // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
         context.commands.push(CompileCommand::Nop);
+
         context.start_scope(scope_ref);
+        context
+            .commands
+            .push(CompileCommand::DeclareVars(scope_ref));
+
         self.context_stack.push(context);
-        // Push a placeholder data which will be filled later.
-        self.functions.push(Default::default());
     }
 
     fn handle_function_context(&mut self) {
@@ -868,7 +940,6 @@ impl<'r> Analyzer<'r> {
     // Such an async function don't need to be rewritten into a state machine.
     fn start_coroutine_body(&mut self) {
         self.handle_function_context();
-        self.scope_tree_builder.set_coroutine();
         self.handle_binding_identifier(Symbol::HIDDEN_PROMISE);
         self.handle_formal_parameter();
         self.handle_binding_identifier(Symbol::HIDDEN_RESULT);
@@ -879,8 +950,9 @@ impl<'r> Analyzer<'r> {
         self.handle_function_signature(Symbol::HIDDEN_COROUTINE);
 
         let context = self.context_stack.last_mut().unwrap();
-
         context.flags.insert(FunctionContextFlags::COROUTINE);
+
+        self.scope_tree_builder.set_coroutine(context.scope_ref);
     }
 
     // Generate compile commands for the bottom-half of the coroutine.
@@ -888,10 +960,10 @@ impl<'r> Analyzer<'r> {
     fn end_coroutine_body(&mut self) {
         // TODO(perf): Some of the local variables can be placed on the stack.
         let context = self.context_stack.last().unwrap();
-        let lambda_id = self.functions[context.func_index].id;
-        let num_locals = context.num_locals;
+        let func_index = context.func_index;
         self.handle_function_expression(false);
-        self.put_command(CompileCommand::Coroutine(lambda_id, num_locals));
+        let func = &self.functions[func_index];
+        self.put_command(CompileCommand::Coroutine(func.id, func.num_locals));
         self.put_command(CompileCommand::Promise);
         self.put_command(CompileCommand::Duplicate(0));
         self.put_command(CompileCommand::Resume);
@@ -949,15 +1021,19 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         }
 
         let mut context = self.context_stack.pop().unwrap();
-        let global_scope_ref = context.end_scope();
+        debug_assert!(context.symbol_stack.is_empty());
 
+        let global_scope_ref = context.end_scope();
         self.scope_tree_builder.pop();
+
         let unresolved_references = self.resolve_references(&mut context);
 
         context.commands[0] = CompileCommand::AllocateLocals(context.num_locals);
 
-        self.functions[context.func_index].commands = context.commands;
-        self.functions[context.func_index].scope_ref = context.scope_ref;
+        let func = &mut self.functions[context.func_index];
+        func.commands = context.commands;
+        func.scope_ref = context.scope_ref;
+        func.num_locals = context.num_locals;
 
         // References to global properties.
         let mut added = FxHashSet::default();
@@ -975,6 +1051,26 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
                     }
                 }
             }
+        }
+
+        // In the specification, global properties defined by "VariableStatement"s are created in
+        // "16.1.7 GlobalDeclarationInstantiation ( script, env )".  We create them here for
+        // simplicity but this still works properly for well-formed JavaScript programs.
+        //
+        // TODO(test): probably, the order of error handling may be different fro the
+        // specification.
+        for symbol in context.function_scoped_symbols.iter().cloned() {
+            // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
+            // `function.commands` must be rewritten to throw the "Error".
+            self.global_object.define_own_property(
+                symbol,
+                Property::Data {
+                    value: Value::Undefined,
+                    flags: PropertyFlags::WRITABLE
+                        | PropertyFlags::ENUMERABLE
+                        | PropertyFlags::CONFIGURABLE,
+                },
+            );
         }
 
         Ok(Program {
@@ -1020,6 +1116,12 @@ struct FunctionContext {
 
     /// A list of symbols in the formal parameters of the function.
     formal_parameters: Vec<Symbol>,
+
+    /// A stack to keep symbols defined as binding identifiers.
+    symbol_stack: Vec<Symbol>,
+
+    /// A set of non-lexically-scoped symbols defined by "VariableStatement"s.
+    function_scoped_symbols: FxHashSet<Symbol>,
 
     /// A stack to hold [`Scope`]s.
     scope_stack: Vec<Scope>,
@@ -1130,22 +1232,24 @@ impl FunctionContext {
         // TODO: type info
     }
 
+    fn put_non_lexical_binding(&mut self, init: bool) {
+        if init {
+            self.commands.push(CompileCommand::Assignment);
+        } else {
+            // Discard the reference.
+            self.commands.push(CompileCommand::Discard);
+        }
+        // TODO: type info
+    }
+
     fn process_identifier_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
         self.put_reference(symbol, scope_ref)
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
+        self.symbol_stack.push(symbol);
         if self.flags.contains(FunctionContextFlags::IN_BODY) {
             self.put_reference(symbol, builder.current());
-            // The BindingKind may change later by `builder.set_immutable()`.
-            builder.add_mutable(symbol, self.num_locals);
-            self.num_locals += 1;
-        } else {
-            // TODO: the compilation should fail if the following condition is unmet.
-            assert!(self.formal_parameters.len() < u16::MAX as usize);
-            let i = self.formal_parameters.len();
-            self.formal_parameters.push(symbol);
-            builder.add_formal_parameter(symbol, i);
         }
     }
 
@@ -1174,25 +1278,67 @@ impl FunctionContext {
         self.put_command(CompileCommand::Discard);
     }
 
-    fn process_mutable_bindings(&mut self, n: u32) {
+    fn process_formal_parameters(&mut self, n: u32, builder: &mut ScopeTreeBuilder) {
+        debug_assert!(self.symbol_stack.len() >= n as usize);
+        let i = self.symbol_stack.len() - n as usize;
+        for symbol in self.symbol_stack[i..].iter().cloned() {
+            // TODO: the compilation should fail if the following condition is unmet.
+            assert!(self.formal_parameters.len() < u16::MAX as usize);
+            let i = self.formal_parameters.len();
+            self.formal_parameters.push(symbol);
+            builder.add_formal_parameter(symbol, i);
+        }
+        self.symbol_stack.truncate(i);
+    }
+
+    fn process_mutable_bindings(&mut self, n: u32, builder: &mut ScopeTreeBuilder) {
         debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
         for i in self.pending_lexical_bindings.iter().cloned() {
             debug_assert!(matches!(self.commands[i], CompileCommand::PlaceHolder));
             self.commands[i] = CompileCommand::MutableBinding;
         }
         self.pending_lexical_bindings.clear();
+
+        debug_assert!(self.symbol_stack.len() >= n as usize);
+        let i = self.symbol_stack.len() - n as usize;
+        for symbol in self.symbol_stack[i..].iter().cloned() {
+            builder.add_mutable(symbol, self.num_locals);
+            self.num_locals += 1;
+        }
+        self.symbol_stack.truncate(i);
     }
 
-    fn process_immutable_bindings(&mut self, n: u32) {
+    fn process_immutable_bindings(&mut self, n: u32, builder: &mut ScopeTreeBuilder) {
         debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
         for i in self.pending_lexical_bindings.iter().cloned() {
             debug_assert!(matches!(self.commands[i], CompileCommand::PlaceHolder));
             self.commands[i] = CompileCommand::ImmutableBinding;
         }
         self.pending_lexical_bindings.clear();
+
+        debug_assert!(self.symbol_stack.len() >= n as usize);
+        let i = self.symbol_stack.len() - n as usize;
+        for symbol in self.symbol_stack[i..].iter().cloned() {
+            builder.add_immutable(symbol, self.num_locals);
+            self.num_locals += 1;
+        }
+        self.symbol_stack.truncate(i);
+    }
+
+    fn process_variable_statement(&mut self, n: u32) {
+        debug_assert!(self.symbol_stack.len() >= n as usize);
+        let i = self.symbol_stack.len() - n as usize;
+        for symbol in self.symbol_stack[i..].iter().cloned() {
+            self.function_scoped_symbols.insert(symbol);
+        }
+        self.symbol_stack.truncate(i);
     }
 
     fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
+        debug_assert!(!self.symbol_stack.is_empty());
+        let symbol = self.symbol_stack.pop().unwrap();
+        self.function_scoped_symbols.insert(symbol);
+
         self.commands.push(CompileCommand::Function(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands.push(CompileCommand::DeclareClosure);
@@ -1205,6 +1351,8 @@ impl FunctionContext {
         named: bool,
     ) {
         if named {
+            debug_assert!(!self.symbol_stack.is_empty());
+            self.symbol_stack.pop();
             // Remove the BindingIdentifier of the function.
             self.put_command(CompileCommand::Discard);
         }
@@ -1402,10 +1550,10 @@ impl FunctionContext {
         self.try_stack.pop();
     }
 
-    fn process_catch_parameter(&mut self) {
+    fn process_catch_parameter(&mut self, builder: &mut ScopeTreeBuilder) {
         self.put_command(CompileCommand::Exception);
         self.put_lexical_binding(true);
-        self.process_mutable_bindings(1);
+        self.process_mutable_bindings(1, builder);
     }
 
     fn start_scope(&mut self, scope_ref: ScopeRef) {
@@ -1481,7 +1629,7 @@ pub enum CompileCommand {
     AllocateLocals(u16),
     MutableBinding,
     ImmutableBinding,
-    DeclareFunction,
+    DeclareVars(ScopeRef),
     DeclareClosure,
     Call(u16),
     PushScope(ScopeRef),
@@ -1789,6 +1937,7 @@ mod tests {
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::Nop,
                         CompileCommand::PushScope(scope_ref!(1)),
+                        CompileCommand::DeclareVars(scope_ref!(1)),
                         CompileCommand::Reference(symbol!(sreg, "a")),
                         CompileCommand::Undefined,
                         CompileCommand::MutableBinding,
@@ -1819,6 +1968,7 @@ mod tests {
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::Nop,
                         CompileCommand::PushScope(scope_ref!(1)),
+                        CompileCommand::DeclareVars(scope_ref!(1)),
                         CompileCommand::Reference(symbol!(sreg, "a")),
                         CompileCommand::Undefined,
                         CompileCommand::MutableBinding,
@@ -1851,6 +2001,7 @@ mod tests {
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
+                    CompileCommand::DeclareVars(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
                     CompileCommand::Swap,
@@ -1871,6 +2022,7 @@ mod tests {
                     CompileCommand::AllocateLocals(1),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
+                    CompileCommand::DeclareVars(scope_ref!(1)),
                     CompileCommand::Reference(symbol!(sreg, "a")),
                     CompileCommand::Number(1.0),
                     CompileCommand::MutableBinding,
@@ -1896,6 +2048,7 @@ mod tests {
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
+                    CompileCommand::DeclareVars(scope_ref!(1)),
                     CompileCommand::Function(program.functions[1].id),
                     CompileCommand::Closure(false, scope_ref!(2)),
                     CompileCommand::Coroutine(program.functions[1].id, 0),
@@ -1912,6 +2065,7 @@ mod tests {
                     CompileCommand::Environment(0),
                     CompileCommand::JumpTable(3),
                     CompileCommand::PushScope(scope_ref!(2)),
+                    CompileCommand::DeclareVars(scope_ref!(2)),
                     CompileCommand::Number(0.0),
                     CompileCommand::Await(1),
                     CompileCommand::Discard,
@@ -1928,6 +2082,8 @@ mod tests {
         };
         let mut symbol_registry = Default::default();
         let mut lambda_registry = LambdaRegistry::new();
+        let mut global_object = Object::default();
+        global_object.define_builtin_global_properties();
         let mut parser = match src {
             Source::Script(src) => Parser::for_script(
                 src,
@@ -1936,6 +2092,7 @@ mod tests {
                         &runtime_pref,
                         &mut symbol_registry,
                         &mut lambda_registry,
+                        &mut global_object,
                     ),
                     false,
                 ),
@@ -1947,6 +2104,7 @@ mod tests {
                         &runtime_pref,
                         &mut symbol_registry,
                         &mut lambda_registry,
+                        &mut global_object,
                     ),
                     true,
                 ),

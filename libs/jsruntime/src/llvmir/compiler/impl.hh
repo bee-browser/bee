@@ -959,6 +959,12 @@ class Compiler {
     builder_->CreateCall(func, {runtime_, value, msg_value});
   }
 
+  void CreatePrintMessage(const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_message.msg"));
+    auto* func = types_->CreateRuntimePrintMessage();
+    builder_->CreateCall(func, {runtime_, msg_value});
+  }
+
   // debugger
 
   void CreateDebugger() {

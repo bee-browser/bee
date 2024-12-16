@@ -112,5 +112,9 @@ functions:
         type: '&Value'
       - name: msg
         type: '&std::ffi::CStr'
+  - name: print_message
+    args:
+      - name: msg
+        type: '&std::ffi::CStr'
   - name: launch_debugger
     args: []

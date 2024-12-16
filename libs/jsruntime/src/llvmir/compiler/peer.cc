@@ -754,6 +754,10 @@ void compiler_peer_create_print_value(CompilerPeer peer, ValueIrPtr value, const
   IMPL(peer)->CreatePrintValue(LLVM_VALUE(value), msg);
 }
 
+void compiler_peer_create_print_message(CompilerPeer peer, const char* msg) {
+  IMPL(peer)->CreatePrintMessage(msg);
+}
+
 // debugger
 
 void compiler_peer_create_debugger(CompilerPeer peer) {
