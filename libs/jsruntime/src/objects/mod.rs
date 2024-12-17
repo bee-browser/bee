@@ -68,11 +68,23 @@ impl Object {
             .entry(name)
             .and_modify(|prop| match prop {
                 Property::Data {
-                    ref mut value,
+                    // The variable name `value` is already used in the arguments.
+                    //
+                    // NOTE: Be careful.  `clippy` does NOT detect mistakes like this:
+                    //
+                    // ```rust
+                    // *value = value.clone();
+                    // ```
+                    //
+                    // This does NOT match the `self_assignment` lint that is denied by default.
+                    //
+                    // If `Value` implements `Copy`, this kind of self-assignment can be detected
+                    // if the `assigning_clones` lint is denied (but it's allowed by default).
+                    value: ref mut value_ref,
                     flags,
                 } => {
                     debug_assert!(flags.contains(PropertyFlags::WRITABLE));
-                    *value = value.clone();
+                    *value_ref = value.clone();
                 }
                 Property::Accessor { flags } => {
                     debug_assert!(flags.contains(PropertyFlags::WRITABLE));
@@ -88,6 +100,7 @@ impl Object {
             });
     }
 
+    // TODO(feat): 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
     pub fn define_own_property(&mut self, name: Symbol, prop: Property) {
         self.properties.insert(name, prop);
     }

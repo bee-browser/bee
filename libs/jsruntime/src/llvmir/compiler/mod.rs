@@ -316,7 +316,7 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableBinding => self.process_mutable_binding(),
             CompileCommand::ImmutableBinding => self.process_immutable_binding(),
-            CompileCommand::DeclareFunction => self.process_declare_function(),
+            CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(*scope_ref),
             CompileCommand::DeclareClosure => self.process_declare_closure(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
@@ -548,7 +548,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn dereference(&mut self) -> (Operand, Option<(Symbol, Locator)>) {
-        logger::debug!(event = "dereference");
+        logger::debug!(event = "dereference", operand_stack.top=?self.operand_stack.last());
 
         let operand = self.operand_stack.pop().unwrap();
         match operand {
@@ -626,22 +626,33 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_store_operand_to_value(&operand, value);
     }
 
-    fn process_declare_function(&mut self) {
-        let block = self.control_flow_stack.scope_flow().hoisted_block;
+    fn process_declare_vars(&mut self, scope_ref: ScopeRef) {
+        debug_assert!(self.scope_tree.scope(scope_ref).is_function());
+
+        // In the specification, function-scoped variables defined by "VariableStatement"s are
+        // created in "10.2.11 FunctionDeclarationInstantiation ( func, argumentsList )".  We
+        // create them here for simplicity but this still works properly for well-formed JavaScript
+        // programs.
+        //
+        // Function-scoped variables are created in the `init` basic block of the current scope.
+        // The `init` basic block is performed before the `hoisted` basic block on which inner
+        // functions defined by "FunctionDeclaration"s are created.
+        let block = self.control_flow_stack.scope_flow().init_block;
 
         let backup = self.bridge.get_basic_block();
         self.bridge.set_basic_block(block);
 
-        let (operand, _) = self.dereference();
-        // TODO: operand must hold a lambda.
-        let (_symbol, locator) = self.pop_reference();
-
-        let value = match locator {
-            Locator::Local(index) => self.locals[index as usize],
-            _ => unreachable!(),
-        };
-
-        self.create_store_operand_to_value(&operand, value);
+        // TODO(refactor): inefficient
+        for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
+            if !binding.is_function_scoped() {
+                continue;
+            }
+            let value = match self.scope_tree.compute_locator(binding_ref) {
+                Locator::Local(index) => self.locals[index as usize],
+                locator => unreachable!("{locator:?}"),
+            };
+            self.bridge.create_store_undefined_to_value(value);
+        }
 
         self.bridge.set_basic_block(backup);
     }
@@ -654,14 +665,19 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let (operand, _) = self.dereference();
         // TODO: operand must hold a closure.
-        let (_symbol, locator) = self.pop_reference();
+        let (symbol, locator) = self.pop_reference();
 
-        let value = match locator {
-            Locator::Local(index) => self.locals[index as usize],
-            _ => unreachable!(),
+        match locator {
+            Locator::Local(index) => {
+                let value = self.locals[index as usize];
+                self.create_store_operand_to_value(&operand, value);
+            }
+            Locator::Global => {
+                let value = self.create_to_any(&operand);
+                self.bridge.create_set(symbol, value);
+            }
+            _ => unreachable!("{locator:?}"),
         };
-
-        self.create_store_operand_to_value(&operand, value);
 
         self.bridge.set_basic_block(backup);
     }
@@ -800,7 +816,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
-            if binding.is_hidden() {
+            if binding.is_hidden() || binding.is_function_scoped() {
                 continue;
             }
             let locator = binding.locator();

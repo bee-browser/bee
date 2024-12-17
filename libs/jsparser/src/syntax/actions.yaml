@@ -131,7 +131,7 @@
 - rule: Statement -> BlockStatement
   action: process_statement
 - rule: Statement -> VariableStatement
-  action: undefined
+  action: process_statement
 - rule: Statement -> EmptyStatement
   action: process_statement
 - rule: Statement -> ExpressionStatement
@@ -211,7 +211,7 @@
 - rule: BlockStatement -> Block
   action: process_block_statement
 - rule: VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
-  action: undefined
+  action: process_variable_statement
 - rule: EmptyStatement -> SEMICOLON
   action: process_empty_statement
 - rule: >-
@@ -297,7 +297,7 @@
 - rule: NamedExports -> LBRACE ExportsList COMMA RBRACE
   action: undefined
 - rule: VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMICOLON
-  action: undefined
+  action: process_variable_statement
 - rule: Declaration_Await -> HoistableDeclaration_Await
   action: process_declaration
 - rule: Declaration_Await -> ClassDeclaration_Await
@@ -351,7 +351,7 @@
 - rule: Statement_Await -> BlockStatement_Await
   action: process_statement
 - rule: Statement_Await -> VariableStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await -> EmptyStatement
   action: process_statement
 - rule: Statement_Await -> ExpressionStatement_Await
@@ -445,11 +445,11 @@
 - rule: Block -> LBRACE _BLOCK_SCOPE_ StatementList RBRACE
   action: process_block
 - rule: VariableDeclarationList_In -> VariableDeclaration_In
-  action: undefined
+  action: process_variable_declaration_list_head
 - rule: >-
     VariableDeclarationList_In -> VariableDeclarationList_In COMMA
     VariableDeclaration_In
-  action: undefined
+  action: process_variable_declaration_list_item
 - rule: Expression_In -> AssignmentExpression_In
   action: nop
 - rule: Expression_In -> Expression_In COMMA AssignmentExpression_In
@@ -542,11 +542,11 @@
 - rule: ExportsList -> ExportsList COMMA ExportSpecifier
   action: undefined
 - rule: VariableDeclarationList_In_Await -> VariableDeclaration_In_Await
-  action: undefined
+  action: process_variable_declaration_list_head
 - rule: >-
     VariableDeclarationList_In_Await -> VariableDeclarationList_In_Await COMMA
     VariableDeclaration_In_Await
-  action: undefined
+  action: process_variable_declaration_list_item
 - rule: HoistableDeclaration_Await -> FunctionDeclaration_Await
   action: process_hoistable_declaration
 - rule: HoistableDeclaration_Await -> GeneratorDeclaration_Await
@@ -907,11 +907,11 @@
 - rule: _BLOCK_SCOPE_ -> (empty)
   action: process_block_scope
 - rule: VariableDeclaration_In -> BindingIdentifier
-  action: undefined
+  action: process_variable_declaration_no_init
 - rule: VariableDeclaration_In -> BindingIdentifier Initializer_In
-  action: undefined
+  action: process_variable_declaration
 - rule: VariableDeclaration_In -> BindingPattern Initializer_In
-  action: undefined
+  action: process_variable_declaration_pattern
 - rule: AssignmentExpression_In -> ConditionalExpression_In
   action: nop
 - rule: AssignmentExpression_In -> ArrowFunction_In
@@ -1207,11 +1207,11 @@
 - rule: ExportSpecifier -> ModuleExportName AS ModuleExportName
   action: undefined
 - rule: VariableDeclaration_In_Await -> BindingIdentifier_Await
-  action: undefined
+  action: process_variable_declaration_no_init
 - rule: VariableDeclaration_In_Await -> BindingIdentifier_Await Initializer_In_Await
-  action: undefined
+  action: process_variable_declaration
 - rule: VariableDeclaration_In_Await -> BindingPattern_Await Initializer_In_Await
-  action: undefined
+  action: process_variable_declaration_pattern
 - rule: >-
     FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await
     _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_
@@ -1521,9 +1521,9 @@
 - rule: _LOOP_NEXT_ -> (empty)
   action: process_loop_next
 - rule: VariableDeclarationList -> VariableDeclaration
-  action: undefined
+  action: process_variable_declaration_list_head
 - rule: VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
-  action: undefined
+  action: process_variable_declaration_list_item
 - rule: _LOOP_INIT_VAR_DECLARATION_ -> (empty)
   action: process_loop_init_var_declaration
 - rule: LexicalDeclaration -> LET BindingList SEMICOLON
@@ -1992,11 +1992,11 @@
     _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: VariableDeclaration -> BindingIdentifier
-  action: undefined
+  action: process_variable_declaration_no_init
 - rule: VariableDeclaration -> BindingIdentifier Initializer
-  action: undefined
+  action: process_variable_declaration
 - rule: VariableDeclaration -> BindingPattern Initializer
-  action: undefined
+  action: process_variable_declaration_pattern
 - rule: BindingList -> LexicalBinding
   action: process_binding_list_head
 - rule: BindingList -> BindingList COMMA LexicalBinding
@@ -2122,11 +2122,11 @@
 - rule: Expression_Await -> Expression_Await COMMA AssignmentExpression_Await
   action: process_comma_operator
 - rule: VariableDeclarationList_Await -> VariableDeclaration_Await
-  action: undefined
+  action: process_variable_declaration_list_head
 - rule: >-
     VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA
     VariableDeclaration_Await
-  action: undefined
+  action: process_variable_declaration_list_item
 - rule: LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
   action: process_let_declaration
 - rule: LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
@@ -2564,11 +2564,11 @@
     _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: VariableDeclaration_Await -> BindingIdentifier_Await
-  action: undefined
+  action: process_variable_declaration_no_init
 - rule: VariableDeclaration_Await -> BindingIdentifier_Await Initializer_Await
-  action: undefined
+  action: process_variable_declaration
 - rule: VariableDeclaration_Await -> BindingPattern_Await Initializer_Await
-  action: undefined
+  action: process_variable_declaration_pattern
 - rule: BindingList_Await -> LexicalBinding_Await
   action: process_binding_list_head
 - rule: BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await
@@ -2894,7 +2894,7 @@
 - rule: Statement_Return -> BlockStatement_Return
   action: process_statement
 - rule: Statement_Return -> VariableStatement
-  action: undefined
+  action: process_statement
 - rule: Statement_Return -> EmptyStatement
   action: process_statement
 - rule: Statement_Return -> ExpressionStatement
@@ -3266,7 +3266,7 @@
 - rule: Statement_Yield_Return -> BlockStatement_Yield_Return
   action: process_statement
 - rule: Statement_Yield_Return -> VariableStatement_Yield
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Return -> EmptyStatement
   action: process_statement
 - rule: Statement_Yield_Return -> ExpressionStatement_Yield
@@ -3300,7 +3300,7 @@
 - rule: Statement_Await_Return -> BlockStatement_Await_Return
   action: process_statement
 - rule: Statement_Await_Return -> VariableStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await_Return -> EmptyStatement
   action: process_statement
 - rule: Statement_Await_Return -> ExpressionStatement_Await
@@ -3328,7 +3328,7 @@
 - rule: Statement_Yield_Await_Return -> BlockStatement_Yield_Await_Return
   action: process_statement
 - rule: Statement_Yield_Await_Return -> VariableStatement_Yield_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> EmptyStatement
   action: process_statement
 - rule: Statement_Yield_Await_Return -> ExpressionStatement_Yield_Await
@@ -3565,7 +3565,7 @@
 - rule: BlockStatement_Yield_Return -> Block_Yield_Return
   action: process_block_statement
 - rule: VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMICOLON
-  action: undefined
+  action: process_variable_statement
 - rule: >-
     ExpressionStatement_Yield -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION,
     CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
@@ -3683,7 +3683,7 @@
 - rule: >-
     VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await
     SEMICOLON
-  action: undefined
+  action: process_variable_statement
 - rule: >-
     ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE)
     FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await
@@ -4078,11 +4078,11 @@
 - rule: Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Return RBRACE
   action: process_block
 - rule: VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
-  action: undefined
+  action: process_variable_declaration_list_head
 - rule: >-
     VariableDeclarationList_In_Yield -> VariableDeclarationList_In_Yield COMMA
     VariableDeclaration_In_Yield
-  action: undefined
+  action: process_variable_declaration_list_item
 - rule: IterationStatement_Yield_Return -> DoWhileStatement_Yield_Return
   action: process_iteration_statement
 - rule: IterationStatement_Yield_Return -> WhileStatement_Yield_Return
@@ -4172,12 +4172,12 @@
     StatementList_Yield_Await_Return RBRACE
   action: process_block
 - rule: VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
-  action: undefined
+  action: process_variable_declaration_list_head
 - rule: >-
     VariableDeclarationList_In_Yield_Await ->
     VariableDeclarationList_In_Yield_Await COMMA
     VariableDeclaration_In_Yield_Await
-  action: undefined
+  action: process_variable_declaration_list_item
 - rule: IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return
   action: process_iteration_statement
 - rule: IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return
@@ -4377,11 +4377,11 @@
     StatementList_Return
   action: process_default_clause
 - rule: VariableDeclaration_In_Yield -> BindingIdentifier_Yield
-  action: undefined
+  action: process_variable_declaration_no_init
 - rule: VariableDeclaration_In_Yield -> BindingIdentifier_Yield Initializer_In_Yield
-  action: undefined
+  action: process_variable_declaration
 - rule: VariableDeclaration_In_Yield -> BindingPattern_Yield Initializer_In_Yield
-  action: undefined
+  action: process_variable_declaration_pattern
 - rule: >-
     DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return
     _LOOP_BODY_ WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON
@@ -4680,15 +4680,15 @@
     DefaultClause_Await_Return CaseClauses_Await_Return RBRACE
   action: process_case_block_cases_default_cases
 - rule: VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await
-  action: undefined
+  action: process_variable_declaration_no_init
 - rule: >-
     VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await
     Initializer_In_Yield_Await
-  action: undefined
+  action: process_variable_declaration
 - rule: >-
     VariableDeclaration_In_Yield_Await -> BindingPattern_Yield_Await
     Initializer_In_Yield_Await
-  action: undefined
+  action: process_variable_declaration_pattern
 - rule: >-
     DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_
     Statement_Yield_Await_Return _LOOP_BODY_ WHILE LPAREN
@@ -5030,11 +5030,11 @@
 - rule: Expression_Yield -> Expression_Yield COMMA AssignmentExpression_Yield
   action: process_comma_operator
 - rule: VariableDeclarationList_Yield -> VariableDeclaration_Yield
-  action: undefined
+  action: process_variable_declaration_list_head
 - rule: >-
     VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA
     VariableDeclaration_Yield
-  action: undefined
+  action: process_variable_declaration_list_item
 - rule: LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
   action: process_let_declaration
 - rule: LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
@@ -5074,11 +5074,11 @@
     AssignmentExpression_Yield_Await
   action: undefined
 - rule: VariableDeclarationList_Yield_Await -> VariableDeclaration_Yield_Await
-  action: undefined
+  action: process_variable_declaration_list_head
 - rule: >-
     VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await
     COMMA VariableDeclaration_Yield_Await
-  action: undefined
+  action: process_variable_declaration_list_item
 - rule: LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
   action: process_let_declaration
 - rule: LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
@@ -5252,11 +5252,11 @@
     _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: VariableDeclaration_Yield -> BindingIdentifier_Yield
-  action: undefined
+  action: process_variable_declaration_no_init
 - rule: VariableDeclaration_Yield -> BindingIdentifier_Yield Initializer_Yield
-  action: undefined
+  action: process_variable_declaration
 - rule: VariableDeclaration_Yield -> BindingPattern_Yield Initializer_Yield
-  action: undefined
+  action: process_variable_declaration_pattern
 - rule: BindingList_Yield -> LexicalBinding_Yield
   action: process_binding_list_head
 - rule: BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield
@@ -5305,15 +5305,15 @@
     AssignmentExpression_Yield_Await _DEREFERENCE_
   action: process_nullish_coalescing_assignment
 - rule: VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await
-  action: undefined
+  action: process_variable_declaration_no_init
 - rule: >-
     VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await
     Initializer_Yield_Await
-  action: undefined
+  action: process_variable_declaration
 - rule: >-
     VariableDeclaration_Yield_Await -> BindingPattern_Yield_Await
     Initializer_Yield_Await
-  action: undefined
+  action: process_variable_declaration_pattern
 - rule: BindingList_Yield_Await -> LexicalBinding_Yield_Await
   action: process_binding_list_head
 - rule: >-

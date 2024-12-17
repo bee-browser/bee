@@ -32,12 +32,15 @@ pub struct RuntimeFunctions {
     await_promise: unsafe extern "C" fn(*mut c_void, u32, u32),
     resume: unsafe extern "C" fn(*mut c_void, u32),
     emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    // TODO(perf): `get()` and `set()` are slow... Compute the address of the value by using a base
+    // address and the offset for each property instead of calling these functions.
     get: unsafe extern "C" fn(*mut c_void, u32) -> *const Value,
     set: unsafe extern "C" fn(*mut c_void, u32, *const Value),
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
     print_value: unsafe extern "C" fn(*mut c_void, *const Value, *const c_char),
+    print_message: unsafe extern "C" fn(*mut c_void, *const c_char),
     launch_debugger: unsafe extern "C" fn(*mut c_void),
 }
 
@@ -63,6 +66,7 @@ impl RuntimeFunctions {
             print_u32: runtime_print_u32,
             print_f64: runtime_print_f64,
             print_value: runtime_print_value,
+            print_message: runtime_print_message,
             launch_debugger: runtime_launch_debugger,
         }
     }
@@ -417,6 +421,14 @@ unsafe extern "C" fn runtime_print_value(
     } else {
         logger::debug!("runtime_print_value: {value:?}: {msg:?}");
     }
+}
+
+unsafe extern "C" fn runtime_print_message(
+    _runtime: *mut c_void,
+    msg: *const std::os::raw::c_char,
+) {
+    let msg = std::ffi::CStr::from_ptr(msg);
+    logger::debug!("runtime_print_value: {msg:?}");
 }
 
 unsafe extern "C" fn runtime_launch_debugger(_runtime: *mut c_void) {
