@@ -43,10 +43,10 @@ make test
 make doc
 
 # release build.
-make release-build
+make build OPTIONS='-r'
 
 # List targets defined in the top-level Makefile.
-make list
+make list-targets
 ```
 
 Worked only on Linux and macOS at this point.  Windows will be supported in the future.

@@ -27,12 +27,9 @@ CODEGEN_TARGETS := $(addprefix codegen-,$(CODEGEN_PATHS))
 .PHONY: all
 all: build
 
-.PHONY: list
-list:
-	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | \
-	  awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | \
-	  sort | \
-	  grep -E -v -e '^[^[:alnum:]]' -e '^$@$$'
+.PHONY: list-targets
+list-targets:
+	@grep -E '^\.PHONY: ' $(MAKEFILE_LIST) | cut -d ' ' -f 2 | grep -v '^\$$' | sort
 
 .PHONY: check
 check: check-rust check-cxx check-js
@@ -52,12 +49,15 @@ check-cxx:
 check-js:
 
 .PHONY: build
+build: OPTIONS ?=
 build: $(BUILD_TARGETS)
-	cargo build
+	cargo build $(OPTIONS)
 
 .PHONY: test
+test: OPTIONS ?= --all-features
+test: TESTNAME ?=
 test:
-	cargo nextest run --all-features
+	cargo nextest run $(OPTIONS) $(TESTNAME)
 
 # TODO: remove '-' once we've fixed all failures.
 .PHONY: test262
@@ -78,8 +78,10 @@ coverage:
 	cargo llvm-cov report $(LLVM_COV_ARGS)
 
 .PHONY: bench
+bench: OPTIONS ?=
+bench: BENCHNAME ?=
 bench:
-	cargo bench
+	cargo bench $(OPTIONS) $(BENCHNAME)
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
@@ -92,14 +94,6 @@ clean: $(CLEAN_TARGETS)
 .PHONY: clean-all
 clean-all: $(CLEAN_TARGETS)
 	cargo clean
-
-.PHONY: release-build
-release-build: $(BUILD_TARGETS)
-	cargo build --release
-
-.PHONY: release-test
-release-test:
-	cargo nextest run --release --all-features
 
 # TODO: `make -j $(nproc) codegen` does not work properly...
 .PHONE: codegen
