@@ -1,3 +1,7 @@
+// TODO(feat): Symbols in a scope must be unique
+//   10.2.11 FunctionDeclarationInstantiation ( func, argumentsList )
+//   16.1.7 GlobalDeclarationInstantiation ( script, env )
+
 use bitflags::bitflags;
 
 use super::Locator;
