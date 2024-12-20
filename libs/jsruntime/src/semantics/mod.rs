@@ -951,8 +951,6 @@ impl<'r> Analyzer<'r> {
 
         let context = self.context_stack.last_mut().unwrap();
         context.flags.insert(FunctionContextFlags::COROUTINE);
-
-        self.scope_tree_builder.set_coroutine(context.scope_ref);
     }
 
     // Generate compile commands for the bottom-half of the coroutine.

@@ -152,20 +152,14 @@ impl ScopeTreeBuilder {
     }
 
     pub fn push_function(&mut self) -> ScopeRef {
-        self.push(ScopeFlags::FUNCTION)
-    }
-
-    pub fn set_coroutine(&mut self, scope_ref: ScopeRef) {
-        let scope = &mut self.scopes[scope_ref.index()];
-        debug_assert!(scope.is_function());
-        scope.flags.insert(ScopeFlags::COROUTINE);
+        self.push(ScopeKind::Function)
     }
 
     pub fn push_block(&mut self) -> ScopeRef {
-        self.push(ScopeFlags::empty())
+        self.push(ScopeKind::Block)
     }
 
-    fn push(&mut self, flags: ScopeFlags) -> ScopeRef {
+    fn push(&mut self, kind: ScopeKind) -> ScopeRef {
         let index = self.scopes.len();
         self.scopes.push(Scope {
             bindings: vec![],
@@ -175,7 +169,7 @@ impl ScopeTreeBuilder {
             outer: self.current,
             depth: self.depth,
             max_child_block_depth: self.depth,
-            flags,
+            kind,
         });
         // TODO: should return an error
         self.current = ScopeRef::checked_new(index).unwrap();
@@ -350,7 +344,7 @@ pub struct Scope {
     outer: ScopeRef,
     depth: u16,
     max_child_block_depth: u16,
-    flags: ScopeFlags,
+    kind: ScopeKind,
 }
 
 impl Scope {
@@ -362,15 +356,11 @@ impl Scope {
         outer: ScopeRef::NONE,
         depth: 0,
         max_child_block_depth: 0,
-        flags: ScopeFlags::empty(),
+        kind: ScopeKind::Block,
     };
 
     pub fn is_function(&self) -> bool {
-        self.flags.contains(ScopeFlags::FUNCTION)
-    }
-
-    pub fn is_coroutine(&self) -> bool {
-        self.flags.contains(ScopeFlags::COROUTINE)
+        matches!(self.kind, ScopeKind::Function)
     }
 }
 
@@ -382,12 +372,9 @@ struct ScopePrinter<'a> {
 impl std::fmt::Display for ScopePrinter<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:indent$}", "", indent = self.scope.depth as usize)?;
-        if self.scope.is_coroutine() {
-            write!(f, "C")?;
-        } else if self.scope.is_function() {
-            write!(f, "F")?;
-        } else {
-            write!(f, "B")?;
+        match self.scope.kind {
+            ScopeKind::Block => write!(f, "B")?,
+            ScopeKind::Function => write!(f, "F")?,
         }
         write!(f, "@{}:", self.index)?;
         for binding in self.scope.bindings.iter() {
@@ -397,11 +384,9 @@ impl std::fmt::Display for ScopePrinter<'_> {
     }
 }
 
-bitflags! {
-    struct ScopeFlags: u8 {
-        const FUNCTION  = 0b00000001;
-        const COROUTINE = 0b00000010;
-    }
+enum ScopeKind {
+    Block,
+    Function,
 }
 
 #[derive(Debug)]
