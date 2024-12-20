@@ -97,7 +97,6 @@ impl ScopeTree {
         let mut scope_ref = scope_ref;
         loop {
             let scope = &self.scopes[scope_ref.index()];
-            debug_assert!(scope.is_sorted());
             match scope
                 .bindings
                 .binary_search_by_key(&symbol, |binding| binding.symbol)
@@ -190,7 +189,6 @@ impl ScopeTreeBuilder {
         scope
             .bindings
             .sort_unstable_by_key(|binding| binding.symbol);
-        scope.flags.insert(ScopeFlags::SORTED);
         self.current = scope.outer;
         if !scope.is_function() {
             let max_child_scope_depth = scope.max_child_block_depth;
@@ -204,7 +202,6 @@ impl ScopeTreeBuilder {
 
     pub fn add_formal_parameter(&mut self, symbol: Symbol, index: usize) {
         let scope = &mut self.scopes[self.current.index()];
-        debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
             index: index as u16,
@@ -216,7 +213,6 @@ impl ScopeTreeBuilder {
 
     pub fn add_mutable(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
-        debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
             index,
@@ -228,7 +224,6 @@ impl ScopeTreeBuilder {
 
     pub fn add_function_scoped_mutable(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
-        debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
             index,
@@ -240,7 +235,6 @@ impl ScopeTreeBuilder {
 
     pub fn add_immutable(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
-        debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
             index,
@@ -253,7 +247,6 @@ impl ScopeTreeBuilder {
     #[allow(unused)]
     pub fn add_hidden(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
-        debug_assert!(!scope.is_sorted());
         scope.bindings.push(Binding {
             symbol,
             index,
@@ -294,7 +287,6 @@ impl ScopeTreeBuilder {
 
     pub fn set_captured(&mut self, binding_ref: BindingRef) {
         let scope = &mut self.scopes[binding_ref.scope_index()];
-        debug_assert!(scope.is_sorted());
         scope.bindings[binding_ref.binding_index()].set_captured();
     }
 
@@ -310,7 +302,6 @@ impl ScopeTreeBuilder {
         let mut scope_ref = reference.scope_ref;
         loop {
             let scope = &self.scopes[scope_ref.index()];
-            debug_assert!(scope.is_sorted());
             match scope
                 .bindings
                 .binary_search_by_key(&symbol, |binding| binding.symbol)
@@ -384,10 +375,6 @@ impl Scope {
     pub fn is_coroutine(&self) -> bool {
         self.flags.contains(ScopeFlags::COROUTINE)
     }
-
-    fn is_sorted(&self) -> bool {
-        self.flags.contains(ScopeFlags::SORTED)
-    }
 }
 
 struct ScopePrinter<'a> {
@@ -398,9 +385,6 @@ struct ScopePrinter<'a> {
 impl std::fmt::Display for ScopePrinter<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:indent$}", "", indent = self.scope.depth as usize)?;
-        if !self.scope.is_sorted() {
-            write!(f, "*")?;
-        }
         if self.scope.is_coroutine() {
             write!(f, "C")?;
         } else if self.scope.is_function() {
@@ -423,7 +407,6 @@ bitflags! {
     struct ScopeFlags: u8 {
         const FUNCTION  = 0b00000001;
         const COROUTINE = 0b00000010;
-        const SORTED    = 0b10000000;
     }
 }
 
