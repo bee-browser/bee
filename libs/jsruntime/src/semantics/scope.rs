@@ -152,7 +152,7 @@ impl ScopeTreeBuilder {
     }
 
     pub fn push_function(&mut self) -> ScopeRef {
-        self.push(ScopeFlags::FUNCTION, "")
+        self.push(ScopeFlags::FUNCTION)
     }
 
     pub fn set_coroutine(&mut self, scope_ref: ScopeRef) {
@@ -161,14 +161,13 @@ impl ScopeTreeBuilder {
         scope.flags.insert(ScopeFlags::COROUTINE);
     }
 
-    pub fn push_block(&mut self, label: &'static str) -> ScopeRef {
-        self.push(ScopeFlags::empty(), label)
+    pub fn push_block(&mut self) -> ScopeRef {
+        self.push(ScopeFlags::empty())
     }
 
-    fn push(&mut self, flags: ScopeFlags, label: &'static str) -> ScopeRef {
+    fn push(&mut self, flags: ScopeFlags) -> ScopeRef {
         let index = self.scopes.len();
         self.scopes.push(Scope {
-            label,
             bindings: vec![],
             num_formal_parameters: 0,
             num_locals: 0,
@@ -344,7 +343,6 @@ impl Default for ScopeTreeBuilder {
 
 // TODO: refactoring
 pub struct Scope {
-    label: &'static str,
     pub bindings: Vec<Binding>,
     pub num_formal_parameters: u16,
     pub num_locals: u16,
@@ -357,7 +355,6 @@ pub struct Scope {
 
 impl Scope {
     const NONE: Self = Self {
-        label: "",
         bindings: vec![],
         num_formal_parameters: 0,
         num_locals: 0,
@@ -391,9 +388,6 @@ impl std::fmt::Display for ScopePrinter<'_> {
             write!(f, "F")?;
         } else {
             write!(f, "B")?;
-        }
-        if !self.scope.label.is_empty() {
-            write!(f, ".{}", self.scope.label)?;
         }
         write!(f, "@{}:", self.index)?;
         for binding in self.scope.bindings.iter() {

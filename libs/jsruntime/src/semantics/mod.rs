@@ -520,7 +520,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_case_block(&mut self) {
-        let scope_ref = self.scope_tree_builder.push_block("switch");
+        let scope_ref = self.scope_tree_builder.push_block();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -607,7 +607,7 @@ impl<'r> Analyzer<'r> {
         // exists, but we always create a scope here for simplicity.  In our processing model,
         // the catch and finally clauses are always created even if there is no corresponding
         // node in the AST.
-        let scope_ref = self.scope_tree_builder.push_block("catch");
+        let scope_ref = self.scope_tree_builder.push_block();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -819,7 +819,7 @@ impl<'r> Analyzer<'r> {
         // iteration statement.  This is needed for the for-let/const statements, but not for
         // others.  We believe that this change does not compromise conformance to the
         // specification and does not cause security problems.
-        let scope_ref = self.scope_tree_builder.push_block("loop");
+        let scope_ref = self.scope_tree_builder.push_block();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -860,7 +860,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_start_block_scope(&mut self) {
-        let scope_ref = self.scope_tree_builder.push_block("");
+        let scope_ref = self.scope_tree_builder.push_block();
         self.context_stack
             .last_mut()
             .unwrap()
