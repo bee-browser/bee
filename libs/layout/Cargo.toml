@@ -12,7 +12,7 @@ version.workspace = true
 service = ["geometry/serde", "serde", "serde_json"]
 
 [dependencies]
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 geometry = { path = "../geometry" }
 logging = { path = "../logging" }
 num-traits = "0.2.19"

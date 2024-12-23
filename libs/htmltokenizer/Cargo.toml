@@ -14,7 +14,7 @@ logging = { path = "../logging" }
 thiserror = "2.0.9"
 
 [dev-dependencies]
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 assert_matches = "1.5.0"
 serde = { version = "1.0.216", features = ["derive"] }
 serde_json = "1.0.133"

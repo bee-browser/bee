@@ -9,7 +9,7 @@ publish.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 base = { path = "../../libs/base" }
 clap = { version = "4.5.23", features = ["derive", "env"] }
 dashmap = "6.1.0"
