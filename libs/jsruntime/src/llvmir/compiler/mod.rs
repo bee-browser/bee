@@ -536,8 +536,8 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_mutable_binding(&mut self) {
-        let (operand, _) = self.dereference();
         let (_symbol, locator) = self.pop_reference();
+        let (operand, _) = self.dereference();
 
         let value = match locator {
             Locator::Local(index) => self.locals[index as usize],
@@ -615,8 +615,8 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_immutable_binding(&mut self) {
-        let (operand, _) = self.dereference();
         let (_symbol, locator) = self.pop_reference();
+        let (operand, _) = self.dereference();
 
         let value = match locator {
             Locator::Local(index) => self.locals[index as usize],
@@ -663,9 +663,9 @@ impl<'r, 's> Compiler<'r, 's> {
         let backup = self.bridge.get_basic_block();
         self.bridge.set_basic_block(block);
 
+        let (symbol, locator) = self.pop_reference();
         let (operand, _) = self.dereference();
         // TODO: operand must hold a closure.
-        let (symbol, locator) = self.pop_reference();
 
         match locator {
             Locator::Local(index) => {

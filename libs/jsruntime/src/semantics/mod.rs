@@ -423,7 +423,7 @@ impl<'r> Analyzer<'r> {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_lexical_binding(init);
+            .process_lexical_binding(init);
     }
 
     fn handle_let_declaration(&mut self, n: u32) {
@@ -446,14 +446,11 @@ impl<'r> Analyzer<'r> {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_non_lexical_binding(init);
+            .process_variable_declaration(init);
     }
 
-    fn handle_variable_statement(&mut self, n: u32) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .process_variable_statement(n);
+    fn handle_variable_statement(&mut self, _n: u32) {
+        // nop
     }
 
     fn handle_binding_element(&mut self, _init: bool) {
@@ -630,15 +627,15 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_formal_parameter(&mut self) {
-        // TODO
-    }
-
-    fn handle_formal_parameters(&mut self, n: u32) {
         let builder = &mut self.scope_tree_builder;
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_formal_parameters(n, builder);
+            .process_formal_parameter(builder);
+    }
+
+    fn handle_formal_parameters(&mut self, _n: u32) {
+        // TODO
     }
 
     fn end_function_scope(&mut self) -> usize {
@@ -1109,14 +1106,14 @@ struct FunctionContext {
     /// performed after all variable declarations are processed.
     references: Vec<Reference>,
 
-    /// A list of indexes of commands that have to be updated while analyzing.
-    pending_lexical_bindings: Vec<usize>,
-
     /// A list of symbols in the formal parameters of the function.
     formal_parameters: Vec<Symbol>,
 
     /// A stack to keep symbols defined as binding identifiers.
-    symbol_stack: Vec<Symbol>,
+    ///
+    /// The second member of a tuple is used for keeping the index of a placeholder command.
+    /// Because the type of a lexical declaration cannot be known at "LexicalBinding".
+    symbol_stack: Vec<(Symbol, usize)>,
 
     /// A set of non-lexically-scoped symbols defined by "VariableStatement"s.
     function_scoped_symbols: FxHashSet<Symbol>,
@@ -1171,6 +1168,14 @@ bitflags! {
 }
 
 impl FunctionContext {
+    fn reserve_command(&mut self, n: usize) -> usize {
+        let index = self.commands.len();
+        for _ in 0..n {
+            self.commands.push(CompileCommand::PlaceHolder);
+        }
+        index
+    }
+
     fn put_command(&mut self, command: CompileCommand) -> usize {
         let index = self.commands.len();
         self.commands.push(command);
@@ -1217,26 +1222,35 @@ impl FunctionContext {
         self.commands.push(CompileCommand::Call(nargs));
     }
 
-    fn put_lexical_binding(&mut self, init: bool) {
+    fn process_lexical_binding(&mut self, init: bool) {
+        debug_assert!(!self.symbol_stack.is_empty());
+
         if !init {
             // Set undefined as the initial value.
             self.commands.push(CompileCommand::Undefined);
         }
-        // We put a placeholder command here because we don't know whether this binding is mutable
-        // or not at this point.  The placeholder command will be replaced in
+
+        // We put placeholder commands here because we don't know whether this binding is mutable
+        // or not at this point.  The placeholder commands will be replaced in
         // `process_mutable_bindings()` or `process_immutable_bindings()`.
-        let command_index = self.put_command(CompileCommand::PlaceHolder);
-        self.pending_lexical_bindings.push(command_index);
+        let command_index = self.reserve_command(2);
+        self.symbol_stack.last_mut().unwrap().1 = command_index;
+
         // TODO: type info
     }
 
-    fn put_non_lexical_binding(&mut self, init: bool) {
+    fn process_variable_declaration(&mut self, init: bool) {
+        debug_assert!(!self.symbol_stack.is_empty());
+
+        let (symbol, _) = self.symbol_stack.pop().unwrap();
         if init {
+            self.commands.push(CompileCommand::Reference(symbol));
+            self.commands.push(CompileCommand::Swap);
             self.commands.push(CompileCommand::Assignment);
-        } else {
-            // Discard the reference.
-            self.commands.push(CompileCommand::Discard);
         }
+
+        self.function_scoped_symbols.insert(symbol);
+
         // TODO: type info
     }
 
@@ -1245,9 +1259,10 @@ impl FunctionContext {
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
-        self.symbol_stack.push(symbol);
+        self.symbol_stack.push((symbol, 0));
         if self.flags.contains(FunctionContextFlags::IN_BODY) {
-            self.put_reference(symbol, builder.current());
+            self.references
+                .push(Reference::new(symbol, builder.current()));
         }
     }
 
@@ -1276,30 +1291,27 @@ impl FunctionContext {
         self.put_command(CompileCommand::Discard);
     }
 
-    fn process_formal_parameters(&mut self, n: u32, builder: &mut ScopeTreeBuilder) {
-        debug_assert!(self.symbol_stack.len() >= n as usize);
-        let i = self.symbol_stack.len() - n as usize;
-        for symbol in self.symbol_stack[i..].iter().cloned() {
-            // TODO: the compilation should fail if the following condition is unmet.
-            assert!(self.formal_parameters.len() < u16::MAX as usize);
-            let i = self.formal_parameters.len();
-            self.formal_parameters.push(symbol);
-            builder.add_formal_parameter(symbol, i);
-        }
-        self.symbol_stack.truncate(i);
+    fn process_formal_parameter(&mut self, builder: &mut ScopeTreeBuilder) {
+        debug_assert!(!self.symbol_stack.is_empty());
+        let (symbol, _) = self.symbol_stack.pop().unwrap();
+        // TODO: the compilation should fail if the following condition is unmet.
+        assert!(self.formal_parameters.len() < u16::MAX as usize);
+        let i = self.formal_parameters.len();
+        self.formal_parameters.push(symbol);
+        builder.add_formal_parameter(symbol, i);
     }
 
     fn process_mutable_bindings(&mut self, n: u32, builder: &mut ScopeTreeBuilder) {
-        debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
-        for i in self.pending_lexical_bindings.iter().cloned() {
-            debug_assert!(matches!(self.commands[i], CompileCommand::PlaceHolder));
-            self.commands[i] = CompileCommand::MutableBinding;
-        }
-        self.pending_lexical_bindings.clear();
-
         debug_assert!(self.symbol_stack.len() >= n as usize);
         let i = self.symbol_stack.len() - n as usize;
-        for symbol in self.symbol_stack[i..].iter().cloned() {
+        for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
+            debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+            self.commands[index] = CompileCommand::Reference(symbol);
+            debug_assert!(matches!(
+                self.commands[index + 1],
+                CompileCommand::PlaceHolder
+            ));
+            self.commands[index + 1] = CompileCommand::MutableBinding;
             builder.add_mutable(symbol, self.num_locals);
             self.num_locals += 1;
         }
@@ -1307,38 +1319,30 @@ impl FunctionContext {
     }
 
     fn process_immutable_bindings(&mut self, n: u32, builder: &mut ScopeTreeBuilder) {
-        debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
-        for i in self.pending_lexical_bindings.iter().cloned() {
-            debug_assert!(matches!(self.commands[i], CompileCommand::PlaceHolder));
-            self.commands[i] = CompileCommand::ImmutableBinding;
-        }
-        self.pending_lexical_bindings.clear();
-
         debug_assert!(self.symbol_stack.len() >= n as usize);
         let i = self.symbol_stack.len() - n as usize;
-        for symbol in self.symbol_stack[i..].iter().cloned() {
+        for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
+            debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+            self.commands[index] = CompileCommand::Reference(symbol);
+            debug_assert!(matches!(
+                self.commands[index + 1],
+                CompileCommand::PlaceHolder
+            ));
+            self.commands[index + 1] = CompileCommand::ImmutableBinding;
             builder.add_immutable(symbol, self.num_locals);
             self.num_locals += 1;
         }
         self.symbol_stack.truncate(i);
     }
 
-    fn process_variable_statement(&mut self, n: u32) {
-        debug_assert!(self.symbol_stack.len() >= n as usize);
-        let i = self.symbol_stack.len() - n as usize;
-        for symbol in self.symbol_stack[i..].iter().cloned() {
-            self.function_scoped_symbols.insert(symbol);
-        }
-        self.symbol_stack.truncate(i);
-    }
-
     fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
         debug_assert!(!self.symbol_stack.is_empty());
-        let symbol = self.symbol_stack.pop().unwrap();
+        let (symbol, _) = self.symbol_stack.pop().unwrap();
         self.function_scoped_symbols.insert(symbol);
 
         self.commands.push(CompileCommand::Function(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
+        self.commands.push(CompileCommand::Reference(symbol));
         self.commands.push(CompileCommand::DeclareClosure);
     }
 
@@ -1351,8 +1355,6 @@ impl FunctionContext {
         if named {
             debug_assert!(!self.symbol_stack.is_empty());
             self.symbol_stack.pop();
-            // Remove the BindingIdentifier of the function.
-            self.put_command(CompileCommand::Discard);
         }
         self.commands.push(CompileCommand::Function(lambda_id));
         self.commands
@@ -1550,7 +1552,7 @@ impl FunctionContext {
 
     fn process_catch_parameter(&mut self, builder: &mut ScopeTreeBuilder) {
         self.put_command(CompileCommand::Exception);
-        self.put_lexical_binding(true);
+        self.process_lexical_binding(true);
         self.process_mutable_bindings(1, builder);
     }
 
@@ -1936,17 +1938,17 @@ mod tests {
                         CompileCommand::Nop,
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVars(scope_ref!(1)),
-                        CompileCommand::Reference(symbol!(sreg, "a")),
                         CompileCommand::Undefined,
+                        CompileCommand::Reference(symbol!(sreg, "a")),
                         CompileCommand::MutableBinding,
-                        CompileCommand::Reference(symbol!(sreg, "b")),
                         CompileCommand::Number(2.0),
+                        CompileCommand::Reference(symbol!(sreg, "b")),
                         CompileCommand::MutableBinding,
-                        CompileCommand::Reference(symbol!(sreg, "c")),
                         CompileCommand::Number(3.0),
+                        CompileCommand::Reference(symbol!(sreg, "c")),
                         CompileCommand::ImmutableBinding,
-                        CompileCommand::Reference(symbol!(sreg, "d")),
                         CompileCommand::Number(4.0),
+                        CompileCommand::Reference(symbol!(sreg, "d")),
                         CompileCommand::ImmutableBinding,
                         CompileCommand::PopScope(scope_ref!(1)),
                     ]
@@ -1967,20 +1969,20 @@ mod tests {
                         CompileCommand::Nop,
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVars(scope_ref!(1)),
-                        CompileCommand::Reference(symbol!(sreg, "a")),
                         CompileCommand::Undefined,
+                        CompileCommand::Reference(symbol!(sreg, "a")),
                         CompileCommand::MutableBinding,
                         CompileCommand::PushScope(scope_ref!(2)),
-                        CompileCommand::Reference(symbol!(sreg, "a")),
                         CompileCommand::Undefined,
+                        CompileCommand::Reference(symbol!(sreg, "a")),
                         CompileCommand::MutableBinding,
                         CompileCommand::PopScope(scope_ref!(2)),
                         CompileCommand::PushScope(scope_ref!(3)),
+                        CompileCommand::Undefined,
                         CompileCommand::Reference(symbol!(sreg, "a")),
-                        CompileCommand::Undefined,
                         CompileCommand::MutableBinding,
-                        CompileCommand::Reference(symbol!(sreg, "b")),
                         CompileCommand::Undefined,
+                        CompileCommand::Reference(symbol!(sreg, "b")),
                         CompileCommand::MutableBinding,
                         CompileCommand::PopScope(scope_ref!(3)),
                         CompileCommand::PopScope(scope_ref!(1)),
@@ -2021,8 +2023,8 @@ mod tests {
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVars(scope_ref!(1)),
-                    CompileCommand::Reference(symbol!(sreg, "a")),
                     CompileCommand::Number(1.0),
+                    CompileCommand::Reference(symbol!(sreg, "a")),
                     CompileCommand::MutableBinding,
                     CompileCommand::Reference(symbol!(sreg, "a")),
                     CompileCommand::Number(2.0),
