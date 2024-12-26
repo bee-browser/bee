@@ -352,18 +352,17 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
-        let scope_ref = self.scope_tree_builder.current();
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_identifier_reference(symbol, scope_ref);
+            .process_identifier_reference(symbol);
     }
 
     fn handle_binding_identifier(&mut self, symbol: Symbol) {
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_binding_identifier(symbol, &mut self.scope_tree_builder);
+            .process_binding_identifier(symbol);
     }
 
     fn handle_argument_list_head(&mut self, empty: bool, spread: bool) {
@@ -675,7 +674,7 @@ impl<'r> Analyzer<'r> {
         func.num_locals = context.num_locals;
 
         let context = self.context_stack.last_mut().unwrap();
-        let scope_ref = self.scope_tree_builder.current();
+        let scope_ref = context.scope_ref();
         let mut added = FxHashSet::default();
         for reference in unresolved_reference.iter() {
             match reference.func_scope_ref {
@@ -870,8 +869,6 @@ impl<'r> Analyzer<'r> {
     }
 
     fn start_function_scope(&mut self) {
-        let scope_ref = self.scope_tree_builder.push_function();
-
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
         let func_index = self.functions.len();
@@ -891,6 +888,7 @@ impl<'r> Analyzer<'r> {
         // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
         context.commands.push(CompileCommand::Nop);
 
+        let scope_ref = self.scope_tree_builder.push_function();
         context.start_scope(scope_ref);
         context
             .commands
@@ -1252,15 +1250,16 @@ impl FunctionContext {
         // TODO: type info
     }
 
-    fn process_identifier_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
+    fn process_identifier_reference(&mut self, symbol: Symbol) {
+        let scope_ref = self.scope_ref();
         self.put_reference(symbol, scope_ref)
     }
 
-    fn process_binding_identifier(&mut self, symbol: Symbol, builder: &mut ScopeTreeBuilder) {
+    fn process_binding_identifier(&mut self, symbol: Symbol) {
         self.symbol_stack.push((symbol, 0));
         if self.flags.contains(FunctionContextFlags::IN_BODY) {
-            self.references
-                .push(Reference::new(symbol, builder.current()));
+            let scope_ref = self.scope_ref();
+            self.references.push(Reference::new(symbol, scope_ref));
         }
     }
 
@@ -1552,6 +1551,10 @@ impl FunctionContext {
         self.put_command(CompileCommand::Exception);
         self.process_lexical_binding(true);
         self.process_mutable_bindings(1, builder);
+    }
+
+    fn scope_ref(&self) -> ScopeRef {
+        self.scope_stack.last().unwrap().scope_ref
     }
 
     fn start_scope(&mut self, scope_ref: ScopeRef) {

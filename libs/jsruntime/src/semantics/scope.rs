@@ -146,11 +146,6 @@ pub struct ScopeTreeBuilder {
 }
 
 impl ScopeTreeBuilder {
-    #[inline(always)]
-    pub fn current(&self) -> ScopeRef {
-        self.current
-    }
-
     pub fn push_function(&mut self) -> ScopeRef {
         self.push(ScopeKind::Function)
     }
