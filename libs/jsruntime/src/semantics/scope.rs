@@ -237,18 +237,6 @@ impl ScopeTreeBuilder {
         scope.num_locals += 1;
     }
 
-    #[allow(unused)]
-    pub fn add_hidden(&mut self, symbol: Symbol, index: u16) {
-        let scope = &mut self.scopes[self.current.index()];
-        scope.bindings.push(Binding {
-            symbol,
-            index,
-            kind: BindingKind::Mutable,
-            flags: BindingFlags::HIDDEN,
-        });
-        scope.num_locals += 1;
-    }
-
     pub fn add_capture(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
@@ -426,10 +414,6 @@ impl Binding {
     fn set_captured(&mut self) {
         self.flags.insert(BindingFlags::CAPTURED)
     }
-
-    pub fn is_hidden(&self) -> bool {
-        self.flags.contains(BindingFlags::HIDDEN)
-    }
 }
 
 impl std::fmt::Display for Binding {
@@ -439,9 +423,6 @@ impl std::fmt::Display for Binding {
         }
         if self.is_function_scoped() {
             write!(f, "^")?;
-        }
-        if self.is_hidden() {
-            write!(f, "?")?;
         }
         match self.kind {
             BindingKind::FormalParameter => write!(f, "P@{}:{}", self.index, self.symbol)?,
@@ -468,6 +449,5 @@ bitflags! {
     struct BindingFlags: u8 {
         const CAPTURED        = 1 << 0;
         const FUNCTION_SCOPED = 1 << 1;
-        const HIDDEN          = 1 << 7;
     }
 }

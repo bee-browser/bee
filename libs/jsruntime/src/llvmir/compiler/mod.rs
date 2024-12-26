@@ -816,7 +816,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let scope = self.scope_tree.scope(scope_ref);
         for binding in scope.bindings.iter() {
-            if binding.is_hidden() || binding.is_function_scoped() {
+            if binding.is_function_scoped() {
                 continue;
             }
             let locator = binding.locator();
