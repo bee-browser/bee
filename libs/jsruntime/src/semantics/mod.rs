@@ -671,7 +671,7 @@ impl<'r> Analyzer<'r> {
         let func_index = context.func_index;
         let func = &mut self.functions[func_index];
         func.commands = context.commands;
-        func.scope_ref = context.scope_ref;
+        func.scope_ref = func_scope_ref;
         func.num_locals = context.num_locals;
 
         let context = self.context_stack.last_mut().unwrap();
@@ -881,7 +881,6 @@ impl<'r> Analyzer<'r> {
 
         let mut context = FunctionContext {
             func_index,
-            scope_ref,
             ..Default::default()
         };
 
@@ -1027,7 +1026,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
 
         let func = &mut self.functions[context.func_index];
         func.commands = context.commands;
-        func.scope_ref = context.scope_ref;
+        func.scope_ref = global_scope_ref;
         func.num_locals = context.num_locals;
 
         // References to global properties.
@@ -1119,6 +1118,8 @@ struct FunctionContext {
     function_scoped_symbols: FxHashSet<Symbol>,
 
     /// A stack to hold [`Scope`]s.
+    ///
+    /// The bottom element always holds the function scope.
     scope_stack: Vec<Scope>,
 
     /// A stack to hold [`LoopContext`]s.
@@ -1140,9 +1141,6 @@ struct FunctionContext {
 
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
-
-    /// The reference to the function scope in the scope tree.
-    scope_ref: ScopeRef,
 
     num_locals: u16,
     num_do_while_statements: u16,
