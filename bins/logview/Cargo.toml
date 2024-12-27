@@ -18,7 +18,7 @@ logging = { path = "../../libs/logging" }
 mime = "0.3.17"
 mustache = "0.9.0"
 open = "5.3.1"
-serde = { version = "1.0.216", features = ["derive", "rc"] }
+serde = { version = "1.0.217", features = ["derive", "rc"] }
 serde_yaml = "0.9.34"
 shell-words = "1.1.0"
 tempfile = "3.14.0"
