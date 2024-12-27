@@ -1137,19 +1137,19 @@ struct FunctionAnalysis {
     /// The bottom element always holds the function scope.
     scope_stack: Vec<Scope>,
 
-    /// A stack to hold [`LoopContext`]s.
-    loop_stack: Vec<LoopContext>,
+    /// A stack to hold [`LoopAnalysis`]s.
+    loop_stack: Vec<LoopAnalysis>,
 
-    /// A stack to hold [`SwitchContext`]s.
-    switch_stack: Vec<SwitchContext>,
+    /// A stack to hold [`SwitchAnalysis`]s.
+    switch_stack: Vec<SwitchAnalysis>,
 
-    /// A stack to hold [`LabelContext`]s.
-    label_stack: Vec<LabelContext>,
+    /// A stack to hold [`LabelAnalysis`]s.
+    label_stack: Vec<LabelAnalysis>,
 
-    /// A stack to hold [`TryContext`]s.
-    try_stack: Vec<TryContext>,
+    /// A stack to hold [`TryAnalysis`]s.
+    try_stack: Vec<TryAnalysis>,
 
-    coroutine: CoroutineContext,
+    coroutine: CoroutineAnalysis,
 
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<u16>,
@@ -1387,7 +1387,7 @@ impl FunctionAnalysis {
         // The placeholder command will be replaced with an appropriate command in
         // `process_loop_end()`.
         let start_index = self.put_command(CompileCommand::PlaceHolder);
-        self.loop_stack.push(LoopContext { start_index });
+        self.loop_stack.push(LoopAnalysis { start_index });
     }
 
     fn process_loop_init_expression(&mut self) {
@@ -1414,7 +1414,7 @@ impl FunctionAnalysis {
 
     fn process_loop_end(&mut self, command: CompileCommand) {
         self.put_command(CompileCommand::LoopEnd);
-        let LoopContext { start_index } = self.loop_stack.pop().unwrap();
+        let LoopAnalysis { start_index } = self.loop_stack.pop().unwrap();
         debug_assert!(matches!(
             self.commands[start_index],
             CompileCommand::PlaceHolder
@@ -1448,7 +1448,7 @@ impl FunctionAnalysis {
 
         // The placeholder commands will be replaced in `process_switch_statement()`.
         let case_block_index = self.put_command(CompileCommand::PlaceHolder);
-        self.switch_stack.push(SwitchContext {
+        self.switch_stack.push(SwitchAnalysis {
             case_block_index,
             ..Default::default()
         });
@@ -1472,13 +1472,13 @@ impl FunctionAnalysis {
 
     fn process_default_clause(&mut self, has_statement: bool) {
         self.put_command(CompileCommand::CaseClause(has_statement));
-        let context = self.switch_stack.last_mut().unwrap();
-        context.default_index = Some(context.num_cases);
-        context.num_cases += 1;
+        let switch = self.switch_stack.last_mut().unwrap();
+        switch.default_index = Some(switch.num_cases);
+        switch.num_cases += 1;
     }
 
     fn process_switch_statement(&mut self) {
-        let SwitchContext {
+        let SwitchAnalysis {
             case_block_index,
             default_index,
             num_cases,
@@ -1509,7 +1509,7 @@ impl FunctionAnalysis {
         // The placeholder command will be replaced with `CompileCommand::LabelStart` in
         // `process_labelled_statement()`.
         let start_index = self.put_command(CompileCommand::PlaceHolder);
-        self.label_stack.push(LabelContext {
+        self.label_stack.push(LabelAnalysis {
             start_index,
             symbol,
         });
@@ -1605,31 +1605,31 @@ struct Scope {
     scope_ref: ScopeRef,
 }
 
-struct LoopContext {
+struct LoopAnalysis {
     start_index: usize,
 }
 
 #[derive(Default)]
-struct SwitchContext {
+struct SwitchAnalysis {
     case_block_index: usize,
     num_cases: u16,
     default_index: Option<u16>,
 }
 
 #[derive(Default)]
-struct LabelContext {
+struct LabelAnalysis {
     start_index: usize,
     symbol: Symbol,
 }
 
 #[derive(Default)]
-struct TryContext {
+struct TryAnalysis {
     catch_index: usize,
     finally_index: usize,
 }
 
 #[derive(Default)]
-struct CoroutineContext {
+struct CoroutineAnalysis {
     state: u32,
 }
 
