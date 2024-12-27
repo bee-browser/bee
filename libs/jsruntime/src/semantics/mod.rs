@@ -161,6 +161,24 @@ struct GlobalAnalysis {
     scope_tree_builder: ScopeTreeBuilder,
 }
 
+// We use a macro to get the mutable reference instead of use a method returning it in order to
+// avoid issues caused by borrow checker.
+macro_rules! analysis_mut {
+    ($analyzer:expr) => {
+        $analyzer.analysis_stack.last_mut().unwrap()
+    };
+}
+
+macro_rules! push_commands {
+    ($analyzer:expr; $($command:expr,)+) => {
+        push_commands!($analyzer, $($command),+)
+    };
+    ($analyzer:expr; $($command:expr),+) => {
+        let analysis = analysis_mut!($analyzer);
+        $(analysis.push_command($command);)*
+    };
+}
+
 impl<'r> Analyzer<'r> {
     /// Creates a semantic analyzer.
     fn new_for_script(
@@ -215,31 +233,11 @@ impl<'r> Analyzer<'r> {
         }
     }
 
-    fn set_in_body(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .flags
-            .insert(FunctionAnalysisFlags::IN_BODY);
+    fn analysis(&self) -> &FunctionAnalysis {
+        self.analysis_stack.last().unwrap()
     }
 
-    fn set_async(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .flags
-            .insert(FunctionAnalysisFlags::ASYNC);
-    }
-
-    fn is_async(&self) -> bool {
-        self.analysis_stack
-            .last()
-            .unwrap()
-            .flags
-            .contains(FunctionAnalysisFlags::ASYNC)
-    }
-
-    /// Handles an AST node coming from a parser.
+    /// Handles an AST node coming from the parser.
     fn handle_node(&mut self, node: Node<'_>) {
         logger::debug!(event = "handle_node", ?node);
         match node {
@@ -251,7 +249,7 @@ impl<'r> Analyzer<'r> {
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
-            Node::Arguments => (), // nop
+            Node::Arguments => self.handle_arguments(),
             Node::CallExpression => self.handle_call_expression(),
             Node::UpdateExpression(op) => self.handle_operator(op.into()),
             Node::UnaryExpression(op) => self.handle_operator(op.into()),
@@ -272,14 +270,14 @@ impl<'r> Analyzer<'r> {
             }
             Node::AssignmentExpression(op) => self.handle_shorthand_assignment_expression(op),
             Node::SequenceExpression => self.handle_sequence_expression(),
-            Node::BlockStatement => (), // nop
+            Node::BlockStatement => self.handle_block_statement(),
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
             Node::LetDeclaration(n) => self.handle_let_declaration(n),
             Node::ConstDeclaration(n) => self.handle_const_declaration(n),
             Node::VariableDeclaration(init) => self.handle_variable_declaration(init),
             Node::VariableStatement(n) => self.handle_variable_statement(n),
             Node::BindingElement(init) => self.handle_binding_element(init),
-            Node::EmptyStatement => (), // nop
+            Node::EmptyStatement => self.handle_empty_statement(),
             Node::ExpressionStatement => self.handle_expression_statement(),
             Node::IfElseStatement => self.handle_if_else_statement(),
             Node::IfStatement => self.handle_if_statement(),
@@ -342,114 +340,87 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_null(&mut self) {
-        self.analysis_stack.last_mut().unwrap().put_null();
+        analysis_mut!(self).put_null();
     }
 
     fn handle_boolean(&mut self, value: bool) {
-        self.analysis_stack.last_mut().unwrap().put_boolean(value);
+        analysis_mut!(self).put_boolean(value);
     }
 
     fn handle_number(&mut self, value: f64) {
-        self.analysis_stack.last_mut().unwrap().put_number(value);
+        analysis_mut!(self).put_number(value);
     }
 
     fn handle_string(&mut self, value: Vec<u16>) {
-        self.analysis_stack.last_mut().unwrap().put_string(value);
+        analysis_mut!(self).put_string(value);
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_identifier_reference(symbol);
+        analysis_mut!(self).process_identifier_reference(symbol);
     }
 
     fn handle_binding_identifier(&mut self, symbol: Symbol) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_binding_identifier(symbol);
+        analysis_mut!(self).process_binding_identifier(symbol);
     }
 
     fn handle_argument_list_head(&mut self, empty: bool, spread: bool) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_argument_list_head(empty, spread)
+        analysis_mut!(self).process_argument_list_head(empty, spread)
     }
 
     fn handle_argument_list_item(&mut self, spread: bool) {
-        self.analysis_stack.last_mut().unwrap().put_argument(spread);
+        analysis_mut!(self).put_argument(spread);
+    }
+
+    fn handle_arguments(&mut self) {
+        // nop
     }
 
     fn handle_call_expression(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_call_expression();
+        analysis_mut!(self).process_call_expression();
     }
 
     fn handle_operator(&mut self, op: CompileCommand) {
-        self.put_command(op);
+        push_commands!(self; op);
     }
 
     fn handle_binary_expression(&mut self, op: BinaryOperator) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_binary_expression(op);
+        analysis_mut!(self).process_binary_expression(op);
     }
 
     fn handle_shorthand_assignment_expression(&mut self, op: AssignmentOperator) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_shorthand_assignment_expression(op);
+        analysis_mut!(self).process_shorthand_assignment_expression(op);
     }
 
     fn handle_sequence_expression(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_sequence_expression();
+        analysis_mut!(self).process_sequence_expression();
     }
 
     fn handle_conditional_expression(&mut self) {
-        self.put_command(CompileCommand::Ternary);
+        push_commands!(self; CompileCommand::Ternary);
     }
 
     fn handle_conditional_assignment(&mut self) {
-        let analysis = self.analysis_stack.last_mut().unwrap();
-        analysis.commands.push(CompileCommand::Ternary);
-        analysis.commands.push(CompileCommand::Assignment);
+        push_commands!(self; CompileCommand::Ternary, CompileCommand::Assignment);
+    }
+
+    fn handle_block_statement(&mut self) {
+        // nop
     }
 
     fn handle_lexical_binding(&mut self, init: bool) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_lexical_binding(init);
+        analysis_mut!(self).process_lexical_binding(init);
     }
 
     fn handle_let_declaration(&mut self, n: u32) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_mutable_bindings(n, &mut self.global_analysis);
+        analysis_mut!(self).process_mutable_bindings(n, &mut self.global_analysis);
     }
 
     fn handle_const_declaration(&mut self, n: u32) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_immutable_bindings(n, &mut self.global_analysis);
+        analysis_mut!(self).process_immutable_bindings(n, &mut self.global_analysis);
     }
 
     fn handle_variable_declaration(&mut self, init: bool) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_variable_declaration(init);
+        analysis_mut!(self).process_variable_declaration(init);
     }
 
     fn handle_variable_statement(&mut self, _n: u32) {
@@ -460,149 +431,108 @@ impl<'r> Analyzer<'r> {
         // TODO
     }
 
+    fn handle_empty_statement(&mut self) {
+        // nop
+    }
+
     fn handle_expression_statement(&mut self) {
-        self.put_command(CompileCommand::Discard);
+        push_commands!(self; CompileCommand::Discard);
     }
 
     fn handle_if_else_statement(&mut self) {
-        self.put_command(CompileCommand::IfElseStatement);
+        push_commands!(self; CompileCommand::IfElseStatement);
     }
 
     fn handle_if_statement(&mut self) {
-        self.put_command(CompileCommand::IfStatement);
+        push_commands!(self; CompileCommand::IfStatement);
     }
 
     fn handle_do_while_statement(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
         self.global_analysis.scope_tree_builder.pop();
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_do_while_statement();
+        analysis_mut!(self).process_do_while_statement();
     }
 
     fn handle_while_statement(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
         self.global_analysis.scope_tree_builder.pop();
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_while_statement();
+        analysis_mut!(self).process_while_statement();
     }
 
     fn handle_for_statement(&mut self, flags: LoopFlags) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
         self.global_analysis.scope_tree_builder.pop();
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_for_statement(flags);
+        analysis_mut!(self).process_for_statement(flags);
     }
 
     fn handle_continue_statement(&mut self, symbol: Symbol) {
-        self.put_command(CompileCommand::Continue(symbol));
+        push_commands!(self; CompileCommand::Continue(symbol));
     }
 
     fn handle_break_statement(&mut self, symbol: Symbol) {
-        self.put_command(CompileCommand::Break(symbol));
+        push_commands!(self; CompileCommand::Break(symbol));
     }
 
     fn handle_return_statement(&mut self, n: u32) {
-        self.put_command(CompileCommand::Return(n));
+        push_commands!(self; CompileCommand::Return(n));
     }
 
     fn handle_switch_statement(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_switch_statement();
+        analysis_mut!(self).process_switch_statement();
         self.global_analysis.scope_tree_builder.pop();
     }
 
     fn handle_case_block(&mut self) {
         let scope_ref = self.global_analysis.scope_tree_builder.push_block();
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_case_block(scope_ref);
+        analysis_mut!(self).process_case_block(scope_ref);
     }
 
     fn handle_case_selector(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_case_selector();
+        analysis_mut!(self).process_case_selector();
     }
 
     fn handle_case_clause(&mut self, has_statement: bool) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_case_clause(has_statement);
+        analysis_mut!(self).process_case_clause(has_statement);
     }
 
     fn handle_default_selector(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_default_selector();
+        analysis_mut!(self).process_default_selector();
     }
 
     fn handle_default_clause(&mut self, has_statement: bool) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_default_clause(has_statement);
+        analysis_mut!(self).process_default_clause(has_statement);
     }
 
     fn handle_labelled_statement(&mut self, symbol: Symbol, is_iteration_statement: bool) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_labelled_statement(symbol, is_iteration_statement);
+        analysis_mut!(self).process_labelled_statement(symbol, is_iteration_statement);
     }
 
     fn handle_label(&mut self, symbol: Symbol) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_label(symbol);
+        analysis_mut!(self).process_label(symbol);
     }
 
     fn handle_throw_statement(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_throw_statement();
+        analysis_mut!(self).process_throw_statement();
     }
 
     fn handle_try_statement(&mut self) {
-        self.analysis_stack.last_mut().unwrap().process_try_end();
+        analysis_mut!(self).process_try_end();
     }
 
     fn handle_catch_clause(&mut self, has_parameter: bool) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_catch_clause(has_parameter);
+        analysis_mut!(self).process_catch_clause(has_parameter);
     }
 
     fn handle_finally_clause(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_finally_clause();
+        analysis_mut!(self).process_finally_clause();
     }
 
     fn handle_catch_parameter(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_catch_parameter(&mut self.global_analysis);
+        analysis_mut!(self).process_catch_parameter(&mut self.global_analysis);
     }
 
     fn handle_try_block(&mut self) {
-        self.analysis_stack.last_mut().unwrap().process_try_block();
+        analysis_mut!(self).process_try_block();
     }
 
     fn handle_catch_block(&mut self) {
@@ -611,32 +541,20 @@ impl<'r> Analyzer<'r> {
         // the catch and finally clauses are always created even if there is no corresponding
         // node in the AST.
         let scope_ref = self.global_analysis.scope_tree_builder.push_block();
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_catch_block(scope_ref);
+        analysis_mut!(self).process_catch_block(scope_ref);
     }
 
     fn handle_finally_block(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_finally_block();
+        analysis_mut!(self).process_finally_block();
         self.global_analysis.scope_tree_builder.pop();
     }
 
     fn handle_debugger_statement(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .put_command(CompileCommand::Debugger);
+        push_commands!(self; CompileCommand::Debugger);
     }
 
     fn handle_formal_parameter(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_formal_parameter(&mut self.global_analysis);
+        analysis_mut!(self).process_formal_parameter(&mut self.global_analysis);
     }
 
     fn handle_formal_parameters(&mut self, _n: u32) {
@@ -651,67 +569,29 @@ impl<'r> Analyzer<'r> {
         // DO NOT CALL `self.global_analysis.scope_tree_builder.pop()` HERE.
 
         // Add Function-scoped variables defined by "VariableStatement"s to the function scope.
-        for symbol in analysis.function_scoped_symbols.iter().cloned() {
-            self.global_analysis
-                .scope_tree_builder
-                .add_function_scoped_mutable(symbol, analysis.num_locals);
-            analysis.num_locals += 1;
-        }
+        analysis.process_funcion_scoped_symbols(&mut self.global_analysis);
 
         self.global_analysis.scope_tree_builder.pop();
 
         // The reference resolution must be performed after the function-scoped variables are added
         // to the function scope.
-        let unresolved_reference = self.resolve_references(&mut analysis);
+        let unresolved_references = self.resolve_references(&mut analysis);
 
-        if analysis.flags.contains(FunctionAnalysisFlags::COROUTINE) {
+        if analysis.is_coroutine() {
             // The local variables allocated on the heap will be passed as arguments for the
             // coroutine.  Load the local variables from the environment at first.
-            analysis.commands[0] = CompileCommand::Environment(analysis.num_locals);
+            analysis.set_command(0, CompileCommand::Environment(analysis.num_locals));
             debug_assert!(analysis.coroutine.state <= u16::MAX as u32);
-            analysis.commands[1] = CompileCommand::JumpTable(analysis.coroutine.state + 2);
+            analysis.set_command(1, CompileCommand::JumpTable(analysis.coroutine.state + 2));
         } else {
-            analysis.commands[0] = CompileCommand::AllocateLocals(analysis.num_locals);
+            analysis.set_command(0, CompileCommand::AllocateLocals(analysis.num_locals));
+            analysis.set_command(1, CompileCommand::Nop);
         }
 
         let func_index = analysis.func_index;
-        let func = &mut self.functions[func_index];
-        func.commands = analysis.commands;
-        func.scope_ref = func_scope_ref;
-        func.num_locals = analysis.num_locals;
+        self.apply_analysis(analysis, func_scope_ref);
 
-        let analysis = self.analysis_stack.last_mut().unwrap();
-        let scope_ref = analysis.scope_ref();
-        let mut added = FxHashSet::default();
-        for reference in unresolved_reference.iter() {
-            match reference.func_scope_ref {
-                Some(inner_func_scope_ref) => {
-                    if !added.contains(&reference.symbol) {
-                        analysis.references.push(Reference {
-                            symbol: reference.symbol,
-                            scope_ref,
-                            func_scope_ref: Some(func_scope_ref),
-                        });
-                        added.insert(reference.symbol);
-                    }
-                    analysis.references.push(Reference {
-                        symbol: reference.symbol,
-                        scope_ref,
-                        func_scope_ref: Some(inner_func_scope_ref),
-                    });
-                }
-                None => {
-                    if !added.contains(&reference.symbol) {
-                        analysis.references.push(Reference {
-                            symbol: reference.symbol,
-                            scope_ref,
-                            func_scope_ref: Some(func_scope_ref),
-                        });
-                        added.insert(reference.symbol);
-                    }
-                }
-            }
-        }
+        analysis_mut!(self).process_unresolved_references(&unresolved_references, func_scope_ref);
 
         func_index
     }
@@ -720,10 +600,7 @@ impl<'r> Analyzer<'r> {
         let func_index = self.end_function_scope();
         let func = &self.functions[func_index];
 
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_closure_declaration(func.scope_ref, func.id);
+        analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
     }
 
     fn handle_async_function_declaration(&mut self) {
@@ -737,10 +614,7 @@ impl<'r> Analyzer<'r> {
         let func_index = self.end_function_scope();
         let func = &self.functions[func_index];
 
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_closure_expression(func.scope_ref, func.id, named);
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, named);
     }
 
     fn handle_async_function_expression(&mut self, named: bool) {
@@ -758,10 +632,7 @@ impl<'r> Analyzer<'r> {
         let func_index = self.end_function_scope();
         let func = &self.functions[func_index];
 
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_closure_expression(func.scope_ref, func.id, false);
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false);
     }
 
     fn handle_async_arrow_function(&mut self) {
@@ -772,49 +643,42 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_await_expression(&mut self) {
-        let next_state = self.analysis_stack.last().unwrap().coroutine.state + 1;
-        self.put_command(CompileCommand::Await(next_state));
-        self.analysis_stack.last_mut().unwrap().coroutine.state = next_state;
+        let analysis = analysis_mut!(self);
+        let next_state = analysis.coroutine.state + 1;
+        analysis.push_command(CompileCommand::Await(next_state));
+        analysis.coroutine.state = next_state;
     }
 
     fn handle_then(&mut self) {
-        let analysis = self.analysis_stack.last_mut().unwrap();
-        analysis.put_command(CompileCommand::Truthy);
-        analysis.put_command(CompileCommand::IfThen);
+        push_commands!(self; CompileCommand::Truthy, CompileCommand::IfThen);
     }
 
     fn handle_else(&mut self) {
-        self.put_command(CompileCommand::Else);
+        push_commands!(self; CompileCommand::Else);
     }
 
     fn handle_falsy_short_circuit(&mut self) {
-        self.put_command(CompileCommand::FalsyShortCircuit);
+        push_commands!(self; CompileCommand::FalsyShortCircuit);
     }
 
     fn handle_truthy_short_circuit(&mut self) {
-        self.put_command(CompileCommand::TruthyShortCircuit);
+        push_commands!(self; CompileCommand::TruthyShortCircuit);
     }
 
     fn handle_nullish_short_circuit(&mut self) {
-        self.put_command(CompileCommand::NullishShortCircuit);
+        push_commands!(self; CompileCommand::NullishShortCircuit);
     }
 
     fn handle_falsy_short_circuit_assignment(&mut self) {
-        let analysis = self.analysis_stack.last_mut().unwrap();
-        analysis.put_command(CompileCommand::Duplicate(0));
-        analysis.put_command(CompileCommand::FalsyShortCircuit);
+        push_commands!(self; CompileCommand::Duplicate(0), CompileCommand::FalsyShortCircuit);
     }
 
     fn handle_truthy_short_circuit_assignment(&mut self) {
-        let analysis = self.analysis_stack.last_mut().unwrap();
-        analysis.put_command(CompileCommand::Duplicate(0));
-        analysis.put_command(CompileCommand::TruthyShortCircuit);
+        push_commands!(self; CompileCommand::Duplicate(0), CompileCommand::TruthyShortCircuit);
     }
 
     fn handle_nullish_short_circuit_assignment(&mut self) {
-        let analysis = self.analysis_stack.last_mut().unwrap();
-        analysis.put_command(CompileCommand::Duplicate(0));
-        analysis.put_command(CompileCommand::NullishShortCircuit);
+        push_commands!(self; CompileCommand::Duplicate(0), CompileCommand::NullishShortCircuit);
     }
 
     fn handle_loop_start(&mut self) {
@@ -823,59 +687,44 @@ impl<'r> Analyzer<'r> {
         // others.  We believe that this change does not compromise conformance to the
         // specification and does not cause security problems.
         let scope_ref = self.global_analysis.scope_tree_builder.push_block();
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_loop_start(scope_ref);
+        analysis_mut!(self).process_loop_start(scope_ref);
     }
 
     fn handle_loop_init_expression(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_loop_init_expression();
+        analysis_mut!(self).process_loop_init_expression();
     }
 
     fn handle_loop_init_var_declaration(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_loop_init_declaration();
+        analysis_mut!(self).process_loop_init_declaration();
     }
 
     fn handle_loop_init_lexical_declaration(&mut self) {
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .process_loop_init_declaration();
+        analysis_mut!(self).process_loop_init_declaration();
     }
 
     fn handle_loop_test(&mut self) {
-        self.analysis_stack.last_mut().unwrap().process_loop_test();
+        analysis_mut!(self).process_loop_test();
     }
 
     fn handle_loop_next(&mut self) {
-        self.analysis_stack.last_mut().unwrap().process_loop_next();
+        analysis_mut!(self).process_loop_next();
     }
 
     fn handle_loop_body(&mut self) {
-        self.analysis_stack.last_mut().unwrap().process_loop_body();
+        analysis_mut!(self).process_loop_body();
     }
 
     fn handle_start_block_scope(&mut self) {
         let scope_ref = self.global_analysis.scope_tree_builder.push_block();
-        self.analysis_stack
-            .last_mut()
-            .unwrap()
-            .start_scope(scope_ref);
+        analysis_mut!(self).start_scope(scope_ref);
     }
 
     fn handle_end_block_scope(&mut self) {
-        self.analysis_stack.last_mut().unwrap().end_scope();
+        analysis_mut!(self).end_scope();
         self.global_analysis.scope_tree_builder.pop();
     }
 
-    fn start_function_scope(&mut self) {
+    fn start_function_scope(&mut self, is_async: bool) {
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
         let func_index = self.functions.len();
@@ -883,50 +732,47 @@ impl<'r> Analyzer<'r> {
         // Push a placeholder data which will be filled later.
         self.functions.push(Default::default());
 
-        let mut analysis = FunctionAnalysis {
-            func_index,
-            ..Default::default()
-        };
+        let mut analysis = FunctionAnalysis::new(func_index);
 
-        // `commands[0]` will be replaced with `AllocateLocals` if the function has local
-        // variables.
-        analysis.commands.push(CompileCommand::Nop);
-
+        // `commands[0]` will be replaced with `AllocateLocals` or `Environment`.
+        //
         // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
-        analysis.commands.push(CompileCommand::Nop);
+        // Otherwise `Nop`.
+        analysis.reserve_commands(2);
 
         let scope_ref = self.global_analysis.scope_tree_builder.push_function();
         analysis.start_scope(scope_ref);
-        analysis
-            .commands
-            .push(CompileCommand::DeclareVars(scope_ref));
+        analysis.push_command(CompileCommand::DeclareVars(scope_ref));
+
+        if is_async {
+            analysis.set_async();
+        }
 
         self.analysis_stack.push(analysis);
     }
 
     fn handle_function_context(&mut self) {
-        self.start_function_scope();
+        self.start_function_scope(false);
     }
 
     fn handle_async_function_context(&mut self) {
-        self.start_function_scope();
-        self.set_async();
-    }
-
-    fn set_function_symbol(&mut self, symbol: Symbol) {
-        let lambda_id = self
-            .lambda_registry
-            .register(symbol == Symbol::HIDDEN_COROUTINE);
-        let func_index = self.analysis_stack.last().unwrap().func_index;
-        self.functions[func_index].symbol = symbol;
-        self.functions[func_index].id = lambda_id;
+        self.start_function_scope(true);
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
-        self.set_function_symbol(symbol);
-        self.set_in_body();
+        let analysis = analysis_mut!(self);
 
-        if self.is_async() {
+        let lambda_id = self
+            .lambda_registry
+            .register(symbol == Symbol::HIDDEN_COROUTINE);
+
+        let func = &mut self.functions[analysis.func_index];
+        func.symbol = symbol;
+        func.id = lambda_id;
+
+        analysis.set_in_body();
+
+        if analysis.is_async() {
             self.start_coroutine_body();
         }
     }
@@ -950,33 +796,23 @@ impl<'r> Analyzer<'r> {
         self.handle_formal_parameters(3);
         self.handle_function_signature(Symbol::HIDDEN_COROUTINE);
 
-        let analysis = self.analysis_stack.last_mut().unwrap();
-        analysis.flags.insert(FunctionAnalysisFlags::COROUTINE);
+        analysis_mut!(self).set_coroutine();
     }
 
     // Generate compile commands for the bottom-half of the coroutine.
     // See //libs/jsruntime/docs/internals.md.
     fn end_coroutine_body(&mut self) {
         // TODO(perf): Some of the local variables can be placed on the stack.
-        let analysis = self.analysis_stack.last().unwrap();
+        let analysis = self.analysis();
         let func_index = analysis.func_index;
         self.handle_function_expression(false);
         let func = &self.functions[func_index];
 
-        let analysis = self.analysis_stack.last_mut().unwrap();
-        analysis.put_command(CompileCommand::Coroutine(func.id, func.num_locals));
-        analysis.put_command(CompileCommand::Promise);
-        analysis.put_command(CompileCommand::Duplicate(0));
-        analysis.put_command(CompileCommand::Resume);
-        analysis.put_command(CompileCommand::Return(1));
+        push_commands!(self; CompileCommand::Coroutine(func.id, func.num_locals), CompileCommand::Promise, CompileCommand::Duplicate(0), CompileCommand::Resume, CompileCommand::Return(1));
     }
 
     fn handle_dereference(&mut self) {
-        self.put_command(CompileCommand::Dereference);
-    }
-
-    fn put_command(&mut self, command: CompileCommand) {
-        self.analysis_stack.last_mut().unwrap().put_command(command);
+        push_commands!(self; CompileCommand::Dereference);
     }
 
     fn resolve_references(&mut self, analitics: &mut FunctionAnalysis) -> Vec<Reference> {
@@ -1003,6 +839,13 @@ impl<'r> Analyzer<'r> {
         }
         unresolved_reference
     }
+
+    fn apply_analysis(&mut self, analysis: FunctionAnalysis, scope_ref: ScopeRef) {
+        let func = &mut self.functions[analysis.func_index];
+        func.commands = analysis.commands;
+        func.num_locals = analysis.num_locals;
+        func.scope_ref = scope_ref;
+    }
 }
 
 impl<'s> NodeHandler<'s> for Analyzer<'_> {
@@ -1010,9 +853,9 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
 
     fn start(&mut self) {
         logger::debug!(event = "start");
-        self.start_function_scope();
+        self.start_function_scope(true);
 
-        self.set_in_body();
+        analysis_mut!(self).set_in_body();
 
         // The module is always treated as an async function body.
         if self.module {
@@ -1035,12 +878,8 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
 
         let unresolved_references = self.resolve_references(&mut analysis);
 
-        analysis.commands[0] = CompileCommand::AllocateLocals(analysis.num_locals);
-
-        let func = &mut self.functions[analysis.func_index];
-        func.commands = analysis.commands;
-        func.scope_ref = global_scope_ref;
-        func.num_locals = analysis.num_locals;
+        analysis.set_command(0, CompileCommand::AllocateLocals(analysis.num_locals));
+        analysis.set_command(1, CompileCommand::Nop);
 
         // References to global properties.
         let mut added = FxHashSet::default();
@@ -1081,6 +920,8 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
                 },
             );
         }
+
+        self.apply_analysis(analysis, global_scope_ref);
 
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
@@ -1181,7 +1022,42 @@ bitflags! {
 }
 
 impl FunctionAnalysis {
-    fn reserve_command(&mut self, n: usize) -> usize {
+    fn new(func_index: usize) -> Self {
+        Self {
+            func_index,
+            ..Default::default()
+        }
+    }
+
+    fn is_in_body(&mut self) -> bool {
+        self.flags.contains(FunctionAnalysisFlags::IN_BODY)
+    }
+
+    fn is_async(&mut self) -> bool {
+        self.flags.contains(FunctionAnalysisFlags::ASYNC)
+    }
+
+    fn is_coroutine(&mut self) -> bool {
+        self.flags.contains(FunctionAnalysisFlags::COROUTINE)
+    }
+
+    fn set_in_body(&mut self) {
+        self.flags.insert(FunctionAnalysisFlags::IN_BODY);
+    }
+
+    fn set_async(&mut self) {
+        self.flags.insert(FunctionAnalysisFlags::ASYNC);
+    }
+
+    fn set_coroutine(&mut self) {
+        self.flags.insert(FunctionAnalysisFlags::COROUTINE);
+    }
+
+    fn push_command(&mut self, command: CompileCommand) {
+        self.commands.push(command);
+    }
+
+    fn reserve_commands(&mut self, n: usize) -> usize {
         let index = self.commands.len();
         for _ in 0..n {
             self.commands.push(CompileCommand::PlaceHolder);
@@ -1193,6 +1069,10 @@ impl FunctionAnalysis {
         let index = self.commands.len();
         self.commands.push(command);
         index
+    }
+
+    fn set_command(&mut self, index: usize, command: CompileCommand) {
+        self.commands[index] = command;
     }
 
     fn put_null(&mut self) {
@@ -1213,11 +1093,6 @@ impl FunctionAnalysis {
     fn put_string(&mut self, value: Vec<u16>) {
         self.commands.push(CompileCommand::String(value));
         // TODO: type inference
-    }
-
-    fn put_reference(&mut self, symbol: Symbol, scope_ref: ScopeRef) {
-        self.put_command(CompileCommand::Reference(symbol));
-        self.references.push(Reference::new(symbol, scope_ref));
     }
 
     fn process_argument_list_head(&mut self, empty: bool, _spread: bool) {
@@ -1246,7 +1121,7 @@ impl FunctionAnalysis {
         // We put placeholder commands here because we don't know whether this binding is mutable
         // or not at this point.  The placeholder commands will be replaced in
         // `process_mutable_bindings()` or `process_immutable_bindings()`.
-        let command_index = self.reserve_command(2);
+        let command_index = self.reserve_commands(2);
         self.symbol_stack.last_mut().unwrap().1 = command_index;
 
         // TODO: type info
@@ -1269,12 +1144,13 @@ impl FunctionAnalysis {
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {
         let scope_ref = self.scope_ref();
-        self.put_reference(symbol, scope_ref)
+        self.commands.push(CompileCommand::Reference(symbol));
+        self.references.push(Reference::new(symbol, scope_ref));
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol) {
         self.symbol_stack.push((symbol, 0));
-        if self.flags.contains(FunctionAnalysisFlags::IN_BODY) {
+        if self.is_in_body() {
             let scope_ref = self.scope_ref();
             self.references.push(Reference::new(symbol, scope_ref));
         }
@@ -1283,8 +1159,8 @@ impl FunctionAnalysis {
     fn process_binary_expression(&mut self, op: BinaryOperator) {
         // When a compiler processes the following command, the RHS has been placed on the LHS on
         // the stack of the compiler.  Swap them so that the LHS is evaluated before the RHS.
-        self.put_command(CompileCommand::Swap);
-        self.put_command(op.into());
+        self.commands.push(CompileCommand::Swap);
+        self.commands.push(op.into());
     }
 
     // Every shorthand assignment operator except for short-circuit assignment operators are
@@ -1292,17 +1168,19 @@ impl FunctionAnalysis {
     fn process_shorthand_assignment_expression(&mut self, op: AssignmentOperator) {
         // When a compiler processes the following command, the RHS has been placed on the LHS on
         // the stack of the compiler.  Duplicate the LHS and push it onto the stack.
-        self.put_command(CompileCommand::Duplicate(1));
+        self.commands.push(CompileCommand::Duplicate(1));
+
         // Now, the duplicate LHS has been placed on the RHS.  And the LHS will be evaluated before
         // the RHS.  We don't need to put a CompileCommand::Swap command and just put the operator.
-        self.put_command(op.into());
+        self.commands.push(op.into());
+
         // Finally, we put the assignment operator.
-        self.put_command(CompileCommand::Assignment);
+        self.commands.push(CompileCommand::Assignment);
     }
 
     fn process_sequence_expression(&mut self) {
-        self.put_command(CompileCommand::Swap);
-        self.put_command(CompileCommand::Discard);
+        self.commands.push(CompileCommand::Swap);
+        self.commands.push(CompileCommand::Discard);
     }
 
     fn process_formal_parameter(&mut self, global_analysis: &mut GlobalAnalysis) {
@@ -1386,34 +1264,34 @@ impl FunctionAnalysis {
 
         // The placeholder command will be replaced with an appropriate command in
         // `process_loop_end()`.
-        let start_index = self.put_command(CompileCommand::PlaceHolder);
+        let start_index = self.reserve_commands(1);
         self.loop_stack.push(LoopAnalysis { start_index });
     }
 
     fn process_loop_init_expression(&mut self) {
         // Discard the evaluation result of the expression like as ExpressionStatement.
-        self.put_command(CompileCommand::Discard);
-        self.put_command(CompileCommand::LoopInit);
+        self.commands.push(CompileCommand::Discard);
+        self.commands.push(CompileCommand::LoopInit);
     }
 
     fn process_loop_init_declaration(&mut self) {
-        self.put_command(CompileCommand::LoopInit);
+        self.commands.push(CompileCommand::LoopInit);
     }
 
     fn process_loop_test(&mut self) {
-        self.put_command(CompileCommand::LoopTest);
+        self.commands.push(CompileCommand::LoopTest);
     }
 
     fn process_loop_next(&mut self) {
-        self.put_command(CompileCommand::LoopNext);
+        self.commands.push(CompileCommand::LoopNext);
     }
 
     fn process_loop_body(&mut self) {
-        self.put_command(CompileCommand::LoopBody);
+        self.commands.push(CompileCommand::LoopBody);
     }
 
     fn process_loop_end(&mut self, command: CompileCommand) {
-        self.put_command(CompileCommand::LoopEnd);
+        self.commands.push(CompileCommand::LoopEnd);
         let LoopAnalysis { start_index } = self.loop_stack.pop().unwrap();
         debug_assert!(matches!(
             self.commands[start_index],
@@ -1425,19 +1303,19 @@ impl FunctionAnalysis {
     }
 
     fn process_do_while_statement(&mut self) {
-        self.put_command(CompileCommand::LoopTest);
+        self.commands.push(CompileCommand::LoopTest);
         self.process_loop_end(CompileCommand::DoWhileLoop(self.num_do_while_statements));
         self.num_do_while_statements += 1;
     }
 
     fn process_while_statement(&mut self) {
-        self.put_command(CompileCommand::LoopBody);
+        self.commands.push(CompileCommand::LoopBody);
         self.process_loop_end(CompileCommand::WhileLoop(self.num_while_statements));
         self.num_while_statements += 1;
     }
 
     fn process_for_statement(&mut self, flags: LoopFlags) {
-        self.put_command(CompileCommand::LoopBody);
+        self.commands.push(CompileCommand::LoopBody);
         self.process_loop_end(CompileCommand::ForLoop(self.num_for_statements, flags));
         self.num_for_statements += 1;
     }
@@ -1447,7 +1325,7 @@ impl FunctionAnalysis {
         self.start_scope(scope_ref);
 
         // The placeholder commands will be replaced in `process_switch_statement()`.
-        let case_block_index = self.put_command(CompileCommand::PlaceHolder);
+        let case_block_index = self.reserve_commands(1);
         self.switch_stack.push(SwitchAnalysis {
             case_block_index,
             ..Default::default()
@@ -1456,22 +1334,24 @@ impl FunctionAnalysis {
 
     fn process_case_selector(&mut self) {
         // Make a duplicate of the `switchValue` for the evaluation on the case selector.
-        self.put_command(CompileCommand::Duplicate(1));
-        self.put_command(CompileCommand::StrictEquality);
-        self.put_command(CompileCommand::Case);
+        self.commands.push(CompileCommand::Duplicate(1));
+        self.commands.push(CompileCommand::StrictEquality);
+        self.commands.push(CompileCommand::Case);
     }
 
     fn process_case_clause(&mut self, has_statement: bool) {
-        self.put_command(CompileCommand::CaseClause(has_statement));
+        self.commands
+            .push(CompileCommand::CaseClause(has_statement));
         self.switch_stack.last_mut().unwrap().num_cases += 1;
     }
 
     fn process_default_selector(&mut self) {
-        self.put_command(CompileCommand::Default);
+        self.commands.push(CompileCommand::Default);
     }
 
     fn process_default_clause(&mut self, has_statement: bool) {
-        self.put_command(CompileCommand::CaseClause(has_statement));
+        self.commands
+            .push(CompileCommand::CaseClause(has_statement));
         let switch = self.switch_stack.last_mut().unwrap();
         switch.default_index = Some(switch.num_cases);
         switch.num_cases += 1;
@@ -1496,8 +1376,9 @@ impl FunctionAnalysis {
         } else {
             self.commands[case_block_index] = CompileCommand::CaseBlock(id, num_cases);
             // Discard the `switchValue` remaining on the stack.
-            self.put_command(CompileCommand::Discard);
-            self.put_command(CompileCommand::Switch(id, num_cases, default_index));
+            self.commands.push(CompileCommand::Discard);
+            self.commands
+                .push(CompileCommand::Switch(id, num_cases, default_index));
             self.num_switch_statements += 1;
         }
 
@@ -1508,7 +1389,7 @@ impl FunctionAnalysis {
     fn process_label(&mut self, symbol: Symbol) {
         // The placeholder command will be replaced with `CompileCommand::LabelStart` in
         // `process_labelled_statement()`.
-        let start_index = self.put_command(CompileCommand::PlaceHolder);
+        let start_index = self.reserve_commands(1);
         self.label_stack.push(LabelAnalysis {
             start_index,
             symbol,
@@ -1524,15 +1405,16 @@ impl FunctionAnalysis {
         ));
         self.commands[label.start_index] =
             CompileCommand::LabelStart(symbol, is_iteration_statement);
-        self.put_command(CompileCommand::LabelEnd(symbol, is_iteration_statement));
+        self.commands
+            .push(CompileCommand::LabelEnd(symbol, is_iteration_statement));
     }
 
     fn process_throw_statement(&mut self) {
-        self.put_command(CompileCommand::Throw);
+        self.commands.push(CompileCommand::Throw);
     }
 
     fn process_try_block(&mut self) {
-        self.put_command(CompileCommand::Try);
+        self.commands.push(CompileCommand::Try);
         self.try_stack.push(Default::default());
     }
 
@@ -1542,6 +1424,7 @@ impl FunctionAnalysis {
         // if a catch clause exists.
         let index = self.put_command(CompileCommand::Catch(true));
         self.try_stack.last_mut().unwrap().catch_index = index;
+
         self.start_scope(scope_ref);
     }
 
@@ -1553,6 +1436,7 @@ impl FunctionAnalysis {
     fn process_finally_block(&mut self) {
         // Remove the scope created for the catch clause.
         self.end_scope();
+
         // Push a *nominal* `Finally` command.
         // It will be replaced with a *substantial* `Finally` command in `process_finally_clause()`
         // if a finally clause exists.
@@ -1566,14 +1450,14 @@ impl FunctionAnalysis {
     }
 
     fn process_try_end(&mut self) {
-        self.put_command(CompileCommand::TryEnd);
+        self.commands.push(CompileCommand::TryEnd);
         self.try_stack.pop();
     }
 
-    fn process_catch_parameter(&mut self, global: &mut GlobalAnalysis) {
-        self.put_command(CompileCommand::Exception);
+    fn process_catch_parameter(&mut self, global_analysis: &mut GlobalAnalysis) {
+        self.commands.push(CompileCommand::Exception);
         self.process_lexical_binding(true);
-        self.process_mutable_bindings(1, global);
+        self.process_mutable_bindings(1, global_analysis);
     }
 
     fn scope_ref(&self) -> ScopeRef {
@@ -1584,7 +1468,7 @@ impl FunctionAnalysis {
         // NOTE(perf): The scope may has no binding.  In this case, we can remove the
         // PushScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
-        self.put_command(CompileCommand::PushScope(scope_ref));
+        self.commands.push(CompileCommand::PushScope(scope_ref));
         self.scope_stack.push(Scope { scope_ref });
     }
 
@@ -1598,6 +1482,53 @@ impl FunctionAnalysis {
             .push(CompileCommand::PopScope(scope.scope_ref));
 
         scope.scope_ref
+    }
+
+    fn process_funcion_scoped_symbols(&mut self, global_analysis: &mut GlobalAnalysis) {
+        for symbol in self.function_scoped_symbols.iter().cloned() {
+            global_analysis
+                .scope_tree_builder
+                .add_function_scoped_mutable(symbol, self.num_locals);
+            self.num_locals += 1;
+        }
+    }
+
+    fn process_unresolved_references(
+        &mut self,
+        unresolved_references: &[Reference],
+        func_scope_ref: ScopeRef,
+    ) {
+        let scope_ref = self.scope_ref();
+        let mut added = FxHashSet::default();
+        for reference in unresolved_references.iter() {
+            match reference.func_scope_ref {
+                Some(inner_func_scope_ref) => {
+                    if !added.contains(&reference.symbol) {
+                        self.references.push(Reference {
+                            symbol: reference.symbol,
+                            scope_ref,
+                            func_scope_ref: Some(func_scope_ref),
+                        });
+                        added.insert(reference.symbol);
+                    }
+                    self.references.push(Reference {
+                        symbol: reference.symbol,
+                        scope_ref,
+                        func_scope_ref: Some(inner_func_scope_ref),
+                    });
+                }
+                None => {
+                    if !added.contains(&reference.symbol) {
+                        self.references.push(Reference {
+                            symbol: reference.symbol,
+                            scope_ref,
+                            func_scope_ref: Some(func_scope_ref),
+                        });
+                        added.insert(reference.symbol);
+                    }
+                }
+            }
+        }
     }
 }
 
