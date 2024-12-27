@@ -65,19 +65,19 @@ impl<X> Runtime<X> {
 /// The program mainly consists of two kind of data.
 ///
 /// 1. Compile commands for each JavaScript function
-/// 2. Analytics data
+/// 2. Analysis data
 ///
 /// Some of synthesized attributes (known as S-attributes) are computed during the semantic
 /// analysis and values are embedded in each compile command.  The others will be computed in a
 /// state machine that interprets the compile commands.
 ///
-/// Inherited attributes are computed and stored into the analytics data.  And the values will be
+/// Inherited attributes are computed and stored into the analysis data.  And the values will be
 /// used in the state machine.
 ///
 /// In our processing model, a parser outputs stream of Nodes in the syntax tree in the buttom-up
 /// order and it doesn't create the AST.  So, it's impossible to compute a inherited attribute
 /// value before a parent node comes from the parser.  The computation has to be postponed.  This
-/// is why we need to introduce the analytics data.
+/// is why we need to introduce the analysis data.
 pub struct Program {
     pub functions: Vec<Function>,
     pub scope_tree: ScopeTree,
@@ -142,6 +142,9 @@ struct Analyzer<'r> {
     /// A mutable reference to a JavaScript global object.
     global_object: &'r mut Object,
 
+    /// Global analysis data.
+    global_analysis: GlobalAnalysis,
+
     /// A stack to keep the analysis data for outer JavaScript functions when analyzing nested
     /// JavaScript functions.
     context_stack: Vec<FunctionContext>,
@@ -149,10 +152,13 @@ struct Analyzer<'r> {
     /// A list of [`Function`]s.
     functions: Vec<Function>,
 
+    module: bool,
+}
+
+#[derive(Default)]
+struct GlobalAnalysis {
     /// A scope tree builder used for building the scope tree of the JavaScript program.
     scope_tree_builder: ScopeTreeBuilder,
-
-    module: bool,
 }
 
 impl<'r> Analyzer<'r> {
@@ -202,9 +208,9 @@ impl<'r> Analyzer<'r> {
             symbol_registry,
             lambda_registry,
             global_object,
+            global_analysis: Default::default(),
             context_stack: vec![],
             functions: vec![],
-            scope_tree_builder: Default::default(),
             module,
         }
     }
@@ -426,19 +432,17 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_let_declaration(&mut self, n: u32) {
-        let builder = &mut self.scope_tree_builder;
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_mutable_bindings(n, builder);
+            .process_mutable_bindings(n, &mut self.global_analysis);
     }
 
     fn handle_const_declaration(&mut self, n: u32) {
-        let builder = &mut self.scope_tree_builder;
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_immutable_bindings(n, builder);
+            .process_immutable_bindings(n, &mut self.global_analysis);
     }
 
     fn handle_variable_declaration(&mut self, init: bool) {
@@ -470,7 +474,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_do_while_statement(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_tree_builder.pop();
+        self.global_analysis.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -479,7 +483,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_while_statement(&mut self) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_tree_builder.pop();
+        self.global_analysis.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -488,7 +492,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_for_statement(&mut self, flags: LoopFlags) {
         // See handle_loop_start() for the reason why we always pop the lexical scope here.
-        self.scope_tree_builder.pop();
+        self.global_analysis.scope_tree_builder.pop();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -512,11 +516,11 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_switch_statement();
-        self.scope_tree_builder.pop();
+        self.global_analysis.scope_tree_builder.pop();
     }
 
     fn handle_case_block(&mut self) {
-        let scope_ref = self.scope_tree_builder.push_block();
+        let scope_ref = self.global_analysis.scope_tree_builder.push_block();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -591,7 +595,7 @@ impl<'r> Analyzer<'r> {
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_catch_parameter(&mut self.scope_tree_builder);
+            .process_catch_parameter(&mut self.global_analysis);
     }
 
     fn handle_try_block(&mut self) {
@@ -603,7 +607,7 @@ impl<'r> Analyzer<'r> {
         // exists, but we always create a scope here for simplicity.  In our processing model,
         // the catch and finally clauses are always created even if there is no corresponding
         // node in the AST.
-        let scope_ref = self.scope_tree_builder.push_block();
+        let scope_ref = self.global_analysis.scope_tree_builder.push_block();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -615,7 +619,7 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_finally_block();
-        self.scope_tree_builder.pop();
+        self.global_analysis.scope_tree_builder.pop();
     }
 
     fn handle_debugger_statement(&mut self) {
@@ -626,11 +630,10 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_formal_parameter(&mut self) {
-        let builder = &mut self.scope_tree_builder;
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_formal_parameter(builder);
+            .process_formal_parameter(&mut self.global_analysis);
     }
 
     fn handle_formal_parameters(&mut self, _n: u32) {
@@ -642,16 +645,17 @@ impl<'r> Analyzer<'r> {
         debug_assert!(context.symbol_stack.is_empty());
 
         let func_scope_ref = context.end_scope();
-        // DO NOT CALL `self.scope_tree_builder.pop()` HERE.
+        // DO NOT CALL `self.global_analysis.scope_tree_builder.pop()` HERE.
 
         // Add Function-scoped variables defined by "VariableStatement"s to the function scope.
         for symbol in context.function_scoped_symbols.iter().cloned() {
-            self.scope_tree_builder
+            self.global_analysis
+                .scope_tree_builder
                 .add_function_scoped_mutable(symbol, context.num_locals);
             context.num_locals += 1;
         }
 
-        self.scope_tree_builder.pop();
+        self.global_analysis.scope_tree_builder.pop();
 
         // The reference resolution must be performed after the function-scoped variables are added
         // to the function scope.
@@ -815,7 +819,7 @@ impl<'r> Analyzer<'r> {
         // iteration statement.  This is needed for the for-let/const statements, but not for
         // others.  We believe that this change does not compromise conformance to the
         // specification and does not cause security problems.
-        let scope_ref = self.scope_tree_builder.push_block();
+        let scope_ref = self.global_analysis.scope_tree_builder.push_block();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -856,7 +860,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_start_block_scope(&mut self) {
-        let scope_ref = self.scope_tree_builder.push_block();
+        let scope_ref = self.global_analysis.scope_tree_builder.push_block();
         self.context_stack
             .last_mut()
             .unwrap()
@@ -865,7 +869,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_end_block_scope(&mut self) {
         self.context_stack.last_mut().unwrap().end_scope();
-        self.scope_tree_builder.pop();
+        self.global_analysis.scope_tree_builder.pop();
     }
 
     fn start_function_scope(&mut self) {
@@ -888,7 +892,7 @@ impl<'r> Analyzer<'r> {
         // `commands[1]` will be replaced with `JumpTable` if the function is a coroutine.
         context.commands.push(CompileCommand::Nop);
 
-        let scope_ref = self.scope_tree_builder.push_function();
+        let scope_ref = self.global_analysis.scope_tree_builder.push_function();
         context.start_scope(scope_ref);
         context
             .commands
@@ -973,12 +977,18 @@ impl<'r> Analyzer<'r> {
     fn resolve_references(&mut self, context: &mut FunctionContext) -> Vec<Reference> {
         let mut unresolved_reference = vec![];
         for reference in std::mem::take(&mut context.references).into_iter() {
-            let binding_ref = self.scope_tree_builder.resolve_reference(&reference);
+            let binding_ref = self
+                .global_analysis
+                .scope_tree_builder
+                .resolve_reference(&reference);
             if binding_ref != BindingRef::NONE {
                 logger::debug!(event = "reference_resolved", ?reference, ?binding_ref);
                 if let Some(func_scope_ref) = reference.func_scope_ref {
-                    self.scope_tree_builder.set_captured(binding_ref);
-                    self.scope_tree_builder
+                    self.global_analysis
+                        .scope_tree_builder
+                        .set_captured(binding_ref);
+                    self.global_analysis
+                        .scope_tree_builder
                         .add_capture(func_scope_ref, reference.symbol);
                 }
             } else {
@@ -1016,7 +1026,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         debug_assert!(context.symbol_stack.is_empty());
 
         let global_scope_ref = context.end_scope();
-        self.scope_tree_builder.pop();
+        self.global_analysis.scope_tree_builder.pop();
 
         let unresolved_references = self.resolve_references(&mut context);
 
@@ -1032,12 +1042,14 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         for reference in unresolved_references.iter() {
             match reference.func_scope_ref {
                 Some(func_scope_ref) => {
-                    self.scope_tree_builder
+                    self.global_analysis
+                        .scope_tree_builder
                         .add_global(func_scope_ref, reference.symbol);
                 }
                 None => {
                     if !added.contains(&reference.symbol) {
-                        self.scope_tree_builder
+                        self.global_analysis
+                            .scope_tree_builder
                             .add_global(global_scope_ref, reference.symbol);
                         added.insert(reference.symbol);
                     }
@@ -1067,7 +1079,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
 
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
-            scope_tree: self.scope_tree_builder.build(),
+            scope_tree: self.global_analysis.scope_tree_builder.build(),
         })
     }
 
@@ -1288,17 +1300,19 @@ impl FunctionContext {
         self.put_command(CompileCommand::Discard);
     }
 
-    fn process_formal_parameter(&mut self, builder: &mut ScopeTreeBuilder) {
+    fn process_formal_parameter(&mut self, global_analysis: &mut GlobalAnalysis) {
         debug_assert!(!self.symbol_stack.is_empty());
         let (symbol, _) = self.symbol_stack.pop().unwrap();
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.formal_parameters.len() < u16::MAX as usize);
         let i = self.formal_parameters.len();
         self.formal_parameters.push(symbol);
-        builder.add_formal_parameter(symbol, i);
+        global_analysis
+            .scope_tree_builder
+            .add_formal_parameter(symbol, i);
     }
 
-    fn process_mutable_bindings(&mut self, n: u32, builder: &mut ScopeTreeBuilder) {
+    fn process_mutable_bindings(&mut self, n: u32, global_analysis: &mut GlobalAnalysis) {
         debug_assert!(self.symbol_stack.len() >= n as usize);
         let i = self.symbol_stack.len() - n as usize;
         for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
@@ -1309,13 +1323,15 @@ impl FunctionContext {
                 CompileCommand::PlaceHolder
             ));
             self.commands[index + 1] = CompileCommand::MutableBinding;
-            builder.add_mutable(symbol, self.num_locals);
+            global_analysis
+                .scope_tree_builder
+                .add_mutable(symbol, self.num_locals);
             self.num_locals += 1;
         }
         self.symbol_stack.truncate(i);
     }
 
-    fn process_immutable_bindings(&mut self, n: u32, builder: &mut ScopeTreeBuilder) {
+    fn process_immutable_bindings(&mut self, n: u32, global_analysis: &mut GlobalAnalysis) {
         debug_assert!(self.symbol_stack.len() >= n as usize);
         let i = self.symbol_stack.len() - n as usize;
         for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
@@ -1326,7 +1342,9 @@ impl FunctionContext {
                 CompileCommand::PlaceHolder
             ));
             self.commands[index + 1] = CompileCommand::ImmutableBinding;
-            builder.add_immutable(symbol, self.num_locals);
+            global_analysis
+                .scope_tree_builder
+                .add_immutable(symbol, self.num_locals);
             self.num_locals += 1;
         }
         self.symbol_stack.truncate(i);
@@ -1547,10 +1565,10 @@ impl FunctionContext {
         self.try_stack.pop();
     }
 
-    fn process_catch_parameter(&mut self, builder: &mut ScopeTreeBuilder) {
+    fn process_catch_parameter(&mut self, global: &mut GlobalAnalysis) {
         self.put_command(CompileCommand::Exception);
         self.process_lexical_binding(true);
-        self.process_mutable_bindings(1, builder);
+        self.process_mutable_bindings(1, global);
     }
 
     fn scope_ref(&self) -> ScopeRef {
