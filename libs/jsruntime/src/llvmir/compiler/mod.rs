@@ -54,12 +54,15 @@ impl<X> Runtime<X> {
         compiler.start_compile(self.pref.enable_llvmir_labels);
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
-        // Compile native functions in reverse order in order to compile a coroutine function
+        // Compile JavaScript functions in reverse order in order to compile a coroutine function
         // before its ramp function so that the size of the scratch buffer for the coroutine
         // function is available when the ramp function is compiled.
         //
+        // NOTE: The functions are stored in post-order traversal on the function tree.  So, we
+        // don't need to use `Iterator::rev()`.
+        //
         // TODO: We should manage dependencies between functions in a more general way.
-        for func in program.functions.iter().rev() {
+        for func in program.functions.iter() {
             compiler.start_function(func.name, func.id);
             for command in func.commands.iter() {
                 compiler.process_command(command);

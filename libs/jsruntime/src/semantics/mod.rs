@@ -101,15 +101,23 @@ impl<X> Runtime<X> {
 /// value before a parent node comes from the parser.  The computation has to be postponed.  This
 /// is why we need to introduce the analysis data.
 pub struct Program {
-    entry_function_index: usize,
+    /// Functions in the program.
+    ///
+    /// The functions are stored in post-order traversal on the function tree where the entry
+    /// function is the root of the function tree.
     pub functions: Vec<Function>,
+
+    /// The scope tree of the program.
     pub scope_tree: ScopeTree,
+
+    /// The global variables used in the program.
     pub global_symbols: FxHashSet<Symbol>,
 }
 
 impl Program {
     pub fn entry_lambda_id(&self) -> LambdaId {
-        self.functions[self.entry_function_index].id
+        // The entry function is always placed at the last.
+        self.functions.last().unwrap().id
     }
 }
 
@@ -194,7 +202,7 @@ macro_rules! analysis_mut {
 
 macro_rules! push_commands {
     ($analyzer:expr; $($command:expr,)+) => {
-        push_commands!($analyzer, $($command),+)
+        push_commands!($analyzer; $($command),+)
     };
     ($analyzer:expr; $($command:expr),+) => {
         let analysis = analysis_mut!($analyzer);
@@ -582,7 +590,7 @@ impl<'r> Analyzer<'r> {
         // TODO
     }
 
-    fn end_function_scope(&mut self) -> usize {
+    fn end_function_scope(&mut self) {
         let mut analysis = self.analysis_stack.pop().unwrap();
         debug_assert!(analysis.symbol_stack.is_empty());
 
@@ -609,18 +617,15 @@ impl<'r> Analyzer<'r> {
             analysis.set_command(1, CompileCommand::Nop);
         }
 
-        let func_index = analysis.func_index;
         self.apply_analysis(analysis, func_scope_ref);
 
         analysis_mut!(self).process_unresolved_references(&unresolved_references, func_scope_ref);
-
-        func_index
     }
 
     fn handle_function_declaration(&mut self) {
-        let func_index = self.end_function_scope();
-        let func = &self.functions[func_index];
+        self.end_function_scope();
 
+        let func = self.functions.last().unwrap();
         analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
     }
 
@@ -632,9 +637,9 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_function_expression(&mut self, named: bool) {
-        let func_index = self.end_function_scope();
-        let func = &self.functions[func_index];
+        self.end_function_scope();
 
+        let func = self.functions.last().unwrap();
         analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, named);
     }
 
@@ -650,9 +655,9 @@ impl<'r> Analyzer<'r> {
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a binding in a lexically enclosing environment.
 
-        let func_index = self.end_function_scope();
-        let func = &self.functions[func_index];
+        self.end_function_scope();
 
+        let func = self.functions.last().unwrap();
         analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false);
     }
 
@@ -748,16 +753,12 @@ impl<'r> Analyzer<'r> {
     fn start_function_scope(&mut self, name: Symbol, is_async: bool) {
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
-        let func_index = self.functions.len();
-
-        // Push a placeholder data which will be filled later.
-        self.functions.push(Default::default());
 
         let lambda_id = self
             .lambda_registry
             .register(name == Symbol::HIDDEN_COROUTINE);
 
-        let mut analysis = FunctionAnalysis::new(func_index, name, lambda_id);
+        let mut analysis = FunctionAnalysis::new(name, lambda_id);
 
         // `commands[0]` will be replaced with `AllocateLocals` or `Environment`.
         //
@@ -816,12 +817,17 @@ impl<'r> Analyzer<'r> {
     // See //libs/jsruntime/docs/internals.md.
     fn end_coroutine_body(&mut self) {
         // TODO(perf): Some of the local variables can be placed on the stack.
-        let analysis = self.analysis();
-        let func_index = analysis.func_index;
         self.handle_function_expression(false);
-        let func = &self.functions[func_index];
 
-        push_commands!(self; CompileCommand::Coroutine(func.id, func.num_locals), CompileCommand::Promise, CompileCommand::Duplicate(0), CompileCommand::Resume, CompileCommand::Return(1));
+        let func = self.functions.last().unwrap();
+        push_commands!(
+            self;
+            CompileCommand::Coroutine(func.id, func.num_locals),
+            CompileCommand::Promise,
+            CompileCommand::Duplicate(0),
+            CompileCommand::Resume,
+            CompileCommand::Return(1),
+        );
     }
 
     fn handle_dereference(&mut self) {
@@ -854,13 +860,14 @@ impl<'r> Analyzer<'r> {
     }
 
     fn apply_analysis(&mut self, analysis: FunctionAnalysis, scope_ref: ScopeRef) {
-        let func = &mut self.functions[analysis.func_index];
-        func.commands = analysis.commands;
-        func.name = analysis.name;
-        func.id = analysis.id;
-        func.num_params = analysis.num_params;
-        func.num_locals = analysis.num_locals;
-        func.scope_ref = scope_ref;
+        self.functions.push(Function {
+            name: analysis.name,
+            id: analysis.id,
+            commands: analysis.commands,
+            scope_ref,
+            num_params: analysis.num_params,
+            num_locals: analysis.num_locals,
+        });
     }
 }
 
@@ -942,11 +949,9 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
             }
         }
 
-        let entry_function_index = analysis.func_index;
         self.apply_analysis(analysis, global_scope_ref);
 
         Ok(Program {
-            entry_function_index,
             functions: std::mem::take(&mut self.functions),
             scope_tree: self.global_analysis.scope_tree_builder.build(),
             global_symbols,
@@ -1016,9 +1021,6 @@ struct FunctionAnalysis {
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<u16>,
 
-    /// The index of the function in [`Analyzer::functions`].
-    func_index: usize,
-
     /// The name of the function.
     ///
     /// Its value is set to `Symbol::NONE` if the function has no name.
@@ -1060,9 +1062,8 @@ bitflags! {
 }
 
 impl FunctionAnalysis {
-    fn new(func_index: usize, name: Symbol, id: LambdaId) -> Self {
+    fn new(name: Symbol, id: LambdaId) -> Self {
         Self {
-            func_index,
             name,
             id,
             ..Default::default()
@@ -2027,23 +2028,6 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateLocals(0),
-                    CompileCommand::Nop,
-                    CompileCommand::PushScope(scope_ref!(1)),
-                    CompileCommand::DeclareVars(scope_ref!(1)),
-                    CompileCommand::Function(program.functions[1].id),
-                    CompileCommand::Closure(false, scope_ref!(2)),
-                    CompileCommand::Coroutine(program.functions[1].id, 0),
-                    CompileCommand::Promise,
-                    CompileCommand::Duplicate(0),
-                    CompileCommand::Resume,
-                    CompileCommand::Return(1),
-                    CompileCommand::PopScope(scope_ref!(1)),
-                ],
-            );
-            assert_eq!(
-                program.functions[1].commands,
-                [
                     CompileCommand::Environment(0),
                     CompileCommand::JumpTable(3),
                     CompileCommand::PushScope(scope_ref!(2)),
@@ -2052,6 +2036,23 @@ mod tests {
                     CompileCommand::Await(1),
                     CompileCommand::Discard,
                     CompileCommand::PopScope(scope_ref!(2)),
+                ],
+            );
+            assert_eq!(
+                program.functions[1].commands,
+                [
+                    CompileCommand::AllocateLocals(0),
+                    CompileCommand::Nop,
+                    CompileCommand::PushScope(scope_ref!(1)),
+                    CompileCommand::DeclareVars(scope_ref!(1)),
+                    CompileCommand::Function(program.functions[0].id),
+                    CompileCommand::Closure(false, scope_ref!(2)),
+                    CompileCommand::Coroutine(program.functions[0].id, 0),
+                    CompileCommand::Promise,
+                    CompileCommand::Duplicate(0),
+                    CompileCommand::Resume,
+                    CompileCommand::Return(1),
+                    CompileCommand::PopScope(scope_ref!(1)),
                 ],
             );
         });
