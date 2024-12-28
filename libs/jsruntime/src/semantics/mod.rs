@@ -73,7 +73,8 @@ impl<X> Runtime<X> {
 
     /// Prints global symbols in a program.
     pub fn print_global_symbols(&self, program: &Program) {
-        for symbol in program.global_symbols.iter().cloned() { // TODO: sort
+        for symbol in program.global_symbols.iter().cloned() {
+            // TODO: sort
             let utf16_str = self.symbol_registry.resolve(symbol).unwrap();
             let utf8_str = String::from_utf16_lossy(utf16_str);
             println!("{symbol} => {utf8_str}");
@@ -120,6 +121,9 @@ pub struct Function {
     /// The reference to the function scope.
     pub scope_ref: ScopeRef,
 
+    /// The number of formal parameters.
+    pub num_params: u16,
+
     /// The number of local variables except for temporal variables created by a compiler.
     pub num_locals: u16,
 }
@@ -133,6 +137,8 @@ impl Function {
                 println!("{indent}  {command:?}");
             }
         }
+        println!("{indent} num_params: {}", self.num_params);
+        println!("{indent} num_locals: {}", self.num_locals);
     }
 }
 
@@ -851,6 +857,7 @@ impl<'r> Analyzer<'r> {
     fn apply_analysis(&mut self, analysis: FunctionAnalysis, scope_ref: ScopeRef) {
         let func = &mut self.functions[analysis.func_index];
         func.commands = analysis.commands;
+        func.num_params = analysis.num_params;
         func.num_locals = analysis.num_locals;
         func.scope_ref = scope_ref;
     }
@@ -927,7 +934,9 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
                 },
             );
             if !global_symbols.contains(&symbol) {
-                self.global_analysis.scope_tree_builder.add_global(global_scope_ref, symbol);
+                self.global_analysis
+                    .scope_tree_builder
+                    .add_global(global_scope_ref, symbol);
                 global_symbols.insert(symbol);
             }
         }
@@ -973,9 +982,6 @@ struct FunctionAnalysis {
     /// performed after all variable declarations are processed.
     references: Vec<Reference>,
 
-    /// A list of symbols in the formal parameters of the function.
-    formal_parameters: Vec<Symbol>,
-
     /// A stack to keep symbols defined as binding identifiers.
     ///
     /// The second member of a tuple is used for keeping the index of a placeholder command.
@@ -1010,6 +1016,7 @@ struct FunctionAnalysis {
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
 
+    num_params: u16,
     num_locals: u16,
     num_do_while_statements: u16,
     num_while_statements: u16,
@@ -1145,7 +1152,8 @@ impl FunctionAnalysis {
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {
         self.commands.push(CompileCommand::Reference(symbol));
-        self.references.push(Reference::new(symbol, self.scope_ref()));
+        self.references
+            .push(Reference::new(symbol, self.scope_ref()));
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol) {
@@ -1183,12 +1191,11 @@ impl FunctionAnalysis {
         debug_assert!(!self.symbol_stack.is_empty());
         let (symbol, _) = self.symbol_stack.pop().unwrap();
         // TODO: the compilation should fail if the following condition is unmet.
-        assert!(self.formal_parameters.len() < u16::MAX as usize);
-        let i = self.formal_parameters.len();
-        self.formal_parameters.push(symbol);
+        assert!(self.num_params < u16::MAX);
         global_analysis
             .scope_tree_builder
-            .add_formal_parameter(symbol, i);
+            .add_formal_parameter(symbol, self.num_params);
+        self.num_params += 1;
     }
 
     fn process_mutable_bindings(&mut self, n: u32, global_analysis: &mut GlobalAnalysis) {

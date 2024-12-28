@@ -188,11 +188,11 @@ impl ScopeTreeBuilder {
         self.depth -= 1;
     }
 
-    pub fn add_formal_parameter(&mut self, symbol: Symbol, index: usize) {
+    pub fn add_formal_parameter(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
         scope.bindings.push(Binding {
             symbol,
-            index: index as u16,
+            index,
             kind: BindingKind::FormalParameter,
             flags: BindingFlags::empty(),
         });
