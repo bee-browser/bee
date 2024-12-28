@@ -58,6 +58,27 @@ impl<X> Runtime<X> {
         let processor = Processor::new(analyzer, true);
         Parser::for_module(source, processor).parse()
     }
+
+    /// Prints functions in a program.
+    pub fn print_functions(&self, program: &Program) {
+        for func in program.functions.iter() {
+            func.print("");
+        }
+    }
+
+    /// Prints the scope tree of a program.
+    pub fn print_scope_tree(&self, program: &Program) {
+        program.scope_tree.print("");
+    }
+
+    /// Prints global symbols in a program.
+    pub fn print_global_symbols(&self, program: &Program) {
+        for symbol in program.global_symbols.iter().cloned() { // TODO: sort
+            let utf16_str = self.symbol_registry.resolve(symbol).unwrap();
+            let utf8_str = String::from_utf16_lossy(utf16_str);
+            println!("{symbol} => {utf8_str}");
+        }
+    }
 }
 
 /// A type representing a JavaScript program after the semantic analysis.
@@ -81,18 +102,7 @@ impl<X> Runtime<X> {
 pub struct Program {
     pub functions: Vec<Function>,
     pub scope_tree: ScopeTree,
-}
-
-impl Program {
-    pub fn print_functions(&self, indent: &str) {
-        for func in self.functions.iter() {
-            func.print(indent);
-        }
-    }
-
-    pub fn print_scope_tree(&self, indent: &str) {
-        self.scope_tree.print(indent);
-    }
+    pub global_symbols: FxHashSet<Symbol>,
 }
 
 /// A type representing a JavaScript function after the semantic analysis.
@@ -569,7 +579,7 @@ impl<'r> Analyzer<'r> {
         // DO NOT CALL `self.global_analysis.scope_tree_builder.pop()` HERE.
 
         // Add Function-scoped variables defined by "VariableStatement"s to the function scope.
-        analysis.process_funcion_scoped_symbols(&mut self.global_analysis);
+        analysis.process_function_scoped_symbols(&mut self.global_analysis);
 
         self.global_analysis.scope_tree_builder.pop();
 
@@ -770,8 +780,6 @@ impl<'r> Analyzer<'r> {
         func.symbol = symbol;
         func.id = lambda_id;
 
-        analysis.set_in_body();
-
         if analysis.is_async() {
             self.start_coroutine_body();
         }
@@ -855,8 +863,6 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         logger::debug!(event = "start");
         self.start_function_scope(true);
 
-        analysis_mut!(self).set_in_body();
-
         // The module is always treated as an async function body.
         if self.module {
             self.start_coroutine_body();
@@ -881,8 +887,9 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         analysis.set_command(0, CompileCommand::AllocateLocals(analysis.num_locals));
         analysis.set_command(1, CompileCommand::Nop);
 
+        let mut global_symbols = FxHashSet::default();
+
         // References to global properties.
-        let mut added = FxHashSet::default();
         for reference in unresolved_references.iter() {
             match reference.func_scope_ref {
                 Some(func_scope_ref) => {
@@ -891,11 +898,11 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
                         .add_global(func_scope_ref, reference.symbol);
                 }
                 None => {
-                    if !added.contains(&reference.symbol) {
+                    if !global_symbols.contains(&reference.symbol) {
                         self.global_analysis
                             .scope_tree_builder
                             .add_global(global_scope_ref, reference.symbol);
-                        added.insert(reference.symbol);
+                        global_symbols.insert(reference.symbol);
                     }
                 }
             }
@@ -919,6 +926,10 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
                         | PropertyFlags::CONFIGURABLE,
                 },
             );
+            if !global_symbols.contains(&symbol) {
+                self.global_analysis.scope_tree_builder.add_global(global_scope_ref, symbol);
+                global_symbols.insert(symbol);
+            }
         }
 
         self.apply_analysis(analysis, global_scope_ref);
@@ -926,6 +937,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
             scope_tree: self.global_analysis.scope_tree_builder.build(),
+            global_symbols,
         })
     }
 
@@ -1010,14 +1022,11 @@ struct FunctionAnalysis {
 bitflags! {
     #[derive(Debug, Default)]
     struct FunctionAnalysisFlags: u8 {
-        /// Enabled while analyzing the function body.
-        const IN_BODY   = 0b00000001;
-
         /// Enabled if the context is the ramp function for an async function.
-        const ASYNC     = 0b00000010;
+        const ASYNC     = 0b00000001;
 
         /// Enabled if the context is the coroutine function for an async function.
-        const COROUTINE = 0b00000100;
+        const COROUTINE = 0b00000010;
     }
 }
 
@@ -1029,20 +1038,12 @@ impl FunctionAnalysis {
         }
     }
 
-    fn is_in_body(&mut self) -> bool {
-        self.flags.contains(FunctionAnalysisFlags::IN_BODY)
-    }
-
     fn is_async(&mut self) -> bool {
         self.flags.contains(FunctionAnalysisFlags::ASYNC)
     }
 
     fn is_coroutine(&mut self) -> bool {
         self.flags.contains(FunctionAnalysisFlags::COROUTINE)
-    }
-
-    fn set_in_body(&mut self) {
-        self.flags.insert(FunctionAnalysisFlags::IN_BODY);
     }
 
     fn set_async(&mut self) {
@@ -1143,17 +1144,12 @@ impl FunctionAnalysis {
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {
-        let scope_ref = self.scope_ref();
         self.commands.push(CompileCommand::Reference(symbol));
-        self.references.push(Reference::new(symbol, scope_ref));
+        self.references.push(Reference::new(symbol, self.scope_ref()));
     }
 
     fn process_binding_identifier(&mut self, symbol: Symbol) {
         self.symbol_stack.push((symbol, 0));
-        if self.is_in_body() {
-            let scope_ref = self.scope_ref();
-            self.references.push(Reference::new(symbol, scope_ref));
-        }
     }
 
     fn process_binary_expression(&mut self, op: BinaryOperator) {
@@ -1484,7 +1480,7 @@ impl FunctionAnalysis {
         scope.scope_ref
     }
 
-    fn process_funcion_scoped_symbols(&mut self, global_analysis: &mut GlobalAnalysis) {
+    fn process_function_scoped_symbols(&mut self, global_analysis: &mut GlobalAnalysis) {
         for symbol in self.function_scoped_symbols.iter().cloned() {
             global_analysis
                 .scope_tree_builder

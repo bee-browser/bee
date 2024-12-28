@@ -129,11 +129,15 @@ fn main() -> Result<()> {
                 match kind {
                     'f' => {
                         println!("### functions");
-                        program.print_functions("");
+                        runtime.print_functions(&program);
                     }
                     's' => {
                         println!("### scope tree");
-                        program.print_scope_tree("");
+                        runtime.print_scope_tree(&program);
+                    }
+                    'g' => {
+                        println!("### global symbols");
+                        runtime.print_global_symbols(&program);
                     }
                     _ => (),
                 }
