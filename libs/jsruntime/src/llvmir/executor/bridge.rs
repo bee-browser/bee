@@ -19,7 +19,7 @@ impl ExecutorBridge {
         })
     }
 
-    pub fn register_module(&self, module: Module) {
+    pub fn register_module(&self, module: &Module) {
         unsafe {
             executor_peer_register_module(self.0, module.peer());
         }

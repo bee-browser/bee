@@ -60,13 +60,13 @@ impl<X> Runtime<X> {
         //
         // TODO: We should manage dependencies between functions in a more general way.
         for func in program.functions.iter().rev() {
-            compiler.start_function(func.symbol, func.id);
+            compiler.start_function(func.name, func.id);
             for command in func.commands.iter() {
                 compiler.process_command(command);
             }
             compiler.end_function(func.id, optimize);
         }
-        Ok(compiler.end_compile())
+        Ok(compiler.end_compile(program.entry_lambda_id()))
     }
 }
 
@@ -189,9 +189,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.start_compile(enable_labels);
     }
 
-    fn end_compile(&self) -> Module {
+    fn end_compile(&self, entry_lambda_id: LambdaId) -> Module {
         logger::debug!(event = "end_compile");
-        self.bridge.end_compile()
+        let module_peer = self.bridge.end_compile();
+        Module::new(module_peer, entry_lambda_id)
     }
 
     fn set_data_layout(&self, data_layout: &CStr) {

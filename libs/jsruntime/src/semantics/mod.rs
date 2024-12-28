@@ -101,16 +101,23 @@ impl<X> Runtime<X> {
 /// value before a parent node comes from the parser.  The computation has to be postponed.  This
 /// is why we need to introduce the analysis data.
 pub struct Program {
+    entry_function_index: usize,
     pub functions: Vec<Function>,
     pub scope_tree: ScopeTree,
     pub global_symbols: FxHashSet<Symbol>,
+}
+
+impl Program {
+    pub fn entry_lambda_id(&self) -> LambdaId {
+        self.functions[self.entry_function_index].id
+    }
 }
 
 /// A type representing a JavaScript function after the semantic analysis.
 #[derive(Default)]
 pub struct Function {
     // TODO: remove?
-    pub symbol: Symbol,
+    pub name: Symbol,
 
     /// The function ID of the function.
     pub id: LambdaId,
@@ -235,8 +242,6 @@ impl<'r> Analyzer<'r> {
         global_object: &'r mut Object,
         module: bool,
     ) -> Self {
-        // TODO: modules including await expressions.
-        let _ = lambda_registry.register(false);
         Self {
             runtime_pref,
             symbol_registry,
@@ -348,9 +353,9 @@ impl<'r> Analyzer<'r> {
             Node::LoopBody => self.handle_loop_body(),
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
-            Node::FunctionContext => self.handle_function_context(),
-            Node::AsyncFunctionContext => self.handle_async_function_context(),
-            Node::FunctionSignature(symbol) => self.handle_function_signature(symbol),
+            Node::FunctionContext(name) => self.handle_function_context(name),
+            Node::AsyncFunctionContext(name) => self.handle_async_function_context(name),
+            Node::FunctionSignature => self.handle_function_signature(),
             Node::Dereference => self.handle_dereference(),
         }
     }
@@ -740,7 +745,7 @@ impl<'r> Analyzer<'r> {
         self.global_analysis.scope_tree_builder.pop();
     }
 
-    fn start_function_scope(&mut self, is_async: bool) {
+    fn start_function_scope(&mut self, name: Symbol, is_async: bool) {
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
         let func_index = self.functions.len();
@@ -748,7 +753,11 @@ impl<'r> Analyzer<'r> {
         // Push a placeholder data which will be filled later.
         self.functions.push(Default::default());
 
-        let mut analysis = FunctionAnalysis::new(func_index);
+        let lambda_id = self
+            .lambda_registry
+            .register(name == Symbol::HIDDEN_COROUTINE);
+
+        let mut analysis = FunctionAnalysis::new(func_index, name, lambda_id);
 
         // `commands[0]` will be replaced with `AllocateLocals` or `Environment`.
         //
@@ -767,26 +776,16 @@ impl<'r> Analyzer<'r> {
         self.analysis_stack.push(analysis);
     }
 
-    fn handle_function_context(&mut self) {
-        self.start_function_scope(false);
+    fn handle_function_context(&mut self, name: Symbol) {
+        self.start_function_scope(name, false);
     }
 
-    fn handle_async_function_context(&mut self) {
-        self.start_function_scope(true);
+    fn handle_async_function_context(&mut self, name: Symbol) {
+        self.start_function_scope(name, true);
     }
 
-    fn handle_function_signature(&mut self, symbol: Symbol) {
-        let analysis = analysis_mut!(self);
-
-        let lambda_id = self
-            .lambda_registry
-            .register(symbol == Symbol::HIDDEN_COROUTINE);
-
-        let func = &mut self.functions[analysis.func_index];
-        func.symbol = symbol;
-        func.id = lambda_id;
-
-        if analysis.is_async() {
+    fn handle_function_signature(&mut self) {
+        if self.analysis().is_async() {
             self.start_coroutine_body();
         }
     }
@@ -800,7 +799,7 @@ impl<'r> Analyzer<'r> {
     // TODO(perf): We never optimize an async function which has no await expression in the body.
     // Such an async function don't need to be rewritten into a state machine.
     fn start_coroutine_body(&mut self) {
-        self.handle_function_context();
+        self.handle_function_context(Symbol::HIDDEN_COROUTINE);
         self.handle_binding_identifier(Symbol::HIDDEN_PROMISE);
         self.handle_formal_parameter();
         self.handle_binding_identifier(Symbol::HIDDEN_RESULT);
@@ -808,7 +807,7 @@ impl<'r> Analyzer<'r> {
         self.handle_binding_identifier(Symbol::HIDDEN_ERROR);
         self.handle_formal_parameter();
         self.handle_formal_parameters(3);
-        self.handle_function_signature(Symbol::HIDDEN_COROUTINE);
+        self.handle_function_signature();
 
         analysis_mut!(self).set_coroutine();
     }
@@ -857,6 +856,8 @@ impl<'r> Analyzer<'r> {
     fn apply_analysis(&mut self, analysis: FunctionAnalysis, scope_ref: ScopeRef) {
         let func = &mut self.functions[analysis.func_index];
         func.commands = analysis.commands;
+        func.name = analysis.name;
+        func.id = analysis.id;
         func.num_params = analysis.num_params;
         func.num_locals = analysis.num_locals;
         func.scope_ref = scope_ref;
@@ -868,7 +869,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
 
     fn start(&mut self) {
         logger::debug!(event = "start");
-        self.start_function_scope(true);
+        self.start_function_scope(Symbol::NONE, true);
 
         // The module is always treated as an async function body.
         if self.module {
@@ -941,9 +942,11 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
             }
         }
 
+        let entry_function_index = analysis.func_index;
         self.apply_analysis(analysis, global_scope_ref);
 
         Ok(Program {
+            entry_function_index,
             functions: std::mem::take(&mut self.functions),
             scope_tree: self.global_analysis.scope_tree_builder.build(),
             global_symbols,
@@ -1016,6 +1019,14 @@ struct FunctionAnalysis {
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
 
+    /// The name of the function.
+    ///
+    /// Its value is set to `Symbol::NONE` if the function has no name.
+    name: Symbol,
+
+    /// The Lambda ID of the function.
+    id: LambdaId,
+
     /// The number of formal parameters.
     num_params: u16,
 
@@ -1049,18 +1060,20 @@ bitflags! {
 }
 
 impl FunctionAnalysis {
-    fn new(func_index: usize) -> Self {
+    fn new(func_index: usize, name: Symbol, id: LambdaId) -> Self {
         Self {
             func_index,
+            name,
+            id,
             ..Default::default()
         }
     }
 
-    fn is_async(&mut self) -> bool {
+    fn is_async(&self) -> bool {
         self.flags.contains(FunctionAnalysisFlags::ASYNC)
     }
 
-    fn is_coroutine(&mut self) -> bool {
+    fn is_coroutine(&self) -> bool {
         self.flags.contains(FunctionAnalysisFlags::COROUTINE)
     }
 

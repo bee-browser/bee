@@ -118,11 +118,11 @@ impl<X> Runtime<X> {
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
         logger::debug!(event = "evaluate");
-        self.executor.register_module(module);
+        self.executor.register_module(&module);
         let mut retv = Value::Undefined;
-        let status = match self.executor.get_lambda(LambdaId::MAIN) {
-            Some(main) => unsafe {
-                main(
+        let status = match self.executor.get_lambda(module.entry_lambda_id()) {
+            Some(entry_lambda) => unsafe {
+                entry_lambda(
                     // runtime
                     self.as_void_ptr(),
                     // context
