@@ -1016,11 +1016,22 @@ struct FunctionAnalysis {
     /// The index of the function in [`Analyzer::functions`].
     func_index: usize,
 
+    /// The number of formal parameters.
     num_params: u16,
+
+    /// The number of local variables.
     num_locals: u16,
+
+    /// The number of do-while statements.
     num_do_while_statements: u16,
+
+    /// The number of while statements.
     num_while_statements: u16,
+
+    /// The number of for statements.
     num_for_statements: u16,
+
+    /// The number of switch statements.
     num_switch_statements: u16,
 
     flags: FunctionAnalysisFlags,
