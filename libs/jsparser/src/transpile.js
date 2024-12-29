@@ -597,7 +597,6 @@ function addActions(rules) {
     '_FUNCTION_CONTEXT_',
     '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
-    '_ANONYMOUS_FUNCTION_SIGNATURE_',
     '_ELSE_',
     '_THEN_',
     '_BLOCK_SCOPE_',
@@ -881,7 +880,7 @@ function modifyArrowFunction(rules) {
     // _FUNCION_CONTEXT_ will be inserted in the syntax module.
     {
       term: '`=>`',
-      action: '_ANONYMOUS_FUNCTION_SIGNATURE_',
+      action: '_FUNCTION_SIGNATURE_',
       insertBefore: false,
     },
   ];
@@ -897,7 +896,7 @@ function modifyAsyncArrowFunction(rules) {
     // _ASYNC_FUNCION_CONTEXT_ will be inserted in the syntax module.
     {
       term: '`=>`',
-      action: '_ANONYMOUS_FUNCTION_SIGNATURE_',
+      action: '_FUNCTION_SIGNATURE_',
       insertBefore: false,
     },
   ];

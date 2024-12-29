@@ -14,11 +14,11 @@ use jsparser::Symbol;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaRegistry;
 use crate::logger;
-use crate::semantics::BindingRef;
 use crate::semantics::CompileCommand;
 use crate::semantics::Locator;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
+use crate::semantics::VariableRef;
 use crate::Program;
 use crate::Runtime;
 use crate::Value;
@@ -54,19 +54,22 @@ impl<X> Runtime<X> {
         compiler.start_compile(self.pref.enable_llvmir_labels);
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
-        // Compile native functions in reverse order in order to compile a coroutine function
+        // Compile JavaScript functions in reverse order in order to compile a coroutine function
         // before its ramp function so that the size of the scratch buffer for the coroutine
         // function is available when the ramp function is compiled.
         //
+        // NOTE: The functions are stored in post-order traversal on the function tree.  So, we
+        // don't need to use `Iterator::rev()`.
+        //
         // TODO: We should manage dependencies between functions in a more general way.
-        for func in program.functions.iter().rev() {
-            compiler.start_function(func.symbol, func.id);
+        for func in program.functions.iter() {
+            compiler.start_function(func.name, func.id);
             for command in func.commands.iter() {
                 compiler.process_command(command);
             }
             compiler.end_function(func.id, optimize);
         }
-        Ok(compiler.end_compile())
+        Ok(compiler.end_compile(program.entry_lambda_id()))
     }
 }
 
@@ -189,9 +192,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.start_compile(enable_labels);
     }
 
-    fn end_compile(&self) -> Module {
+    fn end_compile(&self, entry_lambda_id: LambdaId) -> Module {
         logger::debug!(event = "end_compile");
-        self.bridge.end_compile()
+        let module_peer = self.bridge.end_compile();
+        Module::new(module_peer, entry_lambda_id)
     }
 
     fn set_data_layout(&self, data_layout: &CStr) {
@@ -314,8 +318,8 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Reference(symbol) => self.process_reference(*symbol),
             CompileCommand::Exception => self.process_exception(),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
-            CompileCommand::MutableBinding => self.process_mutable_binding(),
-            CompileCommand::ImmutableBinding => self.process_immutable_binding(),
+            CompileCommand::MutableVariable => self.process_mutable_variable(),
+            CompileCommand::ImmutableVariable => self.process_immutable_variable(),
             CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(*scope_ref),
             CompileCommand::DeclareClosure => self.process_declare_closure(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
@@ -462,15 +466,20 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(scope.is_function());
 
         let lambda = self.pop_lambda();
-        let closure = self.bridge.create_closure(lambda, scope.num_captures);
+        // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
+        let closure = self.bridge.create_closure(lambda, scope.count_captures());
 
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
-        for binding in scope.bindings.iter().filter(|binding| binding.is_capture()) {
-            // TODO(perf): improve if `find_binding()` is the primary case of performance
+        for variable in scope
+            .variables
+            .iter()
+            .filter(|variable| variable.is_capture())
+        {
+            // TODO(perf): improve if `find_variable()` is the primary case of performance
             // bottleneck.
-            let binding_ref = self.scope_tree.find_binding(scope_ref, binding.symbol);
-            debug_assert_ne!(binding_ref, BindingRef::NONE);
-            let locator = self.scope_tree.compute_locator(binding_ref);
+            let variable_ref = self.scope_tree.find_variable(scope_ref, variable.symbol);
+            debug_assert_ne!(variable_ref, VariableRef::NONE);
+            let locator = self.scope_tree.compute_locator(variable_ref);
             let capture = match locator {
                 Locator::Argument(_) | Locator::Local(_) => {
                     debug_assert!(self.captures.contains_key(&locator));
@@ -480,7 +489,7 @@ impl<'r, 's> Compiler<'r, 's> {
                 _ => unreachable!(),
             };
             self.bridge
-                .create_store_capture_to_closure(capture, closure, binding.index);
+                .create_store_capture_to_closure(capture, closure, variable.index);
         }
 
         self.operand_stack.push(Operand::Closure(closure));
@@ -515,10 +524,10 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn process_reference(&mut self, symbol: Symbol) {
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
-        // TODO(perf): improve if `find_binding()` is the primary case of performance bottleneck.
-        let binding_ref = self.scope_tree.find_binding(scope_ref, symbol);
-        debug_assert_ne!(binding_ref, BindingRef::NONE);
-        let locator = self.scope_tree.compute_locator(binding_ref);
+        // TODO(perf): improve if `find_variable()` is the primary case of performance bottleneck.
+        let variable_ref = self.scope_tree.find_variable(scope_ref, symbol);
+        debug_assert_ne!(variable_ref, VariableRef::NONE);
+        let locator = self.scope_tree.compute_locator(variable_ref);
         self.operand_stack.push(Operand::Reference(symbol, locator));
     }
 
@@ -535,9 +544,9 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn process_mutable_binding(&mut self) {
-        let (operand, _) = self.dereference();
+    fn process_mutable_variable(&mut self) {
         let (_symbol, locator) = self.pop_reference();
+        let (operand, _) = self.dereference();
 
         let value = match locator {
             Locator::Local(index) => self.locals[index as usize],
@@ -614,9 +623,9 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn process_immutable_binding(&mut self) {
-        let (operand, _) = self.dereference();
+    fn process_immutable_variable(&mut self) {
         let (_symbol, locator) = self.pop_reference();
+        let (operand, _) = self.dereference();
 
         let value = match locator {
             Locator::Local(index) => self.locals[index as usize],
@@ -643,11 +652,11 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.set_basic_block(block);
 
         // TODO(refactor): inefficient
-        for (binding_ref, binding) in self.scope_tree.iter_bindings(scope_ref) {
-            if !binding.is_function_scoped() {
+        for (variable_ref, variable) in self.scope_tree.iter_variables(scope_ref) {
+            if !variable.is_function_scoped() {
                 continue;
             }
-            let value = match self.scope_tree.compute_locator(binding_ref) {
+            let value = match self.scope_tree.compute_locator(variable_ref) {
                 Locator::Local(index) => self.locals[index as usize],
                 locator => unreachable!("{locator:?}"),
             };
@@ -663,9 +672,9 @@ impl<'r, 's> Compiler<'r, 's> {
         let backup = self.bridge.get_basic_block();
         self.bridge.set_basic_block(block);
 
+        let (symbol, locator) = self.pop_reference();
         let (operand, _) = self.dereference();
         // TODO: operand must hold a closure.
-        let (symbol, locator) = self.pop_reference();
 
         match locator {
             Locator::Local(index) => {
@@ -815,12 +824,12 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.set_basic_block(init_block);
 
         let scope = self.scope_tree.scope(scope_ref);
-        for binding in scope.bindings.iter() {
-            if binding.is_hidden() || binding.is_function_scoped() {
+        for variable in scope.variables.iter() {
+            if variable.is_function_scoped() {
                 continue;
             }
-            let locator = binding.locator();
-            if binding.is_captured() {
+            let locator = variable.locator();
+            if variable.is_captured() {
                 let value = match locator {
                     Locator::Argument(index) => self.bridge.create_get_argument_value_ptr(index),
                     Locator::Local(index) => self.locals[index as usize],
@@ -875,11 +884,11 @@ impl<'r, 's> Compiler<'r, 's> {
 
         self.bridge.set_basic_block(flow.cleanup_block);
         let scope = self.scope_tree.scope(scope_ref);
-        for binding in scope.bindings.iter() {
-            if binding.is_captured() {
-                self.escape_value(binding.locator());
+        for variable in scope.variables.iter() {
+            if variable.is_captured() {
+                self.escape_value(variable.locator());
             }
-            if binding.is_local() {
+            if variable.is_local() {
                 // tidy local value
                 // TODO: GC
             }

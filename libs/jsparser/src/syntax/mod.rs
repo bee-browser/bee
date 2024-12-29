@@ -209,9 +209,9 @@ pub enum Node<'s> {
     DebuggerStatement,
     FormalParameter,
     FormalParameters(u32),
-    FunctionContext,
-    AsyncFunctionContext,
-    FunctionSignature(Symbol),
+    FunctionContext(Symbol),
+    AsyncFunctionContext(Symbol),
+    FunctionSignature,
     FunctionDeclaration,
     AsyncFunctionDeclaration,
     FunctionExpression(bool),
@@ -559,33 +559,35 @@ where
 
     // _FUNCTION_CONTEXT_
     fn process_function_context(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::FunctionContext);
-        Ok(())
-    }
-
-    // _ASYNC_FUNCTION_CONTEXT_
-    fn process_async_function_context(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::AsyncFunctionContext);
-        Ok(())
-    }
-
-    // _FUNCTION_SIGNATURE_
-    fn process_function_signature(&mut self) -> Result<(), Error> {
-        let func_name = match self.stack[self.stack.len() - 4].detail {
+        let name = match self.stack.last().unwrap().detail {
             Detail::BindingIdentifier(symbol) => symbol,
             Detail::Token(index) => {
                 debug_assert!(matches!(self.tokens[index].kind, TokenKind::Function));
                 Symbol::NONE // anonymous function
             }
-            _ => unreachable!(),
+            ref detail => unreachable!("{detail:?}"),
         };
-        self.enqueue(Node::FunctionSignature(func_name));
+        self.enqueue(Node::FunctionContext(name));
         Ok(())
     }
 
-    // _ANONYMOUS_FUNCTION_SIGNATURE_
-    fn process_anonymous_function_signature(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::FunctionSignature(Symbol::NONE));
+    // _ASYNC_FUNCTION_CONTEXT_
+    fn process_async_function_context(&mut self) -> Result<(), Error> {
+        let name = match self.stack.last().unwrap().detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            Detail::Token(index) => {
+                debug_assert!(matches!(self.tokens[index].kind, TokenKind::Function));
+                Symbol::NONE // anonymous function
+            }
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::AsyncFunctionContext(name));
+        Ok(())
+    }
+
+    // _FUNCTION_SIGNATURE_
+    fn process_function_signature(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FunctionSignature);
         Ok(())
     }
 
@@ -2472,7 +2474,7 @@ where
     // ArrowParameters[Yield, Await] :
     //   BindingIdentifier[?Yield, ?Await]
     fn process_arrow_parameters_binding_identifier(&mut self) -> Result<(), Error> {
-        self.process_single_arrow_parameter(Node::FunctionContext)
+        self.process_single_arrow_parameter(Node::FunctionContext(Symbol::NONE))
     }
 
     fn process_single_arrow_parameter(&mut self, context_node: Node<'s>) -> Result<(), Error> {
@@ -2512,7 +2514,7 @@ where
         let syntax = self.pop();
         self.tokens.truncate(syntax.tokens_range.start);
         self.nodes.truncate(syntax.nodes_range.start);
-        self.enqueue(Node::FunctionContext);
+        self.enqueue(Node::FunctionContext(Symbol::NONE));
         self.refine(&syntax, goal_symbol)
     }
 
@@ -2621,7 +2623,7 @@ where
     // AsyncArrowBindingIdentifier[Yield] :
     //   BindingIdentifier[?Yield, +Await]
     fn process_async_arrow_binding_identifier(&mut self) -> Result<(), Error> {
-        self.process_single_arrow_parameter(Node::AsyncFunctionContext)
+        self.process_single_arrow_parameter(Node::AsyncFunctionContext(Symbol::NONE))
     }
 
     // AsyncArrowHeadCCEAAAH[Yield, Await] :
@@ -2634,7 +2636,7 @@ where
         let syntax = self.pop();
         self.tokens.truncate(syntax.tokens_range.start);
         self.nodes.truncate(syntax.nodes_range.start);
-        self.enqueue(Node::AsyncFunctionContext);
+        self.enqueue(Node::AsyncFunctionContext(Symbol::NONE));
         self.refine(&syntax, GoalSymbol::AsyncArrowHead)
     }
 

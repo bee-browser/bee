@@ -3,8 +3,6 @@
 pub struct LambdaId(u32);
 
 impl LambdaId {
-    pub const MAIN: Self = Self(0);
-
     const fn new(index: usize) -> Self {
         debug_assert!(index <= u32::MAX as usize);
         Self(index as u32)

@@ -616,17 +616,16 @@
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE)
-    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
+    ARROW _FUNCTION_SIGNATURE_ ConciseBody_In
   action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
+    _FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: process_async_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Await -> AsyncArrowHeadCCEAAAH_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_
-    AsyncConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: process_async_arrow_function_cceaaah
 - rule: LeftHandSideExpression_Await -> NewExpression_Await
   action: nop
@@ -1250,8 +1249,6 @@
     ArrowParameters_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Await
   action: process_arrow_parameters_cpeaapl_await
-- rule: _ANONYMOUS_FUNCTION_SIGNATURE_ -> (empty)
-  action: process_anonymous_function_signature
 - rule: 'ConciseBody_In -> (?![LBRACE]) ExpressionBody_In'
   action: process_concise_body_expression_body
 - rule: ConciseBody_In -> LBRACE FunctionBody RBRACE
@@ -1489,16 +1486,16 @@
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
+    _FUNCTION_SIGNATURE_ ConciseBody_In
   action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
+    _FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: process_async_arrow_function
 - rule: >-
     AsyncArrowFunction_In -> AsyncArrowHeadCCEAAAH (!LINE_TERMINATOR_SEQUENCE)
-    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
+    ARROW _FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: process_async_arrow_function_cceaaah
 - rule: LeftHandSideExpression -> NewExpression
   action: nop
@@ -1854,17 +1851,16 @@
   action: undefined
 - rule: >-
     ArrowFunction_In_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE)
-    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody_In
+    ARROW _FUNCTION_SIGNATURE_ ConciseBody_In
   action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
+    _FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: process_async_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Yield -> AsyncArrowHeadCCEAAAH_Yield
-    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_
-    AsyncConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: process_async_arrow_function_cceaaah
 - rule: LeftHandSideExpression_Yield -> NewExpression_Yield
   action: nop
@@ -1912,18 +1908,16 @@
   action: undefined
 - rule: >-
     ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_
-    ConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _FUNCTION_SIGNATURE_ ConciseBody_In
   action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody_In
+    _FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: process_async_arrow_function
 - rule: >-
     AsyncArrowFunction_In_Yield_Await -> AsyncArrowHeadCCEAAAH_Yield_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_
-    AsyncConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _FUNCTION_SIGNATURE_ AsyncConciseBody_In
   action: process_async_arrow_function_cceaaah
 - rule: LeftHandSideExpression_Yield_Await -> NewExpression_Yield_Await
   action: nop
@@ -2360,16 +2354,16 @@
   action: process_conditional_expression
 - rule: >-
     ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
+    _FUNCTION_SIGNATURE_ ConciseBody
   action: process_arrow_function
 - rule: >-
     AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
+    _FUNCTION_SIGNATURE_ AsyncConciseBody
   action: process_async_arrow_function
 - rule: >-
     AsyncArrowFunction -> AsyncArrowHeadCCEAAAH (!LINE_TERMINATOR_SEQUENCE)
-    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
+    ARROW _FUNCTION_SIGNATURE_ AsyncConciseBody
   action: process_async_arrow_function_cceaaah
 - rule: Initializer -> ASSIGN AssignmentExpression
   action: process_initializer
@@ -3025,17 +3019,16 @@
   action: process_conditional_expression
 - rule: >-
     ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE)
-    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
+    ARROW _FUNCTION_SIGNATURE_ ConciseBody
   action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
+    _FUNCTION_SIGNATURE_ AsyncConciseBody
   action: process_async_arrow_function
 - rule: >-
     AsyncArrowFunction_Await -> AsyncArrowHeadCCEAAAH_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_
-    AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _FUNCTION_SIGNATURE_ AsyncConciseBody
   action: process_async_arrow_function_cceaaah
 - rule: Initializer_Await -> ASSIGN AssignmentExpression_Await
   action: process_initializer
@@ -5415,17 +5408,16 @@
   action: undefined
 - rule: >-
     ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE)
-    ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
+    ARROW _FUNCTION_SIGNATURE_ ConciseBody
   action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
+    _FUNCTION_SIGNATURE_ AsyncConciseBody
   action: process_async_arrow_function
 - rule: >-
     AsyncArrowFunction_Yield -> AsyncArrowHeadCCEAAAH_Yield
-    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_
-    AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _FUNCTION_SIGNATURE_ AsyncConciseBody
   action: process_async_arrow_function_cceaaah
 - rule: Initializer_Yield -> ASSIGN AssignmentExpression_Yield
   action: process_initializer
@@ -5454,17 +5446,16 @@
   action: undefined
 - rule: >-
     ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_ ConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _FUNCTION_SIGNATURE_ ConciseBody
   action: process_arrow_function
 - rule: >-
     AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
     AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
-    _ANONYMOUS_FUNCTION_SIGNATURE_ AsyncConciseBody
+    _FUNCTION_SIGNATURE_ AsyncConciseBody
   action: process_async_arrow_function
 - rule: >-
     AsyncArrowFunction_Yield_Await -> AsyncArrowHeadCCEAAAH_Yield_Await
-    (!LINE_TERMINATOR_SEQUENCE) ARROW _ANONYMOUS_FUNCTION_SIGNATURE_
-    AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW _FUNCTION_SIGNATURE_ AsyncConciseBody
   action: process_async_arrow_function_cceaaah
 - rule: Initializer_Yield_Await -> ASSIGN AssignmentExpression_Yield_Await
   action: process_initializer

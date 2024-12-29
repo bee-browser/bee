@@ -30,6 +30,21 @@ macro_rules! delegate_all {
             }
         }
     };
+    ($type:ty => $field:ident: $target:ty) => {
+        impl std::ops::Deref for $type {
+            type Target = $target;
+
+            fn deref(&self) -> &Self::Target {
+                &self.$field
+            }
+        }
+
+        impl std::ops::DerefMut for $type {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.$field
+            }
+        }
+    };
 }
 
 #[macro_export]

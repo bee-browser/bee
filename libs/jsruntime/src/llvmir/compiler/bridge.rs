@@ -6,7 +6,6 @@ use paste::paste;
 
 use jsparser::Symbol;
 
-use crate::llvmir::module::Module;
 use crate::llvmir::module::ModulePeer;
 use crate::logger;
 use crate::semantics::ScopeRef;
@@ -70,8 +69,8 @@ impl CompilerBridge {
         }
     }
 
-    pub fn end_compile(&self) -> Module {
-        Module::new(unsafe { compiler_peer_end(self.0) })
+    pub fn end_compile(&self) -> ModulePeer {
+        unsafe { compiler_peer_end(self.0) }
     }
 
     pub fn set_data_layout(&self, data_layout: &CStr) {

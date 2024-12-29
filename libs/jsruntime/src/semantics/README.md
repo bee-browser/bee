@@ -2,9 +2,9 @@
 
 The `semantics` module reads a sequence of the flattened AST and performs:
 
-* Analyzing bindings and their scopes
-* Computing the on-memory location of each binding
-* Inferring the type of each binding as much as possible
+* Analyzing variables and their scopes
+* Computing the on-memory location of each variable
+* Inferring the type of each variable as much as possible
 * Generating a sequence of compile commands for each function
   * The compile commands can be processed on some kind of stack machine
 
