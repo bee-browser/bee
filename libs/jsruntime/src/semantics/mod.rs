@@ -149,7 +149,7 @@ pub struct Function {
 
 impl Function {
     pub fn print(&self, indent: &str) {
-        println!("{indent}function: {:?}", self.id);
+        println!("{indent}function: name={:?} id={:?}", self.name, self.id);
         if !self.commands.is_empty() {
             println!("{indent} commands:");
             for command in self.commands.iter() {
