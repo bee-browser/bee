@@ -136,10 +136,14 @@ pub struct Function {
     /// The reference to the function scope.
     pub scope_ref: ScopeRef,
 
-    /// The number of formal parameters.
+    /// The number of outer variables that the function captures.
+    pub num_captures: u16,
+
+    /// The number of formal parameters of the function.
     pub num_params: u16,
 
-    /// The number of local variables except for temporal variables created by a compiler.
+    /// The number of local variables used in the function except for temporal variables created by
+    /// a compiler.
     pub num_locals: u16,
 }
 
@@ -152,6 +156,7 @@ impl Function {
                 println!("{indent}  {command:?}");
             }
         }
+        println!("{indent} num_captures: {}", self.num_captures);
         println!("{indent} num_params: {}", self.num_params);
         println!("{indent} num_locals: {}", self.num_locals);
     }
@@ -619,7 +624,8 @@ impl<'r> Analyzer<'r> {
 
         self.apply_analysis(analysis, func_scope_ref);
 
-        analysis_mut!(self).process_unresolved_references(&unresolved_references, func_scope_ref);
+        let func_index = self.functions.len() - 1;
+        analysis_mut!(self).process_unresolved_references(&unresolved_references, func_index);
     }
 
     fn handle_function_declaration(&mut self) {
@@ -843,13 +849,17 @@ impl<'r> Analyzer<'r> {
                 .resolve_reference(reference);
             if binding_ref != BindingRef::NONE {
                 logger::debug!(event = "reference_resolved", ?reference, ?binding_ref);
-                if let Some(func_scope_ref) = reference.func_scope_ref {
+                if let Some(func_index) = reference.func_index {
+                    let func = &mut self.functions[func_index];
                     self.global_analysis
                         .scope_tree_builder
                         .set_captured(binding_ref);
-                    self.global_analysis
-                        .scope_tree_builder
-                        .add_capture(func_scope_ref, reference.symbol);
+                    self.global_analysis.scope_tree_builder.add_capture(
+                        func.scope_ref,
+                        reference.symbol,
+                        func.num_captures,
+                    );
+                    func.num_captures += 1;
                 }
             } else {
                 logger::debug!(event = "reference_unresolved", ?reference);
@@ -865,6 +875,7 @@ impl<'r> Analyzer<'r> {
             id: analysis.id,
             commands: analysis.commands,
             scope_ref,
+            num_captures: 0,
             num_params: analysis.num_params,
             num_locals: analysis.num_locals,
         });
@@ -906,8 +917,9 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
 
         // References to global properties.
         for reference in unresolved_references.iter() {
-            match reference.func_scope_ref {
-                Some(func_scope_ref) => {
+            match reference.func_index {
+                Some(func_index) => {
+                    let func_scope_ref = self.functions[func_index].scope_ref;
                     self.global_analysis
                         .scope_tree_builder
                         .add_global(func_scope_ref, reference.symbol);
@@ -1524,35 +1536,30 @@ impl FunctionAnalysis {
     fn process_unresolved_references(
         &mut self,
         unresolved_references: &[Reference],
-        func_scope_ref: ScopeRef,
+        func_index: usize,
     ) {
         let scope_ref = self.scope_ref();
         let mut added = FxHashSet::default();
         for reference in unresolved_references.iter() {
-            match reference.func_scope_ref {
-                Some(inner_func_scope_ref) => {
-                    if !added.contains(&reference.symbol) {
-                        self.references.push(Reference {
-                            symbol: reference.symbol,
-                            scope_ref,
-                            func_scope_ref: Some(func_scope_ref),
-                        });
-                        added.insert(reference.symbol);
+            let symbol = reference.symbol;
+            match reference.func_index {
+                Some(inner_func_index) => {
+                    if !added.contains(&symbol) {
+                        self.references
+                            .push(Reference::with_func_index(symbol, scope_ref, func_index));
+                        added.insert(symbol);
                     }
-                    self.references.push(Reference {
-                        symbol: reference.symbol,
+                    self.references.push(Reference::with_func_index(
+                        symbol,
                         scope_ref,
-                        func_scope_ref: Some(inner_func_scope_ref),
-                    });
+                        inner_func_index,
+                    ));
                 }
                 None => {
-                    if !added.contains(&reference.symbol) {
-                        self.references.push(Reference {
-                            symbol: reference.symbol,
-                            scope_ref,
-                            func_scope_ref: Some(func_scope_ref),
-                        });
-                        added.insert(reference.symbol);
+                    if !added.contains(&symbol) {
+                        self.references
+                            .push(Reference::with_func_index(symbol, scope_ref, func_index));
+                        added.insert(symbol);
                     }
                 }
             }
@@ -1865,8 +1872,8 @@ struct Reference {
     /// The reference to a (function or block) scope where the symbol is referred.
     scope_ref: ScopeRef,
 
-    /// The reference to the function scope using the free variable.
-    func_scope_ref: Option<ScopeRef>,
+    /// The index of a function in `Analyzer::functions`, that refers to the free variable.
+    func_index: Option<usize>,
 }
 
 impl Reference {
@@ -1874,7 +1881,15 @@ impl Reference {
         Self {
             symbol,
             scope_ref,
-            func_scope_ref: None,
+            func_index: None,
+        }
+    }
+
+    fn with_func_index(symbol: Symbol, scope_ref: ScopeRef, func_index: usize) -> Self {
+        Self {
+            symbol,
+            scope_ref,
+            func_index: Some(func_index),
         }
     }
 }

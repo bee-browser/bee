@@ -466,7 +466,8 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(scope.is_function());
 
         let lambda = self.pop_lambda();
-        let closure = self.bridge.create_closure(lambda, scope.num_captures);
+        // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
+        let closure = self.bridge.create_closure(lambda, scope.count_captures());
 
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         for binding in scope.bindings.iter().filter(|binding| binding.is_capture()) {

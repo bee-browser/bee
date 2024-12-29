@@ -158,9 +158,6 @@ impl ScopeTreeBuilder {
         let index = self.scopes.len();
         self.scopes.push(Scope {
             bindings: vec![],
-            num_formal_parameters: 0,
-            num_locals: 0,
-            num_captures: 0,
             outer: self.current,
             depth: self.depth,
             max_child_block_depth: self.depth,
@@ -196,7 +193,6 @@ impl ScopeTreeBuilder {
             kind: BindingKind::FormalParameter,
             flags: BindingFlags::empty(),
         });
-        scope.num_formal_parameters += 1;
     }
 
     pub fn add_mutable(&mut self, symbol: Symbol, index: u16) {
@@ -207,7 +203,6 @@ impl ScopeTreeBuilder {
             kind: BindingKind::Mutable,
             flags: BindingFlags::empty(),
         });
-        scope.num_locals += 1;
     }
 
     pub fn add_function_scoped_mutable(&mut self, symbol: Symbol, index: u16) {
@@ -218,7 +213,6 @@ impl ScopeTreeBuilder {
             kind: BindingKind::Mutable,
             flags: BindingFlags::FUNCTION_SCOPED,
         });
-        scope.num_locals += 1;
     }
 
     pub fn add_immutable(&mut self, symbol: Symbol, index: u16) {
@@ -229,19 +223,17 @@ impl ScopeTreeBuilder {
             kind: BindingKind::Immutable,
             flags: BindingFlags::empty(),
         });
-        scope.num_locals += 1;
     }
 
-    pub fn add_capture(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
+    pub fn add_capture(&mut self, scope_ref: ScopeRef, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
         scope.bindings.push(Binding {
             symbol,
-            index: scope.num_captures,
+            index,
             kind: BindingKind::Capture,
             flags: BindingFlags::empty(),
         });
-        scope.num_captures += 1;
         scope
             .bindings
             .sort_unstable_by_key(|binding| binding.symbol); // TODO(perf)
@@ -321,9 +313,6 @@ impl Default for ScopeTreeBuilder {
 // TODO: refactoring
 pub struct Scope {
     pub bindings: Vec<Binding>,
-    pub num_formal_parameters: u16,
-    pub num_locals: u16,
-    pub num_captures: u16,
     outer: ScopeRef,
     depth: u16,
     max_child_block_depth: u16,
@@ -333,9 +322,6 @@ pub struct Scope {
 impl Scope {
     const NONE: Self = Self {
         bindings: vec![],
-        num_formal_parameters: 0,
-        num_locals: 0,
-        num_captures: 0,
         outer: ScopeRef::NONE,
         depth: 0,
         max_child_block_depth: 0,
@@ -344,6 +330,13 @@ impl Scope {
 
     pub fn is_function(&self) -> bool {
         matches!(self.kind, ScopeKind::Function)
+    }
+
+    pub fn count_captures(&self) -> u16 {
+        self.bindings
+            .iter()
+            .filter(|binding| binding.is_capture())
+            .count() as u16
     }
 }
 
