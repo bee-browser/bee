@@ -42,13 +42,13 @@ impl Default for ScopeRef {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct BindingRef(u16, u16);
+pub struct VariableRef(u16, u16);
 
-impl BindingRef {
+impl VariableRef {
     pub const NONE: Self = Self::new(0, 0);
 
-    pub const fn new(scope_index: u16, binding_index: u16) -> Self {
-        Self(scope_index, binding_index)
+    pub const fn new(scope_index: u16, variable_index: u16) -> Self {
+        Self(scope_index, variable_index)
     }
 
     fn checked_new(scope_ref: ScopeRef, index: usize) -> Option<Self> {
@@ -63,7 +63,7 @@ impl BindingRef {
         self.0 as usize
     }
 
-    fn binding_index(&self) -> usize {
+    fn variable_index(&self) -> usize {
         self.1 as usize
     }
 }
@@ -77,57 +77,57 @@ impl ScopeTree {
         &self.scopes[scope_ref.index()]
     }
 
-    pub fn iter_bindings(
+    pub fn iter_variables(
         &self,
         scope_ref: ScopeRef,
-    ) -> impl Iterator<Item = (BindingRef, &Binding)> {
+    ) -> impl Iterator<Item = (VariableRef, &Variable)> {
         self.scopes[scope_ref.index()]
-            .bindings
+            .variables
             .iter()
             .enumerate()
-            .map(move |(index, binding)| (BindingRef::new(scope_ref.0, index as u16), binding))
+            .map(move |(index, variable)| (VariableRef::new(scope_ref.0, index as u16), variable))
     }
 
-    pub fn get_symbol(&self, binding_ref: BindingRef) -> Symbol {
-        let scope = &self.scopes[binding_ref.scope_index()];
-        scope.bindings[binding_ref.binding_index()].symbol
+    pub fn get_symbol(&self, variable_ref: VariableRef) -> Symbol {
+        let scope = &self.scopes[variable_ref.scope_index()];
+        scope.variables[variable_ref.variable_index()].symbol
     }
 
-    pub fn find_binding(&self, scope_ref: ScopeRef, symbol: Symbol) -> BindingRef {
+    pub fn find_variable(&self, scope_ref: ScopeRef, symbol: Symbol) -> VariableRef {
         let mut scope_ref = scope_ref;
         loop {
             let scope = &self.scopes[scope_ref.index()];
             match scope
-                .bindings
-                .binary_search_by_key(&symbol, |binding| binding.symbol)
+                .variables
+                .binary_search_by_key(&symbol, |variable| variable.symbol)
             {
                 Ok(index) => {
                     // TODO: should return an error
-                    return BindingRef::checked_new(scope_ref, index).unwrap();
+                    return VariableRef::checked_new(scope_ref, index).unwrap();
                 }
                 Err(_) => {
                     if scope.is_function() {
                         // Reference to a free variable.
-                        return BindingRef::NONE;
+                        return VariableRef::NONE;
                     }
                     scope_ref = scope.outer;
                     if scope_ref == ScopeRef::NONE {
                         // Reference to a property of the global object.
-                        return BindingRef::NONE;
+                        return VariableRef::NONE;
                     }
                 }
             }
         }
     }
 
-    pub fn compute_locator(&self, binding_ref: BindingRef) -> Locator {
-        let scope = &self.scopes[binding_ref.scope_index()];
-        let binding = &scope.bindings[binding_ref.binding_index()];
-        match binding.kind {
-            BindingKind::FormalParameter => Locator::Argument(binding.index),
-            BindingKind::Mutable | BindingKind::Immutable => Locator::Local(binding.index),
-            BindingKind::Capture => Locator::Capture(binding.index),
-            BindingKind::Global => Locator::Global,
+    pub fn compute_locator(&self, variable_ref: VariableRef) -> Locator {
+        let scope = &self.scopes[variable_ref.scope_index()];
+        let variable = &scope.variables[variable_ref.variable_index()];
+        match variable.kind {
+            VariableKind::FormalParameter => Locator::Argument(variable.index),
+            VariableKind::Mutable | VariableKind::Immutable => Locator::Local(variable.index),
+            VariableKind::Capture => Locator::Capture(variable.index),
+            VariableKind::Global => Locator::Global,
         }
     }
 
@@ -157,7 +157,7 @@ impl ScopeTreeBuilder {
     fn push(&mut self, kind: ScopeKind) -> ScopeRef {
         let index = self.scopes.len();
         self.scopes.push(Scope {
-            bindings: vec![],
+            variables: vec![],
             outer: self.current,
             depth: self.depth,
             max_child_block_depth: self.depth,
@@ -172,8 +172,8 @@ impl ScopeTreeBuilder {
     pub fn pop(&mut self) {
         let scope = &mut self.scopes[self.current.index()];
         scope
-            .bindings
-            .sort_unstable_by_key(|binding| binding.symbol);
+            .variables
+            .sort_unstable_by_key(|variable| variable.symbol);
         self.current = scope.outer;
         if !scope.is_function() {
             let max_child_scope_depth = scope.max_child_block_depth;
@@ -187,75 +187,75 @@ impl ScopeTreeBuilder {
 
     pub fn add_formal_parameter(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
-        scope.bindings.push(Binding {
+        scope.variables.push(Variable {
             symbol,
             index,
-            kind: BindingKind::FormalParameter,
-            flags: BindingFlags::empty(),
+            kind: VariableKind::FormalParameter,
+            flags: VariableFlags::empty(),
         });
     }
 
     pub fn add_mutable(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
-        scope.bindings.push(Binding {
+        scope.variables.push(Variable {
             symbol,
             index,
-            kind: BindingKind::Mutable,
-            flags: BindingFlags::empty(),
+            kind: VariableKind::Mutable,
+            flags: VariableFlags::empty(),
         });
     }
 
     pub fn add_function_scoped_mutable(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
-        scope.bindings.push(Binding {
+        scope.variables.push(Variable {
             symbol,
             index,
-            kind: BindingKind::Mutable,
-            flags: BindingFlags::FUNCTION_SCOPED,
+            kind: VariableKind::Mutable,
+            flags: VariableFlags::FUNCTION_SCOPED,
         });
     }
 
     pub fn add_immutable(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
-        scope.bindings.push(Binding {
+        scope.variables.push(Variable {
             symbol,
             index,
-            kind: BindingKind::Immutable,
-            flags: BindingFlags::empty(),
+            kind: VariableKind::Immutable,
+            flags: VariableFlags::empty(),
         });
     }
 
     pub fn add_capture(&mut self, scope_ref: ScopeRef, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
-        scope.bindings.push(Binding {
+        scope.variables.push(Variable {
             symbol,
             index,
-            kind: BindingKind::Capture,
-            flags: BindingFlags::empty(),
+            kind: VariableKind::Capture,
+            flags: VariableFlags::empty(),
         });
         scope
-            .bindings
-            .sort_unstable_by_key(|binding| binding.symbol); // TODO(perf)
+            .variables
+            .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
     pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
-        scope.bindings.push(Binding {
+        scope.variables.push(Variable {
             symbol,
             index: 0, // TODO
-            kind: BindingKind::Global,
-            flags: BindingFlags::empty(),
+            kind: VariableKind::Global,
+            flags: VariableFlags::empty(),
         });
         scope
-            .bindings
-            .sort_unstable_by_key(|binding| binding.symbol); // TODO(perf)
+            .variables
+            .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
-    pub fn set_captured(&mut self, binding_ref: BindingRef) {
-        let scope = &mut self.scopes[binding_ref.scope_index()];
-        scope.bindings[binding_ref.binding_index()].set_captured();
+    pub fn set_captured(&mut self, variable_ref: VariableRef) {
+        let scope = &mut self.scopes[variable_ref.scope_index()];
+        scope.variables[variable_ref.variable_index()].set_captured();
     }
 
     #[allow(unused)]
@@ -265,28 +265,28 @@ impl ScopeTreeBuilder {
         scope.max_child_block_depth - scope.depth + 1
     }
 
-    pub fn resolve_reference(&self, reference: &Reference) -> BindingRef {
+    pub fn resolve_reference(&self, reference: &Reference) -> VariableRef {
         let symbol = reference.symbol;
         let mut scope_ref = reference.scope_ref;
         loop {
             let scope = &self.scopes[scope_ref.index()];
             match scope
-                .bindings
-                .binary_search_by_key(&symbol, |binding| binding.symbol)
+                .variables
+                .binary_search_by_key(&symbol, |variable| variable.symbol)
             {
                 Ok(index) => {
                     // TODO: should return an error
-                    return BindingRef::checked_new(scope_ref, index).unwrap();
+                    return VariableRef::checked_new(scope_ref, index).unwrap();
                 }
                 Err(_) => {
                     if scope.is_function() {
                         // Reference to a free variable.
-                        return BindingRef::NONE;
+                        return VariableRef::NONE;
                     }
                     scope_ref = scope.outer;
                     if scope_ref == ScopeRef::NONE {
                         // Reference to a property of the global object.
-                        return BindingRef::NONE;
+                        return VariableRef::NONE;
                     }
                 }
             }
@@ -310,9 +310,22 @@ impl Default for ScopeTreeBuilder {
     }
 }
 
-// TODO: refactoring
+// TODO(refactor): Currently, the function scope holds variables for free variables (references
+// to global variables and captures) in addition to formal parameters and local variables
+// (function-scoped variables and top-level lexical variables).  The variables might be better to
+// place in separate scopes like this:
+//
+//   function-scope: formal parameter
+//     scope-for-free-variables: free variables
+//       scope-for-function-scoped-variables: variables declared with `var`
+//         block-scope: top-level lexical variables
+//           child-block-scope
+//           ...
+//
+// This change increases the depth, but makes it possible to easily access to particular variables.
+// Block scopes hold only lexically-scoped variables.
 pub struct Scope {
-    pub bindings: Vec<Binding>,
+    pub variables: Vec<Variable>,
     outer: ScopeRef,
     depth: u16,
     max_child_block_depth: u16,
@@ -321,7 +334,7 @@ pub struct Scope {
 
 impl Scope {
     const NONE: Self = Self {
-        bindings: vec![],
+        variables: vec![],
         outer: ScopeRef::NONE,
         depth: 0,
         max_child_block_depth: 0,
@@ -333,9 +346,9 @@ impl Scope {
     }
 
     pub fn count_captures(&self) -> u16 {
-        self.bindings
+        self.variables
             .iter()
-            .filter(|binding| binding.is_capture())
+            .filter(|variable| variable.is_capture())
             .count() as u16
     }
 }
@@ -353,8 +366,8 @@ impl std::fmt::Display for ScopePrinter<'_> {
             ScopeKind::Function => write!(f, "F")?,
         }
         write!(f, "@{}:", self.index)?;
-        for binding in self.scope.bindings.iter() {
-            write!(f, " {binding}")?;
+        for variable in self.scope.variables.iter() {
+            write!(f, " {variable}")?;
         }
         Ok(())
     }
@@ -366,45 +379,45 @@ enum ScopeKind {
 }
 
 #[derive(Debug)]
-pub struct Binding {
+pub struct Variable {
     pub symbol: Symbol,
     pub index: u16,
-    pub kind: BindingKind,
-    flags: BindingFlags,
+    pub kind: VariableKind,
+    flags: VariableFlags,
 }
 
-impl Binding {
+impl Variable {
     pub fn is_local(&self) -> bool {
-        matches!(self.kind, BindingKind::Immutable | BindingKind::Mutable)
+        matches!(self.kind, VariableKind::Immutable | VariableKind::Mutable)
     }
 
     pub fn is_capture(&self) -> bool {
-        matches!(self.kind, BindingKind::Capture)
+        matches!(self.kind, VariableKind::Capture)
     }
 
     pub fn locator(&self) -> Locator {
         match self.kind {
-            BindingKind::FormalParameter => Locator::Argument(self.index),
-            BindingKind::Mutable | BindingKind::Immutable => Locator::Local(self.index),
-            BindingKind::Capture => Locator::Capture(self.index),
-            BindingKind::Global => Locator::Global,
+            VariableKind::FormalParameter => Locator::Argument(self.index),
+            VariableKind::Mutable | VariableKind::Immutable => Locator::Local(self.index),
+            VariableKind::Capture => Locator::Capture(self.index),
+            VariableKind::Global => Locator::Global,
         }
     }
 
     pub fn is_captured(&self) -> bool {
-        self.flags.contains(BindingFlags::CAPTURED)
+        self.flags.contains(VariableFlags::CAPTURED)
     }
 
     pub fn is_function_scoped(&self) -> bool {
-        self.flags.contains(BindingFlags::FUNCTION_SCOPED)
+        self.flags.contains(VariableFlags::FUNCTION_SCOPED)
     }
 
     fn set_captured(&mut self) {
-        self.flags.insert(BindingFlags::CAPTURED)
+        self.flags.insert(VariableFlags::CAPTURED)
     }
 }
 
-impl std::fmt::Display for Binding {
+impl std::fmt::Display for Variable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_captured() {
             write!(f, "*")?;
@@ -413,18 +426,18 @@ impl std::fmt::Display for Binding {
             write!(f, "^")?;
         }
         match self.kind {
-            BindingKind::FormalParameter => write!(f, "P@{}:{}", self.index, self.symbol)?,
-            BindingKind::Mutable => write!(f, "M@{}:{}", self.index, self.symbol)?,
-            BindingKind::Immutable => write!(f, "I@{}:{}", self.index, self.symbol)?,
-            BindingKind::Capture => write!(f, "C@{}:{}", self.index, self.symbol)?,
-            BindingKind::Global => write!(f, "G@{}:{}", self.index, self.symbol)?,
+            VariableKind::FormalParameter => write!(f, "P@{}:{}", self.index, self.symbol)?,
+            VariableKind::Mutable => write!(f, "M@{}:{}", self.index, self.symbol)?,
+            VariableKind::Immutable => write!(f, "I@{}:{}", self.index, self.symbol)?,
+            VariableKind::Capture => write!(f, "C@{}:{}", self.index, self.symbol)?,
+            VariableKind::Global => write!(f, "G@{}:{}", self.index, self.symbol)?,
         }
         Ok(())
     }
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum BindingKind {
+pub enum VariableKind {
     FormalParameter,
     Mutable,
     Immutable,
@@ -434,7 +447,7 @@ pub enum BindingKind {
 
 bitflags! {
     #[derive(Debug)]
-    struct BindingFlags: u8 {
+    struct VariableFlags: u8 {
         const CAPTURED        = 1 << 0;
         const FUNCTION_SCOPED = 1 << 1;
     }

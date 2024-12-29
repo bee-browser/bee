@@ -28,9 +28,9 @@ use crate::Value;
 
 use scope::ScopeTreeBuilder;
 
-pub use scope::BindingRef;
 pub use scope::ScopeRef;
 pub use scope::ScopeTree;
+pub use scope::VariableRef;
 
 impl<X> Runtime<X> {
     /// Parses a given source text as a script.
@@ -657,9 +657,9 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_arrow_function(&mut self) {
-        // TODO: An ArrowFunction does not define local bindings for arguments, super, this, or
+        // TODO: An ArrowFunction does not define local variables for arguments, super, this, or
         // new.target.  Any reference to arguments, super, this, or new.target within an
-        // ArrowFunction must resolve to a binding in a lexically enclosing environment.
+        // ArrowFunction must resolve to a variable in a lexically enclosing environment.
 
         self.end_function_scope();
 
@@ -843,17 +843,17 @@ impl<'r> Analyzer<'r> {
     fn resolve_references(&mut self, analitics: &mut FunctionAnalysis) -> Vec<Reference> {
         let mut unresolved_reference = vec![];
         for reference in analitics.references.iter() {
-            let binding_ref = self
+            let variable_ref = self
                 .global_analysis
                 .scope_tree_builder
                 .resolve_reference(reference);
-            if binding_ref != BindingRef::NONE {
-                logger::debug!(event = "reference_resolved", ?reference, ?binding_ref);
+            if variable_ref != VariableRef::NONE {
+                logger::debug!(event = "reference_resolved", ?reference, ?variable_ref);
                 if let Some(func_index) = reference.func_index {
                     let func = &mut self.functions[func_index];
                     self.global_analysis
                         .scope_tree_builder
-                        .set_captured(binding_ref);
+                        .set_captured(variable_ref);
                     self.global_analysis.scope_tree_builder.add_capture(
                         func.scope_ref,
                         reference.symbol,
@@ -1002,7 +1002,7 @@ struct FunctionAnalysis {
     /// performed after all variable declarations are processed.
     references: Vec<Reference>,
 
-    /// A stack to keep symbols defined as binding identifiers.
+    /// A stack to keep symbols defined as "BindingIdentifier"s.
     ///
     /// The second member of a tuple is used for keeping the index of a placeholder command.
     /// Because the type of a lexical declaration cannot be known at "LexicalBinding".
@@ -1163,7 +1163,7 @@ impl FunctionAnalysis {
             self.commands.push(CompileCommand::Undefined);
         }
 
-        // We put placeholder commands here because we don't know whether this binding is mutable
+        // We put placeholder commands here because we don't know whether this variable is mutable
         // or not at this point.  The placeholder commands will be replaced in
         // `process_mutable_bindings()` or `process_immutable_bindings()`.
         let command_index = self.reserve_commands(2);
@@ -1245,7 +1245,7 @@ impl FunctionAnalysis {
                 self.commands[index + 1],
                 CompileCommand::PlaceHolder
             ));
-            self.commands[index + 1] = CompileCommand::MutableBinding;
+            self.commands[index + 1] = CompileCommand::MutableVariable;
             global_analysis
                 .scope_tree_builder
                 .add_mutable(symbol, self.num_locals);
@@ -1264,7 +1264,7 @@ impl FunctionAnalysis {
                 self.commands[index + 1],
                 CompileCommand::PlaceHolder
             ));
-            self.commands[index + 1] = CompileCommand::ImmutableBinding;
+            self.commands[index + 1] = CompileCommand::ImmutableVariable;
             global_analysis
                 .scope_tree_builder
                 .add_immutable(symbol, self.num_locals);
@@ -1505,7 +1505,7 @@ impl FunctionAnalysis {
     }
 
     fn start_scope(&mut self, scope_ref: ScopeRef) {
-        // NOTE(perf): The scope may has no binding.  In this case, we can remove the
+        // NOTE(perf): The scope may has no variable.  In this case, we can remove the
         // PushScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
         self.commands.push(CompileCommand::PushScope(scope_ref));
@@ -1515,7 +1515,7 @@ impl FunctionAnalysis {
     fn end_scope(&mut self) -> ScopeRef {
         let scope = self.scope_stack.pop().unwrap();
 
-        // NOTE(perf): The scope may has no binding.  In this case, we can remove the
+        // NOTE(perf): The scope may has no variable.  In this case, we can remove the
         // PopScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
         self.commands
@@ -1617,8 +1617,8 @@ pub enum CompileCommand {
     Exception,
 
     AllocateLocals(u16),
-    MutableBinding,
-    ImmutableBinding,
+    MutableVariable,
+    ImmutableVariable,
     DeclareVars(ScopeRef),
     DeclareClosure,
     Call(u16),
@@ -1938,16 +1938,16 @@ mod tests {
                         CompileCommand::DeclareVars(scope_ref!(1)),
                         CompileCommand::Undefined,
                         CompileCommand::Reference(symbol!(sreg, "a")),
-                        CompileCommand::MutableBinding,
+                        CompileCommand::MutableVariable,
                         CompileCommand::Number(2.0),
                         CompileCommand::Reference(symbol!(sreg, "b")),
-                        CompileCommand::MutableBinding,
+                        CompileCommand::MutableVariable,
                         CompileCommand::Number(3.0),
                         CompileCommand::Reference(symbol!(sreg, "c")),
-                        CompileCommand::ImmutableBinding,
+                        CompileCommand::ImmutableVariable,
                         CompileCommand::Number(4.0),
                         CompileCommand::Reference(symbol!(sreg, "d")),
-                        CompileCommand::ImmutableBinding,
+                        CompileCommand::ImmutableVariable,
                         CompileCommand::PopScope(scope_ref!(1)),
                     ]
                 );
@@ -1969,19 +1969,19 @@ mod tests {
                         CompileCommand::DeclareVars(scope_ref!(1)),
                         CompileCommand::Undefined,
                         CompileCommand::Reference(symbol!(sreg, "a")),
-                        CompileCommand::MutableBinding,
+                        CompileCommand::MutableVariable,
                         CompileCommand::PushScope(scope_ref!(2)),
                         CompileCommand::Undefined,
                         CompileCommand::Reference(symbol!(sreg, "a")),
-                        CompileCommand::MutableBinding,
+                        CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(2)),
                         CompileCommand::PushScope(scope_ref!(3)),
                         CompileCommand::Undefined,
                         CompileCommand::Reference(symbol!(sreg, "a")),
-                        CompileCommand::MutableBinding,
+                        CompileCommand::MutableVariable,
                         CompileCommand::Undefined,
                         CompileCommand::Reference(symbol!(sreg, "b")),
-                        CompileCommand::MutableBinding,
+                        CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(3)),
                         CompileCommand::PopScope(scope_ref!(1)),
                     ]
@@ -2023,7 +2023,7 @@ mod tests {
                     CompileCommand::DeclareVars(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Reference(symbol!(sreg, "a")),
-                    CompileCommand::MutableBinding,
+                    CompileCommand::MutableVariable,
                     CompileCommand::Reference(symbol!(sreg, "a")),
                     CompileCommand::Number(2.0),
                     CompileCommand::Duplicate(1),
