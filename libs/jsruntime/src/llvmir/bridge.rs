@@ -4,6 +4,7 @@ use std::ffi::c_void;
 use jsparser::Symbol;
 
 use crate::logger;
+use crate::objects::Object;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
@@ -32,6 +33,7 @@ pub struct RuntimeFunctions {
     await_promise: unsafe extern "C" fn(*mut c_void, u32, u32),
     resume: unsafe extern "C" fn(*mut c_void, u32),
     emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
     // TODO(perf): `get()` and `set()` are slow... Compute the address of the value by using a base
     // address and the offset for each property instead of calling these functions.
     get: unsafe extern "C" fn(*mut c_void, u32) -> *const Value,
@@ -60,6 +62,7 @@ impl RuntimeFunctions {
             await_promise: runtime_await_promise::<X>,
             resume: runtime_resume::<X>,
             emit_promise_resolved: runtime_emit_promise_resolved::<X>,
+            create_object: runtime_create_object::<X>,
             get: runtime_get::<X>,
             set: runtime_set::<X>,
             assert: runtime_assert,
@@ -97,6 +100,7 @@ unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Val
         Value::Number(_) => true,
         Value::Closure(_) => true,
         Value::Promise(_) => true,
+        Value::Object(_) => true,
     }
 }
 
@@ -113,6 +117,7 @@ unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Val
         Value::Number(value) => *value,
         Value::Closure(_) => f64::NAN,
         Value::Promise(_) => f64::NAN,
+        Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
     }
 }
 
@@ -352,6 +357,11 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
     let runtime = into_runtime!(runtime, X);
     let cloned = into_value!(result).clone();
     runtime.emit_promise_resolved(promise.into(), cloned);
+}
+
+unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void) -> *mut c_void {
+    let runtime = into_runtime!(runtime, X);
+    runtime.create_object() as *mut Object as *mut c_void
 }
 
 unsafe extern "C" fn runtime_get<X>(runtime: *mut c_void, symbol: u32) -> *const Value {

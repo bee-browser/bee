@@ -69,6 +69,7 @@ function makeLLVMIRType(type) {
     case '&mut Capture':
     case '&mut Closure':
     case '&mut Coroutine':
+    case '&mut Object':
     case '&Value':
     case '&mut Value':
     case '*mut Value':
@@ -105,6 +106,8 @@ function makeCType(type) {
       return 'Closure*';
     case '&mut Coroutine':
       return 'Coroutine*';
+    case '&mut Object':
+      return 'Object*';
     case '&Value':
       return 'const Value*';
     case '&mut Value':

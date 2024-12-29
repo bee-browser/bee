@@ -75,6 +75,9 @@ functions:
         type: u32
       - name: result
         type: '&Value'
+  - name: create_object
+    args: []
+    ret: '&mut Object'
   - name: get
     args:
       - name: symbol

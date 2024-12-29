@@ -23,6 +23,9 @@ pub enum Value {
     // TODO(issue#237): GcCellRef
     Closure(*mut Closure),
     Promise(Promise),
+    // TODO(issue#237): GcCellRef
+    // TODO: *mut Object
+    Object(*mut c_void),
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
@@ -84,6 +87,7 @@ impl std::fmt::Debug for Value {
             Self::Number(value) => write!(f, "{value}"),
             Self::Closure(value) => write!(f, "{:?}", unsafe { value.as_ref().unwrap() }),
             Self::Promise(value) => write!(f, "{value:?}"),
+            Self::Object(value) => write!(f, "object({value:?})"),
         }
     }
 }

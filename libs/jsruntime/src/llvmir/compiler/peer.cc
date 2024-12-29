@@ -21,6 +21,7 @@
 #define PEER_CLOSURE(value) (reinterpret_cast<ClosureIrPtr>(value))
 #define PEER_COROUTINE(value) (reinterpret_cast<CoroutineIrPtr>(value))
 #define PEER_PROMISE(value) (reinterpret_cast<PromiseIrPtr>(value))
+#define PEER_OBJECT(value) (reinterpret_cast<ObjectIrPtr>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIrPtr>(value))
 #define PEER_ARGV(value) (reinterpret_cast<ArgvIrPtr>(value))
 #define PEER_STATUS(value) (reinterpret_cast<StatusIrPtr>(value))
@@ -359,6 +360,20 @@ void compiler_peer_create_emit_promise_resolved(CompilerPeer peer,
   IMPL(peer)->CreateEmitPromiseResolved(LLVM_VALUE(promise), LLVM_VALUE(result));
 }
 
+// object
+
+BooleanIrPtr compiler_peer_create_is_object(CompilerPeer peer, ValueIrPtr value) {
+  return PEER_BOOLEAN(IMPL(peer)->CreateIsObject(LLVM_VALUE(value)));
+}
+
+BooleanIrPtr compiler_peer_create_is_same_object(CompilerPeer peer, ObjectIrPtr a, ObjectIrPtr b) {
+  return PEER_BOOLEAN(IMPL(peer)->CreateIsSameObject(LLVM_VALUE(a), LLVM_VALUE(b)));
+}
+
+ObjectIrPtr compiler_peer_create_object(CompilerPeer peer) {
+  return PEER_OBJECT(IMPL(peer)->CreateObject());
+}
+
 // value
 
 BooleanIrPtr compiler_peer_create_is_nullptr(CompilerPeer peer, ValueIrPtr value) {
@@ -408,6 +423,12 @@ BooleanIrPtr compiler_peer_create_is_same_promise_value(CompilerPeer peer,
       IMPL(peer)->CreateIsSamePromiseValue(LLVM_VALUE(value), LLVM_VALUE(promise)));
 }
 
+BooleanIrPtr compiler_peer_create_is_same_object_value(CompilerPeer peer,
+                                                       ValueIrPtr value,
+                                                       ObjectIrPtr object) {
+  return PEER_BOOLEAN(IMPL(peer)->CreateIsSameObjectValue(LLVM_VALUE(value), LLVM_VALUE(object)));
+}
+
 ValueIrPtr compiler_peer_create_undefined_to_any(CompilerPeer peer) {
   return PEER_VALUE(IMPL(peer)->CreateUndefinedToAny());
 }
@@ -426,6 +447,10 @@ ValueIrPtr compiler_peer_create_number_to_any(CompilerPeer peer, NumberIrPtr val
 
 ValueIrPtr compiler_peer_create_closure_to_any(CompilerPeer peer, ClosureIrPtr value) {
   return PEER_VALUE(IMPL(peer)->CreateClosureToAny(LLVM_VALUE(value)));
+}
+
+ValueIrPtr compiler_peer_create_object_to_any(CompilerPeer peer, ObjectIrPtr value) {
+  return PEER_VALUE(IMPL(peer)->CreateObjectToAny(LLVM_VALUE(value)));
 }
 
 ValueIrPtr compiler_peer_create_value_phi(CompilerPeer peer,
@@ -475,6 +500,12 @@ void compiler_peer_create_store_promise_to_value(CompilerPeer peer,
                                                  PromiseIrPtr value,
                                                  ValueIrPtr dest) {
   IMPL(peer)->CreateStorePromiseToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
+}
+
+void compiler_peer_create_store_object_to_value(CompilerPeer peer,
+                                                ObjectIrPtr value,
+                                                ValueIrPtr dest) {
+  IMPL(peer)->CreateStoreObjectToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
 }
 
 void compiler_peer_create_store_value_to_value(CompilerPeer peer,
@@ -539,6 +570,10 @@ void compiler_peer_create_store_closure_to_retv(CompilerPeer peer, ClosureIrPtr 
 
 void compiler_peer_create_store_promise_to_retv(CompilerPeer peer, PromiseIrPtr value) {
   IMPL(peer)->CreateStorePromiseToRetv(LLVM_VALUE(value));
+}
+
+void compiler_peer_create_store_object_to_retv(CompilerPeer peer, ObjectIrPtr value) {
+  IMPL(peer)->CreateStoreObjectToRetv(LLVM_VALUE(value));
 }
 
 void compiler_peer_create_store_value_to_retv(CompilerPeer peer, ValueIrPtr value) {
@@ -699,6 +734,17 @@ void compiler_peer_create_write_closure_to_scratch_buffer(CompilerPeer peer,
 ClosureIrPtr compiler_peer_create_read_closure_from_scratch_buffer(CompilerPeer peer,
                                                                    uint32_t offset) {
   return PEER_CLOSURE(IMPL(peer)->CreateReadClosureFromScratchBuffer(offset));
+}
+
+void compiler_peer_create_write_object_to_scratch_buffer(CompilerPeer peer,
+                                                         uint32_t offset,
+                                                         ObjectIrPtr value) {
+  IMPL(peer)->CreateWriteObjectToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+ClosureIrPtr compiler_peer_create_read_object_from_scratch_buffer(CompilerPeer peer,
+                                                                  uint32_t offset) {
+  return PEER_OBJECT(IMPL(peer)->CreateReadObjectFromScratchBuffer(offset));
 }
 
 void compiler_peer_create_write_promise_to_scratch_buffer(CompilerPeer peer,

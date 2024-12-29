@@ -2070,7 +2070,7 @@
 - rule: PrimaryExpression_Await -> ArrayLiteral_Await
   action: undefined
 - rule: PrimaryExpression_Await -> ObjectLiteral_Await
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Await -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Await -> ClassExpression_Await
@@ -2473,11 +2473,15 @@
   action: undefined
 - rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA Elision RBRACK
   action: undefined
-- rule: ObjectLiteral_Await -> LBRACE RBRACE
+- rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ RBRACE
+  action: process_object_literal_empty
+- rule: >-
+    ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Await
+    RBRACE
   action: undefined
-- rule: ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await RBRACE
-  action: undefined
-- rule: ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await COMMA RBRACE
+- rule: >-
+    ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Await
+    COMMA RBRACE
   action: undefined
 - rule: >-
     FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters
@@ -2840,7 +2844,7 @@
 - rule: PrimaryExpression -> ArrayLiteral
   action: undefined
 - rule: PrimaryExpression -> ObjectLiteral
-  action: undefined
+  action: nop
 - rule: PrimaryExpression -> FunctionExpression
   action: nop
 - rule: PrimaryExpression -> ClassExpression
@@ -2994,6 +2998,8 @@
   action: undefined
 - rule: ElementList_Await -> ElementList_Await COMMA Elision SpreadElement_Await
   action: undefined
+- rule: _NEW_OBJECT_ -> (empty)
+  action: process_new_object
 - rule: PropertyDefinitionList_Await -> PropertyDefinition_Await
   action: undefined
 - rule: >-
@@ -3063,7 +3069,7 @@
 - rule: PrimaryExpression_Yield -> ArrayLiteral_Yield
   action: undefined
 - rule: PrimaryExpression_Yield -> ObjectLiteral_Yield
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Yield -> ClassExpression_Yield
@@ -3125,7 +3131,7 @@
 - rule: PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await
@@ -3186,11 +3192,11 @@
   action: undefined
 - rule: ArrayLiteral -> LBRACK ElementList COMMA Elision RBRACK
   action: undefined
-- rule: ObjectLiteral -> LBRACE RBRACE
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ RBRACE
+  action: process_object_literal_empty
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList RBRACE
   action: undefined
-- rule: ObjectLiteral -> LBRACE PropertyDefinitionList RBRACE
-  action: undefined
-- rule: ObjectLiteral -> LBRACE PropertyDefinitionList COMMA RBRACE
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList COMMA RBRACE
   action: undefined
 - rule: ClassExpression -> CLASS ClassTail
   action: undefined
@@ -3416,11 +3422,15 @@
   action: undefined
 - rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA Elision RBRACK
   action: undefined
-- rule: ObjectLiteral_Yield -> LBRACE RBRACE
+- rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ RBRACE
+  action: process_object_literal_empty
+- rule: >-
+    ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield
+    RBRACE
   action: undefined
-- rule: ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield RBRACE
-  action: undefined
-- rule: ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield COMMA RBRACE
+- rule: >-
+    ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield
+    COMMA RBRACE
   action: undefined
 - rule: ClassExpression_Yield -> CLASS ClassTail_Yield
   action: undefined
@@ -3454,15 +3464,15 @@
     ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA Elision
     RBRACK
   action: undefined
-- rule: ObjectLiteral_Yield_Await -> LBRACE RBRACE
+- rule: ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ RBRACE
+  action: process_object_literal_empty
+- rule: >-
+    ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_
+    PropertyDefinitionList_Yield_Await RBRACE
   action: undefined
 - rule: >-
-    ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await
-    RBRACE
-  action: undefined
-- rule: >-
-    ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await COMMA
-    RBRACE
+    ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_
+    PropertyDefinitionList_Yield_Await COMMA RBRACE
   action: undefined
 - rule: ClassExpression_Yield_Await -> CLASS ClassTail_Yield_Await
   action: undefined

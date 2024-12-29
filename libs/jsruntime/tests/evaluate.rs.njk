@@ -27,10 +27,15 @@ impl Drop for Validator {
     fn drop(&mut self) {
         assert_eq!(self.actual_values.len(), self.expected_values.len());
         for (actual, expected) in self.actual_values.iter().zip(self.expected_values.iter()) {
-            // Some cases including `f64::NAN` fail in `assert_eq!()`.
-            let actual = format!("{actual:?}");
-            let expected = format!("{expected:?}");
-            assert_eq!(actual, expected);
+            match expected {
+                Value::Object(_) => assert!(matches!(actual, Value::Object(_))),
+                _ => {
+                    // Some cases including `f64::NAN` fail in `assert_eq!()`.
+                    let actual = format!("{actual:?}");
+                    let expected = format!("{expected:?}");
+                    assert_eq!(actual, expected);
+                }
+            }
         }
     }
 }
@@ -45,14 +50,6 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
         runtime.enable_llvmir_labels();
     }
     runtime.register_host_function("print", |runtime, args| {
-        // FIXME(issue#260): bindgen derives `Copy` and `Clone` for all types by default and
-        // provides `no_copy()`.  However, `no_copy()` stops deriving `Copy` and `Clone` for
-        // specific types.  There are no function to stop deriving only `Copy` for specific
-        // types...
-        //
-        // We plan to implement own code generator in the future.  For a meanwhile, we silence
-        // `clippy`.
-        #[allow(clippy::clone_on_copy)]
         runtime.extension_mut().actual_values.push(args[0].clone());
     });
     let program = if module {

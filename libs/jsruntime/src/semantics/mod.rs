@@ -279,6 +279,7 @@ impl<'r> Analyzer<'r> {
             Node::Boolean(value) => self.handle_boolean(value),
             Node::Number(value, ..) => self.handle_number(value),
             Node::String(value, ..) => self.handle_string(value),
+            Node::Object => self.handle_object(),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
@@ -387,6 +388,10 @@ impl<'r> Analyzer<'r> {
 
     fn handle_string(&mut self, value: Vec<u16>) {
         analysis_mut!(self).put_string(value);
+    }
+
+    fn handle_object(&mut self) {
+        analysis_mut!(self).put_object();
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
@@ -1140,6 +1145,11 @@ impl FunctionAnalysis {
         // TODO: type inference
     }
 
+    fn put_object(&mut self) {
+        self.commands.push(CompileCommand::Object);
+        // TODO: type inference
+    }
+
     fn process_argument_list_head(&mut self, empty: bool, _spread: bool) {
         // TODO: spread
         self.nargs_stack.push(if empty { 0 } else { 1 });
@@ -1609,6 +1619,7 @@ pub enum CompileCommand {
     Boolean(bool),
     Number(f64),
     String(Vec<u16>),
+    Object,
     Function(LambdaId),
     Closure(bool, ScopeRef),
     Coroutine(LambdaId, u16),

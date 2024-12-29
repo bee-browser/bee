@@ -84,6 +84,7 @@ enum Detail {
     Arguments,
     ArgumentList,
     Expression,
+    ObjectLiteral,
     Initializer,
     Block,
     Binding(DeclarationSemantics),
@@ -160,6 +161,7 @@ pub enum Node<'s> {
     Boolean(bool),
     Number(f64, &'s str),
     String(Vec<u16>, &'s str),
+    Object,
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
@@ -554,6 +556,12 @@ where
     // _BLOCK_SCOPE_
     fn process_block_scope(&mut self) -> Result<(), Error> {
         self.enqueue(Node::StartBlockScope);
+        Ok(())
+    }
+
+    // _NEW_OBJECT_
+    fn process_new_object(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Object);
         Ok(())
     }
 
@@ -961,6 +969,13 @@ where
     }
 
     // 13.2.5 Object Initializer
+
+    // ObjectLiteral[Yield, Await] :
+    //   { }
+    fn process_object_literal_empty(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::ObjectLiteral);
+        Ok(())
+    }
 
     // Initializer[In, Yield, Await] :
     //   = AssignmentExpression[?In, ?Yield, ?Await]

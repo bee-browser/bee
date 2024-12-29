@@ -155,6 +155,11 @@ impl<X> Runtime<X> {
     fn global_object_mut(&mut self) -> &mut Object {
         &mut self.global_object
     }
+
+    fn create_object(&mut self) -> &mut Object {
+        // TODO: GC
+        self.allocator.alloc(Default::default())
+    }
 }
 
 impl<X> Default for Runtime<X>
