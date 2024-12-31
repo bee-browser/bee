@@ -85,8 +85,8 @@ enum Detail {
     ArgumentList,
     Expression,
     ObjectLiteral,
-    PropertyDefinition,
-    PropertyDefinitionList,
+    PropertyDefinition(Symbol),
+    PropertyDefinitionList(bool),
     Initializer,
     Block,
     Binding(DeclarationSemantics),
@@ -546,6 +546,7 @@ where
     // BindingIdentifier_Yield_Await : yield
     // BindingIdentifier_Await : await
     // BindingIdentifier_Yield_Await : await
+    // PropertyDefinition : CoverInitializedName
     fn syntax_error(&mut self) -> Result<(), Error> {
         Err(Error::SyntaxError)
     }
@@ -1009,30 +1010,60 @@ where
     // PropertyDefinitionList[Yield, Await] :
     //   PropertyDefinition[?Yield, ?Await]
     fn process_property_definition_list_head(&mut self) -> Result<(), Error> {
-        self.replace(1, Detail::PropertyDefinitionList);
+        let mut syntax = self.pop();
+        let name = match syntax.detail {
+            Detail::PropertyDefinition(name) => name,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        syntax.detail = Detail::PropertyDefinitionList(name == Symbol::__PROTO__);
+        self.push(syntax);
         Ok(())
     }
 
     // PropertyDefinitionList[Yield, Await] :
     //   PropertyDefinitionList[?Yield, ?Await] , PropertyDefinition[?Yield, ?Await]
     fn process_property_definition_list_item(&mut self) -> Result<(), Error> {
-        self.replace(3, Detail::PropertyDefinitionList);
+        let name = match self.pop().detail {
+            Detail::PropertyDefinition(name) => name,
+            detail => unreachable!("{detail:?}"),
+        };
+        self.pop(); // Token(,)
+        let is_proto = name == Symbol::__PROTO__;
+        match self.top_mut().detail {
+            // 13.2.5.1 Static Semantics: Early Errors
+            Detail::PropertyDefinitionList(true) if is_proto => return Err(Error::SyntaxError),
+            Detail::PropertyDefinitionList(ref mut has_proto) => {
+                if is_proto {
+                    *has_proto = true;
+                }
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
         Ok(())
     }
 
     // PropertyDefinition[Yield, Await] :
     //   IdentifierReference[?Yield, ?Await]
     fn process_property_definition_identifier_reference(&mut self) -> Result<(), Error> {
+        let name = match self.top().detail {
+            Detail::IdentifierReference(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
         self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::IdentifierReference));
-        self.replace(1, Detail::PropertyDefinition);
+        self.replace(1, Detail::PropertyDefinition(name));
         Ok(())
     }
 
     // PropertyDefinition[Yield, Await] :
     //   PropertyName[?Yield, ?Await] : AssignmentExpression[+In, ?Yield, ?Await]
     fn process_property_definition_name_value(&mut self) -> Result<(), Error> {
+        let name = match self.nth(2).detail {
+            Detail::Identifier(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
         self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::NameValuePair));
-        self.replace(3, Detail::PropertyDefinition);
+        self.replace(3, Detail::PropertyDefinition(name));
         Ok(())
     }
 

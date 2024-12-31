@@ -3385,7 +3385,7 @@
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
   action: process_property_definition_identifier_reference
 - rule: PropertyDefinition_Await -> CoverInitializedName_Await
-  action: undefined
+  action: syntax_error
 - rule: >-
     PropertyDefinition_Await -> PropertyName_Await COLON
     AssignmentExpression_In_Await
@@ -3941,7 +3941,7 @@
 - rule: PropertyDefinition -> IdentifierReference
   action: process_property_definition_identifier_reference
 - rule: PropertyDefinition -> CoverInitializedName
-  action: undefined
+  action: syntax_error
 - rule: PropertyDefinition -> PropertyName COLON AssignmentExpression_In
   action: process_property_definition_name_value
 - rule: PropertyDefinition -> MethodDefinition
@@ -4282,7 +4282,7 @@
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
   action: process_property_definition_identifier_reference
 - rule: PropertyDefinition_Yield -> CoverInitializedName_Yield
-  action: undefined
+  action: syntax_error
 - rule: >-
     PropertyDefinition_Yield -> PropertyName_Yield COLON
     AssignmentExpression_In_Yield
@@ -4322,7 +4322,7 @@
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
   action: process_property_definition_identifier_reference
 - rule: PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await
-  action: undefined
+  action: syntax_error
 - rule: >-
     PropertyDefinition_Yield_Await -> PropertyName_Yield_Await COLON
     AssignmentExpression_In_Yield_Await
