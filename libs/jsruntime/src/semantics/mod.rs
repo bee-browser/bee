@@ -1,6 +1,7 @@
 mod scope;
 
 use bitflags::bitflags;
+use jsparser::syntax::LiteralPropertyName;
 use rustc_hash::FxHashSet;
 
 use jsparser::syntax::AssignmentOperator;
@@ -280,6 +281,8 @@ impl<'r> Analyzer<'r> {
             Node::Number(value, ..) => self.handle_number(value),
             Node::String(value, ..) => self.handle_string(value),
             Node::Object => self.handle_object(),
+            Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
+            Node::PropertyDefinition(has_value) => self.handle_property_definition(has_value),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
@@ -392,6 +395,18 @@ impl<'r> Analyzer<'r> {
 
     fn handle_object(&mut self) {
         analysis_mut!(self).put_object();
+    }
+
+    fn handle_literal_property_name(&mut self, name: LiteralPropertyName) {
+        match name {
+            LiteralPropertyName::IdentifierName(symbol) => {
+                push_commands!(self; CompileCommand::PropertyName(symbol));
+            }
+        }
+    }
+
+    fn handle_property_definition(&mut self, _has_value: bool) {
+        push_commands!(self; CompileCommand::DataProperty);
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
@@ -949,7 +964,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         for symbol in analysis.function_scoped_symbols.iter().cloned() {
             // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
             // `function.commands` must be rewritten to throw the "Error".
-            self.global_object.define_own_property(
+            let result = self.global_object.define_own_property(
                 symbol,
                 Property::Data {
                     value: Value::Undefined,
@@ -958,6 +973,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
                         | PropertyFlags::CONFIGURABLE,
                 },
             );
+            debug_assert!(matches!(result, Ok(true)));
             if !global_symbols.contains(&symbol) {
                 self.global_analysis
                     .scope_tree_builder
@@ -1635,6 +1651,10 @@ pub enum CompileCommand {
     Call(u16),
     PushScope(ScopeRef),
     PopScope(ScopeRef),
+
+    // object
+    PropertyName(Symbol),
+    DataProperty,
 
     // update operators
     PostfixIncrement,

@@ -514,6 +514,10 @@ void compiler_peer_create_store_value_to_value(CompilerPeer peer,
   IMPL(peer)->CreateStoreValueToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
 }
 
+BooleanIrPtr compiler_peer_create_load_boolean_from_value(CompilerPeer peer, ValueIrPtr value) {
+  return PEER_BOOLEAN(IMPL(peer)->CreateLoadBooleanFromValue(LLVM_VALUE(value)));
+}
+
 ClosureIrPtr compiler_peer_create_load_closure_from_value(CompilerPeer peer, ValueIrPtr value) {
   return PEER_CLOSURE(IMPL(peer)->CreateLoadClosureFromValue(LLVM_VALUE(value)));
 }
@@ -780,6 +784,18 @@ void compiler_peer_create_set(CompilerPeer peer, uint32_t symbol, ValueIrPtr val
   IMPL(peer)->CreateSet(symbol, LLVM_VALUE(value));
 }
 
+StatusIrPtr compiler_peer_create_create_data_property(CompilerPeer peer,
+                                                      ObjectIrPtr object,
+                                                      uint32_t name,
+                                                      ValueIrPtr value,
+                                                      ValueIrPtr retv) {
+  assert(object != nullptr);
+  assert(name != 0);
+  assert(value != nullptr);
+  return PEER_STATUS(IMPL(peer)->CreateCreateDataProperty(LLVM_VALUE(object), name,
+                                                          LLVM_VALUE(value), LLVM_VALUE(retv)));
+}
+
 // scope cleanup checker
 
 void compiler_peer_enable_scope_cleanup_checker(CompilerPeer peer, bool is_coroutine) {
@@ -810,7 +826,11 @@ void compiler_peer_create_debugger(CompilerPeer peer) {
   IMPL(peer)->CreateDebugger();
 }
 
-// unreachable
+// assertions
+
+void compiler_peer_create_assert(CompilerPeer peer, BooleanIrPtr assert, const char* msg) {
+  IMPL(peer)->CreateAssert(LLVM_VALUE(assert), msg);
+}
 
 void compiler_peer_create_unreachable(CompilerPeer peer, const char* msg) {
   IMPL(peer)->CreateUnreachable(msg);

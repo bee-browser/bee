@@ -704,6 +704,12 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_load_boolean_from_value(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_load_boolean_from_value(self.0, value.0)
+        }
+    }
+
     pub fn create_load_closure_from_value(&self, value: ValueIr) -> ClosureIr {
         closure_ir! {
             compiler_peer_create_load_closure_from_value(self.0, value.0)
@@ -1092,6 +1098,18 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_create_data_property(
+        &self,
+        object: ObjectIr,
+        symbol: Symbol,
+        value: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_create_data_property(self.0, object.0, symbol.id(), value.0, retv.0)
+        }
+    }
+
     // scope cleanup checker
 
     pub fn enable_scope_cleanup_checker(&self, is_coroutine: bool) {
@@ -1136,7 +1154,13 @@ impl CompilerBridge {
         }
     }
 
-    // unreachable
+    // assertions
+
+    pub fn create_assert(&self, assert: BooleanIr, msg: &CStr) {
+        unsafe {
+            compiler_peer_create_assert(self.0, assert.0, msg.as_ptr());
+        }
+    }
 
     pub fn create_unreachable(&self, msg: &CStr) {
         unsafe {
@@ -1605,6 +1629,10 @@ extern "C" {
         value: ValueIrPtr,
         dest: ValueIrPtr,
     );
+    fn compiler_peer_create_load_boolean_from_value(
+        peer: CompilerPeer,
+        value: ValueIrPtr,
+    ) -> BooleanIrPtr;
     fn compiler_peer_create_load_closure_from_value(
         peer: CompilerPeer,
         value: ValueIrPtr,
@@ -1769,6 +1797,13 @@ extern "C" {
 
     fn compiler_peer_create_get(peer: CompilerPeer, symbol: u32) -> ValueIrPtr;
     fn compiler_peer_create_set(peer: CompilerPeer, symbol: u32, value: ValueIrPtr);
+    fn compiler_peer_create_create_data_property(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        symbol: u32,
+        value: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
 
     // scope cleanup checker
 
@@ -1785,8 +1820,9 @@ extern "C" {
 
     fn compiler_peer_create_debugger(peer: CompilerPeer);
 
-    // unreachable
+    // assertions
 
+    fn compiler_peer_create_assert(peer: CompilerPeer, assert: BooleanIrPtr, msg: *const c_char);
     fn compiler_peer_create_unreachable(peer: CompilerPeer, msg: *const c_char);
 
     // helpers

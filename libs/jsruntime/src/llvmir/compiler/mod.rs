@@ -149,6 +149,12 @@ macro_rules! bb_name {
     };
 }
 
+macro_rules! runtime_debug {
+    ($block:block) => {
+        if cfg!(debug_assertions) $block
+    };
+}
+
 macro_rules! dump_enabled {
     () => {
         cfg!(debug_assertions) && matches!(
@@ -327,6 +333,8 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::PropertyName(symbol) => self.process_property_name(*symbol),
+            CompileCommand::DataProperty => self.process_data_property(),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -627,7 +635,10 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Object(value) => self.bridge.create_store_object_to_value(*value, dest),
             Operand::Promise(value) => self.bridge.create_store_promise_to_value(*value, dest),
             Operand::Any(value) => self.bridge.create_store_value_to_value(*value, dest),
-            Operand::Function(_) | Operand::Coroutine(_) | Operand::Reference(..) => unreachable!(),
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::Reference(..)
+            | Operand::PropertyName(_) => unreachable!(),
         }
     }
 
@@ -936,6 +947,67 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.create_escape_value(capture, value);
     }
 
+    fn process_property_name(&mut self, symbol: Symbol) {
+        self.operand_stack.push(Operand::PropertyName(symbol));
+    }
+
+    fn process_data_property(&mut self) {
+        let (operand, _) = self.dereference();
+        let name = self.pop_property_name();
+        let object = self.peek_object();
+        let value = self.create_to_any(&operand);
+        let retv = self.bridge.create_retv();
+
+        // 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
+
+        // 1. Let success be ? CreateDataProperty(O, P, V).
+        let status = self
+            .bridge
+            .create_create_data_property(object, name, value, retv);
+        self.create_check_status_for_exception(status, retv);
+        // `retv` holds a boolean value.
+        runtime_debug! {{
+            let is_boolean = self.bridge.create_is_boolean(retv);
+            self.bridge.create_assert(
+                is_boolean,
+                c"runtime.create_data_property() returns a boolan value",
+            );
+        }}
+        let success = self.bridge.create_load_boolean_from_value(retv);
+
+        // 2. If success is false, throw a TypeError exception.
+        let then_block = self.create_basic_block("success.then");
+        let else_block = self.create_basic_block("success.else");
+        let merge_block = self.create_basic_block("success.merge");
+        // if success
+        self.bridge.create_cond_br(success, then_block, else_block);
+        // {
+        self.bridge.set_basic_block(then_block);
+        self.bridge.create_br(merge_block);
+        // } else {
+        self.bridge.set_basic_block(else_block);
+        // TODO(feat): TypeError
+        self.process_number(1001.);
+        self.process_throw();
+        self.bridge.create_br(merge_block);
+        // }
+        self.bridge.set_basic_block(merge_block);
+    }
+
+    fn peek_object(&mut self) -> ObjectIr {
+        match self.operand_stack.last().unwrap() {
+            Operand::Object(value) => *value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn pop_property_name(&mut self) -> Symbol {
+        match self.operand_stack.pop().unwrap() {
+            Operand::PropertyName(name) => name,
+            _ => unreachable!(),
+        }
+    }
+
     // 13.4.2.1 Runtime Semantics: Evaluation
     // 13.4.3.1 Runtime Semantics: Evaluation
     // 13.4.4.1 Runtime Semantics: Evaluation
@@ -977,8 +1049,13 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Boolean(value) => self.bridge.create_boolean_to_number(value),
             Operand::Number(value) => value,
             Operand::Closure(_) => self.bridge.get_nan(),
+            Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value) => self.bridge.to_numeric(value),
-            _ => unreachable!(),
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::Promise(_)
+            | Operand::Reference(..)
+            | Operand::PropertyName(_) => unreachable!(),
         }
     }
 
@@ -1058,9 +1135,14 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Undefined | Operand::Null => self.bridge.get_boolean(false),
             Operand::Boolean(value) => value,
             Operand::Number(value) => self.bridge.create_number_to_boolean(value),
-            Operand::Closure(_) => self.bridge.get_boolean(true),
+            Operand::Closure(_) | Operand::Object(_) | Operand::Promise(_) => {
+                self.bridge.get_boolean(true)
+            }
             Operand::Any(value) => self.bridge.create_to_boolean(value),
-            _ => unreachable!(),
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::Reference(..)
+            | Operand::PropertyName(_) => unreachable!(),
         }
     }
 
@@ -1295,7 +1377,12 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Boolean(value) => self.bridge.create_boolean_to_any(*value),
             Operand::Number(value) => self.bridge.create_number_to_any(*value),
             Operand::Closure(value) => self.bridge.create_closure_to_any(*value),
-            _ => unreachable!(),
+            Operand::Object(value) => self.bridge.create_object_to_any(*value),
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::Reference(..)
+            | Operand::PropertyName(_)
+            | Operand::Promise(_) => unreachable!("{operand:?}"),
         }
     }
 
@@ -1345,7 +1432,10 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Object(rhs) => self.create_is_same_object_value(lhs, rhs),
             Operand::Promise(rhs) => self.create_is_same_promise_value(lhs, rhs),
             Operand::Any(rhs) => self.bridge.create_is_strictly_equal(lhs, rhs),
-            Operand::Function(_) | Operand::Coroutine(_) | Operand::Reference(..) => unreachable!(),
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::Reference(..)
+            | Operand::PropertyName(_) => unreachable!("{rhs:?}"),
         }
     }
 
@@ -2216,7 +2306,10 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Object(value) => self.bridge.create_store_object_to_retv(*value),
             Operand::Promise(value) => self.bridge.create_store_promise_to_retv(*value),
             Operand::Any(value) => self.bridge.create_store_value_to_retv(*value),
-            Operand::Function(_) | Operand::Coroutine(_) | Operand::Reference(..) => unreachable!(),
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::Reference(..)
+            | Operand::PropertyName(_) => unreachable!("{operand:?}"),
         }
     }
 
@@ -2361,7 +2454,10 @@ impl<'r, 's> Compiler<'r, 's> {
                 // }
                 self.bridge.set_basic_block(block);
             }
-            Operand::Function(_) | Operand::Coroutine(_) | Operand::Reference(..) => {
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::Reference(..)
+            | Operand::PropertyName(_) => {
                 unreachable!("{operand:?}")
             }
         }
@@ -2414,7 +2510,7 @@ impl<'r, 's> Compiler<'r, 's> {
                         .create_write_value_to_scratch_buffer(offset, *value);
                     offset += VALUE_SIZE;
                 }
-                Operand::Reference(..) => (),
+                Operand::Reference(..) | Operand::PropertyName(_) => (),
                 Operand::Function(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2456,7 +2552,7 @@ impl<'r, 's> Compiler<'r, 's> {
                     *value = self.bridge.create_read_value_from_scratch_buffer(offset);
                     offset += VALUE_SIZE;
                 }
-                Operand::Reference(..) => (),
+                Operand::Reference(..) | Operand::PropertyName(_) => (),
                 Operand::Function(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2584,6 +2680,7 @@ enum Operand {
     Promise(PromiseIr),
     Any(ValueIr),
     Reference(Symbol, Locator),
+    PropertyName(Symbol),
 }
 
 impl Dump for Operand {
@@ -2606,6 +2703,7 @@ impl Dump for Operand {
             Self::Object(value) => eprintln!("Object({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
+            Self::PropertyName(symbol) => eprintln!("PropertyName({symbol:?})"),
         }
     }
 }

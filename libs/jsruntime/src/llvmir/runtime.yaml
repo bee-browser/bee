@@ -91,6 +91,18 @@ functions:
       - name: value
         type: '&Value'
       # TODO(perf): add arguments for inline caching
+  # 7.3.5 CreateDataProperty ( O, P, V )
+  - name: create_data_property
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: name
+        type: 'u32' # Symbol
+      - name: value
+        type: '&Value'
+      - name: 'retv'
+        type: '&mut Value'
+    ret: Status
   - name: assert
     args:
       - name: assertion

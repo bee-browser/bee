@@ -665,6 +665,11 @@ class Compiler {
     CreateStoreValueHolderToValue(holder, dest);
   }
 
+  llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("value.boolean"));
+  }
+
   llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("value.closure"));
@@ -980,6 +985,15 @@ class Compiler {
     builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol), value});
   }
 
+  llvm::Value* CreateCreateDataProperty(llvm::Value* object,
+                                        uint32_t symbol,
+                                        llvm::Value* value,
+                                        llvm::Value* retv) {
+    auto* func = types_->CreateRuntimeCreateDataProperty();
+    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(symbol), value, retv},
+                                REG_NAME("runtime.create_data_property.status.ptr"));
+  }
+
   // scope cleanup checker
 
   void EnableScopeCleanupChecker(bool is_coroutine) {
@@ -1028,7 +1042,13 @@ class Compiler {
     builder_->CreateCall(func, {runtime_});
   }
 
-  // unreachable
+  // assertions
+
+  void CreateAssert(llvm::Value* assertion, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.assert.msg"));
+    auto* func = types_->CreateRuntimeAssert();
+    builder_->CreateCall(func, {runtime_, assertion, msg_value});
+  }
 
   void CreateUnreachable(const char* msg = "") {
     CreateAssert(builder_->getFalse(), msg);
@@ -1188,11 +1208,6 @@ class Compiler {
   llvm::Value* CreateLoadValueHolderFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt64Ty(), ptr, REG_NAME("value.holder"));
-  }
-
-  llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
-    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("value.boolean"));
   }
 
   llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
@@ -1374,12 +1389,6 @@ class Compiler {
   }
 
   // helpers
-
-  void CreateAssert(llvm::Value* assertion, const char* msg = "") {
-    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.assert.msg"));
-    auto* func = types_->CreateRuntimeAssert();
-    builder_->CreateCall(func, {runtime_, assertion, msg_value});
-  }
 
   void CreatePrintU32(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_u32.msg"));

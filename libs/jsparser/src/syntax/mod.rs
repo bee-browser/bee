@@ -85,6 +85,8 @@ enum Detail {
     ArgumentList,
     Expression,
     ObjectLiteral,
+    PropertyDefinition,
+    PropertyDefinitionList,
     Initializer,
     Block,
     Binding(DeclarationSemantics),
@@ -162,6 +164,8 @@ pub enum Node<'s> {
     Number(f64, &'s str),
     String(Vec<u16>, &'s str),
     Object,
+    LiteralPropertyName(LiteralPropertyName),
+    PropertyDefinition(bool),
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
@@ -239,6 +243,11 @@ pub enum Node<'s> {
     StartBlockScope,
     EndBlockScope,
     Dereference,
+}
+
+#[derive(Clone, Debug)]
+pub enum LiteralPropertyName {
+    IdentifierName(Symbol),
 }
 
 #[derive(Clone, Copy)]
@@ -974,6 +983,69 @@ where
     //   { }
     fn process_object_literal_empty(&mut self) -> Result<(), Error> {
         self.replace(2, Detail::ObjectLiteral);
+        Ok(())
+    }
+
+    // ObjectLiteral[Yield, Await] :
+    //   { PropertyDefinitionList[?Yield, ?Await] }
+    fn process_object_literal_list(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::ObjectLiteral);
+        Ok(())
+    }
+
+    // ObjectLiteral[Yield, Await] :
+    //   { PropertyDefinitionList[?Yield, ?Await] , }
+    fn process_object_literal_comma(&mut self) -> Result<(), Error> {
+        self.replace(4, Detail::ObjectLiteral);
+        Ok(())
+    }
+
+    // PropertyDefinitionList[Yield, Await] :
+    //   PropertyDefinition[?Yield, ?Await]
+    fn process_property_definition_list_head(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::PropertyDefinitionList);
+        Ok(())
+    }
+
+    // PropertyDefinitionList[Yield, Await] :
+    //   PropertyDefinitionList[?Yield, ?Await] , PropertyDefinition[?Yield, ?Await]
+    fn process_property_definition_list_item(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::PropertyDefinitionList);
+        Ok(())
+    }
+
+    // PropertyDefinition[Yield, Await] :
+    //   PropertyName[?Yield, ?Await] : AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_property_definition_name_value(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::PropertyDefinition(true)); // with value
+        self.replace(3, Detail::PropertyDefinition);
+        Ok(())
+    }
+
+    // LiteralPropertyName :
+    //   IdentifierName
+    fn process_literal_property_name_identifier_name(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let symbol = self.make_symbol(token_index);
+        self.enqueue(Node::LiteralPropertyName(
+            LiteralPropertyName::IdentifierName(symbol),
+        ));
+        self.replace(1, Detail::Identifier(symbol));
+        Ok(())
+    }
+
+    // LiteralPropertyName :
+    //   NumericLiteral
+    fn process_literal_property_name_numeric_literal(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        // TODO: RS
+        // 1. Let nbr be the NumericValue of NumericLiteral.
+        // 2. Return ! ToString(nbr).
+        let symbol = self.make_symbol(token_index);
+        self.enqueue(Node::LiteralPropertyName(
+            LiteralPropertyName::IdentifierName(symbol),
+        ));
+        self.replace(1, Detail::Identifier(symbol));
         Ok(())
     }
 

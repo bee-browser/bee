@@ -9,6 +9,7 @@ use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
+use crate::types::Status;
 use crate::types::Value;
 use crate::Runtime;
 
@@ -38,6 +39,8 @@ pub struct RuntimeFunctions {
     // address and the offset for each property instead of calling these functions.
     get: unsafe extern "C" fn(*mut c_void, u32) -> *const Value,
     set: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    create_data_property:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
@@ -65,6 +68,7 @@ impl RuntimeFunctions {
             create_object: runtime_create_object::<X>,
             get: runtime_get::<X>,
             set: runtime_set::<X>,
+            create_data_property: runtime_create_data_property::<X>,
             assert: runtime_assert,
             print_u32: runtime_print_u32,
             print_f64: runtime_print_f64,
@@ -380,6 +384,35 @@ unsafe extern "C" fn runtime_set<X>(runtime: *mut c_void, symbol: u32, value: *c
     let symbol = Symbol::from(symbol);
     let value = value.as_ref().unwrap();
     runtime.global_object_mut().set(symbol, value);
+}
+
+// 7.3.5 CreateDataProperty ( O, P, V )
+unsafe extern "C" fn runtime_create_data_property<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    name: u32,
+    value: *const Value,
+    retv: *mut Value,
+) -> Status {
+    debug_assert_ne!(name, 0);
+
+    // TODO(refactor): generate ffi-conversion code by script
+    let runtime = into_runtime!(runtime, X);
+    let object = object.cast::<Object>().as_mut().unwrap();
+    let name = Symbol::from(name);
+    let value = value.as_ref().unwrap();
+    let retv = retv.as_mut().unwrap();
+
+    match runtime.create_data_property(object, name, value) {
+        Ok(success) => {
+            *retv = success.into();
+            Status::Normal
+        }
+        Err(exception) => {
+            *retv = exception;
+            Status::Exception
+        }
+    }
 }
 
 unsafe extern "C" fn runtime_assert(
