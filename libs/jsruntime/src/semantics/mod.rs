@@ -2,6 +2,7 @@ mod scope;
 
 use bitflags::bitflags;
 use jsparser::syntax::LiteralPropertyName;
+use jsparser::syntax::PropertyDefinitionKind;
 use rustc_hash::FxHashSet;
 
 use jsparser::syntax::AssignmentOperator;
@@ -282,7 +283,7 @@ impl<'r> Analyzer<'r> {
             Node::String(value, ..) => self.handle_string(value),
             Node::Object => self.handle_object(),
             Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
-            Node::PropertyDefinition(has_value) => self.handle_property_definition(has_value),
+            Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
@@ -405,8 +406,8 @@ impl<'r> Analyzer<'r> {
         }
     }
 
-    fn handle_property_definition(&mut self, _has_value: bool) {
-        push_commands!(self; CompileCommand::DataProperty);
+    fn handle_property_definition(&mut self, kind: PropertyDefinitionKind) {
+        analysis_mut!(self).process_property_definition(kind);
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
@@ -1211,6 +1212,23 @@ impl FunctionAnalysis {
         self.function_scoped_symbols.insert(symbol);
 
         // TODO: type info
+    }
+
+    fn process_property_definition(&mut self, kind: PropertyDefinitionKind) {
+        match kind {
+            PropertyDefinitionKind::IdentifierReference => {
+                let symbol = match self.commands.pop() {
+                    Some(CompileCommand::Reference(symbol)) => symbol,
+                    command => unreachable!("{command:?}"),
+                };
+                self.commands.push(CompileCommand::PropertyName(symbol));
+                self.commands.push(CompileCommand::Reference(symbol));
+                self.commands.push(CompileCommand::DataProperty);
+            }
+            PropertyDefinitionKind::NameValuePair => {
+                self.commands.push(CompileCommand::DataProperty);
+            }
+        }
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {

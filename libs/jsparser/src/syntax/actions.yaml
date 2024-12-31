@@ -3383,7 +3383,7 @@
 - rule: SpreadElement_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: undefined
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
-  action: undefined
+  action: process_property_definition_identifier_reference
 - rule: PropertyDefinition_Await -> CoverInitializedName_Await
   action: undefined
 - rule: >-
@@ -3939,7 +3939,7 @@
 - rule: SpreadElement -> ELLIPSIS AssignmentExpression_In
   action: undefined
 - rule: PropertyDefinition -> IdentifierReference
-  action: undefined
+  action: process_property_definition_identifier_reference
 - rule: PropertyDefinition -> CoverInitializedName
   action: undefined
 - rule: PropertyDefinition -> PropertyName COLON AssignmentExpression_In
@@ -4280,7 +4280,7 @@
 - rule: SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield
   action: undefined
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
-  action: undefined
+  action: process_property_definition_identifier_reference
 - rule: PropertyDefinition_Yield -> CoverInitializedName_Yield
   action: undefined
 - rule: >-
@@ -4320,7 +4320,7 @@
 - rule: SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
-  action: undefined
+  action: process_property_definition_identifier_reference
 - rule: PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await
   action: undefined
 - rule: >-

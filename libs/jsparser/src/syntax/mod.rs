@@ -165,7 +165,7 @@ pub enum Node<'s> {
     String(Vec<u16>, &'s str),
     Object,
     LiteralPropertyName(LiteralPropertyName),
-    PropertyDefinition(bool),
+    PropertyDefinition(PropertyDefinitionKind),
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
@@ -243,6 +243,12 @@ pub enum Node<'s> {
     StartBlockScope,
     EndBlockScope,
     Dereference,
+}
+
+#[derive(Clone, Debug)]
+pub enum PropertyDefinitionKind {
+    IdentifierReference,
+    NameValuePair,
 }
 
 #[derive(Clone, Debug)]
@@ -1015,9 +1021,17 @@ where
     }
 
     // PropertyDefinition[Yield, Await] :
+    //   IdentifierReference[?Yield, ?Await]
+    fn process_property_definition_identifier_reference(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::IdentifierReference));
+        self.replace(1, Detail::PropertyDefinition);
+        Ok(())
+    }
+
+    // PropertyDefinition[Yield, Await] :
     //   PropertyName[?Yield, ?Await] : AssignmentExpression[+In, ?Yield, ?Await]
     fn process_property_definition_name_value(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::PropertyDefinition(true)); // with value
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::NameValuePair));
         self.replace(3, Detail::PropertyDefinition);
         Ok(())
     }
