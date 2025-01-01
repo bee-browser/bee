@@ -2266,11 +2266,11 @@
   action: array_expression_comma
 - rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA Elision RBRACK
   action: array_expression_comma_elision
-- rule: ObjectLiteral_Await -> LBRACE RBRACE
+- rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
-- rule: ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await RBRACE
+- rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Await RBRACE
   action: object_expression
-- rule: ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await COMMA RBRACE
+- rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Await COMMA RBRACE
   action: object_expression_comma
 - rule: >-
     FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN
@@ -2732,6 +2732,8 @@
   action: append_to_csv_array
 - rule: ElementList_Await -> ElementList_Await COMMA Elision SpreadElement_Await
   action: concat_and_append_array
+- rule: _NEW_OBJECT_ -> (empty)
+  action: nop
 - rule: PropertyDefinitionList_Await -> PropertyDefinition_Await
   action: create_list
 - rule: PropertyDefinitionList_Await -> PropertyDefinitionList_Await COMMA PropertyDefinition_Await
@@ -2909,11 +2911,11 @@
   action: array_expression_comma
 - rule: ArrayLiteral -> LBRACK ElementList COMMA Elision RBRACK
   action: array_expression_comma_elision
-- rule: ObjectLiteral -> LBRACE RBRACE
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
-- rule: ObjectLiteral -> LBRACE PropertyDefinitionList RBRACE
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList RBRACE
   action: object_expression
-- rule: ObjectLiteral -> LBRACE PropertyDefinitionList COMMA RBRACE
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList COMMA RBRACE
   action: object_expression_comma
 - rule: ClassExpression -> CLASS ClassTail
   action: anonymous_class_expression
@@ -3125,11 +3127,11 @@
   action: array_expression_comma
 - rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA Elision RBRACK
   action: array_expression_comma_elision
-- rule: ObjectLiteral_Yield -> LBRACE RBRACE
+- rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
-- rule: ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield RBRACE
+- rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield RBRACE
   action: object_expression
-- rule: ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield COMMA RBRACE
+- rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield COMMA RBRACE
   action: object_expression_comma
 - rule: ClassExpression_Yield -> CLASS ClassTail_Yield
   action: anonymous_class_expression
@@ -3161,11 +3163,13 @@
   action: array_expression_comma
 - rule: ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA Elision RBRACK
   action: array_expression_comma_elision
-- rule: ObjectLiteral_Yield_Await -> LBRACE RBRACE
+- rule: ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
-- rule: ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await RBRACE
+- rule: ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield_Await RBRACE
   action: object_expression
-- rule: ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await COMMA RBRACE
+- rule: >-
+    ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield_Await COMMA
+    RBRACE
   action: object_expression_comma
 - rule: ClassExpression_Yield_Await -> CLASS ClassTail_Yield_Await
   action: anonymous_class_expression

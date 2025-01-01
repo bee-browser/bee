@@ -84,6 +84,9 @@ enum Detail {
     Arguments,
     ArgumentList,
     Expression,
+    ObjectLiteral,
+    PropertyDefinition(Symbol),
+    PropertyDefinitionList(bool),
     Initializer,
     Block,
     Binding(DeclarationSemantics),
@@ -160,6 +163,9 @@ pub enum Node<'s> {
     Boolean(bool),
     Number(f64, &'s str),
     String(Vec<u16>, &'s str),
+    Object,
+    LiteralPropertyName(LiteralPropertyName),
+    PropertyDefinition(PropertyDefinitionKind),
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
@@ -237,6 +243,18 @@ pub enum Node<'s> {
     StartBlockScope,
     EndBlockScope,
     Dereference,
+}
+
+#[derive(Clone, Debug)]
+pub enum PropertyDefinitionKind {
+    Reference,
+    KeyValue,
+    Spread,
+}
+
+#[derive(Clone, Debug)]
+pub enum LiteralPropertyName {
+    IdentifierName(Symbol),
 }
 
 #[derive(Clone, Copy)]
@@ -554,6 +572,12 @@ where
     // _BLOCK_SCOPE_
     fn process_block_scope(&mut self) -> Result<(), Error> {
         self.enqueue(Node::StartBlockScope);
+        Ok(())
+    }
+
+    // _NEW_OBJECT_
+    fn process_new_object(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Object);
         Ok(())
     }
 
@@ -961,6 +985,128 @@ where
     }
 
     // 13.2.5 Object Initializer
+
+    // ObjectLiteral[Yield, Await] :
+    //   { }
+    fn process_object_literal_empty(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::ObjectLiteral);
+        Ok(())
+    }
+
+    // ObjectLiteral[Yield, Await] :
+    //   { PropertyDefinitionList[?Yield, ?Await] }
+    fn process_object_literal_list(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::ObjectLiteral);
+        Ok(())
+    }
+
+    // ObjectLiteral[Yield, Await] :
+    //   { PropertyDefinitionList[?Yield, ?Await] , }
+    fn process_object_literal_comma(&mut self) -> Result<(), Error> {
+        self.replace(4, Detail::ObjectLiteral);
+        Ok(())
+    }
+
+    // PropertyDefinitionList[Yield, Await] :
+    //   PropertyDefinition[?Yield, ?Await]
+    fn process_property_definition_list_head(&mut self) -> Result<(), Error> {
+        let mut syntax = self.pop();
+        let name = match syntax.detail {
+            Detail::PropertyDefinition(name) => name,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        syntax.detail = Detail::PropertyDefinitionList(name == Symbol::__PROTO__);
+        self.push(syntax);
+        Ok(())
+    }
+
+    // PropertyDefinitionList[Yield, Await] :
+    //   PropertyDefinitionList[?Yield, ?Await] , PropertyDefinition[?Yield, ?Await]
+    fn process_property_definition_list_item(&mut self) -> Result<(), Error> {
+        let name = match self.pop().detail {
+            Detail::PropertyDefinition(name) => name,
+            detail => unreachable!("{detail:?}"),
+        };
+        self.pop(); // Token(,)
+        let is_proto = name == Symbol::__PROTO__;
+        match self.top_mut().detail {
+            // 13.2.5.1 Static Semantics: Early Errors
+            Detail::PropertyDefinitionList(true) if is_proto => return Err(Error::SyntaxError),
+            Detail::PropertyDefinitionList(ref mut has_proto) => {
+                if is_proto {
+                    *has_proto = true;
+                }
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
+        Ok(())
+    }
+
+    // PropertyDefinition[Yield, Await] :
+    //   IdentifierReference[?Yield, ?Await]
+    fn process_property_definition_reference(&mut self) -> Result<(), Error> {
+        let name = match self.top().detail {
+            Detail::IdentifierReference(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::Reference));
+        self.replace(1, Detail::PropertyDefinition(name));
+        Ok(())
+    }
+
+    // PropertyDefinition[Yield, Await] :
+    //   CoverInitializedName[?Yield, ?Await]
+    fn process_property_definition_cover(&mut self) -> Result<(), Error> {
+        self.syntax_error()
+    }
+
+    // PropertyDefinition[Yield, Await] :
+    //   PropertyName[?Yield, ?Await] : AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_property_definition_key_value(&mut self) -> Result<(), Error> {
+        let name = match self.nth(2).detail {
+            Detail::Identifier(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::KeyValue));
+        self.replace(3, Detail::PropertyDefinition(name));
+        Ok(())
+    }
+
+    // PropertyDefinition[Yield, Await] :
+    //   ... AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_property_definition_spread(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::Spread));
+        self.replace(2, Detail::PropertyDefinition(Symbol::NONE));
+        Ok(())
+    }
+
+    // LiteralPropertyName :
+    //   IdentifierName
+    fn process_literal_property_name_identifier_name(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let symbol = self.make_symbol(token_index);
+        self.enqueue(Node::LiteralPropertyName(
+            LiteralPropertyName::IdentifierName(symbol),
+        ));
+        self.replace(1, Detail::Identifier(symbol));
+        Ok(())
+    }
+
+    // LiteralPropertyName :
+    //   NumericLiteral
+    fn process_literal_property_name_numeric_literal(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        // TODO: RS
+        // 1. Let nbr be the NumericValue of NumericLiteral.
+        // 2. Return ! ToString(nbr).
+        let symbol = self.make_symbol(token_index);
+        self.enqueue(Node::LiteralPropertyName(
+            LiteralPropertyName::IdentifierName(symbol),
+        ));
+        self.replace(1, Detail::Identifier(symbol));
+        Ok(())
+    }
 
     // Initializer[In, Yield, Await] :
     //   = AssignmentExpression[?In, ?Yield, ?Await]

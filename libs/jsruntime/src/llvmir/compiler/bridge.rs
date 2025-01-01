@@ -51,6 +51,7 @@ define_ir_types! {
     ClosureIr; closure_ir,
     CoroutineIr; coroutine_ir,
     PromiseIr; promise_ir,
+    ObjectIr; object_ir,
     ValueIr; value_ir,
     ArgvIr; argv_ir,
     StatusIr; status_ir,
@@ -507,6 +508,26 @@ impl CompilerBridge {
         }
     }
 
+    // object
+
+    pub fn create_is_object(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_is_object(self.0, value.0)
+        }
+    }
+
+    pub fn create_is_same_object(&self, a: ObjectIr, b: ObjectIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_is_same_object(self.0, a.0, b.0)
+        }
+    }
+
+    pub fn create_object(&self) -> ObjectIr {
+        object_ir! {
+            compiler_peer_create_object(self.0)
+        }
+    }
+
     // value
 
     pub fn create_is_nullptr(&self, value: ValueIr) -> BooleanIr {
@@ -557,6 +578,12 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_is_same_object_value(&self, any: ValueIr, object: ObjectIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_is_same_object_value(self.0, any.0, object.0)
+        }
+    }
+
     pub fn create_undefined_to_any(&self) -> ValueIr {
         value_ir! {
             compiler_peer_create_undefined_to_any(self.0)
@@ -587,6 +614,13 @@ impl CompilerBridge {
         debug_assert_ne!(value, ClosureIr::NONE);
         value_ir! {
             compiler_peer_create_closure_to_any(self.0, value.0)
+        }
+    }
+
+    pub fn create_object_to_any(&self, value: ObjectIr) -> ValueIr {
+        debug_assert_ne!(value, ObjectIr::NONE);
+        value_ir! {
+            compiler_peer_create_object_to_any(self.0, value.0)
         }
     }
 
@@ -656,10 +690,23 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_store_object_to_value(&self, value: ObjectIr, dest: ValueIr) {
+        debug_assert_ne!(value, ObjectIr::NONE);
+        unsafe {
+            compiler_peer_create_store_object_to_value(self.0, value.0, dest.0);
+        }
+    }
+
     pub fn create_store_value_to_value(&self, value: ValueIr, dest: ValueIr) {
         debug_assert_ne!(value, ValueIr::NONE);
         unsafe {
             compiler_peer_create_store_value_to_value(self.0, value.0, dest.0);
+        }
+    }
+
+    pub fn create_load_boolean_from_value(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_load_boolean_from_value(self.0, value.0)
         }
     }
 
@@ -749,6 +796,13 @@ impl CompilerBridge {
         debug_assert_ne!(value, PromiseIr::NONE);
         unsafe {
             compiler_peer_create_store_promise_to_retv(self.0, value.0);
+        }
+    }
+
+    pub fn create_store_object_to_retv(&self, value: ObjectIr) {
+        debug_assert_ne!(value, ObjectIr::NONE);
+        unsafe {
+            compiler_peer_create_store_object_to_retv(self.0, value.0);
         }
     }
 
@@ -994,6 +1048,18 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_write_object_to_scratch_buffer(&self, offset: u32, value: ObjectIr) {
+        unsafe {
+            compiler_peer_create_write_object_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_object_from_scratch_buffer(&self, offset: u32) -> ObjectIr {
+        object_ir! {
+            compiler_peer_create_read_object_from_scratch_buffer(self.0, offset)
+        }
+    }
+
     pub fn create_write_promise_to_scratch_buffer(&self, offset: u32, value: PromiseIr) {
         unsafe {
             compiler_peer_create_write_promise_to_scratch_buffer(self.0, offset, value.0);
@@ -1029,6 +1095,31 @@ impl CompilerBridge {
     pub fn create_set(&self, symbol: Symbol, value: ValueIr) {
         unsafe {
             compiler_peer_create_set(self.0, symbol.id(), value.0);
+        }
+    }
+
+    // 7.3.5 CreateDataProperty ( O, P, V )
+    pub fn create_create_data_property(
+        &self,
+        object: ObjectIr,
+        symbol: Symbol,
+        value: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_create_data_property(self.0, object.0, symbol.id(), value.0, retv.0)
+        }
+    }
+
+    // 7.3.25 CopyDataProperties ( target, source, excludedItems )
+    pub fn create_copy_data_properties(
+        &self,
+        target: ObjectIr,
+        source: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_copy_data_properties(self.0, target.0, source.0, retv.0)
         }
     }
 
@@ -1076,7 +1167,13 @@ impl CompilerBridge {
         }
     }
 
-    // unreachable
+    // assertions
+
+    pub fn create_assert(&self, assert: BooleanIr, msg: &CStr) {
+        unsafe {
+            compiler_peer_create_assert(self.0, assert.0, msg.as_ptr());
+        }
+    }
 
     pub fn create_unreachable(&self, msg: &CStr) {
         unsafe {
@@ -1174,6 +1271,17 @@ impl PromiseIr {
     }
 }
 
+impl ObjectIr {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            compiler_peer_get_value_name_or_as_operand(self.0 as ValueIrPtr, buf, len);
+            CStr::from_ptr(buf)
+        }
+    }
+}
+
 impl ValueIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 
@@ -1199,6 +1307,7 @@ type NumberIrPtr = *mut c_void;
 type ClosureIrPtr = *mut c_void;
 type CoroutineIrPtr = *mut c_void;
 type PromiseIrPtr = *mut c_void;
+type ObjectIrPtr = *mut c_void;
 type ValueIrPtr = *mut c_void;
 type ArgvIrPtr = *mut c_void;
 type StatusIrPtr = *mut c_void;
@@ -1435,6 +1544,16 @@ extern "C" {
         result: ValueIrPtr,
     );
 
+    // object
+
+    fn compiler_peer_create_is_object(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
+    fn compiler_peer_create_is_same_object(
+        peer: CompilerPeer,
+        a: ObjectIrPtr,
+        b: ObjectIrPtr,
+    ) -> BooleanIrPtr;
+    fn compiler_peer_create_object(peer: CompilerPeer) -> ObjectIrPtr;
+
     // value
 
     fn compiler_peer_create_is_nullptr(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
@@ -1469,6 +1588,11 @@ extern "C" {
         value: ValueIrPtr,
         promise: PromiseIrPtr,
     ) -> BooleanIrPtr;
+    fn compiler_peer_create_is_same_object_value(
+        peer: CompilerPeer,
+        value: ValueIrPtr,
+        object: ObjectIrPtr,
+    ) -> BooleanIrPtr;
     fn compiler_peer_create_undefined_to_any(peer: CompilerPeer) -> ValueIrPtr;
     fn compiler_peer_create_null_to_any(peer: CompilerPeer) -> ValueIrPtr;
     fn compiler_peer_create_boolean_to_any(peer: CompilerPeer, boolean: BooleanIrPtr)
@@ -1476,6 +1600,7 @@ extern "C" {
     fn compiler_peer_create_number_to_any(peer: CompilerPeer, number: NumberIrPtr) -> ValueIrPtr;
     fn compiler_peer_create_closure_to_any(peer: CompilerPeer, closure: ClosureIrPtr)
         -> ValueIrPtr;
+    fn compiler_peer_create_object_to_any(peer: CompilerPeer, object: ObjectIrPtr) -> ValueIrPtr;
     fn compiler_peer_create_value_phi(
         peer: CompilerPeer,
         then_value: ValueIrPtr,
@@ -1507,11 +1632,20 @@ extern "C" {
         value: PromiseIrPtr,
         dest: ValueIrPtr,
     );
+    fn compiler_peer_create_store_object_to_value(
+        peer: CompilerPeer,
+        value: ObjectIrPtr,
+        dest: ValueIrPtr,
+    );
     fn compiler_peer_create_store_value_to_value(
         peer: CompilerPeer,
         value: ValueIrPtr,
         dest: ValueIrPtr,
     );
+    fn compiler_peer_create_load_boolean_from_value(
+        peer: CompilerPeer,
+        value: ValueIrPtr,
+    ) -> BooleanIrPtr;
     fn compiler_peer_create_load_closure_from_value(
         peer: CompilerPeer,
         value: ValueIrPtr,
@@ -1543,6 +1677,7 @@ extern "C" {
     fn compiler_peer_create_store_number_to_retv(peer: CompilerPeer, value: NumberIrPtr);
     fn compiler_peer_create_store_closure_to_retv(peer: CompilerPeer, value: ClosureIrPtr);
     fn compiler_peer_create_store_promise_to_retv(peer: CompilerPeer, value: PromiseIrPtr);
+    fn compiler_peer_create_store_object_to_retv(peer: CompilerPeer, value: ObjectIrPtr);
     fn compiler_peer_create_store_value_to_retv(peer: CompilerPeer, value: ValueIrPtr);
     fn compiler_peer_get_exception(peer: CompilerPeer) -> ValueIrPtr;
 
@@ -1643,6 +1778,15 @@ extern "C" {
         peer: CompilerPeer,
         offset: u32,
     ) -> ClosureIrPtr;
+    fn compiler_peer_create_write_object_to_scratch_buffer(
+        peer: CompilerPeer,
+        offset: u32,
+        value: ObjectIrPtr,
+    );
+    fn compiler_peer_create_read_object_from_scratch_buffer(
+        peer: CompilerPeer,
+        offset: u32,
+    ) -> ObjectIrPtr;
     fn compiler_peer_create_write_promise_to_scratch_buffer(
         peer: CompilerPeer,
         offset: u32,
@@ -1666,6 +1810,19 @@ extern "C" {
 
     fn compiler_peer_create_get(peer: CompilerPeer, symbol: u32) -> ValueIrPtr;
     fn compiler_peer_create_set(peer: CompilerPeer, symbol: u32, value: ValueIrPtr);
+    fn compiler_peer_create_create_data_property(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        symbol: u32,
+        value: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
+    fn compiler_peer_create_copy_data_properties(
+        peer: CompilerPeer,
+        target: ObjectIrPtr,
+        source: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
 
     // scope cleanup checker
 
@@ -1682,8 +1839,9 @@ extern "C" {
 
     fn compiler_peer_create_debugger(peer: CompilerPeer);
 
-    // unreachable
+    // assertions
 
+    fn compiler_peer_create_assert(peer: CompilerPeer, assert: BooleanIrPtr, msg: *const c_char);
     fn compiler_peer_create_unreachable(peer: CompilerPeer, msg: *const c_char);
 
     // helpers

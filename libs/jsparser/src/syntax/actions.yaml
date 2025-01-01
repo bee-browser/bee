@@ -1092,115 +1092,115 @@
 - rule: ImportsList -> ImportsList COMMA ImportSpecifier
   action: undefined
 - rule: KeywordOrIdentifierName -> IDENTIFIER_NAME
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> AWAIT
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> BREAK
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> CASE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> CATCH
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> CLASS
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> CONST
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> CONTINUE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> DEBUGGER
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> DEFAULT
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> DELETE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> DO
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> ELSE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> ENUM
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> EXPORT
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> EXTENDS
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> FALSE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> FINALLY
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> FOR
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> FUNCTION
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> IF
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> IMPORT
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> IN
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> INSTANCEOF
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> NEW
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> NULL
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> RETURN
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> SUPER
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> SWITCH
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> THIS
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> THROW
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> TRUE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> TRY
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> TYPEOF
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> VAR
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> VOID
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> WHILE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> WITH
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> YIELD
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> LET
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> STATIC
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> IMPLEMENTS
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> INTERFACE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> PACKAGE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> PRIVATE
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> PROTECTED
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> PUBLIC
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> AS
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> ASYNC
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> FROM
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> GET
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> META
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> OF
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> SET
-  action: undefined
+  action: nop
 - rule: KeywordOrIdentifierName -> TARGET
-  action: undefined
+  action: nop
 - rule: ExportSpecifier -> ModuleExportName
   action: undefined
 - rule: ExportSpecifier -> ModuleExportName AS ModuleExportName
@@ -2070,7 +2070,7 @@
 - rule: PrimaryExpression_Await -> ArrayLiteral_Await
   action: undefined
 - rule: PrimaryExpression_Await -> ObjectLiteral_Await
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Await -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Await -> ClassExpression_Await
@@ -2142,11 +2142,11 @@
 - rule: DefaultClause_Await -> DEFAULT COLON _DEFAULT_SELECTOR_ StatementList_Await
   action: process_default_clause
 - rule: PropertyName -> LiteralPropertyName
-  action: undefined
+  action: nop
 - rule: PropertyName -> ComputedPropertyName
   action: undefined
 - rule: PropertyName_Yield -> LiteralPropertyName
-  action: undefined
+  action: nop
 - rule: PropertyName_Yield -> ComputedPropertyName_Yield
   action: undefined
 - rule: ShortCircuitExpression_In_Yield -> LogicalORExpression_In_Yield
@@ -2192,11 +2192,11 @@
 - rule: OptionalExpression_Yield -> OptionalExpression_Yield OptionalChain_Yield
   action: undefined
 - rule: PropertyName_Await -> LiteralPropertyName
-  action: undefined
+  action: nop
 - rule: PropertyName_Await -> ComputedPropertyName_Await
   action: undefined
 - rule: PropertyName_Yield_Await -> LiteralPropertyName
-  action: undefined
+  action: nop
 - rule: PropertyName_Yield_Await -> ComputedPropertyName_Yield_Await
   action: undefined
 - rule: ShortCircuitExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await
@@ -2473,12 +2473,16 @@
   action: undefined
 - rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA Elision RBRACK
   action: undefined
-- rule: ObjectLiteral_Await -> LBRACE RBRACE
-  action: undefined
-- rule: ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await RBRACE
-  action: undefined
-- rule: ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await COMMA RBRACE
-  action: undefined
+- rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ RBRACE
+  action: process_object_literal_empty
+- rule: >-
+    ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Await
+    RBRACE
+  action: process_object_literal_list
+- rule: >-
+    ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Await
+    COMMA RBRACE
+  action: process_object_literal_comma
 - rule: >-
     FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters
     RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
@@ -2574,11 +2578,11 @@
     StatementList_Await
   action: process_case_clause
 - rule: LiteralPropertyName -> KeywordOrIdentifierName
-  action: undefined
+  action: process_literal_property_name_identifier_name
 - rule: LiteralPropertyName -> STRING_LITERAL
   action: undefined
 - rule: LiteralPropertyName -> NUMERIC_LITERAL
-  action: undefined
+  action: process_literal_property_name_numeric_literal
 - rule: ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
   action: undefined
 - rule: ComputedPropertyName_Yield -> LBRACK AssignmentExpression_In_Yield RBRACK
@@ -2840,7 +2844,7 @@
 - rule: PrimaryExpression -> ArrayLiteral
   action: undefined
 - rule: PrimaryExpression -> ObjectLiteral
-  action: undefined
+  action: nop
 - rule: PrimaryExpression -> FunctionExpression
   action: nop
 - rule: PrimaryExpression -> ClassExpression
@@ -2994,12 +2998,14 @@
   action: undefined
 - rule: ElementList_Await -> ElementList_Await COMMA Elision SpreadElement_Await
   action: undefined
+- rule: _NEW_OBJECT_ -> (empty)
+  action: process_new_object
 - rule: PropertyDefinitionList_Await -> PropertyDefinition_Await
-  action: undefined
+  action: process_property_definition_list_head
 - rule: >-
     PropertyDefinitionList_Await -> PropertyDefinitionList_Await COMMA
     PropertyDefinition_Await
-  action: undefined
+  action: process_property_definition_list_item
 - rule: >-
     SubstitutionTemplate_Await -> TEMPLATE_HEAD Expression_In_Await
     TemplateSpans_Await
@@ -3063,7 +3069,7 @@
 - rule: PrimaryExpression_Yield -> ArrayLiteral_Yield
   action: undefined
 - rule: PrimaryExpression_Yield -> ObjectLiteral_Yield
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Yield -> ClassExpression_Yield
@@ -3125,7 +3131,7 @@
 - rule: PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await
@@ -3186,12 +3192,12 @@
   action: undefined
 - rule: ArrayLiteral -> LBRACK ElementList COMMA Elision RBRACK
   action: undefined
-- rule: ObjectLiteral -> LBRACE RBRACE
-  action: undefined
-- rule: ObjectLiteral -> LBRACE PropertyDefinitionList RBRACE
-  action: undefined
-- rule: ObjectLiteral -> LBRACE PropertyDefinitionList COMMA RBRACE
-  action: undefined
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ RBRACE
+  action: process_object_literal_empty
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList RBRACE
+  action: process_object_literal_list
+- rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList COMMA RBRACE
+  action: process_object_literal_comma
 - rule: ClassExpression -> CLASS ClassTail
   action: undefined
 - rule: ClassExpression -> CLASS BindingIdentifier ClassTail
@@ -3377,17 +3383,17 @@
 - rule: SpreadElement_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: undefined
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
-  action: undefined
+  action: process_property_definition_reference
 - rule: PropertyDefinition_Await -> CoverInitializedName_Await
-  action: undefined
+  action: process_property_definition_cover
 - rule: >-
     PropertyDefinition_Await -> PropertyName_Await COLON
     AssignmentExpression_In_Await
-  action: undefined
+  action: process_property_definition_key_value
 - rule: PropertyDefinition_Await -> MethodDefinition_Await
   action: undefined
 - rule: PropertyDefinition_Await -> ELLIPSIS AssignmentExpression_In_Await
-  action: undefined
+  action: process_property_definition_spread
 - rule: TemplateSpans_Await -> TEMPLATE_TAIL
   action: undefined
 - rule: TemplateSpans_Await -> TemplateMiddleList_Await TEMPLATE_TAIL
@@ -3416,11 +3422,15 @@
   action: undefined
 - rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA Elision RBRACK
   action: undefined
-- rule: ObjectLiteral_Yield -> LBRACE RBRACE
+- rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ RBRACE
+  action: process_object_literal_empty
+- rule: >-
+    ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield
+    RBRACE
   action: undefined
-- rule: ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield RBRACE
-  action: undefined
-- rule: ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield COMMA RBRACE
+- rule: >-
+    ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield
+    COMMA RBRACE
   action: undefined
 - rule: ClassExpression_Yield -> CLASS ClassTail_Yield
   action: undefined
@@ -3454,15 +3464,15 @@
     ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA Elision
     RBRACK
   action: undefined
-- rule: ObjectLiteral_Yield_Await -> LBRACE RBRACE
+- rule: ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ RBRACE
+  action: process_object_literal_empty
+- rule: >-
+    ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_
+    PropertyDefinitionList_Yield_Await RBRACE
   action: undefined
 - rule: >-
-    ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await
-    RBRACE
-  action: undefined
-- rule: >-
-    ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await COMMA
-    RBRACE
+    ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_
+    PropertyDefinitionList_Yield_Await COMMA RBRACE
   action: undefined
 - rule: ClassExpression_Yield_Await -> CLASS ClassTail_Yield_Await
   action: undefined
@@ -3503,9 +3513,9 @@
 - rule: ElementList -> ElementList COMMA Elision SpreadElement
   action: undefined
 - rule: PropertyDefinitionList -> PropertyDefinition
-  action: undefined
+  action: process_property_definition_list_head
 - rule: PropertyDefinitionList -> PropertyDefinitionList COMMA PropertyDefinition
-  action: undefined
+  action: process_property_definition_list_item
 - rule: SubstitutionTemplate -> TEMPLATE_HEAD Expression_In TemplateSpans
   action: undefined
 - rule: TemplateMiddleList_Tagged -> TEMPLATE_MIDDLE Expression_In
@@ -3830,11 +3840,11 @@
 - rule: ElementList_Yield -> ElementList_Yield COMMA Elision SpreadElement_Yield
   action: undefined
 - rule: PropertyDefinitionList_Yield -> PropertyDefinition_Yield
-  action: undefined
+  action: process_property_definition_list_head
 - rule: >-
     PropertyDefinitionList_Yield -> PropertyDefinitionList_Yield COMMA
     PropertyDefinition_Yield
-  action: undefined
+  action: process_property_definition_list_item
 - rule: ClassTail_Yield -> LBRACE RBRACE
   action: undefined
 - rule: ClassTail_Yield -> ClassHeritage_Yield LBRACE RBRACE
@@ -3884,11 +3894,11 @@
     SpreadElement_Yield_Await
   action: undefined
 - rule: PropertyDefinitionList_Yield_Await -> PropertyDefinition_Yield_Await
-  action: undefined
+  action: process_property_definition_list_head
 - rule: >-
     PropertyDefinitionList_Yield_Await -> PropertyDefinitionList_Yield_Await
     COMMA PropertyDefinition_Yield_Await
-  action: undefined
+  action: process_property_definition_list_item
 - rule: ClassTail_Yield_Await -> LBRACE RBRACE
   action: undefined
 - rule: ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE RBRACE
@@ -3929,15 +3939,15 @@
 - rule: SpreadElement -> ELLIPSIS AssignmentExpression_In
   action: undefined
 - rule: PropertyDefinition -> IdentifierReference
-  action: undefined
+  action: process_property_definition_reference
 - rule: PropertyDefinition -> CoverInitializedName
-  action: undefined
+  action: process_property_definition_cover
 - rule: PropertyDefinition -> PropertyName COLON AssignmentExpression_In
-  action: undefined
+  action: process_property_definition_key_value
 - rule: PropertyDefinition -> MethodDefinition
   action: undefined
 - rule: PropertyDefinition -> ELLIPSIS AssignmentExpression_In
-  action: undefined
+  action: process_property_definition_spread
 - rule: TemplateSpans -> TEMPLATE_TAIL
   action: undefined
 - rule: TemplateSpans -> TemplateMiddleList TEMPLATE_TAIL
@@ -4270,17 +4280,17 @@
 - rule: SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield
   action: undefined
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
-  action: undefined
+  action: process_property_definition_reference
 - rule: PropertyDefinition_Yield -> CoverInitializedName_Yield
-  action: undefined
+  action: process_property_definition_cover
 - rule: >-
     PropertyDefinition_Yield -> PropertyName_Yield COLON
     AssignmentExpression_In_Yield
-  action: undefined
+  action: process_property_definition_key_value
 - rule: PropertyDefinition_Yield -> MethodDefinition_Yield
   action: undefined
 - rule: PropertyDefinition_Yield -> ELLIPSIS AssignmentExpression_In_Yield
-  action: undefined
+  action: process_property_definition_spread
 - rule: ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield
   action: undefined
 - rule: ClassBody_Yield -> ClassElementList_Yield
@@ -4310,19 +4320,19 @@
 - rule: SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
-  action: undefined
+  action: process_property_definition_reference
 - rule: PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await
-  action: undefined
+  action: process_property_definition_cover
 - rule: >-
     PropertyDefinition_Yield_Await -> PropertyName_Yield_Await COLON
     AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_property_definition_key_value
 - rule: PropertyDefinition_Yield_Await -> MethodDefinition_Yield_Await
   action: undefined
 - rule: >-
     PropertyDefinition_Yield_Await -> ELLIPSIS
     AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_property_definition_spread
 - rule: ClassHeritage_Yield_Await -> EXTENDS LeftHandSideExpression_Yield_Await
   action: undefined
 - rule: ClassBody_Yield_Await -> ClassElementList_Yield_Await

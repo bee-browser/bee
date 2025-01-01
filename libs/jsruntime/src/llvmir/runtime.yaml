@@ -75,6 +75,9 @@ functions:
         type: u32
       - name: result
         type: '&Value'
+  - name: create_object
+    args: []
+    ret: '&mut Object'
   - name: get
     args:
       - name: symbol
@@ -88,6 +91,28 @@ functions:
       - name: value
         type: '&Value'
       # TODO(perf): add arguments for inline caching
+  # 7.3.5 CreateDataProperty ( O, P, V )
+  - name: create_data_property
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: name
+        type: u32 # Symbol
+      - name: value
+        type: '&Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
+  # 7.3.25 CopyDataProperties ( target, source, excludedItems )
+  - name: copy_data_properties
+    args:
+      - name: target
+        type: '&mut Object'
+      - name: source
+        type: '&Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
   - name: assert
     args:
       - name: assertion

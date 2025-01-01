@@ -4,10 +4,12 @@ use std::ffi::c_void;
 use jsparser::Symbol;
 
 use crate::logger;
+use crate::objects::Object;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
+use crate::types::Status;
 use crate::types::Value;
 use crate::Runtime;
 
@@ -32,10 +34,15 @@ pub struct RuntimeFunctions {
     await_promise: unsafe extern "C" fn(*mut c_void, u32, u32),
     resume: unsafe extern "C" fn(*mut c_void, u32),
     emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
     // TODO(perf): `get()` and `set()` are slow... Compute the address of the value by using a base
     // address and the offset for each property instead of calling these functions.
     get: unsafe extern "C" fn(*mut c_void, u32) -> *const Value,
     set: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    create_data_property:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
+    copy_data_properties:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
@@ -60,8 +67,11 @@ impl RuntimeFunctions {
             await_promise: runtime_await_promise::<X>,
             resume: runtime_resume::<X>,
             emit_promise_resolved: runtime_emit_promise_resolved::<X>,
+            create_object: runtime_create_object::<X>,
             get: runtime_get::<X>,
             set: runtime_set::<X>,
+            create_data_property: runtime_create_data_property::<X>,
+            copy_data_properties: runtime_copy_data_properties::<X>,
             assert: runtime_assert,
             print_u32: runtime_print_u32,
             print_f64: runtime_print_f64,
@@ -97,6 +107,7 @@ unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Val
         Value::Number(_) => true,
         Value::Closure(_) => true,
         Value::Promise(_) => true,
+        Value::Object(_) => true,
     }
 }
 
@@ -113,6 +124,7 @@ unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Val
         Value::Number(value) => *value,
         Value::Closure(_) => f64::NAN,
         Value::Promise(_) => f64::NAN,
+        Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
     }
 }
 
@@ -354,6 +366,11 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
     runtime.emit_promise_resolved(promise.into(), cloned);
 }
 
+unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void) -> *mut c_void {
+    let runtime = into_runtime!(runtime, X);
+    runtime.create_object() as *mut Object as *mut c_void
+}
+
 unsafe extern "C" fn runtime_get<X>(runtime: *mut c_void, symbol: u32) -> *const Value {
     debug_assert_ne!(symbol, 0);
     let runtime = into_runtime!(runtime, X);
@@ -370,6 +387,60 @@ unsafe extern "C" fn runtime_set<X>(runtime: *mut c_void, symbol: u32, value: *c
     let symbol = Symbol::from(symbol);
     let value = value.as_ref().unwrap();
     runtime.global_object_mut().set(symbol, value);
+}
+
+// 7.3.5 CreateDataProperty ( O, P, V )
+unsafe extern "C" fn runtime_create_data_property<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    name: u32,
+    value: *const Value,
+    retv: *mut Value,
+) -> Status {
+    debug_assert_ne!(name, 0);
+
+    // TODO(refactor): generate ffi-conversion code by script
+    let runtime = into_runtime!(runtime, X);
+    let object = object.cast::<Object>().as_mut().unwrap();
+    let name = Symbol::from(name);
+    let value = value.as_ref().unwrap();
+    let retv = retv.as_mut().unwrap();
+
+    match runtime.create_data_property(object, name, value) {
+        Ok(success) => {
+            *retv = success.into();
+            Status::Normal
+        }
+        Err(exception) => {
+            *retv = exception;
+            Status::Exception
+        }
+    }
+}
+
+// 7.3.25 CopyDataProperties ( target, source, excludedItems )
+unsafe extern "C" fn runtime_copy_data_properties<X>(
+    runtime: *mut c_void,
+    target: *mut c_void,
+    source: *const Value,
+    retv: *mut Value,
+) -> Status {
+    // TODO(refactor): generate ffi-conversion code by script
+    let runtime = into_runtime!(runtime, X);
+    let target = target.cast::<Object>().as_mut().unwrap();
+    let source = source.as_ref().unwrap();
+    let retv = retv.as_mut().unwrap();
+
+    match runtime.copy_data_properties(target, source) {
+        Ok(()) => {
+            *retv = Value::None;
+            Status::Normal
+        }
+        Err(exception) => {
+            *retv = exception;
+            Status::Exception
+        }
+    }
 }
 
 unsafe extern "C" fn runtime_assert(

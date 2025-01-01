@@ -61,6 +61,7 @@ function makeLLVMIRType(type) {
       return 'builder_.getInt16Ty()';
     case 'i32':
     case 'u32':
+    case 'Status':
       return 'builder_.getInt32Ty()';
     case 'f64':
       return 'builder_.getDoubleTy()';
@@ -69,6 +70,7 @@ function makeLLVMIRType(type) {
     case '&mut Capture':
     case '&mut Closure':
     case '&mut Coroutine':
+    case '&mut Object':
     case '&Value':
     case '&mut Value':
     case '*mut Value':
@@ -105,6 +107,8 @@ function makeCType(type) {
       return 'Closure*';
     case '&mut Coroutine':
       return 'Coroutine*';
+    case '&mut Object':
+      return 'Object*';
     case '&Value':
       return 'const Value*';
     case '&mut Value':
@@ -114,6 +118,8 @@ function makeCType(type) {
       return 'Lambda';
     case 'VoidPtr':
       return 'void*';
+    case 'Status':
+      return 'Status';
     case undefined:
       return 'void';
     default:

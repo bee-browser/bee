@@ -25,7 +25,21 @@ pub enum Property {
     },
 }
 
+impl Property {
+    pub fn is_enumerable(&self) -> bool {
+        self.flags().contains(PropertyFlags::ENUMERABLE)
+    }
+
+    pub fn flags(&self) -> PropertyFlags {
+        match self {
+            Self::Data { flags, .. } => *flags,
+            Self::Accessor { flags } => *flags,
+        }
+    }
+}
+
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct PropertyFlags: u8 {
         /// The `[[Writable]]` attribute.
         ///
@@ -101,44 +115,42 @@ impl Object {
     }
 
     // TODO(feat): 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
-    pub fn define_own_property(&mut self, name: Symbol, prop: Property) {
+    pub fn define_own_property(&mut self, name: Symbol, prop: Property) -> Result<bool, Value> {
         self.properties.insert(name, prop);
+        Ok(true)
+    }
+
+    pub fn iter_own_properties(&self) -> impl Iterator<Item = (Symbol, &Property)> {
+        self.properties.iter().map(|(symbol, desc)| (*symbol, desc))
     }
 }
 
 // 19 The Global Object
 impl Object {
     pub fn define_builtin_global_properties(&mut self) {
+        macro_rules! define {
+            ($name:expr, $value:expr) => {
+                let result = self.define_own_property(
+                    $name,
+                    Property::Data {
+                        value: $value,
+                        // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
+                        flags: PropertyFlags::empty(),
+                    },
+                );
+                debug_assert!(matches!(result, Ok(true)));
+            };
+        }
+
         // TODO: 19.1.1 globalThis
 
         // 19.1.2 Infinity
-        self.define_own_property(
-            Symbol::INFINITY,
-            Property::Data {
-                value: Value::Number(f64::INFINITY),
-                // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
-                flags: PropertyFlags::empty(),
-            },
-        );
+        define! {Symbol::INFINITY, Value::Number(f64::INFINITY)}
 
         // 19.1.3 NaN
-        self.define_own_property(
-            Symbol::NAN,
-            Property::Data {
-                value: Value::Number(f64::NAN),
-                // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
-                flags: PropertyFlags::empty(),
-            },
-        );
+        define! {Symbol::NAN, Value::Number(f64::NAN)}
 
         // 19.1.4 undefined
-        self.define_own_property(
-            Symbol::UNDEFINED,
-            Property::Data {
-                value: Value::Undefined,
-                // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
-                flags: PropertyFlags::empty(),
-            },
-        );
+        define! {Symbol::UNDEFINED, Value::Undefined}
     }
 }

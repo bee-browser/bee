@@ -44,6 +44,8 @@ async function main(args, options) {
         return 'Value::Number(f64::INFINITY)';
       case '-Infinity':
         return 'Value::Number(-f64::INFINITY)';
+      case 'object':
+        return 'Value::Object(std::ptr::null_mut())';
       default:
         return `Value::from(${value})`;
     }
@@ -55,6 +57,7 @@ async function main(args, options) {
     const script = await Deno.readTextFile(test);
     const lines = script.split('\n').map((line) => line.trim());
     const sequencedValues = lines
+      .filter((line) => !line.startsWith('// '))
       .filter((line) => line.includes('///='))
       .map((line) => line.split('///=')[1].trim())
       .map(mapValue);

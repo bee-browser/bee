@@ -496,6 +496,23 @@ class Compiler {
     builder_->CreateCall(func, {runtime_, promise, result});
   }
 
+  // object
+
+  llvm::Value* CreateIsObject(llvm::Value* value_ptr) {
+    auto* kind = CreateLoadValueKindFromValue(value_ptr);
+    return builder_->CreateICmpEQ(kind, builder_->getInt8(kValueKindObject),
+                                  REG_NAME("is_object"));
+  }
+
+  llvm::Value* CreateIsSameObject(llvm::Value* a, llvm::Value* b) {
+    return builder_->CreateICmpEQ(a, b, REG_NAME("is_same_object"));
+  }
+
+  llvm::Value* CreateObject() {
+    auto* func = types_->CreateRuntimeCreateObject();
+    return builder_->CreateCall(func, {runtime_}, REG_NAME("object.ptr"));
+  }
+
   // value
 
   llvm::Value* CreateIsNullptr(llvm::Value* value) {
@@ -542,6 +559,11 @@ class Compiler {
     return builder_->CreateICmpEQ(value, promise, REG_NAME("is_same_promise_value"));
   }
 
+  llvm::Value* CreateIsSameObjectValue(llvm::Value* value_ptr, llvm::Value* promise) {
+    auto* value = CreateLoadObjectFromValue(value_ptr);
+    return builder_->CreateICmpEQ(value, promise, REG_NAME("is_same_object_value"));
+  }
+
   llvm::Value* CreateUndefinedToAny() {
     auto* value_ptr = CreateAlloc1(types_->CreateValueType(), REG_NAME("any.ptr"));
     CreateStoreUndefinedToValue(value_ptr);
@@ -569,6 +591,12 @@ class Compiler {
   llvm::Value* CreateClosureToAny(llvm::Value* closure) {
     auto* value_ptr = CreateAlloc1(types_->CreateValueType(), REG_NAME("any.ptr"));
     CreateStoreClosureToValue(closure, value_ptr);
+    return value_ptr;
+  }
+
+  llvm::Value* CreateObjectToAny(llvm::Value* object) {
+    auto* value_ptr = CreateAlloc1(types_->CreateValueType(), REG_NAME("any.ptr"));
+    CreateStoreObjectToValue(object, value_ptr);
     return value_ptr;
   }
 
@@ -625,11 +653,21 @@ class Compiler {
     CreateStoreValueHolderToValue(value, dest);
   }
 
+  void CreateStoreObjectToValue(llvm::Value* value, llvm::Value* dest) {
+    CreateStoreValueKindToValue(kValueKindObject, dest);
+    CreateStoreValueHolderToValue(value, dest);
+  }
+
   void CreateStoreValueToValue(llvm::Value* value_ptr, llvm::Value* dest) {
     auto* kind = CreateLoadValueKindFromValue(value_ptr);
     CreateStoreValueKindToValue(kind, dest);
     auto* holder = CreateLoadValueHolderFromValue(value_ptr);
     CreateStoreValueHolderToValue(holder, dest);
+  }
+
+  llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("value.boolean"));
   }
 
   llvm::Value* CreateLoadClosureFromValue(llvm::Value* value_ptr) {
@@ -640,6 +678,11 @@ class Compiler {
   llvm::Value* CreateLoadPromiseFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("value.promise"));
+  }
+
+  llvm::Value* CreateLoadObjectFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("value.object"));
   }
 
   // argv
@@ -687,6 +730,10 @@ class Compiler {
 
   void CreateStorePromiseToRetv(llvm::Value* value) {
     CreateStorePromiseToValue(value, retv_);
+  }
+
+  void CreateStoreObjectToRetv(llvm::Value* value) {
+    CreateStoreObjectToValue(value, retv_);
   }
 
   void CreateStoreValueToRetv(llvm::Value* value) {
@@ -884,6 +931,20 @@ class Compiler {
     return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("scratch.closure"));
   }
 
+  void CreateWriteObjectToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.object.ptr"));
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateReadObjectFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.object.ptr"));
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("scratch.object"));
+  }
+
   void CreateWritePromiseToScratchBuffer(uint32_t offset, llvm::Value* value) {
     auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
     auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
@@ -922,6 +983,25 @@ class Compiler {
   void CreateSet(uint32_t symbol, llvm::Value* value) {
     auto* func = types_->CreateRuntimeSet();
     builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol), value});
+  }
+
+  // 7.3.5 CreateDataProperty ( O, P, V )
+  llvm::Value* CreateCreateDataProperty(llvm::Value* object,
+                                        uint32_t symbol,
+                                        llvm::Value* value,
+                                        llvm::Value* retv) {
+    auto* func = types_->CreateRuntimeCreateDataProperty();
+    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(symbol), value, retv},
+                                REG_NAME("runtime.create_data_property.status.ptr"));
+  }
+
+  // 7.3.25 CopyDataProperties ( target, source, excludedItems )
+  llvm::Value* CreateCopyDataProperties(llvm::Value* target,
+                                        llvm::Value* source,
+                                        llvm::Value* retv) {
+    auto* func = types_->CreateRuntimeCopyDataProperties();
+    return builder_->CreateCall(func, {runtime_, target, source, retv},
+                                REG_NAME("runtime.copy_data_properties.status.ptr"));
   }
 
   // scope cleanup checker
@@ -972,7 +1052,13 @@ class Compiler {
     builder_->CreateCall(func, {runtime_});
   }
 
-  // unreachable
+  // assertions
+
+  void CreateAssert(llvm::Value* assertion, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.assert.msg"));
+    auto* func = types_->CreateRuntimeAssert();
+    builder_->CreateCall(func, {runtime_, assertion, msg_value});
+  }
 
   void CreateUnreachable(const char* msg = "") {
     CreateAssert(builder_->getFalse(), msg);
@@ -1016,6 +1102,7 @@ class Compiler {
   static constexpr uint8_t kValueKindNumber = static_cast<uint8_t>(Value::Tag::Number);
   static constexpr uint8_t kValueKindClosure = static_cast<uint8_t>(Value::Tag::Closure);
   static constexpr uint8_t kValueKindPromise = static_cast<uint8_t>(Value::Tag::Promise);
+  static constexpr uint8_t kValueKindObject = static_cast<uint8_t>(Value::Tag::Object);
 
   void CreateStore(llvm::Value* value, llvm::Value* dest) {
     builder_->CreateStore(value, dest);
@@ -1131,11 +1218,6 @@ class Compiler {
   llvm::Value* CreateLoadValueHolderFromValue(llvm::Value* value_ptr) {
     auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
     return builder_->CreateLoad(builder_->getInt64Ty(), ptr, REG_NAME("value.holder"));
-  }
-
-  llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
-    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
-    return builder_->CreateLoad(builder_->getInt1Ty(), ptr, REG_NAME("value.boolean"));
   }
 
   llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
@@ -1317,12 +1399,6 @@ class Compiler {
   }
 
   // helpers
-
-  void CreateAssert(llvm::Value* assertion, const char* msg = "") {
-    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.assert.msg"));
-    auto* func = types_->CreateRuntimeAssert();
-    builder_->CreateCall(func, {runtime_, assertion, msg_value});
-  }
 
   void CreatePrintU32(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_u32.msg"));

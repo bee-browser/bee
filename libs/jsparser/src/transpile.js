@@ -162,6 +162,7 @@ class Transpiler {
           // conflicts in the LALR(1) parsing table generation when you actually try this.
           //rewriteCPEAAPL,
           addActions,
+          modifyObjectLiteral,
           modifyFunctionDeclaration,
           modifyAsyncFunctionDeclaration,
           modifyIfStatement,
@@ -594,6 +595,7 @@ function addActions(rules) {
   log.debug('Adding production rules for semantic actions...');
 
   const ACTIONS = [
+    '_NEW_OBJECT_',
     '_FUNCTION_CONTEXT_',
     '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
@@ -630,6 +632,21 @@ function addActions(rules) {
     });
   }
 
+  return rules;
+}
+
+function modifyObjectLiteral(rules) {
+  const TARGETS = [
+    {
+      term: '`{`',
+      action: '_NEW_OBJECT_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying ObjectLiteral...');
+  const rule = rules.find((rule) => rule.name === 'ObjectLiteral[Yield, Await]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 

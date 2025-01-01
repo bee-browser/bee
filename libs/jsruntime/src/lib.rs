@@ -8,6 +8,7 @@ mod types;
 
 use std::ffi::c_void;
 
+use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use lambda::LambdaId;
@@ -113,7 +114,8 @@ impl<X> Runtime<X> {
         // TODO: add `flags` to the arguments.
         let flags = PropertyFlags::empty();
         let prop = Property::Data { value, flags };
-        self.global_object.define_own_property(symbol, prop);
+        let result = self.global_object.define_own_property(symbol, prop);
+        debug_assert!(matches!(result, Ok(true)));
     }
 
     pub fn evaluate(&mut self, module: Module) -> Result<Value, Value> {
@@ -154,6 +156,46 @@ impl<X> Runtime<X> {
 
     fn global_object_mut(&mut self) -> &mut Object {
         &mut self.global_object
+    }
+
+    fn create_object(&mut self) -> &mut Object {
+        // TODO: GC
+        self.allocator.alloc(Default::default())
+    }
+
+    // 7.3.5 CreateDataProperty ( O, P, V )
+    fn create_data_property(
+        &mut self,
+        object: &mut Object,
+        name: Symbol,
+        value: &Value,
+    ) -> Result<bool, Value> {
+        object.define_own_property(
+            name,
+            Property::Data {
+                value: value.clone(),
+                flags: PropertyFlags::WRITABLE
+                    | PropertyFlags::ENUMERABLE
+                    | PropertyFlags::CONFIGURABLE,
+            },
+        )
+    }
+
+    // 7.3.25 CopyDataProperties ( target, source, excludedItems )
+    fn copy_data_properties(&mut self, target: &mut Object, source: &Value) -> Result<(), Value> {
+        let from = source.to_object()?;
+        for (key, desc) in from.iter_own_properties() {
+            // TODO: excludedItems
+            if desc.is_enumerable() {
+                // TODO: 7.3.2 Get ( O, P )
+                let value = match desc {
+                    Property::Data { value, .. } => value,
+                    Property::Accessor { .. } => todo!(),
+                };
+                self.create_data_property(target, key, value)?;
+            }
+        }
+        Ok(())
     }
 }
 
