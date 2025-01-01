@@ -1012,7 +1012,9 @@ impl<'r, 's> Compiler<'r, 's> {
         let object = self.peek_object();
         let retv = self.bridge.create_retv();
 
-        let status = self.bridge.create_copy_data_properties(object, from_value, retv);
+        let status = self
+            .bridge
+            .create_copy_data_properties(object, from_value, retv);
         self.create_check_status_for_exception(status, retv);
     }
 

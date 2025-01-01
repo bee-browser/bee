@@ -1111,7 +1111,12 @@ impl CompilerBridge {
     }
 
     // 7.3.25 CopyDataProperties ( target, source, excludedItems )
-    pub fn create_copy_data_properties(&self, target: ObjectIr, source: ValueIr, retv: ValueIr) -> StatusIr {
+    pub fn create_copy_data_properties(
+        &self,
+        target: ObjectIr,
+        source: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
         status_ir! {
             compiler_peer_create_copy_data_properties(self.0, target.0, source.0, retv.0)
         }

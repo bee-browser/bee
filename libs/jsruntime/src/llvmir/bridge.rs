@@ -41,7 +41,8 @@ pub struct RuntimeFunctions {
     set: unsafe extern "C" fn(*mut c_void, u32, *const Value),
     create_data_property:
         unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
-    copy_data_properties: unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
+    copy_data_properties:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
