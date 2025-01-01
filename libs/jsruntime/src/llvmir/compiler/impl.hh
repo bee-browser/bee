@@ -985,6 +985,7 @@ class Compiler {
     builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol), value});
   }
 
+  // 7.3.5 CreateDataProperty ( O, P, V )
   llvm::Value* CreateCreateDataProperty(llvm::Value* object,
                                         uint32_t symbol,
                                         llvm::Value* value,

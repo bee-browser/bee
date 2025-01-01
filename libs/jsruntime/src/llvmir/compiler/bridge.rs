@@ -1098,6 +1098,7 @@ impl CompilerBridge {
         }
     }
 
+    // 7.3.5 CreateDataProperty ( O, P, V )
     pub fn create_create_data_property(
         &self,
         object: ObjectIr,
