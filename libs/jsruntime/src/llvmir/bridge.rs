@@ -41,6 +41,7 @@ pub struct RuntimeFunctions {
     set: unsafe extern "C" fn(*mut c_void, u32, *const Value),
     create_data_property:
         unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
+    copy_data_properties: unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
@@ -69,6 +70,7 @@ impl RuntimeFunctions {
             get: runtime_get::<X>,
             set: runtime_set::<X>,
             create_data_property: runtime_create_data_property::<X>,
+            copy_data_properties: runtime_copy_data_properties::<X>,
             assert: runtime_assert,
             print_u32: runtime_print_u32,
             print_f64: runtime_print_f64,
@@ -406,6 +408,31 @@ unsafe extern "C" fn runtime_create_data_property<X>(
     match runtime.create_data_property(object, name, value) {
         Ok(success) => {
             *retv = success.into();
+            Status::Normal
+        }
+        Err(exception) => {
+            *retv = exception;
+            Status::Exception
+        }
+    }
+}
+
+// 7.3.25 CopyDataProperties ( target, source, excludedItems )
+unsafe extern "C" fn runtime_copy_data_properties<X>(
+    runtime: *mut c_void,
+    target: *mut c_void,
+    source: *const Value,
+    retv: *mut Value,
+) -> Status {
+    // TODO(refactor): generate ffi-conversion code by script
+    let runtime = into_runtime!(runtime, X);
+    let target = target.cast::<Object>().as_mut().unwrap();
+    let source = source.as_ref().unwrap();
+    let retv = retv.as_mut().unwrap();
+
+    match runtime.copy_data_properties(target, source) {
+        Ok(()) => {
+            *retv = Value::None;
             Status::Normal
         }
         Err(exception) => {

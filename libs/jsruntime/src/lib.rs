@@ -180,6 +180,23 @@ impl<X> Runtime<X> {
             },
         )
     }
+
+    // 7.3.25 CopyDataProperties ( target, source, excludedItems )
+    fn copy_data_properties(&mut self, target: &mut Object, source: &Value) -> Result<(), Value> {
+        let from = source.to_object()?;
+        for (key, desc) in from.iter_own_properties() {
+            // TODO: excludedItems
+            if desc.is_enumerable() {
+                // TODO: 7.3.2 Get ( O, P )
+                let value = match desc {
+                    Property::Data { value, .. } => value,
+                    Property::Accessor { .. } => todo!(),
+                };
+                self.create_data_property(target, key, value)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<X> Default for Runtime<X>

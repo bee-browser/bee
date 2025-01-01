@@ -2,6 +2,7 @@ use std::ffi::c_void;
 use std::mem::offset_of;
 use std::ptr::addr_eq;
 
+use crate::objects::Object;
 use crate::Runtime;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
@@ -32,6 +33,19 @@ static_assertions::const_assert_eq!(size_of::<Value>(), 16);
 static_assertions::const_assert_eq!(align_of::<Value>(), 8);
 
 impl Value {
+    // 7.1.18 ToObject ( argument )
+    pub fn to_object(&self) -> Result<&mut Object, Value> {
+        match self {
+            Self::Undefined | Self::Null => Err(1001.into()), // TODO: TypeError
+            Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
+            Self::Number(_value) => unimplemented!("new Number(value)"),
+            Self::Closure(_value) => unimplemented!("new Function()"),
+            Self::Promise(_value) => unimplemented!("new Promise()"),
+            Self::Object(value) => unsafe { Ok(value.cast::<Object>().as_mut().unwrap()) },
+            Self::None => unreachable!(),
+        }
+    }
+
     pub fn into_result(self, status: Status) -> Result<Value, Value> {
         match status {
             Status::Normal => Ok(self),

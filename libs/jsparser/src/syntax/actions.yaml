@@ -3383,17 +3383,17 @@
 - rule: SpreadElement_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: undefined
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
-  action: process_property_definition_identifier_reference
+  action: process_property_definition_reference
 - rule: PropertyDefinition_Await -> CoverInitializedName_Await
-  action: syntax_error
+  action: process_property_definition_cover
 - rule: >-
     PropertyDefinition_Await -> PropertyName_Await COLON
     AssignmentExpression_In_Await
-  action: process_property_definition_name_value
+  action: process_property_definition_key_value
 - rule: PropertyDefinition_Await -> MethodDefinition_Await
   action: undefined
 - rule: PropertyDefinition_Await -> ELLIPSIS AssignmentExpression_In_Await
-  action: undefined
+  action: process_property_definition_spread
 - rule: TemplateSpans_Await -> TEMPLATE_TAIL
   action: undefined
 - rule: TemplateSpans_Await -> TemplateMiddleList_Await TEMPLATE_TAIL
@@ -3939,15 +3939,15 @@
 - rule: SpreadElement -> ELLIPSIS AssignmentExpression_In
   action: undefined
 - rule: PropertyDefinition -> IdentifierReference
-  action: process_property_definition_identifier_reference
+  action: process_property_definition_reference
 - rule: PropertyDefinition -> CoverInitializedName
-  action: syntax_error
+  action: process_property_definition_cover
 - rule: PropertyDefinition -> PropertyName COLON AssignmentExpression_In
-  action: process_property_definition_name_value
+  action: process_property_definition_key_value
 - rule: PropertyDefinition -> MethodDefinition
   action: undefined
 - rule: PropertyDefinition -> ELLIPSIS AssignmentExpression_In
-  action: undefined
+  action: process_property_definition_spread
 - rule: TemplateSpans -> TEMPLATE_TAIL
   action: undefined
 - rule: TemplateSpans -> TemplateMiddleList TEMPLATE_TAIL
@@ -4280,17 +4280,17 @@
 - rule: SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield
   action: undefined
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
-  action: process_property_definition_identifier_reference
+  action: process_property_definition_reference
 - rule: PropertyDefinition_Yield -> CoverInitializedName_Yield
-  action: syntax_error
+  action: process_property_definition_cover
 - rule: >-
     PropertyDefinition_Yield -> PropertyName_Yield COLON
     AssignmentExpression_In_Yield
-  action: process_property_definition_name_value
+  action: process_property_definition_key_value
 - rule: PropertyDefinition_Yield -> MethodDefinition_Yield
   action: undefined
 - rule: PropertyDefinition_Yield -> ELLIPSIS AssignmentExpression_In_Yield
-  action: undefined
+  action: process_property_definition_spread
 - rule: ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield
   action: undefined
 - rule: ClassBody_Yield -> ClassElementList_Yield
@@ -4320,19 +4320,19 @@
 - rule: SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
-  action: process_property_definition_identifier_reference
+  action: process_property_definition_reference
 - rule: PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await
-  action: syntax_error
+  action: process_property_definition_cover
 - rule: >-
     PropertyDefinition_Yield_Await -> PropertyName_Yield_Await COLON
     AssignmentExpression_In_Yield_Await
-  action: process_property_definition_name_value
+  action: process_property_definition_key_value
 - rule: PropertyDefinition_Yield_Await -> MethodDefinition_Yield_Await
   action: undefined
 - rule: >-
     PropertyDefinition_Yield_Await -> ELLIPSIS
     AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_property_definition_spread
 - rule: ClassHeritage_Yield_Await -> EXTENDS LeftHandSideExpression_Yield_Await
   action: undefined
 - rule: ClassBody_Yield_Await -> ClassElementList_Yield_Await

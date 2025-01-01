@@ -334,7 +334,8 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::PropertyName(symbol) => self.process_property_name(*symbol),
-            CompileCommand::DataProperty => self.process_data_property(),
+            CompileCommand::CreateDataProperty => self.process_create_data_property(),
+            CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -951,7 +952,8 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::PropertyName(symbol));
     }
 
-    fn process_data_property(&mut self) {
+    // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
+    fn process_create_data_property(&mut self) {
         let (operand, _) = self.dereference();
         let name = self.pop_property_name();
         let object = self.peek_object();
@@ -992,6 +994,26 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.create_br(merge_block);
         // }
         self.bridge.set_basic_block(merge_block);
+    }
+
+    // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
+    // PropertyDefinition : ... AssignmentExpression
+    fn process_copy_data_properties(&mut self) {
+        // 1. Let exprValue be ? Evaluation of AssignmentExpression.
+        let (operand, _) = self.dereference();
+
+        // 2. Let fromValue be ? GetValue(exprValue).
+        let from_value = self.create_to_any(&operand);
+
+        // TODO: 3. Let excludedNames be a new empty List.
+
+        // 4. Perform ? CopyDataProperties(object, fromValue, excludedNames).
+
+        let object = self.peek_object();
+        let retv = self.bridge.create_retv();
+
+        let status = self.bridge.create_copy_data_properties(object, from_value, retv);
+        self.create_check_status_for_exception(status, retv);
     }
 
     fn peek_object(&mut self) -> ObjectIr {

@@ -1216,17 +1216,20 @@ impl FunctionAnalysis {
 
     fn process_property_definition(&mut self, kind: PropertyDefinitionKind) {
         match kind {
-            PropertyDefinitionKind::IdentifierReference => {
+            PropertyDefinitionKind::Reference => {
                 let symbol = match self.commands.pop() {
                     Some(CompileCommand::Reference(symbol)) => symbol,
                     command => unreachable!("{command:?}"),
                 };
                 self.commands.push(CompileCommand::PropertyName(symbol));
                 self.commands.push(CompileCommand::Reference(symbol));
-                self.commands.push(CompileCommand::DataProperty);
+                self.commands.push(CompileCommand::CreateDataProperty);
             }
-            PropertyDefinitionKind::NameValuePair => {
-                self.commands.push(CompileCommand::DataProperty);
+            PropertyDefinitionKind::KeyValue => {
+                self.commands.push(CompileCommand::CreateDataProperty);
+            }
+            PropertyDefinitionKind::Spread => {
+                self.commands.push(CompileCommand::CopyDataProperties);
             }
         }
     }
@@ -1672,7 +1675,8 @@ pub enum CompileCommand {
 
     // object
     PropertyName(Symbol),
-    DataProperty,
+    CreateDataProperty,
+    CopyDataProperties,
 
     // update operators
     PostfixIncrement,

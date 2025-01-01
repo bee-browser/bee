@@ -792,8 +792,19 @@ StatusIrPtr compiler_peer_create_create_data_property(CompilerPeer peer,
   assert(object != nullptr);
   assert(name != 0);
   assert(value != nullptr);
+  assert(retv != nullptr);
   return PEER_STATUS(IMPL(peer)->CreateCreateDataProperty(LLVM_VALUE(object), name,
                                                           LLVM_VALUE(value), LLVM_VALUE(retv)));
+}
+
+StatusIrPtr compiler_peer_create_copy_data_properties(CompilerPeer peer,
+                                                      ObjectIrPtr target,
+                                                      ValueIrPtr source,
+                                                      ValueIrPtr retv) {
+  assert(target != nullptr);
+  assert(source != nullptr);
+  assert(retv != nullptr);
+  return PEER_STATUS(IMPL(peer)->CreateCopyDataProperties(LLVM_VALUE(target), LLVM_VALUE(source), LLVM_VALUE(retv)));
 }
 
 // scope cleanup checker

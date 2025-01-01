@@ -994,6 +994,15 @@ class Compiler {
                                 REG_NAME("runtime.create_data_property.status.ptr"));
   }
 
+  // 7.3.25 CopyDataProperties ( target, source, excludedItems )
+  llvm::Value* CreateCopyDataProperties(llvm::Value* target,
+                                        llvm::Value* source,
+                                        llvm::Value* retv) {
+    auto* func = types_->CreateRuntimeCopyDataProperties();
+    return builder_->CreateCall(func, {runtime_, target, source, retv},
+                                REG_NAME("runtime.copy_data_properties.status.ptr"));
+  }
+
   // scope cleanup checker
 
   void EnableScopeCleanupChecker(bool is_coroutine) {

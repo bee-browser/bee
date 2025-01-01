@@ -247,8 +247,9 @@ pub enum Node<'s> {
 
 #[derive(Clone, Debug)]
 pub enum PropertyDefinitionKind {
-    IdentifierReference,
-    NameValuePair,
+    Reference,
+    KeyValue,
+    Spread,
 }
 
 #[derive(Clone, Debug)]
@@ -546,7 +547,6 @@ where
     // BindingIdentifier_Yield_Await : yield
     // BindingIdentifier_Await : await
     // BindingIdentifier_Yield_Await : await
-    // PropertyDefinition : CoverInitializedName
     fn syntax_error(&mut self) -> Result<(), Error> {
         Err(Error::SyntaxError)
     }
@@ -1045,25 +1045,39 @@ where
 
     // PropertyDefinition[Yield, Await] :
     //   IdentifierReference[?Yield, ?Await]
-    fn process_property_definition_identifier_reference(&mut self) -> Result<(), Error> {
+    fn process_property_definition_reference(&mut self) -> Result<(), Error> {
         let name = match self.top().detail {
             Detail::IdentifierReference(symbol) => symbol,
             ref detail => unreachable!("{detail:?}"),
         };
-        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::IdentifierReference));
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::Reference));
         self.replace(1, Detail::PropertyDefinition(name));
         Ok(())
     }
 
     // PropertyDefinition[Yield, Await] :
+    //   CoverInitializedName[?Yield, ?Await]
+    fn process_property_definition_cover(&mut self) -> Result<(), Error> {
+        self.syntax_error()
+    }
+
+    // PropertyDefinition[Yield, Await] :
     //   PropertyName[?Yield, ?Await] : AssignmentExpression[+In, ?Yield, ?Await]
-    fn process_property_definition_name_value(&mut self) -> Result<(), Error> {
+    fn process_property_definition_key_value(&mut self) -> Result<(), Error> {
         let name = match self.nth(2).detail {
             Detail::Identifier(symbol) => symbol,
             ref detail => unreachable!("{detail:?}"),
         };
-        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::NameValuePair));
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::KeyValue));
         self.replace(3, Detail::PropertyDefinition(name));
+        Ok(())
+    }
+
+    // PropertyDefinition[Yield, Await] :
+    //   ... AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_property_definition_spread(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::Spread));
+        self.replace(2, Detail::PropertyDefinition(Symbol::NONE));
         Ok(())
     }
 

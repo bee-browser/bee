@@ -25,7 +25,21 @@ pub enum Property {
     },
 }
 
+impl Property {
+    pub fn is_enumerable(&self) -> bool {
+        self.flags().contains(PropertyFlags::ENUMERABLE)
+    }
+
+    pub fn flags(&self) -> PropertyFlags {
+        match self {
+            Self::Data { flags, .. } => *flags,
+            Self::Accessor { flags } => *flags,
+        }
+    }
+}
+
 bitflags! {
+    #[derive(Clone, Copy)]
     pub struct PropertyFlags: u8 {
         /// The `[[Writable]]` attribute.
         ///
@@ -104,6 +118,10 @@ impl Object {
     pub fn define_own_property(&mut self, name: Symbol, prop: Property) -> Result<bool, Value> {
         self.properties.insert(name, prop);
         Ok(true)
+    }
+
+    pub fn iter_own_properties(&self) -> impl Iterator<Item = (Symbol, &Property)> {
+        self.properties.iter().map(|(symbol, desc)| (*symbol, desc))
     }
 }
 
