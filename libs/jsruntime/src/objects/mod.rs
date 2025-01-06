@@ -66,7 +66,17 @@ pub struct Object {
 impl Object {
     pub fn get(&self, name: Symbol) -> Value {
         match self.properties.get(&name) {
-            Some(Property::Data { ref value, .. }) => value.clone(),
+            Some(Property::Data { ref value, .. }) => {
+                // TODO(perf): Returning the reference to the value improves the performance.
+                // But it doesn't work in the case of Property::Accessor if we don't use a
+                // *scratch* memory area in the object in order to store the computation result
+                // temporarily and return it from this method as the return value.
+                //
+                // Returning the reference to the value works properly if and only if the value is
+                // used before it's overwritten.  At this point, we are not sure whether or not
+                // it's always works in any expression.
+                value.clone()
+            }
             Some(Property::Accessor { .. }) => todo!(),
             None => Value::Undefined,
         }
