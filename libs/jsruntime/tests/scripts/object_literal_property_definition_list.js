@@ -6,6 +6,8 @@ let a = {
   1: 1,
   NaN: NaN,
   Infinity: Infinity,
+  function: function() { return 0; },
+  arrowFunction: () => 1,
 };
 
 print(a); ///=object
@@ -16,3 +18,7 @@ print(a.false); ///=false
 // TODO(test): print(a[1]); ///=1
 print(a.NaN); ///=NaN
 print(a.Infinity); ///=Infinity
+print(a.function); ///=closure
+print(a.function()); ///=0
+print(a.arrowFunction); ///=closure
+print(a.arrowFunction()); ///=1
