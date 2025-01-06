@@ -23,6 +23,7 @@ pub fn initialize() {
 pub struct RuntimeFunctions {
     to_boolean: unsafe extern "C" fn(*mut c_void, *const Value) -> bool,
     to_numeric: unsafe extern "C" fn(*mut c_void, *const Value) -> f64,
+    to_object: unsafe extern "C" fn(*mut c_void, *const Value) -> *mut c_void,
     to_int32: unsafe extern "C" fn(*mut c_void, f64) -> i32,
     to_uint32: unsafe extern "C" fn(*mut c_void, f64) -> u32,
     is_loosely_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
@@ -37,10 +38,11 @@ pub struct RuntimeFunctions {
     create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
     // TODO(perf): `get()` and `set()` are slow... Compute the address of the value by using a base
     // address and the offset for each property instead of calling these functions.
-    get: unsafe extern "C" fn(*mut c_void, u32) -> *const Value,
-    set: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    get: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *mut Value),
+    set: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value),
     create_data_property:
         unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
+    has_own_property: unsafe extern "C" fn(*mut c_void, *mut c_void, u32) -> bool,
     copy_data_properties:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
@@ -56,6 +58,7 @@ impl RuntimeFunctions {
         Self {
             to_boolean: runtime_to_boolean,
             to_numeric: runtime_to_numeric,
+            to_object: runtime_to_object,
             to_int32: runtime_to_int32,
             to_uint32: runtime_to_uint32,
             is_loosely_equal: runtime_is_loosely_equal,
@@ -71,6 +74,7 @@ impl RuntimeFunctions {
             get: runtime_get::<X>,
             set: runtime_set::<X>,
             create_data_property: runtime_create_data_property::<X>,
+            has_own_property: runtime_has_own_property::<X>,
             copy_data_properties: runtime_copy_data_properties::<X>,
             assert: runtime_assert,
             print_u32: runtime_print_u32,
@@ -94,6 +98,12 @@ macro_rules! into_value {
     };
 }
 
+macro_rules! into_value_mut {
+    ($value:expr) => {
+        &mut *($value)
+    };
+}
+
 // 7.1.2 ToBoolean ( argument )
 unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Value) -> bool {
     let value = into_value!(value);
@@ -102,7 +112,7 @@ unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Val
         Value::Undefined => false,
         Value::Null => false,
         Value::Boolean(value) => *value,
-        Value::Number(value) if *value == 0.0 => false,
+        Value::Number(0.0) => false,
         Value::Number(value) if value.is_nan() => false,
         Value::Number(_) => true,
         Value::Closure(_) => true,
@@ -119,12 +129,28 @@ unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Val
         Value::None => unreachable!("Value::None"),
         Value::Undefined => f64::NAN,
         Value::Null => 0.0,
-        Value::Boolean(value) if *value => 1.0,
-        Value::Boolean(_) => 0.0,
+        Value::Boolean(true) => 1.0,
+        Value::Boolean(false) => 0.0,
         Value::Number(value) => *value,
         Value::Closure(_) => f64::NAN,
         Value::Promise(_) => f64::NAN,
         Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
+    }
+}
+
+// 7.1.18 ToObject ( argument )
+unsafe extern "C" fn runtime_to_object(_runtime: *mut c_void, value: *const Value) -> *mut c_void {
+    debug_assert_ne!(value, std::ptr::null());
+    let value = into_value!(value);
+
+    match value {
+        Value::None => unreachable!("Value::None"),
+        Value::Undefined | Value::Null => todo!(),
+        Value::Boolean(_value) => todo!(),
+        Value::Number(_value) => todo!(),
+        Value::Closure(_value) => todo!(),
+        Value::Object(value) => *value,
+        Value::Promise(_value) => todo!(),
     }
 }
 
@@ -371,22 +397,46 @@ unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void) -> *mut c_vo
     runtime.create_object() as *mut Object as *mut c_void
 }
 
-unsafe extern "C" fn runtime_get<X>(runtime: *mut c_void, symbol: u32) -> *const Value {
-    debug_assert_ne!(symbol, 0);
+unsafe extern "C" fn runtime_get<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: u32,
+    value: *mut Value,
+) {
+    debug_assert_ne!(runtime, std::ptr::null_mut());
     let runtime = into_runtime!(runtime, X);
-    let symbol = Symbol::from(symbol);
-    match runtime.global_object().get(symbol) {
-        Some(value) => value,
-        None => std::ptr::null(),
-    }
+
+    debug_assert_ne!(key, 0);
+    let key = Symbol::from(key);
+
+    debug_assert_ne!(value, std::ptr::null_mut());
+    let value = into_value_mut!(value);
+
+    *value = match (object as *mut Object).as_ref() {
+        Some(object) => object.get(key),
+        None => runtime.global_object().get(key),
+    };
 }
 
-unsafe extern "C" fn runtime_set<X>(runtime: *mut c_void, symbol: u32, value: *const Value) {
-    debug_assert_ne!(symbol, 0);
+unsafe extern "C" fn runtime_set<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: u32,
+    value: *const Value,
+) {
+    debug_assert_ne!(runtime, std::ptr::null_mut());
     let runtime = into_runtime!(runtime, X);
-    let symbol = Symbol::from(symbol);
+
+    debug_assert_ne!(key, 0);
+    let key = Symbol::from(key);
+
+    debug_assert_ne!(value, std::ptr::null());
     let value = value.as_ref().unwrap();
-    runtime.global_object_mut().set(symbol, value);
+
+    match (object as *mut Object).as_mut() {
+        Some(object) => object.set(key, value),
+        None => runtime.global_object_mut().set(key, value),
+    }
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
@@ -416,6 +466,26 @@ unsafe extern "C" fn runtime_create_data_property<X>(
             Status::Exception
         }
     }
+}
+
+// 7.3.12 HasOwnProperty ( O, P )
+unsafe extern "C" fn runtime_has_own_property<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: u32,
+) -> bool {
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(key, 0);
+    let key = Symbol::from(key);
+
+    let object = match (object as *mut Object).as_mut() {
+        Some(object) => object,
+        None => runtime.global_object(),
+    };
+
+    object.get_own_property(key).is_some()
 }
 
 // 7.3.25 CopyDataProperties ( target, source, excludedItems )

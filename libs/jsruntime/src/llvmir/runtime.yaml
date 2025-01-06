@@ -9,6 +9,11 @@ functions:
       - name: value
         type: '&Value'
     ret: f64
+  - name: to_object
+    args:
+      - name: value
+        type: '&Value'
+    ret: '&mut Object'
   - name: to_int32
     args:
       - name: value
@@ -80,13 +85,18 @@ functions:
     ret: '&mut Object'
   - name: get
     args:
-      - name: symbol
+      - name: object
+        type: '&mut Object'
+      - name: key
         type: u32
+      - name: value
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
-    ret: '&Value'
   - name: set
     args:
-      - name: symbol
+      - name: object
+        type: '&mut Object'
+      - name: key
         type: u32
       - name: value
         type: '&Value'
@@ -96,13 +106,21 @@ functions:
     args:
       - name: object
         type: '&mut Object'
-      - name: name
+      - name: key
         type: u32 # Symbol
       - name: value
         type: '&Value'
       - name: retv
         type: '&mut Value'
     ret: Status
+  # 7.3.12 HasOwnProperty ( O, P )
+  - name: has_own_property
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: key
+        type: u32 # Symbol
+    ret: bool
   # 7.3.25 CopyDataProperties ( target, source, excludedItems )
   - name: copy_data_properties
     args:

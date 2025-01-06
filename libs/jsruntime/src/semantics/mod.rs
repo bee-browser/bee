@@ -2,6 +2,7 @@ mod scope;
 
 use bitflags::bitflags;
 use jsparser::syntax::LiteralPropertyName;
+use jsparser::syntax::MemberExpressionKind;
 use jsparser::syntax::PropertyDefinitionKind;
 use rustc_hash::FxHashSet;
 
@@ -284,6 +285,7 @@ impl<'r> Analyzer<'r> {
             Node::Object => self.handle_object(),
             Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
             Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
+            Node::MemberExpression(kind) => self.handle_member_expression(kind),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
@@ -400,14 +402,18 @@ impl<'r> Analyzer<'r> {
 
     fn handle_literal_property_name(&mut self, name: LiteralPropertyName) {
         match name {
-            LiteralPropertyName::IdentifierName(symbol) => {
-                push_commands!(self; CompileCommand::PropertyName(symbol));
+            LiteralPropertyName::IdentifierName(key) => {
+                push_commands!(self; CompileCommand::PropertyReference(key));
             }
         }
     }
 
     fn handle_property_definition(&mut self, kind: PropertyDefinitionKind) {
         analysis_mut!(self).process_property_definition(kind);
+    }
+
+    fn handle_member_expression(&mut self, kind: MemberExpressionKind) {
+        analysis_mut!(self).process_member_expression(kind);
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
@@ -1204,7 +1210,8 @@ impl FunctionAnalysis {
 
         let (symbol, _) = self.symbol_stack.pop().unwrap();
         if init {
-            self.commands.push(CompileCommand::Reference(symbol));
+            self.commands
+                .push(CompileCommand::VariableReference(symbol));
             self.commands.push(CompileCommand::Swap);
             self.commands.push(CompileCommand::Assignment);
         }
@@ -1218,11 +1225,13 @@ impl FunctionAnalysis {
         match kind {
             PropertyDefinitionKind::Reference => {
                 let symbol = match self.commands.pop() {
-                    Some(CompileCommand::Reference(symbol)) => symbol,
+                    Some(CompileCommand::VariableReference(symbol)) => symbol,
                     command => unreachable!("{command:?}"),
                 };
-                self.commands.push(CompileCommand::PropertyName(symbol));
-                self.commands.push(CompileCommand::Reference(symbol));
+                self.commands
+                    .push(CompileCommand::PropertyReference(symbol));
+                self.commands
+                    .push(CompileCommand::VariableReference(symbol));
                 self.commands.push(CompileCommand::CreateDataProperty);
             }
             PropertyDefinitionKind::KeyValue => {
@@ -1234,8 +1243,18 @@ impl FunctionAnalysis {
         }
     }
 
+    fn process_member_expression(&mut self, kind: MemberExpressionKind) {
+        match kind {
+            MemberExpressionKind::PropertyAccessWithIdentifierKey(key) => {
+                self.commands.push(CompileCommand::ToObject);
+                self.commands.push(CompileCommand::PropertyReference(key));
+            }
+        }
+    }
+
     fn process_identifier_reference(&mut self, symbol: Symbol) {
-        self.commands.push(CompileCommand::Reference(symbol));
+        self.commands
+            .push(CompileCommand::VariableReference(symbol));
         self.references
             .push(Reference::new(symbol, self.scope_ref()));
     }
@@ -1287,7 +1306,7 @@ impl FunctionAnalysis {
         let i = self.symbol_stack.len() - n as usize;
         for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
             debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
-            self.commands[index] = CompileCommand::Reference(symbol);
+            self.commands[index] = CompileCommand::VariableReference(symbol);
             debug_assert!(matches!(
                 self.commands[index + 1],
                 CompileCommand::PlaceHolder
@@ -1306,7 +1325,7 @@ impl FunctionAnalysis {
         let i = self.symbol_stack.len() - n as usize;
         for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
             debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
-            self.commands[index] = CompileCommand::Reference(symbol);
+            self.commands[index] = CompileCommand::VariableReference(symbol);
             debug_assert!(matches!(
                 self.commands[index + 1],
                 CompileCommand::PlaceHolder
@@ -1327,7 +1346,8 @@ impl FunctionAnalysis {
 
         self.commands.push(CompileCommand::Function(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
-        self.commands.push(CompileCommand::Reference(symbol));
+        self.commands
+            .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareClosure);
     }
 
@@ -1661,8 +1681,11 @@ pub enum CompileCommand {
     Closure(bool, ScopeRef),
     Coroutine(LambdaId, u16),
     Promise,
-    Reference(Symbol),
     Exception,
+
+    // references
+    VariableReference(Symbol),
+    PropertyReference(Symbol),
 
     AllocateLocals(u16),
     MutableVariable,
@@ -1674,9 +1697,9 @@ pub enum CompileCommand {
     PopScope(ScopeRef),
 
     // object
-    PropertyName(Symbol),
     CreateDataProperty,
     CopyDataProperties,
+    ToObject,
 
     // update operators
     PostfixIncrement,
@@ -1990,16 +2013,16 @@ mod tests {
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVars(scope_ref!(1)),
                         CompileCommand::Undefined,
-                        CompileCommand::Reference(symbol!(sreg, "a")),
+                        CompileCommand::VariableReference(symbol!(sreg, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::Number(2.0),
-                        CompileCommand::Reference(symbol!(sreg, "b")),
+                        CompileCommand::VariableReference(symbol!(sreg, "b")),
                         CompileCommand::MutableVariable,
                         CompileCommand::Number(3.0),
-                        CompileCommand::Reference(symbol!(sreg, "c")),
+                        CompileCommand::VariableReference(symbol!(sreg, "c")),
                         CompileCommand::ImmutableVariable,
                         CompileCommand::Number(4.0),
-                        CompileCommand::Reference(symbol!(sreg, "d")),
+                        CompileCommand::VariableReference(symbol!(sreg, "d")),
                         CompileCommand::ImmutableVariable,
                         CompileCommand::PopScope(scope_ref!(1)),
                     ]
@@ -2021,19 +2044,19 @@ mod tests {
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVars(scope_ref!(1)),
                         CompileCommand::Undefined,
-                        CompileCommand::Reference(symbol!(sreg, "a")),
+                        CompileCommand::VariableReference(symbol!(sreg, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PushScope(scope_ref!(2)),
                         CompileCommand::Undefined,
-                        CompileCommand::Reference(symbol!(sreg, "a")),
+                        CompileCommand::VariableReference(symbol!(sreg, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(2)),
                         CompileCommand::PushScope(scope_ref!(3)),
                         CompileCommand::Undefined,
-                        CompileCommand::Reference(symbol!(sreg, "a")),
+                        CompileCommand::VariableReference(symbol!(sreg, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::Undefined,
-                        CompileCommand::Reference(symbol!(sreg, "b")),
+                        CompileCommand::VariableReference(symbol!(sreg, "b")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(3)),
                         CompileCommand::PopScope(scope_ref!(1)),
@@ -2075,9 +2098,9 @@ mod tests {
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVars(scope_ref!(1)),
                     CompileCommand::Number(1.0),
-                    CompileCommand::Reference(symbol!(sreg, "a")),
+                    CompileCommand::VariableReference(symbol!(sreg, "a")),
                     CompileCommand::MutableVariable,
-                    CompileCommand::Reference(symbol!(sreg, "a")),
+                    CompileCommand::VariableReference(symbol!(sreg, "a")),
                     CompileCommand::Number(2.0),
                     CompileCommand::Duplicate(1),
                     CompileCommand::Addition,

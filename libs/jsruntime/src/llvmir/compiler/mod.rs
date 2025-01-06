@@ -323,8 +323,9 @@ impl<'r, 's> Compiler<'r, 's> {
                 self.process_coroutine(*lambda_id, *num_locals)
             }
             CompileCommand::Promise => self.process_promise(),
-            CompileCommand::Reference(symbol) => self.process_reference(*symbol),
             CompileCommand::Exception => self.process_exception(),
+            CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
+            CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
@@ -333,9 +334,9 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
-            CompileCommand::PropertyName(symbol) => self.process_property_name(*symbol),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
+            CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -538,19 +539,24 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Promise(promise));
     }
 
-    fn process_reference(&mut self, symbol: Symbol) {
+    fn process_exception(&mut self) {
+        // TODO: Should we check status_ at runtime?
+        self.operand_stack
+            .push(Operand::Any(self.bridge.get_exception()));
+    }
+
+    fn process_variable_reference(&mut self, symbol: Symbol) {
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         // TODO(perf): improve if `find_variable()` is the primary case of performance bottleneck.
         let variable_ref = self.scope_tree.find_variable(scope_ref, symbol);
         debug_assert_ne!(variable_ref, VariableRef::NONE);
         let locator = self.scope_tree.compute_locator(variable_ref);
-        self.operand_stack.push(Operand::Reference(symbol, locator));
+        self.operand_stack
+            .push(Operand::VariableReference(symbol, locator));
     }
 
-    fn process_exception(&mut self) {
-        // TODO: Should we check status_ at runtime?
-        self.operand_stack
-            .push(Operand::Any(self.bridge.get_exception()));
+    fn process_property_reference(&mut self, symbol: Symbol) {
+        self.operand_stack.push(Operand::PropertyReference(symbol));
     }
 
     fn process_allocate_locals(&mut self, num_locals: u16) {
@@ -577,9 +583,15 @@ impl<'r, 's> Compiler<'r, 's> {
 
         let operand = self.operand_stack.pop().unwrap();
         match operand {
-            Operand::Reference(symbol, locator) => {
+            Operand::VariableReference(symbol, locator) => {
                 let value = self.create_get_value_ptr(symbol, locator);
                 (Operand::Any(value), Some((symbol, locator)))
+            }
+            Operand::PropertyReference(key) => {
+                let object = self.pop_object();
+                let value = self.bridge.create_alloc_value();
+                self.bridge.create_get(object, key, value);
+                (Operand::Any(value), None)
             }
             _ => (operand, None),
         }
@@ -594,26 +606,27 @@ impl<'r, 's> Compiler<'r, 's> {
             Locator::Global => {
                 // TODO(perf): return the value directly if it's a read-only global property.
 
-                let then_block = self.create_basic_block("is_nullptr.then");
-                let else_block = self.create_basic_block("is_nullptr.else");
-                let end_block = self.create_basic_block("value_ptr");
+                let then_block = self.create_basic_block("no_such_property.then");
+                let end_block = self.create_basic_block("runtime.get");
 
-                let value = self.bridge.create_get(symbol);
-                // if value.is_nullptr()
-                let is_nullptr = self.bridge.create_is_nullptr(value);
+                let has_property = self
+                    .bridge
+                    .create_has_own_property(self.bridge.get_object_nullptr(), symbol);
+                let no_such_property = self.bridge.create_logical_not(has_property);
+                // if no_such_property
                 self.bridge
-                    .create_cond_br(is_nullptr, then_block, else_block);
+                    .create_cond_br(no_such_property, then_block, end_block);
                 // then
                 self.bridge.set_basic_block(then_block);
                 // TODO(feat): ReferenceError
                 self.process_number(1000.);
                 self.process_throw();
                 self.bridge.create_br(end_block);
-                // else
-                self.bridge.set_basic_block(else_block);
-                self.bridge.create_br(end_block);
 
                 self.bridge.set_basic_block(end_block);
+                let value = self.bridge.create_alloc_value();
+                self.bridge
+                    .create_get(self.bridge.get_object_nullptr(), symbol, value);
                 value
             }
         }
@@ -621,7 +634,7 @@ impl<'r, 's> Compiler<'r, 's> {
 
     fn pop_reference(&mut self) -> (Symbol, Locator) {
         match self.operand_stack.pop().unwrap() {
-            Operand::Reference(symbol, locator) => (symbol, locator),
+            Operand::VariableReference(symbol, locator) => (symbol, locator),
             _ => unreachable!(),
         }
     }
@@ -638,8 +651,8 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Any(value) => self.bridge.create_store_value_to_value(*value, dest),
             Operand::Function(_)
             | Operand::Coroutine(_)
-            | Operand::Reference(..)
-            | Operand::PropertyName(_) => unreachable!(),
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!(),
         }
     }
 
@@ -703,7 +716,8 @@ impl<'r, 's> Compiler<'r, 's> {
             }
             Locator::Global => {
                 let value = self.create_to_any(&operand);
-                self.bridge.create_set(symbol, value);
+                self.bridge
+                    .create_set(self.bridge.get_object_nullptr(), symbol, value);
             }
             _ => unreachable!("{locator:?}"),
         };
@@ -948,14 +962,10 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.create_escape_value(capture, value);
     }
 
-    fn process_property_name(&mut self, symbol: Symbol) {
-        self.operand_stack.push(Operand::PropertyName(symbol));
-    }
-
     // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
     fn process_create_data_property(&mut self) {
         let (operand, _) = self.dereference();
-        let name = self.pop_property_name();
+        let key = self.pop_property_reference();
         let object = self.peek_object();
         let value = self.create_to_any(&operand);
         let retv = self.bridge.create_retv();
@@ -965,7 +975,7 @@ impl<'r, 's> Compiler<'r, 's> {
         // 1. Let success be ? CreateDataProperty(O, P, V).
         let status = self
             .bridge
-            .create_create_data_property(object, name, value, retv);
+            .create_create_data_property(object, key, value, retv);
         self.create_check_status_for_exception(status, retv);
         // `retv` holds a boolean value.
         runtime_debug! {{
@@ -1018,6 +1028,31 @@ impl<'r, 's> Compiler<'r, 's> {
         self.create_check_status_for_exception(status, retv);
     }
 
+    // 7.1.18 ToObject ( argument )
+    fn process_to_object(&mut self) {
+        let (operand, _) = self.dereference();
+        match operand {
+            Operand::Undefined | Operand::Null => {
+                // TODO(feat): TypeError
+                self.process_number(1001.);
+                self.process_throw();
+            }
+            Operand::Boolean(_value) => todo!(),
+            Operand::Number(_value) => todo!(),
+            Operand::Closure(_value) => todo!(),
+            Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
+            Operand::Promise(_value) => todo!(),
+            Operand::Any(value) => {
+                let object = self.bridge.create_to_object(value);
+                self.operand_stack.push(Operand::Object(object));
+            }
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
+        }
+    }
+
     fn peek_object(&mut self) -> ObjectIr {
         match self.operand_stack.last().unwrap() {
             Operand::Object(value) => *value,
@@ -1025,9 +1060,16 @@ impl<'r, 's> Compiler<'r, 's> {
         }
     }
 
-    fn pop_property_name(&mut self) -> Symbol {
+    fn pop_object(&mut self) -> ObjectIr {
         match self.operand_stack.pop().unwrap() {
-            Operand::PropertyName(name) => name,
+            Operand::Object(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn pop_property_reference(&mut self) -> Symbol {
+        match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(name) => name,
             _ => unreachable!(),
         }
     }
@@ -1049,7 +1091,8 @@ impl<'r, 's> Compiler<'r, 's> {
         match reference {
             Some((symbol, locator)) if symbol != Symbol::NONE => {
                 debug_assert!(!locator.is_none());
-                self.operand_stack.push(Operand::Reference(symbol, locator));
+                self.operand_stack
+                    .push(Operand::VariableReference(symbol, locator));
                 self.operand_stack.push(Operand::Number(new_value));
                 self.process_assignment();
                 self.process_discard();
@@ -1078,8 +1121,8 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Function(_)
             | Operand::Coroutine(_)
             | Operand::Promise(_)
-            | Operand::Reference(..)
-            | Operand::PropertyName(_) => unreachable!(),
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!(),
         }
     }
 
@@ -1165,8 +1208,8 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Any(value) => self.bridge.create_to_boolean(value),
             Operand::Function(_)
             | Operand::Coroutine(_)
-            | Operand::Reference(..)
-            | Operand::PropertyName(_) => unreachable!(),
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!(),
         }
     }
 
@@ -1404,8 +1447,8 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Object(value) => self.bridge.create_object_to_any(*value),
             Operand::Function(_)
             | Operand::Coroutine(_)
-            | Operand::Reference(..)
-            | Operand::PropertyName(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_)
             | Operand::Promise(_) => unreachable!("{operand:?}"),
         }
     }
@@ -1458,8 +1501,8 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Any(rhs) => self.bridge.create_is_strictly_equal(lhs, rhs),
             Operand::Function(_)
             | Operand::Coroutine(_)
-            | Operand::Reference(..)
-            | Operand::PropertyName(_) => unreachable!("{rhs:?}"),
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
         }
     }
 
@@ -1741,7 +1784,8 @@ impl<'r, 's> Compiler<'r, 's> {
             Locator::Global => {
                 let value = self.create_to_any(&rhs);
                 // TODO(feat): ReferenceError, TypeError
-                self.bridge.create_set(symbol, value);
+                self.bridge
+                    .create_set(self.bridge.get_object_nullptr(), symbol, value);
             }
             _ => {
                 let value = self.create_get_value_ptr(symbol, locator);
@@ -2332,8 +2376,8 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Any(value) => self.bridge.create_store_value_to_retv(*value),
             Operand::Function(_)
             | Operand::Coroutine(_)
-            | Operand::Reference(..)
-            | Operand::PropertyName(_) => unreachable!("{operand:?}"),
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
         }
     }
 
@@ -2480,8 +2524,8 @@ impl<'r, 's> Compiler<'r, 's> {
             }
             Operand::Function(_)
             | Operand::Coroutine(_)
-            | Operand::Reference(..)
-            | Operand::PropertyName(_) => {
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => {
                 unreachable!("{operand:?}")
             }
         }
@@ -2534,7 +2578,7 @@ impl<'r, 's> Compiler<'r, 's> {
                         .create_write_value_to_scratch_buffer(offset, *value);
                     offset += VALUE_SIZE;
                 }
-                Operand::Reference(..) | Operand::PropertyName(_) => (),
+                Operand::VariableReference(..) | Operand::PropertyReference(_) => (),
                 Operand::Function(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2576,7 +2620,7 @@ impl<'r, 's> Compiler<'r, 's> {
                     *value = self.bridge.create_read_value_from_scratch_buffer(offset);
                     offset += VALUE_SIZE;
                 }
-                Operand::Reference(..) | Operand::PropertyName(_) => (),
+                Operand::VariableReference(..) | Operand::PropertyReference(_) => (),
                 Operand::Function(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2703,8 +2747,8 @@ enum Operand {
     Object(ObjectIr),
     Promise(PromiseIr),
     Any(ValueIr),
-    Reference(Symbol, Locator),
-    PropertyName(Symbol),
+    VariableReference(Symbol, Locator),
+    PropertyReference(Symbol),
 }
 
 impl Dump for Operand {
@@ -2726,8 +2770,10 @@ impl Dump for Operand {
             Self::Promise(value) => eprintln!("Promise({:?})", ir2cstr!(value)),
             Self::Object(value) => eprintln!("Object({:?})", ir2cstr!(value)),
             Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
-            Self::Reference(symbol, locator) => eprintln!("Reference({symbol}, {locator:?})"),
-            Self::PropertyName(symbol) => eprintln!("PropertyName({symbol:?})"),
+            Self::VariableReference(symbol, locator) => {
+                eprintln!("VariableReference({symbol}, {locator:?})")
+            }
+            Self::PropertyReference(key) => eprintln!("PropertyReference({key:?})"),
         }
     }
 }

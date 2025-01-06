@@ -64,15 +64,11 @@ pub struct Object {
 }
 
 impl Object {
-    // TODO(perf): Which one is better?  `Option::None` or `&Value::None`.
-    // In JIT-compiled code, we need a `nullptr` check if we choose `Option::None`.
-    // If we choose `&Value::None`, we always need a memory access for the discriminant check of
-    // the value but no `nullptr` access happens.
-    pub fn get(&self, name: Symbol) -> Option<&Value> {
+    pub fn get(&self, name: Symbol) -> Value {
         match self.properties.get(&name) {
-            Some(Property::Data { ref value, .. }) => Some(value),
+            Some(Property::Data { ref value, .. }) => value.clone(),
             Some(Property::Accessor { .. }) => todo!(),
-            None => None,
+            None => Value::Undefined,
         }
     }
 
@@ -112,6 +108,10 @@ impl Object {
                 value: value.clone(),
                 flags: PropertyFlags::empty(),
             });
+    }
+
+    pub fn get_own_property(&self, key: Symbol) -> Option<&Property> {
+        self.properties.get(&key)
     }
 
     // TODO(feat): 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )

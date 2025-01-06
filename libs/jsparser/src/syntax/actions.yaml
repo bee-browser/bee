@@ -1624,7 +1624,7 @@
     RBRACK
   action: undefined
 - rule: MemberExpression_Await -> MemberExpression_Await DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_member_expression_dot_notation
 - rule: >-
     MemberExpression_Await -> MemberExpression_Await
     TemplateLiteral_Await_Tagged
@@ -2300,7 +2300,7 @@
 - rule: MemberExpression -> MemberExpression LBRACK Expression_In RBRACK
   action: undefined
 - rule: MemberExpression -> MemberExpression DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_member_expression_dot_notation
 - rule: MemberExpression -> MemberExpression TemplateLiteral_Tagged
   action: undefined
 - rule: MemberExpression -> SuperProperty
@@ -2634,7 +2634,7 @@
     RBRACK
   action: undefined
 - rule: MemberExpression_Yield -> MemberExpression_Yield DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_member_expression_dot_notation
 - rule: >-
     MemberExpression_Yield -> MemberExpression_Yield
     TemplateLiteral_Yield_Tagged
@@ -2746,7 +2746,7 @@
 - rule: >-
     MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT
     KeywordOrIdentifierName
-  action: undefined
+  action: process_member_expression_dot_notation
 - rule: >-
     MemberExpression_Yield_Await -> MemberExpression_Yield_Await
     TemplateLiteral_Yield_Await_Tagged

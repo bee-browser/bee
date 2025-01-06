@@ -408,6 +408,12 @@ impl CompilerBridge {
 
     // closure
 
+    pub fn get_closure_nullptr(&self) -> ClosureIr {
+        closure_ir! {
+            compiler_peer_get_closure_nullptr(self.0)
+        }
+    }
+
     pub fn create_is_closure(&self, value: ValueIr) -> BooleanIr {
         boolean_ir! {
             compiler_peer_create_is_closure(self.0, value.0)
@@ -417,12 +423,6 @@ impl CompilerBridge {
     pub fn create_is_same_closure(&self, a: ClosureIr, b: ClosureIr) -> BooleanIr {
         boolean_ir! {
             compiler_peer_create_is_same_closure(self.0, a.0, b.0)
-        }
-    }
-
-    pub fn get_closure_nullptr(&self) -> ClosureIr {
-        closure_ir! {
-            compiler_peer_get_closure_nullptr(self.0)
         }
     }
 
@@ -510,6 +510,12 @@ impl CompilerBridge {
 
     // object
 
+    pub fn get_object_nullptr(&self) -> ObjectIr {
+        object_ir! {
+            compiler_peer_get_object_nullptr(self.0)
+        }
+    }
+
     pub fn create_is_object(&self, value: ValueIr) -> BooleanIr {
         boolean_ir! {
             compiler_peer_create_is_object(self.0, value.0)
@@ -522,17 +528,66 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_to_object(&self, value: ValueIr) -> ObjectIr {
+        debug_assert_ne!(value, ValueIr::NONE);
+        object_ir! {
+            compiler_peer_create_to_object(self.0, value.0)
+        }
+    }
+
     pub fn create_object(&self) -> ObjectIr {
         object_ir! {
             compiler_peer_create_object(self.0)
         }
     }
 
+    pub fn create_get(&self, object: ObjectIr, key: Symbol, value: ValueIr) {
+        unsafe { compiler_peer_create_get(self.0, object.0, key.id(), value.0) }
+    }
+
+    pub fn create_set(&self, object: ObjectIr, key: Symbol, value: ValueIr) {
+        unsafe {
+            compiler_peer_create_set(self.0, object.0, key.id(), value.0);
+        }
+    }
+
+    // 7.3.5 CreateDataProperty ( O, P, V )
+    pub fn create_create_data_property(
+        &self,
+        object: ObjectIr,
+        key: Symbol,
+        value: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_create_data_property(self.0, object.0, key.id(), value.0, retv.0)
+        }
+    }
+
+    // 7.3.12 HasOwnProperty ( O, P )
+    pub fn create_has_own_property(&self, object: ObjectIr, key: Symbol) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_has_own_property(self.0, object.0, key.id())
+        }
+    }
+
+    // 7.3.25 CopyDataProperties ( target, source, excludedItems )
+    pub fn create_copy_data_properties(
+        &self,
+        target: ObjectIr,
+        source: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_copy_data_properties(self.0, target.0, source.0, retv.0)
+        }
+    }
+
     // value
 
-    pub fn create_is_nullptr(&self, value: ValueIr) -> BooleanIr {
-        boolean_ir! {
-            compiler_peer_create_is_nullptr(self.0, value.0)
+    pub fn create_alloc_value(&self) -> ValueIr {
+        value_ir! {
+            compiler_peer_create_alloc_value(self.0)
         }
     }
 
@@ -1084,45 +1139,6 @@ impl CompilerBridge {
         }
     }
 
-    // object
-
-    pub fn create_get(&self, symbol: Symbol) -> ValueIr {
-        value_ir! {
-            compiler_peer_create_get(self.0, symbol.id())
-        }
-    }
-
-    pub fn create_set(&self, symbol: Symbol, value: ValueIr) {
-        unsafe {
-            compiler_peer_create_set(self.0, symbol.id(), value.0);
-        }
-    }
-
-    // 7.3.5 CreateDataProperty ( O, P, V )
-    pub fn create_create_data_property(
-        &self,
-        object: ObjectIr,
-        symbol: Symbol,
-        value: ValueIr,
-        retv: ValueIr,
-    ) -> StatusIr {
-        status_ir! {
-            compiler_peer_create_create_data_property(self.0, object.0, symbol.id(), value.0, retv.0)
-        }
-    }
-
-    // 7.3.25 CopyDataProperties ( target, source, excludedItems )
-    pub fn create_copy_data_properties(
-        &self,
-        target: ObjectIr,
-        source: ValueIr,
-        retv: ValueIr,
-    ) -> StatusIr {
-        status_ir! {
-            compiler_peer_create_copy_data_properties(self.0, target.0, source.0, retv.0)
-        }
-    }
-
     // scope cleanup checker
 
     pub fn enable_scope_cleanup_checker(&self, is_coroutine: bool) {
@@ -1487,13 +1503,13 @@ extern "C" {
 
     // closure
 
+    fn compiler_peer_get_closure_nullptr(peer: CompilerPeer) -> ClosureIrPtr;
     fn compiler_peer_create_is_closure(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_is_same_closure(
         peer: CompilerPeer,
         a: ClosureIrPtr,
         b: ClosureIrPtr,
     ) -> BooleanIrPtr;
-    fn compiler_peer_get_closure_nullptr(peer: CompilerPeer) -> ClosureIrPtr;
     fn compiler_peer_create_closure(
         peer: CompilerPeer,
         lambda: LambdaIrPtr,
@@ -1546,17 +1562,49 @@ extern "C" {
 
     // object
 
+    fn compiler_peer_get_object_nullptr(peer: CompilerPeer) -> ObjectIrPtr;
     fn compiler_peer_create_is_object(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_is_same_object(
         peer: CompilerPeer,
         a: ObjectIrPtr,
         b: ObjectIrPtr,
     ) -> BooleanIrPtr;
+    fn compiler_peer_create_to_object(peer: CompilerPeer, value: ValueIrPtr) -> ObjectIrPtr;
     fn compiler_peer_create_object(peer: CompilerPeer) -> ObjectIrPtr;
+    fn compiler_peer_create_get(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: u32,
+        value: ValueIrPtr,
+    );
+    fn compiler_peer_create_set(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: u32,
+        value: ValueIrPtr,
+    );
+    fn compiler_peer_create_create_data_property(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: u32,
+        value: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
+    fn compiler_peer_create_has_own_property(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: u32,
+    ) -> BooleanIrPtr;
+    fn compiler_peer_create_copy_data_properties(
+        peer: CompilerPeer,
+        target: ObjectIrPtr,
+        source: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
 
     // value
 
-    fn compiler_peer_create_is_nullptr(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
+    fn compiler_peer_create_alloc_value(peer: CompilerPeer) -> ValueIrPtr;
     fn compiler_peer_create_has_value(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_is_loosely_equal(
         peer: CompilerPeer,
@@ -1805,24 +1853,6 @@ extern "C" {
         peer: CompilerPeer,
         offset: u32,
     ) -> ValueIrPtr;
-
-    // object
-
-    fn compiler_peer_create_get(peer: CompilerPeer, symbol: u32) -> ValueIrPtr;
-    fn compiler_peer_create_set(peer: CompilerPeer, symbol: u32, value: ValueIrPtr);
-    fn compiler_peer_create_create_data_property(
-        peer: CompilerPeer,
-        object: ObjectIrPtr,
-        symbol: u32,
-        value: ValueIrPtr,
-        retv: ValueIrPtr,
-    ) -> StatusIrPtr;
-    fn compiler_peer_create_copy_data_properties(
-        peer: CompilerPeer,
-        target: ObjectIrPtr,
-        source: ValueIrPtr,
-        retv: ValueIrPtr,
-    ) -> StatusIrPtr;
 
     // scope cleanup checker
 

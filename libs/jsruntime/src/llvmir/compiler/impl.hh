@@ -508,6 +508,11 @@ class Compiler {
     return builder_->CreateICmpEQ(a, b, REG_NAME("is_same_object"));
   }
 
+  llvm::Value* CreateToObject(llvm::Value* value) {
+    auto* func = types_->CreateRuntimeToObject();
+    return builder_->CreateCall(func, {runtime_, value}, REG_NAME("to_object"));
+  }
+
   llvm::Value* CreateObject() {
     auto* func = types_->CreateRuntimeCreateObject();
     return builder_->CreateCall(func, {runtime_}, REG_NAME("object.ptr"));
@@ -515,8 +520,8 @@ class Compiler {
 
   // value
 
-  llvm::Value* CreateIsNullptr(llvm::Value* value) {
-    return builder_->CreateICmpEQ(value, GetNullptr(), REG_NAME("value.is_nullptr"));
+  llvm::Value* CreateAllocValue() {
+    return CreateAlloc1(types_->CreateValueType(), REG_NAME("value.ptr"));
   }
 
   llvm::Value* CreateHasValue(llvm::Value* value) {
@@ -974,25 +979,31 @@ class Compiler {
 
   // object
 
-  llvm::Value* CreateGet(uint32_t symbol) {
+  void CreateGet(llvm::Value* object, uint32_t key, llvm::Value* value) {
     auto* func = types_->CreateRuntimeGet();
-    return builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol)},
-                                REG_NAME("get." + llvm::Twine(symbol) + ".ptr"));
+    builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value});
   }
 
-  void CreateSet(uint32_t symbol, llvm::Value* value) {
+  void CreateSet(llvm::Value* object, uint32_t key, llvm::Value* value) {
     auto* func = types_->CreateRuntimeSet();
-    builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol), value});
+    builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value});
   }
 
   // 7.3.5 CreateDataProperty ( O, P, V )
   llvm::Value* CreateCreateDataProperty(llvm::Value* object,
-                                        uint32_t symbol,
+                                        uint32_t key,
                                         llvm::Value* value,
                                         llvm::Value* retv) {
     auto* func = types_->CreateRuntimeCreateDataProperty();
-    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(symbol), value, retv},
+    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value, retv},
                                 REG_NAME("runtime.create_data_property.status.ptr"));
+  }
+
+  // 7.3.12 HasOwnProperty ( O, P )
+  llvm::Value* CreateHasOwnProperty(llvm::Value* object, uint32_t key) {
+    auto* func = types_->CreateRuntimeHasOwnProperty();
+    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key)},
+                                REG_NAME("runtime.has_own_property.boolean"));
   }
 
   // 7.3.25 CopyDataProperties ( target, source, excludedItems )
