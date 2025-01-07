@@ -83,16 +83,17 @@ functions:
   - name: create_object
     args: []
     ret: '&mut Object'
-  - name: get
+  - name: get_value
     args:
       - name: object
         type: '&mut Object'
       - name: key
         type: u32
-      - name: value
-        type: '&mut Value'
+      - name: strict
+        type: bool
       # TODO(perf): add arguments for inline caching
-  - name: set
+    ret: '&Value' # may be null
+  - name: set_value
     args:
       - name: object
         type: '&mut Object'
@@ -113,14 +114,6 @@ functions:
       - name: retv
         type: '&mut Value'
     ret: Status
-  # 7.3.12 HasOwnProperty ( O, P )
-  - name: has_own_property
-    args:
-      - name: object
-        type: '&mut Object'
-      - name: key
-        type: u32 # Symbol
-    ret: bool
   # 7.3.25 CopyDataProperties ( target, source, excludedItems )
   - name: copy_data_properties
     args:

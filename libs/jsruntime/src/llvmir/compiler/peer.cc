@@ -383,24 +383,23 @@ ObjectIrPtr compiler_peer_create_object(CompilerPeer peer) {
   return PEER_OBJECT(IMPL(peer)->CreateObject());
 }
 
-void compiler_peer_create_get(CompilerPeer peer,
-                              ObjectIrPtr object,
-                              uint32_t key,
-                              ValueIrPtr value) {
+ValueIrPtr compiler_peer_create_get_value(CompilerPeer peer,
+                                          ObjectIrPtr object,
+                                          uint32_t key,
+                                          bool strict) {
   assert(object != nullptr);
   assert(key != 0);
-  assert(value != nullptr);
-  IMPL(peer)->CreateGet(LLVM_VALUE(object), key, LLVM_VALUE(value));
+  return PEER_VALUE(IMPL(peer)->CreateGetValue(LLVM_VALUE(object), key, strict));
 }
 
-void compiler_peer_create_set(CompilerPeer peer,
-                              ObjectIrPtr object,
-                              uint32_t key,
-                              ValueIrPtr value) {
+void compiler_peer_create_set_value(CompilerPeer peer,
+                                    ObjectIrPtr object,
+                                    uint32_t key,
+                                    ValueIrPtr value) {
   assert(object != nullptr);
   assert(key != 0);
   assert(value != nullptr);
-  IMPL(peer)->CreateSet(LLVM_VALUE(object), key, LLVM_VALUE(value));
+  IMPL(peer)->CreateSetValue(LLVM_VALUE(object), key, LLVM_VALUE(value));
 }
 
 StatusIrPtr compiler_peer_create_create_data_property(CompilerPeer peer,
@@ -416,14 +415,6 @@ StatusIrPtr compiler_peer_create_create_data_property(CompilerPeer peer,
                                                           LLVM_VALUE(value), LLVM_VALUE(retv)));
 }
 
-BooleanIrPtr compiler_peer_create_has_own_property(CompilerPeer peer,
-                                                   ObjectIrPtr object,
-                                                   uint32_t key) {
-  assert(object != nullptr);
-  assert(key != 0);
-  return PEER_BOOLEAN(IMPL(peer)->CreateHasOwnProperty(LLVM_VALUE(object), key));
-}
-
 StatusIrPtr compiler_peer_create_copy_data_properties(CompilerPeer peer,
                                                       ObjectIrPtr target,
                                                       ValueIrPtr source,
@@ -436,6 +427,10 @@ StatusIrPtr compiler_peer_create_copy_data_properties(CompilerPeer peer,
 }
 
 // value
+
+BooleanIrPtr compiler_peer_create_value_is_nullptr(CompilerPeer peer, ValueIrPtr value) {
+  return PEER_BOOLEAN(IMPL(peer)->CreateValueIsNullptr(LLVM_VALUE(value)));
+}
 
 ValueIrPtr compiler_peer_create_alloc_value(CompilerPeer peer) {
   return PEER_VALUE(IMPL(peer)->CreateAllocValue());
@@ -661,6 +656,10 @@ void compiler_peer_create_store_normal_status(CompilerPeer peer) {
 
 void compiler_peer_create_store_exception_status(CompilerPeer peer) {
   IMPL(peer)->CreateStoreExceptionStatus();
+}
+
+BooleanIrPtr compiler_peer_create_is_normal_status(CompilerPeer peer, StatusIrPtr status) {
+  return PEER_BOOLEAN(IMPL(peer)->CreateIsNormalStatus(LLVM_VALUE(status)));
 }
 
 BooleanIrPtr compiler_peer_create_is_exception_status(CompilerPeer peer, StatusIrPtr status) {

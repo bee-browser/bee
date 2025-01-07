@@ -541,13 +541,15 @@ impl CompilerBridge {
         }
     }
 
-    pub fn create_get(&self, object: ObjectIr, key: Symbol, value: ValueIr) {
-        unsafe { compiler_peer_create_get(self.0, object.0, key.id(), value.0) }
+    pub fn create_get_value(&self, object: ObjectIr, key: Symbol, strict: bool) -> ValueIr {
+        value_ir! {
+            compiler_peer_create_get_value(self.0, object.0, key.id(), strict)
+        }
     }
 
-    pub fn create_set(&self, object: ObjectIr, key: Symbol, value: ValueIr) {
+    pub fn create_set_value(&self, object: ObjectIr, key: Symbol, value: ValueIr) {
         unsafe {
-            compiler_peer_create_set(self.0, object.0, key.id(), value.0);
+            compiler_peer_create_set_value(self.0, object.0, key.id(), value.0);
         }
     }
 
@@ -561,13 +563,6 @@ impl CompilerBridge {
     ) -> StatusIr {
         status_ir! {
             compiler_peer_create_create_data_property(self.0, object.0, key.id(), value.0, retv.0)
-        }
-    }
-
-    // 7.3.12 HasOwnProperty ( O, P )
-    pub fn create_has_own_property(&self, object: ObjectIr, key: Symbol) -> BooleanIr {
-        boolean_ir! {
-            compiler_peer_create_has_own_property(self.0, object.0, key.id())
         }
     }
 
@@ -585,9 +580,9 @@ impl CompilerBridge {
 
     // value
 
-    pub fn create_alloc_value(&self) -> ValueIr {
-        value_ir! {
-            compiler_peer_create_alloc_value(self.0)
+    pub fn create_value_is_nullptr(&self, value: ValueIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_value_is_nullptr(self.0, value.0)
         }
     }
 
@@ -1571,13 +1566,13 @@ extern "C" {
     ) -> BooleanIrPtr;
     fn compiler_peer_create_to_object(peer: CompilerPeer, value: ValueIrPtr) -> ObjectIrPtr;
     fn compiler_peer_create_object(peer: CompilerPeer) -> ObjectIrPtr;
-    fn compiler_peer_create_get(
+    fn compiler_peer_create_get_value(
         peer: CompilerPeer,
         object: ObjectIrPtr,
         key: u32,
-        value: ValueIrPtr,
-    );
-    fn compiler_peer_create_set(
+        strict: bool,
+    ) -> ValueIrPtr;
+    fn compiler_peer_create_set_value(
         peer: CompilerPeer,
         object: ObjectIrPtr,
         key: u32,
@@ -1590,11 +1585,6 @@ extern "C" {
         value: ValueIrPtr,
         retv: ValueIrPtr,
     ) -> StatusIrPtr;
-    fn compiler_peer_create_has_own_property(
-        peer: CompilerPeer,
-        object: ObjectIrPtr,
-        key: u32,
-    ) -> BooleanIrPtr;
     fn compiler_peer_create_copy_data_properties(
         peer: CompilerPeer,
         target: ObjectIrPtr,
@@ -1604,7 +1594,8 @@ extern "C" {
 
     // value
 
-    fn compiler_peer_create_alloc_value(peer: CompilerPeer) -> ValueIrPtr;
+    fn compiler_peer_create_value_is_nullptr(peer: CompilerPeer, value: ValueIrPtr)
+        -> BooleanIrPtr;
     fn compiler_peer_create_has_value(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_is_loosely_equal(
         peer: CompilerPeer,

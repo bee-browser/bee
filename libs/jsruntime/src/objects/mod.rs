@@ -64,26 +64,28 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn get(&self, name: Symbol) -> Value {
+    // TODO(perf): Which one is better?  `Option::None` or `&Value::None`.
+    // In JIT-compiled code, we need a `nullptr` check if we choose `Option::None`.
+    // If we choose `&Value::None`, we always need a memory access for the discriminant check of
+    // the value but no `nullptr` access happens.
+    //
+    // TODO(perf): Returning a `Value` degrades the performance.
+    // Returning the reference to the value improves the performance.  But it doesn't work in the
+    // case of `Property::Accessor` if we don't use a *scratch* memory area in the object in order
+    // to store the computation result temporarily and return it from this method as the return
+    // value.  Returning the reference to the value works properly if and only if the value is used
+    // before it's overwritten.  At this point, we are not sure whether or not it's always works in
+    // any expression.
+    pub fn get_value(&self, name: Symbol) -> Option<&Value> {
         match self.properties.get(&name) {
-            Some(Property::Data { ref value, .. }) => {
-                // TODO(perf): Returning the reference to the value improves the performance.
-                // But it doesn't work in the case of Property::Accessor if we don't use a
-                // *scratch* memory area in the object in order to store the computation result
-                // temporarily and return it from this method as the return value.
-                //
-                // Returning the reference to the value works properly if and only if the value is
-                // used before it's overwritten.  At this point, we are not sure whether or not
-                // it's always works in any expression.
-                value.clone()
-            }
+            Some(Property::Data { ref value, .. }) => Some(value),
             Some(Property::Accessor { .. }) => todo!(),
-            None => Value::Undefined,
+            None => None,
         }
     }
 
     // TODO(feat): strict, writable
-    pub fn set(&mut self, name: Symbol, value: &Value) {
+    pub fn set_value(&mut self, name: Symbol, value: &Value) {
         self.properties
             .entry(name)
             .and_modify(|prop| match prop {

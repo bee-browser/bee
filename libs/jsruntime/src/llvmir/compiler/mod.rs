@@ -589,8 +589,15 @@ impl<'r, 's> Compiler<'r, 's> {
             }
             Operand::PropertyReference(key) => {
                 let object = self.pop_object();
-                let value = self.bridge.create_alloc_value();
-                self.bridge.create_get(object, key, value);
+                let value = self.bridge.create_get_value(object, key, false);
+                runtime_debug! {{
+                    let is_nullptr = self.bridge.create_value_is_nullptr(value);
+                    let non_nullptr = self.bridge.create_logical_not(is_nullptr);
+                    self.bridge.create_assert(
+                        non_nullptr,
+                        c"runtime.get_value() should return a non-null pointer",
+                    );
+                }}
                 (Operand::Any(value), None)
             }
             _ => (operand, None),
@@ -603,33 +610,34 @@ impl<'r, 's> Compiler<'r, 's> {
             Locator::Argument(index) => self.bridge.create_get_argument_value_ptr(index),
             Locator::Local(index) => self.locals[index as usize],
             Locator::Capture(index) => self.bridge.create_get_capture_value_ptr(index),
-            Locator::Global => {
-                // TODO(perf): return the value directly if it's a read-only global property.
-
-                let then_block = self.create_basic_block("no_such_property.then");
-                let end_block = self.create_basic_block("runtime.get");
-
-                let has_property = self
-                    .bridge
-                    .create_has_own_property(self.bridge.get_object_nullptr(), symbol);
-                let no_such_property = self.bridge.create_logical_not(has_property);
-                // if no_such_property
-                self.bridge
-                    .create_cond_br(no_such_property, then_block, end_block);
-                // then
-                self.bridge.set_basic_block(then_block);
-                // TODO(feat): ReferenceError
-                self.process_number(1000.);
-                self.process_throw();
-                self.bridge.create_br(end_block);
-
-                self.bridge.set_basic_block(end_block);
-                let value = self.bridge.create_alloc_value();
-                self.bridge
-                    .create_get(self.bridge.get_object_nullptr(), symbol, value);
-                value
-            }
+            Locator::Global => self.create_get_global_value_ptr(symbol),
         }
+    }
+
+    // TODO(perf): return the value directly if it's a read-only global property.
+    fn create_get_global_value_ptr(&mut self, key: Symbol) -> ValueIr {
+        // TODO: strict mode
+        let value = self
+            .bridge
+            .create_get_value(self.bridge.get_object_nullptr(), key, true);
+
+        let then_block = self.create_basic_block("global_object.get_value.is_nullptr");
+        let end_block = self.create_basic_block("global_object.get_value");
+
+        // if value.is_nullptr()
+        let is_nullptr = self.bridge.create_value_is_nullptr(value);
+        self.bridge
+            .create_cond_br(is_nullptr, then_block, end_block);
+        // {
+        self.bridge.set_basic_block(then_block);
+        // TODO(feat): ReferenceError
+        self.process_number(1000.);
+        self.process_throw();
+        self.bridge.create_br(end_block);
+        // }
+        self.bridge.set_basic_block(end_block);
+
+        value
     }
 
     fn pop_reference(&mut self) -> (Symbol, Locator) {
@@ -717,7 +725,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Locator::Global => {
                 let value = self.create_to_any(&operand);
                 self.bridge
-                    .create_set(self.bridge.get_object_nullptr(), symbol, value);
+                    .create_set_value(self.bridge.get_object_nullptr(), symbol, value);
             }
             _ => unreachable!("{locator:?}"),
         };
@@ -1785,7 +1793,7 @@ impl<'r, 's> Compiler<'r, 's> {
                 let value = self.create_to_any(&rhs);
                 // TODO(feat): ReferenceError, TypeError
                 self.bridge
-                    .create_set(self.bridge.get_object_nullptr(), symbol, value);
+                    .create_set_value(self.bridge.get_object_nullptr(), symbol, value);
             }
             _ => {
                 let value = self.create_get_value_ptr(symbol, locator);

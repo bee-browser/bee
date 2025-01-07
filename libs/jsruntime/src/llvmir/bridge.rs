@@ -1,6 +1,7 @@
 use std::ffi::c_char;
 use std::ffi::c_void;
 
+use base::static_assert_size_eq;
 use jsparser::Symbol;
 
 use crate::logger;
@@ -36,13 +37,12 @@ pub struct RuntimeFunctions {
     resume: unsafe extern "C" fn(*mut c_void, u32),
     emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
     create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
-    // TODO(perf): `get()` and `set()` are slow... Compute the address of the value by using a base
-    // address and the offset for each property instead of calling these functions.
-    get: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *mut Value),
-    set: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value),
+    // TODO(perf): `get_value()` and `set_value()` are slow... Compute the address of the value by
+    // using a base address and the offset for each property instead of calling these functions.
+    get_value: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, bool) -> *const Value,
+    set_value: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value),
     create_data_property:
         unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
-    has_own_property: unsafe extern "C" fn(*mut c_void, *mut c_void, u32) -> bool,
     copy_data_properties:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
@@ -71,10 +71,9 @@ impl RuntimeFunctions {
             resume: runtime_resume::<X>,
             emit_promise_resolved: runtime_emit_promise_resolved::<X>,
             create_object: runtime_create_object::<X>,
-            get: runtime_get::<X>,
-            set: runtime_set::<X>,
+            get_value: runtime_get_value::<X>,
+            set_value: runtime_set_value::<X>,
             create_data_property: runtime_create_data_property::<X>,
-            has_own_property: runtime_has_own_property::<X>,
             copy_data_properties: runtime_copy_data_properties::<X>,
             assert: runtime_assert,
             print_u32: runtime_print_u32,
@@ -95,12 +94,6 @@ macro_rules! into_runtime {
 macro_rules! into_value {
     ($value:expr) => {
         &*($value)
-    };
-}
-
-macro_rules! into_value_mut {
-    ($value:expr) => {
-        &mut *($value)
     };
 }
 
@@ -397,28 +390,35 @@ unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void) -> *mut c_vo
     runtime.create_object() as *mut Object as *mut c_void
 }
 
-unsafe extern "C" fn runtime_get<X>(
+unsafe extern "C" fn runtime_get_value<X>(
     runtime: *mut c_void,
     object: *mut c_void,
     key: u32,
-    value: *mut Value,
-) {
+    strict: bool,
+) -> *const Value {
+    // FIXME: `Value` cannot be defined with `static` because it doesn't implement `Sync`.
+    static UNDEFINED: (u8, u64) = (1, 0);
+    static_assert_size_eq!((u8, u64), Value);
+
     debug_assert_ne!(runtime, std::ptr::null_mut());
     let runtime = into_runtime!(runtime, X);
 
     debug_assert_ne!(key, 0);
     let key = Symbol::from(key);
 
-    debug_assert_ne!(value, std::ptr::null_mut());
-    let value = into_value_mut!(value);
-
-    *value = match (object as *mut Object).as_ref() {
-        Some(object) => object.get(key),
-        None => runtime.global_object().get(key),
+    let result = match (object as *mut Object).as_ref() {
+        Some(object) => object.get_value(key),
+        None => runtime.global_object().get_value(key),
     };
+
+    match result {
+        Some(v) => v as *const Value,
+        None if strict => std::ptr::null(),
+        None => std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value,
+    }
 }
 
-unsafe extern "C" fn runtime_set<X>(
+unsafe extern "C" fn runtime_set_value<X>(
     runtime: *mut c_void,
     object: *mut c_void,
     key: u32,
@@ -434,8 +434,8 @@ unsafe extern "C" fn runtime_set<X>(
     let value = value.as_ref().unwrap();
 
     match (object as *mut Object).as_mut() {
-        Some(object) => object.set(key, value),
-        None => runtime.global_object_mut().set(key, value),
+        Some(object) => object.set_value(key, value),
+        None => runtime.global_object_mut().set_value(key, value),
     }
 }
 
@@ -466,26 +466,6 @@ unsafe extern "C" fn runtime_create_data_property<X>(
             Status::Exception
         }
     }
-}
-
-// 7.3.12 HasOwnProperty ( O, P )
-unsafe extern "C" fn runtime_has_own_property<X>(
-    runtime: *mut c_void,
-    object: *mut c_void,
-    key: u32,
-) -> bool {
-    debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
-
-    debug_assert_ne!(key, 0);
-    let key = Symbol::from(key);
-
-    let object = match (object as *mut Object).as_mut() {
-        Some(object) => object,
-        None => runtime.global_object(),
-    };
-
-    object.get_own_property(key).is_some()
 }
 
 // 7.3.25 CopyDataProperties ( target, source, excludedItems )
