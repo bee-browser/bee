@@ -166,6 +166,7 @@ pub enum Node<'s> {
     Object,
     LiteralPropertyName(LiteralPropertyName),
     PropertyDefinition(PropertyDefinitionKind),
+    MemberExpression(MemberExpressionKind),
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
@@ -255,6 +256,11 @@ pub enum PropertyDefinitionKind {
 #[derive(Clone, Debug)]
 pub enum LiteralPropertyName {
     IdentifierName(Symbol),
+}
+
+#[derive(Clone, Debug)]
+pub enum MemberExpressionKind {
+    PropertyAccessWithIdentifierKey(Symbol),
 }
 
 #[derive(Clone, Copy)]
@@ -1116,6 +1122,20 @@ where
     }
 
     // 13.3 Left-Hand-Side Expressions
+
+    // 13.3.2 Property Accessors
+
+    // MemberExpression[Yield, Await] :
+    //   MemberExpression[?Yield, ?Await] . IdentifierName
+    fn process_member_expression_dot_notation(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let symbol = self.make_symbol(token_index);
+        self.enqueue(Node::MemberExpression(
+            MemberExpressionKind::PropertyAccessWithIdentifierKey(symbol),
+        ));
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
 
     // CallExpression[Yield, Await] :
     //   CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]

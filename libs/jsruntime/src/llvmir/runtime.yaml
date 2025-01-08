@@ -9,6 +9,11 @@ functions:
       - name: value
         type: '&Value'
     ret: f64
+  - name: to_object
+    args:
+      - name: value
+        type: '&Value'
+    ret: '&mut Object'
   - name: to_int32
     args:
       - name: value
@@ -78,15 +83,21 @@ functions:
   - name: create_object
     args: []
     ret: '&mut Object'
-  - name: get
+  - name: get_value
     args:
-      - name: symbol
+      - name: object
+        type: '&mut Object'
+      - name: key
         type: u32
+      - name: strict
+        type: bool
       # TODO(perf): add arguments for inline caching
-    ret: '&Value'
-  - name: set
+    ret: '&Value' # may be null
+  - name: set_value
     args:
-      - name: symbol
+      - name: object
+        type: '&mut Object'
+      - name: key
         type: u32
       - name: value
         type: '&Value'
@@ -96,7 +107,7 @@ functions:
     args:
       - name: object
         type: '&mut Object'
-      - name: name
+      - name: key
         type: u32 # Symbol
       - name: value
         type: '&Value'

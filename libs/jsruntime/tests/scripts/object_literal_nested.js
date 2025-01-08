@@ -4,5 +4,5 @@ let a = {
   },
 };
 print(a); ///=object
-// TODO(test): print(a.nested); ///=object
-// TODO(test): print(a.nested.x); ///=1
+print(a.nested); ///=object
+print(a.nested.x); ///=1

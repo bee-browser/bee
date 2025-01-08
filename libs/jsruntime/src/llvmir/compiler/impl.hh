@@ -508,6 +508,11 @@ class Compiler {
     return builder_->CreateICmpEQ(a, b, REG_NAME("is_same_object"));
   }
 
+  llvm::Value* CreateToObject(llvm::Value* value) {
+    auto* func = types_->CreateRuntimeToObject();
+    return builder_->CreateCall(func, {runtime_, value}, REG_NAME("to_object"));
+  }
+
   llvm::Value* CreateObject() {
     auto* func = types_->CreateRuntimeCreateObject();
     return builder_->CreateCall(func, {runtime_}, REG_NAME("object.ptr"));
@@ -515,8 +520,12 @@ class Compiler {
 
   // value
 
-  llvm::Value* CreateIsNullptr(llvm::Value* value) {
+  llvm::Value* CreateValueIsNullptr(llvm::Value* value) {
     return builder_->CreateICmpEQ(value, GetNullptr(), REG_NAME("value.is_nullptr"));
+  }
+
+  llvm::Value* CreateAllocValue() {
+    return CreateAlloc1(types_->CreateValueType(), REG_NAME("value.ptr"));
   }
 
   llvm::Value* CreateHasValue(llvm::Value* value) {
@@ -760,9 +769,14 @@ class Compiler {
     builder_->CreateStore(builder_->getInt32(STATUS_EXCEPTION), status_);
   }
 
+  llvm::Value* CreateIsNormalStatus(llvm::Value* status) {
+    return builder_->CreateICmpEQ(status, builder_->getInt32(STATUS_NORMAL),
+                                  REG_NAME("status.is_normal"));
+  }
+
   llvm::Value* CreateIsExceptionStatus(llvm::Value* status) {
     return builder_->CreateICmpEQ(status, builder_->getInt32(STATUS_EXCEPTION),
-                                  REG_NAME("is_exception"));
+                                  REG_NAME("status.is_exception"));
   }
 
   // flow selector
@@ -974,24 +988,25 @@ class Compiler {
 
   // object
 
-  llvm::Value* CreateGet(uint32_t symbol) {
-    auto* func = types_->CreateRuntimeGet();
-    return builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol)},
-                                REG_NAME("get." + llvm::Twine(symbol) + ".ptr"));
+  llvm::Value* CreateGetValue(llvm::Value* object, uint32_t key, bool strict) {
+    auto* func = types_->CreateRuntimeGetValue();
+    return builder_->CreateCall(
+        func, {runtime_, object, builder_->getInt32(key), builder_->getInt1(strict)},
+        REG_NAME("runtime.get_value.value.ptr"));
   }
 
-  void CreateSet(uint32_t symbol, llvm::Value* value) {
-    auto* func = types_->CreateRuntimeSet();
-    builder_->CreateCall(func, {runtime_, builder_->getInt32(symbol), value});
+  void CreateSetValue(llvm::Value* object, uint32_t key, llvm::Value* value) {
+    auto* func = types_->CreateRuntimeSetValue();
+    builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value});
   }
 
   // 7.3.5 CreateDataProperty ( O, P, V )
   llvm::Value* CreateCreateDataProperty(llvm::Value* object,
-                                        uint32_t symbol,
+                                        uint32_t key,
                                         llvm::Value* value,
                                         llvm::Value* retv) {
     auto* func = types_->CreateRuntimeCreateDataProperty();
-    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(symbol), value, retv},
+    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value, retv},
                                 REG_NAME("runtime.create_data_property.status.ptr"));
   }
 

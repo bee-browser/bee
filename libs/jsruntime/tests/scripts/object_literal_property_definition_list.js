@@ -6,13 +6,19 @@ let a = {
   1: 1,
   NaN: NaN,
   Infinity: Infinity,
+  function: function() { return 0; },
+  arrowFunction: () => 1,
 };
 
 print(a); ///=object
-// TODO(test): print(a.undefined); ///=undefined
-// TODO(test): print(a.null); ///=null
-// TODO(test): print(a.true); ///=true
-// TODO(test): print(a.false); ///=false
+print(a.undefined); ///=undefined
+print(a.null); ///=null
+print(a.true); ///=true
+print(a.false); ///=false
 // TODO(test): print(a[1]); ///=1
-// TODO(test): print(a.NaN); ///=NaN
-// TODO(test): print(a.Infinity); ///=Infinity
+print(a.NaN); ///=NaN
+print(a.Infinity); ///=Infinity
+print(a.function); ///=closure
+print(a.function()); ///=0
+print(a.arrowFunction); ///=closure
+print(a.arrowFunction()); ///=1
