@@ -11,7 +11,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.95"
 assert-json-diff = "2.0.2"
-clap = { version = "4.5.24", features = ["env", "derive", "wrap_help"] }
+clap = { version = "4.5.26", features = ["env", "derive", "wrap_help"] }
 jsparser = { path = "../../libs/jsparser", features = ["location"] }
 logging = { path = "../../libs/logging" }
 serde = { version = "1.0.217", features = ["derive", "rc"] }
