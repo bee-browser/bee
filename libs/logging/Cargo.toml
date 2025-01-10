@@ -9,7 +9,7 @@ publish.workspace = true
 version.workspace = true
 
 [dependencies]
-bitflags = "2.6.0"
+bitflags = "2.7.0"
 chrono = { version = "0.4.39", default-features = false, features = ["clock"] }
 ctor = "0.2.9"
 is-terminal = "0.4.13"
