@@ -163,6 +163,7 @@ class Transpiler {
           //rewriteCPEAAPL,
           addActions,
           modifyObjectLiteral,
+          modifyOptionalChain,
           modifyFunctionDeclaration,
           modifyAsyncFunctionDeclaration,
           modifyIfStatement,
@@ -596,6 +597,7 @@ function addActions(rules) {
 
   const ACTIONS = [
     '_NEW_OBJECT_',
+    '_NON_NULLISH_',
     '_FUNCTION_CONTEXT_',
     '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
@@ -645,6 +647,21 @@ function modifyObjectLiteral(rules) {
   ];
   log.debug('Modifying ObjectLiteral...');
   const rule = rules.find((rule) => rule.name === 'ObjectLiteral[Yield, Await]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyOptionalChain(rules) {
+  const TARGETS = [
+    {
+      term: '`?.`',
+      action: '_NON_NULLISH_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying OptionalChain...');
+  const rule = rules.find((rule) => rule.name === 'OptionalChain[Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;

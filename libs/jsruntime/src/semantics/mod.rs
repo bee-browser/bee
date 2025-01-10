@@ -293,6 +293,7 @@ impl<'r> Analyzer<'r> {
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
             Node::Arguments => self.handle_arguments(),
             Node::CallExpression => self.handle_call_expression(),
+            Node::NonNullish => self.handle_non_nullish(),
             Node::OptionalChain(kind) => self.handle_optional_chain(kind),
             Node::UpdateExpression(op) => self.handle_operator(op.into()),
             Node::UnaryExpression(op) => self.handle_operator(op.into()),
@@ -440,6 +441,10 @@ impl<'r> Analyzer<'r> {
 
     fn handle_call_expression(&mut self) {
         analysis_mut!(self).process_call_expression();
+    }
+
+    fn handle_non_nullish(&mut self) {
+        analysis_mut!(self).process_non_nullish();
     }
 
     fn handle_optional_chain(&mut self, kind: PropertyAccessKind) {
@@ -1269,10 +1274,24 @@ impl FunctionAnalysis {
         self.symbol_stack.push((symbol, 0));
     }
 
+    fn process_non_nullish(&mut self) {
+        // Convert `object?.<op>` into:
+        //   (object !== undefined && object !== null) ? <op> : undefined
+        self.commands.push(CompileCommand::Dereference);
+        self.commands.push(CompileCommand::Duplicate(0));
+        self.commands.push(CompileCommand::NonNullish);
+        self.commands.push(CompileCommand::IfThen);
+    }
+
     fn process_optional_chain(&mut self, kind: PropertyAccessKind) {
         match kind {
-            // Convert `object.?key` into:
-            //   (object !== undefined && object !== null) ? object.key : undefined
+            PropertyAccessKind::Call => {
+                let nargs = self.nargs_stack.pop().unwrap();
+                self.commands.push(CompileCommand::Call(nargs));
+                self.commands.push(CompileCommand::Else);
+                self.commands.push(CompileCommand::Undefined);
+                self.commands.push(CompileCommand::Ternary);
+            }
             PropertyAccessKind::IdentifierKey(key) => {
                 // TODO(fix): Currently, a property access is represented by using two commands.
                 //
@@ -1283,10 +1302,6 @@ impl FunctionAnalysis {
                 //
                 // It may be better to introduce a type like the Reference Record defined in the
                 // specification, which holds a reference to the target object.
-                self.commands.push(CompileCommand::Dereference);
-                self.commands.push(CompileCommand::Duplicate(0));
-                self.commands.push(CompileCommand::NonNullish);
-                self.commands.push(CompileCommand::IfThen);
                 self.commands.push(CompileCommand::ToObject);
                 self.commands.push(CompileCommand::PropertyReference(key));
                 self.commands.push(CompileCommand::Else);
