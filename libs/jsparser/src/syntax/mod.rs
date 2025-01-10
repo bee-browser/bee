@@ -1255,7 +1255,9 @@ where
     fn process_optional_chain_identifier_name_chain(&mut self) -> Result<(), Error> {
         let token_index = self.tokens.len() - 1;
         let key = self.make_symbol(token_index);
-        self.enqueue(Node::MemberExpression(MemberExpressionKind::PropertyAccessWithIdentifierKey(key)));
+        self.enqueue(Node::MemberExpression(
+            MemberExpressionKind::PropertyAccessWithIdentifierKey(key),
+        ));
         self.replace(3, Detail::OptionalChain);
         Ok(())
     }

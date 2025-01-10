@@ -1838,7 +1838,11 @@ impl<'r, 's> Compiler<'r, 's> {
     fn create_is_non_nullish(&mut self, operand: Operand) -> BooleanIr {
         match operand {
             Operand::Undefined | Operand::Null => self.bridge.get_boolean(false),
-            Operand::Boolean(_) | Operand::Number(_) | Operand::Closure(_) | Operand::Object(_) | Operand::Promise(_) => self.bridge.get_boolean(true),
+            Operand::Boolean(_)
+            | Operand::Number(_)
+            | Operand::Closure(_)
+            | Operand::Object(_)
+            | Operand::Promise(_) => self.bridge.get_boolean(true),
             Operand::Any(value) => self.bridge.create_is_non_nullish(value),
             Operand::Function(_)
             | Operand::Coroutine(_)
