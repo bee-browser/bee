@@ -3,6 +3,7 @@ mod scope;
 use bitflags::bitflags;
 use jsparser::syntax::LiteralPropertyName;
 use jsparser::syntax::MemberExpressionKind;
+use jsparser::syntax::PropertyAccessKind;
 use jsparser::syntax::PropertyDefinitionKind;
 use rustc_hash::FxHashSet;
 
@@ -292,6 +293,8 @@ impl<'r> Analyzer<'r> {
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
             Node::Arguments => self.handle_arguments(),
             Node::CallExpression => self.handle_call_expression(),
+            Node::NonNullish => self.handle_non_nullish(),
+            Node::OptionalChain(kind) => self.handle_optional_chain(kind),
             Node::UpdateExpression(op) => self.handle_operator(op.into()),
             Node::UnaryExpression(op) => self.handle_operator(op.into()),
             Node::BinaryExpression(op) => self.handle_binary_expression(op),
@@ -438,6 +441,14 @@ impl<'r> Analyzer<'r> {
 
     fn handle_call_expression(&mut self) {
         analysis_mut!(self).process_call_expression();
+    }
+
+    fn handle_non_nullish(&mut self) {
+        analysis_mut!(self).process_non_nullish();
+    }
+
+    fn handle_optional_chain(&mut self, kind: PropertyAccessKind) {
+        analysis_mut!(self).process_optional_chain(kind);
     }
 
     fn handle_operator(&mut self, op: CompileCommand) {
@@ -1263,6 +1274,43 @@ impl FunctionAnalysis {
         self.symbol_stack.push((symbol, 0));
     }
 
+    fn process_non_nullish(&mut self) {
+        // Convert `object?.<op>` into:
+        //   (object !== undefined && object !== null) ? <op> : undefined
+        self.commands.push(CompileCommand::Dereference);
+        self.commands.push(CompileCommand::Duplicate(0));
+        self.commands.push(CompileCommand::NonNullish);
+        self.commands.push(CompileCommand::IfThen);
+    }
+
+    fn process_optional_chain(&mut self, kind: PropertyAccessKind) {
+        match kind {
+            PropertyAccessKind::Call => {
+                let nargs = self.nargs_stack.pop().unwrap();
+                self.commands.push(CompileCommand::Call(nargs));
+                self.commands.push(CompileCommand::Else);
+                self.commands.push(CompileCommand::Undefined);
+                self.commands.push(CompileCommand::Ternary);
+            }
+            PropertyAccessKind::IdentifierKey(key) => {
+                // TODO(fix): Currently, a property access is represented by using two commands.
+                //
+                //   [ToObject, PropertyReference(key)]
+                //
+                // However, Duplicate creates a copy of a command.  This means that it expects that
+                // the property access has been dereferenced before the duplicate.
+                //
+                // It may be better to introduce a type like the Reference Record defined in the
+                // specification, which holds a reference to the target object.
+                self.commands.push(CompileCommand::ToObject);
+                self.commands.push(CompileCommand::PropertyReference(key));
+                self.commands.push(CompileCommand::Else);
+                self.commands.push(CompileCommand::Undefined);
+                self.commands.push(CompileCommand::Ternary);
+            }
+        }
+    }
+
     fn process_binary_expression(&mut self, op: BinaryOperator) {
         // When a compiler processes the following command, the RHS has been placed on the LHS on
         // the stack of the compiler.  Swap them so that the LHS is evaluated before the RHS.
@@ -1778,6 +1826,7 @@ pub enum CompileCommand {
 
     // conditional
     Truthy,
+    NonNullish,
     IfThen,
     Else,
     IfElseStatement,

@@ -376,6 +376,7 @@ impl<'r, 's> Compiler<'r, 's> {
             CompileCommand::TruthyShortCircuit => self.process_truthy_short_circuit(),
             CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
             CompileCommand::Truthy => self.process_truthy(),
+            CompileCommand::NonNullish => self.process_non_nullish(),
             CompileCommand::IfThen => self.process_if_then(),
             CompileCommand::Else => self.process_else(),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
@@ -1837,17 +1838,28 @@ impl<'r, 's> Compiler<'r, 's> {
     fn create_is_non_nullish(&mut self, operand: Operand) -> BooleanIr {
         match operand {
             Operand::Undefined | Operand::Null => self.bridge.get_boolean(false),
-            Operand::Boolean(_) | Operand::Number(_) | Operand::Closure(_) => {
-                self.bridge.get_boolean(true)
-            }
+            Operand::Boolean(_)
+            | Operand::Number(_)
+            | Operand::Closure(_)
+            | Operand::Object(_)
+            | Operand::Promise(_) => self.bridge.get_boolean(true),
             Operand::Any(value) => self.bridge.create_is_non_nullish(value),
-            _ => unreachable!(),
+            Operand::Function(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!(),
         }
     }
 
     fn process_truthy(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand);
+        self.operand_stack.push(Operand::Boolean(boolean));
+    }
+
+    fn process_non_nullish(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.create_is_non_nullish(operand);
         self.operand_stack.push(Operand::Boolean(boolean));
     }
 

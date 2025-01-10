@@ -83,6 +83,7 @@ enum Detail {
     CpeaaplFormalParametersWithRestPattern,
     Arguments,
     ArgumentList,
+    OptionalChain,
     Expression,
     ObjectLiteral,
     PropertyDefinition(Symbol),
@@ -173,6 +174,8 @@ pub enum Node<'s> {
     ArgumentListItem(bool),
     Arguments,
     CallExpression,
+    NonNullish,
+    OptionalChain(PropertyAccessKind),
     UpdateExpression(UpdateOperator),
     UnaryExpression(UnaryOperator),
     BinaryExpression(BinaryOperator),
@@ -261,6 +264,12 @@ pub enum LiteralPropertyName {
 #[derive(Clone, Debug)]
 pub enum MemberExpressionKind {
     PropertyAccessWithIdentifierKey(Symbol),
+}
+
+#[derive(Clone, Debug)]
+pub enum PropertyAccessKind {
+    Call,
+    IdentifierKey(Symbol),
 }
 
 #[derive(Clone, Copy)]
@@ -584,6 +593,12 @@ where
     // _NEW_OBJECT_
     fn process_new_object(&mut self) -> Result<(), Error> {
         self.enqueue(Node::Object);
+        Ok(())
+    }
+
+    // _NON_NULLISH_
+    fn process_non_nullish(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::NonNullish);
         Ok(())
     }
 
@@ -1183,6 +1198,67 @@ where
     fn process_argument_list_item(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ArgumentListItem(false));
         self.replace(3, Detail::ArgumentList);
+        Ok(())
+    }
+
+    // 13.3.9 Optional Chains
+
+    // OptionalExpression[Yield, Await] :
+    //   MemberExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
+    fn process_optional_expression_member(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // OptionalExpression[Yield, Await] :
+    //   CallExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
+    fn process_optional_expression_call(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // OptionalExpression[Yield, Await] :
+    //   OptionalExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
+    fn process_optional_expression_chain(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // OptionalChain[Yield, Await] :
+    //   ?. Arguments[?Yield, ?Await]
+    fn process_optional_chain_call(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::OptionalChain(PropertyAccessKind::Call));
+        self.replace(2, Detail::OptionalChain);
+        Ok(())
+    }
+
+    // OptionalChain[Yield, Await] :
+    //   ?. IdentifierName
+    fn process_optional_chain_identifier_name(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let key = self.make_symbol(token_index);
+        self.enqueue(Node::OptionalChain(PropertyAccessKind::IdentifierKey(key)));
+        self.replace(2, Detail::OptionalChain);
+        Ok(())
+    }
+
+    // OptionalChain[Yield, Await] :
+    //   OptionalChain[?Yield, ?Await] Arguments[?Yield, ?Await]
+    fn process_optional_chain_call_chain(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CallExpression);
+        self.replace(2, Detail::OptionalChain);
+        Ok(())
+    }
+
+    // OptionalChain[Yield, Await] :
+    //   OptionalChain[?Yield, ?Await] . IdentifierName
+    fn process_optional_chain_identifier_name_chain(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let key = self.make_symbol(token_index);
+        self.enqueue(Node::MemberExpression(
+            MemberExpressionKind::PropertyAccessWithIdentifierKey(key),
+        ));
+        self.replace(3, Detail::OptionalChain);
         Ok(())
     }
 

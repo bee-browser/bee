@@ -632,7 +632,7 @@
 - rule: LeftHandSideExpression_Await -> CallExpression_Await
   action: nop
 - rule: LeftHandSideExpression_Await -> OptionalExpression_Await
-  action: undefined
+  action: nop
 - rule: AssignmentOperator -> MUL_ASSIGN
   action: nop
 - rule: AssignmentOperator -> DIV_ASSIGN
@@ -1284,11 +1284,11 @@
 - rule: CallExpression_Await -> CallExpression_Await DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: OptionalExpression_Await -> MemberExpression_Await OptionalChain_Await
-  action: undefined
+  action: process_optional_expression_member
 - rule: OptionalExpression_Await -> CallExpression_Await OptionalChain_Await
-  action: undefined
+  action: process_optional_expression_call
 - rule: OptionalExpression_Await -> OptionalExpression_Await OptionalChain_Await
-  action: undefined
+  action: process_optional_expression_chain
 - rule: Block_Await -> LBRACE RBRACE
   action: process_empty_block
 - rule: Block_Await -> LBRACE _BLOCK_SCOPE_ StatementList_Await RBRACE
@@ -1502,7 +1502,7 @@
 - rule: LeftHandSideExpression -> CallExpression
   action: nop
 - rule: LeftHandSideExpression -> OptionalExpression
-  action: undefined
+  action: nop
 - rule: _LOOP_START_ -> (empty)
   action: process_loop_start
 - rule: _LOOP_BODY_ -> (empty)
@@ -1651,22 +1651,28 @@
   action: undefined
 - rule: TemplateLiteral_Await_Tagged -> SubstitutionTemplate_Await_Tagged
   action: undefined
-- rule: OptionalChain_Await -> OPTIONAL_CHAINING Arguments_Await
+- rule: OptionalChain_Await -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments_Await
+  action: process_optional_chain_call
+- rule: >-
+    OptionalChain_Await -> OPTIONAL_CHAINING _NON_NULLISH_ LBRACK
+    Expression_In_Await RBRACK
   action: undefined
-- rule: OptionalChain_Await -> OPTIONAL_CHAINING LBRACK Expression_In_Await RBRACK
+- rule: >-
+    OptionalChain_Await -> OPTIONAL_CHAINING _NON_NULLISH_
+    KeywordOrIdentifierName
+  action: process_optional_chain_identifier_name
+- rule: >-
+    OptionalChain_Await -> OPTIONAL_CHAINING _NON_NULLISH_
+    TemplateLiteral_Await_Tagged
   action: undefined
-- rule: OptionalChain_Await -> OPTIONAL_CHAINING KeywordOrIdentifierName
-  action: undefined
-- rule: OptionalChain_Await -> OPTIONAL_CHAINING TemplateLiteral_Await_Tagged
-  action: undefined
-- rule: OptionalChain_Await -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
+- rule: OptionalChain_Await -> OPTIONAL_CHAINING _NON_NULLISH_ PRIVATE_IDENTIFIER
   action: undefined
 - rule: OptionalChain_Await -> OptionalChain_Await Arguments_Await
-  action: undefined
+  action: process_optional_chain_call_chain
 - rule: OptionalChain_Await -> OptionalChain_Await LBRACK Expression_In_Await RBRACK
   action: undefined
 - rule: OptionalChain_Await -> OptionalChain_Await DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_optional_chain_identifier_name_chain
 - rule: OptionalChain_Await -> OptionalChain_Await TemplateLiteral_Await_Tagged
   action: undefined
 - rule: OptionalChain_Await -> OptionalChain_Await DOT PRIVATE_IDENTIFIER
@@ -1867,7 +1873,7 @@
 - rule: LeftHandSideExpression_Yield -> CallExpression_Yield
   action: nop
 - rule: LeftHandSideExpression_Yield -> OptionalExpression_Yield
-  action: undefined
+  action: nop
 - rule: BindingProperty_Await -> SingleNameBinding_Await
   action: undefined
 - rule: BindingProperty_Await -> PropertyName_Await COLON BindingElement_Await
@@ -1924,7 +1930,7 @@
 - rule: LeftHandSideExpression_Yield_Await -> CallExpression_Yield_Await
   action: nop
 - rule: LeftHandSideExpression_Yield_Await -> OptionalExpression_Yield_Await
-  action: undefined
+  action: nop
 - rule: ShortCircuitExpression_In -> LogicalORExpression_In
   action: nop
 - rule: ShortCircuitExpression_In -> CoalesceExpression_In
@@ -1956,11 +1962,11 @@
 - rule: CallExpression -> CallExpression DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: OptionalExpression -> MemberExpression OptionalChain
-  action: undefined
+  action: process_optional_expression_member
 - rule: OptionalExpression -> CallExpression OptionalChain
-  action: undefined
+  action: process_optional_expression_call
 - rule: OptionalExpression -> OptionalExpression OptionalChain
-  action: undefined
+  action: process_optional_expression_chain
 - rule: AssignmentExpression -> ConditionalExpression
   action: nop
 - rule: AssignmentExpression -> ArrowFunction
@@ -2111,6 +2117,8 @@
     SubstitutionTemplate_Await_Tagged -> TEMPLATE_HEAD Expression_In_Await
     TemplateSpans_Await_Tagged
   action: undefined
+- rule: _NON_NULLISH_ -> (empty)
+  action: process_non_nullish
 - rule: Expression_Await -> AssignmentExpression_Await
   action: nop
 - rule: Expression_Await -> Expression_Await COMMA AssignmentExpression_Await
@@ -2186,11 +2194,11 @@
 - rule: CallExpression_Yield -> CallExpression_Yield DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: OptionalExpression_Yield -> MemberExpression_Yield OptionalChain_Yield
-  action: undefined
+  action: process_optional_expression_member
 - rule: OptionalExpression_Yield -> CallExpression_Yield OptionalChain_Yield
-  action: undefined
+  action: process_optional_expression_call
 - rule: OptionalExpression_Yield -> OptionalExpression_Yield OptionalChain_Yield
-  action: undefined
+  action: process_optional_expression_chain
 - rule: PropertyName_Await -> LiteralPropertyName
   action: nop
 - rule: PropertyName_Await -> ComputedPropertyName_Await
@@ -2248,15 +2256,15 @@
 - rule: >-
     OptionalExpression_Yield_Await -> MemberExpression_Yield_Await
     OptionalChain_Yield_Await
-  action: undefined
+  action: process_optional_expression_member
 - rule: >-
     OptionalExpression_Yield_Await -> CallExpression_Yield_Await
     OptionalChain_Yield_Await
-  action: undefined
+  action: process_optional_expression_call
 - rule: >-
     OptionalExpression_Yield_Await -> OptionalExpression_Yield_Await
     OptionalChain_Yield_Await
-  action: undefined
+  action: process_optional_expression_chain
 - rule: LogicalORExpression_In -> LogicalANDExpression_In
   action: nop
 - rule: >-
@@ -2325,22 +2333,22 @@
   action: undefined
 - rule: TemplateLiteral_Tagged -> SubstitutionTemplate_Tagged
   action: undefined
-- rule: OptionalChain -> OPTIONAL_CHAINING Arguments
+- rule: OptionalChain -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments
+  action: process_optional_chain_call
+- rule: OptionalChain -> OPTIONAL_CHAINING _NON_NULLISH_ LBRACK Expression_In RBRACK
   action: undefined
-- rule: OptionalChain -> OPTIONAL_CHAINING LBRACK Expression_In RBRACK
+- rule: OptionalChain -> OPTIONAL_CHAINING _NON_NULLISH_ KeywordOrIdentifierName
+  action: process_optional_chain_identifier_name
+- rule: OptionalChain -> OPTIONAL_CHAINING _NON_NULLISH_ TemplateLiteral_Tagged
   action: undefined
-- rule: OptionalChain -> OPTIONAL_CHAINING KeywordOrIdentifierName
-  action: undefined
-- rule: OptionalChain -> OPTIONAL_CHAINING TemplateLiteral_Tagged
-  action: undefined
-- rule: OptionalChain -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
+- rule: OptionalChain -> OPTIONAL_CHAINING _NON_NULLISH_ PRIVATE_IDENTIFIER
   action: undefined
 - rule: OptionalChain -> OptionalChain Arguments
-  action: undefined
+  action: process_optional_chain_call_chain
 - rule: OptionalChain -> OptionalChain LBRACK Expression_In RBRACK
   action: undefined
 - rule: OptionalChain -> OptionalChain DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_optional_chain_identifier_name_chain
 - rule: OptionalChain -> OptionalChain TemplateLiteral_Tagged
   action: undefined
 - rule: OptionalChain -> OptionalChain DOT PRIVATE_IDENTIFIER
@@ -2667,22 +2675,28 @@
   action: undefined
 - rule: TemplateLiteral_Yield_Tagged -> SubstitutionTemplate_Yield_Tagged
   action: undefined
-- rule: OptionalChain_Yield -> OPTIONAL_CHAINING Arguments_Yield
+- rule: OptionalChain_Yield -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments_Yield
+  action: process_optional_chain_call
+- rule: >-
+    OptionalChain_Yield -> OPTIONAL_CHAINING _NON_NULLISH_ LBRACK
+    Expression_In_Yield RBRACK
   action: undefined
-- rule: OptionalChain_Yield -> OPTIONAL_CHAINING LBRACK Expression_In_Yield RBRACK
+- rule: >-
+    OptionalChain_Yield -> OPTIONAL_CHAINING _NON_NULLISH_
+    KeywordOrIdentifierName
+  action: process_optional_chain_identifier_name
+- rule: >-
+    OptionalChain_Yield -> OPTIONAL_CHAINING _NON_NULLISH_
+    TemplateLiteral_Yield_Tagged
   action: undefined
-- rule: OptionalChain_Yield -> OPTIONAL_CHAINING KeywordOrIdentifierName
-  action: undefined
-- rule: OptionalChain_Yield -> OPTIONAL_CHAINING TemplateLiteral_Yield_Tagged
-  action: undefined
-- rule: OptionalChain_Yield -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
+- rule: OptionalChain_Yield -> OPTIONAL_CHAINING _NON_NULLISH_ PRIVATE_IDENTIFIER
   action: undefined
 - rule: OptionalChain_Yield -> OptionalChain_Yield Arguments_Yield
-  action: undefined
+  action: process_optional_chain_call_chain
 - rule: OptionalChain_Yield -> OptionalChain_Yield LBRACK Expression_In_Yield RBRACK
   action: undefined
 - rule: OptionalChain_Yield -> OptionalChain_Yield DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_optional_chain_identifier_name_chain
 - rule: OptionalChain_Yield -> OptionalChain_Yield TemplateLiteral_Yield_Tagged
   action: undefined
 - rule: OptionalChain_Yield -> OptionalChain_Yield DOT PRIVATE_IDENTIFIER
@@ -2787,22 +2801,28 @@
     TemplateLiteral_Yield_Await_Tagged ->
     SubstitutionTemplate_Yield_Await_Tagged
   action: undefined
-- rule: OptionalChain_Yield_Await -> OPTIONAL_CHAINING Arguments_Yield_Await
-  action: undefined
 - rule: >-
-    OptionalChain_Yield_Await -> OPTIONAL_CHAINING LBRACK
+    OptionalChain_Yield_Await -> OPTIONAL_CHAINING _NON_NULLISH_
+    Arguments_Yield_Await
+  action: process_optional_chain_call
+- rule: >-
+    OptionalChain_Yield_Await -> OPTIONAL_CHAINING _NON_NULLISH_ LBRACK
     Expression_In_Yield_Await RBRACK
   action: undefined
-- rule: OptionalChain_Yield_Await -> OPTIONAL_CHAINING KeywordOrIdentifierName
-  action: undefined
 - rule: >-
-    OptionalChain_Yield_Await -> OPTIONAL_CHAINING
+    OptionalChain_Yield_Await -> OPTIONAL_CHAINING _NON_NULLISH_
+    KeywordOrIdentifierName
+  action: process_optional_chain_identifier_name
+- rule: >-
+    OptionalChain_Yield_Await -> OPTIONAL_CHAINING _NON_NULLISH_
     TemplateLiteral_Yield_Await_Tagged
   action: undefined
-- rule: OptionalChain_Yield_Await -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
+- rule: >-
+    OptionalChain_Yield_Await -> OPTIONAL_CHAINING _NON_NULLISH_
+    PRIVATE_IDENTIFIER
   action: undefined
 - rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await Arguments_Yield_Await
-  action: undefined
+  action: process_optional_chain_call_chain
 - rule: >-
     OptionalChain_Yield_Await -> OptionalChain_Yield_Await LBRACK
     Expression_In_Yield_Await RBRACK
@@ -2810,7 +2830,7 @@
 - rule: >-
     OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT
     KeywordOrIdentifierName
-  action: undefined
+  action: process_optional_chain_identifier_name_chain
 - rule: >-
     OptionalChain_Yield_Await -> OptionalChain_Yield_Await
     TemplateLiteral_Yield_Await_Tagged
