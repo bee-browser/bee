@@ -19,13 +19,13 @@
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
     "@deno/emit": "jsr:@deno/emit@0.46.0",
-    "@std/assert": "jsr:@std/assert@1.0.9",
+    "@std/assert": "jsr:@std/assert@1.0.10",
     "@std/csv": "jsr:@std/csv@1.0.4",
-    "@std/encoding": "jsr:@std/encoding@1.0.5",
-    "@std/fs": "jsr:@std/fs@1.0.6",
+    "@std/encoding": "jsr:@std/encoding@1.0.6",
+    "@std/fs": "jsr:@std/fs@1.0.9",
     "@std/io": "jsr:@std/io@0.225.0",
     "@std/json": "jsr:@std/json@1.0.1",
-    "@std/log": "jsr:@std/log@0.224.11",
+    "@std/log": "jsr:@std/log@0.224.13",
     "@std/path": "jsr:@std/path@1.0.8",
     "@std/streams": "jsr:@std/streams@1.0.8",
     "@std/toml": "jsr:@std/toml@1.0.2",
@@ -44,7 +44,7 @@
   },
   // See https://github.com/hasundue/molt/tree/main/cli
   "tasks": {
-    "update": "deno run --allow-env --allow-read --allow-write='~/.local,.' --allow-run='git,deno' --allow-net='deno.land,jsr.io,registry.npmjs.org' jsr:@molt/cli --write",
+    "update": "deno run --allow-env --allow-read --allow-write=$HOME/.local,. --allow-run=git,deno --allow-net=deno.land,jsr.io,registry.npmjs.org jsr:@molt/cli --write",
     "update:commit": "deno task -q update --commit"
   }
 }
