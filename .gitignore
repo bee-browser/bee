@@ -1,11 +1,12 @@
 /target/
 /vendor/.crates2.json
 /vendor/.crates.toml
-/vendor/bin
-/vendor/include
-/vendor/lib
-/vendor/share
+/vendor/bin/
+/vendor/include/
+/vendor/lib/
+/vendor/share/
 .DS_Store
+.cache/clangd/
 .clangd
 .env
 .envrc
