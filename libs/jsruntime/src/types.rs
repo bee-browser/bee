@@ -21,6 +21,7 @@ pub enum Value {
     Null,
     Boolean(bool),
     Number(f64),
+    String(U16String),
     // TODO(issue#237): GcCellRef
     Closure(*mut Closure),
     Promise(Promise),
@@ -39,6 +40,7 @@ impl Value {
             Self::Undefined | Self::Null => Err(1001.into()), // TODO: TypeError
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
             Self::Number(_value) => unimplemented!("new Number(value)"),
+            Self::String(_value) => unimplemented!("new String(value)"),
             Self::Closure(_value) => unimplemented!("new Function()"),
             Self::Promise(_value) => unimplemented!("new Promise()"),
             Self::Object(value) => unsafe { Ok(value.cast::<Object>().as_mut().unwrap()) },
@@ -99,10 +101,135 @@ impl std::fmt::Debug for Value {
             Self::Null => write!(f, "null"),
             Self::Boolean(value) => write!(f, "{value}"),
             Self::Number(value) => write!(f, "{value}"),
+            Self::String(value) => write!(f, "{value:?}"),
             Self::Closure(value) => write!(f, "{:?}", unsafe { value.as_ref().unwrap() }),
             Self::Promise(value) => write!(f, "{value:?}"),
             Self::Object(value) => write!(f, "object({value:?})"),
         }
+    }
+}
+
+/// A data type to hold a UTF-16 string.
+///
+/// A UTF-16 string is represented as a *chain* of UTF-16 code sequences.
+///
+/// This type is usually allocated on the stack and holds a pointer to a `Char16Seq` that is
+/// allocated on the heap or the stack.
+// TODO(issue#237): GcCell
+#[derive(Clone, Copy, PartialEq)]
+#[repr(C)]
+pub struct U16String(*const Char16Seq); // Non-null
+
+static_assertions::const_assert_eq!(align_of::<U16String>(), align_of::<usize>());
+
+impl U16String {
+    // TODO(refactor): cbindgen cannot parse the following line...
+    // Currently, we don't use union types.  So, now may be the time to switch to cxx.
+    //pub const EMPTY: Self = Self(std::ptr::from_ref(&Char16Seq::EMPTY));
+
+    pub fn new(seq: &Char16Seq) -> Self {
+        Self(std::ptr::from_ref(seq))
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        debug_assert!(!self.0.is_null());
+        unsafe { (*self.0).is_empty() }
+    }
+
+    pub fn len(&self) -> u32 {
+        debug_assert!(!self.0.is_null());
+        unsafe { (*self.0).total_len() }
+    }
+
+    pub(crate) fn first_seq(&self) -> &Char16Seq {
+        unsafe { &(*self.0) }
+    }
+}
+
+impl std::fmt::Debug for U16String {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_empty() {
+            Ok(())
+        } else {
+            unsafe { write!(f, "{:?}", self.0.as_ref().unwrap()) }
+        }
+    }
+}
+
+/// A data type representing a sequence of UTF-16 code units.
+///
+/// This type may be allocated on the stack.
+// TODO(issue#237): GcCell
+#[repr(C)]
+pub struct Char16Seq {
+    /// A pointer to the next sequence if it exists.
+    pub next: *const Char16Seq,
+
+    /// A pointer to the array of UTF-16 code units if it exists.
+    pub ptr: *const u16,
+
+    /// The number of the UTF-16 code units.
+    pub len: u32,
+}
+
+static_assertions::const_assert_eq!(align_of::<Char16Seq>(), align_of::<usize>());
+
+impl Char16Seq {
+    // TODO(refactor): cbindgen cannot parse the following line...
+    // Currently, we don't use union types.  So, now may be the time to switch to cxx.
+    //
+    // `cbindgen:ignore` does not work... The only way we can do is ignoring `ParseSyntaxError`
+    // as described in docs.md, but this is bad because syntax errors we have to fix are also
+    // ignored...
+    //pub static EMPTY: Self = Self::new(std::ptr::null(), 0);
+
+    pub const fn empty() -> Self {
+        Self {
+            next: std::ptr::null(),
+            ptr: std::ptr::null(),
+            len: 0,
+        }
+    }
+
+    pub const fn new(slice: &[u16]) -> Self {
+        Self {
+            next: std::ptr::null(),
+            ptr: slice.as_ptr(),
+            len: slice.len() as u32,
+        }
+    }
+
+    pub const fn from_raw_parts(ptr: *const u16, len: u32) -> Self {
+        Self {
+            next: std::ptr::null(),
+            ptr,
+            len,
+        }
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.next.is_null() && self.len == 0
+    }
+
+    pub fn total_len(&self) -> u32 {
+        // TODO: next
+        self.len
+    }
+}
+
+// The UTF-16 code units never change.
+unsafe impl Send for Char16Seq {}
+unsafe impl Sync for Char16Seq {}
+
+impl std::fmt::Debug for Char16Seq {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let units = unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) };
+        let chars: String = char::decode_utf16(units.iter().cloned())
+            .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
+            .collect();
+        write!(f, "{}", chars.escape_default())?;
+        // TODO: next
+        Ok(())
     }
 }
 

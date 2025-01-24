@@ -72,21 +72,17 @@ struct NullHandler(SymbolRegistry);
 impl<'s> NodeHandler<'s> for NullHandler {
     type Artifact = ();
 
-    #[inline(always)]
     fn start(&mut self) {}
 
-    #[inline(always)]
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         Ok(())
     }
 
-    #[inline(always)]
     fn handle_nodes(&mut self, _nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error> {
         Ok(())
     }
 
-    #[inline(always)]
-    fn symbol_registry_mut(&mut self) -> &mut SymbolRegistry {
-        &mut self.0
+    fn make_symbol(&mut self, lexeme: &str) -> jsparser::Symbol {
+        self.0.intern_str(lexeme)
     }
 }

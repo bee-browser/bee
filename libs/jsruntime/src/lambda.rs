@@ -25,13 +25,14 @@ impl From<LambdaId> for u32 {
     }
 }
 
+#[derive(Default)]
 pub struct LambdaRegistry {
     entries: Vec<LambdaInfo>,
 }
 
 impl LambdaRegistry {
     pub fn new() -> Self {
-        Self { entries: vec![] }
+        Self::default()
     }
 
     pub fn register(&mut self, is_coroutine: bool) -> LambdaId {

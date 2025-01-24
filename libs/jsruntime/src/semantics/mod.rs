@@ -18,16 +18,12 @@ use jsparser::Error;
 use jsparser::Parser;
 use jsparser::Processor;
 use jsparser::Symbol;
-use jsparser::SymbolRegistry;
 
 use crate::logger;
-use crate::objects::Object;
 use crate::objects::Property;
 use crate::objects::PropertyFlags;
 use crate::LambdaId;
-use crate::LambdaRegistry;
 use crate::Runtime;
-use crate::RuntimePref;
 use crate::Value;
 
 use scope::ScopeTreeBuilder;
@@ -40,12 +36,7 @@ impl<X> Runtime<X> {
     /// Parses a given source text as a script.
     pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "script");
-        let analyzer = Analyzer::new_for_script(
-            &self.pref,
-            &mut self.symbol_registry,
-            &mut self.lambda_registry,
-            &mut self.global_object,
-        );
+        let analyzer = Analyzer::new_for_script(self);
         let processor = Processor::new(analyzer, false);
         Parser::for_script(source, processor).parse()
     }
@@ -53,12 +44,7 @@ impl<X> Runtime<X> {
     /// Parses a given source text as a module.
     pub fn parse_module(&mut self, source: &str) -> Result<Program, Error> {
         logger::debug!(event = "parse", source_kind = "module");
-        let analyzer = Analyzer::new_for_module(
-            &self.pref,
-            &mut self.symbol_registry,
-            &mut self.lambda_registry,
-            &mut self.global_object,
-        );
+        let analyzer = Analyzer::new_for_module(self);
         let processor = Processor::new(analyzer, true);
         Parser::for_module(source, processor).parse()
     }
@@ -169,18 +155,8 @@ impl Function {
 /// A semantic analyzer.
 ///
 /// A semantic analyzer analyzes semantics of a JavaScript program.
-struct Analyzer<'r> {
-    #[allow(unused)]
-    runtime_pref: &'r RuntimePref,
-
-    /// A mutable reference to a symbol registry.
-    symbol_registry: &'r mut SymbolRegistry,
-
-    /// A mutable reference to a function registry.
-    lambda_registry: &'r mut LambdaRegistry,
-
-    /// A mutable reference to a JavaScript global object.
-    global_object: &'r mut Object,
+struct Analyzer<'r, R> {
+    support: &'r mut R,
 
     /// Global analysis data.
     global_analysis: GlobalAnalysis,
@@ -193,6 +169,26 @@ struct Analyzer<'r> {
     functions: Vec<Function>,
 
     module: bool,
+}
+
+trait AnalyzerSupport {
+    fn make_symbol(&mut self, lexeme: &str) -> Symbol;
+    fn register_lambda(&mut self, is_coroutine: bool) -> LambdaId;
+    fn define_global_property(&mut self, key: Symbol, property: Property) -> Result<bool, Value>;
+}
+
+impl<X> AnalyzerSupport for Runtime<X> {
+    fn make_symbol(&mut self, lexeme: &str) -> Symbol {
+        self.symbol_registry.intern_str(lexeme)
+    }
+
+    fn register_lambda(&mut self, is_coroutine: bool) -> LambdaId {
+        self.lambda_registry.register(is_coroutine)
+    }
+
+    fn define_global_property(&mut self, key: Symbol, property: Property) -> Result<bool, Value> {
+        self.global_object.define_own_property(key, property)
+    }
 }
 
 #[derive(Default)]
@@ -219,51 +215,23 @@ macro_rules! push_commands {
     };
 }
 
-impl<'r> Analyzer<'r> {
+impl<'r, R> Analyzer<'r, R>
+where
+    R: AnalyzerSupport,
+{
     /// Creates a semantic analyzer.
-    fn new_for_script(
-        runtime_pref: &'r RuntimePref,
-        symbol_registry: &'r mut SymbolRegistry,
-        lambda_registry: &'r mut LambdaRegistry,
-        global_object: &'r mut Object,
-    ) -> Self {
-        Self::new(
-            runtime_pref,
-            symbol_registry,
-            lambda_registry,
-            global_object,
-            false,
-        )
+    fn new_for_script(support: &'r mut R) -> Self {
+        Self::new(support, false)
     }
 
     /// Creates a semantic analyzer.
-    fn new_for_module(
-        runtime_pref: &'r RuntimePref,
-        symbol_registry: &'r mut SymbolRegistry,
-        lambda_registry: &'r mut LambdaRegistry,
-        global_object: &'r mut Object,
-    ) -> Self {
-        Self::new(
-            runtime_pref,
-            symbol_registry,
-            lambda_registry,
-            global_object,
-            true,
-        )
+    fn new_for_module(support: &'r mut R) -> Self {
+        Self::new(support, true)
     }
 
-    fn new(
-        runtime_pref: &'r RuntimePref,
-        symbol_registry: &'r mut SymbolRegistry,
-        lambda_registry: &'r mut LambdaRegistry,
-        global_object: &'r mut Object,
-        module: bool,
-    ) -> Self {
+    fn new(support: &'r mut R, module: bool) -> Self {
         Self {
-            runtime_pref,
-            symbol_registry,
-            lambda_registry,
-            global_object,
+            support,
             global_analysis: Default::default(),
             analysis_stack: vec![],
             functions: vec![],
@@ -799,8 +767,8 @@ impl<'r> Analyzer<'r> {
         assert!(self.functions.len() < u32::MAX as usize);
 
         let lambda_id = self
-            .lambda_registry
-            .register(name == Symbol::HIDDEN_COROUTINE);
+            .support
+            .register_lambda(name == Symbol::HIDDEN_COROUTINE);
 
         let mut analysis = FunctionAnalysis::new(name, lambda_id);
 
@@ -920,7 +888,10 @@ impl<'r> Analyzer<'r> {
     }
 }
 
-impl<'s> NodeHandler<'s> for Analyzer<'_> {
+impl<'s, R> NodeHandler<'s> for Analyzer<'_, R>
+where
+    R: AnalyzerSupport,
+{
     type Artifact = Program;
 
     fn start(&mut self) {
@@ -982,7 +953,7 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         for symbol in analysis.function_scoped_symbols.iter().cloned() {
             // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
             // `function.commands` must be rewritten to throw the "Error".
-            let result = self.global_object.define_own_property(
+            let result = self.support.define_global_property(
                 symbol,
                 Property::Data {
                     value: Value::Undefined,
@@ -1016,8 +987,8 @@ impl<'s> NodeHandler<'s> for Analyzer<'_> {
         Ok(())
     }
 
-    fn symbol_registry_mut(&mut self) -> &mut SymbolRegistry {
-        self.symbol_registry
+    fn make_symbol(&mut self, lexeme: &str) -> Symbol {
+        self.support.make_symbol(lexeme)
     }
 }
 
@@ -2021,14 +1992,17 @@ impl Reference {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::LambdaRegistry;
     use jsparser::Parser;
     use jsparser::Processor;
-
-    use super::*;
+    use jsparser::SymbolRegistry;
 
     macro_rules! symbol {
-        ($symbol_registry:expr, $name:literal) => {
-            $symbol_registry.lookup($name.encode_utf16().collect::<Vec<u16>>().as_slice())
+        ($stub:expr, $name:literal) => {
+            $stub
+                .symbol_registry
+                .lookup($name.encode_utf16().collect::<Vec<u16>>().as_slice())
         };
     }
     macro_rules! scope_ref {
@@ -2053,7 +2027,7 @@ mod tests {
     fn test_lexical_declarations() {
         test(
             script!("let a, b = 2; const c = 3, d = 4;"),
-            |program, sreg, _freg| {
+            |program, stub| {
                 assert_eq!(
                     program.functions[0].commands,
                     [
@@ -2062,16 +2036,16 @@ mod tests {
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVars(scope_ref!(1)),
                         CompileCommand::Undefined,
-                        CompileCommand::VariableReference(symbol!(sreg, "a")),
+                        CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::Number(2.0),
-                        CompileCommand::VariableReference(symbol!(sreg, "b")),
+                        CompileCommand::VariableReference(symbol!(stub, "b")),
                         CompileCommand::MutableVariable,
                         CompileCommand::Number(3.0),
-                        CompileCommand::VariableReference(symbol!(sreg, "c")),
+                        CompileCommand::VariableReference(symbol!(stub, "c")),
                         CompileCommand::ImmutableVariable,
                         CompileCommand::Number(4.0),
-                        CompileCommand::VariableReference(symbol!(sreg, "d")),
+                        CompileCommand::VariableReference(symbol!(stub, "d")),
                         CompileCommand::ImmutableVariable,
                         CompileCommand::PopScope(scope_ref!(1)),
                     ]
@@ -2084,7 +2058,7 @@ mod tests {
     fn test_lexical_declarations_in_scopes() {
         test(
             script!("let a; { let a; } { let a, b; }"),
-            |program, sreg, _freg| {
+            |program, stub| {
                 assert_eq!(
                     program.functions[0].commands,
                     [
@@ -2093,19 +2067,19 @@ mod tests {
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVars(scope_ref!(1)),
                         CompileCommand::Undefined,
-                        CompileCommand::VariableReference(symbol!(sreg, "a")),
+                        CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PushScope(scope_ref!(2)),
                         CompileCommand::Undefined,
-                        CompileCommand::VariableReference(symbol!(sreg, "a")),
+                        CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(2)),
                         CompileCommand::PushScope(scope_ref!(3)),
                         CompileCommand::Undefined,
-                        CompileCommand::VariableReference(symbol!(sreg, "a")),
+                        CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::Undefined,
-                        CompileCommand::VariableReference(symbol!(sreg, "b")),
+                        CompileCommand::VariableReference(symbol!(stub, "b")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(3)),
                         CompileCommand::PopScope(scope_ref!(1)),
@@ -2117,7 +2091,7 @@ mod tests {
 
     #[test]
     fn test_binary_operator() {
-        test(script!("1 + 2"), |program, _sreg, _freg| {
+        test(script!("1 + 2"), |program, _stub| {
             assert_eq!(
                 program.functions[0].commands,
                 [
@@ -2138,7 +2112,7 @@ mod tests {
 
     #[test]
     fn test_shorthand_assignment_operator() {
-        test(script!("let a = 1; a += 2"), |program, sreg, _freg| {
+        test(script!("let a = 1; a += 2"), |program, stub| {
             assert_eq!(
                 program.functions[0].commands,
                 [
@@ -2147,9 +2121,9 @@ mod tests {
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVars(scope_ref!(1)),
                     CompileCommand::Number(1.0),
-                    CompileCommand::VariableReference(symbol!(sreg, "a")),
+                    CompileCommand::VariableReference(symbol!(stub, "a")),
                     CompileCommand::MutableVariable,
-                    CompileCommand::VariableReference(symbol!(sreg, "a")),
+                    CompileCommand::VariableReference(symbol!(stub, "a")),
                     CompileCommand::Number(2.0),
                     CompileCommand::Duplicate(1),
                     CompileCommand::Addition,
@@ -2163,7 +2137,7 @@ mod tests {
 
     #[test]
     fn test_await() {
-        test(module!("await 0"), |program, _sreg, _freg| {
+        test(module!("await 0"), |program, _stub| {
             assert_eq!(program.functions.len(), 2);
             assert_eq!(
                 program.functions[0].commands,
@@ -2198,45 +2172,46 @@ mod tests {
         });
     }
 
-    fn test(src: Source, validate: fn(&Program, &SymbolRegistry, &LambdaRegistry)) {
-        let runtime_pref = RuntimePref {
-            enable_scope_cleanup_checker: true,
-            ..Default::default()
-        };
-        let mut symbol_registry = Default::default();
-        let mut lambda_registry = LambdaRegistry::new();
-        let mut global_object = Object::default();
-        global_object.define_builtin_global_properties();
+    fn test(src: Source, validate: fn(&Program, &Stub)) {
+        let mut stub = Stub::default();
         let mut parser = match src {
             Source::Script(src) => Parser::for_script(
                 src,
-                Processor::new(
-                    Analyzer::new_for_script(
-                        &runtime_pref,
-                        &mut symbol_registry,
-                        &mut lambda_registry,
-                        &mut global_object,
-                    ),
-                    false,
-                ),
+                Processor::new(Analyzer::new_for_script(&mut stub), false),
             ),
             Source::Module(src) => Parser::for_module(
                 src,
-                Processor::new(
-                    Analyzer::new_for_module(
-                        &runtime_pref,
-                        &mut symbol_registry,
-                        &mut lambda_registry,
-                        &mut global_object,
-                    ),
-                    true,
-                ),
+                Processor::new(Analyzer::new_for_module(&mut stub), true),
             ),
         };
         let result = parser.parse();
         assert!(result.is_ok());
         if let Ok(program) = result {
-            validate(&program, &symbol_registry, &lambda_registry)
+            validate(&program, &stub);
+        }
+    }
+
+    #[derive(Default)]
+    struct Stub {
+        symbol_registry: SymbolRegistry,
+        lambda_registry: LambdaRegistry,
+    }
+
+    impl AnalyzerSupport for Stub {
+        fn make_symbol(&mut self, lexeme: &str) -> Symbol {
+            self.symbol_registry.intern_str(lexeme)
+        }
+
+        fn register_lambda(&mut self, is_coroutine: bool) -> LambdaId {
+            self.lambda_registry.register(is_coroutine)
+        }
+
+        fn define_global_property(
+            &mut self,
+            _key: Symbol,
+            _property: Property,
+        ) -> Result<bool, Value> {
+            Ok(true)
         }
     }
 

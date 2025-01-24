@@ -34,6 +34,21 @@ llvm::StructType* TypeHolder::CreateValueType() {
   return value_type_;
 }
 
+llvm::StructType* TypeHolder::CreateChar16SeqType() {
+  if (char16_seq_type_ == nullptr) {
+    char16_seq_type_ = llvm::StructType::create(context_, "Char16Seq");
+    char16_seq_type_->setBody({
+        // next
+        builder_.getPtrTy(),
+        // ptr
+        builder_.getPtrTy(),
+        // len
+        builder_.getInt32Ty(),
+    });
+  }
+  return char16_seq_type_;
+}
+
 llvm::StructType* TypeHolder::CreateCaptureType() {
   if (capture_type_ == nullptr) {
     capture_type_ = llvm::StructType::create(context_, "Capture");

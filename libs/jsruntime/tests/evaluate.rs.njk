@@ -8,8 +8,10 @@
 
 use assert_matches::assert_matches;
 use base::macros::assert_eq;
+use jsruntime::Char16Seq;
 use jsruntime::Runtime;
 use jsruntime::Value;
+use jsruntime::U16String;
 
 logging::init!();
 
@@ -23,8 +25,8 @@ struct Validator {
     actual_values: Vec<Value>,
 }
 
-impl Drop for Validator {
-    fn drop(&mut self) {
+impl Validator {
+    fn validate(&self) {
         assert_eq!(self.actual_values.len(), self.expected_values.len());
         for (actual, expected) in self.actual_values.iter().zip(self.expected_values.iter()) {
             match expected {
@@ -52,7 +54,8 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
         runtime.enable_llvmir_labels();
     }
     runtime.register_host_function("print", |runtime, args| {
-        runtime.extension_mut().actual_values.push(args[0].clone());
+        let value = runtime.clone_value(&args[0]);
+        runtime.extension_mut().actual_values.push(value);
     });
     let program = if module {
         runtime.parse_module(src).unwrap()
@@ -63,26 +66,31 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
     runtime.link(module);
     let result = runtime.evaluate(&program)?;
     runtime.run();
+    runtime.extension().validate();
     Ok(result)
 }
 {%- for test in data.tests %}
 
 #[test]
 fn {{ test.name }}_optimize() {
-   {{ test.name }}(true, false);
+    {{ test.name }}(true, false);
 }
 
 #[test]
 fn {{ test.name }}_no_optimize() {
-   {{ test.name }}(false, false);
+    {{ test.name }}(false, false);
 }
 
 #[test]
 fn {{ test.name }}_with_labels() {
-   {{ test.name }}(false, true);
+    {{ test.name }}(false, true);
 }
 
 fn {{ test.name }}(optimize: bool, enable_labels: bool) {
+    {%- for string in test.strings %}
+    static CODE_UNITS{{ loop.index0 }}: [u16; {{ string.size }}] = [{{ string.data | join(", ") }}];
+    static STRING{{ loop.index0 }}: Char16Seq = Char16Seq::new(&CODE_UNITS{{ loop.index0 }});
+    {%- endfor %}
     let src = include_str!("{{ test.filename }}");
     let result = evaluate(src, {{ test.module }}, optimize, enable_labels, vec![
         {%- for expected in test.expectedValues %}

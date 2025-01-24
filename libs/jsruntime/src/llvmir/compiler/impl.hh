@@ -9,6 +9,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "llvm/ADT/ArrayRef.h"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <llvm/Analysis/CGSCCPassManager.h>
@@ -411,6 +413,61 @@ class Compiler {
     return phi;
   }
 
+  // string - chain of `Char16Seq`s
+
+  llvm::Value* CreateChar16Seq(const uint16_t* ptr, uint32_t len) {
+    // The following implementation is based on llvm::IRBuilder::CreateGlobalString().
+
+    // Theoretically, the heap memory pointed by `ptr` can be freed after the IR built by the
+    // compiler is freed.
+    auto* data = llvm::ConstantDataArray::get(*llvmctx_, llvm::ArrayRef(ptr, len));
+
+    // Define a global variable for `data` w/ private linkage.
+    auto* gv = new llvm::GlobalVariable(*module_, data->getType(), true,
+                                        llvm::GlobalVariable::PrivateLinkage, data,
+                                        REG_NAME("global.char16.ptr"));
+    gv->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+    gv->setAlignment(llvm::Align(2));
+
+    // Allocate a Char16Seq on the stack.
+    auto* seq_ptr = CreateAlloc1(types_->CreateChar16SeqType(), REG_NAME("char16_seq.ptr"));
+    CreateStoreNextToChar16Seq(GetNullptr(), seq_ptr);
+    CreateStorePtrToChar16Seq(gv, seq_ptr);
+    CreateStoreLenToChar16Seq(builder_->getInt32(len), seq_ptr);
+
+    return seq_ptr;
+  }
+
+  void CreateStoreNextToChar16Seq(llvm::Value* value, llvm::Value* dest) {
+    auto* ptr = CreateGetNextPtrOfChar16Seq(dest);
+    builder_->CreateStore(value, ptr);
+  }
+
+  void CreateStorePtrToChar16Seq(llvm::Value* value, llvm::Value* dest) {
+    auto* ptr = CreateGetPtrPtrOfChar16Seq(dest);
+    builder_->CreateStore(value, ptr);
+  }
+
+  void CreateStoreLenToChar16Seq(llvm::Value* value, llvm::Value* dest) {
+    auto* ptr = CreateGetLenPtrOfChar16Seq(dest);
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateGetNextPtrOfChar16Seq(llvm::Value* seq_ptr) {
+    return builder_->CreateStructGEP(types_->CreateChar16SeqType(), seq_ptr, 0,
+                                     REG_NAME("char16_seq.next.ptr"));
+  }
+
+  llvm::Value* CreateGetPtrPtrOfChar16Seq(llvm::Value* seq_ptr) {
+    return builder_->CreateStructGEP(types_->CreateChar16SeqType(), seq_ptr, 1,
+                                     REG_NAME("char16_seq.ptr.ptr"));
+  }
+
+  llvm::Value* CreateGetLenPtrOfChar16Seq(llvm::Value* seq_ptr) {
+    return builder_->CreateStructGEP(types_->CreateChar16SeqType(), seq_ptr, 2,
+                                     REG_NAME("char16_seq.len.ptr"));
+  }
+
   // pointer
 
   llvm::Value* GetNullptr() {
@@ -597,6 +654,14 @@ class Compiler {
     return value_ptr;
   }
 
+  llvm::Value* CreateStringToAny(llvm::Value* string) {
+    auto* value_ptr = CreateAlloc1(types_->CreateValueType(), REG_NAME("any.ptr"));
+    // TODO: this is safe only the value used within the function.
+    // returning it as the return value is unsafe.
+    CreateStoreStringToValue(string, value_ptr);
+    return value_ptr;
+  }
+
   llvm::Value* CreateClosureToAny(llvm::Value* closure) {
     auto* value_ptr = CreateAlloc1(types_->CreateValueType(), REG_NAME("any.ptr"));
     CreateStoreClosureToValue(closure, value_ptr);
@@ -649,6 +714,11 @@ class Compiler {
 
   void CreateStoreNumberToValue(llvm::Value* value, llvm::Value* dest) {
     CreateStoreValueKindToValue(kValueKindNumber, dest);
+    CreateStoreValueHolderToValue(value, dest);
+  }
+
+  void CreateStoreStringToValue(llvm::Value* value, llvm::Value* dest) {
+    CreateStoreValueKindToValue(kValueKindString, dest);
     CreateStoreValueHolderToValue(value, dest);
   }
 
@@ -731,6 +801,11 @@ class Compiler {
 
   void CreateStoreNumberToRetv(llvm::Value* value) {
     CreateStoreNumberToValue(value, retv_);
+  }
+
+  void CreateStoreStringToRetv(llvm::Value* value) {
+    // TODO: make sure that the string value is allocated in the heap.
+    CreateStoreStringToValue(value, retv_);
   }
 
   void CreateStoreClosureToRetv(llvm::Value* value) {
@@ -1048,6 +1123,12 @@ class Compiler {
 
   // print
 
+  void CreatePrintString(llvm::Value* value, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_string.msg"));
+    auto* func = types_->CreateRuntimePrintString();
+    builder_->CreateCall(func, {runtime_, value, msg_value});
+  }
+
   void CreatePrintValue(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_value.msg"));
     auto* func = types_->CreateRuntimePrintValue();
@@ -1115,6 +1196,7 @@ class Compiler {
   static constexpr uint8_t kValueKindNull = static_cast<uint8_t>(Value::Tag::Null);
   static constexpr uint8_t kValueKindBoolean = static_cast<uint8_t>(Value::Tag::Boolean);
   static constexpr uint8_t kValueKindNumber = static_cast<uint8_t>(Value::Tag::Number);
+  static constexpr uint8_t kValueKindString = static_cast<uint8_t>(Value::Tag::String);
   static constexpr uint8_t kValueKindClosure = static_cast<uint8_t>(Value::Tag::Closure);
   static constexpr uint8_t kValueKindPromise = static_cast<uint8_t>(Value::Tag::Promise);
   static constexpr uint8_t kValueKindObject = static_cast<uint8_t>(Value::Tag::Object);

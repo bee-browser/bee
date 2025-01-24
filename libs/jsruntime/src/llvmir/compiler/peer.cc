@@ -18,6 +18,7 @@
 #define LLVM_VALUE(value) (reinterpret_cast<llvm::Value*>(value))
 #define PEER_BOOLEAN(value) (reinterpret_cast<BooleanIrPtr>(value))
 #define PEER_NUMBER(value) (reinterpret_cast<NumberIrPtr>(value))
+#define PEER_CHAR16SEQ(value) (reinterpret_cast<Char16SeqIrPtr>(value))
 #define PEER_CLOSURE(value) (reinterpret_cast<ClosureIrPtr>(value))
 #define PEER_COROUTINE(value) (reinterpret_cast<CoroutineIrPtr>(value))
 #define PEER_PROMISE(value) (reinterpret_cast<PromiseIrPtr>(value))
@@ -40,10 +41,9 @@ void compiler_peer_delete(CompilerPeer peer) {
   delete IMPL(peer);
 }
 
-void compiler_peer_start(CompilerPeer peer, bool enable_labels) {
-  if (enable_labels) {
-    IMPL(peer)->EnableLabels();
-  }
+void compiler_peer_start(CompilerPeer peer) {
+  // Nothing to do at this point, but may perform something in the future.
+  UNUSED(peer);
 }
 
 ModulePeer compiler_peer_end(CompilerPeer peer) {
@@ -56,6 +56,10 @@ void compiler_peer_set_data_layout(CompilerPeer peer, const char* data_layout) {
 
 void compiler_peer_set_target_triple(CompilerPeer peer, const char* triple) {
   IMPL(peer)->SetTargetTriple(triple);
+}
+
+void compiler_peer_enable_labels(CompilerPeer peer) {
+  IMPL(peer)->EnableLabels();
 }
 
 void compiler_peer_start_function(CompilerPeer peer, uint32_t func_id) {
@@ -279,6 +283,14 @@ NumberIrPtr compiler_peer_create_number_phi(CompilerPeer peer,
                                             BasicBlockPtr else_block) {
   return PEER_NUMBER(IMPL(peer)->CreateNumberPhi(LLVM_VALUE(then_value), LLVM_BB(then_block),
                                                  LLVM_VALUE(else_value), LLVM_BB(else_block)));
+}
+
+// string
+
+Char16SeqIrPtr compiler_peer_create_char16_seq(CompilerPeer peer,
+                                               const uint16_t* ptr,
+                                               uint32_t len) {
+  return PEER_CHAR16SEQ(IMPL(peer)->CreateChar16Seq(ptr, len));
 }
 
 // closure
@@ -544,6 +556,12 @@ void compiler_peer_create_store_number_to_value(CompilerPeer peer,
                                                 NumberIrPtr value,
                                                 ValueIrPtr dest) {
   IMPL(peer)->CreateStoreNumberToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
+}
+
+void compiler_peer_create_store_string_to_value(CompilerPeer peer,
+                                                Char16SeqIrPtr value,
+                                                ValueIrPtr dest) {
+  IMPL(peer)->CreateStoreStringToValue(LLVM_VALUE(value), LLVM_VALUE(dest));
 }
 
 void compiler_peer_create_store_closure_to_value(CompilerPeer peer,
@@ -848,6 +866,10 @@ void compiler_peer_assert_scope_id(CompilerPeer peer, uint16_t expected) {
 }
 
 // print
+
+void compiler_peer_create_print_string(CompilerPeer peer, Char16SeqIrPtr value, const char* msg) {
+  IMPL(peer)->CreatePrintString(LLVM_VALUE(value), msg);
+}
 
 void compiler_peer_create_print_value(CompilerPeer peer, ValueIrPtr value, const char* msg) {
   IMPL(peer)->CreatePrintValue(LLVM_VALUE(value), msg);
