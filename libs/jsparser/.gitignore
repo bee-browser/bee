@@ -15,5 +15,5 @@
 /src/parser/lalr/goto.rs
 /src/parser/lalr/lexical_goal.rs
 /src/parser/lalr/non_terminals.rs
-/src/symbol/builtins.rs
+/src/symbol/builtin.rs
 /src/syntax/actions.rs
