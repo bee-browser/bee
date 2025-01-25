@@ -178,5 +178,5 @@ fn read_from_stdin() -> Result<String> {
 }
 
 fn print(_runtime: &mut BasicRuntime, args: &[Value]) {
-    println!("{args:?}");
+    println!("{}", itertools::join(args, " "));
 }
