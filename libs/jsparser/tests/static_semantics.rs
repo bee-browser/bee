@@ -4,6 +4,7 @@ use jsparser::Node;
 use jsparser::NodeHandler;
 use jsparser::Parser;
 use jsparser::Processor;
+use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 macro_rules! parse_fail {
@@ -22,6 +23,17 @@ macro_rules! parse_fail {
     ($parser:expr) => {
         assert_matches!($parser.parse(), Err(Error::SyntaxError));
     };
+}
+
+#[test]
+fn test_13_2_5_1_cover_initialized_name() {
+    // TODO
+    //parse_fail!(script: "static_semantics_13_2_5_1_cover_initialized_name.js");
+}
+
+#[test]
+fn test_13_2_5_1_duplicate_proto() {
+    parse_fail!(script: "static_semantics_13_2_5_1_duplicate_proto.js");
 }
 
 #[test]
@@ -90,21 +102,17 @@ struct NullHandler(SymbolRegistry);
 impl<'s> NodeHandler<'s> for NullHandler {
     type Artifact = ();
 
-    #[inline(always)]
     fn start(&mut self) {}
 
-    #[inline(always)]
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         Ok(())
     }
 
-    #[inline(always)]
     fn handle_nodes(&mut self, _nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error> {
         Ok(())
     }
 
-    #[inline(always)]
-    fn symbol_registry_mut(&mut self) -> &mut SymbolRegistry {
-        &mut self.0
+    fn make_symbol(&mut self, lexeme: &str) -> Symbol {
+        self.0.intern_str(lexeme)
     }
 }

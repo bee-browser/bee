@@ -13,7 +13,6 @@ use crate::Location;
 use crate::Parser;
 use crate::ProductionRule;
 use crate::Symbol;
-use crate::SymbolRegistry;
 use crate::SyntaxHandler;
 use crate::Token;
 use crate::TokenKind;
@@ -35,7 +34,7 @@ pub trait NodeHandler<'s> {
     fn start(&mut self);
     fn accept(&mut self) -> Result<Self::Artifact, Error>;
     fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error>;
-    fn symbol_registry_mut(&mut self) -> &mut SymbolRegistry;
+    fn make_symbol(&mut self, lexeme: &str) -> Symbol;
 }
 
 pub struct Processor<'s, H> {
@@ -542,7 +541,7 @@ where
 
     fn make_symbol(&mut self, token_index: usize) -> Symbol {
         let lexeme = self.tokens[token_index].lexeme;
-        self.handler.symbol_registry_mut().intern_str(lexeme)
+        self.handler.make_symbol(lexeme)
     }
 
     fn src(&self, range: Range<usize>) -> &'s str {
@@ -994,7 +993,8 @@ where
             }
             TokenKind::StringLiteral => {
                 // TODO: perform `SV`
-                let value = token.lexeme.encode_utf16().collect();
+                let content = &token.lexeme[1..(token.lexeme.len() - 1)];
+                let value = content.encode_utf16().collect();
                 self.enqueue(Node::String(value, token.lexeme))
             }
             _ => unreachable!(),

@@ -12,7 +12,7 @@ use jsparser::syntax::LoopFlags;
 use jsparser::Symbol;
 
 use crate::lambda::LambdaId;
-use crate::lambda::LambdaRegistry;
+use crate::lambda::LambdaInfo;
 use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Locator;
@@ -28,6 +28,7 @@ use super::Module;
 use bridge::BasicBlock;
 use bridge::BooleanIr;
 use bridge::CaptureIr;
+use bridge::Char16SeqIr;
 use bridge::ClosureIr;
 use bridge::CompilerBridge;
 use bridge::CoroutineIr;
@@ -48,13 +49,8 @@ impl<X> Runtime<X> {
         logger::debug!(event = "compile");
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(&mut self.lambda_registry, &program.scope_tree);
-        if self.pref.enable_scope_cleanup_checker {
-            compiler.enable_scope_cleanup_checker();
-        }
-        compiler.start_compile(self.pref.enable_llvmir_labels);
-        compiler.set_data_layout(self.executor.get_data_layout());
-        compiler.set_target_triple(self.executor.get_target_triple());
+        let mut compiler = Compiler::new(self, &program.scope_tree);
+        compiler.start_compile();
         // Compile JavaScript functions in reverse order in order to compile a coroutine function
         // before its ramp function so that the size of the scratch buffer for the coroutine
         // function is available when the ramp function is compiled.
@@ -75,12 +71,11 @@ impl<X> Runtime<X> {
 }
 
 /// A Compiler targeting LLVM IR.
-struct Compiler<'r, 's> {
+struct Compiler<'r, 's, R> {
+    support: &'r mut R,
+
     /// The pointer to the compiler peer.
     bridge: CompilerBridge,
-
-    /// The function registry of the JavaScript program to compile.
-    lambda_registry: &'r mut LambdaRegistry,
 
     /// The scope tree of the JavaScript program to compile.
     scope_tree: &'s ScopeTree,
@@ -111,6 +106,46 @@ struct Compiler<'r, 's> {
     dump_buffer: Option<Vec<std::ffi::c_char>>,
 
     enable_scope_cleanup_checker: bool,
+}
+
+trait CompilerSupport {
+    // RuntimePref
+    fn is_scope_cleanup_checker_enabled(&self) -> bool;
+    fn is_llvmir_labels_enabled(&self) -> bool;
+
+    // LambdaRegistry
+    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
+    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
+
+    // Executor
+    fn get_data_layout(&self) -> &CStr;
+    fn get_target_triple(&self) -> &CStr;
+}
+
+impl<X> CompilerSupport for Runtime<X> {
+    fn is_scope_cleanup_checker_enabled(&self) -> bool {
+        self.pref.enable_scope_cleanup_checker
+    }
+
+    fn is_llvmir_labels_enabled(&self) -> bool {
+        self.pref.enable_llvmir_labels
+    }
+
+    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo {
+        self.lambda_registry.get(lambda_id)
+    }
+
+    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo {
+        self.lambda_registry.get_mut(lambda_id)
+    }
+
+    fn get_data_layout(&self) -> &CStr {
+        self.executor.get_data_layout()
+    }
+
+    fn get_target_triple(&self) -> &CStr {
+        self.executor.get_target_triple()
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -155,21 +190,37 @@ macro_rules! runtime_debug {
     };
 }
 
-macro_rules! dump_enabled {
-    () => {
-        cfg!(debug_assertions) && matches!(
-            std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP"),
-            Some(v) if v == "1",
-        )
-    };
-}
-
-impl<'r, 's> Compiler<'r, 's> {
-    pub fn new(lambda_registry: &'r mut LambdaRegistry, scope_tree: &'s ScopeTree) -> Self {
+impl<'r, 's, R> Compiler<'r, 's, R>
+where
+    R: CompilerSupport,
+{
+    pub fn new(support: &'r mut R, scope_tree: &'s ScopeTree) -> Self {
         const DUMP_BUFFER_SIZE: usize = 512;
+
+        macro_rules! dump_enabled {
+            () => {
+                cfg!(debug_assertions) && matches!(
+                    std::env::var_os("BEE_DEBUG_JSRUNTIME_COMPILER_DUMP"),
+                    Some(v) if v == "1",
+                )
+            };
+        }
+
+        macro_rules! dump_buffer {
+            () => {
+                if dump_enabled!() {
+                    Some(Vec::with_capacity(DUMP_BUFFER_SIZE))
+                } else {
+                    None
+                }
+            };
+        }
+
+        let enable_scope_cleanup_checker = support.is_scope_cleanup_checker_enabled();
+
         Self {
+            support,
             bridge: Default::default(),
-            lambda_registry,
             scope_tree,
             operand_stack: Default::default(),
             control_flow_stack: Default::default(),
@@ -178,41 +229,34 @@ impl<'r, 's> Compiler<'r, 's> {
             locals: Default::default(),
             captures: Default::default(),
             max_scratch_buffer_len: 0,
-            dump_buffer: if dump_enabled!() {
-                Some(Vec::with_capacity(DUMP_BUFFER_SIZE))
-            } else {
-                None
-            },
-            enable_scope_cleanup_checker: false,
+            dump_buffer: dump_buffer!(),
+            enable_scope_cleanup_checker,
         }
     }
 
-    fn enable_scope_cleanup_checker(&mut self) {
-        self.enable_scope_cleanup_checker = true;
-    }
-
-    fn start_compile(&mut self, enable_labels: bool) {
-        logger::debug!(event = "start_compile", enable_labels);
+    fn start_compile(&mut self) {
+        let data_layout = self.support.get_data_layout();
+        let target_triple = self.support.get_target_triple();
+        let enable_labels = self.support.is_llvmir_labels_enabled();
+        logger::debug!(
+            event = "start_compile",
+            ?data_layout,
+            ?target_triple,
+            enable_labels
+        );
+        self.bridge.start_compile();
+        self.bridge.set_data_layout(data_layout);
+        self.bridge.set_target_triple(target_triple);
         if enable_labels {
+            self.bridge.enable_labels();
             self.basic_block_name_stack = Some(Default::default());
         }
-        self.bridge.start_compile(enable_labels);
     }
 
     fn end_compile(&self, entry_lambda_id: LambdaId) -> Module {
         logger::debug!(event = "end_compile");
         let module_peer = self.bridge.end_compile();
         Module::new(module_peer, entry_lambda_id)
-    }
-
-    fn set_data_layout(&self, data_layout: &CStr) {
-        logger::debug!(event = "set_data_layout", ?data_layout);
-        self.bridge.set_data_layout(data_layout);
-    }
-
-    fn set_target_triple(&self, triple: &CStr) {
-        logger::debug!(event = "set_target_triple", ?triple);
-        self.bridge.set_target_triple(triple);
     }
 
     fn start_function(&mut self, symbol: Symbol, lambda_id: LambdaId) {
@@ -245,7 +289,7 @@ impl<'r, 's> Compiler<'r, 's> {
         self.bridge.create_alloc_status();
         self.bridge.create_alloc_flow_selector();
         if self.enable_scope_cleanup_checker {
-            let is_coroutine = self.lambda_registry.get(lambda_id).is_coroutine;
+            let is_coroutine = self.support.get_lambda_info(lambda_id).is_coroutine;
             self.bridge.enable_scope_cleanup_checker(is_coroutine);
         }
 
@@ -256,8 +300,8 @@ impl<'r, 's> Compiler<'r, 's> {
         logger::debug!(event = "end_function", ?lambda_id, optimize);
 
         let dormant_block = self
-            .lambda_registry
-            .get(lambda_id)
+            .support
+            .get_lambda_info(lambda_id)
             .is_coroutine
             .then(|| self.control_flow_stack.pop_coroutine_flow().dormant_block);
 
@@ -298,7 +342,7 @@ impl<'r, 's> Compiler<'r, 's> {
         debug_assert!(self.control_flow_stack.is_empty());
         self.control_flow_stack.clear();
 
-        let info = self.lambda_registry.get_mut(lambda_id);
+        let info = self.support.get_lambda_info_mut(lambda_id);
         if info.is_coroutine {
             info.scratch_buffer_len = self.max_scratch_buffer_len;
         }
@@ -452,8 +496,11 @@ impl<'r, 's> Compiler<'r, 's> {
         self.operand_stack.push(Operand::Number(number));
     }
 
-    fn process_string(&mut self, _value: &[u16]) {
-        unimplemented!("string literal");
+    fn process_string(&mut self, value: &[u16]) {
+        // Theoretically, the heap memory pointed by `value` can be freed after the IR built by the
+        // compiler is freed.
+        let seq = self.bridge.create_char16_seq(value);
+        self.operand_stack.push(Operand::String(seq));
     }
 
     fn process_object(&mut self) {
@@ -525,7 +572,7 @@ impl<'r, 's> Compiler<'r, 's> {
     }
 
     fn process_coroutine(&mut self, lambda_id: LambdaId, num_locals: u16) {
-        let scrach_buffer_len = self.lambda_registry.get(lambda_id).scratch_buffer_len;
+        let scrach_buffer_len = self.support.get_lambda_info(lambda_id).scratch_buffer_len;
         debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();
         let coroutine = self
@@ -654,6 +701,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Null => self.bridge.create_store_null_to_value(dest),
             Operand::Boolean(value) => self.bridge.create_store_boolean_to_value(*value, dest),
             Operand::Number(value) => self.bridge.create_store_number_to_value(*value, dest),
+            Operand::String(value) => self.bridge.create_store_string_to_value(*value, dest),
             Operand::Closure(value) => self.bridge.create_store_closure_to_value(*value, dest),
             Operand::Object(value) => self.bridge.create_store_object_to_value(*value, dest),
             Operand::Promise(value) => self.bridge.create_store_promise_to_value(*value, dest),
@@ -1048,6 +1096,7 @@ impl<'r, 's> Compiler<'r, 's> {
             }
             Operand::Boolean(_value) => todo!(),
             Operand::Number(_value) => todo!(),
+            Operand::String(_value) => todo!(),
             Operand::Closure(_value) => todo!(),
             Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
             Operand::Promise(_value) => todo!(),
@@ -1124,6 +1173,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Null => self.bridge.get_zero(),
             Operand::Boolean(value) => self.bridge.create_boolean_to_number(value),
             Operand::Number(value) => value,
+            Operand::String(_value) => unimplemented!("string.to_numeric"),
             Operand::Closure(_) => self.bridge.get_nan(),
             Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value) => self.bridge.to_numeric(value),
@@ -1211,6 +1261,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Undefined | Operand::Null => self.bridge.get_boolean(false),
             Operand::Boolean(value) => value,
             Operand::Number(value) => self.bridge.create_number_to_boolean(value),
+            Operand::String(_value) => todo!(),
             Operand::Closure(_) | Operand::Object(_) | Operand::Promise(_) => {
                 self.bridge.get_boolean(true)
             }
@@ -1452,6 +1503,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Null => self.bridge.create_null_to_any(),
             Operand::Boolean(value) => self.bridge.create_boolean_to_any(*value),
             Operand::Number(value) => self.bridge.create_number_to_any(*value),
+            Operand::String(_value) => todo!(),
             Operand::Closure(value) => self.bridge.create_closure_to_any(*value),
             Operand::Object(value) => self.bridge.create_object_to_any(*value),
             Operand::Function(_)
@@ -1504,6 +1556,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Null => self.bridge.create_is_null(lhs),
             Operand::Boolean(rhs) => self.create_is_same_boolean_value(lhs, rhs),
             Operand::Number(rhs) => self.create_is_same_number_value(lhs, rhs),
+            Operand::String(_rhs) => todo!(),
             Operand::Closure(rhs) => self.create_is_same_closure_value(lhs, rhs),
             Operand::Object(rhs) => self.create_is_same_object_value(lhs, rhs),
             Operand::Promise(rhs) => self.create_is_same_promise_value(lhs, rhs),
@@ -1749,6 +1802,9 @@ impl<'r, 's> Compiler<'r, 's> {
                     self.operand_stack.push(Operand::Number(number));
                     return;
                 }
+                (Operand::String(_then_value), Operand::String(_else_value)) => {
+                    todo!();
+                }
                 (Operand::Any(then_value), Operand::Any(else_value)) => {
                     let any = self
                         .bridge
@@ -1843,6 +1899,7 @@ impl<'r, 's> Compiler<'r, 's> {
             | Operand::Closure(_)
             | Operand::Object(_)
             | Operand::Promise(_) => self.bridge.get_boolean(true),
+            Operand::String(_) => todo!(),
             Operand::Any(value) => self.bridge.create_is_non_nullish(value),
             Operand::Function(_)
             | Operand::Coroutine(_)
@@ -2390,6 +2447,7 @@ impl<'r, 's> Compiler<'r, 's> {
             Operand::Null => self.bridge.create_store_null_to_retv(),
             Operand::Boolean(value) => self.bridge.create_store_boolean_to_retv(*value),
             Operand::Number(value) => self.bridge.create_store_number_to_retv(*value),
+            Operand::String(_value) => todo!(),
             Operand::Closure(value) => self.bridge.create_store_closure_to_retv(*value),
             Operand::Object(value) => self.bridge.create_store_object_to_retv(*value),
             Operand::Promise(value) => self.bridge.create_store_promise_to_retv(*value),
@@ -2511,6 +2569,7 @@ impl<'r, 's> Compiler<'r, 's> {
                 let result = self.bridge.create_number_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
             }
+            Operand::String(_value) => todo!(),
             Operand::Closure(value) => {
                 let result = self.bridge.create_closure_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
@@ -2576,6 +2635,7 @@ impl<'r, 's> Compiler<'r, 's> {
                         .create_write_number_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
+                Operand::String(_value) => todo!(),
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     self.bridge
@@ -2622,6 +2682,7 @@ impl<'r, 's> Compiler<'r, 's> {
                     *value = self.bridge.create_read_number_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
+                Operand::String(_value) => todo!(),
                 Operand::Closure(ref mut value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self.bridge.create_read_closure_from_scratch_buffer(offset);
@@ -2761,6 +2822,7 @@ enum Operand {
     Null,
     Boolean(BooleanIr),
     Number(NumberIr),
+    String(Char16SeqIr),
     Function(LambdaIr),
     Closure(ClosureIr),
     Coroutine(CoroutineIr),
@@ -2784,6 +2846,7 @@ impl Dump for Operand {
             Self::Null => eprintln!("Null"),
             Self::Boolean(value) => eprintln!("Boolean({:?})", ir2cstr!(value)),
             Self::Number(value) => eprintln!("Number({:?})", ir2cstr!(value)),
+            Self::String(value) => eprintln!("String({:?})", ir2cstr!(value)),
             Self::Function(value) => eprintln!("Function({:?})", ir2cstr!(value)),
             Self::Closure(value) => eprintln!("Closure({:?})", ir2cstr!(value)),
             Self::Coroutine(value) => eprintln!("Coroutine({:?})", ir2cstr!(value)),

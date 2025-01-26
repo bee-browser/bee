@@ -22,6 +22,8 @@ use types::ReturnValue;
 pub use llvmir::CompileError;
 pub use llvmir::Module;
 pub use semantics::Program;
+pub use types::Char16Seq;
+pub use types::U16String;
 pub use types::Value;
 
 pub fn initialize() {
@@ -160,6 +162,32 @@ impl<X> Runtime<X> {
 
     fn global_object_mut(&mut self) -> &mut Object {
         &mut self.global_object
+    }
+
+    pub fn clone_value(&mut self, value: &Value) -> Value {
+        match value {
+            Value::String(string) => Value::String(self.clone_string(*string)),
+            _ => value.clone(),
+        }
+    }
+
+    // Clones a UTF-16 string allocated on the heap.
+    fn clone_string(&mut self, string: U16String) -> U16String {
+        // TODO(refactor): replace with Char16Seq::EMPTY.
+        static EMPTY: Char16Seq = Char16Seq::empty();
+
+        if string.is_empty() {
+            return U16String::new(&EMPTY);
+        }
+
+        let seq = string.first_seq();
+
+        // TODO(issue#237): GcCell
+        let seq = self
+            .allocator
+            .alloc(Char16Seq::from_raw_parts(seq.ptr, seq.len));
+
+        U16String::new(seq)
     }
 
     fn create_object(&mut self) -> &mut Object {

@@ -7,6 +7,7 @@ use jsparser::Symbol;
 use crate::logger;
 use crate::objects::Object;
 use crate::types::Capture;
+use crate::types::Char16Seq;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
@@ -48,6 +49,7 @@ pub struct RuntimeFunctions {
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
+    print_string: unsafe extern "C" fn(*mut c_void, *const Char16Seq, *const c_char),
     print_value: unsafe extern "C" fn(*mut c_void, *const Value, *const c_char),
     print_message: unsafe extern "C" fn(*mut c_void, *const c_char),
     launch_debugger: unsafe extern "C" fn(*mut c_void),
@@ -78,6 +80,7 @@ impl RuntimeFunctions {
             assert: runtime_assert,
             print_u32: runtime_print_u32,
             print_f64: runtime_print_f64,
+            print_string: runtime_print_string,
             print_value: runtime_print_value,
             print_message: runtime_print_message,
             launch_debugger: runtime_launch_debugger,
@@ -108,6 +111,8 @@ unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Val
         Value::Number(0.0) => false,
         Value::Number(value) if value.is_nan() => false,
         Value::Number(_) => true,
+        Value::String(value) if value.is_empty() => false,
+        Value::String(_) => true,
         Value::Closure(_) => true,
         Value::Promise(_) => true,
         Value::Object(_) => true,
@@ -125,6 +130,7 @@ unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Val
         Value::Boolean(true) => 1.0,
         Value::Boolean(false) => 0.0,
         Value::Number(value) => *value,
+        Value::String(_value) => todo!(),
         Value::Closure(_) => f64::NAN,
         Value::Promise(_) => f64::NAN,
         Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
@@ -141,6 +147,7 @@ unsafe extern "C" fn runtime_to_object(_runtime: *mut c_void, value: *const Valu
         Value::Undefined | Value::Null => todo!(),
         Value::Boolean(_value) => todo!(),
         Value::Number(_value) => todo!(),
+        Value::String(_value) => todo!(),
         Value::Closure(_value) => todo!(),
         Value::Object(value) => *value,
         Value::Promise(_value) => todo!(),
@@ -527,6 +534,20 @@ unsafe extern "C" fn runtime_print_f64(
         logger::debug!("runtime_print_f64: {value}");
     } else {
         logger::debug!("runtime_print_f64: {value}: {msg:?}");
+    }
+}
+
+unsafe extern "C" fn runtime_print_string(
+    _runtime: *mut c_void,
+    value: *const Char16Seq,
+    msg: *const std::os::raw::c_char,
+) {
+    let value = value.as_ref().unwrap();
+    let msg = std::ffi::CStr::from_ptr(msg);
+    if msg.is_empty() {
+        logger::debug!("runtime_print_f64: {value:?}");
+    } else {
+        logger::debug!("runtime_print_f64: {value:?}: {msg:?}");
     }
 }
 

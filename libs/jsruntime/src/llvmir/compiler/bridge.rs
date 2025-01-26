@@ -48,6 +48,7 @@ define_ir_types! {
     LambdaIr; lambda_ir,
     BooleanIr; boolean_ir,
     NumberIr; number_ir,
+    Char16SeqIr; char16_seq_ir,
     ClosureIr; closure_ir,
     CoroutineIr; coroutine_ir,
     PromiseIr; promise_ir,
@@ -64,9 +65,9 @@ impl CompilerBridge {
         Self(unsafe { compiler_peer_new() })
     }
 
-    pub fn start_compile(&self, enable_labels: bool) {
+    pub fn start_compile(&self) {
         unsafe {
-            compiler_peer_start(self.0, enable_labels);
+            compiler_peer_start(self.0);
         }
     }
 
@@ -83,6 +84,12 @@ impl CompilerBridge {
     pub fn set_target_triple(&self, triple: &CStr) {
         unsafe {
             compiler_peer_set_target_triple(self.0, triple.as_ptr());
+        }
+    }
+
+    pub fn enable_labels(&self) {
+        unsafe {
+            compiler_peer_enable_labels(self.0);
         }
     }
 
@@ -406,6 +413,14 @@ impl CompilerBridge {
         }
     }
 
+    // string
+
+    pub fn create_char16_seq(&self, seq: &[u16]) -> Char16SeqIr {
+        char16_seq_ir! {
+            compiler_peer_create_char16_seq(self.0, seq.as_ptr(), seq.len() as u32)
+        }
+    }
+
     // closure
 
     pub fn get_closure_nullptr(&self) -> ClosureIr {
@@ -723,6 +738,13 @@ impl CompilerBridge {
         debug_assert_ne!(value, NumberIr::NONE);
         unsafe {
             compiler_peer_create_store_number_to_value(self.0, value.0, dest.0);
+        }
+    }
+
+    pub fn create_store_string_to_value(&self, value: Char16SeqIr, dest: ValueIr) {
+        debug_assert_ne!(value, Char16SeqIr::NONE);
+        unsafe {
+            compiler_peer_create_store_string_to_value(self.0, value.0, dest.0);
         }
     }
 
@@ -1157,6 +1179,13 @@ impl CompilerBridge {
     // print
 
     #[allow(unused)]
+    pub fn create_print_string(&self, value: Char16SeqIr, msg: &CStr) {
+        unsafe {
+            compiler_peer_create_print_string(self.0, value.0, msg.as_ptr());
+        }
+    }
+
+    #[allow(unused)]
     pub fn create_print_value(&self, value: ValueIr, msg: &CStr) {
         unsafe {
             compiler_peer_create_print_value(self.0, value.0, msg.as_ptr());
@@ -1251,6 +1280,17 @@ impl NumberIr {
     }
 }
 
+impl Char16SeqIr {
+    pub const NONE: Self = Self(std::ptr::null_mut());
+
+    pub fn get_name_or_as_operand<'a>(&self, buf: *mut std::ffi::c_char, len: usize) -> &'a CStr {
+        unsafe {
+            compiler_peer_get_value_name_or_as_operand(self.0 as ValueIrPtr, buf, len);
+            CStr::from_ptr(buf)
+        }
+    }
+}
+
 impl ClosureIr {
     pub const NONE: Self = Self(std::ptr::null_mut());
 
@@ -1315,6 +1355,7 @@ type BasicBlockPtr = *mut c_void;
 type LambdaIrPtr = *mut c_void;
 type BooleanIrPtr = *mut c_void;
 type NumberIrPtr = *mut c_void;
+type Char16SeqIrPtr = *mut c_void;
 type ClosureIrPtr = *mut c_void;
 type CoroutineIrPtr = *mut c_void;
 type PromiseIrPtr = *mut c_void;
@@ -1329,10 +1370,11 @@ type SwitchIrPtr = *mut c_void;
 extern "C" {
     fn compiler_peer_new() -> CompilerPeer;
     fn compiler_peer_delete(peer: CompilerPeer);
-    fn compiler_peer_start(peer: CompilerPeer, enable_labels: bool);
+    fn compiler_peer_start(peer: CompilerPeer);
     fn compiler_peer_end(peer: CompilerPeer) -> ModulePeer;
     fn compiler_peer_set_data_layout(peer: CompilerPeer, data_layout: *const c_char);
     fn compiler_peer_set_target_triple(peer: CompilerPeer, triple: *const c_char);
+    fn compiler_peer_enable_labels(peer: CompilerPeer);
 
     // function
 
@@ -1495,6 +1537,14 @@ extern "C" {
         else_value: NumberIrPtr,
         else_block: BasicBlockPtr,
     ) -> NumberIrPtr;
+
+    // string
+
+    fn compiler_peer_create_char16_seq(
+        peer: CompilerPeer,
+        ptr: *const u16,
+        len: u32,
+    ) -> Char16SeqIrPtr;
 
     // closure
 
@@ -1659,6 +1709,11 @@ extern "C" {
     fn compiler_peer_create_store_number_to_value(
         peer: CompilerPeer,
         value: NumberIrPtr,
+        dest: ValueIrPtr,
+    );
+    fn compiler_peer_create_store_string_to_value(
+        peer: CompilerPeer,
+        value: Char16SeqIrPtr,
         dest: ValueIrPtr,
     );
     fn compiler_peer_create_store_closure_to_value(
@@ -1853,6 +1908,11 @@ extern "C" {
 
     // print
 
+    fn compiler_peer_create_print_string(
+        peer: CompilerPeer,
+        value: Char16SeqIrPtr,
+        msg: *const c_char,
+    );
     fn compiler_peer_create_print_value(peer: CompilerPeer, value: ValueIrPtr, msg: *const c_char);
     fn compiler_peer_create_print_message(peer: CompilerPeer, msg: *const c_char);
 

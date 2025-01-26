@@ -142,6 +142,12 @@ functions:
         type: f64
       - name: msg
         type: '&std::ffi::CStr'
+  - name: print_string
+    args:
+      - name: value
+        type: '&Char16Seq'
+      - name: msg
+        type: '&std::ffi::CStr'
   - name: print_value
     args:
       - name: value
