@@ -83,7 +83,7 @@ fn link(c: &mut Criterion) {
                     let program = runtime.parse_script(data.1).unwrap();
                     let module = runtime.compile(&program, true).unwrap();
                     total += elapsed! {
-                        black_box(runtime.link(module))
+                        runtime.link(black_box(module))
                     };
                 }
                 total
