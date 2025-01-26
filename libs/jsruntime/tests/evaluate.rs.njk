@@ -35,8 +35,8 @@ impl Validator {
                 Value::Promise(_) => assert!(matches!(actual, Value::Promise(_))),
                 _ => {
                     // Some cases including `f64::NAN` fail in `assert_eq!()`.
-                    let actual = format!("{actual:?}");
-                    let expected = format!("{expected:?}");
+                    let actual = format!("{actual}");
+                    let expected = format!("{expected}");
                     assert_eq!(actual, expected);
                 }
             }

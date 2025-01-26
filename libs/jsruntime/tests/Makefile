@@ -14,9 +14,9 @@ codegen: $(CODEGEN_TARGETS)
 clean:
 	@rm -f $(CODEGEN_TARGETS)
 
-evaluate.rs: evaluate.rs.njk $(EVALUATE_TESTS) collect_evaluate_tests.js
+evaluate.rs: evaluate.rs.njk $(EVALUATE_TESTS) evaluate.js
 	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. collect_evaluate_tests.js $(EVALUATE_TESTS) | \
+	@deno run -q --allow-read=. evaluate.js $(EVALUATE_TESTS) | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $@.njk | \
 	  rustfmt --emit=stdout | \
 	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
