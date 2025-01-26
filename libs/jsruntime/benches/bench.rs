@@ -9,23 +9,21 @@ use jsruntime::BasicRuntime;
 
 const SAMPLE_SIZE: usize = 200;
 
-const DATA_SET: &[(&str, &str)] = &[
-    ("fib16.js", include_str!("dataset/fib16.js")),
-];
+const DATA_SET: &[(&str, &str)] = &[("fib16.js", include_str!("dataset/fib16.js"))];
 
 macro_rules! elapsed {
-    ($target:expr) => {
-        {
-            let start = Instant::now();
-            $target;
-            start.elapsed()
-        }
-    };
+    ($target:expr) => {{
+        let start = Instant::now();
+        $target;
+        start.elapsed()
+    }};
 }
 
 fn init(c: &mut Criterion) {
     jsruntime::initialize();
-    c.bench_function("jsruntime/init", |b| b.iter(|| black_box(BasicRuntime::new())));
+    c.bench_function("jsruntime/init", |b| {
+        b.iter(|| black_box(BasicRuntime::new()))
+    });
 }
 
 fn parse(c: &mut Criterion) {
