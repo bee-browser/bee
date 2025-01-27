@@ -1227,6 +1227,9 @@ impl FunctionAnalysis {
 
     fn process_member_expression(&mut self, kind: MemberExpressionKind) {
         match kind {
+            MemberExpressionKind::PropertyAccessWithExpressionKey => {
+                todo!();
+            }
             MemberExpressionKind::PropertyAccessWithIdentifierKey(key) => {
                 self.commands.push(CompileCommand::ToObject);
                 self.commands.push(CompileCommand::PropertyReference(key));

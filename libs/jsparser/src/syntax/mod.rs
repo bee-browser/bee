@@ -262,6 +262,7 @@ pub enum LiteralPropertyName {
 
 #[derive(Clone, Debug)]
 pub enum MemberExpressionKind {
+    PropertyAccessWithExpressionKey,
     PropertyAccessWithIdentifierKey(Symbol),
 }
 
@@ -1139,6 +1140,16 @@ where
     // 13.3 Left-Hand-Side Expressions
 
     // 13.3.2 Property Accessors
+
+    // MemberExpression[Yield, Await] :
+    //   MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]
+    fn process_member_expression_bracket_notation(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::MemberExpression(
+            MemberExpressionKind::PropertyAccessWithExpressionKey,
+        ));
+        self.replace(4, Detail::Expression);
+        Ok(())
+    }
 
     // MemberExpression[Yield, Await] :
     //   MemberExpression[?Yield, ?Await] . IdentifierName
