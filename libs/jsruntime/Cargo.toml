@@ -12,7 +12,7 @@ version.workspace = true
 base = { path = "../base" }
 bitflags = "2.8.0"
 # TODO(issue#237): replace `bumpalo` with `jsgc = { path = "../jsgc" }`
-bumpalo = "3.16.0"
+bumpalo = "3.17.0"
 indexmap = "2.7.1"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
