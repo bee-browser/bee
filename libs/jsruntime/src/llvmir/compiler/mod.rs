@@ -359,7 +359,7 @@ where
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::String(value) => self.process_string(value),
             CompileCommand::Object => self.process_object(),
-            CompileCommand::Function(lambda_id) => self.process_function(*lambda_id),
+            CompileCommand::Lambda(lambda_id) => self.process_lambda(*lambda_id),
             CompileCommand::Closure(prologue, func_scope_ref) => {
                 self.process_closure(*prologue, *func_scope_ref)
             }
@@ -508,14 +508,14 @@ where
         self.operand_stack.push(Operand::Object(object));
     }
 
-    fn process_function(&mut self, lambda_id: LambdaId) {
+    fn process_lambda(&mut self, lambda_id: LambdaId) {
         let lambda = self.bridge.get_function(lambda_id);
-        self.operand_stack.push(Operand::Function(lambda));
+        self.operand_stack.push(Operand::Lambda(lambda));
     }
 
     fn pop_lambda(&mut self) -> LambdaIr {
         match self.operand_stack.pop() {
-            Some(Operand::Function(lambda)) => lambda,
+            Some(Operand::Lambda(lambda)) => lambda,
             _ => unreachable!(),
         }
     }
@@ -706,7 +706,7 @@ where
             Operand::Object(value) => self.bridge.create_store_object_to_value(*value, dest),
             Operand::Promise(value) => self.bridge.create_store_promise_to_value(*value, dest),
             Operand::Any(value) => self.bridge.create_store_value_to_value(*value, dest),
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!(),
@@ -1104,7 +1104,7 @@ where
                 let object = self.bridge.create_to_object(value);
                 self.operand_stack.push(Operand::Object(object));
             }
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -1177,7 +1177,7 @@ where
             Operand::Closure(_) => self.bridge.get_nan(),
             Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value) => self.bridge.to_numeric(value),
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::Promise(_)
             | Operand::VariableReference(..)
@@ -1266,7 +1266,7 @@ where
                 self.bridge.get_boolean(true)
             }
             Operand::Any(value) => self.bridge.create_to_boolean(value),
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!(),
@@ -1506,7 +1506,7 @@ where
             Operand::String(_value) => todo!(),
             Operand::Closure(value) => self.bridge.create_closure_to_any(*value),
             Operand::Object(value) => self.bridge.create_object_to_any(*value),
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_)
@@ -1561,7 +1561,7 @@ where
             Operand::Object(rhs) => self.create_is_same_object_value(lhs, rhs),
             Operand::Promise(rhs) => self.create_is_same_promise_value(lhs, rhs),
             Operand::Any(rhs) => self.bridge.create_is_strictly_equal(lhs, rhs),
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
@@ -1901,7 +1901,7 @@ where
             | Operand::Promise(_) => self.bridge.get_boolean(true),
             Operand::String(_) => todo!(),
             Operand::Any(value) => self.bridge.create_is_non_nullish(value),
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!(),
@@ -2452,7 +2452,7 @@ where
             Operand::Object(value) => self.bridge.create_store_object_to_retv(*value),
             Operand::Promise(value) => self.bridge.create_store_promise_to_retv(*value),
             Operand::Any(value) => self.bridge.create_store_value_to_retv(*value),
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2601,7 +2601,7 @@ where
                 // }
                 self.bridge.set_basic_block(block);
             }
-            Operand::Function(_)
+            Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => {
@@ -2659,7 +2659,7 @@ where
                     offset += VALUE_SIZE;
                 }
                 Operand::VariableReference(..) | Operand::PropertyReference(_) => (),
-                Operand::Function(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
+                Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
 
@@ -2702,7 +2702,7 @@ where
                     offset += VALUE_SIZE;
                 }
                 Operand::VariableReference(..) | Operand::PropertyReference(_) => (),
-                Operand::Function(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
+                Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
     }
@@ -2823,7 +2823,7 @@ enum Operand {
     Boolean(BooleanIr),
     Number(NumberIr),
     String(Char16SeqIr),
-    Function(LambdaIr),
+    Lambda(LambdaIr),
     Closure(ClosureIr),
     Coroutine(CoroutineIr),
     Object(ObjectIr),
@@ -2847,7 +2847,7 @@ impl Dump for Operand {
             Self::Boolean(value) => eprintln!("Boolean({:?})", ir2cstr!(value)),
             Self::Number(value) => eprintln!("Number({:?})", ir2cstr!(value)),
             Self::String(value) => eprintln!("String({:?})", ir2cstr!(value)),
-            Self::Function(value) => eprintln!("Function({:?})", ir2cstr!(value)),
+            Self::Lambda(value) => eprintln!("Lambda({:?})", ir2cstr!(value)),
             Self::Closure(value) => eprintln!("Closure({:?})", ir2cstr!(value)),
             Self::Coroutine(value) => eprintln!("Coroutine({:?})", ir2cstr!(value)),
             Self::Promise(value) => eprintln!("Promise({:?})", ir2cstr!(value)),

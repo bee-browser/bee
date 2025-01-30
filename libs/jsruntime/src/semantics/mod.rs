@@ -1366,7 +1366,7 @@ impl FunctionAnalysis {
         let (symbol, _) = self.symbol_stack.pop().unwrap();
         self.function_scoped_symbols.insert(symbol);
 
-        self.commands.push(CompileCommand::Function(lambda_id));
+        self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands
             .push(CompileCommand::VariableReference(symbol));
@@ -1383,7 +1383,7 @@ impl FunctionAnalysis {
             debug_assert!(!self.symbol_stack.is_empty());
             self.symbol_stack.pop();
         }
-        self.commands.push(CompileCommand::Function(lambda_id));
+        self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands
             .push(CompileCommand::Closure(false, scope_ref));
     }
@@ -1699,7 +1699,7 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Object,
-    Function(LambdaId),
+    Lambda(LambdaId),
     Closure(bool, ScopeRef),
     Coroutine(LambdaId, u16),
     Promise,
@@ -2162,7 +2162,7 @@ mod tests {
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVars(scope_ref!(1)),
-                    CompileCommand::Function(program.functions[0].id),
+                    CompileCommand::Lambda(program.functions[0].id),
                     CompileCommand::Closure(false, scope_ref!(2)),
                     CompileCommand::Coroutine(program.functions[0].id, 0),
                     CompileCommand::Promise,
