@@ -675,6 +675,13 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_string_to_any(&self, value: Char16SeqIr) -> ValueIr {
+        debug_assert_ne!(value, Char16SeqIr::NONE);
+        value_ir! {
+            compiler_peer_create_string_to_any(self.0, value.0)
+        }
+    }
+
     pub fn create_closure_to_any(&self, value: ClosureIr) -> ValueIr {
         debug_assert_ne!(value, ClosureIr::NONE);
         value_ir! {
@@ -1687,6 +1694,8 @@ extern "C" {
     fn compiler_peer_create_boolean_to_any(peer: CompilerPeer, boolean: BooleanIrPtr)
         -> ValueIrPtr;
     fn compiler_peer_create_number_to_any(peer: CompilerPeer, number: NumberIrPtr) -> ValueIrPtr;
+    fn compiler_peer_create_string_to_any(peer: CompilerPeer, string: Char16SeqIrPtr)
+        -> ValueIrPtr;
     fn compiler_peer_create_closure_to_any(peer: CompilerPeer, closure: ClosureIrPtr)
         -> ValueIrPtr;
     fn compiler_peer_create_object_to_any(peer: CompilerPeer, object: ObjectIrPtr) -> ValueIrPtr;

@@ -23,3 +23,8 @@
 - undefined
 - yield
 - __proto__
+
+# Non-reserved, but commonly used words
+- 'null'
+- 'false'
+- 'true'

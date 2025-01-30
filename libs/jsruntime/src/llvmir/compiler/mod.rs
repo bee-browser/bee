@@ -114,6 +114,9 @@ trait CompilerSupport {
     fn is_scope_cleanup_checker_enabled(&self) -> bool;
     fn is_llvmir_labels_enabled(&self) -> bool;
 
+    // SymbolRegistry
+    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol;
+
     // LambdaRegistry
     fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
     fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
@@ -130,6 +133,10 @@ impl<X> CompilerSupport for Runtime<X> {
 
     fn is_llvmir_labels_enabled(&self) -> bool {
         self.pref.enable_llvmir_labels
+    }
+
+    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol {
+        self.symbol_registry.intern_utf16(name)
     }
 
     fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo {
@@ -371,6 +378,7 @@ where
             CompileCommand::Exception => self.process_exception(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
+            CompileCommand::ToPropertyKey => self.process_to_property_key(),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
@@ -381,7 +389,6 @@ where
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
-            CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -489,19 +496,22 @@ where
 
     fn process_boolean(&mut self, value: bool) {
         let boolean = self.bridge.get_boolean(value);
-        self.operand_stack.push(Operand::Boolean(boolean, Some(value)));
+        self.operand_stack
+            .push(Operand::Boolean(boolean, Some(value)));
     }
 
     fn process_number(&mut self, value: f64) {
         let number = self.bridge.get_number(value);
-        self.operand_stack.push(Operand::Number(number, Some(value)));
+        self.operand_stack
+            .push(Operand::Number(number, Some(value)));
     }
 
     fn process_string(&mut self, value: &[u16]) {
         // Theoretically, the heap memory pointed by `value` can be freed after the IR built by the
         // compiler is freed.
         let seq = self.bridge.create_char16_seq(value);
-        self.operand_stack.push(Operand::String(seq, Some(Char16Seq::new(value))));
+        self.operand_stack
+            .push(Operand::String(seq, Some(Char16Seq::new(value))));
     }
 
     fn process_object(&mut self) {
@@ -608,6 +618,32 @@ where
         self.operand_stack.push(Operand::PropertyReference(symbol));
     }
 
+    fn process_to_property_key(&mut self) {
+        let (operand, _) = self.dereference();
+        let key = match operand {
+            Operand::Undefined => Symbol::UNDEFINED,
+            Operand::Null => Symbol::NULL,
+            Operand::Boolean(_, Some(false)) => Symbol::FALSE,
+            Operand::Boolean(_, Some(true)) => Symbol::TRUE,
+            Operand::Boolean(_, None) => todo!(),
+            Operand::Number(..) => todo!(),
+            Operand::String(_, Some(ref value)) => {
+                self.support.make_symbol_from_name(value.to_vec())
+            }
+            Operand::String(_, None) => todo!(),
+            Operand::Lambda(_) => todo!(),
+            Operand::Closure(_) => todo!(),
+            Operand::Coroutine(_) => todo!(),
+            Operand::Object(_) => todo!(),
+            Operand::Promise(_) => todo!(),
+            Operand::Any(_) => todo!(),
+            Operand::PropertyReference(_) | Operand::VariableReference(..) => {
+                unreachable!("{operand:?}")
+            }
+        };
+        self.operand_stack.push(Operand::PropertyReference(key));
+    }
+
     fn process_allocate_locals(&mut self, num_locals: u16) {
         for i in 0..num_locals {
             let local = self.bridge.create_local_value(i);
@@ -637,6 +673,7 @@ where
                 (Operand::Any(value), Some((symbol, locator)))
             }
             Operand::PropertyReference(key) => {
+                self.perform_to_object();
                 let object = self.pop_object();
                 let value = self.bridge.create_get_value(object, key, false);
                 runtime_debug! {{
@@ -1087,7 +1124,7 @@ where
     }
 
     // 7.1.18 ToObject ( argument )
-    fn process_to_object(&mut self) {
+    fn perform_to_object(&mut self) {
         let (operand, _) = self.dereference();
         match operand {
             Operand::Undefined | Operand::Null => {
@@ -1122,7 +1159,7 @@ where
     fn pop_object(&mut self) -> ObjectIr {
         match self.operand_stack.pop().unwrap() {
             Operand::Object(value) => value,
-            _ => unreachable!(),
+            operand => unreachable!("{operand:?}"),
         }
     }
 
@@ -1161,11 +1198,7 @@ where
                 // TODO(feat): throw a ReferenceError at runtime
             }
         }
-        let value = if pos == '^' {
-            new_value
-        } else {
-            old_value
-        };
+        let value = if pos == '^' { new_value } else { old_value };
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(value, None));
     }
@@ -1524,7 +1557,7 @@ where
             Operand::Null => self.bridge.create_null_to_any(),
             Operand::Boolean(value, ..) => self.bridge.create_boolean_to_any(*value),
             Operand::Number(value, ..) => self.bridge.create_number_to_any(*value),
-            Operand::String(..) => todo!(),
+            Operand::String(value, ..) => self.bridge.create_string_to_any(*value),
             Operand::Closure(value) => self.bridge.create_closure_to_any(*value),
             Operand::Object(value) => self.bridge.create_object_to_any(*value),
             Operand::Lambda(_)
@@ -2868,6 +2901,7 @@ enum Operand {
     Coroutine(CoroutineIr),
     Object(ObjectIr),
     Promise(PromiseIr),
+    // TODO(perf): compile-time evaluation
     Any(ValueIr),
     VariableReference(Symbol, Locator),
     PropertyReference(Symbol),

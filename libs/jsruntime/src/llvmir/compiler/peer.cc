@@ -513,6 +513,10 @@ ValueIrPtr compiler_peer_create_number_to_any(CompilerPeer peer, NumberIrPtr val
   return PEER_VALUE(IMPL(peer)->CreateNumberToAny(LLVM_VALUE(value)));
 }
 
+ValueIrPtr compiler_peer_create_string_to_any(CompilerPeer peer, Char16SeqIrPtr value) {
+  return PEER_VALUE(IMPL(peer)->CreateStringToAny(LLVM_VALUE(value)));
+}
+
 ValueIrPtr compiler_peer_create_closure_to_any(CompilerPeer peer, ClosureIrPtr value) {
   return PEER_VALUE(IMPL(peer)->CreateClosureToAny(LLVM_VALUE(value)));
 }

@@ -56,6 +56,10 @@ impl SymbolRegistry {
         self.intern(SymbolName::Dynamic(name))
     }
 
+    pub fn intern_utf16(&mut self, utf16: Vec<u16>) -> Symbol {
+        self.intern(SymbolName::Dynamic(utf16))
+    }
+
     fn intern(&mut self, name: SymbolName) -> Symbol {
         let i = match self.symbols.get_index_of(&name) {
             Some(i) => i,

@@ -1228,10 +1228,9 @@ impl FunctionAnalysis {
     fn process_member_expression(&mut self, kind: MemberExpressionKind) {
         match kind {
             MemberExpressionKind::PropertyAccessWithExpressionKey => {
-                todo!();
+                self.commands.push(CompileCommand::ToPropertyKey);
             }
             MemberExpressionKind::PropertyAccessWithIdentifierKey(key) => {
-                self.commands.push(CompileCommand::ToObject);
                 self.commands.push(CompileCommand::PropertyReference(key));
             }
         }
@@ -1267,16 +1266,6 @@ impl FunctionAnalysis {
                 self.commands.push(CompileCommand::Ternary);
             }
             PropertyAccessKind::IdentifierKey(key) => {
-                // TODO(fix): Currently, a property access is represented by using two commands.
-                //
-                //   [ToObject, PropertyReference(key)]
-                //
-                // However, Duplicate creates a copy of a command.  This means that it expects that
-                // the property access has been dereferenced before the duplicate.
-                //
-                // It may be better to introduce a type like the Reference Record defined in the
-                // specification, which holds a reference to the target object.
-                self.commands.push(CompileCommand::ToObject);
                 self.commands.push(CompileCommand::PropertyReference(key));
                 self.commands.push(CompileCommand::Else);
                 self.commands.push(CompileCommand::Undefined);
@@ -1708,6 +1697,7 @@ pub enum CompileCommand {
     // references
     VariableReference(Symbol),
     PropertyReference(Symbol),
+    ToPropertyKey,
 
     AllocateLocals(u16),
     MutableVariable,
@@ -1721,7 +1711,6 @@ pub enum CompileCommand {
     // object
     CreateDataProperty,
     CopyDataProperties,
-    ToObject,
 
     // update operators
     PostfixIncrement,

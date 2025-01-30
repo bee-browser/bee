@@ -216,6 +216,18 @@ impl Char16Seq {
         // TODO: next
         self.len
     }
+
+    pub(crate) fn to_vec(&self) -> Vec<u16> {
+        // TODO: next
+        if self.is_empty() {
+            return vec![];
+        }
+
+        debug_assert_ne!(self.len, 0);
+        debug_assert_ne!(self.ptr, std::ptr::null());
+        let slice = unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) };
+        slice.to_vec()
+    }
 }
 
 // The UTF-16 code units never change.
