@@ -19,6 +19,7 @@ use crate::semantics::Locator;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
+use crate::types::Char16Seq;
 use crate::Program;
 use crate::Runtime;
 use crate::Value;
@@ -488,19 +489,19 @@ where
 
     fn process_boolean(&mut self, value: bool) {
         let boolean = self.bridge.get_boolean(value);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        self.operand_stack.push(Operand::Boolean(boolean, Some(value)));
     }
 
     fn process_number(&mut self, value: f64) {
         let number = self.bridge.get_number(value);
-        self.operand_stack.push(Operand::Number(number));
+        self.operand_stack.push(Operand::Number(number, Some(value)));
     }
 
     fn process_string(&mut self, value: &[u16]) {
         // Theoretically, the heap memory pointed by `value` can be freed after the IR built by the
         // compiler is freed.
         let seq = self.bridge.create_char16_seq(value);
-        self.operand_stack.push(Operand::String(seq));
+        self.operand_stack.push(Operand::String(seq, Some(Char16Seq::new(value))));
     }
 
     fn process_object(&mut self) {
@@ -699,9 +700,9 @@ where
         match operand {
             Operand::Undefined => self.bridge.create_store_undefined_to_value(dest),
             Operand::Null => self.bridge.create_store_null_to_value(dest),
-            Operand::Boolean(value) => self.bridge.create_store_boolean_to_value(*value, dest),
-            Operand::Number(value) => self.bridge.create_store_number_to_value(*value, dest),
-            Operand::String(value) => self.bridge.create_store_string_to_value(*value, dest),
+            Operand::Boolean(value, ..) => self.bridge.create_store_boolean_to_value(*value, dest),
+            Operand::Number(value, ..) => self.bridge.create_store_number_to_value(*value, dest),
+            Operand::String(value, ..) => self.bridge.create_store_string_to_value(*value, dest),
             Operand::Closure(value) => self.bridge.create_store_closure_to_value(*value, dest),
             Operand::Object(value) => self.bridge.create_store_object_to_value(*value, dest),
             Operand::Promise(value) => self.bridge.create_store_promise_to_value(*value, dest),
@@ -1094,9 +1095,9 @@ where
                 self.process_number(1001.);
                 self.process_throw();
             }
-            Operand::Boolean(_value) => todo!(),
-            Operand::Number(_value) => todo!(),
-            Operand::String(_value) => todo!(),
+            Operand::Boolean(..) => todo!(),
+            Operand::Number(..) => todo!(),
+            Operand::String(..) => todo!(),
             Operand::Closure(_value) => todo!(),
             Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
             Operand::Promise(_value) => todo!(),
@@ -1151,7 +1152,8 @@ where
                 debug_assert!(!locator.is_none());
                 self.operand_stack
                     .push(Operand::VariableReference(symbol, locator));
-                self.operand_stack.push(Operand::Number(new_value));
+                // TODO(perf): compile-time evaluation
+                self.operand_stack.push(Operand::Number(new_value, None));
                 self.process_assignment();
                 self.process_discard();
             }
@@ -1159,11 +1161,13 @@ where
                 // TODO(feat): throw a ReferenceError at runtime
             }
         }
-        self.operand_stack.push(Operand::Number(if pos == '^' {
+        let value = if pos == '^' {
             new_value
         } else {
             old_value
-        }));
+        };
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(value, None));
     }
 
     // 7.1.4 ToNumber ( argument )
@@ -1171,9 +1175,9 @@ where
         match operand {
             Operand::Undefined => self.bridge.get_nan(),
             Operand::Null => self.bridge.get_zero(),
-            Operand::Boolean(value) => self.bridge.create_boolean_to_number(value),
-            Operand::Number(value) => value,
-            Operand::String(_value) => unimplemented!("string.to_numeric"),
+            Operand::Boolean(value, ..) => self.bridge.create_boolean_to_number(value),
+            Operand::Number(value, ..) => value,
+            Operand::String(..) => unimplemented!("string.to_numeric"),
             Operand::Closure(_) => self.bridge.get_nan(),
             Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value) => self.bridge.to_numeric(value),
@@ -1226,7 +1230,8 @@ where
     fn process_unary_plus(&mut self) {
         let (operand, _) = self.dereference();
         let value = self.to_numeric(operand);
-        self.operand_stack.push(Operand::Number(value));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(value, None));
     }
 
     // 13.5.5.1 Runtime Semantics: Evaluation
@@ -1236,7 +1241,8 @@ where
         // TODO: BigInt
         // 6.1.6.1.1 Number::unaryMinus ( x )
         let value = self.bridge.create_fneg(value);
-        self.operand_stack.push(Operand::Number(value));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(value, None));
     }
 
     // 13.5.6.1 Runtime Semantics: Evaluation
@@ -1245,7 +1251,8 @@ where
         let number = self.to_numeric(operand);
         // TODO: BigInt
         let number = self.bridge.create_bitwise_not(number);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.5.7.1 Runtime Semantics: Evaluation
@@ -1253,15 +1260,16 @@ where
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand);
         let boolean = self.bridge.create_logical_not(boolean);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     fn create_to_boolean(&mut self, operand: Operand) -> BooleanIr {
         match operand {
             Operand::Undefined | Operand::Null => self.bridge.get_boolean(false),
-            Operand::Boolean(value) => value,
-            Operand::Number(value) => self.bridge.create_number_to_boolean(value),
-            Operand::String(_value) => todo!(),
+            Operand::Boolean(value, ..) => value,
+            Operand::Number(value, ..) => self.bridge.create_number_to_boolean(value),
+            Operand::String(..) => todo!(),
             Operand::Closure(_) | Operand::Object(_) | Operand::Promise(_) => {
                 self.bridge.get_boolean(true)
             }
@@ -1287,7 +1295,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let number = self.bridge.create_fmul(lhs, rhs);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.7.1 Runtime Semantics: Evaluation
@@ -1299,7 +1308,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let number = self.bridge.create_fdiv(lhs, rhs);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.7.1 Runtime Semantics: Evaluation
@@ -1311,7 +1321,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let number = self.bridge.create_frem(lhs, rhs);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.8.1.1 Runtime Semantics: Evaluation
@@ -1323,7 +1334,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let number = self.bridge.create_fadd(lhs, rhs);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.8.2.1 Runtime Semantics: Evaluation
@@ -1335,7 +1347,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let number = self.bridge.create_fsub(lhs, rhs);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.9.1.1 Runtime Semantics: Evaluation
@@ -1350,7 +1363,8 @@ where
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
         let number = self.bridge.create_left_shift(lhs, rhs);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.9.2.1 Runtime Semantics: Evaluation
@@ -1365,7 +1379,8 @@ where
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
         let number = self.bridge.create_signed_right_shift(lhs, rhs);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.9.3.1 Runtime Semantics: Evaluation
@@ -1380,7 +1395,8 @@ where
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
         let number = self.bridge.create_unsigned_right_shift(lhs, rhs);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
@@ -1392,7 +1408,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let boolean = self.bridge.create_less_than(lhs, rhs);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
@@ -1404,7 +1421,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let boolean = self.bridge.create_greater_than(lhs, rhs);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
@@ -1416,7 +1434,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let boolean = self.bridge.create_less_than_or_equal(lhs, rhs);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
@@ -1428,7 +1447,8 @@ where
         let rhs = self.to_numeric(rhs);
 
         let boolean = self.bridge.create_greater_than_or_equal(lhs, rhs);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
@@ -1450,7 +1470,8 @@ where
         let (rhs, _) = self.dereference();
 
         let boolean = self.create_is_loosely_equal(lhs, rhs);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     // 7.2.13 IsLooselyEqual ( x, y )
@@ -1501,9 +1522,9 @@ where
             Operand::Any(value) => *value,
             Operand::Undefined => self.bridge.create_undefined_to_any(),
             Operand::Null => self.bridge.create_null_to_any(),
-            Operand::Boolean(value) => self.bridge.create_boolean_to_any(*value),
-            Operand::Number(value) => self.bridge.create_number_to_any(*value),
-            Operand::String(_value) => todo!(),
+            Operand::Boolean(value, ..) => self.bridge.create_boolean_to_any(*value),
+            Operand::Number(value, ..) => self.bridge.create_number_to_any(*value),
+            Operand::String(..) => todo!(),
             Operand::Closure(value) => self.bridge.create_closure_to_any(*value),
             Operand::Object(value) => self.bridge.create_object_to_any(*value),
             Operand::Lambda(_)
@@ -1530,11 +1551,14 @@ where
         match (lhs, rhs) {
             (Operand::Undefined, Operand::Undefined) => self.bridge.get_boolean(true),
             (Operand::Null, Operand::Null) => self.bridge.get_boolean(true),
-            (Operand::Boolean(lhs), Operand::Boolean(rhs)) => {
+            (Operand::Boolean(lhs, ..), Operand::Boolean(rhs, ..)) => {
                 self.bridge.create_is_same_boolean(lhs, rhs)
             }
-            (Operand::Number(lhs), Operand::Number(rhs)) => {
+            (Operand::Number(lhs, ..), Operand::Number(rhs, ..)) => {
                 self.bridge.create_is_same_number(lhs, rhs)
+            }
+            (Operand::String(_lhs, ..), Operand::String(_rhs, ..)) => {
+                todo!();
             }
             (Operand::Closure(lhs), Operand::Closure(rhs)) => {
                 self.bridge.create_is_same_closure(lhs, rhs)
@@ -1554,9 +1578,9 @@ where
         match rhs {
             Operand::Undefined => self.bridge.create_is_undefined(lhs),
             Operand::Null => self.bridge.create_is_null(lhs),
-            Operand::Boolean(rhs) => self.create_is_same_boolean_value(lhs, rhs),
-            Operand::Number(rhs) => self.create_is_same_number_value(lhs, rhs),
-            Operand::String(_rhs) => todo!(),
+            Operand::Boolean(rhs, ..) => self.create_is_same_boolean_value(lhs, rhs),
+            Operand::Number(rhs, ..) => self.create_is_same_number_value(lhs, rhs),
+            Operand::String(_rhs, ..) => todo!(),
             Operand::Closure(rhs) => self.create_is_same_closure_value(lhs, rhs),
             Operand::Object(rhs) => self.create_is_same_object_value(lhs, rhs),
             Operand::Promise(rhs) => self.create_is_same_promise_value(lhs, rhs),
@@ -1688,7 +1712,8 @@ where
 
         let eq = self.create_is_loosely_equal(lhs, rhs);
         let boolean = self.bridge.create_logical_not(eq);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     // 13.11.1 Runtime Semantics: Evaluation
@@ -1698,7 +1723,8 @@ where
         let (rhs, _) = self.dereference();
 
         let boolean = self.create_is_strictly_equal(lhs, rhs);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     // 13.11.1 Runtime Semantics: Evaluation
@@ -1709,7 +1735,8 @@ where
 
         let eq = self.create_is_strictly_equal(lhs, rhs);
         let boolean = self.bridge.create_logical_not(eq);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     // 13.12.1 Runtime Semantics: Evaluation
@@ -1724,7 +1751,8 @@ where
         // TODO: BigInt
 
         let number = self.bridge.create_bitwise_and(lnum, rnum);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.12.1 Runtime Semantics: Evaluation
@@ -1739,7 +1767,8 @@ where
         // TODO: BigInt
 
         let number = self.bridge.create_bitwise_xor(lnum, rnum);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.12.1 Runtime Semantics: Evaluation
@@ -1754,7 +1783,8 @@ where
         // TODO: BigInt
 
         let number = self.bridge.create_bitwise_or(lnum, rnum);
-        self.operand_stack.push(Operand::Number(number));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     fn process_ternary(&mut self) {
@@ -1788,21 +1818,23 @@ where
                     self.process_null();
                     return;
                 }
-                (Operand::Boolean(then_value), Operand::Boolean(else_value)) => {
+                (Operand::Boolean(then_value, ..), Operand::Boolean(else_value, ..)) => {
                     let boolean = self
                         .bridge
                         .create_boolean_phi(then_value, then_block, else_value, else_block);
-                    self.operand_stack.push(Operand::Boolean(boolean));
+                    // TODO(perf): compile-time evaluation
+                    self.operand_stack.push(Operand::Boolean(boolean, None));
                     return;
                 }
-                (Operand::Number(then_value), Operand::Number(else_value)) => {
+                (Operand::Number(then_value, ..), Operand::Number(else_value, ..)) => {
                     let number = self
                         .bridge
                         .create_number_phi(then_value, then_block, else_value, else_block);
-                    self.operand_stack.push(Operand::Number(number));
+                    // TODO(perf): compile-time evaluation
+                    self.operand_stack.push(Operand::Number(number, None));
                     return;
                 }
-                (Operand::String(_then_value), Operand::String(_else_value)) => {
+                (Operand::String(_then_value, ..), Operand::String(_else_value, ..)) => {
                     todo!();
                 }
                 (Operand::Any(then_value), Operand::Any(else_value)) => {
@@ -1835,7 +1867,7 @@ where
 
     fn pop_boolean(&mut self) -> BooleanIr {
         match self.operand_stack.pop().unwrap() {
-            Operand::Boolean(value) => value,
+            Operand::Boolean(value, ..) => value,
             _ => unreachable!(),
         }
     }
@@ -1867,7 +1899,8 @@ where
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand.clone());
         let boolean = self.bridge.create_logical_not(boolean);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
         self.process_if_then();
         self.operand_stack.push(operand);
         self.process_else();
@@ -1876,7 +1909,8 @@ where
     fn process_truthy_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand.clone());
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
         self.process_if_then();
         self.operand_stack.push(operand);
         self.process_else();
@@ -1885,7 +1919,8 @@ where
     fn process_nullish_short_circuit(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_is_non_nullish(operand.clone());
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
         self.process_if_then();
         self.operand_stack.push(operand);
         self.process_else();
@@ -1894,12 +1929,12 @@ where
     fn create_is_non_nullish(&mut self, operand: Operand) -> BooleanIr {
         match operand {
             Operand::Undefined | Operand::Null => self.bridge.get_boolean(false),
-            Operand::Boolean(_)
-            | Operand::Number(_)
+            Operand::Boolean(..)
+            | Operand::Number(..)
             | Operand::Closure(_)
             | Operand::Object(_)
             | Operand::Promise(_) => self.bridge.get_boolean(true),
-            Operand::String(_) => todo!(),
+            Operand::String(..) => todo!(),
             Operand::Any(value) => self.bridge.create_is_non_nullish(value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
@@ -1911,13 +1946,15 @@ where
     fn process_truthy(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_to_boolean(operand);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     fn process_non_nullish(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.create_is_non_nullish(operand);
-        self.operand_stack.push(Operand::Boolean(boolean));
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     fn process_if_then(&mut self) {
@@ -2445,9 +2482,9 @@ where
         match operand {
             Operand::Undefined => self.bridge.create_store_undefined_to_retv(),
             Operand::Null => self.bridge.create_store_null_to_retv(),
-            Operand::Boolean(value) => self.bridge.create_store_boolean_to_retv(*value),
-            Operand::Number(value) => self.bridge.create_store_number_to_retv(*value),
-            Operand::String(_value) => todo!(),
+            Operand::Boolean(value, ..) => self.bridge.create_store_boolean_to_retv(*value),
+            Operand::Number(value, ..) => self.bridge.create_store_number_to_retv(*value),
+            Operand::String(..) => todo!(),
             Operand::Closure(value) => self.bridge.create_store_closure_to_retv(*value),
             Operand::Object(value) => self.bridge.create_store_object_to_retv(*value),
             Operand::Promise(value) => self.bridge.create_store_promise_to_retv(*value),
@@ -2561,15 +2598,15 @@ where
                 let result = self.bridge.create_null_to_any();
                 self.bridge.create_emit_promise_resolved(promise, result);
             }
-            Operand::Boolean(value) => {
+            Operand::Boolean(value, ..) => {
                 let result = self.bridge.create_boolean_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
             }
-            Operand::Number(value) => {
+            Operand::Number(value, ..) => {
                 let result = self.bridge.create_number_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
             }
-            Operand::String(_value) => todo!(),
+            Operand::String(..) => todo!(),
             Operand::Closure(value) => {
                 let result = self.bridge.create_closure_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
@@ -2625,17 +2662,17 @@ where
             match operand {
                 Operand::Undefined => (),
                 Operand::Null => (),
-                Operand::Boolean(value) => {
+                Operand::Boolean(value, ..) => {
                     self.bridge
                         .create_write_boolean_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Number(value) => {
+                Operand::Number(value, ..) => {
                     self.bridge
                         .create_write_number_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::String(_value) => todo!(),
+                Operand::String(..) => todo!(),
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     self.bridge
@@ -2674,15 +2711,15 @@ where
             match operand {
                 Operand::Undefined => (),
                 Operand::Null => (),
-                Operand::Boolean(ref mut value) => {
+                Operand::Boolean(ref mut value, ..) => {
                     *value = self.bridge.create_read_boolean_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Number(ref mut value) => {
+                Operand::Number(ref mut value, ..) => {
                     *value = self.bridge.create_read_number_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::String(_value) => todo!(),
+                Operand::String(..) => todo!(),
                 Operand::Closure(ref mut value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self.bridge.create_read_closure_from_scratch_buffer(offset);
@@ -2820,9 +2857,12 @@ impl Dump for OperandStack {
 enum Operand {
     Undefined,
     Null,
-    Boolean(BooleanIr),
-    Number(NumberIr),
-    String(Char16SeqIr),
+    // TODO(perf): compile-time evaluation
+    Boolean(BooleanIr, #[allow(unused)] Option<bool>),
+    // TODO(perf): compile-time evaluation
+    Number(NumberIr, #[allow(unused)] Option<f64>),
+    // TODO(perf): compile-time evaluation
+    String(Char16SeqIr, #[allow(unused)] Option<Char16Seq>),
     Lambda(LambdaIr),
     Closure(ClosureIr),
     Coroutine(CoroutineIr),
@@ -2844,9 +2884,9 @@ impl Dump for Operand {
         match self {
             Self::Undefined => eprintln!("Undefined"),
             Self::Null => eprintln!("Null"),
-            Self::Boolean(value) => eprintln!("Boolean({:?})", ir2cstr!(value)),
-            Self::Number(value) => eprintln!("Number({:?})", ir2cstr!(value)),
-            Self::String(value) => eprintln!("String({:?})", ir2cstr!(value)),
+            Self::Boolean(value, ..) => eprintln!("Boolean({:?})", ir2cstr!(value)),
+            Self::Number(value, ..) => eprintln!("Number({:?})", ir2cstr!(value)),
+            Self::String(value, ..) => eprintln!("String({:?})", ir2cstr!(value)),
             Self::Lambda(value) => eprintln!("Lambda({:?})", ir2cstr!(value)),
             Self::Closure(value) => eprintln!("Closure({:?})", ir2cstr!(value)),
             Self::Coroutine(value) => eprintln!("Coroutine({:?})", ir2cstr!(value)),

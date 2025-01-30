@@ -160,6 +160,7 @@ impl std::fmt::Debug for U16String {
 ///
 /// This type may be allocated on the stack.
 // TODO(issue#237): GcCell
+#[derive(Clone)]
 #[repr(C)]
 pub struct Char16Seq {
     /// A pointer to the next sequence if it exists.
