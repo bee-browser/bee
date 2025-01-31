@@ -1622,7 +1622,7 @@
 - rule: >-
     MemberExpression_Await -> MemberExpression_Await LBRACK Expression_In_Await
     RBRACK
-  action: undefined
+  action: process_member_expression_bracket_notation
 - rule: MemberExpression_Await -> MemberExpression_Await DOT KeywordOrIdentifierName
   action: process_member_expression_dot_notation
 - rule: >-
@@ -2306,7 +2306,7 @@
 - rule: MemberExpression -> PrimaryExpression
   action: nop
 - rule: MemberExpression -> MemberExpression LBRACK Expression_In RBRACK
-  action: undefined
+  action: process_member_expression_bracket_notation
 - rule: MemberExpression -> MemberExpression DOT KeywordOrIdentifierName
   action: process_member_expression_dot_notation
 - rule: MemberExpression -> MemberExpression TemplateLiteral_Tagged
@@ -2640,7 +2640,7 @@
 - rule: >-
     MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield
     RBRACK
-  action: undefined
+  action: process_member_expression_bracket_notation
 - rule: MemberExpression_Yield -> MemberExpression_Yield DOT KeywordOrIdentifierName
   action: process_member_expression_dot_notation
 - rule: >-
@@ -2756,7 +2756,7 @@
 - rule: >-
     MemberExpression_Yield_Await -> MemberExpression_Yield_Await LBRACK
     Expression_In_Yield_Await RBRACK
-  action: undefined
+  action: process_member_expression_bracket_notation
 - rule: >-
     MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT
     KeywordOrIdentifierName

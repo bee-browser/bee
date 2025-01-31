@@ -1,7 +1,9 @@
-mod builtins;
+mod builtin;
 
-use std::ffi::CStr;
+use std::hash::Hash;
+use std::hash::Hasher;
 
+use indexmap::Equivalent;
 use indexmap::IndexSet;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -34,7 +36,7 @@ impl std::fmt::Display for Symbol {
 }
 
 pub struct SymbolRegistry {
-    symbols: IndexSet<Vec<u16>>,
+    symbols: IndexSet<SymbolName>,
 }
 
 impl SymbolRegistry {
@@ -43,26 +45,26 @@ impl SymbolRegistry {
 
     fn new() -> Self {
         let mut symbols = IndexSet::with_capacity(Self::INITIAL_CAPACITY);
-        symbols.insert(vec![]);
-        debug_assert!(symbols.get_index(0).is_some());
+        let (i, _) = symbols.insert_full(SymbolName::NO_NAME);
+        debug_assert_eq!(i, Symbol::NONE.id() as usize);
         Self { symbols }
     }
 
-    pub fn intern_cstr<T: AsRef<CStr>>(&mut self, s: T) -> Symbol {
-        self.intern_str(s.as_ref().to_str().unwrap())
-    }
-
     pub fn intern_str<T: AsRef<str>>(&mut self, s: T) -> Symbol {
-        let code_units: Vec<u16> = s.as_ref().encode_utf16().collect();
-        self.intern(code_units)
+        // TODO: use more efficient memory management such as bump allocation and arena.
+        let name: Vec<u16> = s.as_ref().encode_utf16().collect();
+        self.intern(SymbolName::Dynamic(name))
     }
 
-    // TODO: use more efficient memory management such as bump allocation and arena.
-    pub fn intern(&mut self, code_units: Vec<u16>) -> Symbol {
-        let i = match self.symbols.get_index_of(&code_units) {
+    pub fn intern_utf16(&mut self, utf16: Vec<u16>) -> Symbol {
+        self.intern(SymbolName::Dynamic(utf16))
+    }
+
+    fn intern(&mut self, name: SymbolName) -> Symbol {
+        let i = match self.symbols.get_index_of(&name) {
             Some(i) => i,
             None => {
-                let (i, _) = self.symbols.insert_full(code_units);
+                let (i, _) = self.symbols.insert_full(name);
                 debug_assert!(i <= u32::MAX as usize);
                 i
             }
@@ -70,8 +72,8 @@ impl SymbolRegistry {
         Symbol(i as u32)
     }
 
-    pub fn lookup(&self, code_units: &[u16]) -> Symbol {
-        match self.symbols.get_index_of(code_units) {
+    pub fn lookup(&self, name: &[u16]) -> Symbol {
+        match self.symbols.get_index_of(&Query(name)) {
             Some(i) => Symbol(i as u32),
             None => Symbol::NONE,
         }
@@ -80,7 +82,7 @@ impl SymbolRegistry {
     pub fn resolve(&self, symbol: Symbol) -> Option<&[u16]> {
         self.symbols
             .get_index(symbol.0 as usize)
-            .map(|v| v.as_slice())
+            .map(|v| v.as_ref())
     }
 }
 
@@ -89,5 +91,46 @@ impl Default for SymbolRegistry {
         let mut self_ = Self::new();
         self_.register_builtin_symbols();
         self_
+    }
+}
+
+#[derive(Debug, Eq)]
+enum SymbolName {
+    Static(&'static [u16]),
+    Dynamic(Vec<u16>),
+}
+
+impl SymbolName {
+    const NO_NAME: Self = SymbolName::Static(&[]);
+}
+
+impl AsRef<[u16]> for SymbolName {
+    fn as_ref(&self) -> &[u16] {
+        match self {
+            Self::Static(name) => name,
+            Self::Dynamic(ref name) => name.as_slice(),
+        }
+    }
+}
+
+impl Hash for SymbolName {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.as_ref().hash(state);
+    }
+}
+
+impl PartialEq for SymbolName {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_ref() == other.as_ref()
+    }
+}
+
+// Use a wrapper in order to implement `Equivalent<SymbolName>`.
+#[derive(Hash)]
+struct Query<'a>(&'a [u16]);
+
+impl Equivalent<SymbolName> for Query<'_> {
+    fn equivalent(&self, key: &SymbolName) -> bool {
+        self.0 == key.as_ref()
     }
 }

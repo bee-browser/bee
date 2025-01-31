@@ -142,7 +142,13 @@ impl U16String {
     }
 
     pub(crate) fn first_seq(&self) -> &Char16Seq {
+        debug_assert!(!self.0.is_null());
         unsafe { &(*self.0) }
+    }
+
+    pub(crate) fn make_utf16(&self) -> Vec<u16> {
+        debug_assert!(!self.0.is_null());
+        unsafe { (*self.0).make_utf16() }
     }
 }
 
@@ -160,6 +166,7 @@ impl std::fmt::Debug for U16String {
 ///
 /// This type may be allocated on the stack.
 // TODO(issue#237): GcCell
+#[derive(Clone)]
 #[repr(C)]
 pub struct Char16Seq {
     /// A pointer to the next sequence if it exists.
@@ -214,6 +221,18 @@ impl Char16Seq {
     pub fn total_len(&self) -> u32 {
         // TODO: next
         self.len
+    }
+
+    pub(crate) fn make_utf16(&self) -> Vec<u16> {
+        // TODO: next
+        if self.is_empty() {
+            return vec![];
+        }
+
+        debug_assert_ne!(self.len, 0);
+        debug_assert_ne!(self.ptr, std::ptr::null());
+        let slice = unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) };
+        slice.to_vec()
     }
 }
 

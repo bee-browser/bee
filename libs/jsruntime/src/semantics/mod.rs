@@ -1227,8 +1227,10 @@ impl FunctionAnalysis {
 
     fn process_member_expression(&mut self, kind: MemberExpressionKind) {
         match kind {
+            MemberExpressionKind::PropertyAccessWithExpressionKey => {
+                self.commands.push(CompileCommand::ToPropertyKey);
+            }
             MemberExpressionKind::PropertyAccessWithIdentifierKey(key) => {
-                self.commands.push(CompileCommand::ToObject);
                 self.commands.push(CompileCommand::PropertyReference(key));
             }
         }
@@ -1264,16 +1266,6 @@ impl FunctionAnalysis {
                 self.commands.push(CompileCommand::Ternary);
             }
             PropertyAccessKind::IdentifierKey(key) => {
-                // TODO(fix): Currently, a property access is represented by using two commands.
-                //
-                //   [ToObject, PropertyReference(key)]
-                //
-                // However, Duplicate creates a copy of a command.  This means that it expects that
-                // the property access has been dereferenced before the duplicate.
-                //
-                // It may be better to introduce a type like the Reference Record defined in the
-                // specification, which holds a reference to the target object.
-                self.commands.push(CompileCommand::ToObject);
                 self.commands.push(CompileCommand::PropertyReference(key));
                 self.commands.push(CompileCommand::Else);
                 self.commands.push(CompileCommand::Undefined);
@@ -1363,7 +1355,7 @@ impl FunctionAnalysis {
         let (symbol, _) = self.symbol_stack.pop().unwrap();
         self.function_scoped_symbols.insert(symbol);
 
-        self.commands.push(CompileCommand::Function(lambda_id));
+        self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands
             .push(CompileCommand::VariableReference(symbol));
@@ -1380,7 +1372,7 @@ impl FunctionAnalysis {
             debug_assert!(!self.symbol_stack.is_empty());
             self.symbol_stack.pop();
         }
-        self.commands.push(CompileCommand::Function(lambda_id));
+        self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands
             .push(CompileCommand::Closure(false, scope_ref));
     }
@@ -1696,7 +1688,7 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Object,
-    Function(LambdaId),
+    Lambda(LambdaId),
     Closure(bool, ScopeRef),
     Coroutine(LambdaId, u16),
     Promise,
@@ -1705,6 +1697,7 @@ pub enum CompileCommand {
     // references
     VariableReference(Symbol),
     PropertyReference(Symbol),
+    ToPropertyKey,
 
     AllocateLocals(u16),
     MutableVariable,
@@ -1718,7 +1711,6 @@ pub enum CompileCommand {
     // object
     CreateDataProperty,
     CopyDataProperties,
-    ToObject,
 
     // update operators
     PostfixIncrement,
@@ -2159,7 +2151,7 @@ mod tests {
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVars(scope_ref!(1)),
-                    CompileCommand::Function(program.functions[0].id),
+                    CompileCommand::Lambda(program.functions[0].id),
                     CompileCommand::Closure(false, scope_ref!(2)),
                     CompileCommand::Coroutine(program.functions[0].id, 0),
                     CompileCommand::Promise,
