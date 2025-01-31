@@ -146,9 +146,9 @@ impl U16String {
         unsafe { &(*self.0) }
     }
 
-    pub(crate) fn to_vec(&self) -> Vec<u16> {
+    pub(crate) fn make_utf16(&self) -> Vec<u16> {
         debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).to_vec() }
+        unsafe { (*self.0).make_utf16() }
     }
 }
 
@@ -223,7 +223,7 @@ impl Char16Seq {
         self.len
     }
 
-    pub(crate) fn to_vec(&self) -> Vec<u16> {
+    pub(crate) fn make_utf16(&self) -> Vec<u16> {
         // TODO: next
         if self.is_empty() {
             return vec![];

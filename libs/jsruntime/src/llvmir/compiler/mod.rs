@@ -629,7 +629,7 @@ where
             Operand::Boolean(_, None) => todo!(),
             Operand::Number(..) => todo!(),
             Operand::String(_, Some(ref value)) => {
-                self.support.make_symbol_from_name(value.to_vec())
+                self.support.make_symbol_from_name(value.make_utf16())
             }
             Operand::String(_, None) => todo!(),
             Operand::Lambda(_) => todo!(),
@@ -642,7 +642,7 @@ where
             Operand::Any(_, Some(Value::Boolean(false))) => Symbol::FALSE,
             Operand::Any(_, Some(Value::Boolean(true))) => Symbol::FALSE,
             Operand::Any(_, Some(Value::String(value))) => {
-                self.support.make_symbol_from_name(value.to_vec())
+                self.support.make_symbol_from_name(value.make_utf16())
             }
             Operand::Any(..) => todo!(),
             Operand::PropertyReference(_) | Operand::VariableReference(..) => {
@@ -677,9 +677,10 @@ where
         let operand = self.operand_stack.pop().unwrap();
         match operand {
             // Shortcut for frequently used reference to `undefined`.
-            Operand::VariableReference(Symbol::UNDEFINED, Locator::Global) => {
-                (Operand::Undefined, Some((Symbol::UNDEFINED, Locator::Global)))
-            }
+            Operand::VariableReference(Symbol::UNDEFINED, Locator::Global) => (
+                Operand::Undefined,
+                Some((Symbol::UNDEFINED, Locator::Global)),
+            ),
             Operand::VariableReference(symbol, locator) => {
                 let value = self.create_get_value_ptr(symbol, locator);
                 // TODO(pref): compile-time evaluation
@@ -864,7 +865,9 @@ where
         let (operand, _) = self.dereference();
         let closure = match operand {
             Operand::Closure(closure) => closure, // IIFE
-            Operand::Any(value, ..) => self.create_load_closure_from_value_or_throw_type_error(value),
+            Operand::Any(value, ..) => {
+                self.create_load_closure_from_value_or_throw_type_error(value)
+            }
             _ => {
                 self.process_number(1.);
                 self.process_throw();
@@ -2632,6 +2635,7 @@ where
 
         self.bridge.set_basic_block(result_block);
         let result = self.bridge.create_get_argument_value_ptr(1); // ##result
+
         // TODO(pref): compile-time evaluation
         self.operand_stack.push(Operand::Any(result, None));
     }
@@ -2906,6 +2910,7 @@ impl Dump for OperandStack {
 }
 
 /// Values pushed on to the operand stack.
+// TODO(feat): add variant for BigInt
 #[derive(Clone, Debug)]
 enum Operand {
     /// Compile-time constant value of `undefined`.
@@ -2921,8 +2926,6 @@ enum Operand {
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
     Number(NumberIr, #[allow(unused)] Option<f64>),
-
-    // TODO(feat): add variant for BigInt
 
     /// Runtime value and optional compile-time constant value of string type.
     // TODO(perf): compile-time evaluation
