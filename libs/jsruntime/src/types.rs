@@ -142,7 +142,13 @@ impl U16String {
     }
 
     pub(crate) fn first_seq(&self) -> &Char16Seq {
+        debug_assert!(!self.0.is_null());
         unsafe { &(*self.0) }
+    }
+
+    pub(crate) fn to_vec(&self) -> Vec<u16> {
+        debug_assert!(!self.0.is_null());
+        unsafe { (*self.0).to_vec() }
     }
 }
 

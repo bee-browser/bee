@@ -601,7 +601,8 @@ where
     fn process_exception(&mut self) {
         // TODO: Should we check status_ at runtime?
         self.operand_stack
-            .push(Operand::Any(self.bridge.get_exception()));
+            // TODO(perf): compile-time evaluation
+            .push(Operand::Any(self.bridge.get_exception(), None));
     }
 
     fn process_variable_reference(&mut self, symbol: Symbol) {
@@ -636,7 +637,14 @@ where
             Operand::Coroutine(_) => todo!(),
             Operand::Object(_) => todo!(),
             Operand::Promise(_) => todo!(),
-            Operand::Any(_) => todo!(),
+            Operand::Any(_, Some(Value::Undefined)) => Symbol::UNDEFINED,
+            Operand::Any(_, Some(Value::Null)) => Symbol::NULL,
+            Operand::Any(_, Some(Value::Boolean(false))) => Symbol::FALSE,
+            Operand::Any(_, Some(Value::Boolean(true))) => Symbol::FALSE,
+            Operand::Any(_, Some(Value::String(value))) => {
+                self.support.make_symbol_from_name(value.to_vec())
+            }
+            Operand::Any(..) => todo!(),
             Operand::PropertyReference(_) | Operand::VariableReference(..) => {
                 unreachable!("{operand:?}")
             }
@@ -668,9 +676,14 @@ where
 
         let operand = self.operand_stack.pop().unwrap();
         match operand {
+            // Shortcut for frequently used reference to `undefined`.
+            Operand::VariableReference(Symbol::UNDEFINED, Locator::Global) => {
+                (Operand::Undefined, Some((Symbol::UNDEFINED, Locator::Global)))
+            }
             Operand::VariableReference(symbol, locator) => {
                 let value = self.create_get_value_ptr(symbol, locator);
-                (Operand::Any(value), Some((symbol, locator)))
+                // TODO(pref): compile-time evaluation
+                (Operand::Any(value, None), Some((symbol, locator)))
             }
             Operand::PropertyReference(key) => {
                 self.perform_to_object();
@@ -684,7 +697,8 @@ where
                         c"runtime.get_value() should return a non-null pointer",
                     );
                 }}
-                (Operand::Any(value), None)
+                // TODO(pref): compile-time evaluation
+                (Operand::Any(value, None), None)
             }
             _ => (operand, None),
         }
@@ -743,7 +757,7 @@ where
             Operand::Closure(value) => self.bridge.create_store_closure_to_value(*value, dest),
             Operand::Object(value) => self.bridge.create_store_object_to_value(*value, dest),
             Operand::Promise(value) => self.bridge.create_store_promise_to_value(*value, dest),
-            Operand::Any(value) => self.bridge.create_store_value_to_value(*value, dest),
+            Operand::Any(value, ..) => self.bridge.create_store_value_to_value(*value, dest),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
@@ -850,7 +864,7 @@ where
         let (operand, _) = self.dereference();
         let closure = match operand {
             Operand::Closure(closure) => closure, // IIFE
-            Operand::Any(value) => self.create_load_closure_from_value_or_throw_type_error(value),
+            Operand::Any(value, ..) => self.create_load_closure_from_value_or_throw_type_error(value),
             _ => {
                 self.process_number(1.);
                 self.process_throw();
@@ -866,7 +880,8 @@ where
 
         self.create_check_status_for_exception(status, retv);
 
-        self.operand_stack.push(Operand::Any(retv));
+        // TODO(pref): compile-time evaluation
+        self.operand_stack.push(Operand::Any(retv, None));
     }
 
     fn create_load_closure_from_value_or_throw_type_error(&mut self, value: ValueIr) -> ClosureIr {
@@ -1138,7 +1153,7 @@ where
             Operand::Closure(_value) => todo!(),
             Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
             Operand::Promise(_value) => todo!(),
-            Operand::Any(value) => {
+            Operand::Any(value, ..) => {
                 let object = self.bridge.create_to_object(value);
                 self.operand_stack.push(Operand::Object(object));
             }
@@ -1213,7 +1228,7 @@ where
             Operand::String(..) => unimplemented!("string.to_numeric"),
             Operand::Closure(_) => self.bridge.get_nan(),
             Operand::Object(_) => unimplemented!("object.to_numeric"),
-            Operand::Any(value) => self.bridge.to_numeric(value),
+            Operand::Any(value, ..) => self.bridge.to_numeric(value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::Promise(_)
@@ -1306,7 +1321,7 @@ where
             Operand::Closure(_) | Operand::Object(_) | Operand::Promise(_) => {
                 self.bridge.get_boolean(true)
             }
-            Operand::Any(value) => self.bridge.create_to_boolean(value),
+            Operand::Any(value, ..) => self.bridge.create_to_boolean(value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
@@ -1510,12 +1525,12 @@ where
     // 7.2.13 IsLooselyEqual ( x, y )
     fn create_is_loosely_equal(&mut self, lhs: Operand, rhs: Operand) -> BooleanIr {
         logger::debug!(event = "create_is_loosely_equal", ?lhs, ?rhs);
-        if let Operand::Any(lhs) = lhs {
+        if let Operand::Any(lhs, ..) = lhs {
             // TODO: compile-time evaluation
             let rhs = self.create_to_any(&rhs);
             return self.bridge.create_is_loosely_equal(lhs, rhs);
         }
-        if let Operand::Any(rhs) = rhs {
+        if let Operand::Any(rhs, ..) = rhs {
             // TODO: compile-time evaluation
             let lhs = self.create_to_any(&lhs);
             return self.bridge.create_is_loosely_equal(lhs, rhs);
@@ -1552,7 +1567,7 @@ where
     fn create_to_any(&mut self, operand: &Operand) -> ValueIr {
         logger::debug!(event = "create_to_any", ?operand);
         match operand {
-            Operand::Any(value) => *value,
+            Operand::Any(value, ..) => *value,
             Operand::Undefined => self.bridge.create_undefined_to_any(),
             Operand::Null => self.bridge.create_null_to_any(),
             Operand::Boolean(value, ..) => self.bridge.create_boolean_to_any(*value),
@@ -1571,10 +1586,10 @@ where
     // 7.2.14 IsStrictlyEqual ( x, y )
     fn create_is_strictly_equal(&mut self, lhs: Operand, rhs: Operand) -> BooleanIr {
         logger::debug!(event = "create_is_strictly_equal", ?lhs, ?rhs);
-        if let Operand::Any(lhs) = lhs {
+        if let Operand::Any(lhs, ..) = lhs {
             return self.create_any_is_strictly_equal(lhs, rhs);
         }
-        if let Operand::Any(rhs) = rhs {
+        if let Operand::Any(rhs, ..) = rhs {
             return self.create_any_is_strictly_equal(rhs, lhs);
         }
         if std::mem::discriminant(&lhs) != std::mem::discriminant(&rhs) {
@@ -1617,7 +1632,7 @@ where
             Operand::Closure(rhs) => self.create_is_same_closure_value(lhs, rhs),
             Operand::Object(rhs) => self.create_is_same_object_value(lhs, rhs),
             Operand::Promise(rhs) => self.create_is_same_promise_value(lhs, rhs),
-            Operand::Any(rhs) => self.bridge.create_is_strictly_equal(lhs, rhs),
+            Operand::Any(rhs, ..) => self.bridge.create_is_strictly_equal(lhs, rhs),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
@@ -1870,11 +1885,12 @@ where
                 (Operand::String(_then_value, ..), Operand::String(_else_value, ..)) => {
                     todo!();
                 }
-                (Operand::Any(then_value), Operand::Any(else_value)) => {
+                (Operand::Any(then_value, ..), Operand::Any(else_value, ..)) => {
                     let any = self
                         .bridge
                         .create_value_phi(then_value, then_block, else_value, else_block);
-                    self.operand_stack.push(Operand::Any(any));
+                    // TODO(pref): compile-time evaluation
+                    self.operand_stack.push(Operand::Any(any, None));
                     return;
                 }
                 _ => unreachable!(),
@@ -1895,7 +1911,8 @@ where
         let any = self
             .bridge
             .create_value_phi(then_value, then_block, else_value, else_block);
-        self.operand_stack.push(Operand::Any(any));
+        // TODO(pref): compile-time evaluation
+        self.operand_stack.push(Operand::Any(any, None));
     }
 
     fn pop_boolean(&mut self) -> BooleanIr {
@@ -1968,7 +1985,7 @@ where
             | Operand::Object(_)
             | Operand::Promise(_) => self.bridge.get_boolean(true),
             Operand::String(..) => todo!(),
-            Operand::Any(value) => self.bridge.create_is_non_nullish(value),
+            Operand::Any(value, ..) => self.bridge.create_is_non_nullish(value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
@@ -2521,7 +2538,7 @@ where
             Operand::Closure(value) => self.bridge.create_store_closure_to_retv(*value),
             Operand::Object(value) => self.bridge.create_store_object_to_retv(*value),
             Operand::Promise(value) => self.bridge.create_store_promise_to_retv(*value),
-            Operand::Any(value) => self.bridge.create_store_value_to_retv(*value),
+            Operand::Any(value, ..) => self.bridge.create_store_value_to_retv(*value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
@@ -2607,14 +2624,16 @@ where
         {
             // throw ##error;
             self.bridge.set_basic_block(has_error_block);
-            self.operand_stack.push(Operand::Any(error));
+            // TODO(pref): compile-time evaluation
+            self.operand_stack.push(Operand::Any(error, None));
             self.process_throw();
             self.bridge.create_br(result_block);
         }
 
         self.bridge.set_basic_block(result_block);
         let result = self.bridge.create_get_argument_value_ptr(1); // ##result
-        self.operand_stack.push(Operand::Any(result));
+        // TODO(pref): compile-time evaluation
+        self.operand_stack.push(Operand::Any(result, None));
     }
 
     fn resolve_promise(&mut self) {
@@ -2651,7 +2670,7 @@ where
             Operand::Promise(value) => {
                 self.bridge.create_await_promise(value, promise);
             }
-            Operand::Any(value) => {
+            Operand::Any(value, ..) => {
                 let then_block = self.create_basic_block("is_promise.then");
                 let else_block = self.create_basic_block("is_promise.else");
                 let block = self.create_basic_block("block");
@@ -2723,7 +2742,7 @@ where
                         .create_write_promise_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Any(value) => {
+                Operand::Any(value, ..) => {
                     self.bridge
                         .create_write_value_to_scratch_buffer(offset, *value);
                     offset += VALUE_SIZE;
@@ -2767,7 +2786,7 @@ where
                     *value = self.bridge.create_read_promise_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Any(ref mut value) => {
+                Operand::Any(ref mut value, ..) => {
                     *value = self.bridge.create_read_value_from_scratch_buffer(offset);
                     offset += VALUE_SIZE;
                 }
@@ -2886,23 +2905,49 @@ impl Dump for OperandStack {
     }
 }
 
+/// Values pushed on to the operand stack.
 #[derive(Clone, Debug)]
 enum Operand {
+    /// Compile-time constant value of `undefined`.
     Undefined,
+
+    /// Compile-time constant value of `null`.
     Null,
+
+    /// Runtime value and optional compile-time constant value of boolean type.
     // TODO(perf): compile-time evaluation
     Boolean(BooleanIr, #[allow(unused)] Option<bool>),
+
+    /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
     Number(NumberIr, #[allow(unused)] Option<f64>),
+
+    // TODO(feat): add variant for BigInt
+
+    /// Runtime value and optional compile-time constant value of string type.
     // TODO(perf): compile-time evaluation
     String(Char16SeqIr, #[allow(unused)] Option<Char16Seq>),
+
+    /// Runtime value of lambda function type.
     Lambda(LambdaIr),
+
+    /// Runtime value of closure type.
     Closure(ClosureIr),
+
+    /// Runtime value of coroutine type.
     Coroutine(CoroutineIr),
+
+    /// Runtime value of object type.
     Object(ObjectIr),
+
+    /// Runtime value of promise type.
     Promise(PromiseIr),
+
+    /// Runtime value and optional compile-time constant value of any type.
     // TODO(perf): compile-time evaluation
-    Any(ValueIr),
+    Any(ValueIr, #[allow(unused)] Option<Value>),
+
+    // Compile-time constant value types.
     VariableReference(Symbol, Locator),
     PropertyReference(Symbol),
 }
@@ -2926,7 +2971,7 @@ impl Dump for Operand {
             Self::Coroutine(value) => eprintln!("Coroutine({:?})", ir2cstr!(value)),
             Self::Promise(value) => eprintln!("Promise({:?})", ir2cstr!(value)),
             Self::Object(value) => eprintln!("Object({:?})", ir2cstr!(value)),
-            Self::Any(value) => eprintln!("Any({:?})", ir2cstr!(value)),
+            Self::Any(value, ..) => eprintln!("Any({:?})", ir2cstr!(value)),
             Self::VariableReference(symbol, locator) => {
                 eprintln!("VariableReference({symbol}, {locator:?})")
             }
