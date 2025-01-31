@@ -1273,8 +1273,32 @@ where
 
     // 13.5.3.1 Runtime Semantics: Evaluation
     fn process_typeof(&mut self) {
-        // TODO: implement String before this
-        unimplemented!("typeof operator");
+        use jsparser::symbol::builtin::names;
+
+        let (operand, _) = self.dereference();
+        match operand {
+            Operand::Undefined => self.process_string(names::UNDEFINED),
+            Operand::Null => self.process_string(names::OBJECT),
+            Operand::Boolean(..) => self.process_string(names::BOOLEAN),
+            Operand::Number(..) => self.process_string(names::NUMBER),
+            Operand::String(..) => self.process_string(names::STRING),
+            Operand::Closure(..) | Operand::Coroutine(..) => self.process_string(names::FUNCTION),
+            Operand::Object(..) | Operand::Promise(..) => self.process_string(names::OBJECT),
+            Operand::Any(_, Some(ref value)) => match value {
+                Value::Undefined => self.process_string(names::UNDEFINED),
+                Value::Null => self.process_string(names::OBJECT),
+                Value::Boolean(_) => self.process_string(names::BOOLEAN),
+                Value::Number(_) => self.process_string(names::NUMBER),
+                Value::String(_) => self.process_string(names::STRING),
+                Value::Closure(_) => self.process_string(names::FUNCTION),
+                Value::Object(_) | Value::Promise(_) => self.process_string(names::OBJECT),
+                Value::None => unreachable!("{value:?}"),
+            },
+            Operand::Any(..) => todo!(),
+            Operand::Lambda(..)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
+        }
     }
 
     // 13.5.4.1 Runtime Semantics: Evaluation

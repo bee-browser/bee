@@ -25,6 +25,13 @@
 - __proto__
 
 # Non-reserved, but commonly used words
+# TODO: use separate string table?
 - 'null'
 - 'false'
 - 'true'
+- object
+- string
+- symbol
+- boolean
+- number
+- function
