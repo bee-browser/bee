@@ -1294,7 +1294,10 @@ where
                 Value::Object(_) | Value::Promise(_) => self.process_string(names::OBJECT),
                 Value::None => unreachable!("{value:?}"),
             },
-            Operand::Any(..) => todo!(),
+            Operand::Any(value, None) => {
+                let string = self.bridge.create_typeof(value);
+                self.operand_stack.push(Operand::String(string, None));
+            }
             Operand::Lambda(..)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
@@ -2686,7 +2689,10 @@ where
                 let result = self.bridge.create_number_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
             }
-            Operand::String(..) => todo!(),
+            Operand::String(value, ..) => {
+                let result = self.bridge.create_string_to_any(value);
+                self.bridge.create_emit_promise_resolved(promise, result);
+            }
             Operand::Closure(value) => {
                 let result = self.bridge.create_closure_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
@@ -2740,8 +2746,6 @@ where
         let mut offset = 0u32;
         for operand in self.operand_stack.iter() {
             match operand {
-                Operand::Undefined => (),
-                Operand::Null => (),
                 Operand::Boolean(value, ..) => {
                     self.bridge
                         .create_write_boolean_to_scratch_buffer(offset, *value);
@@ -2752,7 +2756,12 @@ where
                         .create_write_number_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::String(..) => todo!(),
+                Operand::String(value, ..) => {
+                    // TODO(issue#237): GcCellRef
+                    self.bridge
+                        .create_write_string_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     self.bridge
@@ -2775,7 +2784,10 @@ where
                         .create_write_value_to_scratch_buffer(offset, *value);
                     offset += VALUE_SIZE;
                 }
-                Operand::VariableReference(..) | Operand::PropertyReference(_) => (),
+                Operand::Undefined
+                | Operand::Null
+                | Operand::VariableReference(..)
+                | Operand::PropertyReference(_) => (),
                 Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2789,36 +2801,41 @@ where
         let mut offset = 0u32;
         for operand in self.operand_stack.iter_mut() {
             match operand {
-                Operand::Undefined => (),
-                Operand::Null => (),
-                Operand::Boolean(ref mut value, ..) => {
+                Operand::Boolean(value, ..) => {
                     *value = self.bridge.create_read_boolean_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Number(ref mut value, ..) => {
+                Operand::Number(value, ..) => {
                     *value = self.bridge.create_read_number_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::String(..) => todo!(),
-                Operand::Closure(ref mut value) => {
+                Operand::String(value, ..) => {
+                    // TODO(issue#237): GcCellRef
+                    *value = self.bridge.create_read_string_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self.bridge.create_read_closure_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Object(ref mut value) => {
+                Operand::Object(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self.bridge.create_read_object_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Promise(ref mut value) => {
+                Operand::Promise(value) => {
                     *value = self.bridge.create_read_promise_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Any(ref mut value, ..) => {
+                Operand::Any(value, ..) => {
                     *value = self.bridge.create_read_value_from_scratch_buffer(offset);
                     offset += VALUE_SIZE;
                 }
-                Operand::VariableReference(..) | Operand::PropertyReference(_) => (),
+                Operand::Undefined
+                | Operand::Null
+                | Operand::VariableReference(..)
+                | Operand::PropertyReference(_) => (),
                 Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }

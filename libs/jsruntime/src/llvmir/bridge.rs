@@ -30,6 +30,7 @@ pub struct RuntimeFunctions {
     to_uint32: unsafe extern "C" fn(*mut c_void, f64) -> u32,
     is_loosely_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
     is_strictly_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
+    get_typeof: unsafe extern "C" fn(*mut c_void, *const Value) -> *const Char16Seq,
     create_capture: unsafe extern "C" fn(*mut c_void, *mut Value) -> *mut Capture,
     create_closure: unsafe extern "C" fn(*mut c_void, Lambda, u16) -> *mut Closure,
     create_coroutine: unsafe extern "C" fn(*mut c_void, *mut Closure, u16, u16) -> *mut Coroutine,
@@ -65,6 +66,7 @@ impl RuntimeFunctions {
             to_uint32: runtime_to_uint32,
             is_loosely_equal: runtime_is_loosely_equal,
             is_strictly_equal: runtime_is_strictly_equal,
+            get_typeof: runtime_get_typeof,
             create_capture: runtime_create_capture::<X>,
             create_closure: runtime_create_closure::<X>,
             create_coroutine: runtime_create_coroutine::<X>,
@@ -262,6 +264,16 @@ unsafe extern "C" fn runtime_is_strictly_equal(
     debug_assert!(!matches!(y, Value::None));
 
     x == y
+}
+
+unsafe extern "C" fn runtime_get_typeof(
+    _runtime: *mut c_void,
+    value: *const Value,
+) -> *const Char16Seq {
+    let value = into_value!(value);
+    debug_assert!(!matches!(value, Value::None));
+
+    value.get_typeof() as *const Char16Seq
 }
 
 unsafe extern "C" fn runtime_create_capture<X>(

@@ -55,6 +55,30 @@ impl Value {
             _ => unreachable!(),
         }
     }
+
+    // 13.5.3.1 Runtime Semantics: Evaluation
+    pub fn get_typeof(&self) -> &'static Char16Seq {
+        use jsparser::symbol::builtin::names;
+
+        const UNDEFINED: Char16Seq = Char16Seq::new(names::UNDEFINED);
+        const BOOLEAN: Char16Seq = Char16Seq::new(names::BOOLEAN);
+        const NUMBER: Char16Seq = Char16Seq::new(names::NUMBER);
+        const STRING: Char16Seq = Char16Seq::new(names::STRING);
+        const FUNCTION: Char16Seq = Char16Seq::new(names::FUNCTION);
+        const OBJECT: Char16Seq = Char16Seq::new(names::OBJECT);
+
+        match self {
+            Self::None => unreachable!(),
+            Self::Undefined => &UNDEFINED,
+            Self::Null => &OBJECT,
+            Self::Boolean(_) => &BOOLEAN,
+            Self::Number(_) => &NUMBER,
+            Self::String(_) => &STRING,
+            Self::Closure(_) => &FUNCTION,
+            Self::Object(_) => &OBJECT,
+            Self::Promise(_) => &OBJECT,
+        }
+    }
 }
 
 impl From<()> for Value {

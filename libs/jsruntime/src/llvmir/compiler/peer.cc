@@ -604,6 +604,10 @@ PromiseIrPtr compiler_peer_create_load_promise_from_value(CompilerPeer peer, Val
   return PEER_PROMISE(IMPL(peer)->CreateLoadPromiseFromValue(LLVM_VALUE(value)));
 }
 
+Char16SeqIrPtr compiler_peer_create_typeof(CompilerPeer peer, ValueIrPtr value) {
+  return PEER_CHAR16SEQ(IMPL(peer)->CreateTypeof(LLVM_VALUE(value)));
+}
+
 // argv
 
 ArgvIrPtr compiler_peer_get_argv_nullptr(CompilerPeer peer) {
@@ -809,6 +813,17 @@ void compiler_peer_create_write_number_to_scratch_buffer(CompilerPeer peer,
 NumberIrPtr compiler_peer_create_read_number_from_scratch_buffer(CompilerPeer peer,
                                                                  uint32_t offset) {
   return PEER_NUMBER(IMPL(peer)->CreateReadNumberFromScratchBuffer(offset));
+}
+
+void compiler_peer_create_write_string_to_scratch_buffer(CompilerPeer peer,
+                                                         uint32_t offset,
+                                                         Char16SeqIrPtr value) {
+  IMPL(peer)->CreateWriteStringToScratchBuffer(offset, LLVM_VALUE(value));
+}
+
+ClosureIrPtr compiler_peer_create_read_string_from_scratch_buffer(CompilerPeer peer,
+                                                                  uint32_t offset) {
+  return PEER_CHAR16SEQ(IMPL(peer)->CreateReadStringFromScratchBuffer(offset));
 }
 
 void compiler_peer_create_write_closure_to_scratch_buffer(CompilerPeer peer,

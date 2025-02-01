@@ -801,6 +801,12 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_typeof(&self, value: ValueIr) -> Char16SeqIr {
+        char16_seq_ir! {
+            compiler_peer_create_typeof(self.0, value.0)
+        }
+    }
+
     // argv
 
     pub fn get_argv_nullptr(&self) -> ArgvIr {
@@ -1112,6 +1118,18 @@ impl CompilerBridge {
     pub fn create_read_number_from_scratch_buffer(&self, offset: u32) -> NumberIr {
         number_ir! {
             compiler_peer_create_read_number_from_scratch_buffer(self.0, offset)
+        }
+    }
+
+    pub fn create_write_string_to_scratch_buffer(&self, offset: u32, value: Char16SeqIr) {
+        unsafe {
+            compiler_peer_create_write_string_to_scratch_buffer(self.0, offset, value.0);
+        }
+    }
+
+    pub fn create_read_string_from_scratch_buffer(&self, offset: u32) -> Char16SeqIr {
+        char16_seq_ir! {
+            compiler_peer_create_read_string_from_scratch_buffer(self.0, offset)
         }
     }
 
@@ -1757,6 +1775,7 @@ extern "C" {
         peer: CompilerPeer,
         value: ValueIrPtr,
     ) -> PromiseIrPtr;
+    fn compiler_peer_create_typeof(peer: CompilerPeer, value: ValueIrPtr) -> Char16SeqIrPtr;
 
     // argv
 
@@ -1872,6 +1891,15 @@ extern "C" {
         peer: CompilerPeer,
         offset: u32,
     ) -> NumberIrPtr;
+    fn compiler_peer_create_write_string_to_scratch_buffer(
+        peer: CompilerPeer,
+        offset: u32,
+        value: Char16SeqIrPtr,
+    );
+    fn compiler_peer_create_read_string_from_scratch_buffer(
+        peer: CompilerPeer,
+        offset: u32,
+    ) -> Char16SeqIrPtr;
     fn compiler_peer_create_write_closure_to_scratch_buffer(
         peer: CompilerPeer,
         offset: u32,

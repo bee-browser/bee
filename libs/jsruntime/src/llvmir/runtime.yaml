@@ -38,6 +38,12 @@ functions:
       - name: b
         type: '&Value'
     ret: bool
+  # TODO(perf): inlining instead of calling the runtime function
+  - name: get_typeof
+    args:
+      - name: value
+        type: '&Value'
+    ret: '&Char16Seq'
   - name: create_capture
     args:
       - name: target

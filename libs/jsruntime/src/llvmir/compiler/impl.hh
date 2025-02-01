@@ -764,6 +764,11 @@ class Compiler {
     return builder_->CreateLoad(builder_->getInt32Ty(), ptr, REG_NAME("value.object"));
   }
 
+  llvm::Value* CreateTypeof(llvm::Value* value_ptr) {
+    auto* func = types_->CreateRuntimeGetTypeof();
+    return builder_->CreateCall(func, {runtime_, value_ptr});
+  }
+
   // argv
 
   llvm::Value* CreateArgv(uint16_t argc) {
@@ -1004,6 +1009,20 @@ class Compiler {
     auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
                                                REG_NAME("scratch.number.ptr"));
     return builder_->CreateLoad(builder_->getDoubleTy(), ptr, REG_NAME("scratch.number"));
+  }
+
+  void CreateWriteStringToScratchBuffer(uint32_t offset, llvm::Value* value) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.string.ptr"));
+    builder_->CreateStore(value, ptr);
+  }
+
+  llvm::Value* CreateReadStringFromScratchBuffer(uint32_t offset) {
+    auto* scratch_ptr = CreateGetScratchBufferPtrOfCoroutine();
+    auto* ptr = builder_->CreateInBoundsPtrAdd(scratch_ptr, builder_->getInt32(offset),
+                                               REG_NAME("scratch.string.ptr"));
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr, REG_NAME("scratch.string"));
   }
 
   void CreateWriteClosureToScratchBuffer(uint32_t offset, llvm::Value* value) {
