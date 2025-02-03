@@ -166,28 +166,26 @@ impl<X> Runtime<X> {
 
     pub fn clone_value(&mut self, value: &Value) -> Value {
         match value {
-            Value::String(string) => Value::String(self.clone_string(*string)),
+            Value::String(string) if string.first_seq().on_stack() => Value::String(
+                U16String::new(self.migrate_string_to_heap(string.first_seq())),
+            ),
             _ => value.clone(),
         }
     }
 
-    // Clones a UTF-16 string allocated on the heap.
-    fn clone_string(&mut self, string: U16String) -> U16String {
-        // TODO(refactor): replace with Char16Seq::EMPTY.
-        static EMPTY: Char16Seq = Char16Seq::empty();
+    // Migrate a UTF-16 string from the stack to the heap.
+    pub fn migrate_string_to_heap(&mut self, seq: &Char16Seq) -> &Char16Seq {
+        logger::debug!(event = "migrate_string_to_heap", ?seq);
+        debug_assert!(seq.on_stack());
 
-        if string.is_empty() {
-            return U16String::new(&EMPTY);
+        if seq.is_empty() {
+            return &Char16Seq::EMPTY;
         }
 
-        let seq = string.first_seq();
-
         // TODO(issue#237): GcCell
-        let seq = self
-            .allocator
-            .alloc(Char16Seq::from_raw_parts(seq.ptr, seq.len));
-
-        U16String::new(seq)
+        // TODO: seq.next
+        self.allocator
+            .alloc(Char16Seq::new_heap_from_raw_parts(seq.ptr, seq.len))
     }
 
     fn create_object(&mut self) -> &mut Object {

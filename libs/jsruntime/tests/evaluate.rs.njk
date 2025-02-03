@@ -89,7 +89,7 @@ fn {{ test.name }}_with_labels() {
 fn {{ test.name }}(optimize: bool, enable_labels: bool) {
     {%- for string in test.strings %}
     static CODE_UNITS{{ loop.index0 }}: [u16; {{ string.size }}] = [{{ string.data | join(", ") }}];
-    static STRING{{ loop.index0 }}: Char16Seq = Char16Seq::new(&CODE_UNITS{{ loop.index0 }});
+    static STRING{{ loop.index0 }}: Char16Seq = Char16Seq::new_const(&CODE_UNITS{{ loop.index0 }});
     {%- endfor %}
     let src = include_str!("{{ test.filename }}");
     let result = evaluate(src, {{ test.module }}, optimize, enable_labels, vec![

@@ -30,7 +30,7 @@ impl SymbolRegistry {
     }
 }
 
-mod names {
+pub mod names {
     {%- for symbol in data %}
     pub const {{ symbol.rustName }}: &[u16] = &[{{ symbol.codeUnits | join(", ") }}];
     {%- endfor %}

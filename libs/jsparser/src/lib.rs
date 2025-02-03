@@ -1,6 +1,6 @@
 mod lexer;
 mod parser;
-mod symbol;
+pub mod symbol;
 pub mod syntax;
 
 /// A JavaScript parser.

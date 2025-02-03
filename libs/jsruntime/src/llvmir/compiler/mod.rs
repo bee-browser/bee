@@ -511,7 +511,7 @@ where
         // compiler is freed.
         let seq = self.bridge.create_char16_seq(value);
         self.operand_stack
-            .push(Operand::String(seq, Some(Char16Seq::new(value))));
+            .push(Operand::String(seq, Some(Char16Seq::new_stack(value))));
     }
 
     fn process_object(&mut self) {
@@ -1273,8 +1273,35 @@ where
 
     // 13.5.3.1 Runtime Semantics: Evaluation
     fn process_typeof(&mut self) {
-        // TODO: implement String before this
-        unimplemented!("typeof operator");
+        use jsparser::symbol::builtin::names;
+
+        let (operand, _) = self.dereference();
+        match operand {
+            Operand::Undefined => self.process_string(names::UNDEFINED),
+            Operand::Null => self.process_string(names::OBJECT),
+            Operand::Boolean(..) => self.process_string(names::BOOLEAN),
+            Operand::Number(..) => self.process_string(names::NUMBER),
+            Operand::String(..) => self.process_string(names::STRING),
+            Operand::Closure(..) | Operand::Coroutine(..) => self.process_string(names::FUNCTION),
+            Operand::Object(..) | Operand::Promise(..) => self.process_string(names::OBJECT),
+            Operand::Any(_, Some(ref value)) => match value {
+                Value::Undefined => self.process_string(names::UNDEFINED),
+                Value::Null => self.process_string(names::OBJECT),
+                Value::Boolean(_) => self.process_string(names::BOOLEAN),
+                Value::Number(_) => self.process_string(names::NUMBER),
+                Value::String(_) => self.process_string(names::STRING),
+                Value::Closure(_) => self.process_string(names::FUNCTION),
+                Value::Object(_) | Value::Promise(_) => self.process_string(names::OBJECT),
+                Value::None => unreachable!("{value:?}"),
+            },
+            Operand::Any(value, None) => {
+                let string = self.bridge.create_typeof(value);
+                self.operand_stack.push(Operand::String(string, None));
+            }
+            Operand::Lambda(..)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
+        }
     }
 
     // 13.5.4.1 Runtime Semantics: Evaluation
@@ -2662,7 +2689,11 @@ where
                 let result = self.bridge.create_number_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
             }
-            Operand::String(..) => todo!(),
+            Operand::String(value, ..) => {
+                let value = self.ensure_heap_string(value);
+                let result = self.bridge.create_string_to_any(value);
+                self.bridge.create_emit_promise_resolved(promise, result);
+            }
             Operand::Closure(value) => {
                 let result = self.bridge.create_closure_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
@@ -2703,6 +2734,28 @@ where
         }
     }
 
+    fn ensure_heap_string(&mut self, value: Char16SeqIr) -> Char16SeqIr {
+        let then_block = self.create_basic_block("is_stack_string");
+        let else_block = self.create_basic_block("is_not_stack_string");
+        let block = self.create_basic_block("merge_block");
+
+        // if value.on_stack()
+        let on_stack = self.bridge.create_string_on_stack(value);
+        self.bridge.create_cond_br(on_stack, then_block, else_block);
+        // {
+        self.bridge.set_basic_block(then_block);
+        let then_value = self.bridge.create_migrate_string_to_heap(value);
+        self.bridge.create_br(block);
+        // } else {
+        self.bridge.set_basic_block(else_block);
+        let else_value = value;
+        self.bridge.create_br(block);
+        // }
+        self.bridge.set_basic_block(block);
+        self.bridge
+            .create_string_phi(then_value, then_block, else_value, else_block)
+    }
+
     // TODO(perf): Currently, we have to save all values (except for special cases) on the operand
     // stack into the scratch buffer before the execution of the coroutine suspends.  However, we
     // don't need to save some of them.  For example, there may be constant values on the operand
@@ -2716,8 +2769,6 @@ where
         let mut offset = 0u32;
         for operand in self.operand_stack.iter() {
             match operand {
-                Operand::Undefined => (),
-                Operand::Null => (),
                 Operand::Boolean(value, ..) => {
                     self.bridge
                         .create_write_boolean_to_scratch_buffer(offset, *value);
@@ -2728,7 +2779,12 @@ where
                         .create_write_number_to_scratch_buffer(offset, *value);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::String(..) => todo!(),
+                Operand::String(value, ..) => {
+                    // TODO(issue#237): GcCellRef
+                    self.bridge
+                        .create_write_string_to_scratch_buffer(offset, *value);
+                    offset += VALUE_HOLDER_SIZE;
+                }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     self.bridge
@@ -2751,7 +2807,10 @@ where
                         .create_write_value_to_scratch_buffer(offset, *value);
                     offset += VALUE_SIZE;
                 }
-                Operand::VariableReference(..) | Operand::PropertyReference(_) => (),
+                Operand::Undefined
+                | Operand::Null
+                | Operand::VariableReference(..)
+                | Operand::PropertyReference(_) => (),
                 Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2765,36 +2824,41 @@ where
         let mut offset = 0u32;
         for operand in self.operand_stack.iter_mut() {
             match operand {
-                Operand::Undefined => (),
-                Operand::Null => (),
-                Operand::Boolean(ref mut value, ..) => {
+                Operand::Boolean(value, ..) => {
                     *value = self.bridge.create_read_boolean_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Number(ref mut value, ..) => {
+                Operand::Number(value, ..) => {
                     *value = self.bridge.create_read_number_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::String(..) => todo!(),
-                Operand::Closure(ref mut value) => {
+                Operand::String(value, ..) => {
+                    // TODO(issue#237): GcCellRef
+                    *value = self.bridge.create_read_string_from_scratch_buffer(offset);
+                    offset += VALUE_HOLDER_SIZE;
+                }
+                Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self.bridge.create_read_closure_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Object(ref mut value) => {
+                Operand::Object(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self.bridge.create_read_object_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Promise(ref mut value) => {
+                Operand::Promise(value) => {
                     *value = self.bridge.create_read_promise_from_scratch_buffer(offset);
                     offset += VALUE_HOLDER_SIZE;
                 }
-                Operand::Any(ref mut value, ..) => {
+                Operand::Any(value, ..) => {
                     *value = self.bridge.create_read_value_from_scratch_buffer(offset);
                     offset += VALUE_SIZE;
                 }
-                Operand::VariableReference(..) | Operand::PropertyReference(_) => (),
+                Operand::Undefined
+                | Operand::Null
+                | Operand::VariableReference(..)
+                | Operand::PropertyReference(_) => (),
                 Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }

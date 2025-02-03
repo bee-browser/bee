@@ -55,6 +55,30 @@ impl Value {
             _ => unreachable!(),
         }
     }
+
+    // 13.5.3.1 Runtime Semantics: Evaluation
+    pub fn get_typeof(&self) -> &'static Char16Seq {
+        use jsparser::symbol::builtin::names;
+
+        const UNDEFINED: Char16Seq = Char16Seq::new_const(names::UNDEFINED);
+        const BOOLEAN: Char16Seq = Char16Seq::new_const(names::BOOLEAN);
+        const NUMBER: Char16Seq = Char16Seq::new_const(names::NUMBER);
+        const STRING: Char16Seq = Char16Seq::new_const(names::STRING);
+        const FUNCTION: Char16Seq = Char16Seq::new_const(names::FUNCTION);
+        const OBJECT: Char16Seq = Char16Seq::new_const(names::OBJECT);
+
+        match self {
+            Self::None => unreachable!(),
+            Self::Undefined => &UNDEFINED,
+            Self::Null => &OBJECT,
+            Self::Boolean(_) => &BOOLEAN,
+            Self::Number(_) => &NUMBER,
+            Self::String(_) => &STRING,
+            Self::Closure(_) => &FUNCTION,
+            Self::Object(_) => &OBJECT,
+            Self::Promise(_) => &OBJECT,
+        }
+    }
 }
 
 impl From<()> for Value {
@@ -101,7 +125,7 @@ impl std::fmt::Display for Value {
             Self::Null => write!(f, "null"),
             Self::Boolean(value) => write!(f, "{value}"),
             Self::Number(value) => write!(f, "{value}"),
-            Self::String(value) => write!(f, "{value:?}"),
+            Self::String(value) => write!(f, "{value}"),
             Self::Closure(value) => write!(f, "{:?}", unsafe { value.as_ref().unwrap() }),
             Self::Promise(value) => write!(f, "{value:?}"),
             Self::Object(value) => write!(f, "object({value:?})"),
@@ -152,12 +176,23 @@ impl U16String {
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 impl std::fmt::Debug for U16String {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_empty() {
+            write!(f, "U16String()")
+        } else {
+            unsafe { write!(f, "U16String({:?})", self.0.as_ref().unwrap()) }
+        }
+    }
+}
+
+impl std::fmt::Display for U16String {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_empty() {
             Ok(())
         } else {
-            unsafe { write!(f, "{:?}", self.0.as_ref().unwrap()) }
+            unsafe { write!(f, "{}", self.0.as_ref().unwrap()) }
         }
     }
 }
@@ -166,56 +201,67 @@ impl std::fmt::Debug for U16String {
 ///
 /// This type may be allocated on the stack.
 // TODO(issue#237): GcCell
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Char16Seq {
     /// A pointer to the next sequence if it exists.
-    pub next: *const Char16Seq,
+    pub(crate) next: *const Char16Seq,
 
     /// A pointer to the array of UTF-16 code units if it exists.
-    pub ptr: *const u16,
+    pub(crate) ptr: *const u16,
 
     /// The number of the UTF-16 code units.
-    pub len: u32,
+    pub(crate) len: u32,
+
+    pub(crate) kind: Char16SeqKind,
 }
 
 static_assertions::const_assert_eq!(align_of::<Char16Seq>(), align_of::<usize>());
 
 impl Char16Seq {
-    // TODO(refactor): cbindgen cannot parse the following line...
-    // Currently, we don't use union types.  So, now may be the time to switch to cxx.
-    //
-    // `cbindgen:ignore` does not work... The only way we can do is ignoring `ParseSyntaxError`
-    // as described in docs.md, but this is bad because syntax errors we have to fix are also
-    // ignored...
-    //pub static EMPTY: Self = Self::new(std::ptr::null(), 0);
+    pub const EMPTY: Self = Self::new_const_from_raw_parts(std::ptr::null(), 0);
 
-    pub const fn empty() -> Self {
-        Self {
-            next: std::ptr::null(),
-            ptr: std::ptr::null(),
-            len: 0,
-        }
+    pub const fn new_const(slice: &[u16]) -> Self {
+        Self::new_const_from_raw_parts(slice.as_ptr(), slice.len() as u32)
     }
 
-    pub const fn new(slice: &[u16]) -> Self {
-        Self {
-            next: std::ptr::null(),
-            ptr: slice.as_ptr(),
-            len: slice.len() as u32,
-        }
+    pub const fn new_stack(slice: &[u16]) -> Self {
+        Self::new_stack_from_raw_parts(slice.as_ptr(), slice.len() as u32)
     }
 
-    pub const fn from_raw_parts(ptr: *const u16, len: u32) -> Self {
+    pub const fn new_const_from_raw_parts(ptr: *const u16, len: u32) -> Self {
         Self {
             next: std::ptr::null(),
             ptr,
             len,
+            kind: Char16SeqKind::Const,
+        }
+    }
+
+    pub const fn new_stack_from_raw_parts(ptr: *const u16, len: u32) -> Self {
+        Self {
+            next: std::ptr::null(),
+            ptr,
+            len,
+            kind: Char16SeqKind::Stack,
+        }
+    }
+
+    pub const fn new_heap_from_raw_parts(ptr: *const u16, len: u32) -> Self {
+        Self {
+            next: std::ptr::null(),
+            ptr,
+            len,
+            kind: Char16SeqKind::Heap,
         }
     }
 
     pub const fn is_empty(&self) -> bool {
         self.next.is_null() && self.len == 0
+    }
+
+    pub fn on_stack(&self) -> bool {
+        matches!(self.kind, Char16SeqKind::Stack)
     }
 
     pub fn total_len(&self) -> u32 {
@@ -240,7 +286,7 @@ impl Char16Seq {
 unsafe impl Send for Char16Seq {}
 unsafe impl Sync for Char16Seq {}
 
-impl std::fmt::Debug for Char16Seq {
+impl std::fmt::Display for Char16Seq {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let units = unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) };
         let chars: String = char::decode_utf16(units.iter().cloned())
@@ -250,6 +296,14 @@ impl std::fmt::Debug for Char16Seq {
         // TODO: next
         Ok(())
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(u8)]
+pub enum Char16SeqKind {
+    Const = 0,
+    Stack,
+    Heap,
 }
 
 /// A data type to represent a closure.
@@ -275,6 +329,7 @@ pub struct Closure {
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
 
+#[cfg_attr(coverage, coverage(off))]
 impl std::fmt::Debug for Closure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let lambda = self.lambda;
@@ -320,6 +375,7 @@ impl Capture {
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 impl std::fmt::Debug for Capture {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_escaped() {
