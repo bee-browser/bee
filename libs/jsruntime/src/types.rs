@@ -176,6 +176,7 @@ impl U16String {
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 impl std::fmt::Debug for U16String {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_empty() {
@@ -328,6 +329,7 @@ pub struct Closure {
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
 
+#[cfg_attr(coverage, coverage(off))]
 impl std::fmt::Debug for Closure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let lambda = self.lambda;
@@ -373,6 +375,7 @@ impl Capture {
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 impl std::fmt::Debug for Capture {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_escaped() {

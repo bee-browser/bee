@@ -531,6 +531,7 @@ unsafe extern "C" fn runtime_copy_data_properties<X>(
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 unsafe extern "C" fn runtime_assert(
     _runtime: *mut c_void,
     assertion: bool,
@@ -542,6 +543,7 @@ unsafe extern "C" fn runtime_assert(
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 unsafe extern "C" fn runtime_print_bool(
     _runtime: *mut c_void,
     value: bool,
@@ -555,6 +557,7 @@ unsafe extern "C" fn runtime_print_bool(
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 unsafe extern "C" fn runtime_print_u32(
     _runtime: *mut c_void,
     value: u32,
@@ -568,6 +571,7 @@ unsafe extern "C" fn runtime_print_u32(
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 unsafe extern "C" fn runtime_print_f64(
     _runtime: *mut c_void,
     value: f64,
@@ -581,6 +585,7 @@ unsafe extern "C" fn runtime_print_f64(
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 unsafe extern "C" fn runtime_print_string(
     _runtime: *mut c_void,
     value: *const Char16Seq,
@@ -595,6 +600,7 @@ unsafe extern "C" fn runtime_print_string(
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 unsafe extern "C" fn runtime_print_value(
     _runtime: *mut c_void,
     value: *const Value,
@@ -609,6 +615,7 @@ unsafe extern "C" fn runtime_print_value(
     }
 }
 
+#[cfg_attr(coverage, coverage(off))]
 unsafe extern "C" fn runtime_print_message(
     _runtime: *mut c_void,
     msg: *const std::os::raw::c_char,
@@ -617,6 +624,7 @@ unsafe extern "C" fn runtime_print_message(
     logger::debug!("runtime_print_value: {msg:?}");
 }
 
+#[cfg_attr(coverage, coverage(off))]
 unsafe extern "C" fn runtime_launch_debugger(_runtime: *mut c_void) {
     logger::debug!("runtime_launch_debugger");
     // TODO(feat): Support debuggers such as Chrome DevTools.

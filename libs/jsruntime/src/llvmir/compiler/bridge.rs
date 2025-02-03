@@ -1237,6 +1237,7 @@ impl CompilerBridge {
     // print
 
     #[allow(unused)]
+    #[cfg_attr(coverage, coverage(off))]
     pub fn create_print_boolean(&self, value: BooleanIr, msg: &CStr) {
         unsafe {
             compiler_peer_create_print_boolean(self.0, value.0, msg.as_ptr());
@@ -1244,6 +1245,7 @@ impl CompilerBridge {
     }
 
     #[allow(unused)]
+    #[cfg_attr(coverage, coverage(off))]
     pub fn create_print_string(&self, value: Char16SeqIr, msg: &CStr) {
         unsafe {
             compiler_peer_create_print_string(self.0, value.0, msg.as_ptr());
@@ -1251,6 +1253,7 @@ impl CompilerBridge {
     }
 
     #[allow(unused)]
+    #[cfg_attr(coverage, coverage(off))]
     pub fn create_print_value(&self, value: ValueIr, msg: &CStr) {
         unsafe {
             compiler_peer_create_print_value(self.0, value.0, msg.as_ptr());
@@ -1258,6 +1261,7 @@ impl CompilerBridge {
     }
 
     #[allow(unused)]
+    #[cfg_attr(coverage, coverage(off))]
     pub fn create_print_message(&self, msg: &CStr) {
         unsafe {
             compiler_peer_create_print_message(self.0, msg.as_ptr());
@@ -1266,6 +1270,8 @@ impl CompilerBridge {
 
     // debugger
 
+    #[allow(unused)]
+    #[cfg_attr(coverage, coverage(off))]
     pub fn create_debugger(&self) {
         unsafe {
             compiler_peer_create_debugger(self.0);
@@ -1274,12 +1280,16 @@ impl CompilerBridge {
 
     // assertions
 
+    #[allow(unused)]
+    #[cfg_attr(coverage, coverage(off))]
     pub fn create_assert(&self, assert: BooleanIr, msg: &CStr) {
         unsafe {
             compiler_peer_create_assert(self.0, assert.0, msg.as_ptr());
         }
     }
 
+    #[allow(unused)]
+    #[cfg_attr(coverage, coverage(off))]
     pub fn create_unreachable(&self, msg: &CStr) {
         unsafe {
             compiler_peer_create_unreachable(self.0, msg.as_ptr());
