@@ -2741,12 +2741,13 @@ where
 
         // if value.on_stack()
         let on_stack = self.bridge.create_string_on_stack(value);
-        self.bridge.create_cond_br(on_stack, then_block, block);
+        self.bridge.create_cond_br(on_stack, then_block, else_block);
         // {
         self.bridge.set_basic_block(then_block);
         let then_value = self.bridge.create_migrate_string_to_heap(value);
         self.bridge.create_br(block);
         // } else {
+        self.bridge.set_basic_block(else_block);
         let else_value = value;
         self.bridge.create_br(block);
         // }
