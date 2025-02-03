@@ -293,6 +293,24 @@ Char16SeqIrPtr compiler_peer_create_char16_seq(CompilerPeer peer,
   return PEER_CHAR16SEQ(IMPL(peer)->CreateChar16Seq(ptr, len));
 }
 
+BooleanIrPtr compiler_peer_create_string_on_stack(CompilerPeer peer, Char16SeqIrPtr value) {
+  return PEER_BOOLEAN(IMPL(peer)->CreateStringOnStack(LLVM_VALUE(value)));
+}
+
+Char16SeqIrPtr compiler_peer_create_migrate_string_to_heap(CompilerPeer peer,
+                                                           Char16SeqIrPtr value) {
+  return PEER_CHAR16SEQ(IMPL(peer)->CreateMigrateStringToHeap(LLVM_VALUE(value)));
+}
+
+Char16SeqIrPtr compiler_peer_create_string_phi(CompilerPeer peer,
+                                               Char16SeqIrPtr then_value,
+                                               BasicBlockPtr then_block,
+                                               Char16SeqIrPtr else_value,
+                                               BasicBlockPtr else_block) {
+  return PEER_CHAR16SEQ(IMPL(peer)->CreateStringPhi(LLVM_VALUE(then_value), LLVM_BB(then_block),
+                                                    LLVM_VALUE(else_value), LLVM_BB(else_block)));
+}
+
 // closure
 
 ClosureIrPtr compiler_peer_get_closure_nullptr(CompilerPeer peer) {
@@ -885,6 +903,10 @@ void compiler_peer_assert_scope_id(CompilerPeer peer, uint16_t expected) {
 }
 
 // print
+
+void compiler_peer_create_print_boolean(CompilerPeer peer, BooleanIrPtr value, const char* msg) {
+  IMPL(peer)->CreatePrintBoolean(LLVM_VALUE(value), msg);
+}
 
 void compiler_peer_create_print_string(CompilerPeer peer, Char16SeqIrPtr value, const char* msg) {
   IMPL(peer)->CreatePrintString(LLVM_VALUE(value), msg);

@@ -31,6 +31,7 @@ pub struct RuntimeFunctions {
     is_loosely_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
     is_strictly_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
     get_typeof: unsafe extern "C" fn(*mut c_void, *const Value) -> *const Char16Seq,
+    migrate_string_to_heap: unsafe extern "C" fn(*mut c_void, *const Char16Seq) -> *const Char16Seq,
     create_capture: unsafe extern "C" fn(*mut c_void, *mut Value) -> *mut Capture,
     create_closure: unsafe extern "C" fn(*mut c_void, Lambda, u16) -> *mut Closure,
     create_coroutine: unsafe extern "C" fn(*mut c_void, *mut Closure, u16, u16) -> *mut Coroutine,
@@ -48,6 +49,7 @@ pub struct RuntimeFunctions {
     copy_data_properties:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
+    print_bool: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
     print_string: unsafe extern "C" fn(*mut c_void, *const Char16Seq, *const c_char),
@@ -67,6 +69,7 @@ impl RuntimeFunctions {
             is_loosely_equal: runtime_is_loosely_equal,
             is_strictly_equal: runtime_is_strictly_equal,
             get_typeof: runtime_get_typeof,
+            migrate_string_to_heap: runtime_migrate_string_to_heap::<X>,
             create_capture: runtime_create_capture::<X>,
             create_closure: runtime_create_closure::<X>,
             create_coroutine: runtime_create_coroutine::<X>,
@@ -80,6 +83,7 @@ impl RuntimeFunctions {
             create_data_property: runtime_create_data_property::<X>,
             copy_data_properties: runtime_copy_data_properties::<X>,
             assert: runtime_assert,
+            print_bool: runtime_print_bool,
             print_u32: runtime_print_u32,
             print_f64: runtime_print_f64,
             print_string: runtime_print_string,
@@ -93,6 +97,12 @@ impl RuntimeFunctions {
 macro_rules! into_runtime {
     ($runtime:expr, $extension:ident) => {
         &mut *($runtime as *mut crate::Runtime<$extension>)
+    };
+}
+
+macro_rules! into_string {
+    ($value:expr) => {
+        &*($value)
     };
 }
 
@@ -274,6 +284,15 @@ unsafe extern "C" fn runtime_get_typeof(
     debug_assert!(!matches!(value, Value::None));
 
     value.get_typeof() as *const Char16Seq
+}
+
+unsafe extern "C" fn runtime_migrate_string_to_heap<X>(
+    runtime: *mut c_void,
+    seq: *const Char16Seq,
+) -> *const Char16Seq {
+    let runtime = into_runtime!(runtime, X);
+    let seq = into_string!(seq);
+    runtime.migrate_string_to_heap(seq) as *const Char16Seq
 }
 
 unsafe extern "C" fn runtime_create_capture<X>(
@@ -520,6 +539,19 @@ unsafe extern "C" fn runtime_assert(
     if !assertion {
         let msg = std::ffi::CStr::from_ptr(msg);
         panic!("runtime_assert: {msg:?}");
+    }
+}
+
+unsafe extern "C" fn runtime_print_bool(
+    _runtime: *mut c_void,
+    value: bool,
+    msg: *const std::os::raw::c_char,
+) {
+    let msg = std::ffi::CStr::from_ptr(msg);
+    if msg.is_empty() {
+        logger::debug!("runtime_print_bool: {value}");
+    } else {
+        logger::debug!("runtime_print_bool: {value}: {msg:?}");
     }
 }
 

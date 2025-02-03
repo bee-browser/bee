@@ -511,7 +511,7 @@ where
         // compiler is freed.
         let seq = self.bridge.create_char16_seq(value);
         self.operand_stack
-            .push(Operand::String(seq, Some(Char16Seq::new(value))));
+            .push(Operand::String(seq, Some(Char16Seq::new_stack(value))));
     }
 
     fn process_object(&mut self) {
@@ -2690,6 +2690,7 @@ where
                 self.bridge.create_emit_promise_resolved(promise, result);
             }
             Operand::String(value, ..) => {
+                let value = self.ensure_heap_string(value);
                 let result = self.bridge.create_string_to_any(value);
                 self.bridge.create_emit_promise_resolved(promise, result);
             }
@@ -2731,6 +2732,27 @@ where
                 unreachable!("{operand:?}")
             }
         }
+    }
+
+    fn ensure_heap_string(&mut self, value: Char16SeqIr) -> Char16SeqIr {
+        let then_block = self.create_basic_block("is_stack_string");
+        let else_block = self.create_basic_block("is_not_stack_string");
+        let block = self.create_basic_block("merge_block");
+
+        // if value.on_stack()
+        let on_stack = self.bridge.create_string_on_stack(value);
+        self.bridge.create_cond_br(on_stack, then_block, block);
+        // {
+        self.bridge.set_basic_block(then_block);
+        let then_value = self.bridge.create_migrate_string_to_heap(value);
+        self.bridge.create_br(block);
+        // } else {
+        let else_value = value;
+        self.bridge.create_br(block);
+        // }
+        self.bridge.set_basic_block(block);
+        self.bridge
+            .create_string_phi(then_value, then_block, else_value, else_block)
     }
 
     // TODO(perf): Currently, we have to save all values (except for special cases) on the operand

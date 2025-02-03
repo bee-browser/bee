@@ -44,6 +44,11 @@ functions:
       - name: value
         type: '&Value'
     ret: '&Char16Seq'
+  - name: migrate_string_to_heap
+    args:
+      - name: string
+        type: '&Char16Seq'
+    ret: '&Char16Seq'
   - name: create_capture
     args:
       - name: target
@@ -133,6 +138,12 @@ functions:
   - name: assert
     args:
       - name: assertion
+        type: bool
+      - name: msg
+        type: '&std::ffi::CStr'
+  - name: print_bool
+    args:
+      - name: value
         type: bool
       - name: msg
         type: '&std::ffi::CStr'

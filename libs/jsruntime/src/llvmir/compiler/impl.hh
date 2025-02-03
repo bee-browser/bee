@@ -433,9 +433,37 @@ class Compiler {
     auto* seq_ptr = CreateAlloc1(types_->CreateChar16SeqType(), REG_NAME("char16_seq.ptr"));
     CreateStoreNextToChar16Seq(GetNullptr(), seq_ptr);
     CreateStorePtrToChar16Seq(gv, seq_ptr);
-    CreateStoreLenToChar16Seq(builder_->getInt32(len), seq_ptr);
+    CreateStoreLenToChar16Seq(len, seq_ptr);
+    CreateStoreKindToChar16Seq(kStringKindStack, seq_ptr);
 
     return seq_ptr;
+  }
+
+  llvm::Value* CreateStringOnStack(llvm::Value* value) {
+    auto* kind = CreateLoadKindFromChar16Seq(value);
+    return builder_->CreateICmpEQ(kind, builder_->getInt8(kStringKindStack),
+                                  REG_NAME("is_heap_string"));
+  }
+
+  llvm::Value* CreateMigrateStringToHeap(llvm::Value* value) {
+    auto* func = types_->CreateRuntimeMigrateStringToHeap();
+    return builder_->CreateCall(func, {runtime_, value},
+                                REG_NAME("runtime.migrate_string_to_heap.string.ptr"));
+  }
+
+  llvm::Value* CreateStringPhi(llvm::Value* then_value,
+                               llvm::BasicBlock* then_block,
+                               llvm::Value* else_value,
+                               llvm::BasicBlock* else_block) {
+    auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2, REG_NAME("string.phi"));
+    phi->addIncoming(then_value, then_block);
+    phi->addIncoming(else_value, else_block);
+    return phi;
+  }
+
+  llvm::Value* CreateLoadKindFromChar16Seq(llvm::Value* value) {
+    auto* ptr = CreateGetKindPtrOfChar16Seq(value);
+    return builder_->CreateLoad(builder_->getInt8Ty(), ptr, REG_NAME("char16_seq.kind"));
   }
 
   void CreateStoreNextToChar16Seq(llvm::Value* value, llvm::Value* dest) {
@@ -448,8 +476,21 @@ class Compiler {
     builder_->CreateStore(value, ptr);
   }
 
+  void CreateStoreLenToChar16Seq(uint32_t value, llvm::Value* dest) {
+    CreateStoreLenToChar16Seq(builder_->getInt32(value), dest);
+  }
+
   void CreateStoreLenToChar16Seq(llvm::Value* value, llvm::Value* dest) {
     auto* ptr = CreateGetLenPtrOfChar16Seq(dest);
+    builder_->CreateStore(value, ptr);
+  }
+
+  void CreateStoreKindToChar16Seq(uint8_t value, llvm::Value* dest) {
+    CreateStoreKindToChar16Seq(builder_->getInt8(value), dest);
+  }
+
+  void CreateStoreKindToChar16Seq(llvm::Value* value, llvm::Value* dest) {
+    auto* ptr = CreateGetKindPtrOfChar16Seq(dest);
     builder_->CreateStore(value, ptr);
   }
 
@@ -466,6 +507,11 @@ class Compiler {
   llvm::Value* CreateGetLenPtrOfChar16Seq(llvm::Value* seq_ptr) {
     return builder_->CreateStructGEP(types_->CreateChar16SeqType(), seq_ptr, 2,
                                      REG_NAME("char16_seq.len.ptr"));
+  }
+
+  llvm::Value* CreateGetKindPtrOfChar16Seq(llvm::Value* seq_ptr) {
+    return builder_->CreateStructGEP(types_->CreateChar16SeqType(), seq_ptr, 3,
+                                     REG_NAME("char16_seq.kind.ptr"));
   }
 
   // pointer
@@ -1142,6 +1188,12 @@ class Compiler {
 
   // print
 
+  void CreatePrintBoolean(llvm::Value* value, const char* msg = "") {
+    auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_bool.msg"));
+    auto* func = types_->CreateRuntimePrintBool();
+    builder_->CreateCall(func, {runtime_, value, msg_value});
+  }
+
   void CreatePrintString(llvm::Value* value, const char* msg = "") {
     auto* msg_value = builder_->CreateGlobalString(msg, REG_NAME("runtime.print_string.msg"));
     auto* func = types_->CreateRuntimePrintString();
@@ -1219,6 +1271,9 @@ class Compiler {
   static constexpr uint8_t kValueKindClosure = static_cast<uint8_t>(Value::Tag::Closure);
   static constexpr uint8_t kValueKindPromise = static_cast<uint8_t>(Value::Tag::Promise);
   static constexpr uint8_t kValueKindObject = static_cast<uint8_t>(Value::Tag::Object);
+  static constexpr uint8_t kStringKindConst = static_cast<uint8_t>(Char16SeqKind::Const);
+  static constexpr uint8_t kStringKindStack = static_cast<uint8_t>(Char16SeqKind::Stack);
+  static constexpr uint8_t kStringKindHeap = static_cast<uint8_t>(Char16SeqKind::Heap);
 
   void CreateStore(llvm::Value* value, llvm::Value* dest) {
     builder_->CreateStore(value, dest);

@@ -421,6 +421,39 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_string_on_stack(&self, value: Char16SeqIr) -> BooleanIr {
+        boolean_ir! {
+            compiler_peer_create_string_on_stack(self.0, value.0)
+        }
+    }
+
+    pub fn create_migrate_string_to_heap(&self, value: Char16SeqIr) -> Char16SeqIr {
+        char16_seq_ir! {
+            compiler_peer_create_migrate_string_to_heap(self.0, value.0)
+        }
+    }
+
+    pub fn create_string_phi(
+        &self,
+        then_value: Char16SeqIr,
+        then_block: BasicBlock,
+        else_value: Char16SeqIr,
+        else_block: BasicBlock,
+    ) -> Char16SeqIr {
+        debug_assert_ne!(then_block, BasicBlock::NONE);
+        debug_assert_ne!(else_block, BasicBlock::NONE);
+        logger::debug!(
+            event = "create_string_phi",
+            ?then_value,
+            ?then_block,
+            ?else_value,
+            ?else_block
+        );
+        char16_seq_ir! {
+            compiler_peer_create_string_phi(self.0, then_value.0, then_block.0, else_value.0, else_block.0)
+        }
+    }
+
     // closure
 
     pub fn get_closure_nullptr(&self) -> ClosureIr {
@@ -1204,6 +1237,13 @@ impl CompilerBridge {
     // print
 
     #[allow(unused)]
+    pub fn create_print_boolean(&self, value: BooleanIr, msg: &CStr) {
+        unsafe {
+            compiler_peer_create_print_boolean(self.0, value.0, msg.as_ptr());
+        }
+    }
+
+    #[allow(unused)]
     pub fn create_print_string(&self, value: Char16SeqIr, msg: &CStr) {
         unsafe {
             compiler_peer_create_print_string(self.0, value.0, msg.as_ptr());
@@ -1569,6 +1609,21 @@ extern "C" {
         peer: CompilerPeer,
         ptr: *const u16,
         len: u32,
+    ) -> Char16SeqIrPtr;
+    fn compiler_peer_create_string_on_stack(
+        peer: CompilerPeer,
+        value: Char16SeqIrPtr,
+    ) -> BooleanIrPtr;
+    fn compiler_peer_create_migrate_string_to_heap(
+        peer: CompilerPeer,
+        value: Char16SeqIrPtr,
+    ) -> Char16SeqIrPtr;
+    fn compiler_peer_create_string_phi(
+        peer: CompilerPeer,
+        then_value: Char16SeqIrPtr,
+        then_block: BasicBlockPtr,
+        else_value: Char16SeqIrPtr,
+        else_block: BasicBlockPtr,
     ) -> Char16SeqIrPtr;
 
     // closure
@@ -1945,6 +2000,11 @@ extern "C" {
 
     // print
 
+    fn compiler_peer_create_print_boolean(
+        peer: CompilerPeer,
+        value: BooleanIrPtr,
+        msg: *const c_char,
+    );
     fn compiler_peer_create_print_string(
         peer: CompilerPeer,
         value: Char16SeqIrPtr,

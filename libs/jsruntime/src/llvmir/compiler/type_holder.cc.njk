@@ -44,6 +44,8 @@ llvm::StructType* TypeHolder::CreateChar16SeqType() {
         builder_.getPtrTy(),
         // len
         builder_.getInt32Ty(),
+        // kind
+        builder_.getInt8Ty(),
     });
   }
   return char16_seq_type_;
