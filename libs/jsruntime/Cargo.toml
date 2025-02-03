@@ -31,9 +31,6 @@ assert_matches = "1.5.0"
 criterion = "0.5.1"
 ctor = "0.2.9"
 
-[lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage,coverage_nightly)'] }
-
 [[bench]]
 name = "jsruntime-bench"
 path = "benches/bench.rs"
