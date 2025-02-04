@@ -84,6 +84,7 @@ enum Detail {
     ArgumentList,
     OptionalChain,
     Expression,
+    ArrayLiteral,
     ObjectLiteral,
     PropertyDefinition(Symbol),
     PropertyDefinitionList(bool),
@@ -164,6 +165,7 @@ pub enum Node<'s> {
     Boolean(bool),
     Number(f64, &'s str),
     String(Vec<u16>, &'s str),
+    Array,
     Object,
     LiteralPropertyName(LiteralPropertyName),
     PropertyDefinition(PropertyDefinitionKind),
@@ -591,6 +593,12 @@ where
         Ok(())
     }
 
+    // _NEW_ARRAY_
+    fn process_new_array(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Array);
+        Ok(())
+    }
+
     // _NEW_OBJECT_
     fn process_new_object(&mut self) -> Result<(), Error> {
         self.enqueue(Node::Object);
@@ -1004,6 +1012,15 @@ where
         let syntax = self.top_mut();
         syntax.detail = Detail::Literal;
         syntax.nodes_range = node_index..(node_index + 1);
+        Ok(())
+    }
+
+    // 13.2.4 Array Initializer
+
+    // ArrayLiteral[Yield, Await] :
+    //   [ ]
+    fn process_array_literal_empty(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::ArrayLiteral);
         Ok(())
     }
 

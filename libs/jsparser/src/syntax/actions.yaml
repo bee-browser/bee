@@ -2074,7 +2074,7 @@
 - rule: PrimaryExpression_Await -> Literal
   action: nop
 - rule: PrimaryExpression_Await -> ArrayLiteral_Await
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Await -> ObjectLiteral_Await
   action: nop
 - rule: PrimaryExpression_Await -> FunctionExpression
@@ -2471,15 +2471,17 @@
   action: process_literal
 - rule: Literal -> STRING_LITERAL
   action: process_literal
-- rule: ArrayLiteral_Await -> LBRACK RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ RBRACK
+  action: process_array_literal_empty
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: undefined
-- rule: ArrayLiteral_Await -> LBRACK Elision RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await RBRACK
   action: undefined
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA RBRACK
   action: undefined
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA RBRACK
-  action: undefined
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA Elision RBRACK
+- rule: >-
+    ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA Elision
+    RBRACK
   action: undefined
 - rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: process_object_literal_empty
@@ -2862,7 +2864,7 @@
 - rule: PrimaryExpression -> Literal
   action: nop
 - rule: PrimaryExpression -> ArrayLiteral
-  action: undefined
+  action: nop
 - rule: PrimaryExpression -> ObjectLiteral
   action: nop
 - rule: PrimaryExpression -> FunctionExpression
@@ -3000,6 +3002,8 @@
   action: nop
 - rule: BooleanLiteral -> FALSE
   action: nop
+- rule: _NEW_ARRAY_ -> (empty)
+  action: process_new_array
 - rule: ElementList_Await -> AssignmentExpression_In_Await
   action: undefined
 - rule: ElementList_Await -> Elision AssignmentExpression_In_Await
@@ -3087,7 +3091,7 @@
 - rule: PrimaryExpression_Yield -> Literal
   action: nop
 - rule: PrimaryExpression_Yield -> ArrayLiteral_Yield
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield -> ObjectLiteral_Yield
   action: nop
 - rule: PrimaryExpression_Yield -> FunctionExpression
@@ -3149,7 +3153,7 @@
 - rule: PrimaryExpression_Yield_Await -> Literal
   action: nop
 - rule: PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
   action: nop
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
@@ -3202,15 +3206,15 @@
   action: process_identifier_reference_only_in_non_strict
 - rule: IdentifierReference -> AWAIT
   action: process_identifier_reference_only_in_script
-- rule: ArrayLiteral -> LBRACK RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ RBRACK
+  action: process_array_literal_empty
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: undefined
-- rule: ArrayLiteral -> LBRACK Elision RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList RBRACK
   action: undefined
-- rule: ArrayLiteral -> LBRACK ElementList RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA RBRACK
   action: undefined
-- rule: ArrayLiteral -> LBRACK ElementList COMMA RBRACK
-  action: undefined
-- rule: ArrayLiteral -> LBRACK ElementList COMMA Elision RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA Elision RBRACK
   action: undefined
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ RBRACE
   action: process_object_literal_empty
@@ -3432,15 +3436,17 @@
   action: process_identifier_reference_except_for_yield
 - rule: IdentifierReference_Yield -> AWAIT
   action: process_identifier_reference
-- rule: ArrayLiteral_Yield -> LBRACK RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ RBRACK
+  action: process_array_literal_empty
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: undefined
-- rule: ArrayLiteral_Yield -> LBRACK Elision RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield RBRACK
   action: undefined
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA RBRACK
   action: undefined
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA Elision RBRACK
+- rule: >-
+    ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA Elision
+    RBRACK
   action: undefined
 - rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ RBRACE
   action: process_object_literal_empty
@@ -3472,17 +3478,21 @@
   action: process_bitwise_xor
 - rule: IdentifierReference_Yield_Await -> Identifier
   action: process_identifier_reference_except_for_yield_await
-- rule: ArrayLiteral_Yield_Await -> LBRACK RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield_Await -> LBRACK Elision RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA RBRACK
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ RBRACK
+  action: process_array_literal_empty
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: undefined
 - rule: >-
-    ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA Elision
+    ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await
     RBRACK
+  action: undefined
+- rule: >-
+    ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA
+    RBRACK
+  action: undefined
+- rule: >-
+    ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA
+    Elision RBRACK
   action: undefined
 - rule: ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: process_object_literal_empty

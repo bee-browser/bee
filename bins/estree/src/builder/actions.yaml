@@ -2258,15 +2258,15 @@
   action: numeric_literal
 - rule: Literal -> STRING_LITERAL
   action: string_literal
-- rule: ArrayLiteral_Await -> LBRACK RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ RBRACK
   action: array_expression_empty
-- rule: ArrayLiteral_Await -> LBRACK Elision RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: array_expression
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await RBRACK
   action: array_expression
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA RBRACK
   action: array_expression_comma
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA Elision RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA Elision RBRACK
   action: array_expression_comma_elision
 - rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
@@ -2720,6 +2720,8 @@
   action: boolean_literal_true
 - rule: BooleanLiteral -> FALSE
   action: boolean_literal_false
+- rule: _NEW_ARRAY_ -> (empty)
+  action: nop
 - rule: ElementList_Await -> AssignmentExpression_In_Await
   action: create_array
 - rule: ElementList_Await -> Elision AssignmentExpression_In_Await
@@ -2905,15 +2907,15 @@
   action: identifier
 - rule: IdentifierReference -> AWAIT
   action: identifier
-- rule: ArrayLiteral -> LBRACK RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ RBRACK
   action: array_expression_empty
-- rule: ArrayLiteral -> LBRACK Elision RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: array_expression
-- rule: ArrayLiteral -> LBRACK ElementList RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList RBRACK
   action: array_expression
-- rule: ArrayLiteral -> LBRACK ElementList COMMA RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA RBRACK
   action: array_expression_comma
-- rule: ArrayLiteral -> LBRACK ElementList COMMA Elision RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA Elision RBRACK
   action: array_expression_comma_elision
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
@@ -3121,15 +3123,15 @@
   action: nop
 - rule: IdentifierReference_Yield -> AWAIT
   action: identifier
-- rule: ArrayLiteral_Yield -> LBRACK RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ RBRACK
   action: array_expression_empty
-- rule: ArrayLiteral_Yield -> LBRACK Elision RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: array_expression
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield RBRACK
   action: array_expression
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA RBRACK
   action: array_expression_comma
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA Elision RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA Elision RBRACK
   action: array_expression_comma_elision
 - rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
@@ -3157,15 +3159,15 @@
   action: binary_expression
 - rule: IdentifierReference_Yield_Await -> Identifier
   action: nop
-- rule: ArrayLiteral_Yield_Await -> LBRACK RBRACK
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ RBRACK
   action: array_expression_empty
-- rule: ArrayLiteral_Yield_Await -> LBRACK Elision RBRACK
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: array_expression
-- rule: ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await RBRACK
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await RBRACK
   action: array_expression
-- rule: ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA RBRACK
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA RBRACK
   action: array_expression_comma
-- rule: ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA Elision RBRACK
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA Elision RBRACK
   action: array_expression_comma_elision
 - rule: ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty

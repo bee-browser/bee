@@ -251,6 +251,7 @@ where
             Node::Boolean(value) => self.handle_boolean(value),
             Node::Number(value, ..) => self.handle_number(value),
             Node::String(value, ..) => self.handle_string(value),
+            Node::Array => self.handle_array(),
             Node::Object => self.handle_object(),
             Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
             Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
@@ -365,6 +366,11 @@ where
 
     fn handle_string(&mut self, value: Vec<u16>) {
         analysis_mut!(self).put_string(value);
+    }
+
+    fn handle_array(&mut self) {
+        // TODO(feat): 10.4.2.2 ArrayCreate ( length [ , proto ] )
+        analysis_mut!(self).put_object();
     }
 
     fn handle_object(&mut self) {
