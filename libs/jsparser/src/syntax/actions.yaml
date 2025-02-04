@@ -4380,7 +4380,7 @@
 - rule: RelationalExpression_In -> PRIVATE_IDENTIFIER IN ShiftExpression
   action: undefined
 - rule: CoverInitializedName -> IdentifierReference Initializer_In
-  action: undefined
+  action: process_cover_initialized_name
 - rule: TemplateMiddleList -> TEMPLATE_MIDDLE Expression_In
   action: undefined
 - rule: TemplateMiddleList -> TemplateMiddleList TEMPLATE_MIDDLE Expression_In
@@ -4931,7 +4931,7 @@
 - rule: RelationalExpression_In_Yield -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield
   action: undefined
 - rule: CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
-  action: undefined
+  action: process_cover_initialized_name
 - rule: >-
     MethodDefinition_Yield -> ClassElementName_Yield LPAREN
     UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
@@ -4993,7 +4993,7 @@
 - rule: >-
     CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await
     Initializer_In_Yield_Await
-  action: undefined
+  action: process_cover_initialized_name
 - rule: >-
     MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN
     UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE

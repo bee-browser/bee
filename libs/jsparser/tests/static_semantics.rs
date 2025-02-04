@@ -28,7 +28,7 @@ macro_rules! parse_fail {
 #[test]
 fn test_13_2_5_1_cover_initialized_name() {
     // TODO
-    //parse_fail!(script: "static_semantics_13_2_5_1_cover_initialized_name.js");
+    parse_fail!(script: "static_semantics_13_2_5_1_cover_initialized_name.js");
 }
 
 #[test]

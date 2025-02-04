@@ -87,6 +87,7 @@ enum Detail {
     ObjectLiteral,
     PropertyDefinition(Symbol),
     PropertyDefinitionList(bool),
+    CoverInitializedName,
     Initializer,
     Block,
     Binding(DeclarationSemantics),
@@ -1127,6 +1128,14 @@ where
             LiteralPropertyName::IdentifierName(symbol),
         ));
         self.replace(1, Detail::Identifier(symbol));
+        Ok(())
+    }
+
+    // CoverInitializedName[Yield, Await] :
+    //   IdentifierReference[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]
+    fn process_cover_initialized_name(&mut self) -> Result<(), Error> {
+        // TODO: implementation
+        self.replace(2, Detail::CoverInitializedName);
         Ok(())
     }
 
