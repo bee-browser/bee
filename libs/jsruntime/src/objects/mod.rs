@@ -1,9 +1,64 @@
+use std::hash::Hash;
+use std::hash::Hasher;
+
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
 
 use crate::types::Value;
+
+#[derive(Clone, Debug)]
+#[repr(C, u8)]
+pub enum PropertyKey {
+    Symbol(u32),
+    Number(f64),
+}
+
+impl Eq for PropertyKey {}
+
+impl From<Symbol> for PropertyKey {
+    fn from(value: Symbol) -> Self {
+        Self::Symbol(value.id())
+    }
+}
+
+impl From<f64> for PropertyKey {
+    fn from(value: f64) -> Self {
+        if value.is_nan() {
+            Symbol::NAN.into()
+        } else if value.is_infinite() {
+            if value.is_sign_positive() {
+                Symbol::INFINITY.into()
+            } else {
+                Symbol::NEG_INFINITY.into()
+            }
+        } else if value == 0. {
+            Self::Number(0.) // convert `-0.` to `0.`
+        } else {
+            Self::Number(value)
+        }
+    }
+}
+
+impl Hash for PropertyKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Self::Symbol(v) => state.write_u32(*v),
+            Self::Number(v) => state.write_u64(v.to_bits()),
+        }
+    }
+}
+
+impl PartialEq for PropertyKey {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Symbol(a), Self::Symbol(b)) => a == b,
+            (Self::Number(a), Self::Number(b)) => a == b,
+            _ => false,
+        }
+    }
+}
 
 // 6.1.7.1 Property Attributes
 
@@ -60,7 +115,7 @@ bitflags! {
 
 #[derive(Default)]
 pub struct Object {
-    properties: FxHashMap<Symbol, Property>,
+    properties: FxHashMap<PropertyKey, Property>,
 }
 
 impl Object {
@@ -76,8 +131,8 @@ impl Object {
     // value.  Returning the reference to the value works properly if and only if the value is used
     // before it's overwritten.  At this point, we are not sure whether or not it's always works in
     // any expression.
-    pub fn get_value(&self, name: Symbol) -> Option<&Value> {
-        match self.properties.get(&name) {
+    pub fn get_value(&self, key: &PropertyKey) -> Option<&Value> {
+        match self.properties.get(key) {
             Some(Property::Data { ref value, .. }) => Some(value),
             Some(Property::Accessor { .. }) => todo!(),
             None => None,
@@ -85,9 +140,9 @@ impl Object {
     }
 
     // TODO(feat): strict, writable
-    pub fn set_value(&mut self, name: Symbol, value: &Value) {
+    pub fn set_value(&mut self, key: &PropertyKey, value: &Value) {
         self.properties
-            .entry(name)
+            .entry(key.clone())
             .and_modify(|prop| match prop {
                 Property::Data {
                     // The variable name `value` is already used in the arguments.
@@ -122,18 +177,18 @@ impl Object {
             });
     }
 
-    pub fn get_own_property(&self, key: Symbol) -> Option<&Property> {
-        self.properties.get(&key)
+    pub fn get_own_property(&self, key: &PropertyKey) -> Option<&Property> {
+        self.properties.get(key)
     }
 
     // TODO(feat): 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
-    pub fn define_own_property(&mut self, name: Symbol, prop: Property) -> Result<bool, Value> {
-        self.properties.insert(name, prop);
+    pub fn define_own_property(&mut self, key: PropertyKey, prop: Property) -> Result<bool, Value> {
+        self.properties.insert(key, prop);
         Ok(true)
     }
 
-    pub fn iter_own_properties(&self) -> impl Iterator<Item = (Symbol, &Property)> {
-        self.properties.iter().map(|(symbol, desc)| (*symbol, desc))
+    pub fn iter_own_properties(&self) -> impl Iterator<Item = (&PropertyKey, &Property)> {
+        self.properties.iter()
     }
 }
 
@@ -143,7 +198,7 @@ impl Object {
         macro_rules! define {
             ($name:expr, $value:expr) => {
                 let result = self.define_own_property(
-                    $name,
+                    $name.into(),
                     Property::Data {
                         value: $value,
                         // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }

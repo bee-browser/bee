@@ -24,6 +24,7 @@
 #define PEER_PROMISE(value) (reinterpret_cast<PromiseIrPtr>(value))
 #define PEER_OBJECT(value) (reinterpret_cast<ObjectIrPtr>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIrPtr>(value))
+#define PEER_PROPERTY_KEY(value) (reinterpret_cast<PropertyKeyIrPtr>(value))
 #define PEER_ARGV(value) (reinterpret_cast<ArgvIrPtr>(value))
 #define PEER_STATUS(value) (reinterpret_cast<StatusIrPtr>(value))
 #define PEER_CAPTURE(value) (reinterpret_cast<CaptureIrPtr>(value))
@@ -415,33 +416,33 @@ ObjectIrPtr compiler_peer_create_object(CompilerPeer peer) {
 
 ValueIrPtr compiler_peer_create_get_value(CompilerPeer peer,
                                           ObjectIrPtr object,
-                                          uint32_t key,
+                                          PropertyKeyIrPtr key,
                                           bool strict) {
   assert(object != nullptr);
-  assert(key != 0);
-  return PEER_VALUE(IMPL(peer)->CreateGetValue(LLVM_VALUE(object), key, strict));
+  assert(key != nullptr);
+  return PEER_VALUE(IMPL(peer)->CreateGetValue(LLVM_VALUE(object), LLVM_VALUE(key), strict));
 }
 
 void compiler_peer_create_set_value(CompilerPeer peer,
                                     ObjectIrPtr object,
-                                    uint32_t key,
+                                    PropertyKeyIrPtr key,
                                     ValueIrPtr value) {
   assert(object != nullptr);
-  assert(key != 0);
+  assert(key != nullptr);
   assert(value != nullptr);
-  IMPL(peer)->CreateSetValue(LLVM_VALUE(object), key, LLVM_VALUE(value));
+  IMPL(peer)->CreateSetValue(LLVM_VALUE(object), LLVM_VALUE(key), LLVM_VALUE(value));
 }
 
 StatusIrPtr compiler_peer_create_create_data_property(CompilerPeer peer,
                                                       ObjectIrPtr object,
-                                                      uint32_t key,
+                                                      PropertyKeyIrPtr key,
                                                       ValueIrPtr value,
                                                       ValueIrPtr retv) {
   assert(object != nullptr);
-  assert(key != 0);
+  assert(key != nullptr);
   assert(value != nullptr);
   assert(retv != nullptr);
-  return PEER_STATUS(IMPL(peer)->CreateCreateDataProperty(LLVM_VALUE(object), key,
+  return PEER_STATUS(IMPL(peer)->CreateCreateDataProperty(LLVM_VALUE(object), LLVM_VALUE(key),
                                                           LLVM_VALUE(value), LLVM_VALUE(retv)));
 }
 
@@ -454,6 +455,12 @@ StatusIrPtr compiler_peer_create_copy_data_properties(CompilerPeer peer,
   assert(retv != nullptr);
   return PEER_STATUS(IMPL(peer)->CreateCopyDataProperties(LLVM_VALUE(target), LLVM_VALUE(source),
                                                           LLVM_VALUE(retv)));
+}
+
+PropertyKeyIrPtr compiler_peer_create_const_property_key(CompilerPeer peer,
+                                                         const PropertyKey* key) {
+  assert(key != nullptr);
+  return PEER_PROPERTY_KEY(IMPL(peer)->CreateConstPropertyKey(*key));
 }
 
 // value

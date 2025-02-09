@@ -9,10 +9,9 @@
 #include <string>
 #include <unordered_map>
 
-#include "llvm/ADT/ArrayRef.h"
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <llvm/ADT/ArrayRef.h>
 #include <llvm/Analysis/CGSCCPassManager.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/IR/BasicBlock.h>
@@ -36,6 +35,7 @@
 #include <llvm/Transforms/Utils/Mem2Reg.h>
 #pragma GCC diagnostic pop
 
+#include "../bridge.hh"
 #include "../module/impl.hh"
 #include "type_holder.hh"
 
@@ -1128,25 +1128,24 @@ class Compiler {
 
   // object
 
-  llvm::Value* CreateGetValue(llvm::Value* object, uint32_t key, bool strict) {
+  llvm::Value* CreateGetValue(llvm::Value* object, llvm::Value* key, bool strict) {
     auto* func = types_->CreateRuntimeGetValue();
-    return builder_->CreateCall(
-        func, {runtime_, object, builder_->getInt32(key), builder_->getInt1(strict)},
-        REG_NAME("runtime.get_value.value.ptr"));
+    return builder_->CreateCall(func, {runtime_, object, key, builder_->getInt1(strict)},
+                                REG_NAME("runtime.get_value.value.ptr"));
   }
 
-  void CreateSetValue(llvm::Value* object, uint32_t key, llvm::Value* value) {
+  void CreateSetValue(llvm::Value* object, llvm::Value* key, llvm::Value* value) {
     auto* func = types_->CreateRuntimeSetValue();
-    builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value});
+    builder_->CreateCall(func, {runtime_, object, key, value});
   }
 
   // 7.3.5 CreateDataProperty ( O, P, V )
   llvm::Value* CreateCreateDataProperty(llvm::Value* object,
-                                        uint32_t key,
+                                        llvm::Value* key,
                                         llvm::Value* value,
                                         llvm::Value* retv) {
     auto* func = types_->CreateRuntimeCreateDataProperty();
-    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value, retv},
+    return builder_->CreateCall(func, {runtime_, object, key, value, retv},
                                 REG_NAME("runtime.create_data_property.status.ptr"));
   }
 
@@ -1157,6 +1156,17 @@ class Compiler {
     auto* func = types_->CreateRuntimeCopyDataProperties();
     return builder_->CreateCall(func, {runtime_, target, source, retv},
                                 REG_NAME("runtime.copy_data_properties.status.ptr"));
+  }
+
+  llvm::Value* CreateConstPropertyKey(const PropertyKey& key) {
+    // TODO(perf): create a constant value and return its address
+    // return llvm::ConstantStruct::get(types_->CreatePropertyKeyType(), {...});
+    auto* k = CreateAlloc1(types_->CreatePropertyKeyType(), REG_NAME("const.property_key"));
+    builder_->CreateStore(builder_->getInt8(static_cast<uint8_t>(key.tag)),
+                          builder_->CreateStructGEP(types_->CreatePropertyKeyType(), k, 0));
+    builder_->CreateStore(llvm::ConstantFP::get(*llvmctx_, llvm::APFloat(key.number._0)),
+                          builder_->CreateStructGEP(types_->CreatePropertyKeyType(), k, 1));
+    return k;
   }
 
   // scope cleanup checker

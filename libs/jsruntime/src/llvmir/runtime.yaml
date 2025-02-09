@@ -99,7 +99,7 @@ functions:
       - name: object
         type: '&mut Object'
       - name: key
-        type: u32
+        type: '&PropertyKey'
       - name: strict
         type: bool
       # TODO(perf): add arguments for inline caching
@@ -109,7 +109,7 @@ functions:
       - name: object
         type: '&mut Object'
       - name: key
-        type: u32
+        type: '&PropertyKey'
       - name: value
         type: '&Value'
       # TODO(perf): add arguments for inline caching
@@ -119,7 +119,7 @@ functions:
       - name: object
         type: '&mut Object'
       - name: key
-        type: u32 # Symbol
+        type: '&PropertyKey'
       - name: value
         type: '&Value'
       - name: retv

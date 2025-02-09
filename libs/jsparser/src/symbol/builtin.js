@@ -36,14 +36,23 @@ async function main(args, options) {
   const builtinsYaml = await Deno.readTextFile(args.builtinsYaml);
   const builtins = yaml
     .parse(builtinsYaml)
-    .map((name) => {
+    .map((item) => {
+      let name;
+      let rustName;
+      if (typeof item === 'string') {
+        name = item;
+        rustName = makeRustName(item);
+      } else {
+        name = item[0];
+        rustName = item[1];
+      }
       const codeUnits = [];
       for (let i = 0; i < name.length; ++i) {
         codeUnits.push(name.charCodeAt(i));
       }
       return {
         name,
-        rustName: makeRustName(name),
+        rustName,
         codeUnits: makeCodeUnits(name),
         hidden: name.startsWith('##'),
       };

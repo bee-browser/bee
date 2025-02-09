@@ -2,10 +2,10 @@ use std::ffi::c_char;
 use std::ffi::c_void;
 
 use base::static_assert_size_eq;
-use jsparser::Symbol;
 
 use crate::logger;
 use crate::objects::Object;
+use crate::objects::PropertyKey;
 use crate::types::Capture;
 use crate::types::Char16Seq;
 use crate::types::Closure;
@@ -42,10 +42,16 @@ pub struct RuntimeFunctions {
     create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
     // TODO(perf): `get_value()` and `set_value()` are slow... Compute the address of the value by
     // using a base address and the offset for each property instead of calling these functions.
-    get_value: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, bool) -> *const Value,
-    set_value: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value),
-    create_data_property:
-        unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
+    get_value:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, *const PropertyKey, bool) -> *const Value,
+    set_value: unsafe extern "C" fn(*mut c_void, *mut c_void, *const PropertyKey, *const Value),
+    create_data_property: unsafe extern "C" fn(
+        *mut c_void,
+        *mut c_void,
+        *const PropertyKey,
+        *const Value,
+        *mut Value,
+    ) -> Status,
     copy_data_properties:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
@@ -109,6 +115,12 @@ macro_rules! into_string {
 macro_rules! into_value {
     ($value:expr) => {
         &*($value)
+    };
+}
+
+macro_rules! into_property_key {
+    ($key:expr) => {
+        &*($key)
     };
 }
 
@@ -431,7 +443,7 @@ unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void) -> *mut c_vo
 unsafe extern "C" fn runtime_get_value<X>(
     runtime: *mut c_void,
     object: *mut c_void,
-    key: u32,
+    key: *const PropertyKey,
     strict: bool,
 ) -> *const Value {
     // FIXME: `Value` cannot be defined with `static` because it doesn't implement `Sync`.
@@ -441,8 +453,8 @@ unsafe extern "C" fn runtime_get_value<X>(
     debug_assert_ne!(runtime, std::ptr::null_mut());
     let runtime = into_runtime!(runtime, X);
 
-    debug_assert_ne!(key, 0);
-    let key = Symbol::from(key);
+    debug_assert_ne!(key, std::ptr::null());
+    let key = into_property_key!(key);
 
     let result = match (object as *mut Object).as_ref() {
         Some(object) => object.get_value(key),
@@ -459,14 +471,14 @@ unsafe extern "C" fn runtime_get_value<X>(
 unsafe extern "C" fn runtime_set_value<X>(
     runtime: *mut c_void,
     object: *mut c_void,
-    key: u32,
+    key: *const PropertyKey,
     value: *const Value,
 ) {
     debug_assert_ne!(runtime, std::ptr::null_mut());
     let runtime = into_runtime!(runtime, X);
 
-    debug_assert_ne!(key, 0);
-    let key = Symbol::from(key);
+    debug_assert_ne!(key, std::ptr::null());
+    let key = into_property_key!(key);
 
     debug_assert_ne!(value, std::ptr::null());
     let value = value.as_ref().unwrap();
@@ -481,20 +493,28 @@ unsafe extern "C" fn runtime_set_value<X>(
 unsafe extern "C" fn runtime_create_data_property<X>(
     runtime: *mut c_void,
     object: *mut c_void,
-    name: u32,
+    key: *const PropertyKey,
     value: *const Value,
     retv: *mut Value,
 ) -> Status {
-    debug_assert_ne!(name, 0);
-
     // TODO(refactor): generate ffi-conversion code by script
+
+    debug_assert_ne!(runtime, std::ptr::null_mut());
     let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(object, std::ptr::null_mut());
     let object = object.cast::<Object>().as_mut().unwrap();
-    let name = Symbol::from(name);
+
+    debug_assert_ne!(key, std::ptr::null());
+    let key = into_property_key!(key);
+
+    debug_assert_ne!(value, std::ptr::null());
     let value = value.as_ref().unwrap();
+
+    debug_assert_ne!(retv, std::ptr::null_mut());
     let retv = retv.as_mut().unwrap();
 
-    match runtime.create_data_property(object, name, value) {
+    match runtime.create_data_property(object, key, value) {
         Ok(success) => {
             *retv = success.into();
             Status::Normal

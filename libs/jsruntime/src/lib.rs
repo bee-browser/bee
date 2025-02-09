@@ -8,7 +8,6 @@ mod types;
 
 use std::ffi::c_void;
 
-use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use lambda::LambdaId;
@@ -17,6 +16,7 @@ use llvmir::Executor;
 use objects::Object;
 use objects::Property;
 use objects::PropertyFlags;
+use objects::PropertyKey;
 use types::ReturnValue;
 
 pub use llvmir::CompileError;
@@ -116,7 +116,7 @@ impl<X> Runtime<X> {
         // TODO: add `flags` to the arguments.
         let flags = PropertyFlags::empty();
         let prop = Property::Data { value, flags };
-        let result = self.global_object.define_own_property(symbol, prop);
+        let result = self.global_object.define_own_property(symbol.into(), prop);
         debug_assert!(matches!(result, Ok(true)));
     }
 
@@ -197,11 +197,11 @@ impl<X> Runtime<X> {
     fn create_data_property(
         &mut self,
         object: &mut Object,
-        name: Symbol,
+        key: &PropertyKey,
         value: &Value,
     ) -> Result<bool, Value> {
         object.define_own_property(
-            name,
+            key.clone(),
             Property::Data {
                 value: value.clone(),
                 flags: PropertyFlags::WRITABLE

@@ -26,6 +26,7 @@ class TypeHolder {
   llvm::Type* GetWordType();
   llvm::Value* GetWord(size_t value);
   llvm::StructType* CreateValueType();
+  llvm::StructType* CreatePropertyKeyType();
   llvm::StructType* CreateChar16SeqType();
   llvm::StructType* CreateCaptureType();
   llvm::StructType* CreateClosureType();
@@ -40,6 +41,7 @@ class TypeHolder {
   llvm::Module& module_;
   llvm::IRBuilder<>& builder_;
   llvm::StructType* value_type_ = nullptr;
+  llvm::StructType* property_key_type_ = nullptr;
   llvm::StructType* char16_seq_type_ = nullptr;
   llvm::StructType* capture_type_ = nullptr;
   llvm::StructType* closure_type_ = nullptr;

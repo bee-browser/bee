@@ -4,10 +4,9 @@ use std::ffi::CStr;
 
 use paste::paste;
 
-use jsparser::Symbol;
-
 use crate::llvmir::module::ModulePeer;
 use crate::logger;
+use crate::objects::PropertyKey;
 use crate::semantics::ScopeRef;
 use crate::LambdaId;
 
@@ -54,6 +53,7 @@ define_ir_types! {
     PromiseIr; promise_ir,
     ObjectIr; object_ir,
     ValueIr; value_ir,
+    PropertyKeyIr; property_key_ir,
     ArgvIr; argv_ir,
     StatusIr; status_ir,
     CaptureIr; capture_ir,
@@ -589,15 +589,15 @@ impl CompilerBridge {
         }
     }
 
-    pub fn create_get_value(&self, object: ObjectIr, key: Symbol, strict: bool) -> ValueIr {
+    pub fn create_get_value(&self, object: ObjectIr, key: PropertyKeyIr, strict: bool) -> ValueIr {
         value_ir! {
-            compiler_peer_create_get_value(self.0, object.0, key.id(), strict)
+            compiler_peer_create_get_value(self.0, object.0, key.0, strict)
         }
     }
 
-    pub fn create_set_value(&self, object: ObjectIr, key: Symbol, value: ValueIr) {
+    pub fn create_set_value(&self, object: ObjectIr, key: PropertyKeyIr, value: ValueIr) {
         unsafe {
-            compiler_peer_create_set_value(self.0, object.0, key.id(), value.0);
+            compiler_peer_create_set_value(self.0, object.0, key.0, value.0);
         }
     }
 
@@ -605,12 +605,12 @@ impl CompilerBridge {
     pub fn create_create_data_property(
         &self,
         object: ObjectIr,
-        key: Symbol,
+        key: PropertyKeyIr,
         value: ValueIr,
         retv: ValueIr,
     ) -> StatusIr {
         status_ir! {
-            compiler_peer_create_create_data_property(self.0, object.0, key.id(), value.0, retv.0)
+            compiler_peer_create_create_data_property(self.0, object.0, key.0, value.0, retv.0)
         }
     }
 
@@ -623,6 +623,12 @@ impl CompilerBridge {
     ) -> StatusIr {
         status_ir! {
             compiler_peer_create_copy_data_properties(self.0, target.0, source.0, retv.0)
+        }
+    }
+
+    pub fn create_const_property_key(&self, key: &PropertyKey) -> PropertyKeyIr {
+        property_key_ir! {
+            compiler_peer_create_const_property_key(self.0, key)
         }
     }
 
@@ -1429,6 +1435,7 @@ type CoroutineIrPtr = *mut c_void;
 type PromiseIrPtr = *mut c_void;
 type ObjectIrPtr = *mut c_void;
 type ValueIrPtr = *mut c_void;
+type PropertyKeyIrPtr = *mut c_void;
 type ArgvIrPtr = *mut c_void;
 type StatusIrPtr = *mut c_void;
 type CaptureIrPtr = *mut c_void;
@@ -1702,19 +1709,19 @@ extern "C" {
     fn compiler_peer_create_get_value(
         peer: CompilerPeer,
         object: ObjectIrPtr,
-        key: u32,
+        key: PropertyKeyIrPtr,
         strict: bool,
     ) -> ValueIrPtr;
     fn compiler_peer_create_set_value(
         peer: CompilerPeer,
         object: ObjectIrPtr,
-        key: u32,
+        key: PropertyKeyIrPtr,
         value: ValueIrPtr,
     );
     fn compiler_peer_create_create_data_property(
         peer: CompilerPeer,
         object: ObjectIrPtr,
-        key: u32,
+        key: PropertyKeyIrPtr,
         value: ValueIrPtr,
         retv: ValueIrPtr,
     ) -> StatusIrPtr;
@@ -1724,6 +1731,10 @@ extern "C" {
         source: ValueIrPtr,
         retv: ValueIrPtr,
     ) -> StatusIrPtr;
+    fn compiler_peer_create_const_property_key(
+        peer: CompilerPeer,
+        key: *const PropertyKey,
+    ) -> PropertyKeyIrPtr;
 
     // value
 

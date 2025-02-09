@@ -186,8 +186,10 @@ impl<X> AnalyzerSupport for Runtime<X> {
         self.lambda_registry.register(is_coroutine)
     }
 
-    fn define_global_property(&mut self, key: Symbol, property: Property) -> Result<bool, Value> {
-        self.global_object.define_own_property(key, property)
+    // TODO: PropertyKey::Number
+    fn define_global_property(&mut self, name: Symbol, property: Property) -> Result<bool, Value> {
+        self.global_object
+            .define_own_property(name.into(), property)
     }
 }
 
