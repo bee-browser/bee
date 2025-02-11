@@ -11,7 +11,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.95"
 base = { path = "../../libs/base" }
-clap = { version = "4.5.28", features = ["derive", "env"] }
+clap = { version = "4.5.29", features = ["derive", "env"] }
 dashmap = "6.1.0"
 humantime = "2.1.0"
 im = "15.1.0"

@@ -10,6 +10,6 @@ version.workspace = true
 
 [dependencies]
 anyhow = "1.0.95"
-clap = { version = "4.5.28", features = ["derive"] }
+clap = { version = "4.5.29", features = ["derive"] }
 htmlparser = { path = "../../libs/htmlparser" }
 toydom = { path = "../../libs/toydom" }
