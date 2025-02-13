@@ -1128,25 +1128,69 @@ class Compiler {
 
   // object
 
-  llvm::Value* CreateGetValue(llvm::Value* object, llvm::Value* key, bool strict) {
-    auto* func = types_->CreateRuntimeGetValue();
-    return builder_->CreateCall(func, {runtime_, object, key, builder_->getInt1(strict)},
-                                REG_NAME("runtime.get_value.value.ptr"));
+  llvm::Value* CreateGetValueBySymbol(llvm::Value* object, uint32_t key, bool strict) {
+    auto* func = types_->CreateRuntimeGetValueBySymbol();
+    return builder_->CreateCall(
+        func, {runtime_, object, builder_->getInt32(key), builder_->getInt1(strict)},
+        REG_NAME("runtime.get_value_by_symbol.value.ptr"));
   }
 
-  void CreateSetValue(llvm::Value* object, llvm::Value* key, llvm::Value* value) {
-    auto* func = types_->CreateRuntimeSetValue();
+  llvm::Value* CreateGetValueByNumber(llvm::Value* object, double key, bool strict) {
+    auto* func = types_->CreateRuntimeGetValueByNumber();
+    return builder_->CreateCall(func,
+                                {runtime_, object, GetNumber(key), builder_->getInt1(strict)},
+                                REG_NAME("runtime.get_value_by_number.value.ptr"));
+  }
+
+  llvm::Value* CreateGetValueByValue(llvm::Value* object, llvm::Value* key, bool strict) {
+    auto* func = types_->CreateRuntimeGetValueByValue();
+    return builder_->CreateCall(func, {runtime_, object, key, builder_->getInt1(strict)},
+                                REG_NAME("runtime.get_value_by_value.value.ptr"));
+  }
+
+  void CreateSetValueBySymbol(llvm::Value* object, uint32_t key, llvm::Value* value) {
+    auto* func = types_->CreateRuntimeSetValueBySymbol();
+    builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value});
+  }
+
+  void CreateSetValueByNumber(llvm::Value* object, double key, llvm::Value* value) {
+    auto* func = types_->CreateRuntimeSetValueByNumber();
+    builder_->CreateCall(func, {runtime_, object, GetNumber(key), value});
+  }
+
+  void CreateSetValueByValue(llvm::Value* object, llvm::Value* key, llvm::Value* value) {
+    auto* func = types_->CreateRuntimeSetValueByValue();
     builder_->CreateCall(func, {runtime_, object, key, value});
   }
 
   // 7.3.5 CreateDataProperty ( O, P, V )
-  llvm::Value* CreateCreateDataProperty(llvm::Value* object,
-                                        llvm::Value* key,
-                                        llvm::Value* value,
-                                        llvm::Value* retv) {
-    auto* func = types_->CreateRuntimeCreateDataProperty();
+  llvm::Value* CreateCreateDataPropertyBySymbol(llvm::Value* object,
+                                                uint32_t key,
+                                                llvm::Value* value,
+                                                llvm::Value* retv) {
+    auto* func = types_->CreateRuntimeCreateDataPropertyBySymbol();
+    return builder_->CreateCall(func, {runtime_, object, builder_->getInt32(key), value, retv},
+                                REG_NAME("runtime.create_data_property_by_symbol.status.ptr"));
+  }
+
+  // 7.3.5 CreateDataProperty ( O, P, V )
+  llvm::Value* CreateCreateDataPropertyByNumber(llvm::Value* object,
+                                                double key,
+                                                llvm::Value* value,
+                                                llvm::Value* retv) {
+    auto* func = types_->CreateRuntimeCreateDataPropertyByNumber();
+    return builder_->CreateCall(func, {runtime_, object, GetNumber(key), value, retv},
+                                REG_NAME("runtime.create_data_property_by_number.status.ptr"));
+  }
+
+  // 7.3.5 CreateDataProperty ( O, P, V )
+  llvm::Value* CreateCreateDataPropertyByValue(llvm::Value* object,
+                                               llvm::Value* key,
+                                               llvm::Value* value,
+                                               llvm::Value* retv) {
+    auto* func = types_->CreateRuntimeCreateDataPropertyByValue();
     return builder_->CreateCall(func, {runtime_, object, key, value, retv},
-                                REG_NAME("runtime.create_data_property.status.ptr"));
+                                REG_NAME("runtime.create_data_property_by_value.status.ptr"));
   }
 
   // 7.3.25 CopyDataProperties ( target, source, excludedItems )
@@ -1156,17 +1200,6 @@ class Compiler {
     auto* func = types_->CreateRuntimeCopyDataProperties();
     return builder_->CreateCall(func, {runtime_, target, source, retv},
                                 REG_NAME("runtime.copy_data_properties.status.ptr"));
-  }
-
-  llvm::Value* CreateConstPropertyKey(const PropertyKey& key) {
-    // TODO(perf): create a constant value and return its address
-    // return llvm::ConstantStruct::get(types_->CreatePropertyKeyType(), {...});
-    auto* k = CreateAlloc1(types_->CreatePropertyKeyType(), REG_NAME("const.property_key"));
-    builder_->CreateStore(builder_->getInt8(static_cast<uint8_t>(key.tag)),
-                          builder_->CreateStructGEP(types_->CreatePropertyKeyType(), k, 0));
-    builder_->CreateStore(llvm::ConstantFP::get(*llvmctx_, llvm::APFloat(key.number._0)),
-                          builder_->CreateStructGEP(types_->CreatePropertyKeyType(), k, 1));
-    return k;
   }
 
   // scope cleanup checker

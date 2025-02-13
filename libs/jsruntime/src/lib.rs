@@ -8,6 +8,7 @@ mod types;
 
 use std::ffi::c_void;
 
+use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use lambda::LambdaId;
@@ -191,6 +192,21 @@ impl<X> Runtime<X> {
     fn create_object(&mut self) -> &mut Object {
         // TODO: GC
         self.allocator.alloc(Default::default())
+    }
+
+    fn make_property_key(&mut self, value: &Value) -> PropertyKey {
+        match value {
+            Value::None => unreachable!(),
+            Value::Undefined => Symbol::UNDEFINED.into(),
+            Value::Null => Symbol::NULL.into(),
+            Value::Boolean(false) => Symbol::FALSE.into(),
+            Value::Boolean(true) => Symbol::TRUE.into(),
+            Value::Number(value) => (*value).into(),
+            Value::String(value) => self.symbol_registry.intern_utf16(value.make_utf16()).into(),
+            Value::Closure(_) => todo!(),
+            Value::Object(_) => todo!(),
+            Value::Promise(_) => todo!(),
+        }
     }
 
     // 7.3.5 CreateDataProperty ( O, P, V )

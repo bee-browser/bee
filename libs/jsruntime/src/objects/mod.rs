@@ -9,7 +9,6 @@ use jsparser::Symbol;
 use crate::types::Value;
 
 #[derive(Clone, Debug)]
-#[repr(C, u8)]
 pub enum PropertyKey {
     Symbol(u32),
     Number(f64),

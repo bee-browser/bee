@@ -14,7 +14,6 @@ use jsparser::Symbol;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
 use crate::logger;
-use crate::objects::PropertyKey;
 use crate::semantics::CompileCommand;
 use crate::semantics::Locator;
 use crate::semantics::ScopeRef;
@@ -628,18 +627,18 @@ where
             Operand::Null => Symbol::NULL.into(),
             Operand::Boolean(_, Some(false)) => Symbol::FALSE.into(),
             Operand::Boolean(_, Some(true)) => Symbol::TRUE.into(),
-            Operand::Boolean(_, None) => todo!(),
+            Operand::Boolean(value, None) => self.bridge.create_boolean_to_any(value).into(),
             Operand::Number(_, Some(value)) => value.into(),
-            Operand::Number(_, None) => todo!(),
+            Operand::Number(value, None) => self.bridge.create_number_to_any(value).into(),
             Operand::String(_, Some(ref value)) => self
                 .support
                 .make_symbol_from_name(value.make_utf16())
                 .into(),
-            Operand::String(_, None) => todo!(),
+            Operand::String(value, None) => self.bridge.create_string_to_any(value).into(),
             Operand::Lambda(_) => todo!(),
-            Operand::Closure(_) => todo!(),
+            Operand::Closure(value) => self.bridge.create_closure_to_any(value).into(),
             Operand::Coroutine(_) => todo!(),
-            Operand::Object(_) => todo!(),
+            Operand::Object(value) => self.bridge.create_object_to_any(value).into(),
             Operand::Promise(_) => todo!(),
             Operand::Any(_, Some(Value::Undefined)) => Symbol::UNDEFINED.into(),
             Operand::Any(_, Some(Value::Null)) => Symbol::NULL.into(),
@@ -649,6 +648,7 @@ where
                 .support
                 .make_symbol_from_name(value.make_utf16())
                 .into(),
+            Operand::Any(value, None) => value.into(),
             Operand::Any(..) => todo!(),
             Operand::PropertyReference(_) | Operand::VariableReference(..) => {
                 unreachable!("{operand:?}")
@@ -694,8 +694,17 @@ where
             Operand::PropertyReference(key) => {
                 self.perform_to_object();
                 let object = self.pop_object();
-                let key = self.bridge.create_const_property_key(&key);
-                let value = self.bridge.create_get_value(object, key, false);
+                let value = match key {
+                    PropertyKey::Symbol(key) => {
+                        self.bridge.create_get_value_by_symbol(object, key, false)
+                    }
+                    PropertyKey::Number(key) => {
+                        self.bridge.create_get_value_by_number(object, key, false)
+                    }
+                    PropertyKey::Value(key) => {
+                        self.bridge.create_get_value_by_value(object, key, false)
+                    }
+                };
                 runtime_debug! {{
                     let is_nullptr = self.bridge.create_value_is_nullptr(value);
                     let non_nullptr = self.bridge.create_logical_not(is_nullptr);
@@ -723,11 +732,10 @@ where
 
     // TODO(perf): return the value directly if it's a read-only global property.
     fn create_get_global_value_ptr(&mut self, key: Symbol) -> ValueIr {
-        let key = self.bridge.create_const_property_key(&key.into());
         // TODO: strict mode
-        let value = self
-            .bridge
-            .create_get_value(self.bridge.get_object_nullptr(), key, true);
+        let value =
+            self.bridge
+                .create_get_value_by_symbol(self.bridge.get_object_nullptr(), key, true);
 
         let then_block = self.create_basic_block("global_object.get_value.is_nullptr");
         let end_block = self.create_basic_block("global_object.get_value");
@@ -832,10 +840,9 @@ where
                 self.create_store_operand_to_value(&operand, value);
             }
             Locator::Global => {
-                let key = self.bridge.create_const_property_key(&symbol.into());
                 let value = self.create_to_any(&operand);
                 self.bridge
-                    .create_set_value(self.bridge.get_object_nullptr(), key, value);
+                    .create_set_value_by_symbol(self.bridge.get_object_nullptr(), symbol, value);
             }
             _ => unreachable!("{locator:?}"),
         };
@@ -1094,10 +1101,17 @@ where
         // 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
 
         // 1. Let success be ? CreateDataProperty(O, P, V).
-        let key = self.bridge.create_const_property_key(&key);
-        let status = self
-            .bridge
-            .create_create_data_property(object, key, value, retv);
+        let status = match key {
+            PropertyKey::Symbol(key) => self
+                .bridge
+                .create_create_data_property_by_symbol(object, key, value, retv),
+            PropertyKey::Number(key) => self
+                .bridge
+                .create_create_data_property_by_number(object, key, value, retv),
+            PropertyKey::Value(key) => self
+                .bridge
+                .create_create_data_property_by_value(object, key, value, retv),
+        };
         self.create_check_status_for_exception(status, retv);
         // `retv` holds a boolean value.
         runtime_debug! {{
@@ -1969,10 +1983,9 @@ where
         match locator {
             Locator::Global => {
                 let object = self.bridge.get_object_nullptr();
-                let key = self.bridge.create_const_property_key(&symbol.into());
                 let value = self.create_to_any(&rhs);
                 // TODO(feat): ReferenceError, TypeError
-                self.bridge.create_set_value(object, key, value);
+                self.bridge.create_set_value_by_symbol(object, symbol, value);
             }
             _ => {
                 let value = self.create_get_value_ptr(symbol, locator);
@@ -2995,15 +3008,15 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of boolean type.
     // TODO(perf): compile-time evaluation
-    Boolean(BooleanIr, #[allow(unused)] Option<bool>),
+    Boolean(BooleanIr, Option<bool>),
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    Number(NumberIr, #[allow(unused)] Option<f64>),
+    Number(NumberIr, Option<f64>),
 
     /// Runtime value and optional compile-time constant value of string type.
     // TODO(perf): compile-time evaluation
-    String(Char16SeqIr, #[allow(unused)] Option<Char16Seq>),
+    String(Char16SeqIr, Option<Char16Seq>),
 
     /// Runtime value of lambda function type.
     Lambda(LambdaIr),
@@ -3054,6 +3067,43 @@ impl Dump for Operand {
             }
             Self::PropertyReference(key) => eprintln!("PropertyReference({key:?})"),
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum PropertyKey {
+    Symbol(Symbol),
+    Number(f64),
+    Value(ValueIr),
+}
+
+impl From<Symbol> for PropertyKey {
+    fn from(value: Symbol) -> Self {
+        Self::Symbol(value)
+    }
+}
+
+impl From<f64> for PropertyKey {
+    fn from(value: f64) -> Self {
+        if value.is_nan() {
+            Symbol::NAN.into()
+        } else if value.is_infinite() {
+            if value.is_sign_positive() {
+                Symbol::INFINITY.into()
+            } else {
+                Symbol::NEG_INFINITY.into()
+            }
+        } else if value == 0. {
+            Self::Number(0.) // convert `-0.` to `0.`
+        } else {
+            Self::Number(value)
+        }
+    }
+}
+
+impl From<ValueIr> for PropertyKey {
+    fn from(value: ValueIr) -> Self {
+        Self::Value(value)
     }
 }
 

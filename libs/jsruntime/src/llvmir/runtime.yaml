@@ -94,32 +94,92 @@ functions:
   - name: create_object
     args: []
     ret: '&mut Object'
-  - name: get_value
+  - name: get_value_by_symbol
     args:
       - name: object
         type: '&mut Object'
       - name: key
-        type: '&PropertyKey'
+        type: u32
       - name: strict
         type: bool
       # TODO(perf): add arguments for inline caching
     ret: '&Value' # may be null
-  - name: set_value
+  - name: get_value_by_number
     args:
       - name: object
         type: '&mut Object'
       - name: key
-        type: '&PropertyKey'
+        type: f64
+      - name: strict
+        type: bool
+      # TODO(perf): add arguments for inline caching
+    ret: '&Value' # may be null
+  - name: get_value_by_value
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: key
+        type: '&Value'
+      - name: strict
+        type: bool
+      # TODO(perf): add arguments for inline caching
+    ret: '&Value' # may be null
+  - name: set_value_by_symbol
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: key
+        type: u32
+      - name: value
+        type: '&Value'
+      # TODO(perf): add arguments for inline caching
+  - name: set_value_by_number
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: key
+        type: f64
+      - name: value
+        type: '&Value'
+      # TODO(perf): add arguments for inline caching
+  - name: set_value_by_value
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: key
+        type: '&Value'
       - name: value
         type: '&Value'
       # TODO(perf): add arguments for inline caching
   # 7.3.5 CreateDataProperty ( O, P, V )
-  - name: create_data_property
+  - name: create_data_property_by_symbol
     args:
       - name: object
         type: '&mut Object'
       - name: key
-        type: '&PropertyKey'
+        type: u32
+      - name: value
+        type: '&Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
+  - name: create_data_property_by_number
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: key
+        type: f64
+      - name: value
+        type: '&Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
+  - name: create_data_property_by_value
+    args:
+      - name: object
+        type: '&mut Object'
+      - name: key
+        type: '&Value'
       - name: value
         type: '&Value'
       - name: retv
