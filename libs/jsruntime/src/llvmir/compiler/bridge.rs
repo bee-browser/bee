@@ -684,6 +684,17 @@ impl CompilerBridge {
         }
     }
 
+    pub fn create_push_array_element(
+        &self,
+        target: ObjectIr,
+        value: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_push_array_element(self.0, target.0, value.0, retv.0)
+        }
+    }
+
     // value
 
     pub fn create_value_is_nullptr(&self, value: ValueIr) -> BooleanIr {
@@ -1818,6 +1829,12 @@ extern "C" {
         peer: CompilerPeer,
         target: ObjectIrPtr,
         source: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
+    fn compiler_peer_create_push_array_element(
+        peer: CompilerPeer,
+        target: ObjectIrPtr,
+        value: ValueIrPtr,
         retv: ValueIrPtr,
     ) -> StatusIrPtr;
 

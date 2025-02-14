@@ -243,6 +243,25 @@ impl<X> Runtime<X> {
         }
         Ok(())
     }
+
+    fn push_value(&mut self, target: &mut Object, value: &Value) -> Result<(), Value> {
+        const LENGTH: PropertyKey = PropertyKey::Symbol(Symbol::LENGTH.id());
+
+        let length = match target.get_value(&LENGTH) {
+            Some(Value::Number(v)) => *v,
+            _ => unreachable!(),
+        };
+
+        if length >= i32::MAX as f64 {
+            // TODO(feat): throw a RangeError
+        }
+
+        // TODO: error handling
+        let _ = self.create_data_property(target, &PropertyKey::Number(length), value);
+
+        target.set_value(&LENGTH, &Value::from(length + 1.0));
+        Ok(())
+    }
 }
 
 impl<X> Default for Runtime<X>

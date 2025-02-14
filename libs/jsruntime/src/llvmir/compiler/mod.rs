@@ -389,6 +389,7 @@ where
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
+            CompileCommand::PushArrayElement => self.process_push_array_element(),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -759,7 +760,7 @@ where
     fn pop_reference(&mut self) -> (Symbol, Locator) {
         match self.operand_stack.pop().unwrap() {
             Operand::VariableReference(symbol, locator) => (symbol, locator),
-            _ => unreachable!(),
+            operand => unreachable!("{operand:?}"),
         }
     }
 
@@ -841,8 +842,11 @@ where
             }
             Locator::Global => {
                 let value = self.create_to_any(&operand);
-                self.bridge
-                    .create_set_value_by_symbol(self.bridge.get_object_nullptr(), symbol, value);
+                self.bridge.create_set_value_by_symbol(
+                    self.bridge.get_object_nullptr(),
+                    symbol,
+                    value,
+                );
             }
             _ => unreachable!("{locator:?}"),
         };
@@ -1161,6 +1165,22 @@ where
         let status = self
             .bridge
             .create_copy_data_properties(object, from_value, retv);
+        self.create_check_status_for_exception(status, retv);
+    }
+
+    fn process_push_array_element(&mut self) {
+        // 1. Let exprValue be ? Evaluation of AssignmentExpression.
+        let (operand, _) = self.dereference();
+
+        // 2. Let fromValue be ? GetValue(exprValue).
+        let from_value = self.create_to_any(&operand);
+
+        let object = self.peek_object();
+        let retv = self.bridge.create_retv();
+
+        let status = self
+            .bridge
+            .create_push_array_element(object, from_value, retv);
         self.create_check_status_for_exception(status, retv);
     }
 
@@ -1978,21 +1998,39 @@ where
     // 13.15.2 Runtime Semantics: Evaluation
     fn process_assignment(&mut self) {
         let (rhs, _) = self.dereference();
-        let (symbol, locator) = self.pop_reference();
 
-        match locator {
-            Locator::Global => {
+        match self.operand_stack.pop().unwrap() {
+            Operand::VariableReference(symbol, Locator::Global) => {
                 let object = self.bridge.get_object_nullptr();
                 let value = self.create_to_any(&rhs);
                 // TODO(feat): ReferenceError, TypeError
-                self.bridge.create_set_value_by_symbol(object, symbol, value);
+                self.bridge
+                    .create_set_value_by_symbol(object, symbol, value);
             }
-            _ => {
+            Operand::VariableReference(symbol, locator) => {
                 let value = self.create_get_value_ptr(symbol, locator);
                 // TODO: throw a TypeError in the strict mode.
                 // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
                 self.create_store_operand_to_value(&rhs, value);
             }
+            Operand::PropertyReference(key) => {
+                // TODO(refactor): reduce code clone
+                self.perform_to_object();
+                let object = self.pop_object();
+                let value = self.create_to_any(&rhs);
+                match key {
+                    PropertyKey::Symbol(key) => {
+                        self.bridge.create_set_value_by_symbol(object, key, value);
+                    }
+                    PropertyKey::Number(key) => {
+                        self.bridge.create_set_value_by_number(object, key, value);
+                    }
+                    PropertyKey::Value(key) => {
+                        self.bridge.create_set_value_by_value(object, key, value);
+                    }
+                }
+            }
+            operand => unreachable!("{operand:?}"),
         }
 
         self.operand_stack.push(rhs);

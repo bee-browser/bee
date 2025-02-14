@@ -195,12 +195,23 @@ functions:
       - name: retv
         type: '&mut Value'
     ret: Status
+  - name: push_value
+    args:
+      - name: target
+        type: '&mut Object'
+      - name: value
+        type: '&Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
+  # assertions
   - name: assert
     args:
       - name: assertion
         type: bool
       - name: msg
         type: '&std::ffi::CStr'
+  # print functions
   - name: print_bool
     args:
       - name: value
@@ -235,5 +246,6 @@ functions:
     args:
       - name: msg
         type: '&std::ffi::CStr'
+  # for debugger
   - name: launch_debugger
     args: []

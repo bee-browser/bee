@@ -85,6 +85,7 @@ enum Detail {
     OptionalChain,
     Expression,
     ArrayLiteral,
+    ElementList(usize),
     ObjectLiteral,
     PropertyDefinition(Symbol),
     PropertyDefinitionList(bool),
@@ -253,6 +254,7 @@ pub enum Node<'s> {
 
 #[derive(Clone, Debug)]
 pub enum PropertyDefinitionKind {
+    ArrayElement,
     Reference,
     KeyValue,
     Spread,
@@ -1021,6 +1023,48 @@ where
     //   [ ]
     fn process_array_literal_empty(&mut self) -> Result<(), Error> {
         self.replace(2, Detail::ArrayLiteral);
+        Ok(())
+    }
+
+    // ArrayLiteral[Yield, Await] :
+    //   [ ElementList[?Yield, ?Await] ]
+    fn process_array_literal_list(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::ArrayLiteral);
+        Ok(())
+    }
+
+    // ArrayLiteral[Yield, Await] :
+    //   [ ElementList[?Yield, ?Await] , ]
+    fn process_array_literal_comma(&mut self) -> Result<(), Error> {
+        self.replace(4, Detail::ArrayLiteral);
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_element_list_head(&mut self) -> Result<(), Error> {
+        let mut syntax = self.pop();
+        syntax.detail = Detail::ElementList(0);
+        self.push(syntax);
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   ElementList[?Yield, ?Await] , AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_element_list_item(&mut self) -> Result<(), Error> {
+        self.pop(); // Expression
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::ElementList(ref mut n) => *n += 1,
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
         Ok(())
     }
 

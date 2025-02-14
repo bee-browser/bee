@@ -62,6 +62,7 @@ pub struct RuntimeFunctions {
     ) -> Status,
     copy_data_properties:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
+    push_value: unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_bool: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
@@ -102,6 +103,7 @@ impl RuntimeFunctions {
             create_data_property_by_number: runtime_create_data_property_by_number::<X>,
             create_data_property_by_value: runtime_create_data_property_by_value::<X>,
             copy_data_properties: runtime_copy_data_properties::<X>,
+            push_value: runtime_push_value::<X>,
             assert: runtime_assert,
             print_bool: runtime_print_bool,
             print_u32: runtime_print_u32,
@@ -726,6 +728,38 @@ unsafe extern "C" fn runtime_copy_data_properties<X>(
     let retv = retv.as_mut().unwrap();
 
     match runtime.copy_data_properties(target, source) {
+        Ok(()) => {
+            *retv = Value::None;
+            Status::Normal
+        }
+        Err(exception) => {
+            *retv = exception;
+            Status::Exception
+        }
+    }
+}
+
+unsafe extern "C" fn runtime_push_value<X>(
+    runtime: *mut c_void,
+    target: *mut c_void,
+    value: *const Value,
+    retv: *mut Value,
+) -> Status {
+    // TODO(refactor): generate ffi-conversion code by script
+
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(target, std::ptr::null_mut());
+    let target = target.cast::<Object>().as_mut().unwrap();
+
+    debug_assert_ne!(value, std::ptr::null());
+    let value = into_value!(value);
+
+    debug_assert_ne!(retv, std::ptr::null_mut());
+    let retv = into_value_mut!(retv);
+
+    match runtime.push_value(target, value) {
         Ok(()) => {
             *retv = Value::None;
             Status::Normal

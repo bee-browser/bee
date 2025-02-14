@@ -372,7 +372,14 @@ where
 
     fn handle_array(&mut self) {
         // TODO(feat): 10.4.2.2 ArrayCreate ( length [ , proto ] )
-        analysis_mut!(self).put_object();
+        push_commands! {
+            self;
+            CompileCommand::Object,
+            // object.length = 0;
+            CompileCommand::PropertyReference(Symbol::LENGTH),
+            CompileCommand::Number(0.0),
+            CompileCommand::CreateDataProperty,
+        }
     }
 
     fn handle_object(&mut self) {
@@ -1213,6 +1220,9 @@ impl FunctionAnalysis {
 
     fn process_property_definition(&mut self, kind: PropertyDefinitionKind) {
         match kind {
+            PropertyDefinitionKind::ArrayElement => {
+                self.commands.push(CompileCommand::PushArrayElement);
+            }
             PropertyDefinitionKind::Reference => {
                 let symbol = match self.commands.pop() {
                     Some(CompileCommand::VariableReference(symbol)) => symbol,
@@ -1719,6 +1729,7 @@ pub enum CompileCommand {
     // object
     CreateDataProperty,
     CopyDataProperties,
+    PushArrayElement,
 
     // update operators
     PostfixIncrement,

@@ -1202,6 +1202,12 @@ class Compiler {
                                 REG_NAME("runtime.copy_data_properties.status.ptr"));
   }
 
+  llvm::Value* CreatePushArrayElement(llvm::Value* target, llvm::Value* value, llvm::Value* retv) {
+    auto* func = types_->CreateRuntimePushValue();
+    return builder_->CreateCall(func, {runtime_, target, value, retv},
+                                REG_NAME("runtime.push_value.status.ptr"));
+  }
+
   // scope cleanup checker
 
   void EnableScopeCleanupChecker(bool is_coroutine) {

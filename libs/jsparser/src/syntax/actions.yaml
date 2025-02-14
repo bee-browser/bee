@@ -2476,9 +2476,9 @@
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: undefined
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await RBRACK
-  action: undefined
+  action: process_array_literal_list
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA RBRACK
-  action: undefined
+  action: process_array_literal_comma
 - rule: >-
     ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA Elision
     RBRACK
@@ -3005,7 +3005,7 @@
 - rule: _NEW_ARRAY_ -> (empty)
   action: process_new_array
 - rule: ElementList_Await -> AssignmentExpression_In_Await
-  action: undefined
+  action: process_element_list_head
 - rule: ElementList_Await -> Elision AssignmentExpression_In_Await
   action: undefined
 - rule: ElementList_Await -> SpreadElement_Await
@@ -3013,7 +3013,7 @@
 - rule: ElementList_Await -> Elision SpreadElement_Await
   action: undefined
 - rule: ElementList_Await -> ElementList_Await COMMA AssignmentExpression_In_Await
-  action: undefined
+  action: process_element_list_item
 - rule: >-
     ElementList_Await -> ElementList_Await COMMA Elision
     AssignmentExpression_In_Await
@@ -3211,9 +3211,9 @@
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: undefined
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList RBRACK
-  action: undefined
+  action: process_array_literal_list
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA RBRACK
-  action: undefined
+  action: process_array_literal_comma
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA Elision RBRACK
   action: undefined
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ RBRACE
@@ -3441,9 +3441,9 @@
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ Elision RBRACK
   action: undefined
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield RBRACK
-  action: undefined
+  action: process_array_literal_list
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA RBRACK
-  action: undefined
+  action: process_array_literal_comma
 - rule: >-
     ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA Elision
     RBRACK
@@ -3485,11 +3485,11 @@
 - rule: >-
     ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await
     RBRACK
-  action: undefined
+  action: process_array_literal_list
 - rule: >-
     ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA
     RBRACK
-  action: undefined
+  action: process_array_literal_comma
 - rule: >-
     ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA
     Elision RBRACK
@@ -3527,7 +3527,7 @@
     EqualityExpression_In
   action: process_bitwise_and
 - rule: ElementList -> AssignmentExpression_In
-  action: undefined
+  action: process_element_list_head
 - rule: ElementList -> Elision AssignmentExpression_In
   action: undefined
 - rule: ElementList -> SpreadElement
@@ -3535,7 +3535,7 @@
 - rule: ElementList -> Elision SpreadElement
   action: undefined
 - rule: ElementList -> ElementList COMMA AssignmentExpression_In
-  action: undefined
+  action: process_element_list_item
 - rule: ElementList -> ElementList COMMA Elision AssignmentExpression_In
   action: undefined
 - rule: ElementList -> ElementList COMMA SpreadElement
@@ -3852,7 +3852,7 @@
     EqualityExpression_In_Yield
   action: process_bitwise_and
 - rule: ElementList_Yield -> AssignmentExpression_In_Yield
-  action: undefined
+  action: process_element_list_head
 - rule: ElementList_Yield -> Elision AssignmentExpression_In_Yield
   action: undefined
 - rule: ElementList_Yield -> SpreadElement_Yield
@@ -3860,7 +3860,7 @@
 - rule: ElementList_Yield -> Elision SpreadElement_Yield
   action: undefined
 - rule: ElementList_Yield -> ElementList_Yield COMMA AssignmentExpression_In_Yield
-  action: undefined
+  action: process_element_list_item
 - rule: >-
     ElementList_Yield -> ElementList_Yield COMMA Elision
     AssignmentExpression_In_Yield
@@ -3900,7 +3900,7 @@
     BIT_AND EqualityExpression_In_Yield_Await
   action: process_bitwise_and
 - rule: ElementList_Yield_Await -> AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_element_list_head
 - rule: ElementList_Yield_Await -> Elision AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: ElementList_Yield_Await -> SpreadElement_Yield_Await
@@ -3910,7 +3910,7 @@
 - rule: >-
     ElementList_Yield_Await -> ElementList_Yield_Await COMMA
     AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_element_list_item
 - rule: >-
     ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision
     AssignmentExpression_In_Yield_Await
