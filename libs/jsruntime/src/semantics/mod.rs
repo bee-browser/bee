@@ -1223,6 +1223,11 @@ impl FunctionAnalysis {
             PropertyDefinitionKind::ArrayElement => {
                 self.commands.push(CompileCommand::PushArrayElement);
             }
+            PropertyDefinitionKind::ArrayEmptySlot => {
+                // TODO(refactor): perform `array.length += 1`
+                self.commands.push(CompileCommand::Undefined);
+                self.commands.push(CompileCommand::PushArrayElement);
+            }
             PropertyDefinitionKind::Reference => {
                 let symbol = match self.commands.pop() {
                     Some(CompileCommand::VariableReference(symbol)) => symbol,

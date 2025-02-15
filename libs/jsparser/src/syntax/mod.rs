@@ -86,6 +86,7 @@ enum Detail {
     Expression,
     ArrayLiteral,
     ElementList(usize),
+    Elision(usize),
     ObjectLiteral,
     PropertyDefinition(Symbol),
     PropertyDefinitionList(bool),
@@ -255,6 +256,7 @@ pub enum Node<'s> {
 #[derive(Clone, Debug)]
 pub enum PropertyDefinitionKind {
     ArrayElement,
+    ArrayEmptySlot,
     Reference,
     KeyValue,
     Spread,
@@ -1027,6 +1029,24 @@ where
     }
 
     // ArrayLiteral[Yield, Await] :
+    //   [ Elision ]
+    fn process_array_literal_elision(&mut self) -> Result<(), Error> {
+        self.pop(); // Token(])
+        let n = match self.pop().detail {
+            Detail::Elision(n) => n,
+            _ => unreachable!(),
+        };
+        self.top_mut().detail = Detail::ArrayLiteral;
+        self.update_ends();
+        for _ in 0..n {
+            self.enqueue(Node::PropertyDefinition(
+                PropertyDefinitionKind::ArrayEmptySlot,
+            ));
+        }
+        Ok(())
+    }
+
+    // ArrayLiteral[Yield, Await] :
     //   [ ElementList[?Yield, ?Await] ]
     fn process_array_literal_list(&mut self) -> Result<(), Error> {
         self.replace(3, Detail::ArrayLiteral);
@@ -1065,6 +1085,25 @@ where
         self.enqueue(Node::PropertyDefinition(
             PropertyDefinitionKind::ArrayElement,
         ));
+        Ok(())
+    }
+
+    // Elision :
+    //   ,
+    fn process_elision(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::Elision(1));
+        Ok(())
+    }
+
+    // Elision :
+    //   Elision ,
+    fn process_elision_list(&mut self) -> Result<(), Error> {
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::Elision(ref mut n) => *n += 1,
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
         Ok(())
     }
 

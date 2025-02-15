@@ -1367,9 +1367,9 @@
 - rule: BindingPropertyList -> BindingPropertyList COMMA BindingProperty
   action: undefined
 - rule: Elision -> COMMA
-  action: undefined
+  action: process_elision
 - rule: Elision -> Elision COMMA
-  action: undefined
+  action: process_elision_list
 - rule: BindingElementList -> BindingElisionElement
   action: undefined
 - rule: BindingElementList -> BindingElementList COMMA BindingElisionElement
@@ -2474,7 +2474,7 @@
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ RBRACK
   action: process_array_literal_empty
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
-  action: undefined
+  action: process_array_literal_elision
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await RBRACK
   action: process_array_literal_list
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA RBRACK
@@ -3209,7 +3209,7 @@
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ RBRACK
   action: process_array_literal_empty
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ Elision RBRACK
-  action: undefined
+  action: process_array_literal_elision
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList RBRACK
   action: process_array_literal_list
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA RBRACK
@@ -3439,7 +3439,7 @@
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ RBRACK
   action: process_array_literal_empty
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ Elision RBRACK
-  action: undefined
+  action: process_array_literal_elision
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield RBRACK
   action: process_array_literal_list
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA RBRACK
@@ -3481,7 +3481,7 @@
 - rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ RBRACK
   action: process_array_literal_empty
 - rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
-  action: undefined
+  action: process_array_literal_elision
 - rule: >-
     ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await
     RBRACK
