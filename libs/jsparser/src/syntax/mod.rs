@@ -1031,18 +1031,7 @@ where
     // ArrayLiteral[Yield, Await] :
     //   [ Elision ]
     fn process_array_literal_elision(&mut self) -> Result<(), Error> {
-        self.pop(); // Token(])
-        let n = match self.pop().detail {
-            Detail::Elision(n) => n,
-            _ => unreachable!(),
-        };
-        self.top_mut().detail = Detail::ArrayLiteral;
-        self.update_ends();
-        for _ in 0..n {
-            self.enqueue(Node::PropertyDefinition(
-                PropertyDefinitionKind::ArrayEmptySlot,
-            ));
-        }
+        self.replace(3, Detail::ArrayLiteral);
         Ok(())
     }
 
@@ -1060,12 +1049,31 @@ where
         Ok(())
     }
 
+    // ArrayLiteral[Yield, Await] :
+    //   [ ElementList[?Yield, ?Await] , Elision ]
+    fn process_array_literal_list_elision(&mut self) -> Result<(), Error> {
+        self.replace(5, Detail::ArrayLiteral);
+        Ok(())
+    }
+
     // ElementList[Yield, Await] :
     //   AssignmentExpression[+In, ?Yield, ?Await]
-    fn process_element_list_head(&mut self) -> Result<(), Error> {
-        let mut syntax = self.pop();
-        syntax.detail = Detail::ElementList(0);
-        self.push(syntax);
+    fn process_element_list_item(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::ElementList(1);
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   Elision AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_element_list_elision_item(&mut self) -> Result<(), Error> {
+        let n = match self.nth(1).detail {
+            Detail::Elision(n) => n,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.replace(2, Detail::ElementList(n + 1));
         self.enqueue(Node::PropertyDefinition(
             PropertyDefinitionKind::ArrayElement,
         ));
@@ -1074,7 +1082,7 @@ where
 
     // ElementList[Yield, Await] :
     //   ElementList[?Yield, ?Await] , AssignmentExpression[+In, ?Yield, ?Await]
-    fn process_element_list_item(&mut self) -> Result<(), Error> {
+    fn process_element_list_list_item(&mut self) -> Result<(), Error> {
         self.pop(); // Expression
         self.pop(); // Token(,)
         match self.top_mut().detail {
@@ -1088,10 +1096,35 @@ where
         Ok(())
     }
 
+    // ElementList[Yield, Await] :
+    //   ElementList[?Yield, ?Await] , Elision AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_element_list_list_elision_item(&mut self) -> Result<(), Error> {
+        self.pop(); // Expression
+        let n = match self.pop().detail {
+            Detail::Elision(n) => n,
+            detail => unreachable!("{detail:?}"),
+        };
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::ElementList(ref mut m) => *m += n + 1,
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
+        Ok(())
+    }
+
     // Elision :
     //   ,
     fn process_elision(&mut self) -> Result<(), Error> {
         self.replace(1, Detail::Elision(1));
+        // TODO(fix): `Elision` is used in `ArrayAssignmentPattern`.
+        // Renaming `Elision` in `ArrayAssignmentPattern` to something else can solve the issue.
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayEmptySlot,
+        ));
         Ok(())
     }
 
@@ -1104,6 +1137,11 @@ where
             ref detail => unreachable!("{detail:?}"),
         }
         self.update_ends();
+        // TODO(fix): `Elision` is used in `ArrayAssignmentPattern`.
+        // Renaming `Elision` in `ArrayAssignmentPattern` to something else can solve the issue.
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayEmptySlot,
+        ));
         Ok(())
     }
 
