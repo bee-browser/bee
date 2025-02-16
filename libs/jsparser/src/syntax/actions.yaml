@@ -3021,9 +3021,9 @@
 - rule: ElementList_Await -> ArrayInitializerElision AssignmentExpression_In_Await
   action: process_element_list_elision_item
 - rule: ElementList_Await -> SpreadElement_Await
-  action: undefined
+  action: process_element_list_spread
 - rule: ElementList_Await -> ArrayInitializerElision SpreadElement_Await
-  action: undefined
+  action: process_element_list_elision_spread
 - rule: ElementList_Await -> ElementList_Await COMMA AssignmentExpression_In_Await
   action: process_element_list_list_item
 - rule: >-
@@ -3031,11 +3031,11 @@
     AssignmentExpression_In_Await
   action: process_element_list_list_elision_item
 - rule: ElementList_Await -> ElementList_Await COMMA SpreadElement_Await
-  action: undefined
+  action: process_element_list_list_spread
 - rule: >-
     ElementList_Await -> ElementList_Await COMMA ArrayInitializerElision
     SpreadElement_Await
-  action: undefined
+  action: process_element_list_list_elision_spread
 - rule: _NEW_OBJECT_ -> (empty)
   action: process_new_object
 - rule: PropertyDefinitionList_Await -> PropertyDefinition_Await
@@ -3421,7 +3421,7 @@
     RelationalExpression_In_Await
   action: process_strict_inequality
 - rule: SpreadElement_Await -> ELLIPSIS AssignmentExpression_In_Await
-  action: undefined
+  action: process_spread_element
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
   action: process_property_definition_reference
 - rule: PropertyDefinition_Await -> CoverInitializedName_Await
@@ -3549,9 +3549,9 @@
 - rule: ElementList -> ArrayInitializerElision AssignmentExpression_In
   action: process_element_list_elision_item
 - rule: ElementList -> SpreadElement
-  action: undefined
+  action: process_element_list_spread
 - rule: ElementList -> ArrayInitializerElision SpreadElement
-  action: undefined
+  action: process_element_list_elision_spread
 - rule: ElementList -> ElementList COMMA AssignmentExpression_In
   action: process_element_list_list_item
 - rule: >-
@@ -3559,9 +3559,9 @@
     AssignmentExpression_In
   action: process_element_list_list_elision_item
 - rule: ElementList -> ElementList COMMA SpreadElement
-  action: undefined
+  action: process_element_list_list_spread
 - rule: ElementList -> ElementList COMMA ArrayInitializerElision SpreadElement
-  action: undefined
+  action: process_element_list_list_elision_spread
 - rule: PropertyDefinitionList -> PropertyDefinition
   action: process_property_definition_list_head
 - rule: PropertyDefinitionList -> PropertyDefinitionList COMMA PropertyDefinition
@@ -3876,9 +3876,9 @@
 - rule: ElementList_Yield -> ArrayInitializerElision AssignmentExpression_In_Yield
   action: process_element_list_elision_item
 - rule: ElementList_Yield -> SpreadElement_Yield
-  action: undefined
+  action: process_element_list_spread
 - rule: ElementList_Yield -> ArrayInitializerElision SpreadElement_Yield
-  action: undefined
+  action: process_element_list_elision_spread
 - rule: ElementList_Yield -> ElementList_Yield COMMA AssignmentExpression_In_Yield
   action: process_element_list_list_item
 - rule: >-
@@ -3886,11 +3886,11 @@
     AssignmentExpression_In_Yield
   action: process_element_list_list_elision_item
 - rule: ElementList_Yield -> ElementList_Yield COMMA SpreadElement_Yield
-  action: undefined
+  action: process_element_list_list_spread
 - rule: >-
     ElementList_Yield -> ElementList_Yield COMMA ArrayInitializerElision
     SpreadElement_Yield
-  action: undefined
+  action: process_element_list_list_elision_spread
 - rule: PropertyDefinitionList_Yield -> PropertyDefinition_Yield
   action: process_property_definition_list_head
 - rule: >-
@@ -3928,9 +3928,9 @@
     AssignmentExpression_In_Yield_Await
   action: process_element_list_elision_item
 - rule: ElementList_Yield_Await -> SpreadElement_Yield_Await
-  action: undefined
+  action: process_element_list_spread
 - rule: ElementList_Yield_Await -> ArrayInitializerElision SpreadElement_Yield_Await
-  action: undefined
+  action: process_element_list_elision_spread
 - rule: >-
     ElementList_Yield_Await -> ElementList_Yield_Await COMMA
     AssignmentExpression_In_Yield_Await
@@ -3942,11 +3942,11 @@
 - rule: >-
     ElementList_Yield_Await -> ElementList_Yield_Await COMMA
     SpreadElement_Yield_Await
-  action: undefined
+  action: process_element_list_list_spread
 - rule: >-
     ElementList_Yield_Await -> ElementList_Yield_Await COMMA
     ArrayInitializerElision SpreadElement_Yield_Await
-  action: undefined
+  action: process_element_list_list_elision_spread
 - rule: PropertyDefinitionList_Yield_Await -> PropertyDefinition_Yield_Await
   action: process_property_definition_list_head
 - rule: >-
@@ -3991,7 +3991,7 @@
     RelationalExpression_In
   action: process_strict_inequality
 - rule: SpreadElement -> ELLIPSIS AssignmentExpression_In
-  action: undefined
+  action: process_spread_element
 - rule: PropertyDefinition -> IdentifierReference
   action: process_property_definition_reference
 - rule: PropertyDefinition -> CoverInitializedName
@@ -4332,7 +4332,7 @@
     RelationalExpression_In_Yield
   action: process_strict_inequality
 - rule: SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield
-  action: undefined
+  action: process_spread_element
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
   action: process_property_definition_reference
 - rule: PropertyDefinition_Yield -> CoverInitializedName_Yield
@@ -4372,7 +4372,7 @@
     NE_STRICT RelationalExpression_In_Yield_Await
   action: process_strict_inequality
 - rule: SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_spread_element
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
   action: process_property_definition_reference
 - rule: PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await

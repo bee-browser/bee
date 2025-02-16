@@ -1228,6 +1228,10 @@ impl FunctionAnalysis {
                 self.commands.push(CompileCommand::Undefined);
                 self.commands.push(CompileCommand::PushArrayElement);
             }
+            PropertyDefinitionKind::ArraySpread => {
+                // 13.2.4.1 Runtime Semantics: ArrayAccumulation
+                todo!("feat(jsruntime): GetIterator(spreadObj, sync)");
+            }
             PropertyDefinitionKind::Reference => {
                 let symbol = match self.commands.pop() {
                     Some(CompileCommand::VariableReference(symbol)) => symbol,

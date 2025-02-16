@@ -85,7 +85,7 @@ grammar.txt: $(ECMA262_DIR)/spec.html
 grammar.yaml: grammar.txt ../transpile.js ../lexer/tokens.json
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
-	  deno run --allow-read ../transpile.js -d -g syntactic -t ../lexer/tokens.json \
+	  deno run --allow-read ../transpile.js -g syntactic -t ../lexer/tokens.json \
 	    $(TRANSPILE_ARGS) | \
 	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 

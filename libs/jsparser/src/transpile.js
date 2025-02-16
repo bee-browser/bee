@@ -640,6 +640,8 @@ function addActions(rules) {
   return rules;
 }
 
+// The `Elision` production rule is used in multiple production rules.  We rename it in order to
+// perform a different action for each context.
 function modifyElision(rules) {
   function replace(values, term) {
     return values.map((value) => value.replaceAll('Elision', term));
@@ -685,13 +687,13 @@ function modifyElision(rules) {
   log.debug('Adding the production rule for ArrayInitializerElision...');
   rules.push({
     name: 'ArrayInitializerElision',
-    values: ['`,`', 'ArrayInitializerElision `,`',],
+    values: ['`,`', 'ArrayInitializerElision `,`'],
   });
 
   log.debug('Adding the production rule for ArrayPatternElision...');
   rules.push({
     name: 'ArrayPatternElision',
-    values: ['`,`', 'ArrayPatternElision `,`',],
+    values: ['`,`', 'ArrayPatternElision `,`'],
   });
 
   return rules;
