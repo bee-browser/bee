@@ -679,21 +679,23 @@
   action: object_pattern_comma_rest
 - rule: ArrayBindingPattern -> LBRACK RBRACK
   action: array_pattern_empty
-- rule: ArrayBindingPattern -> LBRACK Elision RBRACK
+- rule: ArrayBindingPattern -> LBRACK ArrayPatternElision RBRACK
   action: array_pattern
 - rule: ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
   action: array_pattern_rest
-- rule: ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
+- rule: ArrayBindingPattern -> LBRACK ArrayPatternElision BindingRestElement RBRACK
   action: array_pattern_elision_rest
 - rule: ArrayBindingPattern -> LBRACK BindingElementList RBRACK
   action: array_pattern
 - rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
   action: array_pattern_comma
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
+- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA ArrayPatternElision RBRACK
   action: array_pattern_concat
 - rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
   action: array_pattern_comma_rest
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
+- rule: >-
+    ArrayBindingPattern -> LBRACK BindingElementList COMMA ArrayPatternElision BindingRestElement
+    RBRACK
   action: array_pattern_concat_rest
 - rule: SingleNameBinding -> BindingIdentifier
   action: single_name_binding
@@ -715,24 +717,24 @@
   action: object_pattern_comma_rest
 - rule: ArrayBindingPattern_Yield -> LBRACK RBRACK
   action: array_pattern_empty
-- rule: ArrayBindingPattern_Yield -> LBRACK Elision RBRACK
+- rule: ArrayBindingPattern_Yield -> LBRACK ArrayPatternElision RBRACK
   action: array_pattern
 - rule: ArrayBindingPattern_Yield -> LBRACK BindingRestElement_Yield RBRACK
   action: array_pattern_rest
-- rule: ArrayBindingPattern_Yield -> LBRACK Elision BindingRestElement_Yield RBRACK
+- rule: ArrayBindingPattern_Yield -> LBRACK ArrayPatternElision BindingRestElement_Yield RBRACK
   action: array_pattern_elision_rest
 - rule: ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield RBRACK
   action: array_pattern
 - rule: ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA RBRACK
   action: array_pattern_comma
-- rule: ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA Elision RBRACK
+- rule: ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA ArrayPatternElision RBRACK
   action: array_pattern_concat
 - rule: >-
     ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA BindingRestElement_Yield
     RBRACK
   action: array_pattern_comma_rest
 - rule: >-
-    ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA Elision
+    ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA ArrayPatternElision
     BindingRestElement_Yield RBRACK
   action: array_pattern_concat_rest
 - rule: SingleNameBinding_Yield -> BindingIdentifier_Yield
@@ -755,24 +757,24 @@
   action: object_pattern_comma_rest
 - rule: ArrayBindingPattern_Await -> LBRACK RBRACK
   action: array_pattern_empty
-- rule: ArrayBindingPattern_Await -> LBRACK Elision RBRACK
+- rule: ArrayBindingPattern_Await -> LBRACK ArrayPatternElision RBRACK
   action: array_pattern
 - rule: ArrayBindingPattern_Await -> LBRACK BindingRestElement_Await RBRACK
   action: array_pattern_rest
-- rule: ArrayBindingPattern_Await -> LBRACK Elision BindingRestElement_Await RBRACK
+- rule: ArrayBindingPattern_Await -> LBRACK ArrayPatternElision BindingRestElement_Await RBRACK
   action: array_pattern_elision_rest
 - rule: ArrayBindingPattern_Await -> LBRACK BindingElementList_Await RBRACK
   action: array_pattern
 - rule: ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA RBRACK
   action: array_pattern_comma
-- rule: ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA Elision RBRACK
+- rule: ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA ArrayPatternElision RBRACK
   action: array_pattern_concat
 - rule: >-
     ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA BindingRestElement_Await
     RBRACK
   action: array_pattern_comma_rest
 - rule: >-
-    ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA Elision
+    ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA ArrayPatternElision
     BindingRestElement_Await RBRACK
   action: array_pattern_concat_rest
 - rule: SingleNameBinding_Await -> BindingIdentifier_Await
@@ -795,25 +797,29 @@
   action: object_pattern_comma_rest
 - rule: ArrayBindingPattern_Yield_Await -> LBRACK RBRACK
   action: array_pattern_empty
-- rule: ArrayBindingPattern_Yield_Await -> LBRACK Elision RBRACK
+- rule: ArrayBindingPattern_Yield_Await -> LBRACK ArrayPatternElision RBRACK
   action: array_pattern
 - rule: ArrayBindingPattern_Yield_Await -> LBRACK BindingRestElement_Yield_Await RBRACK
   action: array_pattern_rest
-- rule: ArrayBindingPattern_Yield_Await -> LBRACK Elision BindingRestElement_Yield_Await RBRACK
+- rule: >-
+    ArrayBindingPattern_Yield_Await -> LBRACK ArrayPatternElision BindingRestElement_Yield_Await
+    RBRACK
   action: array_pattern_elision_rest
 - rule: ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await RBRACK
   action: array_pattern
 - rule: ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA RBRACK
   action: array_pattern_comma
-- rule: ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA Elision RBRACK
+- rule: >-
+    ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA
+    ArrayPatternElision RBRACK
   action: array_pattern_concat
 - rule: >-
     ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA
     BindingRestElement_Yield_Await RBRACK
   action: array_pattern_comma_rest
 - rule: >-
-    ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA Elision
-    BindingRestElement_Yield_Await RBRACK
+    ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA
+    ArrayPatternElision BindingRestElement_Yield_Await RBRACK
   action: array_pattern_concat_rest
 - rule: SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await
   action: single_name_binding
@@ -1253,9 +1259,9 @@
   action: create_list
 - rule: BindingPropertyList -> BindingPropertyList COMMA BindingProperty
   action: append_to_csv_list
-- rule: Elision -> COMMA
+- rule: ArrayPatternElision -> COMMA
   action: elision
-- rule: Elision -> Elision COMMA
+- rule: ArrayPatternElision -> ArrayPatternElision COMMA
   action: elision_append
 - rule: BindingElementList -> BindingElisionElement
   action: nop
@@ -1674,7 +1680,7 @@
   action: property_value
 - rule: BindingElisionElement -> BindingElement
   action: create_array
-- rule: BindingElisionElement -> Elision BindingElement
+- rule: BindingElisionElement -> ArrayPatternElision BindingElement
   action: append_to_array
 - rule: BindingProperty_Yield -> SingleNameBinding_Yield
   action: either_right
@@ -1682,7 +1688,7 @@
   action: property_value
 - rule: BindingElisionElement_Yield -> BindingElement_Yield
   action: create_array
-- rule: BindingElisionElement_Yield -> Elision BindingElement_Yield
+- rule: BindingElisionElement_Yield -> ArrayPatternElision BindingElement_Yield
   action: append_to_array
 - rule: ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
   action: nop
@@ -1722,7 +1728,7 @@
   action: property_value
 - rule: BindingElisionElement_Await -> BindingElement_Await
   action: create_array
-- rule: BindingElisionElement_Await -> Elision BindingElement_Await
+- rule: BindingElisionElement_Await -> ArrayPatternElision BindingElement_Await
   action: append_to_array
 - rule: BindingProperty_Yield_Await -> SingleNameBinding_Yield_Await
   action: either_right
@@ -1730,7 +1736,7 @@
   action: property_value
 - rule: BindingElisionElement_Yield_Await -> BindingElement_Yield_Await
   action: create_array
-- rule: BindingElisionElement_Yield_Await -> Elision BindingElement_Yield_Await
+- rule: BindingElisionElement_Yield_Await -> ArrayPatternElision BindingElement_Yield_Await
   action: append_to_array
 - rule: ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await
   action: nop
@@ -2260,13 +2266,13 @@
   action: string_literal
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ RBRACK
   action: array_expression_empty
-- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ArrayInitializerElision RBRACK
   action: array_expression
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await RBRACK
   action: array_expression
 - rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA RBRACK
   action: array_expression_comma
-- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA Elision RBRACK
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA ArrayInitializerElision RBRACK
   action: array_expression_comma_elision
 - rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
@@ -2722,21 +2728,27 @@
   action: boolean_literal_false
 - rule: _NEW_ARRAY_ -> (empty)
   action: nop
+- rule: ArrayInitializerElision -> COMMA
+  action: elision
+- rule: ArrayInitializerElision -> ArrayInitializerElision COMMA
+  action: elision_append
 - rule: ElementList_Await -> AssignmentExpression_In_Await
   action: create_array
-- rule: ElementList_Await -> Elision AssignmentExpression_In_Await
+- rule: ElementList_Await -> ArrayInitializerElision AssignmentExpression_In_Await
   action: append_to_array
 - rule: ElementList_Await -> SpreadElement_Await
   action: create_array
-- rule: ElementList_Await -> Elision SpreadElement_Await
+- rule: ElementList_Await -> ArrayInitializerElision SpreadElement_Await
   action: append_to_array
 - rule: ElementList_Await -> ElementList_Await COMMA AssignmentExpression_In_Await
   action: append_to_csv_array
-- rule: ElementList_Await -> ElementList_Await COMMA Elision AssignmentExpression_In_Await
+- rule: >-
+    ElementList_Await -> ElementList_Await COMMA ArrayInitializerElision
+    AssignmentExpression_In_Await
   action: concat_and_append_array
 - rule: ElementList_Await -> ElementList_Await COMMA SpreadElement_Await
   action: append_to_csv_array
-- rule: ElementList_Await -> ElementList_Await COMMA Elision SpreadElement_Await
+- rule: ElementList_Await -> ElementList_Await COMMA ArrayInitializerElision SpreadElement_Await
   action: concat_and_append_array
 - rule: _NEW_OBJECT_ -> (empty)
   action: nop
@@ -2909,13 +2921,13 @@
   action: identifier
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ RBRACK
   action: array_expression_empty
-- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ Elision RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ArrayInitializerElision RBRACK
   action: array_expression
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList RBRACK
   action: array_expression
 - rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA RBRACK
   action: array_expression_comma
-- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA Elision RBRACK
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA ArrayInitializerElision RBRACK
   action: array_expression_comma_elision
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
@@ -3125,13 +3137,13 @@
   action: identifier
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ RBRACK
   action: array_expression_empty
-- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ Elision RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ArrayInitializerElision RBRACK
   action: array_expression
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield RBRACK
   action: array_expression
 - rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA RBRACK
   action: array_expression_comma
-- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA Elision RBRACK
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA ArrayInitializerElision RBRACK
   action: array_expression_comma_elision
 - rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
@@ -3161,13 +3173,15 @@
   action: nop
 - rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ RBRACK
   action: array_expression_empty
-- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ Elision RBRACK
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ArrayInitializerElision RBRACK
   action: array_expression
 - rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await RBRACK
   action: array_expression
 - rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA RBRACK
   action: array_expression_comma
-- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA Elision RBRACK
+- rule: >-
+    ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA
+    ArrayInitializerElision RBRACK
   action: array_expression_comma_elision
 - rule: ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: object_expression_empty
@@ -3195,19 +3209,19 @@
   action: binary_expression
 - rule: ElementList -> AssignmentExpression_In
   action: create_array
-- rule: ElementList -> Elision AssignmentExpression_In
+- rule: ElementList -> ArrayInitializerElision AssignmentExpression_In
   action: append_to_array
 - rule: ElementList -> SpreadElement
   action: create_array
-- rule: ElementList -> Elision SpreadElement
+- rule: ElementList -> ArrayInitializerElision SpreadElement
   action: append_to_array
 - rule: ElementList -> ElementList COMMA AssignmentExpression_In
   action: append_to_csv_array
-- rule: ElementList -> ElementList COMMA Elision AssignmentExpression_In
+- rule: ElementList -> ElementList COMMA ArrayInitializerElision AssignmentExpression_In
   action: concat_and_append_array
 - rule: ElementList -> ElementList COMMA SpreadElement
   action: append_to_csv_array
-- rule: ElementList -> ElementList COMMA Elision SpreadElement
+- rule: ElementList -> ElementList COMMA ArrayInitializerElision SpreadElement
   action: concat_and_append_array
 - rule: PropertyDefinitionList -> PropertyDefinition
   action: create_list
@@ -3471,19 +3485,21 @@
   action: binary_expression
 - rule: ElementList_Yield -> AssignmentExpression_In_Yield
   action: create_array
-- rule: ElementList_Yield -> Elision AssignmentExpression_In_Yield
+- rule: ElementList_Yield -> ArrayInitializerElision AssignmentExpression_In_Yield
   action: append_to_array
 - rule: ElementList_Yield -> SpreadElement_Yield
   action: create_array
-- rule: ElementList_Yield -> Elision SpreadElement_Yield
+- rule: ElementList_Yield -> ArrayInitializerElision SpreadElement_Yield
   action: append_to_array
 - rule: ElementList_Yield -> ElementList_Yield COMMA AssignmentExpression_In_Yield
   action: append_to_csv_array
-- rule: ElementList_Yield -> ElementList_Yield COMMA Elision AssignmentExpression_In_Yield
+- rule: >-
+    ElementList_Yield -> ElementList_Yield COMMA ArrayInitializerElision
+    AssignmentExpression_In_Yield
   action: concat_and_append_array
 - rule: ElementList_Yield -> ElementList_Yield COMMA SpreadElement_Yield
   action: append_to_csv_array
-- rule: ElementList_Yield -> ElementList_Yield COMMA Elision SpreadElement_Yield
+- rule: ElementList_Yield -> ElementList_Yield COMMA ArrayInitializerElision SpreadElement_Yield
   action: concat_and_append_array
 - rule: PropertyDefinitionList_Yield -> PropertyDefinition_Yield
   action: create_list
@@ -3513,21 +3529,23 @@
   action: binary_expression
 - rule: ElementList_Yield_Await -> AssignmentExpression_In_Yield_Await
   action: create_array
-- rule: ElementList_Yield_Await -> Elision AssignmentExpression_In_Yield_Await
+- rule: ElementList_Yield_Await -> ArrayInitializerElision AssignmentExpression_In_Yield_Await
   action: append_to_array
 - rule: ElementList_Yield_Await -> SpreadElement_Yield_Await
   action: create_array
-- rule: ElementList_Yield_Await -> Elision SpreadElement_Yield_Await
+- rule: ElementList_Yield_Await -> ArrayInitializerElision SpreadElement_Yield_Await
   action: append_to_array
 - rule: ElementList_Yield_Await -> ElementList_Yield_Await COMMA AssignmentExpression_In_Yield_Await
   action: append_to_csv_array
 - rule: >-
-    ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision
+    ElementList_Yield_Await -> ElementList_Yield_Await COMMA ArrayInitializerElision
     AssignmentExpression_In_Yield_Await
   action: concat_and_append_array
 - rule: ElementList_Yield_Await -> ElementList_Yield_Await COMMA SpreadElement_Yield_Await
   action: append_to_csv_array
-- rule: ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision SpreadElement_Yield_Await
+- rule: >-
+    ElementList_Yield_Await -> ElementList_Yield_Await COMMA ArrayInitializerElision
+    SpreadElement_Yield_Await
   action: concat_and_append_array
 - rule: PropertyDefinitionList_Yield_Await -> PropertyDefinition_Yield_Await
   action: create_list

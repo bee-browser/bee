@@ -61,7 +61,7 @@ function transform(rules) {
 }
 
 function convertTokenNames(rules) {
-  log.debug('Convert token names in the constant case...');
+  log.debug('Converting token names in the constant case...');
   for (const rule of rules) {
     for (const term of rule.production) {
       switch (term.type) {
@@ -99,7 +99,7 @@ function rewriteIdentifierName(rules) {
       }
     }
     if (changed) {
-      log.debug(`  Rewrite ${rule.name}`);
+      log.debug(`  ${rule.name} changed`);
     }
   }
 
@@ -162,6 +162,7 @@ class Transpiler {
           // conflicts in the LALR(1) parsing table generation when you actually try this.
           //rewriteCPEAAPL,
           addActions,
+          modifyElision,
           modifyArrayLiteral,
           modifyObjectLiteral,
           modifyOptionalChain,
@@ -635,6 +636,63 @@ function addActions(rules) {
       values: ['[empty]'],
     });
   }
+
+  return rules;
+}
+
+function modifyElision(rules) {
+  function replace(values, term) {
+    return values.map((value) => value.replaceAll('Elision', term));
+  }
+
+  let rule;
+
+  log.debug('Replacing Elision in ArrayLiteral with ArrayInitializerElision...');
+  rule = rules.find((rule) => rule.name === 'ArrayLiteral[Yield, Await]');
+  assert(rule !== undefined);
+  rule.values = replace(rule.values, 'ArrayInitializerElision');
+
+  log.debug('Replacing Elision in ElementList with ArrayInitializerElision...');
+  rule = rules.find((rule) => rule.name === 'ElementList[Yield, Await]');
+  assert(rule !== undefined);
+  rule.values = replace(rule.values, 'ArrayInitializerElision');
+
+  log.debug('Replacing Elision in ArrayAssignmentPattern with ArrayPatternElision...');
+  rule = rules.find((rule) => rule.name === 'ArrayAssignmentPattern[Yield, Await]');
+  assert(rule !== undefined);
+  rule.values = replace(rule.values, 'ArrayPatternElision');
+
+  log.debug('Replacing Elision in AssignmentElisionElement with ArrayPatternElision...');
+  rule = rules.find((rule) => rule.name === 'AssignmentElisionElement[Yield, Await]');
+  assert(rule !== undefined);
+  rule.values = replace(rule.values, 'ArrayPatternElision');
+
+  log.debug('Replacing Elision in ArrayBindingPattern with ArrayPatternElision...');
+  rule = rules.find((rule) => rule.name === 'ArrayBindingPattern[Yield, Await]');
+  assert(rule !== undefined);
+  rule.values = replace(rule.values, 'ArrayPatternElision');
+
+  log.debug('Replacing Elision in BindingElisionElement with ArrayPatternElision...');
+  rule = rules.find((rule) => rule.name === 'BindingElisionElement[Yield, Await]');
+  assert(rule !== undefined);
+  rule.values = replace(rule.values, 'ArrayPatternElision');
+
+  log.debug('Removing the production rule for Elision...');
+  const i = rules.findIndex((rule) => rule.name === 'Elision');
+  assert(i !== -1);
+  rules.splice(i, 1);
+
+  log.debug('Adding the production rule for ArrayInitializerElision...');
+  rules.push({
+    name: 'ArrayInitializerElision',
+    values: ['`,`', 'ArrayInitializerElision `,`',],
+  });
+
+  log.debug('Adding the production rule for ArrayPatternElision...');
+  rules.push({
+    name: 'ArrayPatternElision',
+    values: ['`,`', 'ArrayPatternElision `,`',],
+  });
 
   return rules;
 }

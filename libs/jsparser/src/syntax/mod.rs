@@ -86,7 +86,7 @@ enum Detail {
     Expression,
     ArrayLiteral,
     ElementList(usize),
-    Elision(usize),
+    ArrayInitializerElision(usize),
     ObjectLiteral,
     PropertyDefinition(Symbol),
     PropertyDefinitionList(bool),
@@ -1070,7 +1070,7 @@ where
     //   Elision AssignmentExpression[+In, ?Yield, ?Await]
     fn process_element_list_elision_item(&mut self) -> Result<(), Error> {
         let n = match self.nth(1).detail {
-            Detail::Elision(n) => n,
+            Detail::ArrayInitializerElision(n) => n,
             ref detail => unreachable!("{detail:?}"),
         };
         self.replace(2, Detail::ElementList(n + 1));
@@ -1101,7 +1101,7 @@ where
     fn process_element_list_list_elision_item(&mut self) -> Result<(), Error> {
         self.pop(); // Expression
         let n = match self.pop().detail {
-            Detail::Elision(n) => n,
+            Detail::ArrayInitializerElision(n) => n,
             detail => unreachable!("{detail:?}"),
         };
         self.pop(); // Token(,)
@@ -1116,29 +1116,25 @@ where
         Ok(())
     }
 
-    // Elision :
+    // ArrayInitializerElision :
     //   ,
-    fn process_elision(&mut self) -> Result<(), Error> {
-        self.replace(1, Detail::Elision(1));
-        // TODO(fix): `Elision` is used in `ArrayAssignmentPattern`.
-        // Renaming `Elision` in `ArrayAssignmentPattern` to something else can solve the issue.
+    fn process_array_initializer_elision(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::ArrayInitializerElision(1));
         self.enqueue(Node::PropertyDefinition(
             PropertyDefinitionKind::ArrayEmptySlot,
         ));
         Ok(())
     }
 
-    // Elision :
-    //   Elision ,
-    fn process_elision_list(&mut self) -> Result<(), Error> {
+    // ArrayInitializerElision :
+    //   ArrayInitializerElision ,
+    fn process_array_initializer_elision_list(&mut self) -> Result<(), Error> {
         self.pop(); // Token(,)
         match self.top_mut().detail {
-            Detail::Elision(ref mut n) => *n += 1,
+            Detail::ArrayInitializerElision(ref mut n) => *n += 1,
             ref detail => unreachable!("{detail:?}"),
         }
         self.update_ends();
-        // TODO(fix): `Elision` is used in `ArrayAssignmentPattern`.
-        // Renaming `Elision` in `ArrayAssignmentPattern` to something else can solve the issue.
         self.enqueue(Node::PropertyDefinition(
             PropertyDefinitionKind::ArrayEmptySlot,
         ));
