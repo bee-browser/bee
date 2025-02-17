@@ -2,10 +2,10 @@ use std::ffi::c_char;
 use std::ffi::c_void;
 
 use base::static_assert_size_eq;
-use jsparser::Symbol;
 
 use crate::logger;
 use crate::objects::Object;
+use crate::objects::PropertyKey;
 use crate::types::Capture;
 use crate::types::Char16Seq;
 use crate::types::Closure;
@@ -42,12 +42,27 @@ pub struct RuntimeFunctions {
     create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
     // TODO(perf): `get_value()` and `set_value()` are slow... Compute the address of the value by
     // using a base address and the offset for each property instead of calling these functions.
-    get_value: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, bool) -> *const Value,
-    set_value: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value),
-    create_data_property:
+    get_value_by_symbol: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, bool) -> *const Value,
+    get_value_by_number: unsafe extern "C" fn(*mut c_void, *mut c_void, f64, bool) -> *const Value,
+    get_value_by_value:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, bool) -> *const Value,
+    set_value_by_symbol: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value),
+    set_value_by_number: unsafe extern "C" fn(*mut c_void, *mut c_void, f64, *const Value),
+    set_value_by_value: unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *const Value),
+    create_data_property_by_symbol:
         unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
+    create_data_property_by_number:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, f64, *const Value, *mut Value) -> Status,
+    create_data_property_by_value: unsafe extern "C" fn(
+        *mut c_void,
+        *mut c_void,
+        *const Value,
+        *const Value,
+        *mut Value,
+    ) -> Status,
     copy_data_properties:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
+    push_value: unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
     assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_bool: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
@@ -78,10 +93,17 @@ impl RuntimeFunctions {
             resume: runtime_resume::<X>,
             emit_promise_resolved: runtime_emit_promise_resolved::<X>,
             create_object: runtime_create_object::<X>,
-            get_value: runtime_get_value::<X>,
-            set_value: runtime_set_value::<X>,
-            create_data_property: runtime_create_data_property::<X>,
+            get_value_by_symbol: runtime_get_value_by_symbol::<X>,
+            get_value_by_number: runtime_get_value_by_number::<X>,
+            get_value_by_value: runtime_get_value_by_value::<X>,
+            set_value_by_symbol: runtime_set_value_by_symbol::<X>,
+            set_value_by_number: runtime_set_value_by_number::<X>,
+            set_value_by_value: runtime_set_value_by_value::<X>,
+            create_data_property_by_symbol: runtime_create_data_property_by_symbol::<X>,
+            create_data_property_by_number: runtime_create_data_property_by_number::<X>,
+            create_data_property_by_value: runtime_create_data_property_by_value::<X>,
             copy_data_properties: runtime_copy_data_properties::<X>,
+            push_value: runtime_push_value::<X>,
             assert: runtime_assert,
             print_bool: runtime_print_bool,
             print_u32: runtime_print_u32,
@@ -109,6 +131,12 @@ macro_rules! into_string {
 macro_rules! into_value {
     ($value:expr) => {
         &*($value)
+    };
+}
+
+macro_rules! into_value_mut {
+    ($value:expr) => {
+        &mut *($value)
     };
 }
 
@@ -428,7 +456,7 @@ unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void) -> *mut c_vo
     runtime.create_object() as *mut Object as *mut c_void
 }
 
-unsafe extern "C" fn runtime_get_value<X>(
+unsafe extern "C" fn runtime_get_value_by_symbol<X>(
     runtime: *mut c_void,
     object: *mut c_void,
     key: u32,
@@ -442,11 +470,11 @@ unsafe extern "C" fn runtime_get_value<X>(
     let runtime = into_runtime!(runtime, X);
 
     debug_assert_ne!(key, 0);
-    let key = Symbol::from(key);
+    let key = PropertyKey::Symbol(key);
 
     let result = match (object as *mut Object).as_ref() {
-        Some(object) => object.get_value(key),
-        None => runtime.global_object().get_value(key),
+        Some(object) => object.get_value(&key),
+        None => runtime.global_object().get_value(&key),
     };
 
     match result {
@@ -456,7 +484,63 @@ unsafe extern "C" fn runtime_get_value<X>(
     }
 }
 
-unsafe extern "C" fn runtime_set_value<X>(
+unsafe extern "C" fn runtime_get_value_by_number<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: f64,
+    strict: bool,
+) -> *const Value {
+    // FIXME: `Value` cannot be defined with `static` because it doesn't implement `Sync`.
+    static UNDEFINED: (u8, u64) = (1, 0);
+    static_assert_size_eq!((u8, u64), Value);
+
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert!(f64::is_finite(key));
+    let key = PropertyKey::Number(key);
+
+    let result = match (object as *mut Object).as_ref() {
+        Some(object) => object.get_value(&key),
+        None => runtime.global_object().get_value(&key),
+    };
+
+    match result {
+        Some(v) => v as *const Value,
+        None if strict => std::ptr::null(),
+        None => std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value,
+    }
+}
+
+unsafe extern "C" fn runtime_get_value_by_value<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: *const Value,
+    strict: bool,
+) -> *const Value {
+    // FIXME: `Value` cannot be defined with `static` because it doesn't implement `Sync`.
+    static UNDEFINED: (u8, u64) = (1, 0);
+    static_assert_size_eq!((u8, u64), Value);
+
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(key, std::ptr::null());
+    let key = runtime.make_property_key(into_value!(key));
+
+    let result = match (object as *mut Object).as_ref() {
+        Some(object) => object.get_value(&key),
+        None => runtime.global_object().get_value(&key),
+    };
+
+    match result {
+        Some(v) => v as *const Value,
+        None if strict => std::ptr::null(),
+        None => std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value,
+    }
+}
+
+unsafe extern "C" fn runtime_set_value_by_symbol<X>(
     runtime: *mut c_void,
     object: *mut c_void,
     key: u32,
@@ -466,35 +550,159 @@ unsafe extern "C" fn runtime_set_value<X>(
     let runtime = into_runtime!(runtime, X);
 
     debug_assert_ne!(key, 0);
-    let key = Symbol::from(key);
+    let key = PropertyKey::Symbol(key);
 
     debug_assert_ne!(value, std::ptr::null());
-    let value = value.as_ref().unwrap();
+    let value = into_value!(value);
 
     match (object as *mut Object).as_mut() {
-        Some(object) => object.set_value(key, value),
-        None => runtime.global_object_mut().set_value(key, value),
+        Some(object) => object.set_value(&key, value),
+        None => runtime.global_object_mut().set_value(&key, value),
+    }
+}
+
+unsafe extern "C" fn runtime_set_value_by_number<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: f64,
+    value: *const Value,
+) {
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert!(f64::is_finite(key));
+    let key = PropertyKey::Number(key);
+
+    debug_assert_ne!(value, std::ptr::null());
+    let value = into_value!(value);
+
+    match (object as *mut Object).as_mut() {
+        Some(object) => object.set_value(&key, value),
+        None => runtime.global_object_mut().set_value(&key, value),
+    }
+}
+
+unsafe extern "C" fn runtime_set_value_by_value<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: *const Value,
+    value: *const Value,
+) {
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(key, std::ptr::null());
+    let key = runtime.make_property_key(into_value!(value));
+
+    debug_assert_ne!(value, std::ptr::null());
+    let value = into_value!(value);
+
+    match (object as *mut Object).as_mut() {
+        Some(object) => object.set_value(&key, value),
+        None => runtime.global_object_mut().set_value(&key, value),
     }
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
-unsafe extern "C" fn runtime_create_data_property<X>(
+unsafe extern "C" fn runtime_create_data_property_by_symbol<X>(
     runtime: *mut c_void,
     object: *mut c_void,
-    name: u32,
+    key: u32,
     value: *const Value,
     retv: *mut Value,
 ) -> Status {
-    debug_assert_ne!(name, 0);
-
     // TODO(refactor): generate ffi-conversion code by script
-    let runtime = into_runtime!(runtime, X);
-    let object = object.cast::<Object>().as_mut().unwrap();
-    let name = Symbol::from(name);
-    let value = value.as_ref().unwrap();
-    let retv = retv.as_mut().unwrap();
 
-    match runtime.create_data_property(object, name, value) {
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(object, std::ptr::null_mut());
+    let object = object.cast::<Object>().as_mut().unwrap();
+
+    debug_assert_ne!(key, 0);
+    let key = PropertyKey::Symbol(key);
+
+    debug_assert_ne!(value, std::ptr::null());
+    let value = into_value!(value);
+
+    debug_assert_ne!(retv, std::ptr::null_mut());
+    let retv = into_value_mut!(retv);
+
+    match runtime.create_data_property(object, &key, value) {
+        Ok(success) => {
+            *retv = success.into();
+            Status::Normal
+        }
+        Err(exception) => {
+            *retv = exception;
+            Status::Exception
+        }
+    }
+}
+
+// 7.3.5 CreateDataProperty ( O, P, V )
+unsafe extern "C" fn runtime_create_data_property_by_number<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: f64,
+    value: *const Value,
+    retv: *mut Value,
+) -> Status {
+    // TODO(refactor): generate ffi-conversion code by script
+
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(object, std::ptr::null_mut());
+    let object = object.cast::<Object>().as_mut().unwrap();
+
+    debug_assert!(f64::is_finite(key));
+    let key = PropertyKey::Number(key);
+
+    debug_assert_ne!(value, std::ptr::null());
+    let value = into_value!(value);
+
+    debug_assert_ne!(retv, std::ptr::null_mut());
+    let retv = into_value_mut!(retv);
+
+    match runtime.create_data_property(object, &key, value) {
+        Ok(success) => {
+            *retv = success.into();
+            Status::Normal
+        }
+        Err(exception) => {
+            *retv = exception;
+            Status::Exception
+        }
+    }
+}
+
+// 7.3.5 CreateDataProperty ( O, P, V )
+unsafe extern "C" fn runtime_create_data_property_by_value<X>(
+    runtime: *mut c_void,
+    object: *mut c_void,
+    key: *const Value,
+    value: *const Value,
+    retv: *mut Value,
+) -> Status {
+    // TODO(refactor): generate ffi-conversion code by script
+
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(object, std::ptr::null_mut());
+    let object = object.cast::<Object>().as_mut().unwrap();
+
+    debug_assert_ne!(key, std::ptr::null());
+    let key = runtime.make_property_key(into_value!(value));
+
+    debug_assert_ne!(value, std::ptr::null());
+    let value = into_value!(value);
+
+    debug_assert_ne!(retv, std::ptr::null_mut());
+    let retv = into_value_mut!(retv);
+
+    match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
             *retv = success.into();
             Status::Normal
@@ -520,6 +728,38 @@ unsafe extern "C" fn runtime_copy_data_properties<X>(
     let retv = retv.as_mut().unwrap();
 
     match runtime.copy_data_properties(target, source) {
+        Ok(()) => {
+            *retv = Value::None;
+            Status::Normal
+        }
+        Err(exception) => {
+            *retv = exception;
+            Status::Exception
+        }
+    }
+}
+
+unsafe extern "C" fn runtime_push_value<X>(
+    runtime: *mut c_void,
+    target: *mut c_void,
+    value: *const Value,
+    retv: *mut Value,
+) -> Status {
+    // TODO(refactor): generate ffi-conversion code by script
+
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = into_runtime!(runtime, X);
+
+    debug_assert_ne!(target, std::ptr::null_mut());
+    let target = target.cast::<Object>().as_mut().unwrap();
+
+    debug_assert_ne!(value, std::ptr::null());
+    let value = into_value!(value);
+
+    debug_assert_ne!(retv, std::ptr::null_mut());
+    let retv = into_value_mut!(retv);
+
+    match runtime.push_value(target, value) {
         Ok(()) => {
             *retv = Value::None;
             Status::Normal

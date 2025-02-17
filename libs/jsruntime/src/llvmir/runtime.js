@@ -75,6 +75,7 @@ function makeLLVMIRType(type) {
     case '&Value':
     case '&mut Value':
     case '*mut Value':
+    case '&PropertyKey':
     case 'Lambda':
     case 'VoidPtr':
       return 'builder_.getPtrTy()';
@@ -117,6 +118,8 @@ function makeCType(type) {
     case '&mut Value':
     case '*mut Value':
       return 'Value*';
+    case '&PropertyKey':
+      return 'const PropertyKey*';
     case 'Lambda':
       return 'Lambda';
     case 'VoidPtr':

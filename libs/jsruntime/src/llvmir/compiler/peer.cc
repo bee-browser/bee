@@ -1,6 +1,7 @@
 #include <llvm/Support/TargetSelect.h>
 #include <sys/types.h>
 
+#include <cmath>
 #include <cstdint>
 
 #include "../bridge.hh"
@@ -24,6 +25,7 @@
 #define PEER_PROMISE(value) (reinterpret_cast<PromiseIrPtr>(value))
 #define PEER_OBJECT(value) (reinterpret_cast<ObjectIrPtr>(value))
 #define PEER_VALUE(value) (reinterpret_cast<ValueIrPtr>(value))
+#define PEER_PROPERTY_KEY(value) (reinterpret_cast<PropertyKeyIrPtr>(value))
 #define PEER_ARGV(value) (reinterpret_cast<ArgvIrPtr>(value))
 #define PEER_STATUS(value) (reinterpret_cast<StatusIrPtr>(value))
 #define PEER_CAPTURE(value) (reinterpret_cast<CaptureIrPtr>(value))
@@ -413,36 +415,101 @@ ObjectIrPtr compiler_peer_create_object(CompilerPeer peer) {
   return PEER_OBJECT(IMPL(peer)->CreateObject());
 }
 
-ValueIrPtr compiler_peer_create_get_value(CompilerPeer peer,
-                                          ObjectIrPtr object,
-                                          uint32_t key,
-                                          bool strict) {
+ValueIrPtr compiler_peer_create_get_value_by_symbol(CompilerPeer peer,
+                                                    ObjectIrPtr object,
+                                                    uint32_t key,
+                                                    bool strict) {
   assert(object != nullptr);
   assert(key != 0);
-  return PEER_VALUE(IMPL(peer)->CreateGetValue(LLVM_VALUE(object), key, strict));
+  return PEER_VALUE(IMPL(peer)->CreateGetValueBySymbol(LLVM_VALUE(object), key, strict));
 }
 
-void compiler_peer_create_set_value(CompilerPeer peer,
-                                    ObjectIrPtr object,
-                                    uint32_t key,
-                                    ValueIrPtr value) {
+ValueIrPtr compiler_peer_create_get_value_by_number(CompilerPeer peer,
+                                                    ObjectIrPtr object,
+                                                    double key,
+                                                    bool strict) {
+  assert(object != nullptr);
+  assert(std::isfinite(key));
+  return PEER_VALUE(IMPL(peer)->CreateGetValueByNumber(LLVM_VALUE(object), key, strict));
+}
+
+ValueIrPtr compiler_peer_create_get_value_by_value(CompilerPeer peer,
+                                                   ObjectIrPtr object,
+                                                   ValueIrPtr key,
+                                                   bool strict) {
+  assert(object != nullptr);
+  assert(key != nullptr);
+  return PEER_VALUE(
+      IMPL(peer)->CreateGetValueByValue(LLVM_VALUE(object), LLVM_VALUE(key), strict));
+}
+
+void compiler_peer_create_set_value_by_symbol(CompilerPeer peer,
+                                              ObjectIrPtr object,
+                                              uint32_t key,
+                                              ValueIrPtr value) {
   assert(object != nullptr);
   assert(key != 0);
   assert(value != nullptr);
-  IMPL(peer)->CreateSetValue(LLVM_VALUE(object), key, LLVM_VALUE(value));
+  IMPL(peer)->CreateSetValueBySymbol(LLVM_VALUE(object), key, LLVM_VALUE(value));
 }
 
-StatusIrPtr compiler_peer_create_create_data_property(CompilerPeer peer,
-                                                      ObjectIrPtr object,
-                                                      uint32_t key,
-                                                      ValueIrPtr value,
-                                                      ValueIrPtr retv) {
+void compiler_peer_create_set_value_by_number(CompilerPeer peer,
+                                              ObjectIrPtr object,
+                                              double key,
+                                              ValueIrPtr value) {
+  assert(object != nullptr);
+  assert(std::isfinite(key));
+  assert(value != nullptr);
+  IMPL(peer)->CreateSetValueByNumber(LLVM_VALUE(object), key, LLVM_VALUE(value));
+}
+
+void compiler_peer_create_set_value_by_value(CompilerPeer peer,
+                                             ObjectIrPtr object,
+                                             ValueIrPtr key,
+                                             ValueIrPtr value) {
+  assert(object != nullptr);
+  assert(key != nullptr);
+  assert(value != nullptr);
+  IMPL(peer)->CreateSetValueByValue(LLVM_VALUE(object), LLVM_VALUE(key), LLVM_VALUE(value));
+}
+
+StatusIrPtr compiler_peer_create_create_data_property_by_symbol(CompilerPeer peer,
+                                                                ObjectIrPtr object,
+                                                                uint32_t key,
+                                                                ValueIrPtr value,
+                                                                ValueIrPtr retv) {
   assert(object != nullptr);
   assert(key != 0);
   assert(value != nullptr);
   assert(retv != nullptr);
-  return PEER_STATUS(IMPL(peer)->CreateCreateDataProperty(LLVM_VALUE(object), key,
-                                                          LLVM_VALUE(value), LLVM_VALUE(retv)));
+  return PEER_STATUS(IMPL(peer)->CreateCreateDataPropertyBySymbol(
+      LLVM_VALUE(object), key, LLVM_VALUE(value), LLVM_VALUE(retv)));
+}
+
+StatusIrPtr compiler_peer_create_create_data_property_by_number(CompilerPeer peer,
+                                                                ObjectIrPtr object,
+                                                                double key,
+                                                                ValueIrPtr value,
+                                                                ValueIrPtr retv) {
+  assert(object != nullptr);
+  assert(std::isfinite(key));
+  assert(value != nullptr);
+  assert(retv != nullptr);
+  return PEER_STATUS(IMPL(peer)->CreateCreateDataPropertyByNumber(
+      LLVM_VALUE(object), key, LLVM_VALUE(value), LLVM_VALUE(retv)));
+}
+
+StatusIrPtr compiler_peer_create_create_data_property_by_value(CompilerPeer peer,
+                                                               ObjectIrPtr object,
+                                                               ValueIrPtr key,
+                                                               ValueIrPtr value,
+                                                               ValueIrPtr retv) {
+  assert(object != nullptr);
+  assert(key != nullptr);
+  assert(value != nullptr);
+  assert(retv != nullptr);
+  return PEER_STATUS(IMPL(peer)->CreateCreateDataPropertyByValue(
+      LLVM_VALUE(object), LLVM_VALUE(key), LLVM_VALUE(value), LLVM_VALUE(retv)));
 }
 
 StatusIrPtr compiler_peer_create_copy_data_properties(CompilerPeer peer,
@@ -454,6 +521,17 @@ StatusIrPtr compiler_peer_create_copy_data_properties(CompilerPeer peer,
   assert(retv != nullptr);
   return PEER_STATUS(IMPL(peer)->CreateCopyDataProperties(LLVM_VALUE(target), LLVM_VALUE(source),
                                                           LLVM_VALUE(retv)));
+}
+
+StatusIrPtr compiler_peer_create_push_array_element(CompilerPeer peer,
+                                                    ObjectIrPtr target,
+                                                    ValueIrPtr value,
+                                                    ValueIrPtr retv) {
+  assert(target != nullptr);
+  assert(value != nullptr);
+  assert(retv != nullptr);
+  return PEER_STATUS(
+      IMPL(peer)->CreatePushArrayElement(LLVM_VALUE(target), LLVM_VALUE(value), LLVM_VALUE(retv)));
 }
 
 // value

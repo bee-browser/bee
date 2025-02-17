@@ -735,24 +735,26 @@
   action: undefined
 - rule: ArrayBindingPattern -> LBRACK RBRACK
   action: undefined
-- rule: ArrayBindingPattern -> LBRACK Elision RBRACK
+- rule: ArrayBindingPattern -> LBRACK ArrayPatternElision RBRACK
   action: undefined
 - rule: ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
   action: undefined
-- rule: ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
+- rule: ArrayBindingPattern -> LBRACK ArrayPatternElision BindingRestElement RBRACK
   action: undefined
 - rule: ArrayBindingPattern -> LBRACK BindingElementList RBRACK
   action: undefined
 - rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
   action: undefined
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
+- rule: >-
+    ArrayBindingPattern -> LBRACK BindingElementList COMMA ArrayPatternElision
+    RBRACK
   action: undefined
 - rule: >-
     ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement
     RBRACK
   action: undefined
 - rule: >-
-    ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision
+    ArrayBindingPattern -> LBRACK BindingElementList COMMA ArrayPatternElision
     BindingRestElement RBRACK
   action: undefined
 - rule: SingleNameBinding -> BindingIdentifier
@@ -775,27 +777,29 @@
   action: undefined
 - rule: ArrayBindingPattern_Yield -> LBRACK RBRACK
   action: undefined
-- rule: ArrayBindingPattern_Yield -> LBRACK Elision RBRACK
+- rule: ArrayBindingPattern_Yield -> LBRACK ArrayPatternElision RBRACK
   action: undefined
 - rule: ArrayBindingPattern_Yield -> LBRACK BindingRestElement_Yield RBRACK
   action: undefined
-- rule: ArrayBindingPattern_Yield -> LBRACK Elision BindingRestElement_Yield RBRACK
+- rule: >-
+    ArrayBindingPattern_Yield -> LBRACK ArrayPatternElision
+    BindingRestElement_Yield RBRACK
   action: undefined
 - rule: ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield RBRACK
   action: undefined
 - rule: ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA RBRACK
   action: undefined
 - rule: >-
-    ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA Elision
-    RBRACK
+    ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA
+    ArrayPatternElision RBRACK
   action: undefined
 - rule: >-
     ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA
     BindingRestElement_Yield RBRACK
   action: undefined
 - rule: >-
-    ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA Elision
-    BindingRestElement_Yield RBRACK
+    ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA
+    ArrayPatternElision BindingRestElement_Yield RBRACK
   action: undefined
 - rule: SingleNameBinding_Yield -> BindingIdentifier_Yield
   action: process_single_name_binding
@@ -817,27 +821,29 @@
   action: undefined
 - rule: ArrayBindingPattern_Await -> LBRACK RBRACK
   action: undefined
-- rule: ArrayBindingPattern_Await -> LBRACK Elision RBRACK
+- rule: ArrayBindingPattern_Await -> LBRACK ArrayPatternElision RBRACK
   action: undefined
 - rule: ArrayBindingPattern_Await -> LBRACK BindingRestElement_Await RBRACK
   action: undefined
-- rule: ArrayBindingPattern_Await -> LBRACK Elision BindingRestElement_Await RBRACK
+- rule: >-
+    ArrayBindingPattern_Await -> LBRACK ArrayPatternElision
+    BindingRestElement_Await RBRACK
   action: undefined
 - rule: ArrayBindingPattern_Await -> LBRACK BindingElementList_Await RBRACK
   action: undefined
 - rule: ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA RBRACK
   action: undefined
 - rule: >-
-    ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA Elision
-    RBRACK
+    ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA
+    ArrayPatternElision RBRACK
   action: undefined
 - rule: >-
     ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA
     BindingRestElement_Await RBRACK
   action: undefined
 - rule: >-
-    ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA Elision
-    BindingRestElement_Await RBRACK
+    ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA
+    ArrayPatternElision BindingRestElement_Await RBRACK
   action: undefined
 - rule: SingleNameBinding_Await -> BindingIdentifier_Await
   action: process_single_name_binding
@@ -865,14 +871,14 @@
   action: undefined
 - rule: ArrayBindingPattern_Yield_Await -> LBRACK RBRACK
   action: undefined
-- rule: ArrayBindingPattern_Yield_Await -> LBRACK Elision RBRACK
+- rule: ArrayBindingPattern_Yield_Await -> LBRACK ArrayPatternElision RBRACK
   action: undefined
 - rule: >-
     ArrayBindingPattern_Yield_Await -> LBRACK BindingRestElement_Yield_Await
     RBRACK
   action: undefined
 - rule: >-
-    ArrayBindingPattern_Yield_Await -> LBRACK Elision
+    ArrayBindingPattern_Yield_Await -> LBRACK ArrayPatternElision
     BindingRestElement_Yield_Await RBRACK
   action: undefined
 - rule: >-
@@ -885,7 +891,7 @@
   action: undefined
 - rule: >-
     ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await
-    COMMA Elision RBRACK
+    COMMA ArrayPatternElision RBRACK
   action: undefined
 - rule: >-
     ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await
@@ -893,7 +899,7 @@
   action: undefined
 - rule: >-
     ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await
-    COMMA Elision BindingRestElement_Yield_Await RBRACK
+    COMMA ArrayPatternElision BindingRestElement_Yield_Await RBRACK
   action: undefined
 - rule: SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await
   action: process_single_name_binding
@@ -1366,9 +1372,9 @@
   action: undefined
 - rule: BindingPropertyList -> BindingPropertyList COMMA BindingProperty
   action: undefined
-- rule: Elision -> COMMA
+- rule: ArrayPatternElision -> COMMA
   action: undefined
-- rule: Elision -> Elision COMMA
+- rule: ArrayPatternElision -> ArrayPatternElision COMMA
   action: undefined
 - rule: BindingElementList -> BindingElisionElement
   action: undefined
@@ -1828,7 +1834,7 @@
   action: undefined
 - rule: BindingElisionElement -> BindingElement
   action: undefined
-- rule: BindingElisionElement -> Elision BindingElement
+- rule: BindingElisionElement -> ArrayPatternElision BindingElement
   action: undefined
 - rule: BindingProperty_Yield -> SingleNameBinding_Yield
   action: undefined
@@ -1836,7 +1842,7 @@
   action: undefined
 - rule: BindingElisionElement_Yield -> BindingElement_Yield
   action: undefined
-- rule: BindingElisionElement_Yield -> Elision BindingElement_Yield
+- rule: BindingElisionElement_Yield -> ArrayPatternElision BindingElement_Yield
   action: undefined
 - rule: ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
   action: nop
@@ -1880,7 +1886,7 @@
   action: undefined
 - rule: BindingElisionElement_Await -> BindingElement_Await
   action: undefined
-- rule: BindingElisionElement_Await -> Elision BindingElement_Await
+- rule: BindingElisionElement_Await -> ArrayPatternElision BindingElement_Await
   action: undefined
 - rule: BindingProperty_Yield_Await -> SingleNameBinding_Yield_Await
   action: undefined
@@ -1890,7 +1896,9 @@
   action: undefined
 - rule: BindingElisionElement_Yield_Await -> BindingElement_Yield_Await
   action: undefined
-- rule: BindingElisionElement_Yield_Await -> Elision BindingElement_Yield_Await
+- rule: >-
+    BindingElisionElement_Yield_Await -> ArrayPatternElision
+    BindingElement_Yield_Await
   action: undefined
 - rule: >-
     ConditionalExpression_In_Yield_Await ->
@@ -2074,7 +2082,7 @@
 - rule: PrimaryExpression_Await -> Literal
   action: nop
 - rule: PrimaryExpression_Await -> ArrayLiteral_Await
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Await -> ObjectLiteral_Await
   action: nop
 - rule: PrimaryExpression_Await -> FunctionExpression
@@ -2471,16 +2479,18 @@
   action: process_literal
 - rule: Literal -> STRING_LITERAL
   action: process_literal
-- rule: ArrayLiteral_Await -> LBRACK RBRACK
-  action: undefined
-- rule: ArrayLiteral_Await -> LBRACK Elision RBRACK
-  action: undefined
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await RBRACK
-  action: undefined
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA RBRACK
-  action: undefined
-- rule: ArrayLiteral_Await -> LBRACK ElementList_Await COMMA Elision RBRACK
-  action: undefined
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ RBRACK
+  action: process_array_literal_empty
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ArrayInitializerElision RBRACK
+  action: process_array_literal_elision
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await RBRACK
+  action: process_array_literal_list
+- rule: ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA RBRACK
+  action: process_array_literal_comma
+- rule: >-
+    ArrayLiteral_Await -> LBRACK _NEW_ARRAY_ ElementList_Await COMMA
+    ArrayInitializerElision RBRACK
+  action: process_array_literal_list_elision
 - rule: ObjectLiteral_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: process_object_literal_empty
 - rule: >-
@@ -2862,7 +2872,7 @@
 - rule: PrimaryExpression -> Literal
   action: nop
 - rule: PrimaryExpression -> ArrayLiteral
-  action: undefined
+  action: nop
 - rule: PrimaryExpression -> ObjectLiteral
   action: nop
 - rule: PrimaryExpression -> FunctionExpression
@@ -3000,24 +3010,32 @@
   action: nop
 - rule: BooleanLiteral -> FALSE
   action: nop
+- rule: _NEW_ARRAY_ -> (empty)
+  action: process_new_array
+- rule: ArrayInitializerElision -> COMMA
+  action: process_array_initializer_elision
+- rule: ArrayInitializerElision -> ArrayInitializerElision COMMA
+  action: process_array_initializer_elision_list
 - rule: ElementList_Await -> AssignmentExpression_In_Await
-  action: undefined
-- rule: ElementList_Await -> Elision AssignmentExpression_In_Await
-  action: undefined
+  action: process_element_list_item
+- rule: ElementList_Await -> ArrayInitializerElision AssignmentExpression_In_Await
+  action: process_element_list_elision_item
 - rule: ElementList_Await -> SpreadElement_Await
-  action: undefined
-- rule: ElementList_Await -> Elision SpreadElement_Await
-  action: undefined
+  action: process_element_list_spread
+- rule: ElementList_Await -> ArrayInitializerElision SpreadElement_Await
+  action: process_element_list_elision_spread
 - rule: ElementList_Await -> ElementList_Await COMMA AssignmentExpression_In_Await
-  action: undefined
+  action: process_element_list_list_item
 - rule: >-
-    ElementList_Await -> ElementList_Await COMMA Elision
+    ElementList_Await -> ElementList_Await COMMA ArrayInitializerElision
     AssignmentExpression_In_Await
-  action: undefined
+  action: process_element_list_list_elision_item
 - rule: ElementList_Await -> ElementList_Await COMMA SpreadElement_Await
-  action: undefined
-- rule: ElementList_Await -> ElementList_Await COMMA Elision SpreadElement_Await
-  action: undefined
+  action: process_element_list_list_spread
+- rule: >-
+    ElementList_Await -> ElementList_Await COMMA ArrayInitializerElision
+    SpreadElement_Await
+  action: process_element_list_list_elision_spread
 - rule: _NEW_OBJECT_ -> (empty)
   action: process_new_object
 - rule: PropertyDefinitionList_Await -> PropertyDefinition_Await
@@ -3087,7 +3105,7 @@
 - rule: PrimaryExpression_Yield -> Literal
   action: nop
 - rule: PrimaryExpression_Yield -> ArrayLiteral_Yield
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield -> ObjectLiteral_Yield
   action: nop
 - rule: PrimaryExpression_Yield -> FunctionExpression
@@ -3149,7 +3167,7 @@
 - rule: PrimaryExpression_Yield_Await -> Literal
   action: nop
 - rule: PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
   action: nop
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
@@ -3202,16 +3220,18 @@
   action: process_identifier_reference_only_in_non_strict
 - rule: IdentifierReference -> AWAIT
   action: process_identifier_reference_only_in_script
-- rule: ArrayLiteral -> LBRACK RBRACK
-  action: undefined
-- rule: ArrayLiteral -> LBRACK Elision RBRACK
-  action: undefined
-- rule: ArrayLiteral -> LBRACK ElementList RBRACK
-  action: undefined
-- rule: ArrayLiteral -> LBRACK ElementList COMMA RBRACK
-  action: undefined
-- rule: ArrayLiteral -> LBRACK ElementList COMMA Elision RBRACK
-  action: undefined
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ RBRACK
+  action: process_array_literal_empty
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ArrayInitializerElision RBRACK
+  action: process_array_literal_elision
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList RBRACK
+  action: process_array_literal_list
+- rule: ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA RBRACK
+  action: process_array_literal_comma
+- rule: >-
+    ArrayLiteral -> LBRACK _NEW_ARRAY_ ElementList COMMA ArrayInitializerElision
+    RBRACK
+  action: process_array_literal_list_elision
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ RBRACE
   action: process_object_literal_empty
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList RBRACE
@@ -3401,7 +3421,7 @@
     RelationalExpression_In_Await
   action: process_strict_inequality
 - rule: SpreadElement_Await -> ELLIPSIS AssignmentExpression_In_Await
-  action: undefined
+  action: process_spread_element
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
   action: process_property_definition_reference
 - rule: PropertyDefinition_Await -> CoverInitializedName_Await
@@ -3432,16 +3452,18 @@
   action: process_identifier_reference_except_for_yield
 - rule: IdentifierReference_Yield -> AWAIT
   action: process_identifier_reference
-- rule: ArrayLiteral_Yield -> LBRACK RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield -> LBRACK Elision RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA Elision RBRACK
-  action: undefined
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ RBRACK
+  action: process_array_literal_empty
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ArrayInitializerElision RBRACK
+  action: process_array_literal_elision
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield RBRACK
+  action: process_array_literal_list
+- rule: ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA RBRACK
+  action: process_array_literal_comma
+- rule: >-
+    ArrayLiteral_Yield -> LBRACK _NEW_ARRAY_ ElementList_Yield COMMA
+    ArrayInitializerElision RBRACK
+  action: process_array_literal_list_elision
 - rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ RBRACE
   action: process_object_literal_empty
 - rule: >-
@@ -3472,18 +3494,24 @@
   action: process_bitwise_xor
 - rule: IdentifierReference_Yield_Await -> Identifier
   action: process_identifier_reference_except_for_yield_await
-- rule: ArrayLiteral_Yield_Await -> LBRACK RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield_Await -> LBRACK Elision RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await RBRACK
-  action: undefined
-- rule: ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA RBRACK
-  action: undefined
+- rule: ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ RBRACK
+  action: process_array_literal_empty
 - rule: >-
-    ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA Elision
+    ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ArrayInitializerElision
     RBRACK
-  action: undefined
+  action: process_array_literal_elision
+- rule: >-
+    ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await
+    RBRACK
+  action: process_array_literal_list
+- rule: >-
+    ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA
+    RBRACK
+  action: process_array_literal_comma
+- rule: >-
+    ArrayLiteral_Yield_Await -> LBRACK _NEW_ARRAY_ ElementList_Yield_Await COMMA
+    ArrayInitializerElision RBRACK
+  action: process_array_literal_list_elision
 - rule: ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ RBRACE
   action: process_object_literal_empty
 - rule: >-
@@ -3517,21 +3545,23 @@
     EqualityExpression_In
   action: process_bitwise_and
 - rule: ElementList -> AssignmentExpression_In
-  action: undefined
-- rule: ElementList -> Elision AssignmentExpression_In
-  action: undefined
+  action: process_element_list_item
+- rule: ElementList -> ArrayInitializerElision AssignmentExpression_In
+  action: process_element_list_elision_item
 - rule: ElementList -> SpreadElement
-  action: undefined
-- rule: ElementList -> Elision SpreadElement
-  action: undefined
+  action: process_element_list_spread
+- rule: ElementList -> ArrayInitializerElision SpreadElement
+  action: process_element_list_elision_spread
 - rule: ElementList -> ElementList COMMA AssignmentExpression_In
-  action: undefined
-- rule: ElementList -> ElementList COMMA Elision AssignmentExpression_In
-  action: undefined
+  action: process_element_list_list_item
+- rule: >-
+    ElementList -> ElementList COMMA ArrayInitializerElision
+    AssignmentExpression_In
+  action: process_element_list_list_elision_item
 - rule: ElementList -> ElementList COMMA SpreadElement
-  action: undefined
-- rule: ElementList -> ElementList COMMA Elision SpreadElement
-  action: undefined
+  action: process_element_list_list_spread
+- rule: ElementList -> ElementList COMMA ArrayInitializerElision SpreadElement
+  action: process_element_list_list_elision_spread
 - rule: PropertyDefinitionList -> PropertyDefinition
   action: process_property_definition_list_head
 - rule: PropertyDefinitionList -> PropertyDefinitionList COMMA PropertyDefinition
@@ -3842,23 +3872,25 @@
     EqualityExpression_In_Yield
   action: process_bitwise_and
 - rule: ElementList_Yield -> AssignmentExpression_In_Yield
-  action: undefined
-- rule: ElementList_Yield -> Elision AssignmentExpression_In_Yield
-  action: undefined
+  action: process_element_list_item
+- rule: ElementList_Yield -> ArrayInitializerElision AssignmentExpression_In_Yield
+  action: process_element_list_elision_item
 - rule: ElementList_Yield -> SpreadElement_Yield
-  action: undefined
-- rule: ElementList_Yield -> Elision SpreadElement_Yield
-  action: undefined
+  action: process_element_list_spread
+- rule: ElementList_Yield -> ArrayInitializerElision SpreadElement_Yield
+  action: process_element_list_elision_spread
 - rule: ElementList_Yield -> ElementList_Yield COMMA AssignmentExpression_In_Yield
-  action: undefined
+  action: process_element_list_list_item
 - rule: >-
-    ElementList_Yield -> ElementList_Yield COMMA Elision
+    ElementList_Yield -> ElementList_Yield COMMA ArrayInitializerElision
     AssignmentExpression_In_Yield
-  action: undefined
+  action: process_element_list_list_elision_item
 - rule: ElementList_Yield -> ElementList_Yield COMMA SpreadElement_Yield
-  action: undefined
-- rule: ElementList_Yield -> ElementList_Yield COMMA Elision SpreadElement_Yield
-  action: undefined
+  action: process_element_list_list_spread
+- rule: >-
+    ElementList_Yield -> ElementList_Yield COMMA ArrayInitializerElision
+    SpreadElement_Yield
+  action: process_element_list_list_elision_spread
 - rule: PropertyDefinitionList_Yield -> PropertyDefinition_Yield
   action: process_property_definition_list_head
 - rule: >-
@@ -3890,29 +3922,31 @@
     BIT_AND EqualityExpression_In_Yield_Await
   action: process_bitwise_and
 - rule: ElementList_Yield_Await -> AssignmentExpression_In_Yield_Await
-  action: undefined
-- rule: ElementList_Yield_Await -> Elision AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_element_list_item
+- rule: >-
+    ElementList_Yield_Await -> ArrayInitializerElision
+    AssignmentExpression_In_Yield_Await
+  action: process_element_list_elision_item
 - rule: ElementList_Yield_Await -> SpreadElement_Yield_Await
-  action: undefined
-- rule: ElementList_Yield_Await -> Elision SpreadElement_Yield_Await
-  action: undefined
+  action: process_element_list_spread
+- rule: ElementList_Yield_Await -> ArrayInitializerElision SpreadElement_Yield_Await
+  action: process_element_list_elision_spread
 - rule: >-
     ElementList_Yield_Await -> ElementList_Yield_Await COMMA
     AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_element_list_list_item
 - rule: >-
-    ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision
-    AssignmentExpression_In_Yield_Await
-  action: undefined
+    ElementList_Yield_Await -> ElementList_Yield_Await COMMA
+    ArrayInitializerElision AssignmentExpression_In_Yield_Await
+  action: process_element_list_list_elision_item
 - rule: >-
     ElementList_Yield_Await -> ElementList_Yield_Await COMMA
     SpreadElement_Yield_Await
-  action: undefined
+  action: process_element_list_list_spread
 - rule: >-
-    ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision
-    SpreadElement_Yield_Await
-  action: undefined
+    ElementList_Yield_Await -> ElementList_Yield_Await COMMA
+    ArrayInitializerElision SpreadElement_Yield_Await
+  action: process_element_list_list_elision_spread
 - rule: PropertyDefinitionList_Yield_Await -> PropertyDefinition_Yield_Await
   action: process_property_definition_list_head
 - rule: >-
@@ -3957,7 +3991,7 @@
     RelationalExpression_In
   action: process_strict_inequality
 - rule: SpreadElement -> ELLIPSIS AssignmentExpression_In
-  action: undefined
+  action: process_spread_element
 - rule: PropertyDefinition -> IdentifierReference
   action: process_property_definition_reference
 - rule: PropertyDefinition -> CoverInitializedName
@@ -4298,7 +4332,7 @@
     RelationalExpression_In_Yield
   action: process_strict_inequality
 - rule: SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield
-  action: undefined
+  action: process_spread_element
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
   action: process_property_definition_reference
 - rule: PropertyDefinition_Yield -> CoverInitializedName_Yield
@@ -4338,7 +4372,7 @@
     NE_STRICT RelationalExpression_In_Yield_Await
   action: process_strict_inequality
 - rule: SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
-  action: undefined
+  action: process_spread_element
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
   action: process_property_definition_reference
 - rule: PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await

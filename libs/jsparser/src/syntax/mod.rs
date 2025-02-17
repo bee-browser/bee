@@ -84,6 +84,10 @@ enum Detail {
     ArgumentList,
     OptionalChain,
     Expression,
+    ArrayLiteral,
+    ElementList(u32, bool),
+    ArrayInitializerElision(u32),
+    SpreadElement,
     ObjectLiteral,
     PropertyDefinition(Symbol),
     PropertyDefinitionList(bool),
@@ -164,6 +168,7 @@ pub enum Node<'s> {
     Boolean(bool),
     Number(f64, &'s str),
     String(Vec<u16>, &'s str),
+    Array,
     Object,
     LiteralPropertyName(LiteralPropertyName),
     PropertyDefinition(PropertyDefinitionKind),
@@ -251,6 +256,9 @@ pub enum Node<'s> {
 
 #[derive(Clone, Debug)]
 pub enum PropertyDefinitionKind {
+    ArrayElement,
+    ArrayEmptySlot,
+    ArraySpread,
     Reference,
     KeyValue,
     Spread,
@@ -588,6 +596,12 @@ where
     // _BLOCK_SCOPE_
     fn process_block_scope(&mut self) -> Result<(), Error> {
         self.enqueue(Node::StartBlockScope);
+        Ok(())
+    }
+
+    // _NEW_ARRAY_
+    fn process_new_array(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Array);
         Ok(())
     }
 
@@ -1004,6 +1018,198 @@ where
         let syntax = self.top_mut();
         syntax.detail = Detail::Literal;
         syntax.nodes_range = node_index..(node_index + 1);
+        Ok(())
+    }
+
+    // 13.2.4 Array Initializer
+
+    // ArrayLiteral[Yield, Await] :
+    //   [ ]
+    fn process_array_literal_empty(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::ArrayLiteral);
+        Ok(())
+    }
+
+    // ArrayLiteral[Yield, Await] :
+    //   [ ArrayInitializerElision ]
+    fn process_array_literal_elision(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::ArrayLiteral);
+        Ok(())
+    }
+
+    // ArrayLiteral[Yield, Await] :
+    //   [ ElementList[?Yield, ?Await] ]
+    fn process_array_literal_list(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::ArrayLiteral);
+        Ok(())
+    }
+
+    // ArrayLiteral[Yield, Await] :
+    //   [ ElementList[?Yield, ?Await] , ]
+    fn process_array_literal_comma(&mut self) -> Result<(), Error> {
+        self.replace(4, Detail::ArrayLiteral);
+        Ok(())
+    }
+
+    // ArrayLiteral[Yield, Await] :
+    //   [ ElementList[?Yield, ?Await] , ArrayInitializerElision ]
+    fn process_array_literal_list_elision(&mut self) -> Result<(), Error> {
+        self.replace(5, Detail::ArrayLiteral);
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_element_list_item(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::ElementList(1, false);
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   ArrayInitializerElision AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_element_list_elision_item(&mut self) -> Result<(), Error> {
+        let n = match self.nth(1).detail {
+            Detail::ArrayInitializerElision(n) => n,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.replace(2, Detail::ElementList(n + 1, false));
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   SpreadElement[?Yield, ?Await]
+    fn process_element_list_spread(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::ElementList(0, true));
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   ArrayInitializerElision SpreadElement[?Yield, ?Await]
+    fn process_element_list_elision_spread(&mut self) -> Result<(), Error> {
+        let n = match self.nth(1).detail {
+            Detail::ArrayInitializerElision(n) => n,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.replace(2, Detail::ElementList(n + 1, true));
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   ElementList[?Yield, ?Await] , AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_element_list_list_item(&mut self) -> Result<(), Error> {
+        self.pop(); // Expression
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::ElementList(ref mut n, _) => *n += 1,
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   ElementList[?Yield, ?Await] , ArrayInitializerElision
+    //   AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_element_list_list_elision_item(&mut self) -> Result<(), Error> {
+        self.pop(); // Expression
+        let n = match self.pop().detail {
+            Detail::ArrayInitializerElision(n) => n,
+            detail => unreachable!("{detail:?}"),
+        };
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::ElementList(ref mut m, _) => *m += n + 1,
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
+        Ok(())
+    }
+
+    // ElementList[Yield, Await] :
+    //   ElementList[?Yield, ?Await] , SpreadElement[?Yield, ?Await]
+    fn process_element_list_list_spread(&mut self) -> Result<(), Error> {
+        self.pop(); // SpreadElement
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::ElementList(_, ref mut spread) => *spread = true,
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
+        Ok(())
+    }
+
+    //   ElementList[?Yield, ?Await] , ArrayInitializerElision SpreadElement[?Yield, ?Await]
+    fn process_element_list_list_elision_spread(&mut self) -> Result<(), Error> {
+        self.pop(); // SpreadElement
+        let n = match self.pop().detail {
+            Detail::ArrayInitializerElision(n) => n,
+            detail => unreachable!("{detail:?}"),
+        };
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::ElementList(ref mut m, ref mut spread) => {
+                *m += n + 1;
+                *spread = true;
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayElement,
+        ));
+        Ok(())
+    }
+
+    // ArrayInitializerElision :
+    //   ,
+    //
+    // NOTE: The `Elision` production rule is used in multiple production rules.  We rename it in
+    // order to perform a different action for each context.
+    fn process_array_initializer_elision(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::ArrayInitializerElision(1));
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayEmptySlot,
+        ));
+        Ok(())
+    }
+
+    // ArrayInitializerElision :
+    //   ArrayInitializerElision ,
+    //
+    // NOTE: The `Elision` production rule is used in multiple production rules.  We rename it in
+    // order to perform a different action for each context.
+    fn process_array_initializer_elision_list(&mut self) -> Result<(), Error> {
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::ArrayInitializerElision(ref mut n) => *n += 1,
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.update_ends();
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArrayEmptySlot,
+        ));
+        Ok(())
+    }
+
+    // SpreadElement[Yield, Await] :
+    //   ... AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_spread_element(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::SpreadElement);
+        self.enqueue(Node::PropertyDefinition(
+            PropertyDefinitionKind::ArraySpread,
+        ));
         Ok(())
     }
 

@@ -1,0 +1,10 @@
+let a = [0,1,,3,,,6,,];
+print(a.length); ///=8
+print(a[0]); ///=0
+print(a[1]); ///=1
+print(a[2]); ///=undefined
+print(a[3]); ///=3
+print(a[4]); ///=undefined
+print(a[5]); ///=undefined
+print(a[6]); ///=6
+print(a[7]); ///=undefined

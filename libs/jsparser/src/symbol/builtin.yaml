@@ -7,6 +7,7 @@
 
 # Reserved words defined in the ECMA-262 specification.
 - Infinity
+- ['-Infinity', NEG_INFINITY]
 - NaN
 - async
 - await
@@ -35,3 +36,4 @@
 - boolean
 - number
 - function
+- length

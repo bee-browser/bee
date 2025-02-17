@@ -17,6 +17,7 @@ use llvmir::Executor;
 use objects::Object;
 use objects::Property;
 use objects::PropertyFlags;
+use objects::PropertyKey;
 use types::ReturnValue;
 
 pub use llvmir::CompileError;
@@ -116,7 +117,7 @@ impl<X> Runtime<X> {
         // TODO: add `flags` to the arguments.
         let flags = PropertyFlags::empty();
         let prop = Property::Data { value, flags };
-        let result = self.global_object.define_own_property(symbol, prop);
+        let result = self.global_object.define_own_property(symbol.into(), prop);
         debug_assert!(matches!(result, Ok(true)));
     }
 
@@ -193,15 +194,30 @@ impl<X> Runtime<X> {
         self.allocator.alloc(Default::default())
     }
 
+    fn make_property_key(&mut self, value: &Value) -> PropertyKey {
+        match value {
+            Value::None => unreachable!(),
+            Value::Undefined => Symbol::UNDEFINED.into(),
+            Value::Null => Symbol::NULL.into(),
+            Value::Boolean(false) => Symbol::FALSE.into(),
+            Value::Boolean(true) => Symbol::TRUE.into(),
+            Value::Number(value) => (*value).into(),
+            Value::String(value) => self.symbol_registry.intern_utf16(value.make_utf16()).into(),
+            Value::Closure(_) => todo!(),
+            Value::Object(_) => todo!(),
+            Value::Promise(_) => todo!(),
+        }
+    }
+
     // 7.3.5 CreateDataProperty ( O, P, V )
     fn create_data_property(
         &mut self,
         object: &mut Object,
-        name: Symbol,
+        key: &PropertyKey,
         value: &Value,
     ) -> Result<bool, Value> {
         object.define_own_property(
-            name,
+            key.clone(),
             Property::Data {
                 value: value.clone(),
                 flags: PropertyFlags::WRITABLE
@@ -225,6 +241,25 @@ impl<X> Runtime<X> {
                 self.create_data_property(target, key, value)?;
             }
         }
+        Ok(())
+    }
+
+    fn push_value(&mut self, target: &mut Object, value: &Value) -> Result<(), Value> {
+        const LENGTH: PropertyKey = PropertyKey::Symbol(Symbol::LENGTH.id());
+
+        let length = match target.get_value(&LENGTH) {
+            Some(Value::Number(v)) => *v,
+            _ => unreachable!(),
+        };
+
+        if length >= i32::MAX as f64 {
+            // TODO(feat): throw a RangeError
+        }
+
+        // TODO: error handling
+        let _ = self.create_data_property(target, &PropertyKey::Number(length), value);
+
+        target.set_value(&LENGTH, &Value::from(length + 1.0));
         Ok(())
     }
 }

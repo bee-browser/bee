@@ -589,20 +589,55 @@ impl CompilerBridge {
         }
     }
 
-    pub fn create_get_value(&self, object: ObjectIr, key: Symbol, strict: bool) -> ValueIr {
+    pub fn create_get_value_by_symbol(
+        &self,
+        object: ObjectIr,
+        key: Symbol,
+        strict: bool,
+    ) -> ValueIr {
         value_ir! {
-            compiler_peer_create_get_value(self.0, object.0, key.id(), strict)
+            compiler_peer_create_get_value_by_symbol(self.0, object.0, key.id(), strict)
         }
     }
 
-    pub fn create_set_value(&self, object: ObjectIr, key: Symbol, value: ValueIr) {
+    pub fn create_get_value_by_number(&self, object: ObjectIr, key: f64, strict: bool) -> ValueIr {
+        value_ir! {
+            compiler_peer_create_get_value_by_number(self.0, object.0, key, strict)
+        }
+    }
+
+    pub fn create_get_value_by_value(
+        &self,
+        object: ObjectIr,
+        key: ValueIr,
+        strict: bool,
+    ) -> ValueIr {
+        value_ir! {
+            compiler_peer_create_get_value_by_value(self.0, object.0, key.0, strict)
+        }
+    }
+
+    pub fn create_set_value_by_symbol(&self, object: ObjectIr, key: Symbol, value: ValueIr) {
         unsafe {
-            compiler_peer_create_set_value(self.0, object.0, key.id(), value.0);
+            compiler_peer_create_set_value_by_symbol(self.0, object.0, key.id(), value.0);
+        }
+    }
+
+    pub fn create_set_value_by_number(&self, object: ObjectIr, key: f64, value: ValueIr) {
+        unsafe {
+            compiler_peer_create_set_value_by_number(self.0, object.0, key, value.0);
+        }
+    }
+
+    pub fn create_set_value_by_value(&self, object: ObjectIr, key: ValueIr, value: ValueIr) {
+        unsafe {
+            compiler_peer_create_set_value_by_value(self.0, object.0, key.0, value.0);
         }
     }
 
     // 7.3.5 CreateDataProperty ( O, P, V )
-    pub fn create_create_data_property(
+
+    pub fn create_create_data_property_by_symbol(
         &self,
         object: ObjectIr,
         key: Symbol,
@@ -610,7 +645,30 @@ impl CompilerBridge {
         retv: ValueIr,
     ) -> StatusIr {
         status_ir! {
-            compiler_peer_create_create_data_property(self.0, object.0, key.id(), value.0, retv.0)
+            compiler_peer_create_create_data_property_by_symbol(self.0, object.0, key.id(), value.0, retv.0)
+        }
+    }
+
+    pub fn create_create_data_property_by_number(
+        &self,
+        object: ObjectIr,
+        key: f64,
+        value: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_create_data_property_by_number(self.0, object.0, key, value.0, retv.0)
+        }
+    }
+    pub fn create_create_data_property_by_value(
+        &self,
+        object: ObjectIr,
+        key: ValueIr,
+        value: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_create_data_property_by_value(self.0, object.0, key.0, value.0, retv.0)
         }
     }
 
@@ -623,6 +681,17 @@ impl CompilerBridge {
     ) -> StatusIr {
         status_ir! {
             compiler_peer_create_copy_data_properties(self.0, target.0, source.0, retv.0)
+        }
+    }
+
+    pub fn create_push_array_element(
+        &self,
+        target: ObjectIr,
+        value: ValueIr,
+        retv: ValueIr,
+    ) -> StatusIr {
+        status_ir! {
+            compiler_peer_create_push_array_element(self.0, target.0, value.0, retv.0)
         }
     }
 
@@ -1699,22 +1768,60 @@ extern "C" {
     ) -> BooleanIrPtr;
     fn compiler_peer_create_to_object(peer: CompilerPeer, value: ValueIrPtr) -> ObjectIrPtr;
     fn compiler_peer_create_object(peer: CompilerPeer) -> ObjectIrPtr;
-    fn compiler_peer_create_get_value(
+    fn compiler_peer_create_get_value_by_symbol(
         peer: CompilerPeer,
         object: ObjectIrPtr,
         key: u32,
         strict: bool,
     ) -> ValueIrPtr;
-    fn compiler_peer_create_set_value(
+    fn compiler_peer_create_get_value_by_number(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: f64,
+        strict: bool,
+    ) -> ValueIrPtr;
+    fn compiler_peer_create_get_value_by_value(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: ValueIrPtr,
+        strict: bool,
+    ) -> ValueIrPtr;
+    fn compiler_peer_create_set_value_by_symbol(
         peer: CompilerPeer,
         object: ObjectIrPtr,
         key: u32,
         value: ValueIrPtr,
     );
-    fn compiler_peer_create_create_data_property(
+    fn compiler_peer_create_set_value_by_number(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: f64,
+        value: ValueIrPtr,
+    );
+    fn compiler_peer_create_set_value_by_value(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: ValueIrPtr,
+        value: ValueIrPtr,
+    );
+    fn compiler_peer_create_create_data_property_by_symbol(
         peer: CompilerPeer,
         object: ObjectIrPtr,
         key: u32,
+        value: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
+    fn compiler_peer_create_create_data_property_by_number(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: f64,
+        value: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
+    fn compiler_peer_create_create_data_property_by_value(
+        peer: CompilerPeer,
+        object: ObjectIrPtr,
+        key: ValueIrPtr,
         value: ValueIrPtr,
         retv: ValueIrPtr,
     ) -> StatusIrPtr;
@@ -1722,6 +1829,12 @@ extern "C" {
         peer: CompilerPeer,
         target: ObjectIrPtr,
         source: ValueIrPtr,
+        retv: ValueIrPtr,
+    ) -> StatusIrPtr;
+    fn compiler_peer_create_push_array_element(
+        peer: CompilerPeer,
+        target: ObjectIrPtr,
+        value: ValueIrPtr,
         retv: ValueIrPtr,
     ) -> StatusIrPtr;
 

@@ -186,8 +186,10 @@ impl<X> AnalyzerSupport for Runtime<X> {
         self.lambda_registry.register(is_coroutine)
     }
 
-    fn define_global_property(&mut self, key: Symbol, property: Property) -> Result<bool, Value> {
-        self.global_object.define_own_property(key, property)
+    // TODO: PropertyKey::Number
+    fn define_global_property(&mut self, name: Symbol, property: Property) -> Result<bool, Value> {
+        self.global_object
+            .define_own_property(name.into(), property)
     }
 }
 
@@ -251,6 +253,7 @@ where
             Node::Boolean(value) => self.handle_boolean(value),
             Node::Number(value, ..) => self.handle_number(value),
             Node::String(value, ..) => self.handle_string(value),
+            Node::Array => self.handle_array(),
             Node::Object => self.handle_object(),
             Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
             Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
@@ -365,6 +368,18 @@ where
 
     fn handle_string(&mut self, value: Vec<u16>) {
         analysis_mut!(self).put_string(value);
+    }
+
+    fn handle_array(&mut self) {
+        // TODO(feat): 10.4.2.2 ArrayCreate ( length [ , proto ] )
+        push_commands! {
+            self;
+            CompileCommand::Object,
+            // object.length = 0;
+            CompileCommand::PropertyReference(Symbol::LENGTH),
+            CompileCommand::Number(0.0),
+            CompileCommand::CreateDataProperty,
+        }
     }
 
     fn handle_object(&mut self) {
@@ -1205,6 +1220,18 @@ impl FunctionAnalysis {
 
     fn process_property_definition(&mut self, kind: PropertyDefinitionKind) {
         match kind {
+            PropertyDefinitionKind::ArrayElement => {
+                self.commands.push(CompileCommand::PushArrayElement);
+            }
+            PropertyDefinitionKind::ArrayEmptySlot => {
+                // TODO(refactor): perform `array.length += 1`
+                self.commands.push(CompileCommand::Undefined);
+                self.commands.push(CompileCommand::PushArrayElement);
+            }
+            PropertyDefinitionKind::ArraySpread => {
+                // 13.2.4.1 Runtime Semantics: ArrayAccumulation
+                todo!("feat(jsruntime): GetIterator(spreadObj, sync)");
+            }
             PropertyDefinitionKind::Reference => {
                 let symbol = match self.commands.pop() {
                     Some(CompileCommand::VariableReference(symbol)) => symbol,
@@ -1711,6 +1738,7 @@ pub enum CompileCommand {
     // object
     CreateDataProperty,
     CopyDataProperties,
+    PushArrayElement,
 
     // update operators
     PostfixIncrement,

@@ -389,6 +389,7 @@ where
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
+            CompileCommand::PushArrayElement => self.process_push_array_element(),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -616,34 +617,39 @@ where
     }
 
     fn process_property_reference(&mut self, symbol: Symbol) {
-        self.operand_stack.push(Operand::PropertyReference(symbol));
+        self.operand_stack
+            .push(Operand::PropertyReference(symbol.into()));
     }
 
     fn process_to_property_key(&mut self) {
         let (operand, _) = self.dereference();
         let key = match operand {
-            Operand::Undefined => Symbol::UNDEFINED,
-            Operand::Null => Symbol::NULL,
-            Operand::Boolean(_, Some(false)) => Symbol::FALSE,
-            Operand::Boolean(_, Some(true)) => Symbol::TRUE,
-            Operand::Boolean(_, None) => todo!(),
-            Operand::Number(..) => todo!(),
-            Operand::String(_, Some(ref value)) => {
-                self.support.make_symbol_from_name(value.make_utf16())
-            }
-            Operand::String(_, None) => todo!(),
+            Operand::Undefined => Symbol::UNDEFINED.into(),
+            Operand::Null => Symbol::NULL.into(),
+            Operand::Boolean(_, Some(false)) => Symbol::FALSE.into(),
+            Operand::Boolean(_, Some(true)) => Symbol::TRUE.into(),
+            Operand::Boolean(value, None) => self.bridge.create_boolean_to_any(value).into(),
+            Operand::Number(_, Some(value)) => value.into(),
+            Operand::Number(value, None) => self.bridge.create_number_to_any(value).into(),
+            Operand::String(_, Some(ref value)) => self
+                .support
+                .make_symbol_from_name(value.make_utf16())
+                .into(),
+            Operand::String(value, None) => self.bridge.create_string_to_any(value).into(),
             Operand::Lambda(_) => todo!(),
-            Operand::Closure(_) => todo!(),
+            Operand::Closure(value) => self.bridge.create_closure_to_any(value).into(),
             Operand::Coroutine(_) => todo!(),
-            Operand::Object(_) => todo!(),
+            Operand::Object(value) => self.bridge.create_object_to_any(value).into(),
             Operand::Promise(_) => todo!(),
-            Operand::Any(_, Some(Value::Undefined)) => Symbol::UNDEFINED,
-            Operand::Any(_, Some(Value::Null)) => Symbol::NULL,
-            Operand::Any(_, Some(Value::Boolean(false))) => Symbol::FALSE,
-            Operand::Any(_, Some(Value::Boolean(true))) => Symbol::FALSE,
-            Operand::Any(_, Some(Value::String(value))) => {
-                self.support.make_symbol_from_name(value.make_utf16())
-            }
+            Operand::Any(_, Some(Value::Undefined)) => Symbol::UNDEFINED.into(),
+            Operand::Any(_, Some(Value::Null)) => Symbol::NULL.into(),
+            Operand::Any(_, Some(Value::Boolean(false))) => Symbol::FALSE.into(),
+            Operand::Any(_, Some(Value::Boolean(true))) => Symbol::FALSE.into(),
+            Operand::Any(_, Some(Value::String(value))) => self
+                .support
+                .make_symbol_from_name(value.make_utf16())
+                .into(),
+            Operand::Any(value, None) => value.into(),
             Operand::Any(..) => todo!(),
             Operand::PropertyReference(_) | Operand::VariableReference(..) => {
                 unreachable!("{operand:?}")
@@ -689,7 +695,17 @@ where
             Operand::PropertyReference(key) => {
                 self.perform_to_object();
                 let object = self.pop_object();
-                let value = self.bridge.create_get_value(object, key, false);
+                let value = match key {
+                    PropertyKey::Symbol(key) => {
+                        self.bridge.create_get_value_by_symbol(object, key, false)
+                    }
+                    PropertyKey::Number(key) => {
+                        self.bridge.create_get_value_by_number(object, key, false)
+                    }
+                    PropertyKey::Value(key) => {
+                        self.bridge.create_get_value_by_value(object, key, false)
+                    }
+                };
                 runtime_debug! {{
                     let is_nullptr = self.bridge.create_value_is_nullptr(value);
                     let non_nullptr = self.bridge.create_logical_not(is_nullptr);
@@ -718,9 +734,9 @@ where
     // TODO(perf): return the value directly if it's a read-only global property.
     fn create_get_global_value_ptr(&mut self, key: Symbol) -> ValueIr {
         // TODO: strict mode
-        let value = self
-            .bridge
-            .create_get_value(self.bridge.get_object_nullptr(), key, true);
+        let value =
+            self.bridge
+                .create_get_value_by_symbol(self.bridge.get_object_nullptr(), key, true);
 
         let then_block = self.create_basic_block("global_object.get_value.is_nullptr");
         let end_block = self.create_basic_block("global_object.get_value");
@@ -744,7 +760,7 @@ where
     fn pop_reference(&mut self) -> (Symbol, Locator) {
         match self.operand_stack.pop().unwrap() {
             Operand::VariableReference(symbol, locator) => (symbol, locator),
-            _ => unreachable!(),
+            operand => unreachable!("{operand:?}"),
         }
     }
 
@@ -826,8 +842,11 @@ where
             }
             Locator::Global => {
                 let value = self.create_to_any(&operand);
-                self.bridge
-                    .create_set_value(self.bridge.get_object_nullptr(), symbol, value);
+                self.bridge.create_set_value_by_symbol(
+                    self.bridge.get_object_nullptr(),
+                    symbol,
+                    value,
+                );
             }
             _ => unreachable!("{locator:?}"),
         };
@@ -1086,9 +1105,17 @@ where
         // 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
 
         // 1. Let success be ? CreateDataProperty(O, P, V).
-        let status = self
-            .bridge
-            .create_create_data_property(object, key, value, retv);
+        let status = match key {
+            PropertyKey::Symbol(key) => self
+                .bridge
+                .create_create_data_property_by_symbol(object, key, value, retv),
+            PropertyKey::Number(key) => self
+                .bridge
+                .create_create_data_property_by_number(object, key, value, retv),
+            PropertyKey::Value(key) => self
+                .bridge
+                .create_create_data_property_by_value(object, key, value, retv),
+        };
         self.create_check_status_for_exception(status, retv);
         // `retv` holds a boolean value.
         runtime_debug! {{
@@ -1141,6 +1168,22 @@ where
         self.create_check_status_for_exception(status, retv);
     }
 
+    fn process_push_array_element(&mut self) {
+        // 1. Let exprValue be ? Evaluation of AssignmentExpression.
+        let (operand, _) = self.dereference();
+
+        // 2. Let fromValue be ? GetValue(exprValue).
+        let from_value = self.create_to_any(&operand);
+
+        let object = self.peek_object();
+        let retv = self.bridge.create_retv();
+
+        let status = self
+            .bridge
+            .create_push_array_element(object, from_value, retv);
+        self.create_check_status_for_exception(status, retv);
+    }
+
     // 7.1.18 ToObject ( argument )
     fn perform_to_object(&mut self) {
         let (operand, _) = self.dereference();
@@ -1181,9 +1224,9 @@ where
         }
     }
 
-    fn pop_property_reference(&mut self) -> Symbol {
+    fn pop_property_reference(&mut self) -> PropertyKey {
         match self.operand_stack.pop().unwrap() {
-            Operand::PropertyReference(name) => name,
+            Operand::PropertyReference(key) => key,
             _ => unreachable!(),
         }
     }
@@ -1955,21 +1998,39 @@ where
     // 13.15.2 Runtime Semantics: Evaluation
     fn process_assignment(&mut self) {
         let (rhs, _) = self.dereference();
-        let (symbol, locator) = self.pop_reference();
 
-        match locator {
-            Locator::Global => {
+        match self.operand_stack.pop().unwrap() {
+            Operand::VariableReference(symbol, Locator::Global) => {
+                let object = self.bridge.get_object_nullptr();
                 let value = self.create_to_any(&rhs);
                 // TODO(feat): ReferenceError, TypeError
                 self.bridge
-                    .create_set_value(self.bridge.get_object_nullptr(), symbol, value);
+                    .create_set_value_by_symbol(object, symbol, value);
             }
-            _ => {
+            Operand::VariableReference(symbol, locator) => {
                 let value = self.create_get_value_ptr(symbol, locator);
                 // TODO: throw a TypeError in the strict mode.
                 // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
                 self.create_store_operand_to_value(&rhs, value);
             }
+            Operand::PropertyReference(key) => {
+                // TODO(refactor): reduce code clone
+                self.perform_to_object();
+                let object = self.pop_object();
+                let value = self.create_to_any(&rhs);
+                match key {
+                    PropertyKey::Symbol(key) => {
+                        self.bridge.create_set_value_by_symbol(object, key, value);
+                    }
+                    PropertyKey::Number(key) => {
+                        self.bridge.create_set_value_by_number(object, key, value);
+                    }
+                    PropertyKey::Value(key) => {
+                        self.bridge.create_set_value_by_value(object, key, value);
+                    }
+                }
+            }
+            operand => unreachable!("{operand:?}"),
         }
 
         self.operand_stack.push(rhs);
@@ -2985,15 +3046,15 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of boolean type.
     // TODO(perf): compile-time evaluation
-    Boolean(BooleanIr, #[allow(unused)] Option<bool>),
+    Boolean(BooleanIr, Option<bool>),
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    Number(NumberIr, #[allow(unused)] Option<f64>),
+    Number(NumberIr, Option<f64>),
 
     /// Runtime value and optional compile-time constant value of string type.
     // TODO(perf): compile-time evaluation
-    String(Char16SeqIr, #[allow(unused)] Option<Char16Seq>),
+    String(Char16SeqIr, Option<Char16Seq>),
 
     /// Runtime value of lambda function type.
     Lambda(LambdaIr),
@@ -3016,7 +3077,7 @@ enum Operand {
 
     // Compile-time constant value types.
     VariableReference(Symbol, Locator),
-    PropertyReference(Symbol),
+    PropertyReference(PropertyKey),
 }
 
 impl Dump for Operand {
@@ -3044,6 +3105,43 @@ impl Dump for Operand {
             }
             Self::PropertyReference(key) => eprintln!("PropertyReference({key:?})"),
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum PropertyKey {
+    Symbol(Symbol),
+    Number(f64),
+    Value(ValueIr),
+}
+
+impl From<Symbol> for PropertyKey {
+    fn from(value: Symbol) -> Self {
+        Self::Symbol(value)
+    }
+}
+
+impl From<f64> for PropertyKey {
+    fn from(value: f64) -> Self {
+        if value.is_nan() {
+            Symbol::NAN.into()
+        } else if value.is_infinite() {
+            if value.is_sign_positive() {
+                Symbol::INFINITY.into()
+            } else {
+                Symbol::NEG_INFINITY.into()
+            }
+        } else if value == 0. {
+            Self::Number(0.) // convert `-0.` to `0.`
+        } else {
+            Self::Number(value)
+        }
+    }
+}
+
+impl From<ValueIr> for PropertyKey {
+    fn from(value: ValueIr) -> Self {
+        Self::Value(value)
     }
 }
 
