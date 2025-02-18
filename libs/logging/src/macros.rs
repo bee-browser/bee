@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! init {
     () => {
-        #[logging::ctor]
+        #[ctor::ctor]
         fn logging_init() {
             $crate::init();
         }

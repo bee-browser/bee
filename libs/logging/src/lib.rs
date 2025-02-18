@@ -12,6 +12,12 @@ use bitflags::bitflags;
 pub use ctor::ctor;
 
 /// Initializes the log system.
+///
+/// This function must be called only once in a process before calling any functions that use
+/// logging macros.
+///
+/// This function is **NOT** thread-safe.  So, it's strongly recommended to call this function
+/// before creating any threads other than the main thread.
 pub fn init() {
     imp::init();
 }
@@ -61,6 +67,7 @@ impl Target {
     }
 }
 
+// TODO(fix): FILTERS should be initialized in init().
 #[ctor]
 static FILTERS: [Flags; targets::len()] = {
     let default = std::env::var("BEE_LOG_DEFAULT")
