@@ -8,8 +8,7 @@ use std::mem::MaybeUninit;
 use std::str::FromStr;
 
 use bitflags::bitflags;
-
-pub use ctor::ctor;
+use ctor::ctor;
 
 /// Initializes the log system.
 ///
