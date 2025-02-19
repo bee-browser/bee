@@ -79,6 +79,8 @@ pub struct Property {
     flags: PropertyFlags,
 }
 
+// NOTE: Current we use `data_*()` factory methods in order hide internal details of this type.
+// Because we'll change its memory layout in the future.
 impl Property {
     /// Creates a data property with [[Writable]]=false, [[Enumerable]]=false and
     /// [[Configurable]]=false.
@@ -165,6 +167,18 @@ impl PropertyFlags {
 
 // 10.1 Ordinary Object Internal Methods and Internal Slots
 
+// TODO(refactor): memory layout
+// Separate `properties` into the following two parts:
+//
+//   1. Memory layout information.
+//      This type is used as a map from a property key to an index (or an offset from a base
+//      address) of its property.
+//      This type should be used as the *hidden class* of the object.
+//
+//   2. A list of properties (or chunks of properties).
+//
+// We use a simple hash map until we finishes implementing built-in objects.  After than, we'll
+// start reconsidering about the memory layout.
 #[derive(Default)]
 pub struct Object {
     properties: FxHashMap<PropertyKey, Property>,
