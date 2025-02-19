@@ -470,7 +470,7 @@ unsafe extern "C" fn runtime_get_value_by_symbol<X>(
     let runtime = into_runtime!(runtime, X);
 
     debug_assert_ne!(key, 0);
-    let key = PropertyKey::Symbol(key);
+    let key = PropertyKey::from(key);
 
     let result = match (object as *mut Object).as_ref() {
         Some(object) => object.get_value(&key),
@@ -498,7 +498,7 @@ unsafe extern "C" fn runtime_get_value_by_number<X>(
     let runtime = into_runtime!(runtime, X);
 
     debug_assert!(f64::is_finite(key));
-    let key = PropertyKey::Number(key);
+    let key = PropertyKey::from(key);
 
     let result = match (object as *mut Object).as_ref() {
         Some(object) => object.get_value(&key),
@@ -550,7 +550,7 @@ unsafe extern "C" fn runtime_set_value_by_symbol<X>(
     let runtime = into_runtime!(runtime, X);
 
     debug_assert_ne!(key, 0);
-    let key = PropertyKey::Symbol(key);
+    let key = PropertyKey::from(key);
 
     debug_assert_ne!(value, std::ptr::null());
     let value = into_value!(value);
@@ -571,7 +571,7 @@ unsafe extern "C" fn runtime_set_value_by_number<X>(
     let runtime = into_runtime!(runtime, X);
 
     debug_assert!(f64::is_finite(key));
-    let key = PropertyKey::Number(key);
+    let key = PropertyKey::from(key);
 
     debug_assert_ne!(value, std::ptr::null());
     let value = into_value!(value);
@@ -620,7 +620,7 @@ unsafe extern "C" fn runtime_create_data_property_by_symbol<X>(
     let object = object.cast::<Object>().as_mut().unwrap();
 
     debug_assert_ne!(key, 0);
-    let key = PropertyKey::Symbol(key);
+    let key = PropertyKey::from(key);
 
     debug_assert_ne!(value, std::ptr::null());
     let value = into_value!(value);
@@ -657,7 +657,7 @@ unsafe extern "C" fn runtime_create_data_property_by_number<X>(
     let object = object.cast::<Object>().as_mut().unwrap();
 
     debug_assert!(f64::is_finite(key));
-    let key = PropertyKey::Number(key);
+    let key = PropertyKey::from(key);
 
     debug_assert_ne!(value, std::ptr::null());
     let value = into_value!(value);

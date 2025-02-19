@@ -10,15 +10,21 @@ use crate::types::Value;
 
 #[derive(Clone, Debug)]
 pub enum PropertyKey {
-    Symbol(u32),
+    Symbol(Symbol),
     Number(f64),
 }
 
 impl Eq for PropertyKey {}
 
+impl From<u32> for PropertyKey {
+    fn from(value: u32) -> Self {
+        Symbol::from(value).into()
+    }
+}
+
 impl From<Symbol> for PropertyKey {
     fn from(value: Symbol) -> Self {
-        Self::Symbol(value.id())
+        Self::Symbol(value)
     }
 }
 
@@ -43,7 +49,7 @@ impl From<f64> for PropertyKey {
 impl Hash for PropertyKey {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
-            Self::Symbol(v) => state.write_u32(*v),
+            Self::Symbol(v) => state.write_u32(v.id()),
             Self::Number(v) => state.write_u64(v.to_bits()),
         }
     }

@@ -231,7 +231,7 @@ impl<X> Runtime<X> {
     }
 
     fn push_value(&mut self, target: &mut Object, value: &Value) -> Result<(), Value> {
-        const LENGTH: PropertyKey = PropertyKey::Symbol(Symbol::LENGTH.id());
+        const LENGTH: PropertyKey = PropertyKey::Symbol(Symbol::LENGTH);
 
         let length = match target.get_value(&LENGTH) {
             Some(Value::Number(v)) => *v,
@@ -243,7 +243,7 @@ impl<X> Runtime<X> {
         }
 
         // TODO: error handling
-        let _ = self.create_data_property(target, &PropertyKey::Number(length), value);
+        let _ = self.create_data_property(target, &PropertyKey::from(length), value);
 
         target.set_value(&LENGTH, &Value::from(length + 1.0));
         Ok(())
