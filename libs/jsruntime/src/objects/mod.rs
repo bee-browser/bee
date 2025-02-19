@@ -61,50 +61,103 @@ impl PartialEq for PropertyKey {
 
 // 6.1.7.1 Property Attributes
 
-pub enum Property {
-    /// A data property.
-    Data {
-        /// The `[[Value]]` attribute.
-        value: Value,
+// TODO(feat): accessor property
+// The accessor property can be represented as a tuple of two pointers.  Its size is within
+// `size_of::<Value>()` (16 bytes) in any architectures.  Replace `value: Value` with
+// `value: [u8; 16]` and define access methods on `Property`.
+//
+// TODO(refactor): memory layout
+// The type of the discriminant value of `Value` is `u8`.  So, there is enough space for storing
+// `flags` in `Value`.  We can use the same memory layout in `Value` and `Property`.  When we
+// represents the [[Get]] and [[Set]] by using a pair of offsets or indexes shorter than 6 bytes,
+// we can also place it in `Value`.
+pub struct Property {
+    /// The `[[Value]]` attribute.
+    value: Value,
 
-        /// Flags for boolean attributes.
-        flags: PropertyFlags,
-    },
-
-    /// A accessor property
-    #[allow(unused)]
-    Accessor {
-        /// Flags for boolean attributes.
-        flags: PropertyFlags,
-    },
+    /// Flags for boolean attributes.
+    flags: PropertyFlags,
 }
 
 impl Property {
-    pub fn is_enumerable(&self) -> bool {
-        self.flags().contains(PropertyFlags::ENUMERABLE)
+    /// Creates a data property with [[Writable]]=false, [[Enumerable]]=false and
+    /// [[Configurable]]=false.
+    pub const fn data_xxx(value: Value) -> Self {
+        Self::data(value, PropertyFlags::XXX)
     }
 
-    pub fn flags(&self) -> PropertyFlags {
-        match self {
-            Self::Data { flags, .. } => *flags,
-            Self::Accessor { flags } => *flags,
+    /// Creates a data property with [[Writable]]=true, [[Enumerable]]=true and
+    /// [[Configurable]]=true.
+    pub const fn data_wec(value: Value) -> Self {
+        Self::data(value, PropertyFlags::WEC)
+    }
+
+    /// Creates a data property.
+    const fn data(value: Value, flags: PropertyFlags) -> Self {
+        Self {
+            value,
+            flags: PropertyFlags::DATA.union(flags),
         }
+    }
+
+    pub const fn is_writable(&self) -> bool {
+        self.flags.is_writable()
+    }
+
+    pub const fn is_enumerable(&self) -> bool {
+        self.flags.is_enumerable()
+    }
+
+    pub const fn is_configurable(&self) -> bool {
+        self.flags.is_configurable()
+    }
+
+    pub fn value(&self) -> &Value {
+        debug_assert!(self.flags.is_data_property());
+        &self.value
     }
 }
 
 bitflags! {
     #[derive(Clone, Copy)]
-    pub struct PropertyFlags: u8 {
+    struct PropertyFlags: u8 {
+        /// The data property (true) or the accessor property (false).
+        const DATA         = 1 << 0;
+
         /// The `[[Writable]]` attribute.
         ///
         /// Available only for the data property.
-        const WRITABLE     = 1 << 0;
+        const WRITABLE     = 1 << 1;
 
         /// The `[[Enumerable]]` attribute.
-        const ENUMERABLE   = 1 << 1;
+        const ENUMERABLE   = 1 << 2;
 
         /// The `[[Configurable]]` attribute.
-        const CONFIGURABLE = 1 << 2;
+        const CONFIGURABLE = 1 << 3;
+    }
+}
+
+impl PropertyFlags {
+    /// [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false
+    const XXX: Self = Self::empty();
+
+    /// [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true
+    const WEC: Self = Self::WRITABLE.union(Self::ENUMERABLE).union(Self::CONFIGURABLE);
+
+    const fn is_data_property(&self) -> bool {
+        self.contains(Self::DATA)
+    }
+
+    const fn is_writable(&self) -> bool {
+        self.contains(Self::WRITABLE)
+    }
+
+    const fn is_enumerable(&self) -> bool {
+        self.contains(Self::ENUMERABLE)
+    }
+
+    const fn is_configurable(&self) -> bool {
+        self.contains(Self::CONFIGURABLE)
     }
 }
 
@@ -131,49 +184,18 @@ impl Object {
     // before it's overwritten.  At this point, we are not sure whether or not it's always works in
     // any expression.
     pub fn get_value(&self, key: &PropertyKey) -> Option<&Value> {
-        match self.properties.get(key) {
-            Some(Property::Data { ref value, .. }) => Some(value),
-            Some(Property::Accessor { .. }) => todo!(),
-            None => None,
-        }
+        self.properties.get(key).map(|prop| &prop.value)
     }
 
     // TODO(feat): strict, writable
     pub fn set_value(&mut self, key: &PropertyKey, value: &Value) {
         self.properties
             .entry(key.clone())
-            .and_modify(|prop| match prop {
-                Property::Data {
-                    // The variable name `value` is already used in the arguments.
-                    //
-                    // NOTE: Be careful.  `clippy` does NOT detect mistakes like this:
-                    //
-                    // ```rust
-                    // *value = value.clone();
-                    // ```
-                    //
-                    // This does NOT match the `self_assignment` lint that is denied by default.
-                    //
-                    // If `Value` implements `Copy`, this kind of self-assignment can be detected
-                    // if the `assigning_clones` lint is denied (but it's allowed by default).
-                    value: ref mut value_ref,
-                    flags,
-                } => {
-                    debug_assert!(flags.contains(PropertyFlags::WRITABLE));
-                    *value_ref = value.clone();
-                }
-                Property::Accessor { flags } => {
-                    debug_assert!(flags.contains(PropertyFlags::WRITABLE));
-                    *prop = Property::Data {
-                        value: value.clone(),
-                        flags: PropertyFlags::empty(),
-                    }
-                }
+            .and_modify(|prop| {
+                debug_assert!(prop.is_writable());
+                prop.value = value.clone();
             })
-            .or_insert(Property::Data {
-                value: value.clone(),
-                flags: PropertyFlags::empty(),
-            });
+            .or_insert(Property::data_xxx(value.clone()));
     }
 
     pub fn get_own_property(&self, key: &PropertyKey) -> Option<&Property> {
@@ -196,14 +218,7 @@ impl Object {
     pub fn define_builtin_global_properties(&mut self) {
         macro_rules! define {
             ($name:expr, $value:expr) => {
-                let result = self.define_own_property(
-                    $name.into(),
-                    Property::Data {
-                        value: $value,
-                        // { [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false }
-                        flags: PropertyFlags::empty(),
-                    },
-                );
+                let result = self.define_own_property($name.into(), Property::data_xxx($value));
                 debug_assert!(matches!(result, Ok(true)));
             };
         }
