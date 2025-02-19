@@ -150,7 +150,9 @@ impl PropertyFlags {
     const XXX: Self = Self::empty();
 
     /// [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true
-    const WEC: Self = Self::WRITABLE.union(Self::ENUMERABLE).union(Self::CONFIGURABLE);
+    const WEC: Self = Self::WRITABLE
+        .union(Self::ENUMERABLE)
+        .union(Self::CONFIGURABLE);
 
     const fn is_data_property(&self) -> bool {
         self.contains(Self::DATA)
