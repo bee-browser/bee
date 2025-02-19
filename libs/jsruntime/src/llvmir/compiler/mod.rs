@@ -3110,8 +3110,11 @@ impl Dump for Operand {
 
 #[derive(Clone, Debug)]
 enum PropertyKey {
+    // Compile-time values
     Symbol(Symbol),
     Number(f64),
+
+    // Runtime value w/ optional compile-time value
     Value(ValueIr),
 }
 
@@ -3123,18 +3126,11 @@ impl From<Symbol> for PropertyKey {
 
 impl From<f64> for PropertyKey {
     fn from(value: f64) -> Self {
-        if value.is_nan() {
-            Symbol::NAN.into()
-        } else if value.is_infinite() {
-            if value.is_sign_positive() {
-                Symbol::INFINITY.into()
-            } else {
-                Symbol::NEG_INFINITY.into()
-            }
-        } else if value == 0. {
-            Self::Number(0.) // convert `-0.` to `0.`
-        } else {
-            Self::Number(value)
+        // Use objects::PropertyKey::from() in order to remove code clone.
+        use crate::objects::PropertyKey;
+        match PropertyKey::from(value) {
+            PropertyKey::Symbol(value) => Self::Symbol(value),
+            PropertyKey::Number(value) => Self::Number(value),
         }
     }
 }
