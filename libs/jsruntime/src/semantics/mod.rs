@@ -21,7 +21,6 @@ use jsparser::Symbol;
 
 use crate::logger;
 use crate::objects::Property;
-use crate::objects::PropertyFlags;
 use crate::LambdaId;
 use crate::Runtime;
 use crate::Value;
@@ -968,15 +967,9 @@ where
         for symbol in analysis.function_scoped_symbols.iter().cloned() {
             // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
             // `function.commands` must be rewritten to throw the "Error".
-            let result = self.support.define_global_property(
-                symbol,
-                Property::Data {
-                    value: Value::Undefined,
-                    flags: PropertyFlags::WRITABLE
-                        | PropertyFlags::ENUMERABLE
-                        | PropertyFlags::CONFIGURABLE,
-                },
-            );
+            let result = self
+                .support
+                .define_global_property(symbol, Property::data_wec(Value::Undefined));
             debug_assert!(matches!(result, Ok(true)));
             if !global_symbols.contains(&symbol) {
                 self.global_analysis

@@ -16,7 +16,6 @@ use lambda::LambdaRegistry;
 use llvmir::Executor;
 use objects::Object;
 use objects::Property;
-use objects::PropertyFlags;
 use objects::PropertyKey;
 use types::ReturnValue;
 
@@ -115,8 +114,7 @@ impl<X> Runtime<X> {
         let closure = self.create_closure(lambda, 0);
         let value = Value::Closure(closure);
         // TODO: add `flags` to the arguments.
-        let flags = PropertyFlags::empty();
-        let prop = Property::Data { value, flags };
+        let prop = Property::data_xxx(value);
         let result = self.global_object.define_own_property(symbol.into(), prop);
         debug_assert!(matches!(result, Ok(true)));
     }
@@ -216,36 +214,24 @@ impl<X> Runtime<X> {
         key: &PropertyKey,
         value: &Value,
     ) -> Result<bool, Value> {
-        object.define_own_property(
-            key.clone(),
-            Property::Data {
-                value: value.clone(),
-                flags: PropertyFlags::WRITABLE
-                    | PropertyFlags::ENUMERABLE
-                    | PropertyFlags::CONFIGURABLE,
-            },
-        )
+        object.define_own_property(key.clone(), Property::data_wec(value.clone()))
     }
 
     // 7.3.25 CopyDataProperties ( target, source, excludedItems )
     fn copy_data_properties(&mut self, target: &mut Object, source: &Value) -> Result<(), Value> {
         let from = source.to_object()?;
-        for (key, desc) in from.iter_own_properties() {
+        for (key, prop) in from.iter_own_properties() {
             // TODO: excludedItems
-            if desc.is_enumerable() {
+            if prop.is_enumerable() {
                 // TODO: 7.3.2 Get ( O, P )
-                let value = match desc {
-                    Property::Data { value, .. } => value,
-                    Property::Accessor { .. } => todo!(),
-                };
-                self.create_data_property(target, key, value)?;
+                self.create_data_property(target, key, prop.value())?;
             }
         }
         Ok(())
     }
 
     fn push_value(&mut self, target: &mut Object, value: &Value) -> Result<(), Value> {
-        const LENGTH: PropertyKey = PropertyKey::Symbol(Symbol::LENGTH.id());
+        const LENGTH: PropertyKey = PropertyKey::Symbol(Symbol::LENGTH);
 
         let length = match target.get_value(&LENGTH) {
             Some(Value::Number(v)) => *v,
@@ -257,7 +243,7 @@ impl<X> Runtime<X> {
         }
 
         // TODO: error handling
-        let _ = self.create_data_property(target, &PropertyKey::Number(length), value);
+        let _ = self.create_data_property(target, &PropertyKey::from(length), value);
 
         target.set_value(&LENGTH, &Value::from(length + 1.0));
         Ok(())
