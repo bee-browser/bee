@@ -9,7 +9,7 @@ publish.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = "1.0.95"
+anyhow = "1.0.96"
 async-stream = "0.3.6"
 axum = "0.8.1"
 bytes = "1.10.0"
