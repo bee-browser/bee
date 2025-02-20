@@ -10,7 +10,7 @@ version.workspace = true
 
 [dependencies]
 num-traits = "0.2.19"
-serde = { version = "1.0.217", features = ["derive"], optional = true }
+serde = { version = "1.0.218", features = ["derive"], optional = true }
 
 [dev-dependencies]
 serde_test = "1.0.177"
