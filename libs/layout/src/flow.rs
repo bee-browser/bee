@@ -145,8 +145,8 @@ impl<'a> BlockFlowBuilder<'a> {
 
     fn process_node(&mut self, node: &LayoutNodeRef) {
         match node {
-            LayoutNodeRef::Element(ref element) => self.process_element(element),
-            LayoutNodeRef::Text(ref text) => self.process_text(text),
+            LayoutNodeRef::Element(element) => self.process_element(element),
+            LayoutNodeRef::Text(text) => self.process_text(text),
         }
     }
 
@@ -283,10 +283,10 @@ impl BlockContent {
     {
         match self {
             Self::None => writeln!(write, "{:indent$}none", "", indent = depth),
-            Self::Block(ref block) => block.inspect(write, depth),
-            Self::Flow(ref flow) => flow.inspect(write, depth),
-            Self::Flex(ref flex) => flex.inspect(write, depth),
-            Self::Canvas(ref canvas) => canvas.inspect(write, depth),
+            Self::Block(block) => block.inspect(write, depth),
+            Self::Flow(flow) => flow.inspect(write, depth),
+            Self::Flex(flex) => flex.inspect(write, depth),
+            Self::Canvas(canvas) => canvas.inspect(write, depth),
         }
     }
 
@@ -296,10 +296,10 @@ impl BlockContent {
     {
         match self {
             Self::None => (),
-            Self::Block(ref block) => block.render_blocks(renderer),
-            Self::Flow(ref flow) => flow.render(renderer),
-            Self::Flex(ref flex) => flex.render(renderer),
-            Self::Canvas(ref canvas) => canvas.render(renderer, content_box),
+            Self::Block(block) => block.render_blocks(renderer),
+            Self::Flow(flow) => flow.render(renderer),
+            Self::Flex(flex) => flex.render(renderer),
+            Self::Canvas(canvas) => canvas.render(renderer, content_box),
         }
     }
 }

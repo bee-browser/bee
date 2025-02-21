@@ -325,7 +325,7 @@ where
         let mut i = self.active_formatting_element_list.len() - 1; // last
         match self.active_formatting_element_list.get(i) {
             ActiveFormattingContext::Marker => return,
-            ActiveFormattingContext::Element { ref node, .. } => {
+            ActiveFormattingContext::Element { node, .. } => {
                 if self.find_element_in_stack(*node).is_some() {
                     return;
                 }
@@ -339,7 +339,7 @@ where
                     i += 1;
                     break;
                 }
-                ActiveFormattingContext::Element { ref node, .. } => {
+                ActiveFormattingContext::Element { node, .. } => {
                     if self.find_element_in_stack(*node).is_some() {
                         i += 1;
                         break;
@@ -2591,7 +2591,7 @@ where
     fn set_element(&mut self, i: usize, element: T) {
         match self.0.get_mut(i).unwrap() {
             ActiveFormattingContext::Marker => unreachable!(),
-            ActiveFormattingContext::Element { ref mut node, .. } => *node = element,
+            ActiveFormattingContext::Element { node, .. } => *node = element,
             ActiveFormattingContext::Removed => (),
         }
     }

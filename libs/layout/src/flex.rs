@@ -70,8 +70,8 @@ impl<'a> FlexLineBuilder<'a> {
 
     fn process_node(&mut self, node: &LayoutNodeRef) {
         match node {
-            LayoutNodeRef::Element(ref element) => self.process_element(element),
-            LayoutNodeRef::Text(ref text) => self.process_text(text),
+            LayoutNodeRef::Element(element) => self.process_element(element),
+            LayoutNodeRef::Text(text) => self.process_text(text),
         }
     }
 

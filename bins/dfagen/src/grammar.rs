@@ -408,8 +408,8 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
     fn build_nfa_for_term(&mut self, term: &Term, accept: bool) -> PartialNfa {
         match term {
             Term::Empty => self.build_nfa_for_empty(),
-            Term::UnicodeSet(ref patterns) => self.build_nfa_for_unicode_set(patterns),
-            Term::NonTerminal(ref name) => self.build_nfa_for_non_terminal(name, accept),
+            Term::UnicodeSet(patterns) => self.build_nfa_for_unicode_set(patterns),
+            Term::NonTerminal(name) => self.build_nfa_for_non_terminal(name, accept),
             _ => unimplemented!(),
         }
     }
@@ -544,8 +544,8 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
     fn build_unicode_set_for_term(&self, term: &Term) -> UnicodeSet {
         match term {
             Term::Any => UnicodeSet::any(),
-            Term::NonTerminal(ref name) => self.build_unicode_set_for_non_terminal(name),
-            Term::UnicodeSet(ref patterns) => self.build_unicode_set_for_patterns(patterns),
+            Term::NonTerminal(name) => self.build_unicode_set_for_non_terminal(name),
+            Term::UnicodeSet(patterns) => self.build_unicode_set_for_patterns(patterns),
             _ => unimplemented!(),
         }
     }

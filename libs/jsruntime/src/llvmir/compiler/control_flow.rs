@@ -178,7 +178,7 @@ impl ControlFlowStack {
         self.stack
             .get(self.scope_index)
             .and_then(|flow| match flow {
-                ControlFlow::Scope(ref flow) => Some(flow),
+                ControlFlow::Scope(flow) => Some(flow),
                 _ => None,
             })
             .unwrap()
@@ -309,7 +309,7 @@ impl ControlFlowStack {
         self.stack
             .get(self.switch_index)
             .and_then(|flow| match flow {
-                ControlFlow::Switch(ref flow) => Some(flow),
+                ControlFlow::Switch(flow) => Some(flow),
                 _ => None,
             })
             .unwrap()
@@ -319,7 +319,7 @@ impl ControlFlowStack {
         self.stack
             .get_mut(self.switch_index)
             .and_then(|flow| match flow {
-                ControlFlow::Switch(ref mut flow) => Some(flow),
+                ControlFlow::Switch(flow) => Some(flow),
                 _ => None,
             })
             .unwrap()
@@ -402,7 +402,7 @@ impl ControlFlowStack {
         self.stack
             .get(self.exception_index)
             .and_then(|flow| match flow {
-                ControlFlow::Exception(ref flow) => Some(flow),
+                ControlFlow::Exception(flow) => Some(flow),
                 _ => None,
             })
             .unwrap()
@@ -412,7 +412,7 @@ impl ControlFlowStack {
         self.stack
             .get_mut(self.exception_index)
             .and_then(|flow| match flow {
-                ControlFlow::Exception(ref mut flow) => Some(flow),
+                ControlFlow::Exception(flow) => Some(flow),
                 _ => None,
             })
             .unwrap()

@@ -108,7 +108,7 @@ impl AsRef<[u16]> for SymbolName {
     fn as_ref(&self) -> &[u16] {
         match self {
             Self::Static(name) => name,
-            Self::Dynamic(ref name) => name.as_slice(),
+            Self::Dynamic(name) => name.as_slice(),
         }
     }
 }
