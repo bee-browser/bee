@@ -5,7 +5,7 @@ resolver = "2"
 [workspace.package]
 authors = ["BEE project contributors"]
 description = "A web browser engine to be embedded within applications"
-edition = "2021"
+edition = "2024"
 homepage = "https://github.com/bee-browser/bee"
 license = "Apache-2.0 OR MIT"
 publish = false
