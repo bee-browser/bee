@@ -10,10 +10,7 @@ homepage = "https://github.com/bee-browser/bee"
 license = "Apache-2.0 OR MIT"
 publish = false
 repository = "https://github.com/bee-browser/bee.git"
-# TODO(build): MSRV of functionality to inherit keys from workspace.package is 1.64+.
-# However, we've never checked if this crate can be built w/ MSRV.
-# See https://doc.rust-lang.org/cargo/reference/workspaces.html#the-package-table.
-#rust-version = "1.64"
+rust-version = "1.85.0"
 version = "0.0.0"
 
 [profile.release]
