@@ -5,8 +5,8 @@ use crate::grammar::NonTerminal;
 use crate::grammar::Rule;
 use crate::grammar::Term;
 use crate::logger;
-use crate::phrase::macros::*;
 use crate::phrase::PhraseSet;
+use crate::phrase::macros::*;
 
 pub struct FirstSet {
     pub max_tokens: usize,

@@ -15,9 +15,9 @@ use crate::grammar::Symbol;
 use crate::grammar::Term;
 use crate::logger;
 use crate::lr::LrItem;
-use crate::phrase::macros::*;
 use crate::phrase::MatchStatus;
 use crate::phrase::PhraseSet;
+use crate::phrase::macros::*;
 use crate::state::Automaton;
 use crate::state::StateId;
 

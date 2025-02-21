@@ -3,8 +3,8 @@
 // This file was automagically generated with:
 // template: {{@template}}
 
-use phf::phf_map;
 use phf::Map;
+use phf::phf_map;
 
 pub fn adjust(name: &str) -> &str {
     LOCAL_NAMES.get(name).cloned().unwrap_or(name)

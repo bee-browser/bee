@@ -8,11 +8,11 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use axum::extract::State;
-use axum::http::header::HeaderValue;
 use axum::http::header::CACHE_CONTROL;
+use axum::http::header::HeaderValue;
+use axum::response::IntoResponse;
 use axum::response::sse::Event;
 use axum::response::sse::Sse;
-use axum::response::IntoResponse;
 use clap::Parser;
 use serde::Deserialize;
 use tokio::io::AsyncBufReadExt;

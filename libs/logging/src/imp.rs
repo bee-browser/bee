@@ -5,13 +5,13 @@ use tracing_subscriber::filter::EnvFilter;
 use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::time::FormatTime;
 
+pub use tracing::Level;
 pub use tracing::debug;
 pub use tracing::error;
 pub use tracing::event;
 pub use tracing::info;
 pub use tracing::trace;
 pub use tracing::warn;
-pub use tracing::Level;
 
 pub(crate) fn init() {
     let builder = tracing_subscriber::fmt()

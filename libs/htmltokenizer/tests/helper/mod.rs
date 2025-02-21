@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use htmltokenizer::token::*;
 use htmltokenizer::Error;
 use htmltokenizer::InitialState;
 use htmltokenizer::Tokenizer;
+use htmltokenizer::token::*;
 
 pub fn tokenize(json: &'static str) {
     let test: TestCase = serde_json::from_str(json).unwrap();
@@ -90,7 +90,7 @@ impl Validator<'_> {
 
     fn handle_text(&mut self, text: Text) {
         match self.output.last_mut() {
-            Some(Output::Character { ref mut data }) => {
+            Some(Output::Character { data }) => {
                 data.push_str(text.data);
             }
             _ => {
@@ -103,7 +103,7 @@ impl Validator<'_> {
 
     fn handle_comment(&mut self, comment: Comment) {
         match self.output.last_mut() {
-            Some(Output::Comment { ref mut data }) => {
+            Some(Output::Comment { data }) => {
                 data.push_str(comment.data);
             }
             _ => {

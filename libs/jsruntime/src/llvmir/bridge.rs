@@ -3,6 +3,7 @@ use std::ffi::c_void;
 
 use base::static_assert_size_eq;
 
+use crate::Runtime;
 use crate::logger;
 use crate::objects::Object;
 use crate::objects::PropertyKey;
@@ -13,7 +14,6 @@ use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Status;
 use crate::types::Value;
-use crate::Runtime;
 
 pub fn initialize() {
     unsafe {
@@ -142,7 +142,7 @@ macro_rules! into_value_mut {
 
 // 7.1.2 ToBoolean ( argument )
 unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Value) -> bool {
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
     match value {
         Value::None => unreachable!("Value::None"),
         Value::Undefined => false,
@@ -162,7 +162,7 @@ unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Val
 // 7.1.3 ToNumeric ( value )
 // 7.1.4 ToNumber ( argument )
 unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Value) -> f64 {
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
     match value {
         Value::None => unreachable!("Value::None"),
         Value::Undefined => f64::NAN,
@@ -180,7 +180,7 @@ unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Val
 // 7.1.18 ToObject ( argument )
 unsafe extern "C" fn runtime_to_object(_runtime: *mut c_void, value: *const Value) -> *mut c_void {
     debug_assert_ne!(value, std::ptr::null());
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
 
     match value {
         Value::None => unreachable!("Value::None"),
@@ -250,10 +250,10 @@ unsafe extern "C" fn runtime_is_loosely_equal(
     a: *const Value,
     b: *const Value,
 ) -> bool {
-    let x = into_value!(a);
+    let x = unsafe { into_value!(a) };
     debug_assert!(!matches!(x, Value::None));
 
-    let y = into_value!(b);
+    let y = unsafe { into_value!(b) };
     debug_assert!(!matches!(y, Value::None));
 
     let x_kind = std::mem::discriminant(x);
@@ -262,7 +262,7 @@ unsafe extern "C" fn runtime_is_loosely_equal(
     // 1. If Type(x) is Type(y)
     if x_kind == y_kind {
         // a. Return IsStrictlyEqual(x, y).
-        return runtime_is_strictly_equal(runtime, a, b);
+        return unsafe { runtime_is_strictly_equal(runtime, a, b) };
     }
 
     match (x, y) {
@@ -279,8 +279,8 @@ unsafe extern "C" fn runtime_is_loosely_equal(
         // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
         // ...
         _ => {
-            let xnum = runtime_to_numeric(runtime, a);
-            let ynum = runtime_to_numeric(runtime, b);
+            let xnum = unsafe { runtime_to_numeric(runtime, a) };
+            let ynum = unsafe { runtime_to_numeric(runtime, b) };
             if xnum.is_nan() || ynum.is_nan() {
                 return false;
             }
@@ -295,10 +295,10 @@ unsafe extern "C" fn runtime_is_strictly_equal(
     a: *const Value,
     b: *const Value,
 ) -> bool {
-    let x = into_value!(a);
+    let x = unsafe { into_value!(a) };
     debug_assert!(!matches!(x, Value::None));
 
-    let y = into_value!(b);
+    let y = unsafe { into_value!(b) };
     debug_assert!(!matches!(y, Value::None));
 
     x == y
@@ -308,7 +308,7 @@ unsafe extern "C" fn runtime_get_typeof(
     _runtime: *mut c_void,
     value: *const Value,
 ) -> *const Char16Seq {
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
     debug_assert!(!matches!(value, Value::None));
 
     value.get_typeof() as *const Char16Seq
@@ -318,8 +318,8 @@ unsafe extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: *mut c_void,
     seq: *const Char16Seq,
 ) -> *const Char16Seq {
-    let runtime = into_runtime!(runtime, X);
-    let seq = into_string!(seq);
+    let runtime = unsafe { into_runtime!(runtime, X) };
+    let seq = unsafe { into_string!(seq) };
     runtime.migrate_string_to_heap(seq) as *const Char16Seq
 }
 
@@ -334,18 +334,17 @@ unsafe extern "C" fn runtime_create_capture<X>(
         )
     };
 
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
     let allocator = runtime.allocator();
 
     // TODO: GC
     let ptr = allocator.alloc_layout(LAYOUT);
 
-    let capture = ptr.cast::<Capture>().as_ptr();
-    (*capture).target = target;
-
+    let capture = unsafe { ptr.cast::<Capture>().as_mut() };
+    capture.target = target;
     // `capture.escaped` will be filled with an actual value.
 
-    capture
+    capture as *mut Capture
 }
 
 impl<X> Runtime<X> {
@@ -380,7 +379,8 @@ unsafe extern "C" fn runtime_create_closure<X>(
     lambda: Lambda,
     num_captures: u16,
 ) -> *mut Closure {
-    into_runtime!(runtime, X).create_closure(lambda, num_captures)
+    let runtime = unsafe { into_runtime!(runtime, X) };
+    runtime.create_closure(lambda, num_captures)
 }
 
 unsafe extern "C" fn runtime_create_coroutine<X>(
@@ -406,38 +406,38 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     let scratch_buffer_layout = std::alloc::Layout::array::<u64>(n).unwrap();
     let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
     let allocator = runtime.allocator();
 
     // TODO: GC
     let ptr = allocator.alloc_layout(layout);
 
-    let coroutine = ptr.cast::<Coroutine>().as_ptr();
-    (*coroutine).closure = closure;
-    (*coroutine).state = 0;
-    (*coroutine).num_locals = num_locals;
-    (*coroutine).scope_id = 0;
-    (*coroutine).scratch_buffer_len = scratch_buffer_len;
-    // `(*coroutine).locals[]` will be initialized in the coroutine.
+    let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
+    coroutine.closure = closure;
+    coroutine.state = 0;
+    coroutine.num_locals = num_locals;
+    coroutine.scope_id = 0;
+    coroutine.scratch_buffer_len = scratch_buffer_len;
+    // `coroutine.locals[]` will be initialized in the coroutine.
 
-    coroutine
+    coroutine as *mut Coroutine
 }
 
 unsafe extern "C" fn runtime_register_promise<X>(
     runtime: *mut c_void,
     coroutine: *mut Coroutine,
 ) -> u32 {
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
     runtime.register_promise(coroutine).into()
 }
 
 unsafe extern "C" fn runtime_resume<X>(runtime: *mut c_void, promise: u32) {
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
     runtime.process_promise(promise.into(), &Value::None, &Value::None);
 }
 
 unsafe extern "C" fn runtime_await_promise<X>(runtime: *mut c_void, promise: u32, awaiting: u32) {
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
     runtime.await_promise(promise.into(), awaiting.into());
 }
 
@@ -446,13 +446,13 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
     promise: u32,
     result: *const Value,
 ) {
-    let runtime = into_runtime!(runtime, X);
-    let cloned = into_value!(result).clone();
-    runtime.emit_promise_resolved(promise.into(), cloned);
+    let runtime = unsafe { into_runtime!(runtime, X) };
+    let result = unsafe { into_value!(result) };
+    runtime.emit_promise_resolved(promise.into(), result.clone());
 }
 
 unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void) -> *mut c_void {
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
     runtime.create_object() as *mut Object as *mut c_void
 }
 
@@ -467,12 +467,15 @@ unsafe extern "C" fn runtime_get_value_by_symbol<X>(
     static_assert_size_eq!((u8, u64), Value);
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
+    // `object` may be null.
+    let object = unsafe { object.cast::<Object>().as_ref() };
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
 
-    let result = match (object as *mut Object).as_ref() {
+    let result = match object {
         Some(object) => object.get_value(&key),
         None => runtime.global_object().get_value(&key),
     };
@@ -480,7 +483,7 @@ unsafe extern "C" fn runtime_get_value_by_symbol<X>(
     match result {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
-        None => std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value,
+        None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
     }
 }
 
@@ -495,12 +498,15 @@ unsafe extern "C" fn runtime_get_value_by_number<X>(
     static_assert_size_eq!((u8, u64), Value);
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
+    // `object` may be null.
+    let object = unsafe { object.cast::<Object>().as_ref() };
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
 
-    let result = match (object as *mut Object).as_ref() {
+    let result = match object {
         Some(object) => object.get_value(&key),
         None => runtime.global_object().get_value(&key),
     };
@@ -508,7 +514,7 @@ unsafe extern "C" fn runtime_get_value_by_number<X>(
     match result {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
-        None => std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value,
+        None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
     }
 }
 
@@ -523,12 +529,16 @@ unsafe extern "C" fn runtime_get_value_by_value<X>(
     static_assert_size_eq!((u8, u64), Value);
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
+    // `object` may be null.
+    let object = unsafe { object.cast::<Object>().as_ref() };
 
     debug_assert_ne!(key, std::ptr::null());
-    let key = runtime.make_property_key(into_value!(key));
+    let key = unsafe { into_value!(key) };
+    let key = runtime.make_property_key(key);
 
-    let result = match (object as *mut Object).as_ref() {
+    let result = match object {
         Some(object) => object.get_value(&key),
         None => runtime.global_object().get_value(&key),
     };
@@ -536,7 +546,7 @@ unsafe extern "C" fn runtime_get_value_by_value<X>(
     match result {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
-        None => std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value,
+        None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
     }
 }
 
@@ -547,15 +557,18 @@ unsafe extern "C" fn runtime_set_value_by_symbol<X>(
     value: *const Value,
 ) {
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
+    // `object` may be null.
+    let object = unsafe { object.cast::<Object>().as_mut() };
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
 
     debug_assert_ne!(value, std::ptr::null());
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
 
-    match (object as *mut Object).as_mut() {
+    match object {
         Some(object) => object.set_value(&key, value),
         None => runtime.global_object_mut().set_value(&key, value),
     }
@@ -568,15 +581,18 @@ unsafe extern "C" fn runtime_set_value_by_number<X>(
     value: *const Value,
 ) {
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
+    // `object` may be null.
+    let object = unsafe { object.cast::<Object>().as_mut() };
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
 
     debug_assert_ne!(value, std::ptr::null());
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
 
-    match (object as *mut Object).as_mut() {
+    match object {
         Some(object) => object.set_value(&key, value),
         None => runtime.global_object_mut().set_value(&key, value),
     }
@@ -589,15 +605,19 @@ unsafe extern "C" fn runtime_set_value_by_value<X>(
     value: *const Value,
 ) {
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
+    // `object` may be null.
+    let object = unsafe { object.cast::<Object>().as_mut() };
 
     debug_assert_ne!(key, std::ptr::null());
-    let key = runtime.make_property_key(into_value!(value));
+    let key = unsafe { into_value!(key) };
+    let key = runtime.make_property_key(key);
 
     debug_assert_ne!(value, std::ptr::null());
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
 
-    match (object as *mut Object).as_mut() {
+    match object {
         Some(object) => object.set_value(&key, value),
         None => runtime.global_object_mut().set_value(&key, value),
     }
@@ -614,19 +634,19 @@ unsafe extern "C" fn runtime_create_data_property_by_symbol<X>(
     // TODO(refactor): generate ffi-conversion code by script
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
 
     debug_assert_ne!(object, std::ptr::null_mut());
-    let object = object.cast::<Object>().as_mut().unwrap();
+    let object = unsafe { object.cast::<Object>().as_mut().unwrap() };
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
 
     debug_assert_ne!(value, std::ptr::null());
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
 
     debug_assert_ne!(retv, std::ptr::null_mut());
-    let retv = into_value_mut!(retv);
+    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
@@ -651,19 +671,19 @@ unsafe extern "C" fn runtime_create_data_property_by_number<X>(
     // TODO(refactor): generate ffi-conversion code by script
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
 
     debug_assert_ne!(object, std::ptr::null_mut());
-    let object = object.cast::<Object>().as_mut().unwrap();
+    let object = unsafe { object.cast::<Object>().as_mut().unwrap() };
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
 
     debug_assert_ne!(value, std::ptr::null());
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
 
     debug_assert_ne!(retv, std::ptr::null_mut());
-    let retv = into_value_mut!(retv);
+    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
@@ -688,19 +708,19 @@ unsafe extern "C" fn runtime_create_data_property_by_value<X>(
     // TODO(refactor): generate ffi-conversion code by script
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
 
     debug_assert_ne!(object, std::ptr::null_mut());
-    let object = object.cast::<Object>().as_mut().unwrap();
+    let object = unsafe { object.cast::<Object>().as_mut().unwrap() };
 
     debug_assert_ne!(key, std::ptr::null());
-    let key = runtime.make_property_key(into_value!(value));
+    let key = unsafe { runtime.make_property_key(into_value!(value)) };
 
     debug_assert_ne!(value, std::ptr::null());
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
 
     debug_assert_ne!(retv, std::ptr::null_mut());
-    let retv = into_value_mut!(retv);
+    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
@@ -722,10 +742,10 @@ unsafe extern "C" fn runtime_copy_data_properties<X>(
     retv: *mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
-    let runtime = into_runtime!(runtime, X);
-    let target = target.cast::<Object>().as_mut().unwrap();
-    let source = source.as_ref().unwrap();
-    let retv = retv.as_mut().unwrap();
+    let runtime = unsafe { into_runtime!(runtime, X) };
+    let target = unsafe { target.cast::<Object>().as_mut().unwrap() };
+    let source = unsafe { into_value!(source) };
+    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.copy_data_properties(target, source) {
         Ok(()) => {
@@ -748,16 +768,16 @@ unsafe extern "C" fn runtime_push_value<X>(
     // TODO(refactor): generate ffi-conversion code by script
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = into_runtime!(runtime, X);
+    let runtime = unsafe { into_runtime!(runtime, X) };
 
     debug_assert_ne!(target, std::ptr::null_mut());
-    let target = target.cast::<Object>().as_mut().unwrap();
+    let target = unsafe { target.cast::<Object>().as_mut().unwrap() };
 
     debug_assert_ne!(value, std::ptr::null());
-    let value = into_value!(value);
+    let value = unsafe { into_value!(value) };
 
     debug_assert_ne!(retv, std::ptr::null_mut());
-    let retv = into_value_mut!(retv);
+    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.push_value(target, value) {
         Ok(()) => {
@@ -777,7 +797,7 @@ unsafe extern "C" fn runtime_assert(
     msg: *const std::os::raw::c_char,
 ) {
     if !assertion {
-        let msg = std::ffi::CStr::from_ptr(msg);
+        let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
         panic!("runtime_assert: {msg:?}");
     }
 }
@@ -787,7 +807,7 @@ unsafe extern "C" fn runtime_print_bool(
     value: bool,
     msg: *const std::os::raw::c_char,
 ) {
-    let msg = std::ffi::CStr::from_ptr(msg);
+    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
     if msg.is_empty() {
         logger::debug!("runtime_print_bool: {value}");
     } else {
@@ -800,7 +820,7 @@ unsafe extern "C" fn runtime_print_u32(
     value: u32,
     msg: *const std::os::raw::c_char,
 ) {
-    let msg = std::ffi::CStr::from_ptr(msg);
+    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
     if msg.is_empty() {
         logger::debug!("runtime_print_u32: {value:08X}");
     } else {
@@ -813,7 +833,7 @@ unsafe extern "C" fn runtime_print_f64(
     value: f64,
     msg: *const std::os::raw::c_char,
 ) {
-    let msg = std::ffi::CStr::from_ptr(msg);
+    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
     if msg.is_empty() {
         logger::debug!("runtime_print_f64: {value}");
     } else {
@@ -826,8 +846,8 @@ unsafe extern "C" fn runtime_print_string(
     value: *const Char16Seq,
     msg: *const std::os::raw::c_char,
 ) {
-    let value = value.as_ref().unwrap();
-    let msg = std::ffi::CStr::from_ptr(msg);
+    let value = unsafe { value.as_ref().unwrap() };
+    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
     if msg.is_empty() {
         logger::debug!("runtime_print_f64: {value:?}");
     } else {
@@ -840,8 +860,8 @@ unsafe extern "C" fn runtime_print_value(
     value: *const Value,
     msg: *const std::os::raw::c_char,
 ) {
-    let value = into_value!(value);
-    let msg = std::ffi::CStr::from_ptr(msg);
+    let value = unsafe { into_value!(value) };
+    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
     if msg.is_empty() {
         logger::debug!("runtime_print_value: {value:?}");
     } else {
@@ -853,7 +873,7 @@ unsafe extern "C" fn runtime_print_message(
     _runtime: *mut c_void,
     msg: *const std::os::raw::c_char,
 ) {
-    let msg = std::ffi::CStr::from_ptr(msg);
+    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
     logger::debug!("runtime_print_value: {msg:?}");
 }
 
@@ -863,6 +883,6 @@ unsafe extern "C" fn runtime_launch_debugger(_runtime: *mut c_void) {
 }
 
 #[link(name = "llvmir")]
-extern "C" {
+unsafe extern "C" {
     fn llvmir_initialize();
 }

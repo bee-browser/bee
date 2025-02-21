@@ -14,9 +14,9 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use htmltokenizer::token::*;
 use htmltokenizer::Error;
 use htmltokenizer::InitialState;
+use htmltokenizer::token::*;
 
 use crate::localnames;
 use crate::localnames::LocalName;
@@ -325,7 +325,7 @@ where
         let mut i = self.active_formatting_element_list.len() - 1; // last
         match self.active_formatting_element_list.get(i) {
             ActiveFormattingContext::Marker => return,
-            ActiveFormattingContext::Element { ref node, .. } => {
+            ActiveFormattingContext::Element { node, .. } => {
                 if self.find_element_in_stack(*node).is_some() {
                     return;
                 }
@@ -339,7 +339,7 @@ where
                     i += 1;
                     break;
                 }
-                ActiveFormattingContext::Element { ref node, .. } => {
+                ActiveFormattingContext::Element { node, .. } => {
                     if self.find_element_in_stack(*node).is_some() {
                         i += 1;
                         break;
@@ -707,7 +707,9 @@ where
             }
             match context.open_element.namespace {
                 Namespace::Html => match context.open_element.local_name {
-                    tag!(Applet, Caption, Html, Table, Td, Th, Marquee, Object, Template) => {
+                    tag!(
+                        Applet, Caption, Html, Table, Td, Th, Marquee, Object, Template
+                    ) => {
                         in_scope = false;
                     }
                     _ => {}
@@ -2591,7 +2593,7 @@ where
     fn set_element(&mut self, i: usize, element: T) {
         match self.0.get_mut(i).unwrap() {
             ActiveFormattingContext::Marker => unreachable!(),
-            ActiveFormattingContext::Element { ref mut node, .. } => *node = element,
+            ActiveFormattingContext::Element { node, .. } => *node = element,
             ActiveFormattingContext::Removed => (),
         }
     }

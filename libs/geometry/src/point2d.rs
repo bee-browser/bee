@@ -276,7 +276,7 @@ mod serde_impl {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use serde_test::{assert_tokens, Token};
+        use serde_test::{Token, assert_tokens};
 
         // TODO: remove PartialEq
         #[derive(Debug, PartialEq)]

@@ -1,5 +1,5 @@
-use criterion::measurement::Measurement;
 use criterion::Criterion;
+use criterion::measurement::Measurement;
 use criterion::{black_box, criterion_group};
 use criterion_cycles_per_byte::CyclesPerByte;
 

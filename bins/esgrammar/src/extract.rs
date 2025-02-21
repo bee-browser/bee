@@ -5,9 +5,9 @@ use clap::Args;
 use clap::ValueEnum;
 
 use htmlparser::*;
-use toydom::delegate;
 use toydom::ToyBuilder;
 use toydom::ToyNode;
+use toydom::delegate;
 
 #[derive(Args)]
 pub struct Opt {

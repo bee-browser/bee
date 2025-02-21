@@ -4,8 +4,8 @@ use std::io::Read;
 
 use anyhow::Result;
 
-use htmltokenizer::token::*;
 use htmltokenizer::Tokenizer;
+use htmltokenizer::token::*;
 
 fn main() -> Result<()> {
     let mut html = String::new();

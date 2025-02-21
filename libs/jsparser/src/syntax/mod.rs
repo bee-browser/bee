@@ -4,10 +4,9 @@ mod logger;
 use std::ops::Range;
 
 use bitflags::bitflags;
-use smallvec::smallvec;
 use smallvec::SmallVec;
+use smallvec::smallvec;
 
-use crate::parser::GoalSymbol;
 use crate::Error;
 use crate::Location;
 use crate::Parser;
@@ -16,6 +15,7 @@ use crate::Symbol;
 use crate::SyntaxHandler;
 use crate::Token;
 use crate::TokenKind;
+use crate::parser::GoalSymbol;
 
 const MAX_ITERATION_STATEMENT_DEPTH: usize = u16::MAX as usize;
 const MAX_SWITCH_STATEMENT_DEPTH: usize = u16::MAX as usize;
@@ -1915,7 +1915,7 @@ where
     fn process_let_declaration(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
         let bound_names = match &mut self.stack[index].detail {
-            Detail::BindingList(ref mut list) => std::mem::take(&mut list.bound_names),
+            Detail::BindingList(list) => std::mem::take(&mut list.bound_names),
             detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::LetDeclaration(bound_names.len() as u32));
@@ -1928,7 +1928,7 @@ where
     fn process_const_declaration(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
         let (bound_names, has_initializer) = match &mut self.stack[index].detail {
-            Detail::BindingList(ref mut list) => {
+            Detail::BindingList(list) => {
                 let bound_names = std::mem::take(&mut list.bound_names);
                 (bound_names, list.has_initializer)
             }
@@ -1962,7 +1962,7 @@ where
         };
         self.pop(); // Token(,)
         match &mut self.top_mut().detail {
-            Detail::BindingList(ref mut list) => {
+            Detail::BindingList(list) => {
                 for name in decl.bound_names.into_iter() {
                     // 14.3.1.1 Static Semantics: Early Errors
                     ensure!(!list.bound_names.contains(&name));
@@ -2033,7 +2033,7 @@ where
     fn process_variable_statement(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
         let bound_names = match &mut self.stack[index].detail {
-            Detail::BindingList(ref mut list) => std::mem::take(&mut list.bound_names),
+            Detail::BindingList(list) => std::mem::take(&mut list.bound_names),
             detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::VariableStatement(bound_names.len() as u32));

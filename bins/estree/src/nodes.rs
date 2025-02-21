@@ -3,10 +3,10 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
+use jsparser::Location;
 use jsparser::string_literal_to_string;
 use jsparser::template_literal_to_cooked_string;
 use jsparser::template_literal_to_raw_string;
-use jsparser::Location;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct NodeRef(Rc<Node>);
@@ -1259,7 +1259,7 @@ impl Node {
     fn into_statement_list_with_directive_prologue(mut list: Vec<NodeRef>) -> Vec<NodeRef> {
         for node in list.iter_mut() {
             match node.0.as_ref() {
-                Node::ExpressionStatement(ref stmt) if stmt.is_likely_directive() => {
+                Node::ExpressionStatement(stmt) if stmt.is_likely_directive() => {
                     *node = NodeRef::new(Node::ExpressionStatement(stmt.to_directive()));
                 }
                 _ => break,
@@ -3427,7 +3427,7 @@ impl std::fmt::Display for RawString {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Static(s) => write!(f, "{s}"),
-            Self::Dynamic(ref s) => write!(f, "{s}"),
+            Self::Dynamic(s) => write!(f, "{s}"),
         }
     }
 }

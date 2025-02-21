@@ -2,8 +2,8 @@ use std::ffi::c_void;
 use std::mem::offset_of;
 use std::ptr::addr_eq;
 
-use crate::objects::Object;
 use crate::Runtime;
+use crate::objects::Object;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
 // memory layout of a type you want to change.  It's recommended to use compile-time assertions
@@ -529,12 +529,12 @@ where
     R: Clone + ReturnValue,
 {
     #[allow(clippy::uninit_assumed_init)]
-    let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
-    let runtime = &mut *(runtime as *mut Runtime<X>);
-    let args = std::slice::from_raw_parts(argv as *const Value, argc as usize);
+    let host_fn = unsafe { std::mem::MaybeUninit::<F>::uninit().assume_init() };
+    let runtime = unsafe { &mut *(runtime as *mut Runtime<X>) };
+    let args = unsafe { std::slice::from_raw_parts(argv as *const Value, argc as usize) };
     // TODO: The return value is copied twice.  That's inefficient.
     let result = host_fn(runtime, args);
-    let retv = &mut *retv;
+    let retv = unsafe { &mut *retv };
     *retv = result.value();
     result.status()
 }

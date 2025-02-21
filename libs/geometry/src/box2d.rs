@@ -137,7 +137,7 @@ mod serde_impl {
     mod tests {
         use super::Box2D;
 
-        use serde_test::{assert_tokens, Token};
+        use serde_test::{Token, assert_tokens};
 
         // TODO: remove PartialEq
         #[derive(Debug, PartialEq)]

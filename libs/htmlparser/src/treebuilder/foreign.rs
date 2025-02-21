@@ -13,7 +13,7 @@ where
             return false;
         }
         match token {
-            Token::StartTag(ref tag) => {
+            Token::StartTag(tag) => {
                 if context.is_html_integration_point() {
                     return false;
                 }

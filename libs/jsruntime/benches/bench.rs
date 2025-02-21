@@ -1,9 +1,9 @@
 use std::hint::black_box;
 use std::time::Instant;
 
+use criterion::Criterion;
 use criterion::criterion_group;
 use criterion::criterion_main;
-use criterion::Criterion;
 
 use jsruntime::BasicRuntime;
 

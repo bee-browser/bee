@@ -6,9 +6,9 @@
 use super::Error;
 use super::SourceCursor;
 use super::Token;
+use crate::lexer::TokenFlags;
 use crate::lexer::logger;
 use crate::lexer::tokens::TokenKind;
-use crate::lexer::TokenFlags;
 
 pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
     let mut token = Token::default();

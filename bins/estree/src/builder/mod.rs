@@ -41,15 +41,15 @@
 
 mod actions;
 
-use jsparser::literal_content_to_string;
 use jsparser::Location;
 use jsparser::ProductionRule;
 use jsparser::SyntaxHandler;
 use jsparser::Token;
+use jsparser::literal_content_to_string;
 
-use crate::nodes::node;
 use crate::nodes::Node;
 use crate::nodes::NodeRef;
+use crate::nodes::node;
 use actions::ACTIONS;
 
 use crate::logger;
@@ -2191,7 +2191,7 @@ impl Builder {
         let (value, _, end) = self.pop_node();
         let (key, start, _) = self.pop_node();
         let value = node!(into_expression; value)?; // may be CPEAAPL
-                                                    // left for BindingElement, right for BindingProperty
+        // left for BindingElement, right for BindingProperty
         let left = node!(assignment_pattern@start..end; key.clone(), value.clone());
         let right = node!(property@start..end; key => left.clone(); shorthand);
         self.push_either(left, right, start, end);

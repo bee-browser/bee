@@ -37,14 +37,14 @@ impl<'a> Token<'a> {
 impl std::fmt::Debug for Token<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Token::Doctype(ref doctype) => {
+            Token::Doctype(doctype) => {
                 write!(f, "<!DOCTYPE")?;
                 if let Some(name) = doctype.name {
                     write!(f, " {}", name)?;
                 }
                 write!(f, ">")
             }
-            Token::StartTag(ref tag) => {
+            Token::StartTag(tag) => {
                 write!(f, "<{}", tag.name)?;
                 if tag.self_closing {
                     write!(f, "/>")
@@ -52,16 +52,16 @@ impl std::fmt::Debug for Token<'_> {
                     write!(f, ">")
                 }
             }
-            Token::EndTag(ref tag) => {
+            Token::EndTag(tag) => {
                 write!(f, "</{}>", tag.name)
             }
-            Token::Comment(ref comment) => {
+            Token::Comment(comment) => {
                 write!(f, "#comment:{}", comment.data.escape_debug())
             }
-            Token::Null(ref text) | Token::Whitespace(ref text) | Token::Text(ref text) => {
+            Token::Null(text) | Token::Whitespace(text) | Token::Text(text) => {
                 write!(f, "#text:{}", text.data.escape_debug())
             }
-            Token::Error(ref err) => {
+            Token::Error(err) => {
                 write!(f, "{:?}", err)
             }
             Token::End => {

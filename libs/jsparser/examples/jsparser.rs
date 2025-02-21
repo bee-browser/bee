@@ -1,8 +1,8 @@
 use std::io::Read;
 use std::path::PathBuf;
 
-use anyhow::anyhow;
 use anyhow::Result;
+use anyhow::anyhow;
 use clap::Parser as _;
 
 use jsparser::Parser;

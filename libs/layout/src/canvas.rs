@@ -1,7 +1,7 @@
-use crate::style::*;
 use crate::LayoutBox2D;
 use crate::ToVisual;
 use crate::VisualRenderer;
+use crate::style::*;
 
 pub(crate) struct CanvasContainer {
     asset: Asset,

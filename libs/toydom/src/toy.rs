@@ -29,14 +29,8 @@ impl Builder {
     pub fn take_child_nodes(&mut self, node: usize) -> Vec<usize> {
         debug_assert!(self.nodes.get(node).is_some());
         let child_nodes = match self.nodes.get_mut(node) {
-            Some(Node::Document {
-                ref mut child_nodes,
-                ..
-            }) => child_nodes,
-            Some(Node::Element {
-                ref mut child_nodes,
-                ..
-            }) => child_nodes,
+            Some(Node::Document { child_nodes, .. }) => child_nodes,
+            Some(Node::Element { child_nodes, .. }) => child_nodes,
             _ => unreachable!(),
         };
         std::mem::take(child_nodes)
@@ -45,12 +39,8 @@ impl Builder {
     pub fn child_nodes(&self, node_id: usize) -> &Vec<usize> {
         debug_assert!(self.nodes.get(node_id).is_some());
         match self.nodes.get(node_id) {
-            Some(Node::Document {
-                ref child_nodes, ..
-            }) => child_nodes,
-            Some(Node::Element {
-                ref child_nodes, ..
-            }) => child_nodes,
+            Some(Node::Document { child_nodes, .. }) => child_nodes,
+            Some(Node::Element { child_nodes, .. }) => child_nodes,
             _ => unreachable!(),
         }
     }
@@ -58,14 +48,8 @@ impl Builder {
     pub fn child_nodes_mut(&mut self, node: usize) -> &mut Vec<usize> {
         debug_assert!(self.nodes.get(node).is_some());
         match self.nodes.get_mut(node) {
-            Some(Node::Document {
-                ref mut child_nodes,
-                ..
-            }) => child_nodes,
-            Some(Node::Element {
-                ref mut child_nodes,
-                ..
-            }) => child_nodes,
+            Some(Node::Document { child_nodes, .. }) => child_nodes,
+            Some(Node::Element { child_nodes, .. }) => child_nodes,
             _ => unreachable!(),
         }
     }
@@ -139,8 +123,8 @@ impl DomTreeBuilder for Builder {
         I: Iterator<Item = (&'b str, &'b str)>,
     {
         debug_assert!(self.nodes.get(node_id).is_some());
-        let element_attrs = match self.nodes[node_id] {
-            Node::Element { ref mut attrs, .. } => attrs,
+        let element_attrs = match &mut self.nodes[node_id] {
+            Node::Element { attrs, .. } => attrs,
             _ => unreachable!(),
         };
         if overwrite {

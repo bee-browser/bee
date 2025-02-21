@@ -2,12 +2,12 @@ use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
 
+use anyhow::Result;
 use anyhow::bail;
 use anyhow::ensure;
-use anyhow::Result;
-use assert_json_diff::assert_json_matches_no_panic;
 use assert_json_diff::CompareMode;
 use assert_json_diff::Config;
+use assert_json_diff::assert_json_matches_no_panic;
 use clap::Parser;
 use serde::Deserialize;
 use serde_json::Value;

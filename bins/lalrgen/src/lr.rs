@@ -234,8 +234,8 @@ mod macros {
         };
     }
 
-    pub(crate) use lr0_item;
     pub(crate) use lr_item;
+    pub(crate) use lr0_item;
 }
 
 #[cfg(test)]

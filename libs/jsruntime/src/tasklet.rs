@@ -2,11 +2,11 @@ use std::collections::VecDeque;
 
 use rustc_hash::FxHashMap;
 
+use crate::Runtime;
+use crate::Value;
 use crate::types::Coroutine;
 use crate::types::CoroutineStatus;
 use crate::types::Promise;
-use crate::Runtime;
-use crate::Value;
 
 impl<X> Runtime<X> {
     /// Perform all tasklets.

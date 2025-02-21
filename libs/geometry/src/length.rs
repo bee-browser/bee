@@ -252,7 +252,7 @@ mod serde_impl {
     mod tests {
         use super::Length;
 
-        use serde_test::{assert_tokens, Token};
+        use serde_test::{Token, assert_tokens};
 
         #[derive(Debug)]
         enum Px {}

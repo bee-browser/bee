@@ -30,7 +30,7 @@ impl Drop for ModuleBridge {
 pub type ModulePeer = *mut c_void;
 
 #[link(name = "llvmir")]
-extern "C" {
+unsafe extern "C" {
     fn module_peer_delete(peer: ModulePeer);
     fn module_peer_print(peer: ModulePeer, stderr: bool);
 }

@@ -736,8 +736,8 @@ impl LayerContent {
         W: std::io::Write + ?Sized,
     {
         match self {
-            LayerContent::Flow(ref flow) => flow.inspect(write, depth),
-            LayerContent::Flex(ref flex) => flex.inspect(write, depth),
+            LayerContent::Flow(flow) => flow.inspect(write, depth),
+            LayerContent::Flex(flex) => flex.inspect(write, depth),
         }
     }
 
@@ -746,8 +746,8 @@ impl LayerContent {
         R: VisualRenderer,
     {
         match self {
-            LayerContent::Flow(ref flow) => flow.render(renderer),
-            LayerContent::Flex(ref flex) => flex.render(renderer),
+            LayerContent::Flow(flow) => flow.render(renderer),
+            LayerContent::Flex(flex) => flex.render(renderer),
         }
     }
 }

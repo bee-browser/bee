@@ -7,6 +7,10 @@ use jsparser::syntax::PropertyAccessKind;
 use jsparser::syntax::PropertyDefinitionKind;
 use rustc_hash::FxHashSet;
 
+use jsparser::Error;
+use jsparser::Parser;
+use jsparser::Processor;
+use jsparser::Symbol;
 use jsparser::syntax::AssignmentOperator;
 use jsparser::syntax::BinaryOperator;
 use jsparser::syntax::LoopFlags;
@@ -14,16 +18,12 @@ use jsparser::syntax::Node;
 use jsparser::syntax::NodeHandler;
 use jsparser::syntax::UnaryOperator;
 use jsparser::syntax::UpdateOperator;
-use jsparser::Error;
-use jsparser::Parser;
-use jsparser::Processor;
-use jsparser::Symbol;
 
-use crate::logger;
-use crate::objects::Property;
 use crate::LambdaId;
 use crate::Runtime;
 use crate::Value;
+use crate::logger;
+use crate::objects::Property;
 
 use scope::ScopeTreeBuilder;
 

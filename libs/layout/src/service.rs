@@ -62,7 +62,7 @@ where
     where
         W: std::io::Write + ?Sized,
     {
-        for (ref layout, ref visual) in self.snapshots.iter() {
+        for (layout, visual) in self.snapshots.iter() {
             writeln!(write, "----- layout tree")?;
             layout.inspect(write)?;
             writeln!(write, "----- visual tree")?;

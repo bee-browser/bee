@@ -3,9 +3,9 @@ use std::io::Read;
 use anyhow::Result;
 
 use htmlparser::*;
-use toydom::delegate;
 use toydom::ToyBuilder;
 use toydom::ToyNode;
+use toydom::delegate;
 
 fn main() -> Result<()> {
     logging::init();
