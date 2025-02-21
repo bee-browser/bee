@@ -1,12 +1,12 @@
+use std::ffi::CStr;
 use std::ffi::c_char;
 use std::ffi::c_void;
-use std::ffi::CStr;
 
+use crate::LambdaId;
+use crate::llvmir::RuntimeFunctions;
 use crate::llvmir::module::Module;
 use crate::llvmir::module::ModulePeer;
-use crate::llvmir::RuntimeFunctions;
 use crate::types::Lambda;
-use crate::LambdaId;
 
 pub struct ExecutorBridge(ExecutorPeer);
 

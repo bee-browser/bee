@@ -14,9 +14,9 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use htmltokenizer::token::*;
 use htmltokenizer::Error;
 use htmltokenizer::InitialState;
+use htmltokenizer::token::*;
 
 use crate::localnames;
 use crate::localnames::LocalName;
@@ -707,7 +707,9 @@ where
             }
             match context.open_element.namespace {
                 Namespace::Html => match context.open_element.local_name {
-                    tag!(Applet, Caption, Html, Table, Td, Th, Marquee, Object, Template) => {
+                    tag!(
+                        Applet, Caption, Html, Table, Td, Th, Marquee, Object, Template
+                    ) => {
                         in_scope = false;
                     }
                     _ => {}

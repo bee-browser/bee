@@ -3,10 +3,10 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
+use jsparser::Location;
 use jsparser::string_literal_to_string;
 use jsparser::template_literal_to_cooked_string;
 use jsparser::template_literal_to_raw_string;
-use jsparser::Location;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct NodeRef(Rc<Node>);

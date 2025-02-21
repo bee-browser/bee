@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use htmltokenizer::token::*;
 use htmltokenizer::Error;
 use htmltokenizer::InitialState;
 use htmltokenizer::Tokenizer;
+use htmltokenizer::token::*;
 
 pub fn tokenize(json: &'static str) {
     let test: TestCase = serde_json::from_str(json).unwrap();

@@ -1,9 +1,9 @@
 use itertools::Itertools;
 
 use htmlparser::*;
-use toydom::delegate;
 use toydom::ToyBuilder;
 use toydom::ToyNode;
+use toydom::delegate;
 
 pub fn parse(test: Test) {
     match test.scripting {

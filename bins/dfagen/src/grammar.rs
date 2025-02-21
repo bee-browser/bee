@@ -6,11 +6,11 @@ use serde::Deserialize;
 use crate::automaton::Nfa;
 use crate::automaton::StateId;
 use crate::logger;
-use crate::unicode::unicode_set;
-use crate::unicode::unicode_span;
 use crate::unicode::CodePoint;
 use crate::unicode::UnicodeSet;
 use crate::unicode::UnicodeSpan;
+use crate::unicode::unicode_set;
+use crate::unicode::unicode_span;
 
 pub fn trim(rules: &[Rule], tokens: &[String]) -> Vec<Rule> {
     // Collect non-terminals needed for recognizing tokens.

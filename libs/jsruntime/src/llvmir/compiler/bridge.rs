@@ -1,15 +1,15 @@
+use std::ffi::CStr;
 use std::ffi::c_char;
 use std::ffi::c_void;
-use std::ffi::CStr;
 
 use paste::paste;
 
 use jsparser::Symbol;
 
+use crate::LambdaId;
 use crate::llvmir::module::ModulePeer;
 use crate::logger;
 use crate::semantics::ScopeRef;
-use crate::LambdaId;
 
 pub struct CompilerBridge(CompilerPeer);
 
@@ -1841,7 +1841,7 @@ unsafe extern "C" {
     // value
 
     fn compiler_peer_create_value_is_nullptr(peer: CompilerPeer, value: ValueIrPtr)
-        -> BooleanIrPtr;
+    -> BooleanIrPtr;
     fn compiler_peer_create_has_value(peer: CompilerPeer, value: ValueIrPtr) -> BooleanIrPtr;
     fn compiler_peer_create_is_loosely_equal(
         peer: CompilerPeer,
@@ -1881,12 +1881,12 @@ unsafe extern "C" {
     fn compiler_peer_create_undefined_to_any(peer: CompilerPeer) -> ValueIrPtr;
     fn compiler_peer_create_null_to_any(peer: CompilerPeer) -> ValueIrPtr;
     fn compiler_peer_create_boolean_to_any(peer: CompilerPeer, boolean: BooleanIrPtr)
-        -> ValueIrPtr;
+    -> ValueIrPtr;
     fn compiler_peer_create_number_to_any(peer: CompilerPeer, number: NumberIrPtr) -> ValueIrPtr;
     fn compiler_peer_create_string_to_any(peer: CompilerPeer, string: Char16SeqIrPtr)
-        -> ValueIrPtr;
+    -> ValueIrPtr;
     fn compiler_peer_create_closure_to_any(peer: CompilerPeer, closure: ClosureIrPtr)
-        -> ValueIrPtr;
+    -> ValueIrPtr;
     fn compiler_peer_create_object_to_any(peer: CompilerPeer, object: ObjectIrPtr) -> ValueIrPtr;
     fn compiler_peer_create_value_phi(
         peer: CompilerPeer,

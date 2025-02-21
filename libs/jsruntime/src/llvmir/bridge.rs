@@ -3,6 +3,7 @@ use std::ffi::c_void;
 
 use base::static_assert_size_eq;
 
+use crate::Runtime;
 use crate::logger;
 use crate::objects::Object;
 use crate::objects::PropertyKey;
@@ -13,7 +14,6 @@ use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Status;
 use crate::types::Value;
-use crate::Runtime;
 
 pub fn initialize() {
     unsafe {

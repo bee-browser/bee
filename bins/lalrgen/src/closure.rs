@@ -7,10 +7,10 @@ use crate::grammar::Grammar;
 use crate::grammar::Term;
 use crate::lr::LrItem;
 use crate::lr::LrItemSet;
-use crate::phrase::macros::*;
 use crate::phrase::MatchStatus;
 use crate::phrase::Phrase;
 use crate::phrase::PhraseSet;
+use crate::phrase::macros::*;
 
 pub type ClosureCache = DashMap<LrItem, LrItemSet>;
 

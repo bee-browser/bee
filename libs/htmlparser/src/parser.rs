@@ -1,13 +1,13 @@
 use htmltokenizer::InitialState;
 use htmltokenizer::Tokenizer;
 
+use crate::Namespace;
+use crate::QuirksMode;
 use crate::localnames::LocalName;
 use crate::logger;
 use crate::treebuilder::Control;
 use crate::treebuilder::DomTreeBuilder;
 use crate::treebuilder::TreeBuilder;
-use crate::Namespace;
-use crate::QuirksMode;
 
 pub struct Parser<T>
 where

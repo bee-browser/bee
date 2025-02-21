@@ -4,12 +4,12 @@ mod logger;
 pub use lalr::GoalSymbol;
 pub use lalr::ProductionRule;
 
+use crate::Error;
 use crate::lexer::Goal;
 use crate::lexer::Lexer;
 use crate::lexer::Location;
 use crate::lexer::Token;
 use crate::lexer::TokenKind;
-use crate::Error;
 
 use lalr::Action;
 use lalr::State;

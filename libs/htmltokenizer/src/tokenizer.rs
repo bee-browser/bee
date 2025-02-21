@@ -1,3 +1,4 @@
+use crate::Location;
 use crate::charref::CharRefResolver;
 use crate::error::Error;
 use crate::error::ErrorCode;
@@ -8,7 +9,6 @@ use crate::token::AttrRange;
 use crate::token::TagRange;
 use crate::token::Token;
 use crate::token::TokenRange;
-use crate::Location;
 use std::collections::VecDeque;
 
 /// An HTML5-compliant tokenizer.

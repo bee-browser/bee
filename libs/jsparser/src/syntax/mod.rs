@@ -4,10 +4,9 @@ mod logger;
 use std::ops::Range;
 
 use bitflags::bitflags;
-use smallvec::smallvec;
 use smallvec::SmallVec;
+use smallvec::smallvec;
 
-use crate::parser::GoalSymbol;
 use crate::Error;
 use crate::Location;
 use crate::Parser;
@@ -16,6 +15,7 @@ use crate::Symbol;
 use crate::SyntaxHandler;
 use crate::Token;
 use crate::TokenKind;
+use crate::parser::GoalSymbol;
 
 const MAX_ITERATION_STATEMENT_DEPTH: usize = u16::MAX as usize;
 const MAX_SWITCH_STATEMENT_DEPTH: usize = u16::MAX as usize;

@@ -8,9 +8,12 @@ use std::ops::DerefMut;
 
 use indexmap::IndexMap;
 
-use jsparser::syntax::LoopFlags;
 use jsparser::Symbol;
+use jsparser::syntax::LoopFlags;
 
+use crate::Program;
+use crate::Runtime;
+use crate::Value;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
 use crate::logger;
@@ -20,9 +23,6 @@ use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
 use crate::types::Char16Seq;
-use crate::Program;
-use crate::Runtime;
-use crate::Value;
 
 use super::Module;
 

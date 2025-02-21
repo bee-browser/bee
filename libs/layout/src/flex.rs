@@ -1,8 +1,5 @@
 use num_traits::Zero;
 
-use crate::flow::FlowContainer;
-use crate::logger;
-use crate::style::*;
 use crate::BoxBackground;
 use crate::BoxConstraintSolver;
 use crate::BoxModel;
@@ -14,6 +11,9 @@ use crate::LayoutVector2D;
 use crate::SolvedBoxGeometry;
 use crate::ToVisual;
 use crate::VisualRenderer;
+use crate::flow::FlowContainer;
+use crate::logger;
+use crate::style::*;
 
 pub(crate) struct FlexContainer {
     direction: FlexDirection,

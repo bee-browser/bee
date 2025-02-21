@@ -2,11 +2,6 @@ use std::sync::Arc;
 
 use num_traits::Zero;
 
-use crate::canvas::CanvasContainer;
-use crate::flex::FlexContainer;
-use crate::logger;
-use crate::spec::*;
-use crate::style::*;
 use crate::BoxBackground;
 use crate::BoxConstraintSolver;
 use crate::BoxModel;
@@ -19,6 +14,11 @@ use crate::LayoutVector2D;
 use crate::SolvedBoxGeometry;
 use crate::ToVisual;
 use crate::VisualRenderer;
+use crate::canvas::CanvasContainer;
+use crate::flex::FlexContainer;
+use crate::logger;
+use crate::spec::*;
+use crate::style::*;
 
 impl LayoutElement {
     pub(crate) fn build_flow(&self, avail: &AvailableSize) -> Arc<FlowContainer> {

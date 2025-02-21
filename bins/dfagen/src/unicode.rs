@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use serde::Deserialize;
 use serde::Serialize;
-use smallvec::smallvec;
 use smallvec::SmallVec;
+use smallvec::smallvec;
 
 // macros
 
