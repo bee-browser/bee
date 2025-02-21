@@ -863,6 +863,6 @@ unsafe extern "C" fn runtime_launch_debugger(_runtime: *mut c_void) {
 }
 
 #[link(name = "llvmir")]
-extern "C" {
+unsafe extern "C" {
     fn llvmir_initialize();
 }

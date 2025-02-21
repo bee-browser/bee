@@ -1504,7 +1504,7 @@ type CaptureIrPtr = *mut c_void;
 type SwitchIrPtr = *mut c_void;
 
 #[link(name = "llvmir")]
-extern "C" {
+unsafe extern "C" {
     fn compiler_peer_new() -> CompilerPeer;
     fn compiler_peer_delete(peer: CompilerPeer);
     fn compiler_peer_start(peer: CompilerPeer);

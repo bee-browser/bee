@@ -54,7 +54,7 @@ impl Drop for ExecutorBridge {
 type ExecutorPeer = *mut c_void;
 
 #[link(name = "llvmir")]
-extern "C" {
+unsafe extern "C" {
     fn executor_peer_new() -> ExecutorPeer;
     fn executor_peer_delete(peer: ExecutorPeer);
     fn executor_peer_register_runtime_functions(peer: ExecutorPeer, functions: &RuntimeFunctions);
