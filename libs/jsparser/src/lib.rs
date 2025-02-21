@@ -148,7 +148,8 @@ pub fn literal_content_to_string(content: &str) -> Option<String> {
                                     if high > 0x03FF || low > 0x03FF {
                                         result.push('\u{FFFD}');
                                     } else {
-                                        result.push(char::from_u32((high << 10 | low) + 0x10000)?);
+                                        result
+                                            .push(char::from_u32(((high << 10) | low) + 0x10000)?);
                                     }
                                 }
                             } else {
