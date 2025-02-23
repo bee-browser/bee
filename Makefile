@@ -108,9 +108,11 @@ codegen-modules: $(CODEGEN_TARGETS)
 update-deps: update-deps-crates update-deps-deno
 
 # Specify `CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git` if `make update-deps-crates` gets stuck.
+# Perform `cargo update` after `cargo upgrade` in order to update `Cargo.lock`.
 .PHONY: update-deps-crates
 update-deps-crates:
 	cargo upgrade -i allow
+	cargo update
 
 .PHONY: update-deps-deno
 update-deps-deno:

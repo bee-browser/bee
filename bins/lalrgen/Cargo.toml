@@ -10,7 +10,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = "1.0.95"
+anyhow = "1.0.96"
 base = { path = "../../libs/base" }
 clap = { version = "4.5.30", features = ["derive", "env"] }
 dashmap = "6.1.0"
@@ -21,8 +21,8 @@ itertools = "0.14.0"
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
 rayon = "1.10.0"
-serde = { version = "1.0.217", features = ["derive", "rc"] }
-serde_json = "1.0.138"
+serde = { version = "1.0.218", features = ["derive", "rc"] }
+serde_json = "1.0.139"
 serde_yaml = "0.9.34"
 
 [dev-dependencies]
