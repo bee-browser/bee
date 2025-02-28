@@ -22,4 +22,4 @@ serde_yaml = "0.9.34"
 smallvec = "1.14.0"
 
 [dev-dependencies]
-ctor = "0.3.6"
+ctor = "0.4.0"
