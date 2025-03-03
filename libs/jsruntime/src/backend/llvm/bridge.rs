@@ -882,7 +882,7 @@ unsafe extern "C" fn runtime_launch_debugger(_runtime: *mut c_void) {
     // TODO(feat): Support debuggers such as Chrome DevTools.
 }
 
-#[link(name = "llvmir")]
+#[link(name = "backend-llvm")]
 unsafe extern "C" {
     fn llvmir_initialize();
 }
