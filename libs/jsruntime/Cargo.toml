@@ -20,7 +20,7 @@ logging = { path = "../logging" }
 paste = "1.0.15"
 rustc-hash = "2.1.1"
 static_assertions = "1.1.0"
-thiserror = "2.0.11"
+thiserror = "2.0.12"
 
 [build-dependencies]
 cbindgen = { git = "https://github.com/masnagam/cbindgen.git", rev = "7fcd29d7a7bd204cff6887ae099aa40f716367ed" }
