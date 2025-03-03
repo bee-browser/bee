@@ -9,12 +9,12 @@ test:
 
 .PHONY: codegen
 codegen:
-	@$(MAKE) -s -C src/llvmir codegen
+	@$(MAKE) -s -C src/backend/llvm codegen
 	@$(MAKE) -s -C tests codegen
 
 .PHONY: clean
 clean:
-	@$(MAKE) -s -C src/llvmir clean
+	@$(MAKE) -s -C src/backend/llvm clean
 	@$(MAKE) -s -C tests clean
 
 .PHONY: bench

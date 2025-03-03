@@ -35,14 +35,14 @@ The following diagram shows perspective of data-flow on the pipeline.
 +----------------------------------+
   | Compile Command Stream
   V
-+-------------------------------+
-| `jsruntime::llvmir::Compiler` |
-+-------------------------------+
++--------------------------------------+
+| `jsruntime::backend::llvm::Compiler` |
++--------------------------------------+
   | LLVM IR Module
   V
-+-------------------------------+
-| `jsruntime::llvmir::Executor` |
-+-------------------------------+
++--------------------------------------+
+| `jsruntime::backend::llvm::Executor` |
++--------------------------------------+
 ```
 
 Currently, the pipeline is performed on a single thread, but it may be performed on multiple
@@ -186,8 +186,8 @@ kind of function is generally called a *ramp* function in a coroutine implementa
 Inside the ramp function, a [*coroutine*](https://en.wikipedia.org/wiki/Coroutine) is created.
 Like the Rust compiler does, we implements the coroutine with a state machine.  In the `semantics`
 module, compile commends for creating a jump table and suspending/resuming the coroutine execution
-are generated and these commands are processed in the `llvmir::compiler` module in order to build
-corresponding LLVM IR instructions.
+are generated and these commands are processed in the `backend::llvm::compiler` module in order to
+build corresponding LLVM IR instructions.
 
 A closure for the lambda function of the coroutine is created in order to capture the arguments of
 the original async function.  The coroutine lambda function takes special *internal* arguments
