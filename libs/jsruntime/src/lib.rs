@@ -1,5 +1,5 @@
+mod backend;
 mod lambda;
-mod llvmir;
 mod logger;
 mod objects;
 mod semantics;
@@ -13,21 +13,21 @@ use jsparser::SymbolRegistry;
 
 use lambda::LambdaId;
 use lambda::LambdaRegistry;
-use llvmir::Executor;
+use backend::Executor;
 use objects::Object;
 use objects::Property;
 use objects::PropertyKey;
 use types::ReturnValue;
 
-pub use llvmir::CompileError;
-pub use llvmir::Module;
+pub use backend::CompileError;
+pub use backend::Module;
 pub use semantics::Program;
 pub use types::Char16Seq;
 pub use types::U16String;
 pub use types::Value;
 
 pub fn initialize() {
-    llvmir::initialize();
+    backend::initialize();
 }
 
 /// Runtime preferences.
@@ -70,7 +70,7 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let functions = llvmir::RuntimeFunctions::new::<X>();
+        let functions = backend::RuntimeFunctions::new::<X>();
 
         let mut global_object = Object::default();
         global_object.define_builtin_global_properties();
