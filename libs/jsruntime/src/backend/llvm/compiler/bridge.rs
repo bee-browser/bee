@@ -7,7 +7,7 @@ use paste::paste;
 use jsparser::Symbol;
 
 use crate::LambdaId;
-use crate::llvmir::module::ModulePeer;
+use crate::backend::llvm::module::ModulePeer;
 use crate::logger;
 use crate::semantics::ScopeRef;
 
@@ -1503,7 +1503,7 @@ type StatusIrPtr = *mut c_void;
 type CaptureIrPtr = *mut c_void;
 type SwitchIrPtr = *mut c_void;
 
-#[link(name = "llvmir")]
+#[link(name = "backend-llvm")]
 unsafe extern "C" {
     fn compiler_peer_new() -> CompilerPeer;
     fn compiler_peer_delete(peer: CompilerPeer);

@@ -29,7 +29,7 @@ impl Drop for ModuleBridge {
 // `ModulePeer` is used in other bridge modules.
 pub type ModulePeer = *mut c_void;
 
-#[link(name = "llvmir")]
+#[link(name = "backend-llvm")]
 unsafe extern "C" {
     fn module_peer_delete(peer: ModulePeer);
     fn module_peer_print(peer: ModulePeer, stderr: bool);
