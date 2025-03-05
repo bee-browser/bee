@@ -17,10 +17,9 @@ use crate::Program;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
+use crate::types::Lambda;
 
 pub use bridge::RuntimeFunctions;
-pub use llvm::Executor;
-pub use llvm::Module;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CompileError {
@@ -28,10 +27,10 @@ pub enum CompileError {
 }
 
 pub fn initialize() {
-    if cfg!(backend = "llvm") {
-        llvm::initialize();
-    } else if cfg!(backend = "cranelift") {
+    if cfg!(backend = "cranelift") {
         cranelift::initialize();
+    } else if cfg!(backend = "llvm") {
+        llvm::initialize();
     } else {
         unreachable!();
     }
@@ -42,10 +41,10 @@ pub fn compile<X>(
     program: &Program,
     optimize: bool,
 ) -> Result<Module, CompileError> {
-    if cfg!(backend = "llvm") {
-        llvm::compiler::compile(runtime, program, optimize)
-    } else if cfg!(backend = "cranelift") {
+    if cfg!(backend = "cranelift") {
         todo!();
+    } else if cfg!(backend = "llvm") {
+        llvm::compiler::compile(runtime, program, optimize).map(Module::Llvm)
     } else {
         unreachable!();
     }
@@ -95,5 +94,144 @@ impl<X> CompilerSupport for Runtime<X> {
 
     fn get_target_triple(&self) -> &CStr {
         self.executor.get_target_triple()
+    }
+}
+
+pub enum Executor {
+    Cranelift(cranelift::Executor),
+    Llvm(llvm::Executor),
+}
+
+impl Executor {
+    pub fn new(functions: &RuntimeFunctions) -> Self {
+        if cfg!(backend = "cranelift") {
+            Self::Cranelift(cranelift::Executor::new(functions))
+        } else if cfg!(backend = "llvm") {
+            Self::Llvm(llvm::Executor::new(functions))
+        } else {
+            unreachable!();
+        }
+    }
+
+    pub fn register_module(&self, module: &Module) {
+        match (self, module) {
+            (Self::Cranelift(_executor), Module::Cranelift) => {
+                if cfg!(backend = "cranelift") {
+                    todo!();
+                } else {
+                    panic!();
+                }
+            }
+            (Self::Llvm(executor), Module::Llvm(module)) => {
+                if cfg!(backend = "llvm") {
+                    executor.register_module(module);
+                } else {
+                    panic!();
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn get_data_layout(&self) -> &CStr {
+        match self {
+            Self::Cranelift(_executor) => {
+                if cfg!(backend = "cranelift") {
+                    todo!();
+                } else {
+                    panic!();
+                }
+            }
+            Self::Llvm(executor) => {
+                if cfg!(backend = "llvm") {
+                    executor.get_data_layout()
+                } else {
+                    panic!();
+                }
+            }
+        }
+    }
+
+    pub fn get_target_triple(&self) -> &CStr {
+        match self {
+            Self::Cranelift(_executor) => {
+                if cfg!(backend = "cranelift") {
+                    todo!();
+                } else {
+                    panic!();
+                }
+            }
+            Self::Llvm(executor) => {
+                if cfg!(backend = "llvm") {
+                    executor.get_target_triple()
+                } else {
+                    panic!();
+                }
+            }
+        }
+    }
+
+    pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
+        match self {
+            Self::Cranelift(_executor) => {
+                if cfg!(backend = "cranelift") {
+                    todo!();
+                } else {
+                    panic!();
+                }
+            }
+            Self::Llvm(executor) => {
+                if cfg!(backend = "llvm") {
+                    executor.get_lambda(lambda_id)
+                } else {
+                    panic!();
+                }
+            }
+        }
+    }
+}
+
+pub enum Module {
+    Cranelift,
+    Llvm(llvm::Module),
+}
+
+impl Module {
+    pub fn entry_lambda_id(&self) -> LambdaId {
+        match self {
+            Self::Cranelift => {
+                if cfg!(backend = "cranelift") {
+                    todo!();
+                } else {
+                    panic!();
+                }
+            }
+            Self::Llvm(module) => {
+                if cfg!(backend = "llvm") {
+                    module.entry_lambda_id()
+                } else {
+                    panic!();
+                }
+            }
+        }
+    }
+
+    pub fn print(&self, stderr: bool) {
+        match self {
+            Self::Cranelift => {
+                if cfg!(backend = "cranelift") {
+                    todo!();
+                } else {
+                    panic!();
+                }
+            }
+            Self::Llvm(module) => {
+                if cfg!(backend = "llvm") {
+                    module.print(stderr);
+                } else {
+                    panic!();
+                }
+            }
+        }
     }
 }
