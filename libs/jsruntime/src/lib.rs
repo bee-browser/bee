@@ -11,9 +11,9 @@ use std::ffi::c_void;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
+use backend::Executor;
 use lambda::LambdaId;
 use lambda::LambdaRegistry;
-use backend::Executor;
 use objects::Object;
 use objects::Property;
 use objects::PropertyKey;
@@ -117,6 +117,10 @@ impl<X> Runtime<X> {
         let prop = Property::data_xxx(value);
         let result = self.global_object.define_own_property(symbol.into(), prop);
         debug_assert!(matches!(result, Ok(true)));
+    }
+
+    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
+        backend::compile(self, program, optimize)
     }
 
     pub fn link(&mut self, module: Module) {
