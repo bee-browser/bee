@@ -4,7 +4,7 @@ use base::macros::delegate_all;
 
 use bridge::ExecutorBridge;
 
-use super::RuntimeFunctions;
+use crate::backend::bridge::RuntimeFunctions;
 
 pub struct Executor(ExecutorBridge);
 

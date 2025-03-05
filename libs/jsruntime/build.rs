@@ -3,9 +3,13 @@ use std::path::PathBuf;
 
 use duct::cmd;
 
-static CBINDGEN_TOML: &str = "src/backend/llvm/cbindgen.toml";
+// TODO: change to "cranelift"
+const BACKEND: &str = "llvm";
 
-static BRIDGE_SOURCE_FILES: &[&str] = &[
+const CBINDGEN_TOML: &str = "src/backend/llvm/cbindgen.toml";
+
+const BRIDGE_SOURCE_FILES: &[&str] = &[
+    "src/backend/bridge.rs",
     "src/backend/llvm/bridge.rs",
     "src/backend/llvm/compiler/bridge.rs",
     "src/backend/llvm/executor/bridge.rs",
@@ -13,9 +17,9 @@ static BRIDGE_SOURCE_FILES: &[&str] = &[
     "src/types.rs",
 ];
 
-static BACKEND_LLVM_COMPONENTS: &[&str] = &["core", "orcjit", "x86"];
+const BACKEND_LLVM_COMPONENTS: &[&str] = &["core", "orcjit", "x86"];
 
-static BACKEND_LLVM_SOURCE_FILES: &[&str] = &[
+const BACKEND_LLVM_SOURCE_FILES: &[&str] = &[
     "src/backend/llvm/bridge.hh",
     "src/backend/llvm/compiler/impl.hh",
     "src/backend/llvm/compiler/peer.cc",
@@ -82,12 +86,14 @@ fn main() {
     for lib in llvm_config.system_libs(BACKEND_LLVM_COMPONENTS).iter() {
         println!("cargo::rustc-link-lib={lib}");
     }
+
+    println!(r#"cargo::rustc-cfg=backend="{}""#, BACKEND);
 }
 
 struct LlvmConfig(PathBuf);
 
 impl LlvmConfig {
-    const LINK_TYPE: &'static str = "--link-static";
+    const LINK_TYPE: &str = "--link-static";
 
     fn new() -> Self {
         let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));

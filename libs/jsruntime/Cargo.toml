@@ -32,6 +32,10 @@ assert_matches = "1.5.0"
 criterion = "0.5.1"
 ctor = "0.4.1"
 
+[lints.rust.unexpected_cfgs]
+level = "deny"
+check-cfg = ['cfg(backend, values("cranelift", "llvm"))']
+
 [[bench]]
 name = "jsruntime-bench"
 path = "benches/bench.rs"
