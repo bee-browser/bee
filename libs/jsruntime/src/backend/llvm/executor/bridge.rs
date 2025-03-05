@@ -3,7 +3,7 @@ use std::ffi::c_char;
 use std::ffi::c_void;
 
 use crate::LambdaId;
-use crate::backend::llvm::RuntimeFunctions;
+use crate::backend::RuntimeFunctions;
 use crate::backend::llvm::module::Module;
 use crate::backend::llvm::module::ModulePeer;
 use crate::types::Lambda;
