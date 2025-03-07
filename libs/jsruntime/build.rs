@@ -3,9 +3,6 @@ use std::path::PathBuf;
 
 use duct::cmd;
 
-// TODO: change to "cranelift"
-const BACKEND: &str = "llvm";
-
 const CBINDGEN_TOML: &str = "src/backend/llvm/cbindgen.toml";
 
 const BRIDGE_SOURCE_FILES: &[&str] = &[
@@ -86,8 +83,6 @@ fn main() {
     for lib in llvm_config.system_libs(BACKEND_LLVM_COMPONENTS).iter() {
         println!("cargo::rustc-link-lib={lib}");
     }
-
-    println!(r#"cargo::rustc-cfg=backend="{}""#, BACKEND);
 }
 
 struct LlvmConfig(PathBuf);
