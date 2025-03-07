@@ -6,6 +6,8 @@ mod module;
 pub use executor::Executor;
 pub use module::Module;
 
+pub use compiler::compile;
+
 pub fn initialize() {
     bridge::initialize();
 }
