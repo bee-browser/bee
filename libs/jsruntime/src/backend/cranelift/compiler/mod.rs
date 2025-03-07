@@ -58,12 +58,6 @@ struct CraneliftContext {
     module: JITModule,
 }
 
-macro_rules! int {
-    ($bits:literal) => {
-        Type::int($bits).unwrap()
-    };
-}
-
 impl CraneliftContext {
     fn new() -> Self {
         let mut flag_builder = settings::builder();
@@ -104,7 +98,7 @@ impl CraneliftContext {
         // context: *mut c_void
         params.push(AbiParam::new(ptr_type));
         // args: u16
-        params.push(AbiParam::new(int!(16)));
+        params.push(AbiParam::new(types::I16));
         // argv: *mut Value
         params.push(AbiParam::new(ptr_type));
         // retv: *mut Value
@@ -115,7 +109,7 @@ impl CraneliftContext {
             .func
             .signature
             .returns
-            .push(AbiParam::new(int!(32)));
+            .push(AbiParam::new(types::I32));
 
         let mut builder = FunctionBuilder::new(&mut self.context.func, &mut self.builder_context);
 
