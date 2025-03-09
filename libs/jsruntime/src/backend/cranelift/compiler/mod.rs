@@ -185,32 +185,15 @@ where
     fn start_compile(&mut self, func: &Function) {
         logger::debug!(event = "start_compile", ?func.name, ?func.id);
 
-        // NOTE: Unlike LLVM IR, no block can move once an instruction is inserted to the block.
-        // So, it's necessary to select one of the following ways:
-        //
-        //   1. Building blocks and inserting instructions in the correct program flow
-        //   2. Inserting blocks to the layout in correct order before inserting any instructions
-        //      to the blocks.
-        //
-        // In the first way, we cannot use the back-patching technique in the compilation.  So, we
-        // select the second way.
-        //
-        // However, Cranelift denies to insert a block after a block which is not in the layout.
-        // This is the reason why we create the `entry_block` here.  The `entry_block` has only one
-        // instruction to jump to the `locals_block`.  When inserting the instruction to the
-        // `entry_block`, the `entry_block` is inserted to the layout.  This makes it possible to
-        // insert other *empty* blocks after the `entry_block` before inserting instructions to
-        // them.
-        let entry_block = self.builder.create_block();
-        self.builder.seal_block(entry_block); // because this is the first block.
+        let entry_block = self.create_entry_block();
 
-        // NOTE: Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from
-        // a debugging and readability perspective...
-        let locals_block = self.builder.create_block();
-        let init_block = self.builder.create_block();
-        let args_block = self.builder.create_block();
-        let body_block = self.builder.create_block();
-        let return_block = self.builder.create_block();
+        // Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from a
+        // debugging and readability perspective...
+        let locals_block = self.create_block();
+        let init_block = self.create_block();
+        let args_block = self.create_block();
+        let body_block = self.create_block();
+        let return_block = self.create_block();
 
         self.control_flow_stack.push_function_flow(
             locals_block,
@@ -224,18 +207,35 @@ where
         self.control_flow_stack
             .push_exit_target(return_block, false);
 
-        self.builder
-            .append_block_params_for_function_params(entry_block);
+        // Unlike LLVM IR, no block can move once an instruction is inserted to the block.  So,
+        // it's necessary to select one of the following ways:
+        //
+        //   1. Building blocks and inserting instructions in the correct program flow
+        //   2. Inserting blocks to the layout in correct order before inserting any instructions
+        //      to the blocks.
+        //
+        // In the first way, we cannot use the back-patching technique in the compilation.  So, we
+        // select the second way.
+        //
+        // However, Cranelift denies to insert a block after a block which is not in the layout.
+        // The `entry_block` has only one instruction to jump to the `locals_block`.  The
+        // `entry_block` is inserted to the layout when the instruction is inserted to it.  This
+        // makes it possible to insert other *empty* blocks after the `entry_block` before
+        // inserting instructions to those blocks.
         self.switch_to_block(entry_block);
         self.emit_jump(locals_block);
-        self.builder.seal_block(locals_block); // because the `entry_block` has been terminated.
+
+        // Immediately call `seal_block()` with the `locals_block`.  This block is always inserted
+        // just after the `entry_block`.  Blocks may be inserted between the `locals_block` and the
+        // `init_block`.
+        self.seal_block(locals_block);
 
         // The `entry_block` is already in the layout.  We can insert empty blocks after it.
-        self.builder.insert_block_after(locals_block, entry_block);
-        self.builder.insert_block_after(init_block, locals_block);
-        self.builder.insert_block_after(args_block, init_block);
-        self.builder.insert_block_after(body_block, args_block);
-        self.builder.insert_block_after(return_block, body_block);
+        self.insert_block_after(locals_block, entry_block);
+        self.insert_block_after(init_block, locals_block);
+        self.insert_block_after(args_block, init_block);
+        self.insert_block_after(body_block, args_block);
+        self.insert_block_after(return_block, body_block);
 
         //self.bridge.create_store_undefined_to_retv();
         // TODO: self.bridge.create_alloc_status();
@@ -245,7 +245,7 @@ where
             // TODO: self.bridge.enable_scope_cleanup_checker(is_coroutine);
         }
 
-        self.builder.switch_to_block(body_block);
+        self.switch_to_block(body_block);
     }
 
     fn end_compile(&mut self, func: &Function, optimize: bool) {
@@ -268,18 +268,18 @@ where
         self.switch_to_block(flow.locals_block);
         self.emit_jump(flow.init_block);
 
-        self.builder.seal_block(flow.init_block);
+        self.seal_block(flow.init_block);
         self.switch_to_block(flow.init_block);
         self.emit_jump(flow.args_block);
 
-        self.builder.seal_block(flow.args_block);
+        self.seal_block(flow.args_block);
         self.switch_to_block(flow.args_block);
         self.emit_jump(flow.body_block);
 
-        self.builder.seal_block(flow.return_block);
+        self.seal_block(flow.return_block);
         self.switch_to_block(flow.return_block);
-        if let Some(block) = dormant_block {
-            self.move_block_after(block);
+        if let Some(_block) = dormant_block {
+            //self.move_block_after(block);
         }
 
         if self.support.is_scope_cleanup_checker_enabled() {
@@ -480,13 +480,35 @@ where
 
     // operations on blocks
 
+    fn create_entry_block(&mut self) -> Block {
+        let block = self.builder.create_block();
+
+        // As described in the following document, the incoming function arguments must be passed
+        // to the entry block as block parameters:
+        // //cranelift/docs/ir.md#static-single-assignment-form in bytecodealliance/wasmtime
+        self.builder.append_block_params_for_function_params(block);
+
+        // Immediately call `seal_block()` because this block is the first block and there is no
+        // predecessor of the entry block.
+        self.builder.seal_block(block);
+
+        block
+    }
+
+    fn create_block(&mut self) -> Block {
+        self.builder.create_block()
+    }
+
+    fn insert_block_after(&mut self, block: Block, after: Block) {
+        self.builder.insert_block_after(block, after);
+    }
+
     fn switch_to_block(&mut self, block: Block) {
         self.builder.switch_to_block(block);
     }
 
-    fn move_block_after(&mut self, block: Block) {
-        let after = self.builder.current_block().unwrap();
-        self.builder.insert_block_after(block, after);
+    fn seal_block(&mut self, block: Block) {
+        self.builder.seal_block(block);
     }
 
     // instructions
