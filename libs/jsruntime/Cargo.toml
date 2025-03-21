@@ -24,7 +24,7 @@ thiserror = "2.0.12"
 
 [build-dependencies]
 cbindgen = { git = "https://github.com/masnagam/cbindgen.git", rev = "7fcd29d7a7bd204cff6887ae099aa40f716367ed" }
-cc = { version = "1.2.16", features = ["parallel"] }
+cc = { version = "1.2.17", features = ["parallel"] }
 duct = "0.13.7"
 
 [dev-dependencies]
