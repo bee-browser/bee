@@ -342,6 +342,7 @@ where
         logger::debug!(event = "process_command", ?command);
         match command {
             CompileCommand::Nop => (),
+            CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
@@ -376,9 +377,14 @@ where
 
     // commands
 
+    fn process_null(&mut self) {
+        self.operand_stack.push(Operand::Null);
+    }
+
     fn process_boolean(&mut self, value: bool) {
         let value_ir = self.emit_boolean(value);
-        self.operand_stack.push(Operand::Boolean(value_ir, Some(value)));
+        self.operand_stack
+            .push(Operand::Boolean(value_ir, Some(value)));
     }
 
     fn process_number(&mut self, value: f64) {
@@ -509,7 +515,7 @@ where
         logger::debug!(event = "to_numeric", ?operand);
         match operand {
             Operand::Undefined => self.emit_number(f64::NAN),
-            // Operand::Null => self.bridge.get_zero(),
+            Operand::Null => self.emit_number(0.0),
             Operand::Boolean(value, ..) => self.emit_boolean_to_number(value),
             Operand::Number(value, ..) => value,
             // Operand::String(..) => unimplemented!("string.to_numeric"),
@@ -673,6 +679,11 @@ where
             Operand::Undefined => {
                 // TODO: Value::KIND_UNDEFINED
                 let kind = self.builder.ins().iconst(types::I8, 1);
+                self.builder.ins().stack_store(kind, slot, base_offset);
+            }
+            Operand::Null => {
+                // TODO: Value::KIND_NULL
+                let kind = self.builder.ins().iconst(types::I8, 2);
                 self.builder.ins().stack_store(kind, slot, base_offset);
             }
             Operand::Boolean(value, _) => {
@@ -907,6 +918,9 @@ impl DerefMut for OperandStack {
 enum Operand {
     /// Compile-time constant value of `undefined`.
     Undefined,
+
+    /// Compile-time constant value of `null`.
+    Null,
 
     /// Runtime value and optional compile-time constant value of boolean type.
     // TODO(perf): compile-time evaluation
