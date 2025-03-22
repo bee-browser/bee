@@ -79,6 +79,8 @@ trait CompilerSupport {
     // Executor
     fn get_data_layout(&self) -> &CStr;
     fn get_target_triple(&self) -> &CStr;
+
+    fn get_runtime_functions(&self) -> RuntimeFunctions;
 }
 
 impl<X> CompilerSupport for Runtime<X> {
@@ -108,6 +110,10 @@ impl<X> CompilerSupport for Runtime<X> {
 
     fn get_target_triple(&self) -> &CStr {
         self.executor.get_target_triple()
+    }
+
+    fn get_runtime_functions(&self) -> RuntimeFunctions {
+        RuntimeFunctions::new::<X>()
     }
 }
 
@@ -172,18 +178,18 @@ impl Executor {
         }
     }
 
-    pub fn register_module(&self, module: &Module) {
+    pub fn register_module(&mut self, module: Module) {
         match (self, module) {
-            (Self::Cranelift(_executor), Module::Cranelift(_module)) => {
+            (Self::Cranelift(executor), Module::Cranelift(module)) => {
                 if use_cranelift_backend!() {
-                    todo!();
+                    executor.register_module(module)
                 } else {
                     panic!();
                 }
             }
             (Self::Llvm(executor), Module::Llvm(module)) => {
                 if use_llvm_backend!() {
-                    executor.register_module(module);
+                    executor.register_module(&module);
                 } else {
                     panic!();
                 }
@@ -232,9 +238,9 @@ impl Executor {
 
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
         match self {
-            Self::Cranelift(_executor) => {
+            Self::Cranelift(executor) => {
                 if use_cranelift_backend!() {
-                    todo!();
+                    executor.get_lambda(lambda_id)
                 } else {
                     panic!();
                 }
