@@ -1,13 +1,16 @@
 mod control_flow;
 
-use core::f64;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use codegen::ir::FuncRef;
+use codegen::ir::SigRef;
+use codegen::ir::StackSlot;
 use cranelift::prelude::*;
 use cranelift_jit::JITBuilder;
 use cranelift_jit::JITModule;
 use cranelift_module::DataDescription;
+use cranelift_module::FuncId;
 use cranelift_module::Module as _;
 use jsparser::Symbol;
 
@@ -15,6 +18,7 @@ use super::CompileError;
 use super::Module;
 use super::Program;
 use crate::backend::CompilerSupport;
+use crate::backend::RuntimeFunctions;
 use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
@@ -33,9 +37,11 @@ pub fn compile<R>(
 where
     R: CompilerSupport,
 {
+    let runtime_functions = support.get_runtime_functions();
+
     // TODO: Deferring the compilation until it's actually called improves the performance.
     // Because the program may contain unused functions.
-    let mut context = CraneliftContext::new();
+    let mut context = CraneliftContext::new(&runtime_functions);
 
     // Compile JavaScript functions in reverse order in order to compile a coroutine function
     // before its ramp function so that the size of the scratch buffer for the coroutine
@@ -51,7 +57,7 @@ where
     }
 
     Ok(Module {
-        _inner: context.module,
+        inner: context.module,
         context: context.context,
     })
 }
@@ -61,10 +67,11 @@ struct CraneliftContext {
     context: codegen::Context,
     _data_description: DataDescription,
     module: JITModule,
+    id_runtime_get_value_by_symbol: FuncId,
 }
 
 impl CraneliftContext {
-    fn new() -> Self {
+    fn new(runtime_functions: &RuntimeFunctions) -> Self {
         let mut flag_builder = settings::builder();
         flag_builder.set("use_colocated_libcalls", "false").unwrap();
         flag_builder.set("is_pic", "false").unwrap();
@@ -77,19 +84,53 @@ impl CraneliftContext {
             .finish(settings::Flags::new(flag_builder))
             .unwrap();
 
-        let builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
+        let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
 
-        // TODO: builder.symbol("runtime_func", runtime_func_addr);
+        // TODO: create symbols for runtime functions
+        macro_rules! register_symbol {
+            ($name:literal, $addr:expr) => {
+                builder.symbol($name, $addr as *const u8)
+            };
+        }
+        register_symbol!(
+            "runtime_get_value_by_symbol",
+            runtime_functions.get_value_by_symbol
+        );
 
-        let module = JITModule::new(builder);
+        let mut module = JITModule::new(builder);
 
-        // TODO:
+        // TODO: declare runtime functions
+        let ptr_type = module.target_config().pointer_type();
+        let mut sig_runtime_get_value_by_symbol = Signature::new(isa::CallConv::SystemV);
+        sig_runtime_get_value_by_symbol
+            .params
+            .push(AbiParam::new(ptr_type));
+        sig_runtime_get_value_by_symbol
+            .params
+            .push(AbiParam::new(ptr_type));
+        sig_runtime_get_value_by_symbol
+            .params
+            .push(AbiParam::new(types::I32));
+        sig_runtime_get_value_by_symbol
+            .params
+            .push(AbiParam::new(types::I8));
+        sig_runtime_get_value_by_symbol
+            .returns
+            .push(AbiParam::new(ptr_type));
+        let id_runtime_get_value_by_symbol = module
+            .declare_function(
+                "runtime_get_value_by_symbol",
+                cranelift_module::Linkage::Import,
+                &sig_runtime_get_value_by_symbol,
+            )
+            .unwrap();
 
         Self {
             builder_context: FunctionBuilderContext::new(),
             context: module.make_context(),
             _data_description: DataDescription::new(),
             module,
+            id_runtime_get_value_by_symbol,
         }
     }
 
@@ -101,10 +142,48 @@ impl CraneliftContext {
     where
         R: CompilerSupport,
     {
-        let ptr_type = self.module.target_config().pointer_type();
+        Compiler::new(runtime, scope_tree, self)
+    }
+}
+
+struct Compiler<'r, 's, 'c, R> {
+    support: &'r mut R,
+
+    /// The scope tree of the JavaScript program to compile.
+    scope_tree: &'s ScopeTree,
+
+    /// A stack to hold sets of basic blocks which construct of a region in the control flow graph
+    /// (CFG) finally built.
+    control_flow_stack: ControlFlowStack,
+
+    pending_labels: Vec<Symbol>,
+
+    builder: FunctionBuilder<'c>,
+    _module: &'c mut JITModule,
+    ptr_type: Type,
+    lambda_sig: SigRef,
+    ref_runtime_get_value_by_symbol: FuncRef,
+
+    /// A stack for operands.
+    operand_stack: OperandStack,
+
+    // The following values must be reset in the end of compilation for each function.
+    locals: Vec<AnyIr>,
+}
+
+impl<'r, 's, 'c, R> Compiler<'r, 's, 'c, R>
+where
+    R: CompilerSupport,
+{
+    fn new(
+        support: &'r mut R,
+        scope_tree: &'s ScopeTree,
+        context: &'c mut CraneliftContext,
+    ) -> Self {
+        let ptr_type = context.module.target_config().pointer_type();
 
         // formal parameters
-        let params = &mut self.context.func.signature.params;
+        let params = &mut context.context.func.signature.params;
         // runtime: *mut c_void
         params.push(AbiParam::new(ptr_type));
         // context: *mut c_void
@@ -117,56 +196,35 @@ impl CraneliftContext {
         params.push(AbiParam::new(ptr_type));
 
         // #[repr(u32)] Status
-        self.context
+        context
+            .context
             .func
             .signature
             .returns
             .push(AbiParam::new(types::I32));
 
-        let builder = FunctionBuilder::new(&mut self.context.func, &mut self.builder_context);
-        Compiler::new(runtime, scope_tree, builder, &mut self.module)
-    }
-}
+        let lambda_sig = context.context.func.signature.clone();
 
-struct Compiler<'r, 's, 'm, R> {
-    support: &'r mut R,
+        let ref_runtime_get_value_by_symbol = context.module.declare_func_in_func(
+            context.id_runtime_get_value_by_symbol,
+            &mut context.context.func,
+        );
 
-    /// The scope tree of the JavaScript program to compile.
-    scope_tree: &'s ScopeTree,
+        let mut builder =
+            FunctionBuilder::new(&mut context.context.func, &mut context.builder_context);
 
-    /// A stack to hold sets of basic blocks which construct of a region in the control flow graph
-    /// (CFG) finally built.
-    control_flow_stack: ControlFlowStack,
+        let lambda_sig = builder.import_signature(lambda_sig);
 
-    pending_labels: Vec<Symbol>,
-
-    builder: FunctionBuilder<'m>,
-    _module: &'m mut JITModule,
-
-    /// A stack for operands.
-    operand_stack: OperandStack,
-
-    // The following values must be reset in the end of compilation for each function.
-    locals: Vec<AnyIr>,
-}
-
-impl<'r, 's, 'm, R> Compiler<'r, 's, 'm, R>
-where
-    R: CompilerSupport,
-{
-    fn new(
-        support: &'r mut R,
-        scope_tree: &'s ScopeTree,
-        builder: FunctionBuilder<'m>,
-        _module: &'m mut JITModule,
-    ) -> Self {
         Self {
             support,
             scope_tree,
             control_flow_stack: Default::default(),
             pending_labels: Default::default(),
             builder,
-            _module,
+            _module: &mut context.module,
+            ptr_type,
+            lambda_sig,
+            ref_runtime_get_value_by_symbol,
             operand_stack: Default::default(),
             locals: Default::default(),
         }
@@ -185,27 +243,17 @@ where
     fn start_compile(&mut self, func: &Function) {
         logger::debug!(event = "start_compile", ?func.name, ?func.id);
 
-        let entry_block = self.create_entry_block();
-
         // Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from a
         // debugging and readability perspective...
-        let locals_block = self.create_block();
-        let init_block = self.create_block();
-        let args_block = self.create_block();
+        let entry_block = self.create_entry_block();
         let body_block = self.create_block();
-        let return_block = self.create_block();
+        let exit_block = self.create_block();
 
-        self.control_flow_stack.push_function_flow(
-            locals_block,
-            init_block,
-            args_block,
-            body_block,
-            return_block,
-        );
+        self.control_flow_stack
+            .push_function_flow(entry_block, body_block, exit_block);
 
         assert!(self.pending_labels.is_empty());
-        self.control_flow_stack
-            .push_exit_target(return_block, false);
+        self.control_flow_stack.push_exit_target(exit_block, false);
 
         // Unlike LLVM IR, no block can move once an instruction is inserted to the block.  So,
         // it's necessary to select one of the following ways:
@@ -223,19 +271,16 @@ where
         // makes it possible to insert other *empty* blocks after the `entry_block` before
         // inserting instructions to those blocks.
         self.switch_to_block(entry_block);
-        self.emit_jump(locals_block);
+        self.emit_jump(body_block);
 
-        // Immediately call `seal_block()` with the `locals_block`.  This block is always inserted
-        // just after the `entry_block`.  Blocks may be inserted between the `locals_block` and the
-        // `init_block`.
-        self.seal_block(locals_block);
+        // Immediately call `seal_block()` with the `body_block`.  This block is always inserted
+        // just after the `entry_block`.  Blocks may be inserted between the `body_block` and the
+        // `exit_block`.
+        self.seal_block(body_block);
 
         // The `entry_block` is already in the layout.  We can insert empty blocks after it.
-        self.insert_block_after(locals_block, entry_block);
-        self.insert_block_after(init_block, locals_block);
-        self.insert_block_after(args_block, init_block);
-        self.insert_block_after(body_block, args_block);
-        self.insert_block_after(return_block, body_block);
+        self.insert_block_after(body_block, entry_block);
+        self.insert_block_after(exit_block, body_block);
 
         //self.bridge.create_store_undefined_to_retv();
         // TODO: self.bridge.create_alloc_status();
@@ -262,22 +307,10 @@ where
         self.control_flow_stack.pop_exit_target();
         let flow = self.control_flow_stack.pop_function_flow();
 
-        self.emit_jump(flow.return_block);
+        self.emit_jump(flow.exit_block);
 
-        // The `locals_block` has already been sealed in start_compile().
-        self.switch_to_block(flow.locals_block);
-        self.emit_jump(flow.init_block);
-
-        self.seal_block(flow.init_block);
-        self.switch_to_block(flow.init_block);
-        self.emit_jump(flow.args_block);
-
-        self.seal_block(flow.args_block);
-        self.switch_to_block(flow.args_block);
-        self.emit_jump(flow.body_block);
-
-        self.seal_block(flow.return_block);
-        self.switch_to_block(flow.return_block);
+        self.seal_block(flow.exit_block);
+        self.switch_to_block(flow.exit_block);
         if let Some(_block) = dormant_block {
             //self.move_block_after(block);
         }
@@ -287,7 +320,8 @@ where
         }
 
         // TODO: self.bridge.end_function(optimize);
-        self.builder.ins().return_(&[]);
+        let retv = self.builder.ins().iconst(types::I32, 0);
+        self.builder.ins().return_(&[retv]);
 
         // TODO: self.locals.clear();
 
@@ -366,17 +400,71 @@ where
         // TODO
     }
 
-    fn process_call(&mut self, _nargs: u16) {
-        // TODO
+    fn process_call(&mut self, argc: u16) {
+        let argv = self.emit_create_argv(argc);
+        let (operand, _) = self.dereference();
+        let closure = match operand {
+            // TODO: Operand::Closure(closure) => closure, // IIFE
+            Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
+            _ => {
+                self.process_number(1001.); // TODO: TypeError
+                self.process_throw();
+                return;
+            }
+        };
+
+        let retv = self.emit_create_any();
+        let status = self.emit_call(closure, argc, argv, retv);
+
+        self.emit_check_status_for_exception(status, retv);
+
+        // TODO(pref): compile-time evaluation
+        self.operand_stack.push(Operand::Any(retv, None));
+    }
+
+    fn get_runtime_ptr(&self) -> Value {
+        let flow = self.control_flow_stack.function_flow();
+        self.builder.block_params(flow.entry_block)[0]
+    }
+
+    fn emit_call(&mut self, closure: ClosureIr, argc: u16, argv: ArgvIr, retv: AnyIr) -> StatusIr {
+        let lambda = self.emit_load_lambda_from_closure(closure);
+        let context = self.emit_load_captures_from_closure(closure);
+        let args = &[
+            self.get_runtime_ptr(),
+            context,
+            self.builder.ins().iconst(types::I16, argc as i64),
+            argv.0,
+            retv.0,
+        ];
+        let call = self
+            .builder
+            .ins()
+            .call_indirect(self.lambda_sig, lambda, args);
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     fn process_push_scope(&mut self, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
+
+        let body_block = self.create_block();
+        self.insert_block_after_current(body_block);
+
+        self.control_flow_stack
+            .push_scope_flow(scope_ref, body_block);
+
         // TODO
+
+        self.emit_jump(body_block);
+        self.switch_to_block(body_block);
     }
 
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
+
+        let flow = self.control_flow_stack.pop_scope_flow();
+        debug_assert_eq!(flow.scope_ref, scope_ref);
+
         // TODO
     }
 
@@ -397,6 +485,11 @@ where
     fn process_discard(&mut self) {
         debug_assert!(!self.operand_stack.is_empty());
         self.operand_stack.pop();
+    }
+
+    fn process_throw(&mut self) {
+        let (_operand, _) = self.dereference();
+        // TODO
     }
 
     fn process_swap(&mut self) {
@@ -480,6 +573,10 @@ where
 
     // operations on blocks
 
+    fn current_block(&self) -> Block {
+        self.builder.current_block().unwrap()
+    }
+
     fn create_entry_block(&mut self) -> Block {
         let block = self.builder.create_block();
 
@@ -503,12 +600,88 @@ where
         self.builder.insert_block_after(block, after);
     }
 
+    fn insert_block_after_current(&mut self, block: Block) {
+        self.builder.insert_block_after(block, self.current_block());
+    }
+
     fn switch_to_block(&mut self, block: Block) {
         self.builder.switch_to_block(block);
     }
 
     fn seal_block(&mut self, block: Block) {
         self.builder.seal_block(block);
+    }
+
+    // stack allocation
+
+    const VALUE_SIZE: u16 = size_of::<crate::types::Value>() as u16;
+    const ALIGNMENT: u8 = align_of::<crate::types::Value>().ilog2() as u8;
+
+    fn emit_is_nullptr(&mut self, value: AnyIr) -> BooleanIr {
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, value.0, 0))
+    }
+
+    fn emit_nullptr(&mut self) -> Value {
+        self.builder.ins().iconst(self.ptr_type, 0)
+    }
+
+    fn emit_create_any(&mut self) -> AnyIr {
+        let slot = self.builder.create_sized_stack_slot(StackSlotData {
+            kind: StackSlotKind::ExplicitSlot,
+            size: Self::VALUE_SIZE as u32,
+            align_shift: Self::ALIGNMENT,
+        });
+
+        // TODO: Value::KIND_NONE
+        let kind = self.builder.ins().iconst(types::I8, 0);
+        self.builder.ins().stack_store(kind, slot, 0);
+
+        let addr = self.builder.ins().stack_addr(self.ptr_type, slot, 0);
+        AnyIr(addr)
+    }
+
+    fn emit_create_argv(&mut self, argc: u16) -> ArgvIr {
+        if argc == 0 {
+            return ArgvIr(self.emit_nullptr());
+        }
+
+        let slot = self.builder.create_sized_stack_slot(StackSlotData {
+            kind: StackSlotKind::ExplicitSlot,
+            size: (Self::VALUE_SIZE * argc) as u32,
+            align_shift: Self::ALIGNMENT,
+        });
+
+        // TODO: evaluation order
+        for i in (0..argc).rev() {
+            let (operand, _) = self.dereference();
+            self.emit_store_operand_to_slot(&operand, slot, i);
+        }
+
+        let addr = self.builder.ins().stack_addr(self.ptr_type, slot, 0);
+        ArgvIr(addr)
+    }
+
+    fn emit_store_operand_to_slot(&mut self, operand: &Operand, slot: StackSlot, index: u16) {
+        let base_offset = (Self::VALUE_SIZE as i32) * (index as i32);
+        match operand {
+            Operand::Undefined => {
+                // TODO: Use the const value
+                let kind = self.builder.ins().iconst(types::I8, 1);
+                self.builder.ins().stack_store(kind, slot, base_offset);
+            }
+            Operand::Number(value, _) => {
+                // TODO: Use the const value
+                let kind = self.builder.ins().iconst(types::I8, 4);
+                self.builder.ins().stack_store(kind, slot, base_offset);
+                self.builder
+                    .ins()
+                    .stack_store(value.0, slot, base_offset + 8);
+            }
+            Operand::Any(value, _) => {
+                todo!("{value:?}");
+            }
+            Operand::VariableReference(..) => unreachable!(),
+        }
     }
 
     // instructions
@@ -549,8 +722,115 @@ where
         todo!();
     }
 
-    fn emit_get_global_variable(&mut self, _symbol: Symbol) -> AnyIr {
-        todo!();
+    fn emit_call_get_global_variable(
+        &mut self,
+        object: ObjectIr,
+        key: Symbol,
+        strict: bool,
+    ) -> AnyIr {
+        let args = [
+            self.get_runtime_ptr(),
+            object.0,
+            self.builder.ins().iconst(types::I32, key.id() as i64),
+            self.builder.ins().iconst(types::I8, strict as i64),
+        ];
+        let call = self
+            .builder
+            .ins()
+            .call(self.ref_runtime_get_value_by_symbol, &args);
+        AnyIr(self.builder.inst_results(call)[0])
+    }
+
+    // TODO(perf): return the value directly if it's a read-only global property.
+    fn emit_get_global_variable(&mut self, key: Symbol) -> AnyIr {
+        let object = ObjectIr(self.emit_nullptr());
+
+        // TODO: strict mode
+        let value = self.emit_call_get_global_variable(object, key, true);
+
+        let then_block = self.create_block();
+        let end_block = self.create_block();
+
+        // if value.is_nullptr()
+        let is_nullptr = self.emit_is_nullptr(value);
+        self.builder
+            .ins()
+            .brif(is_nullptr.0, then_block, &[], end_block, &[]);
+        // {
+        self.switch_to_block(then_block);
+        // TODO(feat): ReferenceError
+        self.process_number(1000.);
+        self.process_throw();
+        self.emit_jump(end_block);
+        // }
+        self.switch_to_block(end_block);
+
+        value
+    }
+
+    fn emit_load_lambda_from_closure(&mut self, closure: ClosureIr) -> Value {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, lambda) as i32;
+        self.builder
+            .ins()
+            .load(self.ptr_type, FLAGS, closure.0, OFFSET)
+    }
+
+    fn emit_load_captures_from_closure(&mut self, closure: ClosureIr) -> Value {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, captures) as i32;
+        self.builder
+            .ins()
+            .load(self.ptr_type, FLAGS, closure.0, OFFSET)
+    }
+
+    fn emit_is_closure(&mut self, value: AnyIr) -> BooleanIr {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = 0;
+        let kind = self.builder.ins().load(types::I8, FLAGS, value.0, OFFSET);
+        // TODO: Value::KIND_CLOSURE
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, kind, 6))
+    }
+
+    fn emit_load_closure(&mut self, value: AnyIr) -> ClosureIr {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = 8; // TODO
+        ClosureIr(
+            self.builder
+                .ins()
+                .load(self.ptr_type, FLAGS, value.0, OFFSET),
+        )
+    }
+
+    fn emit_load_closure_or_throw_type_error(&mut self, value: AnyIr) -> ClosureIr {
+        let then_block = self.create_block();
+        let else_block = self.create_block();
+        let end_block = self.create_block();
+
+        self.builder.append_block_param(end_block, self.ptr_type);
+
+        // if value.is_closure()
+        let is_closure = self.emit_is_closure(value);
+        self.builder
+            .ins()
+            .brif(is_closure.0, then_block, &[], else_block, &[]);
+        // then
+        self.switch_to_block(then_block);
+        let closure = self.emit_load_closure(value);
+        self.builder.ins().jump(end_block, &[closure.0]);
+        // else
+        self.switch_to_block(else_block);
+        self.process_number(1001.); // TODO(feat): TypeError
+        self.process_throw();
+        let dummy = self.emit_nullptr();
+        self.builder.ins().jump(end_block, &[dummy]);
+
+        self.switch_to_block(end_block);
+        ClosureIr(self.builder.block_params(end_block)[0])
+    }
+
+    fn emit_check_status_for_exception(&mut self, _status: StatusIr, _retv: AnyIr) {
+        // TODO
     }
 }
 
@@ -618,7 +898,22 @@ enum Operand {
 }
 
 #[derive(Clone, Copy, Debug)]
+struct BooleanIr(Value);
+
+#[derive(Clone, Copy, Debug)]
 struct NumberIr(Value);
 
 #[derive(Clone, Copy, Debug)]
-struct AnyIr(#[allow(unused)] Value);
+struct ClosureIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct ObjectIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct AnyIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct ArgvIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct StatusIr(#[allow(unused)] Value);
