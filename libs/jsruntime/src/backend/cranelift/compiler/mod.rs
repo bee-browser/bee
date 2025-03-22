@@ -342,6 +342,7 @@ where
         logger::debug!(event = "process_command", ?command);
         match command {
             CompileCommand::Nop => (),
+            CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
             CompileCommand::Number(value) => self.process_number(*value),
@@ -376,6 +377,10 @@ where
     }
 
     // commands
+
+    fn process_undefined(&mut self) {
+        self.operand_stack.push(Operand::Undefined);
+    }
 
     fn process_null(&mut self) {
         self.operand_stack.push(Operand::Null);
