@@ -51,20 +51,11 @@ impl ControlFlowStack {
         self.scope_index != 0
     }
 
-    pub fn push_function_flow(
-        &mut self,
-        locals_block: Block,
-        init_block: Block,
-        args_block: Block,
-        body_block: Block,
-        return_block: Block,
-    ) {
+    pub fn push_function_flow(&mut self, entry_block: Block, body_block: Block, exit_block: Block) {
         self.stack.push(ControlFlow::Function(FunctionFlow {
-            locals_block,
-            init_block,
-            args_block,
+            entry_block,
             body_block,
-            return_block,
+            exit_block,
         }));
     }
 
@@ -131,22 +122,12 @@ impl ControlFlowStack {
         next_state
     }
 
-    pub fn push_scope_flow(
-        &mut self,
-        scope_ref: ScopeRef,
-        init_block: Block,
-        hoisted_block: Block,
-        body_block: Block,
-        cleanup_block: Block,
-    ) {
+    pub fn push_scope_flow(&mut self, scope_ref: ScopeRef, body_block: Block) {
         let outer_index = self.scope_index;
         self.scope_index = self.stack.len();
         self.stack.push(ControlFlow::Scope(ScopeFlow {
             scope_ref,
-            init_block,
-            hoisted_block,
             body_block,
-            cleanup_block,
             outer_index,
         }));
     }
@@ -456,9 +437,10 @@ impl ControlFlowStack {
 
     pub fn cleanup_block(&self) -> Block {
         if self.scope_index == 0 {
-            self.function_flow().return_block
+            self.function_flow().exit_block
         } else {
-            self.scope_flow().cleanup_block
+            //self.scope_flow().cleanup_block
+            todo!()
         }
     }
 
@@ -471,7 +453,8 @@ impl ControlFlowStack {
                 ExceptionState::Finally => unreachable!(),
             }
         } else {
-            self.cleanup_block()
+            //self.cleanup_block()
+            todo!()
         }
     }
 
@@ -499,20 +482,16 @@ impl ControlFlowStack {
             match flow {
                 ControlFlow::Function(flow) => {
                     eprintln!("function:");
-                    eprintln_block!(locals_block, flow);
-                    eprintln_block!(args_block, flow);
+                    eprintln_block!(entry_block, flow);
                     eprintln_block!(body_block, flow);
-                    eprintln_block!(return_block, flow);
+                    eprintln_block!(exit_block, flow);
                 }
                 ControlFlow::Coroutine(flow) => {
                     eprintln!("coroutine: state={}/{}", flow.next_state, flow.num_states);
                 }
                 ControlFlow::Scope(flow) => {
                     eprintln!("scope:");
-                    eprintln_block!(init_block, flow);
-                    eprintln_block!(hoisted_block, flow);
                     eprintln_block!(body_block, flow);
-                    eprintln_block!(cleanup_block, flow);
                 }
                 ControlFlow::IfThenElse(flow) => {
                     eprintln!("then-else:");
@@ -599,15 +578,9 @@ enum ControlFlow {
 
 /// Contains data used for building the root region of a function.
 pub struct FunctionFlow {
-    #[allow(unused)]
-    pub locals_block: Block,
-    #[allow(unused)]
-    pub init_block: Block,
-    #[allow(unused)]
-    pub args_block: Block,
-    #[allow(unused)]
+    pub entry_block: Block,
     pub body_block: Block,
-    pub return_block: Block,
+    pub exit_block: Block,
 }
 
 pub struct CoroutineFlow {
@@ -622,18 +595,8 @@ pub struct ScopeFlow {
     /// The reference to the scope in the scope tree.
     pub scope_ref: ScopeRef,
 
-    /// The entry block of the scope flow.
-    pub init_block: Block,
-
-    /// A basic block containing instructions for hoisted function and variable declarations.
-    pub hoisted_block: Block,
-
     /// The first basic block of the container region of the scope flow.
     pub body_block: Block,
-
-    /// A basic block containing instructions for cleanup.
-    /// The container region will be always connected to this basic block.
-    pub cleanup_block: Block,
 
     /// The index of the enclosing outer scope flow.
     outer_index: usize,

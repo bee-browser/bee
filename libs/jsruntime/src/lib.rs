@@ -125,7 +125,7 @@ impl<X> Runtime<X> {
 
     pub fn link(&mut self, module: Module) {
         logger::debug!(event = "link");
-        self.executor.register_module(&module);
+        self.executor.register_module(module);
     }
 
     pub fn evaluate(&mut self, program: &Program) -> Result<Value, Value> {

@@ -15,56 +15,63 @@ use crate::types::Lambda;
 use crate::types::Status;
 use crate::types::Value;
 
+#[derive(Clone)]
 #[repr(C)]
 pub struct RuntimeFunctions {
-    to_boolean: unsafe extern "C" fn(*mut c_void, *const Value) -> bool,
-    to_numeric: unsafe extern "C" fn(*mut c_void, *const Value) -> f64,
-    to_object: unsafe extern "C" fn(*mut c_void, *const Value) -> *mut c_void,
-    to_int32: unsafe extern "C" fn(*mut c_void, f64) -> i32,
-    to_uint32: unsafe extern "C" fn(*mut c_void, f64) -> u32,
-    is_loosely_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
-    is_strictly_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
-    get_typeof: unsafe extern "C" fn(*mut c_void, *const Value) -> *const Char16Seq,
-    migrate_string_to_heap: unsafe extern "C" fn(*mut c_void, *const Char16Seq) -> *const Char16Seq,
-    create_capture: unsafe extern "C" fn(*mut c_void, *mut Value) -> *mut Capture,
-    create_closure: unsafe extern "C" fn(*mut c_void, Lambda, u16) -> *mut Closure,
-    create_coroutine: unsafe extern "C" fn(*mut c_void, *mut Closure, u16, u16) -> *mut Coroutine,
-    register_promise: unsafe extern "C" fn(*mut c_void, *mut Coroutine) -> u32,
-    await_promise: unsafe extern "C" fn(*mut c_void, u32, u32),
-    resume: unsafe extern "C" fn(*mut c_void, u32),
-    emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
-    create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
+    pub to_boolean: unsafe extern "C" fn(*mut c_void, *const Value) -> bool,
+    pub to_numeric: unsafe extern "C" fn(*mut c_void, *const Value) -> f64,
+    pub to_object: unsafe extern "C" fn(*mut c_void, *const Value) -> *mut c_void,
+    pub to_int32: unsafe extern "C" fn(*mut c_void, f64) -> i32,
+    pub to_uint32: unsafe extern "C" fn(*mut c_void, f64) -> u32,
+    pub is_loosely_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
+    pub is_strictly_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
+    pub get_typeof: unsafe extern "C" fn(*mut c_void, *const Value) -> *const Char16Seq,
+    pub migrate_string_to_heap:
+        unsafe extern "C" fn(*mut c_void, *const Char16Seq) -> *const Char16Seq,
+    pub create_capture: unsafe extern "C" fn(*mut c_void, *mut Value) -> *mut Capture,
+    pub create_closure: unsafe extern "C" fn(*mut c_void, Lambda, u16) -> *mut Closure,
+    pub create_coroutine:
+        unsafe extern "C" fn(*mut c_void, *mut Closure, u16, u16) -> *mut Coroutine,
+    pub register_promise: unsafe extern "C" fn(*mut c_void, *mut Coroutine) -> u32,
+    pub await_promise: unsafe extern "C" fn(*mut c_void, u32, u32),
+    pub resume: unsafe extern "C" fn(*mut c_void, u32),
+    pub emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
+    pub create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
     // TODO(perf): `get_value()` and `set_value()` are slow... Compute the address of the value by
     // using a base address and the offset for each property instead of calling these functions.
-    get_value_by_symbol: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, bool) -> *const Value,
-    get_value_by_number: unsafe extern "C" fn(*mut c_void, *mut c_void, f64, bool) -> *const Value,
-    get_value_by_value:
+    pub get_value_by_symbol:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, u32, bool) -> *const Value,
+    pub get_value_by_number:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, f64, bool) -> *const Value,
+    pub get_value_by_value:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, bool) -> *const Value,
-    set_value_by_symbol: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value),
-    set_value_by_number: unsafe extern "C" fn(*mut c_void, *mut c_void, f64, *const Value),
-    set_value_by_value: unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *const Value),
-    create_data_property_by_symbol:
+    pub set_value_by_symbol: unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value),
+    pub set_value_by_number: unsafe extern "C" fn(*mut c_void, *mut c_void, f64, *const Value),
+    pub set_value_by_value:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *const Value),
+    pub create_data_property_by_symbol:
         unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
-    create_data_property_by_number:
+    pub create_data_property_by_number:
         unsafe extern "C" fn(*mut c_void, *mut c_void, f64, *const Value, *mut Value) -> Status,
-    create_data_property_by_value: unsafe extern "C" fn(
+    pub create_data_property_by_value: unsafe extern "C" fn(
         *mut c_void,
         *mut c_void,
         *const Value,
         *const Value,
         *mut Value,
     ) -> Status,
-    copy_data_properties:
+    pub copy_data_properties:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
-    push_value: unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
-    assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
-    print_bool: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
-    print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
-    print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
-    print_string: unsafe extern "C" fn(*mut c_void, *const Char16Seq, *const c_char),
-    print_value: unsafe extern "C" fn(*mut c_void, *const Value, *const c_char),
-    print_message: unsafe extern "C" fn(*mut c_void, *const c_char),
-    launch_debugger: unsafe extern "C" fn(*mut c_void),
+    pub push_value:
+        unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *mut Value) -> Status,
+    pub assert: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
+    pub print_bool: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
+    pub print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
+    pub print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
+    pub print_string: unsafe extern "C" fn(*mut c_void, *const Char16Seq, *const c_char),
+    pub print_value: unsafe extern "C" fn(*mut c_void, *const Value, *const c_char),
+    pub print_message: unsafe extern "C" fn(*mut c_void, *const c_char),
+    pub launch_debugger: unsafe extern "C" fn(*mut c_void),
 }
 
 impl RuntimeFunctions {
