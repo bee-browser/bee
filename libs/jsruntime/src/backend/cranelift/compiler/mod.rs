@@ -355,6 +355,7 @@ where
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::Multiplication => self.process_multiplication(),
+            CompileCommand::Division => self.process_division(),
             CompileCommand::Addition => self.process_addition(),
             CompileCommand::Subtraction => self.process_subtraction(),
             CompileCommand::Discard => self.process_discard(),
@@ -498,6 +499,19 @@ where
         let rhs = self.apply_to_numeric(rhs);
 
         let number = self.emit_mul(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
+    }
+
+    // 13.7.1 Runtime Semantics: Evaluation
+    fn process_division(&mut self) {
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        let number = self.emit_div(lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -782,6 +796,11 @@ where
     fn emit_mul(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
         logger::debug!(event = "emit_mul", ?lhs, ?rhs);
         NumberIr(self.builder.ins().fmul(lhs.0, rhs.0))
+    }
+
+    fn emit_div(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        logger::debug!(event = "emit_div", ?lhs, ?rhs);
+        NumberIr(self.builder.ins().fdiv(lhs.0, rhs.0))
     }
 
     fn emit_jump(&mut self, block: Block) {
