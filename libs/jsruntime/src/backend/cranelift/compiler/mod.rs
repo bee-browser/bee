@@ -12,6 +12,8 @@ use cranelift_jit::JITModule;
 use cranelift_module::DataDescription;
 use cranelift_module::FuncId;
 use cranelift_module::Module as _;
+
+use base::static_assert_eq;
 use jsparser::Symbol;
 
 use super::CompileError;
@@ -708,7 +710,11 @@ where
                     .stack_store(value.0, slot, base_offset + 8);
             }
             Operand::Any(value, _) => {
-                todo!("{value:?}");
+                const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+                // TODO(perf): should use memcpy?
+                static_assert_eq!(size_of::<crate::types::Value>() * 8, 128);
+                let opaque = self.builder.ins().load(types::I128, FLAGS, value.0, 0);
+                self.builder.ins().stack_store(opaque, slot, base_offset);
             }
             Operand::VariableReference(..) => unreachable!(),
         }
