@@ -342,6 +342,7 @@ where
         logger::debug!(event = "process_command", ?command);
         match command {
             CompileCommand::Nop => (),
+            CompileCommand::Boolean(value) => self.process_boolean(*value),
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
@@ -352,7 +353,7 @@ where
             CompileCommand::Addition => self.process_addition(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
-            _ => todo!(),
+            _ => todo!("{command:?}"),
         }
 
         macro_rules! dump_enabled {
@@ -374,6 +375,11 @@ where
     }
 
     // commands
+
+    fn process_boolean(&mut self, value: bool) {
+        let value_ir = self.emit_boolean(value);
+        self.operand_stack.push(Operand::Boolean(value_ir, Some(value)));
+    }
 
     fn process_number(&mut self, value: f64) {
         let value_ir = self.emit_number(value);
@@ -504,7 +510,7 @@ where
         match operand {
             Operand::Undefined => self.emit_number(f64::NAN),
             // Operand::Null => self.bridge.get_zero(),
-            // Operand::Boolean(value, ..) => self.bridge.create_boolean_to_number(value),
+            Operand::Boolean(value, ..) => self.emit_boolean_to_number(value),
             Operand::Number(value, ..) => value,
             // Operand::String(..) => unimplemented!("string.to_numeric"),
             // Operand::Closure(_) => self.bridge.get_nan(),
@@ -665,12 +671,20 @@ where
         let base_offset = (Self::VALUE_SIZE as i32) * (index as i32);
         match operand {
             Operand::Undefined => {
-                // TODO: Use the const value
+                // TODO: Value::KIND_UNDEFINED
                 let kind = self.builder.ins().iconst(types::I8, 1);
                 self.builder.ins().stack_store(kind, slot, base_offset);
             }
+            Operand::Boolean(value, _) => {
+                // TODO: Value::KIND_BOOLEAN
+                let kind = self.builder.ins().iconst(types::I8, 3);
+                self.builder.ins().stack_store(kind, slot, base_offset);
+                self.builder
+                    .ins()
+                    .stack_store(value.0, slot, base_offset + 8);
+            }
             Operand::Number(value, _) => {
-                // TODO: Use the const value
+                // TODO: Value::KIND_NUMBER
                 let kind = self.builder.ins().iconst(types::I8, 4);
                 self.builder.ins().stack_store(kind, slot, base_offset);
                 self.builder
@@ -686,9 +700,19 @@ where
 
     // instructions
 
+    fn emit_boolean(&mut self, value: bool) -> BooleanIr {
+        logger::debug!(event = "emit_boolean", value);
+        BooleanIr(self.builder.ins().iconst(types::I8, value as i64))
+    }
+
     fn emit_number(&mut self, value: f64) -> NumberIr {
         logger::debug!(event = "emit_number", value);
         NumberIr(self.builder.ins().f64const(value))
+    }
+
+    fn emit_boolean_to_number(&mut self, value: BooleanIr) -> NumberIr {
+        logger::debug!(event = "emit_boolean_to_number", ?value);
+        NumberIr(self.builder.ins().fcvt_from_uint(types::F64, value.0))
     }
 
     fn emit_to_numeric(&mut self, _any: AnyIr) -> NumberIr {
@@ -884,10 +908,13 @@ enum Operand {
     /// Compile-time constant value of `undefined`.
     Undefined,
 
+    /// Runtime value and optional compile-time constant value of boolean type.
+    // TODO(perf): compile-time evaluation
+    Boolean(BooleanIr, #[allow(unused)] Option<bool>),
+
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    #[allow(unused)]
-    Number(NumberIr, Option<f64>),
+    Number(NumberIr, #[allow(unused)] Option<f64>),
 
     /// Runtime value and optional compile-time constant value of any type.
     // TODO(perf): compile-time evaluation
