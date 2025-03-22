@@ -354,6 +354,7 @@ where
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::Multiplication => self.process_multiplication(),
             CompileCommand::Addition => self.process_addition(),
             CompileCommand::Subtraction => self.process_subtraction(),
             CompileCommand::Discard => self.process_discard(),
@@ -486,6 +487,19 @@ where
         debug_assert_eq!(flow.scope_ref, scope_ref);
 
         // TODO
+    }
+
+    // 13.7.1 Runtime Semantics: Evaluation
+    fn process_multiplication(&mut self) {
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        let number = self.emit_mul(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.8.1.1 Runtime Semantics: Evaluation
@@ -763,6 +777,11 @@ where
     fn emit_sub(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
         logger::debug!(event = "emit_sub", ?lhs, ?rhs);
         NumberIr(self.builder.ins().fsub(lhs.0, rhs.0))
+    }
+
+    fn emit_mul(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        logger::debug!(event = "emit_mul", ?lhs, ?rhs);
+        NumberIr(self.builder.ins().fmul(lhs.0, rhs.0))
     }
 
     fn emit_jump(&mut self, block: Block) {
