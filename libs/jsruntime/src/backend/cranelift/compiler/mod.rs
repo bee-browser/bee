@@ -368,6 +368,7 @@ where
             CompileCommand::UnsignedRightShift => self.process_unsigned_right_shift(),
             CompileCommand::BitwiseAnd => self.process_bitwise_and(),
             CompileCommand::BitwiseXor => self.process_bitwise_xor(),
+            CompileCommand::BitwiseOr => self.process_bitwise_or(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             _ => todo!("{command:?}"),
@@ -693,6 +694,22 @@ where
         // TODO: BigInt
 
         let number = self.emit_bitwise_xor(lnum, rnum);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
+    }
+
+    // 13.12.1 Runtime Semantics: Evaluation
+    fn process_bitwise_or(&mut self) {
+        // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+        let (lval, _) = self.dereference();
+        let (rval, _) = self.dereference();
+
+        // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+        let lnum = self.apply_to_numeric(lval);
+        let rnum = self.apply_to_numeric(rval);
+        // TODO: BigInt
+
+        let number = self.emit_bitwise_or(lnum, rnum);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1070,6 +1087,15 @@ where
         let lnum = self.emit_to_int32(x);
         let rnum = self.emit_to_int32(y);
         let result = self.builder.ins().bxor(lnum, rnum);
+        NumberIr(self.builder.ins().fcvt_from_sint(types::F64, result))
+    }
+
+    // 6.1.6.1.19 Number::bitwiseOR ( x, y )
+    fn emit_bitwise_or(&mut self, x: NumberIr, y: NumberIr) -> NumberIr {
+        logger::debug!(event = "emit_bitwise_or", ?x, ?y);
+        let lnum = self.emit_to_int32(x);
+        let rnum = self.emit_to_int32(y);
+        let result = self.builder.ins().bor(lnum, rnum);
         NumberIr(self.builder.ins().fcvt_from_sint(types::F64, result))
     }
 
