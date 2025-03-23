@@ -11,6 +11,7 @@ use cranelift_jit::JITBuilder;
 use cranelift_jit::JITModule;
 use cranelift_module::DataDescription;
 use cranelift_module::FuncId;
+use cranelift_module::Linkage;
 use cranelift_module::Module as _;
 
 use base::static_assert_eq;
@@ -69,6 +70,7 @@ struct CraneliftContext {
     context: codegen::Context,
     _data_description: DataDescription,
     module: JITModule,
+    id_fmod: FuncId,
     id_runtime_get_value_by_symbol: FuncId,
 }
 
@@ -103,28 +105,25 @@ impl CraneliftContext {
 
         // TODO: declare runtime functions
         let ptr_type = module.target_config().pointer_type();
-        let mut sig_runtime_get_value_by_symbol = Signature::new(isa::CallConv::SystemV);
-        sig_runtime_get_value_by_symbol
-            .params
-            .push(AbiParam::new(ptr_type));
-        sig_runtime_get_value_by_symbol
-            .params
-            .push(AbiParam::new(ptr_type));
-        sig_runtime_get_value_by_symbol
-            .params
-            .push(AbiParam::new(types::I32));
-        sig_runtime_get_value_by_symbol
-            .params
-            .push(AbiParam::new(types::I8));
-        sig_runtime_get_value_by_symbol
-            .returns
-            .push(AbiParam::new(ptr_type));
+        let name = "runtime_get_value_by_symbol";
+        let mut sig = module.make_signature();
+        sig.params.push(AbiParam::new(ptr_type));
+        sig.params.push(AbiParam::new(ptr_type));
+        sig.params.push(AbiParam::new(types::I32));
+        sig.params.push(AbiParam::new(types::I8));
+        sig.returns.push(AbiParam::new(ptr_type));
         let id_runtime_get_value_by_symbol = module
-            .declare_function(
-                "runtime_get_value_by_symbol",
-                cranelift_module::Linkage::Import,
-                &sig_runtime_get_value_by_symbol,
-            )
+            .declare_function(name, Linkage::Import, &sig)
+            .unwrap();
+
+        // TODO(feat): if cfg!(feature = "libm")
+        let name = "fmod";
+        let mut sig = module.make_signature();
+        sig.params.push(AbiParam::new(types::F64));
+        sig.params.push(AbiParam::new(types::F64));
+        sig.returns.push(AbiParam::new(types::F64));
+        let id_fmod = module
+            .declare_function(name, Linkage::Import, &sig)
             .unwrap();
 
         Self {
@@ -132,6 +131,7 @@ impl CraneliftContext {
             context: module.make_context(),
             _data_description: DataDescription::new(),
             module,
+            id_fmod,
             id_runtime_get_value_by_symbol,
         }
     }
@@ -164,6 +164,7 @@ struct Compiler<'r, 's, 'c, R> {
     _module: &'c mut JITModule,
     ptr_type: Type,
     lambda_sig: SigRef,
+    ref_fmod: FuncRef,
     ref_runtime_get_value_by_symbol: FuncRef,
 
     /// A stack for operands.
@@ -212,6 +213,10 @@ where
             &mut context.context.func,
         );
 
+        let ref_fmod = context
+            .module
+            .declare_func_in_func(context.id_fmod, &mut context.context.func);
+
         let mut builder =
             FunctionBuilder::new(&mut context.context.func, &mut context.builder_context);
 
@@ -226,6 +231,7 @@ where
             _module: &mut context.module,
             ptr_type,
             lambda_sig,
+            ref_fmod,
             ref_runtime_get_value_by_symbol,
             operand_stack: Default::default(),
             locals: Default::default(),
@@ -356,6 +362,7 @@ where
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::Multiplication => self.process_multiplication(),
             CompileCommand::Division => self.process_division(),
+            CompileCommand::Remainder => self.process_remainder(),
             CompileCommand::Addition => self.process_addition(),
             CompileCommand::Subtraction => self.process_subtraction(),
             CompileCommand::Discard => self.process_discard(),
@@ -512,6 +519,19 @@ where
         let rhs = self.apply_to_numeric(rhs);
 
         let number = self.emit_div(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
+    }
+
+    // 13.7.1 Runtime Semantics: Evaluation
+    fn process_remainder(&mut self) {
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        let number = self.emit_rem(lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -801,6 +821,12 @@ where
     fn emit_div(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
         logger::debug!(event = "emit_div", ?lhs, ?rhs);
         NumberIr(self.builder.ins().fdiv(lhs.0, rhs.0))
+    }
+
+    fn emit_rem(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        logger::debug!(event = "emit_rem", ?lhs, ?rhs);
+        let call = self.builder.ins().call(self.ref_fmod, &[lhs.0, rhs.0]);
+        NumberIr(self.builder.inst_results(call)[0])
     }
 
     fn emit_jump(&mut self, block: Block) {
