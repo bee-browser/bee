@@ -9,6 +9,7 @@ test:
 
 .PHONY: codegen
 codegen:
+	@$(MAKE) -s -C src/backend/cranelift codegen
 	@$(MAKE) -s -C src/backend/llvm codegen
 	@$(MAKE) -s -C tests codegen
 
