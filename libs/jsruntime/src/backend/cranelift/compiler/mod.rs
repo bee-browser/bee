@@ -1,4 +1,5 @@
 mod control_flow;
+mod runtime;
 
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -31,6 +32,8 @@ use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
 
 use control_flow::ControlFlowStack;
+use runtime::RuntimeFunctionIds;
+use runtime::RuntimeFunctionCache;
 
 pub fn compile<R>(
     support: &mut R,
@@ -72,8 +75,7 @@ struct CraneliftContext {
     module: JITModule,
     id_fmod: FuncId,
     id_pow: FuncId,
-    id_runtime_to_numeric: FuncId,
-    id_runtime_get_value_by_symbol: FuncId,
+    runtime_func_ids: RuntimeFunctionIds,
 }
 
 impl CraneliftContext {
@@ -91,41 +93,10 @@ impl CraneliftContext {
             .unwrap();
 
         let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
-
-        // TODO: create symbols for runtime functions
-        macro_rules! register_symbol {
-            ($name:literal, $addr:expr) => {
-                builder.symbol($name, $addr as *const u8)
-            };
-        }
-        register_symbol!("runtime_to_numeric", runtime_functions.to_numeric);
-        register_symbol!(
-            "runtime_get_value_by_symbol",
-            runtime_functions.get_value_by_symbol
-        );
+        runtime::register_symbols(&mut builder, runtime_functions);
 
         let mut module = JITModule::new(builder);
-
-        // TODO: declare runtime functions
-        let ptr_type = module.target_config().pointer_type();
-        let name = "runtime_get_value_by_symbol";
-        let mut sig = module.make_signature();
-        sig.params.push(AbiParam::new(ptr_type));
-        sig.params.push(AbiParam::new(ptr_type));
-        sig.params.push(AbiParam::new(types::I32));
-        sig.params.push(AbiParam::new(types::I8));
-        sig.returns.push(AbiParam::new(ptr_type));
-        let id_runtime_get_value_by_symbol = module
-            .declare_function(name, Linkage::Import, &sig)
-            .unwrap();
-        let name = "runtime_to_numeric";
-        let mut sig = module.make_signature();
-        sig.params.push(AbiParam::new(ptr_type));
-        sig.params.push(AbiParam::new(ptr_type));
-        sig.returns.push(AbiParam::new(types::F64));
-        let id_runtime_to_numeric = module
-            .declare_function(name, Linkage::Import, &sig)
-            .unwrap();
+        let runtime_func_ids = runtime::declare_functions(&mut module);
 
         // TODO(feat): if cfg!(feature = "libm")
         let name = "fmod";
@@ -153,8 +124,7 @@ impl CraneliftContext {
             module,
             id_fmod,
             id_pow,
-            id_runtime_to_numeric,
-            id_runtime_get_value_by_symbol,
+            runtime_func_ids,
         }
     }
 
@@ -183,13 +153,12 @@ struct Compiler<'r, 's, 'c, R> {
     pending_labels: Vec<Symbol>,
 
     builder: FunctionBuilder<'c>,
-    _module: &'c mut JITModule,
+    module: &'c mut JITModule,
     ptr_type: Type,
     lambda_sig: SigRef,
     ref_fmod: FuncRef,
     ref_pow: FuncRef,
-    ref_runtime_to_numeric: FuncRef,
-    ref_runtime_get_value_by_symbol: FuncRef,
+    runtime_func_cache: RuntimeFunctionCache<'c>,
 
     /// A stack for operands.
     operand_stack: OperandStack,
@@ -232,14 +201,6 @@ where
 
         let lambda_sig = context.context.func.signature.clone();
 
-        let ref_runtime_to_numeric = context
-            .module
-            .declare_func_in_func(context.id_runtime_to_numeric, &mut context.context.func);
-        let ref_runtime_get_value_by_symbol = context.module.declare_func_in_func(
-            context.id_runtime_get_value_by_symbol,
-            &mut context.context.func,
-        );
-
         let ref_fmod = context
             .module
             .declare_func_in_func(context.id_fmod, &mut context.context.func);
@@ -259,13 +220,12 @@ where
             control_flow_stack: Default::default(),
             pending_labels: Default::default(),
             builder,
-            _module: &mut context.module,
+            module: &mut context.module,
             ptr_type,
             lambda_sig,
             ref_fmod,
             ref_pow,
-            ref_runtime_to_numeric,
-            ref_runtime_get_value_by_symbol,
+            runtime_func_cache: RuntimeFunctionCache::new(&context.runtime_func_ids),
             operand_stack: Default::default(),
             locals: Default::default(),
         }
@@ -870,7 +830,8 @@ where
     fn emit_to_numeric(&mut self, any: AnyIr) -> NumberIr {
         logger::debug!(event = "emit_to_numeric", ?any);
         let args = [self.get_runtime_ptr(), any.0];
-        let call = self.builder.ins().call(self.ref_runtime_to_numeric, &args);
+        let func = self.runtime_func_cache.get_to_numeric(self.module, self.builder.func);
+        let call = self.builder.ins().call(func, &args);
         NumberIr(self.builder.inst_results(call)[0])
     }
 
@@ -947,10 +908,8 @@ where
             self.builder.ins().iconst(types::I32, key.id() as i64),
             self.builder.ins().iconst(types::I8, strict as i64),
         ];
-        let call = self
-            .builder
-            .ins()
-            .call(self.ref_runtime_get_value_by_symbol, &args);
+        let func = self.runtime_func_cache.get_get_value_by_symbol(self.module, self.builder.func);
+        let call = self.builder.ins().call(func, &args);
         AnyIr(self.builder.inst_results(call)[0])
     }
 
