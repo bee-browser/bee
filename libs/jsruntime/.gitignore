@@ -1,3 +1,4 @@
+/src/backend/cranelift/compiler/runtime.rs
 /src/backend/llvm/bridge.hh
 /src/backend/llvm/compiler/type_holder.cc
 /src/backend/llvm/compiler/type_holder.hh
