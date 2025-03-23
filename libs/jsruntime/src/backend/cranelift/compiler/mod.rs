@@ -365,6 +365,7 @@ where
             CompileCommand::Subtraction => self.process_subtraction(),
             CompileCommand::LeftShift => self.process_left_shift(),
             CompileCommand::SignedRightShift => self.process_signed_right_shift(),
+            CompileCommand::UnsignedRightShift => self.process_unsigned_right_shift(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             _ => todo!("{command:?}"),
@@ -642,6 +643,22 @@ where
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
         let number = self.emit_signed_right_shift(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
+    }
+
+    // 13.9.3.1 Runtime Semantics: Evaluation
+    fn process_unsigned_right_shift(&mut self) {
+        // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+        // TODO: BigInt
+        let number = self.emit_unsigned_right_shift(lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -991,6 +1008,16 @@ where
         let rnum = self.emit_to_uint32(y);
         let shift_count = self.builder.ins().urem_imm(rnum, 32);
         let shifted = self.builder.ins().sshr(lnum, shift_count);
+        NumberIr(self.builder.ins().fcvt_from_sint(types::F64, shifted))
+    }
+
+    // 6.1.6.1.11 Number::unsignedRightShift ( x, y )
+    fn emit_unsigned_right_shift(&mut self, x: NumberIr, y: NumberIr) -> NumberIr {
+        logger::debug!(event = "emit_unsigned_right_shift", ?x, ?y);
+        let lnum = self.emit_to_uint32(x);
+        let rnum = self.emit_to_uint32(y);
+        let shift_count = self.builder.ins().urem_imm(rnum, 32);
+        let shifted = self.builder.ins().ushr(lnum, shift_count);
         NumberIr(self.builder.ins().fcvt_from_sint(types::F64, shifted))
     }
 
