@@ -356,6 +356,7 @@ where
             CompileCommand::UnaryPlus => self.process_unary_plus(),
             CompileCommand::UnaryMinus => self.process_unary_minus(),
             CompileCommand::BitwiseNot => self.process_bitwise_not(),
+            CompileCommand::LogicalNot => self.process_logical_not(),
             CompileCommand::Exponentiation => self.process_exponentiation(),
             CompileCommand::Multiplication => self.process_multiplication(),
             CompileCommand::Division => self.process_division(),
@@ -523,6 +524,15 @@ where
         self.operand_stack.push(Operand::Number(number, None));
     }
 
+    // 13.5.7.1 Runtime Semantics: Evaluation
+    fn process_logical_not(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.perform_to_boolean(operand);
+        let boolean = self.emit_logical_not(boolean);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
     // 13.6.1 Runtime Semantics: Evaluation
     fn process_exponentiation(&mut self) {
         let (lhs, _) = self.dereference();
@@ -617,6 +627,24 @@ where
     }
 
     // commonly used functions
+
+    fn perform_to_boolean(&mut self, operand: Operand) -> BooleanIr {
+        match operand {
+            Operand::Undefined | Operand::Null => self.emit_boolean(false),
+            Operand::Boolean(value, ..) => value,
+            Operand::Number(value, ..) => self.emit_number_to_boolean(value),
+            // Operand::String(..) => todo!(),
+            // Operand::Closure(_) | Operand::Object(_) | Operand::Promise(_) => {
+            //     self.bridge.get_boolean(true)
+            // }
+            Operand::Any(value, ..) => self.emit_to_boolean(value),
+            Operand::VariableReference(..) => unreachable!(),
+            // Operand::Lambda(_)
+            // | Operand::Coroutine(_)
+            // | Operand::VariableReference(..)
+            // | Operand::PropertyReference(_) => unreachable!(),
+        }
+    }
 
     // 7.1.4 ToNumber ( argument )
     fn apply_to_numeric(&mut self, operand: Operand) -> NumberIr {
@@ -828,6 +856,20 @@ where
         BooleanIr(self.builder.ins().iconst(types::I8, value as i64))
     }
 
+    fn emit_number_to_boolean(&mut self, value: NumberIr) -> BooleanIr {
+        let zero = self.builder.ins().f64const(0.0);
+        BooleanIr(self.builder.ins().fcmp(FloatCC::NotEqual, value.0, zero))
+    }
+
+    fn emit_to_boolean(&mut self, value: AnyIr) -> BooleanIr {
+        let func = self
+            .runtime_func_cache
+            .get_to_boolean(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), value.0];
+        let call = self.builder.ins().call(func, &args);
+        BooleanIr(self.builder.inst_results(call)[0])
+    }
+
     fn emit_number(&mut self, value: f64) -> NumberIr {
         logger::debug!(event = "emit_number", value);
         NumberIr(self.builder.ins().f64const(value))
@@ -891,6 +933,11 @@ where
         let int32 = self.emit_to_int32(value);
         let bnot = self.builder.ins().bnot(int32);
         NumberIr(self.builder.ins().fcvt_from_sint(types::F64, bnot))
+    }
+
+    fn emit_logical_not(&mut self, value: BooleanIr) -> BooleanIr {
+        logger::debug!(event = "emit_logical_not", ?value);
+        BooleanIr(self.builder.ins().bxor_imm(value.0, 1))
     }
 
     // 7.1.6 ToInt32 ( argument )
