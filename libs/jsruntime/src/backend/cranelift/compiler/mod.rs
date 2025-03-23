@@ -394,6 +394,7 @@ where
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::UnaryPlus => self.process_unary_plus(),
+            CompileCommand::UnaryMinus => self.process_unary_minus(),
             CompileCommand::Exponentiation => self.process_exponentiation(),
             CompileCommand::Multiplication => self.process_multiplication(),
             CompileCommand::Division => self.process_division(),
@@ -536,6 +537,17 @@ where
     fn process_unary_plus(&mut self) {
         let (operand, _) = self.dereference();
         let value = self.apply_to_numeric(operand);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(value, None));
+    }
+
+    // 13.5.5.1 Runtime Semantics: Evaluation
+    fn process_unary_minus(&mut self) {
+        let (operand, _) = self.dereference();
+        let value = self.apply_to_numeric(operand);
+        // TODO: BigInt
+        // 6.1.6.1.1 Number::unaryMinus ( x )
+        let value = self.emit_neg(value);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(value, None));
     }
@@ -862,6 +874,11 @@ where
         NumberIr(self.builder.inst_results(call)[0])
     }
 
+    fn emit_neg(&mut self, value: NumberIr) -> NumberIr {
+        logger::debug!(event = "emit_neg", ?value);
+        NumberIr(self.builder.ins().fneg(value.0))
+    }
+
     fn emit_add(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
         logger::debug!(event = "emit_add", ?lhs, ?rhs);
         NumberIr(self.builder.ins().fadd(lhs.0, rhs.0))
@@ -895,10 +912,12 @@ where
     }
 
     fn emit_jump(&mut self, block: Block) {
+        logger::debug!(event = "emit_jump", ?block);
         self.builder.ins().jump(block, &[]);
     }
 
     fn emit_get_variable(&mut self, symbol: Symbol, locator: Locator) -> AnyIr {
+        logger::debug!(event = "emit_get_variable", ?symbol, ?locator);
         match locator {
             Locator::None => unreachable!(),
             Locator::Argument(index) => self.emit_get_argument(index),
