@@ -72,7 +72,7 @@ impl<'c> RuntimeFunctionCache<'c> {
 
     #[allow(unused)]
     pub fn get_{{ func.name }}<T: Module>(&self, module: &mut T, func: &mut Function) -> FuncRef {
-        self.{{ func.name }}.get_or_init(|| module.declare_func_in_func(self.ids.{{ func.name }}, func)).clone()
+        *self.{{ func.name }}.get_or_init(|| module.declare_func_in_func(self.ids.{{ func.name }}, func))
     }
     {%- endfor %}
 }
