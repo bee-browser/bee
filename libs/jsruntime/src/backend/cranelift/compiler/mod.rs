@@ -72,6 +72,7 @@ struct CraneliftContext {
     module: JITModule,
     id_fmod: FuncId,
     id_pow: FuncId,
+    id_runtime_to_numeric: FuncId,
     id_runtime_get_value_by_symbol: FuncId,
 }
 
@@ -97,6 +98,7 @@ impl CraneliftContext {
                 builder.symbol($name, $addr as *const u8)
             };
         }
+        register_symbol!("runtime_to_numeric", runtime_functions.to_numeric);
         register_symbol!(
             "runtime_get_value_by_symbol",
             runtime_functions.get_value_by_symbol
@@ -114,6 +116,14 @@ impl CraneliftContext {
         sig.params.push(AbiParam::new(types::I8));
         sig.returns.push(AbiParam::new(ptr_type));
         let id_runtime_get_value_by_symbol = module
+            .declare_function(name, Linkage::Import, &sig)
+            .unwrap();
+        let name = "runtime_to_numeric";
+        let mut sig = module.make_signature();
+        sig.params.push(AbiParam::new(ptr_type));
+        sig.params.push(AbiParam::new(ptr_type));
+        sig.returns.push(AbiParam::new(types::F64));
+        let id_runtime_to_numeric = module
             .declare_function(name, Linkage::Import, &sig)
             .unwrap();
 
@@ -143,6 +153,7 @@ impl CraneliftContext {
             module,
             id_fmod,
             id_pow,
+            id_runtime_to_numeric,
             id_runtime_get_value_by_symbol,
         }
     }
@@ -177,6 +188,7 @@ struct Compiler<'r, 's, 'c, R> {
     lambda_sig: SigRef,
     ref_fmod: FuncRef,
     ref_pow: FuncRef,
+    ref_runtime_to_numeric: FuncRef,
     ref_runtime_get_value_by_symbol: FuncRef,
 
     /// A stack for operands.
@@ -220,6 +232,9 @@ where
 
         let lambda_sig = context.context.func.signature.clone();
 
+        let ref_runtime_to_numeric = context
+            .module
+            .declare_func_in_func(context.id_runtime_to_numeric, &mut context.context.func);
         let ref_runtime_get_value_by_symbol = context.module.declare_func_in_func(
             context.id_runtime_get_value_by_symbol,
             &mut context.context.func,
@@ -249,6 +264,7 @@ where
             lambda_sig,
             ref_fmod,
             ref_pow,
+            ref_runtime_to_numeric,
             ref_runtime_get_value_by_symbol,
             operand_stack: Default::default(),
             locals: Default::default(),
@@ -377,6 +393,7 @@ where
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::UnaryPlus => self.process_unary_plus(),
             CompileCommand::Exponentiation => self.process_exponentiation(),
             CompileCommand::Multiplication => self.process_multiplication(),
             CompileCommand::Division => self.process_division(),
@@ -513,6 +530,14 @@ where
         debug_assert_eq!(flow.scope_ref, scope_ref);
 
         // TODO
+    }
+
+    // 13.5.4.1 Runtime Semantics: Evaluation
+    fn process_unary_plus(&mut self) {
+        let (operand, _) = self.dereference();
+        let value = self.apply_to_numeric(operand);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(value, None));
     }
 
     // 13.6.1 Runtime Semantics: Evaluation
@@ -830,8 +855,11 @@ where
         NumberIr(self.builder.ins().fcvt_from_uint(types::F64, value.0))
     }
 
-    fn emit_to_numeric(&mut self, _any: AnyIr) -> NumberIr {
-        todo!();
+    fn emit_to_numeric(&mut self, any: AnyIr) -> NumberIr {
+        logger::debug!(event = "emit_to_numeric", ?any);
+        let args = [self.get_runtime_ptr(), any.0];
+        let call = self.builder.ins().call(self.ref_runtime_to_numeric, &args);
+        NumberIr(self.builder.inst_results(call)[0])
     }
 
     fn emit_add(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
