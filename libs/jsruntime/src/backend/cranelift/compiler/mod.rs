@@ -32,8 +32,8 @@ use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
 
 use control_flow::ControlFlowStack;
-use runtime::RuntimeFunctionIds;
 use runtime::RuntimeFunctionCache;
+use runtime::RuntimeFunctionIds;
 
 pub fn compile<R>(
     support: &mut R,
@@ -355,6 +355,7 @@ where
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::UnaryPlus => self.process_unary_plus(),
             CompileCommand::UnaryMinus => self.process_unary_minus(),
+            CompileCommand::BitwiseNot => self.process_bitwise_not(),
             CompileCommand::Exponentiation => self.process_exponentiation(),
             CompileCommand::Multiplication => self.process_multiplication(),
             CompileCommand::Division => self.process_division(),
@@ -510,6 +511,16 @@ where
         let value = self.emit_neg(value);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(value, None));
+    }
+
+    // 13.5.6.1 Runtime Semantics: Evaluation
+    fn process_bitwise_not(&mut self) {
+        let (operand, _) = self.dereference();
+        let number = self.apply_to_numeric(operand);
+        // TODO: BigInt
+        let number = self.emit_bitwise_not(number);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.6.1 Runtime Semantics: Evaluation
@@ -829,8 +840,10 @@ where
 
     fn emit_to_numeric(&mut self, any: AnyIr) -> NumberIr {
         logger::debug!(event = "emit_to_numeric", ?any);
+        let func = self
+            .runtime_func_cache
+            .get_to_numeric(self.module, self.builder.func);
         let args = [self.get_runtime_ptr(), any.0];
-        let func = self.runtime_func_cache.get_to_numeric(self.module, self.builder.func);
         let call = self.builder.ins().call(func, &args);
         NumberIr(self.builder.inst_results(call)[0])
     }
@@ -872,6 +885,25 @@ where
         NumberIr(self.builder.inst_results(call)[0])
     }
 
+    // 6.1.6.1.2 Number::bitwiseNOT ( x )
+    fn emit_bitwise_not(&mut self, value: NumberIr) -> NumberIr {
+        logger::debug!(event = "emit_bitwise_not", ?value);
+        let int32 = self.emit_to_int32(value);
+        let bnot = self.builder.ins().bnot(int32);
+        NumberIr(self.builder.ins().fcvt_from_sint(types::F64, bnot))
+    }
+
+    // 7.1.6 ToInt32 ( argument )
+    fn emit_to_int32(&mut self, value: NumberIr) -> Value {
+        logger::debug!(event = "emit_to_int32", ?value);
+        let func = self
+            .runtime_func_cache
+            .get_to_int32(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), value.0];
+        let call = self.builder.ins().call(func, &args);
+        self.builder.inst_results(call)[0]
+    }
+
     fn emit_jump(&mut self, block: Block) {
         logger::debug!(event = "emit_jump", ?block);
         self.builder.ins().jump(block, &[]);
@@ -902,13 +934,15 @@ where
         key: Symbol,
         strict: bool,
     ) -> AnyIr {
+        let func = self
+            .runtime_func_cache
+            .get_get_value_by_symbol(self.module, self.builder.func);
         let args = [
             self.get_runtime_ptr(),
             object.0,
             self.builder.ins().iconst(types::I32, key.id() as i64),
             self.builder.ins().iconst(types::I8, strict as i64),
         ];
-        let func = self.runtime_func_cache.get_get_value_by_symbol(self.module, self.builder.func);
         let call = self.builder.ins().call(func, &args);
         AnyIr(self.builder.inst_results(call)[0])
     }
