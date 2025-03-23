@@ -71,6 +71,7 @@ struct CraneliftContext {
     _data_description: DataDescription,
     module: JITModule,
     id_fmod: FuncId,
+    id_pow: FuncId,
     id_runtime_get_value_by_symbol: FuncId,
 }
 
@@ -126,12 +127,22 @@ impl CraneliftContext {
             .declare_function(name, Linkage::Import, &sig)
             .unwrap();
 
+        let name = "pow";
+        let mut sig = module.make_signature();
+        sig.params.push(AbiParam::new(types::F64));
+        sig.params.push(AbiParam::new(types::F64));
+        sig.returns.push(AbiParam::new(types::F64));
+        let id_pow = module
+            .declare_function(name, Linkage::Import, &sig)
+            .unwrap();
+
         Self {
             builder_context: FunctionBuilderContext::new(),
             context: module.make_context(),
             _data_description: DataDescription::new(),
             module,
             id_fmod,
+            id_pow,
             id_runtime_get_value_by_symbol,
         }
     }
@@ -165,6 +176,7 @@ struct Compiler<'r, 's, 'c, R> {
     ptr_type: Type,
     lambda_sig: SigRef,
     ref_fmod: FuncRef,
+    ref_pow: FuncRef,
     ref_runtime_get_value_by_symbol: FuncRef,
 
     /// A stack for operands.
@@ -217,6 +229,10 @@ where
             .module
             .declare_func_in_func(context.id_fmod, &mut context.context.func);
 
+        let ref_pow = context
+            .module
+            .declare_func_in_func(context.id_pow, &mut context.context.func);
+
         let mut builder =
             FunctionBuilder::new(&mut context.context.func, &mut context.builder_context);
 
@@ -232,6 +248,7 @@ where
             ptr_type,
             lambda_sig,
             ref_fmod,
+            ref_pow,
             ref_runtime_get_value_by_symbol,
             operand_stack: Default::default(),
             locals: Default::default(),
@@ -360,6 +377,7 @@ where
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::Exponentiation => self.process_exponentiation(),
             CompileCommand::Multiplication => self.process_multiplication(),
             CompileCommand::Division => self.process_division(),
             CompileCommand::Remainder => self.process_remainder(),
@@ -495,6 +513,19 @@ where
         debug_assert_eq!(flow.scope_ref, scope_ref);
 
         // TODO
+    }
+
+    // 13.6.1 Runtime Semantics: Evaluation
+    fn process_exponentiation(&mut self) {
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        let number = self.emit_exp(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(number, None));
     }
 
     // 13.7.1 Runtime Semantics: Evaluation
@@ -826,6 +857,12 @@ where
     fn emit_rem(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
         logger::debug!(event = "emit_rem", ?lhs, ?rhs);
         let call = self.builder.ins().call(self.ref_fmod, &[lhs.0, rhs.0]);
+        NumberIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_exp(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+        logger::debug!(event = "emit_exp", ?lhs, ?rhs);
+        let call = self.builder.ins().call(self.ref_pow, &[lhs.0, rhs.0]);
         NumberIr(self.builder.inst_results(call)[0])
     }
 
