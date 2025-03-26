@@ -234,8 +234,8 @@ pub enum Node<'s> {
     ArrowFunction,
     AsyncArrowFunction,
     AwaitExpression,
-    Then,
-    Else,
+    Then(bool),
+    Else(bool),
     FalsyShortCircuit,
     TruthyShortCircuit,
     NullishShortCircuit,
@@ -583,13 +583,25 @@ where
 
     // _THEN_
     fn process_then(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::Then);
+        self.enqueue(Node::Then(false));
         Ok(())
     }
 
     // _ELSE_
     fn process_else(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::Else);
+        self.enqueue(Node::Else(false));
+        Ok(())
+    }
+
+    // _THEN_EXPR_
+    fn process_then_expr(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Then(true));
+        Ok(())
+    }
+
+    // _ELSE_EXPR_
+    fn process_else_expr(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Else(true));
         Ok(())
     }
 

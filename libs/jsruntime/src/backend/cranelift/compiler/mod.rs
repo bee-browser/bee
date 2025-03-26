@@ -366,11 +366,20 @@ where
             CompileCommand::LeftShift => self.process_left_shift(),
             CompileCommand::SignedRightShift => self.process_signed_right_shift(),
             CompileCommand::UnsignedRightShift => self.process_unsigned_right_shift(),
+            CompileCommand::LessThan => self.process_less_than(),
+            CompileCommand::GreaterThan => self.process_greater_than(),
+            CompileCommand::LessThanOrEqual => self.process_less_than_or_equal(),
+            CompileCommand::GreaterThanOrEqual => self.process_greater_than_or_equal(),
             CompileCommand::BitwiseAnd => self.process_bitwise_and(),
             CompileCommand::BitwiseXor => self.process_bitwise_xor(),
             CompileCommand::BitwiseOr => self.process_bitwise_or(),
+            CompileCommand::Ternary => self.process_ternary(),
+            CompileCommand::Truthy => self.process_truthy(),
+            CompileCommand::IfThen(expr) => self.process_if_then(*expr),
+            CompileCommand::Else(expr) => self.process_else(*expr),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
+            CompileCommand::Dereference => self.process_dereference(),
             _ => todo!("{command:?}"),
         }
 
@@ -666,6 +675,58 @@ where
         self.operand_stack.push(Operand::Number(number, None));
     }
 
+    // 13.10.1 Runtime Semantics: Evaluation
+    fn process_less_than(&mut self) {
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        let boolean = self.emit_less_than(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
+    // 13.10.1 Runtime Semantics: Evaluation
+    fn process_greater_than(&mut self) {
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        let boolean = self.emit_greater_than(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
+    // 13.10.1 Runtime Semantics: Evaluation
+    fn process_less_than_or_equal(&mut self) {
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        let boolean = self.emit_less_than_or_equal(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
+    // 13.10.1 Runtime Semantics: Evaluation
+    fn process_greater_than_or_equal(&mut self) {
+        let (lhs, _) = self.dereference();
+        let lhs = self.apply_to_numeric(lhs);
+
+        let (rhs, _) = self.dereference();
+        let rhs = self.apply_to_numeric(rhs);
+
+        let boolean = self.emit_greater_than_or_equal(lhs, rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
     // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_and(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
@@ -714,6 +775,57 @@ where
         self.operand_stack.push(Operand::Number(number, None));
     }
 
+    fn process_ternary(&mut self) {
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
+
+        let (else_operand, _) = self.dereference();
+        let any_ir = self.peek_any();
+        self.emit_store_operand_to_any(&else_operand, any_ir);
+        self.emit_jump(flow.merge_block);
+
+        self.switch_to_block(flow.merge_block);
+    }
+
+    fn process_truthy(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.perform_to_boolean(operand);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
+    fn process_if_then(&mut self, expr: bool) {
+        let cond_value = self.pop_boolean();
+        let then_block = self.create_block();
+        let else_block = self.create_block();
+        let merge_block = self.create_block();
+        if expr {
+            let any_ir = self.emit_create_any();
+            self.operand_stack.push(Operand::Any(any_ir, None));
+        }
+        self.builder
+            .ins()
+            .brif(cond_value.0, then_block, &[], else_block, &[]);
+        self.switch_to_block(then_block);
+        self.control_flow_stack
+            .push_if_then_else_flow(then_block, else_block, merge_block);
+    }
+
+    fn process_else(&mut self, expr: bool) {
+        if expr {
+            let (operand, _) = self.dereference();
+            let any_ir = self.peek_any();
+            self.emit_store_operand_to_any(&operand, any_ir);
+        } else {
+            self.operand_stack.pop();
+        }
+        let merge_block = self.control_flow_stack.merge_block();
+        self.emit_jump(merge_block);
+        let then_block = self.builder.current_block().unwrap();
+        let else_block = self.control_flow_stack.update_then_block(then_block);
+        //self.bridge.move_basic_block_after(else_block);
+        self.switch_to_block(else_block);
+    }
+
     fn process_discard(&mut self) {
         debug_assert!(!self.operand_stack.is_empty());
         self.operand_stack.pop();
@@ -728,7 +840,19 @@ where
         self.swap();
     }
 
+    fn process_dereference(&mut self) {
+        let (operand, _) = self.dereference();
+        self.operand_stack.push(operand);
+    }
+
     // commonly used functions
+
+    fn pop_boolean(&mut self) -> BooleanIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Boolean(value, ..) => value,
+            _ => unreachable!(),
+        }
+    }
 
     fn perform_to_boolean(&mut self, operand: Operand) -> BooleanIr {
         match operand {
@@ -765,6 +889,13 @@ where
             // | Operand::Coroutine(_)
             // | Operand::Promise(_)
             // | Operand::PropertyReference(_) => unreachable!(),
+        }
+    }
+
+    fn peek_any(&mut self) -> AnyIr {
+        match self.operand_stack.last().unwrap() {
+            Operand::Any(value, _) => *value,
+            _ => unreachable!(),
         }
     }
 
@@ -951,6 +1082,41 @@ where
         }
     }
 
+    fn emit_store_operand_to_any(&mut self, operand: &Operand, any_ir: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        match operand {
+            Operand::Undefined => {
+                // TODO: Value::KIND_UNDEFINED
+                let kind = self.builder.ins().iconst(types::I8, 1);
+                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
+            }
+            Operand::Null => {
+                // TODO: Value::KIND_NULL
+                let kind = self.builder.ins().iconst(types::I8, 2);
+                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
+            }
+            Operand::Boolean(value, _) => {
+                // TODO: Value::KIND_BOOLEAN
+                let kind = self.builder.ins().iconst(types::I8, 3);
+                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
+                self.builder.ins().store(FLAGS, value.0, any_ir.0, 8);
+            }
+            Operand::Number(value, _) => {
+                // TODO: Value::KIND_NUMBER
+                let kind = self.builder.ins().iconst(types::I8, 4);
+                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
+                self.builder.ins().store(FLAGS, value.0, any_ir.0, 8);
+            }
+            Operand::Any(value, _) => {
+                // TODO(perf): should use memcpy?
+                static_assert_eq!(size_of::<crate::types::Value>() * 8, 128);
+                let opaque = self.builder.ins().load(types::I128, FLAGS, value.0, 0);
+                self.builder.ins().store(FLAGS, opaque, any_ir.0, 0);
+            }
+            Operand::VariableReference(..) => unreachable!(),
+        }
+    }
+
     // instructions
 
     fn emit_boolean(&mut self, value: bool) -> BooleanIr {
@@ -1118,6 +1284,34 @@ where
         let args = [self.get_runtime_ptr(), value.0];
         let call = self.builder.ins().call(func, &args);
         self.builder.inst_results(call)[0]
+    }
+
+    fn emit_less_than(&mut self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        logger::debug!(event = "emit_less_than", ?lhs, ?rhs);
+        BooleanIr(self.builder.ins().fcmp(FloatCC::LessThan, lhs.0, rhs.0))
+    }
+
+    fn emit_greater_than(&mut self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        logger::debug!(event = "emit_greater_than", ?lhs, ?rhs);
+        BooleanIr(self.builder.ins().fcmp(FloatCC::GreaterThan, lhs.0, rhs.0))
+    }
+
+    fn emit_less_than_or_equal(&mut self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        logger::debug!(event = "emit_less_than_or_equal", ?lhs, ?rhs);
+        BooleanIr(
+            self.builder
+                .ins()
+                .fcmp(FloatCC::LessThanOrEqual, lhs.0, rhs.0),
+        )
+    }
+
+    fn emit_greater_than_or_equal(&mut self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        logger::debug!(event = "emit_greater_than_or_equal", ?lhs, ?rhs);
+        BooleanIr(
+            self.builder
+                .ins()
+                .fcmp(FloatCC::GreaterThanOrEqual, lhs.0, rhs.0),
+        )
     }
 
     fn emit_jump(&mut self, block: Block) {
