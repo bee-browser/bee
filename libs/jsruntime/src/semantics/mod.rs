@@ -329,8 +329,8 @@ where
             Node::ArrowFunction => self.handle_arrow_function(),
             Node::AsyncArrowFunction => self.handle_async_arrow_function(),
             Node::AwaitExpression => self.handle_await_expression(),
-            Node::Then => self.handle_then(),
-            Node::Else => self.handle_else(),
+            Node::Then(expr) => self.handle_then(expr),
+            Node::Else(expr) => self.handle_else(expr),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
             Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
             Node::NullishShortCircuit => self.handle_nullish_short_circuit(),
@@ -701,12 +701,12 @@ where
         analysis.coroutine.state = next_state;
     }
 
-    fn handle_then(&mut self) {
-        push_commands!(self; CompileCommand::Truthy, CompileCommand::IfThen);
+    fn handle_then(&mut self, expr: bool) {
+        push_commands!(self; CompileCommand::Truthy, CompileCommand::IfThen(expr));
     }
 
-    fn handle_else(&mut self) {
-        push_commands!(self; CompileCommand::Else);
+    fn handle_else(&mut self, expr: bool) {
+        push_commands!(self; CompileCommand::Else(expr));
     }
 
     fn handle_falsy_short_circuit(&mut self) {
@@ -1273,7 +1273,7 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Dereference);
         self.commands.push(CompileCommand::Duplicate(0));
         self.commands.push(CompileCommand::NonNullish);
-        self.commands.push(CompileCommand::IfThen);
+        self.commands.push(CompileCommand::IfThen(true));
     }
 
     fn process_optional_chain(&mut self, kind: PropertyAccessKind) {
@@ -1281,13 +1281,13 @@ impl FunctionAnalysis {
             PropertyAccessKind::Call => {
                 let nargs = self.nargs_stack.pop().unwrap();
                 self.commands.push(CompileCommand::Call(nargs));
-                self.commands.push(CompileCommand::Else);
+                self.commands.push(CompileCommand::Else(true));
                 self.commands.push(CompileCommand::Undefined);
                 self.commands.push(CompileCommand::Ternary);
             }
             PropertyAccessKind::IdentifierKey(key) => {
                 self.commands.push(CompileCommand::PropertyReference(key));
-                self.commands.push(CompileCommand::Else);
+                self.commands.push(CompileCommand::Else(true));
                 self.commands.push(CompileCommand::Undefined);
                 self.commands.push(CompileCommand::Ternary);
             }
@@ -1811,8 +1811,8 @@ pub enum CompileCommand {
     // conditional
     Truthy,
     NonNullish,
-    IfThen,
-    Else,
+    IfThen(bool),
+    Else(bool),
     IfElseStatement,
     IfStatement,
 
