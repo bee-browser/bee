@@ -606,6 +606,8 @@ function addActions(rules) {
     '_FUNCTION_SIGNATURE_',
     '_ELSE_',
     '_THEN_',
+    '_ELSE_EXPR_',
+    '_THEN_EXPR_',
     '_BLOCK_SCOPE_',
     '_FALSY_SHORT_CIRCUIT_',
     '_TRUTHY_SHORT_CIRCUIT_',
@@ -833,7 +835,7 @@ function modifyConditionalExpression(rules) {
   rule.values[1] = [
     cond,
     '`?`',
-    '_THEN_',
+    '_THEN_EXPR_',
     thenExpr,
     // Insert the _DEREFERENCE_ actions just after the expression in order to perform dereference
     // on the expression before processing the _ELSE_ action.  The _ELSE_ action
@@ -844,7 +846,7 @@ function modifyConditionalExpression(rules) {
     // well.
     '_DEREFERENCE_',
     '`:`',
-    '_ELSE_',
+    '_ELSE_EXPR_',
     elseExpr,
     '_DEREFERENCE_',
   ].join(' ');

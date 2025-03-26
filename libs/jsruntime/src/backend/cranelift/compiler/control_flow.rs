@@ -33,6 +33,10 @@ pub struct ControlFlowStack {
     // It's used for building the flow chain from the top-most to the bottom-most.
     scope_index: usize,
 
+    // The index of the top-most if-then-else flow on the stack.
+    // It's used for building the flow chain from the top-most to the bottom-most.
+    if_then_else_index: usize,
+
     // The index of the top-most switch flow on the stack.
     // It's used for building the flow chain from the top-most to the bottom-most.
     switch_index: usize,
@@ -152,18 +156,40 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn push_if_then_else_flow(&mut self, then_block: Block, else_block: Block) {
+    pub fn push_if_then_else_flow(
+        &mut self,
+        then_block: Block,
+        else_block: Block,
+        merge_block: Block,
+    ) {
+        let outer_index = self.if_then_else_index;
+        self.if_then_else_index = self.stack.len();
         self.stack.push(ControlFlow::IfThenElse(IfThenElseFlow {
             then_block,
             else_block,
+            merge_block,
+            outer_index,
         }));
     }
 
     pub fn pop_if_then_else_flow(&mut self) -> IfThenElseFlow {
         match self.stack.pop() {
-            Some(ControlFlow::IfThenElse(flow)) => flow,
+            Some(ControlFlow::IfThenElse(flow)) => {
+                self.if_then_else_index = flow.outer_index;
+                flow
+            }
             _ => unreachable!(),
         }
+    }
+
+    pub fn merge_block(&self) -> Block {
+        self.stack
+            .get(self.if_then_else_index)
+            .map(|flow| match flow {
+                ControlFlow::IfThenElse(flow) => flow.merge_block,
+                _ => panic!(),
+            })
+            .unwrap()
     }
 
     pub fn update_then_block(&mut self, then_block: Block) -> Block {
@@ -497,6 +523,7 @@ impl ControlFlowStack {
                     eprintln!("then-else:");
                     eprintln_block!(then_block, flow);
                     eprintln_block!(else_block, flow);
+                    eprintln_block!(merge_block, flow);
                 }
                 ControlFlow::LoopInit(flow) => {
                     eprintln!("loop-init:");
@@ -605,6 +632,10 @@ pub struct ScopeFlow {
 pub struct IfThenElseFlow {
     pub then_block: Block,
     pub else_block: Block,
+    pub merge_block: Block,
+
+    /// The index of the enclosing outer if-then-else flow.
+    outer_index: usize,
 }
 
 pub struct LoopInitFlow {
