@@ -357,6 +357,7 @@ where
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::Delete => self.process_delete(),
+            CompileCommand::Void => self.process_void(),
             CompileCommand::UnaryPlus => self.process_unary_plus(),
             CompileCommand::UnaryMinus => self.process_unary_minus(),
             CompileCommand::BitwiseNot => self.process_bitwise_not(),
@@ -565,6 +566,12 @@ where
     // 13.5.1.2 Runtime Semantics: Evaluation
     fn process_delete(&mut self) {
         unimplemented!("delete operator");
+    }
+
+    // 13.5.2.1 Runtime Semantics: Evaluation
+    fn process_void(&mut self) {
+        self.operand_stack.pop();
+        self.operand_stack.push(Operand::Undefined);
     }
 
     // 13.5.4.1 Runtime Semantics: Evaluation
