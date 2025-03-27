@@ -347,6 +347,7 @@ where
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
             CompileCommand::Number(value) => self.process_number(*value),
+            CompileCommand::String(value) => self.process_string(value),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(*scope_ref),
@@ -421,6 +422,16 @@ where
         let value_ir = self.emit_number(value);
         self.operand_stack
             .push(Operand::Number(value_ir, Some(value)));
+    }
+
+    fn process_string(&mut self, value: &[u16]) {
+        // Theoretically, the heap memory pointed by `value` can be freed after the IR built by the
+        // compiler is freed.
+        let string_ir = self.emit_create_string(value);
+        self.operand_stack.push(Operand::String(
+            string_ir,
+            Some(crate::types::Char16Seq::new_stack(value)),
+        ));
     }
 
     fn process_variable_reference(&mut self, symbol: Symbol) {
@@ -859,7 +870,7 @@ where
             Operand::Undefined | Operand::Null => self.emit_boolean(false),
             Operand::Boolean(value, ..) => value,
             Operand::Number(value, ..) => self.emit_number_to_boolean(value),
-            // Operand::String(..) => todo!(),
+            Operand::String(..) => todo!(),
             // Operand::Closure(_) | Operand::Object(_) | Operand::Promise(_) => {
             //     self.bridge.get_boolean(true)
             // }
@@ -880,7 +891,7 @@ where
             Operand::Null => self.emit_number(0.0),
             Operand::Boolean(value, ..) => self.emit_boolean_to_number(value),
             Operand::Number(value, ..) => value,
-            // Operand::String(..) => unimplemented!("string.to_numeric"),
+            Operand::String(..) => unimplemented!("string.to_numeric"),
             // Operand::Closure(_) => self.bridge.get_nan(),
             // Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.emit_to_numeric(value),
@@ -1006,6 +1017,42 @@ where
         self.builder.ins().iconst(self.ptr_type, 0)
     }
 
+    fn emit_create_string(&mut self, value: &[u16]) -> StringIr {
+        const SIZE: usize = size_of::<crate::types::Char16Seq>();
+        const ALIGNMENT: usize = align_of::<crate::types::Char16Seq>();
+
+        let slot = self.builder.create_sized_stack_slot(StackSlotData {
+            kind: StackSlotKind::ExplicitSlot,
+            size: SIZE as u32,
+            align_shift: ALIGNMENT as u8,
+        });
+
+        macro_rules! offset_of {
+            ($field:ident) => {
+                std::mem::offset_of!(crate::types::Char16Seq, $field) as i32
+            };
+        }
+
+        let next = self.builder.ins().iconst(self.ptr_type, 0);
+        self.builder.ins().stack_store(next, slot, offset_of!(next));
+
+        let ptr = self
+            .builder
+            .ins()
+            .iconst(self.ptr_type, value.as_ptr() as i64);
+        self.builder.ins().stack_store(ptr, slot, offset_of!(ptr));
+
+        let len = self.builder.ins().iconst(types::I32, value.len() as i64);
+        self.builder.ins().stack_store(len, slot, offset_of!(len));
+
+        // TODO: Char16SeqKind::Stack
+        let kind = self.builder.ins().iconst(types::I8, 1);
+        self.builder.ins().stack_store(kind, slot, offset_of!(kind));
+
+        let addr = self.builder.ins().stack_addr(self.ptr_type, slot, 0);
+        StringIr(addr)
+    }
+
     fn emit_create_any(&mut self) -> AnyIr {
         let slot = self.builder.create_sized_stack_slot(StackSlotData {
             kind: StackSlotKind::ExplicitSlot,
@@ -1071,6 +1118,14 @@ where
                     .ins()
                     .stack_store(value.0, slot, base_offset + 8);
             }
+            Operand::String(value, _) => {
+                // TODO: Value::KIND_STRING
+                let kind = self.builder.ins().iconst(types::I8, 5);
+                self.builder.ins().stack_store(kind, slot, base_offset);
+                self.builder
+                    .ins()
+                    .stack_store(value.0, slot, base_offset + 8);
+            }
             Operand::Any(value, _) => {
                 const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
                 // TODO(perf): should use memcpy?
@@ -1104,6 +1159,12 @@ where
             Operand::Number(value, _) => {
                 // TODO: Value::KIND_NUMBER
                 let kind = self.builder.ins().iconst(types::I8, 4);
+                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
+                self.builder.ins().store(FLAGS, value.0, any_ir.0, 8);
+            }
+            Operand::String(value, _) => {
+                // TODO: Value::KIND_STRING
+                let kind = self.builder.ins().iconst(types::I8, 5);
                 self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
                 self.builder.ins().store(FLAGS, value.0, any_ir.0, 8);
             }
@@ -1511,6 +1572,10 @@ enum Operand {
     // TODO(perf): compile-time evaluation
     Number(NumberIr, #[allow(unused)] Option<f64>),
 
+    /// Runtime value and optional compile-time constant value of number type.
+    // TODO(perf): compile-time evaluation
+    String(StringIr, #[allow(unused)] Option<crate::types::Char16Seq>),
+
     /// Runtime value and optional compile-time constant value of any type.
     // TODO(perf): compile-time evaluation
     Any(AnyIr, #[allow(unused)] Option<Value>),
@@ -1524,6 +1589,9 @@ struct BooleanIr(Value);
 
 #[derive(Clone, Copy, Debug)]
 struct NumberIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct StringIr(Value);
 
 #[derive(Clone, Copy, Debug)]
 struct ClosureIr(Value);
