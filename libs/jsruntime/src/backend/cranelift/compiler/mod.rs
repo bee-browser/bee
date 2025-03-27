@@ -164,7 +164,7 @@ struct Compiler<'r, 's, 'c, R> {
     operand_stack: OperandStack,
 
     // The following values must be reset in the end of compilation for each function.
-    locals: Vec<AnyIr>,
+    locals: Vec<StackSlot>,
 }
 
 impl<'r, 's, 'c, R> Compiler<'r, 's, 'c, R>
@@ -350,6 +350,7 @@ where
             CompileCommand::String(value) => self.process_string(value),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
+            CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(*scope_ref),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
@@ -375,6 +376,7 @@ where
             CompileCommand::BitwiseXor => self.process_bitwise_xor(),
             CompileCommand::BitwiseOr => self.process_bitwise_or(),
             CompileCommand::Ternary => self.process_ternary(),
+            CompileCommand::Assignment => self.process_assignment(),
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::IfThen(expr) => self.process_if_then(*expr),
             CompileCommand::Else(expr) => self.process_else(*expr),
@@ -444,8 +446,27 @@ where
             .push(Operand::VariableReference(symbol, locator));
     }
 
-    fn process_allocate_locals(&mut self, _num_locals: u16) {
-        // TODO
+    fn process_allocate_locals(&mut self, num_locals: u16) {
+        for _ in 0..num_locals {
+            let slot = self.builder.create_sized_stack_slot(StackSlotData {
+                kind: StackSlotKind::ExplicitSlot,
+                size: Self::VALUE_SIZE as u32,
+                align_shift: Self::ALIGNMENT,
+            });
+            self.locals.push(slot);
+        }
+    }
+
+    fn process_mutable_variable(&mut self) {
+        let (_symbol, locator) = self.pop_reference();
+        let (operand, _) = self.dereference();
+
+        let slot = match locator {
+            Locator::Local(index) => self.locals[index as usize],
+            _ => unreachable!(),
+        };
+
+        self.emit_store_operand_to_slot(&operand, slot, 0);
     }
 
     fn process_declare_vars(&mut self, scope_ref: ScopeRef) {
@@ -797,6 +818,47 @@ where
         self.switch_to_block(flow.merge_block);
     }
 
+    // 13.15.2 Runtime Semantics: Evaluation
+    fn process_assignment(&mut self) {
+        let (rhs, _) = self.dereference();
+
+        match self.operand_stack.pop().unwrap() {
+            // Operand::VariableReference(symbol, Locator::Global) => {
+            //     let object = self.emit_nullptr();
+            //     let value = self.create_to_any(&rhs);
+            //     // TODO(feat): ReferenceError, TypeError
+            //     self.bridge
+            //         .create_set_value_by_symbol(object, symbol, value);
+            // }
+            Operand::VariableReference(symbol, locator) => {
+                let var = self.emit_get_variable(symbol, locator);
+                // TODO: throw a TypeError in the strict mode.
+                // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
+                self.emit_store_operand_to_any(&rhs, var);
+            }
+            // Operand::PropertyReference(key) => {
+            //     // TODO(refactor): reduce code clone
+            //     self.perform_to_object();
+            //     let object = self.pop_object();
+            //     let value = self.create_to_any(&rhs);
+            //     match key {
+            //         PropertyKey::Symbol(key) => {
+            //             self.bridge.create_set_value_by_symbol(object, key, value);
+            //         }
+            //         PropertyKey::Number(key) => {
+            //             self.bridge.create_set_value_by_number(object, key, value);
+            //         }
+            //         PropertyKey::Value(key) => {
+            //             self.bridge.create_set_value_by_value(object, key, value);
+            //         }
+            //     }
+            // }
+            operand => unreachable!("{operand:?}"),
+        }
+
+        self.operand_stack.push(rhs);
+    }
+
     fn process_truthy(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.perform_to_boolean(operand);
@@ -907,6 +969,13 @@ where
         match self.operand_stack.last().unwrap() {
             Operand::Any(value, _) => *value,
             _ => unreachable!(),
+        }
+    }
+
+    fn pop_reference(&mut self) -> (Symbol, Locator) {
+        match self.operand_stack.pop().unwrap() {
+            Operand::VariableReference(symbol, locator) => (symbol, locator),
+            operand => unreachable!("{operand:?}"),
         }
     }
 
@@ -1385,7 +1454,10 @@ where
         match locator {
             Locator::None => unreachable!(),
             Locator::Argument(index) => self.emit_get_argument(index),
-            Locator::Local(index) => self.locals[index as usize],
+            Locator::Local(index) => {
+                let slot = self.locals[index as usize];
+                AnyIr(self.builder.ins().stack_addr(self.ptr_type, slot, 0))
+            }
             Locator::Capture(index) => self.emit_get_capture(index),
             Locator::Global => self.emit_get_global_variable(symbol),
         }
