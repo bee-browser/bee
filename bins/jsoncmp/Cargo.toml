@@ -12,7 +12,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.97"
 assert-json-diff = "2.0.2"
-clap = { version = "4.5.33", features = ["env", "derive", "wrap_help"] }
+clap = { version = "4.5.34", features = ["env", "derive", "wrap_help"] }
 serde = { version = "1.0.219", features = ["derive"] }
 # "unbounded_depth" is needed for parsing a large JSON.
 # See https://github.com/serde-rs/json/issues/334.
