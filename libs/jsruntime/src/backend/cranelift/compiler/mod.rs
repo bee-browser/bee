@@ -351,6 +351,7 @@ where
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
+            CompileCommand::ImmutableVariable => self.process_immutable_variable(),
             CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(*scope_ref),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
@@ -458,6 +459,18 @@ where
     }
 
     fn process_mutable_variable(&mut self) {
+        let (_symbol, locator) = self.pop_reference();
+        let (operand, _) = self.dereference();
+
+        let slot = match locator {
+            Locator::Local(index) => self.locals[index as usize],
+            _ => unreachable!(),
+        };
+
+        self.emit_store_operand_to_slot(&operand, slot, 0);
+    }
+
+    fn process_immutable_variable(&mut self) {
         let (_symbol, locator) = self.pop_reference();
         let (operand, _) = self.dereference();
 
