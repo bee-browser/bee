@@ -376,6 +376,7 @@ where
             CompileCommand::Equality => self.process_equality(),
             CompileCommand::Inequality => self.process_inequality(),
             CompileCommand::StrictEquality => self.process_strict_equality(),
+            CompileCommand::StrictInequality => self.process_strict_inequality(),
             CompileCommand::BitwiseAnd => self.process_bitwise_and(),
             CompileCommand::BitwiseXor => self.process_bitwise_xor(),
             CompileCommand::BitwiseOr => self.process_bitwise_or(),
@@ -805,6 +806,18 @@ where
         let (rhs, _) = self.dereference();
 
         let boolean = self.perform_is_strictly_equal(&lhs, &rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
+    // 13.11.1 Runtime Semantics: Evaluation
+    fn process_strict_inequality(&mut self) {
+        // TODO: comparing references improves the performance.
+        let (lhs, _) = self.dereference();
+        let (rhs, _) = self.dereference();
+
+        let eq = self.perform_is_strictly_equal(&lhs, &rhs);
+        let boolean = self.emit_logical_not(eq);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
     }
