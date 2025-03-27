@@ -373,6 +373,7 @@ where
             CompileCommand::GreaterThan => self.process_greater_than(),
             CompileCommand::LessThanOrEqual => self.process_less_than_or_equal(),
             CompileCommand::GreaterThanOrEqual => self.process_greater_than_or_equal(),
+            CompileCommand::Equality => self.process_equality(),
             CompileCommand::BitwiseAnd => self.process_bitwise_and(),
             CompileCommand::BitwiseXor => self.process_bitwise_xor(),
             CompileCommand::BitwiseOr => self.process_bitwise_or(),
@@ -772,6 +773,17 @@ where
         self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
+    // 13.11.1 Runtime Semantics: Evaluation
+    fn process_equality(&mut self) {
+        // TODO: comparing the references improves the performance.
+        let (lhs, _) = self.dereference();
+        let (rhs, _) = self.dereference();
+
+        let boolean = self.perform_is_loosely_equal(&lhs, &rhs);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
     // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_and(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
@@ -983,6 +995,169 @@ where
             Operand::Any(value, _) => *value,
             _ => unreachable!(),
         }
+    }
+
+    fn perform_to_any(&mut self, operand: &Operand) -> AnyIr {
+        let slot = self.builder.create_sized_stack_slot(StackSlotData {
+            kind: StackSlotKind::ExplicitSlot,
+            size: Self::VALUE_SIZE as u32,
+            align_shift: Self::ALIGNMENT,
+        });
+        self.emit_store_operand_to_slot(operand, slot, 0);
+        let addr = self.builder.ins().stack_addr(self.ptr_type, slot, 0);
+        AnyIr(addr)
+    }
+
+    // 7.2.13 IsLooselyEqual ( x, y )
+    fn perform_is_loosely_equal(&mut self, lhs: &Operand, rhs: &Operand) -> BooleanIr {
+        logger::debug!(event = "perform_is_loosely_equal", ?lhs, ?rhs);
+        if let Operand::Any(lhs, ..) = lhs {
+            // TODO: compile-time evaluation
+            let rhs = self.perform_to_any(rhs);
+            return self.emit_call_is_loosely_equal(*lhs, rhs);
+        }
+        if let Operand::Any(rhs, ..) = rhs {
+            // TODO: compile-time evaluation
+            let lhs = self.perform_to_any(lhs);
+            return self.emit_call_is_loosely_equal(lhs, *rhs);
+        }
+
+        // 1. If Type(x) is Type(y), then Return IsStrictlyEqual(x, y).
+        if std::mem::discriminant(lhs) == std::mem::discriminant(rhs) {
+            return self.perform_is_strictly_equal(lhs, rhs);
+        }
+
+        // 2. If x is null and y is undefined, return true.
+        if matches!(lhs, Operand::Null) && matches!(rhs, Operand::Undefined) {
+            return self.emit_boolean(true);
+        }
+
+        // 3. If x is undefined and y is null, return true.
+        if matches!(lhs, Operand::Undefined) && matches!(rhs, Operand::Null) {
+            return self.emit_boolean(true);
+        }
+
+        // TODO: 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
+        // TODO: 6. If x is a String and y is a Number, return ! IsLooselyEqual(! ToNumber(x), y).
+        // TODO: 7. If x is a BigInt and y is a String, then
+        // TODO: 8. If x is a String and y is a BigInt, return ! IsLooselyEqual(y, x).
+        // TODO
+        // TODO: 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
+        // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
+        // TODO: ...
+        let lhs = self.perform_to_any(lhs);
+        let rhs = self.perform_to_any(rhs);
+        self.emit_call_is_loosely_equal(lhs, rhs)
+    }
+
+    // 7.2.14 IsStrictlyEqual ( x, y )
+    fn perform_is_strictly_equal(&mut self, lhs: &Operand, rhs: &Operand) -> BooleanIr {
+        logger::debug!(event = "create_is_strictly_equal", ?lhs, ?rhs);
+        if let Operand::Any(lhs, ..) = lhs {
+            return self.perform_any_is_strictly_equal(*lhs, rhs);
+        }
+        if let Operand::Any(rhs, ..) = rhs {
+            return self.perform_any_is_strictly_equal(*rhs, lhs);
+        }
+        if std::mem::discriminant(lhs) != std::mem::discriminant(rhs) {
+            return self.emit_boolean(false);
+        }
+        // TODO: BigInt
+        match (lhs, rhs) {
+            (Operand::Undefined, Operand::Undefined) => self.emit_boolean(true),
+            (Operand::Null, Operand::Null) => self.emit_boolean(true),
+            (Operand::Boolean(lhs, ..), Operand::Boolean(rhs, ..)) => {
+                self.emit_is_same_boolean(*lhs, *rhs)
+            }
+            (Operand::Number(lhs, ..), Operand::Number(rhs, ..)) => {
+                self.emit_is_same_number(*lhs, *rhs)
+            }
+            (Operand::String(_lhs, ..), Operand::String(_rhs, ..)) => {
+                todo!();
+            }
+            // (Operand::Closure(lhs), Operand::Closure(rhs)) => {
+            //     self.perform_is_same_closure(lhs, rhs)
+            // }
+            // (Operand::Promise(lhs), Operand::Promise(rhs)) => {
+            //     self.perform_is_same_promise(lhs, rhs)
+            // }
+            // (Operand::Object(lhs), Operand::Object(rhs)) => {
+            //     self.perform_is_same_object(lhs, rhs)
+            // }
+            (lhs, rhs) => unreachable!("({lhs:?}, {rhs:?})"),
+        }
+    }
+
+    fn perform_any_is_strictly_equal(&mut self, lhs: AnyIr, rhs: &Operand) -> BooleanIr {
+        logger::debug!(event = "create_any_is_strictly_equal", ?lhs, ?rhs);
+        match rhs {
+            Operand::Undefined => self.emit_is_undefined(lhs),
+            Operand::Null => self.emit_is_null(lhs),
+            Operand::Boolean(rhs, ..) => self.perform_is_same_boolean(lhs, *rhs),
+            Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
+            Operand::String(_rhs, ..) => todo!(),
+            // Operand::Closure(rhs) => self.emit_is_same_closure(lhs, rhs),
+            // Operand::Object(rhs) => self.emit_is_same_object(lhs, rhs),
+            // Operand::Promise(rhs) => self.emit_is_same_promise(lhs, rhs),
+            Operand::Any(rhs, ..) => self.emit_call_is_strictly_equal(lhs, *rhs),
+            Operand::VariableReference(..) => unreachable!("{rhs:?}"),
+            // Operand::Lambda(_)
+            // | Operand::Coroutine(_)
+            // | Operand::VariableReference(..)
+            // | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
+        }
+    }
+
+    fn perform_is_same_boolean(&mut self, value: AnyIr, boolean: BooleanIr) -> BooleanIr {
+        let then_block = self.create_block();
+        let else_block = self.create_block();
+        let merge_block = self.create_block();
+        self.builder.append_block_param(merge_block, types::I8);
+
+        // if value.kind == ValueKind::Boolean
+        let cond = self.emit_is_boolean(value);
+        self.builder
+            .ins()
+            .brif(cond.0, then_block, &[], else_block, &[]);
+        // {
+        self.switch_to_block(then_block);
+        let b = self.emit_load_boolean(value);
+        let then_value = self.emit_is_same_boolean(b, boolean);
+        self.builder.ins().jump(merge_block, &[then_value.0]);
+        // } else {
+        self.switch_to_block(else_block);
+        let else_value = self.emit_boolean(false);
+        self.builder.ins().jump(merge_block, &[else_value.0]);
+        // }
+
+        self.switch_to_block(merge_block);
+        BooleanIr(self.builder.block_params(merge_block)[0])
+    }
+
+    fn perform_is_same_number(&mut self, value: AnyIr, number: NumberIr) -> BooleanIr {
+        let then_block = self.create_block();
+        let else_block = self.create_block();
+        let merge_block = self.create_block();
+        self.builder.append_block_param(merge_block, types::I8);
+
+        // if value.kind == ValueKind::Number
+        let cond = self.emit_is_number(value);
+        self.builder
+            .ins()
+            .brif(cond.0, then_block, &[], else_block, &[]);
+        // {
+        self.switch_to_block(then_block);
+        let n = self.emit_load_number(value);
+        let then_value = self.emit_is_same_number(n, number);
+        self.builder.ins().jump(merge_block, &[then_value.0]);
+        // } else {
+        self.switch_to_block(else_block);
+        let else_value = self.emit_boolean(false);
+        self.builder.ins().jump(merge_block, &[else_value.0]);
+        // }
+
+        self.switch_to_block(merge_block);
+        BooleanIr(self.builder.block_params(merge_block)[0])
     }
 
     fn pop_reference(&mut self) -> (Symbol, Locator) {
@@ -1482,6 +1657,74 @@ where
 
     fn emit_get_capture(&mut self, _index: u16) -> AnyIr {
         todo!();
+    }
+
+    fn emit_load_kind(&mut self, any: AnyIr) -> Value {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = 0;
+        self.builder.ins().load(types::I8, FLAGS, any.0, OFFSET)
+    }
+
+    fn emit_load_boolean(&mut self, any: AnyIr) -> BooleanIr {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = 8;
+        BooleanIr(self.builder.ins().load(types::I8, FLAGS, any.0, OFFSET))
+    }
+
+    fn emit_load_number(&mut self, any: AnyIr) -> NumberIr {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = 8;
+        NumberIr(self.builder.ins().load(types::F64, FLAGS, any.0, OFFSET))
+    }
+
+    fn emit_is_undefined(&mut self, any: AnyIr) -> BooleanIr {
+        let kind = self.emit_load_kind(any);
+        // TODO(refactor): Value::KIND_UNDEFINED
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, kind, 1))
+    }
+
+    fn emit_is_null(&mut self, any: AnyIr) -> BooleanIr {
+        let kind = self.emit_load_kind(any);
+        // TODO(refactor): Value::KIND_NULL
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, kind, 2))
+    }
+
+    fn emit_is_boolean(&mut self, any: AnyIr) -> BooleanIr {
+        let kind = self.emit_load_kind(any);
+        // TODO(refactor): Value::KIND_BOOLEAN
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, kind, 3))
+    }
+
+    fn emit_is_same_boolean(&mut self, lhs: BooleanIr, rhs: BooleanIr) -> BooleanIr {
+        BooleanIr(self.builder.ins().icmp(IntCC::Equal, lhs.0, rhs.0))
+    }
+
+    fn emit_is_number(&mut self, any: AnyIr) -> BooleanIr {
+        let kind = self.emit_load_kind(any);
+        // TODO(refactor): Value::KIND_NUMBER
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, kind, 4))
+    }
+
+    fn emit_is_same_number(&mut self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
+        BooleanIr(self.builder.ins().fcmp(FloatCC::Equal, lhs.0, rhs.0))
+    }
+
+    fn emit_call_is_loosely_equal(&mut self, lhs: AnyIr, rhs: AnyIr) -> BooleanIr {
+        let func = self
+            .runtime_func_cache
+            .get_is_loosely_equal(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), lhs.0, rhs.0];
+        let call = self.builder.ins().call(func, &args);
+        BooleanIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_call_is_strictly_equal(&mut self, lhs: AnyIr, rhs: AnyIr) -> BooleanIr {
+        let func = self
+            .runtime_func_cache
+            .get_is_strictly_equal(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), lhs.0, rhs.0];
+        let call = self.builder.ins().call(func, &args);
+        BooleanIr(self.builder.inst_results(call)[0])
     }
 
     fn emit_call_get_global_variable(
