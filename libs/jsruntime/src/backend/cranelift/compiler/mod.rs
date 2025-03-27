@@ -356,6 +356,7 @@ where
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::Delete => self.process_delete(),
             CompileCommand::UnaryPlus => self.process_unary_plus(),
             CompileCommand::UnaryMinus => self.process_unary_minus(),
             CompileCommand::BitwiseNot => self.process_bitwise_not(),
@@ -373,6 +374,8 @@ where
             CompileCommand::GreaterThan => self.process_greater_than(),
             CompileCommand::LessThanOrEqual => self.process_less_than_or_equal(),
             CompileCommand::GreaterThanOrEqual => self.process_greater_than_or_equal(),
+            CompileCommand::Instanceof => self.process_instanceof(),
+            CompileCommand::In => self.process_in(),
             CompileCommand::Equality => self.process_equality(),
             CompileCommand::Inequality => self.process_inequality(),
             CompileCommand::StrictEquality => self.process_strict_equality(),
@@ -557,6 +560,11 @@ where
         debug_assert_eq!(flow.scope_ref, scope_ref);
 
         // TODO
+    }
+
+    // 13.5.1.2 Runtime Semantics: Evaluation
+    fn process_delete(&mut self) {
+        unimplemented!("delete operator");
     }
 
     // 13.5.4.1 Runtime Semantics: Evaluation
@@ -774,6 +782,16 @@ where
         let boolean = self.emit_greater_than_or_equal(lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
+    // 13.10.1 Runtime Semantics: Evaluation
+    fn process_instanceof(&mut self) {
+        unimplemented!("instanceof operator");
+    }
+
+    // 13.10.1 Runtime Semantics: Evaluation
+    fn process_in(&mut self) {
+        unimplemented!("in operator");
     }
 
     // 13.11.1 Runtime Semantics: Evaluation
