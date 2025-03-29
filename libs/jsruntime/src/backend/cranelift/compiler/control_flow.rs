@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 use base::macros::debug_assert_ne;
 use jsparser::Symbol;
 
+use super::FunctionControlSet;
 use super::ScopeRef;
 type SwitchIr = ();
 
@@ -55,11 +56,18 @@ impl ControlFlowStack {
         self.scope_index != 0
     }
 
-    pub fn push_function_flow(&mut self, entry_block: Block, body_block: Block, exit_block: Block) {
+    pub fn push_function_flow(
+        &mut self,
+        entry_block: Block,
+        body_block: Block,
+        exit_block: Block,
+        fcs: FunctionControlSet,
+    ) {
         self.stack.push(ControlFlow::Function(FunctionFlow {
             entry_block,
             body_block,
             exit_block,
+            fcs,
         }));
     }
 
@@ -126,12 +134,18 @@ impl ControlFlowStack {
         next_state
     }
 
-    pub fn push_scope_flow(&mut self, scope_ref: ScopeRef, body_block: Block) {
+    pub fn push_scope_flow(
+        &mut self,
+        scope_ref: ScopeRef,
+        body_block: Block,
+        cleanup_block: Block,
+    ) {
         let outer_index = self.scope_index;
         self.scope_index = self.stack.len();
         self.stack.push(ControlFlow::Scope(ScopeFlow {
             scope_ref,
             body_block,
+            cleanup_block,
             outer_index,
         }));
     }
@@ -465,8 +479,7 @@ impl ControlFlowStack {
         if self.scope_index == 0 {
             self.function_flow().exit_block
         } else {
-            //self.scope_flow().cleanup_block
-            todo!()
+            self.scope_flow().cleanup_block
         }
     }
 
@@ -518,6 +531,7 @@ impl ControlFlowStack {
                 ControlFlow::Scope(flow) => {
                     eprintln!("scope:");
                     eprintln_block!(body_block, flow);
+                    eprintln_block!(cleanup_block, flow);
                 }
                 ControlFlow::IfThenElse(flow) => {
                     eprintln!("then-else:");
@@ -608,6 +622,7 @@ pub struct FunctionFlow {
     pub entry_block: Block,
     pub body_block: Block,
     pub exit_block: Block,
+    pub fcs: FunctionControlSet,
 }
 
 pub struct CoroutineFlow {
@@ -624,6 +639,8 @@ pub struct ScopeFlow {
 
     /// The first basic block of the container region of the scope flow.
     pub body_block: Block,
+
+    pub cleanup_block: Block,
 
     /// The index of the enclosing outer scope flow.
     outer_index: usize,
