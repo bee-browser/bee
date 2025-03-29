@@ -2,8 +2,8 @@ mod compiler;
 
 use cranelift::prelude::*;
 use cranelift_jit::JITModule;
-use cranelift_module::Linkage;
-use cranelift_module::Module as _;
+use cranelift_module::FuncId;
+use rustc_hash::FxHashMap;
 
 use crate::lambda::LambdaId;
 use crate::types::Lambda;
@@ -21,6 +21,7 @@ pub fn initialize() {
 pub struct Module {
     inner: JITModule,
     context: codegen::Context,
+    id_map: FxHashMap<LambdaId, FuncId>,
 }
 
 impl Module {
@@ -35,35 +36,28 @@ impl Module {
 
 pub struct Executor {
     module: Option<Module>,
-    main: Option<*const u8>,
 }
 
 impl Executor {
     pub fn new(_functions: &RuntimeFunctions) -> Self {
-        Self {
-            module: None,
-            main: None,
-        }
+        Self { module: None }
     }
 
     pub fn register_module(&mut self, mut module: Module) {
-        let id = module
-            .inner
-            .declare_function("main", Linkage::Export, &module.context.func.signature)
-            .unwrap();
-        module
-            .inner
-            .define_function(id, &mut module.context)
-            .unwrap();
-        module.inner.clear_context(&mut module.context);
         module.inner.finalize_definitions().unwrap();
-        let addr = module.inner.get_finalized_function(id);
         self.module = Some(module);
-        self.main = Some(addr);
     }
 
-    pub fn get_lambda(&self, _lambda_id: LambdaId) -> Option<Lambda> {
-        self.main
-            .map(|addr| unsafe { std::mem::transmute::<_, Lambda>(addr) })
+    pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
+        let module = self.module.as_ref().unwrap();
+        let func_id = *module.id_map.get(&lambda_id).unwrap();
+        let addr = module.inner.get_finalized_function(func_id);
+        (!addr.is_null()).then(|| unsafe { std::mem::transmute::<_, Lambda>(addr) })
+    }
+}
+
+impl LambdaId {
+    fn make_name(self) -> String {
+        format!("fn{}", u32::from(self))
     }
 }
