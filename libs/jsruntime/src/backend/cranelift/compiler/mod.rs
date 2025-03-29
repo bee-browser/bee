@@ -14,11 +14,13 @@ use cranelift_module::DataDescription;
 use cranelift_module::FuncId;
 use cranelift_module::Linkage;
 use cranelift_module::Module as _;
+use rustc_hash::FxHashMap;
 
 use base::static_assert_eq;
 use jsparser::Symbol;
 
 use super::CompileError;
+use super::LambdaId;
 use super::Module;
 use super::Program;
 use crate::backend::CompilerSupport;
@@ -49,6 +51,22 @@ where
     // Because the program may contain unused functions.
     let mut context = CraneliftContext::new(&runtime_functions);
 
+    // Declare functions defined in the JavaScript program in the module.
+    let func_ids: Vec<FuncId> = program
+        .functions
+        .iter()
+        .map(|func| context.declare_function(func))
+        .collect();
+
+    // TODO(refactor): We creates a map between LambdaId and FuncId here.  But this is somewhat
+    // redundant.
+    let pairs = program
+        .functions
+        .iter()
+        .map(|func| func.id)
+        .zip(func_ids.iter().cloned());
+    let id_map = FxHashMap::from_iter(pairs);
+
     // Compile JavaScript functions in reverse order in order to compile a coroutine function
     // before its ramp function so that the size of the scratch buffer for the coroutine
     // function is available when the ramp function is compiled.
@@ -57,14 +75,20 @@ where
     // don't need to use `Iterator::rev()`.
     //
     // TODO: We should manage dependencies between functions in a more general way.
-    for func in program.functions.iter() {
-        let mut compiler = context.create_compiler(support, &program.scope_tree);
+    for (func, func_id) in program.functions.iter().zip(func_ids.iter().cloned()) {
+        let compiler = context.create_compiler(support, &program.scope_tree, &id_map);
         compiler.compile(func, optimize);
+        context
+            .module
+            .define_function(func_id, &mut context.context)
+            .unwrap();
+        context.module.clear_context(&mut context.context);
     }
 
     Ok(Module {
         inner: context.module,
         context: context.context,
+        id_map,
     })
 }
 
@@ -128,23 +152,52 @@ impl CraneliftContext {
         }
     }
 
-    fn create_compiler<'r, 's, R>(
+    fn declare_function(&mut self, func: &Function) -> FuncId {
+        let name = func.id.make_name();
+
+        let mut sig = self.module.make_signature();
+        let ptr_type = self.module.target_config().pointer_type();
+
+        // runtime: *mut c_void
+        sig.params.push(AbiParam::new(ptr_type));
+        // context: *mut c_void
+        sig.params.push(AbiParam::new(ptr_type));
+        // args: u16
+        sig.params.push(AbiParam::new(types::I16));
+        // argv: *mut Value
+        sig.params.push(AbiParam::new(ptr_type));
+        // retv: *mut Value
+        sig.params.push(AbiParam::new(ptr_type));
+
+        // #[repr(u32)] Status
+        sig.returns.push(AbiParam::new(types::I32));
+
+        self.module
+            .declare_function(&name, Linkage::Local, &sig)
+            .unwrap()
+    }
+
+    fn create_compiler<'r, 'a, R>(
         &mut self,
         runtime: &'r mut R,
-        scope_tree: &'s ScopeTree,
-    ) -> Compiler<'r, 's, '_, R>
+        scope_tree: &'a ScopeTree,
+        id_map: &'a FxHashMap<LambdaId, FuncId>,
+    ) -> Compiler<'r, 'a, '_, R>
     where
         R: CompilerSupport,
     {
-        Compiler::new(runtime, scope_tree, self)
+        Compiler::new(runtime, scope_tree, id_map, self)
     }
 }
 
-struct Compiler<'r, 's, 'c, R> {
+struct Compiler<'r, 'a, 'c, R> {
     support: &'r mut R,
 
     /// The scope tree of the JavaScript program to compile.
-    scope_tree: &'s ScopeTree,
+    scope_tree: &'a ScopeTree,
+
+    /// A map from a LambdaId to a corresponding FuncId.
+    id_map: &'a FxHashMap<LambdaId, FuncId>,
 
     /// A stack to hold sets of basic blocks which construct of a region in the control flow graph
     /// (CFG) finally built.
@@ -159,21 +212,27 @@ struct Compiler<'r, 's, 'c, R> {
     ref_fmod: FuncRef,
     ref_pow: FuncRef,
     runtime_func_cache: RuntimeFunctionCache<'c>,
+    lambda_ir_cache: FxHashMap<FuncId, LambdaIr>,
 
     /// A stack for operands.
     operand_stack: OperandStack,
 
     // The following values must be reset in the end of compilation for each function.
     locals: Vec<StackSlot>,
+    captures: FxHashMap<Locator, CaptureIr>,
 }
 
-impl<'r, 's, 'c, R> Compiler<'r, 's, 'c, R>
+#[derive(Clone, Copy, Debug)]
+struct FunctionControlSet(StackSlot);
+
+impl<'r, 'a, 'c, R> Compiler<'r, 'a, 'c, R>
 where
     R: CompilerSupport,
 {
     fn new(
         support: &'r mut R,
-        scope_tree: &'s ScopeTree,
+        scope_tree: &'a ScopeTree,
+        id_map: &'a FxHashMap<LambdaId, FuncId>,
         context: &'c mut CraneliftContext,
     ) -> Self {
         let ptr_type = context.module.target_config().pointer_type();
@@ -217,6 +276,7 @@ where
         Self {
             support,
             scope_tree,
+            id_map,
             control_flow_stack: Default::default(),
             pending_labels: Default::default(),
             builder,
@@ -226,18 +286,18 @@ where
             ref_fmod,
             ref_pow,
             runtime_func_cache: RuntimeFunctionCache::new(&context.runtime_func_ids),
+            lambda_ir_cache: Default::default(),
             operand_stack: Default::default(),
             locals: Default::default(),
+            captures: Default::default(),
         }
     }
 
-    fn compile(&mut self, func: &Function, optimize: bool) {
+    fn compile(mut self, func: &Function, optimize: bool) {
         self.start_compile(func);
-
         for command in func.commands.iter() {
             self.process_command(command);
         }
-
         self.end_compile(func, optimize);
     }
 
@@ -249,9 +309,6 @@ where
         let entry_block = self.create_entry_block();
         let body_block = self.create_block();
         let exit_block = self.create_block();
-
-        self.control_flow_stack
-            .push_function_flow(entry_block, body_block, exit_block);
 
         assert!(self.pending_labels.is_empty());
         self.control_flow_stack.push_exit_target(exit_block, false);
@@ -272,6 +329,9 @@ where
         // makes it possible to insert other *empty* blocks after the `entry_block` before
         // inserting instructions to those blocks.
         self.switch_to_block(entry_block);
+        let fcs = self.alloc_function_control_set();
+        self.set_status(fcs, 0);
+        self.set_flow_selector(fcs, 0);
         self.emit_jump(body_block);
 
         // Immediately call `seal_block()` with the `body_block`.  This block is always inserted
@@ -283,18 +343,21 @@ where
         self.insert_block_after(body_block, entry_block);
         self.insert_block_after(exit_block, body_block);
 
-        //self.bridge.create_store_undefined_to_retv();
-        // TODO: self.bridge.create_alloc_status();
-        // TODO: self.bridge.create_alloc_flow_selector();
         if self.support.is_scope_cleanup_checker_enabled() {
             let _is_coroutine = self.support.get_lambda_info(func.id).is_coroutine;
             // TODO: self.bridge.enable_scope_cleanup_checker(is_coroutine);
         }
 
         self.switch_to_block(body_block);
+
+        self.control_flow_stack
+            .push_function_flow(entry_block, body_block, exit_block, fcs);
+
+        let retv = self.get_retv();
+        self.emit_store_undefined_to_any(retv);
     }
 
-    fn end_compile(&mut self, func: &Function, optimize: bool) {
+    fn end_compile(mut self, func: &Function, optimize: bool) {
         logger::debug!(event = "end_compile", ?func.id, optimize);
 
         debug_assert!(self.operand_stack.is_empty());
@@ -321,8 +384,10 @@ where
         }
 
         // TODO: self.bridge.end_function(optimize);
-        let retv = self.builder.ins().iconst(types::I32, 0);
-        self.builder.ins().return_(&[retv]);
+        let status = self.load_status(flow.fcs);
+        self.builder.ins().return_(&[status.0]);
+
+        self.builder.seal_all_blocks();
 
         // TODO: self.locals.clear();
 
@@ -337,6 +402,8 @@ where
             // TODO: info.scratch_buffer_len = self.max_scratch_buffer_len;
         }
         // TODO: self.max_scratch_buffer_len = 0;
+
+        self.builder.finalize();
     }
 
     fn process_command(&mut self, command: &CompileCommand) {
@@ -348,11 +415,16 @@ where
             CompileCommand::Boolean(value) => self.process_boolean(*value),
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::String(value) => self.process_string(value),
+            CompileCommand::Lambda(lambda_id) => self.process_lambda(*lambda_id),
+            CompileCommand::Closure(prologue, func_scope_ref) => {
+                self.process_closure(*prologue, *func_scope_ref)
+            }
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
             CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(*scope_ref),
+            CompileCommand::DeclareClosure => self.process_declare_closure(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
@@ -389,6 +461,7 @@ where
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::IfThen(expr) => self.process_if_then(*expr),
             CompileCommand::Else(expr) => self.process_else(*expr),
+            CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Dereference => self.process_dereference(),
@@ -445,6 +518,65 @@ where
         ));
     }
 
+    fn process_lambda(&mut self, lambda_id: LambdaId) {
+        let func_id = *self.id_map.get(&lambda_id).unwrap();
+        let lambda_ir = *self
+            .lambda_ir_cache
+            .entry(func_id)
+            .or_insert_with_key(|&func_id| {
+                let func_ref = self.module.declare_func_in_func(func_id, self.builder.func);
+                LambdaIr(self.builder.ins().func_addr(self.ptr_type, func_ref))
+            });
+        self.operand_stack.push(Operand::Lambda(lambda_ir));
+    }
+
+    fn process_closure(&mut self, _prologue: bool, func_scope_ref: ScopeRef) {
+        /* TODO: hoisting
+        let backup = self.bridge.get_basic_block();
+        if prologue {
+            let block = self.control_flow_stack.scope_flow().hoisted_block;
+            self.bridge.set_basic_block(block);
+        }
+        */
+
+        let scope = self.scope_tree.scope(func_scope_ref);
+        debug_assert!(scope.is_function());
+
+        let lambda = self.pop_lambda();
+        // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
+        let closure = self.emit_call_create_closure(lambda, scope.count_captures());
+
+        let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
+        for variable in scope
+            .variables
+            .iter()
+            .filter(|variable| variable.is_capture())
+        {
+            // TODO(perf): improve if `find_variable()` is the primary case of performance
+            // bottleneck.
+            let variable_ref = self.scope_tree.find_variable(scope_ref, variable.symbol);
+            debug_assert_ne!(variable_ref, VariableRef::NONE);
+            let locator = self.scope_tree.compute_locator(variable_ref);
+            let capture = match locator {
+                Locator::Argument(_) | Locator::Local(_) => {
+                    debug_assert!(self.captures.contains_key(&locator));
+                    *self.captures.get(&locator).unwrap()
+                }
+                Locator::Capture(i) => self.emit_load_capture(i),
+                _ => unreachable!(),
+            };
+            self.emit_store_capture_to_closure(capture, closure, variable.index);
+        }
+
+        self.operand_stack.push(Operand::Closure(closure));
+
+        /* TODO: hoisting
+        if prologue {
+            self.bridge.set_basic_block(backup);
+        }
+        */
+    }
+
     fn process_variable_reference(&mut self, symbol: Symbol) {
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         // TODO(perf): improve if `find_variable()` is the primary case of performance bottleneck.
@@ -495,6 +627,36 @@ where
         // TODO
     }
 
+    fn process_declare_closure(&mut self) {
+        /* TODO: hoisting
+        let block = self.control_flow_stack.scope_flow().hoisted_block;
+
+        let backup = self.bridge.get_basic_block();
+        self.bridge.set_basic_block(block);
+        */
+
+        let (symbol, locator) = self.pop_reference();
+        let (operand, _) = self.dereference();
+        // TODO: operand must hold a closure.
+
+        match locator {
+            Locator::Local(index) => {
+                let slot = self.locals[index as usize];
+                self.emit_store_operand_to_slot(&operand, slot, 0);
+            }
+            Locator::Global => {
+                let object = ObjectIr(self.emit_nullptr());
+                let value = self.perform_to_any(&operand);
+                self.emit_call_set_value_by_symbol(object, symbol, value);
+            }
+            _ => unreachable!("{locator:?}"),
+        };
+
+        /* TODO: hoisting
+        self.bridge.set_basic_block(backup);
+        */
+    }
+
     fn process_call(&mut self, argc: u16) {
         let argv = self.emit_create_argv(argc);
         let (operand, _) = self.dereference();
@@ -515,11 +677,6 @@ where
 
         // TODO(pref): compile-time evaluation
         self.operand_stack.push(Operand::Any(retv, None));
-    }
-
-    fn get_runtime_ptr(&self) -> Value {
-        let flow = self.control_flow_stack.function_flow();
-        self.builder.block_params(flow.entry_block)[0]
     }
 
     fn emit_call(&mut self, closure: ClosureIr, argc: u16, argv: ArgvIr, retv: AnyIr) -> StatusIr {
@@ -543,10 +700,10 @@ where
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
         let body_block = self.create_block();
-        self.insert_block_after_current(body_block);
+        let cleanup_block = self.create_block();
 
         self.control_flow_stack
-            .push_scope_flow(scope_ref, body_block);
+            .push_scope_flow(scope_ref, body_block, cleanup_block);
 
         // TODO
 
@@ -557,10 +714,19 @@ where
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
+        let exit_block = self.create_block();
+
         let flow = self.control_flow_stack.pop_scope_flow();
         debug_assert_eq!(flow.scope_ref, scope_ref);
 
+        self.emit_jump(flow.cleanup_block);
+
+        self.switch_to_block(flow.cleanup_block);
+        self.emit_jump(exit_block);
+
         // TODO
+
+        self.switch_to_block(exit_block);
     }
 
     // 13.5.1.2 Runtime Semantics: Evaluation
@@ -899,8 +1065,8 @@ where
         let flow = self.control_flow_stack.pop_if_then_else_flow();
 
         let (else_operand, _) = self.dereference();
-        let any_ir = self.peek_any();
-        self.emit_store_operand_to_any(&else_operand, any_ir);
+        let any = self.peek_any();
+        self.emit_store_operand_to_any(&else_operand, any);
         self.emit_jump(flow.merge_block);
 
         self.switch_to_block(flow.merge_block);
@@ -960,8 +1126,8 @@ where
         let else_block = self.create_block();
         let merge_block = self.create_block();
         if expr {
-            let any_ir = self.emit_create_any();
-            self.operand_stack.push(Operand::Any(any_ir, None));
+            let any = self.emit_create_any();
+            self.operand_stack.push(Operand::Any(any, None));
         }
         self.builder
             .ins()
@@ -974,17 +1140,35 @@ where
     fn process_else(&mut self, expr: bool) {
         if expr {
             let (operand, _) = self.dereference();
-            let any_ir = self.peek_any();
-            self.emit_store_operand_to_any(&operand, any_ir);
+            let any = self.peek_any();
+            self.emit_store_operand_to_any(&operand, any);
         } else {
             self.operand_stack.pop();
         }
         let merge_block = self.control_flow_stack.merge_block();
         self.emit_jump(merge_block);
-        let then_block = self.builder.current_block().unwrap();
+        let then_block = self.current_block();
         let else_block = self.control_flow_stack.update_then_block(then_block);
         //self.bridge.move_basic_block_after(else_block);
         self.switch_to_block(else_block);
+    }
+
+    fn process_return(&mut self, n: u32) {
+        if n > 0 {
+            debug_assert_eq!(n, 1);
+            let (operand, _) = self.dereference();
+            self.store_operand_to_retv(&operand);
+        }
+
+        let fcs = self.control_flow_stack.function_flow().fcs;
+        self.set_status(fcs, 0); // TODO: NORMAL
+        self.set_flow_selector(fcs, 0); // TODO: RETURN
+
+        let next_block = self.control_flow_stack.cleanup_block();
+        self.emit_jump(next_block);
+
+        let block = self.create_block_for_deadcode();
+        self.switch_to_block(block);
     }
 
     fn process_discard(&mut self) {
@@ -1021,12 +1205,12 @@ where
             Operand::Boolean(value, ..) => value,
             Operand::Number(value, ..) => self.emit_number_to_boolean(value),
             Operand::String(..) => todo!(),
-            // Operand::Closure(_) | Operand::Object(_) | Operand::Promise(_) => {
+            Operand::Closure(_) => self.emit_boolean(true),
+            // | Operand::Object(_) | Operand::Promise(_) => {
             //     self.bridge.get_boolean(true)
             // }
             Operand::Any(value, ..) => self.emit_to_boolean(value),
-            Operand::VariableReference(..) => unreachable!(),
-            // Operand::Lambda(_)
+            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
             // | Operand::Coroutine(_)
             // | Operand::VariableReference(..)
             // | Operand::PropertyReference(_) => unreachable!(),
@@ -1042,11 +1226,10 @@ where
             Operand::Boolean(value, ..) => self.emit_boolean_to_number(value),
             Operand::Number(value, ..) => value,
             Operand::String(..) => unimplemented!("string.to_numeric"),
-            // Operand::Closure(_) => self.bridge.get_nan(),
+            Operand::Closure(_) => self.emit_number(f64::NAN),
             // Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.emit_to_numeric(value),
-            Operand::VariableReference(..) => unreachable!(),
-            // Operand::Lambda(_)
+            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
             // | Operand::Coroutine(_)
             // | Operand::Promise(_)
             // | Operand::PropertyReference(_) => unreachable!(),
@@ -1159,14 +1342,12 @@ where
             Operand::Boolean(rhs, ..) => self.perform_is_same_boolean(lhs, *rhs),
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
             Operand::String(_rhs, ..) => todo!(),
-            // Operand::Closure(rhs) => self.emit_is_same_closure(lhs, rhs),
+            Operand::Closure(rhs) => self.perform_is_same_closure(lhs, *rhs),
             // Operand::Object(rhs) => self.emit_is_same_object(lhs, rhs),
             // Operand::Promise(rhs) => self.emit_is_same_promise(lhs, rhs),
             Operand::Any(rhs, ..) => self.emit_call_is_strictly_equal(lhs, *rhs),
-            Operand::VariableReference(..) => unreachable!("{rhs:?}"),
-            // Operand::Lambda(_)
+            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{rhs:?}"),
             // | Operand::Coroutine(_)
-            // | Operand::VariableReference(..)
             // | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
         }
     }
@@ -1221,6 +1402,39 @@ where
 
         self.switch_to_block(merge_block);
         BooleanIr(self.builder.block_params(merge_block)[0])
+    }
+
+    fn perform_is_same_closure(&mut self, value: AnyIr, closure: ClosureIr) -> BooleanIr {
+        let then_block = self.create_block();
+        let else_block = self.create_block();
+        let merge_block = self.create_block();
+        self.builder.append_block_param(merge_block, types::I8);
+
+        // if value.kind == ValueKind::Closure
+        let cond = self.emit_is_closure(value);
+        self.builder
+            .ins()
+            .brif(cond.0, then_block, &[], else_block, &[]);
+        // {
+        self.switch_to_block(then_block);
+        let v = self.emit_load_closure(value);
+        let then_value = self.emit_is_same_closure(v, closure);
+        self.builder.ins().jump(merge_block, &[then_value.0]);
+        // } else {
+        self.switch_to_block(else_block);
+        let else_value = self.emit_boolean(false);
+        self.builder.ins().jump(merge_block, &[else_value.0]);
+        // }
+
+        self.switch_to_block(merge_block);
+        BooleanIr(self.builder.block_params(merge_block)[0])
+    }
+
+    fn pop_lambda(&mut self) -> LambdaIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Lambda(value) => value,
+            _ => unreachable!(),
+        }
     }
 
     fn pop_reference(&mut self) -> (Symbol, Locator) {
@@ -1283,6 +1497,61 @@ where
         self.operand_stack.swap(last_index - 1, last_index);
     }
 
+    // Parameters of the Lambda function
+
+    fn get_runtime_ptr(&self) -> Value {
+        self.get_lambda_params(0)
+    }
+
+    fn get_captures_ptr(&self) -> Value {
+        self.get_lambda_params(1)
+    }
+
+    fn get_retv(&self) -> AnyIr {
+        AnyIr(self.get_lambda_params(4))
+    }
+
+    fn get_lambda_params(&self, index: usize) -> Value {
+        let entry_block = self.control_flow_stack.function_flow().entry_block;
+        self.builder.block_params(entry_block)[index]
+    }
+
+    // FunctionControlSet
+
+    fn alloc_function_control_set(&mut self) -> FunctionControlSet {
+        let slot = self.builder.create_sized_stack_slot(StackSlotData {
+            kind: StackSlotKind::ExplicitSlot,
+            size: 8, // [status, flow_selector]
+            align_shift: 2,
+        });
+        FunctionControlSet(slot)
+    }
+
+    // FunctionControlSet | status
+
+    fn load_status(&mut self, fcs: FunctionControlSet) -> StatusIr {
+        StatusIr(self.builder.ins().stack_load(types::I32, fcs.0, 0))
+    }
+
+    fn set_status(&mut self, fcs: FunctionControlSet, value: i32) {
+        let value = self.builder.ins().iconst(types::I32, value as i64);
+        self.builder.ins().stack_store(value, fcs.0, 0);
+    }
+
+    // FunctionControlSet | flow_selector
+
+    fn set_flow_selector(&mut self, fcs: FunctionControlSet, value: i32) {
+        let value = self.builder.ins().iconst(types::I32, value as i64);
+        self.builder.ins().stack_store(value, fcs.0, 4);
+    }
+
+    // retv
+
+    fn store_operand_to_retv(&mut self, operand: &Operand) {
+        let retv = self.get_retv();
+        self.emit_store_operand_to_any(operand, retv);
+    }
+
     // operations on blocks
 
     fn current_block(&self) -> Block {
@@ -1308,12 +1577,14 @@ where
         self.builder.create_block()
     }
 
-    fn insert_block_after(&mut self, block: Block, after: Block) {
-        self.builder.insert_block_after(block, after);
+    fn create_block_for_deadcode(&mut self) -> Block {
+        let block = self.builder.create_block();
+        self.builder.set_cold_block(block);
+        block
     }
 
-    fn insert_block_after_current(&mut self, block: Block) {
-        self.builder.insert_block_after(block, self.current_block());
+    fn insert_block_after(&mut self, block: Block, after: Block) {
+        self.builder.insert_block_after(block, after);
     }
 
     fn switch_to_block(&mut self, block: Block) {
@@ -1339,7 +1610,7 @@ where
 
     fn emit_create_string(&mut self, value: &[u16]) -> StringIr {
         const SIZE: usize = size_of::<crate::types::Char16Seq>();
-        const ALIGNMENT: usize = align_of::<crate::types::Char16Seq>();
+        const ALIGNMENT: u32 = align_of::<crate::types::Char16Seq>().ilog2();
 
         let slot = self.builder.create_sized_stack_slot(StackSlotData {
             kind: StackSlotKind::ExplicitSlot,
@@ -1446,6 +1717,14 @@ where
                     .ins()
                     .stack_store(value.0, slot, base_offset + 8);
             }
+            Operand::Closure(value) => {
+                // TODO: Value::KIND_CLOSURE
+                let kind = self.builder.ins().iconst(types::I8, 6);
+                self.builder.ins().stack_store(kind, slot, base_offset);
+                self.builder
+                    .ins()
+                    .stack_store(value.0, slot, base_offset + 8);
+            }
             Operand::Any(value, _) => {
                 const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
                 // TODO(perf): should use memcpy?
@@ -1453,49 +1732,58 @@ where
                 let opaque = self.builder.ins().load(types::I128, FLAGS, value.0, 0);
                 self.builder.ins().stack_store(opaque, slot, base_offset);
             }
-            Operand::VariableReference(..) => unreachable!(),
+            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
         }
     }
 
-    fn emit_store_operand_to_any(&mut self, operand: &Operand, any_ir: AnyIr) {
+    fn emit_store_operand_to_any(&mut self, operand: &Operand, any: AnyIr) {
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         match operand {
-            Operand::Undefined => {
-                // TODO: Value::KIND_UNDEFINED
-                let kind = self.builder.ins().iconst(types::I8, 1);
-                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
-            }
+            Operand::Undefined => self.emit_store_undefined_to_any(any),
             Operand::Null => {
                 // TODO: Value::KIND_NULL
                 let kind = self.builder.ins().iconst(types::I8, 2);
-                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
+                self.builder.ins().store(FLAGS, kind, any.0, 0);
             }
             Operand::Boolean(value, _) => {
                 // TODO: Value::KIND_BOOLEAN
                 let kind = self.builder.ins().iconst(types::I8, 3);
-                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
-                self.builder.ins().store(FLAGS, value.0, any_ir.0, 8);
+                self.builder.ins().store(FLAGS, kind, any.0, 0);
+                self.builder.ins().store(FLAGS, value.0, any.0, 8);
             }
             Operand::Number(value, _) => {
                 // TODO: Value::KIND_NUMBER
                 let kind = self.builder.ins().iconst(types::I8, 4);
-                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
-                self.builder.ins().store(FLAGS, value.0, any_ir.0, 8);
+                self.builder.ins().store(FLAGS, kind, any.0, 0);
+                self.builder.ins().store(FLAGS, value.0, any.0, 8);
             }
             Operand::String(value, _) => {
                 // TODO: Value::KIND_STRING
                 let kind = self.builder.ins().iconst(types::I8, 5);
-                self.builder.ins().store(FLAGS, kind, any_ir.0, 0);
-                self.builder.ins().store(FLAGS, value.0, any_ir.0, 8);
+                self.builder.ins().store(FLAGS, kind, any.0, 0);
+                self.builder.ins().store(FLAGS, value.0, any.0, 8);
+            }
+            Operand::Closure(value) => {
+                // TODO: Value::KIND_CLOSURE
+                let kind = self.builder.ins().iconst(types::I8, 6);
+                self.builder.ins().store(FLAGS, kind, any.0, 0);
+                self.builder.ins().store(FLAGS, value.0, any.0, 8);
             }
             Operand::Any(value, _) => {
                 // TODO(perf): should use memcpy?
                 static_assert_eq!(size_of::<crate::types::Value>() * 8, 128);
                 let opaque = self.builder.ins().load(types::I128, FLAGS, value.0, 0);
-                self.builder.ins().store(FLAGS, opaque, any_ir.0, 0);
+                self.builder.ins().store(FLAGS, opaque, any.0, 0);
             }
-            Operand::VariableReference(..) => unreachable!(),
+            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
         }
+    }
+
+    fn emit_store_undefined_to_any(&mut self, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_UNDEFINED
+        let kind = self.builder.ins().iconst(types::I8, 1);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
     }
 
     // instructions
@@ -1772,6 +2060,10 @@ where
         BooleanIr(self.builder.ins().fcmp(FloatCC::Equal, lhs.0, rhs.0))
     }
 
+    fn emit_is_same_closure(&mut self, lhs: ClosureIr, rhs: ClosureIr) -> BooleanIr {
+        BooleanIr(self.builder.ins().icmp(IntCC::Equal, lhs.0, rhs.0))
+    }
+
     fn emit_call_is_loosely_equal(&mut self, lhs: AnyIr, rhs: AnyIr) -> BooleanIr {
         let func = self
             .runtime_func_cache
@@ -1788,6 +2080,19 @@ where
         let args = [self.get_runtime_ptr(), lhs.0, rhs.0];
         let call = self.builder.ins().call(func, &args);
         BooleanIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_call_create_closure(&mut self, lambda: LambdaIr, num_captures: u16) -> ClosureIr {
+        let func = self
+            .runtime_func_cache
+            .get_create_closure(self.module, self.builder.func);
+        let args = [
+            self.get_runtime_ptr(),
+            lambda.0,
+            self.builder.ins().iconst(types::I16, num_captures as i64),
+        ];
+        let call = self.builder.ins().call(func, &args);
+        ClosureIr(self.builder.inst_results(call)[0])
     }
 
     fn emit_call_get_global_variable(
@@ -1807,6 +2112,19 @@ where
         ];
         let call = self.builder.ins().call(func, &args);
         AnyIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_call_set_value_by_symbol(&mut self, object: ObjectIr, key: Symbol, value: AnyIr) {
+        let func = self
+            .runtime_func_cache
+            .get_set_value_by_symbol(self.module, self.builder.func);
+        let args = [
+            self.get_runtime_ptr(),
+            object.0,
+            self.builder.ins().iconst(types::I32, key.id() as i64),
+            value.0,
+        ];
+        self.builder.ins().call(func, &args);
     }
 
     // TODO(perf): return the value directly if it's a read-only global property.
@@ -1834,22 +2152,6 @@ where
         self.switch_to_block(end_block);
 
         value
-    }
-
-    fn emit_load_lambda_from_closure(&mut self, closure: ClosureIr) -> Value {
-        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
-        const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, lambda) as i32;
-        self.builder
-            .ins()
-            .load(self.ptr_type, FLAGS, closure.0, OFFSET)
-    }
-
-    fn emit_load_captures_from_closure(&mut self, closure: ClosureIr) -> Value {
-        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
-        const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, captures) as i32;
-        self.builder
-            .ins()
-            .load(self.ptr_type, FLAGS, closure.0, OFFSET)
     }
 
     fn emit_is_closure(&mut self, value: AnyIr) -> BooleanIr {
@@ -1895,6 +2197,55 @@ where
 
         self.switch_to_block(end_block);
         ClosureIr(self.builder.block_params(end_block)[0])
+    }
+
+    // closure
+
+    fn emit_load_lambda_from_closure(&mut self, closure: ClosureIr) -> Value {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, lambda) as i32;
+        self.builder
+            .ins()
+            .load(self.ptr_type, FLAGS, closure.0, OFFSET)
+    }
+
+    fn emit_store_capture_to_closure(
+        &mut self,
+        capture: CaptureIr,
+        closure: ClosureIr,
+        index: u16,
+    ) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        let offset = std::mem::offset_of!(crate::types::Closure, captures)
+            + size_of::<crate::types::Capture>() * (index as usize);
+        let base = self.builder.ins().iadd_imm(closure.0, offset as i64);
+        // Load data to be copied.
+        let target = self.builder.ins().load(self.ptr_type, FLAGS, capture.0, 0);
+        let value =
+            self.builder
+                .ins()
+                .load(types::I128, FLAGS, capture.0, self.ptr_type.bytes() as i32);
+        // Store the data.
+        self.builder.ins().store(FLAGS, target, base, 0);
+        self.builder
+            .ins()
+            .store(FLAGS, value, base, self.ptr_type.bytes() as i32);
+    }
+
+    fn emit_load_captures_from_closure(&mut self, closure: ClosureIr) -> Value {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, captures) as i32;
+        self.builder
+            .ins()
+            .load(self.ptr_type, FLAGS, closure.0, OFFSET)
+    }
+
+    // captures
+
+    fn emit_load_capture(&mut self, index: u16) -> CaptureIr {
+        let ptr = self.get_captures_ptr();
+        let offset = size_of::<crate::types::Capture>() * (index as usize);
+        CaptureIr(self.builder.ins().iadd_imm(ptr, offset as i64))
     }
 
     fn emit_check_status_for_exception(&mut self, _status: StatusIr, _retv: AnyIr) {
@@ -1949,6 +2300,7 @@ impl DerefMut for OperandStack {
 // TODO(feat): add variant for BigInt
 #[derive(Clone, Debug)]
 enum Operand {
+    // Values that can be store into a `Value`.
     /// Compile-time constant value of `undefined`.
     Undefined,
 
@@ -1967,9 +2319,16 @@ enum Operand {
     // TODO(perf): compile-time evaluation
     String(StringIr, #[allow(unused)] Option<crate::types::Char16Seq>),
 
+    /// Runtime value of closure type.
+    Closure(ClosureIr),
+
     /// Runtime value and optional compile-time constant value of any type.
     // TODO(perf): compile-time evaluation
     Any(AnyIr, #[allow(unused)] Option<Value>),
+
+    // Values that cannot be stored into a `Value`.
+    /// Runtime value of lambda function type.
+    Lambda(LambdaIr),
 
     // Compile-time constant value types.
     VariableReference(Symbol, Locator),
@@ -1992,6 +2351,12 @@ struct ObjectIr(Value);
 
 #[derive(Clone, Copy, Debug)]
 struct AnyIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct LambdaIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct CaptureIr(Value);
 
 #[derive(Clone, Copy, Debug)]
 struct ArgvIr(Value);

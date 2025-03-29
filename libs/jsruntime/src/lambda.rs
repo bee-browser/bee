@@ -1,5 +1,5 @@
 /// The identifier of a lambda function.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct LambdaId(u32);
 
 impl LambdaId {
