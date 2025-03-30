@@ -436,6 +436,7 @@ where
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::Delete => self.process_delete(),
             CompileCommand::Void => self.process_void(),
             CompileCommand::UnaryPlus => self.process_unary_plus(),
@@ -752,6 +753,11 @@ where
         // TODO
 
         self.switch_to_block(exit_block);
+    }
+
+    // 13.4.2.1 Runtime Semantics: Evaluation
+    fn process_postfix_increment(&mut self) {
+        self.perform_incr_decr('$', '+');
     }
 
     // 13.5.1.2 Runtime Semantics: Evaluation
@@ -1265,6 +1271,39 @@ where
         }
     }
 
+    // 13.4.2.1 Runtime Semantics: Evaluation
+    // 13.4.3.1 Runtime Semantics: Evaluation
+    // 13.4.4.1 Runtime Semantics: Evaluation
+    // 13.4.5.1 Runtime Semantics: Evaluation
+    fn perform_incr_decr(&mut self, pos: char, op: char) {
+        let (operand, reference) = self.dereference();
+        let old_value = self.apply_to_numeric(operand);
+        // TODO: BigInt
+        let one = self.emit_number(1.0);
+        let new_value = if op == '+' {
+            self.emit_add(old_value, one)
+        } else {
+            self.emit_sub(old_value, one)
+        };
+        match reference {
+            Some((symbol, locator)) if symbol != Symbol::NONE => {
+                debug_assert!(!locator.is_none());
+                self.operand_stack
+                    .push(Operand::VariableReference(symbol, locator));
+                // TODO(perf): compile-time evaluation
+                self.operand_stack.push(Operand::Number(new_value, None));
+                self.process_assignment();
+                self.process_discard();
+            }
+            _ => {
+                // TODO(feat): throw a ReferenceError at runtime
+            }
+        }
+        let value = if pos == '^' { new_value } else { old_value };
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Number(value, None));
+    }
+
     fn peek_any(&mut self) -> AnyIr {
         match self.operand_stack.last().unwrap() {
             Operand::Any(value, _) => *value,
@@ -1543,7 +1582,8 @@ where
         self.get_lambda_params(1)
     }
 
-    fn get_argc(&self) -> Value { // u16
+    fn get_argc(&self) -> Value {
+        // u16
         self.get_lambda_params(2)
     }
 
