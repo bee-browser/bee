@@ -644,7 +644,6 @@ where
         let scope = self.scope_tree.scope(scope_ref);
         for variable in scope.variables.iter() {
             // TODO(fix): preserve declaration order.
-            dbg!(variable);
             for command in func.commands[variable.init_commands_range.clone()].iter() {
                 self.process_command(func, command);
             }
@@ -687,7 +686,7 @@ where
         let argv = self.emit_create_argv(argc);
         let (operand, _) = self.dereference();
         let closure = match operand {
-            // TODO: Operand::Closure(closure) => closure, // IIFE
+            Operand::Closure(closure) => closure, // IIFE
             Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
             _ => {
                 self.process_number(1001.); // TODO: TypeError
@@ -1544,6 +1543,14 @@ where
         self.get_lambda_params(1)
     }
 
+    fn get_argc(&self) -> Value { // u16
+        self.get_lambda_params(2)
+    }
+
+    fn get_argv(&self) -> ArgvIr {
+        ArgvIr(self.get_lambda_params(3))
+    }
+
     fn get_retv(&self) -> AnyIr {
         AnyIr(self.get_lambda_params(4))
     }
@@ -2039,8 +2046,12 @@ where
         }
     }
 
-    fn emit_get_argument(&mut self, _index: u16) -> AnyIr {
-        todo!();
+    fn emit_get_argument(&mut self, index: u16) -> AnyIr {
+        // TODO: bounds checking
+        let _argc = self.get_argc();
+        let argv = self.get_argv();
+        let offset = size_of::<crate::types::Value>() * index as usize;
+        AnyIr(self.builder.ins().iadd_imm(argv.0, offset as i64))
     }
 
     fn emit_get_capture(&mut self, _index: u16) -> AnyIr {
