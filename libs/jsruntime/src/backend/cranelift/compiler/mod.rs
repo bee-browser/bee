@@ -472,6 +472,7 @@ where
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
+            CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
             CompileCommand::Dereference => self.process_dereference(),
             _ => todo!("{command:?}"),
         }
@@ -1210,6 +1211,10 @@ where
         self.swap();
     }
 
+    fn process_duplicate(&mut self, offset: u8) {
+        self.duplicate(offset);
+    }
+
     fn process_dereference(&mut self) {
         let (operand, _) = self.dereference();
         self.operand_stack.push(operand);
@@ -1520,6 +1525,13 @@ where
         debug_assert!(self.operand_stack.len() > 1);
         let last_index = self.operand_stack.len() - 1;
         self.operand_stack.swap(last_index - 1, last_index);
+    }
+
+    fn duplicate(&mut self, offset: u8) {
+        logger::debug!(event = "duplicate", offset);
+        debug_assert!(self.operand_stack.len() > offset as usize);
+        let index = self.operand_stack.len() - 1 - offset as usize;
+        self.operand_stack.duplicate(index);
     }
 
     // Parameters of the Lambda function
@@ -2287,12 +2299,10 @@ impl OperandStack {
         Self(vec![])
     }
 
-    /*
     fn duplicate(&mut self, index: usize) {
         let dup = self.0[index].clone();
         self.push(dup);
     }
-    */
 
     fn dump(&self) {
         for operand in self.0.iter().rev() {
