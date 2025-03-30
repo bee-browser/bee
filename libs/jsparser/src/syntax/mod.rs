@@ -1853,16 +1853,76 @@ where
 
     // 14 ECMAScript Language: Statements and Declarations
 
+    // Statement[Yield, Await, Return] :
+    //   BlockStatement[?Yield, ?Await, ?Return]
+    //
+    // Statement[Yield, Await, Return] :
+    //   VariableStatement[?Yield, ?Await]
+    //
+    // Statement[Yield, Await, Return] :
+    //   EmptyStatement
+    //
+    // Statement[Yield, Await, Return] :
+    //   ExpressionStatement[?Yield, ?Await]
+    //
+    // Statement[Yield, Await, Return] :
+    //   IfStatement[?Yield, ?Await, ?Return]
+    //
+    // Statement[Yield, Await, Return] :
+    //   BreakableStatement[?Yield, ?Await, ?Return]
+    //
+    // Statement[Yield, Await, Return] :
+    //   ContinueStatement[?Yield, ?Await]
+    //
+    // Statement[Yield, Await, Return] :
+    //   BreakStatement[?Yield, ?Await]
+    //
+    // Statement[Yield, Await, Return] :
+    //   [+Return] ReturnStatement[?Yield, ?Await]
+    //
+    // Statement[Yield, Await, Return] :
+    //   WithStatement[?Yield, ?Await, ?Return]
+    //
+    // Statement[Yield, Await, Return] :
+    //   LabelledStatement[?Yield, ?Await, ?Return]
+    //
+    // Statement[Yield, Await, Return] :
+    //   ThrowStatement[?Yield, ?Await]
+    //
+    // Statement[Yield, Await, Return] :
+    //   TryStatement[?Yield, ?Await, ?Return]
+    //
+    // Statement[Yield, Await, Return] :
+    //   DebuggerStatement
     fn process_statement(&mut self) -> Result<(), Error> {
         // TODO
         Ok(())
     }
 
+    // Declaration[Yield, Await] :
+    //   HoistableDeclaration[?Yield, ?Await, ~Default]
+    //
+    // Declaration[Yield, Await] :
+    //   ClassDeclaration[?Yield, ?Await, ~Default]
+    //
+    // Declaration[Yield, Await] :
+    //   LexicalDeclaration[+In, ?Yield, ?Await]
     fn process_declaration(&mut self) -> Result<(), Error> {
         self.replace(1, Detail::Declaration);
         Ok(())
     }
 
+    // HoistableDeclaration[Yield, Await, Default] :
+    //   FunctionDeclaration[?Yield, ?Await, ?Default]
+    //
+    // HoistableDeclaration[Yield, Await, Default] :
+    //   GeneratorDeclaration[?Yield, ?Await, ?Default]
+    //
+    // HoistableDeclaration[Yield, Await, Default] :
+    //   AsyncFunctionDeclaration[?Yield, ?Await, ?Default]
+    //
+    // HoistableDeclaration[Yield, Await, Default] :
+    //   AsyncGeneratorDeclaration[?Yield, ?Await, ?Default]
     fn process_hoistable_declaration(&mut self) -> Result<(), Error> {
         // TODO
         Ok(())

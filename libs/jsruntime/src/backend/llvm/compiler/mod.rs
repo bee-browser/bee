@@ -311,6 +311,7 @@ where
         logger::debug!(event = "process_command", ?command);
         match command {
             CompileCommand::Nop => (),
+            CompileCommand::Skip(_) => (),
             CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
