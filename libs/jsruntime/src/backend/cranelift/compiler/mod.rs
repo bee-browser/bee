@@ -437,6 +437,7 @@ where
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
+            CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::Delete => self.process_delete(),
             CompileCommand::Void => self.process_void(),
             CompileCommand::UnaryPlus => self.process_unary_plus(),
@@ -758,6 +759,11 @@ where
     // 13.4.2.1 Runtime Semantics: Evaluation
     fn process_postfix_increment(&mut self) {
         self.perform_incr_decr('$', '+');
+    }
+
+    // 13.4.3.1 Runtime Semantics: Evaluation
+    fn process_postfix_decrement(&mut self) {
+        self.perform_incr_decr('$', '-');
     }
 
     // 13.5.1.2 Runtime Semantics: Evaluation
