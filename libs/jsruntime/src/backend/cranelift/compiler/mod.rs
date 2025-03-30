@@ -220,6 +220,8 @@ struct Compiler<'r, 'a, 'c, R> {
     // The following values must be reset in the end of compilation for each function.
     locals: Vec<StackSlot>,
     captures: FxHashMap<Locator, CaptureIr>,
+
+    skip_count: u16,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -290,13 +292,18 @@ where
             operand_stack: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
+            skip_count: 0,
         }
     }
 
     fn compile(mut self, func: &Function, optimize: bool) {
         self.start_compile(func);
         for command in func.commands.iter() {
-            self.process_command(command);
+            if self.skip_count > 0 {
+                self.skip_count -= 1;
+                continue;
+            }
+            self.process_command(func, command);
         }
         self.end_compile(func, optimize);
     }
@@ -406,10 +413,11 @@ where
         self.builder.finalize();
     }
 
-    fn process_command(&mut self, command: &CompileCommand) {
+    fn process_command(&mut self, func: &Function, command: &CompileCommand) {
         logger::debug!(event = "process_command", ?command);
         match command {
             CompileCommand::Nop => (),
+            CompileCommand::Skip(n) => self.process_skip(*n),
             CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
@@ -423,7 +431,7 @@ where
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
-            CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(*scope_ref),
+            CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(func, *scope_ref),
             CompileCommand::DeclareClosure => self.process_declare_closure(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
@@ -487,6 +495,12 @@ where
     }
 
     // commands
+
+    fn process_skip(&mut self, n: u16) {
+        debug_assert_eq!(self.skip_count, 0);
+        debug_assert_ne!(n, 0);
+        self.skip_count = n;
+    }
 
     fn process_undefined(&mut self) {
         self.operand_stack.push(Operand::Undefined);
@@ -622,8 +636,19 @@ where
         self.emit_store_operand_to_slot(&operand, slot, 0);
     }
 
-    fn process_declare_vars(&mut self, scope_ref: ScopeRef) {
+    // NOTE: This function may call `process_command()`.
+    fn process_declare_vars(&mut self, func: &Function, scope_ref: ScopeRef) {
         debug_assert!(self.scope_tree.scope(scope_ref).is_function());
+
+        let scope = self.scope_tree.scope(scope_ref);
+        for variable in scope.variables.iter() {
+            // TODO(fix): preserve declaration order.
+            dbg!(variable);
+            for command in func.commands[variable.init_commands_range.clone()].iter() {
+                self.process_command(func, command);
+            }
+        }
+
         // TODO
     }
 
