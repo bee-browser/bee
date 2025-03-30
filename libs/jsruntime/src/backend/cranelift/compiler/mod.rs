@@ -222,6 +222,9 @@ struct Compiler<'r, 'a, 'c, R> {
     captures: FxHashMap<Locator, CaptureIr>,
 
     skip_count: u16,
+
+    /// FunctionBuilder::is_filled() is a private method.
+    block_terminated: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -293,6 +296,7 @@ where
             locals: Default::default(),
             captures: Default::default(),
             skip_count: 0,
+            block_terminated: false,
         }
     }
 
@@ -339,7 +343,7 @@ where
         let fcs = self.alloc_function_control_set();
         self.set_status(fcs, 0);
         self.set_flow_selector(fcs, 0);
-        self.emit_jump(body_block);
+        self.emit_jump(body_block, &[]);
 
         // Immediately call `seal_block()` with the `body_block`.  This block is always inserted
         // just after the `entry_block`.  Blocks may be inserted between the `body_block` and the
@@ -378,7 +382,7 @@ where
         self.control_flow_stack.pop_exit_target();
         let flow = self.control_flow_stack.pop_function_flow();
 
-        self.emit_jump(flow.exit_block);
+        self.emit_jump(flow.exit_block, &[]);
 
         self.seal_block(flow.exit_block);
         self.switch_to_block(flow.exit_block);
@@ -392,7 +396,7 @@ where
 
         // TODO: self.bridge.end_function(optimize);
         let status = self.load_status(flow.fcs);
-        self.builder.ins().return_(&[status.0]);
+        self.emit_return(status);
 
         self.builder.seal_all_blocks();
 
@@ -473,6 +477,7 @@ where
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::IfThen(expr) => self.process_if_then(*expr),
             CompileCommand::Else(expr) => self.process_else(*expr),
+            CompileCommand::IfStatement => self.process_if_statement(),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
@@ -736,7 +741,7 @@ where
 
         // TODO
 
-        self.emit_jump(body_block);
+        self.emit_jump(body_block, &[]);
         self.switch_to_block(body_block);
     }
 
@@ -748,10 +753,10 @@ where
         let flow = self.control_flow_stack.pop_scope_flow();
         debug_assert_eq!(flow.scope_ref, scope_ref);
 
-        self.emit_jump(flow.cleanup_block);
+        self.emit_jump(flow.cleanup_block, &[]);
 
         self.switch_to_block(flow.cleanup_block);
-        self.emit_jump(exit_block);
+        self.emit_jump(exit_block, &[]);
 
         // TODO
 
@@ -1116,7 +1121,7 @@ where
         let (else_operand, _) = self.dereference();
         let any = self.peek_any();
         self.emit_store_operand_to_any(&else_operand, any);
-        self.emit_jump(flow.merge_block);
+        self.emit_jump(flow.merge_block, &[]);
 
         self.switch_to_block(flow.merge_block);
     }
@@ -1178,9 +1183,7 @@ where
             let any = self.emit_create_any();
             self.operand_stack.push(Operand::Any(any, None));
         }
-        self.builder
-            .ins()
-            .brif(cond_value.0, then_block, &[], else_block, &[]);
+        self.emit_brif(cond_value, then_block, &[], else_block, &[]);
         self.switch_to_block(then_block);
         self.control_flow_stack
             .push_if_then_else_flow(then_block, else_block, merge_block);
@@ -1195,11 +1198,28 @@ where
             self.operand_stack.pop();
         }
         let merge_block = self.control_flow_stack.merge_block();
-        self.emit_jump(merge_block);
+        self.emit_jump(merge_block, &[]);
         let then_block = self.current_block();
         let else_block = self.control_flow_stack.update_then_block(then_block);
         //self.bridge.move_basic_block_after(else_block);
         self.switch_to_block(else_block);
+    }
+
+    fn process_if_statement(&mut self) {
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
+        let block = self.create_block();
+
+        if self.block_terminated {
+            // We should not append any instructions after a terminator instruction such as `ret`.
+        } else {
+            self.emit_jump(block, &[]);
+        }
+
+        //self.bridge.move_basic_block_after(flow.else_block);
+        self.switch_to_block(flow.else_block);
+        self.emit_jump(block, &[]);
+
+        self.switch_to_block(block);
     }
 
     fn process_return(&mut self, n: u32) {
@@ -1214,7 +1234,7 @@ where
         self.set_flow_selector(fcs, 0); // TODO: RETURN
 
         let next_block = self.control_flow_stack.cleanup_block();
-        self.emit_jump(next_block);
+        self.emit_jump(next_block, &[]);
 
         let block = self.create_block_for_deadcode();
         self.switch_to_block(block);
@@ -1446,18 +1466,16 @@ where
 
         // if value.kind == ValueKind::Boolean
         let cond = self.emit_is_boolean(value);
-        self.builder
-            .ins()
-            .brif(cond.0, then_block, &[], else_block, &[]);
+        self.emit_brif(cond, then_block, &[], else_block, &[]);
         // {
         self.switch_to_block(then_block);
         let b = self.emit_load_boolean(value);
         let then_value = self.emit_is_same_boolean(b, boolean);
-        self.builder.ins().jump(merge_block, &[then_value.0]);
+        self.emit_jump(merge_block, &[then_value.0]);
         // } else {
         self.switch_to_block(else_block);
         let else_value = self.emit_boolean(false);
-        self.builder.ins().jump(merge_block, &[else_value.0]);
+        self.emit_jump(merge_block, &[else_value.0]);
         // }
 
         self.switch_to_block(merge_block);
@@ -1472,18 +1490,16 @@ where
 
         // if value.kind == ValueKind::Number
         let cond = self.emit_is_number(value);
-        self.builder
-            .ins()
-            .brif(cond.0, then_block, &[], else_block, &[]);
+        self.emit_brif(cond, then_block, &[], else_block, &[]);
         // {
         self.switch_to_block(then_block);
         let n = self.emit_load_number(value);
         let then_value = self.emit_is_same_number(n, number);
-        self.builder.ins().jump(merge_block, &[then_value.0]);
+        self.emit_jump(merge_block, &[then_value.0]);
         // } else {
         self.switch_to_block(else_block);
         let else_value = self.emit_boolean(false);
-        self.builder.ins().jump(merge_block, &[else_value.0]);
+        self.emit_jump(merge_block, &[else_value.0]);
         // }
 
         self.switch_to_block(merge_block);
@@ -1498,18 +1514,16 @@ where
 
         // if value.kind == ValueKind::Closure
         let cond = self.emit_is_closure(value);
-        self.builder
-            .ins()
-            .brif(cond.0, then_block, &[], else_block, &[]);
+        self.emit_brif(cond, then_block, &[], else_block, &[]);
         // {
         self.switch_to_block(then_block);
         let v = self.emit_load_closure(value);
         let then_value = self.emit_is_same_closure(v, closure);
-        self.builder.ins().jump(merge_block, &[then_value.0]);
+        self.emit_jump(merge_block, &[then_value.0]);
         // } else {
         self.switch_to_block(else_block);
         let else_value = self.emit_boolean(false);
-        self.builder.ins().jump(merge_block, &[else_value.0]);
+        self.emit_jump(merge_block, &[else_value.0]);
         // }
 
         self.switch_to_block(merge_block);
@@ -1690,7 +1704,9 @@ where
     }
 
     fn switch_to_block(&mut self, block: Block) {
+        logger::debug!(event = "switch_to_block", ?block);
         self.builder.switch_to_block(block);
+        self.block_terminated = false;
     }
 
     fn seal_block(&mut self, block: Block) {
@@ -2085,9 +2101,25 @@ where
         )
     }
 
-    fn emit_jump(&mut self, block: Block) {
-        logger::debug!(event = "emit_jump", ?block);
-        self.builder.ins().jump(block, &[]);
+    fn emit_brif(&mut self, cond: BooleanIr, then_block: Block, then_params: &[Value], else_block: Block, else_params: &[Value]) {
+        logger::debug!(event = "emit_brif", ?cond, ?then_block, ?then_params, ?else_block, ?else_params);
+        debug_assert!(!self.block_terminated);
+        self.builder.ins().brif(cond.0, then_block, then_params, else_block, else_params);
+        self.block_terminated = true;
+    }
+
+    fn emit_jump(&mut self, block: Block, params: &[Value]) {
+        logger::debug!(event = "emit_jump", ?block, ?params);
+        debug_assert!(!self.block_terminated);
+        self.builder.ins().jump(block, params);
+        self.block_terminated = true;
+    }
+
+    fn emit_return(&mut self, status: StatusIr) {
+        logger::debug!(event = "emit_return", ?status);
+        debug_assert!(!self.block_terminated);
+        self.builder.ins().return_(&[status.0]);
+        self.block_terminated = true;
     }
 
     fn emit_get_variable(&mut self, symbol: Symbol, locator: Locator) -> AnyIr {
@@ -2245,15 +2277,13 @@ where
 
         // if value.is_nullptr()
         let is_nullptr = self.emit_is_nullptr(value);
-        self.builder
-            .ins()
-            .brif(is_nullptr.0, then_block, &[], end_block, &[]);
+        self.emit_brif(is_nullptr, then_block, &[], end_block, &[]);
         // {
         self.switch_to_block(then_block);
         // TODO(feat): ReferenceError
         self.process_number(1000.);
         self.process_throw();
-        self.emit_jump(end_block);
+        self.emit_jump(end_block, &[]);
         // }
         self.switch_to_block(end_block);
 
@@ -2287,19 +2317,17 @@ where
 
         // if value.is_closure()
         let is_closure = self.emit_is_closure(value);
-        self.builder
-            .ins()
-            .brif(is_closure.0, then_block, &[], else_block, &[]);
+        self.emit_brif(is_closure, then_block, &[], else_block, &[]);
         // then
         self.switch_to_block(then_block);
         let closure = self.emit_load_closure(value);
-        self.builder.ins().jump(end_block, &[closure.0]);
+        self.emit_jump(end_block, &[closure.0]);
         // else
         self.switch_to_block(else_block);
         self.process_number(1001.); // TODO(feat): TypeError
         self.process_throw();
         let dummy = self.emit_nullptr();
-        self.builder.ins().jump(end_block, &[dummy]);
+        self.emit_jump(end_block, &[dummy]);
 
         self.switch_to_block(end_block);
         ClosureIr(self.builder.block_params(end_block)[0])
