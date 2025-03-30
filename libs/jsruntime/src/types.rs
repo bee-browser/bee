@@ -499,7 +499,7 @@ where
 pub type Lambda = unsafe extern "C" fn(
     runtime: *mut c_void,
     context: *mut c_void,
-    args: u16,
+    argc: u16,
     argv: *mut Value,
     retv: *mut Value,
 ) -> Status;
