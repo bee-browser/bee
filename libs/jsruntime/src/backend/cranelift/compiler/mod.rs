@@ -439,6 +439,7 @@ where
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
+            CompileCommand::PrefixDecrement => self.process_prefix_decrement(),
             CompileCommand::Delete => self.process_delete(),
             CompileCommand::Void => self.process_void(),
             CompileCommand::UnaryPlus => self.process_unary_plus(),
@@ -770,6 +771,11 @@ where
     // 13.4.4.1 Runtime Semantics: Evaluation
     fn process_prefix_increment(&mut self) {
         self.perform_incr_decr('^', '+');
+    }
+
+    // 13.4.5.1 Runtime Semantics: Evaluation
+    fn process_prefix_decrement(&mut self) {
+        self.perform_incr_decr('^', '-');
     }
 
     // 13.5.1.2 Runtime Semantics: Evaluation
