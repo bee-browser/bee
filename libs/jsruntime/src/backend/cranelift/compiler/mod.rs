@@ -341,8 +341,8 @@ where
         // inserting instructions to those blocks.
         self.switch_to_block(entry_block);
         let fcs = self.alloc_function_control_set();
-        self.set_status(fcs, 0);
-        self.set_flow_selector(fcs, 0);
+        self.set_status(fcs, Status::UNSET);
+        self.set_flow_selector(fcs, FlowSelector::NORMAL);
         self.emit_jump(body_block, &[]);
 
         // Immediately call `seal_block()` with the `body_block`.  This block is always inserted
@@ -733,13 +733,40 @@ where
     fn process_push_scope(&mut self, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
+        let init_block = self.create_block();
         let body_block = self.create_block();
         let cleanup_block = self.create_block();
 
         self.control_flow_stack
             .push_scope_flow(scope_ref, body_block, cleanup_block);
 
-        // TODO
+        self.control_flow_stack
+            .push_exit_target(cleanup_block, false);
+
+        self.emit_jump(init_block, &[]);
+        self.switch_to_block(init_block);
+
+        let scope = self.scope_tree.scope(scope_ref);
+        for variable in scope.variables.iter() {
+            if variable.is_function_scoped() {
+                continue;
+            }
+            let locator = variable.locator();
+            if variable.is_captured() {
+                let target = match locator {
+                    Locator::Argument(index) => self.emit_get_argument(index),
+                    Locator::Local(index) => self.emit_get_local(index),
+                    _ => unreachable!(),
+                };
+                let capture = self.emit_call_create_capture(target);
+                debug_assert!(!self.captures.contains_key(&locator));
+                self.captures.insert(locator, capture);
+            }
+            if let Locator::Local(index) = locator {
+                let value = self.emit_get_local(index);
+                self.emit_store_none_to_any(value);
+            }
+        }
 
         self.emit_jump(body_block, &[]);
         self.switch_to_block(body_block);
@@ -748,7 +775,15 @@ where
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
+        // Create additional blocks of the scope region before pop_bb_name!().
+        // Because these constitute the scope region.
+        // TODO: let precheck_block = self.create_basic_block("precheck");
+        let postcheck_block = self.create_block();
+        let ctrl_block = self.create_block();
         let exit_block = self.create_block();
+
+        self.control_flow_stack.pop_exit_target();
+        let parent_exit_block = self.control_flow_stack.exit_block();
 
         let flow = self.control_flow_stack.pop_scope_flow();
         debug_assert_eq!(flow.scope_ref, scope_ref);
@@ -756,9 +791,26 @@ where
         self.emit_jump(flow.cleanup_block, &[]);
 
         self.switch_to_block(flow.cleanup_block);
-        self.emit_jump(exit_block, &[]);
+        let scope = self.scope_tree.scope(scope_ref);
+        for variable in scope.variables.iter() {
+            if variable.is_captured() {
+                self.perform_escape_value(variable.locator());
+            }
+            if variable.is_local() {
+                // tidy local value
+                // TODO: GC
+            }
+        }
+        self.emit_jump(postcheck_block, &[]);
 
+        self.switch_to_block(postcheck_block);
         // TODO
+        self.emit_jump(ctrl_block, &[]);
+
+        self.switch_to_block(ctrl_block);
+        let fcs = self.control_flow_stack.function_flow().fcs;
+        let is_normal = self.is_flow_selector_normal(fcs);
+        self.emit_brif(is_normal, exit_block, &[], parent_exit_block, &[]);
 
         self.switch_to_block(exit_block);
     }
@@ -1230,8 +1282,8 @@ where
         }
 
         let fcs = self.control_flow_stack.function_flow().fcs;
-        self.set_status(fcs, 0); // TODO: NORMAL
-        self.set_flow_selector(fcs, 0); // TODO: RETURN
+        self.set_status(fcs, Status::NORMAL);
+        self.set_flow_selector(fcs, FlowSelector::RETURN);
 
         let next_block = self.control_flow_stack.cleanup_block();
         self.emit_jump(next_block, &[]);
@@ -1590,6 +1642,33 @@ where
         }
     }
 
+    fn perform_escape_value(&mut self, locator: Locator) {
+        debug_assert!(!locator.is_capture());
+        debug_assert!(self.captures.contains_key(&locator));
+        let capture = self.captures.remove(&locator).unwrap();
+        let value = match locator {
+            Locator::Argument(index) => self.emit_get_argument(index),
+            Locator::Local(index) => self.emit_get_local(index),
+            Locator::Capture(index) => self.emit_get_capture(index),
+            Locator::None | Locator::Global => unreachable!(),
+        };
+        self.emit_escape_value(capture, value);
+    }
+
+    fn emit_escape_value(&mut self, capture: CaptureIr, value: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET_TARGET: usize = std::mem::offset_of!(crate::types::Capture, target);
+        const OFFSET_ESCAPED: usize = std::mem::offset_of!(crate::types::Capture, escaped);
+        let escaped = self
+            .builder
+            .ins()
+            .iadd_imm(capture.0, OFFSET_ESCAPED as i64);
+        self.builder
+            .ins()
+            .store(FLAGS, escaped, capture.0, OFFSET_TARGET as i32);
+        self.builder.ins().store(FLAGS, value.0, escaped, 0);
+    }
+
     fn swap(&mut self) {
         logger::debug!(event = "swap");
         debug_assert!(self.operand_stack.len() > 1);
@@ -1649,16 +1728,28 @@ where
         StatusIr(self.builder.ins().stack_load(types::I32, fcs.0, 0))
     }
 
-    fn set_status(&mut self, fcs: FunctionControlSet, value: i32) {
-        let value = self.builder.ins().iconst(types::I32, value as i64);
+    fn set_status(&mut self, fcs: FunctionControlSet, value: Status) {
+        logger::debug!(event = "set_status", ?value);
+        let value = self.builder.ins().iconst(types::I32, value.0 as i64);
         self.builder.ins().stack_store(value, fcs.0, 0);
     }
 
     // FunctionControlSet | flow_selector
 
-    fn set_flow_selector(&mut self, fcs: FunctionControlSet, value: i32) {
-        let value = self.builder.ins().iconst(types::I32, value as i64);
+    fn set_flow_selector(&mut self, fcs: FunctionControlSet, value: FlowSelector) {
+        logger::debug!(event = "set_flow_selector", ?value);
+        let value = self.builder.ins().iconst(types::I32, value.0 as i64);
         self.builder.ins().stack_store(value, fcs.0, 4);
+    }
+
+    fn is_flow_selector_normal(&mut self, fcs: FunctionControlSet) -> BooleanIr {
+        logger::debug!(event = "is_flow_selector_normal");
+        let flow_selector = self.builder.ins().stack_load(types::I32, fcs.0, 4);
+        BooleanIr(self.builder.ins().icmp_imm(
+            IntCC::Equal,
+            flow_selector,
+            FlowSelector::NORMAL.0 as i64,
+        ))
     }
 
     // retv
@@ -1897,6 +1988,13 @@ where
         }
     }
 
+    fn emit_store_none_to_any(&mut self, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_NONE
+        let kind = self.builder.ins().iconst(types::I8, 0);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
+    }
+
     fn emit_store_undefined_to_any(&mut self, any: AnyIr) {
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         // TODO: Value::KIND_UNDEFINED
@@ -2101,10 +2199,26 @@ where
         )
     }
 
-    fn emit_brif(&mut self, cond: BooleanIr, then_block: Block, then_params: &[Value], else_block: Block, else_params: &[Value]) {
-        logger::debug!(event = "emit_brif", ?cond, ?then_block, ?then_params, ?else_block, ?else_params);
+    fn emit_brif(
+        &mut self,
+        cond: BooleanIr,
+        then_block: Block,
+        then_params: &[Value],
+        else_block: Block,
+        else_params: &[Value],
+    ) {
+        logger::debug!(
+            event = "emit_brif",
+            ?cond,
+            ?then_block,
+            ?then_params,
+            ?else_block,
+            ?else_params
+        );
         debug_assert!(!self.block_terminated);
-        self.builder.ins().brif(cond.0, then_block, then_params, else_block, else_params);
+        self.builder
+            .ins()
+            .brif(cond.0, then_block, then_params, else_block, else_params);
         self.block_terminated = true;
     }
 
@@ -2118,7 +2232,8 @@ where
     fn emit_return(&mut self, status: StatusIr) {
         logger::debug!(event = "emit_return", ?status);
         debug_assert!(!self.block_terminated);
-        self.builder.ins().return_(&[status.0]);
+        let masked = self.builder.ins().band_imm(status.0, Status::MASK as i64);
+        self.builder.ins().return_(&[masked]);
         self.block_terminated = true;
     }
 
@@ -2127,16 +2242,14 @@ where
         match locator {
             Locator::None => unreachable!(),
             Locator::Argument(index) => self.emit_get_argument(index),
-            Locator::Local(index) => {
-                let slot = self.locals[index as usize];
-                AnyIr(self.builder.ins().stack_addr(self.ptr_type, slot, 0))
-            }
+            Locator::Local(index) => self.emit_get_local(index),
             Locator::Capture(index) => self.emit_get_capture(index),
             Locator::Global => self.emit_get_global_variable(symbol),
         }
     }
 
     fn emit_get_argument(&mut self, index: u16) -> AnyIr {
+        logger::debug!(event = "emit_get_argument", ?index);
         // TODO: bounds checking
         let _argc = self.get_argc();
         let argv = self.get_argv();
@@ -2144,8 +2257,24 @@ where
         AnyIr(self.builder.ins().iadd_imm(argv.0, offset as i64))
     }
 
-    fn emit_get_capture(&mut self, _index: u16) -> AnyIr {
-        todo!();
+    fn emit_get_local(&mut self, index: u16) -> AnyIr {
+        logger::debug!(event = "emit_get_local", ?index);
+        let slot = self.locals[index as usize];
+        AnyIr(self.builder.ins().stack_addr(self.ptr_type, slot, 0))
+    }
+
+    fn emit_get_capture(&mut self, index: u16) -> AnyIr {
+        logger::debug!(event = "emit_get_capture", ?index);
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Capture, target) as i32;
+        let captures = self.get_captures_ptr();
+        let offset = self.ptr_type.bytes() * index as u32;
+        let capture = self.builder.ins().iadd_imm(captures, offset as i64);
+        AnyIr(
+            self.builder
+                .ins()
+                .load(self.ptr_type, FLAGS, capture, OFFSET),
+        )
     }
 
     fn emit_load_kind(&mut self, any: AnyIr) -> Value {
@@ -2218,6 +2347,16 @@ where
         let args = [self.get_runtime_ptr(), lhs.0, rhs.0];
         let call = self.builder.ins().call(func, &args);
         BooleanIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_call_create_capture(&mut self, target: AnyIr) -> CaptureIr {
+        logger::debug!(event = "emit_call_create_capture", ?target);
+        let func = self
+            .runtime_func_cache
+            .get_create_capture(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), target.0];
+        let call = self.builder.ins().call(func, &args);
+        CaptureIr(self.builder.inst_results(call)[0])
     }
 
     fn emit_call_create_closure(&mut self, lambda: LambdaIr, num_captures: u16) -> ClosureIr {
@@ -2495,3 +2634,45 @@ struct ArgvIr(Value);
 
 #[derive(Clone, Copy, Debug)]
 struct StatusIr(#[allow(unused)] Value);
+
+#[derive(Clone, Copy, Debug)]
+struct Status(u32);
+
+#[allow(unused)]
+impl Status {
+    const UNSET_BIT: u32 = 0x10;
+    const MASK: u32 = 0x0F;
+
+    const NORMAL: Self = Self(0x00);
+    const EXCEPTION: Self = Self(0x01);
+    const SUSPEND: Self = Self(0x02);
+    const UNSET: Self = Self(Self::UNSET_BIT | Self::NORMAL.0);
+}
+
+#[derive(Clone, Copy, Debug)]
+struct FlowSelector(u32);
+
+#[allow(unused)]
+impl FlowSelector {
+    const KIND_RETURN: u8 = 0;
+    const KIND_THROW: u8 = 1;
+    const KIND_BREAK: u8 = 2;
+    const KIND_CONTINUE: u8 = 3;
+    const KIND_NORMAL: u8 = 0xFF;
+
+    const NORMAL: Self = Self::new(1, 0xFF, Self::KIND_NORMAL);
+    const RETURN: Self = Self::new(0, 0, Self::KIND_RETURN);
+    const THROW: Self = Self::new(0, 0, Self::KIND_THROW);
+
+    const fn new(extra: u16, depth: u8, kind: u8) -> Self {
+        Self(((extra as u32) << 16) | ((depth as u32) << 8) | (kind as u32))
+    }
+
+    const fn break_at(depth: u8) -> Self {
+        Self::new(0, depth, Self::KIND_BREAK)
+    }
+
+    const fn continue_at(depth: u8) -> Self {
+        Self::new(0, depth, Self::KIND_CONTINUE)
+    }
+}

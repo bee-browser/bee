@@ -52,7 +52,7 @@ impl Value {
         match status {
             Status::Normal => Ok(self),
             Status::Exception => Err(self),
-            _ => unreachable!(),
+            _ => unreachable!("{status:?}"),
         }
     }
 
@@ -323,7 +323,7 @@ pub struct Closure {
     /// A variable-length list of captures used in the lambda function.
     //
     // TODO(issue#237): GcCellRef
-    pub captures: [Capture; 32],
+    pub captures: [*mut Capture; 32],
 }
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
@@ -540,6 +540,7 @@ where
 }
 
 /// The return value type of `Lambda` function.
+#[derive(Debug)]
 #[repr(u32)]
 pub enum Status {
     Normal,
