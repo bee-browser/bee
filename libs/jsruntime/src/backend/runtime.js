@@ -75,6 +75,7 @@ function makeCraneliftIRType(type) {
     case '&std::ffi::CStr':
     case '&Char16Seq':
     case '&mut Variable':
+    case '&Capture':
     case '&mut Capture':
     case '&mut Closure':
     case '&mut Coroutine':
@@ -109,6 +110,7 @@ function makeLLVMIRType(type) {
     case '&std::ffi::CStr':
     case '&Char16Seq':
     case '&mut Variable':
+    case '&Capture':
     case '&mut Capture':
     case '&mut Closure':
     case '&mut Coroutine':
@@ -146,6 +148,8 @@ function makeCType(type) {
       return 'Char16Seq*';
     case '&mut Variable':
       return 'Variable*';
+    case '&Capture':
+      return 'const Capture*';
     case '&mut Capture':
       return 'Capture*';
     case '&mut Closure':

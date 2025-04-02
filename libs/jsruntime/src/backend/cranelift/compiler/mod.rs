@@ -563,14 +563,6 @@ where
     }
 
     fn process_closure(&mut self, _prologue: bool, func_scope_ref: ScopeRef) {
-        /* TODO: hoisting
-        let backup = self.bridge.get_basic_block();
-        if prologue {
-            let block = self.control_flow_stack.scope_flow().hoisted_block;
-            self.bridge.set_basic_block(block);
-        }
-        */
-
         let scope = self.scope_tree.scope(func_scope_ref);
         debug_assert!(scope.is_function());
 
@@ -722,6 +714,7 @@ where
     }
 
     fn emit_call(&mut self, closure: ClosureIr, argc: u16, argv: ArgvIr, retv: AnyIr) -> StatusIr {
+        logger::debug!(event = "emit_call", ?closure, argc, ?argv, ?retv);
         let lambda = self.emit_load_lambda_from_closure(closure);
         let context = self.emit_load_captures_from_closure(closure);
         let args = &[
@@ -1716,6 +1709,7 @@ where
     fn perform_escape_value(&mut self, locator: Locator) {
         debug_assert!(!locator.is_capture());
         debug_assert!(self.captures.contains_key(&locator));
+        logger::debug!(event = "perform_escape_value", ?locator);
         let capture = self.captures.remove(&locator).unwrap();
         let value = match locator {
             Locator::Argument(index) => self.emit_get_argument(index),
@@ -1727,6 +1721,7 @@ where
     }
 
     fn emit_escape_value(&mut self, capture: CaptureIr, value: AnyIr) {
+        logger::debug!(event = "emit_escape_value", ?capture, ?value);
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         const OFFSET_TARGET: usize = std::mem::offset_of!(crate::types::Capture, target);
         const OFFSET_ESCAPED: usize = std::mem::offset_of!(crate::types::Capture, escaped);
@@ -1737,7 +1732,7 @@ where
         self.builder
             .ins()
             .store(FLAGS, escaped, capture.0, OFFSET_TARGET as i32);
-        self.builder.ins().store(FLAGS, value.0, escaped, 0);
+        self.emit_store_any_to_any(value, AnyIr(escaped));
     }
 
     fn swap(&mut self) {
@@ -1939,6 +1934,7 @@ where
     }
 
     fn emit_create_any(&mut self) -> AnyIr {
+        logger::debug!(event = "emit_create_any");
         let slot = self.builder.create_sized_stack_slot(StackSlotData {
             kind: StackSlotKind::ExplicitSlot,
             size: Self::VALUE_SIZE as u32,
@@ -1954,6 +1950,7 @@ where
     }
 
     fn emit_create_argv(&mut self, argc: u16) -> ArgvIr {
+        logger::debug!(event = "emit_create_argv", argc);
         if argc == 0 {
             return ArgvIr(self.emit_nullptr());
         }
@@ -2467,6 +2464,7 @@ where
     }
 
     fn emit_call_create_closure(&mut self, lambda: LambdaIr, num_captures: u16) -> ClosureIr {
+        logger::debug!(event = "emit_call_create_closure", ?lambda, num_captures);
         let func = self
             .runtime_func_cache
             .get_create_closure(self.module, self.builder.func);
@@ -2513,6 +2511,7 @@ where
 
     // TODO(perf): return the value directly if it's a read-only global property.
     fn emit_get_global_variable(&mut self, key: Symbol) -> AnyIr {
+        logger::debug!(event = "emit_get_global_variable", ?key);
         let object = ObjectIr(self.emit_nullptr());
 
         // TODO: strict mode
@@ -2537,6 +2536,7 @@ where
     }
 
     fn emit_is_closure(&mut self, value: AnyIr) -> BooleanIr {
+        logger::debug!(event = "emit_is_closure", ?value);
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         const OFFSET: i32 = 0;
         let kind = self.builder.ins().load(types::I8, FLAGS, value.0, OFFSET);
@@ -2545,6 +2545,7 @@ where
     }
 
     fn emit_load_closure(&mut self, value: AnyIr) -> ClosureIr {
+        logger::debug!(event = "emit_load_closure", ?value);
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         const OFFSET: i32 = 8; // TODO
         ClosureIr(
@@ -2555,6 +2556,7 @@ where
     }
 
     fn emit_load_closure_or_throw_type_error(&mut self, value: AnyIr) -> ClosureIr {
+        logger::debug!(event = "emit_load_closure_or_throw_type_error", ?value);
         let then_block = self.create_block();
         let else_block = self.create_block();
         let end_block = self.create_block();
@@ -2582,6 +2584,7 @@ where
     // closure
 
     fn emit_load_lambda_from_closure(&mut self, closure: ClosureIr) -> Value {
+        logger::debug!(event = "emit_load_lambda_from_closure", ?closure);
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, lambda) as i32;
         self.builder
@@ -2595,24 +2598,21 @@ where
         closure: ClosureIr,
         index: u16,
     ) {
+        logger::debug!(
+            event = "emit_store_capture_to_closure",
+            ?capture,
+            ?closure,
+            index
+        );
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         let offset = std::mem::offset_of!(crate::types::Closure, captures)
-            + size_of::<crate::types::Capture>() * (index as usize);
+            + (self.ptr_type.bytes() as usize) * (index as usize);
         let base = self.builder.ins().iadd_imm(closure.0, offset as i64);
-        // Load data to be copied.
-        let target = self.builder.ins().load(self.ptr_type, FLAGS, capture.0, 0);
-        let value =
-            self.builder
-                .ins()
-                .load(types::I128, FLAGS, capture.0, self.ptr_type.bytes() as i32);
-        // Store the data.
-        self.builder.ins().store(FLAGS, target, base, 0);
-        self.builder
-            .ins()
-            .store(FLAGS, value, base, self.ptr_type.bytes() as i32);
+        self.builder.ins().store(FLAGS, capture.0, base, 0);
     }
 
     fn emit_load_captures_from_closure(&mut self, closure: ClosureIr) -> Value {
+        logger::debug!(event = "emit_load_captures_from_closure", ?closure);
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, captures) as i32;
         self.builder
@@ -2623,6 +2623,7 @@ where
     // captures
 
     fn emit_load_capture(&mut self, index: u16) -> CaptureIr {
+        logger::debug!(event = "emit_load_capture", ?index);
         let ptr = self.get_captures_ptr();
         let offset = size_of::<crate::types::Capture>() * (index as usize);
         CaptureIr(self.builder.ins().iadd_imm(ptr, offset as i64))
@@ -2662,6 +2663,20 @@ where
             .ins()
             .iconst(self.ptr_type, msg.as_ptr() as i64);
         let args = [self.get_runtime_ptr(), value.0, msg];
+        self.builder.ins().call(func, &args);
+    }
+
+    #[allow(unused)]
+    fn emit_call_print_capture(&mut self, capture: CaptureIr, msg: &'static CStr) {
+        logger::debug!(event = "emit_call_print_capture", ?capture);
+        let func = self
+            .runtime_func_cache
+            .get_print_capture(self.module, self.builder.func);
+        let msg = self
+            .builder
+            .ins()
+            .iconst(self.ptr_type, msg.as_ptr() as i64);
+        let args = [self.get_runtime_ptr(), capture.0, msg];
         self.builder.ins().call(func, &args);
     }
 

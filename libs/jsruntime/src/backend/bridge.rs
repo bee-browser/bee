@@ -70,6 +70,7 @@ pub struct RuntimeFunctions {
     pub print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
     pub print_string: unsafe extern "C" fn(*mut c_void, *const Char16Seq, *const c_char),
     pub print_value: unsafe extern "C" fn(*mut c_void, *const Value, *const c_char),
+    pub print_capture: unsafe extern "C" fn(*mut c_void, *const Capture, *const c_char),
     pub print_message: unsafe extern "C" fn(*mut c_void, *const c_char),
     pub launch_debugger: unsafe extern "C" fn(*mut c_void),
 }
@@ -111,6 +112,7 @@ impl RuntimeFunctions {
             print_f64: runtime_print_f64,
             print_string: runtime_print_string,
             print_value: runtime_print_value,
+            print_capture: runtime_print_capture,
             print_message: runtime_print_message,
             launch_debugger: runtime_launch_debugger,
         }
@@ -138,6 +140,12 @@ macro_rules! into_value {
 macro_rules! into_value_mut {
     ($value:expr) => {
         &mut *($value)
+    };
+}
+
+macro_rules! into_capture {
+    ($capture:expr) => {
+        &*($capture)
     };
 }
 
@@ -867,6 +875,20 @@ unsafe extern "C" fn runtime_print_value(
         logger::debug!("runtime_print_value: {value:?}");
     } else {
         logger::debug!("runtime_print_value: {value:?}: {msg:?}");
+    }
+}
+
+unsafe extern "C" fn runtime_print_capture(
+    _runtime: *mut c_void,
+    capture: *const Capture,
+    msg: *const std::os::raw::c_char,
+) {
+    let capture = unsafe { into_capture!(capture) };
+    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+    if msg.is_empty() {
+        logger::debug!("runtime_print_capture: {capture:?}");
+    } else {
+        logger::debug!("runtime_print_capture: {capture:?}: {msg:?}");
     }
 }
 
