@@ -489,6 +489,8 @@ where
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
             CompileCommand::Dereference => self.process_dereference(),
+            CompileCommand::Debugger => self.process_debugger(),
+            CompileCommand::PlaceHolder => unreachable!(),
             _ => todo!("{command:?}"),
         }
 
@@ -1361,6 +1363,10 @@ where
     fn process_dereference(&mut self) {
         let (operand, _) = self.dereference();
         self.operand_stack.push(operand);
+    }
+
+    fn process_debugger(&mut self) {
+        self.emit_call_launch_debugger();
     }
 
     // commonly used functions
@@ -2656,6 +2662,15 @@ where
             .ins()
             .iconst(self.ptr_type, msg.as_ptr() as i64);
         let args = [self.get_runtime_ptr(), value.0, msg];
+        self.builder.ins().call(func, &args);
+    }
+
+    fn emit_call_launch_debugger(&mut self) {
+        logger::debug!(event = "emit_call_launch_debugger");
+        let func = self
+            .runtime_func_cache
+            .get_launch_debugger(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr()];
         self.builder.ins().call(func, &args);
     }
 }
