@@ -378,7 +378,11 @@ impl Capture {
 impl std::fmt::Debug for Capture {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_escaped() {
-            write!(f, "capture(escaped: {:?})", self.target)
+            write!(
+                f,
+                "capture(escaped: {:?}, value: {:?})",
+                self.target, self.escaped
+            )
         } else {
             write!(f, "capture(onstack: {:?})", self.target)
         }

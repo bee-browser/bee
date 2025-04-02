@@ -242,6 +242,12 @@ functions:
         type: '&Value'
       - name: msg
         type: '&std::ffi::CStr'
+  - name: print_capture
+    args:
+      - name: capture
+        type: '&Capture'
+      - name: msg
+        type: '&std::ffi::CStr'
   - name: print_message
     args:
       - name: msg
