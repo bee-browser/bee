@@ -2,8 +2,8 @@ use std::ffi::c_void;
 use std::mem::offset_of;
 use std::ptr::addr_eq;
 
-use crate::logger;
 use crate::Runtime;
+use crate::logger;
 use crate::objects::Object;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the

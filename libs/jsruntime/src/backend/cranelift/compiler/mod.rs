@@ -475,6 +475,7 @@ where
             CompileCommand::BitwiseOr => self.process_bitwise_or(),
             CompileCommand::Ternary => self.process_ternary(),
             CompileCommand::Assignment => self.process_assignment(),
+            CompileCommand::FalsyShortCircuit => self.process_falsy_short_circuit(),
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::IfThen(expr) => self.process_if_then(*expr),
             CompileCommand::Else(expr) => self.process_else(*expr),
@@ -852,7 +853,7 @@ where
     // 13.5.4.1 Runtime Semantics: Evaluation
     fn process_unary_plus(&mut self) {
         let (operand, _) = self.dereference();
-        let value = self.apply_to_numeric(operand);
+        let value = self.perform_to_numeric(&operand);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(value, None));
     }
@@ -860,7 +861,7 @@ where
     // 13.5.5.1 Runtime Semantics: Evaluation
     fn process_unary_minus(&mut self) {
         let (operand, _) = self.dereference();
-        let value = self.apply_to_numeric(operand);
+        let value = self.perform_to_numeric(&operand);
         // TODO: BigInt
         // 6.1.6.1.1 Number::unaryMinus ( x )
         let value = self.emit_neg(value);
@@ -871,7 +872,7 @@ where
     // 13.5.6.1 Runtime Semantics: Evaluation
     fn process_bitwise_not(&mut self) {
         let (operand, _) = self.dereference();
-        let number = self.apply_to_numeric(operand);
+        let number = self.perform_to_numeric(&operand);
         // TODO: BigInt
         let number = self.emit_bitwise_not(number);
         // TODO(perf): compile-time evaluation
@@ -881,7 +882,7 @@ where
     // 13.5.7.1 Runtime Semantics: Evaluation
     fn process_logical_not(&mut self) {
         let (operand, _) = self.dereference();
-        let boolean = self.perform_to_boolean(operand);
+        let boolean = self.perform_to_boolean(&operand);
         let boolean = self.emit_logical_not(boolean);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
@@ -890,10 +891,10 @@ where
     // 13.6.1 Runtime Semantics: Evaluation
     fn process_exponentiation(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.emit_exp(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -903,10 +904,10 @@ where
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_multiplication(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.emit_mul(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -916,10 +917,10 @@ where
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_division(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.emit_div(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -929,10 +930,10 @@ where
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_remainder(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.emit_rem(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -942,10 +943,10 @@ where
     // 13.8.1.1 Runtime Semantics: Evaluation
     fn process_addition(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.emit_add(lhs, rhs);
 
@@ -956,10 +957,10 @@ where
     // 13.8.2.1 Runtime Semantics: Evaluation
     fn process_subtraction(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.emit_sub(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -970,10 +971,10 @@ where
     fn process_left_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
@@ -986,10 +987,10 @@ where
     fn process_signed_right_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
@@ -1002,10 +1003,10 @@ where
     fn process_unsigned_right_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
@@ -1017,10 +1018,10 @@ where
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_less_than(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let boolean = self.emit_less_than(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -1030,10 +1031,10 @@ where
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_greater_than(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let boolean = self.emit_greater_than(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -1043,10 +1044,10 @@ where
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_less_than_or_equal(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let boolean = self.emit_less_than_or_equal(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -1056,10 +1057,10 @@ where
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_greater_than_or_equal(&mut self) {
         let (lhs, _) = self.dereference();
-        let lhs = self.apply_to_numeric(lhs);
+        let lhs = self.perform_to_numeric(&lhs);
 
         let (rhs, _) = self.dereference();
-        let rhs = self.apply_to_numeric(rhs);
+        let rhs = self.perform_to_numeric(&rhs);
 
         let boolean = self.emit_greater_than_or_equal(lhs, rhs);
         // TODO(perf): compile-time evaluation
@@ -1129,8 +1130,8 @@ where
         let (rval, _) = self.dereference();
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
-        let lnum = self.apply_to_numeric(lval);
-        let rnum = self.apply_to_numeric(rval);
+        let lnum = self.perform_to_numeric(&lval);
+        let rnum = self.perform_to_numeric(&rval);
         // TODO: BigInt
 
         let number = self.emit_bitwise_and(lnum, rnum);
@@ -1145,8 +1146,8 @@ where
         let (rval, _) = self.dereference();
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
-        let lnum = self.apply_to_numeric(lval);
-        let rnum = self.apply_to_numeric(rval);
+        let lnum = self.perform_to_numeric(&lval);
+        let rnum = self.perform_to_numeric(&rval);
         // TODO: BigInt
 
         let number = self.emit_bitwise_xor(lnum, rnum);
@@ -1161,8 +1162,8 @@ where
         let (rval, _) = self.dereference();
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
-        let lnum = self.apply_to_numeric(lval);
-        let rnum = self.apply_to_numeric(rval);
+        let lnum = self.perform_to_numeric(&lval);
+        let rnum = self.perform_to_numeric(&rval);
         // TODO: BigInt
 
         let number = self.emit_bitwise_or(lnum, rnum);
@@ -1222,9 +1223,20 @@ where
         self.operand_stack.push(rhs);
     }
 
+    fn process_falsy_short_circuit(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.perform_to_boolean(&operand);
+        let boolean = self.emit_logical_not(boolean);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+        self.process_if_then(true);
+        self.operand_stack.push(operand);
+        self.process_else(true);
+    }
+
     fn process_truthy(&mut self) {
         let (operand, _) = self.dereference();
-        let boolean = self.perform_to_boolean(operand);
+        let boolean = self.perform_to_boolean(&operand);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
     }
@@ -1338,17 +1350,17 @@ where
         }
     }
 
-    fn perform_to_boolean(&mut self, operand: Operand) -> BooleanIr {
+    fn perform_to_boolean(&mut self, operand: &Operand) -> BooleanIr {
         match operand {
             Operand::Undefined | Operand::Null => self.emit_boolean(false),
-            Operand::Boolean(value, ..) => value,
-            Operand::Number(value, ..) => self.emit_number_to_boolean(value),
+            Operand::Boolean(value, ..) => *value,
+            Operand::Number(value, ..) => self.emit_number_to_boolean(*value),
             Operand::String(..) => todo!(),
             Operand::Closure(_) => self.emit_boolean(true),
             // | Operand::Object(_) | Operand::Promise(_) => {
             //     self.bridge.get_boolean(true)
             // }
-            Operand::Any(value, ..) => self.emit_to_boolean(value),
+            Operand::Any(value, ..) => self.emit_to_boolean(*value),
             Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
             // | Operand::Coroutine(_)
             // | Operand::VariableReference(..)
@@ -1357,17 +1369,17 @@ where
     }
 
     // 7.1.4 ToNumber ( argument )
-    fn apply_to_numeric(&mut self, operand: Operand) -> NumberIr {
+    fn perform_to_numeric(&mut self, operand: &Operand) -> NumberIr {
         logger::debug!(event = "to_numeric", ?operand);
         match operand {
             Operand::Undefined => self.emit_number(f64::NAN),
             Operand::Null => self.emit_number(0.0),
-            Operand::Boolean(value, ..) => self.emit_boolean_to_number(value),
-            Operand::Number(value, ..) => value,
+            Operand::Boolean(value, ..) => self.emit_boolean_to_number(*value),
+            Operand::Number(value, ..) => *value,
             Operand::String(..) => unimplemented!("string.to_numeric"),
             Operand::Closure(_) => self.emit_number(f64::NAN),
             // Operand::Object(_) => unimplemented!("object.to_numeric"),
-            Operand::Any(value, ..) => self.emit_to_numeric(value),
+            Operand::Any(value, ..) => self.emit_to_numeric(*value),
             Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
             // | Operand::Coroutine(_)
             // | Operand::Promise(_)
@@ -1381,7 +1393,7 @@ where
     // 13.4.5.1 Runtime Semantics: Evaluation
     fn perform_incr_decr(&mut self, pos: char, op: char) {
         let (operand, reference) = self.dereference();
-        let old_value = self.apply_to_numeric(operand);
+        let old_value = self.perform_to_numeric(&operand);
         // TODO: BigInt
         let one = self.emit_number(1.0);
         let new_value = if op == '+' {
@@ -1750,11 +1762,11 @@ where
 
     fn is_exception_status(&mut self, status: StatusIr) -> BooleanIr {
         logger::debug!(event = "is_exception_status", ?status);
-        BooleanIr(self.builder.ins().icmp_imm(
-            IntCC::Equal,
-            status.0,
-            Status::EXCEPTION.0 as i64,
-        ))
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(IntCC::Equal, status.0, Status::EXCEPTION.0 as i64),
+        )
     }
 
     // FunctionControlSet | flow_selector
@@ -2586,13 +2598,14 @@ where
     #[allow(unused)]
     fn emit_call_print_value(&mut self, value: AnyIr, msg: &'static CStr) {
         logger::debug!(event = "emit_call_print_value", ?value);
-        let func = self.runtime_func_cache.get_print_value(self.module, self.builder.func);
-        let msg = self.builder.ins().iconst(self.ptr_type, msg.as_ptr() as i64);
-        let args = [
-            self.get_runtime_ptr(),
-            value.0,
-            msg,
-        ];
+        let func = self
+            .runtime_func_cache
+            .get_print_value(self.module, self.builder.func);
+        let msg = self
+            .builder
+            .ins()
+            .iconst(self.ptr_type, msg.as_ptr() as i64);
+        let args = [self.get_runtime_ptr(), value.0, msg];
         self.builder.ins().call(func, &args);
     }
 }
