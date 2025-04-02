@@ -477,6 +477,7 @@ where
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::IfThen(expr) => self.process_if_then(*expr),
             CompileCommand::Else(expr) => self.process_else(*expr),
+            CompileCommand::IfElseStatement => self.process_if_else_statement(),
             CompileCommand::IfStatement => self.process_if_statement(),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Discard => self.process_discard(),
@@ -1250,28 +1251,29 @@ where
             self.operand_stack.pop();
         }
         let merge_block = self.control_flow_stack.merge_block();
-        self.emit_jump(merge_block, &[]);
+        if self.block_terminated {
+            // We should not append any instructions after a terminator instruction such as `ret`.
+        } else {
+            self.emit_jump(merge_block, &[]);
+        }
         let then_block = self.current_block();
         let else_block = self.control_flow_stack.update_then_block(then_block);
         //self.bridge.move_basic_block_after(else_block);
         self.switch_to_block(else_block);
     }
 
+    fn process_if_else_statement(&mut self) {
+        let flow = self.control_flow_stack.pop_if_then_else_flow();
+        self.emit_jump_if_not_terminated(flow.merge_block, &[]);
+        self.switch_to_block(flow.merge_block);
+    }
+
     fn process_if_statement(&mut self) {
         let flow = self.control_flow_stack.pop_if_then_else_flow();
-        let block = self.create_block();
-
-        if self.block_terminated {
-            // We should not append any instructions after a terminator instruction such as `ret`.
-        } else {
-            self.emit_jump(block, &[]);
-        }
-
-        //self.bridge.move_basic_block_after(flow.else_block);
+        self.emit_jump_if_not_terminated(flow.merge_block, &[]);
         self.switch_to_block(flow.else_block);
-        self.emit_jump(block, &[]);
-
-        self.switch_to_block(block);
+        self.emit_jump(flow.merge_block, &[]);
+        self.switch_to_block(flow.merge_block);
     }
 
     fn process_return(&mut self, n: u32) {
@@ -2227,6 +2229,14 @@ where
         debug_assert!(!self.block_terminated);
         self.builder.ins().jump(block, params);
         self.block_terminated = true;
+    }
+
+    fn emit_jump_if_not_terminated(&mut self, block: Block, params: &[Value]) {
+        if self.block_terminated {
+            // We should not append any instructions after a terminator instruction.
+        } else {
+            self.emit_jump(block, params);
+        }
     }
 
     fn emit_return(&mut self, status: StatusIr) {
