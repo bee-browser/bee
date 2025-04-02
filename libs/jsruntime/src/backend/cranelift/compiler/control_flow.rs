@@ -492,8 +492,7 @@ impl ControlFlowStack {
                 ExceptionState::Finally => unreachable!(),
             }
         } else {
-            //self.cleanup_block()
-            todo!()
+            self.cleanup_block()
         }
     }
 
