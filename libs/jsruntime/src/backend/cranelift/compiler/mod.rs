@@ -476,6 +476,7 @@ where
             CompileCommand::Ternary => self.process_ternary(),
             CompileCommand::Assignment => self.process_assignment(),
             CompileCommand::FalsyShortCircuit => self.process_falsy_short_circuit(),
+            CompileCommand::TruthyShortCircuit => self.process_truthy_short_circuit(),
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::IfThen(expr) => self.process_if_then(*expr),
             CompileCommand::Else(expr) => self.process_else(*expr),
@@ -1227,6 +1228,16 @@ where
         let (operand, _) = self.dereference();
         let boolean = self.perform_to_boolean(&operand);
         let boolean = self.emit_logical_not(boolean);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+        self.process_if_then(true);
+        self.operand_stack.push(operand);
+        self.process_else(true);
+    }
+
+    fn process_truthy_short_circuit(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.perform_to_boolean(&operand);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
         self.process_if_then(true);
