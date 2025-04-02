@@ -2,6 +2,7 @@ use std::ffi::c_void;
 use std::mem::offset_of;
 use std::ptr::addr_eq;
 
+use crate::logger;
 use crate::Runtime;
 use crate::objects::Object;
 
@@ -49,6 +50,7 @@ impl Value {
     }
 
     pub fn into_result(self, status: Status) -> Result<Value, Value> {
+        logger::debug!(event = "into_result", ?status);
         match status {
             Status::Normal => Ok(self),
             Status::Exception => Err(self),

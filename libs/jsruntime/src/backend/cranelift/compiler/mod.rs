@@ -1,6 +1,7 @@
 mod control_flow;
 mod runtime;
 
+use std::ffi::CStr;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
@@ -480,6 +481,7 @@ where
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
             CompileCommand::IfStatement => self.process_if_statement(),
             CompileCommand::Return(n) => self.process_return(*n),
+            CompileCommand::Throw => self.process_throw(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
@@ -1300,8 +1302,18 @@ where
     }
 
     fn process_throw(&mut self) {
-        let (_operand, _) = self.dereference();
-        // TODO
+        let (operand, _) = self.dereference();
+        self.store_operand_to_retv(&operand);
+
+        let fcs = self.control_flow_stack.function_flow().fcs;
+        self.set_status(fcs, Status::EXCEPTION);
+        self.set_flow_selector(fcs, FlowSelector::THROW);
+
+        let next_block = self.control_flow_stack.exception_block();
+        self.emit_jump(next_block, &[]);
+
+        let block = self.create_block_for_deadcode();
+        self.switch_to_block(block);
     }
 
     fn process_swap(&mut self) {
@@ -1736,6 +1748,15 @@ where
         self.builder.ins().stack_store(value, fcs.0, 0);
     }
 
+    fn is_exception_status(&mut self, status: StatusIr) -> BooleanIr {
+        logger::debug!(event = "is_exception_status", ?status);
+        BooleanIr(self.builder.ins().icmp_imm(
+            IntCC::Equal,
+            status.0,
+            Status::EXCEPTION.0 as i64,
+        ))
+    }
+
     // FunctionControlSet | flow_selector
 
     fn set_flow_selector(&mut self, fcs: FunctionControlSet, value: FlowSelector) {
@@ -1759,6 +1780,11 @@ where
     fn store_operand_to_retv(&mut self, operand: &Operand) {
         let retv = self.get_retv();
         self.emit_store_operand_to_any(operand, retv);
+    }
+
+    fn store_any_to_retv(&mut self, any: AnyIr) {
+        let retv = self.get_retv();
+        self.emit_store_any_to_any(any, retv);
     }
 
     // operations on blocks
@@ -1980,12 +2006,7 @@ where
                 self.builder.ins().store(FLAGS, kind, any.0, 0);
                 self.builder.ins().store(FLAGS, value.0, any.0, 8);
             }
-            Operand::Any(value, _) => {
-                // TODO(perf): should use memcpy?
-                static_assert_eq!(size_of::<crate::types::Value>() * 8, 128);
-                let opaque = self.builder.ins().load(types::I128, FLAGS, value.0, 0);
-                self.builder.ins().store(FLAGS, opaque, any.0, 0);
-            }
+            Operand::Any(value, _) => self.emit_store_any_to_any(*value, any),
             Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
         }
     }
@@ -2002,6 +2023,14 @@ where
         // TODO: Value::KIND_UNDEFINED
         let kind = self.builder.ins().iconst(types::I8, 1);
         self.builder.ins().store(FLAGS, kind, any.0, 0);
+    }
+
+    fn emit_store_any_to_any(&mut self, src: AnyIr, dst: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO(perf): should use memcpy?
+        static_assert_eq!(size_of::<crate::types::Value>() * 8, 128);
+        let opaque = self.builder.ins().load(types::I128, FLAGS, src.0, 0);
+        self.builder.ins().store(FLAGS, opaque, dst.0, 0);
     }
 
     // instructions
@@ -2531,8 +2560,40 @@ where
         CaptureIr(self.builder.ins().iadd_imm(ptr, offset as i64))
     }
 
-    fn emit_check_status_for_exception(&mut self, _status: StatusIr, _retv: AnyIr) {
-        // TODO
+    fn emit_check_status_for_exception(&mut self, status: StatusIr, retv: AnyIr) {
+        logger::debug!(event = "emit_check_status_for_exception", ?status, ?retv);
+
+        let exception_block = self.control_flow_stack.exception_block();
+
+        let then_block = self.create_block();
+        let merge_block = self.create_block();
+
+        // if status.is_exception()
+        let is_exception = self.is_exception_status(status);
+        self.emit_brif(is_exception, then_block, &[], merge_block, &[]);
+        // {
+        self.switch_to_block(then_block);
+        let fcs = self.control_flow_stack.function_flow().fcs;
+        self.set_status(fcs, Status::EXCEPTION);
+        self.set_flow_selector(fcs, FlowSelector::THROW);
+        self.store_any_to_retv(retv);
+        self.emit_jump(exception_block, &[]);
+        // }
+
+        self.switch_to_block(merge_block);
+    }
+
+    #[allow(unused)]
+    fn emit_call_print_value(&mut self, value: AnyIr, msg: &'static CStr) {
+        logger::debug!(event = "emit_call_print_value", ?value);
+        let func = self.runtime_func_cache.get_print_value(self.module, self.builder.func);
+        let msg = self.builder.ins().iconst(self.ptr_type, msg.as_ptr() as i64);
+        let args = [
+            self.get_runtime_ptr(),
+            value.0,
+            msg,
+        ];
+        self.builder.ins().call(func, &args);
     }
 }
 
