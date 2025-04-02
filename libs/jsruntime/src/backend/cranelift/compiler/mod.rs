@@ -477,6 +477,7 @@ where
             CompileCommand::Assignment => self.process_assignment(),
             CompileCommand::FalsyShortCircuit => self.process_falsy_short_circuit(),
             CompileCommand::TruthyShortCircuit => self.process_truthy_short_circuit(),
+            CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::IfThen(expr) => self.process_if_then(*expr),
             CompileCommand::Else(expr) => self.process_else(*expr),
@@ -1245,6 +1246,16 @@ where
         self.process_else(true);
     }
 
+    fn process_nullish_short_circuit(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.perform_is_non_nullish(&operand);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+        self.process_if_then(true);
+        self.operand_stack.push(operand);
+        self.process_else(true);
+    }
+
     fn process_truthy(&mut self) {
         let (operand, _) = self.dereference();
         let boolean = self.perform_to_boolean(&operand);
@@ -1353,6 +1364,23 @@ where
     }
 
     // commonly used functions
+
+    fn perform_is_non_nullish(&mut self, operand: &Operand) -> BooleanIr {
+        match operand {
+            Operand::Undefined | Operand::Null => self.emit_boolean(false),
+            Operand::Boolean(..)
+            | Operand::Number(..)
+            | Operand::Closure(_) => self.emit_boolean(true),
+            // | Operand::Object(_)
+            // | Operand::Promise(_) => self.emit_boolean(true),
+            Operand::String(..) => todo!(),
+            Operand::Any(value, ..) => self.emit_is_non_nullish(*value),
+            Operand::Lambda(_)
+            // | Operand::Coroutine(_)
+            | Operand::VariableReference(..) => unreachable!(),
+            // | Operand::PropertyReference(_) => unreachable!(),
+        }
+    }
 
     fn pop_boolean(&mut self) -> BooleanIr {
         match self.operand_stack.pop().unwrap() {
@@ -2367,6 +2395,17 @@ where
         let kind = self.emit_load_kind(any);
         // TODO(refactor): Value::KIND_NULL
         BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, kind, 2))
+    }
+
+    fn emit_is_non_nullish(&mut self, any: AnyIr) -> BooleanIr {
+        logger::debug!(event = "emit_is_non_nullish", ?any);
+        let kind = self.emit_load_kind(any);
+        // TODO(refactor): Value::KIND_NULL
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(IntCC::UnsignedGreaterThan, kind, 2),
+        )
     }
 
     fn emit_is_boolean(&mut self, any: AnyIr) -> BooleanIr {
