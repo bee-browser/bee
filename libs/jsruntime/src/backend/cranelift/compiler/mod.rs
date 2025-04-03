@@ -483,6 +483,10 @@ where
             CompileCommand::Else(expr) => self.process_else(*expr),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
             CompileCommand::IfStatement => self.process_if_statement(),
+            CompileCommand::WhileLoop(id) => self.process_while_loop(*id),
+            CompileCommand::LoopTest => self.process_loop_test(),
+            CompileCommand::LoopBody => self.process_loop_body(),
+            CompileCommand::LoopEnd => self.process_loop_end(),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Throw => self.process_throw(),
             CompileCommand::Discard => self.process_discard(),
@@ -1307,6 +1311,76 @@ where
         self.switch_to_block(flow.merge_block);
     }
 
+    fn process_while_loop(&mut self, _id: u16) {
+        let loop_test = self.create_block();
+        let loop_body = self.create_block();
+        let loop_ctrl = self.create_block();
+        let loop_exit = self.create_block();
+
+        let loop_start = loop_test;
+        let loop_continue = loop_test;
+        let loop_break = loop_exit;
+
+        self.control_flow_stack
+            .push_loop_body_flow(loop_ctrl, loop_exit);
+        self.control_flow_stack
+            .push_loop_test_flow(loop_body, loop_exit, loop_body);
+
+        self.emit_jump(loop_start, &[]);
+
+        self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
+
+        self.switch_to_block(loop_start);
+    }
+
+    fn build_loop_ctrl_block(&mut self, loop_ctrl: Block, loop_continue: Block, loop_break: Block) {
+        let set_normal_block = self.create_block();
+        let break_or_continue_block = self.create_block();
+
+        self.control_flow_stack.push_exit_target(loop_ctrl, true);
+        for label in std::mem::take(&mut self.pending_labels).into_iter() {
+            self.control_flow_stack.set_exit_label(label);
+        }
+        let exit_id = self.control_flow_stack.exit_id();
+
+        self.switch_to_block(loop_ctrl);
+        let fcs = self.control_flow_stack.function_flow().fcs;
+        let is_normal_or_continue = self.is_flow_selector_normal_or_continue(fcs, exit_id.depth());
+        let is_break_or_continue = self.is_flow_selector_break_or_continue(fcs, exit_id.depth());
+        self.emit_brif(
+            is_break_or_continue,
+            set_normal_block,
+            &[],
+            break_or_continue_block,
+            &[],
+        );
+
+        self.switch_to_block(set_normal_block);
+        self.set_flow_selector(fcs, FlowSelector::NORMAL);
+        self.emit_jump(break_or_continue_block, &[]);
+
+        self.switch_to_block(break_or_continue_block);
+        self.emit_brif(is_normal_or_continue, loop_continue, &[], loop_break, &[]);
+    }
+
+    fn process_loop_test(&mut self) {
+        let loop_test = self.control_flow_stack.pop_loop_test_flow();
+        let (operand, _) = self.dereference();
+        let cond = self.perform_to_boolean(&operand);
+        self.emit_brif(cond, loop_test.then_block, &[], loop_test.else_block, &[]);
+        self.switch_to_block(loop_test.insert_point);
+    }
+
+    fn process_loop_body(&mut self) {
+        let loop_body = self.control_flow_stack.pop_loop_body_flow();
+        self.emit_jump(loop_body.branch_block, &[]);
+        self.switch_to_block(loop_body.insert_point);
+    }
+
+    fn process_loop_end(&mut self) {
+        self.control_flow_stack.pop_exit_target();
+    }
+
     fn process_return(&mut self, n: u32) {
         if n > 0 {
             debug_assert_eq!(n, 1);
@@ -1825,6 +1899,35 @@ where
             flow_selector,
             FlowSelector::NORMAL.0 as i64,
         ))
+    }
+
+    fn is_flow_selector_normal_or_continue(
+        &mut self,
+        fcs: FunctionControlSet,
+        depth: u32,
+    ) -> BooleanIr {
+        logger::debug!(event = "is_flow_selector_normal_or_continue");
+        let flow_selector = self.builder.ins().stack_load(types::I32, fcs.0, 4);
+        BooleanIr(self.builder.ins().icmp_imm(
+            IntCC::UnsignedGreaterThan,
+            flow_selector,
+            FlowSelector::break_at((depth >> 8) as u8).0 as i64,
+        ))
+    }
+
+    fn is_flow_selector_break_or_continue(
+        &mut self,
+        fcs: FunctionControlSet,
+        depth: u32,
+    ) -> BooleanIr {
+        logger::debug!(event = "is_flow_selector_break_or_continue");
+        let flow_selector = self.builder.ins().stack_load(types::I32, fcs.0, 4);
+        let fs_depth = self.builder.ins().band_imm(flow_selector, 0x0000FF00);
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(IntCC::Equal, fs_depth, depth as i64),
+        )
     }
 
     // retv
