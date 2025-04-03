@@ -19,6 +19,7 @@ use rustc_hash::FxHashMap;
 
 use base::static_assert_eq;
 use jsparser::Symbol;
+use jsparser::syntax::LoopFlags;
 
 use super::CompileError;
 use super::LambdaId;
@@ -485,7 +486,10 @@ where
             CompileCommand::IfStatement => self.process_if_statement(),
             CompileCommand::DoWhileLoop(id) => self.process_do_while_loop(*id),
             CompileCommand::WhileLoop(id) => self.process_while_loop(*id),
+            CompileCommand::ForLoop(id, flags) => self.process_for_loop(*id, *flags),
+            CompileCommand::LoopInit => self.process_loop_init(),
             CompileCommand::LoopTest => self.process_loop_test(),
+            CompileCommand::LoopNext => self.process_loop_next(),
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
             CompileCommand::Return(n) => self.process_return(*n),
@@ -1356,6 +1360,76 @@ where
         self.switch_to_block(loop_start);
     }
 
+    // TODO: rewrite using if and break
+    fn process_for_loop(&mut self, _id: u16, flags: LoopFlags) {
+        let has_init = flags.contains(LoopFlags::HAS_INIT);
+        let has_test = flags.contains(LoopFlags::HAS_TEST);
+        let has_next = flags.contains(LoopFlags::HAS_NEXT);
+
+        let loop_init = self.create_block();
+        let loop_test = self.create_block();
+        let loop_body = self.create_block();
+        let loop_ctrl = self.create_block();
+        let loop_next = self.create_block();
+        let loop_exit = self.create_block();
+
+        let mut loop_start = loop_body;
+        let mut loop_continue = loop_body;
+        let loop_break = loop_exit;
+        let mut insert_point = loop_body;
+
+        self.control_flow_stack
+            .push_loop_body_flow(loop_ctrl, loop_exit);
+
+        if has_next {
+            if has_test {
+                self.control_flow_stack
+                    .push_loop_next_flow(loop_test, loop_body);
+            } else {
+                self.control_flow_stack
+                    .push_loop_next_flow(loop_body, loop_body);
+            }
+            loop_continue = loop_next;
+            insert_point = loop_next;
+        }
+
+        if has_test {
+            if has_next {
+                self.control_flow_stack
+                    .push_loop_test_flow(loop_body, loop_exit, loop_next);
+            } else {
+                self.control_flow_stack
+                    .push_loop_test_flow(loop_body, loop_exit, loop_body);
+            }
+            loop_start = loop_test;
+            if !has_next {
+                loop_continue = loop_test;
+            }
+            insert_point = loop_test;
+        }
+
+        if has_init {
+            if has_test {
+                self.control_flow_stack
+                    .push_loop_init_flow(loop_test, loop_test);
+            } else if has_next {
+                self.control_flow_stack
+                    .push_loop_init_flow(loop_body, loop_next);
+            } else {
+                self.control_flow_stack
+                    .push_loop_init_flow(loop_body, loop_body);
+            }
+            loop_start = loop_init;
+            insert_point = loop_init;
+        }
+
+        self.emit_jump(loop_start, &[]);
+
+        self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
+
+        self.switch_to_block(insert_point);
+    }
+
     fn build_loop_ctrl_block(&mut self, loop_ctrl: Block, loop_continue: Block, loop_break: Block) {
         let set_normal_block = self.create_block();
         let break_or_continue_block = self.create_block();
@@ -1386,12 +1460,26 @@ where
         self.emit_brif(is_normal_or_continue, loop_continue, &[], loop_break, &[]);
     }
 
+    fn process_loop_init(&mut self) {
+        let loop_init = self.control_flow_stack.pop_loop_init_flow();
+        self.emit_jump(loop_init.branch_block, &[]);
+        self.switch_to_block(loop_init.insert_point);
+    }
+
     fn process_loop_test(&mut self) {
         let loop_test = self.control_flow_stack.pop_loop_test_flow();
         let (operand, _) = self.dereference();
         let cond = self.perform_to_boolean(&operand);
         self.emit_brif(cond, loop_test.then_block, &[], loop_test.else_block, &[]);
         self.switch_to_block(loop_test.insert_point);
+    }
+
+    fn process_loop_next(&mut self) {
+        let loop_next = self.control_flow_stack.pop_loop_next_flow();
+        // Discard the evaluation result.
+        self.process_discard();
+        self.emit_jump(loop_next.branch_block, &[]);
+        self.switch_to_block(loop_next.insert_point);
     }
 
     fn process_loop_body(&mut self) {
