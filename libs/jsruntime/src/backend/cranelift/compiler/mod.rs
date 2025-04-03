@@ -492,6 +492,7 @@ where
             CompileCommand::LoopNext => self.process_loop_next(),
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
+            CompileCommand::Continue(symbol) => self.process_continue(*symbol),
             CompileCommand::Break(symbol) => self.process_break(*symbol),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Throw => self.process_throw(),
@@ -1493,10 +1494,24 @@ where
         self.control_flow_stack.pop_exit_target();
     }
 
+    fn process_continue(&mut self, label: Symbol) {
+        let fcs = self.control_flow_stack.function_flow().fcs;
+        let exit_id = self.control_flow_stack.exit_id_for_label(label);
+        let flow_selector = FlowSelector::continue_at(exit_id.depth());
+        self.set_flow_selector(fcs, flow_selector);
+
+        let block = self.control_flow_stack.exit_block();
+        self.emit_jump(block, &[]);
+
+        let block = self.create_block_for_deadcode();
+        self.switch_to_block(block);
+    }
+
     fn process_break(&mut self, label: Symbol) {
         let fcs = self.control_flow_stack.function_flow().fcs;
         let exit_id = self.control_flow_stack.exit_id_for_label(label);
-        self.set_flow_selector(fcs, FlowSelector::break_at(exit_id.depth()));
+        let flow_selector = FlowSelector::break_at(exit_id.depth());
+        self.set_flow_selector(fcs, flow_selector);
 
         let block = self.control_flow_stack.exit_block();
         self.emit_jump(block, &[]);
