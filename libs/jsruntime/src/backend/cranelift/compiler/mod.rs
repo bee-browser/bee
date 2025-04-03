@@ -492,6 +492,7 @@ where
             CompileCommand::LoopNext => self.process_loop_next(),
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
+            CompileCommand::Break(symbol) => self.process_break(*symbol),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Throw => self.process_throw(),
             CompileCommand::Discard => self.process_discard(),
@@ -1492,6 +1493,18 @@ where
         self.control_flow_stack.pop_exit_target();
     }
 
+    fn process_break(&mut self, label: Symbol) {
+        let fcs = self.control_flow_stack.function_flow().fcs;
+        let exit_id = self.control_flow_stack.exit_id_for_label(label);
+        self.set_flow_selector(fcs, FlowSelector::break_at(exit_id.depth()));
+
+        let block = self.control_flow_stack.exit_block();
+        self.emit_jump(block, &[]);
+
+        let block = self.create_block_for_deadcode();
+        self.switch_to_block(block);
+    }
+
     fn process_return(&mut self, n: u32) {
         if n > 0 {
             debug_assert_eq!(n, 1);
@@ -2022,7 +2035,7 @@ where
         BooleanIr(self.builder.ins().icmp_imm(
             IntCC::UnsignedGreaterThan,
             flow_selector,
-            FlowSelector::break_at((depth >> 8) as u8).0 as i64,
+            FlowSelector::break_at(depth).0 as i64,
         ))
     }
 
@@ -3042,15 +3055,15 @@ impl FlowSelector {
     const RETURN: Self = Self::new(0, 0, Self::KIND_RETURN);
     const THROW: Self = Self::new(0, 0, Self::KIND_THROW);
 
-    const fn new(extra: u16, depth: u8, kind: u8) -> Self {
-        Self(((extra as u32) << 16) | ((depth as u32) << 8) | (kind as u32))
+    const fn new(extra: u16, depth: u32, kind: u8) -> Self {
+        Self(((extra as u32) << 16) | depth | (kind as u32))
     }
 
-    const fn break_at(depth: u8) -> Self {
+    const fn break_at(depth: u32) -> Self {
         Self::new(0, depth, Self::KIND_BREAK)
     }
 
-    const fn continue_at(depth: u8) -> Self {
+    const fn continue_at(depth: u32) -> Self {
         Self::new(0, depth, Self::KIND_CONTINUE)
     }
 }
