@@ -667,15 +667,35 @@ where
     fn process_declare_vars(&mut self, func: &Function, scope_ref: ScopeRef) {
         debug_assert!(self.scope_tree.scope(scope_ref).is_function());
 
-        let scope = self.scope_tree.scope(scope_ref);
-        for variable in scope.variables.iter() {
+        // In the specification, function-scoped variables defined by "VariableStatement"s are
+        // created in "10.2.11 FunctionDeclarationInstantiation ( func, argumentsList )".  We
+        // create them here for simplicity but this still works properly for well-formed JavaScript
+        // programs.
+        //
+        // Function-scoped variables are created in the `init` basic block of the current scope.
+        // The `init` basic block is performed before the `hoisted` basic block on which inner
+        // functions defined by "FunctionDeclaration"s are created.
+
+        // TODO(refactor): inefficient
+        for (variable_ref, variable) in self.scope_tree.iter_variables(scope_ref) {
+            if !variable.is_function_scoped() {
+                continue;
+            }
+            let slot = match self.scope_tree.compute_locator(variable_ref) {
+                Locator::Local(index) => self.locals[index as usize],
+                locator => unreachable!("{locator:?}"),
+            };
+            self.emit_store_undefined_to_slot(slot, 0);
+        }
+
+        // TODO(refactor): hoistable declarations.
+        // TODO(fix): preserve declaration order.
+        for variable in self.scope_tree.scope(scope_ref).variables.iter() {
             // TODO(fix): preserve declaration order.
             for command in func.commands[variable.init_commands_range.clone()].iter() {
                 self.process_command(func, command);
             }
         }
-
-        // TODO
     }
 
     fn process_declare_closure(&mut self) {
@@ -2256,11 +2276,7 @@ where
     fn emit_store_operand_to_slot(&mut self, operand: &Operand, slot: StackSlot, index: u16) {
         let base_offset = (Self::VALUE_SIZE as i32) * (index as i32);
         match operand {
-            Operand::Undefined => {
-                // TODO: Value::KIND_UNDEFINED
-                let kind = self.builder.ins().iconst(types::I8, 1);
-                self.builder.ins().stack_store(kind, slot, base_offset);
-            }
+            Operand::Undefined => self.emit_store_undefined_to_slot(slot, index),
             Operand::Null => {
                 // TODO: Value::KIND_NULL
                 let kind = self.builder.ins().iconst(types::I8, 2);
@@ -2307,6 +2323,14 @@ where
             }
             Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
         }
+    }
+
+    fn emit_store_undefined_to_slot(&mut self, slot: StackSlot, index: u16) {
+        logger::debug!(event = "emit_store_undefined_to_slot", ?slot, index);
+        let base_offset = (Self::VALUE_SIZE as i32) * (index as i32);
+        // TODO: Value::KIND_UNDEFINED
+        let kind = self.builder.ins().iconst(types::I8, 1);
+        self.builder.ins().stack_store(kind, slot, base_offset);
     }
 
     fn emit_store_operand_to_any(&mut self, operand: &Operand, any: AnyIr) {
