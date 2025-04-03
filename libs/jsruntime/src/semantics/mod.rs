@@ -1218,6 +1218,7 @@ impl FunctionAnalysis {
                 .push(CompileCommand::VariableReference(symbol));
             self.commands.push(CompileCommand::Swap);
             self.commands.push(CompileCommand::Assignment);
+            self.commands.push(CompileCommand::Discard);
         }
 
         self.function_scoped_symbols
