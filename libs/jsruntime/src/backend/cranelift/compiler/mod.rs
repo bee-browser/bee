@@ -483,6 +483,7 @@ where
             CompileCommand::Else(expr) => self.process_else(*expr),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
             CompileCommand::IfStatement => self.process_if_statement(),
+            CompileCommand::DoWhileLoop(id) => self.process_do_while_loop(*id),
             CompileCommand::WhileLoop(id) => self.process_while_loop(*id),
             CompileCommand::LoopTest => self.process_loop_test(),
             CompileCommand::LoopBody => self.process_loop_body(),
@@ -1309,6 +1310,28 @@ where
         self.switch_to_block(flow.else_block);
         self.emit_jump(flow.merge_block, &[]);
         self.switch_to_block(flow.merge_block);
+    }
+
+    fn process_do_while_loop(&mut self, _id: u16) {
+        let loop_body = self.create_block();
+        let loop_ctrl = self.create_block();
+        let loop_test = self.create_block();
+        let loop_exit = self.create_block();
+
+        let loop_start = loop_body;
+        let loop_continue = loop_test;
+        let loop_break = loop_exit;
+
+        self.control_flow_stack
+            .push_loop_test_flow(loop_body, loop_exit, loop_exit);
+        self.control_flow_stack
+            .push_loop_body_flow(loop_ctrl, loop_test);
+
+        self.emit_jump(loop_start, &[]);
+
+        self.build_loop_ctrl_block(loop_ctrl, loop_continue, loop_break);
+
+        self.switch_to_block(loop_start);
     }
 
     fn process_while_loop(&mut self, _id: u16) {
