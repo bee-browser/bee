@@ -492,6 +492,12 @@ where
             CompileCommand::LoopNext => self.process_loop_next(),
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
+            CompileCommand::LabelStart(symbol, is_iteration_statement) => {
+                self.process_label_start(*symbol, *is_iteration_statement)
+            }
+            CompileCommand::LabelEnd(symbol, is_iteration_statement) => {
+                self.process_label_end(*symbol, *is_iteration_statement)
+            }
             CompileCommand::Continue(symbol) => self.process_continue(*symbol),
             CompileCommand::Break(symbol) => self.process_break(*symbol),
             CompileCommand::Return(n) => self.process_return(*n),
@@ -1492,6 +1498,40 @@ where
 
     fn process_loop_end(&mut self) {
         self.control_flow_stack.pop_exit_target();
+    }
+
+    fn process_label_start(&mut self, label: Symbol, is_iteration_statement: bool) {
+        debug_assert_ne!(label, Symbol::NONE);
+
+        if is_iteration_statement {
+            // Special treatments are needed for iteration statements.
+            // See `build_loop_ctrl_block()` for details.
+            if is_iteration_statement {
+                debug_assert!(!self.pending_labels.contains(&label));
+                self.pending_labels.push(label);
+            }
+        } else {
+            let start_block = self.create_block();
+            let end_block = self.create_block();
+
+            self.emit_jump(start_block, &[]);
+            self.switch_to_block(start_block);
+
+            self.control_flow_stack.push_exit_target(end_block, false);
+            self.control_flow_stack.set_exit_label(label);
+        }
+    }
+
+    fn process_label_end(&mut self, label: Symbol, is_iteration_statement: bool) {
+        debug_assert_ne!(label, Symbol::NONE);
+
+        if is_iteration_statement {
+            debug_assert!(self.pending_labels.is_empty());
+        } else {
+            let end_block = self.control_flow_stack.pop_exit_target();
+            self.emit_jump(end_block, &[]);
+            self.switch_to_block(end_block);
+        }
     }
 
     fn process_continue(&mut self, label: Symbol) {
