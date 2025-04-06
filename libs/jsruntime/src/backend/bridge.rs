@@ -388,6 +388,7 @@ unsafe extern "C" fn runtime_create_closure<X>(
     lambda: Lambda,
     num_captures: u16,
 ) -> *mut Closure {
+    logger::debug!(event = "runtime_create_closure", ?lambda, num_captures);
     let runtime = unsafe { into_runtime!(runtime, X) };
     runtime.create_closure(lambda, num_captures)
 }
@@ -398,6 +399,13 @@ unsafe extern "C" fn runtime_create_coroutine<X>(
     num_locals: u16,
     scratch_buffer_len: u16,
 ) -> *mut Coroutine {
+    logger::debug!(
+        event = "runtime_create_coroutine",
+        ?closure,
+        num_locals,
+        scratch_buffer_len
+    );
+
     const BASE_LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::offset_of!(Coroutine, locals),

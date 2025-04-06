@@ -8,6 +8,7 @@ use std::ops::DerefMut;
 use codegen::ir::FuncRef;
 use codegen::ir::SigRef;
 use codegen::ir::StackSlot;
+use cranelift::frontend::Switch;
 use cranelift::prelude::*;
 use cranelift_jit::JITBuilder;
 use cranelift_jit::JITModule;
@@ -220,13 +221,17 @@ struct Compiler<'r, 'a, 'c, R> {
     operand_stack: OperandStack,
 
     // The following values must be reset in the end of compilation for each function.
-    locals: Vec<StackSlot>,
+    locals: Vec<AnyIr>,
     captures: FxHashMap<Locator, CaptureIr>,
+
+    max_scratch_buffer_len: i32,
 
     skip_count: u16,
 
     /// FunctionBuilder::is_filled() is a private method.
     block_terminated: bool,
+
+    coroutine_context: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -297,8 +302,10 @@ where
             operand_stack: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
+            max_scratch_buffer_len: 0,
             skip_count: 0,
             block_terminated: false,
+            coroutine_context: false,
         }
     }
 
@@ -379,7 +386,7 @@ where
             .support
             .get_lambda_info(func.id)
             .is_coroutine
-            .then(|| self.control_flow_stack.pop_coroutine_flow().dormant_block);
+            .then(|| self.control_flow_stack.pop_coroutine_flow().dormant_block());
 
         self.control_flow_stack.pop_exit_target();
         let flow = self.control_flow_stack.pop_function_flow();
@@ -412,9 +419,10 @@ where
 
         let info = self.support.get_lambda_info_mut(func.id);
         if info.is_coroutine {
-            // TODO: info.scratch_buffer_len = self.max_scratch_buffer_len;
+            debug_assert!(self.max_scratch_buffer_len >= 0);
+            info.scratch_buffer_len = self.max_scratch_buffer_len as u32;
         }
-        // TODO: self.max_scratch_buffer_len = 0;
+        self.max_scratch_buffer_len = 0;
 
         self.builder.finalize();
     }
@@ -433,6 +441,10 @@ where
             CompileCommand::Closure(prologue, func_scope_ref) => {
                 self.process_closure(*prologue, *func_scope_ref)
             }
+            CompileCommand::Coroutine(lambda_id, num_locals) => {
+                self.process_coroutine(*lambda_id, *num_locals)
+            }
+            CompileCommand::Promise => self.process_promise(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
@@ -502,6 +514,10 @@ where
             CompileCommand::Break(symbol) => self.process_break(*symbol),
             CompileCommand::Return(n) => self.process_return(*n),
             CompileCommand::Throw => self.process_throw(),
+            CompileCommand::Environment(num_locals) => self.process_environment(*num_locals),
+            CompileCommand::JumpTable(num_states) => self.process_jump_table(*num_states),
+            CompileCommand::Await(next_state) => self.process_await(*next_state),
+            CompileCommand::Resume => self.process_resume(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
@@ -610,12 +626,21 @@ where
         }
 
         self.operand_stack.push(Operand::Closure(closure));
+    }
 
-        /* TODO: hoisting
-        if prologue {
-            self.bridge.set_basic_block(backup);
-        }
-        */
+    fn process_coroutine(&mut self, lambda_id: LambdaId, num_locals: u16) {
+        let scrach_buffer_len = self.support.get_lambda_info(lambda_id).scratch_buffer_len;
+        debug_assert!(scrach_buffer_len <= u16::MAX as u32);
+        let closure = self.pop_closure();
+        let coroutine =
+            self.emit_runtime_create_coroutine(closure, num_locals, scrach_buffer_len as u16);
+        self.operand_stack.push(Operand::Coroutine(coroutine));
+    }
+
+    fn process_promise(&mut self) {
+        let coroutine = self.pop_coroutine();
+        let promise = self.emit_runtime_register_promise(coroutine);
+        self.operand_stack.push(Operand::Promise(promise));
     }
 
     fn process_variable_reference(&mut self, symbol: Symbol) {
@@ -633,9 +658,10 @@ where
             let slot = self.builder.create_sized_stack_slot(StackSlotData {
                 kind: StackSlotKind::ExplicitSlot,
                 size: Self::VALUE_SIZE as u32,
-                align_shift: Self::ALIGNMENT,
+                align_shift: Self::ALIGNMENT_LOG2,
             });
-            self.locals.push(slot);
+            let addr = self.builder.ins().stack_addr(self.ptr_type, slot, 0);
+            self.locals.push(AnyIr(addr));
         }
     }
 
@@ -643,24 +669,24 @@ where
         let (_symbol, locator) = self.pop_reference();
         let (operand, _) = self.dereference();
 
-        let slot = match locator {
-            Locator::Local(index) => self.locals[index as usize],
+        let local = match locator {
+            Locator::Local(index) => self.emit_get_local(index),
             _ => unreachable!(),
         };
 
-        self.emit_store_operand_to_slot(&operand, slot, 0);
+        self.emit_store_operand_to_any(&operand, local);
     }
 
     fn process_immutable_variable(&mut self) {
         let (_symbol, locator) = self.pop_reference();
         let (operand, _) = self.dereference();
 
-        let slot = match locator {
-            Locator::Local(index) => self.locals[index as usize],
+        let local = match locator {
+            Locator::Local(index) => self.emit_get_local(index),
             _ => unreachable!(),
         };
 
-        self.emit_store_operand_to_slot(&operand, slot, 0);
+        self.emit_store_operand_to_any(&operand, local);
     }
 
     // NOTE: This function may call `process_command()`.
@@ -681,11 +707,11 @@ where
             if !variable.is_function_scoped() {
                 continue;
             }
-            let slot = match self.scope_tree.compute_locator(variable_ref) {
-                Locator::Local(index) => self.locals[index as usize],
+            let local = match self.scope_tree.compute_locator(variable_ref) {
+                Locator::Local(index) => self.emit_get_local(index),
                 locator => unreachable!("{locator:?}"),
             };
-            self.emit_store_undefined_to_slot(slot, 0);
+            self.emit_store_undefined_to_any(local);
         }
 
         // TODO(refactor): hoistable declarations.
@@ -712,8 +738,8 @@ where
 
         match locator {
             Locator::Local(index) => {
-                let slot = self.locals[index as usize];
-                self.emit_store_operand_to_slot(&operand, slot, 0);
+                let local = self.emit_get_local(index);
+                self.emit_store_operand_to_any(&operand, local);
             }
             Locator::Global => {
                 let object = ObjectIr(self.emit_nullptr());
@@ -1598,6 +1624,565 @@ where
         self.switch_to_block(block);
     }
 
+    fn process_environment(&mut self, num_locals: u16) {
+        self.coroutine_context = true;
+
+        // Local variables and captured variables living outer scopes are loaded here from the
+        // `Coroutine` data passed via the `env` argument of the coroutine lambda function to be
+        // generated by the compiler.
+        for i in 0..num_locals {
+            let local = self.emit_get_local_from_coroutine(i);
+            self.locals.push(local);
+        }
+    }
+
+    fn process_jump_table(&mut self, num_states: u32) {
+        debug_assert!(num_states >= 2);
+
+        let state = self.emit_load_state_from_coroutine();
+
+        // TODO(perf): use JumpTable
+        let mut switch = Switch::new();
+        let mut blocks = vec![];
+        for i in 0..num_states - 1 {
+            let block = self.create_block();
+            blocks.push(block);
+            switch.set_entry(i as u128, block);
+        }
+        let done_block = self.create_block();
+        blocks.push(done_block);
+        switch.emit(&mut self.builder, state, done_block);
+
+        self.switch_to_block(done_block);
+        let x = self.emit_boolean(false);
+        self.emit_runtime_assert(x, c"the coroutine has already done");
+        self.emit_unreachable();
+
+        self.switch_to_block(blocks[0]);
+
+        self.control_flow_stack
+            .push_coroutine_flow(blocks, num_states);
+    }
+
+    fn emit_suspend(&mut self) {
+        logger::debug!(event = "emit_suspend");
+        let status = self
+            .builder
+            .ins()
+            .iconst(types::I32, Status::SUSPEND.0 as i64);
+        self.builder.ins().return_(&[status]);
+    }
+
+    fn process_await(&mut self, next_state: u32) {
+        self.perform_resolve_promise();
+        self.perform_save_operands_to_scratch_buffer();
+        self.emit_store_state_to_coroutine(next_state);
+        self.emit_suspend();
+
+        // resume block
+        let block = self.control_flow_stack.coroutine_next_block();
+        self.switch_to_block(block);
+        self.perform_load_operands_from_scratch_buffer();
+
+        let has_error_block = self.create_block();
+        let result_block = self.create_block();
+
+        // if ##error.has_value()
+        let error = self.emit_get_argument(2); // ##error
+        let has_error = self.emit_has_value(error);
+        self.emit_brif(has_error, has_error_block, &[], result_block, &[]);
+        // {
+        // throw ##error;
+        self.switch_to_block(has_error_block);
+        // TODO(pref): compile-time evaluation
+        self.operand_stack.push(Operand::Any(error, None));
+        self.process_throw();
+        self.emit_jump(result_block, &[]);
+        // }
+
+        self.switch_to_block(result_block);
+        let result = self.emit_get_argument(1); // ##result
+
+        // TODO(pref): compile-time evaluation
+        self.operand_stack.push(Operand::Any(result, None));
+    }
+
+    fn process_resume(&mut self) {
+        let promise = self.pop_promise();
+        self.emit_runtime_resume(promise);
+    }
+
+    // TODO(perf): Currently, we have to save all values (except for special cases) on the operand
+    // stack into the scratch buffer before the execution of the coroutine suspends.  However, we
+    // don't need to save some of them.  For example, there may be constant values on the operand
+    // stack.  Additionally, there may be values which will be computed to constant values after
+    // the LLVM IR compiler performs constant folding in optimization passes.
+    //
+    // NOTE: It's best to implement a special pass to determine which value on the operand stack
+    // has to be saved, but we don't like to tightly depend on LLVM.  Because we plan to replace it
+    // with another library written in Rust such as Cranelift in the future.
+    fn perform_save_operands_to_scratch_buffer(&mut self) {
+        logger::debug!(event = "perform_save_operands_to_scratch_buffer");
+        let scratch_buffer = self.emit_get_scratch_buffer_from_coroutine();
+        // Take the whole operand stack in order to avoid the borrow checker.
+        let operand_stack = std::mem::take(&mut self.operand_stack);
+        let mut offset = 0i32;
+        for operand in operand_stack.iter() {
+            match operand {
+                Operand::Boolean(value, ..) => {
+                    self.emit_write_boolean_to_scratch_buffer(scratch_buffer, offset, *value);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                Operand::Number(value, ..) => {
+                    self.emit_write_number_to_scratch_buffer(scratch_buffer, offset, *value);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                Operand::String(value, ..) => {
+                    // TODO(issue#237): GcCellRef
+                    self.emit_write_string_to_scratch_buffer(scratch_buffer, offset, *value);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                Operand::Closure(value) => {
+                    // TODO(issue#237): GcCellRef
+                    self.emit_write_closure_to_scratch_buffer(scratch_buffer, offset, *value);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                // Operand::Object(value) => {
+                //     // TODO(issue#237): GcCellRef
+                //     Self::emit_write_object_to_scratch_buffer(builder, scratch_buffer, offset, *value);
+                //     offset += Self::VALUE_HOLDER_SIZE;
+                // }
+                Operand::Promise(value) => {
+                    self.emit_write_promise_to_scratch_buffer(scratch_buffer, offset, *value);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                Operand::Any(value, ..) => {
+                    self.emit_write_any_to_scratch_buffer(scratch_buffer, offset, *value);
+                    offset += Self::VALUE_SIZE;
+                }
+                Operand::Undefined | Operand::Null | Operand::VariableReference(..) => (),
+                // | Operand::PropertyReference(_) => (),
+                Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
+            }
+        }
+        self.operand_stack = operand_stack;
+
+        // TODO: Should return a compile error.
+        assert!(offset <= u16::MAX as i32);
+        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset);
+    }
+
+    fn emit_write_boolean_to_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+        value: BooleanIr,
+    ) {
+        logger::debug!(
+            event = "emit_write_boolean_to_scratch_buffer",
+            ?scratch_buffer,
+            offset,
+            ?value
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        self.builder
+            .ins()
+            .store(FLAGS, value.0, scratch_buffer, offset);
+    }
+
+    fn emit_write_number_to_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+        value: NumberIr,
+    ) {
+        logger::debug!(
+            event = "emit_write_number_to_scratch_buffer",
+            ?scratch_buffer,
+            offset,
+            ?value
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        self.builder
+            .ins()
+            .store(FLAGS, value.0, scratch_buffer, offset);
+    }
+
+    fn emit_write_string_to_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+        value: StringIr,
+    ) {
+        logger::debug!(
+            event = "emit_write_string_to_scratch_buffer",
+            ?scratch_buffer,
+            offset,
+            ?value
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        self.builder
+            .ins()
+            .store(FLAGS, value.0, scratch_buffer, offset);
+    }
+
+    fn emit_write_closure_to_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+        value: ClosureIr,
+    ) {
+        logger::debug!(
+            event = "emit_write_closure_to_scratch_buffer",
+            ?scratch_buffer,
+            offset,
+            ?value
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        self.builder
+            .ins()
+            .store(FLAGS, value.0, scratch_buffer, offset);
+    }
+
+    fn emit_write_promise_to_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+        value: PromiseIr,
+    ) {
+        logger::debug!(
+            event = "emit_write_promise_to_scratch_buffer",
+            ?scratch_buffer,
+            offset,
+            ?value
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        self.builder
+            .ins()
+            .store(FLAGS, value.0, scratch_buffer, offset);
+    }
+
+    fn emit_write_any_to_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+        value: AnyIr,
+    ) {
+        logger::debug!(
+            event = "emit_write_any_to_scratch_buffer",
+            ?scratch_buffer,
+            offset,
+            ?value
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        let opaque = self.builder.ins().load(types::I128, FLAGS, value.0, 0);
+        self.builder
+            .ins()
+            .store(FLAGS, opaque, scratch_buffer, offset);
+    }
+
+    fn emit_get_scratch_buffer_from_coroutine(&mut self) -> Value {
+        logger::debug!(event = "emit_get_scratch_buffer_from_coroutine");
+        const OFFSET: i64 = std::mem::offset_of!(crate::types::Coroutine, locals) as i64;
+        let coroutine = self.get_coroutine();
+        // TODO(perf): compile-time evaluation
+        let num_locals = self.emit_load_num_locals_from_coroutine();
+        let num_locals = self.builder.ins().uextend(self.ptr_type, num_locals);
+        let offset = self
+            .builder
+            .ins()
+            .imul_imm(num_locals, Self::VALUE_SIZE as i64);
+        let offset = self.builder.ins().iadd_imm(offset, OFFSET);
+        self.builder.ins().iadd(coroutine.0, offset)
+    }
+
+    fn perform_load_operands_from_scratch_buffer(&mut self) {
+        logger::debug!(event = "perform_load_operands_from_scratch_buffer");
+        let scratch_buffer = self.emit_get_scratch_buffer_from_coroutine();
+        // Take the whole operand stack in order to avoid the borrow checker.
+        let mut operand_stack = std::mem::take(&mut self.operand_stack);
+        let mut offset = 0i32;
+        for operand in operand_stack.iter_mut() {
+            match operand {
+                Operand::Boolean(value, ..) => {
+                    *value = self.emit_read_boolean_from_scratch_buffer(scratch_buffer, offset);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                Operand::Number(value, ..) => {
+                    *value = self.emit_read_number_from_scratch_buffer(scratch_buffer, offset);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                Operand::String(value, ..) => {
+                    // TODO(issue#237): GcCellRef
+                    *value = self.emit_read_string_from_scratch_buffer(scratch_buffer, offset);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                Operand::Closure(value) => {
+                    // TODO(issue#237): GcCellRef
+                    *value = self.emit_read_closure_from_scratch_buffer(scratch_buffer, offset);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                // Operand::Object(value) => {
+                //     // TODO(issue#237): GcCellRef
+                //     *value = Self::emit_read_object_from_scratch_buffer(builder, scratch_buffer, offset);
+                //     offset += Self::VALUE_HOLDER_SIZE;
+                // }
+                Operand::Promise(value) => {
+                    *value = self.emit_read_promise_from_scratch_buffer(scratch_buffer, offset);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
+                Operand::Any(value, ..) => {
+                    *value = self.emit_read_any_from_scratch_buffer(scratch_buffer, offset);
+                    offset += Self::VALUE_SIZE;
+                }
+                Operand::Undefined | Operand::Null | Operand::VariableReference(..) => (),
+                // | Operand::PropertyReference(_) => (),
+                Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
+            }
+        }
+        self.operand_stack = operand_stack;
+    }
+
+    fn emit_read_boolean_from_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+    ) -> BooleanIr {
+        logger::debug!(
+            event = "emit_read_boolean_from_scratch_buffer",
+            ?scratch_buffer,
+            offset
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        BooleanIr(
+            self.builder
+                .ins()
+                .load(types::I8, FLAGS, scratch_buffer, offset),
+        )
+    }
+
+    fn emit_read_number_from_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+    ) -> NumberIr {
+        logger::debug!(
+            event = "emit_read_number_from_scratch_buffer",
+            ?scratch_buffer,
+            offset
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        NumberIr(
+            self.builder
+                .ins()
+                .load(types::F64, FLAGS, scratch_buffer, offset),
+        )
+    }
+
+    fn emit_read_string_from_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+    ) -> StringIr {
+        logger::debug!(
+            event = "emit_read_string_from_scratch_buffer",
+            ?scratch_buffer,
+            offset
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        StringIr(
+            self.builder
+                .ins()
+                .load(self.ptr_type, FLAGS, scratch_buffer, offset),
+        )
+    }
+
+    fn emit_read_closure_from_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+    ) -> ClosureIr {
+        logger::debug!(
+            event = "emit_read_closure_from_scratch_buffer",
+            ?scratch_buffer,
+            offset
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        ClosureIr(
+            self.builder
+                .ins()
+                .load(self.ptr_type, FLAGS, scratch_buffer, offset),
+        )
+    }
+
+    fn emit_read_promise_from_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+    ) -> PromiseIr {
+        logger::debug!(
+            event = "emit_read_promise_from_scratch_buffer",
+            ?scratch_buffer,
+            offset
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        PromiseIr(
+            self.builder
+                .ins()
+                .load(types::I32, FLAGS, scratch_buffer, offset),
+        )
+    }
+
+    fn emit_read_any_from_scratch_buffer(&mut self, scratch_buffer: Value, offset: i32) -> AnyIr {
+        logger::debug!(
+            event = "emit_read_boolean_from_scratch_buffer",
+            ?scratch_buffer,
+            offset
+        );
+        // Just return the address on the scratch buffer where the value has been stored.
+        AnyIr(self.builder.ins().iadd_imm(scratch_buffer, offset as i64))
+    }
+
+    fn perform_resolve_promise(&mut self) {
+        logger::debug!(event = "perform_resolve_promise");
+
+        let promise = self.emit_get_argument(0); // ##promise
+        let promise = self.emit_load_promise(promise);
+
+        let (operand, _) = self.dereference();
+        let result = self.emit_create_any();
+        match operand {
+            Operand::Undefined => {
+                self.emit_store_undefined_to_any(result);
+                self.emit_runtime_emit_promise_resolved(promise, result);
+            }
+            Operand::Null => {
+                self.emit_store_null_to_any(result);
+                self.emit_runtime_emit_promise_resolved(promise, result);
+            }
+            Operand::Boolean(value, ..) => {
+                self.emit_store_boolean_to_any(value, result);
+                self.emit_runtime_emit_promise_resolved(promise, result);
+            }
+            Operand::Number(value, ..) => {
+                self.emit_store_number_to_any(value, result);
+                self.emit_runtime_emit_promise_resolved(promise, result);
+            }
+            Operand::String(value, ..) => {
+                let value = self.emit_ensure_heap_string(value);
+                self.emit_store_string_to_any(value, result);
+                self.emit_runtime_emit_promise_resolved(promise, result);
+            }
+            Operand::Closure(value) => {
+                self.emit_store_closure_to_any(value, result);
+                self.emit_runtime_emit_promise_resolved(promise, result);
+            }
+            // Operand::Object(value) => {
+            //     self.emit_store_object_to_any(value, result);
+            //     self.emit_runtime_emit_promise_resolved(promise, result);
+            // }
+            Operand::Promise(value) => {
+                self.emit_runtime_await_promise(value, promise);
+            }
+            Operand::Any(value, ..) => {
+                let then_block = self.create_block();
+                let else_block = self.create_block();
+                let merge_block = self.create_block();
+                // if value.is_promise()
+                let is_promise = self.emit_is_promise(value);
+                self.emit_brif(is_promise, then_block, &[], else_block, &[]);
+                // {
+                self.switch_to_block(then_block);
+                let target = self.emit_load_promise(value);
+                self.emit_runtime_await_promise(target, promise);
+                self.emit_jump(merge_block, &[]);
+                // } else {
+                self.switch_to_block(else_block);
+                self.emit_runtime_emit_promise_resolved(promise, value);
+                self.emit_jump(merge_block, &[]);
+                // }
+                self.switch_to_block(merge_block);
+            }
+            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
+                unreachable!("{operand:?}")
+            } // | Operand::PropertyReference(_) => {
+              //     unreachable!("{operand:?}")
+              // }
+        }
+    }
+
+    fn emit_runtime_await_promise(&mut self, promise: PromiseIr, awaiting: PromiseIr) {
+        logger::debug!(event = "emit_runtime_await_promise", ?promise, ?awaiting);
+        let func = self
+            .runtime_func_cache
+            .get_await_promise(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), promise.0, awaiting.0];
+        self.builder.ins().call(func, &args);
+    }
+
+    fn emit_ensure_heap_string(&mut self, string: StringIr) -> StringIr {
+        logger::debug!(event = "emit_ensure_heap_string", ?string);
+        let then_block = self.create_block();
+        let merge_block = self.create_block();
+        self.builder.append_block_param(merge_block, self.ptr_type);
+
+        // if string.on_stack()
+        let on_stack = self.emit_string_on_stack(string);
+        self.emit_brif(on_stack, then_block, &[], merge_block, &[string.0]);
+        // {
+        self.switch_to_block(then_block);
+        let heap_string = self.emit_runtime_migrate_string_to_heap(string);
+        self.emit_jump(merge_block, &[heap_string.0]);
+        // }
+        self.switch_to_block(merge_block);
+        StringIr(self.builder.block_params(merge_block)[0])
+    }
+
+    fn emit_load_kind_from_string(&mut self, string: StringIr) -> Value {
+        logger::debug!(event = "emit_load_kind_from_stack", ?string);
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Char16Seq, kind) as i32;
+        self.builder.ins().load(types::I8, FLAGS, string.0, OFFSET)
+    }
+
+    fn emit_string_on_stack(&mut self, string: StringIr) -> BooleanIr {
+        logger::debug!(event = "emit_string_on_stack", ?string);
+        let kind = self.emit_load_kind_from_string(string);
+        BooleanIr(self.builder.ins().icmp_imm(
+            IntCC::Equal,
+            kind,
+            crate::types::Char16SeqKind::Stack as i64,
+        ))
+    }
+
+    fn emit_runtime_migrate_string_to_heap(&mut self, string: StringIr) -> StringIr {
+        logger::debug!(event = "emit_runtime_migrate_string_to_heap", ?string);
+        let func = self
+            .runtime_func_cache
+            .get_migrate_string_to_heap(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), string.0];
+        let call = self.builder.ins().call(func, &args);
+        StringIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_assert(&mut self, assertion: BooleanIr, msg: &CStr) {
+        logger::debug!(event = "emit_runtime_assert", ?assertion, ?msg);
+        let func = self
+            .runtime_func_cache
+            .get_assert(self.module, self.builder.func);
+        let msg = self
+            .builder
+            .ins()
+            .iconst(self.ptr_type, msg.as_ptr() as i64);
+        let args = [self.get_runtime_ptr(), assertion.0, msg];
+        self.builder.ins().call(func, &args);
+    }
+
+    fn emit_unreachable(&mut self) {
+        logger::debug!(event = "emit_unreachable");
+        self.builder.ins().trap(TrapCode::unwrap_user(128));
+    }
+
     fn process_discard(&mut self) {
         debug_assert!(!self.operand_stack.is_empty());
         self.operand_stack.pop();
@@ -1642,13 +2227,13 @@ where
             Operand::Undefined | Operand::Null => self.emit_boolean(false),
             Operand::Boolean(..)
             | Operand::Number(..)
-            | Operand::Closure(_) => self.emit_boolean(true),
+            | Operand::Closure(_)
             // | Operand::Object(_)
-            // | Operand::Promise(_) => self.emit_boolean(true),
+            | Operand::Promise(_) => self.emit_boolean(true),
             Operand::String(..) => todo!(),
             Operand::Any(value, ..) => self.emit_is_non_nullish(*value),
             Operand::Lambda(_)
-            // | Operand::Coroutine(_)
+            | Operand::Coroutine(_)
             | Operand::VariableReference(..) => unreachable!(),
             // | Operand::PropertyReference(_) => unreachable!(),
         }
@@ -1661,21 +2246,41 @@ where
         }
     }
 
+    fn pop_closure(&mut self) -> ClosureIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Closure(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn pop_coroutine(&mut self) -> CoroutineIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Coroutine(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn pop_promise(&mut self) -> PromiseIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Promise(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
     fn perform_to_boolean(&mut self, operand: &Operand) -> BooleanIr {
         match operand {
             Operand::Undefined | Operand::Null => self.emit_boolean(false),
             Operand::Boolean(value, ..) => *value,
             Operand::Number(value, ..) => self.emit_number_to_boolean(*value),
             Operand::String(..) => todo!(),
-            Operand::Closure(_) => self.emit_boolean(true),
-            // | Operand::Object(_) | Operand::Promise(_) => {
+            Operand::Closure(_) | Operand::Promise(_) => self.emit_boolean(true),
+            // | Operand::Object(_) => {
             //     self.bridge.get_boolean(true)
             // }
             Operand::Any(value, ..) => self.emit_to_boolean(*value),
-            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
-            // | Operand::Coroutine(_)
-            // | Operand::VariableReference(..)
-            // | Operand::PropertyReference(_) => unreachable!(),
+            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
+                unreachable!("{operand:?}")
+            } // | Operand::PropertyReference(_) => unreachable!(),
         }
     }
 
@@ -1691,9 +2296,10 @@ where
             Operand::Closure(_) => self.emit_number(f64::NAN),
             // Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.emit_to_numeric(*value),
-            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
-            // | Operand::Coroutine(_)
-            // | Operand::Promise(_)
+            Operand::Lambda(_)
+            | Operand::Coroutine(_)
+            | Operand::Promise(_)
+            | Operand::VariableReference(..) => unreachable!("{operand:?}"),
             // | Operand::PropertyReference(_) => unreachable!(),
         }
     }
@@ -1742,7 +2348,7 @@ where
         let slot = self.builder.create_sized_stack_slot(StackSlotData {
             kind: StackSlotKind::ExplicitSlot,
             size: Self::VALUE_SIZE as u32,
-            align_shift: Self::ALIGNMENT,
+            align_shift: Self::ALIGNMENT_LOG2,
         });
         self.emit_store_operand_to_slot(operand, slot, 0);
         let addr = self.builder.ins().stack_addr(self.ptr_type, slot, 0);
@@ -1838,12 +2444,12 @@ where
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
             Operand::String(_rhs, ..) => todo!(),
             Operand::Closure(rhs) => self.perform_is_same_closure(lhs, *rhs),
-            // Operand::Object(rhs) => self.emit_is_same_object(lhs, rhs),
-            // Operand::Promise(rhs) => self.emit_is_same_promise(lhs, rhs),
+            // Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
+            Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
             Operand::Any(rhs, ..) => self.emit_call_is_strictly_equal(lhs, *rhs),
-            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{rhs:?}"),
-            // | Operand::Coroutine(_)
-            // | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
+            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
+                unreachable!("{rhs:?}")
+            } // | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
         }
     }
 
@@ -1908,6 +2514,30 @@ where
         self.switch_to_block(then_block);
         let v = self.emit_load_closure(value);
         let then_value = self.emit_is_same_closure(v, closure);
+        self.emit_jump(merge_block, &[then_value.0]);
+        // } else {
+        self.switch_to_block(else_block);
+        let else_value = self.emit_boolean(false);
+        self.emit_jump(merge_block, &[else_value.0]);
+        // }
+
+        self.switch_to_block(merge_block);
+        BooleanIr(self.builder.block_params(merge_block)[0])
+    }
+
+    fn perform_is_same_promise(&mut self, value: AnyIr, promise: PromiseIr) -> BooleanIr {
+        let then_block = self.create_block();
+        let else_block = self.create_block();
+        let merge_block = self.create_block();
+        self.builder.append_block_param(merge_block, types::I8);
+
+        // if value.kind == ValueKind::Promise
+        let cond = self.emit_is_promise(value);
+        self.emit_brif(cond, then_block, &[], else_block, &[]);
+        // {
+        self.switch_to_block(then_block);
+        let v = self.emit_load_promise(value);
+        let then_value = self.emit_is_same_promise(v, promise);
         self.emit_jump(merge_block, &[then_value.0]);
         // } else {
         self.switch_to_block(else_block);
@@ -2028,8 +2658,73 @@ where
         self.get_lambda_params(0)
     }
 
-    fn get_captures_ptr(&self) -> Value {
-        self.get_lambda_params(1)
+    fn get_captures_ptr(&mut self) -> Value {
+        // TODO(perf): inefficient
+        if self.coroutine_context {
+            self.emit_load_captures_from_coroutine()
+        } else {
+            self.get_lambda_params(1)
+        }
+    }
+
+    fn get_coroutine(&self) -> CoroutineIr {
+        CoroutineIr(self.get_lambda_params(1))
+    }
+
+    fn emit_store_state_to_coroutine(&mut self, state: u32) {
+        logger::debug!(event = "emit_store_state_to_coroutine", state);
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Coroutine, state) as i32;
+        let coroutine = self.get_coroutine();
+        let state = self.builder.ins().iconst(types::I32, state as i64);
+        self.builder.ins().store(FLAGS, state, coroutine.0, OFFSET);
+    }
+
+    fn emit_load_state_from_coroutine(&mut self) -> Value {
+        logger::debug!(event = "emit_load_state_from_coroutine");
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Coroutine, state) as i32;
+        let coroutine = self.get_coroutine();
+        self.builder
+            .ins()
+            .load(types::I32, FLAGS, coroutine.0, OFFSET)
+    }
+
+    fn emit_load_num_locals_from_coroutine(&mut self) -> Value {
+        logger::debug!(event = "emit_load_num_locals_from_coroutine");
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Coroutine, num_locals) as i32;
+        let coroutine = self.get_coroutine();
+        self.builder
+            .ins()
+            .load(types::I16, FLAGS, coroutine.0, OFFSET)
+    }
+
+    fn emit_load_captures_from_coroutine(&mut self) -> Value {
+        logger::debug!(event = "emit_load_captures_from_coroutine");
+        let coroutine = self.get_coroutine();
+        let closure = self.emit_load_closure_from_coroutine(coroutine);
+        self.emit_load_captures_from_closure(closure)
+    }
+
+    fn emit_load_closure_from_coroutine(&mut self, coroutine: CoroutineIr) -> ClosureIr {
+        logger::debug!(event = "emit_load_closure_from_coroutine");
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Coroutine, closure) as i32;
+        let addr = self
+            .builder
+            .ins()
+            .load(self.ptr_type, FLAGS, coroutine.0, OFFSET);
+        ClosureIr(addr)
+    }
+
+    fn emit_get_local_from_coroutine(&mut self, index: u16) -> AnyIr {
+        logger::debug!(event = "emit_get_local_from_coroutine", index);
+        const OFFSET: i32 = std::mem::offset_of!(crate::types::Coroutine, locals) as i32;
+        // TODO: emit assert(index < coroutine.num_locals)
+        let offset = OFFSET + Self::VALUE_SIZE * (index as i32);
+        let coroutine = self.get_coroutine();
+        AnyIr(self.builder.ins().iadd_imm(coroutine.0, offset as i64))
     }
 
     fn get_argc(&self) -> Value {
@@ -2188,8 +2883,9 @@ where
 
     // stack allocation
 
-    const VALUE_SIZE: u16 = size_of::<crate::types::Value>() as u16;
-    const ALIGNMENT: u8 = align_of::<crate::types::Value>().ilog2() as u8;
+    const VALUE_SIZE: i32 = size_of::<crate::types::Value>() as i32;
+    const VALUE_HOLDER_SIZE: i32 = size_of::<u64>() as i32;
+    const ALIGNMENT_LOG2: u8 = align_of::<crate::types::Value>().ilog2() as u8;
 
     fn emit_is_nullptr(&mut self, value: AnyIr) -> BooleanIr {
         BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, value.0, 0))
@@ -2200,13 +2896,13 @@ where
     }
 
     fn emit_create_string(&mut self, value: &[u16]) -> StringIr {
-        const SIZE: usize = size_of::<crate::types::Char16Seq>();
-        const ALIGNMENT: u32 = align_of::<crate::types::Char16Seq>().ilog2();
+        const SIZE: u32 = size_of::<crate::types::Char16Seq>() as u32;
+        const ALIGNMENT_LOG2: u8 = align_of::<crate::types::Char16Seq>().ilog2() as u8;
 
         let slot = self.builder.create_sized_stack_slot(StackSlotData {
             kind: StackSlotKind::ExplicitSlot,
-            size: SIZE as u32,
-            align_shift: ALIGNMENT as u8,
+            size: SIZE,
+            align_shift: ALIGNMENT_LOG2,
         });
 
         macro_rules! offset_of {
@@ -2240,7 +2936,7 @@ where
         let slot = self.builder.create_sized_stack_slot(StackSlotData {
             kind: StackSlotKind::ExplicitSlot,
             size: Self::VALUE_SIZE as u32,
-            align_shift: Self::ALIGNMENT,
+            align_shift: Self::ALIGNMENT_LOG2,
         });
 
         // TODO: Value::KIND_NONE
@@ -2259,8 +2955,8 @@ where
 
         let slot = self.builder.create_sized_stack_slot(StackSlotData {
             kind: StackSlotKind::ExplicitSlot,
-            size: (Self::VALUE_SIZE * argc) as u32,
-            align_shift: Self::ALIGNMENT,
+            size: (Self::VALUE_SIZE * argc as i32) as u32,
+            align_shift: Self::ALIGNMENT_LOG2,
         });
 
         // TODO: evaluation order
@@ -2274,7 +2970,7 @@ where
     }
 
     fn emit_store_operand_to_slot(&mut self, operand: &Operand, slot: StackSlot, index: u16) {
-        let base_offset = (Self::VALUE_SIZE as i32) * (index as i32);
+        let base_offset = Self::VALUE_SIZE * (index as i32);
         match operand {
             Operand::Undefined => self.emit_store_undefined_to_slot(slot, index),
             Operand::Null => {
@@ -2314,6 +3010,14 @@ where
                     .ins()
                     .stack_store(value.0, slot, base_offset + 8);
             }
+            Operand::Promise(value) => {
+                // TODO: Value::KIND_PROMISE
+                let kind = self.builder.ins().iconst(types::I8, 7);
+                self.builder.ins().stack_store(kind, slot, base_offset);
+                self.builder
+                    .ins()
+                    .stack_store(value.0, slot, base_offset + 8);
+            }
             Operand::Any(value, _) => {
                 const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
                 // TODO(perf): should use memcpy?
@@ -2321,53 +3025,33 @@ where
                 let opaque = self.builder.ins().load(types::I128, FLAGS, value.0, 0);
                 self.builder.ins().stack_store(opaque, slot, base_offset);
             }
-            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
+            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
+                unreachable!("{operand:?}")
+            }
         }
     }
 
     fn emit_store_undefined_to_slot(&mut self, slot: StackSlot, index: u16) {
         logger::debug!(event = "emit_store_undefined_to_slot", ?slot, index);
-        let base_offset = (Self::VALUE_SIZE as i32) * (index as i32);
+        let base_offset = Self::VALUE_SIZE * (index as i32);
         // TODO: Value::KIND_UNDEFINED
         let kind = self.builder.ins().iconst(types::I8, 1);
         self.builder.ins().stack_store(kind, slot, base_offset);
     }
 
     fn emit_store_operand_to_any(&mut self, operand: &Operand, any: AnyIr) {
-        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         match operand {
             Operand::Undefined => self.emit_store_undefined_to_any(any),
-            Operand::Null => {
-                // TODO: Value::KIND_NULL
-                let kind = self.builder.ins().iconst(types::I8, 2);
-                self.builder.ins().store(FLAGS, kind, any.0, 0);
-            }
-            Operand::Boolean(value, _) => {
-                // TODO: Value::KIND_BOOLEAN
-                let kind = self.builder.ins().iconst(types::I8, 3);
-                self.builder.ins().store(FLAGS, kind, any.0, 0);
-                self.builder.ins().store(FLAGS, value.0, any.0, 8);
-            }
-            Operand::Number(value, _) => {
-                // TODO: Value::KIND_NUMBER
-                let kind = self.builder.ins().iconst(types::I8, 4);
-                self.builder.ins().store(FLAGS, kind, any.0, 0);
-                self.builder.ins().store(FLAGS, value.0, any.0, 8);
-            }
-            Operand::String(value, _) => {
-                // TODO: Value::KIND_STRING
-                let kind = self.builder.ins().iconst(types::I8, 5);
-                self.builder.ins().store(FLAGS, kind, any.0, 0);
-                self.builder.ins().store(FLAGS, value.0, any.0, 8);
-            }
-            Operand::Closure(value) => {
-                // TODO: Value::KIND_CLOSURE
-                let kind = self.builder.ins().iconst(types::I8, 6);
-                self.builder.ins().store(FLAGS, kind, any.0, 0);
-                self.builder.ins().store(FLAGS, value.0, any.0, 8);
-            }
+            Operand::Null => self.emit_store_null_to_any(any),
+            Operand::Boolean(value, _) => self.emit_store_boolean_to_any(*value, any),
+            Operand::Number(value, _) => self.emit_store_number_to_any(*value, any),
+            Operand::String(value, _) => self.emit_store_string_to_any(*value, any),
+            Operand::Closure(value) => self.emit_store_closure_to_any(*value, any),
             Operand::Any(value, _) => self.emit_store_any_to_any(*value, any),
-            Operand::Lambda(_) | Operand::VariableReference(..) => unreachable!("{operand:?}"),
+            Operand::Promise(value) => self.emit_store_promise_to_any(*value, any),
+            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
+                unreachable!("{operand:?}")
+            }
         }
     }
 
@@ -2383,6 +3067,53 @@ where
         // TODO: Value::KIND_UNDEFINED
         let kind = self.builder.ins().iconst(types::I8, 1);
         self.builder.ins().store(FLAGS, kind, any.0, 0);
+    }
+
+    fn emit_store_null_to_any(&mut self, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_NULL
+        let kind = self.builder.ins().iconst(types::I8, 2);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
+    }
+
+    fn emit_store_boolean_to_any(&mut self, boolean: BooleanIr, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_BOOLEAN
+        let kind = self.builder.ins().iconst(types::I8, 3);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
+        self.builder.ins().store(FLAGS, boolean.0, any.0, 8);
+    }
+
+    fn emit_store_number_to_any(&mut self, number: NumberIr, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_NUMBER
+        let kind = self.builder.ins().iconst(types::I8, 4);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
+        self.builder.ins().store(FLAGS, number.0, any.0, 8);
+    }
+
+    fn emit_store_string_to_any(&mut self, string: StringIr, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_STRING
+        let kind = self.builder.ins().iconst(types::I8, 5);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
+        self.builder.ins().store(FLAGS, string.0, any.0, 8);
+    }
+
+    fn emit_store_closure_to_any(&mut self, closure: ClosureIr, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_CLOSURE
+        let kind = self.builder.ins().iconst(types::I8, 6);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
+        self.builder.ins().store(FLAGS, closure.0, any.0, 8);
+    }
+
+    fn emit_store_promise_to_any(&mut self, promise: PromiseIr, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_PROMISE
+        let kind = self.builder.ins().iconst(types::I8, 7);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
+        self.builder.ins().store(FLAGS, promise.0, any.0, 8);
     }
 
     fn emit_store_any_to_any(&mut self, src: AnyIr, dst: AnyIr) {
@@ -2658,8 +3389,7 @@ where
 
     fn emit_get_local(&mut self, index: u16) -> AnyIr {
         logger::debug!(event = "emit_get_local", ?index);
-        let slot = self.locals[index as usize];
-        AnyIr(self.builder.ins().stack_addr(self.ptr_type, slot, 0))
+        self.locals[index as usize]
     }
 
     fn emit_get_capture(&mut self, index: u16) -> AnyIr {
@@ -2680,6 +3410,12 @@ where
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         const OFFSET: i32 = 0;
         self.builder.ins().load(types::I8, FLAGS, any.0, OFFSET)
+    }
+
+    fn emit_has_value(&mut self, any: AnyIr) -> BooleanIr {
+        let kind = self.emit_load_kind(any);
+        // TODO(refactor): Value::KIND_NONE
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::NotEqual, kind, 0))
     }
 
     fn emit_load_boolean(&mut self, any: AnyIr) -> BooleanIr {
@@ -2741,6 +3477,24 @@ where
         BooleanIr(self.builder.ins().icmp(IntCC::Equal, lhs.0, rhs.0))
     }
 
+    fn emit_is_same_promise(&mut self, lhs: PromiseIr, rhs: PromiseIr) -> BooleanIr {
+        BooleanIr(self.builder.ins().icmp(IntCC::Equal, lhs.0, rhs.0))
+    }
+
+    fn emit_is_promise(&mut self, any: AnyIr) -> BooleanIr {
+        logger::debug!(event = "emit_is_promise", ?any);
+        let kind = self.emit_load_kind(any);
+        // TODO(refactor): Value::KIND_PROMISE
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, kind, 7))
+    }
+
+    fn emit_load_promise(&mut self, value: AnyIr) -> PromiseIr {
+        logger::debug!(event = "emit_load_promise", ?value);
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = 8; // TODO
+        PromiseIr(self.builder.ins().load(types::I32, FLAGS, value.0, OFFSET))
+    }
+
     fn emit_call_is_loosely_equal(&mut self, lhs: AnyIr, rhs: AnyIr) -> BooleanIr {
         let func = self
             .runtime_func_cache
@@ -2781,6 +3535,68 @@ where
         ];
         let call = self.builder.ins().call(func, &args);
         ClosureIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_create_coroutine(
+        &mut self,
+        closure: ClosureIr,
+        num_locals: u16,
+        scratch_buffer_len: u16,
+    ) -> CoroutineIr {
+        logger::debug!(
+            event = "emit_runtime_create_closure",
+            ?closure,
+            num_locals,
+            scratch_buffer_len
+        );
+        let func = self
+            .runtime_func_cache
+            .get_create_coroutine(self.module, self.builder.func);
+        let num_locals = self.builder.ins().iconst(types::I16, num_locals as i64);
+        let scratch_buffer_len = self
+            .builder
+            .ins()
+            .iconst(types::I16, scratch_buffer_len as i64);
+        let args = [
+            self.get_runtime_ptr(),
+            closure.0,
+            num_locals,
+            scratch_buffer_len,
+        ];
+        let call = self.builder.ins().call(func, &args);
+        CoroutineIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_register_promise(&mut self, coroutine: CoroutineIr) -> PromiseIr {
+        logger::debug!(event = "emit_runtime_register_promise", ?coroutine);
+        let func = self
+            .runtime_func_cache
+            .get_register_promise(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), coroutine.0];
+        let call = self.builder.ins().call(func, &args);
+        PromiseIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_resume(&mut self, promise: PromiseIr) {
+        logger::debug!(event = "emit_runtime_resume", ?promise);
+        let func = self
+            .runtime_func_cache
+            .get_resume(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), promise.0];
+        self.builder.ins().call(func, &args);
+    }
+
+    fn emit_runtime_emit_promise_resolved(&mut self, promise: PromiseIr, result: AnyIr) {
+        logger::debug!(
+            event = "emit_runtime_emit_promise_resolved",
+            ?promise,
+            ?result
+        );
+        let func = self
+            .runtime_func_cache
+            .get_emit_promise_resolved(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), promise.0, result.0];
+        self.builder.ins().call(func, &args);
     }
 
     fn emit_call_get_global_variable(
@@ -2959,8 +3775,22 @@ where
     }
 
     #[allow(unused)]
-    fn emit_call_print_value(&mut self, value: AnyIr, msg: &'static CStr) {
-        logger::debug!(event = "emit_call_print_value", ?value);
+    fn emit_runtime_print_f64(&mut self, value: NumberIr, msg: &'static CStr) {
+        logger::debug!(event = "emit_runtime_print_f64", ?value);
+        let func = self
+            .runtime_func_cache
+            .get_print_f64(self.module, self.builder.func);
+        let msg = self
+            .builder
+            .ins()
+            .iconst(self.ptr_type, msg.as_ptr() as i64);
+        let args = [self.get_runtime_ptr(), value.0, msg];
+        self.builder.ins().call(func, &args);
+    }
+
+    #[allow(unused)]
+    fn emit_runtime_print_value(&mut self, value: AnyIr, msg: &'static CStr) {
+        logger::debug!(event = "emit_runtime_print_value", ?value, ?msg);
         let func = self
             .runtime_func_cache
             .get_print_value(self.module, self.builder.func);
@@ -2973,8 +3803,8 @@ where
     }
 
     #[allow(unused)]
-    fn emit_call_print_capture(&mut self, capture: CaptureIr, msg: &'static CStr) {
-        logger::debug!(event = "emit_call_print_capture", ?capture);
+    fn emit_runtime_print_capture(&mut self, capture: CaptureIr, msg: &'static CStr) {
+        logger::debug!(event = "emit_runtime_print_capture", ?capture, ?msg);
         let func = self
             .runtime_func_cache
             .get_print_capture(self.module, self.builder.func);
@@ -2983,6 +3813,20 @@ where
             .ins()
             .iconst(self.ptr_type, msg.as_ptr() as i64);
         let args = [self.get_runtime_ptr(), capture.0, msg];
+        self.builder.ins().call(func, &args);
+    }
+
+    #[allow(unused)]
+    fn emit_runtime_print_message(&mut self, msg: &'static CStr) {
+        logger::debug!(event = "emit_runtime_print_message", ?msg);
+        let func = self
+            .runtime_func_cache
+            .get_print_message(self.module, self.builder.func);
+        let msg = self
+            .builder
+            .ins()
+            .iconst(self.ptr_type, msg.as_ptr() as i64);
+        let args = [self.get_runtime_ptr(), msg];
         self.builder.ins().call(func, &args);
     }
 
@@ -3071,6 +3915,12 @@ enum Operand {
     /// Runtime value of lambda function type.
     Lambda(LambdaIr),
 
+    /// Runtime value of coroutine type.
+    Coroutine(CoroutineIr),
+
+    /// Runtime value of promise type.
+    Promise(PromiseIr),
+
     // Compile-time constant value types.
     VariableReference(Symbol, Locator),
 }
@@ -3098,6 +3948,12 @@ struct LambdaIr(Value);
 
 #[derive(Clone, Copy, Debug)]
 struct CaptureIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct CoroutineIr(Value);
+
+#[derive(Clone, Copy, Debug)]
+struct PromiseIr(Value);
 
 #[derive(Clone, Copy, Debug)]
 struct ArgvIr(Value);

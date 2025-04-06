@@ -91,15 +91,9 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn push_coroutine_flow(
-        &mut self,
-        switch_inst: SwitchIr,
-        dormant_block: Block,
-        num_states: u32,
-    ) {
+    pub fn push_coroutine_flow(&mut self, blocks: Vec<Block>, num_states: u32) {
         self.stack.push(ControlFlow::Coroutine(CoroutineFlow {
-            switch_inst,
-            dormant_block,
+            blocks,
             num_states,
             next_state: 1,
         }));
@@ -115,12 +109,13 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn coroutine_switch_inst(&self) -> SwitchIr {
+    pub fn coroutine_blocks(&self) -> &[Block] {
         debug_assert!(self.stack.len() >= 2);
-        match self.stack[1] {
-            ControlFlow::Coroutine(ref flow) => flow.switch_inst,
+        let flow = match self.stack[1] {
+            ControlFlow::Coroutine(ref flow) => flow,
             _ => unreachable!(),
-        }
+        };
+        &flow.blocks
     }
 
     pub fn coroutine_next_state(&mut self) -> u32 {
@@ -132,6 +127,17 @@ impl ControlFlowStack {
         let next_state = flow.next_state;
         flow.next_state += 1;
         next_state
+    }
+
+    pub fn coroutine_next_block(&mut self) -> Block {
+        debug_assert!(self.stack.len() >= 2);
+        let flow = match self.stack[1] {
+            ControlFlow::Coroutine(ref mut flow) => flow,
+            _ => unreachable!(),
+        };
+        let next_state = flow.next_state;
+        flow.next_state += 1;
+        flow.blocks[next_state as usize]
     }
 
     pub fn push_scope_flow(
@@ -625,10 +631,15 @@ pub struct FunctionFlow {
 }
 
 pub struct CoroutineFlow {
-    switch_inst: SwitchIr,
-    pub dormant_block: Block,
+    blocks: Vec<Block>,
     num_states: u32,
     next_state: u32,
+}
+
+impl CoroutineFlow {
+    pub fn dormant_block(&self) -> Block {
+        *self.blocks.last().unwrap()
+    }
 }
 
 /// Contains data used for building a region representing a lexical scope.
