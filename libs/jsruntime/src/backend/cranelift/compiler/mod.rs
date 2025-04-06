@@ -473,6 +473,7 @@ where
             CompileCommand::PrefixDecrement => self.process_prefix_decrement(),
             CompileCommand::Delete => self.process_delete(),
             CompileCommand::Void => self.process_void(),
+            CompileCommand::Typeof => self.process_typeof(),
             CompileCommand::UnaryPlus => self.process_unary_plus(),
             CompileCommand::UnaryMinus => self.process_unary_minus(),
             CompileCommand::BitwiseNot => self.process_bitwise_not(),
@@ -1102,6 +1103,41 @@ where
     fn process_void(&mut self) {
         self.operand_stack.pop();
         self.operand_stack.push(Operand::Undefined);
+    }
+
+    // 13.5.3.1 Runtime Semantics: Evaluation
+    fn process_typeof(&mut self) {
+        use jsparser::symbol::builtin::names;
+
+        let (operand, _) = self.dereference();
+        match operand {
+            Operand::Undefined => self.process_string(names::UNDEFINED),
+            Operand::Null => self.process_string(names::OBJECT),
+            Operand::Boolean(..) => self.process_string(names::BOOLEAN),
+            Operand::Number(..) => self.process_string(names::NUMBER),
+            Operand::String(..) => self.process_string(names::STRING),
+            Operand::Closure(..) | Operand::Coroutine(..) => self.process_string(names::FUNCTION),
+            Operand::Object(..) | Operand::Promise(..) => self.process_string(names::OBJECT),
+            Operand::Any(_, Some(ref value)) => match value {
+                crate::types::Value::Undefined => self.process_string(names::UNDEFINED),
+                crate::types::Value::Null => self.process_string(names::OBJECT),
+                crate::types::Value::Boolean(_) => self.process_string(names::BOOLEAN),
+                crate::types::Value::Number(_) => self.process_string(names::NUMBER),
+                crate::types::Value::String(_) => self.process_string(names::STRING),
+                crate::types::Value::Closure(_) => self.process_string(names::FUNCTION),
+                crate::types::Value::Object(_) | crate::types::Value::Promise(_) => {
+                    self.process_string(names::OBJECT)
+                }
+                crate::types::Value::None => unreachable!("{value:?}"),
+            },
+            Operand::Any(value, None) => {
+                let string = self.emit_runtime_typeof(value);
+                self.operand_stack.push(Operand::String(string, None));
+            }
+            Operand::Lambda(..)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
+        }
     }
 
     // 13.5.4.1 Runtime Semantics: Evaluation
@@ -4410,6 +4446,16 @@ where
         // }
 
         self.switch_to_block(merge_block);
+    }
+
+    fn emit_runtime_typeof(&mut self, value: AnyIr) -> StringIr {
+        logger::debug!(event = "emit_runtime_typeof", ?value);
+        let func = self
+            .runtime_func_cache
+            .get_get_typeof(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), value.0];
+        let call = self.builder.ins().call(func, &args);
+        StringIr(self.builder.inst_results(call)[0])
     }
 
     #[allow(unused)]
