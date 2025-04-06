@@ -40,6 +40,12 @@ use control_flow::ControlFlowStack;
 use runtime::RuntimeFunctionCache;
 use runtime::RuntimeFunctionIds;
 
+macro_rules! runtime_debug {
+    ($block:block) => {
+        if cfg!(debug_assertions) $block
+    };
+}
+
 pub fn compile<R>(
     support: &mut R,
     program: &Program,
@@ -437,6 +443,7 @@ where
             CompileCommand::Boolean(value) => self.process_boolean(*value),
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::String(value) => self.process_string(value),
+            CompileCommand::Object => self.process_object(),
             CompileCommand::Lambda(lambda_id) => self.process_lambda(*lambda_id),
             CompileCommand::Closure(prologue, func_scope_ref) => {
                 self.process_closure(*prologue, *func_scope_ref)
@@ -447,6 +454,8 @@ where
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Exception => self.process_exception(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
+            CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
+            CompileCommand::ToPropertyKey => self.process_to_property_key(),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
@@ -455,6 +464,8 @@ where
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::CreateDataProperty => self.process_create_data_property(),
+            CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -588,6 +599,11 @@ where
         ));
     }
 
+    fn process_object(&mut self) {
+        let object = self.emit_runtime_create_object();
+        self.operand_stack.push(Operand::Object(object));
+    }
+
     fn process_lambda(&mut self, lambda_id: LambdaId) {
         let func_id = *self.id_map.get(&lambda_id).unwrap();
         let lambda_ir = *self
@@ -663,6 +679,68 @@ where
         let locator = self.scope_tree.compute_locator(variable_ref);
         self.operand_stack
             .push(Operand::VariableReference(symbol, locator));
+    }
+
+    fn process_property_reference(&mut self, symbol: Symbol) {
+        self.operand_stack
+            .push(Operand::PropertyReference(symbol.into()));
+    }
+
+    fn process_to_property_key(&mut self) {
+        let (operand, _) = self.dereference();
+        let key = match operand {
+            Operand::Undefined => Symbol::UNDEFINED.into(),
+            Operand::Null => Symbol::NULL.into(),
+            Operand::Boolean(_, Some(false)) => Symbol::FALSE.into(),
+            Operand::Boolean(_, Some(true)) => Symbol::TRUE.into(),
+            Operand::Boolean(value, None) => {
+                let any = self.emit_create_any();
+                self.emit_store_boolean_to_any(value, any);
+                any.into()
+            }
+            Operand::Number(_, Some(value)) => value.into(),
+            Operand::Number(value, None) => {
+                let any = self.emit_create_any();
+                self.emit_store_number_to_any(value, any);
+                any.into()
+            }
+            Operand::String(_, Some(ref value)) => self
+                .support
+                .make_symbol_from_name(value.make_utf16())
+                .into(),
+            Operand::String(value, None) => {
+                let any = self.emit_create_any();
+                self.emit_store_string_to_any(value, any);
+                any.into()
+            }
+            Operand::Lambda(_) => todo!(),
+            Operand::Closure(value) => {
+                let any = self.emit_create_any();
+                self.emit_store_closure_to_any(value, any);
+                any.into()
+            }
+            Operand::Coroutine(_) => todo!(),
+            Operand::Object(value) => {
+                let any = self.emit_create_any();
+                self.emit_store_object_to_any(value, any);
+                any.into()
+            }
+            Operand::Promise(_) => todo!(),
+            Operand::Any(_, Some(crate::types::Value::Undefined)) => Symbol::UNDEFINED.into(),
+            Operand::Any(_, Some(crate::types::Value::Null)) => Symbol::NULL.into(),
+            Operand::Any(_, Some(crate::types::Value::Boolean(false))) => Symbol::FALSE.into(),
+            Operand::Any(_, Some(crate::types::Value::Boolean(true))) => Symbol::FALSE.into(),
+            Operand::Any(_, Some(crate::types::Value::String(value))) => self
+                .support
+                .make_symbol_from_name(value.make_utf16())
+                .into(),
+            Operand::Any(value, None) => value.into(),
+            Operand::Any(..) => todo!(),
+            Operand::PropertyReference(_) | Operand::VariableReference(..) => {
+                unreachable!("{operand:?}")
+            }
+        };
+        self.operand_stack.push(Operand::PropertyReference(key));
     }
 
     fn process_allocate_locals(&mut self, num_locals: u16) {
@@ -889,6 +967,94 @@ where
         self.emit_brif(is_normal, exit_block, &[], parent_exit_block, &[]);
 
         self.switch_to_block(exit_block);
+    }
+
+    // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
+    fn process_create_data_property(&mut self) {
+        let (operand, _) = self.dereference();
+        let key = self.pop_property_reference();
+        let object = self.peek_object();
+        let value = self.emit_create_any();
+        self.emit_store_operand_to_any(&operand, value);
+        let retv = self.emit_create_any();
+
+        // 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
+
+        // 1. Let success be ? CreateDataProperty(O, P, V).
+        let status = match key {
+            PropertyKey::Symbol(key) => {
+                self.emit_runtime_create_data_property_by_symbol(object, key, value, retv)
+            }
+            PropertyKey::Number(key) => {
+                self.emit_runtime_create_data_property_by_number(object, key, value, retv)
+            }
+            PropertyKey::Any(key) => {
+                self.emit_runtime_create_data_property_by_any(object, key, value, retv)
+            }
+        };
+        self.emit_check_status_for_exception(status, retv);
+        // `retv` holds a boolean value.
+        runtime_debug! {{
+            let is_boolean = self.emit_is_boolean(retv);
+            self.emit_runtime_assert(
+                is_boolean,
+                c"runtime.create_data_property() returns a boolan value",
+            );
+        }}
+        let success = self.emit_load_boolean(retv);
+
+        // 2. If success is false, throw a TypeError exception.
+        let then_block = self.create_block();
+        let else_block = self.create_block();
+        let merge_block = self.create_block();
+        // if success
+        self.emit_brif(success, then_block, &[], else_block, &[]);
+        // {
+        self.switch_to_block(then_block);
+        self.emit_jump(merge_block, &[]);
+        // } else {
+        self.switch_to_block(else_block);
+        // TODO(feat): TypeError
+        self.process_number(1001.);
+        self.process_throw();
+        self.emit_jump(merge_block, &[]);
+        // }
+        self.switch_to_block(merge_block);
+    }
+
+    fn pop_property_reference(&mut self) -> PropertyKey {
+        match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(key) => key,
+            _ => unreachable!(),
+        }
+    }
+
+    fn peek_object(&mut self) -> ObjectIr {
+        match self.operand_stack.last().unwrap() {
+            Operand::Object(value) => *value,
+            _ => unreachable!(),
+        }
+    }
+
+    // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
+    // PropertyDefinition : ... AssignmentExpression
+    fn process_copy_data_properties(&mut self) {
+        // 1. Let exprValue be ? Evaluation of AssignmentExpression.
+        let (operand, _) = self.dereference();
+
+        // 2. Let fromValue be ? GetValue(exprValue).
+        let from_value = self.emit_create_any();
+        self.emit_store_operand_to_any(&operand, from_value);
+
+        // TODO: 3. Let excludedNames be a new empty List.
+
+        // 4. Perform ? CopyDataProperties(object, fromValue, excludedNames).
+
+        let object = self.peek_object();
+        let retv = self.emit_create_any();
+
+        let status = self.emit_runtime_copy_data_properties(object, from_value, retv);
+        self.emit_check_status_for_exception(status, retv);
     }
 
     // 13.4.2.1 Runtime Semantics: Evaluation
@@ -1259,40 +1425,74 @@ where
         let (rhs, _) = self.dereference();
 
         match self.operand_stack.pop().unwrap() {
-            // Operand::VariableReference(symbol, Locator::Global) => {
-            //     let object = self.emit_nullptr();
-            //     let value = self.create_to_any(&rhs);
-            //     // TODO(feat): ReferenceError, TypeError
-            //     self.bridge
-            //         .create_set_value_by_symbol(object, symbol, value);
-            // }
+            Operand::VariableReference(symbol, Locator::Global) => {
+                let object = ObjectIr(self.emit_nullptr());
+                let value = self.emit_create_any();
+                self.emit_store_operand_to_any(&rhs, value);
+                // TODO(feat): ReferenceError, TypeError
+                self.emit_runtime_set_value_by_symbol(object, symbol, value);
+            }
             Operand::VariableReference(symbol, locator) => {
                 let var = self.emit_get_variable(symbol, locator);
                 // TODO: throw a TypeError in the strict mode.
                 // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
                 self.emit_store_operand_to_any(&rhs, var);
             }
-            // Operand::PropertyReference(key) => {
-            //     // TODO(refactor): reduce code clone
-            //     self.perform_to_object();
-            //     let object = self.pop_object();
-            //     let value = self.create_to_any(&rhs);
-            //     match key {
-            //         PropertyKey::Symbol(key) => {
-            //             self.bridge.create_set_value_by_symbol(object, key, value);
-            //         }
-            //         PropertyKey::Number(key) => {
-            //             self.bridge.create_set_value_by_number(object, key, value);
-            //         }
-            //         PropertyKey::Value(key) => {
-            //             self.bridge.create_set_value_by_value(object, key, value);
-            //         }
-            //     }
-            // }
+            Operand::PropertyReference(key) => {
+                // TODO(refactor): reduce code clone
+                self.perform_to_object();
+                let object = self.pop_object();
+                let value = self.emit_create_any();
+                self.emit_store_operand_to_any(&rhs, value);
+                match key {
+                    PropertyKey::Symbol(key) => {
+                        self.emit_runtime_set_value_by_symbol(object, key, value);
+                    }
+                    PropertyKey::Number(key) => {
+                        self.emit_runtime_set_value_by_number(object, key, value);
+                    }
+                    PropertyKey::Any(key) => {
+                        self.emit_runtime_set_value_by_any(object, key, value);
+                    }
+                }
+            }
             operand => unreachable!("{operand:?}"),
         }
 
         self.operand_stack.push(rhs);
+    }
+
+    fn pop_object(&mut self) -> ObjectIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Object(value) => value,
+            operand => unreachable!("{operand:?}"),
+        }
+    }
+
+    // 7.1.18 ToObject ( argument )
+    fn perform_to_object(&mut self) {
+        let (operand, _) = self.dereference();
+        match operand {
+            Operand::Undefined | Operand::Null => {
+                // TODO(feat): TypeError
+                self.process_number(1001.);
+                self.process_throw();
+            }
+            Operand::Boolean(..) => todo!(),
+            Operand::Number(..) => todo!(),
+            Operand::String(..) => todo!(),
+            Operand::Closure(_value) => todo!(),
+            Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
+            Operand::Promise(_value) => todo!(),
+            Operand::Any(value, ..) => {
+                let object = self.emit_runtime_to_object(value);
+                self.operand_stack.push(Operand::Object(object));
+            }
+            Operand::Lambda(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
+        }
     }
 
     fn process_falsy_short_circuit(&mut self) {
@@ -1827,11 +2027,11 @@ where
                     self.emit_write_closure_to_scratch_buffer(scratch_buffer, offset, *value);
                     offset += Self::VALUE_HOLDER_SIZE;
                 }
-                // Operand::Object(value) => {
-                //     // TODO(issue#237): GcCellRef
-                //     Self::emit_write_object_to_scratch_buffer(builder, scratch_buffer, offset, *value);
-                //     offset += Self::VALUE_HOLDER_SIZE;
-                // }
+                Operand::Object(value) => {
+                    // TODO(issue#237): GcCellRef
+                    self.emit_write_object_to_scratch_buffer(scratch_buffer, offset, *value);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
                 Operand::Promise(value) => {
                     self.emit_write_promise_to_scratch_buffer(scratch_buffer, offset, *value);
                     offset += Self::VALUE_HOLDER_SIZE;
@@ -1840,8 +2040,10 @@ where
                     self.emit_write_any_to_scratch_buffer(scratch_buffer, offset, *value);
                     offset += Self::VALUE_SIZE;
                 }
-                Operand::Undefined | Operand::Null | Operand::VariableReference(..) => (),
-                // | Operand::PropertyReference(_) => (),
+                Operand::Undefined
+                | Operand::Null
+                | Operand::VariableReference(..)
+                | Operand::PropertyReference(_) => (),
                 Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -1914,6 +2116,24 @@ where
     ) {
         logger::debug!(
             event = "emit_write_closure_to_scratch_buffer",
+            ?scratch_buffer,
+            offset,
+            ?value
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        self.builder
+            .ins()
+            .store(FLAGS, value.0, scratch_buffer, offset);
+    }
+
+    fn emit_write_object_to_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+        value: ObjectIr,
+    ) {
+        logger::debug!(
+            event = "emit_write_object_to_scratch_buffer",
             ?scratch_buffer,
             offset,
             ?value
@@ -2002,11 +2222,11 @@ where
                     *value = self.emit_read_closure_from_scratch_buffer(scratch_buffer, offset);
                     offset += Self::VALUE_HOLDER_SIZE;
                 }
-                // Operand::Object(value) => {
-                //     // TODO(issue#237): GcCellRef
-                //     *value = Self::emit_read_object_from_scratch_buffer(builder, scratch_buffer, offset);
-                //     offset += Self::VALUE_HOLDER_SIZE;
-                // }
+                Operand::Object(value) => {
+                    // TODO(issue#237): GcCellRef
+                    *value = self.emit_read_object_from_scratch_buffer(scratch_buffer, offset);
+                    offset += Self::VALUE_HOLDER_SIZE;
+                }
                 Operand::Promise(value) => {
                     *value = self.emit_read_promise_from_scratch_buffer(scratch_buffer, offset);
                     offset += Self::VALUE_HOLDER_SIZE;
@@ -2015,8 +2235,10 @@ where
                     *value = self.emit_read_any_from_scratch_buffer(scratch_buffer, offset);
                     offset += Self::VALUE_SIZE;
                 }
-                Operand::Undefined | Operand::Null | Operand::VariableReference(..) => (),
-                // | Operand::PropertyReference(_) => (),
+                Operand::Undefined
+                | Operand::Null
+                | Operand::VariableReference(..)
+                | Operand::PropertyReference(_) => (),
                 Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2095,6 +2317,24 @@ where
         )
     }
 
+    fn emit_read_object_from_scratch_buffer(
+        &mut self,
+        scratch_buffer: Value,
+        offset: i32,
+    ) -> ObjectIr {
+        logger::debug!(
+            event = "emit_read_object_from_scratch_buffer",
+            ?scratch_buffer,
+            offset
+        );
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        ObjectIr(
+            self.builder
+                .ins()
+                .load(self.ptr_type, FLAGS, scratch_buffer, offset),
+        )
+    }
+
     fn emit_read_promise_from_scratch_buffer(
         &mut self,
         scratch_buffer: Value,
@@ -2157,10 +2397,10 @@ where
                 self.emit_store_closure_to_any(value, result);
                 self.emit_runtime_emit_promise_resolved(promise, result);
             }
-            // Operand::Object(value) => {
-            //     self.emit_store_object_to_any(value, result);
-            //     self.emit_runtime_emit_promise_resolved(promise, result);
-            // }
+            Operand::Object(value) => {
+                self.emit_store_object_to_any(value, result);
+                self.emit_runtime_emit_promise_resolved(promise, result);
+            }
             Operand::Promise(value) => {
                 self.emit_runtime_await_promise(value, promise);
             }
@@ -2183,11 +2423,10 @@ where
                 // }
                 self.switch_to_block(merge_block);
             }
-            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
-                unreachable!("{operand:?}")
-            } // | Operand::PropertyReference(_) => {
-              //     unreachable!("{operand:?}")
-              // }
+            Operand::Lambda(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
         }
     }
 
@@ -2308,14 +2547,14 @@ where
             Operand::Boolean(..)
             | Operand::Number(..)
             | Operand::Closure(_)
-            // | Operand::Object(_)
+            | Operand::Object(_)
             | Operand::Promise(_) => self.emit_boolean(true),
             Operand::String(..) => todo!(),
             Operand::Any(value, ..) => self.emit_is_non_nullish(*value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
-            | Operand::VariableReference(..) => unreachable!(),
-            // | Operand::PropertyReference(_) => unreachable!(),
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
         }
     }
 
@@ -2353,14 +2592,16 @@ where
             Operand::Boolean(value, ..) => *value,
             Operand::Number(value, ..) => self.emit_number_to_boolean(*value),
             Operand::String(..) => todo!(),
-            Operand::Closure(_) | Operand::Promise(_) => self.emit_boolean(true),
-            // | Operand::Object(_) => {
-            //     self.bridge.get_boolean(true)
-            // }
+            Operand::Closure(_) | Operand::Promise(_) | Operand::Object(_) => {
+                self.emit_boolean(true)
+            }
             Operand::Any(value, ..) => self.emit_to_boolean(*value),
-            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
+            Operand::Lambda(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => {
                 unreachable!("{operand:?}")
-            } // | Operand::PropertyReference(_) => unreachable!(),
+            }
         }
     }
 
@@ -2374,13 +2615,13 @@ where
             Operand::Number(value, ..) => *value,
             Operand::String(..) => unimplemented!("string.to_numeric"),
             Operand::Closure(_) => self.emit_number(f64::NAN),
-            // Operand::Object(_) => unimplemented!("object.to_numeric"),
+            Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.emit_to_numeric(*value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::Promise(_)
-            | Operand::VariableReference(..) => unreachable!("{operand:?}"),
-            // | Operand::PropertyReference(_) => unreachable!(),
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
         }
     }
 
@@ -2502,15 +2743,9 @@ where
             (Operand::String(_lhs, ..), Operand::String(_rhs, ..)) => {
                 todo!();
             }
-            // (Operand::Closure(lhs), Operand::Closure(rhs)) => {
-            //     self.perform_is_same_closure(lhs, rhs)
-            // }
-            // (Operand::Promise(lhs), Operand::Promise(rhs)) => {
-            //     self.perform_is_same_promise(lhs, rhs)
-            // }
-            // (Operand::Object(lhs), Operand::Object(rhs)) => {
-            //     self.perform_is_same_object(lhs, rhs)
-            // }
+            (Operand::Closure(lhs), Operand::Closure(rhs)) => self.emit_is_same_closure(*lhs, *rhs),
+            (Operand::Promise(lhs), Operand::Promise(rhs)) => self.emit_is_same_promise(*lhs, *rhs),
+            (Operand::Object(lhs), Operand::Object(rhs)) => self.emit_is_same_object(*lhs, *rhs),
             (lhs, rhs) => unreachable!("({lhs:?}, {rhs:?})"),
         }
     }
@@ -2524,12 +2759,13 @@ where
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
             Operand::String(_rhs, ..) => todo!(),
             Operand::Closure(rhs) => self.perform_is_same_closure(lhs, *rhs),
-            // Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
+            Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
             Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
             Operand::Any(rhs, ..) => self.emit_call_is_strictly_equal(lhs, *rhs),
-            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
-                unreachable!("{rhs:?}")
-            } // | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
+            Operand::Lambda(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
         }
     }
 
@@ -2605,6 +2841,30 @@ where
         BooleanIr(self.builder.block_params(merge_block)[0])
     }
 
+    fn perform_is_same_object(&mut self, value: AnyIr, object: ObjectIr) -> BooleanIr {
+        let then_block = self.create_block();
+        let else_block = self.create_block();
+        let merge_block = self.create_block();
+        self.builder.append_block_param(merge_block, types::I8);
+
+        // if value.kind == ValueKind::Object
+        let cond = self.emit_is_object(value);
+        self.emit_brif(cond, then_block, &[], else_block, &[]);
+        // {
+        self.switch_to_block(then_block);
+        let v = self.emit_load_object(value);
+        let then_value = self.emit_is_same_object(v, object);
+        self.emit_jump(merge_block, &[then_value.0]);
+        // } else {
+        self.switch_to_block(else_block);
+        let else_value = self.emit_boolean(false);
+        self.emit_jump(merge_block, &[else_value.0]);
+        // }
+
+        self.switch_to_block(merge_block);
+        BooleanIr(self.builder.block_params(merge_block)[0])
+    }
+
     fn perform_is_same_promise(&mut self, value: AnyIr, promise: PromiseIr) -> BooleanIr {
         let then_block = self.create_block();
         let else_block = self.create_block();
@@ -2658,25 +2918,22 @@ where
                 // TODO(pref): compile-time evaluation
                 (Operand::Any(value, None), Some((symbol, locator)))
             }
-            /*
             Operand::PropertyReference(key) => {
                 self.perform_to_object();
                 let object = self.pop_object();
                 let value = match key {
                     PropertyKey::Symbol(key) => {
-                        self.bridge.create_get_value_by_symbol(object, key, false)
+                        self.emit_runtime_get_value_by_symbol(object, key, false)
                     }
                     PropertyKey::Number(key) => {
-                        self.bridge.create_get_value_by_number(object, key, false)
+                        self.emit_runtime_get_value_by_number(object, key, false)
                     }
-                    PropertyKey::Value(key) => {
-                        self.bridge.create_get_value_by_value(object, key, false)
-                    }
+                    PropertyKey::Any(key) => self.emit_runtime_get_value_by_any(object, key, false),
                 };
                 runtime_debug! {{
-                    let is_nullptr = self.bridge.create_value_is_nullptr(value);
-                    let non_nullptr = self.bridge.create_logical_not(is_nullptr);
-                    self.bridge.create_assert(
+                    let is_nullptr = self.emit_is_nullptr(value);
+                    let non_nullptr = self.emit_logical_not(is_nullptr);
+                    self.emit_runtime_assert(
                         non_nullptr,
                         c"runtime.get_value() should return a non-null pointer",
                     );
@@ -2684,7 +2941,6 @@ where
                 // TODO(pref): compile-time evaluation
                 (Operand::Any(value, None), None)
             }
-            */
             _ => (operand, None),
         }
     }
@@ -3102,6 +3358,14 @@ where
                     .ins()
                     .stack_store(value.0, slot, base_offset + 8);
             }
+            Operand::Object(value) => {
+                // TODO: Value::KIND_OBJECT
+                let kind = self.builder.ins().iconst(types::I8, 8);
+                self.builder.ins().stack_store(kind, slot, base_offset);
+                self.builder
+                    .ins()
+                    .stack_store(value.0, slot, base_offset + 8);
+            }
             Operand::Any(value, _) => {
                 const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
                 // TODO(perf): should use memcpy?
@@ -3109,9 +3373,10 @@ where
                 let opaque = self.builder.ins().load(types::I128, FLAGS, value.0, 0);
                 self.builder.ins().stack_store(opaque, slot, base_offset);
             }
-            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
-                unreachable!("{operand:?}")
-            }
+            Operand::Lambda(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
         }
     }
 
@@ -3131,11 +3396,13 @@ where
             Operand::Number(value, _) => self.emit_store_number_to_any(*value, any),
             Operand::String(value, _) => self.emit_store_string_to_any(*value, any),
             Operand::Closure(value) => self.emit_store_closure_to_any(*value, any),
+            Operand::Object(value) => self.emit_store_object_to_any(*value, any),
             Operand::Any(value, _) => self.emit_store_any_to_any(*value, any),
             Operand::Promise(value) => self.emit_store_promise_to_any(*value, any),
-            Operand::Lambda(_) | Operand::Coroutine(_) | Operand::VariableReference(..) => {
-                unreachable!("{operand:?}")
-            }
+            Operand::Lambda(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
         }
     }
 
@@ -3198,6 +3465,14 @@ where
         let kind = self.builder.ins().iconst(types::I8, 7);
         self.builder.ins().store(FLAGS, kind, any.0, 0);
         self.builder.ins().store(FLAGS, promise.0, any.0, 8);
+    }
+
+    fn emit_store_object_to_any(&mut self, object: ObjectIr, any: AnyIr) {
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        // TODO: Value::KIND_OBJECT
+        let kind = self.builder.ins().iconst(types::I8, 8);
+        self.builder.ins().store(FLAGS, kind, any.0, 0);
+        self.builder.ins().store(FLAGS, object.0, any.0, 8);
     }
 
     fn emit_store_any_to_any(&mut self, src: AnyIr, dst: AnyIr) {
@@ -3651,6 +3926,223 @@ where
         CoroutineIr(self.builder.inst_results(call)[0])
     }
 
+    fn emit_runtime_create_object(&mut self) -> ObjectIr {
+        logger::debug!(event = "emit_runtime_create_object");
+        let func = self
+            .runtime_func_cache
+            .get_create_object(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr()];
+        let call = self.builder.ins().call(func, &args);
+        ObjectIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_to_object(&mut self, any: AnyIr) -> ObjectIr {
+        logger::debug!(event = "emit_runtime_to_object", ?any);
+        let func = self
+            .runtime_func_cache
+            .get_to_object(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), any.0];
+        let call = self.builder.ins().call(func, &args);
+        ObjectIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_get_value_by_symbol(
+        &mut self,
+        object: ObjectIr,
+        key: Symbol,
+        strict: bool,
+    ) -> AnyIr {
+        logger::debug!(
+            event = "emit_runtime_get_value_by_symbol",
+            ?object,
+            ?key,
+            strict
+        );
+        let func = self
+            .runtime_func_cache
+            .get_get_value_by_symbol(self.module, self.builder.func);
+        let key = self.builder.ins().iconst(types::I32, key.id() as i64);
+        let strict = self.emit_boolean(strict);
+        let args = [self.get_runtime_ptr(), object.0, key, strict.0];
+        let call = self.builder.ins().call(func, &args);
+        AnyIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_get_value_by_number(
+        &mut self,
+        object: ObjectIr,
+        key: f64,
+        strict: bool,
+    ) -> AnyIr {
+        logger::debug!(
+            event = "emit_runtime_get_value_by_number",
+            ?object,
+            key,
+            strict
+        );
+        let func = self
+            .runtime_func_cache
+            .get_get_value_by_number(self.module, self.builder.func);
+        let key = self.emit_number(key);
+        let strict = self.emit_boolean(strict);
+        let args = [self.get_runtime_ptr(), object.0, key.0, strict.0];
+        let call = self.builder.ins().call(func, &args);
+        AnyIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_get_value_by_any(
+        &mut self,
+        object: ObjectIr,
+        key: AnyIr,
+        strict: bool,
+    ) -> AnyIr {
+        logger::debug!(
+            event = "emit_runtime_get_value_by_any",
+            ?object,
+            ?key,
+            strict
+        );
+        let func = self
+            .runtime_func_cache
+            .get_get_value_by_value(self.module, self.builder.func);
+        let strict = self.emit_boolean(strict);
+        let args = [self.get_runtime_ptr(), object.0, key.0, strict.0];
+        let call = self.builder.ins().call(func, &args);
+        AnyIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_set_value_by_symbol(&mut self, object: ObjectIr, key: Symbol, value: AnyIr) {
+        logger::debug!(
+            event = "emit_runtime_set_value_by_symbol",
+            ?object,
+            ?key,
+            ?value
+        );
+        let func = self
+            .runtime_func_cache
+            .get_set_value_by_symbol(self.module, self.builder.func);
+        let key = self.builder.ins().iconst(types::I32, key.id() as i64);
+        let args = [self.get_runtime_ptr(), object.0, key, value.0];
+        self.builder.ins().call(func, &args);
+    }
+
+    fn emit_runtime_set_value_by_number(&mut self, object: ObjectIr, key: f64, value: AnyIr) {
+        logger::debug!(
+            event = "emit_runtime_set_value_by_number",
+            ?object,
+            key,
+            ?value
+        );
+        let func = self
+            .runtime_func_cache
+            .get_set_value_by_number(self.module, self.builder.func);
+        let key = self.builder.ins().f64const(key);
+        let args = [self.get_runtime_ptr(), object.0, key, value.0];
+        self.builder.ins().call(func, &args);
+    }
+
+    fn emit_runtime_set_value_by_any(&mut self, object: ObjectIr, key: AnyIr, value: AnyIr) {
+        logger::debug!(
+            event = "emit_runtime_set_value_by_any",
+            ?object,
+            ?key,
+            ?value
+        );
+        let func = self
+            .runtime_func_cache
+            .get_set_value_by_value(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), object.0, key.0, value.0];
+        self.builder.ins().call(func, &args);
+    }
+
+    fn emit_runtime_create_data_property_by_symbol(
+        &mut self,
+        object: ObjectIr,
+        key: Symbol,
+        value: AnyIr,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(
+            event = "emit_runtime_create_data_property_by_symbol",
+            ?object,
+            ?key,
+            ?value,
+            ?retv
+        );
+        let func = self
+            .runtime_func_cache
+            .get_create_data_property_by_symbol(self.module, self.builder.func);
+        let key = self.builder.ins().iconst(types::I32, key.id() as i64);
+        let args = [self.get_runtime_ptr(), object.0, key, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_create_data_property_by_number(
+        &mut self,
+        object: ObjectIr,
+        key: f64,
+        value: AnyIr,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(
+            event = "emit_runtime_create_data_property_by_number",
+            ?object,
+            key,
+            ?value,
+            ?retv
+        );
+        let func = self
+            .runtime_func_cache
+            .get_create_data_property_by_number(self.module, self.builder.func);
+        let key = self.emit_number(key);
+        let args = [self.get_runtime_ptr(), object.0, key.0, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_create_data_property_by_any(
+        &mut self,
+        object: ObjectIr,
+        key: AnyIr,
+        value: AnyIr,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(
+            event = "emit_runtime_create_data_property_by_any",
+            ?object,
+            ?key,
+            ?value,
+            ?retv
+        );
+        let func = self
+            .runtime_func_cache
+            .get_create_data_property_by_value(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), object.0, key.0, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_copy_data_properties(
+        &mut self,
+        target: ObjectIr,
+        source: AnyIr,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(
+            event = "emit_runtime_copy_data_properties",
+            ?target,
+            ?source,
+            ?retv
+        );
+        let func = self
+            .runtime_func_cache
+            .get_copy_data_properties(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), target.0, source.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
+    }
+
     fn emit_runtime_register_promise(&mut self, coroutine: CoroutineIr) -> PromiseIr {
         logger::debug!(event = "emit_runtime_register_promise", ?coroutine);
         let func = self
@@ -3835,6 +4327,32 @@ where
         CaptureIr(self.builder.ins().iadd_imm(ptr, offset as i64))
     }
 
+    // object
+
+    fn emit_is_object(&mut self, value: AnyIr) -> BooleanIr {
+        logger::debug!(event = "emit_is_object", ?value);
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = 0;
+        let kind = self.builder.ins().load(types::I8, FLAGS, value.0, OFFSET);
+        // TODO: Value::KIND_OBJECT
+        BooleanIr(self.builder.ins().icmp_imm(IntCC::Equal, kind, 8))
+    }
+
+    fn emit_is_same_object(&mut self, lhs: ObjectIr, rhs: ObjectIr) -> BooleanIr {
+        BooleanIr(self.builder.ins().icmp(IntCC::Equal, lhs.0, rhs.0))
+    }
+
+    fn emit_load_object(&mut self, value: AnyIr) -> ObjectIr {
+        logger::debug!(event = "emit_load_object", ?value);
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = 8; // TODO
+        ObjectIr(
+            self.builder
+                .ins()
+                .load(self.ptr_type, FLAGS, value.0, OFFSET),
+        )
+    }
+
     fn emit_check_status_for_exception(&mut self, status: StatusIr, retv: AnyIr) {
         logger::debug!(event = "emit_check_status_for_exception", ?status, ?retv);
 
@@ -3991,9 +4509,12 @@ enum Operand {
     /// Runtime value of closure type.
     Closure(ClosureIr),
 
+    /// Runtime value of object type.
+    Object(ObjectIr),
+
     /// Runtime value and optional compile-time constant value of any type.
     // TODO(perf): compile-time evaluation
-    Any(AnyIr, #[allow(unused)] Option<Value>),
+    Any(AnyIr, Option<crate::types::Value>),
 
     // Values that cannot be stored into a `Value`.
     /// Runtime value of lambda function type.
@@ -4007,6 +4528,40 @@ enum Operand {
 
     // Compile-time constant value types.
     VariableReference(Symbol, Locator),
+    PropertyReference(PropertyKey),
+}
+
+#[derive(Clone, Debug)]
+enum PropertyKey {
+    // Compile-time values
+    Symbol(Symbol),
+    Number(f64),
+
+    // Runtime value w/ optional compile-time value
+    Any(AnyIr),
+}
+
+impl From<Symbol> for PropertyKey {
+    fn from(value: Symbol) -> Self {
+        Self::Symbol(value)
+    }
+}
+
+impl From<f64> for PropertyKey {
+    fn from(value: f64) -> Self {
+        // Use objects::PropertyKey::from() in order to remove code clone.
+        use crate::objects::PropertyKey;
+        match PropertyKey::from(value) {
+            PropertyKey::Symbol(value) => Self::Symbol(value),
+            PropertyKey::Number(value) => Self::Number(value),
+        }
+    }
+}
+
+impl From<AnyIr> for PropertyKey {
+    fn from(value: AnyIr) -> Self {
+        Self::Any(value)
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -4043,7 +4598,7 @@ struct PromiseIr(Value);
 struct ArgvIr(Value);
 
 #[derive(Clone, Copy, Debug)]
-struct StatusIr(#[allow(unused)] Value);
+struct StatusIr(Value);
 
 #[derive(Clone, Copy, Debug)]
 struct Status(u32);
