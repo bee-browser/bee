@@ -466,6 +466,7 @@ where
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
+            CompileCommand::PushArrayElement => self.process_push_array_element(),
             CompileCommand::PostfixIncrement => self.process_postfix_increment(),
             CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
             CompileCommand::PrefixIncrement => self.process_prefix_increment(),
@@ -1054,6 +1055,21 @@ where
         let retv = self.emit_create_any();
 
         let status = self.emit_runtime_copy_data_properties(object, from_value, retv);
+        self.emit_check_status_for_exception(status, retv);
+    }
+
+    fn process_push_array_element(&mut self) {
+        // 1. Let exprValue be ? Evaluation of AssignmentExpression.
+        let (operand, _) = self.dereference();
+
+        // 2. Let fromValue be ? GetValue(exprValue).
+        let from_value = self.emit_create_any();
+        self.emit_store_operand_to_any(&operand, from_value);
+
+        let object = self.peek_object();
+        let retv = self.emit_create_any();
+
+        let status = self.emit_runtime_push_array_element(object, from_value, retv);
         self.emit_check_status_for_exception(status, retv);
     }
 
@@ -4139,6 +4155,26 @@ where
             .runtime_func_cache
             .get_copy_data_properties(self.module, self.builder.func);
         let args = [self.get_runtime_ptr(), target.0, source.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
+    }
+
+    fn emit_runtime_push_array_element(
+        &mut self,
+        target: ObjectIr,
+        value: AnyIr,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(
+            event = "emit_runtime_push_array_element",
+            ?target,
+            ?value,
+            ?retv
+        );
+        let func = self
+            .runtime_func_cache
+            .get_push_value(self.module, self.builder.func);
+        let args = [self.get_runtime_ptr(), target.0, value.0, retv.0];
         let call = self.builder.ins().call(func, &args);
         StatusIr(self.builder.inst_results(call)[0])
     }
