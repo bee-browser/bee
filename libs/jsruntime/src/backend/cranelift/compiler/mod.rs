@@ -445,6 +445,7 @@ where
                 self.process_coroutine(*lambda_id, *num_locals)
             }
             CompileCommand::Promise => self.process_promise(),
+            CompileCommand::Exception => self.process_exception(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
@@ -504,6 +505,10 @@ where
             CompileCommand::LoopNext => self.process_loop_next(),
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
+            CompileCommand::Try => self.process_try(),
+            CompileCommand::Catch(nominal) => self.process_catch(*nominal),
+            CompileCommand::Finally(nominal) => self.process_finally(*nominal),
+            CompileCommand::TryEnd => self.process_try_end(),
             CompileCommand::LabelStart(symbol, is_iteration_statement) => {
                 self.process_label_start(*symbol, *is_iteration_statement)
             }
@@ -641,6 +646,13 @@ where
         let coroutine = self.pop_coroutine();
         let promise = self.emit_runtime_register_promise(coroutine);
         self.operand_stack.push(Operand::Promise(promise));
+    }
+
+    fn process_exception(&mut self) {
+        // TODO: Should we check status_ at runtime?
+        let exception = self.get_exception();
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Any(exception, None));
     }
 
     fn process_variable_reference(&mut self, symbol: Symbol) {
@@ -1544,6 +1556,74 @@ where
 
     fn process_loop_end(&mut self) {
         self.control_flow_stack.pop_exit_target();
+    }
+
+    fn process_try(&mut self) {
+        let try_block = self.create_block();
+        let catch_block = self.create_block();
+        let finally_block = self.create_block();
+        let end_block = self.create_block();
+
+        self.control_flow_stack.push_exception_flow(
+            try_block,
+            catch_block,
+            finally_block,
+            end_block,
+        );
+        self.control_flow_stack.push_exit_target(catch_block, false);
+
+        // Jump from the end of previous block to the beginning of the try block.
+        self.emit_jump(try_block, &[]);
+
+        self.switch_to_block(try_block);
+    }
+
+    fn process_catch(&mut self, nominal: bool) {
+        self.control_flow_stack.set_in_catch(nominal);
+
+        let flow = self.control_flow_stack.exception_flow();
+        let finally_block = flow.finally_block;
+        let catch_block = flow.catch_block;
+
+        self.control_flow_stack.pop_exit_target();
+        self.control_flow_stack
+            .push_exit_target(finally_block, false);
+
+        // Jump from the end of the try block to the beginning of the finally block.
+        self.emit_jump(finally_block, &[]);
+        self.switch_to_block(catch_block);
+
+        if !nominal {
+            let fcs = self.control_flow_stack.function_flow().fcs;
+            self.set_status(fcs, Status::NORMAL);
+            self.set_flow_selector(fcs, FlowSelector::NORMAL);
+        }
+    }
+
+    fn process_finally(&mut self, _nominal: bool) {
+        self.control_flow_stack.set_in_finally();
+
+        let flow = self.control_flow_stack.exception_flow();
+        let finally_block = flow.finally_block;
+
+        self.control_flow_stack.pop_exit_target();
+
+        // Jump from the end of the catch block to the beginning of the finally block.
+        self.emit_jump(finally_block, &[]);
+        self.switch_to_block(finally_block);
+    }
+
+    fn process_try_end(&mut self) {
+        let flow = self.control_flow_stack.pop_exception_flow();
+        let parent_exit_block = self.control_flow_stack.exit_block();
+
+        // Jump from the end of the finally block to the beginning of the outer catch block if
+        // there is an uncaught exception.  Otherwise, jump to the beginning of the try-end block.
+        let fcs = self.control_flow_stack.function_flow().fcs;
+        let is_normal = self.is_flow_selector_normal(fcs);
+        self.emit_brif(is_normal, flow.end_block, &[], parent_exit_block, &[]);
+
+        self.switch_to_block(flow.end_block);
     }
 
     fn process_label_start(&mut self, label: Symbol, is_iteration_statement: bool) {
@@ -2656,6 +2736,10 @@ where
 
     fn get_runtime_ptr(&self) -> Value {
         self.get_lambda_params(0)
+    }
+
+    fn get_exception(&self) -> AnyIr {
+        AnyIr(self.get_lambda_params(4))
     }
 
     fn get_captures_ptr(&mut self) -> Value {
