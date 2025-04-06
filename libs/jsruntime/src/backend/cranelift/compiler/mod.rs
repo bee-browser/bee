@@ -506,6 +506,7 @@ where
             CompileCommand::TruthyShortCircuit => self.process_truthy_short_circuit(),
             CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
             CompileCommand::Truthy => self.process_truthy(),
+            CompileCommand::NonNullish => self.process_non_nullish(),
             CompileCommand::IfThen(expr) => self.process_if_then(*expr),
             CompileCommand::Else(expr) => self.process_else(*expr),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
@@ -1463,13 +1464,14 @@ where
 
     fn process_ternary(&mut self) {
         let flow = self.control_flow_stack.pop_if_then_else_flow();
+        let result = flow.result.unwrap();
 
         let (else_operand, _) = self.dereference();
-        let any = self.peek_any();
-        self.emit_store_operand_to_any(&else_operand, any);
+        self.emit_store_operand_to_any(&else_operand, result);
         self.emit_jump(flow.merge_block, &[]);
 
         self.switch_to_block(flow.merge_block);
+        self.operand_stack.push(Operand::Any(result, None))
     }
 
     // 13.15.2 Runtime Semantics: Evaluation
@@ -1523,6 +1525,7 @@ where
 
     // 7.1.18 ToObject ( argument )
     fn perform_to_object(&mut self) {
+        logger::debug!(event = "perform_to_object");
         let (operand, _) = self.dereference();
         match operand {
             Operand::Undefined | Operand::Null => {
@@ -1585,27 +1588,36 @@ where
         self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
+    fn process_non_nullish(&mut self) {
+        let (operand, _) = self.dereference();
+        let boolean = self.perform_is_non_nullish(&operand);
+        // TODO(perf): compile-time evaluation
+        self.operand_stack.push(Operand::Boolean(boolean, None));
+    }
+
     fn process_if_then(&mut self, expr: bool) {
         let cond_value = self.pop_boolean();
         let then_block = self.create_block();
         let else_block = self.create_block();
         let merge_block = self.create_block();
-        if expr {
-            let any = self.emit_create_any();
-            self.operand_stack.push(Operand::Any(any, None));
-        }
+        let result = if expr {
+            Some(self.emit_create_any())
+        } else {
+            None
+        };
         self.emit_brif(cond_value, then_block, &[], else_block, &[]);
         self.switch_to_block(then_block);
         self.control_flow_stack
-            .push_if_then_else_flow(then_block, else_block, merge_block);
+            .push_if_then_else_flow(then_block, else_block, merge_block, result);
     }
 
     fn process_else(&mut self, expr: bool) {
-        if expr {
+        if let Some(result) = self.control_flow_stack.expr_result() {
+            debug_assert!(expr);
             let (operand, _) = self.dereference();
-            let any = self.peek_any();
-            self.emit_store_operand_to_any(&operand, any);
+            self.emit_store_operand_to_any(&operand, result);
         } else {
+            debug_assert!(!expr);
             self.operand_stack.pop();
         }
         let merge_block = self.control_flow_stack.merge_block();
@@ -2601,7 +2613,7 @@ where
             | Operand::Closure(_)
             | Operand::Object(_)
             | Operand::Promise(_) => self.emit_boolean(true),
-            Operand::String(..) => todo!(),
+            Operand::String(..) => todo!("string"),
             Operand::Any(value, ..) => self.emit_is_non_nullish(*value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
@@ -2708,13 +2720,6 @@ where
         let value = if pos == '^' { new_value } else { old_value };
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(value, None));
-    }
-
-    fn peek_any(&mut self) -> AnyIr {
-        match self.operand_stack.last().unwrap() {
-            Operand::Any(value, _) => *value,
-            _ => unreachable!(),
-        }
     }
 
     fn perform_to_any(&mut self, operand: &Operand) -> AnyIr {
@@ -2956,7 +2961,7 @@ where
     }
 
     fn dereference(&mut self) -> (Operand, Option<(Symbol, Locator)>) {
-        logger::debug!(event = "dereference", operand_stack.top=?self.operand_stack.last());
+        logger::debug!(event = "dereference", operand_stack.top = ?self.operand_stack.last());
 
         let operand = self.operand_stack.pop().unwrap();
         match operand {
@@ -4456,6 +4461,20 @@ where
         let args = [self.get_runtime_ptr(), value.0];
         let call = self.builder.ins().call(func, &args);
         StringIr(self.builder.inst_results(call)[0])
+    }
+
+    #[allow(unused)]
+    fn emit_runtime_print_boolean(&mut self, value: BooleanIr, msg: &'static CStr) {
+        logger::debug!(event = "emit_runtime_print_boolean", ?value);
+        let func = self
+            .runtime_func_cache
+            .get_print_bool(self.module, self.builder.func);
+        let msg = self
+            .builder
+            .ins()
+            .iconst(self.ptr_type, msg.as_ptr() as i64);
+        let args = [self.get_runtime_ptr(), value.0, msg];
+        self.builder.ins().call(func, &args);
     }
 
     #[allow(unused)]
