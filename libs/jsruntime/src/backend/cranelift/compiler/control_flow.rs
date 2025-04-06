@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 use base::macros::debug_assert_ne;
 use jsparser::Symbol;
 
+use super::AnyIr;
 use super::FunctionControlSet;
 use super::ScopeRef;
 type SwitchIr = ();
@@ -181,6 +182,7 @@ impl ControlFlowStack {
         then_block: Block,
         else_block: Block,
         merge_block: Block,
+        result: Option<AnyIr>,
     ) {
         let outer_index = self.if_then_else_index;
         self.if_then_else_index = self.stack.len();
@@ -188,6 +190,7 @@ impl ControlFlowStack {
             then_block,
             else_block,
             merge_block,
+            result,
             outer_index,
         }));
     }
@@ -207,6 +210,16 @@ impl ControlFlowStack {
             .get(self.if_then_else_index)
             .map(|flow| match flow {
                 ControlFlow::IfThenElse(flow) => flow.merge_block,
+                _ => panic!(),
+            })
+            .unwrap()
+    }
+
+    pub fn expr_result(&self) -> Option<AnyIr> {
+        self.stack
+            .get(self.if_then_else_index)
+            .map(|flow| match flow {
+                ControlFlow::IfThenElse(flow) => flow.result,
                 _ => panic!(),
             })
             .unwrap()
@@ -660,6 +673,7 @@ pub struct IfThenElseFlow {
     pub then_block: Block,
     pub else_block: Block,
     pub merge_block: Block,
+    pub result: Option<AnyIr>,
 
     /// The index of the enclosing outer if-then-else flow.
     outer_index: usize,
