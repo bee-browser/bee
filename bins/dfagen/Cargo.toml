@@ -13,7 +13,7 @@ version.workspace = true
 anyhow = "1.0.97"
 base = { path = "../../libs/base" }
 clap = { version = "4.5.35", features = ["derive", "env"] }
-indexmap = { version = "2.8.0", features = ["serde"] }
+indexmap = { version = "2.9.0", features = ["serde"] }
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
 serde = { version = "1.0.219", features = ["derive", "rc"] }
