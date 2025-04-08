@@ -336,6 +336,8 @@ unsafe extern "C" fn runtime_create_capture<X>(
     runtime: *mut c_void,
     target: *mut Value,
 ) -> *mut Capture {
+    logger::debug!(event = "runtime_create_capture", ?target);
+
     const LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::size_of::<Capture>(),

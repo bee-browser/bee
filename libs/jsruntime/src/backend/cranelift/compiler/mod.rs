@@ -872,7 +872,7 @@ where
     fn emit_call(&mut self, closure: ClosureIr, argc: u16, argv: ArgvIr, retv: AnyIr) -> StatusIr {
         logger::debug!(event = "emit_call", ?closure, argc, ?argv, ?retv);
         let lambda = self.emit_load_lambda_from_closure(closure);
-        let context = self.emit_load_captures_from_closure(closure);
+        let context = self.emit_get_captures_from_closure(closure);
         let args = &[
             self.get_runtime_ptr(),
             context,
@@ -3101,7 +3101,7 @@ where
         logger::debug!(event = "emit_load_captures_from_coroutine");
         let coroutine = self.get_coroutine();
         let closure = self.emit_load_closure_from_coroutine(coroutine);
-        self.emit_load_captures_from_closure(closure)
+        self.emit_get_captures_from_closure(closure)
     }
 
     fn emit_load_closure_from_coroutine(&mut self, coroutine: CoroutineIr) -> ClosureIr {
@@ -3814,7 +3814,11 @@ where
         const OFFSET: i32 = std::mem::offset_of!(crate::types::Capture, target) as i32;
         let captures = self.get_captures_ptr();
         let offset = self.ptr_type.bytes() * index as u32;
-        let capture = self.builder.ins().iadd_imm(captures, offset as i64);
+        debug_assert!(offset <= i32::MAX as u32);
+        let capture = self
+            .builder
+            .ins()
+            .load(self.ptr_type, FLAGS, captures, offset as i32);
         AnyIr(
             self.builder
                 .ins()
@@ -4382,26 +4386,31 @@ where
         const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
         let offset = std::mem::offset_of!(crate::types::Closure, captures)
             + (self.ptr_type.bytes() as usize) * (index as usize);
-        let base = self.builder.ins().iadd_imm(closure.0, offset as i64);
-        self.builder.ins().store(FLAGS, capture.0, base, 0);
-    }
-
-    fn emit_load_captures_from_closure(&mut self, closure: ClosureIr) -> Value {
-        logger::debug!(event = "emit_load_captures_from_closure", ?closure);
-        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
-        const OFFSET: i32 = std::mem::offset_of!(crate::types::Closure, captures) as i32;
+        debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
-            .load(self.ptr_type, FLAGS, closure.0, OFFSET)
+            .store(FLAGS, capture.0, closure.0, offset as i32);
+    }
+
+    fn emit_get_captures_from_closure(&mut self, closure: ClosureIr) -> Value {
+        logger::debug!(event = "emit_get_captures_from_closure", ?closure);
+        const OFFSET: i64 = std::mem::offset_of!(crate::types::Closure, captures) as i64;
+        self.builder.ins().iadd_imm(closure.0, OFFSET)
     }
 
     // captures
 
     fn emit_load_capture(&mut self, index: u16) -> CaptureIr {
         logger::debug!(event = "emit_load_capture", ?index);
-        let ptr = self.get_captures_ptr();
+        const FLAGS: MemFlags = MemFlags::new().with_aligned().with_notrap();
+        let captures = self.get_captures_ptr();
         let offset = size_of::<crate::types::Capture>() * (index as usize);
-        CaptureIr(self.builder.ins().iadd_imm(ptr, offset as i64))
+        debug_assert!(offset <= i32::MAX as usize);
+        CaptureIr(
+            self.builder
+                .ins()
+                .load(self.ptr_type, FLAGS, captures, offset as i32),
+        )
     }
 
     // object

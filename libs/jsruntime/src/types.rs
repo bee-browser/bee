@@ -338,9 +338,9 @@ impl std::fmt::Debug for Closure {
         let data = self.captures.as_ptr();
         let mut captures = unsafe { std::slice::from_raw_parts(data, len).iter() };
         if let Some(capture) = captures.next() {
-            write!(f, "{capture:?}")?;
+            write!(f, "{:?}", unsafe { &**capture })?;
             for capture in captures {
-                write!(f, ", {capture:?}")?;
+                write!(f, ", {:?}", unsafe { &**capture })?;
             }
         }
         write!(f, "])")
