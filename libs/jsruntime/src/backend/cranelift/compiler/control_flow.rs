@@ -339,12 +339,10 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn push_case_flow(&mut self, next_case_block: Block, clause_start_block: Block) {
+    pub fn push_case_flow(&mut self, clause_block: Block, batch_index: Option<usize>) {
         self.stack.push(ControlFlow::Case(CaseFlow {
-            next_case_block,
-            clause_start_block,
-            clause_end_block: None,
-            clause_has_statement: false,
+            clause_block,
+            batch_index,
         }));
     }
 
@@ -355,17 +353,12 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn update_case_flow(
-        &mut self,
-        clause_end_block: Block,
-        clause_has_statement: bool,
-    ) -> Block {
-        match self.stack.last_mut() {
-            Some(ControlFlow::Case(flow)) => {
-                flow.clause_end_block = Some(clause_end_block);
-                flow.clause_has_statement = clause_has_statement;
-                flow.next_case_block
-            }
+    pub fn get_default_block(&self, default_index: u16) -> Block {
+        debug_assert!(self.switch_index > 0);
+        let index = self.switch_index + 1 + default_index as usize;
+        debug_assert!(index < self.stack.len());
+        match self.stack[index] {
+            ControlFlow::Case(ref flow) => flow.clause_block,
             _ => unreachable!(),
         }
     }
@@ -586,16 +579,12 @@ impl ControlFlowStack {
                     eprintln_block!(end_block, flow);
                 }
                 ControlFlow::Case(flow) => {
-                    if flow.clause_has_statement {
-                        eprintln!("case: has-statement");
+                    if let Some(batch_index) = flow.batch_index {
+                        eprintln!("case: batch={batch_index}");
                     } else {
                         eprintln!("case:");
                     }
-                    eprintln_block!(next_case_block, flow);
-                    eprintln_block!(clause_start_block, flow);
-                    if let Some(clause_end_block) = flow.clause_end_block {
-                        eprintln_block!(clause_end_block);
-                    }
+                    eprintln_block!(clause_block, flow);
                 }
                 ControlFlow::Exception(flow) => {
                     eprint!("exception:");
@@ -707,10 +696,8 @@ pub struct SwitchFlow {
 }
 
 pub struct CaseFlow {
-    pub next_case_block: Block,
-    pub clause_start_block: Block,
-    pub clause_end_block: Option<Block>,
-    pub clause_has_statement: bool,
+    pub clause_block: Block,
+    pub batch_index: Option<usize>,
 }
 
 pub struct ExceptionFlow {
