@@ -1,7 +1,5 @@
 mod scope;
 
-use std::ops::Range;
-
 use bitflags::bitflags;
 use jsparser::syntax::LiteralPropertyName;
 use jsparser::syntax::MemberExpressionKind;
@@ -971,7 +969,7 @@ where
         //
         // TODO(test): probably, the order of error handling may be different fro the
         // specification.
-        for (&symbol, init_commands_range) in analysis.function_scoped_symbols.iter() {
+        for (&symbol, init_batch) in analysis.function_scoped_symbols.iter() {
             // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
             // `function.commands` must be rewritten to throw the "Error".
             let result = self
@@ -982,14 +980,16 @@ where
                 self.global_analysis.scope_tree_builder.add_global(
                     global_scope_ref,
                     symbol,
-                    init_commands_range.clone(),
+                    *init_batch,
                 );
                 global_symbols.insert(symbol);
             } else {
                 // TODO(perf): rethink the algorithm.  somewhat inefficient...
-                self.global_analysis
-                    .scope_tree_builder
-                    .set_init_commands_range(global_scope_ref, symbol, init_commands_range.clone());
+                self.global_analysis.scope_tree_builder.set_init_batch(
+                    global_scope_ref,
+                    symbol,
+                    *init_batch,
+                );
             }
         }
 
@@ -1041,7 +1041,7 @@ struct FunctionAnalysis {
     symbol_stack: Vec<(Symbol, usize)>,
 
     /// A set of non-lexically-scoped symbols defined by "VariableStatement"s.
-    function_scoped_symbols: FxHashMap<Symbol, Range<usize>>,
+    function_scoped_symbols: FxHashMap<Symbol, usize>,
 
     /// A stack to hold [`Scope`]s.
     ///
@@ -1390,18 +1390,17 @@ impl FunctionAnalysis {
         debug_assert!(!self.symbol_stack.is_empty());
         let (symbol, _) = self.symbol_stack.pop().unwrap();
 
-        // This is a hoistable declaration.  Commands following the `Skip` command will perform
+        // This is a hoistable declaration.  Commands following the `Batch` command will perform
         // by a command handler for the `DeclareVars` command generated for the current scope.
-        self.commands.push(CompileCommand::Skip(4));
         let index = self.commands.len();
+        self.commands.push(CompileCommand::Batch(4));
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands
             .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareClosure);
 
-        self.function_scoped_symbols
-            .insert(symbol, index..(index + 4));
+        self.function_scoped_symbols.insert(symbol, index);
     }
 
     fn process_closure_expression(
@@ -1497,21 +1496,44 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Duplicate(1));
         self.commands.push(CompileCommand::StrictEquality);
         self.commands.push(CompileCommand::Case);
+        self.reserve_command_for_case_statements();
+    }
+
+    fn reserve_command_for_case_statements(&mut self) {
+        let index = self.reserve_commands(1);
+        self.switch_stack.last_mut().unwrap().case_statements_index = index;
     }
 
     fn process_case_clause(&mut self, has_statement: bool) {
+        let batch_index = self.update_command_for_case_statements(has_statement);
         self.commands
-            .push(CompileCommand::CaseClause(has_statement));
+            .push(CompileCommand::CaseClause(false, batch_index));
         self.switch_stack.last_mut().unwrap().num_cases += 1;
+    }
+
+    fn update_command_for_case_statements(&mut self, has_statement: bool) -> Option<usize> {
+        let index = self.switch_stack.last().unwrap().case_statements_index;
+        debug_assert_eq!(self.commands[index], CompileCommand::PlaceHolder);
+        if has_statement {
+            let end_index = self.commands.len();
+            debug_assert!(end_index - index - 1 < u16::MAX as usize);
+            self.commands[index] = CompileCommand::Batch((end_index - index - 1) as u16);
+            Some(index)
+        } else {
+            self.commands[index] = CompileCommand::Nop;
+            None
+        }
     }
 
     fn process_default_selector(&mut self) {
         self.commands.push(CompileCommand::Default);
+        self.reserve_command_for_case_statements();
     }
 
     fn process_default_clause(&mut self, has_statement: bool) {
+        let batch_index = self.update_command_for_case_statements(has_statement);
         self.commands
-            .push(CompileCommand::CaseClause(has_statement));
+            .push(CompileCommand::CaseClause(true, batch_index));
         let switch = self.switch_stack.last_mut().unwrap();
         switch.default_index = Some(switch.num_cases);
         switch.num_cases += 1;
@@ -1522,6 +1544,7 @@ impl FunctionAnalysis {
             case_block_index,
             default_index,
             num_cases,
+            ..
         } = self.switch_stack.pop().unwrap();
 
         let id = self.num_switch_statements;
@@ -1645,10 +1668,10 @@ impl FunctionAnalysis {
     }
 
     fn process_function_scoped_symbols(&mut self, global_analysis: &mut GlobalAnalysis) {
-        for (&symbol, init_commands_range) in self.function_scoped_symbols.iter() {
+        for (&symbol, init_batch) in self.function_scoped_symbols.iter() {
             global_analysis
                 .scope_tree_builder
-                .add_function_scoped_mutable(symbol, self.num_locals, init_commands_range.clone());
+                .add_function_scoped_mutable(symbol, self.num_locals, *init_batch);
             self.num_locals += 1;
         }
     }
@@ -1698,6 +1721,7 @@ struct LoopAnalysis {
 #[derive(Default)]
 struct SwitchAnalysis {
     case_block_index: usize,
+    case_statements_index: usize,
     num_cases: u16,
     default_index: Option<u16>,
 }
@@ -1724,15 +1748,18 @@ struct CoroutineAnalysis {
 pub enum CompileCommand {
     // Inserting commands in the middle is an inefficient operation.  For avoiding such an
     // operation, the following commands are introduced.
-    //
-    // The `Nop` performs no operation.  A `Placeholder` will be replaced with a `Nop` once it's
+
+    // A `Nop` performs no operation.  A `Placeholder` will be replaced with a `Nop` once it's
     // determined that command substitution is not needed.
-    //
-    // The `Skip(n)` skips the next `n` commands.  The commands skipped are performed at some
-    // point.  For example, commands generated for a *hoistable* declaration are performed at the
-    // `DeclareVars` in the scope on which the declaration is performed.
     Nop,
-    Skip(u16),
+
+    // A `Batch(n)` is inserted before `n` commands that are compile commands of a *batch*.
+    // Compile commands in a batch will be skipped in an evaluation starting at the first compile
+    // command.  A batch is performed at some point in the evaluation.  For example, compile
+    // commands generated for a *hoistable* declaration are inserted as a batch and the compile
+    // commands of the batch are performed at the `DeclareVars` in the scope on which the
+    // declaration is performed.
+    Batch(u16),
 
     Undefined,
     Null,
@@ -1862,7 +1889,7 @@ pub enum CompileCommand {
     CaseBlock(u16, u16),
     Case,
     Default,
-    CaseClause(bool),
+    CaseClause(bool, Option<usize>),
     Switch(u16, u16, Option<u16>),
 
     // label

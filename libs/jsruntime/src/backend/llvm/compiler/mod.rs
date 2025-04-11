@@ -311,7 +311,7 @@ where
         logger::debug!(event = "process_command", ?command);
         match command {
             CompileCommand::Nop => (),
-            CompileCommand::Skip(_) => (),
+            CompileCommand::Batch(_) => (),
             CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
@@ -396,7 +396,9 @@ where
             CompileCommand::CaseBlock(id, num_cases) => self.process_case_block(*id, *num_cases),
             CompileCommand::Case => self.process_case(),
             CompileCommand::Default => self.process_default(),
-            CompileCommand::CaseClause(has_statement) => self.process_case_clause(*has_statement),
+            CompileCommand::CaseClause(_, batch_idnex) => {
+                self.process_case_clause(batch_idnex.is_some())
+            }
             CompileCommand::Switch(id, num_cases, default_index) => {
                 self.process_switch(*id, *num_cases, *default_index)
             }

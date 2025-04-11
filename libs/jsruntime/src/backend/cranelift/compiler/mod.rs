@@ -437,7 +437,7 @@ where
         logger::debug!(event = "process_command", ?command);
         match command {
             CompileCommand::Nop => (),
-            CompileCommand::Skip(n) => self.process_skip(*n),
+            CompileCommand::Batch(n) => self.process_batch(*n),
             CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
@@ -519,6 +519,15 @@ where
             CompileCommand::LoopNext => self.process_loop_next(),
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
+            CompileCommand::CaseBlock(id, num_cases) => self.process_case_block(*id, *num_cases),
+            CompileCommand::Case => self.process_case(),
+            CompileCommand::Default => self.process_default(),
+            CompileCommand::CaseClause(default, batch_index) => {
+                self.process_case_clause(*default, *batch_index)
+            }
+            CompileCommand::Switch(id, num_cases, default_index) => {
+                self.process_switch(func, *id, *num_cases, *default_index)
+            }
             CompileCommand::Try => self.process_try(),
             CompileCommand::Catch(nominal) => self.process_catch(*nominal),
             CompileCommand::Finally(nominal) => self.process_finally(*nominal),
@@ -543,7 +552,6 @@ where
             CompileCommand::Dereference => self.process_dereference(),
             CompileCommand::Debugger => self.process_debugger(),
             CompileCommand::PlaceHolder => unreachable!(),
-            _ => todo!("{command:?}"),
         }
 
         macro_rules! dump_enabled {
@@ -566,7 +574,7 @@ where
 
     // commands
 
-    fn process_skip(&mut self, n: u16) {
+    fn process_batch(&mut self, n: u16) {
         debug_assert_eq!(self.skip_count, 0);
         debug_assert_ne!(n, 0);
         self.skip_count = n;
@@ -811,7 +819,16 @@ where
         // TODO(fix): preserve declaration order.
         for variable in self.scope_tree.scope(scope_ref).variables.iter() {
             // TODO(fix): preserve declaration order.
-            for command in func.commands[variable.init_commands_range.clone()].iter() {
+            if variable.init_batch == 0 {
+                continue;
+            }
+            let start = variable.init_batch + 1;
+            let end = start
+                + match func.commands[variable.init_batch] {
+                    CompileCommand::Batch(n) => n as usize,
+                    _ => unreachable!(),
+                };
+            for command in func.commands[start..end].iter() {
                 self.process_command(func, command);
             }
         }
@@ -1820,6 +1837,101 @@ where
 
     fn process_loop_end(&mut self) {
         self.control_flow_stack.pop_exit_target();
+    }
+
+    fn process_case_block(&mut self, _id: u16, num_cases: u16) {
+        debug_assert!(num_cases > 0);
+
+        let ctrl_block = self.create_block();
+        let case_block = self.create_block();
+
+        self.control_flow_stack.push_switch_flow(ctrl_block);
+        self.control_flow_stack.push_exit_target(ctrl_block, true);
+        debug_assert!(self.pending_labels.is_empty());
+
+        self.emit_jump(case_block, &[]);
+        self.switch_to_block(case_block);
+    }
+
+    fn process_case(&mut self) {
+        // TODO(refactor): remove
+    }
+
+    fn process_default(&mut self) {
+        // TODO(refactor): remove
+    }
+
+    fn process_case_clause(&mut self, default: bool, batch_index: Option<usize>) {
+        let clause_block = self.create_block();
+        if default {
+            // Nothing to do here.
+            // A jump instruction to the default block will be added in process_switch().
+        } else {
+            let next_case_block = self.create_block();
+            let cond_value = self.pop_boolean();
+            self.emit_brif(cond_value, clause_block, &[], next_case_block, &[]);
+            self.switch_to_block(next_case_block);
+        }
+        self.control_flow_stack
+            .push_case_flow(clause_block, batch_index);
+    }
+
+    fn process_switch(
+        &mut self,
+        func: &Function,
+        _id: u16,
+        num_cases: u16,
+        default_index: Option<u16>,
+    ) {
+        let ctrl_block = self.control_flow_stack.switch_flow().end_block;
+
+        if let Some(default_index) = default_index {
+            debug_assert!(default_index < num_cases);
+            let default_block = self.control_flow_stack.get_default_block(default_index);
+            self.emit_jump(default_block, &[]);
+        } else {
+            self.emit_jump(ctrl_block, &[]);
+        }
+
+        let mut fall_through_block = ctrl_block;
+        for _ in 0..num_cases {
+            let flow = self.control_flow_stack.pop_case_flow();
+            self.switch_to_block(flow.clause_block);
+            if let Some(batch_index) = flow.batch_index {
+                let start = batch_index + 1;
+                let end = start
+                    + match func.commands[batch_index] {
+                        CompileCommand::Batch(n) => n as usize,
+                        _ => unreachable!(),
+                    };
+                for command in func.commands[start..end].iter() {
+                    self.process_command(func, command);
+                }
+            }
+            if !self.block_terminated {
+                // fall through
+                self.emit_jump(fall_through_block, &[]);
+            }
+            fall_through_block = flow.clause_block;
+        }
+
+        let exit_id = self.control_flow_stack.exit_id();
+        self.control_flow_stack.pop_exit_target();
+        self.control_flow_stack.pop_switch_flow();
+
+        let set_normal_block = self.create_block();
+        let end_block = self.create_block();
+        let fcs = self.control_flow_stack.function_flow().fcs;
+
+        self.switch_to_block(ctrl_block);
+        let is_break = self.is_flow_selector_break(fcs, exit_id.depth());
+        self.emit_brif(is_break, set_normal_block, &[], end_block, &[]);
+
+        self.switch_to_block(set_normal_block);
+        self.set_flow_selector(fcs, FlowSelector::NORMAL);
+        self.emit_jump(end_block, &[]);
+
+        self.switch_to_block(end_block);
     }
 
     fn process_try(&mut self) {
@@ -3212,6 +3324,17 @@ where
         depth: u32,
     ) -> BooleanIr {
         logger::debug!(event = "is_flow_selector_break_or_continue");
+        let flow_selector = self.builder.ins().stack_load(types::I32, fcs.0, 4);
+        let fs_depth = self.builder.ins().band_imm(flow_selector, 0x0000FF00);
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(IntCC::Equal, fs_depth, depth as i64),
+        )
+    }
+
+    fn is_flow_selector_break(&mut self, fcs: FunctionControlSet, depth: u32) -> BooleanIr {
+        logger::debug!(event = "is_flow_selector_break");
         let flow_selector = self.builder.ins().stack_load(types::I32, fcs.0, 4);
         let fs_depth = self.builder.ins().band_imm(flow_selector, 0x0000FF00);
         BooleanIr(

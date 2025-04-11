@@ -2,8 +2,6 @@
 //   10.2.11 FunctionDeclarationInstantiation ( func, argumentsList )
 //   16.1.7 GlobalDeclarationInstantiation ( script, env )
 
-use std::ops::Range;
-
 use bitflags::bitflags;
 
 use super::Locator;
@@ -194,7 +192,7 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::FormalParameter,
             flags: VariableFlags::empty(),
-            init_commands_range: Default::default(),
+            init_batch: Default::default(),
         });
     }
 
@@ -205,23 +203,18 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Mutable,
             flags: VariableFlags::empty(),
-            init_commands_range: Default::default(),
+            init_batch: Default::default(),
         });
     }
 
-    pub fn add_function_scoped_mutable(
-        &mut self,
-        symbol: Symbol,
-        index: u16,
-        init_commands_range: Range<usize>,
-    ) {
+    pub fn add_function_scoped_mutable(&mut self, symbol: Symbol, index: u16, init_batch: usize) {
         let scope = &mut self.scopes[self.current.index()];
         scope.variables.push(Variable {
             symbol,
             index,
             kind: VariableKind::Mutable,
             flags: VariableFlags::FUNCTION_SCOPED,
-            init_commands_range,
+            init_batch,
         });
     }
 
@@ -232,7 +225,7 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Immutable,
             flags: VariableFlags::empty(),
-            init_commands_range: Default::default(),
+            init_batch: Default::default(),
         });
     }
 
@@ -244,19 +237,14 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Capture,
             flags: VariableFlags::empty(),
-            init_commands_range: Default::default(),
+            init_batch: Default::default(),
         });
         scope
             .variables
             .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
-    pub fn add_global(
-        &mut self,
-        scope_ref: ScopeRef,
-        symbol: Symbol,
-        init_commands_range: Range<usize>,
-    ) {
+    pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol, init_batch: usize) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
         scope.variables.push(Variable {
@@ -264,7 +252,7 @@ impl ScopeTreeBuilder {
             index: 0, // TODO
             kind: VariableKind::Global,
             flags: VariableFlags::empty(),
-            init_commands_range,
+            init_batch,
         });
         scope
             .variables
@@ -272,16 +260,11 @@ impl ScopeTreeBuilder {
     }
 
     // TODO(perf)
-    pub fn set_init_commands_range(
-        &mut self,
-        scope_ref: ScopeRef,
-        symbol: Symbol,
-        init_commands_range: Range<usize>,
-    ) {
+    pub fn set_init_batch(&mut self, scope_ref: ScopeRef, symbol: Symbol, init_batch: usize) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
         match scope.variables.iter_mut().find(|v| v.symbol == symbol) {
-            Some(variable) => variable.init_commands_range = init_commands_range,
+            Some(variable) => variable.init_batch = init_batch,
             None => panic!(),
         }
     }
@@ -417,7 +400,7 @@ pub struct Variable {
     pub index: u16,
     pub kind: VariableKind,
     flags: VariableFlags,
-    pub init_commands_range: Range<usize>,
+    pub init_batch: usize,
 }
 
 impl Variable {
@@ -466,8 +449,8 @@ impl std::fmt::Display for Variable {
             VariableKind::Capture => write!(f, "C@{}:{}", self.index, self.symbol)?,
             VariableKind::Global => write!(f, "G@{}:{}", self.index, self.symbol)?,
         }
-        if !self.init_commands_range.is_empty() {
-            write!(f, "[{:?}]", self.init_commands_range)?;
+        if self.init_batch > 0 {
+            write!(f, "#{}", self.init_batch)?;
         }
         Ok(())
     }
