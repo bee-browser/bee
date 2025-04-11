@@ -23,8 +23,9 @@ pub use bridge::RuntimeFunctions;
 
 macro_rules! use_cranelift_backend {
     () => {
-        matches!(std::env::var_os("BEE_JSRUNTIME_BACKEND"),
-                 Some(backend) if backend == "cranelift")
+        std::env::var_os("BEE_JSRUNTIME_BACKEND").is_none() ||
+            matches!(std::env::var_os("BEE_JSRUNTIME_BACKEND"),
+                     Some(backend) if backend == "cranelift")
     };
 }
 
@@ -44,6 +45,7 @@ pub fn initialize() {
     match std::env::var_os("BEE_JSRUNTIME_BACKEND") {
         Some(backend) if backend == "cranelift" => cranelift::initialize(),
         Some(backend) if backend == "llvm" => llvm::initialize(),
+        None => cranelift::initialize(),
         _ => unreachable!(),
     }
 }
@@ -60,6 +62,7 @@ pub fn compile<X>(
         Some(backend) if backend == "llvm" => {
             llvm::compile(runtime, program, optimize).map(Module::Llvm)
         }
+        None => cranelift::compile(runtime, program, optimize).map(Module::Cranelift),
         _ => unreachable!(),
     }
 }
@@ -174,6 +177,7 @@ impl Executor {
                 Self::Cranelift(cranelift::Executor::new(functions))
             }
             Some(backend) if backend == "llvm" => Self::Llvm(llvm::Executor::new(functions)),
+            None => Self::Cranelift(cranelift::Executor::new(functions)),
             _ => unreachable!(),
         }
     }
