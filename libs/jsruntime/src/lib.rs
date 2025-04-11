@@ -1,5 +1,5 @@
+mod backend;
 mod lambda;
-mod llvmir;
 mod logger;
 mod objects;
 mod semantics;
@@ -11,23 +11,23 @@ use std::ffi::c_void;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
+use backend::Executor;
 use lambda::LambdaId;
 use lambda::LambdaRegistry;
-use llvmir::Executor;
 use objects::Object;
 use objects::Property;
 use objects::PropertyKey;
 use types::ReturnValue;
 
-pub use llvmir::CompileError;
-pub use llvmir::Module;
+pub use backend::CompileError;
+pub use backend::Module;
 pub use semantics::Program;
 pub use types::Char16Seq;
 pub use types::U16String;
 pub use types::Value;
 
 pub fn initialize() {
-    llvmir::initialize();
+    backend::initialize();
 }
 
 /// Runtime preferences.
@@ -70,7 +70,7 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let functions = llvmir::RuntimeFunctions::new::<X>();
+        let functions = backend::RuntimeFunctions::new::<X>();
 
         let mut global_object = Object::default();
         global_object.define_builtin_global_properties();
@@ -119,9 +119,13 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
     }
 
+    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
+        backend::compile(self, program, optimize)
+    }
+
     pub fn link(&mut self, module: Module) {
         logger::debug!(event = "link");
-        self.executor.register_module(&module);
+        self.executor.register_module(module);
     }
 
     pub fn evaluate(&mut self, program: &Program) -> Result<Value, Value> {

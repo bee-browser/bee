@@ -3,6 +3,7 @@ use std::mem::offset_of;
 use std::ptr::addr_eq;
 
 use crate::Runtime;
+use crate::logger;
 use crate::objects::Object;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
@@ -49,10 +50,11 @@ impl Value {
     }
 
     pub fn into_result(self, status: Status) -> Result<Value, Value> {
+        logger::debug!(event = "into_result", ?status);
         match status {
             Status::Normal => Ok(self),
             Status::Exception => Err(self),
-            _ => unreachable!(),
+            _ => unreachable!("{status:?}"),
         }
     }
 
@@ -323,7 +325,7 @@ pub struct Closure {
     /// A variable-length list of captures used in the lambda function.
     //
     // TODO(issue#237): GcCellRef
-    pub captures: [Capture; 32],
+    pub captures: [*mut Capture; 32],
 }
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
@@ -336,9 +338,9 @@ impl std::fmt::Debug for Closure {
         let data = self.captures.as_ptr();
         let mut captures = unsafe { std::slice::from_raw_parts(data, len).iter() };
         if let Some(capture) = captures.next() {
-            write!(f, "{capture:?}")?;
+            write!(f, "{:?}", unsafe { &**capture })?;
             for capture in captures {
-                write!(f, ", {capture:?}")?;
+                write!(f, ", {:?}", unsafe { &**capture })?;
             }
         }
         write!(f, "])")
@@ -376,7 +378,11 @@ impl Capture {
 impl std::fmt::Debug for Capture {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_escaped() {
-            write!(f, "capture(escaped: {:?})", self.target)
+            write!(
+                f,
+                "capture(escaped: {:?}, value: {:?})",
+                self.target, self.escaped
+            )
         } else {
             write!(f, "capture(onstack: {:?})", self.target)
         }
@@ -499,7 +505,7 @@ where
 pub type Lambda = unsafe extern "C" fn(
     runtime: *mut c_void,
     context: *mut c_void,
-    args: u16,
+    argc: u16,
     argv: *mut Value,
     retv: *mut Value,
 ) -> Status;
@@ -540,6 +546,7 @@ where
 }
 
 /// The return value type of `Lambda` function.
+#[derive(Debug)]
 #[repr(u32)]
 pub enum Status {
     Normal,
