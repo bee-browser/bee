@@ -35,6 +35,12 @@ static_assertions::const_assert_eq!(size_of::<Value>(), 16);
 static_assertions::const_assert_eq!(align_of::<Value>(), 8);
 
 impl Value {
+    pub(crate) const SIZE: usize = size_of::<Self>();
+    pub(crate) const ALIGNMENT: usize = align_of::<Self>();
+    pub(crate) const HOLDER_SIZE: usize = size_of::<u64>();
+    pub(crate) const KIND_OFFSET: usize = 0;
+    pub(crate) const HOLDER_OFFSET: usize = size_of::<u64>();
+
     // 7.1.18 ToObject ( argument )
     pub fn to_object(&self) -> Result<&mut Object, Value> {
         match self {
@@ -222,6 +228,13 @@ static_assertions::const_assert_eq!(align_of::<Char16Seq>(), align_of::<usize>()
 impl Char16Seq {
     pub const EMPTY: Self = Self::new_const_from_raw_parts(std::ptr::null(), 0);
 
+    pub(crate) const SIZE: usize = size_of::<Self>();
+    pub(crate) const ALIGNMENT: usize = align_of::<Self>();
+    pub(crate) const NEXT_OFFSET: usize = std::mem::offset_of!(Self, next);
+    pub(crate) const PTR_OFFSET: usize = std::mem::offset_of!(Self, ptr);
+    pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
+    pub(crate) const KIND_OFFSET: usize = std::mem::offset_of!(Self, kind);
+
     pub const fn new_const(slice: &[u16]) -> Self {
         Self::new_const_from_raw_parts(slice.as_ptr(), slice.len() as u32)
     }
@@ -330,6 +343,11 @@ pub struct Closure {
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
 
+impl Closure {
+    pub(crate) const LAMBDA_OFFSET: usize = std::mem::offset_of!(Self, lambda);
+    pub(crate) const CAPTURES_OFFSET: usize = std::mem::offset_of!(Self, captures);
+}
+
 impl std::fmt::Debug for Closure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let lambda = self.lambda;
@@ -369,6 +387,9 @@ static_assertions::const_assert_eq!(align_of::<Capture>(), 8);
 static_assertions::const_assert_eq!(offset_of!(Capture, escaped), 8);
 
 impl Capture {
+    pub(crate) const TARGET_OFFSET: usize = std::mem::offset_of!(Self, target);
+    pub(crate) const ESCAPED_OFFSET: usize = std::mem::offset_of!(Self, escaped);
+
     fn is_escaped(&self) -> bool {
         debug_assert!(!self.target.is_null());
         addr_eq(self.target, &self.escaped)
@@ -422,6 +443,11 @@ pub struct Coroutine {
 static_assertions::const_assert_eq!(align_of::<Coroutine>(), 8);
 
 impl Coroutine {
+    pub(crate) const CLOSURE_OFFSET: usize = std::mem::offset_of!(Self, closure);
+    pub(crate) const STATE_OFFSET: usize = std::mem::offset_of!(Self, state);
+    pub(crate) const NUM_LOCALS_OFFSET: usize = std::mem::offset_of!(Self, num_locals);
+    pub(crate) const LOCALS_OFFSET: usize = std::mem::offset_of!(Self, locals);
+
     pub fn resume(
         runtime: *mut c_void,
         coroutine: *mut Coroutine,

@@ -8,9 +8,7 @@ use base::macros::debug_assert_ne;
 use jsparser::Symbol;
 
 use super::AnyIr;
-use super::FunctionControlSet;
 use super::ScopeRef;
-type SwitchIr = ();
 
 #[derive(Clone, Copy, Debug)]
 pub struct ExitId(u8);
@@ -57,18 +55,11 @@ impl ControlFlowStack {
         self.scope_index != 0
     }
 
-    pub fn push_function_flow(
-        &mut self,
-        entry_block: Block,
-        body_block: Block,
-        exit_block: Block,
-        fcs: FunctionControlSet,
-    ) {
+    pub fn push_function_flow(&mut self, entry_block: Block, body_block: Block, exit_block: Block) {
         self.stack.push(ControlFlow::Function(FunctionFlow {
             entry_block,
             body_block,
             exit_block,
-            fcs,
         }));
     }
 
@@ -629,7 +620,6 @@ pub struct FunctionFlow {
     pub entry_block: Block,
     pub body_block: Block,
     pub exit_block: Block,
-    pub fcs: FunctionControlSet,
 }
 
 pub struct CoroutineFlow {

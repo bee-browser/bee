@@ -23,6 +23,11 @@ pub fn register_symbols(builder: &mut JITBuilder, funcs: &RuntimeFunctions) {
 }
 
 pub struct RuntimeFunctionIds {
+    // TODO(feat): if cfg!(feature = "libm")
+    fmod: FuncId,
+    // TODO(feat): if cfg!(feature = "libm")
+    pow: FuncId,
+
     {%- for func in data.functions %}
     #[allow(unused)]
     {{ func.name }}: FuncId,
@@ -31,6 +36,22 @@ pub struct RuntimeFunctionIds {
 
 pub fn declare_functions<T: Module>(module: &mut T) -> RuntimeFunctionIds {
     let ptr_type = module.target_config().pointer_type();
+
+    // TODO(feat): if cfg!(feature = "libm")
+    let name = "fmod";
+    let mut sig = module.make_signature();
+    sig.params.push(AbiParam::new(types::F64));
+    sig.params.push(AbiParam::new(types::F64));
+    sig.returns.push(AbiParam::new(types::F64));
+    let fmod = module.declare_function(name, Linkage::Import, &sig).unwrap();
+
+    // TODO(feat): if cfg!(feature = "libm")
+    let name = "pow";
+    let mut sig = module.make_signature();
+    sig.params.push(AbiParam::new(types::F64));
+    sig.params.push(AbiParam::new(types::F64));
+    sig.returns.push(AbiParam::new(types::F64));
+    let pow = module.declare_function(name, Linkage::Import, &sig).unwrap();
     {%- for func in data.functions %}
 
     let name = "runtime_{{ func.name }}";
@@ -45,6 +66,8 @@ pub fn declare_functions<T: Module>(module: &mut T) -> RuntimeFunctionIds {
     {%- endfor %}
 
     RuntimeFunctionIds {
+        fmod,
+        pow,
         {%- for func in data.functions %}
         {{ func.name }},
         {%- endfor %}
@@ -53,6 +76,13 @@ pub fn declare_functions<T: Module>(module: &mut T) -> RuntimeFunctionIds {
 
 pub struct RuntimeFunctionCache<'c> {
     ids: &'c RuntimeFunctionIds,
+    // TODO(feat): if cfg!(feature = "libm")
+    #[allow(unused)]
+    fmod: OnceCell<FuncRef>,
+    // TODO(feat): if cfg!(feature = "libm")
+    #[allow(unused)]
+    pow: OnceCell<FuncRef>,
+
     {%- for func in data.functions %}
     #[allow(unused)]
     {{ func.name }}: OnceCell<FuncRef>,
@@ -63,10 +93,26 @@ impl<'c> RuntimeFunctionCache<'c> {
     pub fn new(ids: &'c RuntimeFunctionIds) -> Self {
         Self {
             ids,
+            // TODO(feat): if cfg!(feature = "libm")
+            fmod: Default::default(),
+            // TODO(feat): if cfg!(feature = "libm")
+            pow: Default::default(),
             {%- for func in data.functions %}
             {{ func.name }}: Default::default(),
             {%- endfor %}
         }
+    }
+
+    // TODO(feat): if cfg!(feature = "libm")
+    #[allow(unused)]
+    pub fn get_fmod<T: Module>(&self, module: &mut T, func: &mut Function) -> FuncRef {
+        *self.fmod.get_or_init(|| module.declare_func_in_func(self.ids.fmod, func))
+    }
+
+    // TODO(feat): if cfg!(feature = "libm")
+    #[allow(unused)]
+    pub fn get_pow<T: Module>(&self, module: &mut T, func: &mut Function) -> FuncRef {
+        *self.pow.get_or_init(|| module.declare_func_in_func(self.ids.pow, func))
     }
     {%- for func in data.functions %}
 
