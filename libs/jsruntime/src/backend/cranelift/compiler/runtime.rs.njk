@@ -5,10 +5,7 @@
 
 use std::cell::OnceCell;
 
-use cranelift::codegen::ir::AbiParam;
-use cranelift::codegen::ir::entities::FuncRef;
-use cranelift::codegen::ir::function::Function;
-use cranelift::codegen::ir::types;
+use cranelift::codegen::ir;
 use cranelift_jit::JITBuilder;
 use cranelift_module::FuncId;
 use cranelift_module::Linkage;
@@ -40,27 +37,27 @@ pub fn declare_functions<T: Module>(module: &mut T) -> RuntimeFunctionIds {
     // TODO(feat): if cfg!(feature = "libm")
     let name = "fmod";
     let mut sig = module.make_signature();
-    sig.params.push(AbiParam::new(types::F64));
-    sig.params.push(AbiParam::new(types::F64));
-    sig.returns.push(AbiParam::new(types::F64));
+    sig.params.push(ir::AbiParam::new(ir::types::F64));
+    sig.params.push(ir::AbiParam::new(ir::types::F64));
+    sig.returns.push(ir::AbiParam::new(ir::types::F64));
     let fmod = module.declare_function(name, Linkage::Import, &sig).unwrap();
 
     // TODO(feat): if cfg!(feature = "libm")
     let name = "pow";
     let mut sig = module.make_signature();
-    sig.params.push(AbiParam::new(types::F64));
-    sig.params.push(AbiParam::new(types::F64));
-    sig.returns.push(AbiParam::new(types::F64));
+    sig.params.push(ir::AbiParam::new(ir::types::F64));
+    sig.params.push(ir::AbiParam::new(ir::types::F64));
+    sig.returns.push(ir::AbiParam::new(ir::types::F64));
     let pow = module.declare_function(name, Linkage::Import, &sig).unwrap();
     {%- for func in data.functions %}
 
     let name = "runtime_{{ func.name }}";
     let mut sig = module.make_signature();
     {%- for arg in func.args %}
-    sig.params.push(AbiParam::new({{ arg.clir_type }}));
+    sig.params.push(ir::AbiParam::new({{ arg.clir_type }}));
     {%- endfor %}
     {%- if func.clir_ret %}
-    sig.returns.push(AbiParam::new({{ func.clir_ret }}));
+    sig.returns.push(ir::AbiParam::new({{ func.clir_ret }}));
     {%- endif %}
     let {{ func.name }} = module.declare_function(name, Linkage::Import, &sig).unwrap();
     {%- endfor %}
@@ -78,14 +75,14 @@ pub struct RuntimeFunctionCache<'c> {
     ids: &'c RuntimeFunctionIds,
     // TODO(feat): if cfg!(feature = "libm")
     #[allow(unused)]
-    fmod: OnceCell<FuncRef>,
+    fmod: OnceCell<ir::FuncRef>,
     // TODO(feat): if cfg!(feature = "libm")
     #[allow(unused)]
-    pow: OnceCell<FuncRef>,
+    pow: OnceCell<ir::FuncRef>,
 
     {%- for func in data.functions %}
     #[allow(unused)]
-    {{ func.name }}: OnceCell<FuncRef>,
+    {{ func.name }}: OnceCell<ir::FuncRef>,
     {%- endfor %}
 }
 
@@ -105,19 +102,19 @@ impl<'c> RuntimeFunctionCache<'c> {
 
     // TODO(feat): if cfg!(feature = "libm")
     #[allow(unused)]
-    pub fn get_fmod<T: Module>(&self, module: &mut T, func: &mut Function) -> FuncRef {
+    pub fn get_fmod<T: Module>(&self, module: &mut T, func: &mut ir::Function) -> ir::FuncRef {
         *self.fmod.get_or_init(|| module.declare_func_in_func(self.ids.fmod, func))
     }
 
     // TODO(feat): if cfg!(feature = "libm")
     #[allow(unused)]
-    pub fn get_pow<T: Module>(&self, module: &mut T, func: &mut Function) -> FuncRef {
+    pub fn get_pow<T: Module>(&self, module: &mut T, func: &mut ir::Function) -> ir::FuncRef {
         *self.pow.get_or_init(|| module.declare_func_in_func(self.ids.pow, func))
     }
     {%- for func in data.functions %}
 
     #[allow(unused)]
-    pub fn get_{{ func.name }}<T: Module>(&self, module: &mut T, func: &mut Function) -> FuncRef {
+    pub fn get_{{ func.name }}<T: Module>(&self, module: &mut T, func: &mut ir::Function) -> ir::FuncRef {
         *self.{{ func.name }}.get_or_init(|| module.declare_func_in_func(self.ids.{{ func.name }}, func))
     }
     {%- endfor %}

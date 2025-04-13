@@ -63,15 +63,15 @@ function makeCFunc(func) {
 function makeCraneliftIRType(type) {
   switch (type) {
     case 'bool':
-      return 'types::I8';
+      return 'ir::types::I8';
     case 'u16':
-      return 'types::I16';
+      return 'ir::types::I16';
     case 'i32':
     case 'u32':
     case 'Status':
-      return 'types::I32';
+      return 'ir::types::I32';
     case 'f64':
-      return 'types::F64';
+      return 'ir::types::F64';
     case '&std::ffi::CStr':
     case '&Char16Seq':
     case '&mut Variable':

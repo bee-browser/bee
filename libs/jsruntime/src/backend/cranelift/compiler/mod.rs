@@ -5,8 +5,12 @@ mod runtime;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use cranelift::codegen;
+use cranelift::codegen::ir;
+use cranelift::codegen::settings::Configurable as _;
+use cranelift::frontend::FunctionBuilder;
+use cranelift::frontend::FunctionBuilderContext;
 use cranelift::frontend::Switch;
-use cranelift::prelude::*;
 use cranelift_jit::JITBuilder;
 use cranelift_jit::JITModule;
 use cranelift_module::DataDescription;
@@ -18,10 +22,6 @@ use rustc_hash::FxHashMap;
 use jsparser::Symbol;
 use jsparser::syntax::LoopFlags;
 
-use super::CompileError;
-use super::LambdaId;
-use super::Module;
-use super::Program;
 use crate::backend::CompilerSupport;
 use crate::backend::RuntimeFunctions;
 use crate::logger;
@@ -31,6 +31,11 @@ use crate::semantics::Locator;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
+
+use super::CompileError;
+use super::LambdaId;
+use super::Module;
+use super::Program;
 
 use control_flow::ControlFlowStack;
 use editor::Editor;
@@ -82,7 +87,7 @@ where
     //
     // TODO: We should manage dependencies between functions in a more general way.
     for (func, func_id) in program.functions.iter().zip(func_ids.iter().cloned()) {
-        let compiler = context.create_compiler(support, &program.scope_tree, &id_map);
+        let compiler = context.create_compiler(func, support, &program.scope_tree, &id_map);
         compiler.compile(func, optimize);
         context
             .module
@@ -108,16 +113,16 @@ struct CraneliftContext {
 
 impl CraneliftContext {
     fn new(runtime_functions: &RuntimeFunctions) -> Self {
-        let mut flag_builder = settings::builder();
+        let mut flag_builder = codegen::settings::builder();
         flag_builder.set("use_colocated_libcalls", "false").unwrap();
         flag_builder.set("is_pic", "false").unwrap();
 
         let isa_builder = cranelift_native::builder().unwrap_or_else(|msg| {
-            panic!("host machine is not supported: {}", msg);
+            panic!("host machine is not supported: {msg}");
         });
 
         let isa = isa_builder
-            .finish(settings::Flags::new(flag_builder))
+            .finish(codegen::settings::Flags::new(flag_builder))
             .unwrap();
 
         let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
@@ -139,21 +144,21 @@ impl CraneliftContext {
         let name = func.id.make_name();
 
         let mut sig = self.module.make_signature();
-        let ptr_type = self.module.target_config().pointer_type();
+        let addr_type = self.module.target_config().pointer_type();
 
         // runtime: *mut c_void
-        sig.params.push(AbiParam::new(ptr_type));
+        sig.params.push(ir::AbiParam::new(addr_type));
         // context: *mut c_void
-        sig.params.push(AbiParam::new(ptr_type));
+        sig.params.push(ir::AbiParam::new(addr_type));
         // args: u16
-        sig.params.push(AbiParam::new(types::I16));
+        sig.params.push(ir::AbiParam::new(ir::types::I16));
         // argv: *mut Value
-        sig.params.push(AbiParam::new(ptr_type));
+        sig.params.push(ir::AbiParam::new(addr_type));
         // retv: *mut Value
-        sig.params.push(AbiParam::new(ptr_type));
+        sig.params.push(ir::AbiParam::new(addr_type));
 
         // #[repr(u32)] Status
-        sig.returns.push(AbiParam::new(types::I32));
+        sig.returns.push(ir::AbiParam::new(ir::types::I32));
 
         self.module
             .declare_function(&name, Linkage::Local, &sig)
@@ -162,6 +167,7 @@ impl CraneliftContext {
 
     fn create_compiler<'r, 'a, R>(
         &mut self,
+        func: &Function,
         runtime: &'r mut R,
         scope_tree: &'a ScopeTree,
         id_map: &'a FxHashMap<LambdaId, FuncId>,
@@ -169,7 +175,7 @@ impl CraneliftContext {
     where
         R: CompilerSupport,
     {
-        Compiler::new(runtime, scope_tree, id_map, self)
+        Compiler::new(func, runtime, scope_tree, id_map, self)
     }
 }
 
@@ -195,11 +201,9 @@ struct Compiler<'r, 'a, 'c, R> {
     locals: Vec<AnyIr>,
     captures: FxHashMap<Locator, CaptureIr>,
 
-    max_scratch_buffer_len: i32,
+    max_scratch_buffer_len: u32,
 
     skip_count: u16,
-
-    coroutine_context: bool,
 }
 
 impl<'r, 'a, 'c, R> Compiler<'r, 'a, 'c, R>
@@ -207,25 +211,28 @@ where
     R: CompilerSupport,
 {
     fn new(
+        func: &Function,
         support: &'r mut R,
         scope_tree: &'a ScopeTree,
         id_map: &'a FxHashMap<LambdaId, FuncId>,
         context: &'c mut CraneliftContext,
     ) -> Self {
-        let ptr_type = context.module.target_config().pointer_type();
+        let addr_type = context.module.target_config().pointer_type();
+
+        context.context.func.name = ir::UserFuncName::user(0, func.id.into());
 
         // formal parameters
         let params = &mut context.context.func.signature.params;
         // runtime: *mut c_void
-        params.push(AbiParam::new(ptr_type));
+        params.push(ir::AbiParam::new(addr_type));
         // context: *mut c_void
-        params.push(AbiParam::new(ptr_type));
+        params.push(ir::AbiParam::new(addr_type));
         // args: u16
-        params.push(AbiParam::new(types::I16));
+        params.push(ir::AbiParam::new(ir::types::I16));
         // argv: *mut Value
-        params.push(AbiParam::new(ptr_type));
+        params.push(ir::AbiParam::new(addr_type));
         // retv: *mut Value
-        params.push(AbiParam::new(ptr_type));
+        params.push(ir::AbiParam::new(addr_type));
 
         // #[repr(u32)] Status
         context
@@ -233,7 +240,7 @@ where
             .func
             .signature
             .returns
-            .push(AbiParam::new(types::I32));
+            .push(ir::AbiParam::new(ir::types::I32));
 
         let builder = FunctionBuilder::new(&mut context.context.func, &mut context.builder_context);
 
@@ -254,7 +261,6 @@ where
             captures: Default::default(),
             max_scratch_buffer_len: 0,
             skip_count: 0,
-            coroutine_context: false,
         }
     }
 
@@ -332,6 +338,7 @@ where
 
         self.control_flow_stack.pop_exit_target();
         let flow = self.control_flow_stack.pop_function_flow();
+        debug_assert!(self.control_flow_stack.is_empty());
 
         self.editor.put_jump(flow.exit_block, &[]);
 
@@ -341,23 +348,12 @@ where
             // TODO: self.bridge.assert_scope_id(ScopeRef::NONE);
         }
 
-        // TODO: self.bridge.end_function(optimize);
         self.editor.put_return();
-
-        // TODO: self.locals.clear();
-
-        // TODO: debug_assert!(self.captures.is_empty());
-        // TODO: self.captures.clear();
-
-        debug_assert!(self.control_flow_stack.is_empty());
-        self.control_flow_stack.clear();
 
         let info = self.support.get_lambda_info_mut(func.id);
         if info.is_coroutine {
-            debug_assert!(self.max_scratch_buffer_len >= 0);
-            info.scratch_buffer_len = self.max_scratch_buffer_len as u32;
+            info.scratch_buffer_len = self.max_scratch_buffer_len;
         }
-        self.max_scratch_buffer_len = 0;
 
         self.editor.end();
     }
@@ -741,10 +737,8 @@ where
             self.editor.put_store_undefined_to_any(local);
         }
 
-        // TODO(refactor): hoistable declarations.
         // TODO(fix): preserve declaration order.
         for variable in self.scope_tree.scope(scope_ref).variables.iter() {
-            // TODO(fix): preserve declaration order.
             if variable.init_batch == 0 {
                 continue;
             }
@@ -761,13 +755,6 @@ where
     }
 
     fn process_declare_closure(&mut self) {
-        /* TODO: hoisting
-        let block = self.control_flow_stack.scope_flow().hoisted_block;
-
-        let backup = self.bridge.get_basic_block();
-        self.bridge.set_basic_block(block);
-        */
-
         let (symbol, locator) = self.pop_reference();
         let (operand, _) = self.dereference();
         // TODO: operand must hold a closure.
@@ -785,10 +772,6 @@ where
             }
             _ => unreachable!("{locator:?}"),
         };
-
-        /* TODO: hoisting
-        self.bridge.set_basic_block(backup);
-        */
     }
 
     fn process_call(&mut self, argc: u16) {
@@ -829,6 +812,10 @@ where
         self.editor.put_jump(init_block, &[]);
         self.editor.switch_to_block(init_block);
 
+        if self.support.is_scope_cleanup_checker_enabled() {
+            // TODO: self.bridge.set_scope_id_for_checker(scope_ref);
+        }
+
         let scope = self.scope_tree.scope(scope_ref);
         for variable in scope.variables.iter() {
             if variable.is_function_scoped() {
@@ -860,7 +847,6 @@ where
 
         // Create additional blocks of the scope region before pop_bb_name!().
         // Because these constitute the scope region.
-        // TODO: let precheck_block = self.create_basic_block("precheck");
         let postcheck_block = self.editor.create_block();
         let ctrl_block = self.editor.create_block();
         let exit_block = self.editor.create_block();
@@ -887,7 +873,17 @@ where
         self.editor.put_jump(postcheck_block, &[]);
 
         self.editor.switch_to_block(postcheck_block);
-        // TODO
+        if self.support.is_scope_cleanup_checker_enabled() {
+            /* TODO:
+            self.bridge.assert_scope_id(scope_ref);
+            if self.control_flow_stack.has_scope_flow() {
+                let outer_scope_ref = self.control_flow_stack.scope_flow().scope_ref;
+                self.bridge.set_scope_id_for_checker(outer_scope_ref);
+            } else {
+                self.bridge.set_scope_id_for_checker(ScopeRef::NONE);
+            }
+            */
+        }
         self.editor.put_jump(ctrl_block, &[]);
 
         self.editor.switch_to_block(ctrl_block);
@@ -1714,7 +1710,12 @@ where
         self.editor.switch_to_block(insert_point);
     }
 
-    fn build_loop_ctrl_block(&mut self, loop_ctrl: Block, loop_continue: Block, loop_break: Block) {
+    fn build_loop_ctrl_block(
+        &mut self,
+        loop_ctrl: ir::Block,
+        loop_continue: ir::Block,
+        loop_break: ir::Block,
+    ) {
         let set_normal_block = self.editor.create_block();
         let break_or_continue_block = self.editor.create_block();
 
@@ -2018,8 +2019,6 @@ where
     }
 
     fn process_environment(&mut self, num_locals: u16) {
-        self.coroutine_context = true;
-
         // Local variables and captured variables living outer scopes are loaded here from the
         // `Coroutine` data passed via the `env` argument of the coroutine lambda function to be
         // generated by the compiler.
@@ -2164,7 +2163,7 @@ where
 
         // TODO: Should return a compile error.
         assert!(offset <= u16::MAX as usize);
-        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset as i32);
+        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset as u32);
     }
 
     fn perform_load_operands_from_scratch_buffer(&mut self) {
@@ -3084,40 +3083,40 @@ impl From<AnyIr> for PropertyKey {
 
 /// A runtime boolean value in `ir::types::I8`.
 #[derive(Clone, Copy, Debug)]
-struct BooleanIr(Value);
+struct BooleanIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct NumberIr(Value);
+struct NumberIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct StringIr(Value);
+struct StringIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct ClosureIr(Value);
+struct ClosureIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct ObjectIr(Value);
+struct ObjectIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct AnyIr(Value);
+struct AnyIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct LambdaIr(Value);
+struct LambdaIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct CaptureIr(Value);
+struct CaptureIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct CoroutineIr(Value);
+struct CoroutineIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct PromiseIr(Value);
+struct PromiseIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct ArgvIr(Value);
+struct ArgvIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
-struct StatusIr(Value);
+struct StatusIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
 struct Status(u32);

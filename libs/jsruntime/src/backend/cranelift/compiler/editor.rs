@@ -43,7 +43,7 @@ pub struct Editor<'a, 'c> {
     runtime_func_cache: RuntimeFunctionCache<'c>,
     lambda_cache: FxHashMap<FuncId, LambdaIr>,
 
-    ptr_type: ir::Type,
+    addr_type: ir::Type,
     lambda_sig: ir::SigRef,
     entry_block: ir::Block,
     captures: ir::Value,
@@ -87,7 +87,7 @@ impl<'a, 'c> Editor<'a, 'c> {
             id_map,
             runtime_func_cache: RuntimeFunctionCache::new(runtime_func_ids),
             lambda_cache: Default::default(),
-            ptr_type: target_config.pointer_type(),
+            addr_type: target_config.pointer_type(),
             lambda_sig,
             entry_block,
             captures,
@@ -105,7 +105,7 @@ impl<'a, 'c> Editor<'a, 'c> {
             .entry(func_id)
             .or_insert_with_key(|&func_id| {
                 let func_ref = module.declare_func_in_func(func_id, self.builder.func);
-                LambdaIr(self.builder.ins().func_addr(self.ptr_type, func_ref))
+                LambdaIr(self.builder.ins().func_addr(self.addr_type, func_ref))
             })
     }
 
@@ -180,7 +180,7 @@ impl<'a, 'c> Editor<'a, 'c> {
     pub fn create_block_with_addr(&mut self) -> ir::Block {
         logger::debug!(event = "create_block_with_addr");
         let block = self.builder.create_block();
-        self.builder.append_block_param(block, self.ptr_type);
+        self.builder.append_block_param(block, self.addr_type);
         block
     }
 
@@ -352,7 +352,7 @@ impl<'a, 'c> Editor<'a, 'c> {
     }
 
     pub fn put_nullptr(&mut self) -> ir::Value {
-        self.builder.ins().iconst(self.ptr_type, 0)
+        self.builder.ins().iconst(self.addr_type, 0)
     }
 
     // type conversions for elementary data types
@@ -380,13 +380,13 @@ impl<'a, 'c> Editor<'a, 'c> {
             align_shift: types::Char16Seq::ALIGNMENT.ilog2() as u8,
         });
 
-        let next = self.builder.ins().iconst(self.ptr_type, 0);
+        let next = self.builder.ins().iconst(self.addr_type, 0);
         self.put_store_to_slot(next, slot, types::Char16Seq::NEXT_OFFSET);
 
         let ptr = self
             .builder
             .ins()
-            .iconst(self.ptr_type, value.as_ptr() as i64);
+            .iconst(self.addr_type, value.as_ptr() as i64);
         self.put_store_to_slot(ptr, slot, types::Char16Seq::PTR_OFFSET);
 
         debug_assert!(value.len() <= u32::MAX as usize);
@@ -402,7 +402,7 @@ impl<'a, 'c> Editor<'a, 'c> {
             .iconst(ir::types::I8, types::Char16SeqKind::Stack as i64);
         self.put_store_to_slot(kind, slot, types::Char16Seq::KIND_OFFSET);
 
-        StringIr(self.builder.ins().stack_addr(self.ptr_type, slot, 0))
+        StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
 
     pub fn put_string_on_stack(&mut self, string: StringIr) -> BooleanIr {
@@ -429,7 +429,7 @@ impl<'a, 'c> Editor<'a, 'c> {
             size: types::Value::SIZE as u32,
             align_shift: types::Value::ALIGNMENT.ilog2() as u8,
         });
-        AnyIr(self.builder.ins().stack_addr(self.ptr_type, slot, 0))
+        AnyIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
 
     pub fn put_load_kind(&mut self, any: AnyIr) -> ir::Value {
@@ -473,13 +473,13 @@ impl<'a, 'c> Editor<'a, 'c> {
 
     pub fn put_load_capture(&mut self, index: u16) -> CaptureIr {
         logger::debug!(event = "put_load_capture", index);
-        let offset = (self.ptr_type.bytes() as usize) * (index as usize);
+        let offset = (self.addr_type.bytes() as usize) * (index as usize);
         CaptureIr(self.put_load_addr(self.captures, offset))
     }
 
     pub fn put_load_captured_value(&mut self, index: u16) -> AnyIr {
         logger::debug!(event = "put_load_captured_value", index);
-        let offset = (self.ptr_type.bytes() as usize) * (index as usize);
+        let offset = (self.addr_type.bytes() as usize) * (index as usize);
         let capture = self.put_load_addr(self.captures, offset);
         AnyIr(self.put_load_addr(capture, types::Capture::TARGET_OFFSET))
     }
@@ -521,7 +521,7 @@ impl<'a, 'c> Editor<'a, 'c> {
             index
         );
         let offset =
-            types::Closure::CAPTURES_OFFSET + (self.ptr_type.bytes() as usize) * (index as usize);
+            types::Closure::CAPTURES_OFFSET + (self.addr_type.bytes() as usize) * (index as usize);
         self.put_store(capture.0, closure.0, offset);
     }
 
@@ -617,7 +617,7 @@ impl<'a, 'c> Editor<'a, 'c> {
             align_shift: types::Value::ALIGNMENT.ilog2() as u8,
         });
 
-        ArgvIr(self.builder.ins().stack_addr(self.ptr_type, slot, 0))
+        ArgvIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
 
     pub fn put_get_arg(&mut self, argv: ArgvIr, index: u16) -> AnyIr {
@@ -674,7 +674,7 @@ impl<'a, 'c> Editor<'a, 'c> {
         debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
-            .load(self.ptr_type, FLAGS, addr, offset as i32)
+            .load(self.addr_type, FLAGS, addr, offset as i32)
     }
 
     // store
@@ -1044,7 +1044,7 @@ impl<'a, 'c> Editor<'a, 'c> {
         let coroutine = self.coroutine();
         // TODO(perf): compile-time evaluation
         let num_locals = self.put_load_num_locals_from_coroutine();
-        let num_locals = self.builder.ins().uextend(self.ptr_type, num_locals);
+        let num_locals = self.builder.ins().uextend(self.addr_type, num_locals);
         let offset = self
             .builder
             .ins()
@@ -1736,7 +1736,7 @@ impl<'a, 'c> Editor<'a, 'c> {
         let msg = self
             .builder
             .ins()
-            .iconst(self.ptr_type, msg.as_ptr() as i64);
+            .iconst(self.addr_type, msg.as_ptr() as i64);
         let args = [self.runtime(), assertion.0, msg];
         self.builder.ins().call(func, &args);
     }
@@ -1755,7 +1755,7 @@ impl<'a, 'c> Editor<'a, 'c> {
         let msg = self
             .builder
             .ins()
-            .iconst(self.ptr_type, msg.as_ptr() as i64);
+            .iconst(self.addr_type, msg.as_ptr() as i64);
         let args = [self.runtime(), value.0, msg];
         self.builder.ins().call(func, &args);
     }
@@ -1774,7 +1774,7 @@ impl<'a, 'c> Editor<'a, 'c> {
         let msg = self
             .builder
             .ins()
-            .iconst(self.ptr_type, msg.as_ptr() as i64);
+            .iconst(self.addr_type, msg.as_ptr() as i64);
         let args = [self.runtime(), value.0, msg];
         self.builder.ins().call(func, &args);
     }
@@ -1793,7 +1793,7 @@ impl<'a, 'c> Editor<'a, 'c> {
         let msg = self
             .builder
             .ins()
-            .iconst(self.ptr_type, msg.as_ptr() as i64);
+            .iconst(self.addr_type, msg.as_ptr() as i64);
         let args = [self.runtime(), value.0, msg];
         self.builder.ins().call(func, &args);
     }
@@ -1812,7 +1812,7 @@ impl<'a, 'c> Editor<'a, 'c> {
         let msg = self
             .builder
             .ins()
-            .iconst(self.ptr_type, msg.as_ptr() as i64);
+            .iconst(self.addr_type, msg.as_ptr() as i64);
         let args = [self.runtime(), capture.0, msg];
         self.builder.ins().call(func, &args);
     }
@@ -1826,7 +1826,7 @@ impl<'a, 'c> Editor<'a, 'c> {
         let msg = self
             .builder
             .ins()
-            .iconst(self.ptr_type, msg.as_ptr() as i64);
+            .iconst(self.addr_type, msg.as_ptr() as i64);
         let args = [self.runtime(), msg];
         self.builder.ins().call(func, &args);
     }

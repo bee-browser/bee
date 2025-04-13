@@ -1,7 +1,7 @@
 // TODO: remove
 #![allow(unused)]
 
-use cranelift::codegen::ir::Block;
+use cranelift::codegen::ir;
 use rustc_hash::FxHashMap;
 
 use base::macros::debug_assert_ne;
@@ -55,7 +55,12 @@ impl ControlFlowStack {
         self.scope_index != 0
     }
 
-    pub fn push_function_flow(&mut self, entry_block: Block, body_block: Block, exit_block: Block) {
+    pub fn push_function_flow(
+        &mut self,
+        entry_block: ir::Block,
+        body_block: ir::Block,
+        exit_block: ir::Block,
+    ) {
         self.stack.push(ControlFlow::Function(FunctionFlow {
             entry_block,
             body_block,
@@ -83,7 +88,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn push_coroutine_flow(&mut self, blocks: Vec<Block>, num_states: u32) {
+    pub fn push_coroutine_flow(&mut self, blocks: Vec<ir::Block>, num_states: u32) {
         self.stack.push(ControlFlow::Coroutine(CoroutineFlow {
             blocks,
             num_states,
@@ -101,7 +106,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn coroutine_blocks(&self) -> &[Block] {
+    pub fn coroutine_blocks(&self) -> &[ir::Block] {
         debug_assert!(self.stack.len() >= 2);
         let flow = match self.stack[1] {
             ControlFlow::Coroutine(ref flow) => flow,
@@ -121,7 +126,7 @@ impl ControlFlowStack {
         next_state
     }
 
-    pub fn coroutine_next_block(&mut self) -> Block {
+    pub fn coroutine_next_block(&mut self) -> ir::Block {
         debug_assert!(self.stack.len() >= 2);
         let flow = match self.stack[1] {
             ControlFlow::Coroutine(ref mut flow) => flow,
@@ -135,8 +140,8 @@ impl ControlFlowStack {
     pub fn push_scope_flow(
         &mut self,
         scope_ref: ScopeRef,
-        body_block: Block,
-        cleanup_block: Block,
+        body_block: ir::Block,
+        cleanup_block: ir::Block,
     ) {
         let outer_index = self.scope_index;
         self.scope_index = self.stack.len();
@@ -170,9 +175,9 @@ impl ControlFlowStack {
 
     pub fn push_if_then_else_flow(
         &mut self,
-        then_block: Block,
-        else_block: Block,
-        merge_block: Block,
+        then_block: ir::Block,
+        else_block: ir::Block,
+        merge_block: ir::Block,
         result: Option<AnyIr>,
     ) {
         let outer_index = self.if_then_else_index;
@@ -196,7 +201,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn merge_block(&self) -> Block {
+    pub fn merge_block(&self) -> ir::Block {
         self.stack
             .get(self.if_then_else_index)
             .map(|flow| match flow {
@@ -216,7 +221,7 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn update_then_block(&mut self, then_block: Block) -> Block {
+    pub fn update_then_block(&mut self, then_block: ir::Block) -> ir::Block {
         match self.stack.last_mut() {
             Some(ControlFlow::IfThenElse(flow)) => {
                 flow.then_block = then_block;
@@ -226,7 +231,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn push_loop_init_flow(&mut self, branch_block: Block, insert_point: Block) {
+    pub fn push_loop_init_flow(&mut self, branch_block: ir::Block, insert_point: ir::Block) {
         self.stack.push(ControlFlow::LoopInit(LoopInitFlow {
             branch_block,
             insert_point,
@@ -242,9 +247,9 @@ impl ControlFlowStack {
 
     pub fn push_loop_test_flow(
         &mut self,
-        then_block: Block,
-        else_block: Block,
-        insert_point: Block,
+        then_block: ir::Block,
+        else_block: ir::Block,
+        insert_point: ir::Block,
     ) {
         self.stack.push(ControlFlow::LoopTest(LoopTestFlow {
             then_block,
@@ -260,7 +265,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn push_loop_next_flow(&mut self, branch_block: Block, insert_point: Block) {
+    pub fn push_loop_next_flow(&mut self, branch_block: ir::Block, insert_point: ir::Block) {
         self.stack.push(ControlFlow::LoopNext(LoopNextFlow {
             branch_block,
             insert_point,
@@ -274,7 +279,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn push_loop_body_flow(&mut self, branch_block: Block, insert_point: Block) {
+    pub fn push_loop_body_flow(&mut self, branch_block: ir::Block, insert_point: ir::Block) {
         self.stack.push(ControlFlow::LoopBody(LoopBodyFlow {
             branch_block,
             insert_point,
@@ -288,7 +293,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn push_switch_flow(&mut self, end_block: Block) {
+    pub fn push_switch_flow(&mut self, end_block: ir::Block) {
         let outer_index = self.switch_index;
         self.switch_index = self.stack.len();
         self.stack.push(ControlFlow::Switch(SwitchFlow {
@@ -330,7 +335,7 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    pub fn push_case_flow(&mut self, clause_block: Block, batch_index: Option<usize>) {
+    pub fn push_case_flow(&mut self, clause_block: ir::Block, batch_index: Option<usize>) {
         self.stack.push(ControlFlow::Case(CaseFlow {
             clause_block,
             batch_index,
@@ -344,7 +349,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn get_default_block(&self, default_index: u16) -> Block {
+    pub fn get_default_block(&self, default_index: u16) -> ir::Block {
         debug_assert!(self.switch_index > 0);
         let index = self.switch_index + 1 + default_index as usize;
         debug_assert!(index < self.stack.len());
@@ -356,10 +361,10 @@ impl ControlFlowStack {
 
     pub fn push_exception_flow(
         &mut self,
-        try_block: Block,
-        catch_block: Block,
-        finally_block: Block,
-        end_block: Block,
+        try_block: ir::Block,
+        catch_block: ir::Block,
+        finally_block: ir::Block,
+        end_block: ir::Block,
     ) {
         let outer_index = self.exception_index;
         self.exception_index = self.stack.len();
@@ -420,12 +425,12 @@ impl ControlFlowStack {
         self.exception_flow_mut().state = ExceptionState::Finally;
     }
 
-    pub fn set_default_case_block(&mut self, block: Block) {
+    pub fn set_default_case_block(&mut self, block: ir::Block) {
         debug_assert!(self.switch_index > 0);
         self.switch_flow_mut().default_block = Some(block);
     }
 
-    pub fn push_exit_target(&mut self, block: Block, breakable: bool) {
+    pub fn push_exit_target(&mut self, block: ir::Block, breakable: bool) {
         // TODO: should treat as a compilation error.
         assert!(self.exit_stack.len() <= u8::MAX as usize);
         self.exit_stack.push(ExitTarget { block, breakable });
@@ -438,7 +443,7 @@ impl ControlFlowStack {
         self.exit_label_map.insert(label, index);
     }
 
-    pub fn pop_exit_target(&mut self) -> Block {
+    pub fn pop_exit_target(&mut self) -> ir::Block {
         debug_assert!(!self.exit_stack.is_empty());
         let index = self.exit_stack.len() - 1;
         self.exit_label_map.retain(|_, v| *v != index); // TODO: inefficient...
@@ -464,7 +469,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn exit_block(&self) -> Block {
+    pub fn exit_block(&self) -> ir::Block {
         debug_assert!(!self.exit_stack.is_empty());
         self.exit_stack.last().unwrap().block
     }
@@ -478,7 +483,7 @@ impl ControlFlowStack {
         self.exception_index = 0;
     }
 
-    pub fn cleanup_block(&self) -> Block {
+    pub fn cleanup_block(&self) -> ir::Block {
         if self.scope_index == 0 {
             self.function_flow().exit_block
         } else {
@@ -486,7 +491,7 @@ impl ControlFlowStack {
         }
     }
 
-    pub fn exception_block(&self) -> Block {
+    pub fn exception_block(&self) -> ir::Block {
         if self.exception_index > self.scope_index {
             let flow = self.exception_flow();
             match flow.state {
@@ -617,19 +622,19 @@ enum ControlFlow {
 
 /// Contains data used for building the root region of a function.
 pub struct FunctionFlow {
-    pub entry_block: Block,
-    pub body_block: Block,
-    pub exit_block: Block,
+    pub entry_block: ir::Block,
+    pub body_block: ir::Block,
+    pub exit_block: ir::Block,
 }
 
 pub struct CoroutineFlow {
-    blocks: Vec<Block>,
+    blocks: Vec<ir::Block>,
     num_states: u32,
     next_state: u32,
 }
 
 impl CoroutineFlow {
-    pub fn dormant_block(&self) -> Block {
+    pub fn dormant_block(&self) -> ir::Block {
         *self.blocks.last().unwrap()
     }
 }
@@ -640,18 +645,18 @@ pub struct ScopeFlow {
     pub scope_ref: ScopeRef,
 
     /// The first basic block of the container region of the scope flow.
-    pub body_block: Block,
+    pub body_block: ir::Block,
 
-    pub cleanup_block: Block,
+    pub cleanup_block: ir::Block,
 
     /// The index of the enclosing outer scope flow.
     outer_index: usize,
 }
 
 pub struct IfThenElseFlow {
-    pub then_block: Block,
-    pub else_block: Block,
-    pub merge_block: Block,
+    pub then_block: ir::Block,
+    pub else_block: ir::Block,
+    pub merge_block: ir::Block,
     pub result: Option<AnyIr>,
 
     /// The index of the enclosing outer if-then-else flow.
@@ -659,43 +664,43 @@ pub struct IfThenElseFlow {
 }
 
 pub struct LoopInitFlow {
-    pub branch_block: Block,
-    pub insert_point: Block,
+    pub branch_block: ir::Block,
+    pub insert_point: ir::Block,
 }
 
 pub struct LoopTestFlow {
-    pub then_block: Block,
-    pub else_block: Block,
-    pub insert_point: Block,
+    pub then_block: ir::Block,
+    pub else_block: ir::Block,
+    pub insert_point: ir::Block,
 }
 
 pub struct LoopNextFlow {
-    pub branch_block: Block,
-    pub insert_point: Block,
+    pub branch_block: ir::Block,
+    pub insert_point: ir::Block,
 }
 
 pub struct LoopBodyFlow {
-    pub branch_block: Block,
-    pub insert_point: Block,
+    pub branch_block: ir::Block,
+    pub insert_point: ir::Block,
 }
 
 pub struct SwitchFlow {
-    pub end_block: Block,
-    pub default_block: Option<Block>,
+    pub end_block: ir::Block,
+    pub default_block: Option<ir::Block>,
     outer_index: usize,
 }
 
 pub struct CaseFlow {
-    pub clause_block: Block,
+    pub clause_block: ir::Block,
     pub batch_index: Option<usize>,
 }
 
 pub struct ExceptionFlow {
     #[allow(unused)]
-    pub try_block: Block,
-    pub catch_block: Block,
-    pub finally_block: Block,
-    pub end_block: Block,
+    pub try_block: ir::Block,
+    pub catch_block: ir::Block,
+    pub finally_block: ir::Block,
+    pub end_block: ir::Block,
 
     // The index of the enclosing outer exception flow.
     outer_index: usize,
@@ -710,6 +715,6 @@ enum ExceptionState {
 }
 
 struct ExitTarget {
-    block: Block,
+    block: ir::Block,
     breakable: bool,
 }
