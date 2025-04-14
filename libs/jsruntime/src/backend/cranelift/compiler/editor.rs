@@ -29,6 +29,7 @@ use super::ObjectIr;
 use super::PromiseIr;
 use super::RuntimeFunctionCache;
 use super::RuntimeFunctionIds;
+use super::ScopeRef;
 use super::Status;
 use super::StatusIr;
 use super::StringIr;
@@ -78,7 +79,7 @@ impl<'a, 'c> Editor<'a, 'c> {
 
         let fcs = builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
-            size: 8, // [status, flow_selector]
+            size: 10, // [status, flow_selector, scope_id]
             align_shift: 2,
         });
 
@@ -1728,7 +1729,12 @@ impl<'a, 'c> Editor<'a, 'c> {
         StatusIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_assert(&mut self, module: &mut JITModule, assertion: BooleanIr, msg: &CStr) {
+    pub fn put_runtime_assert(
+        &mut self,
+        module: &mut JITModule,
+        assertion: BooleanIr,
+        msg: &'static CStr,
+    ) {
         logger::debug!(event = "put_runtime_assert", ?assertion, ?msg);
         let func = self
             .runtime_func_cache
@@ -1838,5 +1844,45 @@ impl<'a, 'c> Editor<'a, 'c> {
             .get_launch_debugger(module, self.builder.func);
         let args = [self.runtime()];
         self.builder.ins().call(func, &args);
+    }
+
+    // scope cleanup checker
+
+    pub fn put_init_scope_cleanup_checker(&mut self) {
+        logger::debug!(event = "put_init_scope_cleanup_cheker");
+        if !self.coroutine_mode {
+            let zero = self.builder.ins().iconst(ir::types::I16, 0);
+            self.builder.ins().stack_store(zero, self.fcs, 8);
+        }
+    }
+
+    pub fn put_store_scope_id_for_checker(&mut self, scope_ref: ScopeRef) {
+        logger::debug!(event = "put_store_scope_id_for_checker", ?scope_ref);
+        let scope_id = self
+            .builder
+            .ins()
+            .iconst(ir::types::I16, scope_ref.id() as i64);
+        if self.coroutine_mode {
+            let coroutine = self.coroutine();
+            self.put_store(scope_id, coroutine.0, types::Coroutine::SCOPE_ID_OFFSET);
+        } else {
+            self.builder.ins().stack_store(scope_id, self.fcs, 8);
+        }
+    }
+
+    pub fn put_assert_scope_id(&mut self, module: &mut JITModule, expected: ScopeRef) {
+        logger::debug!(event = "put_assert_scope_id", ?expected);
+        use ir::condcodes::IntCC::Equal;
+        let scope_id = if self.coroutine_mode {
+            let coroutine = self.coroutine();
+            self.put_load_i16(coroutine.0, types::Coroutine::SCOPE_ID_OFFSET)
+        } else {
+            self.builder.ins().stack_load(ir::types::I16, self.fcs, 8)
+        };
+        let assertion = self
+            .builder
+            .ins()
+            .icmp_imm(Equal, scope_id, expected.id() as i64);
+        self.put_runtime_assert(module, BooleanIr(assertion), c"invalid scope");
     }
 }

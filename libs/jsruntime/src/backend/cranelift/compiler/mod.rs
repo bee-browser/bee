@@ -311,12 +311,10 @@ where
         // inserting instructions to those blocks.
         self.editor.put_store_status(Status::UNSET);
         self.editor.put_store_flow_selector(FlowSelector::NORMAL);
-        self.editor.put_jump(body_block, &[]);
-
         if self.support.is_scope_cleanup_checker_enabled() {
-            let _is_coroutine = self.support.get_lambda_info(func.id).is_coroutine;
-            // TODO: self.bridge.enable_scope_cleanup_checker(is_coroutine);
+            self.editor.put_init_scope_cleanup_checker();
         }
+        self.editor.put_jump(body_block, &[]);
 
         self.editor.switch_to_block(body_block);
 
@@ -341,13 +339,10 @@ where
         debug_assert!(self.control_flow_stack.is_empty());
 
         self.editor.put_jump(flow.exit_block, &[]);
-
         self.editor.switch_to_block(flow.exit_block);
-
         if self.support.is_scope_cleanup_checker_enabled() {
-            // TODO: self.bridge.assert_scope_id(ScopeRef::NONE);
+            self.editor.put_assert_scope_id(self.module, ScopeRef::NONE);
         }
-
         self.editor.put_return();
 
         let info = self.support.get_lambda_info_mut(func.id);
@@ -813,7 +808,7 @@ where
         self.editor.switch_to_block(init_block);
 
         if self.support.is_scope_cleanup_checker_enabled() {
-            // TODO: self.bridge.set_scope_id_for_checker(scope_ref);
+            self.editor.put_store_scope_id_for_checker(scope_ref);
         }
 
         let scope = self.scope_tree.scope(scope_ref);
@@ -874,15 +869,13 @@ where
 
         self.editor.switch_to_block(postcheck_block);
         if self.support.is_scope_cleanup_checker_enabled() {
-            /* TODO:
-            self.bridge.assert_scope_id(scope_ref);
+            self.editor.put_assert_scope_id(self.module, scope_ref);
             if self.control_flow_stack.has_scope_flow() {
                 let outer_scope_ref = self.control_flow_stack.scope_flow().scope_ref;
-                self.bridge.set_scope_id_for_checker(outer_scope_ref);
+                self.editor.put_store_scope_id_for_checker(outer_scope_ref);
             } else {
-                self.bridge.set_scope_id_for_checker(ScopeRef::NONE);
+                self.editor.put_store_scope_id_for_checker(ScopeRef::NONE);
             }
-            */
         }
         self.editor.put_jump(ctrl_block, &[]);
 

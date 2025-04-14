@@ -446,6 +446,7 @@ impl Coroutine {
     pub(crate) const CLOSURE_OFFSET: usize = std::mem::offset_of!(Self, closure);
     pub(crate) const STATE_OFFSET: usize = std::mem::offset_of!(Self, state);
     pub(crate) const NUM_LOCALS_OFFSET: usize = std::mem::offset_of!(Self, num_locals);
+    pub(crate) const SCOPE_ID_OFFSET: usize = std::mem::offset_of!(Self, scope_id);
     pub(crate) const LOCALS_OFFSET: usize = std::mem::offset_of!(Self, locals);
 
     pub fn resume(
