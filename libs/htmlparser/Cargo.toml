@@ -18,7 +18,7 @@ thiserror = "2.0.12"
 unicase = "2.8.1"
 
 [dev-dependencies]
-anyhow = "1.0.97"
+anyhow = "1.0.98"
 criterion = "0.5.1"
 ctor = "0.4.1"
 itertools = "0.14.0"
