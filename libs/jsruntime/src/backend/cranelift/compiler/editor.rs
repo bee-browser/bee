@@ -35,13 +35,13 @@ use super::StatusIr;
 use super::StringIr;
 use super::Symbol;
 
-pub struct Editor<'a, 'c> {
-    builder: FunctionBuilder<'c>,
+pub struct Editor<'a> {
+    builder: FunctionBuilder<'a>,
 
     /// A map from a LambdaId to a corresponding FuncId.
     id_map: &'a FxHashMap<LambdaId, FuncId>,
 
-    runtime_func_cache: RuntimeFunctionCache<'c>,
+    runtime_func_cache: RuntimeFunctionCache<'a>,
     lambda_cache: FxHashMap<FuncId, LambdaIr>,
 
     addr_type: ir::Type,
@@ -57,12 +57,12 @@ pub struct Editor<'a, 'c> {
     coroutine_mode: bool,
 }
 
-impl<'a, 'c> Editor<'a, 'c> {
+impl<'a> Editor<'a> {
     pub fn new(
-        mut builder: FunctionBuilder<'c>,
+        mut builder: FunctionBuilder<'a>,
         target_config: &TargetFrontendConfig,
         id_map: &'a FxHashMap<LambdaId, FuncId>,
-        runtime_func_ids: &'c RuntimeFunctionIds,
+        runtime_func_ids: &'a RuntimeFunctionIds,
     ) -> Self {
         let lambda_sig = builder.import_signature(builder.func.signature.clone());
 

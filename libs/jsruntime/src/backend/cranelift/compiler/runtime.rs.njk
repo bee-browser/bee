@@ -31,6 +31,27 @@ pub struct RuntimeFunctionIds {
     {%- endfor %}
 }
 
+pub fn make_lambda_signature<T: Module>(module: &mut T) -> ir::Signature {
+    let mut sig = module.make_signature();
+    let addr_type = module.target_config().pointer_type();
+
+    // runtime: *mut c_void
+    sig.params.push(ir::AbiParam::new(addr_type));
+    // context: *mut c_void
+    sig.params.push(ir::AbiParam::new(addr_type));
+    // args: u16
+    sig.params.push(ir::AbiParam::new(ir::types::I16));
+    // argv: *mut Value
+    sig.params.push(ir::AbiParam::new(addr_type));
+    // retv: *mut Value
+    sig.params.push(ir::AbiParam::new(addr_type));
+
+    // #[repr(u32)] Status
+    sig.returns.push(ir::AbiParam::new(ir::types::I32));
+
+    sig
+}
+
 pub fn declare_functions<T: Module>(module: &mut T) -> RuntimeFunctionIds {
     let ptr_type = module.target_config().pointer_type();
 

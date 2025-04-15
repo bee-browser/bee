@@ -87,13 +87,9 @@ where
     //
     // TODO: We should manage dependencies between functions in a more general way.
     for (func, func_id) in program.functions.iter().zip(func_ids.iter().cloned()) {
-        let compiler = context.create_compiler(func, support, &program.scope_tree, &id_map);
-        compiler.compile(func, optimize);
-        context
-            .module
-            .define_function(func_id, &mut context.context)
-            .unwrap();
-        context.module.clear_context(&mut context.context);
+        context.compile_function(func, optimize, support, &program.scope_tree, &id_map);
+        context.define_function(func_id);
+        context.clear();
     }
 
     Ok(Module {
@@ -108,6 +104,7 @@ struct CraneliftContext {
     context: codegen::Context,
     _data_description: DataDescription,
     module: JITModule,
+    lambda_sig: ir::Signature,
     runtime_func_ids: RuntimeFunctionIds,
 }
 
@@ -130,57 +127,53 @@ impl CraneliftContext {
 
         let mut module = JITModule::new(builder);
         let runtime_func_ids = runtime::declare_functions(&mut module);
+        let lambda_sig = runtime::make_lambda_signature(&mut module);
 
         Self {
             builder_context: FunctionBuilderContext::new(),
             context: module.make_context(),
             _data_description: DataDescription::new(),
             module,
+            lambda_sig,
             runtime_func_ids,
         }
     }
 
     fn declare_function(&mut self, func: &Function) -> FuncId {
         let name = func.id.make_name();
-
-        let mut sig = self.module.make_signature();
-        let addr_type = self.module.target_config().pointer_type();
-
-        // runtime: *mut c_void
-        sig.params.push(ir::AbiParam::new(addr_type));
-        // context: *mut c_void
-        sig.params.push(ir::AbiParam::new(addr_type));
-        // args: u16
-        sig.params.push(ir::AbiParam::new(ir::types::I16));
-        // argv: *mut Value
-        sig.params.push(ir::AbiParam::new(addr_type));
-        // retv: *mut Value
-        sig.params.push(ir::AbiParam::new(addr_type));
-
-        // #[repr(u32)] Status
-        sig.returns.push(ir::AbiParam::new(ir::types::I32));
-
         self.module
-            .declare_function(&name, Linkage::Local, &sig)
+            .declare_function(&name, Linkage::Local, &self.lambda_sig)
             .unwrap()
     }
 
-    fn create_compiler<'r, 'a, R>(
+    fn compile_function<R>(
         &mut self,
         func: &Function,
-        runtime: &'r mut R,
-        scope_tree: &'a ScopeTree,
-        id_map: &'a FxHashMap<LambdaId, FuncId>,
-    ) -> Compiler<'r, 'a, '_, R>
+        optimize: bool,
+        runtime: &mut R,
+        scope_tree: &ScopeTree,
+        id_map: &FxHashMap<LambdaId, FuncId>,
+    )
     where
         R: CompilerSupport,
     {
-        Compiler::new(func, runtime, scope_tree, id_map, self)
+        let compiler = Compiler::new(func, runtime, scope_tree, id_map, self);
+        compiler.compile(func, optimize);
+    }
+
+    fn define_function(&mut self, func_id: FuncId) {
+        self.module
+            .define_function(func_id, &mut self.context)
+            .unwrap();
+    }
+
+    fn clear(&mut self) {
+        self.module.clear_context(&mut self.context);
     }
 }
 
-struct Compiler<'r, 'a, 'c, R> {
-    support: &'r mut R,
+struct Compiler<'a, R> {
+    support: &'a mut R,
 
     /// The scope tree of the JavaScript program to compile.
     scope_tree: &'a ScopeTree,
@@ -191,8 +184,8 @@ struct Compiler<'r, 'a, 'c, R> {
 
     pending_labels: Vec<Symbol>,
 
-    editor: Editor<'a, 'c>,
-    module: &'c mut JITModule,
+    editor: Editor<'a>,
+    module: &'a mut JITModule,
 
     /// A stack for operands.
     operand_stack: OperandStack,
@@ -206,16 +199,16 @@ struct Compiler<'r, 'a, 'c, R> {
     skip_count: u16,
 }
 
-impl<'r, 'a, 'c, R> Compiler<'r, 'a, 'c, R>
+impl<'a, R> Compiler<'a, R>
 where
     R: CompilerSupport,
 {
     fn new(
         func: &Function,
-        support: &'r mut R,
+        support: &'a mut R,
         scope_tree: &'a ScopeTree,
         id_map: &'a FxHashMap<LambdaId, FuncId>,
-        context: &'c mut CraneliftContext,
+        context: &'a mut CraneliftContext,
     ) -> Self {
         let addr_type = context.module.target_config().pointer_type();
 
