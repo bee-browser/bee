@@ -153,8 +153,7 @@ impl CraneliftContext {
         runtime: &mut R,
         scope_tree: &ScopeTree,
         id_map: &FxHashMap<LambdaId, FuncId>,
-    )
-    where
+    ) where
         R: CompilerSupport,
     {
         let compiler = Compiler::new(func, runtime, scope_tree, id_map, self);
