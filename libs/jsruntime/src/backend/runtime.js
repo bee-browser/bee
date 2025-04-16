@@ -38,11 +38,20 @@ async function main(args, options) {
 
   for (const func of runtimeSpec.functions) {
     func.args = [{ name: 'runtime', type: 'VoidPtr' }].concat(func.args).map(({ name, type }) => {
-      return { name, type, ctype: makeCType(type), llvmir_type: makeLLVMIRType(type) };
+      return {
+        name,
+        type,
+        ctype: makeCType(type),
+        llvmir_type: makeLLVMIRType(type),
+        clir_type: makeCraneliftIRType(type),
+        clir_type2: makeCraneliftIRType2(type),
+      };
     });
     func.c_type = makeCFunc(func);
     func.c_ret = makeCType(func.ret);
     func.llvmir_ret = makeLLVMIRType(func.ret);
+    func.clir_ret = makeCraneliftIRType(func.ret);
+    func.clir_ret2 = makeCraneliftIRType2(func.ret);
   }
 
   console.log(JSON.stringify(runtimeSpec));
@@ -51,6 +60,76 @@ async function main(args, options) {
 function makeCFunc(func) {
   const args = func.args.map((arg) => `${arg.ctype} ${arg.name}`).join(', ');
   return `${makeCType(func.ret)} (*${func.name})(${args})`;
+}
+
+function makeCraneliftIRType(type) {
+  switch (type) {
+    case 'bool':
+      return 'ir::types::I8';
+    case 'u16':
+      return 'ir::types::I16';
+    case 'i32':
+    case 'u32':
+    case 'Status':
+      return 'ir::types::I32';
+    case 'f64':
+      return 'ir::types::F64';
+    case '&std::ffi::CStr':
+    case '&Char16Seq':
+    case '&mut Variable':
+    case '&Capture':
+    case '&mut Capture':
+    case '&mut Closure':
+    case '&mut Coroutine':
+    case '&mut Object':
+    case '&Value':
+    case '&mut Value':
+    case '*mut Value':
+    case '&PropertyKey':
+    case 'Lambda':
+    case 'VoidPtr':
+      return 'addr_type';
+    case undefined:
+      return '';
+    default:
+      log.error(`unsupported type: ${type}`);
+      return '';
+  }
+}
+
+function makeCraneliftIRType2(type) {
+  switch (type) {
+    case 'bool':
+      return 'ir::types::I8';
+    case 'u16':
+      return 'ir::types::I16';
+    case 'i32':
+    case 'u32':
+    case 'Status':
+      return 'ir::types::I32';
+    case 'f64':
+      return 'ir::types::F64';
+    case '&std::ffi::CStr':
+    case '&Char16Seq':
+    case '&mut Variable':
+    case '&Capture':
+    case '&mut Capture':
+    case '&mut Closure':
+    case '&mut Coroutine':
+    case '&mut Object':
+    case '&Value':
+    case '&mut Value':
+    case '*mut Value':
+    case '&PropertyKey':
+    case 'Lambda':
+    case 'VoidPtr':
+      return 'self.target_config.pointer_type()';
+    case undefined:
+      return '';
+    default:
+      log.error(`unsupported type: ${type}`);
+      return '';
+  }
 }
 
 function makeLLVMIRType(type) {
@@ -68,6 +147,7 @@ function makeLLVMIRType(type) {
     case '&std::ffi::CStr':
     case '&Char16Seq':
     case '&mut Variable':
+    case '&Capture':
     case '&mut Capture':
     case '&mut Closure':
     case '&mut Coroutine':
@@ -105,6 +185,8 @@ function makeCType(type) {
       return 'Char16Seq*';
     case '&mut Variable':
       return 'Variable*';
+    case '&Capture':
+      return 'const Capture*';
     case '&mut Capture':
       return 'Capture*';
     case '&mut Closure':

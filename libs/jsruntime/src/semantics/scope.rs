@@ -192,6 +192,7 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::FormalParameter,
             flags: VariableFlags::empty(),
+            init_batch: Default::default(),
         });
     }
 
@@ -202,16 +203,18 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Mutable,
             flags: VariableFlags::empty(),
+            init_batch: Default::default(),
         });
     }
 
-    pub fn add_function_scoped_mutable(&mut self, symbol: Symbol, index: u16) {
+    pub fn add_function_scoped_mutable(&mut self, symbol: Symbol, index: u16, init_batch: usize) {
         let scope = &mut self.scopes[self.current.index()];
         scope.variables.push(Variable {
             symbol,
             index,
             kind: VariableKind::Mutable,
             flags: VariableFlags::FUNCTION_SCOPED,
+            init_batch,
         });
     }
 
@@ -222,6 +225,7 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Immutable,
             flags: VariableFlags::empty(),
+            init_batch: Default::default(),
         });
     }
 
@@ -233,13 +237,14 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Capture,
             flags: VariableFlags::empty(),
+            init_batch: Default::default(),
         });
         scope
             .variables
             .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
-    pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
+    pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol, init_batch: usize) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
         scope.variables.push(Variable {
@@ -247,10 +252,21 @@ impl ScopeTreeBuilder {
             index: 0, // TODO
             kind: VariableKind::Global,
             flags: VariableFlags::empty(),
+            init_batch,
         });
         scope
             .variables
             .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
+    }
+
+    // TODO(perf)
+    pub fn set_init_batch(&mut self, scope_ref: ScopeRef, symbol: Symbol, init_batch: usize) {
+        let scope = &mut self.scopes[scope_ref.index()];
+        debug_assert!(scope.is_function());
+        match scope.variables.iter_mut().find(|v| v.symbol == symbol) {
+            Some(variable) => variable.init_batch = init_batch,
+            None => panic!(),
+        }
     }
 
     pub fn set_captured(&mut self, variable_ref: VariableRef) {
@@ -384,6 +400,7 @@ pub struct Variable {
     pub index: u16,
     pub kind: VariableKind,
     flags: VariableFlags,
+    pub init_batch: usize,
 }
 
 impl Variable {
@@ -431,6 +448,9 @@ impl std::fmt::Display for Variable {
             VariableKind::Immutable => write!(f, "I@{}:{}", self.index, self.symbol)?,
             VariableKind::Capture => write!(f, "C@{}:{}", self.index, self.symbol)?,
             VariableKind::Global => write!(f, "G@{}:{}", self.index, self.symbol)?,
+        }
+        if self.init_batch > 0 {
+            write!(f, "#{}", self.init_batch)?;
         }
         Ok(())
     }

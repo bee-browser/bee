@@ -3,30 +3,31 @@ use std::path::PathBuf;
 
 use duct::cmd;
 
-static CBINDGEN_TOML: &str = "src/llvmir/cbindgen.toml";
+const CBINDGEN_TOML: &str = "src/backend/llvm/cbindgen.toml";
 
-static BRIDGE_SOURCE_FILES: &[&str] = &[
-    "src/llvmir/bridge.rs",
-    "src/llvmir/compiler/bridge.rs",
-    "src/llvmir/executor/bridge.rs",
-    "src/llvmir/module/bridge.rs",
+const BRIDGE_SOURCE_FILES: &[&str] = &[
+    "src/backend/bridge.rs",
+    "src/backend/llvm/bridge.rs",
+    "src/backend/llvm/compiler/bridge.rs",
+    "src/backend/llvm/executor/bridge.rs",
+    "src/backend/llvm/module/bridge.rs",
     "src/types.rs",
 ];
 
-static LLVM_COMPONENTS: &[&str] = &["core", "orcjit", "x86"];
+const BACKEND_LLVM_COMPONENTS: &[&str] = &["core", "orcjit", "x86"];
 
-static LLVMIR_SOURCE_FILES: &[&str] = &[
-    "src/llvmir/bridge.hh",
-    "src/llvmir/compiler/impl.hh",
-    "src/llvmir/compiler/peer.cc",
-    "src/llvmir/compiler/type_holder.hh",
-    "src/llvmir/compiler/type_holder.cc",
-    "src/llvmir/executor/impl.codegen.hh",
-    "src/llvmir/executor/impl.hh",
-    "src/llvmir/executor/peer.cc",
-    "src/llvmir/module/impl.hh",
-    "src/llvmir/module/peer.cc",
-    "src/llvmir/peer.cc",
+const BACKEND_LLVM_SOURCE_FILES: &[&str] = &[
+    "src/backend/llvm/bridge.hh",
+    "src/backend/llvm/compiler/impl.hh",
+    "src/backend/llvm/compiler/peer.cc",
+    "src/backend/llvm/compiler/type_holder.hh",
+    "src/backend/llvm/compiler/type_holder.cc",
+    "src/backend/llvm/executor/impl.codegen.hh",
+    "src/backend/llvm/executor/impl.hh",
+    "src/backend/llvm/executor/peer.cc",
+    "src/backend/llvm/module/impl.hh",
+    "src/backend/llvm/module/peer.cc",
+    "src/backend/llvm/peer.cc",
 ];
 
 fn main() {
@@ -43,7 +44,7 @@ fn main() {
         .with_crate(crate_dir)
         .generate()
         .expect("Unable to generate bindings")
-        .write_to_file("src/llvmir/bridge.hh");
+        .write_to_file("src/backend/llvm/bridge.hh");
 
     // Rebuild when cbindgen.toml change.
     println!("cargo::rerun-if-changed={CBINDGEN_TOML}");
@@ -56,7 +57,7 @@ fn main() {
     // Build LLVM IR bridge.
 
     let llvm_config = LlvmConfig::new();
-    let cc_files = LLVMIR_SOURCE_FILES
+    let cc_files = BACKEND_LLVM_SOURCE_FILES
         .iter()
         .filter(|src| src.ends_with(".cc"));
     let mut build = cc::Build::default();
@@ -67,19 +68,19 @@ fn main() {
     if profile == "debug" {
         build.define("BEE_BUILD_DEBUG", "1");
     }
-    build.compile("llvmir");
+    build.compile("backend-llvm");
 
-    // Rebuild when any of LLVMIR_SOURCE_FILES change.
-    for src in LLVMIR_SOURCE_FILES {
+    // Rebuild when any of BACKEND_LLVM_SOURCE_FILES change.
+    for src in BACKEND_LLVM_SOURCE_FILES {
         println!("cargo::rerun-if-changed={src}");
     }
 
     // Link against LLVM.
     println!("cargo::rustc-link-search=native={}", llvm_config.libdir());
-    for lib in llvm_config.libs(LLVM_COMPONENTS).iter() {
+    for lib in llvm_config.libs(BACKEND_LLVM_COMPONENTS).iter() {
         println!("cargo::rustc-link-lib=static={lib}");
     }
-    for lib in llvm_config.system_libs(LLVM_COMPONENTS).iter() {
+    for lib in llvm_config.system_libs(BACKEND_LLVM_COMPONENTS).iter() {
         println!("cargo::rustc-link-lib={lib}");
     }
 }
@@ -87,7 +88,7 @@ fn main() {
 struct LlvmConfig(PathBuf);
 
 impl LlvmConfig {
-    const LINK_TYPE: &'static str = "--link-static";
+    const LINK_TYPE: &str = "--link-static";
 
     fn new() -> Self {
         let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));

@@ -1,6 +1,6 @@
-# llvmir
+# llvm
 
-The `llvmir` module implements a compiler and an executor targeting [LLVM IR].
+The `llvm` module implements a compiler and an executor targeting [LLVM IR].
 
 ## Source Tree Structure
 

@@ -14,6 +14,10 @@ base = { path = "../base" }
 bitflags = "2.9.0"
 # TODO(issue#237): replace `bumpalo` with `jsgc = { path = "../jsgc" }`
 bumpalo = "3.17.0"
+cranelift = "0.118.0"
+cranelift-module = "0.118.0"
+cranelift-jit = "0.118.0"
+cranelift-native = "0.118.0"
 indexmap = "2.9.0"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
@@ -31,6 +35,10 @@ duct = "0.13.7"
 assert_matches = "1.5.0"
 criterion = "0.5.1"
 ctor = "0.4.1"
+
+[lints.rust.unexpected_cfgs]
+level = "deny"
+check-cfg = ['cfg(backend, values("cranelift", "llvm"))']
 
 [[bench]]
 name = "jsruntime-bench"

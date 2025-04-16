@@ -1,7 +1,6 @@
 mod bridge;
 mod control_flow;
 
-use std::ffi::CStr;
 use std::io::Write;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -14,8 +13,9 @@ use jsparser::syntax::LoopFlags;
 use crate::Program;
 use crate::Runtime;
 use crate::Value;
+use crate::backend::CompileError;
+use crate::backend::CompilerSupport;
 use crate::lambda::LambdaId;
-use crate::lambda::LambdaInfo;
 use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Locator;
@@ -45,30 +45,32 @@ use control_flow::ControlFlowStack;
 const VALUE_SIZE: u32 = size_of::<Value>() as u32;
 const VALUE_HOLDER_SIZE: u32 = size_of::<u64>() as u32;
 
-impl<X> Runtime<X> {
-    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
-        logger::debug!(event = "compile");
-        // TODO: Deferring the compilation until it's actually called improves the performance.
-        // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(self, &program.scope_tree);
-        compiler.start_compile();
-        // Compile JavaScript functions in reverse order in order to compile a coroutine function
-        // before its ramp function so that the size of the scratch buffer for the coroutine
-        // function is available when the ramp function is compiled.
-        //
-        // NOTE: The functions are stored in post-order traversal on the function tree.  So, we
-        // don't need to use `Iterator::rev()`.
-        //
-        // TODO: We should manage dependencies between functions in a more general way.
-        for func in program.functions.iter() {
-            compiler.start_function(func.name, func.id);
-            for command in func.commands.iter() {
-                compiler.process_command(command);
-            }
-            compiler.end_function(func.id, optimize);
+pub fn compile<X>(
+    runtime: &mut Runtime<X>,
+    program: &Program,
+    optimize: bool,
+) -> Result<Module, CompileError> {
+    logger::debug!(event = "compile");
+    // TODO: Deferring the compilation until it's actually called improves the performance.
+    // Because the program may contain unused functions.
+    let mut compiler = Compiler::new(runtime, &program.scope_tree);
+    compiler.start_compile();
+    // Compile JavaScript functions in reverse order in order to compile a coroutine function
+    // before its ramp function so that the size of the scratch buffer for the coroutine
+    // function is available when the ramp function is compiled.
+    //
+    // NOTE: The functions are stored in post-order traversal on the function tree.  So, we
+    // don't need to use `Iterator::rev()`.
+    //
+    // TODO: We should manage dependencies between functions in a more general way.
+    for func in program.functions.iter() {
+        compiler.start_function(func.name, func.id);
+        for command in func.commands.iter() {
+            compiler.process_command(command);
         }
-        Ok(compiler.end_compile(program.entry_lambda_id()))
+        compiler.end_function(func.id, optimize);
     }
+    Ok(compiler.end_compile(program.entry_lambda_id()))
 }
 
 /// A Compiler targeting LLVM IR.
@@ -107,58 +109,6 @@ struct Compiler<'r, 's, R> {
     dump_buffer: Option<Vec<std::ffi::c_char>>,
 
     enable_scope_cleanup_checker: bool,
-}
-
-trait CompilerSupport {
-    // RuntimePref
-    fn is_scope_cleanup_checker_enabled(&self) -> bool;
-    fn is_llvmir_labels_enabled(&self) -> bool;
-
-    // SymbolRegistry
-    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol;
-
-    // LambdaRegistry
-    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
-    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
-
-    // Executor
-    fn get_data_layout(&self) -> &CStr;
-    fn get_target_triple(&self) -> &CStr;
-}
-
-impl<X> CompilerSupport for Runtime<X> {
-    fn is_scope_cleanup_checker_enabled(&self) -> bool {
-        self.pref.enable_scope_cleanup_checker
-    }
-
-    fn is_llvmir_labels_enabled(&self) -> bool {
-        self.pref.enable_llvmir_labels
-    }
-
-    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol {
-        self.symbol_registry.intern_utf16(name)
-    }
-
-    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo {
-        self.lambda_registry.get(lambda_id)
-    }
-
-    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo {
-        self.lambda_registry.get_mut(lambda_id)
-    }
-
-    fn get_data_layout(&self) -> &CStr {
-        self.executor.get_data_layout()
-    }
-
-    fn get_target_triple(&self) -> &CStr {
-        self.executor.get_target_triple()
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum CompileError {
-    // TODO: define errors
 }
 
 macro_rules! push_bb_name {
@@ -361,6 +311,7 @@ where
         logger::debug!(event = "process_command", ?command);
         match command {
             CompileCommand::Nop => (),
+            CompileCommand::Batch(_) => (),
             CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
@@ -430,8 +381,8 @@ where
             CompileCommand::NullishShortCircuit => self.process_nullish_short_circuit(),
             CompileCommand::Truthy => self.process_truthy(),
             CompileCommand::NonNullish => self.process_non_nullish(),
-            CompileCommand::IfThen => self.process_if_then(),
-            CompileCommand::Else => self.process_else(),
+            CompileCommand::IfThen(_) => self.process_if_then(),
+            CompileCommand::Else(_) => self.process_else(),
             CompileCommand::IfElseStatement => self.process_if_else_statement(),
             CompileCommand::IfStatement => self.process_if_statement(),
             CompileCommand::DoWhileLoop(id) => self.process_do_while_loop(*id),
@@ -445,7 +396,9 @@ where
             CompileCommand::CaseBlock(id, num_cases) => self.process_case_block(*id, *num_cases),
             CompileCommand::Case => self.process_case(),
             CompileCommand::Default => self.process_default(),
-            CompileCommand::CaseClause(has_statement) => self.process_case_clause(*has_statement),
+            CompileCommand::CaseClause(_, batch_idnex) => {
+                self.process_case_clause(batch_idnex.is_some())
+            }
             CompileCommand::Switch(id, num_cases, default_index) => {
                 self.process_switch(*id, *num_cases, *default_index)
             }

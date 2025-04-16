@@ -5,6 +5,7 @@ use jsparser::syntax::LiteralPropertyName;
 use jsparser::syntax::MemberExpressionKind;
 use jsparser::syntax::PropertyAccessKind;
 use jsparser::syntax::PropertyDefinitionKind;
+use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
 use jsparser::Error;
@@ -329,8 +330,8 @@ where
             Node::ArrowFunction => self.handle_arrow_function(),
             Node::AsyncArrowFunction => self.handle_async_arrow_function(),
             Node::AwaitExpression => self.handle_await_expression(),
-            Node::Then => self.handle_then(),
-            Node::Else => self.handle_else(),
+            Node::Then(expr) => self.handle_then(expr),
+            Node::Else(expr) => self.handle_else(expr),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
             Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
             Node::NullishShortCircuit => self.handle_nullish_short_circuit(),
@@ -701,12 +702,12 @@ where
         analysis.coroutine.state = next_state;
     }
 
-    fn handle_then(&mut self) {
-        push_commands!(self; CompileCommand::Truthy, CompileCommand::IfThen);
+    fn handle_then(&mut self, expr: bool) {
+        push_commands!(self; CompileCommand::Truthy, CompileCommand::IfThen(expr));
     }
 
-    fn handle_else(&mut self) {
-        push_commands!(self; CompileCommand::Else);
+    fn handle_else(&mut self, expr: bool) {
+        push_commands!(self; CompileCommand::Else(expr));
     }
 
     fn handle_falsy_short_circuit(&mut self) {
@@ -943,15 +944,19 @@ where
             match reference.func_index {
                 Some(func_index) => {
                     let func_scope_ref = self.functions[func_index].scope_ref;
-                    self.global_analysis
-                        .scope_tree_builder
-                        .add_global(func_scope_ref, reference.symbol);
+                    self.global_analysis.scope_tree_builder.add_global(
+                        func_scope_ref,
+                        reference.symbol,
+                        Default::default(),
+                    );
                 }
                 None => {
                     if !global_symbols.contains(&reference.symbol) {
-                        self.global_analysis
-                            .scope_tree_builder
-                            .add_global(global_scope_ref, reference.symbol);
+                        self.global_analysis.scope_tree_builder.add_global(
+                            global_scope_ref,
+                            reference.symbol,
+                            Default::default(),
+                        );
                         global_symbols.insert(reference.symbol);
                     }
                 }
@@ -964,7 +969,7 @@ where
         //
         // TODO(test): probably, the order of error handling may be different fro the
         // specification.
-        for symbol in analysis.function_scoped_symbols.iter().cloned() {
+        for (&symbol, init_batch) in analysis.function_scoped_symbols.iter() {
             // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
             // `function.commands` must be rewritten to throw the "Error".
             let result = self
@@ -972,10 +977,19 @@ where
                 .define_global_property(symbol, Property::data_wec(Value::Undefined));
             debug_assert!(matches!(result, Ok(true)));
             if !global_symbols.contains(&symbol) {
-                self.global_analysis
-                    .scope_tree_builder
-                    .add_global(global_scope_ref, symbol);
+                self.global_analysis.scope_tree_builder.add_global(
+                    global_scope_ref,
+                    symbol,
+                    *init_batch,
+                );
                 global_symbols.insert(symbol);
+            } else {
+                // TODO(perf): rethink the algorithm.  somewhat inefficient...
+                self.global_analysis.scope_tree_builder.set_init_batch(
+                    global_scope_ref,
+                    symbol,
+                    *init_batch,
+                );
             }
         }
 
@@ -1027,7 +1041,7 @@ struct FunctionAnalysis {
     symbol_stack: Vec<(Symbol, usize)>,
 
     /// A set of non-lexically-scoped symbols defined by "VariableStatement"s.
-    function_scoped_symbols: FxHashSet<Symbol>,
+    function_scoped_symbols: FxHashMap<Symbol, usize>,
 
     /// A stack to hold [`Scope`]s.
     ///
@@ -1204,9 +1218,11 @@ impl FunctionAnalysis {
                 .push(CompileCommand::VariableReference(symbol));
             self.commands.push(CompileCommand::Swap);
             self.commands.push(CompileCommand::Assignment);
+            self.commands.push(CompileCommand::Discard);
         }
 
-        self.function_scoped_symbols.insert(symbol);
+        self.function_scoped_symbols
+            .insert(symbol, Default::default());
 
         // TODO: type info
     }
@@ -1273,7 +1289,7 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Dereference);
         self.commands.push(CompileCommand::Duplicate(0));
         self.commands.push(CompileCommand::NonNullish);
-        self.commands.push(CompileCommand::IfThen);
+        self.commands.push(CompileCommand::IfThen(true));
     }
 
     fn process_optional_chain(&mut self, kind: PropertyAccessKind) {
@@ -1281,13 +1297,13 @@ impl FunctionAnalysis {
             PropertyAccessKind::Call => {
                 let nargs = self.nargs_stack.pop().unwrap();
                 self.commands.push(CompileCommand::Call(nargs));
-                self.commands.push(CompileCommand::Else);
+                self.commands.push(CompileCommand::Else(true));
                 self.commands.push(CompileCommand::Undefined);
                 self.commands.push(CompileCommand::Ternary);
             }
             PropertyAccessKind::IdentifierKey(key) => {
                 self.commands.push(CompileCommand::PropertyReference(key));
-                self.commands.push(CompileCommand::Else);
+                self.commands.push(CompileCommand::Else(true));
                 self.commands.push(CompileCommand::Undefined);
                 self.commands.push(CompileCommand::Ternary);
             }
@@ -1373,13 +1389,18 @@ impl FunctionAnalysis {
     fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
         debug_assert!(!self.symbol_stack.is_empty());
         let (symbol, _) = self.symbol_stack.pop().unwrap();
-        self.function_scoped_symbols.insert(symbol);
 
+        // This is a hoistable declaration.  Commands following the `Batch` command will perform
+        // by a command handler for the `DeclareVars` command generated for the current scope.
+        let index = self.commands.len();
+        self.commands.push(CompileCommand::Batch(4));
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands
             .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareClosure);
+
+        self.function_scoped_symbols.insert(symbol, index);
     }
 
     fn process_closure_expression(
@@ -1475,21 +1496,44 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Duplicate(1));
         self.commands.push(CompileCommand::StrictEquality);
         self.commands.push(CompileCommand::Case);
+        self.reserve_command_for_case_statements();
+    }
+
+    fn reserve_command_for_case_statements(&mut self) {
+        let index = self.reserve_commands(1);
+        self.switch_stack.last_mut().unwrap().case_statements_index = index;
     }
 
     fn process_case_clause(&mut self, has_statement: bool) {
+        let batch_index = self.update_command_for_case_statements(has_statement);
         self.commands
-            .push(CompileCommand::CaseClause(has_statement));
+            .push(CompileCommand::CaseClause(false, batch_index));
         self.switch_stack.last_mut().unwrap().num_cases += 1;
+    }
+
+    fn update_command_for_case_statements(&mut self, has_statement: bool) -> Option<usize> {
+        let index = self.switch_stack.last().unwrap().case_statements_index;
+        debug_assert_eq!(self.commands[index], CompileCommand::PlaceHolder);
+        if has_statement {
+            let end_index = self.commands.len();
+            debug_assert!(end_index - index - 1 < u16::MAX as usize);
+            self.commands[index] = CompileCommand::Batch((end_index - index - 1) as u16);
+            Some(index)
+        } else {
+            self.commands[index] = CompileCommand::Nop;
+            None
+        }
     }
 
     fn process_default_selector(&mut self) {
         self.commands.push(CompileCommand::Default);
+        self.reserve_command_for_case_statements();
     }
 
     fn process_default_clause(&mut self, has_statement: bool) {
+        let batch_index = self.update_command_for_case_statements(has_statement);
         self.commands
-            .push(CompileCommand::CaseClause(has_statement));
+            .push(CompileCommand::CaseClause(true, batch_index));
         let switch = self.switch_stack.last_mut().unwrap();
         switch.default_index = Some(switch.num_cases);
         switch.num_cases += 1;
@@ -1500,6 +1544,7 @@ impl FunctionAnalysis {
             case_block_index,
             default_index,
             num_cases,
+            ..
         } = self.switch_stack.pop().unwrap();
 
         let id = self.num_switch_statements;
@@ -1623,10 +1668,10 @@ impl FunctionAnalysis {
     }
 
     fn process_function_scoped_symbols(&mut self, global_analysis: &mut GlobalAnalysis) {
-        for symbol in self.function_scoped_symbols.iter().cloned() {
+        for (&symbol, init_batch) in self.function_scoped_symbols.iter() {
             global_analysis
                 .scope_tree_builder
-                .add_function_scoped_mutable(symbol, self.num_locals);
+                .add_function_scoped_mutable(symbol, self.num_locals, *init_batch);
             self.num_locals += 1;
         }
     }
@@ -1676,6 +1721,7 @@ struct LoopAnalysis {
 #[derive(Default)]
 struct SwitchAnalysis {
     case_block_index: usize,
+    case_statements_index: usize,
     num_cases: u16,
     default_index: Option<u16>,
 }
@@ -1700,7 +1746,20 @@ struct CoroutineAnalysis {
 /// A compile command.
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
+    // Inserting commands in the middle is an inefficient operation.  For avoiding such an
+    // operation, the following commands are introduced.
+
+    // A `Nop` performs no operation.  A `Placeholder` will be replaced with a `Nop` once it's
+    // determined that command substitution is not needed.
     Nop,
+
+    // A `Batch(n)` is inserted before `n` commands that are compile commands of a *batch*.
+    // Compile commands in a batch will be skipped in an evaluation starting at the first compile
+    // command.  A batch is performed at some point in the evaluation.  For example, compile
+    // commands generated for a *hoistable* declaration are inserted as a batch and the compile
+    // commands of the batch are performed at the `DeclareVars` in the scope on which the
+    // declaration is performed.
+    Batch(u16),
 
     Undefined,
     Null,
@@ -1811,8 +1870,8 @@ pub enum CompileCommand {
     // conditional
     Truthy,
     NonNullish,
-    IfThen,
-    Else,
+    IfThen(bool),
+    Else(bool),
     IfElseStatement,
     IfStatement,
 
@@ -1830,7 +1889,7 @@ pub enum CompileCommand {
     CaseBlock(u16, u16),
     Case,
     Default,
-    CaseClause(bool),
+    CaseClause(bool, Option<usize>),
     Switch(u16, u16, Option<u16>),
 
     // label

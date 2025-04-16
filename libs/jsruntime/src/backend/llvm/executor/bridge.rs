@@ -3,9 +3,9 @@ use std::ffi::c_char;
 use std::ffi::c_void;
 
 use crate::LambdaId;
-use crate::llvmir::RuntimeFunctions;
-use crate::llvmir::module::Module;
-use crate::llvmir::module::ModulePeer;
+use crate::backend::RuntimeFunctions;
+use crate::backend::llvm::module::Module;
+use crate::backend::llvm::module::ModulePeer;
 use crate::types::Lambda;
 
 pub struct ExecutorBridge(ExecutorPeer);
@@ -53,7 +53,7 @@ impl Drop for ExecutorBridge {
 
 type ExecutorPeer = *mut c_void;
 
-#[link(name = "llvmir")]
+#[link(name = "backend-llvm")]
 unsafe extern "C" {
     fn executor_peer_new() -> ExecutorPeer;
     fn executor_peer_delete(peer: ExecutorPeer);

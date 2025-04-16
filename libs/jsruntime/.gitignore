@@ -1,5 +1,6 @@
-/src/llvmir/bridge.hh
-/src/llvmir/compiler/type_holder.cc
-/src/llvmir/compiler/type_holder.hh
-/src/llvmir/executor/impl.codegen.hh
+/src/backend/cranelift/compiler/runtime.rs
+/src/backend/llvm/bridge.hh
+/src/backend/llvm/compiler/type_holder.cc
+/src/backend/llvm/compiler/type_holder.hh
+/src/backend/llvm/executor/impl.codegen.hh
 /tests/evaluate.rs
