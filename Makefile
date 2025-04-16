@@ -32,17 +32,13 @@ list-targets:
 	@grep -E '^\.PHONY: ' $(MAKEFILE_LIST) | cut -d ' ' -f 2 | grep -v '^\$$' | sort
 
 .PHONY: check
-check: check-rust check-cxx check-js
+check: check-rust check-js
 
 .PHONY: check-rust
 check-rust:
 	cargo fmt --all --check
 	cargo check --workspace --all-targets --all-features
 	cargo clippy --workspace --all-targets --all-features -- -D warnings
-
-.PHONY: check-cxx
-# TODO
-check-cxx:
 
 .PHONY: check-js
 # TODO
@@ -127,18 +123,12 @@ doc:
 	cargo doc --workspace --all-features --document-private-items
 
 .PHONY: format
-format: format-rust format-cxx format-js
+format: format-rust format-js
 
 .PHONY: format-rust
 format-rust:
 	@echo 'Formatting *.rs...'
 	@cargo fmt --all
-
-.PHONY: format-cxx
-format-cxx:
-	@echo 'Formatting *.[cc|hh]...'
-	@find . -name '*.cc' -o -name '*.hh' | grep -v './target/' | grep -v './vendor/' | \
-	  xargs clang-format -i
 
 .PHONY: format-js
 format-js:
@@ -149,7 +139,6 @@ format-js:
 vendor:
 	@$(MAKE) -s -C vendor clean
 	@$(MAKE) -s -C vendor install
-	@mv vendor/src/llvm/llvm-project/compile_commands.json ./
 
 .PHONY: $(BUILD_TARGETS)
 $(BUILD_TARGETS):

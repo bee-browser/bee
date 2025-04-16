@@ -17,8 +17,6 @@ Install the following software:
 * [Rust]
 * [GNU Bash]
 * [GNU Make]
-* [CMake]
-* [Ninja]
 * [Deno]
 * [Nextest]
 * [jq]
@@ -77,8 +75,6 @@ shall be dual licensed as above, without any additional terms or conditions.
 [Rust]: https://www.rust-lang.org/
 [GNU Bash]: https://www.gnu.org/software/bash/
 [GNU Make]: https://www.gnu.org/software/make/
-[CMake]: https://cmake.org/
-[Ninja]: https://ninja-build.org/
 [Deno]: https://deno.com/
 [Nextest]: https://github.com/nextest-rs/nextest
 [jq]: https://jqlang.github.io/jq/

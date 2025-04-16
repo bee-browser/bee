@@ -48,9 +48,6 @@ jobs:
         with:
           deno-version-file: .tool-versions
       - uses: taiki-e/install-action@nextest
-      - name: Install LLVM
-        run: |
-          sh -x tools/bin/github_actions_install_llvm.sh
       - name: Codegen
         run: make codegen
       - name: Check

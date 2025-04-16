@@ -145,7 +145,6 @@ fn main() -> Result<()> {
             }
         }
         Command::Compile(args) => {
-            runtime.enable_llvmir_labels();
             let program = parse!(&source, cl)?;
             let module = runtime.compile(&program, !args.no_optimize)?;
             module.print(false); // to STDOUT

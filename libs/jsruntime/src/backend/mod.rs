@@ -1,13 +1,5 @@
-// NOTE: `cbindgen` does NOT work property together with cfg_if and match_cfg macros.  As a
-// temporal workaround, we use `cfg!` instead until we remove the `llvm` module completely.
-// At that time, we don't need bridge code between Rust and C++ and we can remove `cbindgen`.
-//
-// We use a custom key called `backend` that takes `"llvm"` or `"cranelift"` as value.  See
-// `build.rs` to check which value is currently specified.
-
 mod bridge;
 mod cranelift;
-mod llvm;
 
 use std::ffi::CStr;
 
@@ -21,33 +13,13 @@ use crate::types::Lambda;
 
 pub use bridge::RuntimeFunctions;
 
-macro_rules! use_cranelift_backend {
-    () => {
-        std::env::var_os("BEE_JSRUNTIME_BACKEND").is_none() ||
-            matches!(std::env::var_os("BEE_JSRUNTIME_BACKEND"),
-                     Some(backend) if backend == "cranelift")
-    };
-}
-
-macro_rules! use_llvm_backend {
-    () => {
-        matches!(std::env::var_os("BEE_JSRUNTIME_BACKEND"),
-                 Some(backend) if backend == "llvm")
-    };
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum CompileError {
     // TODO: define errors
 }
 
 pub fn initialize() {
-    match std::env::var_os("BEE_JSRUNTIME_BACKEND") {
-        Some(backend) if backend == "cranelift" => cranelift::initialize(),
-        Some(backend) if backend == "llvm" => llvm::initialize(),
-        None => cranelift::initialize(),
-        _ => unreachable!(),
-    }
+    cranelift::initialize()
 }
 
 pub fn compile<X>(
@@ -55,22 +27,12 @@ pub fn compile<X>(
     program: &Program,
     optimize: bool,
 ) -> Result<Module, CompileError> {
-    match std::env::var_os("BEE_JSRUNTIME_BACKEND") {
-        Some(backend) if backend == "cranelift" => {
-            cranelift::compile(runtime, program, optimize).map(Module::Cranelift)
-        }
-        Some(backend) if backend == "llvm" => {
-            llvm::compile(runtime, program, optimize).map(Module::Llvm)
-        }
-        None => cranelift::compile(runtime, program, optimize).map(Module::Cranelift),
-        _ => unreachable!(),
-    }
+    cranelift::compile(runtime, program, optimize).map(Module)
 }
 
 trait CompilerSupport {
     // RuntimePref
     fn is_scope_cleanup_checker_enabled(&self) -> bool;
-    fn is_llvmir_labels_enabled(&self) -> bool;
 
     // SymbolRegistry
     fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol;
@@ -89,10 +51,6 @@ trait CompilerSupport {
 impl<X> CompilerSupport for Runtime<X> {
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
         self.pref.enable_scope_cleanup_checker
-    }
-
-    fn is_llvmir_labels_enabled(&self) -> bool {
-        self.pref.enable_llvmir_labels
     }
 
     fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol {
@@ -120,142 +78,38 @@ impl<X> CompilerSupport for Runtime<X> {
     }
 }
 
-pub enum Module {
-    Cranelift(Box<cranelift::Module>),
-    Llvm(llvm::Module),
-}
+pub struct Module(Box<cranelift::Module>);
 
 impl Module {
     pub fn entry_lambda_id(&self) -> LambdaId {
-        match self {
-            Self::Cranelift(_module) => {
-                if use_cranelift_backend!() {
-                    todo!();
-                } else {
-                    panic!();
-                }
-            }
-            Self::Llvm(module) => {
-                if use_llvm_backend!() {
-                    module.entry_lambda_id()
-                } else {
-                    panic!();
-                }
-            }
-        }
+        todo!();
     }
 
     pub fn print(&self, stderr: bool) {
-        match self {
-            Self::Cranelift(module) => {
-                if use_cranelift_backend!() {
-                    module.print(stderr);
-                } else {
-                    panic!();
-                }
-            }
-            Self::Llvm(module) => {
-                if use_llvm_backend!() {
-                    module.print(stderr);
-                } else {
-                    panic!();
-                }
-            }
-        }
+        self.0.print(stderr);
     }
 }
 
-pub enum Executor {
-    Cranelift(cranelift::Executor),
-    Llvm(llvm::Executor),
-}
+pub struct Executor(cranelift::Executor);
 
 impl Executor {
     pub fn new(functions: &RuntimeFunctions) -> Self {
-        match std::env::var_os("BEE_JSRUNTIME_BACKEND") {
-            Some(backend) if backend == "cranelift" => {
-                Self::Cranelift(cranelift::Executor::new(functions))
-            }
-            Some(backend) if backend == "llvm" => Self::Llvm(llvm::Executor::new(functions)),
-            None => Self::Cranelift(cranelift::Executor::new(functions)),
-            _ => unreachable!(),
-        }
+        Self(cranelift::Executor::new(functions))
     }
 
     pub fn register_module(&mut self, module: Module) {
-        match (self, module) {
-            (Self::Cranelift(executor), Module::Cranelift(module)) => {
-                if use_cranelift_backend!() {
-                    executor.register_module(module)
-                } else {
-                    panic!();
-                }
-            }
-            (Self::Llvm(executor), Module::Llvm(module)) => {
-                if use_llvm_backend!() {
-                    executor.register_module(&module);
-                } else {
-                    panic!();
-                }
-            }
-            _ => unreachable!(),
-        }
+        self.0.register_module(module.0)
     }
 
     pub fn get_data_layout(&self) -> &CStr {
-        match self {
-            Self::Cranelift(_executor) => {
-                if use_cranelift_backend!() {
-                    todo!();
-                } else {
-                    panic!();
-                }
-            }
-            Self::Llvm(executor) => {
-                if use_llvm_backend!() {
-                    executor.get_data_layout()
-                } else {
-                    panic!();
-                }
-            }
-        }
+        todo!();
     }
 
     pub fn get_target_triple(&self) -> &CStr {
-        match self {
-            Self::Cranelift(_executor) => {
-                if use_cranelift_backend!() {
-                    todo!();
-                } else {
-                    panic!();
-                }
-            }
-            Self::Llvm(executor) => {
-                if use_llvm_backend!() {
-                    executor.get_target_triple()
-                } else {
-                    panic!();
-                }
-            }
-        }
+        todo!();
     }
 
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
-        match self {
-            Self::Cranelift(executor) => {
-                if use_cranelift_backend!() {
-                    executor.get_lambda(lambda_id)
-                } else {
-                    panic!();
-                }
-            }
-            Self::Llvm(executor) => {
-                if use_llvm_backend!() {
-                    executor.get_lambda(lambda_id)
-                } else {
-                    panic!();
-                }
-            }
-        }
+        self.0.get_lambda(lambda_id)
     }
 }

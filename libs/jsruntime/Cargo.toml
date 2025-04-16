@@ -26,19 +26,10 @@ rustc-hash = "2.1.1"
 static_assertions = "1.1.0"
 thiserror = "2.0.12"
 
-[build-dependencies]
-cbindgen = { git = "https://github.com/masnagam/cbindgen.git", rev = "7fcd29d7a7bd204cff6887ae099aa40f716367ed" }
-cc = { version = "1.2.19", features = ["parallel"] }
-duct = "0.13.7"
-
 [dev-dependencies]
 assert_matches = "1.5.0"
 criterion = "0.5.1"
 ctor = "0.4.1"
-
-[lints.rust.unexpected_cfgs]
-level = "deny"
-check-cfg = ['cfg(backend, values("cranelift", "llvm"))']
 
 [[bench]]
 name = "jsruntime-bench"

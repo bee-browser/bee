@@ -10,9 +10,6 @@
 [submodule "vendor/html5lib/html5lib-tests"]
 	path = vendor/src/html5lib/html5lib-tests
 	url = https://github.com/html5lib/html5lib-tests.git
-[submodule "vendor/src/llvm/llvm-project"]
-	path = vendor/src/llvm/llvm-project
-	url = https://github.com/llvm/llvm-project.git
 [submodule "vendor/src/bee-browser/rust-html-parser-benchmark"]
 	path = vendor/src/bee-browser/rust-html-parser-benchmark
 	url = https://github.com/bee-browser/rust-html-parser-benchmark.git
