@@ -35,17 +35,9 @@ pub fn initialize() {
 struct RuntimePref {
     /// Enables the scope cleanup checker.
     ///
-    /// Insert LLVM IR instructions to check if the cleanup for each scope is performed properly.
+    /// Insert IR instructions to check if the cleanup for each scope is performed properly.
     /// Immediately panic the current thread evaluating a JavaScript program if the check fails.
     enable_scope_cleanup_checker: bool,
-
-    /// Enables contextual labels for registers and basic blocks in LLVM IR.
-    ///
-    /// The labels are disabled by default in a performance point of view.  In this case, the
-    /// compiler assigns a sequential number to each register and basic block in the generated LLVM
-    /// IR as its name.  When this option is enabled, the compiler generates a contextual label and
-    /// assigns it to each one.  This option is useful when you need to read the generated LLVM IR.
-    enable_llvmir_labels: bool,
 }
 
 pub type BasicRuntime = Runtime<()>;
@@ -97,10 +89,6 @@ impl<X> Runtime<X> {
 
     pub fn enable_scope_cleanup_checker(&mut self) {
         self.pref.enable_scope_cleanup_checker = true;
-    }
-
-    pub fn enable_llvmir_labels(&mut self) {
-        self.pref.enable_llvmir_labels = true;
     }
 
     pub fn register_host_function<F, R>(&mut self, name: &str, host_fn: F)

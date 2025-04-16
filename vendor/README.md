@@ -7,7 +7,6 @@ This folder contains third-party packages used in this project.
 The following packages are managed as Git Submodules:
 
 * [html5lib/html5lib-tests](https://github.com/html5lib/html5lib-tests) (MIT)
-* [llvm/llvm-project](https://github.com/llvm/llvm-project) (Apache-2.0 WITH LLVM-exception)
 * [tc39/ecma262](https://github.com/tc39/ecma262) (Ecma's MIT-style Ecma International Policy on
   Submission, Inclusion and Licensing of Software)
 * [tc39/test262](https://github.com/tc39/test262) (BSD-3-Clause)

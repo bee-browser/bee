@@ -42,14 +42,12 @@ async function main(args, options) {
         name,
         type,
         ctype: makeCType(type),
-        llvmir_type: makeLLVMIRType(type),
         clir_type: makeCraneliftIRType(type),
         clir_type2: makeCraneliftIRType2(type),
       };
     });
     func.c_type = makeCFunc(func);
     func.c_ret = makeCType(func.ret);
-    func.llvmir_ret = makeLLVMIRType(func.ret);
     func.clir_ret = makeCraneliftIRType(func.ret);
     func.clir_ret2 = makeCraneliftIRType2(func.ret);
   }
@@ -126,41 +124,6 @@ function makeCraneliftIRType2(type) {
       return 'self.target_config.pointer_type()';
     case undefined:
       return '';
-    default:
-      log.error(`unsupported type: ${type}`);
-      return '';
-  }
-}
-
-function makeLLVMIRType(type) {
-  switch (type) {
-    case 'bool':
-      return 'builder_.getInt1Ty()';
-    case 'u16':
-      return 'builder_.getInt16Ty()';
-    case 'i32':
-    case 'u32':
-    case 'Status':
-      return 'builder_.getInt32Ty()';
-    case 'f64':
-      return 'builder_.getDoubleTy()';
-    case '&std::ffi::CStr':
-    case '&Char16Seq':
-    case '&mut Variable':
-    case '&Capture':
-    case '&mut Capture':
-    case '&mut Closure':
-    case '&mut Coroutine':
-    case '&mut Object':
-    case '&Value':
-    case '&mut Value':
-    case '*mut Value':
-    case '&PropertyKey':
-    case 'Lambda':
-    case 'VoidPtr':
-      return 'builder_.getPtrTy()';
-    case undefined:
-      return 'builder_.getVoidTy()';
     default:
       log.error(`unsupported type: ${type}`);
       return '';

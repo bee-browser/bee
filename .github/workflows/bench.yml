@@ -24,9 +24,7 @@ jobs:
   bench:
     # Skip if this workflow is triggered by dependabot.
     if: ${{ github.actor != 'dependabot[bot]' }}
-    # a temporal fix for llvm/llvm-project#99502
-    #runs-on: ubuntu-latest
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,9 +40,6 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version-file: .tool-versions
-      - name: Install LLVM
-        run: |
-          sh -x tools/bin/github_actions_install_llvm.sh
       - name: Codegen
         run: make codegen
       - uses: bencherdev/bencher@main

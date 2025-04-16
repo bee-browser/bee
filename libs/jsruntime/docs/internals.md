@@ -1,5 +1,7 @@
 # Internals
 
+> TODO(docs): rewrite based on Cranelift backend
+
 ## Pipeline
 
 The following diagram shows perspective of data-flow on the pipeline.

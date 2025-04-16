@@ -12,6 +12,3 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yml
-    with:
-      # a temporal fix for llvm/llvm-project#99502
-      runner: ubuntu-24.04
