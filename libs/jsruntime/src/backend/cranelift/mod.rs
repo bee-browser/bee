@@ -1,6 +1,5 @@
 mod compiler;
 
-use cranelift::prelude::*;
 use cranelift_jit::JITModule;
 use cranelift_module::FuncId;
 use rustc_hash::FxHashMap;
@@ -20,22 +19,17 @@ pub fn initialize() {
 
 pub struct Module {
     inner: JITModule,
-    context: codegen::Context,
     id_map: FxHashMap<LambdaId, FuncId>,
 }
 
 impl Module {
-    pub fn print(&self, stderr: bool) {
-        if stderr {
-            eprintln!("{}", self.context.func);
-        } else {
-            println!("{}", self.context.func);
-        }
+    pub fn print(&self, _stderr: bool) {
+        // TODO: implement
     }
 }
 
 pub struct Executor {
-    module: Option<Module>,
+    module: Option<Box<Module>>,
 }
 
 impl Executor {
@@ -43,7 +37,7 @@ impl Executor {
         Self { module: None }
     }
 
-    pub fn register_module(&mut self, mut module: Module) {
+    pub fn register_module(&mut self, mut module: Box<Module>) {
         module.inner.finalize_definitions().unwrap();
         self.module = Some(module);
     }

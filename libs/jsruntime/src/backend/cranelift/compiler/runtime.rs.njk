@@ -6,6 +6,7 @@
 use std::cell::OnceCell;
 
 use cranelift::codegen::ir;
+use cranelift::codegen::isa;
 use cranelift_jit::JITBuilder;
 use cranelift_module::FuncId;
 use cranelift_module::Linkage;
@@ -53,7 +54,7 @@ pub fn make_lambda_signature<T: Module>(module: &mut T) -> ir::Signature {
 }
 
 pub fn declare_functions<T: Module>(module: &mut T) -> RuntimeFunctionIds {
-    let ptr_type = module.target_config().pointer_type();
+    let addr_type = module.target_config().pointer_type();
 
     // TODO(feat): if cfg!(feature = "libm")
     let name = "fmod";
@@ -94,6 +95,8 @@ pub fn declare_functions<T: Module>(module: &mut T) -> RuntimeFunctionIds {
 
 pub struct RuntimeFunctionCache<'c> {
     ids: &'c RuntimeFunctionIds,
+    target_config: isa::TargetFrontendConfig,
+
     // TODO(feat): if cfg!(feature = "libm")
     #[allow(unused)]
     fmod: OnceCell<ir::FuncRef>,
@@ -108,9 +111,13 @@ pub struct RuntimeFunctionCache<'c> {
 }
 
 impl<'c> RuntimeFunctionCache<'c> {
-    pub fn new(ids: &'c RuntimeFunctionIds) -> Self {
+    pub fn new(
+        ids: &'c RuntimeFunctionIds,
+        target_config: isa::TargetFrontendConfig,
+    ) -> Self {
         Self {
             ids,
+            target_config,
             // TODO(feat): if cfg!(feature = "libm")
             fmod: Default::default(),
             // TODO(feat): if cfg!(feature = "libm")
@@ -123,20 +130,65 @@ impl<'c> RuntimeFunctionCache<'c> {
 
     // TODO(feat): if cfg!(feature = "libm")
     #[allow(unused)]
-    pub fn get_fmod<T: Module>(&self, module: &mut T, func: &mut ir::Function) -> ir::FuncRef {
-        *self.fmod.get_or_init(|| module.declare_func_in_func(self.ids.fmod, func))
+    pub fn get_fmod(&self, func: &mut ir::Function) -> ir::FuncRef {
+        *self.fmod.get_or_init(|| {
+            let mut sig = ir::Signature::new(self.target_config.default_call_conv);
+            sig.params.push(ir::AbiParam::new(ir::types::F64));
+            sig.params.push(ir::AbiParam::new(ir::types::F64));
+            sig.returns.push(ir::AbiParam::new(ir::types::F64));
+            let signature = func.import_signature(sig);
+            let name = ir::UserExternalName::new(0, self.ids.fmod.as_u32());
+            let name = func.declare_imported_user_function(name);
+            let name = ir::ExternalName::user(name);
+            func.import_function(ir::ExtFuncData {
+                name,
+                signature,
+                colocated: false, // Linkage::Import
+            })
+        })
     }
 
     // TODO(feat): if cfg!(feature = "libm")
     #[allow(unused)]
-    pub fn get_pow<T: Module>(&self, module: &mut T, func: &mut ir::Function) -> ir::FuncRef {
-        *self.pow.get_or_init(|| module.declare_func_in_func(self.ids.pow, func))
+    pub fn get_pow(&self, func: &mut ir::Function) -> ir::FuncRef {
+        *self.pow.get_or_init(|| {
+            let mut sig = ir::Signature::new(self.target_config.default_call_conv);
+            sig.params.push(ir::AbiParam::new(ir::types::F64));
+            sig.params.push(ir::AbiParam::new(ir::types::F64));
+            sig.returns.push(ir::AbiParam::new(ir::types::F64));
+            let signature = func.import_signature(sig);
+            let name = ir::UserExternalName::new(0, self.ids.pow.as_u32());
+            let name = func.declare_imported_user_function(name);
+            let name = ir::ExternalName::user(name);
+            func.import_function(ir::ExtFuncData {
+                name,
+                signature,
+                colocated: false, // Linkage::Import
+            })
+        })
     }
     {%- for func in data.functions %}
 
     #[allow(unused)]
-    pub fn get_{{ func.name }}<T: Module>(&self, module: &mut T, func: &mut ir::Function) -> ir::FuncRef {
-        *self.{{ func.name }}.get_or_init(|| module.declare_func_in_func(self.ids.{{ func.name }}, func))
+    pub fn get_{{ func.name }}(&self, func: &mut ir::Function) -> ir::FuncRef {
+        *self.{{ func.name }}.get_or_init(|| {
+            let mut sig = ir::Signature::new(self.target_config.default_call_conv);
+            {%- for arg in func.args %}
+            sig.params.push(ir::AbiParam::new({{ arg.clir_type2 }}));
+            {%- endfor %}
+            {%- if func.clir_ret %}
+            sig.returns.push(ir::AbiParam::new({{ func.clir_ret2 }}));
+            {%- endif %}
+            let signature = func.import_signature(sig);
+            let name = ir::UserExternalName::new(0, self.ids.{{ func.name }}.as_u32());
+            let name = func.declare_imported_user_function(name);
+            let name = ir::ExternalName::user(name);
+            func.import_function(ir::ExtFuncData {
+                name,
+                signature,
+                colocated: false, // Linkage::Import
+            })
+        })
     }
     {%- endfor %}
 }

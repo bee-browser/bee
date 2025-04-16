@@ -121,7 +121,7 @@ impl<X> CompilerSupport for Runtime<X> {
 }
 
 pub enum Module {
-    Cranelift(cranelift::Module),
+    Cranelift(Box<cranelift::Module>),
     Llvm(llvm::Module),
 }
 

@@ -1,13 +1,11 @@
 use std::ffi::CStr;
 
 use cranelift::codegen::ir;
-use cranelift::codegen::isa::TargetFrontendConfig;
+use cranelift::codegen::ir::InstBuilder as _;
+use cranelift::codegen::isa;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::Switch;
-use cranelift::prelude::InstBuilder;
-use cranelift_jit::JITModule;
 use cranelift_module::FuncId;
-use cranelift_module::Module as _;
 use rustc_hash::FxHashMap;
 
 use base::static_assert_eq;
@@ -60,7 +58,7 @@ pub struct Editor<'a> {
 impl<'a> Editor<'a> {
     pub fn new(
         mut builder: FunctionBuilder<'a>,
-        target_config: &TargetFrontendConfig,
+        target_config: isa::TargetFrontendConfig,
         id_map: &'a FxHashMap<LambdaId, FuncId>,
         runtime_func_ids: &'a RuntimeFunctionIds,
     ) -> Self {
@@ -86,7 +84,7 @@ impl<'a> Editor<'a> {
         Self {
             builder,
             id_map,
-            runtime_func_cache: RuntimeFunctionCache::new(runtime_func_ids),
+            runtime_func_cache: RuntimeFunctionCache::new(runtime_func_ids, target_config),
             lambda_cache: Default::default(),
             addr_type: target_config.pointer_type(),
             lambda_sig,
@@ -98,14 +96,22 @@ impl<'a> Editor<'a> {
         }
     }
 
-    pub fn put_declare_lambda(&mut self, module: &mut JITModule, lambda_id: LambdaId) -> LambdaIr {
+    pub fn put_declare_lambda(&mut self, lambda_id: LambdaId) -> LambdaIr {
         logger::debug!(event = "put_declare_lambda", ?lambda_id);
         let func_id = *self.id_map.get(&lambda_id).unwrap();
         *self
             .lambda_cache
             .entry(func_id)
             .or_insert_with_key(|&func_id| {
-                let func_ref = module.declare_func_in_func(func_id, self.builder.func);
+                // The following implementation is based on
+                // cranelift_module::Module::declare_func_in_func().
+                let name = ir::UserExternalName::new(0, func_id.as_u32());
+                let name_ref = self.builder.func.declare_imported_user_function(name);
+                let func_ref = self.builder.func.import_function(ir::ExtFuncData {
+                    name: ir::ExternalName::user(name_ref),
+                    signature: self.lambda_sig,
+                    colocated: true, // Linkage::Local
+                });
                 LambdaIr(self.builder.ins().func_addr(self.addr_type, func_ref))
             })
     }
@@ -777,9 +783,9 @@ impl<'a> Editor<'a> {
     }
 
     // 6.1.6.1.2 Number::bitwiseNOT ( x )
-    pub fn put_bitwise_not(&mut self, module: &mut JITModule, value: NumberIr) -> NumberIr {
+    pub fn put_bitwise_not(&mut self, value: NumberIr) -> NumberIr {
         logger::debug!(event = "put_bitwise_not", ?value);
-        let int32 = self.put_runtime_to_int32(module, value);
+        let int32 = self.put_runtime_to_int32(value);
         let bnot = self.builder.ins().bnot(int32);
         self.put_i32_to_f64(bnot)
     }
@@ -811,16 +817,16 @@ impl<'a> Editor<'a> {
         NumberIr(self.builder.ins().fdiv(lhs.0, rhs.0))
     }
 
-    pub fn put_rem(&mut self, module: &mut JITModule, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+    pub fn put_rem(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
         logger::debug!(event = "put_rem", ?lhs, ?rhs);
-        let func = self.runtime_func_cache.get_fmod(module, self.builder.func);
+        let func = self.runtime_func_cache.get_fmod(self.builder.func);
         let call = self.builder.ins().call(func, &[lhs.0, rhs.0]);
         NumberIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_exp(&mut self, module: &mut JITModule, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
+    pub fn put_exp(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
         logger::debug!(event = "put_exp", ?lhs, ?rhs);
-        let func = self.runtime_func_cache.get_pow(module, self.builder.func);
+        let func = self.runtime_func_cache.get_pow(self.builder.func);
         let call = self.builder.ins().call(func, &[lhs.0, rhs.0]);
         NumberIr(self.builder.inst_results(call)[0])
     }
@@ -828,40 +834,30 @@ impl<'a> Editor<'a> {
     // shift operators
 
     // 6.1.6.1.9 Number::leftShift ( x, y )
-    pub fn put_left_shift(&mut self, module: &mut JITModule, x: NumberIr, y: NumberIr) -> NumberIr {
+    pub fn put_left_shift(&mut self, x: NumberIr, y: NumberIr) -> NumberIr {
         logger::debug!(event = "put_left_shift", ?x, ?y);
-        let lnum = self.put_runtime_to_int32(module, x);
-        let rnum = self.put_runtime_to_uint32(module, y);
+        let lnum = self.put_runtime_to_int32(x);
+        let rnum = self.put_runtime_to_uint32(y);
         let shift_count = self.builder.ins().urem_imm(rnum, 32);
         let shifted = self.builder.ins().ishl(lnum, shift_count);
         self.put_i32_to_f64(shifted)
     }
 
     // 6.1.6.1.10 Number::signedRightShift ( x, y )
-    pub fn put_signed_right_shift(
-        &mut self,
-        module: &mut JITModule,
-        x: NumberIr,
-        y: NumberIr,
-    ) -> NumberIr {
+    pub fn put_signed_right_shift(&mut self, x: NumberIr, y: NumberIr) -> NumberIr {
         logger::debug!(event = "put_signed_right_shift", ?x, ?y);
-        let lnum = self.put_runtime_to_int32(module, x);
-        let rnum = self.put_runtime_to_uint32(module, y);
+        let lnum = self.put_runtime_to_int32(x);
+        let rnum = self.put_runtime_to_uint32(y);
         let shift_count = self.builder.ins().urem_imm(rnum, 32);
         let shifted = self.builder.ins().sshr(lnum, shift_count);
         self.put_i32_to_f64(shifted)
     }
 
     // 6.1.6.1.11 Number::unsignedRightShift ( x, y )
-    pub fn put_unsigned_right_shift(
-        &mut self,
-        module: &mut JITModule,
-        x: NumberIr,
-        y: NumberIr,
-    ) -> NumberIr {
+    pub fn put_unsigned_right_shift(&mut self, x: NumberIr, y: NumberIr) -> NumberIr {
         logger::debug!(event = "put_unsigned_right_shift", ?x, ?y);
-        let lnum = self.put_runtime_to_uint32(module, x);
-        let rnum = self.put_runtime_to_uint32(module, y);
+        let lnum = self.put_runtime_to_uint32(x);
+        let rnum = self.put_runtime_to_uint32(y);
         let shift_count = self.builder.ins().urem_imm(rnum, 32);
         let shifted = self.builder.ins().ushr(lnum, shift_count);
         self.put_i32_to_f64(shifted)
@@ -1002,38 +998,28 @@ impl<'a> Editor<'a> {
     // bitwise operators
 
     // 6.1.6.1.17 Number::bitwiseAND ( x, y )
-    pub fn put_bitwise_and(
-        &mut self,
-        module: &mut JITModule,
-        x: NumberIr,
-        y: NumberIr,
-    ) -> NumberIr {
+    pub fn put_bitwise_and(&mut self, x: NumberIr, y: NumberIr) -> NumberIr {
         logger::debug!(event = "put_bitwise_and", ?x, ?y);
-        let lnum = self.put_runtime_to_int32(module, x);
-        let rnum = self.put_runtime_to_int32(module, y);
+        let lnum = self.put_runtime_to_int32(x);
+        let rnum = self.put_runtime_to_int32(y);
         let result = self.builder.ins().band(lnum, rnum);
         self.put_i32_to_f64(result)
     }
 
     // 6.1.6.1.18 Number::bitwiseXOR ( x, y )
-    pub fn put_bitwise_xor(
-        &mut self,
-        module: &mut JITModule,
-        x: NumberIr,
-        y: NumberIr,
-    ) -> NumberIr {
+    pub fn put_bitwise_xor(&mut self, x: NumberIr, y: NumberIr) -> NumberIr {
         logger::debug!(event = "put_bitwise_xor", ?x, ?y);
-        let lnum = self.put_runtime_to_int32(module, x);
-        let rnum = self.put_runtime_to_int32(module, y);
+        let lnum = self.put_runtime_to_int32(x);
+        let rnum = self.put_runtime_to_int32(y);
         let result = self.builder.ins().bxor(lnum, rnum);
         self.put_i32_to_f64(result)
     }
 
     // 6.1.6.1.19 Number::bitwiseOR ( x, y )
-    pub fn put_bitwise_or(&mut self, module: &mut JITModule, x: NumberIr, y: NumberIr) -> NumberIr {
+    pub fn put_bitwise_or(&mut self, x: NumberIr, y: NumberIr) -> NumberIr {
         logger::debug!(event = "put_bitwise_or", ?x, ?y);
-        let lnum = self.put_runtime_to_int32(module, x);
-        let rnum = self.put_runtime_to_int32(module, y);
+        let lnum = self.put_runtime_to_int32(x);
+        let rnum = self.put_runtime_to_int32(y);
         let result = self.builder.ins().bor(lnum, rnum);
         self.put_i32_to_f64(result)
     }
@@ -1257,135 +1243,100 @@ impl<'a> Editor<'a> {
 
     // runtime function calls
 
-    pub fn put_runtime_to_boolean(&mut self, module: &mut JITModule, value: AnyIr) -> BooleanIr {
+    pub fn put_runtime_to_boolean(&mut self, value: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_runtime_to_boolean", ?value);
-        let func = self
-            .runtime_func_cache
-            .get_to_boolean(module, self.builder.func);
+        let func = self.runtime_func_cache.get_to_boolean(self.builder.func);
         let args = [self.runtime(), value.0];
         let call = self.builder.ins().call(func, &args);
         BooleanIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_to_numeric(&mut self, module: &mut JITModule, value: AnyIr) -> NumberIr {
+    pub fn put_runtime_to_numeric(&mut self, value: AnyIr) -> NumberIr {
         logger::debug!(event = "put_runtime_to_numeric", ?value);
-        let func = self
-            .runtime_func_cache
-            .get_to_numeric(module, self.builder.func);
+        let func = self.runtime_func_cache.get_to_numeric(self.builder.func);
         let args = [self.runtime(), value.0];
         let call = self.builder.ins().call(func, &args);
         NumberIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_to_object(&mut self, module: &mut JITModule, any: AnyIr) -> ObjectIr {
+    pub fn put_runtime_to_object(&mut self, any: AnyIr) -> ObjectIr {
         logger::debug!(event = "put_runtime_to_object", ?any);
-        let func = self
-            .runtime_func_cache
-            .get_to_object(module, self.builder.func);
+        let func = self.runtime_func_cache.get_to_object(self.builder.func);
         let args = [self.runtime(), any.0];
         let call = self.builder.ins().call(func, &args);
         ObjectIr(self.builder.inst_results(call)[0])
     }
 
     // 7.1.6 ToInt32 ( argument )
-    pub fn put_runtime_to_int32(&mut self, module: &mut JITModule, value: NumberIr) -> ir::Value {
+    pub fn put_runtime_to_int32(&mut self, value: NumberIr) -> ir::Value {
         logger::debug!(event = "put_runtime_to_int32", ?value);
-        let func = self
-            .runtime_func_cache
-            .get_to_int32(module, self.builder.func);
+        let func = self.runtime_func_cache.get_to_int32(self.builder.func);
         let args = [self.runtime(), value.0];
         let call = self.builder.ins().call(func, &args);
         self.builder.inst_results(call)[0]
     }
 
-    pub fn put_runtime_to_uint32(&mut self, module: &mut JITModule, value: NumberIr) -> ir::Value {
+    pub fn put_runtime_to_uint32(&mut self, value: NumberIr) -> ir::Value {
         logger::debug!(event = "put_runtime_to_uint32", ?value);
-        let func = self
-            .runtime_func_cache
-            .get_to_uint32(module, self.builder.func);
+        let func = self.runtime_func_cache.get_to_uint32(self.builder.func);
         let args = [self.runtime(), value.0];
         let call = self.builder.ins().call(func, &args);
         self.builder.inst_results(call)[0]
     }
 
-    pub fn put_runtime_is_loosely_equal(
-        &mut self,
-        module: &mut JITModule,
-        lhs: AnyIr,
-        rhs: AnyIr,
-    ) -> BooleanIr {
+    pub fn put_runtime_is_loosely_equal(&mut self, lhs: AnyIr, rhs: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_runtime_is_loosely_equal", ?lhs, ?rhs);
         let func = self
             .runtime_func_cache
-            .get_is_loosely_equal(module, self.builder.func);
+            .get_is_loosely_equal(self.builder.func);
         let args = [self.runtime(), lhs.0, rhs.0];
         let call = self.builder.ins().call(func, &args);
         BooleanIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_is_strictly_equal(
-        &mut self,
-        module: &mut JITModule,
-        lhs: AnyIr,
-        rhs: AnyIr,
-    ) -> BooleanIr {
+    pub fn put_runtime_is_strictly_equal(&mut self, lhs: AnyIr, rhs: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_runtime_is_strictly_equal", ?lhs, ?rhs);
         let func = self
             .runtime_func_cache
-            .get_is_strictly_equal(module, self.builder.func);
+            .get_is_strictly_equal(self.builder.func);
         let args = [self.runtime(), lhs.0, rhs.0];
         let call = self.builder.ins().call(func, &args);
         BooleanIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_typeof(&mut self, module: &mut JITModule, value: AnyIr) -> StringIr {
+    pub fn put_runtime_typeof(&mut self, value: AnyIr) -> StringIr {
         logger::debug!(event = "put_runtime_typeof", ?value);
-        let func = self
-            .runtime_func_cache
-            .get_get_typeof(module, self.builder.func);
+        let func = self.runtime_func_cache.get_get_typeof(self.builder.func);
         let args = [self.runtime(), value.0];
         let call = self.builder.ins().call(func, &args);
         StringIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_migrate_string_to_heap(
-        &mut self,
-        module: &mut JITModule,
-        string: StringIr,
-    ) -> StringIr {
+    pub fn put_runtime_migrate_string_to_heap(&mut self, string: StringIr) -> StringIr {
         logger::debug!(event = "putruntime_migrate_string_to_heap", ?string);
         let func = self
             .runtime_func_cache
-            .get_migrate_string_to_heap(module, self.builder.func);
+            .get_migrate_string_to_heap(self.builder.func);
         let args = [self.runtime(), string.0];
         let call = self.builder.ins().call(func, &args);
         StringIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_create_capture(
-        &mut self,
-        module: &mut JITModule,
-        target: AnyIr,
-    ) -> CaptureIr {
+    pub fn put_runtime_create_capture(&mut self, target: AnyIr) -> CaptureIr {
         logger::debug!(event = "put_runtime_create_capture", ?target);
         let func = self
             .runtime_func_cache
-            .get_create_capture(module, self.builder.func);
+            .get_create_capture(self.builder.func);
         let args = [self.runtime(), target.0];
         let call = self.builder.ins().call(func, &args);
         CaptureIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_create_closure(
-        &mut self,
-        module: &mut JITModule,
-        lambda: LambdaIr,
-        num_captures: u16,
-    ) -> ClosureIr {
+    pub fn put_runtime_create_closure(&mut self, lambda: LambdaIr, num_captures: u16) -> ClosureIr {
         logger::debug!(event = "put_runtime_create_closure", ?lambda, num_captures);
         let func = self
             .runtime_func_cache
-            .get_create_closure(module, self.builder.func);
+            .get_create_closure(self.builder.func);
         let num_captures = self
             .builder
             .ins()
@@ -1397,7 +1348,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_runtime_create_coroutine(
         &mut self,
-        module: &mut JITModule,
         closure: ClosureIr,
         num_locals: u16,
         scratch_buffer_len: u16,
@@ -1410,7 +1360,7 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_create_coroutine(module, self.builder.func);
+            .get_create_coroutine(self.builder.func);
         let num_locals = self.builder.ins().iconst(ir::types::I16, num_locals as i64);
         let scratch_buffer_len = self
             .builder
@@ -1421,49 +1371,31 @@ impl<'a> Editor<'a> {
         CoroutineIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_register_promise(
-        &mut self,
-        module: &mut JITModule,
-        coroutine: CoroutineIr,
-    ) -> PromiseIr {
+    pub fn put_runtime_register_promise(&mut self, coroutine: CoroutineIr) -> PromiseIr {
         logger::debug!(event = "put_runtime_register_promise", ?coroutine);
         let func = self
             .runtime_func_cache
-            .get_register_promise(module, self.builder.func);
+            .get_register_promise(self.builder.func);
         let args = [self.runtime(), coroutine.0];
         let call = self.builder.ins().call(func, &args);
         PromiseIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_await_promise(
-        &mut self,
-        module: &mut JITModule,
-        promise: PromiseIr,
-        awaiting: PromiseIr,
-    ) {
+    pub fn put_runtime_await_promise(&mut self, promise: PromiseIr, awaiting: PromiseIr) {
         logger::debug!(event = "put_runtime_await_promise", ?promise, ?awaiting);
-        let func = self
-            .runtime_func_cache
-            .get_await_promise(module, self.builder.func);
+        let func = self.runtime_func_cache.get_await_promise(self.builder.func);
         let args = [self.runtime(), promise.0, awaiting.0];
         self.builder.ins().call(func, &args);
     }
 
-    pub fn put_runtime_resume(&mut self, module: &mut JITModule, promise: PromiseIr) {
+    pub fn put_runtime_resume(&mut self, promise: PromiseIr) {
         logger::debug!(event = "put_runtime_resume", ?promise);
-        let func = self
-            .runtime_func_cache
-            .get_resume(module, self.builder.func);
+        let func = self.runtime_func_cache.get_resume(self.builder.func);
         let args = [self.runtime(), promise.0];
         self.builder.ins().call(func, &args);
     }
 
-    pub fn put_runtime_emit_promise_resolved(
-        &mut self,
-        module: &mut JITModule,
-        promise: PromiseIr,
-        result: AnyIr,
-    ) {
+    pub fn put_runtime_emit_promise_resolved(&mut self, promise: PromiseIr, result: AnyIr) {
         logger::debug!(
             event = "put_runtime_emit_promise_resolved",
             ?promise,
@@ -1471,16 +1403,14 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_emit_promise_resolved(module, self.builder.func);
+            .get_emit_promise_resolved(self.builder.func);
         let args = [self.runtime(), promise.0, result.0];
         self.builder.ins().call(func, &args);
     }
 
-    pub fn put_runtime_create_object(&mut self, module: &mut JITModule) -> ObjectIr {
+    pub fn put_runtime_create_object(&mut self) -> ObjectIr {
         logger::debug!(event = "put_runtime_create_object");
-        let func = self
-            .runtime_func_cache
-            .get_create_object(module, self.builder.func);
+        let func = self.runtime_func_cache.get_create_object(self.builder.func);
         let args = [self.runtime()];
         let call = self.builder.ins().call(func, &args);
         ObjectIr(self.builder.inst_results(call)[0])
@@ -1488,7 +1418,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_runtime_get_value_by_symbol(
         &mut self,
-        module: &mut JITModule,
         object: ObjectIr,
         key: Symbol,
         strict: bool,
@@ -1501,7 +1430,7 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_get_value_by_symbol(module, self.builder.func);
+            .get_get_value_by_symbol(self.builder.func);
         let key = self.builder.ins().iconst(ir::types::I32, key.id() as i64);
         let strict = self.put_boolean(strict);
         let args = [self.runtime(), object.0, key, strict.0];
@@ -1511,7 +1440,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_runtime_get_value_by_number(
         &mut self,
-        module: &mut JITModule,
         object: ObjectIr,
         key: f64,
         strict: bool,
@@ -1524,7 +1452,7 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_get_value_by_number(module, self.builder.func);
+            .get_get_value_by_number(self.builder.func);
         let key = self.put_number(key);
         let strict = self.put_boolean(strict);
         let args = [self.runtime(), object.0, key.0, strict.0];
@@ -1534,7 +1462,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_runtime_get_value_by_any(
         &mut self,
-        module: &mut JITModule,
         object: ObjectIr,
         key: AnyIr,
         strict: bool,
@@ -1547,20 +1474,14 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_get_value_by_value(module, self.builder.func);
+            .get_get_value_by_value(self.builder.func);
         let strict = self.put_boolean(strict);
         let args = [self.runtime(), object.0, key.0, strict.0];
         let call = self.builder.ins().call(func, &args);
         AnyIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_set_value_by_symbol(
-        &mut self,
-        module: &mut JITModule,
-        object: ObjectIr,
-        key: Symbol,
-        value: AnyIr,
-    ) {
+    pub fn put_runtime_set_value_by_symbol(&mut self, object: ObjectIr, key: Symbol, value: AnyIr) {
         logger::debug!(
             event = "put_runtime_set_value_by_symbol",
             ?object,
@@ -1569,19 +1490,13 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_set_value_by_symbol(module, self.builder.func);
+            .get_set_value_by_symbol(self.builder.func);
         let key = self.builder.ins().iconst(ir::types::I32, key.id() as i64);
         let args = [self.runtime(), object.0, key, value.0];
         self.builder.ins().call(func, &args);
     }
 
-    pub fn put_runtime_set_value_by_number(
-        &mut self,
-        module: &mut JITModule,
-        object: ObjectIr,
-        key: f64,
-        value: AnyIr,
-    ) {
+    pub fn put_runtime_set_value_by_number(&mut self, object: ObjectIr, key: f64, value: AnyIr) {
         logger::debug!(
             event = "put_runtime_set_value_by_number",
             ?object,
@@ -1590,19 +1505,13 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_set_value_by_number(module, self.builder.func);
+            .get_set_value_by_number(self.builder.func);
         let key = self.builder.ins().f64const(key);
         let args = [self.runtime(), object.0, key, value.0];
         self.builder.ins().call(func, &args);
     }
 
-    pub fn put_runtime_set_value_by_any(
-        &mut self,
-        module: &mut JITModule,
-        object: ObjectIr,
-        key: AnyIr,
-        value: AnyIr,
-    ) {
+    pub fn put_runtime_set_value_by_any(&mut self, object: ObjectIr, key: AnyIr, value: AnyIr) {
         logger::debug!(
             event = "put_runtime_set_value_by_any",
             ?object,
@@ -1611,14 +1520,13 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_set_value_by_value(module, self.builder.func);
+            .get_set_value_by_value(self.builder.func);
         let args = [self.runtime(), object.0, key.0, value.0];
         self.builder.ins().call(func, &args);
     }
 
     pub fn put_runtime_create_data_property_by_symbol(
         &mut self,
-        module: &mut JITModule,
         object: ObjectIr,
         key: Symbol,
         value: AnyIr,
@@ -1633,7 +1541,7 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_create_data_property_by_symbol(module, self.builder.func);
+            .get_create_data_property_by_symbol(self.builder.func);
         let key = self.builder.ins().iconst(ir::types::I32, key.id() as i64);
         let args = [self.runtime(), object.0, key, value.0, retv.0];
         let call = self.builder.ins().call(func, &args);
@@ -1642,7 +1550,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_runtime_create_data_property_by_number(
         &mut self,
-        module: &mut JITModule,
         object: ObjectIr,
         key: f64,
         value: AnyIr,
@@ -1657,7 +1564,7 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_create_data_property_by_number(module, self.builder.func);
+            .get_create_data_property_by_number(self.builder.func);
         let key = self.put_number(key);
         let args = [self.runtime(), object.0, key.0, value.0, retv.0];
         let call = self.builder.ins().call(func, &args);
@@ -1666,7 +1573,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_runtime_create_data_property_by_any(
         &mut self,
-        module: &mut JITModule,
         object: ObjectIr,
         key: AnyIr,
         value: AnyIr,
@@ -1681,7 +1587,7 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_create_data_property_by_value(module, self.builder.func);
+            .get_create_data_property_by_value(self.builder.func);
         let args = [self.runtime(), object.0, key.0, value.0, retv.0];
         let call = self.builder.ins().call(func, &args);
         StatusIr(self.builder.inst_results(call)[0])
@@ -1689,7 +1595,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_runtime_copy_data_properties(
         &mut self,
-        module: &mut JITModule,
         target: ObjectIr,
         source: AnyIr,
         retv: AnyIr,
@@ -1702,7 +1607,7 @@ impl<'a> Editor<'a> {
         );
         let func = self
             .runtime_func_cache
-            .get_copy_data_properties(module, self.builder.func);
+            .get_copy_data_properties(self.builder.func);
         let args = [self.runtime(), target.0, source.0, retv.0];
         let call = self.builder.ins().call(func, &args);
         StatusIr(self.builder.inst_results(call)[0])
@@ -1710,7 +1615,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_runtime_push_array_element(
         &mut self,
-        module: &mut JITModule,
         target: ObjectIr,
         value: AnyIr,
         retv: AnyIr,
@@ -1721,24 +1625,15 @@ impl<'a> Editor<'a> {
             ?value,
             ?retv
         );
-        let func = self
-            .runtime_func_cache
-            .get_push_value(module, self.builder.func);
+        let func = self.runtime_func_cache.get_push_value(self.builder.func);
         let args = [self.runtime(), target.0, value.0, retv.0];
         let call = self.builder.ins().call(func, &args);
         StatusIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_assert(
-        &mut self,
-        module: &mut JITModule,
-        assertion: BooleanIr,
-        msg: &'static CStr,
-    ) {
+    pub fn put_runtime_assert(&mut self, assertion: BooleanIr, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_assert", ?assertion, ?msg);
-        let func = self
-            .runtime_func_cache
-            .get_assert(module, self.builder.func);
+        let func = self.runtime_func_cache.get_assert(self.builder.func);
         let msg = self
             .builder
             .ins()
@@ -1748,16 +1643,9 @@ impl<'a> Editor<'a> {
     }
 
     #[allow(unused)]
-    pub fn put_runtime_print_boolean(
-        &mut self,
-        module: &mut JITModule,
-        value: BooleanIr,
-        msg: &'static CStr,
-    ) {
+    pub fn put_runtime_print_boolean(&mut self, value: BooleanIr, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_print_boolean", ?value);
-        let func = self
-            .runtime_func_cache
-            .get_print_bool(module, self.builder.func);
+        let func = self.runtime_func_cache.get_print_bool(self.builder.func);
         let msg = self
             .builder
             .ins()
@@ -1767,16 +1655,9 @@ impl<'a> Editor<'a> {
     }
 
     #[allow(unused)]
-    pub fn put_runtime_print_number(
-        &mut self,
-        module: &mut JITModule,
-        value: NumberIr,
-        msg: &'static CStr,
-    ) {
+    pub fn put_runtime_print_number(&mut self, value: NumberIr, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_print_number", ?value);
-        let func = self
-            .runtime_func_cache
-            .get_print_f64(module, self.builder.func);
+        let func = self.runtime_func_cache.get_print_f64(self.builder.func);
         let msg = self
             .builder
             .ins()
@@ -1786,16 +1667,9 @@ impl<'a> Editor<'a> {
     }
 
     #[allow(unused)]
-    pub fn put_runtime_print_any(
-        &mut self,
-        module: &mut JITModule,
-        value: AnyIr,
-        msg: &'static CStr,
-    ) {
+    pub fn put_runtime_print_any(&mut self, value: AnyIr, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_print_any", ?value, ?msg);
-        let func = self
-            .runtime_func_cache
-            .get_print_value(module, self.builder.func);
+        let func = self.runtime_func_cache.get_print_value(self.builder.func);
         let msg = self
             .builder
             .ins()
@@ -1805,16 +1679,9 @@ impl<'a> Editor<'a> {
     }
 
     #[allow(unused)]
-    pub fn put_runtime_print_capture(
-        &mut self,
-        module: &mut JITModule,
-        capture: CaptureIr,
-        msg: &'static CStr,
-    ) {
+    pub fn put_runtime_print_capture(&mut self, capture: CaptureIr, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_print_capture", ?capture, ?msg);
-        let func = self
-            .runtime_func_cache
-            .get_print_capture(module, self.builder.func);
+        let func = self.runtime_func_cache.get_print_capture(self.builder.func);
         let msg = self
             .builder
             .ins()
@@ -1824,11 +1691,9 @@ impl<'a> Editor<'a> {
     }
 
     #[allow(unused)]
-    pub fn put_runtime_print_message(&mut self, module: &mut JITModule, msg: &'static CStr) {
+    pub fn put_runtime_print_message(&mut self, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_print_message", ?msg);
-        let func = self
-            .runtime_func_cache
-            .get_print_message(module, self.builder.func);
+        let func = self.runtime_func_cache.get_print_message(self.builder.func);
         let msg = self
             .builder
             .ins()
@@ -1837,11 +1702,11 @@ impl<'a> Editor<'a> {
         self.builder.ins().call(func, &args);
     }
 
-    pub fn put_runtime_launch_debugger(&mut self, module: &mut JITModule) {
+    pub fn put_runtime_launch_debugger(&mut self) {
         logger::debug!(event = "put_runtime_launch_debugger");
         let func = self
             .runtime_func_cache
-            .get_launch_debugger(module, self.builder.func);
+            .get_launch_debugger(self.builder.func);
         let args = [self.runtime()];
         self.builder.ins().call(func, &args);
     }
@@ -1870,7 +1735,7 @@ impl<'a> Editor<'a> {
         }
     }
 
-    pub fn put_assert_scope_id(&mut self, module: &mut JITModule, expected: ScopeRef) {
+    pub fn put_assert_scope_id(&mut self, expected: ScopeRef) {
         logger::debug!(event = "put_assert_scope_id", ?expected);
         use ir::condcodes::IntCC::Equal;
         let scope_id = if self.coroutine_mode {
@@ -1883,6 +1748,6 @@ impl<'a> Editor<'a> {
             .builder
             .ins()
             .icmp_imm(Equal, scope_id, expected.id() as i64);
-        self.put_runtime_assert(module, BooleanIr(assertion), c"invalid scope");
+        self.put_runtime_assert(BooleanIr(assertion), c"invalid scope");
     }
 }

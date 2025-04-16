@@ -44,12 +44,14 @@ async function main(args, options) {
         ctype: makeCType(type),
         llvmir_type: makeLLVMIRType(type),
         clir_type: makeCraneliftIRType(type),
+        clir_type2: makeCraneliftIRType2(type),
       };
     });
     func.c_type = makeCFunc(func);
     func.c_ret = makeCType(func.ret);
     func.llvmir_ret = makeLLVMIRType(func.ret);
     func.clir_ret = makeCraneliftIRType(func.ret);
+    func.clir_ret2 = makeCraneliftIRType2(func.ret);
   }
 
   console.log(JSON.stringify(runtimeSpec));
@@ -86,7 +88,42 @@ function makeCraneliftIRType(type) {
     case '&PropertyKey':
     case 'Lambda':
     case 'VoidPtr':
-      return 'ptr_type';
+      return 'addr_type';
+    case undefined:
+      return '';
+    default:
+      log.error(`unsupported type: ${type}`);
+      return '';
+  }
+}
+
+function makeCraneliftIRType2(type) {
+  switch (type) {
+    case 'bool':
+      return 'ir::types::I8';
+    case 'u16':
+      return 'ir::types::I16';
+    case 'i32':
+    case 'u32':
+    case 'Status':
+      return 'ir::types::I32';
+    case 'f64':
+      return 'ir::types::F64';
+    case '&std::ffi::CStr':
+    case '&Char16Seq':
+    case '&mut Variable':
+    case '&Capture':
+    case '&mut Capture':
+    case '&mut Closure':
+    case '&mut Coroutine':
+    case '&mut Object':
+    case '&Value':
+    case '&mut Value':
+    case '*mut Value':
+    case '&PropertyKey':
+    case 'Lambda':
+    case 'VoidPtr':
+      return 'self.target_config.pointer_type()';
     case undefined:
       return '';
     default:
