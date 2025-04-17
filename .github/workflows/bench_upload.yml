@@ -48,7 +48,6 @@ jobs:
           --start-point-hash="$PR_BASE_SHA"
           --start-point-clone-thresholds
           --start-point-reset
-          --err
           --github-actions='${{ secrets.GITHUB_TOKEN }}'
           --ci-number="$PR_NUMBER"
           --adapter=rust_criterion

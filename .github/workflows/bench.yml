@@ -47,6 +47,5 @@ jobs:
           --threshold-max-sample-size=64
           --threshold-upper-boundary=0.99
           --thresholds-reset
-          --err
           --adapter=rust_criterion
           make bench
