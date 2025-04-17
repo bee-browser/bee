@@ -22,6 +22,9 @@ jobs:
     # Skip if this workflow is triggered by dependabot.
     if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
