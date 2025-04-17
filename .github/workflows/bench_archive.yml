@@ -1,0 +1,23 @@
+# See https://bencher.dev/docs/how-to/github-actions/#pull-requests-from-forks
+name: bench (archive)
+
+on:
+  pull_request_target:
+    types:
+      - closed
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: bencherdev/bencher@main
+      - name: Archive closed fork PR branch
+        run: >-
+          bencher archive
+          --project=bee-browser
+          --token='${{ secrets.BENCHER_API_TOKEN }}'
+          --branch="$GITHUB_HEAD_REF"

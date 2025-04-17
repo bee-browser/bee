@@ -1,0 +1,50 @@
+# See https://bencher.dev/docs/how-to/github-actions/#pull-requests-from-forks
+name: bench (PR)
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - edited
+      - synchronize
+    paths-ignore:
+      - '**.md'
+
+env:
+  DENO_DIR: /tmp/deno
+
+jobs:
+  bench:
+    # Skip if this workflow is triggered by dependabot.
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: 'clippy, rustfmt'
+      - uses: Swatinem/rust-cache@v2
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version-file: .tool-versions
+      - name: Codegen
+        run: make codegen
+      - uses: bencherdev/bencher@main
+      - name: Benchmark tests
+        run: >-
+          make bench >benchmark_results.txt
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark_results.txt
+          path: ./benchmark_results.txt
+      - name: Upload GitHub Pull Request Event
+        uses: actions/upload-artifact@v4
+        with:
+          name: event.json
+          path: ${{ github.event_path }}
