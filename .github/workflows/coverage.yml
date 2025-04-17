@@ -8,9 +8,7 @@ on:
       - trial-*
     paths-ignore:
       - '**.md'
-  # Don't run this workflow on pull_request.
-  # This workflow uses secrets.
-  pull_request_target:
+  pull_request:
     branches:
       - main
       - release
@@ -26,6 +24,9 @@ jobs:
     if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write
     steps:
       # Remove packages in order to avoid "No space left on device" error in `make coverage`.
       - uses: jlumbroso/free-disk-space@v1.3.1
@@ -52,5 +53,4 @@ jobs:
         with:
           files: codecov.json
           fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
