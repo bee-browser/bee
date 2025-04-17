@@ -1,5 +1,5 @@
 # See https://bencher.dev/docs/how-to/github-actions/#base-branch
-name: bench (baseline)
+name: bench
 
 on:
   push:

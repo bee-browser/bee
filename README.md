@@ -4,7 +4,7 @@
 
 [![ci](https://github.com/bee-browser/bee/actions/workflows/ci.yml/badge.svg)](https://github.com/bee-browser/bee/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/bee-browser/bee/graph/badge.svg?token=ZU1I8W30M9)](https://codecov.io/gh/bee-browser/bee)
-[![bencher](https://github.com/bee-browser/bee/actions/workflows/bench_baseline.yml/badge.svg)](https://bencher.dev/perf/bee-browser/plots)
+[![bencher](https://github.com/bee-browser/bee/actions/workflows/bench.yml/badge.svg)](https://bencher.dev/perf/bee-browser/plots)
 
 ## What's BEE?
 
