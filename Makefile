@@ -113,6 +113,7 @@ update-deps-crates:
 .PHONY: update-deps-deno
 update-deps-deno:
 	@deno task update
+	@deno eval "console.log('deno', Deno.version.deno)" >.tool-versions
 
 .PHONY: update-devcontainer
 update-devcontainer:
