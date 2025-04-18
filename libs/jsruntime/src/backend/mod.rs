@@ -1,7 +1,11 @@
 mod bridge;
 mod cranelift;
 
+use cranelift_module::FuncId;
+use cranelift_module::Module;
+
 use jsparser::Symbol;
+use rustc_hash::FxHashMap;
 
 use crate::Program;
 use crate::Runtime;
@@ -9,6 +13,7 @@ use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
 use crate::types::Lambda;
 
+pub use cranelift::RuntimeFunctionIds;
 pub use bridge::RuntimeFunctions;
 
 #[derive(Debug, thiserror::Error)]
@@ -24,8 +29,8 @@ pub fn compile<X>(
     runtime: &mut Runtime<X>,
     program: &Program,
     optimize: bool,
-) -> Result<Module, CompileError> {
-    cranelift::compile(runtime, program, optimize).map(Module)
+) -> Result<(), CompileError> {
+    cranelift::compile(runtime, program, optimize)
 }
 
 trait CompilerSupport {
@@ -39,7 +44,11 @@ trait CompilerSupport {
     fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
     fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
 
-    fn get_runtime_functions(&self) -> RuntimeFunctions;
+    fn module(&self) -> &impl Module;
+    fn module_mut(&mut self) -> &mut impl Module;
+    fn id_map(&self) -> &FxHashMap<LambdaId, FuncId>;
+    fn runtime_func_ids(&self) -> &RuntimeFunctionIds;
+    fn declare_functions(&mut self, program: &Program);
 }
 
 impl<X> CompilerSupport for Runtime<X> {
@@ -59,20 +68,24 @@ impl<X> CompilerSupport for Runtime<X> {
         self.lambda_registry.get_mut(lambda_id)
     }
 
-    fn get_runtime_functions(&self) -> RuntimeFunctions {
-        RuntimeFunctions::new::<X>()
-    }
-}
-
-pub struct Module(Box<cranelift::Module>);
-
-impl Module {
-    pub fn entry_lambda_id(&self) -> LambdaId {
-        todo!();
+    fn module(&self) -> &impl Module {
+        self.executor.module()
     }
 
-    pub fn print(&self, stderr: bool) {
-        self.0.print(stderr);
+    fn module_mut(&mut self) -> &mut impl Module {
+        self.executor.module_mut()
+    }
+
+    fn id_map(&self) -> &FxHashMap<LambdaId, FuncId> {
+        self.executor.id_map()
+    }
+
+    fn runtime_func_ids(&self) -> &RuntimeFunctionIds {
+        self.executor.runtime_func_ids()
+    }
+
+    fn declare_functions(&mut self, program: &Program) {
+        self.executor.declare_functions(program);
     }
 }
 
@@ -83,11 +96,31 @@ impl Executor {
         Self(cranelift::Executor::new(functions))
     }
 
-    pub fn register_module(&mut self, module: Module) {
-        self.0.register_module(module.0)
+    pub fn module(&self) -> &impl Module {
+        self.0.module()
+    }
+
+    pub fn module_mut(&mut self) -> &mut impl Module {
+        self.0.module_mut()
+    }
+
+    pub fn id_map(&self) -> &FxHashMap<LambdaId, FuncId> {
+        self.0.id_map()
+    }
+
+    pub fn runtime_func_ids(&self) -> &RuntimeFunctionIds {
+        self.0.runtime_func_ids()
+    }
+
+    pub fn link(&mut self) {
+        self.0.link();
     }
 
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
         self.0.get_lambda(lambda_id)
+    }
+
+    pub fn declare_functions(&mut self, program: &Program) {
+        self.0.declare_functions(program);
     }
 }

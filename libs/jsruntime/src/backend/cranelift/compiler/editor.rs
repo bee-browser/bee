@@ -37,9 +37,9 @@ pub struct Editor<'a> {
     builder: FunctionBuilder<'a>,
 
     /// A map from a LambdaId to a corresponding FuncId.
-    id_map: &'a FxHashMap<LambdaId, FuncId>,
+    id_map: FxHashMap<LambdaId, FuncId>,
 
-    runtime_func_cache: RuntimeFunctionCache<'a>,
+    runtime_func_cache: RuntimeFunctionCache,
     lambda_cache: FxHashMap<FuncId, LambdaIr>,
 
     addr_type: ir::Type,
@@ -59,8 +59,8 @@ impl<'a> Editor<'a> {
     pub fn new(
         mut builder: FunctionBuilder<'a>,
         target_config: isa::TargetFrontendConfig,
-        id_map: &'a FxHashMap<LambdaId, FuncId>,
-        runtime_func_ids: &'a RuntimeFunctionIds,
+        id_map: FxHashMap<LambdaId, FuncId>,
+        runtime_func_ids: RuntimeFunctionIds,
     ) -> Self {
         let lambda_sig = builder.import_signature(builder.func.signature.clone());
 

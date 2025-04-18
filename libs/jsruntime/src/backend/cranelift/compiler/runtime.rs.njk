@@ -20,6 +20,7 @@ pub fn register_symbols(builder: &mut JITBuilder, funcs: &RuntimeFunctions) {
     {%- endfor %}
 }
 
+#[derive(Clone)]
 pub struct RuntimeFunctionIds {
     // TODO(feat): if cfg!(feature = "libm")
     fmod: FuncId,
@@ -93,8 +94,8 @@ pub fn declare_functions<T: Module>(module: &mut T) -> RuntimeFunctionIds {
     }
 }
 
-pub struct RuntimeFunctionCache<'c> {
-    ids: &'c RuntimeFunctionIds,
+pub struct RuntimeFunctionCache {
+    ids: RuntimeFunctionIds,
     target_config: isa::TargetFrontendConfig,
 
     // TODO(feat): if cfg!(feature = "libm")
@@ -110,9 +111,9 @@ pub struct RuntimeFunctionCache<'c> {
     {%- endfor %}
 }
 
-impl<'c> RuntimeFunctionCache<'c> {
+impl RuntimeFunctionCache {
     pub fn new(
-        ids: &'c RuntimeFunctionIds,
+        ids: RuntimeFunctionIds,
         target_config: isa::TargetFrontendConfig,
     ) -> Self {
         Self {

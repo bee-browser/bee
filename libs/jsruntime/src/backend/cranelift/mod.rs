@@ -1,7 +1,13 @@
 mod compiler;
 
+use cranelift::codegen;
+use cranelift::codegen::ir;
+use cranelift::codegen::settings::Configurable as _;
+use cranelift_jit::JITBuilder;
 use cranelift_jit::JITModule;
 use cranelift_module::FuncId;
+use cranelift_module::Linkage;
+use cranelift_module::Module;
 use rustc_hash::FxHashMap;
 
 use crate::lambda::LambdaId;
@@ -12,41 +18,80 @@ use super::Program;
 use super::RuntimeFunctions;
 
 pub use compiler::compile;
+pub use compiler::runtime::RuntimeFunctionIds;
 
 pub fn initialize() {
     // TODO
 }
 
-pub struct Module {
-    inner: JITModule,
+pub struct Executor {
+    module: Box<JITModule>,
+    lambda_sig: ir::Signature,
+    runtime_func_ids: RuntimeFunctionIds,
     id_map: FxHashMap<LambdaId, FuncId>,
 }
 
-impl Module {
-    pub fn print(&self, _stderr: bool) {
-        // TODO: implement
-    }
-}
-
-pub struct Executor {
-    module: Option<Box<Module>>,
-}
-
 impl Executor {
-    pub fn new(_functions: &RuntimeFunctions) -> Self {
-        Self { module: None }
+    pub fn new(runtime_functions: &RuntimeFunctions) -> Self {
+        let mut flag_builder = codegen::settings::builder();
+        flag_builder.set("use_colocated_libcalls", "false").unwrap();
+        flag_builder.set("is_pic", "false").unwrap();
+
+        let isa_builder = cranelift_native::builder().unwrap_or_else(|msg| {
+            panic!("host machine is not supported: {msg}");
+        });
+
+        let isa = isa_builder
+            .finish(codegen::settings::Flags::new(flag_builder))
+            .unwrap();
+
+        let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
+        compiler::runtime::register_symbols(&mut builder, runtime_functions);
+
+        let mut module = Box::new(JITModule::new(builder));
+        let lambda_sig = compiler::runtime::make_lambda_signature(&mut module);
+        let runtime_func_ids = compiler::runtime::declare_functions(&mut module);
+
+        Self {
+            module,
+            lambda_sig,
+            runtime_func_ids,
+            id_map: Default::default(),
+        }
     }
 
-    pub fn register_module(&mut self, mut module: Box<Module>) {
-        module.inner.finalize_definitions().unwrap();
-        self.module = Some(module);
+    pub fn module(&self) -> &impl Module {
+        &*self.module
+    }
+
+    pub fn module_mut(&mut self) -> &mut impl Module {
+        &mut *self.module
+    }
+
+    pub fn id_map(&self) -> &FxHashMap<LambdaId, FuncId> {
+        &self.id_map
+    }
+
+    pub fn runtime_func_ids(&self) -> &RuntimeFunctionIds {
+        &self.runtime_func_ids
+    }
+
+    pub fn link(&mut self) {
+        self.module.finalize_definitions().unwrap();
     }
 
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
-        let module = self.module.as_ref().unwrap();
-        let func_id = *module.id_map.get(&lambda_id).unwrap();
-        let addr = module.inner.get_finalized_function(func_id);
+        let func_id = *self.id_map.get(&lambda_id).unwrap();
+        let addr = self.module.get_finalized_function(func_id);
         (!addr.is_null()).then(|| unsafe { std::mem::transmute::<_, Lambda>(addr) })
+    }
+
+    pub fn declare_functions(&mut self, program: &Program) {
+        for func in program.functions.iter() {
+            let name = func.id.make_name();
+            let func_id = self.module.declare_function(&name, Linkage::Local, &self.lambda_sig).unwrap();
+            self.id_map.insert(func.id, func_id);
+        }
     }
 }
 

@@ -1,3 +1,4 @@
+
 mod backend;
 mod lambda;
 mod logger;
@@ -20,7 +21,6 @@ use objects::PropertyKey;
 use types::ReturnValue;
 
 pub use backend::CompileError;
-pub use backend::Module;
 pub use semantics::Program;
 pub use types::Char16Seq;
 pub use types::U16String;
@@ -107,13 +107,12 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
     }
 
-    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<Module, CompileError> {
+    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<(), CompileError> {
         backend::compile(self, program, optimize)
     }
 
-    pub fn link(&mut self, module: Module) {
-        logger::debug!(event = "link");
-        self.executor.register_module(module);
+    pub fn link(&mut self) {
+        self.executor.link();
     }
 
     pub fn evaluate(&mut self, program: &Program) -> Result<Value, Value> {

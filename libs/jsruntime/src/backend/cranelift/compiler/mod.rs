@@ -1,29 +1,23 @@
 mod control_flow;
 mod editor;
-mod runtime;
+pub mod runtime;
 
 use std::ops::Deref;
 use std::ops::DerefMut;
 
 use cranelift::codegen;
 use cranelift::codegen::ir;
-use cranelift::codegen::settings::Configurable as _;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
 use cranelift::frontend::Switch;
-use cranelift_jit::JITBuilder;
-use cranelift_jit::JITModule;
 use cranelift_module::DataDescription;
 use cranelift_module::FuncId;
-use cranelift_module::Linkage;
-use cranelift_module::Module as _;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
 use jsparser::syntax::LoopFlags;
 
 use crate::backend::CompilerSupport;
-use crate::backend::RuntimeFunctions;
 use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
@@ -52,31 +46,16 @@ pub fn compile<R>(
     support: &mut R,
     program: &Program,
     optimize: bool,
-) -> Result<Box<Module>, CompileError>
+) -> Result<(), CompileError>
 where
     R: CompilerSupport,
 {
-    let runtime_functions = support.get_runtime_functions();
-
     // TODO: Deferring the compilation until it's actually called improves the performance.
     // Because the program may contain unused functions.
-    let mut context = CraneliftContext::new(&runtime_functions);
+    let mut context = CraneliftContext::new(support.module_mut());
 
     // Declare functions defined in the JavaScript program in the module.
-    let func_ids: Vec<FuncId> = program
-        .functions
-        .iter()
-        .map(|func| context.declare_function(func))
-        .collect();
-
-    // TODO(refactor): We creates a map between LambdaId and FuncId here.  But this is somewhat
-    // redundant.
-    let pairs = program
-        .functions
-        .iter()
-        .map(|func| func.id)
-        .zip(func_ids.iter().cloned());
-    let id_map = FxHashMap::from_iter(pairs);
+    support.declare_functions(program);
 
     // Compile JavaScript functions in reverse order in order to compile a coroutine function
     // before its ramp function so that the size of the scratch buffer for the coroutine
@@ -86,63 +65,29 @@ where
     // don't need to use `Iterator::rev()`.
     //
     // TODO: We should manage dependencies between functions in a more general way.
-    for (func, func_id) in program.functions.iter().zip(func_ids.iter().cloned()) {
-        context.compile_function(func, optimize, support, &program.scope_tree, &id_map);
-        context.define_function(func_id);
-        context.clear();
+    for func in program.functions.iter() {
+        context.compile_function(func, optimize, support, &program.scope_tree);
+        let func_id = *support.id_map().get(&func.id).unwrap();
+        context.define_function(func_id, support.module_mut());
+        context.clear(support.module_mut());
     }
 
-    Ok(Box::new(Module {
-        inner: context.module,
-        id_map,
-    }))
+    Ok(())
 }
 
 struct CraneliftContext {
     builder_context: FunctionBuilderContext,
     context: codegen::Context,
     _data_description: DataDescription,
-    module: JITModule,
-    lambda_sig: ir::Signature,
-    runtime_func_ids: RuntimeFunctionIds,
 }
 
 impl CraneliftContext {
-    fn new(runtime_functions: &RuntimeFunctions) -> Self {
-        let mut flag_builder = codegen::settings::builder();
-        flag_builder.set("use_colocated_libcalls", "false").unwrap();
-        flag_builder.set("is_pic", "false").unwrap();
-
-        let isa_builder = cranelift_native::builder().unwrap_or_else(|msg| {
-            panic!("host machine is not supported: {msg}");
-        });
-
-        let isa = isa_builder
-            .finish(codegen::settings::Flags::new(flag_builder))
-            .unwrap();
-
-        let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
-        runtime::register_symbols(&mut builder, runtime_functions);
-
-        let mut module = JITModule::new(builder);
-        let runtime_func_ids = runtime::declare_functions(&mut module);
-        let lambda_sig = runtime::make_lambda_signature(&mut module);
-
+    fn new<T: Module>(module: &mut T) -> Self {
         Self {
             builder_context: FunctionBuilderContext::new(),
             context: module.make_context(),
             _data_description: DataDescription::new(),
-            module,
-            lambda_sig,
-            runtime_func_ids,
         }
-    }
-
-    fn declare_function(&mut self, func: &Function) -> FuncId {
-        let name = func.id.make_name();
-        self.module
-            .declare_function(&name, Linkage::Local, &self.lambda_sig)
-            .unwrap()
     }
 
     fn compile_function<R>(
@@ -151,22 +96,21 @@ impl CraneliftContext {
         optimize: bool,
         runtime: &mut R,
         scope_tree: &ScopeTree,
-        id_map: &FxHashMap<LambdaId, FuncId>,
     ) where
         R: CompilerSupport,
     {
-        let compiler = Compiler::new(func, runtime, scope_tree, id_map, self);
+        let compiler = Compiler::new(func, runtime, scope_tree, self);
         compiler.compile(func, optimize);
     }
 
-    fn define_function(&mut self, func_id: FuncId) {
-        self.module
+    fn define_function<T: Module>(&mut self, func_id: FuncId, module: &mut T) {
+        module
             .define_function(func_id, &mut self.context)
             .unwrap();
     }
 
-    fn clear(&mut self) {
-        self.module.clear_context(&mut self.context);
+    fn clear<T: Module>(&mut self, module: &mut T) {
+        module.clear_context(&mut self.context);
     }
 }
 
@@ -204,10 +148,10 @@ where
         func: &Function,
         support: &'a mut R,
         scope_tree: &'a ScopeTree,
-        id_map: &'a FxHashMap<LambdaId, FuncId>,
         context: &'a mut CraneliftContext,
     ) -> Self {
-        let addr_type = context.module.target_config().pointer_type();
+        let target_config = support.module().target_config();
+        let addr_type = target_config.pointer_type();
 
         context.context.func.name = ir::UserFuncName::user(0, func.id.into());
 
@@ -233,6 +177,9 @@ where
             .push(ir::AbiParam::new(ir::types::I32));
 
         let builder = FunctionBuilder::new(&mut context.context.func, &mut context.builder_context);
+        // TODO: remove
+        let id_map = support.id_map().clone();
+        let runtime_func_ids = support.runtime_func_ids().clone();
 
         Self {
             support,
@@ -241,9 +188,9 @@ where
             pending_labels: Default::default(),
             editor: Editor::new(
                 builder,
-                context.module.target_config(),
+                target_config,
                 id_map,
-                &context.runtime_func_ids,
+                runtime_func_ids,
             ),
             operand_stack: Default::default(),
             locals: Default::default(),
