@@ -1,2 +1,2 @@
-/src/backend/cranelift/compiler/runtime.rs
+/src/backend/clir/compiler/runtime.rs
 /tests/evaluate.rs

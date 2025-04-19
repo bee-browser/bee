@@ -9,12 +9,12 @@ test:
 
 .PHONY: codegen
 codegen:
-	@$(MAKE) -s -C src/backend/cranelift codegen
+	@$(MAKE) -s -C src/backend/clir codegen
 	@$(MAKE) -s -C tests codegen
 
 .PHONY: clean
 clean:
-	@$(MAKE) -s -C src/backend/cranelift clean
+	@$(MAKE) -s -C src/backend/clir clean
 	@$(MAKE) -s -C tests clean
 
 .PHONY: bench

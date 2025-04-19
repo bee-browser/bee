@@ -1,5 +1,5 @@
 mod bridge;
-mod cranelift;
+mod clir;
 
 use cranelift_module::FuncId;
 use cranelift_module::Module;
@@ -14,7 +14,7 @@ use crate::lambda::LambdaInfo;
 use crate::types::Lambda;
 
 pub use bridge::RuntimeFunctions;
-pub use cranelift::RuntimeFunctionIds;
+pub use clir::RuntimeFunctionIds;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CompileError {
@@ -22,7 +22,7 @@ pub enum CompileError {
 }
 
 pub fn initialize() {
-    cranelift::initialize()
+    clir::initialize()
 }
 
 pub fn compile<X>(
@@ -30,7 +30,7 @@ pub fn compile<X>(
     program: &Program,
     optimize: bool,
 ) -> Result<(), CompileError> {
-    cranelift::compile(runtime, program, optimize)
+    clir::compile(runtime, program, optimize)
 }
 
 trait CompilerSupport {
@@ -89,11 +89,11 @@ impl<X> CompilerSupport for Runtime<X> {
     }
 }
 
-pub struct Executor(cranelift::Executor);
+pub struct Executor(clir::Executor);
 
 impl Executor {
     pub fn new(functions: &RuntimeFunctions) -> Self {
-        Self(cranelift::Executor::new(functions))
+        Self(clir::Executor::new(functions))
     }
 
     pub fn module(&self) -> &impl Module {

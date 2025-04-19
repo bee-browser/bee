@@ -87,12 +87,12 @@ impl CraneliftContext {
         &mut self,
         func: &Function,
         optimize: bool,
-        runtime: &mut R,
+        support: &mut R,
         scope_tree: &ScopeTree,
     ) where
         R: CompilerSupport,
     {
-        let compiler = Compiler::new(func, runtime, scope_tree, self);
+        let compiler = Compiler::new(func, support, scope_tree, self);
         compiler.compile(func, optimize);
     }
 
