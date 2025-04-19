@@ -13,8 +13,8 @@ use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
 use crate::types::Lambda;
 
-pub use cranelift::RuntimeFunctionIds;
 pub use bridge::RuntimeFunctions;
+pub use cranelift::RuntimeFunctionIds;
 
 #[derive(Debug, thiserror::Error)]
 pub enum CompileError {

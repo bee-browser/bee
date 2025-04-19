@@ -89,7 +89,10 @@ impl Executor {
     pub fn declare_functions(&mut self, program: &Program) {
         for func in program.functions.iter() {
             let name = func.id.make_name();
-            let func_id = self.module.declare_function(&name, Linkage::Local, &self.lambda_sig).unwrap();
+            let func_id = self
+                .module
+                .declare_function(&name, Linkage::Local, &self.lambda_sig)
+                .unwrap();
             self.id_map.insert(func.id, func_id);
         }
     }

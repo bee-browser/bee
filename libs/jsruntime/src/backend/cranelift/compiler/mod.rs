@@ -41,11 +41,7 @@ macro_rules! runtime_debug {
     };
 }
 
-pub fn compile<R>(
-    support: &mut R,
-    program: &Program,
-    optimize: bool,
-) -> Result<(), CompileError>
+pub fn compile<R>(support: &mut R, program: &Program, optimize: bool) -> Result<(), CompileError>
 where
     R: CompilerSupport,
 {
@@ -101,9 +97,7 @@ impl CraneliftContext {
     }
 
     fn define_function<T: Module>(&mut self, func_id: FuncId, module: &mut T) {
-        module
-            .define_function(func_id, &mut self.context)
-            .unwrap();
+        module.define_function(func_id, &mut self.context).unwrap();
     }
 
     fn clear<T: Module>(&mut self, module: &mut T) {
@@ -183,12 +177,7 @@ where
             scope_tree,
             control_flow_stack: Default::default(),
             pending_labels: Default::default(),
-            editor: Editor::new(
-                builder,
-                target_config,
-                id_map,
-                runtime_func_ids,
-            ),
+            editor: Editor::new(builder, target_config, id_map, runtime_func_ids),
             operand_stack: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
