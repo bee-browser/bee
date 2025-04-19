@@ -10,7 +10,6 @@ use cranelift::codegen::ir;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
 use cranelift::frontend::Switch;
-use cranelift_module::DataDescription;
 use cranelift_module::FuncId;
 use rustc_hash::FxHashMap;
 
@@ -52,9 +51,8 @@ where
 {
     // TODO: Deferring the compilation until it's actually called improves the performance.
     // Because the program may contain unused functions.
-    let mut context = CraneliftContext::new(support.module_mut());
 
-    // Declare functions defined in the JavaScript program in the module.
+    // Declare functions defined in the JavaScript program before compiling each function.
     support.declare_functions(program);
 
     // Compile JavaScript functions in reverse order in order to compile a coroutine function
@@ -65,6 +63,7 @@ where
     // don't need to use `Iterator::rev()`.
     //
     // TODO: We should manage dependencies between functions in a more general way.
+    let mut context = CraneliftContext::new(support.module());
     for func in program.functions.iter() {
         context.compile_function(func, optimize, support, &program.scope_tree);
         let func_id = *support.id_map().get(&func.id).unwrap();
@@ -78,15 +77,13 @@ where
 struct CraneliftContext {
     builder_context: FunctionBuilderContext,
     context: codegen::Context,
-    _data_description: DataDescription,
 }
 
 impl CraneliftContext {
-    fn new<T: Module>(module: &mut T) -> Self {
+    fn new<T: Module>(module: &T) -> Self {
         Self {
             builder_context: FunctionBuilderContext::new(),
             context: module.make_context(),
-            _data_description: DataDescription::new(),
         }
     }
 
