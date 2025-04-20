@@ -10,7 +10,6 @@ use cranelift::codegen::ir;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
 use cranelift::frontend::Switch;
-use cranelift_module::FuncId;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
@@ -27,7 +26,6 @@ use crate::semantics::VariableRef;
 
 use super::CompileError;
 use super::LambdaId;
-use super::Module;
 use super::Program;
 
 use control_flow::ControlFlowStack;
@@ -41,30 +39,35 @@ macro_rules! runtime_debug {
     };
 }
 
+// TODO: Deferring the compilation until it's actually called improves the performance.
+// Because the program may contain unused functions.
 pub fn compile<R>(support: &mut R, program: &Program, optimize: bool) -> Result<(), CompileError>
 where
     R: CompilerSupport,
 {
-    // TODO: Deferring the compilation until it's actually called improves the performance.
-    // Because the program may contain unused functions.
-
-    // Declare functions defined in the JavaScript program before compiling each function.
+    // Declare functions defined in the JavaScript program before compiling the functions so that
+    // the functions can refer each other.
     support.declare_functions(program);
 
-    // Compile JavaScript functions in reverse order in order to compile a coroutine function
-    // before its ramp function so that the size of the scratch buffer for the coroutine
-    // function is available when the ramp function is compiled.
+    // Allocate large data on the heap memory.
     //
-    // NOTE: The functions are stored in post-order traversal on the function tree.  So, we
-    // don't need to use `Iterator::rev()`.
+    // Many existing programs including examples in bytecodealliance/wasmtime allocate
+    // `FunctionBuilderContext` and `codegen::Context` on the stack.  However, it's not good to
+    // allocate large data on the stack in a function that is called deep in the stack.  At this
+    // point, the size of `FunctionBuilderContext` is nearly 1KB and the size of `codegen::Context`
+    // is more than 4KB.
+    let mut context = Box::new(CraneliftContext::new());
+
+    // Compile the functions in reverse order in order to compile a coroutine function before its
+    // ramp function so that the size of the scratch buffer for the coroutine function is available
+    // when the ramp function is compiled.
+    //
+    // NOTE: The functions are stored in post-order traversal on the scope tree.  So, we don't need
+    // to use `Iterator::rev()`.
     //
     // TODO: We should manage dependencies between functions in a more general way.
-    let mut context = CraneliftContext::new(support.module());
     for func in program.functions.iter() {
         context.compile_function(func, optimize, support, &program.scope_tree);
-        let func_id = *support.id_map().get(&func.id).unwrap();
-        context.define_function(func_id, support.module_mut());
-        context.clear(support.module_mut());
     }
 
     Ok(())
@@ -76,10 +79,10 @@ struct CraneliftContext {
 }
 
 impl CraneliftContext {
-    fn new<T: Module>(module: &T) -> Self {
+    fn new() -> Self {
         Self {
             builder_context: FunctionBuilderContext::new(),
-            context: module.make_context(),
+            context: codegen::Context::new(),
         }
     }
 
@@ -94,14 +97,7 @@ impl CraneliftContext {
     {
         let compiler = Compiler::new(func, support, scope_tree, self);
         compiler.compile(func, optimize);
-    }
-
-    fn define_function<T: Module>(&mut self, func_id: FuncId, module: &mut T) {
-        module.define_function(func_id, &mut self.context).unwrap();
-    }
-
-    fn clear<T: Module>(&mut self, module: &mut T) {
-        module.clear_context(&mut self.context);
+        support.define_function(func, &mut self.context);
     }
 }
 
@@ -141,10 +137,11 @@ where
         scope_tree: &'a ScopeTree,
         context: &'a mut CraneliftContext,
     ) -> Self {
-        let target_config = support.module().target_config();
+        let target_config = support.target_config();
         let addr_type = target_config.pointer_type();
 
         context.context.func.name = ir::UserFuncName::user(0, func.id.into());
+        context.context.func.signature.call_conv = target_config.default_call_conv;
 
         // formal parameters
         let params = &mut context.context.func.signature.params;

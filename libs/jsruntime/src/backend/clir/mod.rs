@@ -3,6 +3,7 @@ mod compiler;
 use cranelift::codegen;
 use cranelift::codegen::ir;
 use cranelift::codegen::settings::Configurable as _;
+use cranelift::prelude::isa;
 use cranelift_jit::JITBuilder;
 use cranelift_jit::JITModule;
 use cranelift_module::FuncId;
@@ -11,6 +12,7 @@ use cranelift_module::Module;
 use rustc_hash::FxHashMap;
 
 use crate::lambda::LambdaId;
+use crate::semantics::Function;
 use crate::types::Lambda;
 
 use super::CompileError;
@@ -60,12 +62,8 @@ impl Executor {
         }
     }
 
-    pub fn module(&self) -> &impl Module {
-        &*self.module
-    }
-
-    pub fn module_mut(&mut self) -> &mut impl Module {
-        &mut *self.module
+    pub fn target_config(&self) -> isa::TargetFrontendConfig {
+        self.module.target_config()
     }
 
     pub fn id_map(&self) -> &FxHashMap<LambdaId, FuncId> {
@@ -95,6 +93,12 @@ impl Executor {
                 .unwrap();
             self.id_map.insert(func.id, func_id);
         }
+    }
+
+    pub fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
+        let func_id = *self.id_map.get(&func.id).unwrap();
+        self.module.define_function(func_id, ctx).unwrap();
+        self.module.clear_context(ctx);
     }
 }
 

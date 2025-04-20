@@ -1,16 +1,18 @@
 mod bridge;
 mod clir;
 
+use cranelift::codegen;
+use cranelift::prelude::isa;
 use cranelift_module::FuncId;
-use cranelift_module::Module;
 
 use jsparser::Symbol;
 use rustc_hash::FxHashMap;
 
-use crate::Program;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
+use crate::semantics::Function;
+use crate::semantics::Program;
 use crate::types::Lambda;
 
 pub use bridge::RuntimeFunctions;
@@ -44,11 +46,11 @@ trait CompilerSupport {
     fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
     fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
 
-    fn module(&self) -> &impl Module;
-    fn module_mut(&mut self) -> &mut impl Module;
+    fn target_config(&self) -> isa::TargetFrontendConfig;
     fn id_map(&self) -> &FxHashMap<LambdaId, FuncId>;
     fn runtime_func_ids(&self) -> &RuntimeFunctionIds;
     fn declare_functions(&mut self, program: &Program);
+    fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context);
 }
 
 impl<X> CompilerSupport for Runtime<X> {
@@ -68,12 +70,8 @@ impl<X> CompilerSupport for Runtime<X> {
         self.lambda_registry.get_mut(lambda_id)
     }
 
-    fn module(&self) -> &impl Module {
-        self.executor.module()
-    }
-
-    fn module_mut(&mut self) -> &mut impl Module {
-        self.executor.module_mut()
+    fn target_config(&self) -> isa::TargetFrontendConfig {
+        self.executor.target_config()
     }
 
     fn id_map(&self) -> &FxHashMap<LambdaId, FuncId> {
@@ -87,6 +85,10 @@ impl<X> CompilerSupport for Runtime<X> {
     fn declare_functions(&mut self, program: &Program) {
         self.executor.declare_functions(program);
     }
+
+    fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
+        self.executor.define_function(func, ctx);
+    }
 }
 
 pub struct Executor(clir::Executor);
@@ -96,12 +98,8 @@ impl Executor {
         Self(clir::Executor::new(functions))
     }
 
-    pub fn module(&self) -> &impl Module {
-        self.0.module()
-    }
-
-    pub fn module_mut(&mut self) -> &mut impl Module {
-        self.0.module_mut()
+    pub fn target_config(&self) -> isa::TargetFrontendConfig {
+        self.0.target_config()
     }
 
     pub fn id_map(&self) -> &FxHashMap<LambdaId, FuncId> {
@@ -122,5 +120,9 @@ impl Executor {
 
     pub fn declare_functions(&mut self, program: &Program) {
         self.0.declare_functions(program);
+    }
+
+    pub fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
+        self.0.define_function(func, ctx);
     }
 }

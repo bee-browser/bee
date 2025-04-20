@@ -107,32 +107,32 @@ impl<X> Runtime<X> {
     }
 
     pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<(), CompileError> {
+        logger::debug!(event = "compile");
         backend::compile(self, program, optimize)
     }
 
     pub fn link(&mut self) {
+        logger::debug!(event = "link");
         self.executor.link();
     }
 
     pub fn evaluate(&mut self, program: &Program) -> Result<Value, Value> {
         logger::debug!(event = "evaluate");
         let mut retv = Value::Undefined;
-        let status = match self.executor.get_lambda(program.entry_lambda_id()) {
-            Some(entry_lambda) => unsafe {
-                entry_lambda(
-                    // runtime
-                    self.as_void_ptr(),
-                    // context
-                    std::ptr::null_mut(),
-                    // argc
-                    0,
-                    // argv
-                    std::ptr::null_mut(),
-                    // retv
-                    &mut retv,
-                )
-            },
-            None => unreachable!(),
+        let lambda = self.executor.get_lambda(program.entry_lambda_id()).unwrap();
+        let status = unsafe {
+            lambda(
+                // runtime
+                self.as_void_ptr(),
+                // context
+                std::ptr::null_mut(),
+                // argc
+                0,
+                // argv
+                std::ptr::null_mut(),
+                // retv
+                &mut retv,
+            )
         };
         retv.into_result(status)
     }
