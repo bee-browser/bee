@@ -1,6 +1,5 @@
 mod control_flow;
 mod editor;
-pub mod runtime;
 
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -15,7 +14,6 @@ use rustc_hash::FxHashMap;
 use jsparser::Symbol;
 use jsparser::syntax::LoopFlags;
 
-use crate::backend::CompilerSupport;
 use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
@@ -25,13 +23,14 @@ use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
 
 use super::CompileError;
+use super::CompilerSupport;
+use super::EditorSupport;
 use super::LambdaId;
 use super::Program;
+use super::RuntimeFunctionCache;
 
 use control_flow::ControlFlowStack;
 use editor::Editor;
-use runtime::RuntimeFunctionCache;
-use runtime::RuntimeFunctionIds;
 
 macro_rules! runtime_debug {
     ($block:block) => {
@@ -43,7 +42,7 @@ macro_rules! runtime_debug {
 // Because the program may contain unused functions.
 pub fn compile<R>(support: &mut R, program: &Program, optimize: bool) -> Result<(), CompileError>
 where
-    R: CompilerSupport,
+    R: CompilerSupport + EditorSupport,
 {
     // Declare functions defined in the JavaScript program before compiling the functions so that
     // the functions can refer each other.
@@ -93,7 +92,7 @@ impl CraneliftContext {
         support: &mut R,
         scope_tree: &ScopeTree,
     ) where
-        R: CompilerSupport,
+        R: CompilerSupport + EditorSupport,
     {
         let compiler = Compiler::new(func, support, scope_tree, self);
         compiler.compile(func, optimize);
@@ -129,7 +128,7 @@ struct Compiler<'a, R> {
 
 impl<'a, R> Compiler<'a, R>
 where
-    R: CompilerSupport,
+    R: CompilerSupport + EditorSupport,
 {
     fn new(
         func: &Function,
@@ -165,16 +164,13 @@ where
             .push(ir::AbiParam::new(ir::types::I32));
 
         let builder = FunctionBuilder::new(&mut context.context.func, &mut context.builder_context);
-        // TODO: remove
-        let id_map = support.id_map().clone();
-        let runtime_func_ids = support.runtime_func_ids().clone();
 
         Self {
             support,
             scope_tree,
             control_flow_stack: Default::default(),
             pending_labels: Default::default(),
-            editor: Editor::new(builder, target_config, id_map, runtime_func_ids),
+            editor: Editor::new(builder, target_config),
             operand_stack: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
@@ -260,7 +256,8 @@ where
         self.editor.put_jump(flow.exit_block, &[]);
         self.editor.switch_to_block(flow.exit_block);
         if self.support.is_scope_cleanup_checker_enabled() {
-            self.editor.put_assert_scope_id(ScopeRef::NONE);
+            self.editor
+                .put_assert_scope_id(self.support, ScopeRef::NONE);
         }
         self.editor.put_return();
 
@@ -450,12 +447,12 @@ where
     }
 
     fn process_object(&mut self) {
-        let object = self.editor.put_runtime_create_object();
+        let object = self.editor.put_runtime_create_object(self.support);
         self.operand_stack.push(Operand::Object(object));
     }
 
     fn process_lambda(&mut self, lambda_id: LambdaId) {
-        let lambda = self.editor.put_declare_lambda(lambda_id);
+        let lambda = self.editor.put_declare_lambda(self.support, lambda_id);
         self.operand_stack.push(Operand::Lambda(lambda));
     }
 
@@ -465,9 +462,9 @@ where
 
         let lambda = self.pop_lambda();
         // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
-        let closure = self
-            .editor
-            .put_runtime_create_closure(lambda, scope.count_captures());
+        let closure =
+            self.editor
+                .put_runtime_create_closure(self.support, lambda, scope.count_captures());
 
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         for variable in scope
@@ -499,15 +496,20 @@ where
         let scrach_buffer_len = self.support.get_lambda_info(lambda_id).scratch_buffer_len;
         debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();
-        let coroutine =
-            self.editor
-                .put_runtime_create_coroutine(closure, num_locals, scrach_buffer_len as u16);
+        let coroutine = self.editor.put_runtime_create_coroutine(
+            self.support,
+            closure,
+            num_locals,
+            scrach_buffer_len as u16,
+        );
         self.operand_stack.push(Operand::Coroutine(coroutine));
     }
 
     fn process_promise(&mut self) {
         let coroutine = self.pop_coroutine();
-        let promise = self.editor.put_runtime_register_promise(coroutine);
+        let promise = self
+            .editor
+            .put_runtime_register_promise(self.support, coroutine);
         self.operand_stack.push(Operand::Promise(promise));
     }
 
@@ -677,7 +679,7 @@ where
                 let object = ObjectIr(self.editor.put_nullptr());
                 let value = self.perform_to_any(&operand);
                 self.editor
-                    .put_runtime_set_value_by_symbol(object, symbol, value);
+                    .put_runtime_set_value_by_symbol(self.support, object, symbol, value);
             }
             _ => unreachable!("{locator:?}"),
         };
@@ -737,7 +739,7 @@ where
                     Locator::Local(index) => self.get_local(index),
                     _ => unreachable!(),
                 };
-                let capture = self.editor.put_runtime_create_capture(target);
+                let capture = self.editor.put_runtime_create_capture(self.support, target);
                 debug_assert!(!self.captures.contains_key(&locator));
                 self.captures.insert(locator, capture);
             }
@@ -783,7 +785,7 @@ where
 
         self.editor.switch_to_block(postcheck_block);
         if self.support.is_scope_cleanup_checker_enabled() {
-            self.editor.put_assert_scope_id(scope_ref);
+            self.editor.put_assert_scope_id(self.support, scope_ref);
             if self.control_flow_stack.has_scope_flow() {
                 let outer_scope_ref = self.control_flow_stack.scope_flow().scope_ref;
                 self.editor.put_store_scope_id_for_checker(outer_scope_ref);
@@ -814,21 +816,33 @@ where
 
         // 1. Let success be ? CreateDataProperty(O, P, V).
         let status = match key {
-            PropertyKey::Symbol(key) => self
-                .editor
-                .put_runtime_create_data_property_by_symbol(object, key, value, retv),
-            PropertyKey::Number(key) => self
-                .editor
-                .put_runtime_create_data_property_by_number(object, key, value, retv),
-            PropertyKey::Any(key) => self
-                .editor
-                .put_runtime_create_data_property_by_any(object, key, value, retv),
+            PropertyKey::Symbol(key) => self.editor.put_runtime_create_data_property_by_symbol(
+                self.support,
+                object,
+                key,
+                value,
+                retv,
+            ),
+            PropertyKey::Number(key) => self.editor.put_runtime_create_data_property_by_number(
+                self.support,
+                object,
+                key,
+                value,
+                retv,
+            ),
+            PropertyKey::Any(key) => self.editor.put_runtime_create_data_property_by_any(
+                self.support,
+                object,
+                key,
+                value,
+                retv,
+            ),
         };
         self.emit_check_status_for_exception(status, retv);
         // `retv` holds a boolean value.
         runtime_debug! {{
             let is_boolean = self.editor.put_is_boolean(retv);
-            self.editor.put_runtime_assert(
+            self.editor.put_runtime_assert(self.support,
                 is_boolean,
                 c"runtime.create_data_property() returns a boolan value",
             );
@@ -886,9 +900,9 @@ where
         let object = self.peek_object();
         let retv = self.emit_create_any();
 
-        let status = self
-            .editor
-            .put_runtime_copy_data_properties(object, from_value, retv);
+        let status =
+            self.editor
+                .put_runtime_copy_data_properties(self.support, object, from_value, retv);
         self.emit_check_status_for_exception(status, retv);
     }
 
@@ -903,9 +917,9 @@ where
         let object = self.peek_object();
         let retv = self.emit_create_any();
 
-        let status = self
-            .editor
-            .put_runtime_push_array_element(object, from_value, retv);
+        let status =
+            self.editor
+                .put_runtime_push_array_element(self.support, object, from_value, retv);
         self.emit_check_status_for_exception(status, retv);
     }
 
@@ -966,7 +980,7 @@ where
                 crate::types::Value::None => unreachable!("{value:?}"),
             },
             Operand::Any(value, None) => {
-                let string = self.editor.put_runtime_typeof(value);
+                let string = self.editor.put_runtime_typeof(self.support, value);
                 self.operand_stack.push(Operand::String(string, None));
             }
             Operand::Lambda(..)
@@ -999,7 +1013,7 @@ where
         let (operand, _) = self.dereference();
         let number = self.perform_to_numeric(&operand);
         // TODO: BigInt
-        let number = self.editor.put_bitwise_not(number);
+        let number = self.editor.put_bitwise_not(self.support, number);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1021,7 +1035,7 @@ where
         let (rhs, _) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
-        let number = self.editor.put_exp(lhs, rhs);
+        let number = self.editor.put_exp(self.support, lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1060,7 +1074,7 @@ where
         let (rhs, _) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
-        let number = self.editor.put_rem(lhs, rhs);
+        let number = self.editor.put_rem(self.support, lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1103,7 +1117,7 @@ where
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
-        let number = self.editor.put_left_shift(lhs, rhs);
+        let number = self.editor.put_left_shift(self.support, lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1119,7 +1133,7 @@ where
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
-        let number = self.editor.put_signed_right_shift(lhs, rhs);
+        let number = self.editor.put_signed_right_shift(self.support, lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1135,7 +1149,7 @@ where
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         // TODO: BigInt
-        let number = self.editor.put_unsigned_right_shift(lhs, rhs);
+        let number = self.editor.put_unsigned_right_shift(self.support, lhs, rhs);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1259,7 +1273,7 @@ where
         let rnum = self.perform_to_numeric(&rval);
         // TODO: BigInt
 
-        let number = self.editor.put_bitwise_and(lnum, rnum);
+        let number = self.editor.put_bitwise_and(self.support, lnum, rnum);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1275,7 +1289,7 @@ where
         let rnum = self.perform_to_numeric(&rval);
         // TODO: BigInt
 
-        let number = self.editor.put_bitwise_xor(lnum, rnum);
+        let number = self.editor.put_bitwise_xor(self.support, lnum, rnum);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1291,7 +1305,7 @@ where
         let rnum = self.perform_to_numeric(&rval);
         // TODO: BigInt
 
-        let number = self.editor.put_bitwise_or(lnum, rnum);
+        let number = self.editor.put_bitwise_or(self.support, lnum, rnum);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(number, None));
     }
@@ -1319,7 +1333,7 @@ where
                 self.emit_store_operand_to_any(&rhs, value);
                 // TODO(feat): ReferenceError, TypeError
                 self.editor
-                    .put_runtime_set_value_by_symbol(object, symbol, value);
+                    .put_runtime_set_value_by_symbol(self.support, object, symbol, value);
             }
             Operand::VariableReference(symbol, locator) => {
                 let var = self.emit_get_variable(symbol, locator);
@@ -1335,15 +1349,24 @@ where
                 self.emit_store_operand_to_any(&rhs, value);
                 match key {
                     PropertyKey::Symbol(key) => {
-                        self.editor
-                            .put_runtime_set_value_by_symbol(object, key, value);
+                        self.editor.put_runtime_set_value_by_symbol(
+                            self.support,
+                            object,
+                            key,
+                            value,
+                        );
                     }
                     PropertyKey::Number(key) => {
-                        self.editor
-                            .put_runtime_set_value_by_number(object, key, value);
+                        self.editor.put_runtime_set_value_by_number(
+                            self.support,
+                            object,
+                            key,
+                            value,
+                        );
                     }
                     PropertyKey::Any(key) => {
-                        self.editor.put_runtime_set_value_by_any(object, key, value);
+                        self.editor
+                            .put_runtime_set_value_by_any(self.support, object, key, value);
                     }
                 }
             }
@@ -1377,7 +1400,7 @@ where
             Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
             Operand::Promise(_value) => todo!(),
             Operand::Any(value, ..) => {
-                let object = self.editor.put_runtime_to_object(value);
+                let object = self.editor.put_runtime_to_object(self.support, value);
                 self.operand_stack.push(Operand::Object(object));
             }
             Operand::Lambda(_)
@@ -1933,7 +1956,7 @@ where
         self.editor.switch_to_block(done_block);
         let x = self.editor.put_boolean(false);
         self.editor
-            .put_runtime_assert(x, c"the coroutine has already done");
+            .put_runtime_assert(self.support, x, c"the coroutine has already done");
         self.editor.put_unreachable();
 
         self.editor.switch_to_block(blocks[0]);
@@ -1979,7 +2002,7 @@ where
 
     fn process_resume(&mut self) {
         let promise = self.pop_promise();
-        self.editor.put_runtime_resume(promise);
+        self.editor.put_runtime_resume(self.support, promise);
     }
 
     // TODO(perf): Currently, we have to save all values (except for special cases) on the operand
@@ -2126,47 +2149,48 @@ where
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_undefined_to_any(result);
                 self.editor
-                    .put_runtime_emit_promise_resolved(promise, result);
+                    .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
             Operand::Null => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_null_to_any(result);
                 self.editor
-                    .put_runtime_emit_promise_resolved(promise, result);
+                    .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
             Operand::Boolean(value, ..) => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_boolean_to_any(value, result);
                 self.editor
-                    .put_runtime_emit_promise_resolved(promise, result);
+                    .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
             Operand::Number(value, ..) => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_number_to_any(value, result);
                 self.editor
-                    .put_runtime_emit_promise_resolved(promise, result);
+                    .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
             Operand::String(value, ..) => {
                 let result = self.editor.put_alloc_any();
                 let value = self.emit_ensure_heap_string(value);
                 self.editor.put_store_string_to_any(value, result);
                 self.editor
-                    .put_runtime_emit_promise_resolved(promise, result);
+                    .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
             Operand::Closure(value) => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_closure_to_any(value, result);
                 self.editor
-                    .put_runtime_emit_promise_resolved(promise, result);
+                    .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
             Operand::Object(value) => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_object_to_any(value, result);
                 self.editor
-                    .put_runtime_emit_promise_resolved(promise, result);
+                    .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
             Operand::Promise(value) => {
-                self.editor.put_runtime_await_promise(value, promise);
+                self.editor
+                    .put_runtime_await_promise(self.support, value, promise);
             }
             Operand::Any(value, ..) => {
                 let then_block = self.editor.create_block();
@@ -2179,12 +2203,13 @@ where
                 // {
                 self.editor.switch_to_block(then_block);
                 let target = self.editor.put_load_promise(value);
-                self.editor.put_runtime_await_promise(target, promise);
+                self.editor
+                    .put_runtime_await_promise(self.support, target, promise);
                 self.editor.put_jump(merge_block, &[]);
                 // } else {
                 self.editor.switch_to_block(else_block);
                 self.editor
-                    .put_runtime_emit_promise_resolved(promise, value);
+                    .put_runtime_emit_promise_resolved(self.support, promise, value);
                 self.editor.put_jump(merge_block, &[]);
                 // }
                 self.editor.switch_to_block(merge_block);
@@ -2207,7 +2232,9 @@ where
             .put_branch(on_stack, then_block, &[], merge_block, &[string.0]);
         // {
         self.editor.switch_to_block(then_block);
-        let heap_string = self.editor.put_runtime_migrate_string_to_heap(string);
+        let heap_string = self
+            .editor
+            .put_runtime_migrate_string_to_heap(self.support, string);
         self.editor.put_jump(merge_block, &[heap_string.0]);
         // }
         self.editor.switch_to_block(merge_block);
@@ -2247,7 +2274,7 @@ where
     }
 
     fn process_debugger(&mut self) {
-        self.editor.put_runtime_launch_debugger();
+        self.editor.put_runtime_launch_debugger(self.support);
     }
 
     // commonly used functions
@@ -2306,7 +2333,7 @@ where
             Operand::Closure(_) | Operand::Promise(_) | Operand::Object(_) => {
                 self.editor.put_boolean(true)
             }
-            Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(*value),
+            Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
@@ -2327,7 +2354,7 @@ where
             Operand::String(..) => unimplemented!("string.to_numeric"),
             Operand::Closure(_) => self.editor.put_number(f64::NAN),
             Operand::Object(_) => unimplemented!("object.to_numeric"),
-            Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(*value),
+            Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::Promise(_)
@@ -2381,12 +2408,16 @@ where
         if let Operand::Any(lhs, ..) = lhs {
             // TODO: compile-time evaluation
             let rhs = self.perform_to_any(rhs);
-            return self.editor.put_runtime_is_loosely_equal(*lhs, rhs);
+            return self
+                .editor
+                .put_runtime_is_loosely_equal(self.support, *lhs, rhs);
         }
         if let Operand::Any(rhs, ..) = rhs {
             // TODO: compile-time evaluation
             let lhs = self.perform_to_any(lhs);
-            return self.editor.put_runtime_is_loosely_equal(lhs, *rhs);
+            return self
+                .editor
+                .put_runtime_is_loosely_equal(self.support, lhs, *rhs);
         }
 
         // 1. If Type(x) is Type(y), then Return IsStrictlyEqual(x, y).
@@ -2414,7 +2445,8 @@ where
         // TODO: ...
         let lhs = self.perform_to_any(lhs);
         let rhs = self.perform_to_any(rhs);
-        self.editor.put_runtime_is_loosely_equal(lhs, rhs)
+        self.editor
+            .put_runtime_is_loosely_equal(self.support, lhs, rhs)
     }
 
     // 7.2.14 IsStrictlyEqual ( x, y )
@@ -2464,7 +2496,10 @@ where
             Operand::Closure(rhs) => self.perform_is_same_closure(lhs, *rhs),
             Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
             Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
-            Operand::Any(rhs, ..) => self.editor.put_runtime_is_strictly_equal(lhs, *rhs),
+            Operand::Any(rhs, ..) => {
+                self.editor
+                    .put_runtime_is_strictly_equal(self.support, lhs, *rhs)
+            }
             Operand::Lambda(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
@@ -2625,20 +2660,27 @@ where
                 self.perform_to_object();
                 let object = self.pop_object();
                 let value = match key {
-                    PropertyKey::Symbol(key) => self
-                        .editor
-                        .put_runtime_get_value_by_symbol(object, key, false),
-                    PropertyKey::Number(key) => self
-                        .editor
-                        .put_runtime_get_value_by_number(object, key, false),
+                    PropertyKey::Symbol(key) => self.editor.put_runtime_get_value_by_symbol(
+                        self.support,
+                        object,
+                        key,
+                        false,
+                    ),
+                    PropertyKey::Number(key) => self.editor.put_runtime_get_value_by_number(
+                        self.support,
+                        object,
+                        key,
+                        false,
+                    ),
                     PropertyKey::Any(key) => {
-                        self.editor.put_runtime_get_value_by_any(object, key, false)
+                        self.editor
+                            .put_runtime_get_value_by_any(self.support, object, key, false)
                     }
                 };
                 runtime_debug! {{
                     let is_nullptr = self.editor.put_is_nullptr(value);
                     let non_nullptr = self.editor.put_logical_not(is_nullptr);
-                    self.editor.put_runtime_assert(
+                    self.editor.put_runtime_assert(self.support,
                         non_nullptr,
                         c"runtime.get_value() should return a non-null pointer",
                     );
@@ -2756,7 +2798,7 @@ where
         // TODO: strict mode
         let value = self
             .editor
-            .put_runtime_get_value_by_symbol(object, key, true);
+            .put_runtime_get_value_by_symbol(self.support, object, key, true);
 
         let then_block = self.editor.create_block();
         let end_block = self.editor.create_block();

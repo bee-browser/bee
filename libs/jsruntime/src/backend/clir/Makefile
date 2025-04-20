@@ -3,8 +3,7 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 PROJ_DIR := $(realpath ../../../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
-CODEGEN_TARGETS := \
-  compiler/runtime.rs
+CODEGEN_TARGETS := support.rs
 
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)

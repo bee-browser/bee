@@ -1,4 +1,5 @@
 mod compiler;
+mod support;
 
 use cranelift::codegen;
 use cranelift::codegen::ir;
@@ -11,7 +12,11 @@ use cranelift_module::Linkage;
 use cranelift_module::Module;
 use rustc_hash::FxHashMap;
 
+use jsparser::Symbol;
+
+use crate::Runtime;
 use crate::lambda::LambdaId;
+use crate::lambda::LambdaInfo;
 use crate::semantics::Function;
 use crate::types::Lambda;
 
@@ -19,11 +24,61 @@ use super::CompileError;
 use super::Program;
 use super::RuntimeFunctions;
 
+use support::EditorSupport;
+use support::RuntimeFunctionCache;
+use support::RuntimeFunctionIds;
+
 pub use compiler::compile;
-pub use compiler::runtime::RuntimeFunctionIds;
 
 pub fn initialize() {
     // TODO
+}
+
+pub trait CompilerSupport {
+    // RuntimePref
+    fn is_scope_cleanup_checker_enabled(&self) -> bool;
+
+    // SymbolRegistry
+    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol;
+
+    // LambdaRegistry
+    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
+    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
+
+    // Executor
+    fn target_config(&self) -> isa::TargetFrontendConfig;
+    fn declare_functions(&mut self, program: &Program);
+    fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context);
+}
+
+impl<X> CompilerSupport for Runtime<X> {
+    fn is_scope_cleanup_checker_enabled(&self) -> bool {
+        self.pref.enable_scope_cleanup_checker
+    }
+
+    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol {
+        self.symbol_registry.intern_utf16(name)
+    }
+
+    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo {
+        self.lambda_registry.get(lambda_id)
+    }
+
+    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo {
+        self.lambda_registry.get_mut(lambda_id)
+    }
+
+    fn target_config(&self) -> isa::TargetFrontendConfig {
+        self.executor.target_config()
+    }
+
+    fn declare_functions(&mut self, program: &Program) {
+        self.executor.declare_functions(program);
+    }
+
+    fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
+        self.executor.define_function(func, ctx);
+    }
 }
 
 pub struct Executor {
@@ -48,11 +103,11 @@ impl Executor {
             .unwrap();
 
         let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
-        compiler::runtime::register_symbols(&mut builder, runtime_functions);
+        support::register_symbols(&mut builder, runtime_functions);
 
         let mut module = Box::new(JITModule::new(builder));
-        let lambda_sig = compiler::runtime::make_lambda_signature(&mut module);
-        let runtime_func_ids = compiler::runtime::declare_functions(&mut module);
+        let lambda_sig = support::make_lambda_signature(&mut module);
+        let runtime_func_ids = support::declare_functions(&mut module);
 
         Self {
             module,
@@ -64,14 +119,6 @@ impl Executor {
 
     pub fn target_config(&self) -> isa::TargetFrontendConfig {
         self.module.target_config()
-    }
-
-    pub fn id_map(&self) -> &FxHashMap<LambdaId, FuncId> {
-        &self.id_map
-    }
-
-    pub fn runtime_func_ids(&self) -> &RuntimeFunctionIds {
-        &self.runtime_func_ids
     }
 
     pub fn link(&mut self) {
