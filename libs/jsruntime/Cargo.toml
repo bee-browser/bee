@@ -16,7 +16,7 @@ bitflags = "2.9.0"
 bumpalo = "3.17.0"
 cranelift = "0.118.0"
 cranelift-module = "0.118.0"
-cranelift-jit = "0.118.0"
+cranelift-jit = "0.119.0"
 cranelift-native = "0.118.0"
 indexmap = "2.9.0"
 jsparser = { path = "../jsparser", features = ["location"] }
