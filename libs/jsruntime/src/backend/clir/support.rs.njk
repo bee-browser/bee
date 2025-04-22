@@ -125,26 +125,6 @@ impl<X> EditorSupport for crate::Runtime<X> {
     {%- endfor %}
 }
 
-impl EditorSupport for crate::backend::Executor {
-    fn import_lambda(&mut self, lambda_id: LambdaId, func: &mut ir::Function) -> ir::FuncRef {
-        self.0.import_lambda(lambda_id, func)
-    }
-
-    fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.0.import_fmod(func)
-    }
-
-    fn import_pow(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.0.import_pow(func)
-    }
-    {%- for func in data.functions %}
-
-    fn import_runtime_{{ func.name }}(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.0.import_runtime_{{ func.name }}(func)
-    }
-    {%- endfor %}
-}
-
 impl EditorSupport for crate::backend::clir::Executor {
     fn import_lambda(&mut self, lambda_id: LambdaId, func: &mut ir::Function) -> ir::FuncRef {
         let func_id = *self.id_map.get(&lambda_id).unwrap();

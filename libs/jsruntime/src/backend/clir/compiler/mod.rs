@@ -18,6 +18,7 @@ use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
 use crate::semantics::Locator;
+use crate::semantics::Program;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
@@ -26,7 +27,6 @@ use super::CompileError;
 use super::CompilerSupport;
 use super::EditorSupport;
 use super::LambdaId;
-use super::Program;
 use super::RuntimeFunctionCache;
 
 use control_flow::ControlFlowStack;

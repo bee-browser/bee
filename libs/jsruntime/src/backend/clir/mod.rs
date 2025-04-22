@@ -18,10 +18,10 @@ use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
 use crate::semantics::Function;
+use crate::semantics::Program;
 use crate::types::Lambda;
 
 use super::CompileError;
-use super::Program;
 use super::RuntimeFunctions;
 
 use support::EditorSupport;
