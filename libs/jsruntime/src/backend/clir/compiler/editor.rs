@@ -10,7 +10,12 @@ use rustc_hash::FxHashMap;
 use base::static_assert_eq;
 
 use crate::logger;
-use crate::types;
+use crate::types::Capture;
+use crate::types::Closure;
+use crate::types::Coroutine;
+use crate::types::U16Chunk;
+use crate::types::U16ChunkKind;
+use crate::types::Value;
 
 use super::AnyIr;
 use super::ArgvIr;
@@ -143,7 +148,7 @@ impl<'a> Editor<'a> {
         // TODO: bounds checking
         let _argc = self.argc();
         let argv = self.argv();
-        let offset = types::Value::SIZE * index as usize;
+        let offset = Value::SIZE * index as usize;
         AnyIr(self.builder.ins().iadd_imm(argv.0, offset as i64))
     }
 
@@ -201,7 +206,10 @@ impl<'a> Editor<'a> {
 
     pub fn put_store_status(&mut self, status: Status) {
         logger::debug!(event = "put_store_status", ?status);
-        let status = self.builder.ins().iconst(ir::types::I32, status.0 as i64);
+        let status = self
+            .builder
+            .ins()
+            .iconst(ir::types::I32, status.imm() as i64);
         self.builder.ins().stack_store(status, self.fcs, 0);
     }
 
@@ -211,7 +219,7 @@ impl<'a> Editor<'a> {
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(Equal, status.0, Status::EXCEPTION.0 as i64),
+                .icmp_imm(Equal, status.0, Status::EXCEPTION.imm() as i64),
         )
     }
 
@@ -219,7 +227,7 @@ impl<'a> Editor<'a> {
 
     pub fn put_store_flow_selector(&mut self, fs: FlowSelector) {
         logger::debug!(event = "put_store_flow_selector", ?fs);
-        let value = self.builder.ins().iconst(ir::types::I32, fs.0 as i64);
+        let value = self.builder.ins().iconst(ir::types::I32, fs.imm() as i64);
         self.builder.ins().stack_store(value, self.fcs, 4);
     }
 
@@ -230,7 +238,7 @@ impl<'a> Editor<'a> {
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(Equal, fs, FlowSelector::NORMAL.0 as i64),
+                .icmp_imm(Equal, fs, FlowSelector::NORMAL.imm() as i64),
         )
     }
 
@@ -241,7 +249,7 @@ impl<'a> Editor<'a> {
         BooleanIr(self.builder.ins().icmp_imm(
             UnsignedGreaterThan,
             fs,
-            FlowSelector::break_at(depth).0 as i64,
+            FlowSelector::break_at(depth).imm() as i64,
         ))
     }
 
@@ -301,9 +309,22 @@ impl<'a> Editor<'a> {
         }
     }
 
-    pub fn put_switch(&mut self, switch: Switch, state: ir::Value, block: ir::Block) {
-        logger::debug!(event = "put_switch", ?switch, ?state, ?block);
-        switch.emit(&mut self.builder, state, block);
+    pub fn put_jump_table(&mut self, state: ir::Value, num_states: u32) -> Vec<ir::Block> {
+        logger::debug!(event = "put_jump_table", ?state, num_states);
+        debug_assert!(num_states >= 2);
+        // TODO(perf): use JumpTable
+        let mut switch = Switch::new();
+        let mut blocks = vec![];
+        for i in 0..num_states - 1 {
+            let block = self.create_block();
+            blocks.push(block);
+            switch.set_entry(i as u128, block);
+        }
+        let done_block = self.create_block();
+        blocks.push(done_block);
+        debug_assert_eq!(blocks.len(), num_states as usize);
+        switch.emit(&mut self.builder, state, done_block);
+        blocks
     }
 
     pub fn put_return(&mut self) {
@@ -320,7 +341,7 @@ impl<'a> Editor<'a> {
         let status = self
             .builder
             .ins()
-            .iconst(ir::types::I32, Status::SUSPEND.0 as i64);
+            .iconst(ir::types::I32, Status::SUSPEND.imm() as i64);
         self.builder.ins().return_(&[status]);
         self.block_terminated = true;
     }
@@ -368,31 +389,31 @@ impl<'a> Editor<'a> {
 
         let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
-            size: types::Char16Seq::SIZE as u32,
-            align_shift: types::Char16Seq::ALIGNMENT.ilog2() as u8,
+            size: U16Chunk::SIZE as u32,
+            align_shift: U16Chunk::ALIGNMENT.ilog2() as u8,
         });
 
         let next = self.builder.ins().iconst(self.addr_type, 0);
-        self.put_store_to_slot(next, slot, types::Char16Seq::NEXT_OFFSET);
+        self.put_store_to_slot(next, slot, U16Chunk::NEXT_OFFSET);
 
         let ptr = self
             .builder
             .ins()
             .iconst(self.addr_type, value.as_ptr() as i64);
-        self.put_store_to_slot(ptr, slot, types::Char16Seq::PTR_OFFSET);
+        self.put_store_to_slot(ptr, slot, U16Chunk::PTR_OFFSET);
 
         debug_assert!(value.len() <= u32::MAX as usize);
         let len = self
             .builder
             .ins()
             .iconst(ir::types::I32, value.len() as i64);
-        self.put_store_to_slot(len, slot, types::Char16Seq::LEN_OFFSET);
+        self.put_store_to_slot(len, slot, U16Chunk::LEN_OFFSET);
 
         let kind = self
             .builder
             .ins()
-            .iconst(ir::types::I8, types::Char16SeqKind::Stack as i64);
-        self.put_store_to_slot(kind, slot, types::Char16Seq::KIND_OFFSET);
+            .iconst(ir::types::I8, U16ChunkKind::Stack as i64);
+        self.put_store_to_slot(kind, slot, U16Chunk::KIND_OFFSET);
 
         StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
@@ -401,15 +422,15 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_string_on_stack", ?string);
         use ir::condcodes::IntCC::Equal;
         let kind = self.put_load_kind_from_string(string);
-        BooleanIr(self.builder.ins().icmp_imm(
-            Equal,
-            kind,
-            crate::types::Char16SeqKind::Stack as i64,
-        ))
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(Equal, kind, U16ChunkKind::Stack as i64),
+        )
     }
 
     fn put_load_kind_from_string(&mut self, string: StringIr) -> ir::Value {
-        self.put_load_i8(string.0, types::Char16Seq::KIND_OFFSET)
+        self.put_load_i8(string.0, U16Chunk::KIND_OFFSET)
     }
 
     // any
@@ -418,47 +439,47 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_alloc_any");
         let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
-            size: types::Value::SIZE as u32,
-            align_shift: types::Value::ALIGNMENT.ilog2() as u8,
+            size: Value::SIZE as u32,
+            align_shift: Value::ALIGNMENT.ilog2() as u8,
         });
         AnyIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
 
     pub fn put_load_kind(&mut self, any: AnyIr) -> ir::Value {
-        self.put_load_i8(any.0, types::Value::KIND_OFFSET)
+        self.put_load_i8(any.0, Value::KIND_OFFSET)
     }
 
     pub fn put_has_value(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_has_value", ?any);
         use ir::condcodes::IntCC::NotEqual;
-        let kind = self.put_load_i8(any.0, types::Value::KIND_OFFSET);
+        let kind = self.put_load_i8(any.0, Value::KIND_OFFSET);
         // TODO(refactor): Value::KIND_NONE
         BooleanIr(self.builder.ins().icmp_imm(NotEqual, kind, 0))
     }
 
     pub fn put_load_boolean(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_load_boolean", ?any);
-        BooleanIr(self.put_load_i8(any.0, types::Value::HOLDER_OFFSET))
+        BooleanIr(self.put_load_i8(any.0, Value::HOLDER_OFFSET))
     }
 
     pub fn put_load_number(&mut self, any: AnyIr) -> NumberIr {
         logger::debug!(event = "put_load_number", ?any);
-        NumberIr(self.put_load_f64(any.0, types::Value::HOLDER_OFFSET))
+        NumberIr(self.put_load_f64(any.0, Value::HOLDER_OFFSET))
     }
 
     pub fn put_load_closure(&mut self, any: AnyIr) -> ClosureIr {
         logger::debug!(event = "put_load_closure", ?any);
-        ClosureIr(self.put_load_addr(any.0, types::Value::HOLDER_OFFSET))
+        ClosureIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
     }
 
     pub fn put_load_promise(&mut self, any: AnyIr) -> PromiseIr {
         logger::debug!(event = "put_load_promise", ?any);
-        PromiseIr(self.put_load_i32(any.0, types::Value::HOLDER_OFFSET))
+        PromiseIr(self.put_load_i32(any.0, Value::HOLDER_OFFSET))
     }
 
     pub fn put_load_object(&mut self, any: AnyIr) -> ObjectIr {
         logger::debug!(event = "put_load_closure", ?any);
-        ObjectIr(self.put_load_addr(any.0, types::Value::HOLDER_OFFSET))
+        ObjectIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
     }
 
     // capture
@@ -473,7 +494,7 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_load_captured_value", index);
         let offset = (self.addr_type.bytes() as usize) * (index as usize);
         let capture = self.put_load_addr(self.captures, offset);
-        AnyIr(self.put_load_addr(capture, types::Capture::TARGET_OFFSET))
+        AnyIr(self.put_load_addr(capture, Capture::TARGET_OFFSET))
     }
 
     pub fn put_escape_value(&mut self, capture: CaptureIr, value: AnyIr) {
@@ -481,8 +502,8 @@ impl<'a> Editor<'a> {
         let escaped = self
             .builder
             .ins()
-            .iadd_imm(capture.0, types::Capture::ESCAPED_OFFSET as i64);
-        self.put_store(escaped, capture.0, types::Capture::TARGET_OFFSET);
+            .iadd_imm(capture.0, Capture::ESCAPED_OFFSET as i64);
+        self.put_store(escaped, capture.0, Capture::TARGET_OFFSET);
         self.put_copy_i128(value.0, escaped);
     }
 
@@ -490,14 +511,14 @@ impl<'a> Editor<'a> {
 
     pub fn put_load_lambda_from_closure(&mut self, closure: ClosureIr) -> LambdaIr {
         logger::debug!(event = "put_load_lambda_from_closure", ?closure);
-        LambdaIr(self.put_load_addr(closure.0, types::Closure::LAMBDA_OFFSET))
+        LambdaIr(self.put_load_addr(closure.0, Closure::LAMBDA_OFFSET))
     }
 
     pub fn put_get_captures_from_closure(&mut self, closure: ClosureIr) -> ir::Value {
         logger::debug!(event = "put_get_captures_from_closure", ?closure);
         self.builder
             .ins()
-            .iadd_imm(closure.0, types::Closure::CAPTURES_OFFSET as i64)
+            .iadd_imm(closure.0, Closure::CAPTURES_OFFSET as i64)
     }
 
     pub fn put_store_capture_to_closure(
@@ -513,7 +534,7 @@ impl<'a> Editor<'a> {
             index
         );
         let offset =
-            types::Closure::CAPTURES_OFFSET + (self.addr_type.bytes() as usize) * (index as usize);
+            Closure::CAPTURES_OFFSET + (self.addr_type.bytes() as usize) * (index as usize);
         self.put_store(capture.0, closure.0, offset);
     }
 
@@ -553,13 +574,13 @@ impl<'a> Editor<'a> {
     pub fn put_load_num_locals_from_coroutine(&mut self) -> ir::Value {
         logger::debug!(event = "put_load_num_locals_from_coroutine");
         let coroutine = self.coroutine();
-        self.put_load_i16(coroutine.0, types::Coroutine::NUM_LOCALS_OFFSET)
+        self.put_load_i16(coroutine.0, Coroutine::NUM_LOCALS_OFFSET)
     }
 
     pub fn put_load_state_from_coroutine(&mut self) -> ir::Value {
         logger::debug!(event = "put_load_state_from_coroutine");
         let coroutine = self.coroutine();
-        self.put_load_i32(coroutine.0, types::Coroutine::STATE_OFFSET)
+        self.put_load_i32(coroutine.0, Coroutine::STATE_OFFSET)
     }
 
     pub fn put_load_captures_from_coroutine(&mut self) -> ir::Value {
@@ -572,13 +593,13 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_get_local_from_coroutine", index);
         // TODO: emit assert(index < coroutine.num_locals)
         let coroutine = self.coroutine();
-        let offset = types::Coroutine::LOCALS_OFFSET + types::Value::SIZE * (index as usize);
+        let offset = Coroutine::LOCALS_OFFSET + Value::SIZE * (index as usize);
         AnyIr(self.builder.ins().iadd_imm(coroutine.0, offset as i64))
     }
 
     fn put_load_closure_from_coroutine(&mut self) -> ClosureIr {
         let coroutine = self.coroutine();
-        ClosureIr(self.put_load_addr(coroutine.0, types::Coroutine::CLOSURE_OFFSET))
+        ClosureIr(self.put_load_addr(coroutine.0, Coroutine::CLOSURE_OFFSET))
     }
 
     pub fn put_store_state_to_coroutine(&mut self, state: u32) {
@@ -586,12 +607,9 @@ impl<'a> Editor<'a> {
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
         let coroutine = self.coroutine();
         let state = self.builder.ins().iconst(ir::types::I32, state as i64);
-        self.builder.ins().store(
-            FLAGS,
-            state,
-            coroutine.0,
-            types::Coroutine::STATE_OFFSET as i32,
-        );
+        self.builder
+            .ins()
+            .store(FLAGS, state, coroutine.0, Coroutine::STATE_OFFSET as i32);
     }
 
     // argv
@@ -605,8 +623,8 @@ impl<'a> Editor<'a> {
 
         let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
-            size: (types::Value::SIZE as u32) * (argc as u32),
-            align_shift: types::Value::ALIGNMENT.ilog2() as u8,
+            size: (Value::SIZE as u32) * (argc as u32),
+            align_shift: Value::ALIGNMENT.ilog2() as u8,
         });
 
         ArgvIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
@@ -614,7 +632,7 @@ impl<'a> Editor<'a> {
 
     pub fn put_get_arg(&mut self, argv: ArgvIr, index: u16) -> AnyIr {
         logger::debug!(event = "put_get_arg", ?argv, index);
-        let offset = (types::Value::SIZE as i64) * (index as i64);
+        let offset = (Value::SIZE as i64) * (index as i64);
         let addr = self.builder.ins().iadd_imm(argv.0, offset);
         AnyIr(addr)
     }
@@ -739,18 +757,18 @@ impl<'a> Editor<'a> {
     pub fn put_store_any_to_any(&mut self, src: AnyIr, dst: AnyIr) {
         logger::debug!(event = "put_store_any_to_any", ?src, ?dst);
         // TODO(perf): should use memcpy?
-        static_assert_eq!(types::Value::SIZE * 8, 128);
+        static_assert_eq!(Value::SIZE * 8, 128);
         self.put_copy_i128(src.0, dst.0);
     }
 
     fn put_store_kind_and_value_to_any(&mut self, kind: u8, value: ir::Value, any: AnyIr) {
         self.put_store_kind_to_any(kind, any);
-        self.put_store(value, any.0, types::Value::HOLDER_OFFSET);
+        self.put_store(value, any.0, Value::HOLDER_OFFSET);
     }
 
     fn put_store_kind_to_any(&mut self, kind: u8, any: AnyIr) {
         let kind = self.builder.ins().iconst(ir::types::I8, kind as i64);
-        self.put_store(kind, any.0, types::Value::KIND_OFFSET);
+        self.put_store(kind, any.0, Value::KIND_OFFSET);
     }
 
     // copy operations
@@ -1065,14 +1083,11 @@ impl<'a> Editor<'a> {
         // TODO(perf): compile-time evaluation
         let num_locals = self.put_load_num_locals_from_coroutine();
         let num_locals = self.builder.ins().uextend(self.addr_type, num_locals);
+        let offset = self.builder.ins().imul_imm(num_locals, Value::SIZE as i64);
         let offset = self
             .builder
             .ins()
-            .imul_imm(num_locals, types::Value::SIZE as i64);
-        let offset = self
-            .builder
-            .ins()
-            .iadd_imm(offset, types::Coroutine::LOCALS_OFFSET as i64);
+            .iadd_imm(offset, Coroutine::LOCALS_OFFSET as i64);
         self.builder.ins().iadd(coroutine.0, offset)
     }
 
@@ -1911,7 +1926,7 @@ impl<'a> Editor<'a> {
             .iconst(ir::types::I16, scope_ref.id() as i64);
         if self.coroutine_mode {
             let coroutine = self.coroutine();
-            self.put_store(scope_id, coroutine.0, types::Coroutine::SCOPE_ID_OFFSET);
+            self.put_store(scope_id, coroutine.0, Coroutine::SCOPE_ID_OFFSET);
         } else {
             self.builder.ins().stack_store(scope_id, self.fcs, 8);
         }
@@ -1922,7 +1937,7 @@ impl<'a> Editor<'a> {
         use ir::condcodes::IntCC::Equal;
         let scope_id = if self.coroutine_mode {
             let coroutine = self.coroutine();
-            self.put_load_i16(coroutine.0, types::Coroutine::SCOPE_ID_OFFSET)
+            self.put_load_i16(coroutine.0, Coroutine::SCOPE_ID_OFFSET)
         } else {
             self.builder.ins().stack_load(ir::types::I16, self.fcs, 8)
         };

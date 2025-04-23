@@ -21,7 +21,7 @@ use types::ReturnValue;
 
 pub use backend::CompileError;
 pub use semantics::Program;
-pub use types::Char16Seq;
+pub use types::U16Chunk; // TODO: remove
 pub use types::U16String;
 pub use types::Value;
 
@@ -155,26 +155,27 @@ impl<X> Runtime<X> {
 
     pub fn clone_value(&mut self, value: &Value) -> Value {
         match value {
-            Value::String(string) if string.first_seq().on_stack() => Value::String(
-                U16String::new(self.migrate_string_to_heap(string.first_seq())),
-            ),
+            Value::String(string) if string.first_chunk().on_stack() => {
+                let chunk = self.migrate_string_to_heap(string.first_chunk());
+                Value::String(U16String::new(chunk))
+            }
             _ => value.clone(),
         }
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    pub fn migrate_string_to_heap(&mut self, seq: &Char16Seq) -> &Char16Seq {
-        logger::debug!(event = "migrate_string_to_heap", ?seq);
-        debug_assert!(seq.on_stack());
+    pub fn migrate_string_to_heap(&mut self, chunk: &U16Chunk) -> &U16Chunk {
+        logger::debug!(event = "migrate_string_to_heap", ?chunk);
+        debug_assert!(chunk.on_stack());
 
-        if seq.is_empty() {
-            return &Char16Seq::EMPTY;
+        if chunk.is_empty() {
+            return &U16Chunk::EMPTY;
         }
 
         // TODO(issue#237): GcCell
-        // TODO: seq.next
+        // TODO: chunk.next
         self.allocator
-            .alloc(Char16Seq::new_heap_from_raw_parts(seq.ptr, seq.len))
+            .alloc(U16Chunk::new_heap_from_raw_parts(chunk.ptr, chunk.len))
     }
 
     fn create_object(&mut self) -> &mut Object {

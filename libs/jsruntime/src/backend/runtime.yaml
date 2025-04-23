@@ -43,12 +43,12 @@ functions:
     args:
       - name: value
         type: '&Value'
-    ret: '&Char16Seq'
+    ret: '&U16Chunk'
   - name: migrate_string_to_heap
     args:
       - name: string
-        type: '&Char16Seq'
-    ret: '&Char16Seq'
+        type: '&U16Chunk'
+    ret: '&U16Chunk'
   - name: create_capture
     args:
       - name: target
@@ -233,7 +233,7 @@ functions:
   - name: print_string
     args:
       - name: value
-        type: '&Char16Seq'
+        type: '&U16Chunk'
       - name: msg
         type: '&std::ffi::CStr'
   - name: print_value

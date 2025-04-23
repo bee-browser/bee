@@ -73,7 +73,7 @@ function makeCraneliftIRType(type) {
     case 'f64':
       return 'ir::types::F64';
     case '&std::ffi::CStr':
-    case '&Char16Seq':
+    case '&U16Chunk':
     case '&mut Variable':
     case '&Capture':
     case '&mut Capture':
@@ -108,7 +108,7 @@ function makeCraneliftIRType2(type) {
     case 'f64':
       return 'ir::types::F64';
     case '&std::ffi::CStr':
-    case '&Char16Seq':
+    case '&U16Chunk':
     case '&mut Variable':
     case '&Capture':
     case '&mut Capture':
@@ -144,8 +144,8 @@ function makeCType(type) {
       return 'double';
     case '&std::ffi::CStr':
       return 'const char*';
-    case '&Char16Seq':
-      return 'Char16Seq*';
+    case '&U16Chunk':
+      return 'U16Chunk*';
     case '&mut Variable':
       return 'Variable*';
     case '&Capture':

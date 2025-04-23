@@ -8,7 +8,6 @@ use cranelift::codegen;
 use cranelift::codegen::ir;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
-use cranelift::frontend::Switch;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
@@ -22,6 +21,8 @@ use crate::semantics::Program;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
+use crate::types::U16Chunk;
+use crate::types::Value;
 
 use super::CompileError;
 use super::CompilerSupport;
@@ -440,10 +441,8 @@ where
         // Theoretically, the heap memory pointed by `value` can be freed after the IR built by the
         // compiler is freed.
         let string_ir = self.editor.put_create_string(value);
-        self.operand_stack.push(Operand::String(
-            string_ir,
-            Some(crate::types::Char16Seq::new_stack(value)),
-        ));
+        self.operand_stack
+            .push(Operand::String(string_ir, Some(U16Chunk::new_stack(value))));
     }
 
     fn process_object(&mut self) {
@@ -575,11 +574,11 @@ where
                 any.into()
             }
             Operand::Promise(_) => todo!(),
-            Operand::Any(_, Some(crate::types::Value::Undefined)) => Symbol::UNDEFINED.into(),
-            Operand::Any(_, Some(crate::types::Value::Null)) => Symbol::NULL.into(),
-            Operand::Any(_, Some(crate::types::Value::Boolean(false))) => Symbol::FALSE.into(),
-            Operand::Any(_, Some(crate::types::Value::Boolean(true))) => Symbol::FALSE.into(),
-            Operand::Any(_, Some(crate::types::Value::String(value))) => self
+            Operand::Any(_, Some(Value::Undefined)) => Symbol::UNDEFINED.into(),
+            Operand::Any(_, Some(Value::Null)) => Symbol::NULL.into(),
+            Operand::Any(_, Some(Value::Boolean(false))) => Symbol::FALSE.into(),
+            Operand::Any(_, Some(Value::Boolean(true))) => Symbol::FALSE.into(),
+            Operand::Any(_, Some(Value::String(value))) => self
                 .support
                 .make_symbol_from_name(value.make_utf16())
                 .into(),
@@ -968,16 +967,14 @@ where
             Operand::Closure(..) | Operand::Coroutine(..) => self.process_string(names::FUNCTION),
             Operand::Object(..) | Operand::Promise(..) => self.process_string(names::OBJECT),
             Operand::Any(_, Some(ref value)) => match value {
-                crate::types::Value::Undefined => self.process_string(names::UNDEFINED),
-                crate::types::Value::Null => self.process_string(names::OBJECT),
-                crate::types::Value::Boolean(_) => self.process_string(names::BOOLEAN),
-                crate::types::Value::Number(_) => self.process_string(names::NUMBER),
-                crate::types::Value::String(_) => self.process_string(names::STRING),
-                crate::types::Value::Closure(_) => self.process_string(names::FUNCTION),
-                crate::types::Value::Object(_) | crate::types::Value::Promise(_) => {
-                    self.process_string(names::OBJECT)
-                }
-                crate::types::Value::None => unreachable!("{value:?}"),
+                Value::Undefined => self.process_string(names::UNDEFINED),
+                Value::Null => self.process_string(names::OBJECT),
+                Value::Boolean(_) => self.process_string(names::BOOLEAN),
+                Value::Number(_) => self.process_string(names::NUMBER),
+                Value::String(_) => self.process_string(names::STRING),
+                Value::Closure(_) => self.process_string(names::FUNCTION),
+                Value::Object(_) | Value::Promise(_) => self.process_string(names::OBJECT),
+                Value::None => unreachable!("{value:?}"),
             },
             Operand::Any(value, None) => {
                 let string = self.editor.put_runtime_typeof(self.support, value);
@@ -1940,20 +1937,10 @@ where
         debug_assert!(num_states >= 2);
 
         let state = self.editor.put_load_state_from_coroutine();
+        let blocks = self.editor.put_jump_table(state, num_states);
+        debug_assert_eq!(blocks.len(), num_states as usize);
 
-        // TODO(perf): use JumpTable
-        let mut switch = Switch::new();
-        let mut blocks = vec![];
-        for i in 0..num_states - 1 {
-            let block = self.editor.create_block();
-            blocks.push(block);
-            switch.set_entry(i as u128, block);
-        }
-        let done_block = self.editor.create_block();
-        blocks.push(done_block);
-        self.editor.put_switch(switch, state, done_block);
-
-        self.editor.switch_to_block(done_block);
+        self.editor.switch_to_block(blocks[num_states as usize - 1]);
         let x = self.editor.put_boolean(false);
         self.editor
             .put_runtime_assert(self.support, x, c"the coroutine has already done");
@@ -2025,40 +2012,40 @@ where
                 Operand::Boolean(value, ..) => {
                     self.editor
                         .put_write_boolean_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Number(value, ..) => {
                     self.editor
                         .put_write_number_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::String(value, ..) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
                         .put_write_string_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
                         .put_write_closure_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Object(value) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
                         .put_write_object_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Promise(value) => {
                     self.editor
                         .put_write_promise_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Any(value, ..) => {
                     self.editor
                         .put_write_any_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += crate::types::Value::SIZE;
+                    offset += Value::SIZE;
                 }
                 Operand::Undefined
                 | Operand::Null
@@ -2086,46 +2073,46 @@ where
                     *value = self
                         .editor
                         .put_read_boolean_from_scratch_buffer(scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Number(value, ..) => {
                     *value = self
                         .editor
                         .put_read_number_from_scratch_buffer(scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::String(value, ..) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
                         .put_read_string_from_scratch_buffer(scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
                         .put_read_closure_from_scratch_buffer(scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Object(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
                         .put_read_object_from_scratch_buffer(scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Promise(value) => {
                     *value = self
                         .editor
                         .put_read_promise_from_scratch_buffer(scratch_buffer, offset);
-                    offset += crate::types::Value::HOLDER_SIZE;
+                    offset += Value::HOLDER_SIZE;
                 }
                 Operand::Any(value, ..) => {
                     *value = self
                         .editor
                         .put_read_any_from_scratch_buffer(scratch_buffer, offset);
-                    offset += crate::types::Value::SIZE;
+                    offset += Value::SIZE;
                 }
                 Operand::Undefined
                 | Operand::Null
@@ -2932,7 +2919,7 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    String(StringIr, #[allow(unused)] Option<crate::types::Char16Seq>),
+    String(StringIr, #[allow(unused)] Option<U16Chunk>),
 
     /// Runtime value of closure type.
     Closure(ClosureIr),
@@ -2942,7 +2929,7 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of any type.
     // TODO(perf): compile-time evaluation
-    Any(AnyIr, Option<crate::types::Value>),
+    Any(AnyIr, Option<Value>),
 
     // Values that cannot be stored into a `Value`.
     /// Runtime value of lambda function type.
@@ -3041,6 +3028,10 @@ impl Status {
     const EXCEPTION: Self = Self(0x01);
     const SUSPEND: Self = Self(0x02);
     const UNSET: Self = Self(Self::UNSET_BIT | Self::NORMAL.0);
+
+    const fn imm(&self) -> u32 {
+        self.0
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -3068,5 +3059,9 @@ impl FlowSelector {
 
     const fn continue_at(depth: u32) -> Self {
         Self::new(0, depth, Self::KIND_CONTINUE)
+    }
+
+    const fn imm(&self) -> u32 {
+        self.0
     }
 }
