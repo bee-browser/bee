@@ -1,7 +1,5 @@
 # Internals
 
-> TODO(docs): rewrite based on Cranelift backend
-
 ## Pipeline
 
 The following diagram shows perspective of data-flow on the pipeline.
@@ -35,16 +33,16 @@ The following diagram shows perspective of data-flow on the pipeline.
 +----------------------------------+
 | `jsruntime::semantics::Analyzer` |
 +----------------------------------+
-  | Compile Command Stream
+  | Compile Script for each Function
   V
-+--------------------------------------+
-| `jsruntime::backend::llvm::Compiler` |
-+--------------------------------------+
-  | LLVM IR Module
++---------------------------------+
+| `jsruntime::backend::compile()` |
++---------------------------------+
+  | Address of JIT Compiled Function
   V
-+--------------------------------------+
-| `jsruntime::backend::llvm::Executor` |
-+--------------------------------------+
++--------------------------------+
+| `jsruntime::backend::Executor` |
++--------------------------------+
 ```
 
 Currently, the pipeline is performed on a single thread, but it may be performed on multiple
@@ -81,7 +79,7 @@ the following paper and book:
 
 Differences from the original algorithm come from differences in the processing models.  One of
 design goals of our compiler is to save runtime costs as much as possible.  Achieving this goal,
-our compiler computes logical locations of free variables on the stack and generates LLVM IR
+our compiler computes logical locations of free variables on the stack and generates IR
 instructions to escape the free variables from the stack to the heap at runtime.  The generated
 code does not use a list of open upvalues at all, which is used for sharing upvalues among
 closures.
@@ -89,7 +87,7 @@ closures.
 The implementation of our compiler is basically separated into two parts:
 
 1. Detecting detect free variables and computing their locations
-2. Generating LLVM IR instructions to perform runtime operations on *upvalues*
+2. Generating IR instructions to perform runtime operations on *upvalues*
 
 The first part is implemented in the `semantics` module.  A `semantics::Analyzer` builds a scope
 tree for a JavaScript program.  A scope node in the scope tree holds a list of variables defined in
@@ -97,19 +95,20 @@ the scope.  When a variable referred in a scope is not found in the lexical scop
 scope up to the function scope, the `semantics::Analyzer` postpones resolving the reference and
 will try again in outer scopes enclosing the function.  Once the reference is resolved, the
 `semantics::Analyzer` updates *placeholder* `semantics::CompileCommand`s to be interpreted in the
-next phase to generate LLVM IR instructions for closures.
+next phase to generate IR instructions for closures.
 
 The second part is implemented in the `compiler` and `bridge` modules.  A `compiler::Compiler`
 interprets the `semantics::CompileCommand`s and calls functions of `bridge::Compiler` in order to
-build LLVM IR instructions for closures.  The logical location of each free variable on the stack
-is computed and the runtime part of the original algorithm are coded in this phase.
+build IR instructions for closures.  The logical location of each free variable on the stack is
+computed and the runtime part of the original algorithm are coded in this phase.
 
 ## async/await
 
 There are multiple feasible ways to implement the async/await features, but we decided not to use
-[the LLVM coroutines](https://llvm.org/docs/Coroutines.html).  The reasons are as follows:
+features such as [the LLVM coroutines](https://llvm.org/docs/Coroutines.html). The reasons are as
+follows:
 
-* We have a plan to switch IR to others written in Rust, such as cranelift IR
+* We may switch to another IR in the future
   * It's better to use only instructions that commonly used in others
 * The optimizer for llvm.coro.* is great but it does not improve instructions generated from a
   JavaScript program
@@ -188,8 +187,8 @@ kind of function is generally called a *ramp* function in a coroutine implementa
 Inside the ramp function, a [*coroutine*](https://en.wikipedia.org/wiki/Coroutine) is created.
 Like the Rust compiler does, we implements the coroutine with a state machine.  In the `semantics`
 module, compile commends for creating a jump table and suspending/resuming the coroutine execution
-are generated and these commands are processed in the `backend::llvm::compiler` module in order to
-build corresponding LLVM IR instructions.
+are generated and these commands are processed in the `backend::compile()` in order to build
+corresponding target IR instructions.
 
 A closure for the lambda function of the coroutine is created in order to capture the arguments of
 the original async function.  The coroutine lambda function takes special *internal* arguments
@@ -208,58 +207,80 @@ of such variables will be saved into the memory area of the `Coroutine` data bef
 suspends and loaded from it when the coroutine resumes.  The size of the memory area can be
 computed at compile time.
 
-### Generating LLVM IR instructions implementing the state machine for a coroutine
+### Generating target IR instructions implementing the state machine for a coroutine
 
-Here we are going to explain how `await` expressions are translated into [LLVM IR instructions].
+Here we are going to explain how `await` expressions are translated into target IR instructions.
 For simplicity, we treat only the case of the following simple `await` expression:
 
 ```javascript
 await 0
 ```
 
-The same strategy can work for any kind of JavaScript control structure including conditional and
-loop statements.
+However, the same strategy can work for any kind of JavaScript control structure including
+conditional and loop statements.
 
-LLVM IR instructions for `await` expressions can be divided into two groups:
+The compile script (containing compile commands) for the above expression can be displayed by
+running the following command:
 
-* Instructions building the jump table for the state machine
-* Instructions to suspend and resume the execution
-
-As you saw above, the instructions for the jump table is placed before instructions for the
-modified function body.  The jump table can be built with an LLVM IR `switch` instruction:
-
-```llvm
-bb.body:                                          ; preds = %bb.args
-  %co.state.ptr = getelementptr inbounds %Coroutine, ptr %context, i32 0, i32 1
-  %co.state = load i32, ptr %co.state.ptr, align 4
-  switch i32 %co.state, label %bb.co.dormant [
-    i32 0, label %bb.co.initial
-    i32 1, label %bb.scope.2.resume
-  ]
+```shell
+echo 'await 0' | cargo run --bin=jstb -- parse -p f --as=module
 ```
 
-At the suspend point, the LLVM IR compiler generates a LLVM IR `store` instruction to update the
-current state of the coroutine and a LLVM IR `ret` instruction to suspend the execution:
+You can see the compile script like this:
 
-```llvm
-  ; Save temporal variables to the scratch buffer.
-  %co.state.ptr4 = getelementptr inbounds %Coroutine, ptr %context, i32 0, i32 1
-  store i32 1, ptr %co.state.ptr4, align 4
-  ret i32 2
+```
+  Environment(0)
+  JumpTable(3)
+  PushScope(ScopeRef(2))
+  DeclareVars(ScopeRef(2))
+  Number(0.0)
+  Await(1)
+  Discard
+  PopScope(ScopeRef(2))
+```
+
+Target IR instructions generated for `await` expressions can be divided into two groups:
+
+* `JumpTable(3)`
+  * Instructions building the jump table for the state machine
+* `Await(1)`
+  * Instructions to suspend and resume the execution
+
+As you saw in the previous section, the instructions for the jump table is placed before
+instructions for the modified function body.
+
+```clir
+    v10 = load.i32 notrap aligned v1+8  ; Load Coroutine::state
+    br_table v10, block5, [block3, block4]
+```
+
+At the suspend point, the compiler generates:
+
+1. `store` instruction to save the next state to `Coroutine::state`
+2. `return` instruction to suspend the execution
+
+```clir
+    ; 1. Save state(1) to Coroutine::state
+    v23 = iconst.i32 1
+    store notrap aligned v23, v1+8  ; v23 = 1
+    ; 2. Return Status::SUSPEND
+    v24 = iconst.i32 2
+    return v24  ; v24 = 2
 ```
 
 A basic block from which the execution resumes is inserted after the basic block containing the
 suspend point:
 
-```llvm
-bb.scope.2.resume:                                ; preds = %bb.body
-  ; Load temporal variables the scratch buffer.
+```clir
+block4:
+    ; Load temporal variables the scratch buffer
+    v25 = load.i16 notrap aligned v1+12
 ```
 
-You can see the entire LLVM IR instructions by running the following command:
+You can see the entire IR instructions by running the following command:
 
 ```shell
-echo 'await 0' | cargo run --bin=jstb -- compile --as=module --no-optimize
+echo 'await 0' | cargo run --bin=jstb -- compile --as=module
 ```
 
 ### The scratch buffer
@@ -283,27 +304,36 @@ the next suspend point.  Existing values in the scratch buffer will always be **
 new temporal values used in an expression which is being evaluated just before the next suspend
 point.
 
-The following LLVM IR instructions store the result of `a + b` into the scratch buffer and load it
-from the scratch buffer:
+The following IR instructions store the result of `a + b` into the scratch buffer and load it from
+the scratch buffer:
 
-```llvm
-  %co.scratch_buffer.ptr = getelementptr inbounds i8, ptr %context, i64 %co.scratch_buffer.offsetof
-  %scratch.number.ptr = getelementptr inbounds i8, ptr %co.scratch_buffer.ptr, i32 0
-  store double %add, ptr %scratch.number.ptr, align 8
-  ...
+```clir
+block11:
+    ; Compute the address of the scratch buffer
+    v33 = load.i16 notrap aligned v1+12
+    v34 = uextend.i64 v33
+    v35 = imul_imm v34, 16
+    v36 = iadd_imm v35, 24
+    v37 = iadd.i64 v1, v36
+    ; Save the temporal value to the scratch buffer
+    store.f64 notrap aligned v27, v37
+    ...
 
-bb.scope.2.resume:                                ; preds = %bb.body
-  ...
-  %co.scratch_buffer.ptr26 = getelementptr inbounds i8, ptr %context, i64 %co.scratch_buffer.offsetof25
-  %scratch.number.ptr27 = getelementptr inbounds i8, ptr %co.scratch_buffer.ptr26, i32 0
-  %scratch.number = load double, ptr %scratch.number.ptr27, align 8
+block4:
+    ; Compute the address of the scratch buffer
+    v40 = load.i16 notrap aligned v1+12
+    v41 = uextend.i64 v40
+    v42 = imul_imm v41, 16
+    v43 = iadd_imm v42, 24
+    v44 = iadd.i64 v1, v43
+    ; Load the temporal value from the scratch buffer
+    v45 = load.f64 notrap aligned v44
+    ...
 ```
 
-Run the following command if you want to see the entire LLVM IR instructions:
+Run the following command if you want to see the entire IR instructions:
 
 ```shell
 echo 'const a = 1, b = 2, c = 3; a + b + await c' | \
-  cargo run --bin=jstb -- compile --no-optimize --as=module
+  cargo run --bin=jstb -- compile --as=module
 ```
-
-[LLVM IR instructions]: https://llvm.org/docs/LangRef.html
