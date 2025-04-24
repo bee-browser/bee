@@ -31,7 +31,7 @@ use support::RuntimeFunctionIds;
 pub use compiler::compile;
 
 pub fn initialize() {
-    // TODO
+    // Nothing to do.
 }
 
 pub trait CompilerSupport {
