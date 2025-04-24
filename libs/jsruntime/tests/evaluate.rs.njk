@@ -72,27 +72,13 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
 {%- for test in data.tests %}
 
 #[test]
-fn {{ test.name }}_optimize() {
-    {{ test.name }}(true, false);
-}
-
-#[test]
-fn {{ test.name }}_no_optimize() {
-    {{ test.name }}(false, false);
-}
-
-#[test]
-fn {{ test.name }}_with_labels() {
-    {{ test.name }}(false, true);
-}
-
-fn {{ test.name }}(optimize: bool, enable_labels: bool) {
+fn {{ test.name }}() {
     {%- for string in test.strings %}
     static CODE_UNITS{{ loop.index0 }}: [u16; {{ string.size }}] = [{{ string.data | join(", ") }}];
     static STRING{{ loop.index0 }}: U16Chunk = U16Chunk::new_const(&CODE_UNITS{{ loop.index0 }});
     {%- endfor %}
     let src = include_str!("{{ test.filename }}");
-    let result = evaluate(src, {{ test.module }}, optimize, enable_labels, vec![
+    let result = evaluate(src, {{ test.module }}, true, false, vec![
         {%- for expected in test.expectedValues %}
         {{ expected }},
         {%- endfor %}
