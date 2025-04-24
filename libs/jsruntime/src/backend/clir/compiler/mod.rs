@@ -357,8 +357,6 @@ where
             CompileCommand::LoopBody => self.process_loop_body(),
             CompileCommand::LoopEnd => self.process_loop_end(),
             CompileCommand::CaseBlock(id, num_cases) => self.process_case_block(*id, *num_cases),
-            CompileCommand::Case => self.process_case(),
-            CompileCommand::Default => self.process_default(),
             CompileCommand::CaseClause(default, batch_index) => {
                 self.process_case_clause(*default, *batch_index)
             }
@@ -1699,14 +1697,6 @@ where
 
         self.editor.put_jump(case_block, &[]);
         self.editor.switch_to_block(case_block);
-    }
-
-    fn process_case(&mut self) {
-        // TODO(refactor): remove
-    }
-
-    fn process_default(&mut self) {
-        // TODO(refactor): remove
     }
 
     fn process_case_clause(&mut self, default: bool, batch_index: Option<usize>) {
