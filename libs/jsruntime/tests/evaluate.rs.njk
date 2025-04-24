@@ -8,7 +8,7 @@
 
 use assert_matches::assert_matches;
 use base::macros::assert_eq;
-use jsruntime::Char16Seq;
+use jsruntime::U16Chunk;
 use jsruntime::Runtime;
 use jsruntime::Value;
 use jsruntime::U16String;
@@ -62,8 +62,8 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
     } else {
         runtime.parse_script(src).unwrap()
     };
-    let module = runtime.compile(&program, optimize).unwrap();
-    runtime.link(module);
+    runtime.compile(&program, optimize).unwrap();
+    runtime.link();
     let result = runtime.evaluate(&program)?;
     runtime.run();
     runtime.extension().validate();
@@ -72,27 +72,13 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
 {%- for test in data.tests %}
 
 #[test]
-fn {{ test.name }}_optimize() {
-    {{ test.name }}(true, false);
-}
-
-#[test]
-fn {{ test.name }}_no_optimize() {
-    {{ test.name }}(false, false);
-}
-
-#[test]
-fn {{ test.name }}_with_labels() {
-    {{ test.name }}(false, true);
-}
-
-fn {{ test.name }}(optimize: bool, enable_labels: bool) {
+fn {{ test.name }}() {
     {%- for string in test.strings %}
     static CODE_UNITS{{ loop.index0 }}: [u16; {{ string.size }}] = [{{ string.data | join(", ") }}];
-    static STRING{{ loop.index0 }}: Char16Seq = Char16Seq::new_const(&CODE_UNITS{{ loop.index0 }});
+    static STRING{{ loop.index0 }}: U16Chunk = U16Chunk::new_const(&CODE_UNITS{{ loop.index0 }});
     {%- endfor %}
     let src = include_str!("{{ test.filename }}");
-    let result = evaluate(src, {{ test.module }}, optimize, enable_labels, vec![
+    let result = evaluate(src, {{ test.module }}, true, false, vec![
         {%- for expected in test.expectedValues %}
         {{ expected }},
         {%- endfor %}

@@ -17,24 +17,35 @@ use crate::objects::Object;
 #[repr(C, u8)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
-    None = 0,
-    Undefined,
-    Null,
-    Boolean(bool),
-    Number(f64),
-    String(U16String),
+    None = Self::KIND_NONE,
+    Undefined = Self::KIND_UNDEFINED,
+    Null = Self::KIND_NULL,
+    Boolean(bool) = Self::KIND_BOOLEAN,
+    Number(f64) = Self::KIND_NUMBER,
+    String(U16String) = Self::KIND_STRING,
     // TODO(issue#237): GcCellRef
-    Closure(*mut Closure),
-    Promise(Promise),
+    Closure(*mut Closure) = Self::KIND_CLOSURE,
+    Promise(Promise) = Self::KIND_PROMISE,
     // TODO(issue#237): GcCellRef
     // TODO: *mut Object
-    Object(*mut c_void),
+    Object(*mut c_void) = Self::KIND_OBJECT,
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
 static_assertions::const_assert_eq!(align_of::<Value>(), 8);
 
 impl Value {
+    // There is no way to define const function to extract the discriminant of each variant.
+    pub(crate) const KIND_NONE: u8 = 0;
+    pub(crate) const KIND_UNDEFINED: u8 = 1;
+    pub(crate) const KIND_NULL: u8 = 2;
+    pub(crate) const KIND_BOOLEAN: u8 = 3;
+    pub(crate) const KIND_NUMBER: u8 = 4;
+    pub(crate) const KIND_STRING: u8 = 5;
+    pub(crate) const KIND_CLOSURE: u8 = 6;
+    pub(crate) const KIND_PROMISE: u8 = 7;
+    pub(crate) const KIND_OBJECT: u8 = 8;
+
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
     pub(crate) const HOLDER_SIZE: usize = size_of::<u64>();
@@ -65,15 +76,15 @@ impl Value {
     }
 
     // 13.5.3.1 Runtime Semantics: Evaluation
-    pub fn get_typeof(&self) -> &'static Char16Seq {
+    pub fn get_typeof(&self) -> &'static U16Chunk {
         use jsparser::symbol::builtin::names;
 
-        const UNDEFINED: Char16Seq = Char16Seq::new_const(names::UNDEFINED);
-        const BOOLEAN: Char16Seq = Char16Seq::new_const(names::BOOLEAN);
-        const NUMBER: Char16Seq = Char16Seq::new_const(names::NUMBER);
-        const STRING: Char16Seq = Char16Seq::new_const(names::STRING);
-        const FUNCTION: Char16Seq = Char16Seq::new_const(names::FUNCTION);
-        const OBJECT: Char16Seq = Char16Seq::new_const(names::OBJECT);
+        const UNDEFINED: U16Chunk = U16Chunk::new_const(names::UNDEFINED);
+        const BOOLEAN: U16Chunk = U16Chunk::new_const(names::BOOLEAN);
+        const NUMBER: U16Chunk = U16Chunk::new_const(names::NUMBER);
+        const STRING: U16Chunk = U16Chunk::new_const(names::STRING);
+        const FUNCTION: U16Chunk = U16Chunk::new_const(names::FUNCTION);
+        const OBJECT: U16Chunk = U16Chunk::new_const(names::OBJECT);
 
         match self {
             Self::None => unreachable!(),
@@ -145,22 +156,19 @@ impl std::fmt::Display for Value {
 ///
 /// A UTF-16 string is represented as a *chain* of UTF-16 code sequences.
 ///
-/// This type is usually allocated on the stack and holds a pointer to a `Char16Seq` that is
+/// This type is usually allocated on the stack and holds a pointer to a `U16Chunk` that is
 /// allocated on the heap or the stack.
 // TODO(issue#237): GcCell
 #[derive(Clone, Copy, PartialEq)]
-#[repr(C)]
-pub struct U16String(*const Char16Seq); // Non-null
+pub struct U16String(*const U16Chunk); // Non-null
 
 static_assertions::const_assert_eq!(align_of::<U16String>(), align_of::<usize>());
 
 impl U16String {
-    // TODO(refactor): cbindgen cannot parse the following line...
-    // Currently, we don't use union types.  So, now may be the time to switch to cxx.
-    //pub const EMPTY: Self = Self(std::ptr::from_ref(&Char16Seq::EMPTY));
+    pub const EMPTY: Self = Self(std::ptr::from_ref(&U16Chunk::EMPTY));
 
-    pub fn new(seq: &Char16Seq) -> Self {
-        Self(std::ptr::from_ref(seq))
+    pub const fn new(chunk: &U16Chunk) -> Self {
+        Self(std::ptr::from_ref(chunk))
     }
 
     pub const fn is_empty(&self) -> bool {
@@ -173,7 +181,7 @@ impl U16String {
         unsafe { (*self.0).total_len() }
     }
 
-    pub(crate) fn first_seq(&self) -> &Char16Seq {
+    pub(crate) fn first_chunk(&self) -> &U16Chunk {
         debug_assert!(!self.0.is_null());
         unsafe { &(*self.0) }
     }
@@ -210,9 +218,9 @@ impl std::fmt::Display for U16String {
 // TODO(issue#237): GcCell
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct Char16Seq {
+pub struct U16Chunk {
     /// A pointer to the next sequence if it exists.
-    pub(crate) next: *const Char16Seq,
+    pub(crate) next: *const U16Chunk,
 
     /// A pointer to the array of UTF-16 code units if it exists.
     pub(crate) ptr: *const u16,
@@ -220,12 +228,12 @@ pub struct Char16Seq {
     /// The number of the UTF-16 code units.
     pub(crate) len: u32,
 
-    pub(crate) kind: Char16SeqKind,
+    pub(crate) kind: U16ChunkKind,
 }
 
-static_assertions::const_assert_eq!(align_of::<Char16Seq>(), align_of::<usize>());
+static_assertions::const_assert_eq!(align_of::<U16Chunk>(), align_of::<usize>());
 
-impl Char16Seq {
+impl U16Chunk {
     pub const EMPTY: Self = Self::new_const_from_raw_parts(std::ptr::null(), 0);
 
     pub(crate) const SIZE: usize = size_of::<Self>();
@@ -248,7 +256,7 @@ impl Char16Seq {
             next: std::ptr::null(),
             ptr,
             len,
-            kind: Char16SeqKind::Const,
+            kind: U16ChunkKind::Const,
         }
     }
 
@@ -257,7 +265,7 @@ impl Char16Seq {
             next: std::ptr::null(),
             ptr,
             len,
-            kind: Char16SeqKind::Stack,
+            kind: U16ChunkKind::Stack,
         }
     }
 
@@ -266,7 +274,7 @@ impl Char16Seq {
             next: std::ptr::null(),
             ptr,
             len,
-            kind: Char16SeqKind::Heap,
+            kind: U16ChunkKind::Heap,
         }
     }
 
@@ -275,7 +283,7 @@ impl Char16Seq {
     }
 
     pub fn on_stack(&self) -> bool {
-        matches!(self.kind, Char16SeqKind::Stack)
+        matches!(self.kind, U16ChunkKind::Stack)
     }
 
     pub fn total_len(&self) -> u32 {
@@ -297,10 +305,10 @@ impl Char16Seq {
 }
 
 // The UTF-16 code units never change.
-unsafe impl Send for Char16Seq {}
-unsafe impl Sync for Char16Seq {}
+unsafe impl Send for U16Chunk {}
+unsafe impl Sync for U16Chunk {}
 
-impl std::fmt::Display for Char16Seq {
+impl std::fmt::Display for U16Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let units = unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) };
         let chars: String = char::decode_utf16(units.iter().cloned())
@@ -314,7 +322,7 @@ impl std::fmt::Display for Char16Seq {
 
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)]
-pub enum Char16SeqKind {
+pub enum U16ChunkKind {
     Const = 0,
     Stack,
     Heap,

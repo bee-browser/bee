@@ -1,6 +1,3 @@
-// TODO: remove
-#![allow(unused)]
-
 use cranelift::codegen::ir;
 use rustc_hash::FxHashMap;
 
@@ -104,26 +101,6 @@ impl ControlFlowStack {
             }
             _ => unreachable!(),
         }
-    }
-
-    pub fn coroutine_blocks(&self) -> &[ir::Block] {
-        debug_assert!(self.stack.len() >= 2);
-        let flow = match self.stack[1] {
-            ControlFlow::Coroutine(ref flow) => flow,
-            _ => unreachable!(),
-        };
-        &flow.blocks
-    }
-
-    pub fn coroutine_next_state(&mut self) -> u32 {
-        debug_assert!(self.stack.len() >= 2);
-        let flow = match self.stack[1] {
-            ControlFlow::Coroutine(ref mut flow) => flow,
-            _ => unreachable!(),
-        };
-        let next_state = flow.next_state;
-        flow.next_state += 1;
-        next_state
     }
 
     pub fn coroutine_next_block(&mut self) -> ir::Block {
@@ -325,16 +302,6 @@ impl ControlFlowStack {
             .unwrap()
     }
 
-    fn switch_flow_mut(&mut self) -> &mut SwitchFlow {
-        self.stack
-            .get_mut(self.switch_index)
-            .and_then(|flow| match flow {
-                ControlFlow::Switch(flow) => Some(flow),
-                _ => None,
-            })
-            .unwrap()
-    }
-
     pub fn push_case_flow(&mut self, clause_block: ir::Block, batch_index: Option<usize>) {
         self.stack.push(ControlFlow::Case(CaseFlow {
             clause_block,
@@ -425,11 +392,6 @@ impl ControlFlowStack {
         self.exception_flow_mut().state = ExceptionState::Finally;
     }
 
-    pub fn set_default_case_block(&mut self, block: ir::Block) {
-        debug_assert!(self.switch_index > 0);
-        self.switch_flow_mut().default_block = Some(block);
-    }
-
     pub fn push_exit_target(&mut self, block: ir::Block, breakable: bool) {
         // TODO: should treat as a compilation error.
         assert!(self.exit_stack.len() <= u8::MAX as usize);
@@ -472,15 +434,6 @@ impl ControlFlowStack {
     pub fn exit_block(&self) -> ir::Block {
         debug_assert!(!self.exit_stack.is_empty());
         self.exit_stack.last().unwrap().block
-    }
-
-    pub fn clear(&mut self) {
-        self.stack.clear();
-        self.exit_stack.clear();
-        self.exit_label_map.clear();
-        self.scope_index = 0;
-        self.switch_index = 0;
-        self.exception_index = 0;
     }
 
     pub fn cleanup_block(&self) -> ir::Block {
@@ -631,12 +584,6 @@ pub struct CoroutineFlow {
     blocks: Vec<ir::Block>,
     num_states: u32,
     next_state: u32,
-}
-
-impl CoroutineFlow {
-    pub fn dormant_block(&self) -> ir::Block {
-        *self.blocks.last().unwrap()
-    }
 }
 
 /// Contains data used for building a region representing a lexical scope.

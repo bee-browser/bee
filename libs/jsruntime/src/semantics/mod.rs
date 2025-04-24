@@ -1495,7 +1495,6 @@ impl FunctionAnalysis {
         // Make a duplicate of the `switchValue` for the evaluation on the case selector.
         self.commands.push(CompileCommand::Duplicate(1));
         self.commands.push(CompileCommand::StrictEquality);
-        self.commands.push(CompileCommand::Case);
         self.reserve_command_for_case_statements();
     }
 
@@ -1526,7 +1525,6 @@ impl FunctionAnalysis {
     }
 
     fn process_default_selector(&mut self) {
-        self.commands.push(CompileCommand::Default);
         self.reserve_command_for_case_statements();
     }
 
@@ -1887,8 +1885,6 @@ pub enum CompileCommand {
 
     // switch
     CaseBlock(u16, u16),
-    Case,
-    Default,
     CaseClause(bool, Option<usize>),
     Switch(u16, u16, Option<u16>),
 

@@ -60,7 +60,7 @@ fn compile(c: &mut Criterion) {
                     let mut runtime = BasicRuntime::new();
                     let program = runtime.parse_script(data.1).unwrap();
                     total += elapsed! {
-                        black_box(runtime.compile(black_box(&program), black_box(true)).unwrap())
+                        runtime.compile(black_box(&program), black_box(true)).unwrap()
                     };
                 }
                 total
@@ -81,9 +81,9 @@ fn link(c: &mut Criterion) {
                 for _i in 0..iters {
                     let mut runtime = BasicRuntime::new();
                     let program = runtime.parse_script(data.1).unwrap();
-                    let module = runtime.compile(&program, true).unwrap();
+                    runtime.compile(&program, true).unwrap();
                     total += elapsed! {
-                        runtime.link(black_box(module))
+                        runtime.link()
                     };
                 }
                 total
@@ -104,8 +104,8 @@ fn evaluate(c: &mut Criterion) {
                 for _i in 0..iters {
                     let mut runtime = BasicRuntime::new();
                     let program = runtime.parse_script(data.1).unwrap();
-                    let module = runtime.compile(&program, true).unwrap();
-                    runtime.link(module);
+                    runtime.compile(&program, true).unwrap();
+                    runtime.link();
                     total += elapsed! {
                         black_box(runtime.evaluate(black_box(&program)).unwrap())
                     };
@@ -126,8 +126,8 @@ fn full(c: &mut Criterion) {
             b.iter(|| {
                 let mut runtime = BasicRuntime::new();
                 let program = runtime.parse_script(data.1).unwrap();
-                let module = runtime.compile(&program, true).unwrap();
-                runtime.link(module);
+                runtime.compile(&program, true).unwrap();
+                runtime.link();
                 black_box(runtime.evaluate(black_box(&program)).unwrap());
             })
         });

@@ -8,11 +8,11 @@ use crate::logger;
 use crate::objects::Object;
 use crate::objects::PropertyKey;
 use crate::types::Capture;
-use crate::types::Char16Seq;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Status;
+use crate::types::U16Chunk;
 use crate::types::Value;
 
 #[derive(Clone)]
@@ -25,9 +25,9 @@ pub struct RuntimeFunctions {
     pub to_uint32: unsafe extern "C" fn(*mut c_void, f64) -> u32,
     pub is_loosely_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
     pub is_strictly_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
-    pub get_typeof: unsafe extern "C" fn(*mut c_void, *const Value) -> *const Char16Seq,
+    pub get_typeof: unsafe extern "C" fn(*mut c_void, *const Value) -> *const U16Chunk,
     pub migrate_string_to_heap:
-        unsafe extern "C" fn(*mut c_void, *const Char16Seq) -> *const Char16Seq,
+        unsafe extern "C" fn(*mut c_void, *const U16Chunk) -> *const U16Chunk,
     pub create_capture: unsafe extern "C" fn(*mut c_void, *mut Value) -> *mut Capture,
     pub create_closure: unsafe extern "C" fn(*mut c_void, Lambda, u16) -> *mut Closure,
     pub create_coroutine:
@@ -68,7 +68,7 @@ pub struct RuntimeFunctions {
     pub print_bool: unsafe extern "C" fn(*mut c_void, bool, *const c_char),
     pub print_u32: unsafe extern "C" fn(*mut c_void, u32, *const c_char),
     pub print_f64: unsafe extern "C" fn(*mut c_void, f64, *const c_char),
-    pub print_string: unsafe extern "C" fn(*mut c_void, *const Char16Seq, *const c_char),
+    pub print_string: unsafe extern "C" fn(*mut c_void, *const U16Chunk, *const c_char),
     pub print_value: unsafe extern "C" fn(*mut c_void, *const Value, *const c_char),
     pub print_capture: unsafe extern "C" fn(*mut c_void, *const Capture, *const c_char),
     pub print_message: unsafe extern "C" fn(*mut c_void, *const c_char),
@@ -316,20 +316,20 @@ unsafe extern "C" fn runtime_is_strictly_equal(
 unsafe extern "C" fn runtime_get_typeof(
     _runtime: *mut c_void,
     value: *const Value,
-) -> *const Char16Seq {
+) -> *const U16Chunk {
     let value = unsafe { into_value!(value) };
     debug_assert!(!matches!(value, Value::None));
 
-    value.get_typeof() as *const Char16Seq
+    value.get_typeof() as *const U16Chunk
 }
 
 unsafe extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: *mut c_void,
-    seq: *const Char16Seq,
-) -> *const Char16Seq {
+    seq: *const U16Chunk,
+) -> *const U16Chunk {
     let runtime = unsafe { into_runtime!(runtime, X) };
     let seq = unsafe { into_string!(seq) };
-    runtime.migrate_string_to_heap(seq) as *const Char16Seq
+    runtime.migrate_string_to_heap(seq) as *const U16Chunk
 }
 
 unsafe extern "C" fn runtime_create_capture<X>(
@@ -862,7 +862,7 @@ unsafe extern "C" fn runtime_print_f64(
 
 unsafe extern "C" fn runtime_print_string(
     _runtime: *mut c_void,
-    value: *const Char16Seq,
+    value: *const U16Chunk,
     msg: *const std::os::raw::c_char,
 ) {
     let value = unsafe { value.as_ref().unwrap() };
