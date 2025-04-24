@@ -453,8 +453,11 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_has_value", ?any);
         use ir::condcodes::IntCC::NotEqual;
         let kind = self.put_load_i8(any.0, Value::KIND_OFFSET);
-        // TODO(refactor): Value::KIND_NONE
-        BooleanIr(self.builder.ins().icmp_imm(NotEqual, kind, 0))
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(NotEqual, kind, Value::KIND_NONE as i64),
+        )
     }
 
     pub fn put_load_boolean(&mut self, any: AnyIr) -> BooleanIr {
@@ -702,56 +705,47 @@ impl<'a> Editor<'a> {
 
     pub fn put_store_none_to_any(&mut self, any: AnyIr) {
         logger::debug!(event = "put_store_none_to_any", ?any);
-        // TODO: Value::KIND_NONE
-        self.put_store_kind_to_any(0, any);
+        self.put_store_kind_to_any(Value::KIND_NONE, any);
     }
 
     pub fn put_store_undefined_to_any(&mut self, any: AnyIr) {
         logger::debug!(event = "put_store_undefined_to_any", ?any);
-        // TODO: Value::KIND_UNDEFINED
-        self.put_store_kind_to_any(1, any);
+        self.put_store_kind_to_any(Value::KIND_UNDEFINED, any);
     }
 
     pub fn put_store_null_to_any(&mut self, any: AnyIr) {
         logger::debug!(event = "put_store_null_to_any", ?any);
-        // TODO: Value::KIND_NULL
-        self.put_store_kind_to_any(2, any);
+        self.put_store_kind_to_any(Value::KIND_NULL, any);
     }
 
     pub fn put_store_boolean_to_any(&mut self, boolean: BooleanIr, any: AnyIr) {
         logger::debug!(event = "put_store_boolean_to_any", ?boolean, ?any);
-        // TODO: Value::KIND_BOOLEAN
-        self.put_store_kind_and_value_to_any(3, boolean.0, any);
+        self.put_store_kind_and_value_to_any(Value::KIND_BOOLEAN, boolean.0, any);
     }
 
     pub fn put_store_number_to_any(&mut self, number: NumberIr, any: AnyIr) {
         logger::debug!(event = "put_store_number_to_any", ?number, ?any);
-        // TODO: Value::KIND_NUMBER
-        self.put_store_kind_and_value_to_any(4, number.0, any);
+        self.put_store_kind_and_value_to_any(Value::KIND_NUMBER, number.0, any);
     }
 
     pub fn put_store_string_to_any(&mut self, string: StringIr, any: AnyIr) {
         logger::debug!(event = "put_store_string_to_any", ?string, ?any);
-        // TODO: Value::KIND_STRING
-        self.put_store_kind_and_value_to_any(5, string.0, any);
+        self.put_store_kind_and_value_to_any(Value::KIND_STRING, string.0, any);
     }
 
     pub fn put_store_closure_to_any(&mut self, closure: ClosureIr, any: AnyIr) {
         logger::debug!(event = "put_store_closure_to_any", ?closure, ?any);
-        // TODO: Value::KIND_CLOSURE
-        self.put_store_kind_and_value_to_any(6, closure.0, any);
+        self.put_store_kind_and_value_to_any(Value::KIND_CLOSURE, closure.0, any);
     }
 
     pub fn put_store_promise_to_any(&mut self, promise: PromiseIr, any: AnyIr) {
         logger::debug!(event = "put_store_promise_to_any", ?promise, ?any);
-        // TODO: Value::KIND_PROMISE
-        self.put_store_kind_and_value_to_any(7, promise.0, any);
+        self.put_store_kind_and_value_to_any(Value::KIND_PROMISE, promise.0, any);
     }
 
     pub fn put_store_object_to_any(&mut self, object: ObjectIr, any: AnyIr) {
         logger::debug!(event = "put_store_object_to_any", ?object, ?any);
-        // TODO: Value::KIND_OBJECT
-        self.put_store_kind_and_value_to_any(8, object.0, any);
+        self.put_store_kind_and_value_to_any(Value::KIND_OBJECT, object.0, any);
     }
 
     pub fn put_store_any_to_any(&mut self, src: AnyIr, dst: AnyIr) {
@@ -933,52 +927,48 @@ impl<'a> Editor<'a> {
 
     pub fn put_is_undefined(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_undefined", ?any);
-        // TODO(refactor): Value::KIND_UNDEFINED
-        self.put_is_kind_of(1, any)
+        self.put_is_kind_of(Value::KIND_UNDEFINED, any)
     }
 
     pub fn put_is_null(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_null", ?any);
-        // TODO(refactor): Value::KIND_NULL
-        self.put_is_kind_of(2, any)
+        self.put_is_kind_of(Value::KIND_NULL, any)
     }
 
     pub fn put_is_boolean(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_boolean", ?any);
-        // TODO(refactor): Value::KIND_BOOLEAN
-        self.put_is_kind_of(3, any)
+        self.put_is_kind_of(Value::KIND_BOOLEAN, any)
     }
 
     pub fn put_is_number(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_number", ?any);
-        // TODO(refactor): Value::KIND_NUMBER
-        self.put_is_kind_of(4, any)
+        self.put_is_kind_of(Value::KIND_NUMBER, any)
     }
 
     pub fn put_is_closure(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_closure", ?any);
-        // TODO(refactor): Value::KIND_CLOSURE
-        self.put_is_kind_of(6, any)
+        self.put_is_kind_of(Value::KIND_CLOSURE, any)
     }
 
     pub fn put_is_promise(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_promise", ?any);
-        // TODO(refactor): Value::KIND_PROMISE
-        self.put_is_kind_of(7, any)
+        self.put_is_kind_of(Value::KIND_PROMISE, any)
     }
 
     pub fn put_is_object(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_object", ?any);
-        // TODO(refactor): Value::KIND_OBJECT
-        self.put_is_kind_of(8, any)
+        self.put_is_kind_of(Value::KIND_OBJECT, any)
     }
 
     pub fn put_is_non_nullish(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_non_nullish", ?any);
         use ir::condcodes::IntCC::UnsignedGreaterThan;
         let kind = self.put_load_kind(any);
-        // TODO(refactor): Value::KIND_NULL
-        BooleanIr(self.builder.ins().icmp_imm(UnsignedGreaterThan, kind, 2))
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(UnsignedGreaterThan, kind, Value::KIND_NULL as i64),
+        )
     }
 
     pub fn put_is_nullptr(&mut self, any: AnyIr) -> BooleanIr {
@@ -1012,13 +1002,10 @@ impl<'a> Editor<'a> {
         self.put_is_same_int_value(lhs.0, rhs.0)
     }
 
-    pub fn put_is_kind_of<T>(&mut self, kind_imm: T, any: AnyIr) -> BooleanIr
-    where
-        T: Into<ir::immediates::Imm64>,
-    {
+    pub fn put_is_kind_of(&mut self, kind_imm: u8, any: AnyIr) -> BooleanIr {
         use ir::condcodes::IntCC::Equal;
         let kind = self.put_load_kind(any);
-        BooleanIr(self.builder.ins().icmp_imm(Equal, kind, kind_imm))
+        BooleanIr(self.builder.ins().icmp_imm(Equal, kind, kind_imm as i64))
     }
 
     fn put_is_same_int_value(&mut self, lhs: ir::Value, rhs: ir::Value) -> BooleanIr {

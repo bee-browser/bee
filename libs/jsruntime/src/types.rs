@@ -17,24 +17,35 @@ use crate::objects::Object;
 #[repr(C, u8)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
-    None = 0,
-    Undefined,
-    Null,
-    Boolean(bool),
-    Number(f64),
-    String(U16String),
+    None = Self::KIND_NONE,
+    Undefined = Self::KIND_UNDEFINED,
+    Null = Self::KIND_NULL,
+    Boolean(bool) = Self::KIND_BOOLEAN,
+    Number(f64) = Self::KIND_NUMBER,
+    String(U16String) = Self::KIND_STRING,
     // TODO(issue#237): GcCellRef
-    Closure(*mut Closure),
-    Promise(Promise),
+    Closure(*mut Closure) = Self::KIND_CLOSURE,
+    Promise(Promise) = Self::KIND_PROMISE,
     // TODO(issue#237): GcCellRef
     // TODO: *mut Object
-    Object(*mut c_void),
+    Object(*mut c_void) = Self::KIND_OBJECT,
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
 static_assertions::const_assert_eq!(align_of::<Value>(), 8);
 
 impl Value {
+    // There is no way to define const function to extract the discriminant of each variant.
+    pub(crate) const KIND_NONE: u8 = 0;
+    pub(crate) const KIND_UNDEFINED: u8 = 1;
+    pub(crate) const KIND_NULL: u8 = 2;
+    pub(crate) const KIND_BOOLEAN: u8 = 3;
+    pub(crate) const KIND_NUMBER: u8 = 4;
+    pub(crate) const KIND_STRING: u8 = 5;
+    pub(crate) const KIND_CLOSURE: u8 = 6;
+    pub(crate) const KIND_PROMISE: u8 = 7;
+    pub(crate) const KIND_OBJECT: u8 = 8;
+
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
     pub(crate) const HOLDER_SIZE: usize = size_of::<u64>();
