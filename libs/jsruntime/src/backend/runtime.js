@@ -41,23 +41,13 @@ async function main(args, options) {
       return {
         name,
         type,
-        ctype: makeCType(type),
         clir_type: makeCraneliftIRType(type),
-        clir_type2: makeCraneliftIRType2(type),
       };
     });
-    func.c_type = makeCFunc(func);
-    func.c_ret = makeCType(func.ret);
     func.clir_ret = makeCraneliftIRType(func.ret);
-    func.clir_ret2 = makeCraneliftIRType2(func.ret);
   }
 
   console.log(JSON.stringify(runtimeSpec));
-}
-
-function makeCFunc(func) {
-  const args = func.args.map((arg) => `${arg.ctype} ${arg.name}`).join(', ');
-  return `${makeCType(func.ret)} (*${func.name})(${args})`;
 }
 
 function makeCraneliftIRType(type) {
@@ -89,90 +79,6 @@ function makeCraneliftIRType(type) {
       return 'addr_type';
     case undefined:
       return '';
-    default:
-      log.error(`unsupported type: ${type}`);
-      return '';
-  }
-}
-
-function makeCraneliftIRType2(type) {
-  switch (type) {
-    case 'bool':
-      return 'ir::types::I8';
-    case 'u16':
-      return 'ir::types::I16';
-    case 'i32':
-    case 'u32':
-    case 'Status':
-      return 'ir::types::I32';
-    case 'f64':
-      return 'ir::types::F64';
-    case '&std::ffi::CStr':
-    case '&U16Chunk':
-    case '&mut Variable':
-    case '&Capture':
-    case '&mut Capture':
-    case '&mut Closure':
-    case '&mut Coroutine':
-    case '&mut Object':
-    case '&Value':
-    case '&mut Value':
-    case '*mut Value':
-    case '&PropertyKey':
-    case 'Lambda':
-    case 'VoidPtr':
-      return 'self.target_config.pointer_type()';
-    case undefined:
-      return '';
-    default:
-      log.error(`unsupported type: ${type}`);
-      return '';
-  }
-}
-
-function makeCType(type) {
-  switch (type) {
-    case 'bool':
-      return 'bool';
-    case 'u16':
-      return 'uint16_t';
-    case 'i32':
-      return 'int32_t';
-    case 'u32':
-      return 'uint32_t';
-    case 'f64':
-      return 'double';
-    case '&std::ffi::CStr':
-      return 'const char*';
-    case '&U16Chunk':
-      return 'U16Chunk*';
-    case '&mut Variable':
-      return 'Variable*';
-    case '&Capture':
-      return 'const Capture*';
-    case '&mut Capture':
-      return 'Capture*';
-    case '&mut Closure':
-      return 'Closure*';
-    case '&mut Coroutine':
-      return 'Coroutine*';
-    case '&mut Object':
-      return 'Object*';
-    case '&Value':
-      return 'const Value*';
-    case '&mut Value':
-    case '*mut Value':
-      return 'Value*';
-    case '&PropertyKey':
-      return 'const PropertyKey*';
-    case 'Lambda':
-      return 'Lambda';
-    case 'VoidPtr':
-      return 'void*';
-    case 'Status':
-      return 'Status';
-    case undefined:
-      return 'void';
     default:
       log.error(`unsupported type: ${type}`);
       return '';
