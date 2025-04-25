@@ -1383,11 +1383,9 @@ where
         logger::debug!(event = "perform_to_object");
         let (operand, _) = self.dereference();
         match operand {
-            Operand::Undefined | Operand::Null => {
-                // TODO(feat): TypeError
-                self.process_number(1001.);
-                self.process_throw();
-            }
+            Operand::Undefined | Operand::Null => self
+                .operand_stack
+                .push(Operand::Object(ObjectIr(self.editor.put_nullptr()))),
             Operand::Boolean(..) => todo!(),
             Operand::Number(..) => todo!(),
             Operand::String(..) => todo!(),
@@ -2636,6 +2634,18 @@ where
             Operand::PropertyReference(key) => {
                 self.perform_to_object();
                 let object = self.pop_object();
+                let then_block = self.editor.create_block();
+                let end_block = self.editor.create_block();
+                // if object.is_nullptr()
+                let is_nullptr = self.editor.put_is_nullptr(object.0);
+                self.editor
+                    .put_branch(is_nullptr, then_block, &[], end_block, &[]);
+                // {
+                self.editor.switch_to_block(then_block);
+                self.process_number(1001.); // TODO: TypeError
+                self.process_throw();
+                // }
+                self.editor.switch_to_block(end_block);
                 let value = match key {
                     PropertyKey::Symbol(key) => self.editor.put_runtime_get_value_by_symbol(
                         self.support,
@@ -2655,7 +2665,7 @@ where
                     }
                 };
                 runtime_debug! {{
-                    let is_nullptr = self.editor.put_is_nullptr(value);
+                    let is_nullptr = self.editor.put_is_nullptr(value.0);
                     let non_nullptr = self.editor.put_logical_not(is_nullptr);
                     self.editor.put_runtime_assert(self.support,
                         non_nullptr,
@@ -2781,7 +2791,7 @@ where
         let end_block = self.editor.create_block();
 
         // if value.is_nullptr()
-        let is_nullptr = self.editor.put_is_nullptr(value);
+        let is_nullptr = self.editor.put_is_nullptr(value.0);
         self.editor
             .put_branch(is_nullptr, then_block, &[], end_block, &[]);
         // {

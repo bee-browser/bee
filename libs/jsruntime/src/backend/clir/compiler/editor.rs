@@ -971,10 +971,10 @@ impl<'a> Editor<'a> {
         )
     }
 
-    pub fn put_is_nullptr(&mut self, any: AnyIr) -> BooleanIr {
-        logger::debug!(event = "put_is_nullptr", ?any);
+    pub fn put_is_nullptr(&mut self, value: ir::Value) -> BooleanIr {
+        logger::debug!(event = "put_is_nullptr", ?value);
         use ir::condcodes::IntCC::Equal;
-        BooleanIr(self.builder.ins().icmp_imm(Equal, any.0, 0))
+        BooleanIr(self.builder.ins().icmp_imm(Equal, value, 0))
     }
 
     pub fn put_is_same_boolean(&mut self, lhs: BooleanIr, rhs: BooleanIr) -> BooleanIr {
