@@ -40,7 +40,11 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version-file: .tool-versions
-      # TODO: Caching dependencies
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env. DENO_DIR }}
+          key: deno-dir-${{ runner.os }}-${{ hashFiles('deno.lock') }}
       - uses: taiki-e/install-action@nextest
       - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Codegen
