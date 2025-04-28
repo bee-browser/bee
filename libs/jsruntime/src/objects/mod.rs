@@ -88,14 +88,14 @@ pub struct Property {
 // NOTE: Current we use `data_*()` factory methods in order hide internal details of this type.
 // Because we'll change its memory layout in the future.
 impl Property {
-    /// Creates a data property with [[Writable]]=false, [[Enumerable]]=false and
-    /// [[Configurable]]=false.
+    /// Creates a data property with `[[Writable]]=false`, `[[Enumerable]]=false` and
+    /// `[[Configurable]]=false`.
     pub const fn data_xxx(value: Value) -> Self {
         Self::data(value, PropertyFlags::XXX)
     }
 
-    /// Creates a data property with [[Writable]]=true, [[Enumerable]]=true and
-    /// [[Configurable]]=true.
+    /// Creates a data property with `[[Writable]]=true`, `[[Enumerable]]=true` and
+    /// `[[Configurable]]=true`.
     pub const fn data_wec(value: Value) -> Self {
         Self::data(value, PropertyFlags::WEC)
     }
@@ -146,10 +146,10 @@ bitflags! {
 }
 
 impl PropertyFlags {
-    /// [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: false
+    /// `[[Writable]]: false`, `[[Enumerable]]: false`, `[[Configurable]]: false`
     const XXX: Self = Self::empty();
 
-    /// [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true
+    /// `[[Writable]]: true`, `[[Enumerable]]: true`, `[[Configurable]]: true`
     const WEC: Self = Self::WRITABLE
         .union(Self::ENUMERABLE)
         .union(Self::CONFIGURABLE);
