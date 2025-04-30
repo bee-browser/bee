@@ -12,7 +12,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.98"
 async-stream = "0.3.6"
-axum = "0.8.3"
+axum = "0.8.4"
 bytes = "1.10.1"
 clap = { version = "4.5.37", features = ["derive"] }
 logging = { path = "../../libs/logging" }
