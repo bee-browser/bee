@@ -98,13 +98,13 @@ clean-all: $(CLEAN_TARGETS)
 codegen:
 	@bash libs/logging/scripts/loggergen.sh
 	@$(MAKE) -s codegen-libs
-	@$(MAKE) -s codegen-bins
-
-.PHONY: codegen-bins
-codegen-bins: $(filter codegen-bins/%,$(CODEGEN_TARGETS))
+	@$(MAKE) -s codegen-others
 
 .PHONY: codegen-libs
 codegen-libs: $(filter codegen-libs/%,$(CODEGEN_TARGETS))
+
+.PHONY: codegen-others
+codegen-others: $(filter-out codegen-libs/%,$(CODEGEN_TARGETS))
 
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno
