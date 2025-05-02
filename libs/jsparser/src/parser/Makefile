@@ -3,24 +3,24 @@ TRANSPILE_ARGS ?=
 
 SHELL := $(shell which bash) -eu -o pipefail -c
 
-PROJ_DIR := $(realpath ../../../..)
+PROJ_DIR := ../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
-CODEGEN_DIR := $(PROJ_DIR)/target/codegen/libs/jsparser/lalrgen
+TOKENS_JSON := ../lexer/tokens.json
 
 CODEGEN_FILES := \
-  action.rs \
-  debug.rs \
-  goal_symbols.rs \
-  goto.rs \
-  lexical_goal.rs \
-  non_terminals.rs \
-  auto_semicolon.rs
-
-CODEGEN_TARGETS := \
   grammar.txt \
   grammar.yaml \
-  $(addprefix lalr/,$(CODEGEN_FILES))
+  lalr.json \
+  lalr/action.rs \
+  lalr/debug.rs \
+  lalr/goal_symbols.rs \
+  lalr/goto.rs \
+  lalr/lexical_goal.rs \
+  lalr/non_terminals.rs \
+  lalr/auto_semicolon.rs
+
+CODEGEN_TARGETS := $(filter %.rs,$(CODEGEN_FILES))
 
 # The syntactic grammar in the ECMA-262 specification adopts *permissive* production rules in order
 # to avoid shift-shift/reduce conflicts.  There are some production rules that we have to parsing
@@ -48,7 +48,7 @@ codegen: $(CODEGEN_TARGETS)
 
 .PHONY: clean
 clean:
-	@rm -f $(CODEGEN_TARGETS)
+	@rm -fr $(CODEGEN_FILES) lalrgen
 
 # Usually, we define targets in descending order in the dependency tree order.  However, we define
 # targets here in the reverse order in order to explain the code generation steps.
@@ -63,8 +63,7 @@ clean:
 .PRECIOUS: grammar.txt
 grammar.txt: $(ECMA262_DIR)/spec.html
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -rqp esgrammar -- extract syntactic-grammar | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@cat $< | cargo run -rqp esgrammar -- extract syntactic-grammar >$@
 
 # 2. Transpile the extracted grammars into an equivalent but more computer-friendly data
 #
@@ -82,29 +81,23 @@ grammar.txt: $(ECMA262_DIR)/spec.html
 # into equivalent production rules.  `transpile.js` adds some production rules for convenience in
 # further processing.
 .PRECIOUS: grammar.yaml
-grammar.yaml: grammar.txt ../transpile.js ../lexer/tokens.json
+grammar.yaml: grammar.txt ../transpile.js $(TOKENS_JSON)
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
-	  deno run --allow-read ../transpile.js -g syntactic -t ../lexer/tokens.json \
-	    $(TRANSPILE_ARGS) | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	  deno run --allow-read ../transpile.js -g syntactic -t $(TOKENS_JSON) $(TRANSPILE_ARGS) >$@
 
 # 3. Generate an intermediate JSON data in order to avoid re-running lalrgen when lalr.js or
 # lalr.rs.hbs changes.
-.PRECIOUS: $(CODEGEN_DIR)/lalr.json
-$(CODEGEN_DIR)/lalr.json: grammar.yaml | $(CODEGEN_DIR)
+.PRECIOUS: lalr.json
+lalr.json: grammar.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp lalrgen -- -r $(CODEGEN_DIR) $< $(GOAL_SYMBOLS) | jq '.' | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@mkdir -p lalrgen
+	@cargo run -rqp lalrgen -- -r lalrgen $< $(GOAL_SYMBOLS) | jq '.' >$@
 
 # 4. Generate LALR parsing tables.
-lalr/%.rs: lalr/%.rs.hbs lalr.js $(CODEGEN_DIR)/lalr.json
+lalr/%.rs: lalr.json lalr/%.rs.hbs lalr.js $(TOKENS_JSON)
 	@echo 'Generating $(abspath $@)...'
-	@cat $(CODEGEN_DIR)/lalr.json | \
-	  deno run --allow-read lalr.js | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $< | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
-
-$(CODEGEN_DIR):
-	@mkdir -p $@
+	@cat $< | \
+	  deno run --allow-read=.. lalr.js $(TOKENS_JSON) | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $@.hbs | \
+	  rustfmt --emit=stdout >$@

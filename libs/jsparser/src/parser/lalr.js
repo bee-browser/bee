@@ -1,16 +1,13 @@
 'use strict';
 
 import { assert } from '@std/assert';
-import * as path from '@std/path';
 import { constantCase } from 'change-case';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
 const baseDir = new URL('.', import.meta.url).pathname;
 
 const spec = JSON.parse(await readAllText(Deno.stdin));
-const tokens = JSON.parse(
-  await Deno.readTextFile(path.join(baseDir, '..', 'lexer', 'tokens.json')),
-);
+const tokens = JSON.parse(await Deno.readTextFile(Deno.args[0]));
 
 const tokenIndexMap = {};
 for (let i = 0; i < tokens.length; ++i) {

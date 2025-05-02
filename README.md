@@ -32,7 +32,7 @@ make vendor
 
 # Run once before building.
 # Run again if some of input files of generated source files have been updated.
-make codegen
+make -j $(nproc) codegen
 
 # Run tests.
 make test

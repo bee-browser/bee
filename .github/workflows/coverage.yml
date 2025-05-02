@@ -48,7 +48,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Codegen
-        run: make codegen
+        run: make -j $(nproc) codegen
       - name: Generate code coverage
         run: |
           make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json' TEST262_ARGS=''

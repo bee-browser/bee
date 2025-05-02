@@ -1,6 +1,6 @@
 SHELL := $(shell which bash) -eu -o pipefail -c
 
-PROJ_DIR := $(realpath ../../../../..)
+PROJ_DIR := ../../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 CODEGEN_TARGETS := support.rs
@@ -12,9 +12,8 @@ codegen: $(CODEGEN_TARGETS)
 clean:
 	@rm -f $(CODEGEN_TARGETS)
 
-%:: ../runtime.yaml %.njk ../runtime.js $(TOOLS_BIN)/nunjucks.js $(TOOLS_BIN)/update_file.js
+%.rs: %.rs.njk ../runtime.yaml ../runtime.js $(TOOLS_BIN)/nunjucks.js
 	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=.. ../runtime.js $< | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $@.njk | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@deno run -q --allow-read=.. ../runtime.js ../runtime.yaml | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< | \
+	  rustfmt --emit=stdout >$@

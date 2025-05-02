@@ -56,7 +56,7 @@ jobs:
           key: deno-dir-${{ runner.os }}-${{ hashFiles('deno.lock') }}
       - uses: taiki-e/install-action@nextest
       - name: Codegen
-        run: make codegen
+        run: make -j $(nproc) codegen
       - name: Check
         run: make check
       - name: Build

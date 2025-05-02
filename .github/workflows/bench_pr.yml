@@ -42,7 +42,7 @@ jobs:
           path: ${{ env. DENO_DIR }}
           key: deno-dir-${{ runner.os }}-${{ hashFiles('deno.lock') }}
       - name: Codegen
-        run: make codegen
+        run: make -j $(nproc) codegen
       - uses: bencherdev/bencher@main
       - name: Benchmark tests
         run: >-

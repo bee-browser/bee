@@ -1,7 +1,7 @@
 # Specify `-d` if you want to see debug logs.
 TRANSPILE_ARGS ?=
 
-PROJ_DIR := $(realpath ../../..)
+PROJ_DIR := ../../..
 ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
 
 # targets

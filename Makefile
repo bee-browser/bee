@@ -4,13 +4,13 @@ export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
 
 CODEGEN_PATHS := \
+  bins/estree \
   libs/logging \
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
   libs/jsruntime \
-  libs/layout \
-  bins/estree
+  libs/layout
 
 BUILD_TARGETS := $(addprefix build-,\
   webui \
@@ -22,7 +22,9 @@ CLEAN_TARGETS := $(addprefix clean-,\
 )
 
 # The order must be determined by dependencies between packages.
-CODEGEN_TARGETS := $(addprefix codegen-,$(CODEGEN_PATHS))
+CODEGEN_TARGETS := $(addprefix codegen-,\
+  $(CODEGEN_PATHS) \
+)
 
 .PHONY: all
 all: build
@@ -95,10 +97,14 @@ clean-all: $(CLEAN_TARGETS)
 .PHONE: codegen
 codegen:
 	@bash libs/logging/scripts/loggergen.sh
-	@$(MAKE) -s codegen-modules
+	@$(MAKE) -s codegen-libs
+	@$(MAKE) -s codegen-bins
 
-.PHONY: codegen-modules
-codegen-modules: $(CODEGEN_TARGETS)
+.PHONY: codegen-bins
+codegen-bins: $(filter codegen-bins/%,$(CODEGEN_TARGETS))
+
+.PHONY: codegen-libs
+codegen-libs: $(filter codegen-libs/%,$(CODEGEN_TARGETS))
 
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno

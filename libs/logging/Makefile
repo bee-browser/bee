@@ -1,6 +1,6 @@
 SHELL := $(shell which bash) -eu -o pipefail -c
 
-PROJ_DIR := $(realpath ../..)
+PROJ_DIR := ../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 CODEGEN_TARGETS := src/targets.rs
@@ -18,9 +18,9 @@ clean:
 src/targets.rs: FORCE
 	@echo 'Updating $(abspath $@) if any of logging.yaml files changes...'
 	@deno run -q --allow-read=$(PROJ_DIR) scripts/targets.js | \
-	  deno run -q --allow-read=$(PROJ_DIR) $(TOOLS_BIN)/codegen.js --input-stdin --no-escape src/targets.rs.hbs | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=$(PROJ_DIR) --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	  deno run -q --allow-read=$(PROJ_DIR) $(TOOLS_BIN)/codegen.js --input-stdin --no-escape \
+	    $@.hbs | \
+	  rustfmt --emit=stdout >$@
 
 .PHONY: FORCE
 FORCE:

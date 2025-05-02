@@ -1,6 +1,6 @@
 SHELL := $(shell which bash) -eu -o pipefail -c
 
-PROJ_DIR := $(realpath ../../..)
+PROJ_DIR := ../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 CODEGEN_TARGETS := evaluate.rs
@@ -17,6 +17,5 @@ clean:
 evaluate.rs: evaluate.rs.njk $(EVALUATE_TESTS) evaluate.js
 	@echo 'Generating $(abspath $@)...'
 	@deno run -q --allow-read=. evaluate.js $(EVALUATE_TESTS) | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $@.njk | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< | \
+	  rustfmt --emit=stdout >$@

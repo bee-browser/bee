@@ -1,5 +1,6 @@
 /logview/assets/
 /metrics/*.ndjson
+/src/lexer/dfa/*.json
 /src/lexer/dfa/*.rs
 /src/lexer/goals.rs
 /src/lexer/grammar.txt
@@ -8,6 +9,7 @@
 /src/lexer/tokens.rs
 /src/parser/grammar.txt
 /src/parser/grammar.yaml
+/src/parser/lalr.json
 /src/parser/lalr/action.rs
 /src/parser/lalr/auto_semicolon.rs
 /src/parser/lalr/debug.rs
@@ -15,5 +17,6 @@
 /src/parser/lalr/goto.rs
 /src/parser/lalr/lexical_goal.rs
 /src/parser/lalr/non_terminals.rs
+/src/parser/lalrgen/
 /src/symbol/builtin.rs
 /src/syntax/actions.rs

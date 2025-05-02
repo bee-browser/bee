@@ -4,7 +4,7 @@ PROJ_DIR := ../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 SRCS := doctype.rs comment.rs null.rs whitespace.rs text.rs eof.rs
-DEPS := spec.yaml collect.js
+DEPS := spec.yaml collect.js $(TOOLS_BIN)/codegen.js
 
 .PHONY: codegen
 codegen: $(SRCS)
@@ -19,12 +19,10 @@ null.rs: null.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read collect.js rules -s spec.yaml nul nul | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	  rustfmt --emit=stdout >$@
 
 %.rs: %.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read collect.js rules -s spec.yaml $(subst .rs,,$@) $(subst .rs,,$@) | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	  rustfmt --emit=stdout >$@
