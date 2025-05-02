@@ -1,6 +1,3 @@
-# Specify `-d` if you want to see debug logs.
-TRANSPILE_ARGS ?=
-
 SHELL := $(shell which bash) -eu -o pipefail -c
 
 PROJ_DIR := ../../../..
@@ -81,10 +78,11 @@ grammar.txt: $(ECMA262_DIR)/spec.html
 # into equivalent production rules.  `transpile.js` adds some production rules for convenience in
 # further processing.
 .PRECIOUS: grammar.yaml
+grammar.yaml: EXTRA_ARGS := $(BEE_BUILD_JSPARSER_TRANSPILE_EXTRA_ARGS)
 grammar.yaml: grammar.txt ../transpile.js $(TOKENS_JSON)
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
-	  deno run --allow-read ../transpile.js -g syntactic -t $(TOKENS_JSON) $(TRANSPILE_ARGS) >$@
+	  deno run --allow-read ../transpile.js -g syntactic -t $(TOKENS_JSON) $(EXTRA_ARGS) >$@
 
 # 3. Generate an intermediate JSON data in order to avoid re-running lalrgen when lalr.js or
 # lalr.rs.hbs changes.

@@ -1,6 +1,3 @@
-# Specify `-d` if you want to see debug logs.
-TRANSPILE_ARGS ?=
-
 PROJ_DIR := ../../..
 ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
 
@@ -11,8 +8,8 @@ all: codegen
 
 .PHONY: codegen
 codegen:
-	@$(MAKE) -s -C lexer codegen TRANSPILE_ARGS=$(TRANSPILE_ARGS)
-	@$(MAKE) -s -C parser codegen TRANSPILE_ARGS=$(TRANSPILE_ARGS)
+	@$(MAKE) -s -C lexer codegen
+	@$(MAKE) -s -C parser codegen
 	@$(MAKE) -s -C symbol codegen
 	@$(MAKE) -s -C syntax codegen
 

@@ -1,6 +1,3 @@
-# Specify `-d` if you want to see debug logs.
-TRANSPILE_ARGS ?=
-
 SHELL := $(shell which bash) -eu -o pipefail -c
 
 PROJ_DIR := ../../../..
@@ -84,9 +81,10 @@ grammar.txt: $(ECMA262_DIR)/spec.html
 # into equivalent production rules.  `transpile.js` adds some production rules for convenience in
 # further processing.
 .PRECIOUS: grammar.yaml
+grammar.yaml: EXTRA_ARGS := $(BEE_BUILD_JSPARSER_TRANSPILE_EXTRA_ARGS)
 grammar.yaml: grammar.txt ../transpile.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run ../transpile.js -g lexical $(TRANSPILE_ARGS) >$@
+	@cat $< | deno run ../transpile.js -g lexical $(EXTRA_ARGS) >$@
 
 # 3. Build a minimized DFA for each goal symbol defined in the lexical grammar
 #
