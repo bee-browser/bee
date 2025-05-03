@@ -3,26 +3,27 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
 
+BUILD_TARGETS := $(addprefix build-,\
+  webui \
+)
+
 CODEGEN_PATHS := \
+  bins/estree \
   libs/logging \
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
   libs/jsruntime \
-  libs/layout \
-  bins/estree
-
-BUILD_TARGETS := $(addprefix build-,\
-  webui \
-)
+  libs/layout
 
 CLEAN_TARGETS := $(addprefix clean-,\
   $(CODEGEN_PATHS) \
   webui \
 )
 
-# The order must be determined by dependencies between packages.
-CODEGEN_TARGETS := $(addprefix codegen-,$(CODEGEN_PATHS))
+CODEGEN_TARGETS := $(addprefix codegen-,\
+  $(CODEGEN_PATHS) \
+)
 
 .PHONY: all
 all: build
@@ -91,14 +92,17 @@ clean: $(CLEAN_TARGETS)
 clean-all: $(CLEAN_TARGETS)
 	cargo clean
 
-# TODO: `make -j $(nproc) codegen` does not work properly...
+# The order must be determined by dependencies between packages.
 .PHONE: codegen
 codegen:
 	@bash libs/logging/scripts/loggergen.sh
-	@$(MAKE) -s codegen-modules
-
-.PHONY: codegen-modules
-codegen-modules: $(CODEGEN_TARGETS)
+	@$(MAKE) -s codegen-libs/logging
+	@$(MAKE) -s codegen-libs/htmltokenizer
+	@$(MAKE) -s codegen-libs/htmlparser
+	@$(MAKE) -s codegen-libs/jsparser
+	@$(MAKE) -s codegen-libs/jsruntime
+	@$(MAKE) -s codegen-libs/layout
+	@$(MAKE) -s codegen-bins/estree
 
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno

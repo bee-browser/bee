@@ -1,12 +1,8 @@
-# Specify `-d` if you want to see debug logs.
-TRANSPILE_ARGS ?=
-
 SHELL := $(shell which bash) -eu -o pipefail -c
 
-PROJ_DIR := $(realpath ../../../..)
+PROJ_DIR := ../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
-CODEGEN_DIR := $(PROJ_DIR)/target/codegen/libs/jsparser/dfagen
 
 GOAL_SYMBOLS := $(shell \
   cat tokens.yaml | \
@@ -14,7 +10,7 @@ GOAL_SYMBOLS := $(shell \
   jq -r '[.goals[].name] | join(" ")' \
 )
 
-CODEGEN_TARGETS := \
+CODEGEN_FILES := \
   grammar.txt \
   grammar.yaml \
   goals.rs \
@@ -23,13 +19,15 @@ CODEGEN_TARGETS := \
   dfa/mod.rs \
   $(patsubst %,dfa/%.rs,$(GOAL_SYMBOLS))
 
+CODEGEN_TARGETS := $(filter %.rs,$(CODEGEN_FILES))
+
 # Lazy evaluation.
 # The following variable will be evaluated in substitution time.
 # The definition order of tokens will be preserved.
 LIST_TOKENS = \
   cat tokens.yaml | \
   yq -o=json | \
-  jq -r '.goals[] | select(.name == "$(patsubst $(CODEGEN_DIR)/%.json,%,$@)") | .tokens | flatten | join(" ")'
+  jq -r '.goals[] | select(.name == "$(patsubst dfagen/%.json,%,$@)") | .tokens | flatten | join(" ")'
 
 # targets
 
@@ -49,7 +47,7 @@ codegen: $(CODEGEN_TARGETS)
 
 .PHONY: clean
 clean:
-	@rm -f $(CODEGEN_TARGETS)
+	@rm -fr $(CODEGEN_FILES) dfagen
 
 # Usually, we define targets in descending order in the dependency tree order.  However, we define
 # targets here in the reverse order in order to explain the code generation steps.
@@ -64,8 +62,7 @@ clean:
 .PRECIOUS: grammar.txt
 grammar.txt: $(ECMA262_DIR)/spec.html
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -rqp esgrammar -- extract lexical-grammar | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@cat $< | cargo run -rqp esgrammar -- extract lexical-grammar >$@
 
 # 2. Transpile the extracted grammars into an equivalent but more computer-friendly data
 #
@@ -83,10 +80,10 @@ grammar.txt: $(ECMA262_DIR)/spec.html
 # into equivalent production rules.  `transpile.js` adds some production rules for convenience in
 # further processing.
 .PRECIOUS: grammar.yaml
+grammar.yaml: EXTRA_ARGS := $(BEE_BUILD_JSPARSER_TRANSPILE_EXTRA_ARGS)
 grammar.yaml: grammar.txt ../transpile.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run ../transpile.js -g lexical $(TRANSPILE_ARGS) | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@cat $< | deno run ../transpile.js -g lexical $(EXTRA_ARGS) >$@
 
 # 3. Build a minimized DFA for each goal symbol defined in the lexical grammar
 #
@@ -104,39 +101,35 @@ grammar.yaml: grammar.txt ../transpile.js
 # specified tokens.  Then, `dfagen` converts the NFA to an equivalent minimized DFA by using
 # well-known algorithms.  Finally, `dfagen` outputs the DFA in a JSON format which contains enough
 # information for code generation.
-.PRECIOUS: $(CODEGEN_DIR)/%.json
-$(CODEGEN_DIR)/%.json: grammar.yaml tokens.yaml | $(CODEGEN_DIR)
+.PRECIOUS: dfagen/%.json
+dfagen/%.json: grammar.yaml tokens.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq '.' | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@mkdir -p dfagen
+	@cargo run -rqp dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq '.' >$@
 
 # 4. Generate code for each DFA
-dfa/%.rs: $(CODEGEN_DIR)/%.json dfa.js dfa/dfa.rs.hbs
+dfa/%.rs: dfagen/%.json dfa/dfa.rs.hbs dfa.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | \
-	  deno run dfa.js | \
+	@cat $< | deno run dfa.js | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin dfa/dfa.rs.hbs | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	  rustfmt --emit=stdout >$@
 
 # 5. Generate a wrapper function
 #
 # A wrapper function that selects a DFA according to the specified goal symbol.  Goal symbols are
 # defined in `tokens.yaml` and extracted from it by using `jq`.
-dfa/mod.rs: dfa/mod.rs.hbs tokens.yaml
+dfa/mod.rs: tokens.yaml dfa/mod.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@cat tokens.yaml | yq -o=json | jq -r '[.goals[].name]' | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $< | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@cat $< | yq -o=json | jq -r '[.goals[].name]' | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $@.hbs | \
+	  rustfmt --emit=stdout >$@
 
 # 6. Generate an enum type for goal symbols
-goals.rs: goals.rs.hbs tokens.yaml
+goals.rs: tokens.yaml goals.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@cat tokens.yaml | yq -o=json | jq -r '[.goals[].name]' | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $< | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@cat $< | yq -o=json | jq -r '[.goals[].name]' | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $@.hbs | \
+	  rustfmt --emit=stdout >$@
 
 # 7. Collect tokens from tokens.yaml
 #
@@ -146,16 +139,11 @@ goals.rs: goals.rs.hbs tokens.yaml
 .PRECIOUS: tokens.json
 tokens.json: tokens.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | yq -o=json | jq '[.goals[].tokens] | flatten | unique' | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
+	@cat $< | yq -o=json | jq '[.goals[].tokens] | flatten | unique' >$@
 
 # 8. Generate an enum type for tokens.
-tokens.rs: tokens.rs.hbs tokens.json
+tokens.rs: tokens.json tokens.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@cat tokens.json | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $< | \
-	  rustfmt --emit=stdout | \
-	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
-
-$(CODEGEN_DIR):
-	@mkdir -p $@
+	@cat $< | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $@.hbs | \
+	  rustfmt --emit=stdout >$@

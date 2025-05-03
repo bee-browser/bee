@@ -1,4 +1,4 @@
-PROJ_DIR := $(realpath ../../..)
+PROJ_DIR := ../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 JS_FILES := $(wildcard src/*.js)
