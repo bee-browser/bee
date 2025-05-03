@@ -9,20 +9,36 @@ BUILD_TARGETS := $(addprefix build-,\
 
 CODEGEN_PATHS := \
   bins/estree \
-  libs/logging \
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
   libs/jsruntime \
   libs/layout
 
+LOGGERGEN_PATHS := \
+  bins/dfagen \
+  bins/estree \
+  bins/lalrgen \
+  bins/logview \
+  libs/htmltokenizer \
+  libs/htmlparser \
+  libs/jsparser \
+  libs/jsruntime \
+  libs/layout \
+  libs/toydom
+
 CLEAN_TARGETS := $(addprefix clean-,\
   $(CODEGEN_PATHS) \
+  $(LOGGER_PATHS) \
   webui \
 )
 
 CODEGEN_TARGETS := $(addprefix codegen-,\
   $(CODEGEN_PATHS) \
+)
+
+LOGGERGEN_TARGETS := $(addprefix loggergen-,\
+  $(LOGGERGEN_PATHS) \
 )
 
 .PHONY: all
@@ -82,7 +98,6 @@ bench:
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
-	@bash libs/logging/scripts/loggergen.sh --rm
 	cargo clean --profile=dev
 	cargo clean --profile=profiling
 	cargo clean --profile=release
@@ -94,15 +109,16 @@ clean-all: $(CLEAN_TARGETS)
 
 # The order must be determined by dependencies between packages.
 .PHONE: codegen
-codegen:
-	@bash libs/logging/scripts/loggergen.sh
-	@$(MAKE) -s codegen-libs/logging
+codegen: loggergen
 	@$(MAKE) -s codegen-libs/htmltokenizer
 	@$(MAKE) -s codegen-libs/htmlparser
 	@$(MAKE) -s codegen-libs/jsparser
 	@$(MAKE) -s codegen-libs/jsruntime
 	@$(MAKE) -s codegen-libs/layout
 	@$(MAKE) -s codegen-bins/estree
+
+.PHONE: loggergen
+loggergen: $(LOGGERGEN_TARGETS)
 
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno
@@ -153,6 +169,10 @@ $(BUILD_TARGETS):
 .PHONY: $(CODEGEN_TARGETS)
 $(CODEGEN_TARGETS):
 	@$(MAKE) -s -C $(subst codegen-,,$@) codegen
+
+.PHONY: $(LOGGERGEN_TARGETS)
+$(LOGGERGEN_TARGETS):
+	@$(MAKE) -s -C $(subst loggergen-,,$@) loggergen
 
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):

@@ -10,6 +10,10 @@ codegen:
 	@$(MAKE) -s -C src codegen
 	@$(MAKE) -s -C logview codegen
 
+.PHONY: loggergen
+loggergen:
+	@$(MAKE) -s -C src loggergen
+
 .PHONY: clean
 clean:
 	@$(MAKE) -s -C src clean

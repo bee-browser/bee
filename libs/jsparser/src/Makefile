@@ -1,8 +1,3 @@
-PROJ_DIR := ../../..
-ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
-
-# targets
-
 .PHONY: all
 all: codegen
 
@@ -13,9 +8,14 @@ codegen:
 	@$(MAKE) -s -C symbol codegen
 	@$(MAKE) -s -C syntax codegen
 
+.PHONY: loggergen
+loggergen:
+	@$(MAKE) -s -C lexer loggergen
+	@$(MAKE) -s -C parser loggergen
+	@$(MAKE) -s -C syntax loggergen
+
 .PHONY: clean
 clean:
-	@rm -f $(CODEGEN_TARGETS)
 	@$(MAKE) -s -C lexer clean
 	@$(MAKE) -s -C parser clean
 	@$(MAKE) -s -C symbol clean

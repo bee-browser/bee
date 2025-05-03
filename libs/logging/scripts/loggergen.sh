@@ -4,37 +4,15 @@ BASE_DIR=$(cd $(dirname $0); pwd)
 PROJ_DIR=$(cd $BASE_DIR/../../..; pwd)
 TOOLS_BIN=$PROJ_DIR/tools/bin
 
-OP='codegen'
+OP="$1"
 
-for OPT in "$@"
-do
-  case $OPT in
-    '--rm')
-      OP='rm'
-      shift
-      ;;
-  esac
-done
-
-deno run -q --allow-read=$PROJ_DIR $BASE_DIR/targets.js | \
-  jq -c '.targets[]' | \
-  while read -r JSON
-  do
-    LOGGER_RS=$(echo "$JSON" | jq -r 'select(.loggerPath != null) | .loggerPath')
-    if [ -z "$LOGGER_RS" ]
-    then
-      continue
-    fi
-
-    if [ "$OP" = 'rm' ]
-    then
-      rm -f $LOGGER_RS
-      continue
-    fi
-
-    echo "$JSON" | \
-      deno run -q \
-        --allow-read=$BASE_DIR/logger.rs.hbs \
-        $TOOLS_BIN/codegen.js --input-stdin --no-escape $BASE_DIR/logger.rs.hbs | \
-      rustfmt --emit=stdout >$LOGGER_RS
-  done
+case $1 in
+  'codegen')
+    deno run -q --allow-read=$BASE_DIR/logger.rs.hbs \
+      $TOOLS_BIN/codegen.js --input-inline --no-escape $BASE_DIR/logger.rs.hbs "$2" | \
+      rustfmt --emit=stdout
+    ;;
+  'deps')
+    echo "$BASE_DIR/loggergen.sh $BASE_DIR/logger.rs.hbs"
+    ;;
+esac

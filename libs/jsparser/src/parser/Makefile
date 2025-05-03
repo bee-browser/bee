@@ -2,6 +2,8 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 
 PROJ_DIR := ../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
+LOGGERGEN_SH := $(PROJ_DIR)/libs/logging/scripts/loggergen.sh
+LOGGERGEN_DEPS := $(shell sh $(LOGGERGEN_SH) deps)
 ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
 TOKENS_JSON := ../lexer/tokens.json
 
@@ -17,6 +19,8 @@ CODEGEN_FILES := \
   lalr/auto_semicolon.rs
 
 CODEGEN_TARGETS := $(filter %.rs,$(CODEGEN_FILES))
+
+LOGGERGEN_TARGETS := logger.rs
 
 # The syntactic grammar in the ECMA-262 specification adopts *permissive* production rules in order
 # to avoid shift-shift/reduce conflicts.  There are some production rules that we have to parsing
@@ -42,9 +46,12 @@ all: codegen
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
+.PHONY: loggergen
+loggergen: $(LOGGERGEN_TARGETS)
+
 .PHONY: clean
 clean:
-	@rm -fr $(CODEGEN_FILES) lalrgen
+	@rm -fr $(CODEGEN_FILES) $(LOGGERGEN_TARGETS) lalrgen
 
 # Usually, we define targets in descending order in the dependency tree order.  However, we define
 # targets here in the reverse order in order to explain the code generation steps.
@@ -98,3 +105,7 @@ lalr/%.rs: lalrgen/lalr.json lalr/%.rs.hbs lalr.js $(TOKENS_JSON)
 	  deno run --allow-read=.. lalr.js $(TOKENS_JSON) | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $@.hbs | \
 	  rustfmt --emit=stdout >$@
+
+logger.rs: $(LOGGERGEN_DEPS)
+	@echo 'Generating $(abspath $@)...'
+	@sh $(LOGGERGEN_SH) codegen '{"module":"parser","target":"bee::jsparser::parser"}' >$@

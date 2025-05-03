@@ -3,10 +3,18 @@
 // This file was automagically generated with:
 // template: {{@template}}
 
+use std::sync::LazyLock;
+
+pub(crate) static FLAGS: LazyLock<logging::Flags> = LazyLock::new(|| {
+    logging::load_flags("{{ target }}")
+});
+
 #[allow(unused_macros)]
 macro_rules! error {
     ($($tokens:tt)+) => {
-        logging::error!(logging::targets::{{symbol}}, $($tokens)+);
+        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::ERROR) {
+            logging::error!(target: "{{ target }}", $($tokens)+);
+        }
     };
 }
 
@@ -14,49 +22,61 @@ macro_rules! error {
 #[allow(unused_macros)]
 macro_rules! warn_ {
     ($($tokens:tt)+) => {
-        logging::warn!(logging::targets::{{symbol}}, $($tokens)+);
+        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::WARN) {
+            logging::warn!(target: "{{ target }}", $($tokens)+);
+        }
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! info {
     ($($tokens:tt)+) => {
-        logging::info!(logging::targets::{{symbol}}, $($tokens)+);
+        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::INFO) {
+            logging::info!(target: "{{ target }}", $($tokens)+);
+        }
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! debug0 {
     ($($tokens:tt)+) => {
-        logging::debug0!(logging::targets::{{symbol}}, $($tokens)+);
+        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::DEBUG0) {
+            logging::debug0!(target: "{{ target }}", $($tokens)+);
+        }
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! debug1 {
     ($($tokens:tt)+) => {
-        logging::debug1!(logging::targets::{{symbol}}, $($tokens)+);
+        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::DEBUG1) {
+            logging::debug1!(target: "{{ target }}", $($tokens)+);
+        }
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! debug2 {
     ($($tokens:tt)+) => {
-        logging::debug2!(logging::targets::{{symbol}}, $($tokens)+);
+        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::DEBUG2) {
+            logging::debug2!(target: "{{ target }}", $($tokens)+);
+        }
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! trace {
     ($($tokens:tt)+) => {
-        logging::trace!(logging::targets::{{symbol}}, $($tokens)+);
+        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::TRACE) {
+            logging::trace!(target: "{{ target }}", $($tokens)+);
+        }
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! debug {
     ($($tokens:tt)+) => {
-        logging::debug!(logging::targets::{{symbol}}, $($tokens)+);
+        crate::{{#if module}}{{ module }}::{{/if}}logger::debug0!($($tokens)+);
     };
 }
 

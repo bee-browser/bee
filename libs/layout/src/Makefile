@@ -7,18 +7,13 @@ LOGGERGEN_DEPS := $(shell sh $(LOGGERGEN_SH) deps)
 
 LOGGERGEN_TARGETS := logger.rs
 
-.PHONY: codegen
-codegen:
-	@$(MAKE) -s -C builder codegen
-
 .PHONY: loggergen
 loggergen: $(LOGGERGEN_TARGETS)
 
 .PHONY: clean
 clean:
-	@rm -f $(CODEGEN_TARGETS) $(LOGGERGEN_TARGETS)
-	@$(MAKE) -s -C builder clean
+	@rm -f $(LOGGERGEN_TARGETS)
 
 logger.rs: $(LOGGERGEN_DEPS)
 	@echo 'Generating $(abspath $@)...'
-	@sh $(LOGGERGEN_SH) codegen '{"module":"","target":"bee::estree"}' >$@
+	@sh $(LOGGERGEN_SH) codegen '{"module":"","target":"bee::layout"}' >$@

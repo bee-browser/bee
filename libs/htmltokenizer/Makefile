@@ -1,8 +1,3 @@
-SHELL := $(shell which bash) -eu -o pipefail -c
-
-PROJ_DIR := ../..
-TOOLS_BIN := $(PROJ_DIR)/tools/bin
-
 .PHONY: all
 all:
 
@@ -11,22 +6,15 @@ test:
 	@cargo nextest run
 
 .PHONY: codegen
-codegen: src/charref/trie.rs
+codegen:
+	@$(MAKE) -s -C src codegen
 	@$(MAKE) -s -C tests codegen
+
+.PHONY: loggergen
+loggergen:
+	@$(MAKE) -s -C src loggergen
 
 .PHONY: clean
 clean:
-	@rm -f src/charref/trie.rs src/charref/trie.codegen.json
+	@$(MAKE) -s -C src clean
 	@$(MAKE) -s -C tests clean
-
-src/charref/trie.rs: src/charref/trie.codegen.json src/charref/trie.rs.hbs
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape src/charref/trie.rs.hbs $< | \
-	  rustfmt --emit=stdout >$@
-
-# TODO: Use JSON5 and add comments at the beginning of the file like other
-#       generated files.
-.PRECIOUS: src/charref/trie.codegen.json
-src/charref/trie.codegen.json: src/charref/entities.json src/charref/trie.codegen.json.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run src/charref/trie.codegen.json.js <$< >$@

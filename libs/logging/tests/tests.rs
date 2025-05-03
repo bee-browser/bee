@@ -6,16 +6,16 @@ macro_rules! impl_test_log {
             #[test]
             fn [<test_ $flag>]() {
                 let a = 1;
-                logging::$flag!(logging::targets::TESTS, "msg");
-                logging::$flag!(logging::targets::TESTS, a);
-                logging::$flag!(logging::targets::TESTS, %a);
-                logging::$flag!(logging::targets::TESTS, ?a);
-                logging::$flag!(logging::targets::TESTS, b = 1);
-                logging::$flag!(logging::targets::TESTS, b = %1);
-                logging::$flag!(logging::targets::TESTS, b = ?1);
-                logging::$flag!(logging::targets::TESTS, c.d = 1);
-                logging::$flag!(logging::targets::TESTS, c.d = %1);
-                logging::$flag!(logging::targets::TESTS, c.d = ?1);
+                logging::$flag!(target: "bee.tests", "msg");
+                logging::$flag!(target: "bee.tests", a);
+                logging::$flag!(target: "bee.tests", %a);
+                logging::$flag!(target: "bee.tests", ?a);
+                logging::$flag!(target: "bee.tests", b = 1);
+                logging::$flag!(target: "bee.tests", b = %1);
+                logging::$flag!(target: "bee.tests", b = ?1);
+                logging::$flag!(target: "bee.tests", c.d = 1);
+                logging::$flag!(target: "bee.tests", c.d = %1);
+                logging::$flag!(target: "bee.tests", c.d = ?1);
             }
         }
     };
@@ -28,4 +28,3 @@ impl_test_log! { debug0 }
 impl_test_log! { debug1 }
 impl_test_log! { debug2 }
 impl_test_log! { trace }
-impl_test_log! { debug }
