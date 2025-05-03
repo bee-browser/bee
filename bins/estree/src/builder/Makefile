@@ -2,7 +2,7 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 
 PROJ_DIR := ../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
-LALR_JSON := $(PROJ_DIR)/libs/jsparser/src/parser/lalr.json
+LALR_JSON := $(PROJ_DIR)/libs/jsparser/src/parser/lalrgen/lalr.json
 
 CODEGEN_TARGETS := actions.rs
 
@@ -25,4 +25,4 @@ actions.yaml: actions.js $(LALR_JSON)
 	@mv -f $@.new $@
 
 $(LALR_JSON):
-	@$(MAKE) -s -C $(PROJ_DIR)/libs/jsparser/src codegen
+	@$(MAKE) -s -C $(PROJ_DIR)/libs/jsparser codegen

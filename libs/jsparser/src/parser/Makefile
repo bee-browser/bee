@@ -8,7 +8,6 @@ TOKENS_JSON := ../lexer/tokens.json
 CODEGEN_FILES := \
   grammar.txt \
   grammar.yaml \
-  lalr.json \
   lalr/action.rs \
   lalr/debug.rs \
   lalr/goal_symbols.rs \
@@ -86,14 +85,14 @@ grammar.yaml: grammar.txt ../transpile.js $(TOKENS_JSON)
 
 # 3. Generate an intermediate JSON data in order to avoid re-running lalrgen when lalr.js or
 # lalr.rs.hbs changes.
-.PRECIOUS: lalr.json
-lalr.json: grammar.yaml
+.PRECIOUS: lalrgen/lalr.json
+lalrgen/lalr.json: grammar.yaml
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p lalrgen
 	@cargo run -rqp lalrgen -- -r lalrgen $< $(GOAL_SYMBOLS) | jq '.' >$@
 
 # 4. Generate LALR parsing tables.
-lalr/%.rs: lalr.json lalr/%.rs.hbs lalr.js $(TOKENS_JSON)
+lalr/%.rs: lalrgen/lalr.json lalr/%.rs.hbs lalr.js $(TOKENS_JSON)
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
 	  deno run --allow-read=.. lalr.js $(TOKENS_JSON) | \

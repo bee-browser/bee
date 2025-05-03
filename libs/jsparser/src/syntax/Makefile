@@ -2,7 +2,7 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 
 PROJ_DIR := ../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
-LALR_JSON := ../parser/lalr.json
+LALR_JSON := ../parser/lalrgen/lalr.json
 
 CODEGEN_TARGETS := actions.rs
 

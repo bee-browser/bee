@@ -17,7 +17,6 @@ CODEGEN_FILES := \
   tokens.json \
   tokens.rs \
   dfa/mod.rs \
-  $(patsubst %,dfa/%.json,$(GOAL_SYMBOLS)) \
   $(patsubst %,dfa/%.rs,$(GOAL_SYMBOLS))
 
 CODEGEN_TARGETS := $(filter %.rs,$(CODEGEN_FILES))
@@ -28,7 +27,7 @@ CODEGEN_TARGETS := $(filter %.rs,$(CODEGEN_FILES))
 LIST_TOKENS = \
   cat tokens.yaml | \
   yq -o=json | \
-  jq -r '.goals[] | select(.name == "$(patsubst dfa/%.json,%,$@)") | .tokens | flatten | join(" ")'
+  jq -r '.goals[] | select(.name == "$(patsubst dfagen/%.json,%,$@)") | .tokens | flatten | join(" ")'
 
 # targets
 
@@ -48,7 +47,7 @@ codegen: $(CODEGEN_TARGETS)
 
 .PHONY: clean
 clean:
-	@rm -f $(CODEGEN_FILES)
+	@rm -fr $(CODEGEN_FILES) dfagen
 
 # Usually, we define targets in descending order in the dependency tree order.  However, we define
 # targets here in the reverse order in order to explain the code generation steps.
@@ -102,13 +101,14 @@ grammar.yaml: grammar.txt ../transpile.js
 # specified tokens.  Then, `dfagen` converts the NFA to an equivalent minimized DFA by using
 # well-known algorithms.  Finally, `dfagen` outputs the DFA in a JSON format which contains enough
 # information for code generation.
-.PRECIOUS: dfa/%.json
-dfa/%.json: grammar.yaml tokens.yaml
+.PRECIOUS: dfagen/%.json
+dfagen/%.json: grammar.yaml tokens.yaml
 	@echo 'Generating $(abspath $@)...'
+	@mkdir -p dfagen
 	@cargo run -rqp dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq '.' >$@
 
 # 4. Generate code for each DFA
-dfa/%.rs: dfa/%.json dfa/dfa.rs.hbs dfa.js
+dfa/%.rs: dfagen/%.json dfa/dfa.rs.hbs dfa.js
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | deno run dfa.js | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin dfa/dfa.rs.hbs | \
