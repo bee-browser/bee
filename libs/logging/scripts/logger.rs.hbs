@@ -6,7 +6,7 @@
 use std::sync::LazyLock;
 
 pub(crate) static FLAGS: LazyLock<logging::Flags> = LazyLock::new(|| {
-    logging::load_flags("{{ target }}")
+    logging::Flags::load("{{ target }}")
 });
 
 #[allow(unused_macros)]

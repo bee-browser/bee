@@ -24,54 +24,6 @@ pub fn init() {
     imp::init();
 }
 
-pub fn load_flags(target: &str) -> Flags {
-    let default = std::env::var("BEE_LOG_DEFAULT")
-        .map(|flags| match Flags::from_str(&flags) {
-            Ok(flags) => flags,
-            Err(_) => panic!("invalid default filter: {flags}"),
-        })
-        .unwrap_or(Flags::empty());
-    let filters = std::env::var("BEE_LOG").unwrap_or_default();
-    load_flags_from_filters(&filters, target, default)
-}
-
-fn load_flags_from_filters(filters: &str, target: &str, default: Flags) -> Flags {
-    filters
-        .split(',')
-        .map(str::trim)
-        .filter(|filter| !filter.is_empty())
-        .map(parse_filter)
-        .filter(|(filter_target, _, _)| target.starts_with(filter_target))
-        .fold(default, |prev, (_, op, flags)| match op {
-            Op::Assign => flags,
-            Op::Add => prev | flags,
-            Op::Remove => prev & !flags,
-        })
-}
-
-fn parse_filter(filter: &str) -> (&str, Op, Flags) {
-    let result = if let Some((target, flags)) = filter.split_once("+=") {
-        Flags::from_str(flags).map(|flags| (target, Op::Add, flags))
-    } else if let Some((target, flags)) = filter.split_once("-=") {
-        Flags::from_str(flags).map(|flags| (target, Op::Remove, flags))
-    } else if let Some((target, flags)) = filter.split_once('=') {
-        Flags::from_str(flags).map(|flags| (target, Op::Assign, flags))
-    } else {
-        Flags::from_str(filter).map(|flags| ("", Op::Assign, flags))
-    };
-    match result {
-        Ok(v) => v,
-        Err(_) => panic!("invalid filter: {filter}"),
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum Op {
-    Assign,
-    Add,
-    Remove,
-}
-
 bitflags! {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     pub struct Flags: u8 {
@@ -82,6 +34,30 @@ bitflags! {
         const DEBUG1 = 0b00010000;
         const DEBUG2 = 0b00100000;
         const TRACE  = 0b01000000;
+    }
+}
+
+impl Flags {
+    /// Loads flags for a logging target from the `BEE_LOG` environment variable.
+    pub fn load(target: &str) -> Flags {
+        Self::load_from_env(target, "BEE_LOG")
+    }
+
+    /// Loads flags for a logging target from an environment variable.
+    pub fn load_from_env(target: &str, name: &str) -> Flags {
+        let filters = std::env::var(name).unwrap_or_default();
+        Flags::load_from_str(target, &filters)
+    }
+
+    /// Loads flags for a logging target from a string.
+    pub fn load_from_str(target: &str, filters: &str) -> Flags {
+        filters
+            .split(',')
+            .map(str::trim)
+            .filter(|filter| !filter.is_empty())
+            .map(Filter::parse)
+            .filter(|filter| filter.matches(target))
+            .fold(Flags::empty(), |flags, filter| filter.fold(flags))
     }
 }
 
@@ -109,5 +85,45 @@ impl FromStr for Flags {
                         _ => return Err(()),
                     })
             })
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Op {
+    Assign,
+    Add,
+    Remove,
+}
+
+#[derive(Debug, PartialEq)]
+struct Filter<'a>(&'a str, Op, Flags);
+
+impl<'a> Filter<'a> {
+    fn parse(filter: &'a str) -> Self {
+        let result = if let Some((target, flags)) = filter.split_once("+=") {
+            Flags::from_str(flags).map(|flags| Self(target, Op::Add, flags))
+        } else if let Some((target, flags)) = filter.split_once("-=") {
+            Flags::from_str(flags).map(|flags| Self(target, Op::Remove, flags))
+        } else if let Some((target, flags)) = filter.split_once('=') {
+            Flags::from_str(flags).map(|flags| Self(target, Op::Assign, flags))
+        } else {
+            Flags::from_str(filter).map(|flags| Self("", Op::Assign, flags))
+        };
+        match result {
+            Ok(v) => v,
+            Err(_) => panic!("invalid filter: {filter}"),
+        }
+    }
+
+    fn matches(&self, target: &str) -> bool {
+        target.starts_with(self.0)
+    }
+
+    fn fold(&self, flags: Flags) -> Flags {
+        match self.1 {
+            Op::Assign => self.2,
+            Op::Add => flags | self.2,
+            Op::Remove => flags & !self.2,
+        }
     }
 }

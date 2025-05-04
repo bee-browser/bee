@@ -1,109 +1,80 @@
 use super::*;
 
 #[test]
-fn test_load_flags_from_filters_empty() {
-    assert_eq!(
-        load_flags_from_filters("", "a", Flags::empty()),
-        Flags::empty()
-    );
-    assert_eq!(
-        load_flags_from_filters("", "b", Flags::empty()),
-        Flags::empty()
-    );
+fn test_flags_load_from_str_empty() {
+    assert_eq!(Flags::load_from_str("a", ""), Flags::empty());
+    assert_eq!(Flags::load_from_str("b", ""), Flags::empty());
 }
 
 #[test]
-fn test_load_flags_from_filters_no_target() {
-    assert_eq!(
-        load_flags_from_filters("error|warn", "a", Flags::empty()),
-        Flags::ERROR | Flags::WARN
-    );
-    assert_eq!(
-        load_flags_from_filters("error|warn", "b", Flags::empty()),
-        Flags::ERROR | Flags::WARN
-    );
+fn test_flags_load_from_str_no_target() {
+    const FILTERS: &str = "error|warn";
+    assert_eq!(Flags::load_from_str("a", FILTERS), Flags::ERROR | Flags::WARN);
+    assert_eq!(Flags::load_from_str("b", FILTERS), Flags::ERROR | Flags::WARN);
 }
 
 #[test]
-fn test_load_flags_from_filters_single_filter() {
-    assert_eq!(
-        load_flags_from_filters("a=error|warn", "a", Flags::empty()),
-        Flags::ERROR | Flags::WARN
-    );
-    assert_eq!(
-        load_flags_from_filters("a=error|warn", "b", Flags::empty()),
-        Flags::empty()
-    );
+fn test_flags_load_from_str_single_filter() {
+    const FILTERS: &str = "a=error|warn";
+    assert_eq!(Flags::load_from_str("a", FILTERS), Flags::ERROR | Flags::WARN);
+    assert_eq!(Flags::load_from_str("b", FILTERS), Flags::empty());
 }
 
 #[test]
-fn test_load_flags_from_filters_multiple_filters() {
-    assert_eq!(
-        load_flags_from_filters("a=error|warn,b=info|trace", "a", Flags::empty()),
-        Flags::ERROR | Flags::WARN
-    );
-    assert_eq!(
-        load_flags_from_filters("a=error|warn,b=info|trace", "b", Flags::empty()),
-        Flags::INFO | Flags::TRACE
-    );
+fn test_flags_load_from_str_multiple_targets() {
+    const FILTERS: &str = "a=error|warn,b=info|trace";
+    assert_eq!(Flags::load_from_str("a", FILTERS), Flags::ERROR | Flags::WARN);
+    assert_eq!(Flags::load_from_str("b", FILTERS), Flags::INFO | Flags::TRACE);
 }
 
 #[test]
-fn test_load_flags_from_filters_override() {
-    assert_eq!(
-        load_flags_from_filters("a=error|warn,a=info|trace", "a", Flags::empty()),
-        Flags::INFO | Flags::TRACE
-    );
+fn test_flags_load_from_str_folding_assign() {
+    const FILTERS: &str = "a=error|warn,a=info|trace";
+    assert_eq!(Flags::load_from_str("a", FILTERS), Flags::INFO | Flags::TRACE);
 }
 
 #[test]
-fn test_load_flags_from_filters_last_comma() {
-    assert_eq!(
-        load_flags_from_filters("a=error|warn,", "a", Flags::empty()),
-        Flags::ERROR | Flags::WARN
-    );
+fn test_flags_load_from_str_folding_add() {
+    const FILTERS: &str = "a=info,a+=warn";
+    assert_eq!(Flags::load_from_str("a", FILTERS), Flags::WARN | Flags::INFO);
 }
 
 #[test]
-fn test_load_flags_from_filters_add() {
-    assert_eq!(
-        load_flags_from_filters("a+=error|warn", "a", Flags::INFO),
-        Flags::ERROR | Flags::WARN | Flags::INFO
-    );
+fn test_flags_load_from_str_folding_remove() {
+    const FILTERS: &str = "a=error|info,a-=error|warn";
+    assert_eq!(Flags::load_from_str("a", FILTERS), Flags::INFO);
 }
 
 #[test]
-fn test_load_flags_from_filters_remove() {
-    assert_eq!(
-        load_flags_from_filters("a-=error|warn", "a", Flags::INFO | Flags::ERROR),
-        Flags::INFO
-    );
+fn test_flags_load_from_str_last_comma() {
+    const FILTERS: &str = "a=error|warn,";
+    assert_eq!(Flags::load_from_str("a", FILTERS), Flags::ERROR | Flags::WARN);
 }
 
 #[test]
-fn test_parse_filter_empty() {
-    assert_eq!(parse_filter(""), ("", Op::Assign, Flags::empty()))
+fn test_filter_parse_empty() {
+    assert_eq!(Filter::parse(""), Filter("", Op::Assign, Flags::empty()));
 }
 
 #[test]
-fn test_parse_filter_add() {
-    assert_eq!(parse_filter("a+=info"), ("a", Op::Add, Flags::INFO))
+fn test_filter_parse_assign() {
+    assert_eq!(Filter::parse("a=info"), Filter("a", Op::Assign, Flags::INFO));
 }
 
 #[test]
-fn test_parse_filter_remove() {
-    assert_eq!(parse_filter("a-=info"), ("a", Op::Remove, Flags::INFO))
+fn test_filter_parse_add() {
+    assert_eq!(Filter::parse("a+=info"), Filter("a", Op::Add, Flags::INFO));
 }
 
 #[test]
-fn test_parse_filter_assign() {
-    assert_eq!(parse_filter("a=info"), ("a", Op::Assign, Flags::INFO))
+fn test_filter_parse_remove() {
+    assert_eq!(Filter::parse("a-=info"), Filter("a", Op::Remove, Flags::INFO));
 }
 
 #[test]
 #[should_panic(expected = "invalid filter: a==info")]
-fn test_parse_filter_invalid() {
-    parse_filter("a==info");
+fn test_filter_parse_invalid() {
+    Filter::parse("a==info");
 }
 
 #[test]
