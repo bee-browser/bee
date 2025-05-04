@@ -30,21 +30,7 @@ macro_rules! info {
 }
 
 #[macro_export]
-macro_rules! debug0 {
-    (target: $target:literal, $($tokens:tt)+) => {
-        $crate::imp::event!(target: $target, $crate::imp::Level::DEBUG, $($tokens)+);
-    };
-}
-
-#[macro_export]
-macro_rules! debug1 {
-    (target: $target:literal, $($tokens:tt)+) => {
-        $crate::imp::event!(target: $target, $crate::imp::Level::DEBUG, $($tokens)+);
-    };
-}
-
-#[macro_export]
-macro_rules! debug2 {
+macro_rules! debug {
     (target: $target:literal, $($tokens:tt)+) => {
         $crate::imp::event!(target: $target, $crate::imp::Level::DEBUG, $($tokens)+);
     };

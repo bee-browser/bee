@@ -5,14 +5,44 @@
 
 use std::sync::LazyLock;
 
-pub(crate) static FLAGS: LazyLock<logging::Flags> = LazyLock::new(|| {
-    logging::Flags::load("{{ target }}")
+static LEVEL: LazyLock<logging::imp::LevelFilter> = LazyLock::new(|| {
+    logging::load_level("{{ target }}")
 });
+
+#[allow(unused)]
+#[inline(always)]
+pub(crate) fn error_enabled() -> bool {
+    *LEVEL >= logging::imp::Level::ERROR
+}
+
+#[allow(unused)]
+#[inline(always)]
+pub(crate) fn warn_enabled() -> bool {
+    *LEVEL >= logging::imp::Level::WARN
+}
+
+#[allow(unused)]
+#[inline(always)]
+pub(crate) fn info_enabled() -> bool {
+    *LEVEL >= logging::imp::Level::INFO
+}
+
+#[allow(unused)]
+#[inline(always)]
+pub(crate) fn debug_enabled() -> bool {
+    *LEVEL >= logging::imp::Level::DEBUG
+}
+
+#[allow(unused)]
+#[inline(always)]
+pub(crate) fn trace_enabled() -> bool {
+    *LEVEL >= logging::imp::Level::TRACE
+}
 
 #[allow(unused_macros)]
 macro_rules! error {
     ($($tokens:tt)+) => {
-        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::ERROR) {
+        if crate::{{#if module}}{{ module }}::{{/if}}logger::error_enabled() {
             logging::error!(target: "{{ target }}", $($tokens)+);
         }
     };
@@ -22,7 +52,7 @@ macro_rules! error {
 #[allow(unused_macros)]
 macro_rules! warn_ {
     ($($tokens:tt)+) => {
-        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::WARN) {
+        if crate::{{#if module}}{{ module }}::{{/if}}logger::warn_enabled() {
             logging::warn!(target: "{{ target }}", $($tokens)+);
         }
     };
@@ -31,44 +61,8 @@ macro_rules! warn_ {
 #[allow(unused_macros)]
 macro_rules! info {
     ($($tokens:tt)+) => {
-        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::INFO) {
+        if crate::{{#if module}}{{ module }}::{{/if}}logger::info_enabled() {
             logging::info!(target: "{{ target }}", $($tokens)+);
-        }
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! debug0 {
-    ($($tokens:tt)+) => {
-        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::DEBUG0) {
-            logging::debug0!(target: "{{ target }}", $($tokens)+);
-        }
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! debug1 {
-    ($($tokens:tt)+) => {
-        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::DEBUG1) {
-            logging::debug1!(target: "{{ target }}", $($tokens)+);
-        }
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! debug2 {
-    ($($tokens:tt)+) => {
-        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::DEBUG2) {
-            logging::debug2!(target: "{{ target }}", $($tokens)+);
-        }
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! trace {
-    ($($tokens:tt)+) => {
-        if (*crate::{{#if module}}{{ module }}::{{/if}}logger::FLAGS).contains(logging::Flags::TRACE) {
-            logging::trace!(target: "{{ target }}", $($tokens)+);
         }
     };
 }
@@ -76,18 +70,23 @@ macro_rules! trace {
 #[allow(unused_macros)]
 macro_rules! debug {
     ($($tokens:tt)+) => {
-        crate::{{#if module}}{{ module }}::{{/if}}logger::debug0!($($tokens)+);
+        if crate::{{#if module}}{{ module }}::{{/if}}logger::debug_enabled() {
+            logging::debug!(target: "{{ target }}", $($tokens)+);
+        }
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! trace {
+    ($($tokens:tt)+) => {
+        if crate::{{#if module}}{{ module }}::{{/if}}logger::trace_enabled() {
+            logging::trace!(target: "{{ target }}", $($tokens)+);
+        }
     };
 }
 
 #[allow(unused_imports)]
 pub(crate) use debug;
-#[allow(unused_imports)]
-pub(crate) use debug0;
-#[allow(unused_imports)]
-pub(crate) use debug1;
-#[allow(unused_imports)]
-pub(crate) use debug2;
 #[allow(unused_imports)]
 pub(crate) use error;
 #[allow(unused_imports)]

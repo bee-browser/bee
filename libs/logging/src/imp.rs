@@ -6,6 +6,7 @@ use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::time::FormatTime;
 
 pub use tracing::Level;
+pub use tracing::level_filters::LevelFilter;
 pub use tracing::debug;
 pub use tracing::error;
 pub use tracing::event;
