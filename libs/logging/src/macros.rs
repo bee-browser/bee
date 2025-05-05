@@ -23,6 +23,7 @@ macro_rules! define_logger {
 // replace `$crate` with `$d crate`.
 #[doc(hidden)]
 #[macro_export]
+#[rustfmt::skip]
 macro_rules! define_logger_inner {
     ($target:literal, $d:tt) => {
         mod logger {
@@ -31,9 +32,7 @@ macro_rules! define_logger_inner {
             use $crate::imp::Level;
             use $crate::imp::LevelFilter;
 
-            static LEVEL: LazyLock<LevelFilter> = LazyLock::new(|| {
-                $crate::load_level($target)
-            });
+            static LEVEL: LazyLock<LevelFilter> = LazyLock::new(|| $crate::load_level($target));
 
             #[allow(unused)]
             #[inline(always)]
