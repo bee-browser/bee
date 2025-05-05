@@ -1,4 +1,5 @@
-mod logger;
+logging::define_logger! {"bee::toydom"}
+
 mod null;
 mod toy;
 

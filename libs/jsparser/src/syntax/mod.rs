@@ -1,5 +1,6 @@
+logging::define_logger! {"bee::jsparser::syntax"}
+
 mod actions;
-mod logger;
 
 use std::ops::Range;
 

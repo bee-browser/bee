@@ -8,12 +8,6 @@ codegen:
 	@$(MAKE) -s -C symbol codegen
 	@$(MAKE) -s -C syntax codegen
 
-.PHONY: loggergen
-loggergen:
-	@$(MAKE) -s -C lexer loggergen
-	@$(MAKE) -s -C parser loggergen
-	@$(MAKE) -s -C syntax loggergen
-
 .PHONY: clean
 clean:
 	@$(MAKE) -s -C lexer clean

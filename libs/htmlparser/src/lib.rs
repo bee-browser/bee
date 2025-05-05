@@ -1,8 +1,9 @@
+logging::define_logger! {"bee::htmlparser"}
+
 #[macro_use]
 mod macros;
 
 mod localnames;
-mod logger;
 mod parser;
 mod treebuilder;
 

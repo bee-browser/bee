@@ -4,6 +4,7 @@ use rustc_hash::FxHashMap;
 
 use crate::Runtime;
 use crate::Value;
+use crate::logger;
 use crate::types::Coroutine;
 use crate::types::CoroutineStatus;
 use crate::types::Promise;
@@ -17,7 +18,7 @@ impl<X> Runtime<X> {
     }
 
     fn handle_message(&mut self, msg: Message) {
-        crate::logger::debug!(event = "handle_message", ?msg);
+        logger::debug!(event = "handle_message", ?msg);
         match msg {
             Message::PromiseResolved {
                 promise,
@@ -32,17 +33,17 @@ impl<X> Runtime<X> {
     // promise
 
     pub fn register_promise(&mut self, coroutine: *mut Coroutine) -> Promise {
-        crate::logger::debug!(event = "register_promise", ?coroutine);
+        logger::debug!(event = "register_promise", ?coroutine);
         self.tasklet_system.register_promise(coroutine)
     }
 
     pub fn await_promise(&mut self, promise: Promise, awaiting: Promise) {
-        crate::logger::debug!(event = "await_promise", ?promise, ?awaiting);
+        logger::debug!(event = "await_promise", ?promise, ?awaiting);
         self.tasklet_system.await_promise(promise, awaiting);
     }
 
     pub fn process_promise(&mut self, promise: Promise, result: &Value, error: &Value) {
-        crate::logger::debug!(event = "process_promise", ?promise, ?result, ?error);
+        logger::debug!(event = "process_promise", ?promise, ?result, ?error);
         let coroutine = self.tasklet_system.get_coroutine(promise);
         match Coroutine::resume(self.as_void_ptr(), coroutine, promise, result, error) {
             CoroutineStatus::Done(result) => self.tasklet_system.resolve_promise(promise, result),
@@ -116,13 +117,13 @@ impl System {
     }
 
     fn emit_promise_resolved(&mut self, promise: Promise, result: Value) {
-        crate::logger::debug!(event = "emit_promise_resolved", ?promise, ?result);
+        logger::debug!(event = "emit_promise_resolved", ?promise, ?result);
         self.messages
             .push_back(Message::PromiseResolved { promise, result });
     }
 
     fn emit_promise_rejected(&mut self, promise: Promise, error: Value) {
-        crate::logger::debug!(event = "emit_promise_rejected", ?promise, ?error);
+        logger::debug!(event = "emit_promise_rejected", ?promise, ?error);
         self.messages
             .push_back(Message::PromiseRejected { promise, error });
     }
@@ -132,7 +133,7 @@ impl System {
     }
 
     fn resolve_promise(&mut self, promise: Promise, result: Value) {
-        crate::logger::debug!(event = "resolve_promise", ?promise, ?result);
+        logger::debug!(event = "resolve_promise", ?promise, ?result);
         let driver = self.promises.get_mut(&promise).unwrap();
         debug_assert!(matches!(driver.state, PromiseState::Pending));
         if let Some(awaiting) = driver.awaiting {
@@ -144,7 +145,7 @@ impl System {
     }
 
     fn reject_promise(&mut self, promise: Promise, error: Value) {
-        crate::logger::debug!(event = "reject_promise", ?promise, ?error);
+        logger::debug!(event = "reject_promise", ?promise, ?error);
         let driver = self.promises.get_mut(&promise).unwrap();
         debug_assert!(matches!(driver.state, PromiseState::Pending));
         if let Some(awaiting) = driver.awaiting {

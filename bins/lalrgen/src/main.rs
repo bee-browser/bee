@@ -1,10 +1,11 @@
 #![doc = include_str!("../README.md")]
 
+logging::define_logger! {"bee::lalrgen"}
+
 mod closure;
 mod firstset;
 mod grammar;
 mod lalr;
-mod logger;
 mod lr;
 mod phrase;
 mod preprocess;

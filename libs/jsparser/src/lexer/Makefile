@@ -2,8 +2,6 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 
 PROJ_DIR := ../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
-LOGGERGEN_SH := $(PROJ_DIR)/libs/logging/scripts/loggergen.sh
-LOGGERGEN_DEPS := $(shell sh $(LOGGERGEN_SH) deps)
 ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
 
 GOAL_SYMBOLS := $(shell \
@@ -22,8 +20,6 @@ CODEGEN_FILES := \
   $(patsubst %,dfa/%.rs,$(GOAL_SYMBOLS))
 
 CODEGEN_TARGETS := $(filter %.rs,$(CODEGEN_FILES))
-
-LOGGERGEN_TARGETS := logger.rs
 
 # Lazy evaluation.
 # The following variable will be evaluated in substitution time.
@@ -49,12 +45,9 @@ all: codegen
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
-.PHONY: loggergen
-loggergen: $(LOGGERGEN_TARGETS)
-
 .PHONY: clean
 clean:
-	@rm -fr $(CODEGEN_FILES) $(LOGGERGEN_TARGETS) dfagen
+	@rm -fr $(CODEGEN_FILES) dfagen
 
 # Usually, we define targets in descending order in the dependency tree order.  However, we define
 # targets here in the reverse order in order to explain the code generation steps.
@@ -154,7 +147,3 @@ tokens.rs: tokens.json tokens.rs.hbs
 	@cat $< | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@
-
-logger.rs: $(LOGGERGEN_DEPS)
-	@echo 'Generating $(abspath $@)...'
-	@sh $(LOGGERGEN_SH) codegen '{"module":"lexer","target":"bee::jsparser::lexer"}' >$@

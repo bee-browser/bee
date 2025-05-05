@@ -1,5 +1,6 @@
+logging::define_logger! {"bee::estree"}
+
 mod builder;
-mod logger;
 mod nodes;
 
 use std::io::BufRead;

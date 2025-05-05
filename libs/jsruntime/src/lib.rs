@@ -1,6 +1,7 @@
+logging::define_logger! {"bee::jsruntime"}
+
 mod backend;
 mod lambda;
-mod logger;
 mod objects;
 mod semantics;
 mod tasklet;
