@@ -45,10 +45,6 @@ pub fn compile<R>(support: &mut R, program: &Program, optimize: bool) -> Result<
 where
     R: CompilerSupport + EditorSupport,
 {
-    // Declare functions defined in the JavaScript program before compiling the functions so that
-    // the functions can refer each other.
-    support.declare_functions(program);
-
     // Allocate large data on the heap memory.
     //
     // Many existing programs including examples in bytecodealliance/wasmtime allocate
