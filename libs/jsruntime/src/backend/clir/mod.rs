@@ -18,7 +18,6 @@ use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
 use crate::semantics::Function;
-use crate::semantics::Program;
 use crate::types::Lambda;
 
 use super::CompileError;
@@ -47,7 +46,6 @@ pub trait CompilerSupport {
 
     // Executor
     fn target_config(&self) -> isa::TargetFrontendConfig;
-    fn declare_functions(&mut self, program: &Program);
     fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context);
 }
 
@@ -70,10 +68,6 @@ impl<X> CompilerSupport for Runtime<X> {
 
     fn target_config(&self) -> isa::TargetFrontendConfig {
         self.executor.target_config()
-    }
-
-    fn declare_functions(&mut self, program: &Program) {
-        self.executor.declare_functions(program);
     }
 
     fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
@@ -131,19 +125,15 @@ impl Executor {
         (!addr.is_null()).then(|| unsafe { std::mem::transmute::<_, Lambda>(addr) })
     }
 
-    pub fn declare_functions(&mut self, program: &Program) {
-        for func in program.functions.iter() {
-            let name = func.id.make_name();
-            let func_id = self
-                .module
-                .declare_function(&name, Linkage::Local, &self.lambda_sig)
-                .unwrap();
-            self.id_map.insert(func.id, func_id);
-        }
-    }
-
     pub fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
-        let func_id = *self.id_map.get(&func.id).unwrap();
+        // It's unnecessary to declare JavaScript functions called in a JavaScript function before
+        // the JIT compilation.  Because every JavaScript function will be called indirectly.
+        let name = func.id.make_name();
+        let func_id = self
+            .module
+            .declare_function(&name, Linkage::Local, &self.lambda_sig)
+            .unwrap();
+        self.id_map.insert(func.id, func_id);
         self.module.define_function(func_id, ctx).unwrap();
         self.module.clear_context(ctx);
     }
