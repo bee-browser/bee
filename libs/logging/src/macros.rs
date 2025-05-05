@@ -15,6 +15,13 @@ macro_rules! define_logger {
     };
 }
 
+// See https://github.com/rust-lang/rust/issues/35853 for the reason why we define
+// the `define_logger_inner` macro.
+//
+// Limitation: It's assumed that `logger` defined in the current module scope.  We cannot use
+// `$crate` in macro definitions in this macro.  `$crate` always expands to `logging` even if we
+// replace `$crate` with `$d crate`.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! define_logger_inner {
     ($target:literal, $d:tt) => {
