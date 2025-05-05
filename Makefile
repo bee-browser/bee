@@ -9,7 +9,6 @@ BUILD_TARGETS := $(addprefix build-,\
 
 CODEGEN_PATHS := \
   bins/estree \
-  libs/logging \
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
@@ -82,7 +81,6 @@ bench:
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
-	@bash libs/logging/scripts/loggergen.sh --rm
 	cargo clean --profile=dev
 	cargo clean --profile=profiling
 	cargo clean --profile=release
@@ -95,8 +93,6 @@ clean-all: $(CLEAN_TARGETS)
 # The order must be determined by dependencies between packages.
 .PHONE: codegen
 codegen:
-	@bash libs/logging/scripts/loggergen.sh
-	@$(MAKE) -s codegen-libs/logging
 	@$(MAKE) -s codegen-libs/htmltokenizer
 	@$(MAKE) -s codegen-libs/htmlparser
 	@$(MAKE) -s codegen-libs/jsparser

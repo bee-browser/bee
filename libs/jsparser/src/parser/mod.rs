@@ -1,5 +1,6 @@
+logging::define_logger! {"bee::jsparser::parser"}
+
 mod lalr;
-mod logger;
 
 pub use lalr::GoalSymbol;
 pub use lalr::ProductionRule;

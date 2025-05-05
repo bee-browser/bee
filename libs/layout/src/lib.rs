@@ -1,7 +1,8 @@
+logging::define_logger! {"bee::layout"}
+
 mod canvas;
 mod flex;
 mod flow;
-mod logger;
 mod spec;
 mod style;
 

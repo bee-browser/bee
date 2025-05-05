@@ -10,6 +10,7 @@ pub use tracing::debug;
 pub use tracing::error;
 pub use tracing::event;
 pub use tracing::info;
+pub use tracing::level_filters::LevelFilter;
 pub use tracing::trace;
 pub use tracing::warn;
 

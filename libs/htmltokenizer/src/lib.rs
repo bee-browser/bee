@@ -1,7 +1,8 @@
+logging::define_logger! {"bee::htmltokenizer"}
+
 mod charref;
 mod error;
 mod inputstream;
-mod logger;
 pub mod token;
 mod tokenizer;
 

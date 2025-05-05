@@ -8,6 +8,8 @@ use super::Locator;
 use super::Reference;
 use super::Symbol;
 
+use crate::logger;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ScopeRef(u16);
 
@@ -24,7 +26,7 @@ impl ScopeRef {
 
     fn checked_new(index: usize) -> Option<Self> {
         if index > u16::MAX as usize {
-            crate::logger::error!(err = "too large", index);
+            logger::error!(err = "too large", index);
             return None;
         }
         Some(Self::new(index as u16))
@@ -53,7 +55,7 @@ impl VariableRef {
 
     fn checked_new(scope_ref: ScopeRef, index: usize) -> Option<Self> {
         if index > u16::MAX as usize {
-            crate::logger::error!(err = "too large", index);
+            logger::error!(err = "too large", index);
             return None;
         }
         Some(Self::new(scope_ref.0, index as u16))

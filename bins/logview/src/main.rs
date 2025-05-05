@@ -1,4 +1,4 @@
-mod logger;
+logging::define_logger! {"bee::logview"}
 
 use std::convert::Infallible;
 use std::error::Error;

@@ -1,7 +1,8 @@
+logging::define_logger! {"bee::jsparser::lexer"}
+
 mod cursor;
 mod dfa;
 mod goals;
-mod logger;
 mod tokens;
 
 use bitflags::bitflags;

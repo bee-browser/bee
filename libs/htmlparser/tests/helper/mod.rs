@@ -193,7 +193,7 @@ impl DomTreeBuilder for TreeValidator<'_> {
     fn print_tree(&self) {
         let mut v = vec![];
         self.flatten(0, 0, &mut v);
-        logging::debug!(logging::targets::TESTS, "{v:?}");
+        logging::debug!(target: "bee.tests", "{v:?}");
     }
 }
 

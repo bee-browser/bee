@@ -1,8 +1,9 @@
 #![doc = include_str!("../README.md")]
 
+logging::define_logger! {"bee::dfagen"}
+
 mod automaton;
 mod grammar;
-mod logger;
 mod unicode;
 
 use std::path::PathBuf;
