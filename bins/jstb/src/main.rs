@@ -145,6 +145,8 @@ fn main() -> Result<()> {
             }
         }
         Command::Compile(args) => {
+            let monitor = Box::new(Monitor);
+            runtime.set_monitor(monitor);
             let program = parse!(&source, cl)?;
             runtime.compile(&program, !args.no_optimize)?;
         }
@@ -178,4 +180,13 @@ fn read_from_stdin() -> Result<String> {
 
 fn print(_runtime: &mut BasicRuntime, args: &[Value]) {
     println!("{}", args.iter().format(" "));
+}
+
+struct Monitor;
+
+impl jsruntime::Monitor for Monitor {
+    fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
+        println!("### {id:?}");
+        println!("{ir}");
+    }
 }

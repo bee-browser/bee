@@ -13,7 +13,6 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use backend::Executor;
-use lambda::LambdaId;
 use lambda::LambdaRegistry;
 use objects::Object;
 use objects::Property;
@@ -21,6 +20,7 @@ use objects::PropertyKey;
 use types::ReturnValue;
 
 pub use backend::CompileError;
+pub use lambda::LambdaId;
 pub use semantics::Program;
 pub use types::U16Chunk; // TODO: remove
 pub use types::U16String;
@@ -57,6 +57,7 @@ pub struct Runtime<X> {
     allocator: bumpalo::Bump,
     tasklet_system: tasklet::System,
     global_object: Object,
+    monitor: Option<Box<dyn Monitor>>,
     extension: X,
 }
 
@@ -75,6 +76,7 @@ impl<X> Runtime<X> {
             allocator: bumpalo::Bump::new(),
             tasklet_system: tasklet::System::new(),
             global_object,
+            monitor: None,
             extension,
         }
     }
@@ -89,6 +91,10 @@ impl<X> Runtime<X> {
 
     pub fn enable_scope_cleanup_checker(&mut self) {
         self.pref.enable_scope_cleanup_checker = true;
+    }
+
+    pub fn set_monitor(&mut self, monitor: Box<dyn Monitor>) {
+        self.monitor = Some(monitor);
     }
 
     pub fn register_host_function<F, R>(&mut self, name: &str, host_fn: F)
@@ -249,4 +255,8 @@ where
     fn default() -> Self {
         Runtime::with_extension(Default::default())
     }
+}
+
+pub trait Monitor {
+    fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
 }
