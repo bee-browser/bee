@@ -62,10 +62,7 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
     } else {
         runtime.parse_script(src).unwrap()
     };
-    runtime.compile(&program, optimize).unwrap();
-    runtime.link();
-    let result = runtime.evaluate(&program)?;
-    runtime.run();
+    let result = runtime.run(&program, optimize)?;
     runtime.extension().validate();
     Ok(result)
 }

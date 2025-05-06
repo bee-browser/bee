@@ -11,7 +11,7 @@ use crate::types::Promise;
 
 impl<X> Runtime<X> {
     /// Perform all tasklets.
-    pub fn run(&mut self) {
+    pub fn process_tasks(&mut self) {
         while let Some(msg) = self.tasklet_system.next_msg() {
             self.handle_message(msg);
         }
