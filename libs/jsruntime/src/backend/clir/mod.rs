@@ -71,6 +71,9 @@ impl<X> CompilerSupport for Runtime<X> {
     }
 
     fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
+        if let Some(ref mut monitor) = self.monitor {
+            monitor.print_function_ir(func.id, &ctx.func.display());
+        }
         self.executor.define_function(func, ctx);
     }
 }
