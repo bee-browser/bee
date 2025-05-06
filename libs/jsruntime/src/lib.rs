@@ -144,6 +144,14 @@ impl<X> Runtime<X> {
         retv.into_result(status)
     }
 
+    pub fn run(&mut self, program: &Program, optimize: bool) -> Result<Value, Value> {
+        self.compile(program, optimize).unwrap(); // TODO(fix): handle compilation errors
+        self.link();
+        let value = self.evaluate(program)?;
+        self.process_tasks();
+        Ok(value)
+    }
+
     fn as_void_ptr(&mut self) -> *mut c_void {
         self as *mut Self as *mut c_void
     }

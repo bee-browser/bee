@@ -152,10 +152,8 @@ fn main() -> Result<()> {
         }
         Command::Run(args) => {
             let program = parse!(&source, cl)?;
-            runtime.compile(&program, !args.no_optimize)?;
-            runtime.link();
-            match runtime.evaluate(&program) {
-                Ok(_) => runtime.run(),
+            match runtime.run(&program, !args.no_optimize) {
+                Ok(_) => (),
                 Err(v) => println!("Uncaught {v:?}"),
             }
         }
