@@ -534,7 +534,8 @@ where
 ///
 /// The actual type of `context` varies depending on usage of the lambda function:
 ///
-/// * Regular functions: Capture**
+/// * Entry function: 0 (null pointer)
+/// * Regular functions: Closure*
 /// * Coroutine functions: Coroutine*
 ///
 pub type Lambda = unsafe extern "C" fn(
