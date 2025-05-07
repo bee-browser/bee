@@ -46,7 +46,7 @@ pub struct Editor<'a> {
     addr_type: ir::Type,
     lambda_sig: ir::SigRef,
     entry_block: ir::Block,
-    captures: ir::Value,
+    closure: ir::Value,
     fcs: ir::StackSlot,
 
     // FunctionBuilder::is_filled() is a private method.
@@ -69,7 +69,7 @@ impl<'a> Editor<'a> {
         // predecessor of the entry block.
         builder.seal_block(entry_block);
 
-        let captures = builder.block_params(entry_block)[1];
+        let closure = builder.block_params(entry_block)[1];
 
         let fcs = builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
@@ -84,7 +84,7 @@ impl<'a> Editor<'a> {
             addr_type: target_config.pointer_type(),
             lambda_sig,
             entry_block,
-            captures,
+            closure,
             fcs,
             block_terminated: false,
             coroutine_mode: false,
@@ -490,13 +490,15 @@ impl<'a> Editor<'a> {
     pub fn put_load_capture(&mut self, index: u16) -> CaptureIr {
         logger::debug!(event = "put_load_capture", index);
         let offset = (self.addr_type.bytes() as usize) * (index as usize);
-        CaptureIr(self.put_load_addr(self.captures, offset))
+        let captures = self.put_get_captures_from_closure();
+        CaptureIr(self.put_load_addr(captures, offset))
     }
 
     pub fn put_load_captured_value(&mut self, index: u16) -> AnyIr {
         logger::debug!(event = "put_load_captured_value", index);
         let offset = (self.addr_type.bytes() as usize) * (index as usize);
-        let capture = self.put_load_addr(self.captures, offset);
+        let captures = self.put_get_captures_from_closure();
+        let capture = self.put_load_addr(captures, offset);
         AnyIr(self.put_load_addr(capture, Capture::TARGET_OFFSET))
     }
 
@@ -512,16 +514,15 @@ impl<'a> Editor<'a> {
 
     // closure
 
+    fn put_get_captures_from_closure(&mut self) -> ir::Value {
+        self.builder
+            .ins()
+            .iadd_imm(self.closure, Closure::CAPTURES_OFFSET as i64)
+    }
+
     pub fn put_load_lambda_from_closure(&mut self, closure: ClosureIr) -> LambdaIr {
         logger::debug!(event = "put_load_lambda_from_closure", ?closure);
         LambdaIr(self.put_load_addr(closure.0, Closure::LAMBDA_OFFSET))
-    }
-
-    pub fn put_get_captures_from_closure(&mut self, closure: ClosureIr) -> ir::Value {
-        logger::debug!(event = "put_get_captures_from_closure", ?closure);
-        self.builder
-            .ins()
-            .iadd_imm(closure.0, Closure::CAPTURES_OFFSET as i64)
     }
 
     pub fn put_store_capture_to_closure(
@@ -550,10 +551,9 @@ impl<'a> Editor<'a> {
     ) -> StatusIr {
         logger::debug!(event = "put_call", ?closure, argc, ?argv, ?retv);
         let lambda = self.put_load_lambda_from_closure(closure);
-        let context = self.put_get_captures_from_closure(closure);
         let args = &[
             self.runtime(),
-            context,
+            closure.0,
             self.builder.ins().iconst(ir::types::I16, argc as i64),
             argv.0,
             retv.0,
@@ -571,7 +571,8 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_set_coroutine_mode");
         debug_assert!(!self.coroutine_mode);
         self.coroutine_mode = true;
-        self.captures = self.put_load_captures_from_coroutine();
+        let coroutine = self.coroutine();
+        self.closure = self.put_load_addr(coroutine.0, Coroutine::CLOSURE_OFFSET);
     }
 
     pub fn put_load_num_locals_from_coroutine(&mut self) -> ir::Value {
@@ -586,23 +587,12 @@ impl<'a> Editor<'a> {
         self.put_load_i32(coroutine.0, Coroutine::STATE_OFFSET)
     }
 
-    pub fn put_load_captures_from_coroutine(&mut self) -> ir::Value {
-        logger::debug!(event = "put_load_captures_from_coroutine");
-        let closure = self.put_load_closure_from_coroutine();
-        self.put_get_captures_from_closure(closure)
-    }
-
     pub fn put_get_local_from_coroutine(&mut self, index: u16) -> AnyIr {
         logger::debug!(event = "put_get_local_from_coroutine", index);
         // TODO: emit assert(index < coroutine.num_locals)
         let coroutine = self.coroutine();
         let offset = Coroutine::LOCALS_OFFSET + Value::SIZE * (index as usize);
         AnyIr(self.builder.ins().iadd_imm(coroutine.0, offset as i64))
-    }
-
-    fn put_load_closure_from_coroutine(&mut self) -> ClosureIr {
-        let coroutine = self.coroutine();
-        ClosureIr(self.put_load_addr(coroutine.0, Coroutine::CLOSURE_OFFSET))
     }
 
     pub fn put_store_state_to_coroutine(&mut self, state: u32) {
