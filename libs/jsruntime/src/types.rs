@@ -3,6 +3,7 @@ use std::mem::offset_of;
 use std::ptr::addr_eq;
 
 use crate::Runtime;
+use crate::lambda::LambdaId;
 use crate::logger;
 use crate::objects::Object;
 
@@ -336,6 +337,9 @@ pub struct Closure {
     /// A pointer to a lambda function compiled from a JavaScript function definition.
     pub lambda: Lambda,
 
+    /// The ID of `lambda`.
+    pub lambda_id: LambdaId,
+
     /// The number of captures.
     ///
     /// Usually, this field does not used in the compiled function, but we add this field here for
@@ -358,8 +362,7 @@ impl Closure {
 
 impl std::fmt::Debug for Closure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let lambda = self.lambda;
-        write!(f, "closure({lambda:?}, [")?;
+        write!(f, "closure({:?}, [", self.lambda_id)?;
         let len = self.num_captures as usize;
         let data = self.captures.as_ptr();
         let mut captures = unsafe { std::slice::from_raw_parts(data, len).iter() };

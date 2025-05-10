@@ -58,6 +58,8 @@ functions:
     args:
       - name: lambda
         type: Lambda
+      - name: lambda_id
+        type: u32
       - name: num_captures
         type: u16
     ret: '&mut Closure'

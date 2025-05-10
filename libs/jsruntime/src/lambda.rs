@@ -3,8 +3,10 @@
 pub struct LambdaId(u32);
 
 impl LambdaId {
+    pub(crate) const HOST: Self = Self(u32::MAX);
+
     const fn new(index: usize) -> Self {
-        debug_assert!(index <= u32::MAX as usize);
+        debug_assert!(index < u32::MAX as usize);
         Self(index as u32)
     }
 
@@ -15,6 +17,7 @@ impl LambdaId {
 
 impl From<u32> for LambdaId {
     fn from(value: u32) -> Self {
+        debug_assert!(value < u32::MAX);
         Self(value)
     }
 }
@@ -36,6 +39,7 @@ impl LambdaRegistry {
     }
 
     pub fn register(&mut self, is_coroutine: bool) -> LambdaId {
+        // TODO(fix): index < u32::MAX
         let index = self.entries.len();
         self.entries.push(LambdaInfo {
             scratch_buffer_len: 0,
@@ -45,10 +49,12 @@ impl LambdaRegistry {
     }
 
     pub fn get(&self, id: LambdaId) -> &LambdaInfo {
+        debug_assert_ne!(id, LambdaId::HOST);
         self.entries.get(id.index()).unwrap()
     }
 
     pub fn get_mut(&mut self, id: LambdaId) -> &mut LambdaInfo {
+        debug_assert_ne!(id, LambdaId::HOST);
         self.entries.get_mut(id.index()).unwrap()
     }
 }
