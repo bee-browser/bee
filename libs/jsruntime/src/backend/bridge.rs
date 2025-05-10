@@ -4,6 +4,7 @@ use std::ffi::c_void;
 use base::static_assert_size_eq;
 
 use crate::Runtime;
+use crate::lambda::LambdaId;
 use crate::logger;
 use crate::objects::Object;
 use crate::objects::PropertyKey;
@@ -29,7 +30,7 @@ pub struct RuntimeFunctions {
     pub migrate_string_to_heap:
         unsafe extern "C" fn(*mut c_void, *const U16Chunk) -> *const U16Chunk,
     pub create_capture: unsafe extern "C" fn(*mut c_void, *mut Value) -> *mut Capture,
-    pub create_closure: unsafe extern "C" fn(*mut c_void, Lambda, u16) -> *mut Closure,
+    pub create_closure: unsafe extern "C" fn(*mut c_void, Lambda, u32, u16) -> *mut Closure,
     pub create_coroutine:
         unsafe extern "C" fn(*mut c_void, *mut Closure, u16, u16) -> *mut Coroutine,
     pub register_promise: unsafe extern "C" fn(*mut c_void, *mut Coroutine) -> u32,
@@ -359,7 +360,12 @@ unsafe extern "C" fn runtime_create_capture<X>(
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn create_closure(&mut self, lambda: Lambda, num_captures: u16) -> *mut Closure {
+    pub(crate) fn create_closure(
+        &mut self,
+        lambda: Lambda,
+        lambda_id: LambdaId,
+        num_captures: u16,
+    ) -> *mut Closure {
         const BASE_LAYOUT: std::alloc::Layout = unsafe {
             std::alloc::Layout::from_size_align_unchecked(
                 std::mem::offset_of!(Closure, captures),
@@ -378,6 +384,7 @@ impl<X> Runtime<X> {
 
         let closure = unsafe { ptr.cast::<Closure>().as_mut() };
         closure.lambda = lambda;
+        closure.lambda_id = lambda_id;
         closure.num_captures = num_captures;
         // `closure.captures[]` will be filled with actual pointers to `Captures`.
 
@@ -388,11 +395,17 @@ impl<X> Runtime<X> {
 unsafe extern "C" fn runtime_create_closure<X>(
     runtime: *mut c_void,
     lambda: Lambda,
+    lambda_id: u32,
     num_captures: u16,
 ) -> *mut Closure {
-    logger::debug!(event = "runtime_create_closure", ?lambda, num_captures);
+    logger::debug!(
+        event = "runtime_create_closure",
+        ?lambda,
+        lambda_id,
+        num_captures
+    );
     let runtime = unsafe { into_runtime!(runtime, X) };
-    runtime.create_closure(lambda, num_captures)
+    runtime.create_closure(lambda, lambda_id.into(), num_captures)
 }
 
 unsafe extern "C" fn runtime_create_coroutine<X>(

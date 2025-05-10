@@ -1415,17 +1415,25 @@ impl<'a> Editor<'a> {
         &mut self,
         support: &mut impl EditorSupport,
         lambda: LambdaIr,
+        lambda_id: LambdaId,
         num_captures: u16,
     ) -> ClosureIr {
-        logger::debug!(event = "put_runtime_create_closure", ?lambda, num_captures);
+        logger::debug!(
+            event = "put_runtime_create_closure",
+            ?lambda,
+            ?lambda_id,
+            num_captures
+        );
         let func = self
             .runtime_func_cache
             .import_runtime_create_closure(support, self.builder.func);
+        let lambda_id: u32 = lambda_id.into();
+        let lambda_id = self.builder.ins().iconst(ir::types::I32, lambda_id as i64);
         let num_captures = self
             .builder
             .ins()
             .iconst(ir::types::I16, num_captures as i64);
-        let args = [self.runtime(), lambda.0, num_captures];
+        let args = [self.runtime(), lambda.0, lambda_id, num_captures];
         let call = self.builder.ins().call(func, &args);
         ClosureIr(self.builder.inst_results(call)[0])
     }

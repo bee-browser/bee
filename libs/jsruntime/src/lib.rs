@@ -105,7 +105,7 @@ impl<X> Runtime<X> {
         let symbol = self.symbol_registry.intern_str(name);
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
-        let closure = self.create_closure(lambda, 0);
+        let closure = self.create_closure(lambda, LambdaId::HOST, 0);
         let value = Value::Closure(closure);
         // TODO: add `flags` to the arguments.
         let prop = Property::data_xxx(value);

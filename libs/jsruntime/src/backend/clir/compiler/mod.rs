@@ -446,18 +446,21 @@ where
 
     fn process_lambda(&mut self, lambda_id: LambdaId) {
         let lambda = self.editor.put_declare_lambda(self.support, lambda_id);
-        self.operand_stack.push(Operand::Lambda(lambda));
+        self.operand_stack.push(Operand::Lambda(lambda, lambda_id));
     }
 
     fn process_closure(&mut self, _prologue: bool, func_scope_ref: ScopeRef) {
         let scope = self.scope_tree.scope(func_scope_ref);
         debug_assert!(scope.is_function());
 
-        let lambda = self.pop_lambda();
+        let (lambda, lambda_id) = self.pop_lambda();
         // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
-        let closure =
-            self.editor
-                .put_runtime_create_closure(self.support, lambda, scope.count_captures());
+        let closure = self.editor.put_runtime_create_closure(
+            self.support,
+            lambda,
+            lambda_id,
+            scope.count_captures(),
+        );
 
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         for variable in scope
@@ -555,7 +558,7 @@ where
                 self.editor.put_store_string_to_any(value, any);
                 any.into()
             }
-            Operand::Lambda(_) => todo!(),
+            Operand::Lambda(..) => todo!(),
             Operand::Closure(value) => {
                 let any = self.editor.put_alloc_any();
                 self.editor.put_store_closure_to_any(value, any);
@@ -1392,7 +1395,7 @@ where
                 let object = self.editor.put_runtime_to_object(self.support, value);
                 self.operand_stack.push(Operand::Object(object));
             }
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2035,7 +2038,7 @@ where
                 | Operand::Null
                 | Operand::VariableReference(..)
                 | Operand::PropertyReference(_) => (),
-                Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
+                Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
         self.operand_stack = operand_stack;
@@ -2102,7 +2105,7 @@ where
                 | Operand::Null
                 | Operand::VariableReference(..)
                 | Operand::PropertyReference(_) => (),
-                Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
+                Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
         self.operand_stack = operand_stack;
@@ -2185,7 +2188,7 @@ where
                 // }
                 self.editor.switch_to_block(merge_block);
             }
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2260,7 +2263,7 @@ where
             | Operand::Promise(_) => self.editor.put_boolean(true),
             Operand::String(..) => todo!("string"),
             Operand::Any(value, ..) => self.editor.put_is_non_nullish(*value),
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2305,7 +2308,7 @@ where
                 self.editor.put_boolean(true)
             }
             Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => {
@@ -2326,7 +2329,7 @@ where
             Operand::Closure(_) => self.editor.put_number(f64::NAN),
             Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::Promise(_)
             | Operand::VariableReference(..)
@@ -2471,7 +2474,7 @@ where
                 self.editor
                     .put_runtime_is_strictly_equal(self.support, lhs, *rhs)
             }
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
@@ -2598,9 +2601,9 @@ where
         BooleanIr(self.editor.get_block_param(merge_block, 0))
     }
 
-    fn pop_lambda(&mut self) -> LambdaIr {
+    fn pop_lambda(&mut self) -> (LambdaIr, LambdaId) {
         match self.operand_stack.pop().unwrap() {
-            Operand::Lambda(value) => value,
+            Operand::Lambda(lambda, lambda_id) => (lambda, lambda_id),
             _ => unreachable!(),
         }
     }
@@ -2748,7 +2751,7 @@ where
             Operand::Object(value) => self.editor.put_store_object_to_any(*value, any),
             Operand::Any(value, _) => self.editor.put_store_any_to_any(*value, any),
             Operand::Promise(value) => self.editor.put_store_promise_to_any(*value, any),
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2929,7 +2932,7 @@ enum Operand {
 
     // Values that cannot be stored into a `Value`.
     /// Runtime value of lambda function type.
-    Lambda(LambdaIr),
+    Lambda(LambdaIr, LambdaId),
 
     /// Runtime value of coroutine type.
     Coroutine(CoroutineIr),
