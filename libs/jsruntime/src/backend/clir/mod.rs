@@ -46,7 +46,6 @@ pub trait CompilerSupport {
 
     // Executor
     fn target_config(&self) -> isa::TargetFrontendConfig;
-    fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context);
 }
 
 impl<X> CompilerSupport for Runtime<X> {
@@ -68,13 +67,6 @@ impl<X> CompilerSupport for Runtime<X> {
 
     fn target_config(&self) -> isa::TargetFrontendConfig {
         self.executor.target_config()
-    }
-
-    fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
-        if let Some(ref mut monitor) = self.monitor {
-            monitor.print_function_ir(func.id, &ctx.func.display());
-        }
-        self.executor.define_function(func, ctx);
     }
 }
 
