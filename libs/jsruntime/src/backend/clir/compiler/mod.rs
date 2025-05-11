@@ -6,13 +6,18 @@ use std::ops::DerefMut;
 
 use cranelift::codegen;
 use cranelift::codegen::ir;
+use cranelift::codegen::isa;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
+use jsparser::SymbolRegistry;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
 use jsparser::syntax::LoopFlags;
 
+use crate::Runtime;
+use crate::lambda::LambdaInfo;
+use crate::lambda::LambdaRegistry;
 use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
@@ -27,6 +32,7 @@ use crate::types::Value;
 use super::CompileError;
 use super::CompilerSupport;
 use super::EditorSupport;
+use super::Executor;
 use super::LambdaId;
 use super::RuntimeFunctionCache;
 
@@ -39,12 +45,46 @@ macro_rules! runtime_debug {
     };
 }
 
+pub struct Session<'r> {
+    symbol_registry: &'r mut SymbolRegistry,
+    lambda_registry: &'r mut LambdaRegistry,
+    pub executor: &'r mut Executor,
+    scope_cleanup_checker_enabled: bool,
+}
+
+impl CompilerSupport for Session<'_> {
+    fn is_scope_cleanup_checker_enabled(&self) -> bool {
+        self.scope_cleanup_checker_enabled
+    }
+
+    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol {
+        self.symbol_registry.intern_utf16(name)
+    }
+
+    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo {
+        self.lambda_registry.get(lambda_id)
+    }
+
+    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo {
+        self.lambda_registry.get_mut(lambda_id)
+    }
+
+    fn target_config(&self) -> isa::TargetFrontendConfig {
+        self.executor.target_config()
+    }
+
+    fn define_function(&mut self, _func: &Function, _ctx: &mut codegen::Context) {
+        panic!();
+    }
+}
+
 // TODO: Deferring the compilation until it's actually called improves the performance.
 // Because the program may contain unused functions.
-pub fn compile<R>(support: &mut R, program: &Program, optimize: bool) -> Result<(), CompileError>
-where
-    R: CompilerSupport + EditorSupport,
-{
+pub fn compile<X>(
+    runtime: &mut Runtime<X>,
+    program: &Program,
+    _optimize: bool,
+) -> Result<(), CompileError> {
     // Allocate large data on the heap memory.
     //
     // Many existing programs including examples in bytecodealliance/wasmtime allocate
@@ -63,7 +103,17 @@ where
     //
     // TODO: We should manage dependencies between functions in a more general way.
     for func in program.functions.iter() {
-        context.compile_function(func, optimize, support, &program.scope_tree);
+        let mut session = {
+            let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
+            Session {
+                symbol_registry: &mut runtime.symbol_registry,
+                lambda_registry: &mut runtime.lambda_registry,
+                executor: &mut runtime.executor,
+                scope_cleanup_checker_enabled,
+            }
+        };
+        context.compile_function(func, &mut session, &program.scope_tree);
+        runtime.define_function(func, &mut context.context);
     }
 
     Ok(())
@@ -82,13 +132,8 @@ impl CraneliftContext {
         }
     }
 
-    fn compile_function<R>(
-        &mut self,
-        func: &Function,
-        optimize: bool,
-        support: &mut R,
-        scope_tree: &ScopeTree,
-    ) where
+    fn compile_function<R>(&mut self, func: &Function, support: &mut R, scope_tree: &ScopeTree)
+    where
         R: CompilerSupport + EditorSupport,
     {
         let compiler = Compiler::new(
@@ -100,8 +145,7 @@ impl CraneliftContext {
             &mut self.context.func,
             &mut self.builder_context,
         );
-        compiler.compile(func, optimize);
-        support.define_function(func, &mut self.context);
+        compiler.compile(func);
     }
 }
 
@@ -183,7 +227,7 @@ where
         }
     }
 
-    fn compile(mut self, func: &Function, optimize: bool) {
+    fn compile(mut self, func: &Function) {
         self.start_compile(func);
         for command in func.commands.iter() {
             if self.skip_count > 0 {
@@ -192,7 +236,7 @@ where
             }
             self.process_command(func, command);
         }
-        self.end_compile(func, optimize);
+        self.end_compile(func);
     }
 
     fn start_compile(&mut self, func: &Function) {
@@ -244,8 +288,8 @@ where
         self.editor.put_store_undefined_to_any(retv);
     }
 
-    fn end_compile(mut self, func: &Function, optimize: bool) {
-        logger::debug!(event = "end_compile", ?func.id, optimize);
+    fn end_compile(mut self, func: &Function) {
+        logger::debug!(event = "end_compile", ?func.id);
 
         debug_assert!(self.operand_stack.is_empty());
 

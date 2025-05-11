@@ -11,6 +11,7 @@ use cranelift_module::FuncId;
 use cranelift_module::Linkage;
 use cranelift_module::Module;
 
+use super::compiler;
 use super::LambdaId;
 use super::RuntimeFunctions;
 
@@ -105,7 +106,7 @@ pub trait EditorSupport {
     {%- endfor %}
 }
 
-impl<X> EditorSupport for crate::Runtime<X> {
+impl EditorSupport for compiler::Session<'_> {
     fn import_lambda(&mut self, lambda_id: LambdaId, func: &mut ir::Function) -> ir::FuncRef {
         self.executor.import_lambda(lambda_id, func)
     }
