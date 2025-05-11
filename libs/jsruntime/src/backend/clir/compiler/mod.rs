@@ -91,7 +91,15 @@ impl CraneliftContext {
     ) where
         R: CompilerSupport + EditorSupport,
     {
-        let compiler = Compiler::new(func, support, scope_tree, self);
+        let compiler = Compiler::new(
+            func,
+            support,
+            scope_tree,
+            // At this point, the size of ir::Function is 896 bytes.  Copy operation is not fast.
+            // It's better to use codegen::Context::func as the sample code does.
+            &mut self.context.func,
+            &mut self.builder_context,
+        );
         compiler.compile(func, optimize);
         support.define_function(func, &mut self.context);
     }
@@ -131,16 +139,17 @@ where
         func: &Function,
         support: &'a mut R,
         scope_tree: &'a ScopeTree,
-        context: &'a mut CraneliftContext,
+        func_ir: &'a mut ir::Function,
+        builder_context: &'a mut FunctionBuilderContext,
     ) -> Self {
         let target_config = support.target_config();
         let addr_type = target_config.pointer_type();
 
-        context.context.func.name = ir::UserFuncName::user(0, func.id.into());
-        context.context.func.signature.call_conv = target_config.default_call_conv;
+        func_ir.name = ir::UserFuncName::user(0, func.id.into());
+        func_ir.signature.call_conv = target_config.default_call_conv;
 
         // formal parameters
-        let params = &mut context.context.func.signature.params;
+        let params = &mut func_ir.signature.params;
         // runtime: *mut c_void
         params.push(ir::AbiParam::new(addr_type));
         // context: *mut c_void
@@ -153,14 +162,12 @@ where
         params.push(ir::AbiParam::new(addr_type));
 
         // #[repr(u32)] Status
-        context
-            .context
-            .func
+        func_ir
             .signature
             .returns
             .push(ir::AbiParam::new(ir::types::I32));
 
-        let builder = FunctionBuilder::new(&mut context.context.func, &mut context.builder_context);
+        let builder = FunctionBuilder::new(func_ir, builder_context);
 
         Self {
             support,
