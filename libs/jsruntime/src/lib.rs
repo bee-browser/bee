@@ -17,11 +17,11 @@ use lambda::LambdaRegistry;
 use objects::Object;
 use objects::Property;
 use objects::PropertyKey;
+use semantics::Program;
 use types::ReturnValue;
 
 pub use backend::CompileError;
 pub use lambda::LambdaId;
-pub use semantics::Program;
 pub use types::U16Chunk; // TODO: remove
 pub use types::U16String;
 pub use types::Value;
@@ -40,6 +40,20 @@ struct RuntimePref {
     enable_scope_cleanup_checker: bool,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct ProgramId(u32);
+
+impl ProgramId {
+    fn new(index: usize) -> Self {
+        debug_assert!(index <= u32::MAX as usize);
+        Self(index as u32)
+    }
+
+    fn index(&self) -> usize {
+        self.0 as usize
+    }
+}
+
 pub type BasicRuntime = Runtime<()>;
 
 impl BasicRuntime {
@@ -52,6 +66,7 @@ pub struct Runtime<X> {
     pref: RuntimePref,
     symbol_registry: SymbolRegistry,
     lambda_registry: LambdaRegistry,
+    programs: Vec<Program>,
     executor: Executor,
     // TODO: GcArena
     allocator: bumpalo::Bump,
@@ -72,6 +87,7 @@ impl<X> Runtime<X> {
             pref: Default::default(),
             symbol_registry: Default::default(),
             lambda_registry: LambdaRegistry::new(),
+            programs: vec![],
             executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
             tasklet_system: tasklet::System::new(),
@@ -113,9 +129,9 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
     }
 
-    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<(), CompileError> {
-        logger::debug!(event = "compile");
-        backend::compile(self, program, optimize)
+    pub fn compile(&mut self, program_id: ProgramId, optimize: bool) -> Result<(), CompileError> {
+        logger::debug!(event = "compile", ?program_id, optimize);
+        backend::compile(self, program_id, optimize)
     }
 
     pub fn link(&mut self) {
@@ -123,10 +139,11 @@ impl<X> Runtime<X> {
         self.executor.link();
     }
 
-    pub fn evaluate(&mut self, program: &Program) -> Result<Value, Value> {
-        logger::debug!(event = "evaluate");
+    pub fn evaluate(&mut self, program_id: ProgramId) -> Result<Value, Value> {
+        logger::debug!(event = "evaluate", ?program_id);
+        let lambda_id = self.programs[program_id.index()].entry_lambda_id();
         let mut retv = Value::Undefined;
-        let lambda = self.executor.get_lambda(program.entry_lambda_id()).unwrap();
+        let lambda = self.executor.get_lambda(lambda_id).unwrap();
         let status = unsafe {
             lambda(
                 // runtime
@@ -144,10 +161,10 @@ impl<X> Runtime<X> {
         retv.into_result(status)
     }
 
-    pub fn run(&mut self, program: &Program, optimize: bool) -> Result<Value, Value> {
-        self.compile(program, optimize).unwrap(); // TODO(fix): handle compilation errors
+    pub fn run(&mut self, program_id: ProgramId, optimize: bool) -> Result<Value, Value> {
+        self.compile(program_id, optimize).unwrap(); // TODO(fix): handle compilation errors
         self.link();
-        let value = self.evaluate(program)?;
+        let value = self.evaluate(program_id)?;
         self.process_tasks();
         Ok(value)
     }

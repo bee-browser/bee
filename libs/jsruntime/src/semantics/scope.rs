@@ -90,11 +90,6 @@ impl ScopeTree {
             .map(move |(index, variable)| (VariableRef::new(scope_ref.0, index as u16), variable))
     }
 
-    pub fn get_symbol(&self, variable_ref: VariableRef) -> Symbol {
-        let scope = &self.scopes[variable_ref.scope_index()];
-        scope.variables[variable_ref.variable_index()].symbol
-    }
-
     pub fn find_variable(&self, scope_ref: ScopeRef, symbol: Symbol) -> VariableRef {
         let mut scope_ref = scope_ref;
         loop {

@@ -15,6 +15,7 @@ use rustc_hash::FxHashMap;
 use jsparser::Symbol;
 use jsparser::syntax::LoopFlags;
 
+use crate::ProgramId;
 use crate::Runtime;
 use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaRegistry;
@@ -22,7 +23,6 @@ use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
 use crate::semantics::Locator;
-use crate::semantics::Program;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
@@ -72,17 +72,13 @@ impl CompilerSupport for Session<'_> {
     fn target_config(&self) -> isa::TargetFrontendConfig {
         self.executor.target_config()
     }
-
-    fn define_function(&mut self, _func: &Function, _ctx: &mut codegen::Context) {
-        panic!();
-    }
 }
 
 // TODO: Deferring the compilation until it's actually called improves the performance.
 // Because the program may contain unused functions.
 pub fn compile<X>(
     runtime: &mut Runtime<X>,
-    program: &Program,
+    program_id: ProgramId,
     _optimize: bool,
 ) -> Result<(), CompileError> {
     // Allocate large data on the heap memory.
@@ -102,6 +98,7 @@ pub fn compile<X>(
     // to use `Iterator::rev()`.
     //
     // TODO: We should manage dependencies between functions in a more general way.
+    let program = &runtime.programs[program_id.index()];
     for func in program.functions.iter() {
         let mut session = {
             let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
@@ -113,7 +110,10 @@ pub fn compile<X>(
             }
         };
         context.compile_function(func, &mut session, &program.scope_tree);
-        runtime.define_function(func, &mut context.context);
+        if let Some(ref mut monitor) = runtime.monitor {
+            monitor.print_function_ir(func.id, &context.context.func);
+        }
+        runtime.executor.define_function(func, &mut context.context);
     }
 
     Ok(())
@@ -2404,7 +2404,6 @@ where
         };
         match reference {
             Some((symbol, locator)) if symbol != Symbol::NONE => {
-                debug_assert!(!locator.is_none());
                 self.operand_stack
                     .push(Operand::VariableReference(symbol, locator));
                 // TODO(perf): compile-time evaluation
@@ -2738,7 +2737,7 @@ where
             Locator::Argument(index) => self.editor.put_get_argument(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
-            Locator::None | Locator::Global => unreachable!(),
+            Locator::Global => unreachable!(),
         };
         self.editor.put_escape_value(capture, value);
     }
@@ -2814,7 +2813,6 @@ where
     fn emit_get_variable(&mut self, symbol: Symbol, locator: Locator) -> AnyIr {
         logger::debug!(event = "emit_get_variable", ?symbol, ?locator);
         match locator {
-            Locator::None => unreachable!(),
             Locator::Argument(index) => self.editor.put_get_argument(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),

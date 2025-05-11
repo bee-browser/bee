@@ -58,9 +58,9 @@ fn compile(c: &mut Criterion) {
                 let mut total = Default::default();
                 for _i in 0..iters {
                     let mut runtime = BasicRuntime::new();
-                    let program = runtime.parse_script(data.1).unwrap();
+                    let program_id = runtime.parse_script(data.1).unwrap();
                     total += elapsed! {
-                        runtime.compile(black_box(&program), black_box(true)).unwrap()
+                        runtime.compile(black_box(program_id), black_box(true)).unwrap()
                     };
                 }
                 total
@@ -80,8 +80,8 @@ fn link(c: &mut Criterion) {
                 let mut total = Default::default();
                 for _i in 0..iters {
                     let mut runtime = BasicRuntime::new();
-                    let program = runtime.parse_script(data.1).unwrap();
-                    runtime.compile(&program, true).unwrap();
+                    let program_id = runtime.parse_script(data.1).unwrap();
+                    runtime.compile(program_id, true).unwrap();
                     total += elapsed! {
                         runtime.link()
                     };
@@ -103,11 +103,11 @@ fn evaluate(c: &mut Criterion) {
                 let mut total = Default::default();
                 for _i in 0..iters {
                     let mut runtime = BasicRuntime::new();
-                    let program = runtime.parse_script(data.1).unwrap();
-                    runtime.compile(&program, true).unwrap();
+                    let program_id = runtime.parse_script(data.1).unwrap();
+                    runtime.compile(program_id, true).unwrap();
                     runtime.link();
                     total += elapsed! {
-                        black_box(runtime.evaluate(black_box(&program)).unwrap())
+                        black_box(runtime.evaluate(black_box(program_id)).unwrap())
                     };
                 }
                 total
@@ -125,10 +125,10 @@ fn full(c: &mut Criterion) {
         group.bench_function(data.0, |b| {
             b.iter(|| {
                 let mut runtime = BasicRuntime::new();
-                let program = runtime.parse_script(data.1).unwrap();
-                runtime.compile(&program, true).unwrap();
+                let program_id = runtime.parse_script(data.1).unwrap();
+                runtime.compile(program_id, true).unwrap();
                 runtime.link();
-                black_box(runtime.evaluate(black_box(&program)).unwrap());
+                black_box(runtime.evaluate(black_box(program_id)).unwrap());
             })
         });
     }

@@ -21,6 +21,7 @@ use jsparser::syntax::UnaryOperator;
 use jsparser::syntax::UpdateOperator;
 
 use crate::LambdaId;
+use crate::ProgramId;
 use crate::Runtime;
 use crate::Value;
 use crate::logger;
@@ -34,36 +35,46 @@ pub use scope::VariableRef;
 
 impl<X> Runtime<X> {
     /// Parses a given source text as a script.
-    pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
+    pub fn parse_script(&mut self, source: &str) -> Result<ProgramId, Error> {
         logger::debug!(event = "parse", source_kind = "script");
         let analyzer = Analyzer::new_for_script(self);
         let processor = Processor::new(analyzer, false);
-        Parser::for_script(source, processor).parse()
+        let program = Parser::for_script(source, processor).parse()?;
+        let index = self.programs.len();
+        self.programs.push(program);
+        Ok(ProgramId::new(index))
     }
 
     /// Parses a given source text as a module.
-    pub fn parse_module(&mut self, source: &str) -> Result<Program, Error> {
+    pub fn parse_module(&mut self, source: &str) -> Result<ProgramId, Error> {
         logger::debug!(event = "parse", source_kind = "module");
         let analyzer = Analyzer::new_for_module(self);
         let processor = Processor::new(analyzer, true);
-        Parser::for_module(source, processor).parse()
+        let program = Parser::for_module(source, processor).parse()?;
+        let index = self.programs.len();
+        self.programs.push(program);
+        Ok(ProgramId::new(index))
     }
 
     /// Prints functions in a program.
-    pub fn print_functions(&self, program: &Program) {
-        for func in program.functions.iter() {
+    pub fn print_functions(&self, program_id: ProgramId) {
+        for func in self.programs[program_id.index()].functions.iter() {
             func.print("");
         }
     }
 
     /// Prints the scope tree of a program.
-    pub fn print_scope_tree(&self, program: &Program) {
-        program.scope_tree.print("");
+    pub fn print_scope_tree(&self, program_id: ProgramId) {
+        self.programs[program_id.index()].scope_tree.print("");
     }
 
     /// Prints global symbols in a program.
-    pub fn print_global_symbols(&self, program: &Program) {
-        for symbol in program.global_symbols.iter().cloned() {
+    pub fn print_global_symbols(&self, program_id: ProgramId) {
+        for symbol in self.programs[program_id.index()]
+            .global_symbols
+            .iter()
+            .cloned()
+        {
             // TODO: sort
             let utf16_str = self.symbol_registry.resolve(symbol).unwrap();
             let utf8_str = String::from_utf16_lossy(utf16_str);
@@ -2002,7 +2013,6 @@ impl From<AssignmentOperator> for CompileCommand {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Locator {
-    None,
     Argument(u16),
     Local(u16),
     Capture(u16),
@@ -2010,18 +2020,6 @@ pub enum Locator {
 }
 
 impl Locator {
-    pub fn is_none(&self) -> bool {
-        matches!(self, Self::None)
-    }
-
-    pub fn is_argument(&self) -> bool {
-        matches!(self, Self::Argument(_))
-    }
-
-    pub fn is_local(&self) -> bool {
-        matches!(self, Self::Local(_))
-    }
-
     pub fn is_capture(&self) -> bool {
         matches!(self, Self::Capture(_))
     }
