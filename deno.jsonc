@@ -34,7 +34,7 @@
     "acorn": "npm:acorn@8.14.1",
     "change-case": "npm:change-case@5.4.4",
     "deep-diff": "npm:deep-diff@1.0.2",
-    "docopt": "https://deno.land/x/docopt@v1.0.7/mod.ts",
+    "docopt": "npm:@eyalsh/docopt@1.0.7",
     "handlebars": "npm:handlebars@4.7.8",
     "nunjucks": "npm:nunjucks@3.2.4",
     "ora": "npm:ora@8.2.0",

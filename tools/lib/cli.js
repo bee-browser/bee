@@ -2,7 +2,8 @@
 
 import { readAll } from '@std/io';
 import { camelCase } from 'change-case';
-import { default as docopt } from 'docopt';
+import { default as docoptModule } from 'docopt';
+const docopt = docoptModule.default;
 
 export async function parseCommand({ doc, conv, init }) {
   try {

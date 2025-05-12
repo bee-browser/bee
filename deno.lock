@@ -35,6 +35,7 @@
     "jsr:@std/toml@1.0.5": "1.0.5",
     "jsr:@std/yaml@1.0.6": "1.0.6",
     "jsr:@zip-js/zip-js@2.7.60": "2.7.60",
+    "npm:@eyalsh/docopt@1.0.7": "1.0.7",
     "npm:acorn@8.14.1": "8.14.1",
     "npm:change-case@5.4.4": "5.4.4",
     "npm:deep-diff@1.0.2": "1.0.2",
@@ -189,6 +190,9 @@
     }
   },
   "npm": {
+    "@eyalsh/docopt@1.0.7": {
+      "integrity": "sha512-xuNkr0oMNM75NACp6byAVutKiv1Pm7ujqR4A9/bEsX9Sqf/SPIG4gS6y0N1KnKwS5Qs3faPGdh8yJMRzM5CaWQ=="
+    },
     "a-sync-waterfall@1.0.1": {
       "integrity": "sha512-RYTOHHdWipFUliRFMCS4X2Yn2X8M87V/OpSqWzKKOGhzqyUxzyVmhHDH9sAvG+ZuQf/TAOFsLCpMw09I1ufUnA=="
     },
@@ -397,6 +401,7 @@
       "jsr:@std/toml@1.0.5",
       "jsr:@std/yaml@1.0.6",
       "jsr:@zip-js/zip-js@2.7.60",
+      "npm:@eyalsh/docopt@1.0.7",
       "npm:acorn@8.14.1",
       "npm:change-case@5.4.4",
       "npm:deep-diff@1.0.2",
