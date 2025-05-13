@@ -19,6 +19,7 @@
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
     "@deno/emit": "jsr:@deno/emit@0.46.0",
+    "@oak/oak": "jsr:@oak/oak@17.1.4",
     "@std/assert": "jsr:@std/assert@1.0.13",
     "@std/csv": "jsr:@std/csv@1.0.6",
     "@std/encoding": "jsr:@std/encoding@1.0.10",
@@ -38,8 +39,6 @@
     "handlebars": "npm:handlebars@4.7.8",
     "nunjucks": "npm:nunjucks@3.2.4",
     "ora": "npm:ora@8.2.0",
-    // TODO(issue#275): servest was deprecated...
-    "servest": "https://deno.land/x/servest@v1.3.4/mod.ts",
     "test262-stream": "npm:test262-stream@1.4.0"
   },
   // See https://github.com/hasundue/molt/tree/main/cli

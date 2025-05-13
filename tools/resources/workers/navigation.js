@@ -1,24 +1,50 @@
 'use strict';
 
-// The import map is NOT applied to workers:
-// https://github.com/denoland/deno/issues/6675
-import * as io from 'https://deno.land/std@0.224.0/io/mod.ts';
-import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
+import * as io from '@std/io';
+import * as path from '@std/path';
+import { TextLineStream } from '@std/streams';
 
 const TOOLS_DIR = path.resolve(path.dirname(path.fromFileUrl(import.meta.url)), '..', '..');
 const TEXT_TO_DOT_MATRIX = path.join(TOOLS_DIR, 'bin', 'text_to_dot_matrix.js');
 const DOM_SCRAPER = path.join(TOOLS_DIR, 'bin', 'scrape_dom.sh');
 const LAYOUT_BUILDER = path.join(TOOLS_DIR, 'bin', 'build_layout.js');
 
+class Logger {
+  debug(data) {
+    this.log_('debug', data);
+  }
+
+  info(data) {
+    this.log_('info', data);
+  }
+
+  warn(data) {
+    this.log_('warn', data);
+  }
+
+  error(data) {
+    this.log_('error', data);
+  }
+
+  log_(level, data) {
+    self.postMessage({
+      type: 'log',
+      data: { level, data },
+    });
+  }
+}
+
+const log = new Logger();
+
 self.onmessage = async ({ data }) => {
   try {
     await layout(await scrape(data), data);
-    //const script = buildScript(data);
-    //await runScript(script);
+    const script = buildScript(data);
+    await runScript(script);
   } catch (err) {
     self.postMessage({
       type: 'error',
-      data: err.toString(),
+      data: err,
     });
     //throw err;  // FIXME: this doesn't cause an error event
   } finally {
@@ -30,6 +56,8 @@ self.onmessage = async ({ data }) => {
 };
 
 async function scrape({ uri, width, height }) {
+  log.debug({ event: 'scrape.start', uri, width, height });
+
   const commands = [];
 
   if (uri.startsWith('text:')) {
@@ -42,20 +70,20 @@ async function scrape({ uri, width, height }) {
 
   const script = commands.join(' | ');
 
-  const shell = Deno.run({
-    cmd: ['sh', '-c', script],
+  const cmd = new Deno.Command('sh', {
+    args: ['-c', script],
     stdin: 'null',
     stdout: 'piped',
   });
 
-  const output = await shell.output();
-  const { code } = await shell.status();
+  const shell = cmd.spawn();
+  const { code, stdout } = await shell.output();
   if (code !== 0) {
     throw new Error(`Failed to scrape: ${code}: ${script}`);
   }
 
   // Send assets to the debug console.
-  const dom = JSON.parse(new TextDecoder().decode(output));
+  const dom = JSON.parse(new TextDecoder().decode(stdout));
   for (let asset of Object.values(dom.assets)) {
     self.postMessage({
       type: 'asset',
@@ -66,35 +94,44 @@ async function scrape({ uri, width, height }) {
     });
   }
 
-  shell.close();
+  log.debug({ event: 'scrape.end', uri, width, height });
 
-  return output;
+  return stdout;
 }
 
 async function layout(input, { layouter }) {
+  log.debug({ event: 'layout.start' });
+
   const commands = [];
-  commands.push(LAYOUT_BUILDER);
+  commands.push(`deno run -qA ${LAYOUT_BUILDER}`);
   commands.push(layouter);
 
   const script = commands.join(' | ');
 
-  const shell = Deno.run({
-    cmd: ['sh', '-c', script],
+  const cmd = new Deno.Command('sh', {
+    args: ['-c', script],
     stdin: 'piped',
     stdout: 'piped',
   });
 
-  await Deno.writeAll(shell.stdin, input);
-  await shell.stdin.close();
+  const shell = cmd.spawn();
 
-  for await (let json of io.readLines(shell.stdout)) {
+  const writer = shell.stdin.getWriter();
+  await writer.write(input);
+  writer.close();
+
+  const lines = shell
+    .stdout
+    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(new TextLineStream());
+  for await (let json of lines) {
     self.postMessage({
       type: 'render',
       data: json,
     });
   }
 
-  shell.close();
+  log.debug({ event: 'layout.end' });
 }
 
 function buildScript({ uri, width, height, layouter }) {
@@ -107,31 +144,30 @@ function buildScript({ uri, width, height, layouter }) {
   } else {
     commands.push(`sh ${DOM_SCRAPER} --viewport ${width}x${height} ${uri}`);
   }
-  commands.push(LAYOUT_BUILDER);
+  commands.push(`deno run -qA ${LAYOUT_BUILDER}`);
   commands.push(layouter);
 
   return commands.join(' | ');
 }
 
 async function runScript(script) {
-  const shell = Deno.run({
-    cmd: ['sh', '-c', script],
+  const cmd = new Deno.Command('sh', {
+    args: ['-c', script],
     stdin: 'null',
     stdout: 'piped',
     stderr: 'null',
-  });
+  })
 
-  const { code } = await shell.status();
-  if (code !== 0) {
-    throw new Error(`Failed to scrape: ${code}: ${script}`);
-  }
+  const shell = cmd.spawn();
 
-  for await (let json of io.readLines(shell.stdout)) {
+  const lines = shell
+    .stdout
+    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(new TextLineStream());
+  for await (let json of lines) {
     self.postMessage({
       type: 'render',
       data: json,
     });
   }
-
-  shell.close();
 }

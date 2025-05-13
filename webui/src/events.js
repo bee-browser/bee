@@ -9,7 +9,7 @@ export class EventEmitter {
     if (this.listeners_[event] === undefined) {
       this.listeners_[event] = [];
     }
-    this.listeners_.push(listener);
+    this.listeners_[event].push(listener);
   }
 
   emit(event, data) {
@@ -19,5 +19,10 @@ export class EventEmitter {
     for (const listener of this.listeners_[event]) {
       listener(data);
     }
+  }
+
+  // alias
+  on(event, listener) {
+    this.addEventListener(event, listener);
   }
 }
