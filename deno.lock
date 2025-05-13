@@ -13,22 +13,22 @@
     "jsr:@std/assert@1": "1.0.13",
     "jsr:@std/assert@1.0.13": "1.0.13",
     "jsr:@std/bytes@0.223": "0.223.0",
-    "jsr:@std/bytes@1": "1.0.5",
-    "jsr:@std/bytes@^1.0.5": "1.0.5",
-    "jsr:@std/collections@^1.0.11": "1.0.11",
-    "jsr:@std/crypto@1": "1.0.4",
+    "jsr:@std/bytes@1": "1.0.6",
+    "jsr:@std/bytes@^1.0.5": "1.0.6",
+    "jsr:@std/collections@^1.1.0": "1.1.0",
+    "jsr:@std/crypto@1": "1.0.5",
     "jsr:@std/csv@1.0.6": "1.0.6",
     "jsr:@std/encoding@1": "1.0.10",
     "jsr:@std/encoding@1.0.10": "1.0.10",
     "jsr:@std/encoding@^1.0.10": "1.0.10",
     "jsr:@std/fmt@0.223": "0.223.0",
-    "jsr:@std/fmt@^1.0.5": "1.0.7",
-    "jsr:@std/fmt@~1.0.2": "1.0.7",
+    "jsr:@std/fmt@^1.0.5": "1.0.8",
+    "jsr:@std/fmt@~1.0.2": "1.0.8",
     "jsr:@std/fs@0.223": "0.223.0",
     "jsr:@std/fs@1.0.17": "1.0.17",
     "jsr:@std/fs@^1.0.11": "1.0.17",
-    "jsr:@std/http@1": "1.0.15",
-    "jsr:@std/internal@^1.0.6": "1.0.6",
+    "jsr:@std/http@1": "1.0.16",
+    "jsr:@std/internal@^1.0.6": "1.0.7",
     "jsr:@std/io@0.223": "0.223.0",
     "jsr:@std/io@0.225.2": "0.225.2",
     "jsr:@std/io@~0.225.2": "0.225.2",
@@ -41,10 +41,10 @@
     "jsr:@std/path@^1.0.9": "1.0.9",
     "jsr:@std/streams@1.0.9": "1.0.9",
     "jsr:@std/streams@^1.0.9": "1.0.9",
-    "jsr:@std/text@~1.0.7": "1.0.12",
-    "jsr:@std/toml@1.0.5": "1.0.5",
+    "jsr:@std/text@~1.0.7": "1.0.13",
+    "jsr:@std/toml@1.0.6": "1.0.6",
     "jsr:@std/yaml@1.0.6": "1.0.6",
-    "jsr:@zip-js/zip-js@2.7.60": "2.7.60",
+    "jsr:@zip-js/zip-js@2.7.61": "2.7.61",
     "npm:@eyalsh/docopt@1.0.7": "1.0.7",
     "npm:acorn@8.14.1": "8.14.1",
     "npm:change-case@5.4.4": "5.4.4",
@@ -135,11 +135,17 @@
     "@std/bytes@1.0.5": {
       "integrity": "4465dd739d7963d964c809202ebea6d5c6b8e3829ef25c6a224290fbb8a1021e"
     },
-    "@std/collections@1.0.11": {
-      "integrity": "2f62cf9587484b1fff364f6c3e1f83478eea53dbb6faed6ffeda92ddb6b172f0"
+    "@std/bytes@1.0.6": {
+      "integrity": "f6ac6adbd8ccd99314045f5703e23af0a68d7f7e58364b47d2c7f408aeb5820a"
+    },
+    "@std/collections@1.1.0": {
+      "integrity": "2ee8761c84c3d203f7a4ecd376f9ca88a0c559817a4a54c9150f28c0b948027c"
     },
     "@std/crypto@1.0.4": {
       "integrity": "cee245c453bd5366207f4d8aa25ea3e9c86cecad2be3fefcaa6cb17203d79340"
+    },
+    "@std/crypto@1.0.5": {
+      "integrity": "0dcfbb319fe0bba1bd3af904ceb4f948cde1b92979ec1614528380ed308a3b40"
     },
     "@std/csv@1.0.6": {
       "integrity": "52ef0e62799a0028d278fa04762f17f9bd263fad9a8e7f98c14fbd371d62d9fd",
@@ -156,6 +162,9 @@
     "@std/fmt@1.0.7": {
       "integrity": "2a727c043d8df62cd0b819b3fb709b64dd622e42c3b1bb817ea7e6cc606360fb"
     },
+    "@std/fmt@1.0.8": {
+      "integrity": "71e1fc498787e4434d213647a6e43e794af4fd393ef8f52062246e06f7e372b7"
+    },
     "@std/fs@0.223.0": {
       "integrity": "3b4b0550b2c524cbaaa5a9170c90e96cbb7354e837ad1bdaf15fc9df1ae9c31c"
     },
@@ -171,8 +180,17 @@
         "jsr:@std/encoding@^1.0.10"
       ]
     },
+    "@std/http@1.0.16": {
+      "integrity": "80c8d08c4bfcf615b89978dcefb84f7e880087cf3b6b901703936f3592a06933",
+      "dependencies": [
+        "jsr:@std/encoding@^1.0.10"
+      ]
+    },
     "@std/internal@1.0.6": {
       "integrity": "9533b128f230f73bd209408bb07a4b12f8d4255ab2a4d22a1fd6d87304aca9a4"
+    },
+    "@std/internal@1.0.7": {
+      "integrity": "39eeb5265190a7bc5d5591c9ff019490bd1f2c3907c044a11b0d545796158a0f"
     },
     "@std/io@0.223.0": {
       "integrity": "2d8c3c2ab3a515619b90da2c6ff5ea7b75a94383259ef4d02116b228393f84f1",
@@ -222,8 +240,11 @@
     "@std/text@1.0.12": {
       "integrity": "921132a41e03a2363f76ee5afe83c90a6271596aa95c137494edcb3404a564a5"
     },
-    "@std/toml@1.0.5": {
-      "integrity": "08061156e9c5716443a144b6e40a8668738b8b424ad99ab0b6fdf1b6ea4da806",
+    "@std/text@1.0.13": {
+      "integrity": "2191c90e6e667b0c3b7dea1cd082137580a93b3c136bad597c0212d5fe006eb1"
+    },
+    "@std/toml@1.0.6": {
+      "integrity": "da225502aecad66d8d778a635e9b78991997c2567ef8c6dbbd595c0cfce14c51",
       "dependencies": [
         "jsr:@std/collections"
       ]
@@ -231,8 +252,8 @@
     "@std/yaml@1.0.6": {
       "integrity": "c9a5a914e1d51c46756cb10e356710035cfa905e713c90d3b711413fd3aead27"
     },
-    "@zip-js/zip-js@2.7.60": {
-      "integrity": "6bb6cf0d02b64ca9acba8c7bc072293609ec3bad584db2b5cf3bb089e031ea0e"
+    "@zip-js/zip-js@2.7.61": {
+      "integrity": "fb84a27455a79ce893d80150b5a6d26c1bdb744a7319c2a084a967c31c221ffc"
     }
   },
   "npm": {
@@ -556,9 +577,9 @@
       "jsr:@std/log@0.224.14",
       "jsr:@std/path@1.0.9",
       "jsr:@std/streams@1.0.9",
-      "jsr:@std/toml@1.0.5",
+      "jsr:@std/toml@1.0.6",
       "jsr:@std/yaml@1.0.6",
-      "jsr:@zip-js/zip-js@2.7.60",
+      "jsr:@zip-js/zip-js@2.7.61",
       "npm:@eyalsh/docopt@1.0.7",
       "npm:acorn@8.14.1",
       "npm:change-case@5.4.4",

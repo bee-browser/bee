@@ -29,9 +29,9 @@
     "@std/log": "jsr:@std/log@0.224.14",
     "@std/path": "jsr:@std/path@1.0.9",
     "@std/streams": "jsr:@std/streams@1.0.9",
-    "@std/toml": "jsr:@std/toml@1.0.5",
+    "@std/toml": "jsr:@std/toml@1.0.6",
     "@std/yaml": "jsr:@std/yaml@1.0.6",
-    "@zip-js/zip-js": "jsr:@zip-js/zip-js@2.7.60",
+    "@zip-js/zip-js": "jsr:@zip-js/zip-js@2.7.61",
     "acorn": "npm:acorn@8.14.1",
     "change-case": "npm:change-case@5.4.4",
     "deep-diff": "npm:deep-diff@1.0.2",
@@ -41,9 +41,7 @@
     "ora": "npm:ora@8.2.0",
     "test262-stream": "npm:test262-stream@1.4.0"
   },
-  // See https://github.com/hasundue/molt/tree/main/cli
   "tasks": {
-    "update": "deno run --allow-env --allow-read --allow-write=$HOME/.local,. --allow-run=git,deno --allow-net=deno.land,jsr.io,registry.npmjs.org jsr:@molt/cli --write",
-    "update:commit": "deno task -q update --commit"
+    "update": "deno outdated --update --latest"
   }
 }
