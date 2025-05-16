@@ -40,16 +40,19 @@ struct RuntimePref {
     enable_scope_cleanup_checker: bool,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ProgramId(u32);
 
 impl ProgramId {
+    const INVALID: Self = Self(u32::MAX);
+
     fn new(index: usize) -> Self {
-        debug_assert!(index <= u32::MAX as usize);
+        debug_assert!(index < u32::MAX as usize);
         Self(index as u32)
     }
 
     fn index(&self) -> usize {
+        debug_assert!(self.0 < u32::MAX);
         self.0 as usize
     }
 }
@@ -134,11 +137,6 @@ impl<X> Runtime<X> {
         backend::compile(self, program_id, optimize)
     }
 
-    pub fn link(&mut self) {
-        logger::debug!(event = "link");
-        self.executor.link();
-    }
-
     pub fn evaluate(&mut self, program_id: ProgramId) -> Result<Value, Value> {
         logger::debug!(event = "evaluate", ?program_id);
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
@@ -163,7 +161,6 @@ impl<X> Runtime<X> {
 
     pub fn run(&mut self, program_id: ProgramId, optimize: bool) -> Result<Value, Value> {
         self.compile(program_id, optimize).unwrap(); // TODO(fix): handle compilation errors
-        self.link();
         let value = self.evaluate(program_id)?;
         self.process_tasks();
         Ok(value)

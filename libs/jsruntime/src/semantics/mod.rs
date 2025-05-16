@@ -40,9 +40,7 @@ impl<X> Runtime<X> {
         let analyzer = Analyzer::new_for_script(self);
         let processor = Processor::new(analyzer, false);
         let program = Parser::for_script(source, processor).parse()?;
-        let index = self.programs.len();
-        self.programs.push(program);
-        Ok(ProgramId::new(index))
+        Ok(self.register_program(program))
     }
 
     /// Parses a given source text as a module.
@@ -51,9 +49,22 @@ impl<X> Runtime<X> {
         let analyzer = Analyzer::new_for_module(self);
         let processor = Processor::new(analyzer, true);
         let program = Parser::for_module(source, processor).parse()?;
+        Ok(self.register_program(program))
+    }
+
+    fn register_program(&mut self, program: Program) -> ProgramId {
         let index = self.programs.len();
+        let program_id = ProgramId::new(index);
+        for (index, function) in program.functions.iter().enumerate() {
+            let lambda_info = self.lambda_registry.get_mut(function.id);
+            debug_assert_eq!(lambda_info.program_id, ProgramId::INVALID);
+            lambda_info.program_id = program_id;
+            debug_assert!(index < u32::MAX as usize);
+            debug_assert_eq!(lambda_info.function_index, u32::MAX);
+            lambda_info.function_index = index as u32;
+        }
         self.programs.push(program);
-        Ok(ProgramId::new(index))
+        program_id
     }
 
     /// Prints functions in a program.

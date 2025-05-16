@@ -1,3 +1,5 @@
+use crate::ProgramId;
+
 /// The identifier of a lambda function.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct LambdaId(u32);
@@ -42,6 +44,8 @@ impl LambdaRegistry {
         // TODO(fix): index < u32::MAX
         let index = self.entries.len();
         self.entries.push(LambdaInfo {
+            program_id: ProgramId::INVALID,
+            function_index: u32::MAX,
             scratch_buffer_len: 0,
             is_coroutine,
         });
@@ -61,6 +65,8 @@ impl LambdaRegistry {
 
 pub struct LambdaInfo {
     // [[ECMAScriptCode]]
+    pub program_id: ProgramId,
+    pub function_index: u32,
     pub scratch_buffer_len: u32,
     pub is_coroutine: bool,
 }

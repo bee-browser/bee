@@ -113,7 +113,10 @@ pub fn compile<X>(
         if let Some(ref mut monitor) = runtime.monitor {
             monitor.print_function_ir(func.id, &context.context.func);
         }
+
+        // generate code
         runtime.executor.define_function(func, &mut context.context);
+        runtime.executor.link();
     }
 
     Ok(())

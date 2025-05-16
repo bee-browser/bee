@@ -36,9 +36,7 @@ fn parse(c: &mut Criterion) {
                 let mut total = Default::default();
                 for _i in 0..iters {
                     let mut runtime = BasicRuntime::new();
-                    total += elapsed! {
-                        black_box(runtime.parse_script(black_box(data.1)).unwrap())
-                    };
+                    total += elapsed!(runtime.parse_script(data.1).unwrap());
                 }
                 total
             })
@@ -59,32 +57,7 @@ fn compile(c: &mut Criterion) {
                 for _i in 0..iters {
                     let mut runtime = BasicRuntime::new();
                     let program_id = runtime.parse_script(data.1).unwrap();
-                    total += elapsed! {
-                        runtime.compile(black_box(program_id), black_box(true)).unwrap()
-                    };
-                }
-                total
-            })
-        });
-    }
-    group.finish();
-}
-
-fn link(c: &mut Criterion) {
-    jsruntime::initialize();
-    let mut group = c.benchmark_group("jsruntime/link");
-    group.sample_size(SAMPLE_SIZE);
-    for data in DATA_SET.iter() {
-        group.bench_function(data.0, |b| {
-            b.iter_custom(|iters| {
-                let mut total = Default::default();
-                for _i in 0..iters {
-                    let mut runtime = BasicRuntime::new();
-                    let program_id = runtime.parse_script(data.1).unwrap();
-                    runtime.compile(program_id, true).unwrap();
-                    total += elapsed! {
-                        runtime.link()
-                    };
+                    total += elapsed!(runtime.compile(program_id, true).unwrap());
                 }
                 total
             })
@@ -105,10 +78,7 @@ fn evaluate(c: &mut Criterion) {
                     let mut runtime = BasicRuntime::new();
                     let program_id = runtime.parse_script(data.1).unwrap();
                     runtime.compile(program_id, true).unwrap();
-                    runtime.link();
-                    total += elapsed! {
-                        black_box(runtime.evaluate(black_box(program_id)).unwrap())
-                    };
+                    total += elapsed!(runtime.evaluate(program_id).unwrap());
                 }
                 total
             })
@@ -126,9 +96,7 @@ fn full(c: &mut Criterion) {
             b.iter(|| {
                 let mut runtime = BasicRuntime::new();
                 let program_id = runtime.parse_script(data.1).unwrap();
-                runtime.compile(program_id, true).unwrap();
-                runtime.link();
-                black_box(runtime.evaluate(black_box(program_id)).unwrap());
+                runtime.run(program_id, true).unwrap();
             })
         });
     }
@@ -140,7 +108,6 @@ criterion_group! {
     init,
     parse,
     compile,
-    link,
     evaluate,
     full,
 }

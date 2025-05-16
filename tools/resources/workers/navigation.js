@@ -156,7 +156,7 @@ async function runScript(script) {
     stdin: 'null',
     stdout: 'piped',
     stderr: 'null',
-  })
+  });
 
   const shell = cmd.spawn();
 
