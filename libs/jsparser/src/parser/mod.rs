@@ -221,7 +221,7 @@ where
             TokenKind::Comment if token.has_line_terminators() => &Token::SINGLE_LINE_TERMINATOR,
             _ => token,
         };
-        let result = match self.state().action(token_for_grammar) {
+        match self.state().action(token_for_grammar) {
             Action::Accept => {
                 logger::trace!(opcode = "accept", ?token.kind);
                 self.handler.location(self.lexer.location());
@@ -276,9 +276,7 @@ where
                 ParserResult::NextToken
             }
             Action::Error => ParserResult::Error,
-        };
-
-        result
+        }
     }
 
     fn is_auto_semicolon_allowed(&self, token: &Token<'s>) -> bool {

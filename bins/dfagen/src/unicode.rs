@@ -178,7 +178,7 @@ impl UnicodeSpan {
         if self.is_empty() {
             return self.clone();
         }
-        let first = if self.base < n { 0 } else { self.base - n };
+        let first = self.base.saturating_sub(n);
         let last = (char::MAX as u32).min(self.base + self.length - 1 + n);
         Self::new(first.into(), last.into())
     }
