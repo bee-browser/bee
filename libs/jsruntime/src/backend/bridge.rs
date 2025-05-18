@@ -3,6 +3,7 @@ use std::ffi::c_void;
 
 use base::static_assert_size_eq;
 
+use crate::ProgramId;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaKind;
@@ -172,6 +173,8 @@ macro_rules! into_capture {
     };
 }
 
+// lazy compilation
+
 unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     runtime: *mut c_void,
     context: *mut c_void,
@@ -229,17 +232,19 @@ unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     } else {
         let lambda_info = runtime.lambda_registry.get(lambda_id);
         debug_assert!(matches!(lambda_info.kind, LambdaKind::Ramp));
+
         let program_id = lambda_info.program_id;
         let function_index = lambda_info.function_index as usize;
 
-        // Compile the coroutine lambda before the ramp lambda in order to compute the scratch
+        // Compile the coroutine function before the ramp function in order to compute the scratch
         // buffer size.
-        debug_assert!(function_index > 0);
-        let coroutine_index = function_index - 1;
-        debug_assert!(coroutine_index < runtime.programs[program_id.index()].functions.len());
+        let coroutine_index = runtime.get_index_of_coroutine_function(program_id, function_index);
         super::compile_function(runtime, program_id, coroutine_index, true).unwrap();
 
+        // Then compile the ramp function.
         super::compile_function(runtime, program_id, function_index, true).unwrap();
+
+        // Get the lambda function compiled from the ramp function.
         runtime.executor.get_lambda(lambda_id).unwrap()
     };
 
@@ -281,6 +286,27 @@ unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
     closure.lambda = lambda;
 
     unsafe { lambda(runtime.as_void_ptr(), context, argc, argv, retv) }
+}
+
+impl<X> Runtime<X> {
+    fn get_index_of_coroutine_function(
+        &self,
+        program_id: ProgramId,
+        function_index: usize,
+    ) -> usize {
+        debug_assert!(function_index > 0);
+        // It's assumed that a ramp function contains only a single inner (coroutine) function
+        // which has been appended to `Program::functions` just before the ramp function.
+        let coroutine_index = function_index - 1;
+        debug_assert!(coroutine_index < self.programs[program_id.index()].functions.len());
+        debug_assert!(matches!(
+            self.lambda_registry
+                .get(self.programs[program_id.index()].functions[coroutine_index].id)
+                .kind,
+            LambdaKind::Coroutine
+        ));
+        coroutine_index
+    }
 }
 
 // 7.1.2 ToBoolean ( argument )
