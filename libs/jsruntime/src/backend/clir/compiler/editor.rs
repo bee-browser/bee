@@ -5,10 +5,10 @@ use cranelift::codegen::ir::InstBuilder as _;
 use cranelift::codegen::isa;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::Switch;
-use rustc_hash::FxHashMap;
 
 use base::static_assert_eq;
 
+use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::types::Capture;
 use crate::types::Closure;
@@ -40,7 +40,6 @@ use super::Symbol;
 pub struct Editor<'a> {
     builder: FunctionBuilder<'a>,
 
-    lambda_cache: FxHashMap<LambdaId, LambdaIr>,
     runtime_func_cache: RuntimeFunctionCache,
 
     addr_type: ir::Type,
@@ -79,7 +78,6 @@ impl<'a> Editor<'a> {
 
         Self {
             builder,
-            lambda_cache: Default::default(),
             runtime_func_cache: Default::default(),
             addr_type: target_config.pointer_type(),
             lambda_sig,
@@ -91,19 +89,24 @@ impl<'a> Editor<'a> {
         }
     }
 
-    pub fn put_declare_lambda(
+    pub fn put_declare_lazy_compile(
         &mut self,
         support: &mut impl EditorSupport,
-        lambda_id: LambdaId,
+        lambda_kind: LambdaKind,
     ) -> LambdaIr {
-        logger::debug!(event = "put_declare_lambda", ?lambda_id);
-        *self
-            .lambda_cache
-            .entry(lambda_id)
-            .or_insert_with_key(|&lambda_id| {
-                let func_ref = support.import_lambda(lambda_id, self.builder.func);
-                LambdaIr(self.builder.ins().func_addr(self.addr_type, func_ref))
-            })
+        logger::debug!(event = "put_declare_lazy_compile", ?lambda_kind);
+        let func_ref = match lambda_kind {
+            LambdaKind::Normal => self
+                .runtime_func_cache
+                .import_runtime_lazy_compile_normal(support, self.builder.func),
+            LambdaKind::Ramp => self
+                .runtime_func_cache
+                .import_runtime_lazy_compile_ramp(support, self.builder.func),
+            LambdaKind::Coroutine => self
+                .runtime_func_cache
+                .import_runtime_lazy_compile_coroutine(support, self.builder.func),
+        };
+        LambdaIr(self.builder.ins().func_addr(self.addr_type, func_ref))
     }
 
     pub fn end(mut self) {

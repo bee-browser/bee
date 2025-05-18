@@ -17,6 +17,7 @@ use jsparser::Symbol;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
+use crate::logger;
 use crate::semantics::Function;
 use crate::types::Lambda;
 
@@ -28,6 +29,7 @@ use support::RuntimeFunctionCache;
 use support::RuntimeFunctionIds;
 
 pub use compiler::compile;
+pub use compiler::compile_function;
 
 pub fn initialize() {
     // Nothing to do.
@@ -110,17 +112,14 @@ impl Executor {
         self.module.target_config()
     }
 
-    pub fn link(&mut self) {
-        self.module.finalize_definitions().unwrap();
-    }
-
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
-        let func_id = *self.id_map.get(&lambda_id).unwrap();
+        let func_id = *self.id_map.get(&lambda_id)?;
         let addr = self.module.get_finalized_function(func_id);
         (!addr.is_null()).then(|| unsafe { std::mem::transmute::<_, Lambda>(addr) })
     }
 
-    pub fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
+    pub fn codegen(&mut self, func: &Function, ctx: &mut codegen::Context) {
+        logger::debug!(event = "codegen");
         // It's unnecessary to declare JavaScript functions called in a JavaScript function before
         // the JIT compilation.  Because every JavaScript function will be called indirectly.
         let name = func.id.make_name();
@@ -131,6 +130,7 @@ impl Executor {
         self.id_map.insert(func.id, func_id);
         self.module.define_function(func_id, ctx).unwrap();
         self.module.clear_context(ctx);
+        self.module.finalize_definitions().unwrap();
     }
 }
 

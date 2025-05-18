@@ -13,15 +13,17 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use backend::Executor;
+use lambda::LambdaKind;
 use lambda::LambdaRegistry;
 use objects::Object;
 use objects::Property;
 use objects::PropertyKey;
 use semantics::Program;
+use types::Lambda;
 use types::ReturnValue;
 
 pub use backend::CompileError;
-pub use lambda::LambdaId;
+pub use lambda::LambdaId; // TODO: private
 pub use types::U16Chunk; // TODO: remove
 pub use types::U16String;
 pub use types::Value;
@@ -132,16 +134,55 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
     }
 
+    /// Performs AOT-compilations of all functions in a program.
+    ///
+    /// Unused functions are always compiled.
     pub fn compile(&mut self, program_id: ProgramId, optimize: bool) -> Result<(), CompileError> {
         logger::debug!(event = "compile", ?program_id, optimize);
         backend::compile(self, program_id, optimize)
     }
 
+    /// Evaluates statements in a program.
+    ///
+    /// Functions in a program must be compiled by [`Runtime::compile()`] before the evaluation.
     pub fn evaluate(&mut self, program_id: ProgramId) -> Result<Value, Value> {
         logger::debug!(event = "evaluate", ?program_id);
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
-        let mut retv = Value::Undefined;
         let lambda = self.executor.get_lambda(lambda_id).unwrap();
+        self.call_entry_lambda(lambda)
+    }
+
+    /// Runs a program.
+    ///
+    /// A function will be compiled just before being called for the first time.
+    pub fn run(&mut self, program_id: ProgramId, optimize: bool) -> Result<Value, Value> {
+        logger::debug!(event = "run", ?program_id);
+        let lambda_id = self.programs[program_id.index()].entry_lambda_id();
+        let lambda = if let Some(lambda) = self.executor.get_lambda(lambda_id) {
+            lambda
+        } else {
+            // TODO: compile only top-level statements in the program.
+            let function_index = self.programs[program_id.index()].functions.len() - 1;
+            let lambda_kind = self.lambda_registry.get(lambda_id).kind;
+            if matches!(lambda_kind, LambdaKind::Ramp) {
+                debug_assert!(function_index > 0);
+                let coroutine_index = function_index - 1;
+                // TODO(fix): handle compilation errors
+                backend::compile_function(self, program_id, coroutine_index, optimize).unwrap();
+            }
+            // TODO(fix): handle compilation errors
+            backend::compile_function(self, program_id, function_index, optimize).unwrap();
+            self.executor.get_lambda(lambda_id).unwrap()
+        };
+        let value = self.call_entry_lambda(lambda)?;
+        self.process_tasks();
+        Ok(value)
+    }
+
+    /// Calls an entry lambda function.
+    fn call_entry_lambda(&mut self, lambda: Lambda) -> Result<Value, Value> {
+        logger::debug!(event = "call_entry_lambda", ?lambda);
+        let mut retv = Value::Undefined;
         let status = unsafe {
             lambda(
                 // runtime
@@ -157,13 +198,6 @@ impl<X> Runtime<X> {
             )
         };
         retv.into_result(status)
-    }
-
-    pub fn run(&mut self, program_id: ProgramId, optimize: bool) -> Result<Value, Value> {
-        self.compile(program_id, optimize).unwrap(); // TODO(fix): handle compilation errors
-        let value = self.evaluate(program_id)?;
-        self.process_tasks();
-        Ok(value)
     }
 
     fn as_void_ptr(&mut self) -> *mut c_void {

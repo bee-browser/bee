@@ -40,14 +40,14 @@ impl LambdaRegistry {
         Self::default()
     }
 
-    pub fn register(&mut self, is_coroutine: bool) -> LambdaId {
+    pub fn register(&mut self, kind: LambdaKind) -> LambdaId {
         // TODO(fix): index < u32::MAX
         let index = self.entries.len();
         self.entries.push(LambdaInfo {
             program_id: ProgramId::INVALID,
             function_index: u32::MAX,
             scratch_buffer_len: 0,
-            is_coroutine,
+            kind,
         });
         LambdaId::new(index)
     }
@@ -68,5 +68,12 @@ pub struct LambdaInfo {
     pub program_id: ProgramId,
     pub function_index: u32,
     pub scratch_buffer_len: u32,
-    pub is_coroutine: bool,
+    pub kind: LambdaKind,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum LambdaKind {
+    Normal,
+    Ramp,
+    Coroutine,
 }

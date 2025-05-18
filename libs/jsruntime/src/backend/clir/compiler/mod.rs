@@ -18,6 +18,7 @@ use jsparser::syntax::LoopFlags;
 use crate::ProgramId;
 use crate::Runtime;
 use crate::lambda::LambdaInfo;
+use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;
 use crate::logger;
 use crate::semantics::CompileCommand;
@@ -114,10 +115,48 @@ pub fn compile<X>(
             monitor.print_function_ir(func.id, &context.context.func);
         }
 
-        // generate code
-        runtime.executor.define_function(func, &mut context.context);
-        runtime.executor.link();
+        runtime.executor.codegen(func, &mut context.context);
     }
+
+    Ok(())
+}
+
+pub fn compile_function<X>(
+    runtime: &mut Runtime<X>,
+    program_id: ProgramId,
+    function_index: usize,
+    _optimize: bool,
+) -> Result<(), CompileError> {
+    logger::debug!(event = "compile_function", ?program_id, function_index);
+
+    // Allocate large data on the heap memory.
+    //
+    // Many existing programs including examples in bytecodealliance/wasmtime allocate
+    // `FunctionBuilderContext` and `codegen::Context` on the stack.  However, it's not good to
+    // allocate large data on the stack in a function that is called deep in the stack.  At this
+    // point, the size of `FunctionBuilderContext` is nearly 1KB and the size of `codegen::Context`
+    // is more than 4KB.
+    let mut context = Box::new(CraneliftContext::new());
+
+    let program = &runtime.programs[program_id.index()];
+    let func = &program.functions[function_index];
+
+    let mut session = {
+        let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
+        Session {
+            symbol_registry: &mut runtime.symbol_registry,
+            lambda_registry: &mut runtime.lambda_registry,
+            executor: &mut runtime.executor,
+            scope_cleanup_checker_enabled,
+        }
+    };
+
+    context.compile_function(func, &mut session, &program.scope_tree);
+    if let Some(ref mut monitor) = runtime.monitor {
+        monitor.print_function_ir(func.id, &context.context.func);
+    }
+
+    runtime.executor.codegen(func, &mut context.context);
 
     Ok(())
 }
@@ -248,7 +287,10 @@ where
         let entry_block = self.editor.entry_block();
         self.editor.switch_to_block(entry_block);
 
-        if self.support.get_lambda_info(func.id).is_coroutine {
+        if matches!(
+            self.support.get_lambda_info(func.id).kind,
+            LambdaKind::Coroutine
+        ) {
             self.editor.put_set_coroutine_mode();
         }
 
@@ -296,7 +338,10 @@ where
 
         debug_assert!(self.operand_stack.is_empty());
 
-        if self.support.get_lambda_info(func.id).is_coroutine {
+        if matches!(
+            self.support.get_lambda_info(func.id).kind,
+            LambdaKind::Coroutine
+        ) {
             self.control_flow_stack.pop_coroutine_flow();
         }
 
@@ -313,7 +358,7 @@ where
         self.editor.put_return();
 
         let info = self.support.get_lambda_info_mut(func.id);
-        if info.is_coroutine {
+        if matches!(info.kind, LambdaKind::Coroutine) {
             info.scratch_buffer_len = self.max_scratch_buffer_len;
         }
 
@@ -499,7 +544,11 @@ where
     }
 
     fn process_lambda(&mut self, lambda_id: LambdaId) {
-        let lambda = self.editor.put_declare_lambda(self.support, lambda_id);
+        let lambda_kind = self.support.get_lambda_info(lambda_id).kind;
+        // Perform lazy compilation by default.
+        let lambda = self
+            .editor
+            .put_declare_lazy_compile(self.support, lambda_kind);
         self.operand_stack.push(Operand::Lambda(lambda, lambda_id));
     }
 
