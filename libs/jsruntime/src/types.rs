@@ -3,6 +3,7 @@ use std::mem::offset_of;
 use std::ptr::addr_eq;
 
 use crate::Runtime;
+use crate::lambda::LambdaId;
 use crate::logger;
 use crate::objects::Object;
 
@@ -334,7 +335,13 @@ pub enum U16ChunkKind {
 #[repr(C)]
 pub struct Closure {
     /// A pointer to a lambda function compiled from a JavaScript function definition.
+    ///
+    /// This filed is initially set to a runtime function that will perform the lazy compilation of
+    /// the JavaScript function and set the actual lambda function to this field.
     pub lambda: Lambda,
+
+    /// The ID of `lambda`.
+    pub lambda_id: LambdaId,
 
     /// The number of captures.
     ///
@@ -358,8 +365,7 @@ impl Closure {
 
 impl std::fmt::Debug for Closure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let lambda = self.lambda;
-        write!(f, "closure({lambda:?}, [")?;
+        write!(f, "closure({:?}, [", self.lambda_id)?;
         let len = self.num_captures as usize;
         let data = self.captures.as_ptr();
         let mut captures = unsafe { std::slice::from_raw_parts(data, len).iter() };
@@ -423,6 +429,7 @@ impl std::fmt::Debug for Capture {
 /// The scratch_buffer starts from `&Coroutine::locals[Coroutine::num_locals]`.
 //
 // TODO(issue#237): GcCell
+#[derive(Debug)]
 #[repr(C)]
 pub struct Coroutine {
     /// The closure of the coroutine.
@@ -464,6 +471,7 @@ impl Coroutine {
         result: &Value,
         error: &Value,
     ) -> CoroutineStatus {
+        logger::debug!(event = "resume", ?coroutine, ?promise, ?result, ?error);
         unsafe {
             let lambda = (*(*coroutine).closure).lambda;
             let mut args = [promise.into(), result.clone(), error.clone()];
@@ -534,7 +542,8 @@ where
 ///
 /// The actual type of `context` varies depending on usage of the lambda function:
 ///
-/// * Regular functions: Capture**
+/// * Entry function: 0 (null pointer)
+/// * Regular functions: Closure*
 /// * Coroutine functions: Coroutine*
 ///
 pub type Lambda = unsafe extern "C" fn(

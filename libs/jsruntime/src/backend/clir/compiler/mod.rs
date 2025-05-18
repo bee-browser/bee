@@ -6,18 +6,24 @@ use std::ops::DerefMut;
 
 use cranelift::codegen;
 use cranelift::codegen::ir;
+use cranelift::codegen::isa;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
+use jsparser::SymbolRegistry;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
 use jsparser::syntax::LoopFlags;
 
+use crate::ProgramId;
+use crate::Runtime;
+use crate::lambda::LambdaInfo;
+use crate::lambda::LambdaKind;
+use crate::lambda::LambdaRegistry;
 use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
 use crate::semantics::Locator;
-use crate::semantics::Program;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
@@ -27,6 +33,7 @@ use crate::types::Value;
 use super::CompileError;
 use super::CompilerSupport;
 use super::EditorSupport;
+use super::Executor;
 use super::LambdaId;
 use super::RuntimeFunctionCache;
 
@@ -39,16 +46,42 @@ macro_rules! runtime_debug {
     };
 }
 
+pub struct Session<'r> {
+    symbol_registry: &'r mut SymbolRegistry,
+    lambda_registry: &'r mut LambdaRegistry,
+    pub executor: &'r mut Executor,
+    scope_cleanup_checker_enabled: bool,
+}
+
+impl CompilerSupport for Session<'_> {
+    fn is_scope_cleanup_checker_enabled(&self) -> bool {
+        self.scope_cleanup_checker_enabled
+    }
+
+    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol {
+        self.symbol_registry.intern_utf16(name)
+    }
+
+    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo {
+        self.lambda_registry.get(lambda_id)
+    }
+
+    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo {
+        self.lambda_registry.get_mut(lambda_id)
+    }
+
+    fn target_config(&self) -> isa::TargetFrontendConfig {
+        self.executor.target_config()
+    }
+}
+
 // TODO: Deferring the compilation until it's actually called improves the performance.
 // Because the program may contain unused functions.
-pub fn compile<R>(support: &mut R, program: &Program, optimize: bool) -> Result<(), CompileError>
-where
-    R: CompilerSupport + EditorSupport,
-{
-    // Declare functions defined in the JavaScript program before compiling the functions so that
-    // the functions can refer each other.
-    support.declare_functions(program);
-
+pub fn compile<X>(
+    runtime: &mut Runtime<X>,
+    program_id: ProgramId,
+    _optimize: bool,
+) -> Result<(), CompileError> {
     // Allocate large data on the heap memory.
     //
     // Many existing programs including examples in bytecodealliance/wasmtime allocate
@@ -66,9 +99,64 @@ where
     // to use `Iterator::rev()`.
     //
     // TODO: We should manage dependencies between functions in a more general way.
+    let program = &runtime.programs[program_id.index()];
     for func in program.functions.iter() {
-        context.compile_function(func, optimize, support, &program.scope_tree);
+        let mut session = {
+            let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
+            Session {
+                symbol_registry: &mut runtime.symbol_registry,
+                lambda_registry: &mut runtime.lambda_registry,
+                executor: &mut runtime.executor,
+                scope_cleanup_checker_enabled,
+            }
+        };
+        context.compile_function(func, &mut session, &program.scope_tree);
+        if let Some(ref mut monitor) = runtime.monitor {
+            monitor.print_function_ir(func.id, &context.context.func);
+        }
+
+        runtime.executor.codegen(func, &mut context.context);
     }
+
+    Ok(())
+}
+
+pub fn compile_function<X>(
+    runtime: &mut Runtime<X>,
+    program_id: ProgramId,
+    function_index: usize,
+    _optimize: bool,
+) -> Result<(), CompileError> {
+    logger::debug!(event = "compile_function", ?program_id, function_index);
+
+    // Allocate large data on the heap memory.
+    //
+    // Many existing programs including examples in bytecodealliance/wasmtime allocate
+    // `FunctionBuilderContext` and `codegen::Context` on the stack.  However, it's not good to
+    // allocate large data on the stack in a function that is called deep in the stack.  At this
+    // point, the size of `FunctionBuilderContext` is nearly 1KB and the size of `codegen::Context`
+    // is more than 4KB.
+    let mut context = Box::new(CraneliftContext::new());
+
+    let program = &runtime.programs[program_id.index()];
+    let func = &program.functions[function_index];
+
+    let mut session = {
+        let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
+        Session {
+            symbol_registry: &mut runtime.symbol_registry,
+            lambda_registry: &mut runtime.lambda_registry,
+            executor: &mut runtime.executor,
+            scope_cleanup_checker_enabled,
+        }
+    };
+
+    context.compile_function(func, &mut session, &program.scope_tree);
+    if let Some(ref mut monitor) = runtime.monitor {
+        monitor.print_function_ir(func.id, &context.context.func);
+    }
+
+    runtime.executor.codegen(func, &mut context.context);
 
     Ok(())
 }
@@ -86,18 +174,20 @@ impl CraneliftContext {
         }
     }
 
-    fn compile_function<R>(
-        &mut self,
-        func: &Function,
-        optimize: bool,
-        support: &mut R,
-        scope_tree: &ScopeTree,
-    ) where
+    fn compile_function<R>(&mut self, func: &Function, support: &mut R, scope_tree: &ScopeTree)
+    where
         R: CompilerSupport + EditorSupport,
     {
-        let compiler = Compiler::new(func, support, scope_tree, self);
-        compiler.compile(func, optimize);
-        support.define_function(func, &mut self.context);
+        let compiler = Compiler::new(
+            func,
+            support,
+            scope_tree,
+            // At this point, the size of ir::Function is 896 bytes.  Copy operation is not fast.
+            // It's better to use codegen::Context::func as the sample code does.
+            &mut self.context.func,
+            &mut self.builder_context,
+        );
+        compiler.compile(func);
     }
 }
 
@@ -135,16 +225,17 @@ where
         func: &Function,
         support: &'a mut R,
         scope_tree: &'a ScopeTree,
-        context: &'a mut CraneliftContext,
+        func_ir: &'a mut ir::Function,
+        builder_context: &'a mut FunctionBuilderContext,
     ) -> Self {
         let target_config = support.target_config();
         let addr_type = target_config.pointer_type();
 
-        context.context.func.name = ir::UserFuncName::user(0, func.id.into());
-        context.context.func.signature.call_conv = target_config.default_call_conv;
+        func_ir.name = ir::UserFuncName::user(0, func.id.into());
+        func_ir.signature.call_conv = target_config.default_call_conv;
 
         // formal parameters
-        let params = &mut context.context.func.signature.params;
+        let params = &mut func_ir.signature.params;
         // runtime: *mut c_void
         params.push(ir::AbiParam::new(addr_type));
         // context: *mut c_void
@@ -157,14 +248,12 @@ where
         params.push(ir::AbiParam::new(addr_type));
 
         // #[repr(u32)] Status
-        context
-            .context
-            .func
+        func_ir
             .signature
             .returns
             .push(ir::AbiParam::new(ir::types::I32));
 
-        let builder = FunctionBuilder::new(&mut context.context.func, &mut context.builder_context);
+        let builder = FunctionBuilder::new(func_ir, builder_context);
 
         Self {
             support,
@@ -180,7 +269,7 @@ where
         }
     }
 
-    fn compile(mut self, func: &Function, optimize: bool) {
+    fn compile(mut self, func: &Function) {
         self.start_compile(func);
         for command in func.commands.iter() {
             if self.skip_count > 0 {
@@ -189,7 +278,7 @@ where
             }
             self.process_command(func, command);
         }
-        self.end_compile(func, optimize);
+        self.end_compile(func);
     }
 
     fn start_compile(&mut self, func: &Function) {
@@ -198,7 +287,10 @@ where
         let entry_block = self.editor.entry_block();
         self.editor.switch_to_block(entry_block);
 
-        if self.support.get_lambda_info(func.id).is_coroutine {
+        if matches!(
+            self.support.get_lambda_info(func.id).kind,
+            LambdaKind::Coroutine
+        ) {
             self.editor.put_set_coroutine_mode();
         }
 
@@ -241,12 +333,15 @@ where
         self.editor.put_store_undefined_to_any(retv);
     }
 
-    fn end_compile(mut self, func: &Function, optimize: bool) {
-        logger::debug!(event = "end_compile", ?func.id, optimize);
+    fn end_compile(mut self, func: &Function) {
+        logger::debug!(event = "end_compile", ?func.id);
 
         debug_assert!(self.operand_stack.is_empty());
 
-        if self.support.get_lambda_info(func.id).is_coroutine {
+        if matches!(
+            self.support.get_lambda_info(func.id).kind,
+            LambdaKind::Coroutine
+        ) {
             self.control_flow_stack.pop_coroutine_flow();
         }
 
@@ -263,7 +358,7 @@ where
         self.editor.put_return();
 
         let info = self.support.get_lambda_info_mut(func.id);
-        if info.is_coroutine {
+        if matches!(info.kind, LambdaKind::Coroutine) {
             info.scratch_buffer_len = self.max_scratch_buffer_len;
         }
 
@@ -449,19 +544,26 @@ where
     }
 
     fn process_lambda(&mut self, lambda_id: LambdaId) {
-        let lambda = self.editor.put_declare_lambda(self.support, lambda_id);
-        self.operand_stack.push(Operand::Lambda(lambda));
+        let lambda_kind = self.support.get_lambda_info(lambda_id).kind;
+        // Perform lazy compilation by default.
+        let lambda = self
+            .editor
+            .put_declare_lazy_compile(self.support, lambda_kind);
+        self.operand_stack.push(Operand::Lambda(lambda, lambda_id));
     }
 
     fn process_closure(&mut self, _prologue: bool, func_scope_ref: ScopeRef) {
         let scope = self.scope_tree.scope(func_scope_ref);
         debug_assert!(scope.is_function());
 
-        let lambda = self.pop_lambda();
+        let (lambda, lambda_id) = self.pop_lambda();
         // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
-        let closure =
-            self.editor
-                .put_runtime_create_closure(self.support, lambda, scope.count_captures());
+        let closure = self.editor.put_runtime_create_closure(
+            self.support,
+            lambda,
+            lambda_id,
+            scope.count_captures(),
+        );
 
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         for variable in scope
@@ -559,7 +661,7 @@ where
                 self.editor.put_store_string_to_any(value, any);
                 any.into()
             }
-            Operand::Lambda(_) => todo!(),
+            Operand::Lambda(..) => todo!(),
             Operand::Closure(value) => {
                 let any = self.editor.put_alloc_any();
                 self.editor.put_store_closure_to_any(value, any);
@@ -1396,7 +1498,7 @@ where
                 let object = self.editor.put_runtime_to_object(self.support, value);
                 self.operand_stack.push(Operand::Object(object));
             }
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2039,7 +2141,7 @@ where
                 | Operand::Null
                 | Operand::VariableReference(..)
                 | Operand::PropertyReference(_) => (),
-                Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
+                Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
         self.operand_stack = operand_stack;
@@ -2106,7 +2208,7 @@ where
                 | Operand::Null
                 | Operand::VariableReference(..)
                 | Operand::PropertyReference(_) => (),
-                Operand::Lambda(_) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
+                Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
         self.operand_stack = operand_stack;
@@ -2189,7 +2291,7 @@ where
                 // }
                 self.editor.switch_to_block(merge_block);
             }
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2264,7 +2366,7 @@ where
             | Operand::Promise(_) => self.editor.put_boolean(true),
             Operand::String(..) => todo!("string"),
             Operand::Any(value, ..) => self.editor.put_is_non_nullish(*value),
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2309,7 +2411,7 @@ where
                 self.editor.put_boolean(true)
             }
             Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => {
@@ -2330,7 +2432,7 @@ where
             Operand::Closure(_) => self.editor.put_number(f64::NAN),
             Operand::Object(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::Promise(_)
             | Operand::VariableReference(..)
@@ -2354,7 +2456,6 @@ where
         };
         match reference {
             Some((symbol, locator)) if symbol != Symbol::NONE => {
-                debug_assert!(!locator.is_none());
                 self.operand_stack
                     .push(Operand::VariableReference(symbol, locator));
                 // TODO(perf): compile-time evaluation
@@ -2475,7 +2576,7 @@ where
                 self.editor
                     .put_runtime_is_strictly_equal(self.support, lhs, *rhs)
             }
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
@@ -2602,9 +2703,9 @@ where
         BooleanIr(self.editor.get_block_param(merge_block, 0))
     }
 
-    fn pop_lambda(&mut self) -> LambdaIr {
+    fn pop_lambda(&mut self) -> (LambdaIr, LambdaId) {
         match self.operand_stack.pop().unwrap() {
-            Operand::Lambda(value) => value,
+            Operand::Lambda(lambda, lambda_id) => (lambda, lambda_id),
             _ => unreachable!(),
         }
     }
@@ -2688,7 +2789,7 @@ where
             Locator::Argument(index) => self.editor.put_get_argument(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
-            Locator::None | Locator::Global => unreachable!(),
+            Locator::Global => unreachable!(),
         };
         self.editor.put_escape_value(capture, value);
     }
@@ -2752,7 +2853,7 @@ where
             Operand::Object(value) => self.editor.put_store_object_to_any(*value, any),
             Operand::Any(value, _) => self.editor.put_store_any_to_any(*value, any),
             Operand::Promise(value) => self.editor.put_store_promise_to_any(*value, any),
-            Operand::Lambda(_)
+            Operand::Lambda(..)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2764,7 +2865,6 @@ where
     fn emit_get_variable(&mut self, symbol: Symbol, locator: Locator) -> AnyIr {
         logger::debug!(event = "emit_get_variable", ?symbol, ?locator);
         match locator {
-            Locator::None => unreachable!(),
             Locator::Argument(index) => self.editor.put_get_argument(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
@@ -2933,7 +3033,7 @@ enum Operand {
 
     // Values that cannot be stored into a `Value`.
     /// Runtime value of lambda function type.
-    Lambda(LambdaIr),
+    Lambda(LambdaIr, LambdaId),
 
     /// Runtime value of coroutine type.
     Coroutine(CoroutineIr),

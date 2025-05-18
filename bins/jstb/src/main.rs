@@ -125,35 +125,35 @@ fn main() -> Result<()> {
 
     match cl.command {
         Command::Parse(args) => {
-            let program = parse!(&source, cl)?;
+            let program_id = parse!(&source, cl)?;
             for kind in args.print.chars() {
                 match kind {
                     'f' => {
                         println!("### functions");
-                        runtime.print_functions(&program);
+                        runtime.print_functions(program_id);
                     }
                     's' => {
                         println!("### scope tree");
-                        runtime.print_scope_tree(&program);
+                        runtime.print_scope_tree(program_id);
                     }
                     'g' => {
                         println!("### global symbols");
-                        runtime.print_global_symbols(&program);
+                        runtime.print_global_symbols(program_id);
                     }
                     _ => (),
                 }
             }
         }
         Command::Compile(args) => {
-            let program = parse!(&source, cl)?;
-            runtime.compile(&program, !args.no_optimize)?;
+            let monitor = Box::new(Monitor);
+            runtime.set_monitor(monitor);
+            let program_id = parse!(&source, cl)?;
+            runtime.compile(program_id, !args.no_optimize)?;
         }
         Command::Run(args) => {
-            let program = parse!(&source, cl)?;
-            runtime.compile(&program, !args.no_optimize)?;
-            runtime.link();
-            match runtime.evaluate(&program) {
-                Ok(_) => runtime.run(),
+            let program_id = parse!(&source, cl)?;
+            match runtime.run(program_id, !args.no_optimize) {
+                Ok(_) => (),
                 Err(v) => println!("Uncaught {v:?}"),
             }
         }
@@ -178,4 +178,13 @@ fn read_from_stdin() -> Result<String> {
 
 fn print(_runtime: &mut BasicRuntime, args: &[Value]) {
     println!("{}", args.iter().format(" "));
+}
+
+struct Monitor;
+
+impl jsruntime::Monitor for Monitor {
+    fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
+        println!("### {id:?}");
+        println!("{ir}");
+    }
 }

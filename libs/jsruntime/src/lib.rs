@@ -13,15 +13,17 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use backend::Executor;
-use lambda::LambdaId;
+use lambda::LambdaKind;
 use lambda::LambdaRegistry;
 use objects::Object;
 use objects::Property;
 use objects::PropertyKey;
+use semantics::Program;
+use types::Lambda;
 use types::ReturnValue;
 
 pub use backend::CompileError;
-pub use semantics::Program;
+pub use lambda::LambdaId; // TODO: private
 pub use types::U16Chunk; // TODO: remove
 pub use types::U16String;
 pub use types::Value;
@@ -40,6 +42,23 @@ struct RuntimePref {
     enable_scope_cleanup_checker: bool,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ProgramId(u32);
+
+impl ProgramId {
+    const INVALID: Self = Self(u32::MAX);
+
+    fn new(index: usize) -> Self {
+        debug_assert!(index < u32::MAX as usize);
+        Self(index as u32)
+    }
+
+    fn index(&self) -> usize {
+        debug_assert!(self.0 < u32::MAX);
+        self.0 as usize
+    }
+}
+
 pub type BasicRuntime = Runtime<()>;
 
 impl BasicRuntime {
@@ -52,11 +71,13 @@ pub struct Runtime<X> {
     pref: RuntimePref,
     symbol_registry: SymbolRegistry,
     lambda_registry: LambdaRegistry,
+    programs: Vec<Program>,
     executor: Executor,
     // TODO: GcArena
     allocator: bumpalo::Bump,
     tasklet_system: tasklet::System,
     global_object: Object,
+    monitor: Option<Box<dyn Monitor>>,
     extension: X,
 }
 
@@ -71,10 +92,12 @@ impl<X> Runtime<X> {
             pref: Default::default(),
             symbol_registry: Default::default(),
             lambda_registry: LambdaRegistry::new(),
+            programs: vec![],
             executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
             tasklet_system: tasklet::System::new(),
             global_object,
+            monitor: None,
             extension,
         }
     }
@@ -91,6 +114,10 @@ impl<X> Runtime<X> {
         self.pref.enable_scope_cleanup_checker = true;
     }
 
+    pub fn set_monitor(&mut self, monitor: Box<dyn Monitor>) {
+        self.monitor = Some(monitor);
+    }
+
     pub fn register_host_function<F, R>(&mut self, name: &str, host_fn: F)
     where
         F: Fn(&mut Self, &[Value]) -> R + Send + Sync + 'static,
@@ -99,7 +126,7 @@ impl<X> Runtime<X> {
         let symbol = self.symbol_registry.intern_str(name);
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
-        let closure = self.create_closure(lambda, 0);
+        let closure = self.create_closure(lambda, LambdaId::HOST, 0);
         let value = Value::Closure(closure);
         // TODO: add `flags` to the arguments.
         let prop = Property::data_xxx(value);
@@ -107,20 +134,55 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
     }
 
-    pub fn compile(&mut self, program: &Program, optimize: bool) -> Result<(), CompileError> {
-        logger::debug!(event = "compile");
-        backend::compile(self, program, optimize)
+    /// Performs AOT-compilations of all functions in a program.
+    ///
+    /// Unused functions are always compiled.
+    pub fn compile(&mut self, program_id: ProgramId, optimize: bool) -> Result<(), CompileError> {
+        logger::debug!(event = "compile", ?program_id, optimize);
+        backend::compile(self, program_id, optimize)
     }
 
-    pub fn link(&mut self) {
-        logger::debug!(event = "link");
-        self.executor.link();
+    /// Evaluates statements in a program.
+    ///
+    /// Functions in a program must be compiled by [`Runtime::compile()`] before the evaluation.
+    pub fn evaluate(&mut self, program_id: ProgramId) -> Result<Value, Value> {
+        logger::debug!(event = "evaluate", ?program_id);
+        let lambda_id = self.programs[program_id.index()].entry_lambda_id();
+        let lambda = self.executor.get_lambda(lambda_id).unwrap();
+        self.call_entry_lambda(lambda)
     }
 
-    pub fn evaluate(&mut self, program: &Program) -> Result<Value, Value> {
-        logger::debug!(event = "evaluate");
+    /// Runs a program.
+    ///
+    /// A function will be compiled just before being called for the first time.
+    pub fn run(&mut self, program_id: ProgramId, optimize: bool) -> Result<Value, Value> {
+        logger::debug!(event = "run", ?program_id);
+        let lambda_id = self.programs[program_id.index()].entry_lambda_id();
+        let lambda = if let Some(lambda) = self.executor.get_lambda(lambda_id) {
+            lambda
+        } else {
+            // TODO: compile only top-level statements in the program.
+            let function_index = self.programs[program_id.index()].functions.len() - 1;
+            let lambda_kind = self.lambda_registry.get(lambda_id).kind;
+            if matches!(lambda_kind, LambdaKind::Ramp) {
+                debug_assert!(function_index > 0);
+                let coroutine_index = function_index - 1;
+                // TODO(fix): handle compilation errors
+                backend::compile_function(self, program_id, coroutine_index, optimize).unwrap();
+            }
+            // TODO(fix): handle compilation errors
+            backend::compile_function(self, program_id, function_index, optimize).unwrap();
+            self.executor.get_lambda(lambda_id).unwrap()
+        };
+        let value = self.call_entry_lambda(lambda)?;
+        self.process_tasks();
+        Ok(value)
+    }
+
+    /// Calls an entry lambda function.
+    fn call_entry_lambda(&mut self, lambda: Lambda) -> Result<Value, Value> {
+        logger::debug!(event = "call_entry_lambda", ?lambda);
         let mut retv = Value::Undefined;
-        let lambda = self.executor.get_lambda(program.entry_lambda_id()).unwrap();
         let status = unsafe {
             lambda(
                 // runtime
@@ -249,4 +311,8 @@ where
     fn default() -> Self {
         Runtime::with_extension(Default::default())
     }
+}
+
+pub trait Monitor {
+    fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
 }

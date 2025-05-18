@@ -57,15 +57,12 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
         let value = runtime.clone_value(&args[0]);
         runtime.extension_mut().actual_values.push(value);
     });
-    let program = if module {
+    let program_id = if module {
         runtime.parse_module(src).unwrap()
     } else {
         runtime.parse_script(src).unwrap()
     };
-    runtime.compile(&program, optimize).unwrap();
-    runtime.link();
-    let result = runtime.evaluate(&program)?;
-    runtime.run();
+    let result = runtime.run(program_id, optimize)?;
     runtime.extension().validate();
     Ok(result)
 }

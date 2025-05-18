@@ -20,9 +20,11 @@ use jsparser::syntax::NodeHandler;
 use jsparser::syntax::UnaryOperator;
 use jsparser::syntax::UpdateOperator;
 
-use crate::LambdaId;
+use crate::ProgramId;
 use crate::Runtime;
 use crate::Value;
+use crate::lambda::LambdaId;
+use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::objects::Property;
 
@@ -34,36 +36,57 @@ pub use scope::VariableRef;
 
 impl<X> Runtime<X> {
     /// Parses a given source text as a script.
-    pub fn parse_script(&mut self, source: &str) -> Result<Program, Error> {
+    pub fn parse_script(&mut self, source: &str) -> Result<ProgramId, Error> {
         logger::debug!(event = "parse", source_kind = "script");
         let analyzer = Analyzer::new_for_script(self);
         let processor = Processor::new(analyzer, false);
-        Parser::for_script(source, processor).parse()
+        let program = Parser::for_script(source, processor).parse()?;
+        Ok(self.register_program(program))
     }
 
     /// Parses a given source text as a module.
-    pub fn parse_module(&mut self, source: &str) -> Result<Program, Error> {
+    pub fn parse_module(&mut self, source: &str) -> Result<ProgramId, Error> {
         logger::debug!(event = "parse", source_kind = "module");
         let analyzer = Analyzer::new_for_module(self);
         let processor = Processor::new(analyzer, true);
-        Parser::for_module(source, processor).parse()
+        let program = Parser::for_module(source, processor).parse()?;
+        Ok(self.register_program(program))
+    }
+
+    fn register_program(&mut self, program: Program) -> ProgramId {
+        let index = self.programs.len();
+        let program_id = ProgramId::new(index);
+        for (index, function) in program.functions.iter().enumerate() {
+            let lambda_info = self.lambda_registry.get_mut(function.id);
+            debug_assert_eq!(lambda_info.program_id, ProgramId::INVALID);
+            lambda_info.program_id = program_id;
+            debug_assert!(index < u32::MAX as usize);
+            debug_assert_eq!(lambda_info.function_index, u32::MAX);
+            lambda_info.function_index = index as u32;
+        }
+        self.programs.push(program);
+        program_id
     }
 
     /// Prints functions in a program.
-    pub fn print_functions(&self, program: &Program) {
-        for func in program.functions.iter() {
+    pub fn print_functions(&self, program_id: ProgramId) {
+        for func in self.programs[program_id.index()].functions.iter() {
             func.print("");
         }
     }
 
     /// Prints the scope tree of a program.
-    pub fn print_scope_tree(&self, program: &Program) {
-        program.scope_tree.print("");
+    pub fn print_scope_tree(&self, program_id: ProgramId) {
+        self.programs[program_id.index()].scope_tree.print("");
     }
 
     /// Prints global symbols in a program.
-    pub fn print_global_symbols(&self, program: &Program) {
-        for symbol in program.global_symbols.iter().cloned() {
+    pub fn print_global_symbols(&self, program_id: ProgramId) {
+        for symbol in self.programs[program_id.index()]
+            .global_symbols
+            .iter()
+            .cloned()
+        {
             // TODO: sort
             let utf16_str = self.symbol_registry.resolve(symbol).unwrap();
             let utf8_str = String::from_utf16_lossy(utf16_str);
@@ -173,7 +196,7 @@ struct Analyzer<'r, R> {
 
 trait AnalyzerSupport {
     fn make_symbol(&mut self, lexeme: &str) -> Symbol;
-    fn register_lambda(&mut self, is_coroutine: bool) -> LambdaId;
+    fn register_lambda(&mut self, kind: LambdaKind) -> LambdaId;
     fn define_global_property(&mut self, key: Symbol, property: Property) -> Result<bool, Value>;
 }
 
@@ -182,8 +205,8 @@ impl<X> AnalyzerSupport for Runtime<X> {
         self.symbol_registry.intern_str(lexeme)
     }
 
-    fn register_lambda(&mut self, is_coroutine: bool) -> LambdaId {
-        self.lambda_registry.register(is_coroutine)
+    fn register_lambda(&mut self, kind: LambdaKind) -> LambdaId {
+        self.lambda_registry.register(kind)
     }
 
     // TODO: PropertyKey::Number
@@ -777,13 +800,11 @@ where
         self.global_analysis.scope_tree_builder.pop();
     }
 
-    fn start_function_scope(&mut self, name: Symbol, is_async: bool) {
+    fn start_function_scope(&mut self, name: Symbol, kind: LambdaKind) {
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
 
-        let lambda_id = self
-            .support
-            .register_lambda(name == Symbol::HIDDEN_COROUTINE);
+        let lambda_id = self.support.register_lambda(kind);
 
         let mut analysis = FunctionAnalysis::new(name, lambda_id);
 
@@ -797,23 +818,23 @@ where
         analysis.start_scope(scope_ref);
         analysis.push_command(CompileCommand::DeclareVars(scope_ref));
 
-        if is_async {
-            analysis.set_async();
+        if matches!(kind, LambdaKind::Ramp) {
+            analysis.set_ramp();
         }
 
         self.analysis_stack.push(analysis);
     }
 
     fn handle_function_context(&mut self, name: Symbol) {
-        self.start_function_scope(name, false);
+        self.start_function_scope(name, LambdaKind::Normal);
     }
 
     fn handle_async_function_context(&mut self, name: Symbol) {
-        self.start_function_scope(name, true);
+        self.start_function_scope(name, LambdaKind::Ramp);
     }
 
     fn handle_function_signature(&mut self) {
-        if self.analysis().is_async() {
+        if self.analysis().is_ramp() {
             self.start_coroutine_body();
         }
     }
@@ -827,7 +848,7 @@ where
     // TODO(perf): We never optimize an async function which has no await expression in the body.
     // Such an async function don't need to be rewritten into a state machine.
     fn start_coroutine_body(&mut self) {
-        self.handle_function_context(Symbol::HIDDEN_COROUTINE);
+        self.start_function_scope(Symbol::HIDDEN_COROUTINE, LambdaKind::Coroutine);
         self.handle_binding_identifier(Symbol::HIDDEN_PROMISE);
         self.handle_formal_parameter();
         self.handle_binding_identifier(Symbol::HIDDEN_RESULT);
@@ -911,11 +932,13 @@ where
 
     fn start(&mut self) {
         logger::debug!(event = "start");
-        self.start_function_scope(Symbol::NONE, true);
 
         // The module is always treated as an async function body.
         if self.module {
+            self.start_function_scope(Symbol::NONE, LambdaKind::Ramp);
             self.start_coroutine_body();
+        } else {
+            self.start_function_scope(Symbol::NONE, LambdaKind::Normal);
         }
     }
 
@@ -1098,7 +1121,7 @@ bitflags! {
     #[derive(Debug, Default)]
     struct FunctionAnalysisFlags: u8 {
         /// Enabled if the context is the ramp function for an async function.
-        const ASYNC     = 0b00000001;
+        const RAMP      = 0b00000001;
 
         /// Enabled if the context is the coroutine function for an async function.
         const COROUTINE = 0b00000010;
@@ -1114,16 +1137,16 @@ impl FunctionAnalysis {
         }
     }
 
-    fn is_async(&self) -> bool {
-        self.flags.contains(FunctionAnalysisFlags::ASYNC)
+    fn is_ramp(&self) -> bool {
+        self.flags.contains(FunctionAnalysisFlags::RAMP)
     }
 
     fn is_coroutine(&self) -> bool {
         self.flags.contains(FunctionAnalysisFlags::COROUTINE)
     }
 
-    fn set_async(&mut self) {
-        self.flags.insert(FunctionAnalysisFlags::ASYNC);
+    fn set_ramp(&mut self) {
+        self.flags.insert(FunctionAnalysisFlags::RAMP);
     }
 
     fn set_coroutine(&mut self) {
@@ -2002,7 +2025,6 @@ impl From<AssignmentOperator> for CompileCommand {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Locator {
-    None,
     Argument(u16),
     Local(u16),
     Capture(u16),
@@ -2010,18 +2032,6 @@ pub enum Locator {
 }
 
 impl Locator {
-    pub fn is_none(&self) -> bool {
-        matches!(self, Self::None)
-    }
-
-    pub fn is_argument(&self) -> bool {
-        matches!(self, Self::Argument(_))
-    }
-
-    pub fn is_local(&self) -> bool {
-        matches!(self, Self::Local(_))
-    }
-
     pub fn is_capture(&self) -> bool {
         matches!(self, Self::Capture(_))
     }
@@ -2270,8 +2280,8 @@ mod tests {
             self.symbol_registry.intern_str(lexeme)
         }
 
-        fn register_lambda(&mut self, is_coroutine: bool) -> LambdaId {
-            self.lambda_registry.register(is_coroutine)
+        fn register_lambda(&mut self, kind: LambdaKind) -> LambdaId {
+            self.lambda_registry.register(kind)
         }
 
         fn define_global_property(

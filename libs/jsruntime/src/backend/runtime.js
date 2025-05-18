@@ -62,6 +62,7 @@ function makeCraneliftIRType(type) {
       return 'ir::types::I32';
     case 'f64':
       return 'ir::types::F64';
+    case '&mut c_void':
     case '&std::ffi::CStr':
     case '&U16Chunk':
     case '&mut Variable':

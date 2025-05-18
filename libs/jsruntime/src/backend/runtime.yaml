@@ -1,4 +1,37 @@
 functions:
+  - name: lazy_compile_normal
+    args:
+      - name: context
+        type: '&mut c_void'
+      - name: argc
+        type: u16
+      - name: argv
+        type: '&mut Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
+  - name: lazy_compile_ramp
+    args:
+      - name: context
+        type: '&mut c_void'
+      - name: argc
+        type: u16
+      - name: argv
+        type: '&mut Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
+  - name: lazy_compile_coroutine
+    args:
+      - name: context
+        type: '&mut c_void'
+      - name: argc
+        type: u16
+      - name: argv
+        type: '&mut Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
   - name: to_boolean
     args:
       - name: value
@@ -58,6 +91,8 @@ functions:
     args:
       - name: lambda
         type: Lambda
+      - name: lambda_id
+        type: u32
       - name: num_captures
         type: u16
     ret: '&mut Closure'

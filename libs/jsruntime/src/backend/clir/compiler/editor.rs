@@ -5,10 +5,10 @@ use cranelift::codegen::ir::InstBuilder as _;
 use cranelift::codegen::isa;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::Switch;
-use rustc_hash::FxHashMap;
 
 use base::static_assert_eq;
 
+use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::types::Capture;
 use crate::types::Closure;
@@ -40,13 +40,12 @@ use super::Symbol;
 pub struct Editor<'a> {
     builder: FunctionBuilder<'a>,
 
-    lambda_cache: FxHashMap<LambdaId, LambdaIr>,
     runtime_func_cache: RuntimeFunctionCache,
 
     addr_type: ir::Type,
     lambda_sig: ir::SigRef,
     entry_block: ir::Block,
-    captures: ir::Value,
+    closure: ir::Value,
     fcs: ir::StackSlot,
 
     // FunctionBuilder::is_filled() is a private method.
@@ -69,7 +68,7 @@ impl<'a> Editor<'a> {
         // predecessor of the entry block.
         builder.seal_block(entry_block);
 
-        let captures = builder.block_params(entry_block)[1];
+        let closure = builder.block_params(entry_block)[1];
 
         let fcs = builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
@@ -79,31 +78,35 @@ impl<'a> Editor<'a> {
 
         Self {
             builder,
-            lambda_cache: Default::default(),
             runtime_func_cache: Default::default(),
             addr_type: target_config.pointer_type(),
             lambda_sig,
             entry_block,
-            captures,
+            closure,
             fcs,
             block_terminated: false,
             coroutine_mode: false,
         }
     }
 
-    pub fn put_declare_lambda(
+    pub fn put_declare_lazy_compile(
         &mut self,
         support: &mut impl EditorSupport,
-        lambda_id: LambdaId,
+        lambda_kind: LambdaKind,
     ) -> LambdaIr {
-        logger::debug!(event = "put_declare_lambda", ?lambda_id);
-        *self
-            .lambda_cache
-            .entry(lambda_id)
-            .or_insert_with_key(|&lambda_id| {
-                let func_ref = support.import_lambda(lambda_id, self.builder.func);
-                LambdaIr(self.builder.ins().func_addr(self.addr_type, func_ref))
-            })
+        logger::debug!(event = "put_declare_lazy_compile", ?lambda_kind);
+        let func_ref = match lambda_kind {
+            LambdaKind::Normal => self
+                .runtime_func_cache
+                .import_runtime_lazy_compile_normal(support, self.builder.func),
+            LambdaKind::Ramp => self
+                .runtime_func_cache
+                .import_runtime_lazy_compile_ramp(support, self.builder.func),
+            LambdaKind::Coroutine => self
+                .runtime_func_cache
+                .import_runtime_lazy_compile_coroutine(support, self.builder.func),
+        };
+        LambdaIr(self.builder.ins().func_addr(self.addr_type, func_ref))
     }
 
     pub fn end(mut self) {
@@ -490,13 +493,15 @@ impl<'a> Editor<'a> {
     pub fn put_load_capture(&mut self, index: u16) -> CaptureIr {
         logger::debug!(event = "put_load_capture", index);
         let offset = (self.addr_type.bytes() as usize) * (index as usize);
-        CaptureIr(self.put_load_addr(self.captures, offset))
+        let captures = self.put_get_captures_from_closure();
+        CaptureIr(self.put_load_addr(captures, offset))
     }
 
     pub fn put_load_captured_value(&mut self, index: u16) -> AnyIr {
         logger::debug!(event = "put_load_captured_value", index);
         let offset = (self.addr_type.bytes() as usize) * (index as usize);
-        let capture = self.put_load_addr(self.captures, offset);
+        let captures = self.put_get_captures_from_closure();
+        let capture = self.put_load_addr(captures, offset);
         AnyIr(self.put_load_addr(capture, Capture::TARGET_OFFSET))
     }
 
@@ -512,16 +517,15 @@ impl<'a> Editor<'a> {
 
     // closure
 
+    fn put_get_captures_from_closure(&mut self) -> ir::Value {
+        self.builder
+            .ins()
+            .iadd_imm(self.closure, Closure::CAPTURES_OFFSET as i64)
+    }
+
     pub fn put_load_lambda_from_closure(&mut self, closure: ClosureIr) -> LambdaIr {
         logger::debug!(event = "put_load_lambda_from_closure", ?closure);
         LambdaIr(self.put_load_addr(closure.0, Closure::LAMBDA_OFFSET))
-    }
-
-    pub fn put_get_captures_from_closure(&mut self, closure: ClosureIr) -> ir::Value {
-        logger::debug!(event = "put_get_captures_from_closure", ?closure);
-        self.builder
-            .ins()
-            .iadd_imm(closure.0, Closure::CAPTURES_OFFSET as i64)
     }
 
     pub fn put_store_capture_to_closure(
@@ -550,10 +554,9 @@ impl<'a> Editor<'a> {
     ) -> StatusIr {
         logger::debug!(event = "put_call", ?closure, argc, ?argv, ?retv);
         let lambda = self.put_load_lambda_from_closure(closure);
-        let context = self.put_get_captures_from_closure(closure);
         let args = &[
             self.runtime(),
-            context,
+            closure.0,
             self.builder.ins().iconst(ir::types::I16, argc as i64),
             argv.0,
             retv.0,
@@ -571,7 +574,8 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_set_coroutine_mode");
         debug_assert!(!self.coroutine_mode);
         self.coroutine_mode = true;
-        self.captures = self.put_load_captures_from_coroutine();
+        let coroutine = self.coroutine();
+        self.closure = self.put_load_addr(coroutine.0, Coroutine::CLOSURE_OFFSET);
     }
 
     pub fn put_load_num_locals_from_coroutine(&mut self) -> ir::Value {
@@ -586,23 +590,12 @@ impl<'a> Editor<'a> {
         self.put_load_i32(coroutine.0, Coroutine::STATE_OFFSET)
     }
 
-    pub fn put_load_captures_from_coroutine(&mut self) -> ir::Value {
-        logger::debug!(event = "put_load_captures_from_coroutine");
-        let closure = self.put_load_closure_from_coroutine();
-        self.put_get_captures_from_closure(closure)
-    }
-
     pub fn put_get_local_from_coroutine(&mut self, index: u16) -> AnyIr {
         logger::debug!(event = "put_get_local_from_coroutine", index);
         // TODO: emit assert(index < coroutine.num_locals)
         let coroutine = self.coroutine();
         let offset = Coroutine::LOCALS_OFFSET + Value::SIZE * (index as usize);
         AnyIr(self.builder.ins().iadd_imm(coroutine.0, offset as i64))
-    }
-
-    fn put_load_closure_from_coroutine(&mut self) -> ClosureIr {
-        let coroutine = self.coroutine();
-        ClosureIr(self.put_load_addr(coroutine.0, Coroutine::CLOSURE_OFFSET))
     }
 
     pub fn put_store_state_to_coroutine(&mut self, state: u32) {
@@ -1425,17 +1418,25 @@ impl<'a> Editor<'a> {
         &mut self,
         support: &mut impl EditorSupport,
         lambda: LambdaIr,
+        lambda_id: LambdaId,
         num_captures: u16,
     ) -> ClosureIr {
-        logger::debug!(event = "put_runtime_create_closure", ?lambda, num_captures);
+        logger::debug!(
+            event = "put_runtime_create_closure",
+            ?lambda,
+            ?lambda_id,
+            num_captures
+        );
         let func = self
             .runtime_func_cache
             .import_runtime_create_closure(support, self.builder.func);
+        let lambda_id: u32 = lambda_id.into();
+        let lambda_id = self.builder.ins().iconst(ir::types::I32, lambda_id as i64);
         let num_captures = self
             .builder
             .ins()
             .iconst(ir::types::I16, num_captures as i64);
-        let args = [self.runtime(), lambda.0, num_captures];
+        let args = [self.runtime(), lambda.0, lambda_id, num_captures];
         let call = self.builder.ins().call(func, &args);
         ClosureIr(self.builder.inst_results(call)[0])
     }

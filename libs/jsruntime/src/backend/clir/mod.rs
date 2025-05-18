@@ -17,8 +17,8 @@ use jsparser::Symbol;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaInfo;
+use crate::logger;
 use crate::semantics::Function;
-use crate::semantics::Program;
 use crate::types::Lambda;
 
 use super::CompileError;
@@ -29,6 +29,7 @@ use support::RuntimeFunctionCache;
 use support::RuntimeFunctionIds;
 
 pub use compiler::compile;
+pub use compiler::compile_function;
 
 pub fn initialize() {
     // Nothing to do.
@@ -47,8 +48,6 @@ pub trait CompilerSupport {
 
     // Executor
     fn target_config(&self) -> isa::TargetFrontendConfig;
-    fn declare_functions(&mut self, program: &Program);
-    fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context);
 }
 
 impl<X> CompilerSupport for Runtime<X> {
@@ -70,14 +69,6 @@ impl<X> CompilerSupport for Runtime<X> {
 
     fn target_config(&self) -> isa::TargetFrontendConfig {
         self.executor.target_config()
-    }
-
-    fn declare_functions(&mut self, program: &Program) {
-        self.executor.declare_functions(program);
-    }
-
-    fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
-        self.executor.define_function(func, ctx);
     }
 }
 
@@ -121,31 +112,25 @@ impl Executor {
         self.module.target_config()
     }
 
-    pub fn link(&mut self) {
-        self.module.finalize_definitions().unwrap();
-    }
-
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
-        let func_id = *self.id_map.get(&lambda_id).unwrap();
+        let func_id = *self.id_map.get(&lambda_id)?;
         let addr = self.module.get_finalized_function(func_id);
         (!addr.is_null()).then(|| unsafe { std::mem::transmute::<_, Lambda>(addr) })
     }
 
-    pub fn declare_functions(&mut self, program: &Program) {
-        for func in program.functions.iter() {
-            let name = func.id.make_name();
-            let func_id = self
-                .module
-                .declare_function(&name, Linkage::Local, &self.lambda_sig)
-                .unwrap();
-            self.id_map.insert(func.id, func_id);
-        }
-    }
-
-    pub fn define_function(&mut self, func: &Function, ctx: &mut codegen::Context) {
-        let func_id = *self.id_map.get(&func.id).unwrap();
+    pub fn codegen(&mut self, func: &Function, ctx: &mut codegen::Context) {
+        logger::debug!(event = "codegen");
+        // It's unnecessary to declare JavaScript functions called in a JavaScript function before
+        // the JIT compilation.  Because every JavaScript function will be called indirectly.
+        let name = func.id.make_name();
+        let func_id = self
+            .module
+            .declare_function(&name, Linkage::Local, &self.lambda_sig)
+            .unwrap();
+        self.id_map.insert(func.id, func_id);
         self.module.define_function(func_id, ctx).unwrap();
         self.module.clear_context(ctx);
+        self.module.finalize_definitions().unwrap();
     }
 }
 
