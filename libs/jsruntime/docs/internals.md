@@ -337,3 +337,21 @@ Run the following command if you want to see the entire IR instructions:
 echo 'const a = 1, b = 2, c = 3; a + b + await c' | \
   cargo run --bin=jstb -- compile --as=module
 ```
+
+## Lazy JIT compilation
+
+It's not difficult to implement lazy JIT compilation in JavaScript language.  In JavaScript
+language, a function is an object that implements the `[[Call]]` internal method.  This definition
+allows the runtime to dynamically replace a `Lambda` function that performs the function body of
+the JavaScript function.  A runtime function is initially set as the `Lambda` function to a
+JavaScript function object, which will compile its function body into an actual `Lambda` function
+and replace itself with the actual `Lambda` function when the JavaScript function is called for the
+first time.
+
+One of key types is the `Closure` type.  This type has the `lambda` field which holds a `Lambda`
+function.  A `Lambda` function has the `context` formal parameter.  And a related `Closure` can be
+obtained from it even if the JavaScript function is compiled as a coroutine.  See the following
+functions for implementation details:
+
+* `backend::bridge::runtime_lazy_compile_normal()`
+* `backend::bridge::runtime_lazy_compile_ramp()`
