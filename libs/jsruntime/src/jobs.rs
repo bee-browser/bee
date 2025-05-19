@@ -10,9 +10,9 @@ use crate::types::CoroutineStatus;
 use crate::types::Promise;
 
 impl<X> Runtime<X> {
-    /// Perform all tasklets.
-    pub fn process_tasks(&mut self) {
-        while let Some(msg) = self.tasklet_system.next_msg() {
+    /// Perform all jobs.
+    pub fn process_jobs(&mut self) {
+        while let Some(msg) = self.job_runner.next_msg() {
             self.handle_message(msg);
         }
     }
@@ -34,36 +34,36 @@ impl<X> Runtime<X> {
 
     pub fn register_promise(&mut self, coroutine: *mut Coroutine) -> Promise {
         logger::debug!(event = "register_promise", ?coroutine);
-        self.tasklet_system.register_promise(coroutine)
+        self.job_runner.register_promise(coroutine)
     }
 
     pub fn await_promise(&mut self, promise: Promise, awaiting: Promise) {
         logger::debug!(event = "await_promise", ?promise, ?awaiting);
-        self.tasklet_system.await_promise(promise, awaiting);
+        self.job_runner.await_promise(promise, awaiting);
     }
 
     pub fn process_promise(&mut self, promise: Promise, result: &Value, error: &Value) {
         logger::debug!(event = "process_promise", ?promise, ?result, ?error);
-        let coroutine = self.tasklet_system.get_coroutine(promise);
+        let coroutine = self.job_runner.get_coroutine(promise);
         match Coroutine::resume(self.as_void_ptr(), coroutine, promise, result, error) {
-            CoroutineStatus::Done(result) => self.tasklet_system.resolve_promise(promise, result),
-            CoroutineStatus::Error(error) => self.tasklet_system.reject_promise(promise, error),
+            CoroutineStatus::Done(result) => self.job_runner.resolve_promise(promise, result),
+            CoroutineStatus::Error(error) => self.job_runner.reject_promise(promise, error),
             CoroutineStatus::Suspend => (),
         }
     }
 
     pub fn emit_promise_resolved(&mut self, promise: Promise, result: Value) {
-        self.tasklet_system.emit_promise_resolved(promise, result);
+        self.job_runner.emit_promise_resolved(promise, result);
     }
 }
 
-pub struct System {
+pub struct JobRunner {
     messages: VecDeque<Message>,
     promises: FxHashMap<Promise, PromiseDriver>,
     next_promise: u32,
 }
 
-impl System {
+impl JobRunner {
     pub fn new() -> Self {
         Self {
             messages: Default::default(),
