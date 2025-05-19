@@ -3,7 +3,6 @@ use std::ffi::c_void;
 
 use base::static_assert_size_eq;
 
-use crate::ProgramId;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaKind;
@@ -286,27 +285,6 @@ unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
     closure.lambda = lambda;
 
     unsafe { lambda(runtime.as_void_ptr(), context, argc, argv, retv) }
-}
-
-impl<X> Runtime<X> {
-    fn get_index_of_coroutine_function(
-        &self,
-        program_id: ProgramId,
-        function_index: usize,
-    ) -> usize {
-        debug_assert!(function_index > 0);
-        // It's assumed that a ramp function contains only a single inner (coroutine) function
-        // which has been appended to `Program::functions` just before the ramp function.
-        let coroutine_index = function_index - 1;
-        debug_assert!(coroutine_index < self.programs[program_id.index()].functions.len());
-        debug_assert!(matches!(
-            self.lambda_registry
-                .get(self.programs[program_id.index()].functions[coroutine_index].id)
-                .kind,
-            LambdaKind::Coroutine
-        ));
-        coroutine_index
-    }
 }
 
 // 7.1.2 ToBoolean ( argument )

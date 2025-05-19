@@ -1,10 +1,10 @@
 logging::define_logger! {"bee::jsruntime"}
 
 mod backend;
+mod jobs;
 mod lambda;
 mod objects;
 mod semantics;
-mod tasklet;
 mod types;
 
 use std::ffi::c_void;
@@ -13,6 +13,7 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use backend::Executor;
+use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
 use objects::Object;
@@ -75,7 +76,7 @@ pub struct Runtime<X> {
     executor: Executor,
     // TODO: GcArena
     allocator: bumpalo::Bump,
-    tasklet_system: tasklet::System,
+    job_runner: JobRunner,
     global_object: Object,
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
@@ -95,7 +96,7 @@ impl<X> Runtime<X> {
             programs: vec![],
             executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
-            tasklet_system: tasklet::System::new(),
+            job_runner: JobRunner::new(),
             global_object,
             monitor: None,
             extension,
@@ -154,7 +155,7 @@ impl<X> Runtime<X> {
 
     /// Runs a program.
     ///
-    /// A function will be compiled just before being called for the first time.
+    /// Functions will be compiled just before being called for the first time.
     pub fn run(&mut self, program_id: ProgramId, optimize: bool) -> Result<Value, Value> {
         logger::debug!(event = "run", ?program_id);
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
@@ -166,7 +167,8 @@ impl<X> Runtime<X> {
             let lambda_kind = self.lambda_registry.get(lambda_id).kind;
             if matches!(lambda_kind, LambdaKind::Ramp) {
                 debug_assert!(function_index > 0);
-                let coroutine_index = function_index - 1;
+                let coroutine_index =
+                    self.get_index_of_coroutine_function(program_id, function_index);
                 // TODO(fix): handle compilation errors
                 backend::compile_function(self, program_id, coroutine_index, optimize).unwrap();
             }
@@ -175,8 +177,28 @@ impl<X> Runtime<X> {
             self.executor.get_lambda(lambda_id).unwrap()
         };
         let value = self.call_entry_lambda(lambda)?;
-        self.process_tasks();
+        // TODO(perf): Memory related to `lambda` can be removed safely after the call.
+        // Because the top-level statements are performed only once.
         Ok(value)
+    }
+
+    fn get_index_of_coroutine_function(
+        &self,
+        program_id: ProgramId,
+        function_index: usize,
+    ) -> usize {
+        debug_assert!(function_index > 0);
+        // It's assumed that a ramp function contains only a single inner (coroutine) function
+        // which has been appended to `Program::functions` just before the ramp function.
+        let coroutine_index = function_index - 1;
+        debug_assert!(coroutine_index < self.programs[program_id.index()].functions.len());
+        debug_assert!(matches!(
+            self.lambda_registry
+                .get(self.programs[program_id.index()].functions[coroutine_index].id)
+                .kind,
+            LambdaKind::Coroutine
+        ));
+        coroutine_index
     }
 
     /// Calls an entry lambda function.

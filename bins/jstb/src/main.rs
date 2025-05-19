@@ -1,4 +1,5 @@
 use std::io::Read;
+use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -28,11 +29,17 @@ struct CommandLine {
     #[arg(global = true, long)]
     scope_cleanup_checker: bool,
 
-    /// The source file of the JavaScript program to compile.
+    /// The JavaScript source files to compile.
     ///
     /// Reads the source text from STDIN if this argument is not specified.
     #[arg(global = true)]
-    source: Option<PathBuf>,
+    sources: Vec<PathBuf>,
+}
+
+impl CommandLine {
+    fn sources(&self) -> Sources<'_> {
+        Sources::new(self)
+    }
 }
 
 /// A testbed for the jsruntime module.
@@ -104,70 +111,70 @@ fn main() -> Result<()> {
     }
     runtime.register_host_function("print", print);
 
-    let source = read_source(cl.source.as_ref())?;
-
     // This is not a good practice, but we define a macro instead of a function in order to avoid
     // code clones.  By using the macro, we can avoid additional `use` directives needed for the
     // return type.
     macro_rules! parse {
-        ($source:expr, $cl:expr) => {
+        ($input:expr, $source:expr, $cl:expr) => {
             match $cl.parse_as {
-                SourceType::Auto => match $cl.source.as_ref().and_then(|path| path.extension()) {
-                    Some(ext) if ext == "js" => runtime.parse_script($source),
-                    Some(ext) if ext == "mjs" => runtime.parse_module($source),
-                    _ => runtime.parse_script($source),
+                SourceType::Auto => match $input.extension() {
+                    Some(ext) if ext == "js" => runtime.parse_script(&$source),
+                    Some(ext) if ext == "mjs" => runtime.parse_module(&$source),
+                    _ => runtime.parse_script(&$source),
                 },
-                SourceType::Script => runtime.parse_script($source),
-                SourceType::Module => runtime.parse_module($source),
+                SourceType::Script => runtime.parse_script(&$source),
+                SourceType::Module => runtime.parse_module(&$source),
             }
         };
     }
 
     match cl.command {
-        Command::Parse(args) => {
-            let program_id = parse!(&source, cl)?;
-            for kind in args.print.chars() {
-                match kind {
-                    'f' => {
-                        println!("### functions");
-                        runtime.print_functions(program_id);
+        Command::Parse(ref args) => {
+            for (input, source) in cl.sources() {
+                println!("## {}", input.display());
+                let program_id = parse!(input, source, cl)?;
+                for kind in args.print.chars() {
+                    match kind {
+                        'f' => {
+                            println!("### functions");
+                            runtime.print_functions(program_id);
+                        }
+                        's' => {
+                            println!("### scope tree");
+                            runtime.print_scope_tree(program_id);
+                        }
+                        'g' => {
+                            println!("### global symbols");
+                            runtime.print_global_symbols(program_id);
+                        }
+                        _ => (),
                     }
-                    's' => {
-                        println!("### scope tree");
-                        runtime.print_scope_tree(program_id);
-                    }
-                    'g' => {
-                        println!("### global symbols");
-                        runtime.print_global_symbols(program_id);
-                    }
-                    _ => (),
                 }
             }
         }
-        Command::Compile(args) => {
+        Command::Compile(ref args) => {
             let monitor = Box::new(Monitor);
             runtime.set_monitor(monitor);
-            let program_id = parse!(&source, cl)?;
-            runtime.compile(program_id, !args.no_optimize)?;
-        }
-        Command::Run(args) => {
-            let program_id = parse!(&source, cl)?;
-            match runtime.run(program_id, !args.no_optimize) {
-                Ok(_) => (),
-                Err(v) => println!("Uncaught {v:?}"),
+            for (input, source) in cl.sources() {
+                println!("## {}", input.display());
+                let program_id = parse!(input, source, cl)?;
+                runtime.compile(program_id, !args.no_optimize)?;
             }
+        }
+        Command::Run(ref args) => {
+            for (input, source) in cl.sources() {
+                println!("## {}", input.display());
+                let program_id = parse!(input, source, cl)?;
+                match runtime.run(program_id, !args.no_optimize) {
+                    Ok(_) => (),
+                    Err(v) => println!("Uncaught {v:?}"),
+                }
+            }
+            runtime.process_jobs();
         }
     }
 
     Ok(())
-}
-
-fn read_source(file: Option<&PathBuf>) -> Result<String> {
-    let source = match file {
-        Some(file) => std::fs::read_to_string(file)?,
-        None => read_from_stdin()?,
-    };
-    Ok(source)
 }
 
 fn read_from_stdin() -> Result<String> {
@@ -186,5 +193,33 @@ impl jsruntime::Monitor for Monitor {
     fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
         println!("### {id:?}");
         println!("{ir}");
+    }
+}
+
+struct Sources<'a> {
+    cl: &'a CommandLine,
+    index: usize,
+}
+
+impl<'a> Sources<'a> {
+    fn new(cl: &'a CommandLine) -> Self {
+        Self { cl, index: 0 }
+    }
+}
+
+impl<'a> Iterator for Sources<'a> {
+    type Item = (&'a Path, String);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let index = self.index;
+        self.index += 1;
+        if index == 0 && self.cl.sources.is_empty() {
+            Some((Path::new("<STDIN>"), read_from_stdin().unwrap()))
+        } else if index < self.cl.sources.len() {
+            let path = &self.cl.sources[index];
+            Some((path, std::fs::read_to_string(path).unwrap()))
+        } else {
+            None
+        }
     }
 }
