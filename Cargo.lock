@@ -232,7 +232,7 @@ dependencies = [
 name = "base"
 version = "0.0.0"
 dependencies = [
- "criterion",
+ "criterion 0.6.0",
  "criterion-cycles-per-byte",
 ]
 
@@ -582,13 +582,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "criterion"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bf7af66b0989381bd0be551bd7cc91912a655a58c6918420c9527b1fd8b4679"
+dependencies = [
+ "anes",
+ "cast",
+ "ciborium",
+ "clap",
+ "criterion-plot",
+ "itertools 0.13.0",
+ "num-traits",
+ "oorandom",
+ "plotters",
+ "rayon",
+ "regex",
+ "serde",
+ "serde_json",
+ "tinytemplate",
+ "walkdir",
+]
+
+[[package]]
 name = "criterion-cycles-per-byte"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1029452fa751c93f8834962dd74807d69f0a6c7624d5b06625b393aeb6a14fc2"
 dependencies = [
  "cfg-if",
- "criterion",
+ "criterion 0.5.1",
 ]
 
 [[package]]
@@ -888,7 +911,7 @@ name = "htmlparser"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "criterion",
+ "criterion 0.6.0",
  "ctor",
  "flagset",
  "htmltokenizer",
@@ -1102,6 +1125,15 @@ dependencies = [
 
 [[package]]
 name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
@@ -1165,7 +1197,7 @@ dependencies = [
  "cranelift-jit",
  "cranelift-module",
  "cranelift-native",
- "criterion",
+ "criterion 0.6.0",
  "ctor",
  "indexmap",
  "jsparser",
