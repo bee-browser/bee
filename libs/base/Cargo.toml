@@ -10,8 +10,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dev-dependencies]
-criterion = "0.5.1"
-criterion-cycles-per-byte = "0.6.1"
+criterion = "0.6.0"
 
 [lib]
 bench = false

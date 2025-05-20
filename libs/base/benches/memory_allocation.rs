@@ -1,7 +1,8 @@
+use std::hint::black_box;
+
 use criterion::Criterion;
+use criterion::criterion_group;
 use criterion::measurement::Measurement;
-use criterion::{black_box, criterion_group};
-use criterion_cycles_per_byte::CyclesPerByte;
 
 #[derive(Clone, Copy)]
 struct Data {
@@ -49,6 +50,6 @@ fn vec_push_with_capacity<M: Measurement + 'static>(c: &mut Criterion<M>) {
 
 criterion_group! {
     name = benches;
-    config = Criterion::default().with_measurement(CyclesPerByte);
+    config = Criterion::default();
     targets = box_new, vec_push, vec_push_with_capacity
 }
