@@ -14,10 +14,10 @@ base = { path = "../base" }
 bitflags = "2.9.1"
 # TODO(issue#237): replace `bumpalo` with `jsgc = { path = "../jsgc" }`
 bumpalo = "3.17.0"
-cranelift = "0.119.0"
-cranelift-module = "0.119.0"
-cranelift-jit = "0.119.0"
-cranelift-native = "0.119.0"
+cranelift = "0.120.0"
+cranelift-module = "0.120.0"
+cranelift-jit = "0.120.0"
+cranelift-native = "0.120.0"
 indexmap = "2.9.0"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }

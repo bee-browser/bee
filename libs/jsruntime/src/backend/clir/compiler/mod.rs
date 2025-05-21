@@ -2306,13 +2306,13 @@ where
         // if string.on_stack()
         let on_stack = self.editor.put_string_on_stack(string);
         self.editor
-            .put_branch(on_stack, then_block, &[], merge_block, &[string.0]);
+            .put_branch(on_stack, then_block, &[], merge_block, &[string.0.into()]);
         // {
         self.editor.switch_to_block(then_block);
         let heap_string = self
             .editor
             .put_runtime_migrate_string_to_heap(self.support, string);
-        self.editor.put_jump(merge_block, &[heap_string.0]);
+        self.editor.put_jump(merge_block, &[heap_string.0.into()]);
         // }
         self.editor.switch_to_block(merge_block);
         StringIr(self.editor.get_block_param(merge_block, 0))
@@ -2596,11 +2596,11 @@ where
         self.editor.switch_to_block(then_block);
         let b = self.editor.put_load_boolean(value);
         let then_value = self.editor.put_is_same_boolean(b, boolean);
-        self.editor.put_jump(merge_block, &[then_value.0]);
+        self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
         let else_value = self.editor.put_boolean(false);
-        self.editor.put_jump(merge_block, &[else_value.0]);
+        self.editor.put_jump(merge_block, &[else_value.0.into()]);
         // }
 
         self.editor.switch_to_block(merge_block);
@@ -2620,11 +2620,11 @@ where
         self.editor.switch_to_block(then_block);
         let n = self.editor.put_load_number(value);
         let then_value = self.editor.put_is_same_number(n, number);
-        self.editor.put_jump(merge_block, &[then_value.0]);
+        self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
         let else_value = self.editor.put_boolean(false);
-        self.editor.put_jump(merge_block, &[else_value.0]);
+        self.editor.put_jump(merge_block, &[else_value.0.into()]);
         // }
 
         self.editor.switch_to_block(merge_block);
@@ -2644,11 +2644,11 @@ where
         self.editor.switch_to_block(then_block);
         let v = self.editor.put_load_closure(value);
         let then_value = self.editor.put_is_same_closure(v, closure);
-        self.editor.put_jump(merge_block, &[then_value.0]);
+        self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
         let else_value = self.editor.put_boolean(false);
-        self.editor.put_jump(merge_block, &[else_value.0]);
+        self.editor.put_jump(merge_block, &[else_value.0.into()]);
         // }
 
         self.editor.switch_to_block(merge_block);
@@ -2668,11 +2668,11 @@ where
         self.editor.switch_to_block(then_block);
         let v = self.editor.put_load_object(value);
         let then_value = self.editor.put_is_same_object(v, object);
-        self.editor.put_jump(merge_block, &[then_value.0]);
+        self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
         let else_value = self.editor.put_boolean(false);
-        self.editor.put_jump(merge_block, &[else_value.0]);
+        self.editor.put_jump(merge_block, &[else_value.0.into()]);
         // }
 
         self.editor.switch_to_block(merge_block);
@@ -2692,11 +2692,11 @@ where
         self.editor.switch_to_block(then_block);
         let v = self.editor.put_load_promise(value);
         let then_value = self.editor.put_is_same_promise(v, promise);
-        self.editor.put_jump(merge_block, &[then_value.0]);
+        self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
         let else_value = self.editor.put_boolean(false);
-        self.editor.put_jump(merge_block, &[else_value.0]);
+        self.editor.put_jump(merge_block, &[else_value.0.into()]);
         // }
 
         self.editor.switch_to_block(merge_block);
@@ -2919,13 +2919,13 @@ where
         // then
         self.editor.switch_to_block(then_block);
         let closure = self.editor.put_load_closure(value);
-        self.editor.put_jump(end_block, &[closure.0]);
+        self.editor.put_jump(end_block, &[closure.0.into()]);
         // else
         self.editor.switch_to_block(else_block);
         self.process_number(1001.); // TODO(feat): TypeError
         self.process_throw();
         let dummy = self.editor.put_nullptr();
-        self.editor.put_jump(end_block, &[dummy]);
+        self.editor.put_jump(end_block, &[dummy.into()]);
 
         self.editor.switch_to_block(end_block);
         ClosureIr(self.editor.get_block_param(end_block, 0))

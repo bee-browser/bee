@@ -279,9 +279,9 @@ impl<'a> Editor<'a> {
         &mut self,
         cond: BooleanIr,
         then_block: ir::Block,
-        then_args: &[ir::Value],
+        then_args: &[ir::BlockArg],
         else_block: ir::Block,
-        else_args: &[ir::Value],
+        else_args: &[ir::BlockArg],
     ) {
         logger::debug!(
             event = "put_branch",
@@ -297,14 +297,14 @@ impl<'a> Editor<'a> {
     }
 
     /// Puts an unconditional branch instruction.
-    pub fn put_jump(&mut self, block: ir::Block, args: &[ir::Value]) {
+    pub fn put_jump(&mut self, block: ir::Block, args: &[ir::BlockArg]) {
         logger::debug!(event = "put_jump", ?block, ?args);
         debug_assert!(!self.block_terminated);
         self.builder.ins().jump(block, args);
         self.block_terminated = true;
     }
 
-    pub fn put_jump_if_not_terminated(&mut self, block: ir::Block, args: &[ir::Value]) {
+    pub fn put_jump_if_not_terminated(&mut self, block: ir::Block, args: &[ir::BlockArg]) {
         if self.block_terminated {
             // We should not append any instructions after a terminator instruction.
         } else {
