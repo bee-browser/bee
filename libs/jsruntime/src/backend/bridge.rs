@@ -91,7 +91,7 @@ impl RuntimeFunctions {
             lazy_compile_coroutine: runtime_lazy_compile_coroutine::<X>,
             to_boolean: runtime_to_boolean,
             to_numeric: runtime_to_numeric,
-            to_object: runtime_to_object,
+            to_object: runtime_to_object::<X>,
             to_int32: runtime_to_int32,
             to_uint32: runtime_to_uint32,
             is_loosely_equal: runtime_is_loosely_equal,
@@ -325,7 +325,15 @@ unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Val
 }
 
 // 7.1.18 ToObject ( argument )
-unsafe extern "C" fn runtime_to_object(_runtime: *mut c_void, value: *const Value) -> *mut c_void {
+unsafe extern "C" fn runtime_to_object<X>(
+    runtime: *mut c_void,
+    value: *const Value,
+) -> *mut c_void {
+    logger::debug!(event = "runtime_to_object", ?value);
+
+    debug_assert_ne!(runtime, std::ptr::null_mut());
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
     debug_assert_ne!(value, std::ptr::null());
     let value = unsafe { into_value!(value) };
 
@@ -335,9 +343,18 @@ unsafe extern "C" fn runtime_to_object(_runtime: *mut c_void, value: *const Valu
         Value::Boolean(_value) => todo!(),
         Value::Number(_value) => todo!(),
         Value::String(_value) => todo!(),
-        Value::Closure(_value) => todo!(),
+        Value::Closure(value) => runtime.closure_to_object(*value),
         Value::Object(value) => *value,
         Value::Promise(_value) => todo!(),
+    }
+}
+
+impl<X> Runtime<X> {
+    fn closure_to_object(&mut self, closure: *mut Closure) -> *mut c_void {
+        // TODO(feat): 10.2.3 OrdinaryFunctionCreate()
+        let object = self.create_object();
+        object.set_closure(closure);
+        object as *mut Object as *mut c_void
     }
 }
 

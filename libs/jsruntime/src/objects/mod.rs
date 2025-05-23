@@ -6,6 +6,7 @@ use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
 
+use crate::types::Closure;
 use crate::types::Value;
 
 #[derive(Clone, Debug)]
@@ -187,12 +188,16 @@ impl PropertyFlags {
 //
 // We use a simple hash map until we finishes implementing built-in objects.  After than, we'll
 // start reconsidering about the memory layout.
-#[derive(Default)]
 pub struct Object {
+    // [[Call]]
+    // TODO(issue#237): GcCellRef
+    call: *mut Closure,
     properties: FxHashMap<PropertyKey, Property>,
 }
 
 impl Object {
+    pub(crate) const CALL_OFFSET: usize = std::mem::offset_of!(Self, call);
+
     // TODO(perf): Which one is better?  `Option::None` or `&Value::None`.
     // In JIT-compiled code, we need a `nullptr` check if we choose `Option::None`.
     // If we choose `&Value::None`, we always need a memory access for the discriminant check of
@@ -233,6 +238,10 @@ impl Object {
     pub fn iter_own_properties(&self) -> impl Iterator<Item = (&PropertyKey, &Property)> {
         self.properties.iter()
     }
+
+    pub(crate) fn set_closure(&mut self, closure: *mut Closure) {
+        self.call = closure;
+    }
 }
 
 // 19 The Global Object
@@ -255,5 +264,14 @@ impl Object {
 
         // 19.1.4 undefined
         define! {Symbol::UNDEFINED, Value::Undefined}
+    }
+}
+
+impl Default for Object {
+    fn default() -> Self {
+        Self {
+            call: std::ptr::null_mut(),
+            properties: Default::default(),
+        }
     }
 }
