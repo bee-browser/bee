@@ -1481,21 +1481,33 @@ where
     }
 
     // 7.1.18 ToObject ( argument )
+    // TODO(perf): directly convert the value referred by the operand into an object.
     fn perform_to_object(&mut self) {
         logger::debug!(event = "perform_to_object");
-        let (operand, _) = self.dereference();
+        let (operand, reference) = self.dereference();
         match operand {
+            // Immediate values.
             Operand::Undefined | Operand::Null => self
                 .operand_stack
                 .push(Operand::Object(ObjectIr(self.editor.put_nullptr()))),
             Operand::Boolean(..) => todo!(),
             Operand::Number(..) => todo!(),
             Operand::String(..) => todo!(),
-            Operand::Closure(_value) => todo!(),
+            Operand::Closure(value) => {
+                let tmp = self.editor.put_alloc_any();
+                self.editor.put_store_closure_to_any(value, tmp);
+                let object = self.editor.put_runtime_to_object(self.support, tmp);
+                // The immediate value has no memory to write the object back to.
+                debug_assert!(reference.is_none());
+                self.operand_stack.push(Operand::Object(object));
+            }
             Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
             Operand::Promise(_value) => todo!(),
+            // Variables and properties.
             Operand::Any(value, ..) => {
                 let object = self.editor.put_runtime_to_object(self.support, value);
+                // Write the object back to `value`.
+                self.editor.put_store_object_to_any(object, value);
                 self.operand_stack.push(Operand::Object(object));
             }
             Operand::Lambda(..)
@@ -2908,24 +2920,37 @@ where
 
     fn emit_load_closure_or_throw_type_error(&mut self, value: AnyIr) -> ClosureIr {
         logger::debug!(event = "emit_load_closure_or_throw_type_error", ?value);
-        let then_block = self.editor.create_block();
+        let closure_block = self.editor.create_block();
+        let else_if_block = self.editor.create_block();
+        let object_block = self.editor.create_block();
         let else_block = self.editor.create_block();
         let end_block = self.editor.create_block_with_addr();
 
         // if value.is_closure()
         let is_closure = self.editor.put_is_closure(value);
         self.editor
-            .put_branch(is_closure, then_block, &[], else_block, &[]);
-        // then
-        self.editor.switch_to_block(then_block);
+            .put_branch(is_closure, closure_block, &[], else_if_block, &[]);
+        // {
+        self.editor.switch_to_block(closure_block);
         let closure = self.editor.put_load_closure(value);
         self.editor.put_jump(end_block, &[closure.0.into()]);
-        // else
+        // } else if value.is_object()
+        self.editor.switch_to_block(else_if_block);
+        let is_object = self.editor.put_is_object(value);
+        self.editor
+            .put_branch(is_object, object_block, &[], else_block, &[]);
+        // {
+        self.editor.switch_to_block(object_block);
+        let object = self.editor.put_load_object(value);
+        let closure = self.editor.put_load_closure_from_object(object);
+        self.editor.put_jump(end_block, &[closure.0.into()]);
+        // } else {
         self.editor.switch_to_block(else_block);
         self.process_number(1001.); // TODO(feat): TypeError
         self.process_throw();
         let dummy = self.editor.put_nullptr();
         self.editor.put_jump(end_block, &[dummy.into()]);
+        // }
 
         self.editor.switch_to_block(end_block);
         ClosureIr(self.editor.get_block_param(end_block, 0))

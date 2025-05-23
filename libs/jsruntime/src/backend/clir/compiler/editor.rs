@@ -10,6 +10,7 @@ use base::static_assert_eq;
 
 use crate::lambda::LambdaKind;
 use crate::logger;
+use crate::objects::Object;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
@@ -606,6 +607,13 @@ impl<'a> Editor<'a> {
         self.builder
             .ins()
             .store(FLAGS, state, coroutine.0, Coroutine::STATE_OFFSET as i32);
+    }
+
+    // object
+
+    pub fn put_load_closure_from_object(&mut self, object: ObjectIr) -> ClosureIr {
+        logger::debug!(event = "put_load_closure_from_object", ?object);
+        ClosureIr(self.put_load_addr(object.0, Object::CALL_OFFSET))
     }
 
     // argv
