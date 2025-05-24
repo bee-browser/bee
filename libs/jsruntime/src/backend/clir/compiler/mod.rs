@@ -385,6 +385,7 @@ where
             }
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Exception => self.process_exception(),
+            CompileCommand::This => self.process_this(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
             CompileCommand::ToPropertyKey => self.process_to_property_key(),
@@ -617,6 +618,10 @@ where
         let exception = self.editor.exception();
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Any(exception, None));
+    }
+
+    fn process_this(&mut self) {
+        self.operand_stack.push(Operand::VariableReference(Symbol::GLOBAL_THIS, Locator::Global));
     }
 
     fn process_variable_reference(&mut self, symbol: Symbol) {

@@ -281,6 +281,7 @@ where
             Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
             Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
             Node::MemberExpression(kind) => self.handle_member_expression(kind),
+            Node::This => self.handle_this(),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
@@ -423,6 +424,10 @@ where
 
     fn handle_member_expression(&mut self, kind: MemberExpressionKind) {
         analysis_mut!(self).process_member_expression(kind);
+    }
+
+    fn handle_this(&mut self) {
+        analysis_mut!(self).process_this();
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
@@ -1295,6 +1300,10 @@ impl FunctionAnalysis {
         }
     }
 
+    fn process_this(&mut self) {
+        self.commands.push(CompileCommand::This);
+    }
+
     fn process_identifier_reference(&mut self, symbol: Symbol) {
         self.commands
             .push(CompileCommand::VariableReference(symbol));
@@ -1795,6 +1804,7 @@ pub enum CompileCommand {
     Exception,
 
     // references
+    This,
     VariableReference(Symbol),
     PropertyReference(Symbol),
     ToPropertyKey,

@@ -37,3 +37,6 @@
 - number
 - function
 - length
+
+# Well-known property names.
+- globalThis

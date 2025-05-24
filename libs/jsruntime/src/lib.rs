@@ -8,6 +8,7 @@ mod semantics;
 mod types;
 
 use std::ffi::c_void;
+use std::pin::Pin;
 
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
@@ -77,7 +78,7 @@ pub struct Runtime<X> {
     // TODO: GcArena
     allocator: bumpalo::Bump,
     job_runner: JobRunner,
-    global_object: Object,
+    global_object: Pin<Box<Object>>,
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
 }
@@ -86,7 +87,7 @@ impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
         let functions = backend::RuntimeFunctions::new::<X>();
 
-        let mut global_object = Object::default();
+        let mut global_object = Box::pin(Object::default());
         global_object.define_builtin_global_properties();
 
         Self {
