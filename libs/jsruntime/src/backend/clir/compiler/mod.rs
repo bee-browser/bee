@@ -621,6 +621,7 @@ where
     }
 
     fn process_this(&mut self) {
+        // TODO(perf): shortcut the property access.
         self.operand_stack.push(Operand::VariableReference(Symbol::GLOBAL_THIS, Locator::Global));
     }
 

@@ -1286,9 +1286,9 @@
 - rule: >-
     CallExpression_Await -> CallExpression_Await LBRACK Expression_In_Await
     RBRACK
-  action: undefined
+  action: process_call_expression_bracket_notation
 - rule: CallExpression_Await -> CallExpression_Await DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_call_expression_dot_notation
 - rule: CallExpression_Await -> CallExpression_Await TemplateLiteral_Await_Tagged
   action: undefined
 - rule: CallExpression_Await -> CallExpression_Await DOT PRIVATE_IDENTIFIER
@@ -1966,9 +1966,9 @@
 - rule: CallExpression -> CallExpression Arguments
   action: undefined
 - rule: CallExpression -> CallExpression LBRACK Expression_In RBRACK
-  action: undefined
+  action: process_call_expression_bracket_notation
 - rule: CallExpression -> CallExpression DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_call_expression_dot_notation
 - rule: CallExpression -> CallExpression TemplateLiteral_Tagged
   action: undefined
 - rule: CallExpression -> CallExpression DOT PRIVATE_IDENTIFIER
@@ -2198,9 +2198,9 @@
 - rule: >-
     CallExpression_Yield -> CallExpression_Yield LBRACK Expression_In_Yield
     RBRACK
-  action: undefined
+  action: process_call_expression_bracket_notation
 - rule: CallExpression_Yield -> CallExpression_Yield DOT KeywordOrIdentifierName
-  action: undefined
+  action: process_call_expression_dot_notation
 - rule: CallExpression_Yield -> CallExpression_Yield TemplateLiteral_Yield_Tagged
   action: undefined
 - rule: CallExpression_Yield -> CallExpression_Yield DOT PRIVATE_IDENTIFIER
@@ -2252,11 +2252,11 @@
 - rule: >-
     CallExpression_Yield_Await -> CallExpression_Yield_Await LBRACK
     Expression_In_Yield_Await RBRACK
-  action: undefined
+  action: process_call_expression_bracket_notation
 - rule: >-
     CallExpression_Yield_Await -> CallExpression_Yield_Await DOT
     KeywordOrIdentifierName
-  action: undefined
+  action: process_call_expression_dot_notation
 - rule: >-
     CallExpression_Yield_Await -> CallExpression_Yield_Await
     TemplateLiteral_Yield_Await_Tagged

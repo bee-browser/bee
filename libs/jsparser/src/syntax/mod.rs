@@ -1405,6 +1405,30 @@ where
     }
 
     // CallExpression[Yield, Await] :
+    //   CallExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]
+    fn process_call_expression_bracket_notation(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::MemberExpression(
+            MemberExpressionKind::PropertyAccessWithExpressionKey,
+        ));
+        self.replace(4, Detail::Expression);
+        Ok(())
+    }
+
+    // CallExpression[Yield, Await] :
+    //   CallExpression[?Yield, ?Await] . IdentifierName
+    fn process_call_expression_dot_notation(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let symbol = self.make_symbol(token_index);
+        self.enqueue(Node::MemberExpression(
+            MemberExpressionKind::PropertyAccessWithIdentifierKey(symbol),
+        ));
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
+
+    // 13.3.6 Function Calls
+
+    // CallExpression[Yield, Await] :
     //   CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
     fn process_call_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::CallExpression);
