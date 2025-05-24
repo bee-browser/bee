@@ -174,6 +174,7 @@ pub enum Node<'s> {
     LiteralPropertyName(LiteralPropertyName),
     PropertyDefinition(PropertyDefinitionKind),
     MemberExpression(MemberExpressionKind),
+    This,
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
@@ -924,6 +925,18 @@ where
 
     // 13.2 Primary Expression
 
+    // 13.2.1 The this Keyword
+
+    // PrimaryExpression[Yield, Await] :
+    //   this
+    fn process_primary_expression_this(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::This);
+        self.top_mut().detail = Detail::Expression;
+        Ok(())
+    }
+
+    // 13.2.2 Identifier Reference
+
     // PrimaryExpression[Yield, Await] :
     //   IdentifierReference[?Yield, ?Await]
     fn process_primary_expression_identifier_reference(&mut self) -> Result<(), Error> {
@@ -1257,7 +1270,7 @@ where
             Detail::PropertyDefinition(name) => name,
             ref detail => unreachable!("{detail:?}"),
         };
-        syntax.detail = Detail::PropertyDefinitionList(name == Symbol::__PROTO__);
+        syntax.detail = Detail::PropertyDefinitionList(name == Symbol::LEGACY_PROTO);
         self.push(syntax);
         Ok(())
     }
@@ -1270,7 +1283,7 @@ where
             detail => unreachable!("{detail:?}"),
         };
         self.pop(); // Token(,)
-        let is_proto = name == Symbol::__PROTO__;
+        let is_proto = name == Symbol::LEGACY_PROTO;
         match self.top_mut().detail {
             // 13.2.5.1 Static Semantics: Early Errors
             Detail::PropertyDefinitionList(true) if is_proto => return Err(Error::SyntaxError),
