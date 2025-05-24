@@ -2080,7 +2080,7 @@
     BitwiseXORExpression_In_Await
   action: process_bitwise_or
 - rule: PrimaryExpression_Await -> THIS
-  action: undefined
+  action: process_primary_expression_this
 - rule: PrimaryExpression_Await -> IdentifierReference_Await
   action: process_primary_expression_identifier_reference
 - rule: PrimaryExpression_Await -> Literal
@@ -2870,7 +2870,7 @@
     BitwiseXORExpression_In
   action: process_bitwise_or
 - rule: PrimaryExpression -> THIS
-  action: undefined
+  action: process_primary_expression_this
 - rule: PrimaryExpression -> IdentifierReference
   action: process_primary_expression_identifier_reference
 - rule: PrimaryExpression -> Literal
@@ -3103,7 +3103,7 @@
     BitwiseXORExpression_In_Yield
   action: process_bitwise_or
 - rule: PrimaryExpression_Yield -> THIS
-  action: undefined
+  action: process_primary_expression_this
 - rule: PrimaryExpression_Yield -> IdentifierReference_Yield
   action: process_primary_expression_identifier_reference
 - rule: PrimaryExpression_Yield -> Literal
@@ -3165,7 +3165,7 @@
     BIT_OR BitwiseXORExpression_In_Yield_Await
   action: process_bitwise_or
 - rule: PrimaryExpression_Yield_Await -> THIS
-  action: undefined
+  action: process_primary_expression_this
 - rule: PrimaryExpression_Yield_Await -> IdentifierReference_Yield_Await
   action: process_primary_expression_identifier_reference
 - rule: PrimaryExpression_Yield_Await -> Literal
