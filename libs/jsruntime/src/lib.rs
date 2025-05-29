@@ -205,6 +205,7 @@ impl<X> Runtime<X> {
     /// Calls an entry lambda function.
     fn call_entry_lambda(&mut self, lambda: Lambda) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda);
+        let mut this = Value::Undefined;
         let mut retv = Value::Undefined;
         let status = unsafe {
             lambda(
@@ -212,6 +213,8 @@ impl<X> Runtime<X> {
                 self.as_void_ptr(),
                 // context
                 std::ptr::null_mut(),
+                // this
+                &mut this,
                 // argc
                 0,
                 // argv

@@ -228,6 +228,8 @@ pub enum Node<'s> {
     FormalParameters(u32),
     FunctionContext(Symbol),
     AsyncFunctionContext(Symbol),
+    ArrowFunctionContext,
+    AsyncArrowFunctionContext,
     FunctionSignature,
     FunctionDeclaration,
     AsyncFunctionDeclaration,
@@ -3052,7 +3054,7 @@ where
     // ArrowParameters[Yield, Await] :
     //   BindingIdentifier[?Yield, ?Await]
     fn process_arrow_parameters_binding_identifier(&mut self) -> Result<(), Error> {
-        self.process_single_arrow_parameter(Node::FunctionContext(Symbol::NONE))
+        self.process_single_arrow_parameter(Node::ArrowFunctionContext)
     }
 
     fn process_single_arrow_parameter(&mut self, context_node: Node<'s>) -> Result<(), Error> {
@@ -3092,7 +3094,7 @@ where
         let syntax = self.pop();
         self.tokens.truncate(syntax.tokens_range.start);
         self.nodes.truncate(syntax.nodes_range.start);
-        self.enqueue(Node::FunctionContext(Symbol::NONE));
+        self.enqueue(Node::ArrowFunctionContext);
         self.refine(&syntax, goal_symbol)
     }
 
@@ -3201,7 +3203,7 @@ where
     // AsyncArrowBindingIdentifier[Yield] :
     //   BindingIdentifier[?Yield, +Await]
     fn process_async_arrow_binding_identifier(&mut self) -> Result<(), Error> {
-        self.process_single_arrow_parameter(Node::AsyncFunctionContext(Symbol::NONE))
+        self.process_single_arrow_parameter(Node::AsyncArrowFunctionContext)
     }
 
     // AsyncArrowHeadCCEAAAH[Yield, Await] :
@@ -3214,7 +3216,7 @@ where
         let syntax = self.pop();
         self.tokens.truncate(syntax.tokens_range.start);
         self.nodes.truncate(syntax.nodes_range.start);
-        self.enqueue(Node::AsyncFunctionContext(Symbol::NONE));
+        self.enqueue(Node::AsyncArrowFunctionContext);
         self.refine(&syntax, GoalSymbol::AsyncArrowHead)
     }
 

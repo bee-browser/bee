@@ -373,6 +373,8 @@ where
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext(name) => self.handle_function_context(name),
             Node::AsyncFunctionContext(name) => self.handle_async_function_context(name),
+            Node::ArrowFunctionContext => self.handle_arrow_function_context(),
+            Node::AsyncArrowFunctionContext => self.handle_async_arrow_function_context(),
             Node::FunctionSignature => self.handle_function_signature(),
             Node::Dereference => self.handle_dereference(),
         }
@@ -805,13 +807,13 @@ where
         self.global_analysis.scope_tree_builder.pop();
     }
 
-    fn start_function_scope(&mut self, name: Symbol, kind: LambdaKind) {
+    fn start_function_scope(&mut self, name: Symbol, kind: LambdaKind, this_mode: ThisMode) {
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
 
         let lambda_id = self.support.register_lambda(kind);
 
-        let mut analysis = FunctionAnalysis::new(name, lambda_id);
+        let mut analysis = FunctionAnalysis::new(name, lambda_id, this_mode);
 
         // `commands[0]` will be replaced with `AllocateLocals` or `Environment`.
         //
@@ -823,6 +825,66 @@ where
         analysis.start_scope(scope_ref);
         analysis.push_command(CompileCommand::DeclareVars(scope_ref));
 
+        // Define a hidden immutable variable for `this` in the function scope.  The value assigned
+        // to the variable depends on the [[ThisMode]].
+        //
+        // TODO(perf): We can define special `CompileCommand`s to generate IR instructions
+        // that are equivalent to the following `CompileCommand`s in order to reduce the compile
+        // script.  Even in this case, we still need to add symbols such as `this` to the scope.
+        debug_assert_eq!(analysis.num_locals, 0);
+        match this_mode {
+            ThisMode::Global => {
+                // const this = globalThis;
+                analysis.push_command(CompileCommand::VariableReference(Symbol::GLOBAL_THIS));
+                analysis.push_command(CompileCommand::VariableReference(Symbol::THIS));
+                analysis.push_command(CompileCommand::ImmutableVariable);
+                analysis
+                    .references
+                    .push(Reference::new(Symbol::GLOBAL_THIS, scope_ref));
+                self.global_analysis
+                    .scope_tree_builder
+                    .add_immutable(Symbol::THIS, 0);
+                analysis.num_locals = 1;
+            }
+            ThisMode::Strict => {
+                // const this = thisArgument;
+                analysis.push_command(CompileCommand::This);
+                analysis.push_command(CompileCommand::VariableReference(Symbol::THIS));
+                analysis.push_command(CompileCommand::ImmutableVariable);
+                self.global_analysis
+                    .scope_tree_builder
+                    .add_immutable(Symbol::THIS, 0);
+                analysis.num_locals = 1;
+            }
+            ThisMode::NonStrict => {
+                // const this =
+                //   thisArgument !== null && thisArgument !== undefined ?
+                //   ToObject(thisArgument) : globalThis;
+                analysis.push_command(CompileCommand::This);
+                analysis.push_command(CompileCommand::NonNullish);
+                analysis.push_command(CompileCommand::IfThen(true));
+                analysis.push_command(CompileCommand::This);
+                analysis.push_command(CompileCommand::ToObject);
+                analysis.push_command(CompileCommand::Else(true));
+                analysis.push_command(CompileCommand::VariableReference(Symbol::GLOBAL_THIS));
+                analysis.push_command(CompileCommand::Dereference);
+                analysis.push_command(CompileCommand::Ternary);
+                analysis.push_command(CompileCommand::VariableReference(Symbol::THIS));
+                analysis.push_command(CompileCommand::ImmutableVariable);
+                analysis
+                    .references
+                    .push(Reference::new(Symbol::GLOBAL_THIS, scope_ref));
+                self.global_analysis
+                    .scope_tree_builder
+                    .add_immutable(Symbol::THIS, 0);
+                analysis.num_locals = 1;
+            }
+            ThisMode::Lexical => {
+                // Nothing to do here.  A hidden `this` in an outer scope will be captured
+                // if there are references to `this` in the function.
+            }
+        }
+
         if matches!(kind, LambdaKind::Ramp) {
             analysis.set_ramp();
         }
@@ -831,11 +893,19 @@ where
     }
 
     fn handle_function_context(&mut self, name: Symbol) {
-        self.start_function_scope(name, LambdaKind::Normal);
+        self.start_function_scope(name, LambdaKind::Normal, ThisMode::NonStrict);
     }
 
     fn handle_async_function_context(&mut self, name: Symbol) {
-        self.start_function_scope(name, LambdaKind::Ramp);
+        self.start_function_scope(name, LambdaKind::Ramp, ThisMode::NonStrict);
+    }
+
+    fn handle_arrow_function_context(&mut self) {
+        self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Lexical);
+    }
+
+    fn handle_async_arrow_function_context(&mut self) {
+        self.start_function_scope(Symbol::NONE, LambdaKind::Ramp, ThisMode::Lexical);
     }
 
     fn handle_function_signature(&mut self) {
@@ -853,7 +923,9 @@ where
     // TODO(perf): We never optimize an async function which has no await expression in the body.
     // Such an async function don't need to be rewritten into a state machine.
     fn start_coroutine_body(&mut self) {
-        self.start_function_scope(Symbol::HIDDEN_COROUTINE, LambdaKind::Coroutine);
+        debug_assert!(self.analysis().is_ramp());
+        let this_mode = self.analysis().this_mode;
+        self.start_function_scope(Symbol::HIDDEN_COROUTINE, LambdaKind::Coroutine, this_mode);
         self.handle_binding_identifier(Symbol::HIDDEN_PROMISE);
         self.handle_formal_parameter();
         self.handle_binding_identifier(Symbol::HIDDEN_RESULT);
@@ -887,9 +959,9 @@ where
         push_commands!(self; CompileCommand::Dereference);
     }
 
-    fn resolve_references(&mut self, analitics: &mut FunctionAnalysis) -> Vec<Reference> {
+    fn resolve_references(&mut self, analysis: &mut FunctionAnalysis) -> Vec<Reference> {
         let mut unresolved_reference = vec![];
-        for reference in analitics.references.iter() {
+        for reference in analysis.references.iter() {
             let variable_ref = self
                 .global_analysis
                 .scope_tree_builder
@@ -940,10 +1012,10 @@ where
 
         // The module is always treated as an async function body.
         if self.module {
-            self.start_function_scope(Symbol::NONE, LambdaKind::Ramp);
+            self.start_function_scope(Symbol::NONE, LambdaKind::Ramp, ThisMode::Global);
             self.start_coroutine_body();
         } else {
-            self.start_function_scope(Symbol::NONE, LambdaKind::Normal);
+            self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
         }
     }
 
@@ -965,6 +1037,7 @@ where
         analysis.set_command(0, CompileCommand::AllocateLocals(analysis.num_locals));
         analysis.set_command(1, CompileCommand::Nop);
 
+        let mut globals_in_global_scope = FxHashSet::default();
         let mut global_symbols = FxHashSet::default();
 
         // References to global properties.
@@ -979,16 +1052,17 @@ where
                     );
                 }
                 None => {
-                    if !global_symbols.contains(&reference.symbol) {
+                    if !globals_in_global_scope.contains(&reference.symbol) {
                         self.global_analysis.scope_tree_builder.add_global(
                             global_scope_ref,
                             reference.symbol,
                             Default::default(),
                         );
-                        global_symbols.insert(reference.symbol);
+                        globals_in_global_scope.insert(reference.symbol);
                     }
                 }
             }
+            global_symbols.insert(reference.symbol);
         }
 
         // In the specification, global properties defined by "VariableStatement"s are created in
@@ -1004,13 +1078,13 @@ where
                 .support
                 .define_global_property(symbol, Property::data_wec(Value::Undefined));
             debug_assert!(matches!(result, Ok(true)));
-            if !global_symbols.contains(&symbol) {
+            if !globals_in_global_scope.contains(&symbol) {
                 self.global_analysis.scope_tree_builder.add_global(
                     global_scope_ref,
                     symbol,
                     *init_batch,
                 );
-                global_symbols.insert(symbol);
+                globals_in_global_scope.insert(symbol);
             } else {
                 // TODO(perf): rethink the algorithm.  somewhat inefficient...
                 self.global_analysis.scope_tree_builder.set_init_batch(
@@ -1019,6 +1093,7 @@ where
                     *init_batch,
                 );
             }
+            global_symbols.insert(symbol);
         }
 
         self.apply_analysis(analysis, global_scope_ref);
@@ -1119,7 +1194,20 @@ struct FunctionAnalysis {
     /// The number of switch statements.
     num_switch_statements: u16,
 
+    /// `[[ThisMode]]`.
+    this_mode: ThisMode,
+
     flags: FunctionAnalysisFlags,
+}
+
+#[derive(Clone, Copy, Default)]
+enum ThisMode {
+    #[default]
+    Global,
+    #[allow(unused)] // TODO(feat): strict mode
+    Strict,
+    NonStrict,
+    Lexical,
 }
 
 bitflags! {
@@ -1134,10 +1222,11 @@ bitflags! {
 }
 
 impl FunctionAnalysis {
-    fn new(name: Symbol, id: LambdaId) -> Self {
+    fn new(name: Symbol, id: LambdaId, this_mode: ThisMode) -> Self {
         Self {
             name,
             id,
+            this_mode,
             ..Default::default()
         }
     }
@@ -1301,7 +1390,9 @@ impl FunctionAnalysis {
     }
 
     fn process_this(&mut self) {
-        self.commands.push(CompileCommand::This);
+        // A reference to `this` is implemented as a reference to a hidden immutable variable in
+        // the function scope.  See the implementation of [`accept()`] for details.
+        self.process_identifier_reference(Symbol::THIS)
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {
@@ -1819,6 +1910,7 @@ pub enum CompileCommand {
     PopScope(ScopeRef),
 
     // object
+    ToObject,
     CreateDataProperty,
     CopyDataProperties,
     PushArrayElement,
@@ -2119,10 +2211,13 @@ mod tests {
                 assert_eq!(
                     program.functions[0].commands,
                     [
-                        CompileCommand::AllocateLocals(4),
+                        CompileCommand::AllocateLocals(5),
                         CompileCommand::Nop,
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVars(scope_ref!(1)),
+                        CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
+                        CompileCommand::VariableReference(Symbol::THIS),
+                        CompileCommand::ImmutableVariable,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2150,10 +2245,13 @@ mod tests {
                 assert_eq!(
                     program.functions[0].commands,
                     [
-                        CompileCommand::AllocateLocals(4),
+                        CompileCommand::AllocateLocals(5),
                         CompileCommand::Nop,
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVars(scope_ref!(1)),
+                        CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
+                        CompileCommand::VariableReference(Symbol::THIS),
+                        CompileCommand::ImmutableVariable,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2183,10 +2281,13 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateLocals(0),
+                    CompileCommand::AllocateLocals(1),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVars(scope_ref!(1)),
+                    CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
+                    CompileCommand::VariableReference(Symbol::THIS),
+                    CompileCommand::ImmutableVariable,
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
                     CompileCommand::Swap,
@@ -2204,10 +2305,13 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateLocals(1),
+                    CompileCommand::AllocateLocals(2),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVars(scope_ref!(1)),
+                    CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
+                    CompileCommand::VariableReference(Symbol::THIS),
+                    CompileCommand::ImmutableVariable,
                     CompileCommand::Number(1.0),
                     CompileCommand::VariableReference(symbol!(stub, "a")),
                     CompileCommand::MutableVariable,
@@ -2230,10 +2334,13 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::Environment(0),
+                    CompileCommand::Environment(1),
                     CompileCommand::JumpTable(3),
                     CompileCommand::PushScope(scope_ref!(2)),
                     CompileCommand::DeclareVars(scope_ref!(2)),
+                    CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
+                    CompileCommand::VariableReference(Symbol::THIS),
+                    CompileCommand::ImmutableVariable,
                     CompileCommand::Number(0.0),
                     CompileCommand::Await(1),
                     CompileCommand::Discard,
@@ -2243,13 +2350,16 @@ mod tests {
             assert_eq!(
                 program.functions[1].commands,
                 [
-                    CompileCommand::AllocateLocals(0),
+                    CompileCommand::AllocateLocals(1),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVars(scope_ref!(1)),
+                    CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
+                    CompileCommand::VariableReference(Symbol::THIS),
+                    CompileCommand::ImmutableVariable,
                     CompileCommand::Lambda(program.functions[0].id),
                     CompileCommand::Closure(false, scope_ref!(2)),
-                    CompileCommand::Coroutine(program.functions[0].id, 0),
+                    CompileCommand::Coroutine(program.functions[0].id, 1),
                     CompileCommand::Promise,
                     CompileCommand::Duplicate(0),
                     CompileCommand::Resume,

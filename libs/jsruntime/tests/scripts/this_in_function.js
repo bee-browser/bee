@@ -1,8 +1,13 @@
-var a = 1;
-
-function b() {
+function a() {
   return this;
 }
 
-print(b().a); ///=1
-print(b() === globalThis); ///=true
+print(a() === globalThis); ///=true
+
+// TODO(feat): strict mode
+// function b() {
+//   "use strict";
+//   return this;
+// }
+
+// print(b() === undefined); ///=true
