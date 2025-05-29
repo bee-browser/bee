@@ -1274,7 +1274,7 @@
 - rule: NewExpression_Await -> MemberExpression_Await
   action: nop
 - rule: NewExpression_Await -> NEW NewExpression_Await
-  action: undefined
+  action: process_new_expression
 - rule: CallExpression_Await -> CoverCallExpressionAndAsyncArrowHead_Await
   action: process_call_expression
 - rule: CallExpression_Await -> SuperCall_Await
@@ -1644,7 +1644,7 @@
 - rule: MemberExpression_Await -> MetaProperty
   action: undefined
 - rule: MemberExpression_Await -> NEW MemberExpression_Await Arguments_Await
-  action: undefined
+  action: process_member_expression_new
 - rule: MemberExpression_Await -> MemberExpression_Await DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: SuperCall_Await -> SUPER Arguments_Await
@@ -1956,7 +1956,7 @@
 - rule: NewExpression -> MemberExpression
   action: nop
 - rule: NewExpression -> NEW NewExpression
-  action: undefined
+  action: process_new_expression
 - rule: CallExpression -> CoverCallExpressionAndAsyncArrowHead
   action: process_call_expression
 - rule: CallExpression -> SuperCall
@@ -2186,7 +2186,7 @@
 - rule: NewExpression_Yield -> MemberExpression_Yield
   action: nop
 - rule: NewExpression_Yield -> NEW NewExpression_Yield
-  action: undefined
+  action: process_new_expression
 - rule: CallExpression_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
   action: process_call_expression
 - rule: CallExpression_Yield -> SuperCall_Yield
@@ -2236,7 +2236,7 @@
 - rule: NewExpression_Yield_Await -> MemberExpression_Yield_Await
   action: nop
 - rule: NewExpression_Yield_Await -> NEW NewExpression_Yield_Await
-  action: undefined
+  action: process_new_expression
 - rule: >-
     CallExpression_Yield_Await ->
     CoverCallExpressionAndAsyncArrowHead_Yield_Await
@@ -2328,7 +2328,7 @@
 - rule: MemberExpression -> MetaProperty
   action: undefined
 - rule: MemberExpression -> NEW MemberExpression Arguments
-  action: undefined
+  action: process_member_expression_new
 - rule: MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: SuperCall -> SUPER Arguments
@@ -2666,7 +2666,7 @@
 - rule: MemberExpression_Yield -> MetaProperty
   action: undefined
 - rule: MemberExpression_Yield -> NEW MemberExpression_Yield Arguments_Yield
-  action: undefined
+  action: process_member_expression_new
 - rule: MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: SuperCall_Yield -> SUPER Arguments_Yield
@@ -2786,7 +2786,7 @@
 - rule: >-
     MemberExpression_Yield_Await -> NEW MemberExpression_Yield_Await
     Arguments_Yield_Await
-  action: undefined
+  action: process_member_expression_new
 - rule: >-
     MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT
     PRIVATE_IDENTIFIER
