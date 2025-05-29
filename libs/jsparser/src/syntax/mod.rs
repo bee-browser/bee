@@ -181,6 +181,7 @@ pub enum Node<'s> {
     ArgumentListItem(bool),
     Arguments,
     CallExpression,
+    NewExpression(bool),
     NonNullish,
     OptionalChain(PropertyAccessKind),
     UpdateExpression(UpdateOperator),
@@ -1476,6 +1477,24 @@ where
     fn process_argument_list_item(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ArgumentListItem(false));
         self.replace(3, Detail::ArgumentList);
+        Ok(())
+    }
+
+    // 13.3.5 The new Operator
+
+    // NewExpression[Yield, Await] :
+    //   new NewExpression[?Yield, ?Await]
+    fn process_new_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::NewExpression(false));
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // MemberExpression[Yield, Await] :
+    //   new MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+    fn process_member_expression_new(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::NewExpression(true));
+        self.replace(3, Detail::Expression);
         Ok(())
     }
 

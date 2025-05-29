@@ -397,6 +397,7 @@ where
             CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(func, *scope_ref),
             CompileCommand::DeclareClosure => self.process_declare_closure(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
+            CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::ToObject => self.process_to_object(),
@@ -821,6 +822,35 @@ where
 
         // TODO(pref): compile-time evaluation
         self.operand_stack.push(Operand::Any(retv, None));
+    }
+
+    fn process_new(&mut self, argc: u16) {
+        // TODO: prototype chain
+        let argv = self.emit_create_argv(argc);
+        let (operand, ..) = self.dereference();
+        let closure = match operand {
+            Operand::Closure(closure) => closure, // IIFE
+            Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
+            _ => {
+                self.process_number(1001.); // TODO: TypeError
+                self.process_throw();
+                return;
+            }
+        };
+
+        let this = {
+            let any = self.emit_create_any();
+            let object = self.editor.put_runtime_create_object(self.support);
+            self.editor.put_store_object_to_any(object, any);
+            any
+        };
+        let retv = self.emit_create_any();
+        let status = self.editor.put_call(closure, this, argc, argv, retv);
+
+        self.emit_check_status_for_exception(status, retv);
+
+        // TODO(pref): compile-time evaluation
+        self.operand_stack.push(Operand::Any(this, None));
     }
 
     fn process_push_scope(&mut self, scope_ref: ScopeRef) {
