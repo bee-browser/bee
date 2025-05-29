@@ -288,6 +288,7 @@ where
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
             Node::Arguments => self.handle_arguments(),
             Node::CallExpression => self.handle_call_expression(),
+            Node::NewExpression(has_args) => self.handle_new_expression(has_args),
             Node::NonNullish => self.handle_non_nullish(),
             Node::OptionalChain(kind) => self.handle_optional_chain(kind),
             Node::UpdateExpression(op) => self.handle_operator(op.into()),
@@ -454,6 +455,10 @@ where
 
     fn handle_call_expression(&mut self) {
         analysis_mut!(self).process_call_expression();
+    }
+
+    fn handle_new_expression(&mut self, has_args: bool) {
+        analysis_mut!(self).process_new_expression(has_args);
     }
 
     fn handle_non_nullish(&mut self) {
@@ -1309,6 +1314,15 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Call(nargs));
     }
 
+    fn process_new_expression(&mut self, has_args: bool) {
+        let nargs = if has_args {
+            self.nargs_stack.pop().unwrap()
+        } else {
+            0
+        };
+        self.commands.push(CompileCommand::New(nargs));
+    }
+
     fn process_lexical_binding(&mut self, init: bool) {
         debug_assert!(!self.symbol_stack.is_empty());
 
@@ -1906,6 +1920,7 @@ pub enum CompileCommand {
     DeclareVars(ScopeRef),
     DeclareClosure,
     Call(u16),
+    New(u16),
     PushScope(ScopeRef),
     PopScope(ScopeRef),
 
