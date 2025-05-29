@@ -65,12 +65,12 @@ function makeRustName(name) {
     return `HIDDEN_${changeCase.constantCase(name)}`;
   }
   switch (name) {
-  case 'NaN':
-    return 'NAN';
-  case '__proto__':
-    return 'LEGACY_PROTO';
-  default:
-    return changeCase.constantCase(name);
+    case 'NaN':
+      return 'NAN';
+    case '__proto__':
+      return 'LEGACY_PROTO';
+    default:
+      return changeCase.constantCase(name);
   }
 }
 

@@ -474,11 +474,13 @@ impl Coroutine {
         logger::debug!(event = "resume", ?coroutine, ?promise, ?result, ?error);
         unsafe {
             let lambda = (*(*coroutine).closure).lambda;
+            let mut this = Value::Undefined;
             let mut args = [promise.into(), result.clone(), error.clone()];
             let mut retv = Value::None;
             let status = lambda(
                 runtime,
                 coroutine as *mut c_void,
+                &mut this as *mut Value,
                 args.len() as u16,
                 args.as_mut_ptr(),
                 &mut retv as *mut Value,
@@ -549,6 +551,7 @@ where
 pub type Lambda = unsafe extern "C" fn(
     runtime: *mut c_void,
     context: *mut c_void,
+    this: *mut Value,
     argc: u16,
     argv: *mut Value,
     retv: *mut Value,
@@ -570,6 +573,7 @@ where
 unsafe extern "C" fn host_fn_wrapper<F, R, X>(
     runtime: *mut c_void,
     _context: *mut c_void,
+    _this: *mut Value,
     argc: u16,
     argv: *mut Value,
     retv: *mut Value,
