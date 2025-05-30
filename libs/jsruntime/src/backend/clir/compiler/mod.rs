@@ -240,6 +240,8 @@ where
         params.push(ir::AbiParam::new(addr_type));
         // context: *mut c_void
         params.push(ir::AbiParam::new(addr_type));
+        // this: *mut Value
+        params.push(ir::AbiParam::new(addr_type));
         // args: u16
         params.push(ir::AbiParam::new(ir::types::I16));
         // argv: *mut Value
@@ -385,6 +387,7 @@ where
             }
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Exception => self.process_exception(),
+            CompileCommand::This => self.process_this(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
             CompileCommand::ToPropertyKey => self.process_to_property_key(),
@@ -394,8 +397,10 @@ where
             CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(func, *scope_ref),
             CompileCommand::DeclareClosure => self.process_declare_closure(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
+            CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
             CompileCommand::PushArrayElement => self.process_push_array_element(),
@@ -619,6 +624,12 @@ where
         self.operand_stack.push(Operand::Any(exception, None));
     }
 
+    fn process_this(&mut self) {
+        // TODO(perf): shortcut the property access.
+        let this = self.editor.this();
+        self.operand_stack.push(Operand::Any(this, None));
+    }
+
     fn process_variable_reference(&mut self, symbol: Symbol) {
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         // TODO(perf): improve if `find_variable()` is the primary case of performance bottleneck.
@@ -635,7 +646,7 @@ where
     }
 
     fn process_to_property_key(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let key = match operand {
             Operand::Undefined => Symbol::UNDEFINED.into(),
             Operand::Null => Symbol::NULL.into(),
@@ -700,7 +711,7 @@ where
 
     fn process_mutable_variable(&mut self) {
         let (_symbol, locator) = self.pop_reference();
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
 
         let local = match locator {
             Locator::Local(index) => self.get_local(index),
@@ -712,7 +723,7 @@ where
 
     fn process_immutable_variable(&mut self) {
         let (_symbol, locator) = self.pop_reference();
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
 
         let local = match locator {
             Locator::Local(index) => self.get_local(index),
@@ -766,7 +777,7 @@ where
 
     fn process_declare_closure(&mut self) {
         let (symbol, locator) = self.pop_reference();
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         // TODO: operand must hold a closure.
 
         match locator {
@@ -786,7 +797,7 @@ where
 
     fn process_call(&mut self, argc: u16) {
         let argv = self.emit_create_argv(argc);
-        let (operand, _) = self.dereference();
+        let (operand, this, _) = self.dereference();
         let closure = match operand {
             Operand::Closure(closure) => closure, // IIFE
             Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
@@ -797,13 +808,49 @@ where
             }
         };
 
+        let this = if let Some(this) = this {
+            let any = self.emit_create_any();
+            self.editor.put_store_object_to_any(this, any);
+            any
+        } else {
+            self.editor.this()
+        };
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, argc, argv, retv);
+        let status = self.editor.put_call(closure, this, argc, argv, retv);
 
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation
         self.operand_stack.push(Operand::Any(retv, None));
+    }
+
+    fn process_new(&mut self, argc: u16) {
+        // TODO: prototype chain
+        let argv = self.emit_create_argv(argc);
+        let (operand, ..) = self.dereference();
+        let closure = match operand {
+            Operand::Closure(closure) => closure, // IIFE
+            Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
+            _ => {
+                self.process_number(1001.); // TODO: TypeError
+                self.process_throw();
+                return;
+            }
+        };
+
+        let this = {
+            let any = self.emit_create_any();
+            let object = self.editor.put_runtime_create_object(self.support);
+            self.editor.put_store_object_to_any(object, any);
+            any
+        };
+        let retv = self.emit_create_any();
+        let status = self.editor.put_call(closure, this, argc, argv, retv);
+
+        self.emit_check_status_for_exception(status, retv);
+
+        // TODO(pref): compile-time evaluation
+        self.operand_stack.push(Operand::Any(this, None));
     }
 
     fn process_push_scope(&mut self, scope_ref: ScopeRef) {
@@ -902,9 +949,13 @@ where
         self.editor.switch_to_block(exit_block);
     }
 
+    fn process_to_object(&mut self) {
+        self.perform_to_object();
+    }
+
     // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
     fn process_create_data_property(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let key = self.pop_property_reference();
         let object = self.peek_object();
         let value = self.editor.put_alloc_any();
@@ -986,7 +1037,7 @@ where
     // PropertyDefinition : ... AssignmentExpression
     fn process_copy_data_properties(&mut self) {
         // 1. Let exprValue be ? Evaluation of AssignmentExpression.
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
 
         // 2. Let fromValue be ? GetValue(exprValue).
         let from_value = self.editor.put_alloc_any();
@@ -1007,7 +1058,7 @@ where
 
     fn process_push_array_element(&mut self) {
         // 1. Let exprValue be ? Evaluation of AssignmentExpression.
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
 
         // 2. Let fromValue be ? GetValue(exprValue).
         let from_value = self.editor.put_alloc_any();
@@ -1057,7 +1108,7 @@ where
     fn process_typeof(&mut self) {
         use jsparser::symbol::builtin::names;
 
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         match operand {
             Operand::Undefined => self.process_string(names::UNDEFINED),
             Operand::Null => self.process_string(names::OBJECT),
@@ -1088,7 +1139,7 @@ where
 
     // 13.5.4.1 Runtime Semantics: Evaluation
     fn process_unary_plus(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let value = self.perform_to_numeric(&operand);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Number(value, None));
@@ -1096,7 +1147,7 @@ where
 
     // 13.5.5.1 Runtime Semantics: Evaluation
     fn process_unary_minus(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let value = self.perform_to_numeric(&operand);
         // TODO: BigInt
         // 6.1.6.1.1 Number::unaryMinus ( x )
@@ -1107,7 +1158,7 @@ where
 
     // 13.5.6.1 Runtime Semantics: Evaluation
     fn process_bitwise_not(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let number = self.perform_to_numeric(&operand);
         // TODO: BigInt
         let number = self.editor.put_bitwise_not(self.support, number);
@@ -1117,7 +1168,7 @@ where
 
     // 13.5.7.1 Runtime Semantics: Evaluation
     fn process_logical_not(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let boolean = self.perform_to_boolean(&operand);
         let boolean = self.editor.put_logical_not(boolean);
         // TODO(perf): compile-time evaluation
@@ -1126,10 +1177,10 @@ where
 
     // 13.6.1 Runtime Semantics: Evaluation
     fn process_exponentiation(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.editor.put_exp(self.support, lhs, rhs);
@@ -1139,10 +1190,10 @@ where
 
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_multiplication(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.editor.put_mul(lhs, rhs);
@@ -1152,10 +1203,10 @@ where
 
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_division(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.editor.put_div(lhs, rhs);
@@ -1165,10 +1216,10 @@ where
 
     // 13.7.1 Runtime Semantics: Evaluation
     fn process_remainder(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.editor.put_rem(self.support, lhs, rhs);
@@ -1178,10 +1229,10 @@ where
 
     // 13.8.1.1 Runtime Semantics: Evaluation
     fn process_addition(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.editor.put_add(lhs, rhs);
@@ -1192,10 +1243,10 @@ where
 
     // 13.8.2.1 Runtime Semantics: Evaluation
     fn process_subtraction(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let number = self.editor.put_sub(lhs, rhs);
@@ -1206,10 +1257,10 @@ where
     // 13.9.1.1 Runtime Semantics: Evaluation
     fn process_left_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
@@ -1222,10 +1273,10 @@ where
     // 13.9.2.1 Runtime Semantics: Evaluation
     fn process_signed_right_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
@@ -1238,10 +1289,10 @@ where
     // 13.9.3.1 Runtime Semantics: Evaluation
     fn process_unsigned_right_shift(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
@@ -1253,10 +1304,10 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_less_than(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let boolean = self.editor.put_less_than(lhs, rhs);
@@ -1266,10 +1317,10 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_greater_than(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let boolean = self.editor.put_greater_than(lhs, rhs);
@@ -1279,10 +1330,10 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_less_than_or_equal(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let boolean = self.editor.put_less_than_or_equal(lhs, rhs);
@@ -1292,10 +1343,10 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_greater_than_or_equal(&mut self) {
-        let (lhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
         let lhs = self.perform_to_numeric(&lhs);
 
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
         let rhs = self.perform_to_numeric(&rhs);
 
         let boolean = self.editor.put_greater_than_or_equal(lhs, rhs);
@@ -1316,8 +1367,8 @@ where
     // 13.11.1 Runtime Semantics: Evaluation
     fn process_equality(&mut self) {
         // TODO: comparing the references improves the performance.
-        let (lhs, _) = self.dereference();
-        let (rhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
+        let (rhs, ..) = self.dereference();
 
         let boolean = self.perform_is_loosely_equal(&lhs, &rhs);
         // TODO(perf): compile-time evaluation
@@ -1327,8 +1378,8 @@ where
     // 13.11.1 Runtime Semantics: Evaluation
     fn process_inequality(&mut self) {
         // TODO: comparing references improves the performance.
-        let (lhs, _) = self.dereference();
-        let (rhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
+        let (rhs, ..) = self.dereference();
 
         let eq = self.perform_is_loosely_equal(&lhs, &rhs);
         let boolean = self.editor.put_logical_not(eq);
@@ -1339,8 +1390,8 @@ where
     // 13.11.1 Runtime Semantics: Evaluation
     fn process_strict_equality(&mut self) {
         // TODO: comparing references improves the performance.
-        let (lhs, _) = self.dereference();
-        let (rhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
+        let (rhs, ..) = self.dereference();
 
         let boolean = self.perform_is_strictly_equal(&lhs, &rhs);
         // TODO(perf): compile-time evaluation
@@ -1350,8 +1401,8 @@ where
     // 13.11.1 Runtime Semantics: Evaluation
     fn process_strict_inequality(&mut self) {
         // TODO: comparing references improves the performance.
-        let (lhs, _) = self.dereference();
-        let (rhs, _) = self.dereference();
+        let (lhs, ..) = self.dereference();
+        let (rhs, ..) = self.dereference();
 
         let eq = self.perform_is_strictly_equal(&lhs, &rhs);
         let boolean = self.editor.put_logical_not(eq);
@@ -1362,8 +1413,8 @@ where
     // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_and(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        let (lval, _) = self.dereference();
-        let (rval, _) = self.dereference();
+        let (lval, ..) = self.dereference();
+        let (rval, ..) = self.dereference();
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         let lnum = self.perform_to_numeric(&lval);
@@ -1378,8 +1429,8 @@ where
     // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_xor(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        let (lval, _) = self.dereference();
-        let (rval, _) = self.dereference();
+        let (lval, ..) = self.dereference();
+        let (rval, ..) = self.dereference();
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         let lnum = self.perform_to_numeric(&lval);
@@ -1394,8 +1445,8 @@ where
     // 13.12.1 Runtime Semantics: Evaluation
     fn process_bitwise_or(&mut self) {
         // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-        let (lval, _) = self.dereference();
-        let (rval, _) = self.dereference();
+        let (lval, ..) = self.dereference();
+        let (rval, ..) = self.dereference();
 
         // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
         let lnum = self.perform_to_numeric(&lval);
@@ -1411,7 +1462,7 @@ where
         let flow = self.control_flow_stack.pop_if_then_else_flow();
         let result = flow.result.unwrap();
 
-        let (else_operand, _) = self.dereference();
+        let (else_operand, ..) = self.dereference();
         self.emit_store_operand_to_any(&else_operand, result);
         self.editor.put_jump(flow.merge_block, &[]);
 
@@ -1421,7 +1472,7 @@ where
 
     // 13.15.2 Runtime Semantics: Evaluation
     fn process_assignment(&mut self) {
-        let (rhs, _) = self.dereference();
+        let (rhs, ..) = self.dereference();
 
         match self.operand_stack.pop().unwrap() {
             Operand::VariableReference(symbol, Locator::Global) => {
@@ -1484,7 +1535,7 @@ where
     // TODO(perf): directly convert the value referred by the operand into an object.
     fn perform_to_object(&mut self) {
         logger::debug!(event = "perform_to_object");
-        let (operand, reference) = self.dereference();
+        let (operand, _, reference) = self.dereference();
         match operand {
             // Immediate values.
             Operand::Undefined | Operand::Null => self
@@ -1518,7 +1569,7 @@ where
     }
 
     fn process_falsy_short_circuit(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let boolean = self.perform_to_boolean(&operand);
         let boolean = self.editor.put_logical_not(boolean);
         // TODO(perf): compile-time evaluation
@@ -1529,7 +1580,7 @@ where
     }
 
     fn process_truthy_short_circuit(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let boolean = self.perform_to_boolean(&operand);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
@@ -1539,7 +1590,7 @@ where
     }
 
     fn process_nullish_short_circuit(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let boolean = self.perform_is_non_nullish(&operand);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
@@ -1549,14 +1600,14 @@ where
     }
 
     fn process_truthy(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let boolean = self.perform_to_boolean(&operand);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
     }
 
     fn process_non_nullish(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let boolean = self.perform_is_non_nullish(&operand);
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Boolean(boolean, None));
@@ -1582,7 +1633,7 @@ where
     fn process_else(&mut self, expr: bool) {
         if let Some(result) = self.control_flow_stack.expr_result() {
             debug_assert!(expr);
-            let (operand, _) = self.dereference();
+            let (operand, ..) = self.dereference();
             self.emit_store_operand_to_any(&operand, result);
         } else {
             debug_assert!(!expr);
@@ -1772,7 +1823,7 @@ where
 
     fn process_loop_test(&mut self) {
         let loop_test = self.control_flow_stack.pop_loop_test_flow();
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         let cond = self.perform_to_boolean(&operand);
         self.editor
             .put_branch(cond, loop_test.then_block, &[], loop_test.else_block, &[]);
@@ -2011,7 +2062,7 @@ where
     fn process_return(&mut self, n: u32) {
         if n > 0 {
             debug_assert_eq!(n, 1);
-            let (operand, _) = self.dereference();
+            let (operand, ..) = self.dereference();
             self.store_operand_to_retv(&operand);
         }
 
@@ -2232,7 +2283,7 @@ where
         let promise = self.editor.put_get_argument(0); // ##promise
         let promise = self.editor.put_load_promise(promise);
 
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         match operand {
             Operand::Undefined => {
                 let result = self.editor.put_alloc_any();
@@ -2336,7 +2387,7 @@ where
     }
 
     fn process_throw(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         self.store_operand_to_retv(&operand);
 
         self.editor.put_store_status(Status::EXCEPTION);
@@ -2358,7 +2409,7 @@ where
     }
 
     fn process_dereference(&mut self) {
-        let (operand, _) = self.dereference();
+        let (operand, ..) = self.dereference();
         self.operand_stack.push(operand);
     }
 
@@ -2457,7 +2508,7 @@ where
     // 13.4.4.1 Runtime Semantics: Evaluation
     // 13.4.5.1 Runtime Semantics: Evaluation
     fn perform_incr_decr(&mut self, pos: char, op: char) {
-        let (operand, reference) = self.dereference();
+        let (operand, _, reference) = self.dereference();
         let old_value = self.perform_to_numeric(&operand);
         // TODO: BigInt
         let one = self.editor.put_number(1.0);
@@ -2729,7 +2780,8 @@ where
         }
     }
 
-    fn dereference(&mut self) -> (Operand, Option<(Symbol, Locator)>) {
+    // TODO(refactor): need rethink, especially the return value.
+    fn dereference(&mut self) -> (Operand, Option<ObjectIr>, Option<(Symbol, Locator)>) {
         logger::debug!(event = "dereference", operand_stack.top = ?self.operand_stack.last());
 
         let operand = self.operand_stack.pop().unwrap();
@@ -2737,12 +2789,13 @@ where
             // Shortcut for frequently used reference to `undefined`.
             Operand::VariableReference(Symbol::UNDEFINED, Locator::Global) => (
                 Operand::Undefined,
+                None,
                 Some((Symbol::UNDEFINED, Locator::Global)),
             ),
             Operand::VariableReference(symbol, locator) => {
                 let value = self.emit_get_variable(symbol, locator);
                 // TODO(pref): compile-time evaluation
-                (Operand::Any(value, None), Some((symbol, locator)))
+                (Operand::Any(value, None), None, Some((symbol, locator)))
             }
             Operand::PropertyReference(key) => {
                 self.perform_to_object();
@@ -2786,9 +2839,9 @@ where
                     );
                 }}
                 // TODO(pref): compile-time evaluation
-                (Operand::Any(value, None), None)
+                (Operand::Any(value, None), Some(object), None)
             }
-            _ => (operand, None),
+            _ => (operand, None, None),
         }
     }
 
@@ -2846,7 +2899,7 @@ where
         let argv = self.editor.put_alloc_argv(argc);
         // TODO: evaluation order
         for i in (0..argc).rev() {
-            let (operand, _) = self.dereference();
+            let (operand, ..) = self.dereference();
             // TODO(perf): inefficient
             let arg = self.editor.put_get_arg(argv, i);
             self.emit_store_operand_to_any(&operand, arg);

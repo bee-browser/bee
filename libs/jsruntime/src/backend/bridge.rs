@@ -20,12 +20,30 @@ use crate::types::Value;
 #[derive(Clone)]
 #[repr(C)]
 pub struct RuntimeFunctions {
-    pub lazy_compile_normal:
-        unsafe extern "C" fn(*mut c_void, *mut c_void, u16, *mut Value, *mut Value) -> Status,
-    pub lazy_compile_ramp:
-        unsafe extern "C" fn(*mut c_void, *mut c_void, u16, *mut Value, *mut Value) -> Status,
-    pub lazy_compile_coroutine:
-        unsafe extern "C" fn(*mut c_void, *mut c_void, u16, *mut Value, *mut Value) -> Status,
+    pub lazy_compile_normal: unsafe extern "C" fn(
+        *mut c_void,
+        *mut c_void,
+        *mut Value,
+        u16,
+        *mut Value,
+        *mut Value,
+    ) -> Status,
+    pub lazy_compile_ramp: unsafe extern "C" fn(
+        *mut c_void,
+        *mut c_void,
+        *mut Value,
+        u16,
+        *mut Value,
+        *mut Value,
+    ) -> Status,
+    pub lazy_compile_coroutine: unsafe extern "C" fn(
+        *mut c_void,
+        *mut c_void,
+        *mut Value,
+        u16,
+        *mut Value,
+        *mut Value,
+    ) -> Status,
     pub to_boolean: unsafe extern "C" fn(*mut c_void, *const Value) -> bool,
     pub to_numeric: unsafe extern "C" fn(*mut c_void, *const Value) -> f64,
     pub to_object: unsafe extern "C" fn(*mut c_void, *const Value) -> *mut c_void,
@@ -177,6 +195,7 @@ macro_rules! into_capture {
 unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     runtime: *mut c_void,
     context: *mut c_void,
+    this: *mut Value,
     argc: u16,
     argv: *mut Value,
     retv: *mut Value,
@@ -207,12 +226,13 @@ unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     );
     closure.lambda = lambda;
 
-    unsafe { lambda(runtime.as_void_ptr(), context, argc, argv, retv) }
+    unsafe { lambda(runtime.as_void_ptr(), context, this, argc, argv, retv) }
 }
 
 unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     runtime: *mut c_void,
     context: *mut c_void,
+    this: *mut Value,
     argc: u16,
     argv: *mut Value,
     retv: *mut Value,
@@ -253,12 +273,13 @@ unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     );
     closure.lambda = lambda;
 
-    unsafe { lambda(runtime.as_void_ptr(), context, argc, argv, retv) }
+    unsafe { lambda(runtime.as_void_ptr(), context, this, argc, argv, retv) }
 }
 
 unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
     runtime: *mut c_void,
     context: *mut c_void,
+    this: *mut Value,
     argc: u16,
     argv: *mut Value,
     retv: *mut Value,
@@ -284,7 +305,7 @@ unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
     );
     closure.lambda = lambda;
 
-    unsafe { lambda(runtime.as_void_ptr(), context, argc, argv, retv) }
+    unsafe { lambda(runtime.as_void_ptr(), context, this, argc, argv, retv) }
 }
 
 // 7.1.2 ToBoolean ( argument )

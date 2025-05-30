@@ -42,6 +42,8 @@ pub fn make_lambda_signature(module: &mut impl Module) -> ir::Signature {
     sig.params.push(ir::AbiParam::new(addr_type));
     // context: *mut c_void
     sig.params.push(ir::AbiParam::new(addr_type));
+    // this: *mut Value
+    sig.params.push(ir::AbiParam::new(addr_type));
     // args: u16
     sig.params.push(ir::AbiParam::new(ir::types::I16));
     // argv: *mut Value
