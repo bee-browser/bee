@@ -77,7 +77,9 @@ impl<X> Runtime<X> {
 
     /// Prints the scope tree of a program.
     pub fn print_scope_tree(&self, program_id: ProgramId) {
-        self.programs[program_id.index()].scope_tree.print("");
+        self.programs[program_id.index()]
+            .scope_tree
+            .print(&self.symbol_registry, "");
     }
 
     /// Prints global symbols in a program.
@@ -90,7 +92,7 @@ impl<X> Runtime<X> {
             // TODO: sort
             let utf16_str = self.symbol_registry.resolve(symbol).unwrap();
             let utf8_str = String::from_utf16_lossy(utf16_str);
-            println!("{symbol} => {utf8_str}");
+            println!("{utf8_str}{symbol}");
         }
     }
 }
@@ -135,7 +137,6 @@ impl Program {
 }
 
 /// A type representing a JavaScript function after the semantic analysis.
-#[derive(Default)]
 pub struct Function {
     // TODO: remove?
     pub name: Symbol,
@@ -158,6 +159,33 @@ pub struct Function {
     /// The number of local variables used in the function except for temporal variables created by
     /// a compiler.
     pub num_locals: u16,
+
+    /// Controls how the `this` binding is resolved.
+    pub this_binding: ThisBinding,
+}
+
+#[derive(Debug)]
+pub enum ThisBinding {
+    /// No `this` binding is used in the function body.
+    None,
+
+    /// The `this` binding in the function body is resolved to the `this` argument of the lambda
+    /// function.
+    ThisArgument,
+
+    /// The `this` binding in the function body captures the `this` binding of the enclosing outer
+    /// function scope.
+    Capture,
+
+    /// The `this` binding in the function body is resolved to the global object if the `this`
+    /// argument of the lambda function is null-ish.  Otherwise, it's resolved to the result of
+    /// `ToObject(thisArgument)`.
+    GlobalObject,
+
+    /// The `this` binding in the function body is resolved to the global object if the `this`
+    /// argument of the lambda function is null-ish.  Otherwise, it's resolved to the result of
+    /// `ToObject(thisArgument)`.
+    GlobalObjectIfNullish,
 }
 
 impl Function {
@@ -172,6 +200,7 @@ impl Function {
         println!("{indent} num_captures: {}", self.num_captures);
         println!("{indent} num_params: {}", self.num_params);
         println!("{indent} num_locals: {}", self.num_locals);
+        println!("{indent} this_binding: {:?}", self.this_binding);
     }
 }
 
@@ -266,6 +295,10 @@ where
 
     fn analysis(&self) -> &FunctionAnalysis {
         self.analysis_stack.last().unwrap()
+    }
+
+    fn analysis_mut(&mut self) -> &mut FunctionAnalysis {
+        self.analysis_stack.last_mut().unwrap()
     }
 
     /// Handles an AST node coming from the parser.
@@ -659,7 +692,9 @@ where
         // DO NOT CALL `self.global_analysis.scope_tree_builder.pop()` HERE.
 
         // Add Function-scoped variables defined by "VariableStatement"s to the function scope.
-        analysis.process_function_scoped_symbols(&mut self.global_analysis);
+        analysis.process_function_scoped_variables(&mut self.global_analysis);
+
+        // TODO: this binding resolution
 
         self.global_analysis.scope_tree_builder.pop();
 
@@ -678,10 +713,23 @@ where
             analysis.set_command(1, CompileCommand::Nop);
         }
 
+        let this_captured = if analysis
+            .flags
+            .contains(FunctionAnalysisFlags::THIS_BINDING_USED)
+        {
+            matches!(analysis.this_mode, ThisMode::Lexical)
+        } else {
+            false
+        };
+
         self.apply_analysis(analysis, func_scope_ref);
 
         let func_index = self.functions.len() - 1;
-        analysis_mut!(self).process_unresolved_references(&unresolved_references, func_index);
+        let analysis = self.analysis_mut();
+        analysis
+            .flags
+            .set(FunctionAnalysisFlags::THIS_BINDING_CAPTURED, this_captured);
+        analysis.process_unresolved_references(&unresolved_references, func_index);
     }
 
     fn handle_function_declaration(&mut self) {
@@ -828,65 +876,29 @@ where
 
         let scope_ref = self.global_analysis.scope_tree_builder.push_function();
         analysis.start_scope(scope_ref);
-        analysis.push_command(CompileCommand::DeclareVars(scope_ref));
+        analysis.push_command(CompileCommand::DeclareVariables(scope_ref));
 
-        // Define a hidden immutable variable for `this` in the function scope.  The value assigned
-        // to the variable depends on the [[ThisMode]].
-        //
-        // TODO(perf): We can define special `CompileCommand`s to generate IR instructions
-        // that are equivalent to the following `CompileCommand`s in order to reduce the compile
-        // script.  Even in this case, we still need to add symbols such as `this` to the scope.
-        debug_assert_eq!(analysis.num_locals, 0);
         match this_mode {
-            ThisMode::Global => {
-                // const this = globalThis;
-                analysis.push_command(CompileCommand::VariableReference(Symbol::GLOBAL_THIS));
-                analysis.push_command(CompileCommand::VariableReference(Symbol::THIS));
-                analysis.push_command(CompileCommand::ImmutableVariable);
-                analysis
-                    .references
-                    .push(Reference::new(Symbol::GLOBAL_THIS, scope_ref));
-                self.global_analysis
-                    .scope_tree_builder
-                    .add_immutable(Symbol::THIS, 0);
-                analysis.num_locals = 1;
-            }
             ThisMode::Strict => {
-                // const this = thisArgument;
-                analysis.push_command(CompileCommand::This);
-                analysis.push_command(CompileCommand::VariableReference(Symbol::THIS));
-                analysis.push_command(CompileCommand::ImmutableVariable);
-                self.global_analysis
-                    .scope_tree_builder
-                    .add_immutable(Symbol::THIS, 0);
-                analysis.num_locals = 1;
+                // Nothing to do here.
             }
-            ThisMode::NonStrict => {
-                // const this =
-                //   thisArgument !== null && thisArgument !== undefined ?
-                //   ToObject(thisArgument) : globalThis;
-                analysis.push_command(CompileCommand::This);
-                analysis.push_command(CompileCommand::NonNullish);
-                analysis.push_command(CompileCommand::IfThen(true));
-                analysis.push_command(CompileCommand::This);
-                analysis.push_command(CompileCommand::ToObject);
-                analysis.push_command(CompileCommand::Else(true));
-                analysis.push_command(CompileCommand::VariableReference(Symbol::GLOBAL_THIS));
-                analysis.push_command(CompileCommand::Dereference);
-                analysis.push_command(CompileCommand::Ternary);
-                analysis.push_command(CompileCommand::VariableReference(Symbol::THIS));
-                analysis.push_command(CompileCommand::ImmutableVariable);
+            ThisMode::Global => {
+                // The `this` binding will be resolved to the global object if the `this` argument
+                // of the lambda function is null-ish.
+                //
+                // TODO(perf): use a direct reference to the global object
                 analysis
                     .references
                     .push(Reference::new(Symbol::GLOBAL_THIS, scope_ref));
-                self.global_analysis
-                    .scope_tree_builder
-                    .add_immutable(Symbol::THIS, 0);
-                analysis.num_locals = 1;
             }
             ThisMode::Lexical => {
-                // Nothing to do here.  A hidden `this` in an outer scope will be captured
-                // if there are references to `this` in the function.
+                // The `this` binding may be resolved to the global object if the enclosing outer
+                // function is the entry function.
+                //
+                // TODO(perf): use a direct reference to the global object
+                analysis
+                    .references
+                    .push(Reference::new(Symbol::GLOBAL_THIS, scope_ref));
             }
         }
 
@@ -898,11 +910,13 @@ where
     }
 
     fn handle_function_context(&mut self, name: Symbol) {
-        self.start_function_scope(name, LambdaKind::Normal, ThisMode::NonStrict);
+        // TODO(feat): strict mode
+        self.start_function_scope(name, LambdaKind::Normal, ThisMode::Global);
     }
 
     fn handle_async_function_context(&mut self, name: Symbol) {
-        self.start_function_scope(name, LambdaKind::Ramp, ThisMode::NonStrict);
+        // TODO(feat): strict mode
+        self.start_function_scope(name, LambdaKind::Ramp, ThisMode::Global);
     }
 
     fn handle_arrow_function_context(&mut self) {
@@ -965,6 +979,21 @@ where
     }
 
     fn resolve_references(&mut self, analysis: &mut FunctionAnalysis) -> Vec<Reference> {
+        if analysis
+            .flags
+            .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED)
+        {
+            let func = self.functions.last_mut().unwrap();
+            if analysis
+                .flags
+                .contains(FunctionAnalysisFlags::ENTRY_FUNCTION)
+            {
+                func.this_binding = ThisBinding::GlobalObject;
+            } else {
+                func.num_captures += 1;
+            }
+        }
+
         let mut unresolved_reference = vec![];
         for reference in analysis.references.iter() {
             let variable_ref = self
@@ -994,6 +1023,19 @@ where
     }
 
     fn apply_analysis(&mut self, analysis: FunctionAnalysis, scope_ref: ScopeRef) {
+        let this_used = analysis.flags.intersects(
+            FunctionAnalysisFlags::THIS_BINDING_USED | FunctionAnalysisFlags::THIS_BINDING_CAPTURED,
+        );
+        let is_entry = analysis
+            .flags
+            .contains(FunctionAnalysisFlags::ENTRY_FUNCTION);
+        let this_binding = match (this_used, is_entry, analysis.this_mode) {
+            (false, _, _) => ThisBinding::None,
+            (_, _, ThisMode::Strict) => ThisBinding::ThisArgument,
+            (_, _, ThisMode::Lexical) => ThisBinding::Capture,
+            (_, true, ThisMode::Global) => ThisBinding::GlobalObject,
+            (_, false, ThisMode::Global) => ThisBinding::GlobalObjectIfNullish,
+        };
         self.functions.push(Function {
             name: analysis.name,
             id: analysis.id,
@@ -1002,6 +1044,7 @@ where
             num_captures: 0,
             num_params: analysis.num_params,
             num_locals: analysis.num_locals,
+            this_binding,
         });
     }
 }
@@ -1015,13 +1058,19 @@ where
     fn start(&mut self) {
         logger::debug!(event = "start");
 
-        // The module is always treated as an async function body.
+        // The global object will be specified in the `this` parameter of the lambda function
+        // compiled from the top-level statements.  See `Runtime::call_entry_lambda()`.
         if self.module {
-            self.start_function_scope(Symbol::NONE, LambdaKind::Ramp, ThisMode::Global);
+            self.start_function_scope(Symbol::NONE, LambdaKind::Ramp, ThisMode::Strict);
+            // The module is always treated as an async function body.
             self.start_coroutine_body();
         } else {
-            self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
+            self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Strict);
         }
+
+        self.analysis_mut()
+            .flags
+            .insert(FunctionAnalysisFlags::ENTRY_FUNCTION);
     }
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
@@ -1076,27 +1125,30 @@ where
         //
         // TODO(test): probably, the order of error handling may be different fro the
         // specification.
-        for (&symbol, init_batch) in analysis.function_scoped_symbols.iter() {
+        for (&symbol, entry) in analysis.function_scoped_variables.iter() {
             // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
             // `function.commands` must be rewritten to throw the "Error".
             let result = self
                 .support
                 .define_global_property(symbol, Property::data_wec(Value::Undefined));
             debug_assert!(matches!(result, Ok(true)));
+            // TODO: this
             if !globals_in_global_scope.contains(&symbol) {
                 self.global_analysis.scope_tree_builder.add_global(
                     global_scope_ref,
                     symbol,
-                    *init_batch,
+                    entry.function_declaration_batch,
                 );
                 globals_in_global_scope.insert(symbol);
             } else {
                 // TODO(perf): rethink the algorithm.  somewhat inefficient...
-                self.global_analysis.scope_tree_builder.set_init_batch(
-                    global_scope_ref,
-                    symbol,
-                    *init_batch,
-                );
+                self.global_analysis
+                    .scope_tree_builder
+                    .set_function_declaration_batch(
+                        global_scope_ref,
+                        symbol,
+                        entry.function_declaration_batch,
+                    );
             }
             global_symbols.insert(symbol);
         }
@@ -1148,8 +1200,13 @@ struct FunctionAnalysis {
     /// Because the type of a lexical declaration cannot be known at "LexicalBinding".
     symbol_stack: Vec<(Symbol, usize)>,
 
-    /// A set of non-lexically-scoped symbols defined by "VariableStatement"s.
-    function_scoped_symbols: FxHashMap<Symbol, usize>,
+    /// A set of function-scoped variables.
+    ///
+    /// The set includes the following symbols used in the function body:
+    ///
+    ///   * Variable names declared by "VariableStatement"s
+    ///   * Function names declared by "FunctionDeclaration"s
+    function_scoped_variables: FxHashMap<Symbol, FunctionScopedVariableEntry>,
 
     /// A stack to hold [`Scope`]s.
     ///
@@ -1205,24 +1262,61 @@ struct FunctionAnalysis {
     flags: FunctionAnalysisFlags,
 }
 
+struct FunctionScopedVariableEntry {
+    /// The index of the [`CompileCommand::Batch`] for the variable.
+    ///
+    /// `0` means that there is no [`CompileCommand::Batch`] for a function declaration.
+    function_declaration_batch: usize,
+
+    /// The mutability of the variable.
+    mutable: bool,
+}
+
+impl FunctionScopedVariableEntry {
+    fn var() -> Self {
+        Self {
+            function_declaration_batch: 0,
+            mutable: true,
+        }
+    }
+
+    fn function(declaration_batch: usize) -> Self {
+        debug_assert_ne!(declaration_batch, 0);
+        Self {
+            function_declaration_batch: declaration_batch,
+            mutable: true,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Default)]
 enum ThisMode {
     #[default]
-    Global,
-    #[allow(unused)] // TODO(feat): strict mode
     Strict,
-    NonStrict,
     Lexical,
+    Global,
 }
 
 bitflags! {
     #[derive(Debug, Default)]
     struct FunctionAnalysisFlags: u8 {
+        /// The entry function of a program.
+        const ENTRY_FUNCTION = 0b00000001;
+
         /// Enabled if the context is the ramp function for an async function.
-        const RAMP      = 0b00000001;
+        const RAMP = 0b00000010;
 
         /// Enabled if the context is the coroutine function for an async function.
-        const COROUTINE = 0b00000010;
+        const COROUTINE = 0b00000100;
+
+        /// The `this` binding is used in the function body.
+        ///
+        /// The `this` binding must be resolved to an actual value in
+        /// [`CompileCommand::DeclareVariables`] according to the [`ThisBinding`].
+        const THIS_BINDING_USED = 0b00001000;
+
+        /// The `this` binding is captured by descendant closures.
+        const THIS_BINDING_CAPTURED = 0b00010000;
     }
 }
 
@@ -1352,8 +1446,11 @@ impl FunctionAnalysis {
             self.commands.push(CompileCommand::Discard);
         }
 
-        self.function_scoped_symbols
-            .insert(symbol, Default::default());
+        // "VariableDeclaration"s can overwrite the variable bound to a function declared with the
+        // same symbol in a "FunctionDeclaration".
+        self.function_scoped_variables
+            .entry(symbol)
+            .or_insert(FunctionScopedVariableEntry::var());
 
         // TODO: type info
     }
@@ -1404,9 +1501,10 @@ impl FunctionAnalysis {
     }
 
     fn process_this(&mut self) {
-        // A reference to `this` is implemented as a reference to a hidden immutable variable in
-        // the function scope.  See the implementation of [`accept()`] for details.
-        self.process_identifier_reference(Symbol::THIS)
+        // A use of the `this` keyword is implemented as a reference to a hidden immutable variable
+        // in the function scope.  See the implementation of [`accept()`] for details.
+        self.commands.push(CompileCommand::This);
+        self.flags.insert(FunctionAnalysisFlags::THIS_BINDING_USED);
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {
@@ -1481,7 +1579,7 @@ impl FunctionAnalysis {
         assert!(self.num_params < u16::MAX);
         global_analysis
             .scope_tree_builder
-            .add_formal_parameter(symbol, self.num_params);
+            .add_argument(symbol, self.num_params);
         self.num_params += 1;
     }
 
@@ -1498,7 +1596,7 @@ impl FunctionAnalysis {
             self.commands[index + 1] = CompileCommand::MutableVariable;
             global_analysis
                 .scope_tree_builder
-                .add_mutable(symbol, self.num_locals);
+                .add_local(symbol, self.num_locals, true);
             self.num_locals += 1;
         }
         self.symbol_stack.truncate(i);
@@ -1517,7 +1615,7 @@ impl FunctionAnalysis {
             self.commands[index + 1] = CompileCommand::ImmutableVariable;
             global_analysis
                 .scope_tree_builder
-                .add_immutable(symbol, self.num_locals);
+                .add_local(symbol, self.num_locals, false);
             self.num_locals += 1;
         }
         self.symbol_stack.truncate(i);
@@ -1528,7 +1626,7 @@ impl FunctionAnalysis {
         let (symbol, _) = self.symbol_stack.pop().unwrap();
 
         // This is a hoistable declaration.  Commands following the `Batch` command will perform
-        // by a command handler for the `DeclareVars` command generated for the current scope.
+        // by a command handler for the `DeclareVariables` command generated for the current scope.
         let index = self.commands.len();
         self.commands.push(CompileCommand::Batch(4));
         self.commands.push(CompileCommand::Lambda(lambda_id));
@@ -1537,7 +1635,18 @@ impl FunctionAnalysis {
             .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareClosure);
 
-        self.function_scoped_symbols.insert(symbol, index);
+        // "VariableStatement"s have already declared variables with the same symbol.
+        // Such "VariableStatement"s can overwrite the variable.
+        self.function_scoped_variables
+            .entry(symbol)
+            .and_modify(|entry| {
+                debug_assert_eq!(
+                    entry.function_declaration_batch, 0,
+                    "Multiple function declarations with the same symbol are not allowed."
+                );
+                entry.function_declaration_batch = index;
+            })
+            .or_insert(FunctionScopedVariableEntry::function(index));
     }
 
     fn process_closure_expression(
@@ -1802,11 +1911,16 @@ impl FunctionAnalysis {
         scope.scope_ref
     }
 
-    fn process_function_scoped_symbols(&mut self, global_analysis: &mut GlobalAnalysis) {
-        for (&symbol, init_batch) in self.function_scoped_symbols.iter() {
+    fn process_function_scoped_variables(&mut self, global_analysis: &mut GlobalAnalysis) {
+        for (&symbol, entry) in self.function_scoped_variables.iter() {
             global_analysis
                 .scope_tree_builder
-                .add_function_scoped_mutable(symbol, self.num_locals, *init_batch);
+                .add_function_scoped_variable(
+                    symbol,
+                    self.num_locals,
+                    entry.mutable,
+                    entry.function_declaration_batch,
+                );
             self.num_locals += 1;
         }
     }
@@ -1892,7 +2006,7 @@ pub enum CompileCommand {
     // Compile commands in a batch will be skipped in an evaluation starting at the first compile
     // command.  A batch is performed at some point in the evaluation.  For example, compile
     // commands generated for a *hoistable* declaration are inserted as a batch and the compile
-    // commands of the batch are performed at the `DeclareVars` in the scope on which the
+    // commands of the batch are performed at the `DeclareVariables` in the scope on which the
     // declaration is performed.
     Batch(u16),
 
@@ -1917,7 +2031,7 @@ pub enum CompileCommand {
     AllocateLocals(u16),
     MutableVariable,
     ImmutableVariable,
-    DeclareVars(ScopeRef),
+    DeclareVariables(ScopeRef),
     DeclareClosure,
     Call(u16),
     New(u16),
@@ -1925,7 +2039,6 @@ pub enum CompileCommand {
     PopScope(ScopeRef),
 
     // object
-    ToObject,
     CreateDataProperty,
     CopyDataProperties,
     PushArrayElement,
@@ -2226,13 +2339,10 @@ mod tests {
                 assert_eq!(
                     program.functions[0].commands,
                     [
-                        CompileCommand::AllocateLocals(5),
+                        CompileCommand::AllocateLocals(4),
                         CompileCommand::Nop,
                         CompileCommand::PushScope(scope_ref!(1)),
-                        CompileCommand::DeclareVars(scope_ref!(1)),
-                        CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
-                        CompileCommand::VariableReference(Symbol::THIS),
-                        CompileCommand::ImmutableVariable,
+                        CompileCommand::DeclareVariables(scope_ref!(1)),
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2260,13 +2370,10 @@ mod tests {
                 assert_eq!(
                     program.functions[0].commands,
                     [
-                        CompileCommand::AllocateLocals(5),
+                        CompileCommand::AllocateLocals(4),
                         CompileCommand::Nop,
                         CompileCommand::PushScope(scope_ref!(1)),
-                        CompileCommand::DeclareVars(scope_ref!(1)),
-                        CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
-                        CompileCommand::VariableReference(Symbol::THIS),
-                        CompileCommand::ImmutableVariable,
+                        CompileCommand::DeclareVariables(scope_ref!(1)),
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2296,13 +2403,10 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateLocals(1),
+                    CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
-                    CompileCommand::DeclareVars(scope_ref!(1)),
-                    CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
-                    CompileCommand::VariableReference(Symbol::THIS),
-                    CompileCommand::ImmutableVariable,
+                    CompileCommand::DeclareVariables(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
                     CompileCommand::Swap,
@@ -2320,13 +2424,10 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateLocals(2),
+                    CompileCommand::AllocateLocals(1),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
-                    CompileCommand::DeclareVars(scope_ref!(1)),
-                    CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
-                    CompileCommand::VariableReference(Symbol::THIS),
-                    CompileCommand::ImmutableVariable,
+                    CompileCommand::DeclareVariables(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::VariableReference(symbol!(stub, "a")),
                     CompileCommand::MutableVariable,
@@ -2349,13 +2450,10 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::Environment(1),
+                    CompileCommand::Environment(0),
                     CompileCommand::JumpTable(3),
                     CompileCommand::PushScope(scope_ref!(2)),
-                    CompileCommand::DeclareVars(scope_ref!(2)),
-                    CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
-                    CompileCommand::VariableReference(Symbol::THIS),
-                    CompileCommand::ImmutableVariable,
+                    CompileCommand::DeclareVariables(scope_ref!(2)),
                     CompileCommand::Number(0.0),
                     CompileCommand::Await(1),
                     CompileCommand::Discard,
@@ -2365,16 +2463,13 @@ mod tests {
             assert_eq!(
                 program.functions[1].commands,
                 [
-                    CompileCommand::AllocateLocals(1),
+                    CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
                     CompileCommand::PushScope(scope_ref!(1)),
-                    CompileCommand::DeclareVars(scope_ref!(1)),
-                    CompileCommand::VariableReference(Symbol::GLOBAL_THIS),
-                    CompileCommand::VariableReference(Symbol::THIS),
-                    CompileCommand::ImmutableVariable,
+                    CompileCommand::DeclareVariables(scope_ref!(1)),
                     CompileCommand::Lambda(program.functions[0].id),
                     CompileCommand::Closure(false, scope_ref!(2)),
-                    CompileCommand::Coroutine(program.functions[0].id, 1),
+                    CompileCommand::Coroutine(program.functions[0].id, 0),
                     CompileCommand::Promise,
                     CompileCommand::Duplicate(0),
                     CompileCommand::Resume,

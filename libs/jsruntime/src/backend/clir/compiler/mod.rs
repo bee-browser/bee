@@ -26,6 +26,7 @@ use crate::semantics::Function;
 use crate::semantics::Locator;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
+use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::U16Chunk;
 use crate::types::Value;
@@ -209,6 +210,7 @@ struct Compiler<'a, R> {
     operand_stack: OperandStack,
 
     // The following values must be reset in the end of compilation for each function.
+    this: Option<AnyIr>,
     locals: Vec<AnyIr>,
     captures: FxHashMap<Locator, CaptureIr>,
 
@@ -264,6 +266,7 @@ where
             pending_labels: Default::default(),
             editor: Editor::new(builder, target_config),
             operand_stack: Default::default(),
+            this: None,
             locals: Default::default(),
             captures: Default::default(),
             max_scratch_buffer_len: 0,
@@ -394,13 +397,14 @@ where
             CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
-            CompileCommand::DeclareVars(scope_ref) => self.process_declare_vars(func, *scope_ref),
+            CompileCommand::DeclareVariables(scope_ref) => {
+                self.process_declare_variables(func, *scope_ref)
+            }
             CompileCommand::DeclareClosure => self.process_declare_closure(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
-            CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
             CompileCommand::PushArrayElement => self.process_push_array_element(),
@@ -570,6 +574,8 @@ where
             scope.count_captures(),
         );
 
+        // TODO(feat): store capture for `this` to closure
+
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         for variable in scope
             .variables
@@ -626,7 +632,7 @@ where
 
     fn process_this(&mut self) {
         // TODO(perf): shortcut the property access.
-        let this = self.editor.this();
+        let this = self.this.unwrap();
         self.operand_stack.push(Operand::Any(this, None));
     }
 
@@ -734,7 +740,7 @@ where
     }
 
     // NOTE: This function may call `process_command()`.
-    fn process_declare_vars(&mut self, func: &Function, scope_ref: ScopeRef) {
+    fn process_declare_variables(&mut self, func: &Function, scope_ref: ScopeRef) {
         debug_assert!(self.scope_tree.scope(scope_ref).is_function());
 
         // In the specification, function-scoped variables defined by "VariableStatement"s are
@@ -760,17 +766,70 @@ where
 
         // TODO(fix): preserve declaration order.
         for variable in self.scope_tree.scope(scope_ref).variables.iter() {
-            if variable.init_batch == 0 {
+            if variable.function_declaration_batch == 0 {
                 continue;
             }
-            let start = variable.init_batch + 1;
+            let start = variable.function_declaration_batch + 1;
             let end = start
-                + match func.commands[variable.init_batch] {
+                + match func.commands[variable.function_declaration_batch] {
                     CompileCommand::Batch(n) => n as usize,
                     _ => unreachable!(),
                 };
             for command in func.commands[start..end].iter() {
                 self.process_command(func, command);
+            }
+        }
+
+        self.resolve_this_binding(func);
+    }
+
+    // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
+    //
+    // See Also:
+    // 9.1.2.4 NewFunctionEnvironment()
+    // 10.2 ECMAScript Function Objects
+    // 10.2.3 OrdinaryFunctionCreate()
+    // 10.2.11 FunctionDeclarationInstantiation()
+    fn resolve_this_binding(&mut self, func: &Function) {
+        logger::debug!(event = "resolve_this_binding", ?func.this_binding);
+        match func.this_binding {
+            ThisBinding::None => {
+                // No code is generated for the `this` binding resolution, which improves the
+                // execution time in some situations.
+            }
+            ThisBinding::ThisArgument => {
+                // const this = thisArgument;
+                self.this = Some(self.editor.this_argument());
+                // TODO(feat): capture
+            }
+            ThisBinding::Capture => {
+                todo!("TODO(feat): set captured `this`");
+            }
+            ThisBinding::GlobalObject => {
+                // const this = globalThis
+                self.process_variable_reference(Symbol::GLOBAL_THIS);
+                self.process_dereference();
+                let this = self.pop_any();
+                self.this = Some(this);
+            }
+            ThisBinding::GlobalObjectIfNullish => {
+                // const this =
+                //   thisArgument !== null && thisArgument !== undefined ?
+                //   ToObject(thisArgument) : globalThis;
+                self.operand_stack
+                    .push(Operand::Any(self.editor.this_argument(), None));
+                self.process_non_nullish();
+                self.process_if_then(true);
+                self.operand_stack
+                    .push(Operand::Any(self.editor.this_argument(), None));
+                self.perform_to_object();
+                self.process_else(true);
+                self.process_variable_reference(Symbol::GLOBAL_THIS);
+                self.process_dereference();
+                self.process_ternary();
+                let this = self.pop_any();
+                self.this = Some(this);
+                // TODO(feat): capture
             }
         }
     }
@@ -813,7 +872,7 @@ where
             self.editor.put_store_object_to_any(this, any);
             any
         } else {
-            self.editor.this()
+            self.editor.this_argument()
         };
         let retv = self.emit_create_any();
         let status = self.editor.put_call(closure, this, argc, argv, retv);
@@ -895,6 +954,10 @@ where
             }
         }
 
+        if scope.is_function() {
+            // TODO(feat): create a capture for `this` if it's captured
+        }
+
         self.editor.put_jump(body_block, &[]);
         self.editor.switch_to_block(body_block);
     }
@@ -927,6 +990,9 @@ where
                 // TODO: GC
             }
         }
+        if scope.is_function() {
+            // TODO(feat): escape `this` if it's captured
+        }
         self.editor.put_jump(postcheck_block, &[]);
 
         self.editor.switch_to_block(postcheck_block);
@@ -947,10 +1013,6 @@ where
             .put_branch(is_normal, exit_block, &[], parent_exit_block, &[]);
 
         self.editor.switch_to_block(exit_block);
-    }
-
-    fn process_to_object(&mut self) {
-        self.perform_to_object();
     }
 
     // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
@@ -2447,6 +2509,13 @@ where
         match self.operand_stack.pop().unwrap() {
             Operand::Closure(value) => value,
             _ => unreachable!(),
+        }
+    }
+
+    fn pop_any(&mut self) -> AnyIr {
+        match self.operand_stack.pop().unwrap() {
+            Operand::Any(value, _) => value,
+            operand => unreachable!("{operand:?}"),
         }
     }
 

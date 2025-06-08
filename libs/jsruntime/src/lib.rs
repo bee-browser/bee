@@ -205,7 +205,11 @@ impl<X> Runtime<X> {
     /// Calls an entry lambda function.
     fn call_entry_lambda(&mut self, lambda: Lambda) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda);
-        let mut this = Value::Undefined;
+        // Specify the global object in the `this` parameter.
+        // See also `semantics::Analyzer::start()`.
+        //
+        // TODO: immutable
+        let mut this = Value::Object(self.global_object_mut().as_ptr());
         let mut retv = Value::Undefined;
         let status = unsafe {
             lambda(

@@ -3,6 +3,7 @@
 //   16.1.7 GlobalDeclarationInstantiation ( script, env )
 
 use bitflags::bitflags;
+use jsparser::SymbolRegistry;
 
 use super::Locator;
 use super::Reference;
@@ -121,17 +122,17 @@ impl ScopeTree {
         let scope = &self.scopes[variable_ref.scope_index()];
         let variable = &scope.variables[variable_ref.variable_index()];
         match variable.kind {
-            VariableKind::FormalParameter => Locator::Argument(variable.index),
-            VariableKind::Mutable | VariableKind::Immutable => Locator::Local(variable.index),
+            VariableKind::Argument => Locator::Argument(variable.index),
+            VariableKind::Local => Locator::Local(variable.index),
             VariableKind::Capture => Locator::Capture(variable.index),
             VariableKind::Global => Locator::Global,
         }
     }
 
     #[allow(unused)]
-    pub fn print(&self, indent: &str) {
+    pub fn print(&self, symbol_registry: &SymbolRegistry, indent: &str) {
         for (index, scope) in self.scopes.iter().enumerate().skip(1) {
-            println!("{indent}{}", ScopePrinter { index, scope });
+            println!("{indent}{}", scope.display(symbol_registry, index));
         }
     }
 }
@@ -182,47 +183,51 @@ impl ScopeTreeBuilder {
         self.depth -= 1;
     }
 
-    pub fn add_formal_parameter(&mut self, symbol: Symbol, index: u16) {
+    pub fn add_argument(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
         scope.variables.push(Variable {
             symbol,
             index,
-            kind: VariableKind::FormalParameter,
+            kind: VariableKind::Argument,
             flags: VariableFlags::empty(),
-            init_batch: Default::default(),
+            function_declaration_batch: 0,
         });
     }
 
-    pub fn add_mutable(&mut self, symbol: Symbol, index: u16) {
+    pub fn add_local(&mut self, symbol: Symbol, index: u16, mutable: bool) {
         let scope = &mut self.scopes[self.current.index()];
         scope.variables.push(Variable {
             symbol,
             index,
-            kind: VariableKind::Mutable,
-            flags: VariableFlags::empty(),
-            init_batch: Default::default(),
+            kind: VariableKind::Local,
+            flags: if mutable {
+                VariableFlags::MUTABLE
+            } else {
+                VariableFlags::empty()
+            },
+            function_declaration_batch: 0,
         });
     }
 
-    pub fn add_function_scoped_mutable(&mut self, symbol: Symbol, index: u16, init_batch: usize) {
+    pub fn add_function_scoped_variable(
+        &mut self,
+        symbol: Symbol,
+        index: u16,
+        mutable: bool,
+        declaration_batch: usize,
+    ) {
         let scope = &mut self.scopes[self.current.index()];
         scope.variables.push(Variable {
             symbol,
             index,
-            kind: VariableKind::Mutable,
-            flags: VariableFlags::FUNCTION_SCOPED,
-            init_batch,
-        });
-    }
-
-    pub fn add_immutable(&mut self, symbol: Symbol, index: u16) {
-        let scope = &mut self.scopes[self.current.index()];
-        scope.variables.push(Variable {
-            symbol,
-            index,
-            kind: VariableKind::Immutable,
-            flags: VariableFlags::empty(),
-            init_batch: Default::default(),
+            kind: VariableKind::Local,
+            flags: VariableFlags::FUNCTION_SCOPED
+                | if mutable {
+                    VariableFlags::MUTABLE
+                } else {
+                    VariableFlags::empty()
+                },
+            function_declaration_batch: declaration_batch,
         });
     }
 
@@ -234,14 +239,19 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Capture,
             flags: VariableFlags::empty(),
-            init_batch: Default::default(),
+            function_declaration_batch: 0,
         });
         scope
             .variables
             .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
-    pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol, init_batch: usize) {
+    pub fn add_global(
+        &mut self,
+        scope_ref: ScopeRef,
+        symbol: Symbol,
+        function_declaration_batch: usize,
+    ) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
         scope.variables.push(Variable {
@@ -249,7 +259,7 @@ impl ScopeTreeBuilder {
             index: 0, // TODO
             kind: VariableKind::Global,
             flags: VariableFlags::empty(),
-            init_batch,
+            function_declaration_batch,
         });
         scope
             .variables
@@ -257,11 +267,16 @@ impl ScopeTreeBuilder {
     }
 
     // TODO(perf)
-    pub fn set_init_batch(&mut self, scope_ref: ScopeRef, symbol: Symbol, init_batch: usize) {
+    pub fn set_function_declaration_batch(
+        &mut self,
+        scope_ref: ScopeRef,
+        symbol: Symbol,
+        function_declaration_batch: usize,
+    ) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
         match scope.variables.iter_mut().find(|v| v.symbol == symbol) {
-            Some(variable) => variable.init_batch = init_batch,
+            Some(variable) => variable.function_declaration_batch = function_declaration_batch,
             None => panic!(),
         }
     }
@@ -364,14 +379,33 @@ impl Scope {
             .filter(|variable| variable.is_capture())
             .count() as u16
     }
+
+    fn display<'a>(
+        &'a self,
+        symbol_registry: &'a SymbolRegistry,
+        index: usize,
+    ) -> ScopeDisplay<'a> {
+        ScopeDisplay::new(self, symbol_registry, index)
+    }
 }
 
-struct ScopePrinter<'a> {
-    index: usize,
+struct ScopeDisplay<'a> {
     scope: &'a Scope,
+    symbol_registry: &'a SymbolRegistry,
+    index: usize,
 }
 
-impl std::fmt::Display for ScopePrinter<'_> {
+impl<'a> ScopeDisplay<'a> {
+    fn new(scope: &'a Scope, symbol_registry: &'a SymbolRegistry, index: usize) -> Self {
+        Self {
+            scope,
+            symbol_registry,
+            index,
+        }
+    }
+}
+
+impl std::fmt::Display for ScopeDisplay<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:indent$}", "", indent = self.scope.depth as usize)?;
         match self.scope.kind {
@@ -380,7 +414,7 @@ impl std::fmt::Display for ScopePrinter<'_> {
         }
         write!(f, "@{}:", self.index)?;
         for variable in self.scope.variables.iter() {
-            write!(f, " {variable}")?;
+            write!(f, " {}", variable.display(self.symbol_registry))?;
         }
         Ok(())
     }
@@ -397,12 +431,12 @@ pub struct Variable {
     pub index: u16,
     pub kind: VariableKind,
     flags: VariableFlags,
-    pub init_batch: usize,
+    pub function_declaration_batch: usize,
 }
 
 impl Variable {
     pub fn is_local(&self) -> bool {
-        matches!(self.kind, VariableKind::Immutable | VariableKind::Mutable)
+        matches!(self.kind, VariableKind::Local)
     }
 
     pub fn is_capture(&self) -> bool {
@@ -411,11 +445,15 @@ impl Variable {
 
     pub fn locator(&self) -> Locator {
         match self.kind {
-            VariableKind::FormalParameter => Locator::Argument(self.index),
-            VariableKind::Mutable | VariableKind::Immutable => Locator::Local(self.index),
+            VariableKind::Argument => Locator::Argument(self.index),
+            VariableKind::Local => Locator::Local(self.index),
             VariableKind::Capture => Locator::Capture(self.index),
             VariableKind::Global => Locator::Global,
         }
+    }
+
+    pub fn is_mutable(&self) -> bool {
+        self.flags.contains(VariableFlags::MUTABLE)
     }
 
     pub fn is_captured(&self) -> bool {
@@ -429,25 +467,59 @@ impl Variable {
     fn set_captured(&mut self) {
         self.flags.insert(VariableFlags::CAPTURED)
     }
+
+    fn display<'a>(&'a self, symbol_registry: &'a SymbolRegistry) -> VariableDisplay<'a> {
+        VariableDisplay::new(self, symbol_registry)
+    }
 }
 
-impl std::fmt::Display for Variable {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.is_captured() {
-            write!(f, "*")?;
+struct VariableDisplay<'a> {
+    variable: &'a Variable,
+    symbol_registry: &'a SymbolRegistry,
+}
+
+impl<'a> VariableDisplay<'a> {
+    fn new(variable: &'a Variable, symbol_registry: &'a SymbolRegistry) -> Self {
+        Self {
+            variable,
+            symbol_registry,
         }
-        if self.is_function_scoped() {
+    }
+}
+
+impl<'a> std::fmt::Display for VariableDisplay<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self {
+            variable,
+            symbol_registry,
+        } = self;
+        let symbol = variable.symbol;
+        let name = symbol_registry.resolve(variable.symbol).unwrap();
+        let name = String::from_utf16_lossy(name);
+        write!(f, "{name}{symbol}:")?;
+        if variable.is_function_scoped() {
+            debug_assert!(matches!(variable.kind, VariableKind::Local));
             write!(f, "^")?;
         }
-        match self.kind {
-            VariableKind::FormalParameter => write!(f, "P@{}:{}", self.index, self.symbol)?,
-            VariableKind::Mutable => write!(f, "M@{}:{}", self.index, self.symbol)?,
-            VariableKind::Immutable => write!(f, "I@{}:{}", self.index, self.symbol)?,
-            VariableKind::Capture => write!(f, "C@{}:{}", self.index, self.symbol)?,
-            VariableKind::Global => write!(f, "G@{}:{}", self.index, self.symbol)?,
+        match variable.kind {
+            VariableKind::Argument => write!(f, "A@{}", variable.index)?,
+            VariableKind::Local => write!(f, "L@{}", variable.index)?,
+            VariableKind::Capture => write!(f, "C@{}", variable.index)?,
+            VariableKind::Global => write!(f, "G@{}", variable.index)?,
         }
-        if self.init_batch > 0 {
-            write!(f, "#{}", self.init_batch)?;
+        if variable.is_mutable() {
+            debug_assert!(!matches!(variable.kind, VariableKind::Global));
+            write!(f, "+")?;
+        }
+        if variable.is_captured() {
+            debug_assert!(matches!(
+                variable.kind,
+                VariableKind::Local | VariableKind::Argument
+            ));
+            write!(f, "*")?;
+        }
+        if variable.function_declaration_batch > 0 {
+            write!(f, "#{}", variable.function_declaration_batch)?;
         }
         Ok(())
     }
@@ -455,9 +527,8 @@ impl std::fmt::Display for Variable {
 
 #[derive(Clone, Copy, Debug)]
 pub enum VariableKind {
-    FormalParameter,
-    Mutable,
-    Immutable,
+    Argument,
+    Local,
     Capture,
     Global,
 }
@@ -465,7 +536,8 @@ pub enum VariableKind {
 bitflags! {
     #[derive(Debug)]
     struct VariableFlags: u8 {
-        const CAPTURED        = 1 << 0;
-        const FUNCTION_SCOPED = 1 << 1;
+        const MUTABLE         = 1 << 0;
+        const CAPTURED        = 1 << 1;
+        const FUNCTION_SCOPED = 1 << 2;
     }
 }
