@@ -129,7 +129,7 @@ impl<'a> Editor<'a> {
     ///
     /// Don't be confused.  The value is **NOT** equal to the return value of
     /// `ResolveThisBinding()` defined in the ECMA-262 specification.
-    pub fn this(&self) -> AnyIr {
+    pub fn this_argument(&self) -> AnyIr {
         AnyIr(self.lambda_params(2))
     }
 
