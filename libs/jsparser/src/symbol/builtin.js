@@ -64,8 +64,14 @@ function makeRustName(name) {
   if (name.startsWith('##')) {
     return `HIDDEN_${changeCase.constantCase(name)}`;
   }
-  // Use `upper` instead of `constantCase` so that 'NaN' is converted into 'NAN'.
-  return name.toUpperCase();
+  switch (name) {
+    case 'NaN':
+      return 'NAN';
+    case '__proto__':
+      return 'LEGACY_PROTO';
+    default:
+      return changeCase.constantCase(name);
+  }
 }
 
 function makeCodeUnits(name) {
