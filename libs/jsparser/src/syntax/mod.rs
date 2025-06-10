@@ -1439,6 +1439,14 @@ where
         Ok(())
     }
 
+    // CallExpression[Yield, Await] :
+    //   CallExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+    fn process_call_expression_call(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CallExpression);
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
     // Arguments[Yield, Await] :
     //   ( )
     fn process_arguments_empty(&mut self) -> Result<(), Error> {
