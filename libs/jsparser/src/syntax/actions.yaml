@@ -1282,7 +1282,7 @@
 - rule: CallExpression_Await -> ImportCall_Await
   action: undefined
 - rule: CallExpression_Await -> CallExpression_Await Arguments_Await
-  action: undefined
+  action: process_call_expression_call
 - rule: >-
     CallExpression_Await -> CallExpression_Await LBRACK Expression_In_Await
     RBRACK
@@ -1964,7 +1964,7 @@
 - rule: CallExpression -> ImportCall
   action: undefined
 - rule: CallExpression -> CallExpression Arguments
-  action: undefined
+  action: process_call_expression_call
 - rule: CallExpression -> CallExpression LBRACK Expression_In RBRACK
   action: process_call_expression_bracket_notation
 - rule: CallExpression -> CallExpression DOT KeywordOrIdentifierName
@@ -2194,7 +2194,7 @@
 - rule: CallExpression_Yield -> ImportCall_Yield
   action: undefined
 - rule: CallExpression_Yield -> CallExpression_Yield Arguments_Yield
-  action: undefined
+  action: process_call_expression_call
 - rule: >-
     CallExpression_Yield -> CallExpression_Yield LBRACK Expression_In_Yield
     RBRACK
@@ -2248,7 +2248,7 @@
 - rule: >-
     CallExpression_Yield_Await -> CallExpression_Yield_Await
     Arguments_Yield_Await
-  action: undefined
+  action: process_call_expression_call
 - rule: >-
     CallExpression_Yield_Await -> CallExpression_Yield_Await LBRACK
     Expression_In_Yield_Await RBRACK
