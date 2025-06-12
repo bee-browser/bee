@@ -162,6 +162,9 @@ pub struct Function {
 
     /// Controls how the `this` binding is resolved.
     pub this_binding: ThisBinding,
+
+    /// Flags.
+    flags: FunctionFlags,
 }
 
 #[derive(Debug)]
@@ -188,7 +191,20 @@ pub enum ThisBinding {
     GlobalObjectIfNullish,
 }
 
+bitflags! {
+    #[derive(Debug)]
+    struct FunctionFlags: u8 {
+        /// The `this` binding is captured by descendant closures.
+        const THIS_BINDING_CAPTURED = 1 << 1;
+    }
+}
+
 impl Function {
+    /// Returns `true` if the `this` binding is captured.
+    pub fn is_this_binding_captured(&self) -> bool {
+        self.flags.contains(FunctionFlags::THIS_BINDING_CAPTURED)
+    }
+
     pub fn print(&self, indent: &str) {
         println!("{indent}function: name={:?} id={:?}", self.name, self.id);
         if !self.commands.is_empty() {
@@ -201,6 +217,7 @@ impl Function {
         println!("{indent} num_params: {}", self.num_params);
         println!("{indent} num_locals: {}", self.num_locals);
         println!("{indent} this_binding: {:?}", self.this_binding);
+        println!("{indent} flags: {:?}", self.flags);
     }
 }
 
@@ -1023,19 +1040,27 @@ where
     }
 
     fn apply_analysis(&mut self, analysis: FunctionAnalysis, scope_ref: ScopeRef) {
-        let this_used = analysis.flags.intersects(
-            FunctionAnalysisFlags::THIS_BINDING_USED | FunctionAnalysisFlags::THIS_BINDING_CAPTURED,
-        );
+        let this_used = analysis
+            .flags
+            .contains(FunctionAnalysisFlags::THIS_BINDING_USED);
+        let this_captured = analysis
+            .flags
+            .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
         let is_entry = analysis
             .flags
             .contains(FunctionAnalysisFlags::ENTRY_FUNCTION);
-        let this_binding = match (this_used, is_entry, analysis.this_mode) {
+        let this_binding = match (this_used || this_captured, is_entry, analysis.this_mode) {
             (false, _, _) => ThisBinding::None,
             (_, _, ThisMode::Strict) => ThisBinding::ThisArgument,
             (_, _, ThisMode::Lexical) => ThisBinding::Capture,
             (_, true, ThisMode::Global) => ThisBinding::GlobalObject,
             (_, false, ThisMode::Global) => ThisBinding::GlobalObjectIfNullish,
         };
+        let mut flags = FunctionFlags::empty();
+        // The global object is never captured.  It can be directly accessible in any scope.
+        if !is_entry && this_captured {
+            flags.insert(FunctionFlags::THIS_BINDING_CAPTURED);
+        }
         self.functions.push(Function {
             name: analysis.name,
             id: analysis.id,
@@ -1045,6 +1070,7 @@ where
             num_params: analysis.num_params,
             num_locals: analysis.num_locals,
             this_binding,
+            flags,
         });
     }
 }

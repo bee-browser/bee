@@ -1,6 +1,7 @@
 mod control_flow;
 mod editor;
 
+use std::ffi::c_void;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
@@ -24,6 +25,7 @@ use crate::logger;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
 use crate::semantics::Locator;
+use crate::semantics::Program;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::ThisBinding;
@@ -48,10 +50,12 @@ macro_rules! runtime_debug {
 }
 
 pub struct Session<'r> {
+    program: &'r Program,
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
     pub executor: &'r mut Executor,
     scope_cleanup_checker_enabled: bool,
+    global_object: *mut c_void,
 }
 
 impl CompilerSupport for Session<'_> {
@@ -71,8 +75,17 @@ impl CompilerSupport for Session<'_> {
         self.lambda_registry.get_mut(lambda_id)
     }
 
+    fn get_function(&self, lambda_id: LambdaId) -> &Function {
+        let index = self.lambda_registry.get(lambda_id).function_index as usize;
+        &self.program.functions[index]
+    }
+
     fn target_config(&self) -> isa::TargetFrontendConfig {
         self.executor.target_config()
+    }
+
+    fn global_object(&mut self) -> *mut c_void {
+        self.global_object
     }
 }
 
@@ -104,11 +117,14 @@ pub fn compile<X>(
     for func in program.functions.iter() {
         let mut session = {
             let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
+            let global_object = runtime.global_object.as_ptr();
             Session {
+                program,
                 symbol_registry: &mut runtime.symbol_registry,
                 lambda_registry: &mut runtime.lambda_registry,
                 executor: &mut runtime.executor,
                 scope_cleanup_checker_enabled,
+                global_object,
             }
         };
         context.compile_function(func, &mut session, &program.scope_tree);
@@ -144,11 +160,14 @@ pub fn compile_function<X>(
 
     let mut session = {
         let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
+        let global_object = runtime.global_object.as_ptr();
         Session {
+            program,
             symbol_registry: &mut runtime.symbol_registry,
             lambda_registry: &mut runtime.lambda_registry,
             executor: &mut runtime.executor,
             scope_cleanup_checker_enabled,
+            global_object,
         }
     };
 
@@ -211,6 +230,7 @@ struct Compiler<'a, R> {
 
     // The following values must be reset in the end of compilation for each function.
     this: Option<AnyIr>,
+    this_capture: Option<CaptureIr>,
     locals: Vec<AnyIr>,
     captures: FxHashMap<Locator, CaptureIr>,
 
@@ -267,6 +287,7 @@ where
             editor: Editor::new(builder, target_config),
             operand_stack: Default::default(),
             this: None,
+            this_capture: None,
             locals: Default::default(),
             captures: Default::default(),
             max_scratch_buffer_len: 0,
@@ -383,7 +404,7 @@ where
             CompileCommand::Object => self.process_object(),
             CompileCommand::Lambda(lambda_id) => self.process_lambda(*lambda_id),
             CompileCommand::Closure(prologue, func_scope_ref) => {
-                self.process_closure(*prologue, *func_scope_ref)
+                self.process_closure(func, *prologue, *func_scope_ref)
             }
             CompileCommand::Coroutine(lambda_id, num_locals) => {
                 self.process_coroutine(*lambda_id, *num_locals)
@@ -403,7 +424,7 @@ where
             CompileCommand::DeclareClosure => self.process_declare_closure(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::New(nargs) => self.process_new(*nargs),
-            CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
+            CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
@@ -561,20 +582,23 @@ where
         self.operand_stack.push(Operand::Lambda(lambda, lambda_id));
     }
 
-    fn process_closure(&mut self, _prologue: bool, func_scope_ref: ScopeRef) {
+    fn process_closure(&mut self, func: &Function, _prologue: bool, func_scope_ref: ScopeRef) {
         let scope = self.scope_tree.scope(func_scope_ref);
         debug_assert!(scope.is_function());
 
         let (lambda, lambda_id) = self.pop_lambda();
-        // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
-        let closure = self.editor.put_runtime_create_closure(
-            self.support,
-            lambda,
-            lambda_id,
-            scope.count_captures(),
-        );
+        let num_captures = self.support.get_function(lambda_id).num_captures;
 
-        // TODO(feat): store capture for `this` to closure
+        // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
+        let closure =
+            self.editor
+                .put_runtime_create_closure(self.support, lambda, lambda_id, num_captures);
+
+        if func.is_this_binding_captured() {
+            let capture = self.this_capture.unwrap();
+            self.editor
+                .put_store_capture_to_closure(capture, closure, 0);
+        }
 
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         for variable in scope
@@ -779,59 +803,6 @@ where
                 self.process_command(func, command);
             }
         }
-
-        self.resolve_this_binding(func);
-    }
-
-    // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
-    //
-    // See Also:
-    // 9.1.2.4 NewFunctionEnvironment()
-    // 10.2 ECMAScript Function Objects
-    // 10.2.3 OrdinaryFunctionCreate()
-    // 10.2.11 FunctionDeclarationInstantiation()
-    fn resolve_this_binding(&mut self, func: &Function) {
-        logger::debug!(event = "resolve_this_binding", ?func.this_binding);
-        match func.this_binding {
-            ThisBinding::None => {
-                // No code is generated for the `this` binding resolution, which improves the
-                // execution time in some situations.
-            }
-            ThisBinding::ThisArgument => {
-                // const this = thisArgument;
-                self.this = Some(self.editor.this_argument());
-                // TODO(feat): capture
-            }
-            ThisBinding::Capture => {
-                todo!("TODO(feat): set captured `this`");
-            }
-            ThisBinding::GlobalObject => {
-                // const this = globalThis
-                self.process_variable_reference(Symbol::GLOBAL_THIS);
-                self.process_dereference();
-                let this = self.pop_any();
-                self.this = Some(this);
-            }
-            ThisBinding::GlobalObjectIfNullish => {
-                // const this =
-                //   thisArgument !== null && thisArgument !== undefined ?
-                //   ToObject(thisArgument) : globalThis;
-                self.operand_stack
-                    .push(Operand::Any(self.editor.this_argument(), None));
-                self.process_non_nullish();
-                self.process_if_then(true);
-                self.operand_stack
-                    .push(Operand::Any(self.editor.this_argument(), None));
-                self.perform_to_object();
-                self.process_else(true);
-                self.process_variable_reference(Symbol::GLOBAL_THIS);
-                self.process_dereference();
-                self.process_ternary();
-                let this = self.pop_any();
-                self.this = Some(this);
-                // TODO(feat): capture
-            }
-        }
     }
 
     fn process_declare_closure(&mut self) {
@@ -912,7 +883,7 @@ where
         self.operand_stack.push(Operand::Any(this, None));
     }
 
-    fn process_push_scope(&mut self, scope_ref: ScopeRef) {
+    fn process_push_scope(&mut self, func: &Function, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
         let init_block = self.editor.create_block();
@@ -933,6 +904,11 @@ where
         }
 
         let scope = self.scope_tree.scope(scope_ref);
+
+        if scope.is_function() {
+            self.resolve_this_binding(func);
+        }
+
         for variable in scope.variables.iter() {
             if variable.is_function_scoped() {
                 continue;
@@ -954,12 +930,70 @@ where
             }
         }
 
-        if scope.is_function() {
-            // TODO(feat): create a capture for `this` if it's captured
-        }
-
         self.editor.put_jump(body_block, &[]);
         self.editor.switch_to_block(body_block);
+    }
+
+    // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
+    //
+    // See Also:
+    // 9.1.2.4 NewFunctionEnvironment()
+    // 10.2 ECMAScript Function Objects
+    // 10.2.3 OrdinaryFunctionCreate()
+    // 10.2.11 FunctionDeclarationInstantiation()
+    fn resolve_this_binding(&mut self, func: &Function) {
+        logger::debug!(event = "resolve_this_binding", ?func.this_binding);
+        debug_assert!(self.this.is_none());
+        debug_assert!(self.this_capture.is_none());
+        match func.this_binding {
+            ThisBinding::None => {
+                // No code is generated for the `this` binding resolution, which improves the
+                // execution time in some situations.
+            }
+            ThisBinding::ThisArgument => {
+                // const this = thisArgument;
+                let this = self.editor.this_argument();
+                self.this = Some(this);
+            }
+            ThisBinding::Capture => {
+                let this = self.editor.put_load_captured_value(0);
+                self.this = Some(this);
+            }
+            ThisBinding::GlobalObject => {
+                // const this = globalObject;
+                // Don't use `globalThis`.
+                let global_object = self.support.global_object();
+                let value = self.editor.put_object(global_object);
+                let this = self.perform_to_any(&Operand::Object(value));
+                self.this = Some(this);
+            }
+            ThisBinding::GlobalObjectIfNullish => {
+                // const this =
+                //   thisArgument !== null && thisArgument !== undefined ?
+                //   ToObject(thisArgument) : globalObject;
+                self.operand_stack
+                    .push(Operand::Any(self.editor.this_argument(), None));
+                self.process_non_nullish();
+                self.process_if_then(true);
+                self.operand_stack
+                    .push(Operand::Any(self.editor.this_argument(), None));
+                self.perform_to_object();
+                self.process_else(true);
+                // Don't use `globalThis`.
+                let global_object = self.support.global_object();
+                let value = self.editor.put_object(global_object);
+                self.operand_stack.push(Operand::Object(value));
+                self.process_ternary();
+                let this = self.pop_any();
+                self.this = Some(this);
+            }
+        }
+
+        if func.is_this_binding_captured() {
+            let this = self.this.unwrap();
+            let capture = self.editor.put_runtime_create_capture(self.support, this);
+            self.this_capture = Some(capture);
+        }
     }
 
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
@@ -991,7 +1025,10 @@ where
             }
         }
         if scope.is_function() {
-            // TODO(feat): escape `this` if it's captured
+            if let Some(this_capture) = self.this_capture {
+                let this = self.this.unwrap();
+                self.editor.put_escape_value(this_capture, this);
+            }
         }
         self.editor.put_jump(postcheck_block, &[]);
 
