@@ -373,13 +373,6 @@ impl Scope {
         matches!(self.kind, ScopeKind::Function)
     }
 
-    pub fn count_captures(&self) -> u16 {
-        self.variables
-            .iter()
-            .filter(|variable| variable.is_capture())
-            .count() as u16
-    }
-
     fn display<'a>(
         &'a self,
         symbol_registry: &'a SymbolRegistry,
