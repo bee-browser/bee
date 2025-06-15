@@ -1,4 +1,5 @@
 use std::ffi::CStr;
+use std::ffi::c_void;
 
 use cranelift::codegen::ir;
 use cranelift::codegen::ir::InstBuilder as _;
@@ -125,20 +126,28 @@ impl<'a> Editor<'a> {
         CoroutineIr(self.lambda_params(1))
     }
 
+    /// Returns the `this` argument of the lambda function.
+    ///
+    /// Don't be confused.  The value is **NOT** equal to the return value of
+    /// `ResolveThisBinding()` defined in the ECMA-262 specification.
+    pub fn this_argument(&self) -> AnyIr {
+        AnyIr(self.lambda_params(2))
+    }
+
     fn argc(&self) -> ir::Value {
-        self.lambda_params(2)
+        self.lambda_params(3)
     }
 
     fn argv(&self) -> ArgvIr {
-        ArgvIr(self.lambda_params(3))
+        ArgvIr(self.lambda_params(4))
     }
 
     pub fn retv(&self) -> AnyIr {
-        AnyIr(self.lambda_params(4))
+        AnyIr(self.lambda_params(5))
     }
 
     pub fn exception(&self) -> AnyIr {
-        AnyIr(self.lambda_params(4))
+        AnyIr(self.lambda_params(5))
     }
 
     fn lambda_params(&self, index: usize) -> ir::Value {
@@ -549,6 +558,7 @@ impl<'a> Editor<'a> {
     pub fn put_call(
         &mut self,
         closure: ClosureIr,
+        this: AnyIr,
         argc: u16,
         argv: ArgvIr,
         retv: AnyIr,
@@ -558,6 +568,7 @@ impl<'a> Editor<'a> {
         let args = &[
             self.runtime(),
             closure.0,
+            this.0,
             self.builder.ins().iconst(ir::types::I16, argc as i64),
             argv.0,
             retv.0,
@@ -610,6 +621,11 @@ impl<'a> Editor<'a> {
     }
 
     // object
+
+    pub fn put_object(&mut self, addr: *mut c_void) -> ObjectIr {
+        logger::debug!(event = "put_object", ?addr);
+        ObjectIr(self.builder.ins().iconst(self.addr_type, addr as i64))
+    }
 
     pub fn put_load_closure_from_object(&mut self, object: ObjectIr) -> ClosureIr {
         logger::debug!(event = "put_load_closure_from_object", ?object);

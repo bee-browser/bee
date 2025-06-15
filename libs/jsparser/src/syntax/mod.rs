@@ -174,12 +174,14 @@ pub enum Node<'s> {
     LiteralPropertyName(LiteralPropertyName),
     PropertyDefinition(PropertyDefinitionKind),
     MemberExpression(MemberExpressionKind),
+    This,
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
     ArgumentListItem(bool),
     Arguments,
     CallExpression,
+    NewExpression(bool),
     NonNullish,
     OptionalChain(PropertyAccessKind),
     UpdateExpression(UpdateOperator),
@@ -227,6 +229,8 @@ pub enum Node<'s> {
     FormalParameters(u32),
     FunctionContext(Symbol),
     AsyncFunctionContext(Symbol),
+    ArrowFunctionContext,
+    AsyncArrowFunctionContext,
     FunctionSignature,
     FunctionDeclaration,
     AsyncFunctionDeclaration,
@@ -924,6 +928,18 @@ where
 
     // 13.2 Primary Expression
 
+    // 13.2.1 The this Keyword
+
+    // PrimaryExpression[Yield, Await] :
+    //   this
+    fn process_primary_expression_this(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::This);
+        self.top_mut().detail = Detail::Expression;
+        Ok(())
+    }
+
+    // 13.2.2 Identifier Reference
+
     // PrimaryExpression[Yield, Await] :
     //   IdentifierReference[?Yield, ?Await]
     fn process_primary_expression_identifier_reference(&mut self) -> Result<(), Error> {
@@ -1257,7 +1273,7 @@ where
             Detail::PropertyDefinition(name) => name,
             ref detail => unreachable!("{detail:?}"),
         };
-        syntax.detail = Detail::PropertyDefinitionList(name == Symbol::__PROTO__);
+        syntax.detail = Detail::PropertyDefinitionList(name == Symbol::LEGACY_PROTO);
         self.push(syntax);
         Ok(())
     }
@@ -1270,7 +1286,7 @@ where
             detail => unreachable!("{detail:?}"),
         };
         self.pop(); // Token(,)
-        let is_proto = name == Symbol::__PROTO__;
+        let is_proto = name == Symbol::LEGACY_PROTO;
         match self.top_mut().detail {
             // 13.2.5.1 Static Semantics: Early Errors
             Detail::PropertyDefinitionList(true) if is_proto => return Err(Error::SyntaxError),
@@ -1392,10 +1408,42 @@ where
     }
 
     // CallExpression[Yield, Await] :
+    //   CallExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]
+    fn process_call_expression_bracket_notation(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::MemberExpression(
+            MemberExpressionKind::PropertyAccessWithExpressionKey,
+        ));
+        self.replace(4, Detail::Expression);
+        Ok(())
+    }
+
+    // CallExpression[Yield, Await] :
+    //   CallExpression[?Yield, ?Await] . IdentifierName
+    fn process_call_expression_dot_notation(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let symbol = self.make_symbol(token_index);
+        self.enqueue(Node::MemberExpression(
+            MemberExpressionKind::PropertyAccessWithIdentifierKey(symbol),
+        ));
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
+
+    // 13.3.6 Function Calls
+
+    // CallExpression[Yield, Await] :
     //   CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
     fn process_call_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::CallExpression);
         self.replace(1, Detail::Expression);
+        Ok(())
+    }
+
+    // CallExpression[Yield, Await] :
+    //   CallExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+    fn process_call_expression_call(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CallExpression);
+        self.replace(2, Detail::Expression);
         Ok(())
     }
 
@@ -1437,6 +1485,24 @@ where
     fn process_argument_list_item(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ArgumentListItem(false));
         self.replace(3, Detail::ArgumentList);
+        Ok(())
+    }
+
+    // 13.3.5 The new Operator
+
+    // NewExpression[Yield, Await] :
+    //   new NewExpression[?Yield, ?Await]
+    fn process_new_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::NewExpression(false));
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // MemberExpression[Yield, Await] :
+    //   new MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+    fn process_member_expression_new(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::NewExpression(true));
+        self.replace(3, Detail::Expression);
         Ok(())
     }
 
@@ -3015,7 +3081,7 @@ where
     // ArrowParameters[Yield, Await] :
     //   BindingIdentifier[?Yield, ?Await]
     fn process_arrow_parameters_binding_identifier(&mut self) -> Result<(), Error> {
-        self.process_single_arrow_parameter(Node::FunctionContext(Symbol::NONE))
+        self.process_single_arrow_parameter(Node::ArrowFunctionContext)
     }
 
     fn process_single_arrow_parameter(&mut self, context_node: Node<'s>) -> Result<(), Error> {
@@ -3055,7 +3121,7 @@ where
         let syntax = self.pop();
         self.tokens.truncate(syntax.tokens_range.start);
         self.nodes.truncate(syntax.nodes_range.start);
-        self.enqueue(Node::FunctionContext(Symbol::NONE));
+        self.enqueue(Node::ArrowFunctionContext);
         self.refine(&syntax, goal_symbol)
     }
 
@@ -3164,7 +3230,7 @@ where
     // AsyncArrowBindingIdentifier[Yield] :
     //   BindingIdentifier[?Yield, +Await]
     fn process_async_arrow_binding_identifier(&mut self) -> Result<(), Error> {
-        self.process_single_arrow_parameter(Node::AsyncFunctionContext(Symbol::NONE))
+        self.process_single_arrow_parameter(Node::AsyncArrowFunctionContext)
     }
 
     // AsyncArrowHeadCCEAAAH[Yield, Await] :
@@ -3177,7 +3243,7 @@ where
         let syntax = self.pop();
         self.tokens.truncate(syntax.tokens_range.start);
         self.nodes.truncate(syntax.nodes_range.start);
-        self.enqueue(Node::AsyncFunctionContext(Symbol::NONE));
+        self.enqueue(Node::AsyncArrowFunctionContext);
         self.refine(&syntax, GoalSymbol::AsyncArrowHead)
     }
 

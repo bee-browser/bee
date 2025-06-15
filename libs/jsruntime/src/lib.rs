@@ -8,6 +8,7 @@ mod semantics;
 mod types;
 
 use std::ffi::c_void;
+use std::pin::Pin;
 
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
@@ -77,7 +78,7 @@ pub struct Runtime<X> {
     // TODO: GcArena
     allocator: bumpalo::Bump,
     job_runner: JobRunner,
-    global_object: Object,
+    global_object: Pin<Box<Object>>,
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
 }
@@ -86,7 +87,7 @@ impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
         let functions = backend::RuntimeFunctions::new::<X>();
 
-        let mut global_object = Object::default();
+        let mut global_object = Box::pin(Object::default());
         global_object.define_builtin_global_properties();
 
         Self {
@@ -204,6 +205,11 @@ impl<X> Runtime<X> {
     /// Calls an entry lambda function.
     fn call_entry_lambda(&mut self, lambda: Lambda) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda);
+        // Specify the global object in the `this` parameter.
+        // See also `semantics::Analyzer::start()`.
+        //
+        // TODO: immutable
+        let mut this = Value::Object(self.global_object_mut().as_ptr());
         let mut retv = Value::Undefined;
         let status = unsafe {
             lambda(
@@ -211,6 +217,8 @@ impl<X> Runtime<X> {
                 self.as_void_ptr(),
                 // context
                 std::ptr::null_mut(),
+                // this
+                &mut this,
                 // argc
                 0,
                 // argv
