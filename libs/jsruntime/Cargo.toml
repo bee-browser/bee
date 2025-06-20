@@ -17,7 +17,7 @@ bumpalo = "3.18.1"
 cranelift = "0.120.0"
 cranelift-module = "0.120.0"
 cranelift-jit = "0.120.0"
-cranelift-native = "0.120.0"
+cranelift-native = "0.121.0"
 indexmap = "2.9.0"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
