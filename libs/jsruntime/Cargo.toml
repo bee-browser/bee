@@ -14,7 +14,7 @@ base = { path = "../base" }
 bitflags = "2.9.1"
 # TODO(issue#237): replace `bumpalo` with `jsgc = { path = "../jsgc" }`
 bumpalo = "3.18.1"
-cranelift = "0.120.0"
+cranelift = "0.121.0"
 cranelift-module = "0.120.0"
 cranelift-jit = "0.120.0"
 cranelift-native = "0.120.0"
