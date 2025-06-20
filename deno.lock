@@ -15,7 +15,8 @@
     "jsr:@std/bytes@0.223": "0.223.0",
     "jsr:@std/bytes@1": "1.0.6",
     "jsr:@std/bytes@^1.0.5": "1.0.6",
-    "jsr:@std/collections@^1.1.0": "1.1.0",
+    "jsr:@std/bytes@^1.0.6": "1.0.6",
+    "jsr:@std/collections@^1.1.1": "1.1.1",
     "jsr:@std/crypto@1": "1.0.5",
     "jsr:@std/csv@1.0.6": "1.0.6",
     "jsr:@std/encoding@1": "1.0.10",
@@ -26,9 +27,10 @@
     "jsr:@std/fmt@~1.0.2": "1.0.8",
     "jsr:@std/fs@0.223": "0.223.0",
     "jsr:@std/fs@1.0.17": "1.0.17",
-    "jsr:@std/fs@^1.0.11": "1.0.17",
-    "jsr:@std/http@1": "1.0.16",
-    "jsr:@std/internal@^1.0.6": "1.0.7",
+    "jsr:@std/fs@1.0.18": "1.0.18",
+    "jsr:@std/fs@^1.0.11": "1.0.18",
+    "jsr:@std/http@1": "1.0.18",
+    "jsr:@std/internal@^1.0.6": "1.0.8",
     "jsr:@std/io@0.223": "0.223.0",
     "jsr:@std/io@0.225.2": "0.225.2",
     "jsr:@std/io@~0.225.2": "0.225.2",
@@ -36,17 +38,20 @@
     "jsr:@std/log@0.224.14": "0.224.14",
     "jsr:@std/media-types@1": "1.1.0",
     "jsr:@std/path@0.223": "0.223.0",
-    "jsr:@std/path@1": "1.0.9",
+    "jsr:@std/path@1": "1.1.0",
     "jsr:@std/path@1.0.9": "1.0.9",
+    "jsr:@std/path@1.1.0": "1.1.0",
     "jsr:@std/path@^1.0.9": "1.0.9",
+    "jsr:@std/path@^1.1.0": "1.1.0",
+    "jsr:@std/streams@1.0.10": "1.0.10",
     "jsr:@std/streams@1.0.9": "1.0.9",
-    "jsr:@std/streams@^1.0.9": "1.0.9",
-    "jsr:@std/text@~1.0.7": "1.0.13",
-    "jsr:@std/toml@1.0.6": "1.0.6",
-    "jsr:@std/yaml@1.0.6": "1.0.6",
-    "jsr:@zip-js/zip-js@2.7.61": "2.7.61",
+    "jsr:@std/streams@^1.0.9": "1.0.10",
+    "jsr:@std/text@~1.0.7": "1.0.14",
+    "jsr:@std/toml@1.0.8": "1.0.8",
+    "jsr:@std/yaml@1.0.8": "1.0.8",
+    "jsr:@zip-js/zip-js@2.7.62": "2.7.62",
     "npm:@eyalsh/docopt@1.0.7": "1.0.7",
-    "npm:acorn@8.14.1": "8.14.1",
+    "npm:acorn@8.15.0": "8.15.0",
     "npm:change-case@5.4.4": "5.4.4",
     "npm:deep-diff@1.0.2": "1.0.2",
     "npm:handlebars@4.7.8": "4.7.8",
@@ -138,8 +143,8 @@
     "@std/bytes@1.0.6": {
       "integrity": "f6ac6adbd8ccd99314045f5703e23af0a68d7f7e58364b47d2c7f408aeb5820a"
     },
-    "@std/collections@1.1.0": {
-      "integrity": "2ee8761c84c3d203f7a4ecd376f9ca88a0c559817a4a54c9150f28c0b948027c"
+    "@std/collections@1.1.1": {
+      "integrity": "eff6443fbd9d5a6697018fb39c5d13d5f662f0045f21392d640693d0008ab2af"
     },
     "@std/crypto@1.0.4": {
       "integrity": "cee245c453bd5366207f4d8aa25ea3e9c86cecad2be3fefcaa6cb17203d79340"
@@ -174,6 +179,12 @@
         "jsr:@std/path@^1.0.9"
       ]
     },
+    "@std/fs@1.0.18": {
+      "integrity": "24bcad99eab1af4fde75e05da6e9ed0e0dce5edb71b7e34baacf86ffe3969f3a",
+      "dependencies": [
+        "jsr:@std/path@^1.1.0"
+      ]
+    },
     "@std/http@1.0.15": {
       "integrity": "435a4934b4e196e82a8233f724da525f7b7112f3566502f28815e94764c19159",
       "dependencies": [
@@ -186,11 +197,20 @@
         "jsr:@std/encoding@^1.0.10"
       ]
     },
+    "@std/http@1.0.18": {
+      "integrity": "8d9546aa532c52a0cf318c74616db0638b4c1073405355d1b14f9e1591dccf20",
+      "dependencies": [
+        "jsr:@std/encoding@^1.0.10"
+      ]
+    },
     "@std/internal@1.0.6": {
       "integrity": "9533b128f230f73bd209408bb07a4b12f8d4255ab2a4d22a1fd6d87304aca9a4"
     },
     "@std/internal@1.0.7": {
       "integrity": "39eeb5265190a7bc5d5591c9ff019490bd1f2c3907c044a11b0d545796158a0f"
+    },
+    "@std/internal@1.0.8": {
+      "integrity": "fc66e846d8d38a47cffd274d80d2ca3f0de71040f855783724bb6b87f60891f5"
     },
     "@std/io@0.223.0": {
       "integrity": "2d8c3c2ab3a515619b90da2c6ff5ea7b75a94383259ef4d02116b228393f84f1",
@@ -231,10 +251,19 @@
     "@std/path@1.0.9": {
       "integrity": "260a49f11edd3db93dd38350bf9cd1b4d1366afa98e81b86167b4e3dd750129e"
     },
+    "@std/path@1.1.0": {
+      "integrity": "ddc94f8e3c275627281cbc23341df6b8bcc874d70374f75fec2533521e3d6886"
+    },
     "@std/streams@1.0.9": {
       "integrity": "a9d26b1988cdd7aa7b1f4b51e1c36c1557f3f252880fa6cc5b9f37078b1a5035",
       "dependencies": [
         "jsr:@std/bytes@^1.0.5"
+      ]
+    },
+    "@std/streams@1.0.10": {
+      "integrity": "75c0b1431873cd0d8b3d679015220204d36d3c7420d93b60acfc379eb0dc30af",
+      "dependencies": [
+        "jsr:@std/bytes@^1.0.6"
       ]
     },
     "@std/text@1.0.12": {
@@ -243,17 +272,20 @@
     "@std/text@1.0.13": {
       "integrity": "2191c90e6e667b0c3b7dea1cd082137580a93b3c136bad597c0212d5fe006eb1"
     },
-    "@std/toml@1.0.6": {
-      "integrity": "da225502aecad66d8d778a635e9b78991997c2567ef8c6dbbd595c0cfce14c51",
+    "@std/text@1.0.14": {
+      "integrity": "1a810108482414d19112b8b506ad0b7cba826000cd13f74274ffda6dd83d273f"
+    },
+    "@std/toml@1.0.8": {
+      "integrity": "eb8ae76b4cc1c6c13f2a91123675823adbec2380de75cd3748c628960d952164",
       "dependencies": [
         "jsr:@std/collections"
       ]
     },
-    "@std/yaml@1.0.6": {
-      "integrity": "c9a5a914e1d51c46756cb10e356710035cfa905e713c90d3b711413fd3aead27"
+    "@std/yaml@1.0.8": {
+      "integrity": "90b8aab62995e929fa0ea5f4151c287275b63e321ac375c35ff7406ca60c169d"
     },
-    "@zip-js/zip-js@2.7.61": {
-      "integrity": "fb84a27455a79ce893d80150b5a6d26c1bdb744a7319c2a084a967c31c221ffc"
+    "@zip-js/zip-js@2.7.62": {
+      "integrity": "11cbe0746fa1e52e6e0a601c89ba97365f16e38a07f139b9d9914f988aec9081"
     }
   },
   "npm": {
@@ -263,8 +295,8 @@
     "a-sync-waterfall@1.0.1": {
       "integrity": "sha512-RYTOHHdWipFUliRFMCS4X2Yn2X8M87V/OpSqWzKKOGhzqyUxzyVmhHDH9sAvG+ZuQf/TAOFsLCpMw09I1ufUnA=="
     },
-    "acorn@8.14.1": {
-      "integrity": "sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==",
+    "acorn@8.15.0": {
+      "integrity": "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==",
       "bin": true
     },
     "ansi-regex@6.1.0": {
@@ -571,17 +603,17 @@
       "jsr:@std/assert@1.0.13",
       "jsr:@std/csv@1.0.6",
       "jsr:@std/encoding@1.0.10",
-      "jsr:@std/fs@1.0.17",
+      "jsr:@std/fs@1.0.18",
       "jsr:@std/io@0.225.2",
       "jsr:@std/json@1.0.2",
       "jsr:@std/log@0.224.14",
-      "jsr:@std/path@1.0.9",
-      "jsr:@std/streams@1.0.9",
-      "jsr:@std/toml@1.0.6",
-      "jsr:@std/yaml@1.0.6",
-      "jsr:@zip-js/zip-js@2.7.61",
+      "jsr:@std/path@1.1.0",
+      "jsr:@std/streams@1.0.10",
+      "jsr:@std/toml@1.0.8",
+      "jsr:@std/yaml@1.0.8",
+      "jsr:@zip-js/zip-js@2.7.62",
       "npm:@eyalsh/docopt@1.0.7",
-      "npm:acorn@8.14.1",
+      "npm:acorn@8.15.0",
       "npm:change-case@5.4.4",
       "npm:deep-diff@1.0.2",
       "npm:handlebars@4.7.8",
