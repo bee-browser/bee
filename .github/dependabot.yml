@@ -8,3 +8,9 @@ updates:
     directory: /
     schedule:
       interval: daily
+    groups:
+      # cranelift* must be updated in the same pull request
+      cranelift:
+        patterns:
+          - 'cranelift'
+          - 'cranelift-*'
