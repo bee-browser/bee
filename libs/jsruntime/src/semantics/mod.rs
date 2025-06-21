@@ -884,6 +884,7 @@ where
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
 
+        let is_entry_function = self.analysis_stack.is_empty();
         let lambda_id = self.support.register_lambda(kind);
 
         let mut analysis = FunctionAnalysis::new(name, lambda_id, this_mode);
@@ -898,37 +899,11 @@ where
         analysis.start_scope(scope_ref);
         analysis.push_command(CompileCommand::DeclareVariables(scope_ref));
 
-        match this_mode {
-            ThisMode::Strict => {
-                if !self.analysis_stack.is_empty() {
-                    analysis
-                        .flags
-                        .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
-                }
-            }
-            ThisMode::Global => {
-                if !self.analysis_stack.is_empty() {
-                    analysis
-                        .flags
-                        .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
-                }
-                // The `this` binding will be resolved to the global object if the `this` argument
-                // of the lambda function is null-ish.
-                //
-                // TODO(perf): use a direct reference to the global object
-                analysis
-                    .references
-                    .push(Reference::new(Symbol::GLOBAL_THIS, scope_ref));
-            }
-            ThisMode::Lexical => {
-                // The `this` binding may be resolved to the global object if the enclosing outer
-                // function is the entry function.
-                //
-                // TODO(perf): use a direct reference to the global object
-                analysis
-                    .references
-                    .push(Reference::new(Symbol::GLOBAL_THIS, scope_ref));
-            }
+        // The `this` binding will be always resolved to the global object in the entry function.
+        if !is_entry_function && matches!(this_mode, ThisMode::Strict | ThisMode::Global) {
+            analysis
+                .flags
+                .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
         }
 
         if matches!(kind, LambdaKind::Ramp) {
