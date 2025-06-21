@@ -1,6 +1,8 @@
 mod compiler;
 mod support;
 
+use std::ffi::c_void;
+
 use cranelift::codegen;
 use cranelift::codegen::ir;
 use cranelift::codegen::settings::Configurable as _;
@@ -46,8 +48,14 @@ pub trait CompilerSupport {
     fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
     fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
 
+    // Program
+    fn get_function(&self, lambda_id: LambdaId) -> &Function;
+
     // Executor
     fn target_config(&self) -> isa::TargetFrontendConfig;
+
+    // GlobalObject
+    fn global_object(&mut self) -> *mut c_void;
 }
 
 impl<X> CompilerSupport for Runtime<X> {
@@ -67,8 +75,17 @@ impl<X> CompilerSupport for Runtime<X> {
         self.lambda_registry.get_mut(lambda_id)
     }
 
+    fn get_function(&self, lambda_id: LambdaId) -> &Function {
+        let info = self.lambda_registry.get(lambda_id);
+        &self.programs[info.program_id.index()].functions[info.function_index as usize]
+    }
+
     fn target_config(&self) -> isa::TargetFrontendConfig {
         self.executor.target_config()
+    }
+
+    fn global_object(&mut self) -> *mut c_void {
+        self.global_object.as_ptr()
     }
 }
 

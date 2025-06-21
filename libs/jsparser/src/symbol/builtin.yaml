@@ -6,34 +6,38 @@
 - '##error'
 
 # Reserved words defined in the ECMA-262 specification.
-- Infinity
-- ['-Infinity', NEG_INFINITY]
-- NaN
-- async
 - await
 - arguments
 - eval
+- 'false'
+- function
 - implements
 - interface
 - let
+- 'null'
 - package
 - private
 - protected
 - public
 - static
+- this
+- 'true'
 - undefined
 - yield
-- __proto__
 
 # Non-reserved, but commonly used words
 # TODO: use separate string table?
-- 'null'
-- 'false'
-- 'true'
+- __proto__
+- Infinity
+- NaN
+- async
+- boolean
+- globalThis
+- length
+- number
 - object
 - string
 - symbol
-- boolean
-- number
-- function
-- length
+
+# Special symbols for internal use only.
+- ['-Infinity', NEG_INFINITY]
