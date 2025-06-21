@@ -29,7 +29,6 @@
 # TODO: use separate string table?
 - __proto__
 - Infinity
-- ['-Infinity', NEG_INFINITY]
 - NaN
 - async
 - boolean
@@ -39,3 +38,6 @@
 - object
 - string
 - symbol
+
+# Special symbols for internal use only.
+- ['-Infinity', NEG_INFINITY]

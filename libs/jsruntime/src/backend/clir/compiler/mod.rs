@@ -655,7 +655,6 @@ where
     }
 
     fn process_this(&mut self) {
-        // TODO(perf): shortcut the property access.
         let this = self.this.unwrap();
         self.operand_stack.push(Operand::Any(this, None));
     }
@@ -945,6 +944,7 @@ where
         logger::debug!(event = "resolve_this_binding", ?func.this_binding);
         debug_assert!(self.this.is_none());
         debug_assert!(self.this_capture.is_none());
+
         match func.this_binding {
             ThisBinding::None => {
                 // No code is generated for the `this` binding resolution, which improves the
@@ -956,18 +956,20 @@ where
                 self.this = Some(this);
             }
             ThisBinding::Capture => {
+                // The capture of the outer `this` binding is always the first element in the
+                // capture list.
                 let this = self.editor.put_load_captured_value(0);
                 self.this = Some(this);
             }
             ThisBinding::GlobalObject => {
                 // const this = globalObject;
-                // Don't use `globalThis`.
+                // DO NOT USE `globalThis` HERE.
                 let global_object = self.support.global_object();
                 let value = self.editor.put_object(global_object);
                 let this = self.perform_to_any(&Operand::Object(value));
                 self.this = Some(this);
             }
-            ThisBinding::GlobalObjectIfNullish => {
+            ThisBinding::Quirk => {
                 // const this =
                 //   thisArgument !== null && thisArgument !== undefined ?
                 //   ToObject(thisArgument) : globalObject;
@@ -979,7 +981,7 @@ where
                     .push(Operand::Any(self.editor.this_argument(), None));
                 self.perform_to_object();
                 self.process_else(true);
-                // Don't use `globalThis`.
+                // DO NOT USE `globalThis` HERE.
                 let global_object = self.support.global_object();
                 let value = self.editor.put_object(global_object);
                 self.operand_stack.push(Operand::Object(value));
@@ -1029,6 +1031,8 @@ where
                 let this = self.this.unwrap();
                 self.editor.put_escape_value(this_capture, this);
             }
+            // tidy this value if it exists
+            // TODO: GC
         }
         self.editor.put_jump(postcheck_block, &[]);
 

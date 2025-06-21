@@ -180,22 +180,21 @@ pub enum ThisBinding {
     /// function scope.
     Capture,
 
-    /// The `this` binding in the function body is resolved to the global object if the `this`
-    /// argument of the lambda function is null-ish.  Otherwise, it's resolved to the result of
-    /// `ToObject(thisArgument)`.
+    /// The `this` binding is always resolved to the global object even if the `this` argument of
+    /// the lambda function is not null-ish.
     GlobalObject,
 
     /// The `this` binding in the function body is resolved to the global object if the `this`
     /// argument of the lambda function is null-ish.  Otherwise, it's resolved to the result of
     /// `ToObject(thisArgument)`.
-    GlobalObjectIfNullish,
+    Quirk,
 }
 
 bitflags! {
     #[derive(Debug)]
     struct FunctionFlags: u8 {
         /// The `this` binding is captured by descendant closures.
-        const THIS_BINDING_CAPTURED = 1 << 1;
+        const THIS_BINDING_CAPTURED = 1 << 0;
     }
 }
 
@@ -1075,7 +1074,7 @@ where
             (_, _, ThisMode::Strict) => ThisBinding::ThisArgument,
             (_, true, ThisMode::Lexical) => ThisBinding::Capture,
             (_, false, ThisMode::Lexical) => ThisBinding::GlobalObject,
-            (_, true, ThisMode::Global) => ThisBinding::GlobalObjectIfNullish,
+            (_, true, ThisMode::Global) => ThisBinding::Quirk,
             (_, false, ThisMode::Global) => ThisBinding::GlobalObject,
         };
         let mut flags = FunctionFlags::empty();
@@ -1341,31 +1340,27 @@ enum ThisMode {
     Global,
 }
 
-macro_rules! bitflag {
-    ($pos:literal) => {
-        1 << $pos
-    };
-}
-
 bitflags! {
     #[derive(Debug, Default)]
     struct FunctionAnalysisFlags: u8 {
         /// Enabled if the context is the ramp function for an async function.
-        const RAMP = bitflag!(1);
+        const RAMP = 1 << 0;
 
         /// Enabled if the context is the coroutine function for an async function.
-        const COROUTINE = bitflag!(2);
+        const COROUTINE = 1 << 1;
 
         /// The `this` binding is used in the function body.
         ///
         /// The `this` binding must be resolved to an actual value in
         /// [`CompileCommand::DeclareVariables`] according to the [`ThisBinding`].
-        const THIS_BINDING_USED = bitflag!(3);
+        const THIS_BINDING_USED = 1 << 2;
 
         /// The `this` binding is captured by descendant closures.
-        const THIS_BINDING_CAPTURED = bitflag!(4);
+        const THIS_BINDING_CAPTURED = 1 << 3;
 
-        const THIS_BINDING_LOCAL = bitflag!(5);
+        /// The `this` binding will be always resolved to the global object if this flag is not
+        /// set.
+        const THIS_BINDING_LOCAL = 1 << 4;
     }
 }
 
