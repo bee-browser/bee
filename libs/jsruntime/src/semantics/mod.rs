@@ -730,22 +730,26 @@ where
             analysis.set_command(1, CompileCommand::Nop);
         }
 
-        let this_captured = if analysis
+        let this_local = analysis
             .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_USED)
-        {
-            matches!(analysis.this_mode, ThisMode::Lexical)
-        } else {
-            false
-        };
+            .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
+        let this_used = analysis
+            .flags
+            .contains(FunctionAnalysisFlags::THIS_BINDING_USED);
+        let this_captured = analysis
+            .flags
+            .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
+        let this_mode_lexical = matches!(analysis.this_mode, ThisMode::Lexical);
+        let outer_this_captured = this_local && (this_used || this_captured) && this_mode_lexical;
 
         self.apply_analysis(analysis, func_scope_ref);
 
         let func_index = self.functions.len() - 1;
         let analysis = self.analysis_mut();
-        analysis
-            .flags
-            .set(FunctionAnalysisFlags::THIS_BINDING_CAPTURED, this_captured);
+        analysis.flags.set(
+            FunctionAnalysisFlags::THIS_BINDING_CAPTURED,
+            outer_this_captured,
+        );
         analysis.process_unresolved_references(&unresolved_references, func_index);
     }
 
@@ -897,9 +901,18 @@ where
 
         match this_mode {
             ThisMode::Strict => {
-                // Nothing to do here.
+                if !self.analysis_stack.is_empty() {
+                    analysis
+                        .flags
+                        .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
+                }
             }
             ThisMode::Global => {
+                if !self.analysis_stack.is_empty() {
+                    analysis
+                        .flags
+                        .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
+                }
                 // The `this` binding will be resolved to the global object if the `this` argument
                 // of the lambda function is null-ish.
                 //
@@ -921,6 +934,17 @@ where
 
         if matches!(kind, LambdaKind::Ramp) {
             analysis.set_ramp();
+        }
+
+        if let Some(parent) = self.analysis_stack.last_mut() {
+            if parent
+                .flags
+                .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL)
+            {
+                analysis
+                    .flags
+                    .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
+            }
         }
 
         self.analysis_stack.push(analysis);
@@ -1000,15 +1024,12 @@ where
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED)
         {
-            let func = self.functions.last_mut().unwrap();
-            if analysis
-                .flags
-                .contains(FunctionAnalysisFlags::ENTRY_FUNCTION)
-            {
-                func.this_binding = ThisBinding::GlobalObject;
-            } else {
-                func.num_captures += 1;
-            }
+            debug_assert!(
+                analysis
+                    .flags
+                    .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL)
+            );
+            self.functions.last_mut().unwrap().num_captures += 1;
         }
 
         let mut unresolved_reference = vec![];
@@ -1046,19 +1067,20 @@ where
         let this_captured = analysis
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
-        let is_entry = analysis
+        let this_local = analysis
             .flags
-            .contains(FunctionAnalysisFlags::ENTRY_FUNCTION);
-        let this_binding = match (this_used || this_captured, is_entry, analysis.this_mode) {
+            .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
+        let this_binding = match (this_used || this_captured, this_local, analysis.this_mode) {
             (false, _, _) => ThisBinding::None,
             (_, _, ThisMode::Strict) => ThisBinding::ThisArgument,
-            (_, _, ThisMode::Lexical) => ThisBinding::Capture,
-            (_, true, ThisMode::Global) => ThisBinding::GlobalObject,
-            (_, false, ThisMode::Global) => ThisBinding::GlobalObjectIfNullish,
+            (_, true, ThisMode::Lexical) => ThisBinding::Capture,
+            (_, false, ThisMode::Lexical) => ThisBinding::GlobalObject,
+            (_, true, ThisMode::Global) => ThisBinding::GlobalObjectIfNullish,
+            (_, false, ThisMode::Global) => ThisBinding::GlobalObject,
         };
         let mut flags = FunctionFlags::empty();
         // The global object is never captured.  It can be directly accessible in any scope.
-        if !is_entry && this_captured {
+        if this_captured && this_local {
             flags.insert(FunctionFlags::THIS_BINDING_CAPTURED);
         }
         self.functions.push(Function {
@@ -1093,10 +1115,6 @@ where
         } else {
             self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Strict);
         }
-
-        self.analysis_mut()
-            .flags
-            .insert(FunctionAnalysisFlags::ENTRY_FUNCTION);
     }
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
@@ -1323,26 +1341,31 @@ enum ThisMode {
     Global,
 }
 
+macro_rules! bitflag {
+    ($pos:literal) => {
+        1 << $pos
+    };
+}
+
 bitflags! {
     #[derive(Debug, Default)]
     struct FunctionAnalysisFlags: u8 {
-        /// The entry function of a program.
-        const ENTRY_FUNCTION = 0b00000001;
-
         /// Enabled if the context is the ramp function for an async function.
-        const RAMP = 0b00000010;
+        const RAMP = bitflag!(1);
 
         /// Enabled if the context is the coroutine function for an async function.
-        const COROUTINE = 0b00000100;
+        const COROUTINE = bitflag!(2);
 
         /// The `this` binding is used in the function body.
         ///
         /// The `this` binding must be resolved to an actual value in
         /// [`CompileCommand::DeclareVariables`] according to the [`ThisBinding`].
-        const THIS_BINDING_USED = 0b00001000;
+        const THIS_BINDING_USED = bitflag!(3);
 
         /// The `this` binding is captured by descendant closures.
-        const THIS_BINDING_CAPTURED = 0b00010000;
+        const THIS_BINDING_CAPTURED = bitflag!(4);
+
+        const THIS_BINDING_LOCAL = bitflag!(5);
     }
 }
 
