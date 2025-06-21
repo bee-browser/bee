@@ -127,6 +127,9 @@ pub struct Program {
 
     /// The global variables used in the program.
     pub global_symbols: FxHashSet<Symbol>,
+
+    /// `true` if the program is a JavaScript module.
+    pub module: bool,
 }
 
 impl Program {
@@ -925,13 +928,23 @@ where
     }
 
     fn handle_function_context(&mut self, name: Symbol) {
-        // TODO(feat): strict mode
-        self.start_function_scope(name, LambdaKind::Normal, ThisMode::Global);
+        // TODO(feat): 'use strict'
+        let this_mode = if self.module {
+            ThisMode::Strict
+        } else {
+            ThisMode::Global
+        };
+        self.start_function_scope(name, LambdaKind::Normal, this_mode);
     }
 
     fn handle_async_function_context(&mut self, name: Symbol) {
-        // TODO(feat): strict mode
-        self.start_function_scope(name, LambdaKind::Ramp, ThisMode::Global);
+        // TODO(feat): 'use strict'
+        let this_mode = if self.module {
+            ThisMode::Strict
+        } else {
+            ThisMode::Global
+        };
+        self.start_function_scope(name, LambdaKind::Ramp, this_mode);
     }
 
     fn handle_arrow_function_context(&mut self) {
@@ -1087,7 +1100,7 @@ where
             // The module is always treated as an async function body.
             self.start_coroutine_body();
         } else {
-            self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Strict);
+            self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
         }
     }
 
@@ -1177,6 +1190,7 @@ where
             functions: std::mem::take(&mut self.functions),
             scope_tree: self.global_analysis.scope_tree_builder.build(),
             global_symbols,
+            module: self.module,
         })
     }
 

@@ -151,7 +151,8 @@ impl<X> Runtime<X> {
         logger::debug!(event = "evaluate", ?program_id);
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
         let lambda = self.executor.get_lambda(lambda_id).unwrap();
-        self.call_entry_lambda(lambda)
+        let module = self.programs[program_id.index()].module;
+        self.call_entry_lambda(lambda, module)
     }
 
     /// Runs a program.
@@ -177,7 +178,8 @@ impl<X> Runtime<X> {
             backend::compile_function(self, program_id, function_index, optimize).unwrap();
             self.executor.get_lambda(lambda_id).unwrap()
         };
-        let value = self.call_entry_lambda(lambda)?;
+        let module = self.programs[program_id.index()].module;
+        let value = self.call_entry_lambda(lambda, module)?;
         // TODO(perf): Memory related to `lambda` can be removed safely after the call.
         // Because the top-level statements are performed only once.
         Ok(value)
@@ -203,13 +205,13 @@ impl<X> Runtime<X> {
     }
 
     /// Calls an entry lambda function.
-    fn call_entry_lambda(&mut self, lambda: Lambda) -> Result<Value, Value> {
-        logger::debug!(event = "call_entry_lambda", ?lambda);
+    fn call_entry_lambda(&mut self, lambda: Lambda, module: bool) -> Result<Value, Value> {
+        logger::debug!(event = "call_entry_lambda", ?lambda, module);
         // Specify the global object in the `this` parameter.
         // See also `semantics::Analyzer::start()`.
         //
         // TODO: immutable
-        let mut this = Value::Object(self.global_object_mut().as_ptr());
+        let mut this = Value::Undefined;
         let mut retv = Value::Undefined;
         let status = unsafe {
             lambda(
