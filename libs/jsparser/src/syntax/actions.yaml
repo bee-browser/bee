@@ -1658,7 +1658,7 @@
 - rule: Arguments_Await -> LPAREN ArgumentList_Await COMMA RPAREN
   action: process_arguments_with_comma
 - rule: TemplateLiteral_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Await_Tagged -> SubstitutionTemplate_Await_Tagged
   action: undefined
 - rule: OptionalChain_Await -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments_Await
@@ -2342,7 +2342,7 @@
 - rule: Arguments -> LPAREN ArgumentList COMMA RPAREN
   action: process_arguments_with_comma
 - rule: TemplateLiteral_Tagged -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Tagged -> SubstitutionTemplate_Tagged
   action: undefined
 - rule: OptionalChain -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments
@@ -2546,7 +2546,7 @@
     LBRACE AsyncGeneratorBody RBRACE
   action: undefined
 - rule: TemplateLiteral_Await -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Await -> SubstitutionTemplate_Await
   action: undefined
 - rule: NewTarget -> NEW DOT TARGET
@@ -2686,7 +2686,7 @@
     AssignmentExpression_In_Yield
   action: undefined
 - rule: TemplateLiteral_Yield_Tagged -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Yield_Tagged -> SubstitutionTemplate_Yield_Tagged
   action: undefined
 - rule: OptionalChain_Yield -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments_Yield
@@ -2810,7 +2810,7 @@
     AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: TemplateLiteral_Yield_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: >-
     TemplateLiteral_Yield_Await_Tagged ->
     SubstitutionTemplate_Yield_Await_Tagged
@@ -2892,7 +2892,7 @@
 - rule: PrimaryExpression -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression -> TemplateLiteral
-  action: undefined
+  action: nop
 - rule: PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
   action: process_primary_expression_cpeaapl
 - rule: SuperProperty -> SUPER LBRACK Expression_In RBRACK
@@ -3125,7 +3125,7 @@
 - rule: PrimaryExpression_Yield -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression_Yield -> TemplateLiteral_Yield
-  action: undefined
+  action: nop
 - rule: >-
     PrimaryExpression_Yield ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield
@@ -3187,7 +3187,7 @@
 - rule: PrimaryExpression_Yield_Await -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
-  action: undefined
+  action: nop
 - rule: >-
     PrimaryExpression_Yield_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
@@ -3247,7 +3247,7 @@
 - rule: ClassExpression -> CLASS BindingIdentifier ClassTail
   action: undefined
 - rule: TemplateLiteral -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral -> SubstitutionTemplate
   action: undefined
 - rule: TemplateSpans_Tagged -> TEMPLATE_TAIL
@@ -3483,7 +3483,7 @@
 - rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
   action: undefined
 - rule: TemplateLiteral_Yield -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Yield -> SubstitutionTemplate_Yield
   action: undefined
 - rule: TemplateSpans_Yield_Tagged -> TEMPLATE_TAIL
@@ -3533,7 +3533,7 @@
     ClassTail_Yield_Await
   action: undefined
 - rule: TemplateLiteral_Yield_Await -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Yield_Await -> SubstitutionTemplate_Yield_Await
   action: undefined
 - rule: TemplateSpans_Yield_Await_Tagged -> TEMPLATE_TAIL

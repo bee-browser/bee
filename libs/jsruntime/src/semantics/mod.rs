@@ -328,6 +328,7 @@ where
             Node::Boolean(value) => self.handle_boolean(value),
             Node::Number(value, ..) => self.handle_number(value),
             Node::String(value, ..) => self.handle_string(value),
+            Node::TemplateLiteral(n) => self.handle_template_literal(n),
             Node::Array => self.handle_array(),
             Node::Object => self.handle_object(),
             Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
@@ -447,6 +448,13 @@ where
 
     fn handle_string(&mut self, value: Vec<u16>) {
         analysis_mut!(self).put_string(value);
+    }
+
+    fn handle_template_literal(&mut self, n: u16) {
+        debug_assert!(n > 0);
+        if n > 1 {
+            // TODO(feat): concatenate strings
+        }
     }
 
     fn handle_array(&mut self) {

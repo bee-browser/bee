@@ -70,6 +70,7 @@ struct Syntax {
 enum Detail {
     Token(usize),
     Literal,
+    TemplateLiteral,
     Identifier(Symbol),
     IdentifierReference(#[allow(unused)] Symbol), // TODO: SS
     BindingIdentifier(Symbol),
@@ -169,6 +170,7 @@ pub enum Node<'s> {
     Boolean(bool),
     Number(f64, &'s str),
     String(Vec<u16>, &'s str),
+    TemplateLiteral(u16),
     Array,
     Object,
     LiteralPropertyName(LiteralPropertyName),
@@ -1378,6 +1380,28 @@ where
     //   = AssignmentExpression[?In, ?Yield, ?Await]
     fn process_initializer(&mut self) -> Result<(), Error> {
         self.replace(2, Detail::Initializer);
+        Ok(())
+    }
+
+    // 13.2.8 Template Literals
+
+    // TemplateLiteral[Yield, Await, Tagged] :
+    //   NoSubstitutionTemplate
+    fn process_template_literal_no_substitution(&mut self) -> Result<(), Error> {
+        // TODO(feat): 13.2.8.1 Static Semantics: Early Errors
+        // It is a Syntax Error if the [Tagged] parameter was not set and NoSubstitutionTemplate
+        // Contains NotEscapeSequence.
+        let token_index = self.tokens.len() - 1;
+        let token = &self.tokens[token_index];
+        debug_assert!(matches!(token.kind, TokenKind::NoSubstitutionTemplate));
+        // TODO: perform `TV`
+        let content = &token.lexeme[1..(token.lexeme.len() - 1)];
+        let value = content.encode_utf16().collect();
+        let start_index = self.enqueue(Node::String(value, token.lexeme));
+        let end_index = self.enqueue(Node::TemplateLiteral(1));
+        let syntax = self.top_mut();
+        syntax.detail = Detail::TemplateLiteral;
+        syntax.nodes_range = start_index..(end_index + 1);
         Ok(())
     }
 
