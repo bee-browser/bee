@@ -426,6 +426,7 @@ where
             CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
             CompileCommand::PushArrayElement => self.process_push_array_element(),
@@ -829,6 +830,10 @@ where
         let (operand, this, _) = self.dereference();
         let closure = match operand {
             Operand::Closure(closure) => closure, // IIFE
+            Operand::Object(object) => {
+                // IIFE
+                self.editor.put_load_closure_from_object(object)
+            }
             Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
             _ => {
                 self.process_number(1001.); // TODO: TypeError
@@ -1054,6 +1059,10 @@ where
             .put_branch(is_normal, exit_block, &[], parent_exit_block, &[]);
 
         self.editor.switch_to_block(exit_block);
+    }
+
+    fn process_to_object(&mut self) {
+        self.perform_to_object();
     }
 
     // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
