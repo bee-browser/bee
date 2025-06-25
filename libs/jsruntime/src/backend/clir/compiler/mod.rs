@@ -709,8 +709,6 @@ where
                 self.editor.put_store_string_to_any(value, any);
                 any.into()
             }
-            Operand::Lambda(..) => todo!(),
-            Operand::Coroutine(_) => todo!(),
             Operand::Object(value) => {
                 let any = self.editor.put_alloc_any();
                 self.editor.put_store_object_to_any(value, any);
@@ -732,7 +730,9 @@ where
                 .into(),
             Operand::Any(value, None) => value.into(),
             Operand::Any(..) => todo!(),
-            Operand::Closure(_)
+            Operand::Lambda(..)
+            | Operand::Closure(_)
+            | Operand::Coroutine(_)
             | Operand::PropertyReference(_)
             | Operand::VariableReference(..) => {
                 unreachable!("{operand:?}")
@@ -838,7 +838,7 @@ where
         let argv = self.emit_create_argv(argc);
         let (operand, this, _) = self.dereference();
         let closure = match operand {
-            Operand::Closure(closure) => closure, // IIFE
+            Operand::Closure(_) => unreachable!(),
             Operand::Function(object) => {
                 // IIFE
                 self.editor.put_load_closure_from_function(object)
@@ -872,7 +872,11 @@ where
         let argv = self.emit_create_argv(argc);
         let (operand, ..) = self.dereference();
         let closure = match operand {
-            Operand::Closure(closure) => closure, // IIFE
+            Operand::Closure(_) => unreachable!(),
+            Operand::Function(object) => {
+                // IIFE
+                self.editor.put_load_closure_from_function(object)
+            }
             Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
             _ => {
                 self.process_number(1001.); // TODO: TypeError
@@ -1232,8 +1236,6 @@ where
             Operand::Boolean(..) => self.process_string(names::BOOLEAN),
             Operand::Number(..) => self.process_string(names::NUMBER),
             Operand::String(..) => self.process_string(names::STRING),
-            // TODO: remove
-            Operand::Closure(..) | Operand::Coroutine(..) => self.process_string(names::FUNCTION),
             Operand::Object(..) | Operand::Promise(..) => self.process_string(names::OBJECT),
             Operand::Function(..) => self.process_string(names::FUNCTION),
             Operand::Any(_, Some(ref value)) => match value {
@@ -1251,6 +1253,8 @@ where
                 self.operand_stack.push(Operand::String(string, None));
             }
             Operand::Lambda(..)
+            | Operand::Closure(_)
+            | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
         }
@@ -2554,14 +2558,13 @@ where
             Operand::Undefined | Operand::Null => self.editor.put_boolean(false),
             Operand::Boolean(..)
             | Operand::Number(..)
-            // TODO: remove
-            | Operand::Closure(_)
             | Operand::Object(_)
             | Operand::Function(_)
             | Operand::Promise(_) => self.editor.put_boolean(true),
             Operand::String(..) => todo!("string"),
             Operand::Any(value, ..) => self.editor.put_is_non_nullish(*value),
             Operand::Lambda(..)
+            | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2609,13 +2612,12 @@ where
             Operand::Boolean(value, ..) => *value,
             Operand::Number(value, ..) => self.editor.put_number_to_boolean(*value),
             Operand::String(..) => todo!(),
-            // TODO: remove
-            Operand::Closure(_)
-            | Operand::Promise(_)
-            | Operand::Object(_)
-            | Operand::Function(_) => self.editor.put_boolean(true),
+            Operand::Promise(_) | Operand::Object(_) | Operand::Function(_) => {
+                self.editor.put_boolean(true)
+            }
             Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
             Operand::Lambda(..)
+            | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => {
@@ -2633,11 +2635,10 @@ where
             Operand::Boolean(value, ..) => self.editor.put_boolean_to_number(*value),
             Operand::Number(value, ..) => *value,
             Operand::String(..) => unimplemented!("string.to_numeric"),
-            // TODO: remove
-            Operand::Closure(_) => self.editor.put_number(f64::NAN),
             Operand::Object(_) | Operand::Function(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
             Operand::Lambda(..)
+            | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::Promise(_)
             | Operand::VariableReference(..)
