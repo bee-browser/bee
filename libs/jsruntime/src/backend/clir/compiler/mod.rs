@@ -1618,8 +1618,6 @@ where
                 let object = self.pop_object();
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
-                self.editor
-                    .put_runtime_print_any(self.support, value, c"process_assignment");
                 match key {
                     PropertyKey::Symbol(key) => {
                         self.editor.put_runtime_set_value_by_symbol(
@@ -3122,11 +3120,6 @@ where
         let else_block = self.editor.create_block();
         let end_block = self.editor.create_block_with_addr();
 
-        self.editor.put_runtime_print_any(
-            self.support,
-            value,
-            c"emit_load_closure_or_throw_type_error",
-        );
         // if value.is_function()
         let is_function = self.editor.put_is_function(value);
         self.editor
