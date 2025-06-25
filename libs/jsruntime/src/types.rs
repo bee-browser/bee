@@ -25,11 +25,13 @@ pub enum Value {
     Number(f64) = Self::KIND_NUMBER,
     String(U16String) = Self::KIND_STRING,
     // TODO(issue#237): GcCellRef
+    // TODO: remove
     Closure(*mut Closure) = Self::KIND_CLOSURE,
     Promise(Promise) = Self::KIND_PROMISE,
     // TODO(issue#237): GcCellRef
     // TODO: *mut Object
     Object(*mut c_void) = Self::KIND_OBJECT,
+    Function(*mut c_void) = Self::KIND_FUNCTION,
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
@@ -43,9 +45,11 @@ impl Value {
     pub(crate) const KIND_BOOLEAN: u8 = 3;
     pub(crate) const KIND_NUMBER: u8 = 4;
     pub(crate) const KIND_STRING: u8 = 5;
+    // TODO: remove
     pub(crate) const KIND_CLOSURE: u8 = 6;
     pub(crate) const KIND_PROMISE: u8 = 7;
     pub(crate) const KIND_OBJECT: u8 = 8;
+    pub(crate) const KIND_FUNCTION: u8 = 9;
 
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
@@ -60,9 +64,12 @@ impl Value {
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),
+            // TODO: remove
             Self::Closure(_value) => unimplemented!("new Function()"),
             Self::Promise(_value) => unimplemented!("new Promise()"),
-            Self::Object(value) => unsafe { Ok(value.cast::<Object>().as_mut().unwrap()) },
+            Self::Object(value) | Self::Function(value) => unsafe {
+                Ok(value.cast::<Object>().as_mut().unwrap())
+            },
             Self::None => unreachable!(),
         }
     }
@@ -94,8 +101,10 @@ impl Value {
             Self::Boolean(_) => &BOOLEAN,
             Self::Number(_) => &NUMBER,
             Self::String(_) => &STRING,
+            // TODO: remove
             Self::Closure(_) => &FUNCTION,
             Self::Object(_) => &OBJECT,
+            Self::Function(_) => &FUNCTION,
             Self::Promise(_) => &OBJECT,
         }
     }
@@ -146,9 +155,11 @@ impl std::fmt::Display for Value {
             Self::Boolean(value) => write!(f, "{value}"),
             Self::Number(value) => write!(f, "{value}"),
             Self::String(value) => write!(f, "{value}"),
+            // TODO: remove
             Self::Closure(value) => write!(f, "{:?}", unsafe { value.as_ref().unwrap() }),
             Self::Promise(value) => write!(f, "{value:?}"),
             Self::Object(value) => write!(f, "object({value:?})"),
+            Self::Function(value) => write!(f, "function({value:?})"),
         }
     }
 }

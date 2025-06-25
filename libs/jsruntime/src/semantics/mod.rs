@@ -770,7 +770,7 @@ where
     }
 
     fn handle_function_expression(&mut self, named: bool) {
-        self.do_handle_function_expression(named, true);
+        self.do_handle_function_expression(named, false);
     }
 
     fn handle_async_function_expression(&mut self, named: bool) {
@@ -780,15 +780,15 @@ where
         self.do_handle_function_expression(named, false);
     }
 
-    fn do_handle_function_expression(&mut self, named: bool, to_object: bool) {
+    fn do_handle_function_expression(&mut self, named: bool, coroutine: bool) {
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, named, to_object);
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, named, coroutine);
     }
 
     fn handle_arrow_function(&mut self) {
-        self.do_handle_arrow_function(true);
+        self.do_handle_arrow_function(false);
     }
 
     fn handle_async_arrow_function(&mut self) {
@@ -798,7 +798,7 @@ where
         self.do_handle_arrow_function(false);
     }
 
-    fn do_handle_arrow_function(&mut self, to_object: bool) {
+    fn do_handle_arrow_function(&mut self, coroutine: bool) {
         // TODO: An ArrowFunction does not define local variables for arguments, super, this, or
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a variable in a lexically enclosing environment.
@@ -806,7 +806,7 @@ where
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false, to_object);
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false, coroutine);
     }
 
     fn handle_await_expression(&mut self) {
@@ -997,7 +997,7 @@ where
     // See //libs/jsruntime/docs/internals.md.
     fn end_coroutine_body(&mut self) {
         // TODO(perf): Some of the local variables can be placed on the stack.
-        self.do_handle_function_expression(false, false);
+        self.do_handle_function_expression(false, true);
 
         let func = self.functions.last().unwrap();
         push_commands!(
@@ -1672,7 +1672,7 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Batch(5));
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
-        self.commands.push(CompileCommand::ToObject);
+        self.commands.push(CompileCommand::Function);
         self.commands
             .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareClosure);
@@ -1696,7 +1696,7 @@ impl FunctionAnalysis {
         scope_ref: ScopeRef,
         lambda_id: LambdaId,
         named: bool,
-        to_object: bool,
+        coroutine: bool,
     ) {
         if named {
             debug_assert!(!self.symbol_stack.is_empty());
@@ -1705,8 +1705,8 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands
             .push(CompileCommand::Closure(false, scope_ref));
-        if to_object {
-            self.commands.push(CompileCommand::ToObject);
+        if !coroutine {
+            self.commands.push(CompileCommand::Function);
         }
     }
 
@@ -2062,6 +2062,7 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Object,
+    Function,
     Lambda(LambdaId),
     Closure(bool, ScopeRef),
     Coroutine(LambdaId, u16),
@@ -2085,7 +2086,6 @@ pub enum CompileCommand {
     PopScope(ScopeRef),
 
     // object
-    ToObject,
     CreateDataProperty,
     CopyDataProperties,
     PushArrayElement,

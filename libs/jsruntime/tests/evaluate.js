@@ -48,8 +48,8 @@ async function main(args, options) {
         return 'Value::Number(f64::INFINITY)';
       case '-Infinity':
         return 'Value::Number(-f64::INFINITY)';
-      case 'closure':
-        return 'Value::Closure(std::ptr::null_mut())';
+      case 'function':
+        return 'Value::Function(std::ptr::null_mut())';
       case 'object':
         return 'Value::Object(std::ptr::null_mut())';
       case 'promise':
