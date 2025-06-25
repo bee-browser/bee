@@ -576,6 +576,7 @@ where
 
     fn process_function(&mut self) {
         let closure = self.pop_closure();
+        // TODO(feat): Function object
         let object = self.editor.put_runtime_create_object(self.support);
         self.editor.put_store_closure_to_function(closure, object);
         self.operand_stack.push(Operand::Function(object));
