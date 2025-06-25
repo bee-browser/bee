@@ -483,18 +483,18 @@ impl<'a> Editor<'a> {
         NumberIr(self.put_load_f64(any.0, Value::HOLDER_OFFSET))
     }
 
-    pub fn put_load_closure(&mut self, any: AnyIr) -> ClosureIr {
-        logger::debug!(event = "put_load_closure", ?any);
-        ClosureIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
-    }
-
     pub fn put_load_promise(&mut self, any: AnyIr) -> PromiseIr {
         logger::debug!(event = "put_load_promise", ?any);
         PromiseIr(self.put_load_i32(any.0, Value::HOLDER_OFFSET))
     }
 
     pub fn put_load_object(&mut self, any: AnyIr) -> ObjectIr {
-        logger::debug!(event = "put_load_closure", ?any);
+        logger::debug!(event = "put_load_object", ?any);
+        ObjectIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
+    }
+
+    pub fn put_load_function(&mut self, any: AnyIr) -> ObjectIr {
+        logger::debug!(event = "put_load_function", ?any);
         ObjectIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
     }
 
@@ -627,9 +627,19 @@ impl<'a> Editor<'a> {
         ObjectIr(self.builder.ins().iconst(self.addr_type, addr as i64))
     }
 
-    pub fn put_load_closure_from_object(&mut self, object: ObjectIr) -> ClosureIr {
-        logger::debug!(event = "put_load_closure_from_object", ?object);
+    // function
+
+    pub fn put_load_closure_from_function(&mut self, object: ObjectIr) -> ClosureIr {
+        logger::debug!(event = "put_load_closure_from_function", ?object);
         ClosureIr(self.put_load_addr(object.0, Object::CALL_OFFSET))
+    }
+
+    pub fn put_store_closure_to_function(&mut self, closure: ClosureIr, object: ObjectIr) {
+        logger::debug!(event = "put_store_closure_from_function", ?object);
+        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        self.builder
+            .ins()
+            .store(FLAGS, closure.0, object.0, Object::CALL_OFFSET as i32);
     }
 
     // argv
@@ -750,11 +760,6 @@ impl<'a> Editor<'a> {
         self.put_store_kind_and_value_to_any(Value::KIND_STRING, string.0, any);
     }
 
-    pub fn put_store_closure_to_any(&mut self, closure: ClosureIr, any: AnyIr) {
-        logger::debug!(event = "put_store_closure_to_any", ?closure, ?any);
-        self.put_store_kind_and_value_to_any(Value::KIND_CLOSURE, closure.0, any);
-    }
-
     pub fn put_store_promise_to_any(&mut self, promise: PromiseIr, any: AnyIr) {
         logger::debug!(event = "put_store_promise_to_any", ?promise, ?any);
         self.put_store_kind_and_value_to_any(Value::KIND_PROMISE, promise.0, any);
@@ -763,6 +768,11 @@ impl<'a> Editor<'a> {
     pub fn put_store_object_to_any(&mut self, object: ObjectIr, any: AnyIr) {
         logger::debug!(event = "put_store_object_to_any", ?object, ?any);
         self.put_store_kind_and_value_to_any(Value::KIND_OBJECT, object.0, any);
+    }
+
+    pub fn put_store_function_to_any(&mut self, object: ObjectIr, any: AnyIr) {
+        logger::debug!(event = "put_store_function_to_any", ?object, ?any);
+        self.put_store_kind_and_value_to_any(Value::KIND_FUNCTION, object.0, any);
     }
 
     pub fn put_store_any_to_any(&mut self, src: AnyIr, dst: AnyIr) {
@@ -962,11 +972,6 @@ impl<'a> Editor<'a> {
         self.put_is_kind_of(Value::KIND_NUMBER, any)
     }
 
-    pub fn put_is_closure(&mut self, any: AnyIr) -> BooleanIr {
-        logger::debug!(event = "put_is_closure", ?any);
-        self.put_is_kind_of(Value::KIND_CLOSURE, any)
-    }
-
     pub fn put_is_promise(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_promise", ?any);
         self.put_is_kind_of(Value::KIND_PROMISE, any)
@@ -975,6 +980,11 @@ impl<'a> Editor<'a> {
     pub fn put_is_object(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_object", ?any);
         self.put_is_kind_of(Value::KIND_OBJECT, any)
+    }
+
+    pub fn put_is_function(&mut self, any: AnyIr) -> BooleanIr {
+        logger::debug!(event = "put_is_function", ?any);
+        self.put_is_kind_of(Value::KIND_FUNCTION, any)
     }
 
     pub fn put_is_non_nullish(&mut self, any: AnyIr) -> BooleanIr {
@@ -1004,11 +1014,6 @@ impl<'a> Editor<'a> {
         self.put_is_same_float_value(lhs.0, rhs.0)
     }
 
-    pub fn put_is_same_closure(&mut self, lhs: ClosureIr, rhs: ClosureIr) -> BooleanIr {
-        logger::debug!(event = "put_is_same_closure", ?lhs, ?rhs);
-        self.put_is_same_int_value(lhs.0, rhs.0)
-    }
-
     pub fn put_is_same_promise(&mut self, lhs: PromiseIr, rhs: PromiseIr) -> BooleanIr {
         logger::debug!(event = "put_is_same_promise", ?lhs, ?rhs);
         self.put_is_same_int_value(lhs.0, rhs.0)
@@ -1016,6 +1021,11 @@ impl<'a> Editor<'a> {
 
     pub fn put_is_same_object(&mut self, lhs: ObjectIr, rhs: ObjectIr) -> BooleanIr {
         logger::debug!(event = "put_is_same_object", ?lhs, ?rhs);
+        self.put_is_same_int_value(lhs.0, rhs.0)
+    }
+
+    pub fn put_is_same_function(&mut self, lhs: ObjectIr, rhs: ObjectIr) -> BooleanIr {
+        logger::debug!(event = "put_is_same_function", ?lhs, ?rhs);
         self.put_is_same_int_value(lhs.0, rhs.0)
     }
 
@@ -1170,6 +1180,21 @@ impl<'a> Editor<'a> {
         self.put_store(value.0, scratch_buffer, offset);
     }
 
+    pub fn put_write_function_to_scratch_buffer(
+        &mut self,
+        value: ObjectIr,
+        scratch_buffer: ir::Value,
+        offset: usize,
+    ) {
+        logger::debug!(
+            event = "put_write_function_to_scratch_buffer",
+            ?value,
+            ?scratch_buffer,
+            offset,
+        );
+        self.put_store(value.0, scratch_buffer, offset);
+    }
+
     pub fn put_write_promise_to_scratch_buffer(
         &mut self,
         value: PromiseIr,
@@ -1260,6 +1285,19 @@ impl<'a> Editor<'a> {
     ) -> ObjectIr {
         logger::debug!(
             event = "put_read_object_from_scratch_buffer",
+            ?scratch_buffer,
+            offset
+        );
+        ObjectIr(self.put_load_addr(scratch_buffer, offset))
+    }
+
+    pub fn put_read_function_from_scratch_buffer(
+        &mut self,
+        scratch_buffer: ir::Value,
+        offset: usize,
+    ) -> ObjectIr {
+        logger::debug!(
+            event = "put_read_function_from_scratch_buffer",
             ?scratch_buffer,
             offset
         );

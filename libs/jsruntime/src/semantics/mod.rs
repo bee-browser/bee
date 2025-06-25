@@ -770,20 +770,35 @@ where
     }
 
     fn handle_function_expression(&mut self, named: bool) {
-        self.end_function_scope();
-
-        let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, named);
+        self.do_handle_function_expression(named, false);
     }
 
     fn handle_async_function_expression(&mut self, named: bool) {
         self.end_coroutine_body();
 
         // Node::FunctionExpression for the outer ramp function.
-        self.handle_function_expression(named);
+        self.do_handle_function_expression(named, false);
+    }
+
+    fn do_handle_function_expression(&mut self, named: bool, coroutine: bool) {
+        self.end_function_scope();
+
+        let func = self.functions.last().unwrap();
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, named, coroutine);
     }
 
     fn handle_arrow_function(&mut self) {
+        self.do_handle_arrow_function(false);
+    }
+
+    fn handle_async_arrow_function(&mut self) {
+        self.end_coroutine_body();
+
+        // Node::ArrowFunction for the outer ramp function.
+        self.do_handle_arrow_function(false);
+    }
+
+    fn do_handle_arrow_function(&mut self, coroutine: bool) {
         // TODO: An ArrowFunction does not define local variables for arguments, super, this, or
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a variable in a lexically enclosing environment.
@@ -791,14 +806,7 @@ where
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false);
-    }
-
-    fn handle_async_arrow_function(&mut self) {
-        self.end_coroutine_body();
-
-        // Node::ArrowFunction for the outer ramp function.
-        self.handle_arrow_function()
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false, coroutine);
     }
 
     fn handle_await_expression(&mut self) {
@@ -989,7 +997,7 @@ where
     // See //libs/jsruntime/docs/internals.md.
     fn end_coroutine_body(&mut self) {
         // TODO(perf): Some of the local variables can be placed on the stack.
-        self.handle_function_expression(false);
+        self.do_handle_function_expression(false, true);
 
         let func = self.functions.last().unwrap();
         push_commands!(
@@ -1661,9 +1669,10 @@ impl FunctionAnalysis {
         // This is a hoistable declaration.  Commands following the `Batch` command will perform
         // by a command handler for the `DeclareVariables` command generated for the current scope.
         let index = self.commands.len();
-        self.commands.push(CompileCommand::Batch(4));
+        self.commands.push(CompileCommand::Batch(5));
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
+        self.commands.push(CompileCommand::Function);
         self.commands
             .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareClosure);
@@ -1687,6 +1696,7 @@ impl FunctionAnalysis {
         scope_ref: ScopeRef,
         lambda_id: LambdaId,
         named: bool,
+        coroutine: bool,
     ) {
         if named {
             debug_assert!(!self.symbol_stack.is_empty());
@@ -1695,6 +1705,9 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands
             .push(CompileCommand::Closure(false, scope_ref));
+        if !coroutine {
+            self.commands.push(CompileCommand::Function);
+        }
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
@@ -2049,6 +2062,7 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Object,
+    Function,
     Lambda(LambdaId),
     Closure(bool, ScopeRef),
     Coroutine(LambdaId, u16),

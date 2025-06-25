@@ -321,9 +321,9 @@ unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Val
         Value::Number(_) => true,
         Value::String(value) if value.is_empty() => false,
         Value::String(_) => true,
-        Value::Closure(_) => true,
         Value::Promise(_) => true,
         Value::Object(_) => true,
+        Value::Function(_) => true,
     }
 }
 
@@ -339,9 +339,8 @@ unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Val
         Value::Boolean(false) => 0.0,
         Value::Number(value) => *value,
         Value::String(_value) => todo!(),
-        Value::Closure(_) => f64::NAN,
         Value::Promise(_) => f64::NAN,
-        Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
+        Value::Object(_) | Value::Function(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
     }
 }
 
@@ -353,7 +352,7 @@ unsafe extern "C" fn runtime_to_object<X>(
     logger::debug!(event = "runtime_to_object", ?value);
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let runtime = unsafe { into_runtime!(runtime, X) };
+    let _runtime = unsafe { into_runtime!(runtime, X) };
 
     debug_assert_ne!(value, std::ptr::null());
     let value = unsafe { into_value!(value) };
@@ -364,18 +363,8 @@ unsafe extern "C" fn runtime_to_object<X>(
         Value::Boolean(_value) => todo!(),
         Value::Number(_value) => todo!(),
         Value::String(_value) => todo!(),
-        Value::Closure(value) => runtime.closure_to_object(*value),
-        Value::Object(value) => *value,
+        Value::Object(value) | Value::Function(value) => *value,
         Value::Promise(_value) => todo!(),
-    }
-}
-
-impl<X> Runtime<X> {
-    fn closure_to_object(&mut self, closure: *mut Closure) -> *mut c_void {
-        // TODO(feat): 10.2.3 OrdinaryFunctionCreate()
-        let object = self.create_object();
-        object.set_closure(closure);
-        object as *mut Object as *mut c_void
     }
 }
 

@@ -129,7 +129,9 @@ impl<X> Runtime<X> {
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let value = Value::Closure(closure);
+        let object = self.create_object();
+        object.set_closure(closure);
+        let value = Value::Function(object.as_ptr());
         // TODO: add `flags` to the arguments.
         let prop = Property::data_xxx(value);
         let result = self.global_object.define_own_property(symbol.into(), prop);
@@ -287,8 +289,7 @@ impl<X> Runtime<X> {
             Value::Boolean(true) => Symbol::TRUE.into(),
             Value::Number(value) => (*value).into(),
             Value::String(value) => self.symbol_registry.intern_utf16(value.make_utf16()).into(),
-            Value::Closure(_) => todo!(),
-            Value::Object(_) => todo!(),
+            Value::Object(_) | Value::Function(_) => todo!(),
             Value::Promise(_) => todo!(),
         }
     }
