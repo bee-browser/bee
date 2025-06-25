@@ -62,8 +62,8 @@ impl Validator {
         assert_eq!(self.actual_values.len(), self.expected_values.len());
         for (actual, expected) in self.actual_values.iter().zip(self.expected_values.iter()) {
             match expected {
-                Value::Closure(_) => assert!(matches!(actual, Value::Closure(_))),
                 Value::Object(_) => assert!(matches!(actual, Value::Object(_))),
+                Value::Function(_) => assert!(matches!(actual, Value::Function(_))),
                 Value::Promise(_) => assert!(matches!(actual, Value::Promise(_))),
                 _ => {
                     // Some cases including `f64::NAN` fail in `assert_eq!()`.

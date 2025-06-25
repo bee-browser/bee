@@ -289,8 +289,6 @@ impl<X> Runtime<X> {
             Value::Boolean(true) => Symbol::TRUE.into(),
             Value::Number(value) => (*value).into(),
             Value::String(value) => self.symbol_registry.intern_utf16(value.make_utf16()).into(),
-            // TODO: remove
-            Value::Closure(_) => todo!(),
             Value::Object(_) | Value::Function(_) => todo!(),
             Value::Promise(_) => todo!(),
         }

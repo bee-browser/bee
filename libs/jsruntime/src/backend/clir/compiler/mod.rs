@@ -575,9 +575,9 @@ where
     }
 
     fn process_function(&mut self) {
-        // TODO(perf): inefficient
-        self.perform_to_object();
-        let object = self.pop_object();
+        let closure = self.pop_closure();
+        let object = self.editor.put_runtime_create_object(self.support);
+        self.editor.put_store_closure_to_function(closure, object);
         self.operand_stack.push(Operand::Function(object));
     }
 
@@ -710,11 +710,6 @@ where
                 any.into()
             }
             Operand::Lambda(..) => todo!(),
-            Operand::Closure(value) => {
-                let any = self.editor.put_alloc_any();
-                self.editor.put_store_closure_to_any(value, any);
-                any.into()
-            }
             Operand::Coroutine(_) => todo!(),
             Operand::Object(value) => {
                 let any = self.editor.put_alloc_any();
@@ -737,7 +732,9 @@ where
                 .into(),
             Operand::Any(value, None) => value.into(),
             Operand::Any(..) => todo!(),
-            Operand::PropertyReference(_) | Operand::VariableReference(..) => {
+            Operand::Closure(_)
+            | Operand::PropertyReference(_)
+            | Operand::VariableReference(..) => {
                 unreachable!("{operand:?}")
             }
         };
@@ -1245,8 +1242,6 @@ where
                 Value::Boolean(_) => self.process_string(names::BOOLEAN),
                 Value::Number(_) => self.process_string(names::NUMBER),
                 Value::String(_) => self.process_string(names::STRING),
-                // TODO: remove
-                Value::Closure(_) => self.process_string(names::FUNCTION),
                 Value::Object(_) | Value::Promise(_) => self.process_string(names::OBJECT),
                 Value::Function(_) => self.process_string(names::FUNCTION),
                 Value::None => unreachable!("{value:?}"),
@@ -1661,7 +1656,7 @@ where
     // TODO(perf): directly convert the value referred by the operand into an object.
     fn perform_to_object(&mut self) {
         logger::debug!(event = "perform_to_object");
-        let (operand, _, reference) = self.dereference();
+        let (operand, ..) = self.dereference();
         match operand {
             // Immediate values.
             Operand::Undefined | Operand::Null => self
@@ -1670,15 +1665,6 @@ where
             Operand::Boolean(..) => todo!(),
             Operand::Number(..) => todo!(),
             Operand::String(..) => todo!(),
-            // TODO: remove
-            Operand::Closure(value) => {
-                let tmp = self.editor.put_alloc_any();
-                self.editor.put_store_closure_to_any(value, tmp);
-                let object = self.editor.put_runtime_to_object(self.support, tmp);
-                // The immediate value has no memory to write the object back to.
-                debug_assert!(reference.is_none());
-                self.operand_stack.push(Operand::Function(object));
-            }
             Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
             Operand::Function(value) => self.operand_stack.push(Operand::Function(value)),
             Operand::Promise(_value) => todo!(),
@@ -1688,6 +1674,7 @@ where
                 self.operand_stack.push(Operand::Object(object));
             }
             Operand::Lambda(..)
+            | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2458,13 +2445,6 @@ where
                 self.editor
                     .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
-            // TODO: remove
-            Operand::Closure(value) => {
-                let result = self.editor.put_alloc_any();
-                self.editor.put_store_closure_to_any(value, result);
-                self.editor
-                    .put_runtime_emit_promise_resolved(self.support, promise, result);
-            }
             Operand::Object(value) => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_object_to_any(value, result);
@@ -2504,6 +2484,7 @@ where
                 self.editor.switch_to_block(merge_block);
             }
             Operand::Lambda(..)
+            | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -2772,10 +2753,6 @@ where
                 self.editor.put_is_same_number(*lhs, *rhs)
             }
             (Operand::String(_lhs, ..), Operand::String(_rhs, ..)) => todo!(),
-            // TODO: remove
-            (Operand::Closure(lhs), Operand::Closure(rhs)) => {
-                self.editor.put_is_same_closure(*lhs, *rhs)
-            }
             (Operand::Promise(lhs), Operand::Promise(rhs)) => {
                 self.editor.put_is_same_promise(*lhs, *rhs)
             }
@@ -2797,8 +2774,6 @@ where
             Operand::Boolean(rhs, ..) => self.perform_is_same_boolean(lhs, *rhs),
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
             Operand::String(_rhs, ..) => todo!(),
-            // TODO: remove
-            Operand::Closure(rhs) => self.perform_is_same_closure(lhs, *rhs),
             Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
             Operand::Function(rhs) => self.perform_is_same_function(lhs, *rhs),
             Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
@@ -2807,6 +2782,7 @@ where
                     .put_runtime_is_strictly_equal(self.support, lhs, *rhs)
             }
             Operand::Lambda(..)
+            | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
@@ -2850,30 +2826,6 @@ where
         self.editor.switch_to_block(then_block);
         let n = self.editor.put_load_number(value);
         let then_value = self.editor.put_is_same_number(n, number);
-        self.editor.put_jump(merge_block, &[then_value.0.into()]);
-        // } else {
-        self.editor.switch_to_block(else_block);
-        let else_value = self.editor.put_boolean(false);
-        self.editor.put_jump(merge_block, &[else_value.0.into()]);
-        // }
-
-        self.editor.switch_to_block(merge_block);
-        BooleanIr(self.editor.get_block_param(merge_block, 0))
-    }
-
-    fn perform_is_same_closure(&mut self, value: AnyIr, closure: ClosureIr) -> BooleanIr {
-        let then_block = self.editor.create_block();
-        let else_block = self.editor.create_block();
-        let merge_block = self.editor.create_block_with_i8();
-
-        // if value.kind == ValueKind::Closure
-        let cond = self.editor.put_is_closure(value);
-        self.editor
-            .put_branch(cond, then_block, &[], else_block, &[]);
-        // {
-        self.editor.switch_to_block(then_block);
-        let v = self.editor.put_load_closure(value);
-        let then_value = self.editor.put_is_same_closure(v, closure);
         self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
@@ -3105,13 +3057,12 @@ where
             Operand::Boolean(value, _) => self.editor.put_store_boolean_to_any(*value, any),
             Operand::Number(value, _) => self.editor.put_store_number_to_any(*value, any),
             Operand::String(value, _) => self.editor.put_store_string_to_any(*value, any),
-            // TODO: remove
-            Operand::Closure(value) => self.editor.put_store_closure_to_any(*value, any),
             Operand::Object(value) => self.editor.put_store_object_to_any(*value, any),
             Operand::Function(value) => self.editor.put_store_function_to_any(*value, any),
             Operand::Any(value, _) => self.editor.put_store_any_to_any(*value, any),
             Operand::Promise(value) => self.editor.put_store_promise_to_any(*value, any),
             Operand::Lambda(..)
+            | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
@@ -3166,9 +3117,7 @@ where
 
     fn emit_load_closure_or_throw_type_error(&mut self, value: AnyIr) -> ClosureIr {
         logger::debug!(event = "emit_load_closure_or_throw_type_error", ?value);
-        let closure_block = self.editor.create_block();
-        let else_if_block = self.editor.create_block();
-        let object_block = self.editor.create_block();
+        let then_block = self.editor.create_block();
         let else_block = self.editor.create_block();
         let end_block = self.editor.create_block_with_addr();
 
@@ -3177,21 +3126,12 @@ where
             value,
             c"emit_load_closure_or_throw_type_error",
         );
-        // if value.is_closure()
-        let is_closure = self.editor.put_is_closure(value);
-        self.editor
-            .put_branch(is_closure, closure_block, &[], else_if_block, &[]);
-        // {
-        self.editor.switch_to_block(closure_block);
-        let closure = self.editor.put_load_closure(value);
-        self.editor.put_jump(end_block, &[closure.0.into()]);
-        // } else if value.is_function()
-        self.editor.switch_to_block(else_if_block);
+        // if value.is_function()
         let is_function = self.editor.put_is_function(value);
         self.editor
-            .put_branch(is_function, object_block, &[], else_block, &[]);
+            .put_branch(is_function, then_block, &[], else_block, &[]);
         // {
-        self.editor.switch_to_block(object_block);
+        self.editor.switch_to_block(then_block);
         let object = self.editor.put_load_function(value);
         let closure = self.editor.put_load_closure_from_function(object);
         self.editor.put_jump(end_block, &[closure.0.into()]);

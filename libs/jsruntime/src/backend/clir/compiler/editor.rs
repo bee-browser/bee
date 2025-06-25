@@ -483,12 +483,6 @@ impl<'a> Editor<'a> {
         NumberIr(self.put_load_f64(any.0, Value::HOLDER_OFFSET))
     }
 
-    // TODO: remove
-    pub fn put_load_closure(&mut self, any: AnyIr) -> ClosureIr {
-        logger::debug!(event = "put_load_closure", ?any);
-        ClosureIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
-    }
-
     pub fn put_load_promise(&mut self, any: AnyIr) -> PromiseIr {
         logger::debug!(event = "put_load_promise", ?any);
         PromiseIr(self.put_load_i32(any.0, Value::HOLDER_OFFSET))
@@ -640,6 +634,14 @@ impl<'a> Editor<'a> {
         ClosureIr(self.put_load_addr(object.0, Object::CALL_OFFSET))
     }
 
+    pub fn put_store_closure_to_function(&mut self, closure: ClosureIr, object: ObjectIr) {
+        logger::debug!(event = "put_store_closure_from_function", ?object);
+        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        self.builder
+            .ins()
+            .store(FLAGS, closure.0, object.0, Object::CALL_OFFSET as i32);
+    }
+
     // argv
 
     pub fn put_alloc_argv(&mut self, argc: u16) -> ArgvIr {
@@ -756,11 +758,6 @@ impl<'a> Editor<'a> {
     pub fn put_store_string_to_any(&mut self, string: StringIr, any: AnyIr) {
         logger::debug!(event = "put_store_string_to_any", ?string, ?any);
         self.put_store_kind_and_value_to_any(Value::KIND_STRING, string.0, any);
-    }
-
-    pub fn put_store_closure_to_any(&mut self, closure: ClosureIr, any: AnyIr) {
-        logger::debug!(event = "put_store_closure_to_any", ?closure, ?any);
-        self.put_store_kind_and_value_to_any(Value::KIND_CLOSURE, closure.0, any);
     }
 
     pub fn put_store_promise_to_any(&mut self, promise: PromiseIr, any: AnyIr) {
@@ -975,12 +972,6 @@ impl<'a> Editor<'a> {
         self.put_is_kind_of(Value::KIND_NUMBER, any)
     }
 
-    // TODO: remove
-    pub fn put_is_closure(&mut self, any: AnyIr) -> BooleanIr {
-        logger::debug!(event = "put_is_closure", ?any);
-        self.put_is_kind_of(Value::KIND_CLOSURE, any)
-    }
-
     pub fn put_is_promise(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_promise", ?any);
         self.put_is_kind_of(Value::KIND_PROMISE, any)
@@ -1021,11 +1012,6 @@ impl<'a> Editor<'a> {
     pub fn put_is_same_number(&mut self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
         logger::debug!(event = "put_is_same_number", ?lhs, ?rhs);
         self.put_is_same_float_value(lhs.0, rhs.0)
-    }
-
-    pub fn put_is_same_closure(&mut self, lhs: ClosureIr, rhs: ClosureIr) -> BooleanIr {
-        logger::debug!(event = "put_is_same_closure", ?lhs, ?rhs);
-        self.put_is_same_int_value(lhs.0, rhs.0)
     }
 
     pub fn put_is_same_promise(&mut self, lhs: PromiseIr, rhs: PromiseIr) -> BooleanIr {
