@@ -53,7 +53,7 @@ impl Value {
     pub(crate) const HOLDER_OFFSET: usize = size_of::<u64>();
 
     // 7.1.18 ToObject ( argument )
-    pub fn to_object(&self) -> Result<&mut Object, Value> {
+    pub fn to_object(&self) -> Result<&Object, Value> {
         match self {
             Self::Undefined | Self::Null => Err(1001.into()), // TODO: TypeError
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
@@ -61,7 +61,7 @@ impl Value {
             Self::String(_value) => unimplemented!("new String(value)"),
             Self::Promise(_value) => unimplemented!("new Promise()"),
             Self::Object(value) | Self::Function(value) => unsafe {
-                Ok(value.cast::<Object>().as_mut().unwrap())
+                Ok(value.cast::<Object>().as_ref().unwrap())
             },
             Self::None => unreachable!(),
         }
