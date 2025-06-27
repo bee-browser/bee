@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
     let handle = tokio::spawn(async move { serve(workdir, config, cl.data).await });
 
     // Load the web UI.
-    open::that(format!("http://{}/logview/index.html", listen))?;
+    open::that(format!("http://{listen}/logview/index.html"))?;
 
     let _ = handle.await;
 

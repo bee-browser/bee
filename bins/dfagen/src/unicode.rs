@@ -571,9 +571,9 @@ impl std::fmt::Display for UnicodeSet {
         match self.spans.split_last() {
             Some((last, leadings)) => {
                 for span in leadings.iter() {
-                    write!(f, "{}, ", span)?;
+                    write!(f, "{span}, ")?;
                 }
-                write!(f, "{}", last)?;
+                write!(f, "{last}")?;
                 if self.eof {
                     write!(f, ", (eof)")?;
                 }
@@ -640,9 +640,9 @@ impl std::fmt::Display for UnicodeSetsBuilder {
         write!(f, "[")?;
         if let Some((last, leadings)) = self.sets.split_last() {
             for set in leadings.iter() {
-                write!(f, "{}, ", set)?;
+                write!(f, "{set}, ")?;
             }
-            write!(f, "{}", last)?;
+            write!(f, "{last}")?;
         }
         write!(f, "]")
     }
@@ -926,8 +926,8 @@ mod tests {
     fn test_unicode_set_format() {
         let digit = unicode_set!['0'..='9'];
         let alnum = unicode_set!['0'..='9', 'a'..='z'];
-        assert_eq!(format!("{}", digit), "[0..9]");
-        assert_eq!(format!("{}", alnum), "[0..9, a..z]");
+        assert_eq!(format!("{digit}"), "[0..9]");
+        assert_eq!(format!("{alnum}"), "[0..9, a..z]");
         assert_eq!(format!("{}", UnicodeSet::empty().merge_eof()), "[(eof)]");
         assert_eq!(format!("{}", alnum.merge_eof()), "[0..9, a..z, (eof)]");
     }
@@ -981,8 +981,8 @@ mod tests {
     #[test]
     fn test_unicode_sets_builder_format() {
         let mut builder = UnicodeSetsBuilder::default();
-        assert_eq!(format!("{}", builder), "[]");
+        assert_eq!(format!("{builder}"), "[]");
         builder.add(&unicode_set!['a']);
-        assert_eq!(format!("{}", builder), "[[a]]");
+        assert_eq!(format!("{builder}"), "[[a]]");
     }
 }

@@ -26,8 +26,7 @@ where
 
     // TODO: use BufRead as argument
     pub fn interpret(&mut self, json: &str) -> Result<()> {
-        let msg =
-            serde_json::from_str(json).with_context(|| format!("Failed to parse: {}", json))?;
+        let msg = serde_json::from_str(json).with_context(|| format!("Failed to parse: {json}"))?;
         match msg {
             LayoutMessage::CreateElement {
                 id,

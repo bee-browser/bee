@@ -127,7 +127,7 @@ impl std::fmt::Display for LrItem {
             if i == self.dot {
                 write!(f, " .")?;
             }
-            write!(f, " {}", term)?;
+            write!(f, " {term}")?;
         }
         if self.dot == self.rule.production.len() {
             write!(f, " .")?;

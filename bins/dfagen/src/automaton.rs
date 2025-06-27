@@ -462,7 +462,7 @@ impl std::fmt::Display for StateGroup {
         write!(f, "[")?;
         if let Some((last, leadings)) = self.split_last() {
             for value in leadings.iter() {
-                write!(f, "{}", value)?;
+                write!(f, "{value}")?;
             }
             write!(f, "{}", last.id)?;
         }
@@ -488,7 +488,7 @@ impl From<StateId> for StateIdWithPreCondition {
 impl std::fmt::Display for StateIdWithPreCondition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(ref cond) = self.pre_condition {
-            write!(f, "?{} ", cond)?;
+            write!(f, "?{cond} ")?;
         }
         write!(f, "{},", self.id)
     }
@@ -557,8 +557,8 @@ mod tests {
         assert_eq!(format!("{}", state!(0)), "State(0)");
         let mut state = state!(0);
         state.accept = Some("token".to_string());
-        assert_eq!(format!("{}", state), "State(0):token");
+        assert_eq!(format!("{state}"), "State(0):token");
         state.lookahead = true;
-        assert_eq!(format!("{}", state), "State(0):token?");
+        assert_eq!(format!("{state}"), "State(0):token?");
     }
 }

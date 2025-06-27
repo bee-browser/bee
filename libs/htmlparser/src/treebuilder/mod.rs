@@ -2548,7 +2548,7 @@ where
                 local_name,
                 attrs_hash,
                 node,
-            } => write!(f, "{:?}:<{:?} {}>", node, local_name, attrs_hash),
+            } => write!(f, "{node:?}:<{local_name:?} {attrs_hash}>"),
             Self::Removed => write!(f, "$removed"),
         }
     }

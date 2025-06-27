@@ -56,7 +56,7 @@ fn main() -> Result<()> {
                 println!(r#"#text:"{}""#, text.data.escape_debug());
             }
             Token::Error(err) => {
-                eprintln!("ERROR: {}", err);
+                eprintln!("ERROR: {err}");
             }
             Token::End => break,
         }

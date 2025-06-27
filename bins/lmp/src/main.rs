@@ -50,6 +50,6 @@ struct JsonPrinter;
 
 impl JsonSink for JsonPrinter {
     fn consume(&mut self, json: serde_json::Value) {
-        println!("{}", json);
+        println!("{json}");
     }
 }

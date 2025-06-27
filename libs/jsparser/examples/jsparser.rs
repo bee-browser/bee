@@ -55,8 +55,8 @@ fn main() -> Result<()> {
             let stack_depth = parser.max_stack_depth();
             let template_literal_depth = parser.max_template_literal_depth();
             println!(
-                "time={} size={} max-stack-depth={} max-template-literal-depth={}",
-                elapsed, bytes, stack_depth, template_literal_depth
+                "time={elapsed} size={bytes} max-stack-depth={stack_depth} \
+                 max-template-literal-depth={template_literal_depth}"
             );
             Ok(())
         }

@@ -486,10 +486,10 @@ mod tests {
     fn test_rule_format() {
         let rule =
             rule!("A" -> token!("a") non_terminal!("B") lookahead!(x: phrase_set![phrase!("c")]));
-        assert_eq!(format!("{}", rule), "A -> a B (?![c])");
+        assert_eq!(format!("{rule}"), "A -> a B (?![c])");
 
         let rule = rule!("A" ->);
-        assert_eq!(format!("{}", rule), "A ->");
+        assert_eq!(format!("{rule}"), "A ->");
     }
 
     #[test]

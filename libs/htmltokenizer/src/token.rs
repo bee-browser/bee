@@ -40,7 +40,7 @@ impl std::fmt::Debug for Token<'_> {
             Token::Doctype(doctype) => {
                 write!(f, "<!DOCTYPE")?;
                 if let Some(name) = doctype.name {
-                    write!(f, " {}", name)?;
+                    write!(f, " {name}")?;
                 }
                 write!(f, ">")
             }
@@ -62,7 +62,7 @@ impl std::fmt::Debug for Token<'_> {
                 write!(f, "#text:{}", text.data.escape_debug())
             }
             Token::Error(err) => {
-                write!(f, "{:?}", err)
+                write!(f, "{err:?}")
             }
             Token::End => {
                 write!(f, "eof")

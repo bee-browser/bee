@@ -43,11 +43,11 @@ impl DemoBuilder {
             } => {
                 let name = name.as_deref().unwrap_or_default();
                 if public_id.is_none() && system_id.is_none() {
-                    println!("<!DOCTYPE {}>", name);
+                    println!("<!DOCTYPE {name}>");
                 } else {
                     let public_id = public_id.as_deref().unwrap_or_default();
                     let system_id = system_id.as_deref().unwrap_or_default();
-                    println!(r#"<!DOCTYPE {} "{}" "{}">"#, name, public_id, system_id)
+                    println!(r#"<!DOCTYPE {name} "{public_id}" "{system_id}">"#)
                 }
             }
             ToyNode::Element {
@@ -59,13 +59,13 @@ impl DemoBuilder {
             } => {
                 match namespace {
                     Namespace::Html => {
-                        print!("<html:{}", name);
+                        print!("<html:{name}");
                     }
                     Namespace::MathMl => {
-                        print!("<math:{}", name);
+                        print!("<math:{name}");
                     }
                     Namespace::Svg => {
-                        print!("<svg:{}", name);
+                        print!("<svg:{name}");
                     }
                 }
                 for (name, value) in attrs.iter() {
@@ -80,7 +80,7 @@ impl DemoBuilder {
                 println!(r#""{}""#, data.escape_debug());
             }
             ToyNode::Comment { data, .. } => {
-                println!("<!-- {} -->", data);
+                println!("<!-- {data} -->");
             }
         }
     }
