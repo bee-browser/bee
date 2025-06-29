@@ -280,7 +280,8 @@ impl U16Chunk {
     }
 
     pub const fn is_empty(&self) -> bool {
-        self.next.is_null() && self.len == 0
+        debug_assert!(self.len > 0 || self.next.is_null());
+        self.len == 0
     }
 
     pub fn on_stack(&self) -> bool {
@@ -288,8 +289,12 @@ impl U16Chunk {
     }
 
     pub fn total_len(&self) -> u32 {
-        // TODO: next
-        self.len
+        if self.next.is_null() {
+            self.len
+        } else {
+            debug_assert!(self.len > 0);
+            self.len + unsafe { self.next.as_ref().unwrap().total_len() }
+        }
     }
 
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
@@ -311,12 +316,18 @@ unsafe impl Sync for U16Chunk {}
 
 impl std::fmt::Display for U16Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let units = unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) };
-        let chars: String = char::decode_utf16(units.iter().cloned())
-            .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
-            .collect();
-        write!(f, "{}", chars.escape_default())?;
-        // TODO: next
+        let mut chunk = self;
+        loop {
+            let units = unsafe { std::slice::from_raw_parts(chunk.ptr, chunk.len as usize) };
+            let chars: String = char::decode_utf16(units.iter().cloned())
+                .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
+                .collect();
+            write!(f, "{}", chars.escape_default())?;
+            if chunk.next.is_null() {
+                break;
+            }
+            chunk = unsafe { chunk.next.as_ref().unwrap() };
+        }
         Ok(())
     }
 }

@@ -192,6 +192,13 @@ functions:
       - name: value
         type: '&Value'
       # TODO(perf): add arguments for inline caching
+  - name: concat_strings
+    args:
+      - name: str1
+        type: '&U16Chunk'
+      - name: str2
+        type: '&U16Chunk'
+    ret: '&U16Chunk'
   # 7.3.5 CreateDataProperty ( O, P, V )
   - name: create_data_property_by_symbol
     args:

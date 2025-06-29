@@ -75,6 +75,8 @@ pub struct RuntimeFunctions {
     pub set_value_by_number: unsafe extern "C" fn(*mut c_void, *mut c_void, f64, *const Value),
     pub set_value_by_value:
         unsafe extern "C" fn(*mut c_void, *mut c_void, *const Value, *const Value),
+    pub concat_strings:
+        unsafe extern "C" fn(*mut c_void, *const U16Chunk, *const U16Chunk) -> *const U16Chunk,
     pub create_data_property_by_symbol:
         unsafe extern "C" fn(*mut c_void, *mut c_void, u32, *const Value, *mut Value) -> Status,
     pub create_data_property_by_number:
@@ -130,6 +132,7 @@ impl RuntimeFunctions {
             set_value_by_symbol: runtime_set_value_by_symbol::<X>,
             set_value_by_number: runtime_set_value_by_number::<X>,
             set_value_by_value: runtime_set_value_by_value::<X>,
+            concat_strings: runtime_concat_strings::<X>,
             create_data_property_by_symbol: runtime_create_data_property_by_symbol::<X>,
             create_data_property_by_number: runtime_create_data_property_by_number::<X>,
             create_data_property_by_value: runtime_create_data_property_by_value::<X>,
@@ -817,6 +820,26 @@ unsafe extern "C" fn runtime_set_value_by_value<X>(
         Some(object) => object.set_value(&key, value),
         None => runtime.global_object_mut().set_value(&key, value),
     }
+}
+
+unsafe extern "C" fn runtime_concat_strings<X>(
+    runtime: *mut c_void,
+    head: *const U16Chunk,
+    tail: *const U16Chunk,
+) -> *const U16Chunk {
+    debug_assert!(!runtime.is_null());
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
+    debug_assert!(!tail.is_null());
+    let tail = unsafe { into_string!(tail) };
+    let tail = if tail.on_stack() {
+        unsafe { runtime.alloc_string_rec(tail, std::ptr::null()) }
+    } else {
+        tail
+    };
+
+    debug_assert!(!head.is_null());
+    unsafe { runtime.alloc_string_rec(into_string!(head), tail as *const U16Chunk) }
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )

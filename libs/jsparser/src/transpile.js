@@ -165,6 +165,7 @@ class Transpiler {
           modifyElision,
           modifyArrayLiteral,
           modifyObjectLiteral,
+          modifyTemplateLiteral,
           modifyOptionalChain,
           modifyFunctionDeclaration,
           modifyAsyncFunctionDeclaration,
@@ -739,6 +740,54 @@ function modifyObjectLiteral(rules) {
   const rule = rules.find((rule) => rule.name === 'ObjectLiteral[Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyTemplateLiteral(rules) {
+  rules = modifyTemplateHead(rules);
+  rules = modifyTemplateMiddle(rules);
+  return modifyTemplateTail(rules);
+}
+
+function modifyTemplateHead(rules) {
+  log.debug('Modifying TemplateHead...');
+  const rule = rules.find((rule) => rule.name === 'SubstitutionTemplate[Yield, Await, Tagged]');
+  assert(rule !== undefined);
+  rule.values = rule.values.map((value) => {
+    return value.replace('TemplateHead', '_TEMPLATE_HEAD_');
+  });
+  rules.push({
+    name: '_TEMPLATE_HEAD_',
+    values: ['TemplateHead'],
+  });
+  return rules;
+}
+
+function modifyTemplateMiddle(rules) {
+  log.debug('Modifying TemplateMiddle...');
+  const rule = rules.find((rule) => rule.name === 'TemplateMiddleList[Yield, Await, Tagged]');
+  assert(rule !== undefined);
+  rule.values = rule.values.map((value) => {
+    return value.replace('TemplateMiddle ', '_TEMPLATE_MIDDLE_ ');
+  });
+  rules.push({
+    name: '_TEMPLATE_MIDDLE_',
+    values: ['TemplateMiddle'],
+  });
+  return rules;
+}
+
+function modifyTemplateTail(rules) {
+  log.debug('Modifying TemplateTail...');
+  const rule = rules.find((rule) => rule.name === 'TemplateSpans[Yield, Await, Tagged]');
+  assert(rule !== undefined);
+  rule.values = rule.values.map((value) => {
+    return value.replace('TemplateTail', '_TEMPLATE_TAIL_');
+  });
+  rules.push({
+    name: '_TEMPLATE_TAIL_',
+    values: ['TemplateTail'],
+  });
   return rules;
 }
 

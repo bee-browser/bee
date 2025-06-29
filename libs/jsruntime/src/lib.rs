@@ -275,6 +275,23 @@ impl<X> Runtime<X> {
             .alloc(U16Chunk::new_heap_from_raw_parts(chunk.ptr, chunk.len))
     }
 
+    pub(crate) unsafe fn alloc_string_rec(
+        &self,
+        head: &U16Chunk,
+        tail: *const U16Chunk,
+    ) -> &U16Chunk {
+        let result = self
+            .allocator
+            .alloc(U16Chunk::new_heap_from_raw_parts(head.ptr, head.len));
+        if head.next.is_null() {
+            result.next = tail;
+        } else {
+            let chunk = unsafe { head.next.as_ref().unwrap() };
+            result.next = unsafe { self.alloc_string_rec(chunk, tail) };
+        }
+        result
+    }
+
     fn create_object(&mut self) -> &mut Object {
         // TODO: GC
         self.allocator.alloc(Default::default())

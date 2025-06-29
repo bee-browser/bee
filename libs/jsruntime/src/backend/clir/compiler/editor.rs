@@ -1724,6 +1724,21 @@ impl<'a> Editor<'a> {
         self.builder.ins().call(func, &args);
     }
 
+    pub fn put_runtime_concat_strings(
+        &mut self,
+        support: &mut impl EditorSupport,
+        head: StringIr,
+        tail: StringIr,
+    ) -> StringIr {
+        logger::debug!(event = "put_runtime_concat_strings", ?head, ?tail);
+        let func = self
+            .runtime_func_cache
+            .import_runtime_concat_strings(support, self.builder.func);
+        let args = [self.runtime(), head.0, tail.0];
+        let call = self.builder.ins().call(func, &args);
+        StringIr(self.builder.inst_results(call)[0])
+    }
+
     pub fn put_runtime_create_data_property_by_symbol(
         &mut self,
         support: &mut impl EditorSupport,
