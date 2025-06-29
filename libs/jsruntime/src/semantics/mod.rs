@@ -451,9 +451,9 @@ where
     }
 
     fn handle_template_literal(&mut self, n: u16) {
-        debug_assert!(n > 0);
-        if n > 1 {
-            // TODO(feat): concatenate strings
+        // n: The number of expressions interpolated into the template literal.
+        if n > 0 {
+            analysis_mut!(self).put_command(CompileCommand::ConcatStrings(2 * n + 1));
         }
     }
 
@@ -2092,6 +2092,9 @@ pub enum CompileCommand {
     New(u16),
     PushScope(ScopeRef),
     PopScope(ScopeRef),
+
+    // string
+    ConcatStrings(u16),
 
     // object
     CreateDataProperty,
