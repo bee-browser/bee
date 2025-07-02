@@ -160,6 +160,7 @@ impl std::fmt::Display for Value {
 /// This type is usually allocated on the stack and holds a pointer to a `U16Chunk` that is
 /// allocated on the heap or the stack.
 // TODO(issue#237): GcCell
+// TODO(refactor): refactoring
 #[derive(Clone, Copy, PartialEq)]
 pub struct U16String(*const U16Chunk); // Non-null
 
@@ -217,6 +218,7 @@ impl std::fmt::Display for U16String {
 ///
 /// This type may be allocated on the stack.
 // TODO(issue#237): GcCell
+// TODO(refactor): refactoring
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct U16Chunk {
@@ -297,16 +299,27 @@ impl U16Chunk {
         }
     }
 
+    pub fn as_slice(&self) -> &[u16] {
+        debug_assert_ne!(self.len, 0);
+        debug_assert_ne!(self.ptr, std::ptr::null());
+        unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) }
+    }
+
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
-        // TODO: next
         if self.is_empty() {
             return vec![];
         }
 
-        debug_assert_ne!(self.len, 0);
-        debug_assert_ne!(self.ptr, std::ptr::null());
-        let slice = unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) };
-        slice.to_vec()
+        let mut result = vec![];
+        let mut chunk = self;
+        loop {
+            result.extend_from_slice(chunk.as_slice());
+            if chunk.next.is_null() {
+                break;
+            }
+            chunk = unsafe { chunk.next.as_ref().unwrap() };
+        }
+        result
     }
 }
 
@@ -316,10 +329,14 @@ unsafe impl Sync for U16Chunk {}
 
 impl std::fmt::Display for U16Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_empty() {
+            return Ok(());
+        }
+
         let mut chunk = self;
         loop {
-            let units = unsafe { std::slice::from_raw_parts(chunk.ptr, chunk.len as usize) };
-            let chars: String = char::decode_utf16(units.iter().cloned())
+            let slice = chunk.as_slice();
+            let chars: String = char::decode_utf16(slice.iter().cloned())
                 .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
                 .collect();
             write!(f, "{}", chars.escape_default())?;
