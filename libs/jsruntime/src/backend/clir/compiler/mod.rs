@@ -427,6 +427,7 @@ where
             CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::ConcatStrings(n) => self.process_concat_strings(*n),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
             CompileCommand::PushArrayElement => self.process_push_array_element(),
@@ -1073,6 +1074,26 @@ where
             .put_branch(is_normal, exit_block, &[], parent_exit_block, &[]);
 
         self.editor.switch_to_block(exit_block);
+    }
+
+    fn process_concat_strings(&mut self, n: u16) {
+        debug_assert!(n > 1);
+        // TODO(perf): compile-time concatenation
+        let (mut tail, _) = self.pop_string();
+        for _ in 1..n {
+            let (head, _) = self.pop_string();
+            tail = self
+                .editor
+                .put_runtime_concat_strings(self.support, head, tail)
+        }
+        self.operand_stack.push(Operand::String(tail, None));
+    }
+
+    fn pop_string(&mut self) -> (StringIr, Option<U16Chunk>) {
+        match self.operand_stack.pop().unwrap() {
+            Operand::String(value_rt, value_ct) => (value_rt, value_ct),
+            operand => unreachable!("{operand:?}"),
+        }
     }
 
     // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation

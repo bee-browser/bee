@@ -328,6 +328,7 @@ where
             Node::Boolean(value) => self.handle_boolean(value),
             Node::Number(value, ..) => self.handle_number(value),
             Node::String(value, ..) => self.handle_string(value),
+            Node::TemplateLiteral(n) => self.handle_template_literal(n),
             Node::Array => self.handle_array(),
             Node::Object => self.handle_object(),
             Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
@@ -447,6 +448,13 @@ where
 
     fn handle_string(&mut self, value: Vec<u16>) {
         analysis_mut!(self).put_string(value);
+    }
+
+    fn handle_template_literal(&mut self, n: u16) {
+        // n: The number of expressions interpolated into the template literal.
+        if n > 0 {
+            analysis_mut!(self).put_command(CompileCommand::ConcatStrings(2 * n + 1));
+        }
     }
 
     fn handle_array(&mut self) {
@@ -2084,6 +2092,9 @@ pub enum CompileCommand {
     New(u16),
     PushScope(ScopeRef),
     PopScope(ScopeRef),
+
+    // string
+    ConcatStrings(u16),
 
     // object
     CreateDataProperty,
