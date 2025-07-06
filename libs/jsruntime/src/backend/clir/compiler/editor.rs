@@ -397,6 +397,49 @@ impl<'a> Editor<'a> {
 
     // string
 
+    pub fn put_alloc_string(&mut self) -> StringIr {
+        logger::debug!(event = "put_alloc_string");
+
+        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
+            kind: ir::StackSlotKind::ExplicitSlot,
+            size: U16Chunk::SIZE as u32,
+            align_shift: U16Chunk::ALIGNMENT.ilog2() as u8,
+        });
+
+        let next = self.builder.ins().iconst(self.addr_type, 0);
+        self.put_store_to_slot(next, slot, U16Chunk::NEXT_OFFSET);
+
+        let kind = self
+            .builder
+            .ins()
+            .iconst(ir::types::I8, U16ChunkKind::Stack as i64);
+        self.put_store_to_slot(kind, slot, U16Chunk::KIND_OFFSET);
+
+        StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
+    }
+
+    pub fn put_set_string(&mut self, value: &[u16], target: StringIr) {
+        logger::debug!(event = "put_set_string", ?value, ?target);
+        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+
+        let ptr = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, value.as_ptr() as i64);
+        self.builder
+            .ins()
+            .store(FLAGS, ptr, target.0, U16Chunk::PTR_OFFSET as i32);
+
+        debug_assert!(value.len() <= u32::MAX as usize);
+        let len = self
+            .builder
+            .ins()
+            .iconst(ir::types::I32, value.len() as i64);
+        self.builder
+            .ins()
+            .store(FLAGS, len, target.0, U16Chunk::LEN_OFFSET as i32);
+    }
+
     pub fn put_create_string(&mut self, value: &[u16]) -> StringIr {
         logger::debug!(event = "put_create_string", ?value);
 
@@ -1359,6 +1402,20 @@ impl<'a> Editor<'a> {
         let args = [self.runtime(), value.0];
         let call = self.builder.ins().call(func, &args);
         NumberIr(self.builder.inst_results(call)[0])
+    }
+
+    pub fn put_runtime_to_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: AnyIr,
+    ) -> StringIr {
+        logger::debug!(event = "put_runtime_to_string", ?value);
+        let func = self
+            .runtime_func_cache
+            .import_runtime_to_string(support, self.builder.func);
+        let args = [self.runtime(), value.0];
+        let call = self.builder.ins().call(func, &args);
+        StringIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_to_object(

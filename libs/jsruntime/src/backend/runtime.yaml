@@ -48,6 +48,11 @@ functions:
       - name: value
         type: '&Value'
     ret: f64
+  - name: to_string
+    args:
+      - name: value
+        type: '&Value'
+    ret: '&U16Chunk'
   - name: to_object
     args:
       - name: value

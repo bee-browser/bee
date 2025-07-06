@@ -260,6 +260,7 @@ pub enum Node<'s> {
     StartBlockScope,
     EndBlockScope,
     Dereference,
+    ToString,
 }
 
 #[derive(Clone, Debug)]
@@ -581,6 +582,12 @@ where
     // BindingIdentifier_Yield_Await : await
     fn syntax_error(&mut self) -> Result<(), Error> {
         Err(Error::SyntaxError)
+    }
+
+    // _TO_STRING_
+    fn process_to_string(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ToString);
+        Ok(())
     }
 
     // _DEREFERENCE_

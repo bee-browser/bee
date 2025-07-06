@@ -3054,7 +3054,7 @@
   action: process_property_definition_list_item
 - rule: >-
     SubstitutionTemplate_Await -> _TEMPLATE_HEAD_ Expression_In_Await
-    TemplateSpans_Await
+    _TO_STRING_ TemplateSpans_Await
   action: process_substitution_template
 - rule: _TEMPLATE_TAIL_ -> TEMPLATE_TAIL
   action: process_template_tail
@@ -3444,6 +3444,8 @@
   action: undefined
 - rule: PropertyDefinition_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: process_property_definition_spread
+- rule: _TO_STRING_ -> (empty)
+  action: process_to_string
 - rule: TemplateSpans_Await -> _TEMPLATE_TAIL_
   action: process_template_spans_tail
 - rule: TemplateSpans_Await -> TemplateMiddleList_Await _TEMPLATE_TAIL_
@@ -3580,7 +3582,9 @@
   action: process_property_definition_list_head
 - rule: PropertyDefinitionList -> PropertyDefinitionList COMMA PropertyDefinition
   action: process_property_definition_list_item
-- rule: SubstitutionTemplate -> _TEMPLATE_HEAD_ Expression_In TemplateSpans
+- rule: >-
+    SubstitutionTemplate -> _TEMPLATE_HEAD_ Expression_In _TO_STRING_
+    TemplateSpans
   action: process_substitution_template
 - rule: TemplateMiddleList_Tagged -> _TEMPLATE_MIDDLE_ Expression_In
   action: process_template_middle_list_head
@@ -3863,11 +3867,13 @@
   action: undefined
 - rule: CoverInitializedName_Await -> IdentifierReference_Await Initializer_In_Await
   action: undefined
-- rule: TemplateMiddleList_Await -> _TEMPLATE_MIDDLE_ Expression_In_Await
+- rule: >-
+    TemplateMiddleList_Await -> _TEMPLATE_MIDDLE_ Expression_In_Await
+    _TO_STRING_
   action: process_template_middle_list_head
 - rule: >-
     TemplateMiddleList_Await -> TemplateMiddleList_Await _TEMPLATE_MIDDLE_
-    Expression_In_Await
+    Expression_In_Await _TO_STRING_
   action: process_template_middle_list_item
 - rule: LogicalORExpression_Await -> LogicalANDExpression_Await
   action: nop
@@ -3921,7 +3927,7 @@
   action: undefined
 - rule: >-
     SubstitutionTemplate_Yield -> _TEMPLATE_HEAD_ Expression_In_Yield
-    TemplateSpans_Yield
+    _TO_STRING_ TemplateSpans_Yield
   action: process_substitution_template
 - rule: TemplateMiddleList_Yield_Tagged -> _TEMPLATE_MIDDLE_ Expression_In_Yield
   action: process_template_middle_list_head
@@ -3979,7 +3985,7 @@
   action: undefined
 - rule: >-
     SubstitutionTemplate_Yield_Await -> _TEMPLATE_HEAD_
-    Expression_In_Yield_Await TemplateSpans_Yield_Await
+    Expression_In_Yield_Await _TO_STRING_ TemplateSpans_Yield_Await
   action: process_substitution_template
 - rule: >-
     TemplateMiddleList_Yield_Await_Tagged -> _TEMPLATE_MIDDLE_
@@ -4429,9 +4435,11 @@
   action: undefined
 - rule: CoverInitializedName -> IdentifierReference Initializer_In
   action: process_cover_initialized_name
-- rule: TemplateMiddleList -> _TEMPLATE_MIDDLE_ Expression_In
+- rule: TemplateMiddleList -> _TEMPLATE_MIDDLE_ Expression_In _TO_STRING_
   action: process_template_middle_list_head
-- rule: TemplateMiddleList -> TemplateMiddleList _TEMPLATE_MIDDLE_ Expression_In
+- rule: >-
+    TemplateMiddleList -> TemplateMiddleList _TEMPLATE_MIDDLE_ Expression_In
+    _TO_STRING_
   action: process_template_middle_list_item
 - rule: BitwiseANDExpression -> EqualityExpression
   action: nop
@@ -5002,11 +5010,13 @@
   action: undefined
 - rule: ClassElementList_Yield -> ClassElementList_Yield ClassElement_Yield
   action: undefined
-- rule: TemplateMiddleList_Yield -> _TEMPLATE_MIDDLE_ Expression_In_Yield
+- rule: >-
+    TemplateMiddleList_Yield -> _TEMPLATE_MIDDLE_ Expression_In_Yield
+    _TO_STRING_
   action: process_template_middle_list_head
 - rule: >-
     TemplateMiddleList_Yield -> TemplateMiddleList_Yield _TEMPLATE_MIDDLE_
-    Expression_In_Yield
+    Expression_In_Yield _TO_STRING_
   action: process_template_middle_list_item
 - rule: RelationalExpression_In_Yield_Await -> ShiftExpression_Yield_Await
   action: nop
@@ -5068,11 +5078,11 @@
   action: undefined
 - rule: >-
     TemplateMiddleList_Yield_Await -> _TEMPLATE_MIDDLE_
-    Expression_In_Yield_Await
+    Expression_In_Yield_Await _TO_STRING_
   action: process_template_middle_list_head
 - rule: >-
     TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await
-    _TEMPLATE_MIDDLE_ Expression_In_Yield_Await
+    _TEMPLATE_MIDDLE_ Expression_In_Yield_Await _TO_STRING_
   action: process_template_middle_list_item
 - rule: ShiftExpression -> AdditiveExpression
   action: nop

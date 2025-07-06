@@ -427,6 +427,7 @@ where
             CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::ToString => self.process_to_string(),
             CompileCommand::ConcatStrings(n) => self.process_concat_strings(*n),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
@@ -1074,6 +1075,55 @@ where
             .put_branch(is_normal, exit_block, &[], parent_exit_block, &[]);
 
         self.editor.switch_to_block(exit_block);
+    }
+
+    // 7.1.17 ToString ( argument )
+    fn process_to_string(&mut self) {
+        use jsparser::symbol::builtin::names;
+
+        let (operand, ..) = self.dereference();
+        match operand {
+            Operand::Undefined => self.process_string(names::UNDEFINED),
+            Operand::Null => self.process_string(names::NULL),
+            Operand::Boolean(_, Some(true)) => self.process_string(names::TRUE),
+            Operand::Boolean(_, Some(false)) => self.process_string(names::FALSE),
+            Operand::Boolean(value, None) => self.perform_boolean_to_string(value),
+            Operand::Number(..) => todo!(),
+            operand @ Operand::String(..) => {
+                // Nothing to do.
+                self.operand_stack.push(operand);
+            }
+            Operand::Object(_) => todo!(),
+            Operand::Function(_) => todo!(),
+            Operand::Promise(_) => todo!(),
+            Operand::Any(value, _) => {
+                let result = self.editor.put_runtime_to_string(self.support, value);
+                self.operand_stack.push(Operand::String(result, None));
+            }
+            Operand::Lambda(..)
+            | Operand::Closure(_)
+            | Operand::Coroutine(_)
+            | Operand::VariableReference(..)
+            | Operand::PropertyReference(_) => unreachable!(),
+        }
+    }
+
+    fn perform_boolean_to_string(&mut self, value: BooleanIr) {
+        use jsparser::symbol::builtin::names;
+        let string_ir = self.editor.put_alloc_string();
+        let then_block = self.editor.create_block();
+        let else_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+        self.editor
+            .put_branch(value, then_block, &[], else_block, &[]);
+        self.editor.switch_to_block(then_block);
+        self.editor.put_set_string(names::TRUE, string_ir);
+        self.editor.put_jump(merge_block, &[]);
+        self.editor.switch_to_block(else_block);
+        self.editor.put_set_string(names::FALSE, string_ir);
+        self.editor.put_jump(merge_block, &[]);
+        self.editor.switch_to_block(merge_block);
+        self.operand_stack.push(Operand::String(string_ir, None));
     }
 
     fn process_concat_strings(&mut self, n: u16) {

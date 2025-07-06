@@ -431,6 +431,7 @@ where
             Node::AsyncArrowFunctionContext => self.handle_async_arrow_function_context(),
             Node::FunctionSignature => self.handle_function_signature(),
             Node::Dereference => self.handle_dereference(),
+            Node::ToString => self.handle_to_string(),
         }
     }
 
@@ -1020,6 +1021,10 @@ where
 
     fn handle_dereference(&mut self) {
         push_commands!(self; CompileCommand::Dereference);
+    }
+
+    fn handle_to_string(&mut self) {
+        push_commands!(self; CompileCommand::ToString);
     }
 
     fn resolve_references(&mut self, analysis: &mut FunctionAnalysis) -> Vec<Reference> {
@@ -2094,6 +2099,7 @@ pub enum CompileCommand {
     PopScope(ScopeRef),
 
     // string
+    ToString,
     ConcatStrings(u16),
 
     // object

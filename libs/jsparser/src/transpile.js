@@ -188,6 +188,7 @@ class Transpiler {
           modifyForInOfStatement,
           expandParameterizedRules,
           modifyBlock,
+          insertToStringInTemplateLiteral,
           translateRules,
           processLookaheads,
           addLiterals,
@@ -599,6 +600,7 @@ function addActions(rules) {
   log.debug('Adding production rules for semantic actions...');
 
   const ACTIONS = [
+    '_TO_STRING_',
     '_NEW_ARRAY_',
     '_NEW_OBJECT_',
     '_NON_NULLISH_',
@@ -1495,13 +1497,42 @@ function modifyBlock(rules) {
     return rule.name === 'Block' || rule.name.startsWith('Block_');
   });
 
-  let rule;
-
   for (const rule of blockRules) {
     assert(rule.values.length === 2);
     rule.values[1] = rule
       .values[1]
       .replace('`{` Statement', '`{` _BLOCK_SCOPE_ Statement');
+  }
+
+  return rules;
+}
+
+function insertToStringInTemplateLiteral(rules) {
+  log.debug('Inserting _TO_STRING_ after Expression in TemplateLiteral...');
+
+  const targetRules = rules.filter((rule) => {
+    if (rule.name.endsWith('_Tagged')) {
+      return false;
+    }
+    if (rule.name === 'SubstitutionTemplate' || rule.name.startsWith('SubstitutionTemplate_')) {
+      return true;
+    }
+    if (rule.name === 'TemplateMiddleList' || rule.name.startsWith('TemplateMiddleList_')) {
+      return true;
+    }
+    return false;
+  });
+
+  for (const rule of targetRules) {
+    rule.values = rule.values.map((value) => {
+      const terms = value.split(' ');
+      const index = terms.findIndex((term) => term.startsWith('Expression'));
+      if (index === -1) {
+        return value;
+      }
+      terms.splice(index + 1, 0, '_TO_STRING_');
+      return terms.join(' ');
+    });
   }
 
   return rules;

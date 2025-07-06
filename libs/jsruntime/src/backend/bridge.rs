@@ -46,6 +46,7 @@ pub struct RuntimeFunctions {
     ) -> Status,
     pub to_boolean: unsafe extern "C" fn(*mut c_void, *const Value) -> bool,
     pub to_numeric: unsafe extern "C" fn(*mut c_void, *const Value) -> f64,
+    pub to_string: unsafe extern "C" fn(*mut c_void, *const Value) -> *const U16Chunk,
     pub to_object: unsafe extern "C" fn(*mut c_void, *const Value) -> *mut c_void,
     pub to_int32: unsafe extern "C" fn(*mut c_void, f64) -> i32,
     pub to_uint32: unsafe extern "C" fn(*mut c_void, f64) -> u32,
@@ -111,6 +112,7 @@ impl RuntimeFunctions {
             lazy_compile_coroutine: runtime_lazy_compile_coroutine::<X>,
             to_boolean: runtime_to_boolean,
             to_numeric: runtime_to_numeric,
+            to_string: runtime_to_string::<X>,
             to_object: runtime_to_object::<X>,
             to_int32: runtime_to_int32,
             to_uint32: runtime_to_uint32,
@@ -313,6 +315,7 @@ unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
 
 // 7.1.2 ToBoolean ( argument )
 unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Value) -> bool {
+    logger::debug!(event = "runtime_to_boolean", ?value);
     let value = unsafe { into_value!(value) };
     match value {
         Value::None => unreachable!("Value::None"),
@@ -333,6 +336,7 @@ unsafe extern "C" fn runtime_to_boolean(_runtime: *mut c_void, value: *const Val
 // 7.1.3 ToNumeric ( value )
 // 7.1.4 ToNumber ( argument )
 unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Value) -> f64 {
+    logger::debug!(event = "runtime_to_numeric", ?value);
     let value = unsafe { into_value!(value) };
     match value {
         Value::None => unreachable!("Value::None"),
@@ -345,6 +349,42 @@ unsafe extern "C" fn runtime_to_numeric(_runtime: *mut c_void, value: *const Val
         Value::Promise(_) => f64::NAN,
         Value::Object(_) | Value::Function(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
     }
+}
+
+// 7.1.17 ToString ( argument )
+unsafe extern "C" fn runtime_to_string<X>(
+    runtime: *mut c_void,
+    value: *const Value,
+) -> *const U16Chunk {
+    logger::debug!(event = "runtime_to_string", ?value);
+
+    use jsparser::symbol::builtin::names;
+
+    const UNDEFINED: U16Chunk = U16Chunk::new_const(names::UNDEFINED);
+    const NULL: U16Chunk = U16Chunk::new_const(names::NULL);
+    const TRUE: U16Chunk = U16Chunk::new_const(names::TRUE);
+    const FALSE: U16Chunk = U16Chunk::new_const(names::FALSE);
+
+    let _runtime = unsafe { into_runtime!(runtime, X) };
+    let value = unsafe { into_value!(value) };
+    let result = match value {
+        Value::None => unreachable!("Value::None"),
+        Value::Undefined => &UNDEFINED,
+        Value::Null => &NULL,
+        Value::Boolean(value) => {
+            if *value {
+                &TRUE
+            } else {
+                &FALSE
+            }
+        }
+        Value::Number(_) => todo!(),
+        Value::String(value) => value.first_chunk(),
+        Value::Promise(_) => todo!(),
+        Value::Object(_) => todo!(),
+        Value::Function(_) => todo!(),
+    };
+    result as *const U16Chunk
 }
 
 // 7.1.18 ToObject ( argument )
@@ -831,15 +871,25 @@ unsafe extern "C" fn runtime_concat_strings<X>(
     let runtime = unsafe { into_runtime!(runtime, X) };
 
     debug_assert!(!tail.is_null());
+    debug_assert!(!head.is_null());
+
     let tail = unsafe { into_string!(tail) };
+    if tail.is_empty() {
+        return unsafe { runtime.alloc_string_rec(into_string!(head), std::ptr::null()) };
+    }
+
     let tail = if tail.on_stack() {
         unsafe { runtime.alloc_string_rec(tail, std::ptr::null()) }
     } else {
         tail
-    };
+    } as *const U16Chunk;
 
-    debug_assert!(!head.is_null());
-    unsafe { runtime.alloc_string_rec(into_string!(head), tail as *const U16Chunk) }
+    let head = unsafe { into_string!(head) };
+    if head.is_empty() {
+        return tail;
+    }
+
+    unsafe { runtime.alloc_string_rec(head, tail) }
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
