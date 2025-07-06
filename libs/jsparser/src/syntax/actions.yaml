@@ -1658,9 +1658,9 @@
 - rule: Arguments_Await -> LPAREN ArgumentList_Await COMMA RPAREN
   action: process_arguments_with_comma
 - rule: TemplateLiteral_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Await_Tagged -> SubstitutionTemplate_Await_Tagged
-  action: undefined
+  action: process_template_literal
 - rule: OptionalChain_Await -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments_Await
   action: process_optional_chain_call
 - rule: >-
@@ -2102,7 +2102,7 @@
 - rule: PrimaryExpression_Await -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression_Await -> TemplateLiteral_Await
-  action: undefined
+  action: nop
 - rule: >-
     PrimaryExpression_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Await
@@ -2126,9 +2126,9 @@
     AssignmentExpression_In_Await
   action: undefined
 - rule: >-
-    SubstitutionTemplate_Await_Tagged -> TEMPLATE_HEAD Expression_In_Await
+    SubstitutionTemplate_Await_Tagged -> _TEMPLATE_HEAD_ Expression_In_Await
     TemplateSpans_Await_Tagged
-  action: undefined
+  action: process_substitution_template
 - rule: _NON_NULLISH_ -> (empty)
   action: process_non_nullish
 - rule: Expression_Await -> AssignmentExpression_Await
@@ -2342,9 +2342,9 @@
 - rule: Arguments -> LPAREN ArgumentList COMMA RPAREN
   action: process_arguments_with_comma
 - rule: TemplateLiteral_Tagged -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Tagged -> SubstitutionTemplate_Tagged
-  action: undefined
+  action: process_template_literal
 - rule: OptionalChain -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments
   action: process_optional_chain_call
 - rule: OptionalChain -> OPTIONAL_CHAINING _NON_NULLISH_ LBRACK Expression_In RBRACK
@@ -2546,17 +2546,21 @@
     LBRACE AsyncGeneratorBody RBRACE
   action: undefined
 - rule: TemplateLiteral_Await -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Await -> SubstitutionTemplate_Await
-  action: undefined
+  action: process_template_literal
 - rule: NewTarget -> NEW DOT TARGET
   action: undefined
 - rule: ImportMeta -> IMPORT DOT META
   action: undefined
-- rule: TemplateSpans_Await_Tagged -> TEMPLATE_TAIL
-  action: undefined
-- rule: TemplateSpans_Await_Tagged -> TemplateMiddleList_Await_Tagged TEMPLATE_TAIL
-  action: undefined
+- rule: _TEMPLATE_HEAD_ -> TEMPLATE_HEAD
+  action: process_template_head
+- rule: TemplateSpans_Await_Tagged -> _TEMPLATE_TAIL_
+  action: process_template_spans_tail
+- rule: >-
+    TemplateSpans_Await_Tagged -> TemplateMiddleList_Await_Tagged
+    _TEMPLATE_TAIL_
+  action: process_template_spans_middle_tail
 - rule: AssignmentExpression_Await -> ConditionalExpression_Await
   action: nop
 - rule: AssignmentExpression_Await -> ArrowFunction_Await
@@ -2686,9 +2690,9 @@
     AssignmentExpression_In_Yield
   action: undefined
 - rule: TemplateLiteral_Yield_Tagged -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Yield_Tagged -> SubstitutionTemplate_Yield_Tagged
-  action: undefined
+  action: process_template_literal
 - rule: OptionalChain_Yield -> OPTIONAL_CHAINING _NON_NULLISH_ Arguments_Yield
   action: process_optional_chain_call
 - rule: >-
@@ -2810,11 +2814,11 @@
     AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: TemplateLiteral_Yield_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: >-
     TemplateLiteral_Yield_Await_Tagged ->
     SubstitutionTemplate_Yield_Await_Tagged
-  action: undefined
+  action: process_template_literal
 - rule: >-
     OptionalChain_Yield_Await -> OPTIONAL_CHAINING _NON_NULLISH_
     Arguments_Yield_Await
@@ -2892,7 +2896,7 @@
 - rule: PrimaryExpression -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression -> TemplateLiteral
-  action: undefined
+  action: nop
 - rule: PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
   action: process_primary_expression_cpeaapl
 - rule: SuperProperty -> SUPER LBRACK Expression_In RBRACK
@@ -2908,9 +2912,9 @@
 - rule: ArgumentList -> ArgumentList COMMA ELLIPSIS AssignmentExpression_In
   action: undefined
 - rule: >-
-    SubstitutionTemplate_Tagged -> TEMPLATE_HEAD Expression_In
+    SubstitutionTemplate_Tagged -> _TEMPLATE_HEAD_ Expression_In
     TemplateSpans_Tagged
-  action: undefined
+  action: process_substitution_template
 - rule: ShortCircuitExpression -> LogicalORExpression
   action: nop
 - rule: ShortCircuitExpression -> CoalesceExpression
@@ -3049,15 +3053,17 @@
     PropertyDefinition_Await
   action: process_property_definition_list_item
 - rule: >-
-    SubstitutionTemplate_Await -> TEMPLATE_HEAD Expression_In_Await
-    TemplateSpans_Await
-  action: undefined
-- rule: TemplateMiddleList_Await_Tagged -> TEMPLATE_MIDDLE Expression_In_Await
-  action: undefined
+    SubstitutionTemplate_Await -> _TEMPLATE_HEAD_ Expression_In_Await
+    _TO_STRING_ TemplateSpans_Await
+  action: process_substitution_template
+- rule: _TEMPLATE_TAIL_ -> TEMPLATE_TAIL
+  action: process_template_tail
+- rule: TemplateMiddleList_Await_Tagged -> _TEMPLATE_MIDDLE_ Expression_In_Await
+  action: process_template_middle_list_head
 - rule: >-
     TemplateMiddleList_Await_Tagged -> TemplateMiddleList_Await_Tagged
-    TEMPLATE_MIDDLE Expression_In_Await
-  action: undefined
+    _TEMPLATE_MIDDLE_ Expression_In_Await
+  action: process_template_middle_list_item
 - rule: ConditionalExpression_Await -> ShortCircuitExpression_Await
   action: nop
 - rule: >-
@@ -3125,7 +3131,7 @@
 - rule: PrimaryExpression_Yield -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression_Yield -> TemplateLiteral_Yield
-  action: undefined
+  action: nop
 - rule: >-
     PrimaryExpression_Yield ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield
@@ -3145,9 +3151,9 @@
     AssignmentExpression_In_Yield
   action: undefined
 - rule: >-
-    SubstitutionTemplate_Yield_Tagged -> TEMPLATE_HEAD Expression_In_Yield
+    SubstitutionTemplate_Yield_Tagged -> _TEMPLATE_HEAD_ Expression_In_Yield
     TemplateSpans_Yield_Tagged
-  action: undefined
+  action: process_substitution_template
 - rule: LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
   action: nop
 - rule: >-
@@ -3187,7 +3193,7 @@
 - rule: PrimaryExpression_Yield_Await -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
-  action: undefined
+  action: nop
 - rule: >-
     PrimaryExpression_Yield_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
@@ -3209,9 +3215,9 @@
     AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: >-
-    SubstitutionTemplate_Yield_Await_Tagged -> TEMPLATE_HEAD
+    SubstitutionTemplate_Yield_Await_Tagged -> _TEMPLATE_HEAD_
     Expression_In_Yield_Await TemplateSpans_Yield_Await_Tagged
-  action: undefined
+  action: process_substitution_template
 - rule: BitwiseXORExpression_In -> BitwiseANDExpression_In
   action: nop
 - rule: >-
@@ -3247,13 +3253,13 @@
 - rule: ClassExpression -> CLASS BindingIdentifier ClassTail
   action: undefined
 - rule: TemplateLiteral -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral -> SubstitutionTemplate
-  action: undefined
-- rule: TemplateSpans_Tagged -> TEMPLATE_TAIL
-  action: undefined
-- rule: TemplateSpans_Tagged -> TemplateMiddleList_Tagged TEMPLATE_TAIL
-  action: undefined
+  action: process_template_literal
+- rule: TemplateSpans_Tagged -> _TEMPLATE_TAIL_
+  action: process_template_spans_tail
+- rule: TemplateSpans_Tagged -> TemplateMiddleList_Tagged _TEMPLATE_TAIL_
+  action: process_template_spans_middle_tail
 - rule: LogicalORExpression -> LogicalANDExpression
   action: nop
 - rule: >-
@@ -3438,10 +3444,14 @@
   action: undefined
 - rule: PropertyDefinition_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: process_property_definition_spread
-- rule: TemplateSpans_Await -> TEMPLATE_TAIL
-  action: undefined
-- rule: TemplateSpans_Await -> TemplateMiddleList_Await TEMPLATE_TAIL
-  action: undefined
+- rule: _TO_STRING_ -> (empty)
+  action: process_to_string
+- rule: TemplateSpans_Await -> _TEMPLATE_TAIL_
+  action: process_template_spans_tail
+- rule: TemplateSpans_Await -> TemplateMiddleList_Await _TEMPLATE_TAIL_
+  action: process_template_spans_middle_tail
+- rule: _TEMPLATE_MIDDLE_ -> TEMPLATE_MIDDLE
+  action: process_template_middle
 - rule: ShortCircuitExpression_Await -> LogicalORExpression_Await
   action: nop
 - rule: ShortCircuitExpression_Await -> CoalesceExpression_Await
@@ -3483,13 +3493,15 @@
 - rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
   action: undefined
 - rule: TemplateLiteral_Yield -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Yield -> SubstitutionTemplate_Yield
-  action: undefined
-- rule: TemplateSpans_Yield_Tagged -> TEMPLATE_TAIL
-  action: undefined
-- rule: TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_TAIL
-  action: undefined
+  action: process_template_literal
+- rule: TemplateSpans_Yield_Tagged -> _TEMPLATE_TAIL_
+  action: process_template_spans_tail
+- rule: >-
+    TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged
+    _TEMPLATE_TAIL_
+  action: process_template_spans_middle_tail
 - rule: BitwiseXORExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await
   action: nop
 - rule: >-
@@ -3533,15 +3545,15 @@
     ClassTail_Yield_Await
   action: undefined
 - rule: TemplateLiteral_Yield_Await -> NO_SUBSTITUTION_TEMPLATE
-  action: undefined
+  action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Yield_Await -> SubstitutionTemplate_Yield_Await
-  action: undefined
-- rule: TemplateSpans_Yield_Await_Tagged -> TEMPLATE_TAIL
-  action: undefined
+  action: process_template_literal
+- rule: TemplateSpans_Yield_Await_Tagged -> _TEMPLATE_TAIL_
+  action: process_template_spans_tail
 - rule: >-
     TemplateSpans_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged
-    TEMPLATE_TAIL
-  action: undefined
+    _TEMPLATE_TAIL_
+  action: process_template_spans_middle_tail
 - rule: BitwiseANDExpression_In -> EqualityExpression_In
   action: nop
 - rule: >-
@@ -3570,14 +3582,16 @@
   action: process_property_definition_list_head
 - rule: PropertyDefinitionList -> PropertyDefinitionList COMMA PropertyDefinition
   action: process_property_definition_list_item
-- rule: SubstitutionTemplate -> TEMPLATE_HEAD Expression_In TemplateSpans
-  action: undefined
-- rule: TemplateMiddleList_Tagged -> TEMPLATE_MIDDLE Expression_In
-  action: undefined
 - rule: >-
-    TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TEMPLATE_MIDDLE
+    SubstitutionTemplate -> _TEMPLATE_HEAD_ Expression_In _TO_STRING_
+    TemplateSpans
+  action: process_substitution_template
+- rule: TemplateMiddleList_Tagged -> _TEMPLATE_MIDDLE_ Expression_In
+  action: process_template_middle_list_head
+- rule: >-
+    TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged _TEMPLATE_MIDDLE_
     Expression_In
-  action: undefined
+  action: process_template_middle_list_item
 - rule: LogicalANDExpression -> BitwiseORExpression
   action: nop
 - rule: >-
@@ -3853,12 +3867,14 @@
   action: undefined
 - rule: CoverInitializedName_Await -> IdentifierReference_Await Initializer_In_Await
   action: undefined
-- rule: TemplateMiddleList_Await -> TEMPLATE_MIDDLE Expression_In_Await
-  action: undefined
 - rule: >-
-    TemplateMiddleList_Await -> TemplateMiddleList_Await TEMPLATE_MIDDLE
-    Expression_In_Await
-  action: undefined
+    TemplateMiddleList_Await -> _TEMPLATE_MIDDLE_ Expression_In_Await
+    _TO_STRING_
+  action: process_template_middle_list_head
+- rule: >-
+    TemplateMiddleList_Await -> TemplateMiddleList_Await _TEMPLATE_MIDDLE_
+    Expression_In_Await _TO_STRING_
+  action: process_template_middle_list_item
 - rule: LogicalORExpression_Await -> LogicalANDExpression_Await
   action: nop
 - rule: >-
@@ -3910,15 +3926,15 @@
 - rule: ClassTail_Yield -> ClassHeritage_Yield LBRACE ClassBody_Yield RBRACE
   action: undefined
 - rule: >-
-    SubstitutionTemplate_Yield -> TEMPLATE_HEAD Expression_In_Yield
-    TemplateSpans_Yield
-  action: undefined
-- rule: TemplateMiddleList_Yield_Tagged -> TEMPLATE_MIDDLE Expression_In_Yield
-  action: undefined
+    SubstitutionTemplate_Yield -> _TEMPLATE_HEAD_ Expression_In_Yield
+    _TO_STRING_ TemplateSpans_Yield
+  action: process_substitution_template
+- rule: TemplateMiddleList_Yield_Tagged -> _TEMPLATE_MIDDLE_ Expression_In_Yield
+  action: process_template_middle_list_head
 - rule: >-
     TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged
-    TEMPLATE_MIDDLE Expression_In_Yield
-  action: undefined
+    _TEMPLATE_MIDDLE_ Expression_In_Yield
+  action: process_template_middle_list_item
 - rule: BitwiseANDExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await
   action: nop
 - rule: >-
@@ -3968,18 +3984,18 @@
     ClassBody_Yield_Await RBRACE
   action: undefined
 - rule: >-
-    SubstitutionTemplate_Yield_Await -> TEMPLATE_HEAD Expression_In_Yield_Await
-    TemplateSpans_Yield_Await
-  action: undefined
+    SubstitutionTemplate_Yield_Await -> _TEMPLATE_HEAD_
+    Expression_In_Yield_Await _TO_STRING_ TemplateSpans_Yield_Await
+  action: process_substitution_template
 - rule: >-
-    TemplateMiddleList_Yield_Await_Tagged -> TEMPLATE_MIDDLE
+    TemplateMiddleList_Yield_Await_Tagged -> _TEMPLATE_MIDDLE_
     Expression_In_Yield_Await
-  action: undefined
+  action: process_template_middle_list_head
 - rule: >-
     TemplateMiddleList_Yield_Await_Tagged ->
-    TemplateMiddleList_Yield_Await_Tagged TEMPLATE_MIDDLE
+    TemplateMiddleList_Yield_Await_Tagged _TEMPLATE_MIDDLE_
     Expression_In_Yield_Await
-  action: undefined
+  action: process_template_middle_list_item
 - rule: EqualityExpression_In -> RelationalExpression_In
   action: nop
 - rule: EqualityExpression_In -> EqualityExpression_In EQ RelationalExpression_In
@@ -4006,10 +4022,10 @@
   action: undefined
 - rule: PropertyDefinition -> ELLIPSIS AssignmentExpression_In
   action: process_property_definition_spread
-- rule: TemplateSpans -> TEMPLATE_TAIL
-  action: undefined
-- rule: TemplateSpans -> TemplateMiddleList TEMPLATE_TAIL
-  action: undefined
+- rule: TemplateSpans -> _TEMPLATE_TAIL_
+  action: process_template_spans_tail
+- rule: TemplateSpans -> TemplateMiddleList _TEMPLATE_TAIL_
+  action: process_template_spans_middle_tail
 - rule: BitwiseXORExpression -> BitwiseANDExpression
   action: nop
 - rule: BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
@@ -4353,10 +4369,10 @@
   action: undefined
 - rule: ClassBody_Yield -> ClassElementList_Yield
   action: undefined
-- rule: TemplateSpans_Yield -> TEMPLATE_TAIL
-  action: undefined
-- rule: TemplateSpans_Yield -> TemplateMiddleList_Yield TEMPLATE_TAIL
-  action: undefined
+- rule: TemplateSpans_Yield -> _TEMPLATE_TAIL_
+  action: process_template_spans_tail
+- rule: TemplateSpans_Yield -> TemplateMiddleList_Yield _TEMPLATE_TAIL_
+  action: process_template_spans_middle_tail
 - rule: EqualityExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
   action: nop
 - rule: >-
@@ -4395,10 +4411,10 @@
   action: undefined
 - rule: ClassBody_Yield_Await -> ClassElementList_Yield_Await
   action: undefined
-- rule: TemplateSpans_Yield_Await -> TEMPLATE_TAIL
-  action: undefined
-- rule: TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_TAIL
-  action: undefined
+- rule: TemplateSpans_Yield_Await -> _TEMPLATE_TAIL_
+  action: process_template_spans_tail
+- rule: TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await _TEMPLATE_TAIL_
+  action: process_template_spans_middle_tail
 - rule: RelationalExpression_In -> ShiftExpression
   action: nop
 - rule: RelationalExpression_In -> RelationalExpression_In LT ShiftExpression
@@ -4419,10 +4435,12 @@
   action: undefined
 - rule: CoverInitializedName -> IdentifierReference Initializer_In
   action: process_cover_initialized_name
-- rule: TemplateMiddleList -> TEMPLATE_MIDDLE Expression_In
-  action: undefined
-- rule: TemplateMiddleList -> TemplateMiddleList TEMPLATE_MIDDLE Expression_In
-  action: undefined
+- rule: TemplateMiddleList -> _TEMPLATE_MIDDLE_ Expression_In _TO_STRING_
+  action: process_template_middle_list_head
+- rule: >-
+    TemplateMiddleList -> TemplateMiddleList _TEMPLATE_MIDDLE_ Expression_In
+    _TO_STRING_
+  action: process_template_middle_list_item
 - rule: BitwiseANDExpression -> EqualityExpression
   action: nop
 - rule: BitwiseANDExpression -> BitwiseANDExpression BIT_AND EqualityExpression
@@ -4992,12 +5010,14 @@
   action: undefined
 - rule: ClassElementList_Yield -> ClassElementList_Yield ClassElement_Yield
   action: undefined
-- rule: TemplateMiddleList_Yield -> TEMPLATE_MIDDLE Expression_In_Yield
-  action: undefined
 - rule: >-
-    TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE
-    Expression_In_Yield
-  action: undefined
+    TemplateMiddleList_Yield -> _TEMPLATE_MIDDLE_ Expression_In_Yield
+    _TO_STRING_
+  action: process_template_middle_list_head
+- rule: >-
+    TemplateMiddleList_Yield -> TemplateMiddleList_Yield _TEMPLATE_MIDDLE_
+    Expression_In_Yield _TO_STRING_
+  action: process_template_middle_list_item
 - rule: RelationalExpression_In_Yield_Await -> ShiftExpression_Yield_Await
   action: nop
 - rule: >-
@@ -5056,12 +5076,14 @@
     ClassElementList_Yield_Await -> ClassElementList_Yield_Await
     ClassElement_Yield_Await
   action: undefined
-- rule: TemplateMiddleList_Yield_Await -> TEMPLATE_MIDDLE Expression_In_Yield_Await
-  action: undefined
+- rule: >-
+    TemplateMiddleList_Yield_Await -> _TEMPLATE_MIDDLE_
+    Expression_In_Yield_Await _TO_STRING_
+  action: process_template_middle_list_head
 - rule: >-
     TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await
-    TEMPLATE_MIDDLE Expression_In_Yield_Await
-  action: undefined
+    _TEMPLATE_MIDDLE_ Expression_In_Yield_Await _TO_STRING_
+  action: process_template_middle_list_item
 - rule: ShiftExpression -> AdditiveExpression
   action: nop
 - rule: ShiftExpression -> ShiftExpression SHL AdditiveExpression

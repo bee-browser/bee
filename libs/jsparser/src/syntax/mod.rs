@@ -70,6 +70,8 @@ struct Syntax {
 enum Detail {
     Token(usize),
     Literal,
+    TemplateString,
+    TemplateLiteral(u16),
     Identifier(Symbol),
     IdentifierReference(#[allow(unused)] Symbol), // TODO: SS
     BindingIdentifier(Symbol),
@@ -169,6 +171,7 @@ pub enum Node<'s> {
     Boolean(bool),
     Number(f64, &'s str),
     String(Vec<u16>, &'s str),
+    TemplateLiteral(u16),
     Array,
     Object,
     LiteralPropertyName(LiteralPropertyName),
@@ -257,6 +260,7 @@ pub enum Node<'s> {
     StartBlockScope,
     EndBlockScope,
     Dereference,
+    ToString,
 }
 
 #[derive(Clone, Debug)]
@@ -578,6 +582,12 @@ where
     // BindingIdentifier_Yield_Await : await
     fn syntax_error(&mut self) -> Result<(), Error> {
         Err(Error::SyntaxError)
+    }
+
+    // _TO_STRING_
+    fn process_to_string(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ToString);
+        Ok(())
     }
 
     // _DEREFERENCE_
@@ -1378,6 +1388,134 @@ where
     //   = AssignmentExpression[?In, ?Yield, ?Await]
     fn process_initializer(&mut self) -> Result<(), Error> {
         self.replace(2, Detail::Initializer);
+        Ok(())
+    }
+
+    // 13.2.8 Template Literals
+
+    // TemplateLiteral[Yield, Await, Tagged] :
+    //   NoSubstitutionTemplate
+    fn process_template_literal_no_substitution(&mut self) -> Result<(), Error> {
+        // TODO(feat): 13.2.8.1 Static Semantics: Early Errors
+        // It is a Syntax Error if the [Tagged] parameter was not set and NoSubstitutionTemplate
+        // Contains NotEscapeSequence.
+        let token_index = self.tokens.len() - 1;
+        let token = &self.tokens[token_index];
+        debug_assert!(matches!(token.kind, TokenKind::NoSubstitutionTemplate));
+        // TODO: perform `TV`
+        let content = &token.lexeme[1..(token.lexeme.len() - 1)];
+        let value = content.encode_utf16().collect();
+        let start_index = self.enqueue(Node::String(value, token.lexeme));
+        let end_index = self.enqueue(Node::TemplateLiteral(0));
+        let syntax = self.top_mut();
+        syntax.detail = Detail::TemplateLiteral(0);
+        syntax.nodes_range = start_index..(end_index + 1);
+        Ok(())
+    }
+
+    // TemplateLiteral[Yield, Await, Tagged] :
+    //   SubstitutionTemplate[?Yield, ?Await, ?Tagged]
+    fn process_template_literal(&mut self) -> Result<(), Error> {
+        let n = match self.top().detail {
+            Detail::TemplateLiteral(n) => n,
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::TemplateLiteral(n));
+        self.replace(1, Detail::TemplateLiteral(n));
+        Ok(())
+    }
+
+    // SubstitutionTemplate[Yield, Await, Tagged] :
+    //   TemplateHead Expression[+In, ?Yield, ?Await] TemplateSpans[?Yield, ?Await, ?Tagged]
+    fn process_substitution_template(&mut self) -> Result<(), Error> {
+        let n = match self.top().detail {
+            Detail::TemplateLiteral(n) => n,
+            _ => unreachable!(),
+        };
+        debug_assert!(n < u16::MAX / 2);
+        self.replace(3, Detail::TemplateLiteral(n + 1));
+        Ok(())
+    }
+
+    // TemplateSpans[Yield, Await, Tagged] :
+    //   TemplateTail
+    fn process_template_spans_tail(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::TemplateLiteral(0));
+        Ok(())
+    }
+
+    // TemplateSpans[Yield, Await, Tagged] :
+    //   TemplateMiddleList[?Yield, ?Await, ?Tagged] TemplateTail
+    fn process_template_spans_middle_tail(&mut self) -> Result<(), Error> {
+        let n = match self.nth(1).detail {
+            Detail::TemplateLiteral(n) => n,
+            _ => unreachable!(),
+        };
+        self.replace(2, Detail::TemplateLiteral(n));
+        Ok(())
+    }
+
+    // TemplateMiddleList[Yield, Await, Tagged] :
+    //   TemplateMiddle Expression[+In, ?Yield, ?Await]
+    fn process_template_middle_list_head(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::TemplateLiteral(1));
+        Ok(())
+    }
+
+    // TemplateMiddleList[Yield, Await, Tagged] :
+    //   TemplateMiddleList[?Yield, ?Await, ?Tagged] TemplateMiddle Expression[+In, ?Yield, ?Await]
+    fn process_template_middle_list_item(&mut self) -> Result<(), Error> {
+        let n = match self.nth(2).detail {
+            Detail::TemplateLiteral(n) => n,
+            _ => unreachable!(),
+        };
+        debug_assert!(n < u16::MAX / 2);
+        self.replace(3, Detail::TemplateLiteral(n + 1));
+        Ok(())
+    }
+
+    fn process_template_head(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let token = &self.tokens[token_index];
+        debug_assert!(matches!(token.kind, TokenKind::TemplateHead));
+        // TODO: perform `TV`
+        let content = &token.lexeme[1..(token.lexeme.len() - 2)];
+        let value = content.encode_utf16().collect();
+        // The template string may be empty.
+        let start_index = self.enqueue(Node::String(value, token.lexeme));
+        let syntax = self.top_mut();
+        syntax.detail = Detail::TemplateString;
+        syntax.nodes_range = start_index..(start_index + 1);
+        Ok(())
+    }
+
+    fn process_template_middle(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let token = &self.tokens[token_index];
+        debug_assert!(matches!(token.kind, TokenKind::TemplateMiddle));
+        // TODO: perform `TV`
+        let content = &token.lexeme[1..(token.lexeme.len() - 2)];
+        let value = content.encode_utf16().collect();
+        // The template string may be empty.
+        let start_index = self.enqueue(Node::String(value, token.lexeme));
+        let syntax = self.top_mut();
+        syntax.detail = Detail::TemplateString;
+        syntax.nodes_range = start_index..(start_index + 1);
+        Ok(())
+    }
+
+    fn process_template_tail(&mut self) -> Result<(), Error> {
+        let token_index = self.tokens.len() - 1;
+        let token = &self.tokens[token_index];
+        debug_assert!(matches!(token.kind, TokenKind::TemplateTail));
+        // TODO: perform `TV`
+        let content = &token.lexeme[1..(token.lexeme.len() - 1)];
+        let value = content.encode_utf16().collect();
+        // The template string may be empty.
+        let start_index = self.enqueue(Node::String(value, token.lexeme));
+        let syntax = self.top_mut();
+        syntax.detail = Detail::TemplateString;
+        syntax.nodes_range = start_index..(start_index + 1);
         Ok(())
     }
 
