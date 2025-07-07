@@ -422,7 +422,7 @@ where
             CompileCommand::DeclareVariables(scope_ref) => {
                 self.process_declare_variables(func, *scope_ref)
             }
-            CompileCommand::DeclareClosure => self.process_declare_closure(),
+            CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
@@ -817,7 +817,7 @@ where
         }
     }
 
-    fn process_declare_closure(&mut self) {
+    fn process_declare_function(&mut self) {
         let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
         // TODO: operand must hold a closure.
