@@ -257,6 +257,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bjs"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "itertools 0.14.0",
+ "jsruntime",
+ "logging",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1181,17 +1192,6 @@ dependencies = [
  "rustc-hash",
  "static_assertions",
  "thiserror",
-]
-
-[[package]]
-name = "jstb"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "itertools 0.14.0",
- "jsruntime",
- "logging",
 ]
 
 [[package]]

@@ -42,7 +42,7 @@ impl CommandLine {
     }
 }
 
-/// A testbed for the jsruntime module.
+/// A command-line tool for testing jsruntime.
 #[derive(clap::Subcommand)]
 enum Command {
     /// Parses a JavaScript program and print the result.

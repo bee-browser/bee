@@ -1,5 +1,5 @@
 [package]
-name = "jstb"
+name = "bjs"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
