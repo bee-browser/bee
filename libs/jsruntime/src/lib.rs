@@ -30,6 +30,8 @@ pub use types::U16Chunk; // TODO: remove
 pub use types::U16String;
 pub use types::Value;
 
+pub type ParseError = jsparser::Error;
+
 pub fn initialize() {
     backend::initialize();
 }
