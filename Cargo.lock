@@ -265,6 +265,8 @@ dependencies = [
  "itertools 0.14.0",
  "jsruntime",
  "logging",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

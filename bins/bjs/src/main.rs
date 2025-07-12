@@ -5,8 +5,9 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::Parser as _;
 use itertools::Itertools;
+use serde::Serialize;
 
-use jsruntime::BasicRuntime;
+use jsruntime::Runtime;
 use jsruntime::Value;
 
 #[derive(clap::Parser)]
@@ -59,6 +60,9 @@ enum Command {
 
     /// Runs a JavaScript program.
     Run(Run),
+
+    /// Runs a test262 test.
+    Test262(Test262),
 }
 
 #[derive(clap::Args)]
@@ -84,6 +88,13 @@ struct Run {
     no_optimize: bool,
 }
 
+#[derive(clap::Args)]
+struct Test262 {
+    /// Path to tc39/test262 to use.
+    #[arg(long, env = "BEE_TEST262_DIR")]
+    test262_dir: PathBuf,
+}
+
 #[derive(clap::ValueEnum, Clone)]
 enum SourceType {
     /// Parse as a script if the file extension of the input file is "js".
@@ -105,7 +116,7 @@ fn main() -> Result<()> {
 
     jsruntime::initialize();
 
-    let mut runtime = BasicRuntime::new();
+    let mut runtime = Runtime::with_extension(Context);
     if cl.scope_cleanup_checker {
         runtime.enable_scope_cleanup_checker();
     }
@@ -172,6 +183,11 @@ fn main() -> Result<()> {
             }
             runtime.process_jobs();
         }
+        Command::Test262(ref args) => {
+            let mut runner = Runner::new(&args.test262_dir);
+            runner.setup_runtime();
+            runner.run(&cl.sources[0])?;
+        }
     }
 
     Ok(())
@@ -183,7 +199,7 @@ fn read_from_stdin() -> Result<String> {
     Ok(source)
 }
 
-fn print(_runtime: &mut BasicRuntime, args: &[Value]) {
+fn print(_runtime: &mut Runtime<Context>, args: &[Value]) {
     println!("{}", args.iter().format(" "));
 }
 
@@ -222,4 +238,66 @@ impl<'a> Iterator for Sources<'a> {
             None
         }
     }
+}
+
+struct Context;
+
+// TODO: move to //bins/test262/src
+
+struct Runner<'a> {
+    test262_dir: &'a Path,
+    runtime: Runtime<Context>,
+}
+
+impl<'a> Runner<'a> {
+    fn new(test262_dir: &'a Path) -> Self {
+        Self {
+            test262_dir,
+            runtime: Runtime::with_extension(Context),
+        }
+    }
+
+    fn setup_runtime(&mut self) {
+        self.runtime.enable_scope_cleanup_checker();
+        self.runtime.register_host_function("print", Self::print); // TODO
+    }
+
+    fn run<P: AsRef<Path>>(&mut self, testfile: P) -> Result<()> {
+        let path = self.test262_dir.join(testfile);
+        let src = std::fs::read_to_string(path)?;
+
+        let program_id = match self.runtime.parse_script(&src) {
+            Ok(program_id) => program_id,
+            Err(_err) => {
+                println!("{}", serde_json::to_value(&Test262Result::ParseError)?);
+                return Ok(());
+            }
+        };
+
+        match self.runtime.run(program_id, true) {
+            Ok(_value) => {
+                println!("{}", serde_json::to_value(&Test262Result::Pass)?);
+            }
+            Err(_value) => {
+                println!("{}", serde_json::to_value(&Test262Result::RuntimeError)?);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn print(_runtime: &mut Runtime<Context>, _args: &[Value]) {
+        // TODO: println!("{}", args[0]);
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(tag = "type", content = "data")]
+enum Test262Result {
+    #[serde(rename = "pass")]
+    Pass,
+    #[serde(rename = "parse-error")]
+    ParseError,
+    #[serde(rename = "runtime-error")]
+    RuntimeError,
 }
