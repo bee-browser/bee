@@ -70,7 +70,7 @@ coverage: TEST262_ARGS ?= --progress
 coverage:
 	cargo llvm-cov clean --workspace
 	-cargo llvm-cov nextest --no-report --all-features
-	-$(MAKE) test262 ARGS='--mode=coverage $(TEST262_ARGS)'
+	-$(MAKE) test262 ARGS='--profile=coverage $(TEST262_ARGS)'
 	cargo llvm-cov report $(LLVM_COV_ARGS)
 
 .PHONY: bench

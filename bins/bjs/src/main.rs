@@ -62,7 +62,7 @@ enum Command {
     Run(Run),
 
     /// Runs a test262 test.
-    Test262(Test262),
+    Test262,
 }
 
 #[derive(clap::Args)]
@@ -86,13 +86,6 @@ struct Run {
     /// Disable optimization.
     #[arg(long)]
     no_optimize: bool,
-}
-
-#[derive(clap::Args)]
-struct Test262 {
-    /// Path to tc39/test262 to use.
-    #[arg(long, env = "BEE_TEST262_DIR")]
-    test262_dir: PathBuf,
 }
 
 #[derive(clap::ValueEnum, Clone)]
@@ -183,10 +176,12 @@ fn main() -> Result<()> {
             }
             runtime.process_jobs();
         }
-        Command::Test262(ref args) => {
-            let mut runner = Runner::new(&args.test262_dir);
+        Command::Test262 => {
+            let mut runner = Runner::new();
             runner.setup_runtime();
-            runner.run(&cl.sources[0])?;
+            for (_input, source) in cl.sources() {
+                runner.run(&source)?;
+            }
         }
     }
 
@@ -244,15 +239,13 @@ struct Context;
 
 // TODO: move to //bins/test262/src
 
-struct Runner<'a> {
-    test262_dir: &'a Path,
+struct Runner {
     runtime: Runtime<Context>,
 }
 
-impl<'a> Runner<'a> {
-    fn new(test262_dir: &'a Path) -> Self {
+impl Runner {
+    fn new() -> Self {
         Self {
-            test262_dir,
             runtime: Runtime::with_extension(Context),
         }
     }
@@ -262,11 +255,8 @@ impl<'a> Runner<'a> {
         self.runtime.register_host_function("print", Self::print); // TODO
     }
 
-    fn run<P: AsRef<Path>>(&mut self, testfile: P) -> Result<()> {
-        let path = self.test262_dir.join(testfile);
-        let src = std::fs::read_to_string(path)?;
-
-        let program_id = match self.runtime.parse_script(&src) {
+    fn run(&mut self, src: &str) -> Result<()> {
+        let program_id = match self.runtime.parse_script(src) {
             Ok(program_id) => program_id,
             Err(_err) => {
                 println!("{}", serde_json::to_value(&Test262Result::ParseError)?);

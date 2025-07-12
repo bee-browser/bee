@@ -72,7 +72,10 @@ Deno.addSignalListener('SIGINT', () => {
 const spinner = ora({ spinner: 'line' });
 
 const stream = new TestStream(options.test262Dir, { paths: args.tests });
-stream.on('error', (err) => console.error('Something went wrong:', err));
+stream.on('error', (err) => {
+  console.error('Something went wrong:', err);
+  spinner.stop();
+});
 if (options.progress) {
   spinner.start();
 }
@@ -100,8 +103,49 @@ async function handleJob(job) {
     const { code, stdout } = await job.output;
     handleTestResult(job.test, code, stdout);
   } catch (error) {
-    aborted.push({ test, error });
+    aborted.push({ test: job.test, error });
   }
+}
+
+function spawnBjs(options) {
+  const commandOptions = {
+    stdin: 'piped',
+    stdout: 'piped',
+    stderr: 'null',
+    env: {
+      RUST_LOG: 'off',
+    },
+  };
+
+  switch (options.profile) {
+  case 'release':
+    commandOptions.args = [
+      options.timeout,
+      path.join(PROJ_DIR, 'target', 'release', 'bjs'), 'test262',
+    ];
+    break;
+  case 'debug':
+    commandOptions.args = [
+      options.timeout,
+      path.join(PROJ_DIR, 'target', 'debug', 'bjs'), 'test262',
+    ];
+    break;
+  case 'coverage':
+    console.error("NOT SUPPORTED:", options.profile);
+    unreachable();
+  default:
+    unreachable();
+  }
+  return new Deno.Command('timeout', commandOptions).spawn();
+}
+
+async function runTest(bjs, test) {
+  const encoder = new TextEncoder();
+  const writer = bjs.stdin.getWriter();
+  await writer.write(encoder.encode(test.contents));
+  writer.releaseLock();
+  await bjs.stdin.close();
+  return await bjs.output();
 }
 
 function handleTestResult(test, code, stdout) {
@@ -160,18 +204,9 @@ for await (const test of stream) {
   const source = test.contents;
   const sourceType = test.attrs.flags.module ? 'module' : 'script';
 
-  const bjs = path.join(PROJ_DIR, 'target', options.profile, 'bjs');
-  const cmd = new Deno.Command('timeout', {
-    args: [options.timeout, bjs, 'test262', test.file],
-    stdin: 'null',
-    stdout: 'piped',
-    stderr: 'null',
-    env: {
-      RUST_LOG: 'off',
-    },
-  });
-
-  jobs.push({ test, output: cmd.output() });
+  const bjs = spawnBjs(options);
+  const output = runTest(bjs, test);
+  jobs.push({ test, output });
   if (jobs.length === NUM_JOBS) {
     await handleJobs();
   }
