@@ -422,7 +422,7 @@ where
             CompileCommand::DeclareVariables(scope_ref) => {
                 self.process_declare_variables(func, *scope_ref)
             }
-            CompileCommand::DeclareClosure => self.process_declare_closure(),
+            CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
@@ -817,24 +817,49 @@ where
         }
     }
 
-    fn process_declare_closure(&mut self) {
+    fn process_declare_function(&mut self) {
         let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
-        // TODO: operand must hold a closure.
+        let func_ir = match operand {
+            Operand::Function(value) => value,
+            _ => unreachable!("{operand:?}"),
+        };
+
+        // TODO: 4. Perform SetFunctionName(F, name).
+        self.perform_make_constructor(func_ir);
 
         match locator {
             Locator::Local(index) => {
                 let local = self.get_local(index);
-                self.emit_store_operand_to_any(&operand, local);
+                self.editor.put_store_function_to_any(func_ir, local);
             }
             Locator::Global => {
                 let object = ObjectIr(self.editor.put_nullptr());
-                let value = self.perform_to_any(&operand);
+                let value = self.editor.put_alloc_any();
+                self.editor.put_store_function_to_any(func_ir, value);
                 self.editor
                     .put_runtime_set_value_by_symbol(self.support, object, symbol, value);
             }
             _ => unreachable!("{locator:?}"),
         };
+    }
+
+    // 10.2.5 MakeConstructor ( F [ , writablePrototype [ , prototype ] ] )
+    fn perform_make_constructor(&mut self, func_ir: ObjectIr) {
+        // TODO(feat): implement others
+        let prototype = self.editor.put_runtime_create_object(self.support);
+        let value = self.editor.put_alloc_any();
+        self.editor.put_store_object_to_any(prototype, value);
+        let retv = self.editor.put_alloc_any();
+        // TODO(feat): [[Writable]]: writablePrototype, [[Enumerable]]: false,
+        // [[Configurable]]: false
+        self.editor.put_runtime_create_data_property_by_symbol(
+            self.support,
+            func_ir,
+            Symbol::PROTOTYPE,
+            value,
+            retv,
+        );
     }
 
     fn process_call(&mut self, argc: u16) {

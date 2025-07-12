@@ -1688,7 +1688,7 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Function);
         self.commands
             .push(CompileCommand::VariableReference(symbol));
-        self.commands.push(CompileCommand::DeclareClosure);
+        self.commands.push(CompileCommand::DeclareFunction);
 
         // "VariableStatement"s have already declared variables with the same symbol.
         // Such "VariableStatement"s can overwrite the variable.
@@ -2092,7 +2092,7 @@ pub enum CompileCommand {
     MutableVariable,
     ImmutableVariable,
     DeclareVariables(ScopeRef),
-    DeclareClosure,
+    DeclareFunction,
     Call(u16),
     New(u16),
     PushScope(ScopeRef),

@@ -5,8 +5,9 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::Parser as _;
 use itertools::Itertools;
+use serde::Serialize;
 
-use jsruntime::BasicRuntime;
+use jsruntime::Runtime;
 use jsruntime::Value;
 
 #[derive(clap::Parser)]
@@ -42,7 +43,7 @@ impl CommandLine {
     }
 }
 
-/// A testbed for the jsruntime module.
+/// A command-line tool for testing jsruntime.
 #[derive(clap::Subcommand)]
 enum Command {
     /// Parses a JavaScript program and print the result.
@@ -59,6 +60,9 @@ enum Command {
 
     /// Runs a JavaScript program.
     Run(Run),
+
+    /// Runs a test262 test.
+    Test262,
 }
 
 #[derive(clap::Args)]
@@ -105,7 +109,7 @@ fn main() -> Result<()> {
 
     jsruntime::initialize();
 
-    let mut runtime = BasicRuntime::new();
+    let mut runtime = Runtime::with_extension(Context);
     if cl.scope_cleanup_checker {
         runtime.enable_scope_cleanup_checker();
     }
@@ -172,6 +176,13 @@ fn main() -> Result<()> {
             }
             runtime.process_jobs();
         }
+        Command::Test262 => {
+            let mut runner = Runner::new();
+            runner.setup_runtime();
+            for (_input, source) in cl.sources() {
+                runner.run(&source)?;
+            }
+        }
     }
 
     Ok(())
@@ -183,7 +194,7 @@ fn read_from_stdin() -> Result<String> {
     Ok(source)
 }
 
-fn print(_runtime: &mut BasicRuntime, args: &[Value]) {
+fn print(_runtime: &mut Runtime<Context>, args: &[Value]) {
     println!("{}", args.iter().format(" "));
 }
 
@@ -222,4 +233,61 @@ impl<'a> Iterator for Sources<'a> {
             None
         }
     }
+}
+
+struct Context;
+
+// TODO: move to //bins/test262/src
+
+struct Runner {
+    runtime: Runtime<Context>,
+}
+
+impl Runner {
+    fn new() -> Self {
+        Self {
+            runtime: Runtime::with_extension(Context),
+        }
+    }
+
+    fn setup_runtime(&mut self) {
+        self.runtime.enable_scope_cleanup_checker();
+        self.runtime.register_host_function("print", Self::print); // TODO
+    }
+
+    fn run(&mut self, src: &str) -> Result<()> {
+        let program_id = match self.runtime.parse_script(src) {
+            Ok(program_id) => program_id,
+            Err(_err) => {
+                println!("{}", serde_json::to_value(&Test262Result::ParseError)?);
+                return Ok(());
+            }
+        };
+
+        match self.runtime.run(program_id, true) {
+            Ok(_value) => {
+                println!("{}", serde_json::to_value(&Test262Result::Pass)?);
+            }
+            Err(_value) => {
+                println!("{}", serde_json::to_value(&Test262Result::RuntimeError)?);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn print(_runtime: &mut Runtime<Context>, _args: &[Value]) {
+        // TODO: println!("{}", args[0]);
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(tag = "type", content = "data")]
+enum Test262Result {
+    #[serde(rename = "pass")]
+    Pass,
+    #[serde(rename = "parse-error")]
+    ParseError,
+    #[serde(rename = "runtime-error")]
+    RuntimeError,
 }

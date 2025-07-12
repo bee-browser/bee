@@ -61,7 +61,7 @@ function refine(obj) {
 
 export class ESTree {
   static buildArgs(options, estreeArgs) {
-    switch (options.mode) {
+    switch (options.profile) {
       case 'release':
         return ['run', '-r', '-q', '-p', 'estree', '--', ...estreeArgs];
       case 'debug':

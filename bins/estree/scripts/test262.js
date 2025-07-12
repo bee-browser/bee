@@ -24,8 +24,8 @@ Options:
   --details
     Show the details of failed tests.
 
-  --mode=(release | debug | coverage) [default: release]
-    Choice one of the following modes:
+  --profile=(release | debug | coverage) [default: release]
+    Choice one of the following profiles:
       release: Use the release build
       debug: Use the debug build
       coverage: Use cargo-llvm-cov
@@ -39,7 +39,7 @@ const { options, args } = await parseCommand({
   doc: DOC,
 });
 
-options.mode ||= 'release';
+options.profile ||= 'release';
 args.test262Dir ||= DEFAULT_TEST262_DIR;
 
 // TODO: Remove
