@@ -1,5 +1,3 @@
-'use strict';
-
 // TODO(test): Use bins/test262.
 //
 // Currently, there are many unimplemented features that cause panics in jsparser/jsruntime.
@@ -9,12 +7,16 @@
 // This script is slow because this script performs tests in separate bjs processes.  Performing
 // all test cases takes about nearly 10 minutes.
 
+'use strict';
+
 import { unreachable } from '@std/assert';
+import * as log from '@std/log';
 import * as path from '@std/path';
 import ora from 'ora';
 import TestStream from 'test262-stream';
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { PROJ_DIR, VENDOR_DIR } from '../../../tools/lib/consts.js';
+import { setup } from '../../../tools/lib/log.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DEFAULT_TEST262_DIR = path.join(VENDOR_DIR, 'src', 'tc39', 'test262');
@@ -30,8 +32,7 @@ Options:
   --progress
     Show progress.
 
-  --details
-    Show the details of failed tests.
+  --debug
 
   --profile=(release | debug | coverage) [default: release]
     Choice one of the following profiles:
@@ -50,61 +51,87 @@ Arguments:
     Tests to perform.
 `;
 
-const { options, args } = await parseCommand({
-  doc: DOC,
-});
+if (import.meta.main) {
+  const { options, args } = await parseCommand({
+    doc: DOC,
+  });
 
-options.profile ||= 'release';
-options.test262Dir ||= DEFAULT_TEST262_DIR;
-options.timeout ||= DEFAULT_TIMEOUT;
+  options.profile ||= 'release';
+  options.test262Dir ||= DEFAULT_TEST262_DIR;
+  options.timeout ||= DEFAULT_TIMEOUT;
 
-if (args.tests.length === 0) {
-  args.tests.push(DEFAULT_TESTS);
+  if (args.tests.length === 0) {
+    args.tests.push(DEFAULT_TESTS);
+  }
+
+  Deno.exit(await main(options, args));
 }
 
-// The signal handler must be registered before starting the estree server.
-Deno.addSignalListener('SIGINT', () => {
-  spinner?.stop();
-  // We cannot call server?.stop() here because it's async method...
-  Deno.exit(0);
-});
+async function main(options, args) {
+  if (options.debug) {
+    setup(PROGNAME, 'DEBUG');
+  } else {
+    setup(PROGNAME, 'INFO');
+  }
 
-const spinner = ora({ spinner: 'line' });
+  const spinner = ora({ spinner: 'line' });
 
-const stream = new TestStream(options.test262Dir, { paths: args.tests });
-stream.on('error', (err) => {
-  console.error('Something went wrong:', err);
+  // The signal handler must be registered before starting the estree server.
+  Deno.addSignalListener('SIGINT', () => {
+    spinner.stop();
+    // We cannot call server?.stop() here because it's async method...
+    Deno.exit(0);
+  });
+
+  const stream = new TestStream(options.test262Dir, { paths: args.tests });
+  stream.on('error', (err) => {
+    log.error(`Something went wrong: ${err}`);
+    spinner.stop();
+  });
+
+  if (options.progress) {
+    spinner.start();
+  }
+
+  const results = {
+    count: 0,
+    skipped: [],
+    aborted: [],
+    timedout: [],
+    failed: [],
+  };
+
+  // Promises of `cmd.output()` are put into the following queue in order to improve throughput.
+  // There are some test cases that are timed out.
+  const jobs = [];
+  const NUM_JOBS = navigator.hardwareConcurrency;
+
+  for await (const test of stream) {
+    results.count++;
+
+    spinner.text = test.file;
+
+    const bjs = spawnBjs(options);
+    const output = runTest(bjs, test);
+    jobs.push({ test, output });
+    if (jobs.length === NUM_JOBS) {
+      await handleJobs(jobs, results);
+    }
+  }
+
+  if (jobs.length > 0) {
+    await handleJobs(jobs, results);
+  }
+
   spinner.stop();
-});
-if (options.progress) {
-  spinner.start();
-}
 
-let count = 0;
-const skipped = [];
-const aborted = [];
-const timedout = [];
-const failed = [];
+  const passed = results.count - results.skipped.length - results.aborted.length - results.timedout.length - results.failed.length;
+  log.info(
+    `${results.count} tests: ${passed} passed, ` +
+      `${results.skipped.length} skipped, ${results.aborted.length} aborted, ` +
+      `${results.timedout.length} timed-out, ${results.failed.length} failed`);
 
-// Promises of `cmd.output()` are put into the following queue in order to improve throughput.
-// There are some test cases that are timed out.
-const jobs = [];
-const NUM_JOBS = navigator.hardwareConcurrency;
-
-async function handleJobs() {
-  for (const job of jobs) {
-    await handleJob(job);
-  }
-  jobs.length = 0;
-}
-
-async function handleJob(job) {
-  try {
-    const { code, stdout } = await job.output;
-    handleTestResult(job.test, code, stdout);
-  } catch (error) {
-    aborted.push({ test: job.test, error });
-  }
+  return passed === results.count - results.skipped.length ? 0 : 1;
 }
 
 function spawnBjs(options) {
@@ -148,16 +175,32 @@ async function runTest(bjs, test) {
   return await bjs.output();
 }
 
-function handleTestResult(test, code, stdout) {
+async function handleJobs(jobs, results) {
+  for (const job of jobs) {
+    await handleJob(job, results);
+  }
+  jobs.length = 0;
+}
+
+async function handleJob(job, results) {
+  try {
+    const { code, stdout } = await job.output;
+    handleTestResult(job.test, code, stdout, results);
+  } catch (error) {
+    results.aborted.push({ test: job.test, error });
+  }
+}
+
+function handleTestResult(test, code, stdout, results) {
   switch (code) {
   case 0:
     // finished
     break;
   case 124:
-    timedout.push(test);
+    results.timedout.push(test);
     return;
   default:
-    aborted.push({ test, code });
+    results.aborted.push({ test, code });
     return;
   }
 
@@ -166,62 +209,20 @@ function handleTestResult(test, code, stdout) {
   switch (result.type) {
   case 'pass':
     if (test.attrs?.negative) {
-      failed.push({ test, reason: 'negative mismatched' });
+      results.failed.push({ test, reason: 'negative mismatched' });
     }
     break;
   case 'parse-error':
     if (test.attrs?.negative?.phase !== 'parse') {
-      failed.push({ test, reason: 'negative mismatched' });
+      results.failed.push({ test, reason: 'negative mismatched' });
     }
     break;
   case 'runtime-error':
-    failed.push({ test, reason: 'runtime-error', value: result.data });
+    resutls.failed.push({ test, reason: 'runtime-error', value: result.data });
     // TODO
     break;
   default:
-    console.error('invalid result.type:', result.type);
+    log.error(`invalid result.type: ${result.type}`);
     break;
   }
 }
-
-for await (const test of stream) {
-  count++;
-
-  test.toString = function () {
-    let s = this.file;
-    s += this.attrs.flags.module ? '#module' : '#script';
-    if (this.scenario === 'strict mode') {
-      s += '#strict';
-    }
-    if (this.attrs.features) {
-      s += `#${this.attrs.features.join('#')}`;
-    }
-    return s;
-  };
-
-  spinner.text = test.file;
-
-  const source = test.contents;
-  const sourceType = test.attrs.flags.module ? 'module' : 'script';
-
-  const bjs = spawnBjs(options);
-  const output = runTest(bjs, test);
-  jobs.push({ test, output });
-  if (jobs.length === NUM_JOBS) {
-    await handleJobs();
-  }
-}
-
-if (jobs.length > 0) {
-  await handleJobs();
-}
-
-spinner.stop();
-
-const passed = count - skipped.length - aborted.length - timedout.length - failed.length;
-console.log(
-  `${count} tests: ${passed} passed, ` +
-    `${skipped.length} skipped, ${aborted.length} aborted, ` +
-    `${timedout.length} timed-out, ${failed.length} failed`);
-
-Deno.exit(failed.length === 0 ? 0 : 1);
