@@ -179,8 +179,8 @@ fn main() -> Result<()> {
         Command::Test262 => {
             let mut runner = Runner::new();
             runner.setup_runtime();
-            for (_input, source) in cl.sources() {
-                runner.run(&source)?;
+            if let Some((_input, source)) = cl.sources().next() {
+                runner.run(&source);
             }
         }
     }
@@ -255,39 +255,45 @@ impl Runner {
         self.runtime.register_host_function("print", Self::print); // TODO
     }
 
-    fn run(&mut self, src: &str) -> Result<()> {
+    fn run(&mut self, src: &str) {
         let program_id = match self.runtime.parse_script(src) {
             Ok(program_id) => program_id,
             Err(_err) => {
-                println!("{}", serde_json::to_value(&Test262Result::ParseError)?);
-                return Ok(());
+                let event = Test262Event::ParseError;
+                println!("{}", serde_json::to_value(&event).unwrap());
+                return;
             }
         };
 
-        match self.runtime.run(program_id, true) {
+        let result = self.runtime.run(program_id, true);
+        self.runtime.process_jobs();
+        match result {
             Ok(_value) => {
-                println!("{}", serde_json::to_value(&Test262Result::Pass)?);
+                let event = Test262Event::Pass;
+                println!("{}", serde_json::to_value(&event).unwrap());
             }
             Err(_value) => {
-                println!("{}", serde_json::to_value(&Test262Result::RuntimeError)?);
+                let event = Test262Event::RuntimeError;
+                println!("{}", serde_json::to_value(&event).unwrap());
             }
         }
-
-        Ok(())
     }
 
-    fn print(_runtime: &mut Runtime<Context>, _args: &[Value]) {
-        // TODO: println!("{}", args[0]);
+    fn print(_runtime: &mut Runtime<Context>, args: &[Value]) {
+        let event = Test262Event::Print(format!("{}", args[0])); // TODO: ToString()
+        println!("{}", serde_json::to_value(&event).unwrap());
     }
 }
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "type", content = "data")]
-enum Test262Result {
+enum Test262Event {
     #[serde(rename = "pass")]
     Pass,
     #[serde(rename = "parse-error")]
     ParseError,
     #[serde(rename = "runtime-error")]
     RuntimeError,
+    #[serde(rename = "print")]
+    Print(String),
 }

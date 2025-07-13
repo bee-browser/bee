@@ -125,11 +125,13 @@ async function main(options, args) {
 
   spinner.stop();
 
-  const passed = results.count - results.skipped.length - results.aborted.length - results.timedout.length - results.failed.length;
+  const passed = results.count - results.skipped.length - results.aborted.length -
+    results.timedout.length - results.failed.length;
   log.info(
     `${results.count} tests: ${passed} passed, ` +
       `${results.skipped.length} skipped, ${results.aborted.length} aborted, ` +
-      `${results.timedout.length} timed-out, ${results.failed.length} failed`);
+      `${results.timedout.length} timed-out, ${results.failed.length} failed`,
+  );
 
   return passed === results.count - results.skipped.length ? 0 : 1;
 }
@@ -145,23 +147,25 @@ function spawnBjs(options) {
   };
 
   switch (options.profile) {
-  case 'release':
-    commandOptions.args = [
-      options.timeout,
-      path.join(PROJ_DIR, 'target', 'release', 'bjs'), 'test262',
-    ];
-    break;
-  case 'debug':
-    commandOptions.args = [
-      options.timeout,
-      path.join(PROJ_DIR, 'target', 'debug', 'bjs'), 'test262',
-    ];
-    break;
-  case 'coverage':
-    console.error("NOT SUPPORTED:", options.profile);
-    unreachable();
-  default:
-    unreachable();
+    case 'release':
+      commandOptions.args = [
+        options.timeout,
+        path.join(PROJ_DIR, 'target', 'release', 'bjs'),
+        'test262',
+      ];
+      break;
+    case 'debug':
+      commandOptions.args = [
+        options.timeout,
+        path.join(PROJ_DIR, 'target', 'debug', 'bjs'),
+        'test262',
+      ];
+      break;
+    case 'coverage':
+      console.error('NOT SUPPORTED:', options.profile);
+      unreachable();
+    default:
+      unreachable();
   }
   return new Deno.Command('timeout', commandOptions).spawn();
 }
@@ -193,36 +197,42 @@ async function handleJob(job, results) {
 
 function handleTestResult(test, code, stdout, results) {
   switch (code) {
-  case 0:
-    // finished
-    break;
-  case 124:
-    results.timedout.push(test);
-    return;
-  default:
-    results.aborted.push({ test, code });
-    return;
+    case 0:
+      // finished
+      break;
+    case 124:
+      results.timedout.push(test);
+      return;
+    default:
+      results.aborted.push({ test, code });
+      return;
   }
 
-  const json = new TextDecoder().decode(stdout);
-  const result = JSON.parse(json);
-  switch (result.type) {
-  case 'pass':
-    if (test.attrs?.negative) {
-      results.failed.push({ test, reason: 'negative mismatched' });
+  const lines = new TextDecoder().decode(stdout).split('\n');
+  for (const json of lines) {
+    const event = JSON.parse(json);
+    switch (event.type) {
+      case 'pass':
+        if (test.attrs?.negative) {
+          results.failed.push({ test, reason: 'negative mismatched' });
+        }
+        return;
+      case 'parse-error':
+        if (test.attrs?.negative?.phase !== 'parse') {
+          results.failed.push({ test, reason: 'negative mismatched' });
+        }
+        return;
+      case 'runtime-error':
+        // TODO: check error
+        resutls.failed.push({ test, reason: 'runtime-error', value: result.data });
+        return;
+      case 'print':
+        // TODO
+        break;
+      default:
+        log.error(`invalid result.type: ${result.type}`);
+        // ignore
+        break;
     }
-    break;
-  case 'parse-error':
-    if (test.attrs?.negative?.phase !== 'parse') {
-      results.failed.push({ test, reason: 'negative mismatched' });
-    }
-    break;
-  case 'runtime-error':
-    resutls.failed.push({ test, reason: 'runtime-error', value: result.data });
-    // TODO
-    break;
-  default:
-    log.error(`invalid result.type: ${result.type}`);
-    break;
   }
 }
