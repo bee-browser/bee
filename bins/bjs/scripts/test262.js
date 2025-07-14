@@ -102,34 +102,23 @@ async function main(options, args) {
 
   const tests = [];
 
-  const results = {
-    count: 0,
-    skipped: [],
-    aborted: [],
-    timedout: [],
-    failed: [],
-  };
-
   // Promises of `cmd.output()` are put into the following queue in order to improve throughput.
   // There are some test cases that are timed out.
   const jobs = [];
   const NUM_JOBS = navigator.hardwareConcurrency;
 
   for await (const test of stream) {
-    results.count++;
-
     spinner.text = test.file;
-
     const bjs = spawnBjs(options);
     const output = runTest(bjs, test);
     jobs.push({ test, output });
     if (jobs.length === NUM_JOBS) {
-      await handleJobs(jobs, results, tests);
+      await handleJobs(jobs, tests);
     }
   }
 
   if (jobs.length > 0) {
-    await handleJobs(jobs, results, tests);
+    await handleJobs(jobs, tests);
   }
 
   spinner.stop();
@@ -192,17 +181,17 @@ async function runTest(bjs, test) {
   return await bjs.output();
 }
 
-async function handleJobs(jobs, results, tests) {
+async function handleJobs(jobs, tests) {
   for (const job of jobs) {
-    await handleJob(job, results, tests);
+    await handleJob(job, tests);
   }
   jobs.length = 0;
 }
 
-async function handleJob(job, results, tests) {
+async function handleJob(job, tests) {
   try {
     const { code, stdout } = await job.output;
-    handleTestResult(job.test, code, stdout, results, tests);
+    handleTestResult(job.test, code, stdout, tests);
   } catch (error) {
     tests.push({
       name: job.test.file,
@@ -217,7 +206,7 @@ async function handleJob(job, results, tests) {
   }
 }
 
-function handleTestResult(test, code, stdout, results, tests) {
+function handleTestResult(test, code, stdout, tests) {
   switch (code) {
     case 0:
       // finished
