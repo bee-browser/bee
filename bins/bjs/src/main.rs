@@ -294,56 +294,60 @@ impl Runner {
 #[serde(tag = "type", content = "data")]
 enum Test262Event {
     #[serde(rename = "start")]
-    Start {
-        timestamp: u64,
-    },
+    Start { timestamp: u64 },
     #[serde(rename = "pass")]
-    Pass {
-        timestamp: u64,
-    },
+    Pass { timestamp: u64 },
     #[serde(rename = "parse-error")]
-    ParseError {
-        timestamp: u64,
-    },
+    ParseError { timestamp: u64 },
     #[serde(rename = "runtime-error")]
-    RuntimeError {
-        timestamp: u64,
-    },
+    RuntimeError { timestamp: u64 },
     #[serde(rename = "print")]
-    Print {
-        timestamp: u64,
-        value: String,
-    },
+    Print { timestamp: u64, value: String },
 }
 
 impl Test262Event {
     fn start() -> Self {
         Self::Start {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64,
         }
     }
 
     fn pass() -> Self {
         Self::Pass {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64,
         }
     }
 
     fn parse_error() -> Self {
         Self::ParseError {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64,
         }
     }
 
     fn runtime_error() -> Self {
         Self::RuntimeError {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64,
         }
     }
 
     fn print(value: String) -> Self {
         Self::Print {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64,
             value,
         }
     }

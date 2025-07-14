@@ -212,7 +212,7 @@ async function handleJob(job, results, tests) {
       extra: {
         metadata: job.test.attrs,
         error: error,
-      }
+      },
     });
   }
 }
@@ -230,7 +230,7 @@ function handleTestResult(test, code, stdout, results, tests) {
         rawStatus: 'timed-out',
         extra: {
           metadata: test.attrs,
-        }
+        },
       });
       return;
     default:
@@ -242,7 +242,7 @@ function handleTestResult(test, code, stdout, results, tests) {
         extra: {
           metadata: test.attrs,
           exitCode: code,
-        }
+        },
       });
       return;
   }
@@ -267,7 +267,7 @@ function handleTestResult(test, code, stdout, results, tests) {
             rawStatus: 'failed',
             extra: {
               metadata: test.attrs,
-            }
+            },
           });
           return;
         }
@@ -280,7 +280,7 @@ function handleTestResult(test, code, stdout, results, tests) {
           rawStatus: 'passed',
           extra: {
             metadata: test.attrs,
-          }
+          },
         });
         return;
       case 'parse-error':
@@ -295,7 +295,7 @@ function handleTestResult(test, code, stdout, results, tests) {
             rawStatus: 'failed',
             extra: {
               metadata: test.attrs,
-            }
+            },
           });
           return;
         }
@@ -308,7 +308,7 @@ function handleTestResult(test, code, stdout, results, tests) {
           rawStatus: 'passed',
           extra: {
             metadata: test.attrs,
-          }
+          },
         });
         return;
       case 'runtime-error':
@@ -323,7 +323,7 @@ function handleTestResult(test, code, stdout, results, tests) {
           rawStatus: 'failed',
           extra: {
             metadata: test.attrs,
-          }
+          },
         });
         return;
       case 'print':
@@ -399,7 +399,8 @@ function showSummary(tests) {
 
   log.info(
     `${tests.length} tests: ${passed} passed, ${skipped} skipped, ${aborted} aborted, ` +
-      `${timedout} timed-out, ${failed} failed`);
+      `${timedout} timed-out, ${failed} failed`,
+  );
 
   return passed === tests.length;
 }
