@@ -33,6 +33,7 @@ Options:
     Show progress.
 
   --debug
+    Show debug logs.
 
   --profile=(release | debug | coverage) [default: release]
     Choice one of the following profiles:
@@ -49,6 +50,12 @@ Options:
 Arguments:
   <tests> [default: ${DEFAULT_TESTS}]
     Tests to perform.
+
+Description:
+  This script performs the specified test cases in tc39/test262, outputs test results to STDOUT and
+  shows the summary of the test results.
+
+  The test results are output in the CTRF (Common Test Report Format).
 `;
 
 if (import.meta.main) {
@@ -93,6 +100,8 @@ async function main(options, args) {
     spinner.start();
   }
 
+  const tests = [];
+
   const results = {
     count: 0,
     skipped: [],
@@ -115,25 +124,29 @@ async function main(options, args) {
     const output = runTest(bjs, test);
     jobs.push({ test, output });
     if (jobs.length === NUM_JOBS) {
-      await handleJobs(jobs, results);
+      await handleJobs(jobs, results, tests);
     }
   }
 
   if (jobs.length > 0) {
-    await handleJobs(jobs, results);
+    await handleJobs(jobs, results, tests);
   }
 
   spinner.stop();
 
-  const passed = results.count - results.skipped.length - results.aborted.length -
-    results.timedout.length - results.failed.length;
-  log.info(
-    `${results.count} tests: ${passed} passed, ` +
-      `${results.skipped.length} skipped, ${results.aborted.length} aborted, ` +
-      `${results.timedout.length} timed-out, ${results.failed.length} failed`,
-  );
+  console.log(JSON.stringify({
+    reportFormat: 'CTRF',
+    specVersion: '0.0.0',
+    results: {
+      tool: {
+        name: 'bee-browser/bee;bins/bjs/scripts/test262.js',
+      },
+      summary: ctrfSummary(tests),
+      tests,
+    },
+  }));
 
-  return passed === results.count - results.skipped.length ? 0 : 1;
+  return showSummary(tests) ? 0 : 1;
 }
 
 function spawnBjs(options) {
@@ -179,52 +192,139 @@ async function runTest(bjs, test) {
   return await bjs.output();
 }
 
-async function handleJobs(jobs, results) {
+async function handleJobs(jobs, results, tests) {
   for (const job of jobs) {
-    await handleJob(job, results);
+    await handleJob(job, results, tests);
   }
   jobs.length = 0;
 }
 
-async function handleJob(job, results) {
+async function handleJob(job, results, tests) {
   try {
     const { code, stdout } = await job.output;
-    handleTestResult(job.test, code, stdout, results);
+    handleTestResult(job.test, code, stdout, results, tests);
   } catch (error) {
-    results.aborted.push({ test: job.test, error });
+    tests.push({
+      name: job.test.file,
+      status: 'other',
+      duration: 0,
+      rawStatus: 'aborted',
+      extra: {
+        metadata: job.test.attrs,
+        error: error,
+      }
+    });
   }
 }
 
-function handleTestResult(test, code, stdout, results) {
+function handleTestResult(test, code, stdout, results, tests) {
   switch (code) {
     case 0:
       // finished
       break;
     case 124:
-      results.timedout.push(test);
+      tests.push({
+        name: test.file,
+        status: 'other',
+        duration: 0,
+        rawStatus: 'timed-out',
+        extra: {
+          metadata: test.attrs,
+        }
+      });
       return;
     default:
-      results.aborted.push({ test, code });
+      tests.push({
+        name: test.file,
+        status: 'other',
+        duration: 0,
+        rawStatus: 'aborted',
+        extra: {
+          metadata: test.attrs,
+          exitCode: code,
+        }
+      });
       return;
   }
 
+  let start;
   const lines = new TextDecoder().decode(stdout).split('\n');
   for (const json of lines) {
     const event = JSON.parse(json);
     switch (event.type) {
-      case 'pass':
+      case 'start':
+        start = event.data.timestamp;
+        break;
+      case 'passed':
         if (test.attrs?.negative) {
-          results.failed.push({ test, reason: 'negative mismatched' });
+          tests.push({
+            name: test.file,
+            status: 'failed',
+            duration: event.data.timestamp - start,
+            start,
+            stop: event.data.timestamp,
+            message: 'negative mismatched',
+            rawStatus: 'failed',
+            extra: {
+              metadata: test.attrs,
+            }
+          });
+          return;
         }
+        tests.push({
+          name: test.file,
+          status: 'passed',
+          duration: event.data.timestamp - start,
+          start,
+          stop: event.data.timestamp,
+          rawStatus: 'passed',
+          extra: {
+            metadata: test.attrs,
+          }
+        });
         return;
       case 'parse-error':
         if (test.attrs?.negative?.phase !== 'parse') {
-          results.failed.push({ test, reason: 'negative mismatched' });
+          tests.push({
+            name: test.file,
+            status: 'failed',
+            duration: event.data.timestamp - start,
+            start,
+            stop: event.data.timestamp,
+            message: 'negative mismatched',
+            rawStatus: 'failed',
+            extra: {
+              metadata: test.attrs,
+            }
+          });
+          return;
         }
+        tests.push({
+          name: test.file,
+          status: 'passed',
+          duration: event.data.timestamp - start,
+          start,
+          stop: event.data.timestamp,
+          rawStatus: 'passed',
+          extra: {
+            metadata: test.attrs,
+          }
+        });
         return;
       case 'runtime-error':
         // TODO: check error
-        resutls.failed.push({ test, reason: 'runtime-error', value: result.data });
+        tests.push({
+          name: test.file,
+          status: 'failed',
+          duration: event.data.timestamp - start,
+          start,
+          stop: event.data.timestamp,
+          message: 'runtime-error',
+          rawStatus: 'failed',
+          extra: {
+            metadata: test.attrs,
+          }
+        });
         return;
       case 'print':
         // TODO
@@ -235,4 +335,71 @@ function handleTestResult(test, code, stdout, results) {
         break;
     }
   }
+}
+
+function ctrfSummary(tests) {
+  const summary = {
+    tests: tests.length,
+    passed: 0,
+    failed: 0,
+    pending: 0,
+    skipped: 0,
+    other: 0,
+  };
+
+  for (const test of tests) {
+    switch (test.status) {
+      case 'passed':
+        summary.passed++;
+        break;
+      case 'failed':
+        summary.failed++;
+        break;
+      case 'pending':
+        summary.pending++;
+        break;
+      case 'skipped':
+        summary.skipped++;
+        break;
+      case 'other':
+        summary.other++;
+        break;
+    }
+  }
+
+  return summary;
+}
+
+function showSummary(tests) {
+  let passed = 0;
+  let skipped = 0;
+  let aborted = 0;
+  let timedout = 0;
+  let failed = 0;
+
+  for (const test of tests) {
+    switch (test.rawStatus) {
+      case 'passed':
+        passed++;
+        break;
+      case 'skipped':
+        skipped++;
+        break;
+      case 'aborted':
+        aborted++;
+        break;
+      case 'timed-out':
+        timedout++;
+        break;
+      case 'failed':
+        failed++;
+        break;
+    }
+  }
+
+  log.info(
+    `${tests.length} tests: ${passed} passed, ${skipped} skipped, ${aborted} aborted, ` +
+      `${timedout} timed-out, ${failed} failed`);
+
+  return passed === tests.length;
 }

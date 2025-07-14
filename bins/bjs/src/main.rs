@@ -1,6 +1,8 @@
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 use anyhow::Result;
 use clap::Parser as _;
@@ -245,6 +247,9 @@ struct Runner {
 
 impl Runner {
     fn new() -> Self {
+        let event = Test262Event::start();
+        println!("{}", serde_json::to_value(&event).unwrap());
+
         Self {
             runtime: Runtime::with_extension(Context),
         }
@@ -259,7 +264,7 @@ impl Runner {
         let program_id = match self.runtime.parse_script(src) {
             Ok(program_id) => program_id,
             Err(_err) => {
-                let event = Test262Event::ParseError;
+                let event = Test262Event::parse_error();
                 println!("{}", serde_json::to_value(&event).unwrap());
                 return;
             }
@@ -269,18 +274,18 @@ impl Runner {
         self.runtime.process_jobs();
         match result {
             Ok(_value) => {
-                let event = Test262Event::Pass;
+                let event = Test262Event::pass();
                 println!("{}", serde_json::to_value(&event).unwrap());
             }
             Err(_value) => {
-                let event = Test262Event::RuntimeError;
+                let event = Test262Event::runtime_error();
                 println!("{}", serde_json::to_value(&event).unwrap());
             }
         }
     }
 
     fn print(_runtime: &mut Runtime<Context>, args: &[Value]) {
-        let event = Test262Event::Print(format!("{}", args[0])); // TODO: ToString()
+        let event = Test262Event::print(format!("{}", args[0])); // TODO: ToString()
         println!("{}", serde_json::to_value(&event).unwrap());
     }
 }
@@ -288,12 +293,58 @@ impl Runner {
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "type", content = "data")]
 enum Test262Event {
+    #[serde(rename = "start")]
+    Start {
+        timestamp: u64,
+    },
     #[serde(rename = "pass")]
-    Pass,
+    Pass {
+        timestamp: u64,
+    },
     #[serde(rename = "parse-error")]
-    ParseError,
+    ParseError {
+        timestamp: u64,
+    },
     #[serde(rename = "runtime-error")]
-    RuntimeError,
+    RuntimeError {
+        timestamp: u64,
+    },
     #[serde(rename = "print")]
-    Print(String),
+    Print {
+        timestamp: u64,
+        value: String,
+    },
+}
+
+impl Test262Event {
+    fn start() -> Self {
+        Self::Start {
+            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+        }
+    }
+
+    fn pass() -> Self {
+        Self::Pass {
+            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+        }
+    }
+
+    fn parse_error() -> Self {
+        Self::ParseError {
+            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+        }
+    }
+
+    fn runtime_error() -> Self {
+        Self::RuntimeError {
+            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+        }
+    }
+
+    fn print(value: String) -> Self {
+        Self::Print {
+            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+            value,
+        }
+    }
 }
