@@ -1,5 +1,3 @@
-'use strict';
-
 // TODO(test): Use bins/test262.
 //
 // Currently, there are many unimplemented features that cause panics in jsparser/jsruntime.
@@ -9,12 +7,16 @@
 // This script is slow because this script performs tests in separate bjs processes.  Performing
 // all test cases takes about nearly 10 minutes.
 
+'use strict';
+
 import { unreachable } from '@std/assert';
+import * as log from '@std/log';
 import * as path from '@std/path';
 import ora from 'ora';
 import TestStream from 'test262-stream';
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { PROJ_DIR, VENDOR_DIR } from '../../../tools/lib/consts.js';
+import { setup } from '../../../tools/lib/log.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DEFAULT_TEST262_DIR = path.join(VENDOR_DIR, 'src', 'tc39', 'test262');
@@ -30,8 +32,8 @@ Options:
   --progress
     Show progress.
 
-  --details
-    Show the details of failed tests.
+  --debug
+    Show debug logs.
 
   --profile=(release | debug | coverage) [default: release]
     Choice one of the following profiles:
@@ -48,63 +50,92 @@ Options:
 Arguments:
   <tests> [default: ${DEFAULT_TESTS}]
     Tests to perform.
+
+Description:
+  This script performs the specified test cases in tc39/test262, outputs test results to STDOUT and
+  shows the summary of the test results.
+
+  The test results are output in the CTRF (Common Test Report Format).
 `;
 
-const { options, args } = await parseCommand({
-  doc: DOC,
-});
+if (import.meta.main) {
+  const { options, args } = await parseCommand({
+    doc: DOC,
+  });
 
-options.profile ||= 'release';
-options.test262Dir ||= DEFAULT_TEST262_DIR;
-options.timeout ||= DEFAULT_TIMEOUT;
+  options.profile ||= 'release';
+  options.test262Dir ||= DEFAULT_TEST262_DIR;
+  options.timeout ||= DEFAULT_TIMEOUT;
 
-if (args.tests.length === 0) {
-  args.tests.push(DEFAULT_TESTS);
+  if (args.tests.length === 0) {
+    args.tests.push(DEFAULT_TESTS);
+  }
+
+  Deno.exit(await main(options, args));
 }
 
-// The signal handler must be registered before starting the estree server.
-Deno.addSignalListener('SIGINT', () => {
-  spinner?.stop();
-  // We cannot call server?.stop() here because it's async method...
-  Deno.exit(0);
-});
+async function main(options, args) {
+  if (options.debug) {
+    setup(PROGNAME, 'DEBUG');
+  } else {
+    setup(PROGNAME, 'INFO');
+  }
 
-const spinner = ora({ spinner: 'line' });
+  const spinner = ora({ spinner: 'line' });
 
-const stream = new TestStream(options.test262Dir, { paths: args.tests });
-stream.on('error', (err) => {
-  console.error('Something went wrong:', err);
+  // The signal handler must be registered before starting the estree server.
+  Deno.addSignalListener('SIGINT', () => {
+    spinner.stop();
+    // We cannot call server?.stop() here because it's async method...
+    Deno.exit(0);
+  });
+
+  const stream = new TestStream(options.test262Dir, { paths: args.tests });
+  stream.on('error', (err) => {
+    log.error(`Something went wrong: ${err}`);
+    spinner.stop();
+  });
+
+  if (options.progress) {
+    spinner.start();
+  }
+
+  const tests = [];
+
+  // Promises of `cmd.output()` are put into the following queue in order to improve throughput.
+  // There are some test cases that are timed out.
+  const jobs = [];
+  const NUM_JOBS = navigator.hardwareConcurrency;
+
+  for await (const test of stream) {
+    spinner.text = test.file;
+    const bjs = spawnBjs(options);
+    const output = runTest(bjs, test);
+    jobs.push({ test, output });
+    if (jobs.length === NUM_JOBS) {
+      await handleJobs(jobs, tests);
+    }
+  }
+
+  if (jobs.length > 0) {
+    await handleJobs(jobs, tests);
+  }
+
   spinner.stop();
-});
-if (options.progress) {
-  spinner.start();
-}
 
-let count = 0;
-const skipped = [];
-const aborted = [];
-const timedout = [];
-const failed = [];
+  console.log(JSON.stringify({
+    reportFormat: 'CTRF',
+    specVersion: '0.0.0',
+    results: {
+      tool: {
+        name: 'bee-browser/bee;bins/bjs/scripts/test262.js',
+      },
+      summary: ctrfSummary(tests),
+      tests,
+    },
+  }));
 
-// Promises of `cmd.output()` are put into the following queue in order to improve throughput.
-// There are some test cases that are timed out.
-const jobs = [];
-const NUM_JOBS = navigator.hardwareConcurrency;
-
-async function handleJobs() {
-  for (const job of jobs) {
-    await handleJob(job);
-  }
-  jobs.length = 0;
-}
-
-async function handleJob(job) {
-  try {
-    const { code, stdout } = await job.output;
-    handleTestResult(job.test, code, stdout);
-  } catch (error) {
-    aborted.push({ test: job.test, error });
-  }
+  return showSummary(tests) ? 0 : 1;
 }
 
 function spawnBjs(options) {
@@ -118,23 +149,25 @@ function spawnBjs(options) {
   };
 
   switch (options.profile) {
-  case 'release':
-    commandOptions.args = [
-      options.timeout,
-      path.join(PROJ_DIR, 'target', 'release', 'bjs'), 'test262',
-    ];
-    break;
-  case 'debug':
-    commandOptions.args = [
-      options.timeout,
-      path.join(PROJ_DIR, 'target', 'debug', 'bjs'), 'test262',
-    ];
-    break;
-  case 'coverage':
-    console.error("NOT SUPPORTED:", options.profile);
-    unreachable();
-  default:
-    unreachable();
+    case 'release':
+      commandOptions.args = [
+        options.timeout,
+        path.join(PROJ_DIR, 'target', 'release', 'bjs'),
+        'test262',
+      ];
+      break;
+    case 'debug':
+      commandOptions.args = [
+        options.timeout,
+        path.join(PROJ_DIR, 'target', 'debug', 'bjs'),
+        'test262',
+      ];
+      break;
+    case 'coverage':
+      console.error('NOT SUPPORTED:', options.profile);
+      unreachable();
+    default:
+      unreachable();
   }
   return new Deno.Command('timeout', commandOptions).spawn();
 }
@@ -148,80 +181,215 @@ async function runTest(bjs, test) {
   return await bjs.output();
 }
 
-function handleTestResult(test, code, stdout) {
-  switch (code) {
-  case 0:
-    // finished
-    break;
-  case 124:
-    timedout.push(test);
-    return;
-  default:
-    aborted.push({ test, code });
-    return;
+async function handleJobs(jobs, tests) {
+  for (const job of jobs) {
+    await handleJob(job, tests);
   }
+  jobs.length = 0;
+}
 
-  const json = new TextDecoder().decode(stdout);
-  const result = JSON.parse(json);
-  switch (result.type) {
-  case 'pass':
-    if (test.attrs?.negative) {
-      failed.push({ test, reason: 'negative mismatched' });
-    }
-    break;
-  case 'parse-error':
-    if (test.attrs?.negative?.phase !== 'parse') {
-      failed.push({ test, reason: 'negative mismatched' });
-    }
-    break;
-  case 'runtime-error':
-    failed.push({ test, reason: 'runtime-error', value: result.data });
-    // TODO
-    break;
-  default:
-    console.error('invalid result.type:', result.type);
-    break;
+async function handleJob(job, tests) {
+  try {
+    const { code, stdout } = await job.output;
+    handleTestResult(job.test, code, stdout, tests);
+  } catch (error) {
+    tests.push({
+      name: job.test.file,
+      status: 'other',
+      duration: 0,
+      rawStatus: 'aborted',
+      extra: {
+        metadata: job.test.attrs,
+        error: error,
+      },
+    });
   }
 }
 
-for await (const test of stream) {
-  count++;
+function handleTestResult(test, code, stdout, tests) {
+  switch (code) {
+    case 0:
+      // finished
+      break;
+    case 124:
+      tests.push({
+        name: test.file,
+        status: 'other',
+        duration: 0,
+        rawStatus: 'timed-out',
+        extra: {
+          metadata: test.attrs,
+        },
+      });
+      return;
+    default:
+      tests.push({
+        name: test.file,
+        status: 'other',
+        duration: 0,
+        rawStatus: 'aborted',
+        extra: {
+          metadata: test.attrs,
+          exitCode: code,
+        },
+      });
+      return;
+  }
 
-  test.toString = function () {
-    let s = this.file;
-    s += this.attrs.flags.module ? '#module' : '#script';
-    if (this.scenario === 'strict mode') {
-      s += '#strict';
+  let start;
+  const lines = new TextDecoder().decode(stdout).split('\n');
+  for (const json of lines) {
+    const event = JSON.parse(json);
+    switch (event.type) {
+      case 'start':
+        start = event.data.timestamp;
+        break;
+      case 'passed':
+        if (test.attrs?.negative) {
+          tests.push({
+            name: test.file,
+            status: 'failed',
+            duration: event.data.timestamp - start,
+            start,
+            stop: event.data.timestamp,
+            message: 'negative mismatched',
+            rawStatus: 'failed',
+            extra: {
+              metadata: test.attrs,
+            },
+          });
+          return;
+        }
+        tests.push({
+          name: test.file,
+          status: 'passed',
+          duration: event.data.timestamp - start,
+          start,
+          stop: event.data.timestamp,
+          rawStatus: 'passed',
+          extra: {
+            metadata: test.attrs,
+          },
+        });
+        return;
+      case 'parse-error':
+        if (test.attrs?.negative?.phase !== 'parse') {
+          tests.push({
+            name: test.file,
+            status: 'failed',
+            duration: event.data.timestamp - start,
+            start,
+            stop: event.data.timestamp,
+            message: 'negative mismatched',
+            rawStatus: 'failed',
+            extra: {
+              metadata: test.attrs,
+            },
+          });
+          return;
+        }
+        tests.push({
+          name: test.file,
+          status: 'passed',
+          duration: event.data.timestamp - start,
+          start,
+          stop: event.data.timestamp,
+          rawStatus: 'passed',
+          extra: {
+            metadata: test.attrs,
+          },
+        });
+        return;
+      case 'runtime-error':
+        // TODO: check error
+        tests.push({
+          name: test.file,
+          status: 'failed',
+          duration: event.data.timestamp - start,
+          start,
+          stop: event.data.timestamp,
+          message: 'runtime-error',
+          rawStatus: 'failed',
+          extra: {
+            metadata: test.attrs,
+          },
+        });
+        return;
+      case 'print':
+        // TODO
+        break;
+      default:
+        log.error(`invalid result.type: ${result.type}`);
+        // ignore
+        break;
     }
-    if (this.attrs.features) {
-      s += `#${this.attrs.features.join('#')}`;
-    }
-    return s;
+  }
+}
+
+function ctrfSummary(tests) {
+  const summary = {
+    tests: tests.length,
+    passed: 0,
+    failed: 0,
+    pending: 0,
+    skipped: 0,
+    other: 0,
   };
 
-  spinner.text = test.file;
-
-  const source = test.contents;
-  const sourceType = test.attrs.flags.module ? 'module' : 'script';
-
-  const bjs = spawnBjs(options);
-  const output = runTest(bjs, test);
-  jobs.push({ test, output });
-  if (jobs.length === NUM_JOBS) {
-    await handleJobs();
+  for (const test of tests) {
+    switch (test.status) {
+      case 'passed':
+        summary.passed++;
+        break;
+      case 'failed':
+        summary.failed++;
+        break;
+      case 'pending':
+        summary.pending++;
+        break;
+      case 'skipped':
+        summary.skipped++;
+        break;
+      case 'other':
+        summary.other++;
+        break;
+    }
   }
+
+  return summary;
 }
 
-if (jobs.length > 0) {
-  await handleJobs();
+function showSummary(tests) {
+  let passed = 0;
+  let skipped = 0;
+  let aborted = 0;
+  let timedout = 0;
+  let failed = 0;
+
+  for (const test of tests) {
+    switch (test.rawStatus) {
+      case 'passed':
+        passed++;
+        break;
+      case 'skipped':
+        skipped++;
+        break;
+      case 'aborted':
+        aborted++;
+        break;
+      case 'timed-out':
+        timedout++;
+        break;
+      case 'failed':
+        failed++;
+        break;
+    }
+  }
+
+  log.info(
+    `${tests.length} tests: ${passed} passed, ${skipped} skipped, ${aborted} aborted, ` +
+      `${timedout} timed-out, ${failed} failed`,
+  );
+
+  return passed === tests.length;
 }
-
-spinner.stop();
-
-const passed = count - skipped.length - aborted.length - timedout.length - failed.length;
-console.log(
-  `${count} tests: ${passed} passed, ` +
-    `${skipped.length} skipped, ${aborted.length} aborted, ` +
-    `${timedout.length} timed-out, ${failed.length} failed`);
-
-Deno.exit(failed.length === 0 ? 0 : 1);
