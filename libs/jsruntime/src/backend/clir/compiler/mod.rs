@@ -3444,7 +3444,7 @@ impl Status {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 struct FlowSelector(u32);
 
 #[allow(unused)]
@@ -3473,5 +3473,24 @@ impl FlowSelector {
 
     const fn imm(&self) -> u32 {
         self.0
+    }
+}
+
+impl std::fmt::Debug for FlowSelector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Self::NORMAL => write!(f, "FlowSelector(Normal)"),
+            Self::RETURN => write!(f, "FlowSelector(Return)"),
+            Self::THROW => write!(f, "FlowSelector(Throw)"),
+            _ => {
+                let depth = ((self.0 >> 8) & 0xFF) as u8;
+                let kind = (self.0 & 0xFF) as u8;
+                if kind == Self::KIND_BREAK {
+                    write!(f, "FlowSelector(Break@{depth})")
+                } else {
+                    write!(f, "FlowSelector(Continue@{depth})")
+                }
+            }
+        }
     }
 }
