@@ -4,11 +4,28 @@
 
 ## Usage
 
+Run JavaScript programs:
+
 ```shell
 bjs run program.js
 
 # or
 cat program.js | bjs run
+
+# multiple files can be specified
+bjs run a.js b.js
+```
+
+Show [Cranelift IR]:
+
+```shell
+bjs compile program.js
+```
+
+Show [CFG]:
+
+```shell
+bjs print-cfg program.js | xdot -
 ```
 
 All commands can be shown by `bjs -h`.
@@ -17,7 +34,7 @@ All commands can be shown by `bjs -h`.
 
 ```shell
 make build OPTIONS=-r
-time sh bins/bjs/scripts/test262.sh --progress
+time sh bins/bjs/scripts/test262.sh --progress >ctrf.json
 ```
 
 After about 10 minutes, you can see results like this:
@@ -30,9 +47,8 @@ user    4m56.751s
 sys     3m59.425s
 ```
 
-TODO:
+The test results are output to STDOUT in the [CTRF] format.
 
-* [ ] Output results in [CTRF]
-* [ ] Generate a graphical report from CTRF
-
+[Cranelift IR]: https://github.com/bytecodealliance/wasmtime/blob/main/cranelift/docs/ir.md
+[CFG]: https://en.wikipedia.org/wiki/Control-flow_graph
 [CTRF]: https://ctrf.io/
