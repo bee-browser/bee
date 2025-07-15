@@ -262,6 +262,8 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "clap",
+ "cranelift-codegen",
+ "cranelift-reader",
  "itertools 0.14.0",
  "jsruntime",
  "logging",
@@ -559,6 +561,18 @@ checksum = "0975ce66adcf2e0729d06b1d3efea0398d793d1f39c2e0a6f52a347537836693"
 dependencies = [
  "cranelift-codegen",
  "libc",
+ "target-lexicon",
+]
+
+[[package]]
+name = "cranelift-reader"
+version = "0.121.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a749b44cce3b4b42819c8b2ff6fd89fc0b9c225da23623cba2520cd5bbb6395"
+dependencies = [
+ "anyhow",
+ "cranelift-codegen",
+ "smallvec",
  "target-lexicon",
 ]
 
