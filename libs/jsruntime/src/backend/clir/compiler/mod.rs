@@ -2179,8 +2179,17 @@ where
 
         // Jump from the end of the try block to the beginning of the finally block.
         self.editor.put_jump(finally_block, &[]);
-        self.editor.switch_to_block(catch_block);
 
+        self.editor.switch_to_block(catch_block);
+        // Reach here when the flow selector is not NORMAL.
+        // Jump to the finally block if the flow selector is not THROW.
+        // TODO(perf): Directly jump to the finally block if the flow selector is not THROW.
+        let block = self.editor.create_block();
+        let is_throw = self.editor.put_is_flow_selector_throw();
+        self.editor
+            .put_branch(is_throw, block, &[], finally_block, &[]);
+
+        self.editor.switch_to_block(block);
         if !nominal {
             self.editor.put_store_status(Status::NORMAL);
             self.editor.put_store_flow_selector(FlowSelector::NORMAL);
