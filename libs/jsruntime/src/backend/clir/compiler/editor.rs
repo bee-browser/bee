@@ -245,7 +245,7 @@ impl<'a> Editor<'a> {
     }
 
     pub fn put_is_flow_selector_normal(&mut self) -> BooleanIr {
-        logger::debug!(event = "pub_is_flow_selector_normal");
+        logger::debug!(event = "put_is_flow_selector_normal");
         use ir::condcodes::IntCC::Equal;
         let fs = self.builder.ins().stack_load(ir::types::I32, self.fcs, 4);
         BooleanIr(
@@ -255,8 +255,19 @@ impl<'a> Editor<'a> {
         )
     }
 
+    pub fn put_is_flow_selector_throw(&mut self) -> BooleanIr {
+        logger::debug!(event = "put_is_flow_selector_normal");
+        use ir::condcodes::IntCC::Equal;
+        let fs = self.builder.ins().stack_load(ir::types::I32, self.fcs, 4);
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(Equal, fs, FlowSelector::THROW.imm() as i64),
+        )
+    }
+
     pub fn put_is_flow_selector_normal_or_continue(&mut self, depth: u32) -> BooleanIr {
-        logger::debug!(event = "pub_is_flow_selector_normal_or_continue");
+        logger::debug!(event = "put_is_flow_selector_normal_or_continue");
         let fs = self.builder.ins().stack_load(ir::types::I32, self.fcs, 4);
         use ir::condcodes::IntCC::UnsignedGreaterThan;
         BooleanIr(self.builder.ins().icmp_imm(

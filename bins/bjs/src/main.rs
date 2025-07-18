@@ -60,6 +60,9 @@ enum Command {
     /// Contextual labels for registers and basic blocks are enabled.
     Compile(Compile),
 
+    /// Prints the CFG of a JavaScript program in the DOT format.
+    PrintCfg,
+
     /// Runs a JavaScript program.
     Run(Run),
 
@@ -159,12 +162,21 @@ fn main() -> Result<()> {
             }
         }
         Command::Compile(ref args) => {
-            let monitor = Box::new(Monitor);
-            runtime.set_monitor(monitor);
+            let printer = Box::new(IrPrinter);
+            runtime.set_monitor(printer);
             for (input, source) in cl.sources() {
                 println!("## {}", input.display());
                 let program_id = parse!(input, source, cl)?;
                 runtime.compile(program_id, !args.no_optimize)?;
+            }
+        }
+        Command::PrintCfg => {
+            let printer = Box::new(CfgPrinter);
+            runtime.set_monitor(printer);
+            for (input, source) in cl.sources() {
+                println!("## {}", input.display());
+                let program_id = parse!(input, source, cl)?;
+                runtime.compile(program_id, true)?;
             }
         }
         Command::Run(ref args) => {
@@ -200,12 +212,24 @@ fn print(_runtime: &mut Runtime<Context>, args: &[Value]) {
     println!("{}", args.iter().format(" "));
 }
 
-struct Monitor;
+struct IrPrinter;
 
-impl jsruntime::Monitor for Monitor {
+impl jsruntime::Monitor for IrPrinter {
     fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
         println!("### {id:?}");
         println!("{ir}");
+    }
+}
+
+struct CfgPrinter;
+
+impl jsruntime::Monitor for CfgPrinter {
+    fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
+        println!("### {id:?}");
+        let clir = format!("{ir}");
+        for func in cranelift_reader::parse_functions(&clir).unwrap() {
+            print!("{}", cranelift_codegen::cfg_printer::CFGPrinter::new(&func));
+        }
     }
 }
 

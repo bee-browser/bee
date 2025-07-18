@@ -2179,8 +2179,17 @@ where
 
         // Jump from the end of the try block to the beginning of the finally block.
         self.editor.put_jump(finally_block, &[]);
-        self.editor.switch_to_block(catch_block);
 
+        self.editor.switch_to_block(catch_block);
+        // Reach here when the flow selector is not NORMAL.
+        // Jump to the finally block if the flow selector is not THROW.
+        // TODO(perf): Directly jump to the finally block if the flow selector is not THROW.
+        let block = self.editor.create_block();
+        let is_throw = self.editor.put_is_flow_selector_throw();
+        self.editor
+            .put_branch(is_throw, block, &[], finally_block, &[]);
+
+        self.editor.switch_to_block(block);
         if !nominal {
             self.editor.put_store_status(Status::NORMAL);
             self.editor.put_store_flow_selector(FlowSelector::NORMAL);
@@ -3444,7 +3453,7 @@ impl Status {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 struct FlowSelector(u32);
 
 #[allow(unused)]
@@ -3473,5 +3482,24 @@ impl FlowSelector {
 
     const fn imm(&self) -> u32 {
         self.0
+    }
+}
+
+impl std::fmt::Debug for FlowSelector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Self::NORMAL => write!(f, "FlowSelector(Normal)"),
+            Self::RETURN => write!(f, "FlowSelector(Return)"),
+            Self::THROW => write!(f, "FlowSelector(Throw)"),
+            _ => {
+                let depth = ((self.0 >> 8) & 0xFF) as u8;
+                let kind = (self.0 & 0xFF) as u8;
+                if kind == Self::KIND_BREAK {
+                    write!(f, "FlowSelector(Break@{depth})")
+                } else {
+                    write!(f, "FlowSelector(Continue@{depth})")
+                }
+            }
+        }
     }
 }
