@@ -1,0 +1,50 @@
+name: test262
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release
+    paths-ignore:
+      - '**.md'
+  push:
+    branches:
+      - main
+      - release
+      - trial-*
+    paths-ignore:
+      - '**.md'
+
+env:
+  DENO_DIR: /tmp/deno
+
+jobs:
+  test262:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - uses: rui314/setup-mold@v1
+      - uses: Swatinem/rust-cache@v2
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version-file: .tool-versions
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env. DENO_DIR }}
+          key: deno-dir-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+      - name: Codegen
+        run: make -j $(nproc) codegen
+      - name: Build (release)
+        run: make build OPTIONS='-r'
+      - name: Run tc39/test262
+        # TODO(ci): upload test262.ctrf.json
+        run: sh bins/bjs/scripts/test262.sh >test262.ctrf.json
