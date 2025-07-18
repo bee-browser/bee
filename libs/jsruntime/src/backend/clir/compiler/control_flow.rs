@@ -89,14 +89,14 @@ impl ControlFlowStack {
         self.stack.push(ControlFlow::Coroutine(CoroutineFlow {
             blocks,
             num_states,
-            next_state: 1,
+            current_state: 0,
         }));
     }
 
     pub fn pop_coroutine_flow(&mut self) -> CoroutineFlow {
         match self.stack.pop() {
             Some(ControlFlow::Coroutine(flow)) => {
-                debug_assert_eq!(flow.next_state, flow.num_states - 1);
+                debug_assert_eq!(flow.current_state, flow.num_states - 2);
                 flow
             }
             _ => unreachable!(),
@@ -109,9 +109,8 @@ impl ControlFlowStack {
             ControlFlow::Coroutine(ref mut flow) => flow,
             _ => unreachable!(),
         };
-        let next_state = flow.next_state;
-        flow.next_state += 1;
-        flow.blocks[next_state as usize]
+        flow.current_state += 1;
+        flow.blocks[flow.current_state as usize]
     }
 
     pub fn push_scope_flow(
@@ -486,10 +485,17 @@ impl ControlFlowStack {
                     eprintln_block!(exit_block, flow);
                 }
                 ControlFlow::Coroutine(flow) => {
-                    eprintln!("coroutine: state={}/{}", flow.next_state, flow.num_states);
+                    eprintln!("coroutine:");
+                    for (i, block) in flow.blocks.iter().enumerate() {
+                        if i == flow.current_state as usize {
+                            eprintln!(" block#{i}={block:?} <<");
+                        } else {
+                            eprintln!(" block#{i}={block:?}");
+                        }
+                    }
                 }
                 ControlFlow::Scope(flow) => {
-                    eprintln!("scope:");
+                    eprintln!("scope#{}:", flow.scope_ref.id());
                     eprintln_block!(body_block, flow);
                     eprintln_block!(cleanup_block, flow);
                 }
@@ -559,6 +565,7 @@ impl ControlFlowStack {
     }
 }
 
+/// Control flow types.
 enum ControlFlow {
     Function(FunctionFlow),
     Coroutine(CoroutineFlow),
@@ -573,27 +580,49 @@ enum ControlFlow {
     Exception(ExceptionFlow),
 }
 
-/// Contains data used for building the root region of a function.
+/// The root flow of a function.
+///
+/// This flow is always placed at the bottom-most in the flow stack.  This flow contains basic
+/// blocks used for building the root region of the function.
 pub struct FunctionFlow {
+    /// The basic block where any program flow begins.
     pub entry_block: ir::Block,
+
+    /// The basic block corresponding to the function body.
     pub body_block: ir::Block,
+
+    /// The basic block where any program flow will eventually reach.
+    ///
+    /// This block always ends with the 'return' instruction and no other basic blocks in the
+    /// function contain 'return' instructions.
     pub exit_block: ir::Block,
 }
 
+/// A flow representing the state machine of a coroutine.
+///
+/// This flow is always placed on top of the function flow if it exists.
 pub struct CoroutineFlow {
+    /// A vector containing the entry basic block of each coroutine state.
     blocks: Vec<ir::Block>,
+
+    /// The number of the coroutine states.
     num_states: u32,
-    next_state: u32,
+
+    /// The current coroutine state.
+    current_state: u32,
 }
 
-/// Contains data used for building a region representing a lexical scope.
+/// A flow representing a lexical scope.
 pub struct ScopeFlow {
-    /// The reference to the scope in the scope tree.
+    /// The reference to the corresponding scope in the scope tree.
     pub scope_ref: ScopeRef,
 
-    /// The first basic block of the container region of the scope flow.
+    /// The entry basic block of the container region of the scope flow.
     pub body_block: ir::Block,
 
+    /// The basic block where the scope cleanup instructions are placed.
+    ///
+    /// Any program flow inside this flow always reaches this basic block eventually.
     pub cleanup_block: ir::Block,
 
     /// The index of the enclosing outer scope flow.
@@ -642,22 +671,37 @@ pub struct CaseFlow {
     pub batch_index: Option<usize>,
 }
 
+// A flow managing an exception handling.
 pub struct ExceptionFlow {
+    /// The entry basic block of the 'try' region.
     #[allow(unused)]
     pub try_block: ir::Block,
+
+    /// The entry basic block of the 'catch' region.
     pub catch_block: ir::Block,
+
+    /// The entry basic block of the 'catch' region.
     pub finally_block: ir::Block,
+
+    /// The basic block that normal program flows always reach.
     pub end_block: ir::Block,
 
-    // The index of the enclosing outer exception flow.
+    /// The index of the enclosing outer exception flow.
     outer_index: usize,
 
+    /// The current exception handling state.
     state: ExceptionState,
 }
 
+/// A exception handling state.
 enum ExceptionState {
+    /// In the 'try' block.
     Try,
+
+    /// In the 'catch' block.
     Catch,
+
+    /// In the 'finally' block.
     Finally,
 }
 
