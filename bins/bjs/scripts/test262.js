@@ -197,6 +197,8 @@ async function handleJob(job, tests) {
       name: job.test.file,
       status: 'other',
       duration: 0,
+      start: 0,
+      stop: 0,
       rawStatus: 'aborted',
       extra: {
         metadata: job.test.attrs,
@@ -216,6 +218,8 @@ function handleTestResult(test, code, stdout, tests) {
         name: test.file,
         status: 'other',
         duration: 0,
+        start: 0,
+        stop: 0,
         rawStatus: 'timed-out',
         extra: {
           metadata: test.attrs,
@@ -227,6 +231,8 @@ function handleTestResult(test, code, stdout, tests) {
         name: test.file,
         status: 'other',
         duration: 0,
+        start: 0,
+        stop: 0,
         rawStatus: 'aborted',
         extra: {
           metadata: test.attrs,
