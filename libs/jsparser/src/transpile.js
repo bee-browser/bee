@@ -166,6 +166,7 @@ class Transpiler {
           modifyArrayLiteral,
           modifyObjectLiteral,
           modifyTemplateLiteral,
+          modifyMemberExpression,
           modifyOptionalChain,
           modifyFunctionDeclaration,
           modifyAsyncFunctionDeclaration,
@@ -790,6 +791,21 @@ function modifyTemplateTail(rules) {
     name: '_TEMPLATE_TAIL_',
     values: ['TemplateTail'],
   });
+  return rules;
+}
+
+function modifyMemberExpression(rules) {
+  const TARGETS = [
+    {
+      term: 'MemberExpression[?Yield, ?Await]',
+      action: '_DEREFERENCE_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying MemberExpression...');
+  const rule = rules.find((rule) => rule.name === 'MemberExpression[Yield, Await]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 

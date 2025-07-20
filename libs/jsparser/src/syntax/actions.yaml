@@ -1630,22 +1630,28 @@
 - rule: MemberExpression_Await -> PrimaryExpression_Await
   action: nop
 - rule: >-
-    MemberExpression_Await -> MemberExpression_Await LBRACK Expression_In_Await
-    RBRACK
+    MemberExpression_Await -> MemberExpression_Await _DEREFERENCE_ LBRACK
+    Expression_In_Await RBRACK
   action: process_member_expression_bracket_notation
-- rule: MemberExpression_Await -> MemberExpression_Await DOT KeywordOrIdentifierName
+- rule: >-
+    MemberExpression_Await -> MemberExpression_Await _DEREFERENCE_ DOT
+    KeywordOrIdentifierName
   action: process_member_expression_dot_notation
 - rule: >-
-    MemberExpression_Await -> MemberExpression_Await
+    MemberExpression_Await -> MemberExpression_Await _DEREFERENCE_
     TemplateLiteral_Await_Tagged
   action: undefined
 - rule: MemberExpression_Await -> SuperProperty_Await
   action: undefined
 - rule: MemberExpression_Await -> MetaProperty
   action: undefined
-- rule: MemberExpression_Await -> NEW MemberExpression_Await Arguments_Await
+- rule: >-
+    MemberExpression_Await -> NEW MemberExpression_Await _DEREFERENCE_
+    Arguments_Await
   action: process_member_expression_new
-- rule: MemberExpression_Await -> MemberExpression_Await DOT PRIVATE_IDENTIFIER
+- rule: >-
+    MemberExpression_Await -> MemberExpression_Await _DEREFERENCE_ DOT
+    PRIVATE_IDENTIFIER
   action: undefined
 - rule: SuperCall_Await -> SUPER Arguments_Await
   action: undefined
@@ -2317,19 +2323,23 @@
   action: process_cover_call_expression_and_async_arrow_head
 - rule: MemberExpression -> PrimaryExpression
   action: nop
-- rule: MemberExpression -> MemberExpression LBRACK Expression_In RBRACK
+- rule: >-
+    MemberExpression -> MemberExpression _DEREFERENCE_ LBRACK Expression_In
+    RBRACK
   action: process_member_expression_bracket_notation
-- rule: MemberExpression -> MemberExpression DOT KeywordOrIdentifierName
+- rule: >-
+    MemberExpression -> MemberExpression _DEREFERENCE_ DOT
+    KeywordOrIdentifierName
   action: process_member_expression_dot_notation
-- rule: MemberExpression -> MemberExpression TemplateLiteral_Tagged
+- rule: MemberExpression -> MemberExpression _DEREFERENCE_ TemplateLiteral_Tagged
   action: undefined
 - rule: MemberExpression -> SuperProperty
   action: undefined
 - rule: MemberExpression -> MetaProperty
   action: undefined
-- rule: MemberExpression -> NEW MemberExpression Arguments
+- rule: MemberExpression -> NEW MemberExpression _DEREFERENCE_ Arguments
   action: process_member_expression_new
-- rule: MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
+- rule: MemberExpression -> MemberExpression _DEREFERENCE_ DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: SuperCall -> SUPER Arguments
   action: undefined
@@ -2656,22 +2666,28 @@
 - rule: MemberExpression_Yield -> PrimaryExpression_Yield
   action: nop
 - rule: >-
-    MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield
-    RBRACK
+    MemberExpression_Yield -> MemberExpression_Yield _DEREFERENCE_ LBRACK
+    Expression_In_Yield RBRACK
   action: process_member_expression_bracket_notation
-- rule: MemberExpression_Yield -> MemberExpression_Yield DOT KeywordOrIdentifierName
+- rule: >-
+    MemberExpression_Yield -> MemberExpression_Yield _DEREFERENCE_ DOT
+    KeywordOrIdentifierName
   action: process_member_expression_dot_notation
 - rule: >-
-    MemberExpression_Yield -> MemberExpression_Yield
+    MemberExpression_Yield -> MemberExpression_Yield _DEREFERENCE_
     TemplateLiteral_Yield_Tagged
   action: undefined
 - rule: MemberExpression_Yield -> SuperProperty_Yield
   action: undefined
 - rule: MemberExpression_Yield -> MetaProperty
   action: undefined
-- rule: MemberExpression_Yield -> NEW MemberExpression_Yield Arguments_Yield
+- rule: >-
+    MemberExpression_Yield -> NEW MemberExpression_Yield _DEREFERENCE_
+    Arguments_Yield
   action: process_member_expression_new
-- rule: MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER
+- rule: >-
+    MemberExpression_Yield -> MemberExpression_Yield _DEREFERENCE_ DOT
+    PRIVATE_IDENTIFIER
   action: undefined
 - rule: SuperCall_Yield -> SUPER Arguments_Yield
   action: undefined
@@ -2772,15 +2788,15 @@
 - rule: MemberExpression_Yield_Await -> PrimaryExpression_Yield_Await
   action: nop
 - rule: >-
-    MemberExpression_Yield_Await -> MemberExpression_Yield_Await LBRACK
-    Expression_In_Yield_Await RBRACK
+    MemberExpression_Yield_Await -> MemberExpression_Yield_Await _DEREFERENCE_
+    LBRACK Expression_In_Yield_Await RBRACK
   action: process_member_expression_bracket_notation
 - rule: >-
-    MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT
-    KeywordOrIdentifierName
+    MemberExpression_Yield_Await -> MemberExpression_Yield_Await _DEREFERENCE_
+    DOT KeywordOrIdentifierName
   action: process_member_expression_dot_notation
 - rule: >-
-    MemberExpression_Yield_Await -> MemberExpression_Yield_Await
+    MemberExpression_Yield_Await -> MemberExpression_Yield_Await _DEREFERENCE_
     TemplateLiteral_Yield_Await_Tagged
   action: undefined
 - rule: MemberExpression_Yield_Await -> SuperProperty_Yield_Await
@@ -2789,11 +2805,11 @@
   action: undefined
 - rule: >-
     MemberExpression_Yield_Await -> NEW MemberExpression_Yield_Await
-    Arguments_Yield_Await
+    _DEREFERENCE_ Arguments_Yield_Await
   action: process_member_expression_new
 - rule: >-
-    MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT
-    PRIVATE_IDENTIFIER
+    MemberExpression_Yield_Await -> MemberExpression_Yield_Await _DEREFERENCE_
+    DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: SuperCall_Yield_Await -> SUPER Arguments_Yield_Await
   action: undefined
