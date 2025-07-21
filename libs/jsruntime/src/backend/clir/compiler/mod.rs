@@ -3110,8 +3110,54 @@ where
     fn swap(&mut self) {
         logger::debug!(event = "swap");
         debug_assert!(self.operand_stack.len() > 1);
+
         let last_index = self.operand_stack.len() - 1;
-        self.operand_stack.swap(last_index - 1, last_index);
+        if self.operand_stack.len() == 2 {
+            self.operand_stack.swap(last_index - 1, last_index);
+            return;
+        }
+
+        // Operand::PropertyReference must be moved together with the previous operand that is the
+        // target value of the property access.
+        debug_assert!(self.operand_stack.len() > 2);
+        match &self.operand_stack[(last_index - 2)..] {
+            [
+                Operand::PropertyReference(_),
+                Operand::PropertyReference(_),
+                _,
+            ] => {
+                // This case never happens.
+                // The MemberExpression must be evaluated before subsequent terms.
+                // See also: modifyMemberExpression() in //libs/jsparser/src/transpile.js.
+                unreachable!();
+            }
+            [
+                _,
+                Operand::PropertyReference(_),
+                Operand::PropertyReference(_),
+            ] => {
+                // This case never happens.
+                // The MemberExpression must be evaluated before subsequent terms.
+                // See also: modifyMemberExpression() in //libs/jsparser/src/transpile.js.
+                unreachable!();
+            }
+            [
+                Operand::PropertyReference(_),
+                _,
+                Operand::PropertyReference(_),
+            ] => {
+                debug_assert!(self.operand_stack.len() > 3);
+                self.operand_stack.swap(last_index - 3, last_index - 1);
+                self.operand_stack.swap(last_index - 2, last_index);
+            }
+            [_, Operand::PropertyReference(_), _] => {
+                self.operand_stack[(last_index - 2)..].rotate_right(1);
+            }
+            [_, _, Operand::PropertyReference(_)] => {
+                self.operand_stack[(last_index - 2)..].rotate_left(1);
+            }
+            _ => self.operand_stack.swap(last_index - 1, last_index),
+        }
     }
 
     fn duplicate(&mut self, offset: u8) {
