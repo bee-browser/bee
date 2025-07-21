@@ -50,6 +50,7 @@ pub struct RuntimeFunctions {
     pub to_object: unsafe extern "C" fn(*mut c_void, *const Value) -> *mut c_void,
     pub to_int32: unsafe extern "C" fn(*mut c_void, f64) -> i32,
     pub to_uint32: unsafe extern "C" fn(*mut c_void, f64) -> u32,
+    pub is_same_string: unsafe extern "C" fn(*mut c_void, *const U16Chunk, *const U16Chunk) -> bool,
     pub is_loosely_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
     pub is_strictly_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
     pub get_typeof: unsafe extern "C" fn(*mut c_void, *const Value) -> *const U16Chunk,
@@ -116,6 +117,7 @@ impl RuntimeFunctions {
             to_object: runtime_to_object::<X>,
             to_int32: runtime_to_int32,
             to_uint32: runtime_to_uint32,
+            is_same_string: runtime_is_same_string,
             is_loosely_equal: runtime_is_loosely_equal,
             is_strictly_equal: runtime_is_strictly_equal,
             get_typeof: runtime_get_typeof,
@@ -459,6 +461,23 @@ unsafe extern "C" fn runtime_to_uint32(_runtime: *mut c_void, value: f64) -> u32
     } else {
         int32bit as u32
     }
+}
+
+unsafe extern "C" fn runtime_is_same_string(
+    _runtime: *mut c_void,
+    a: *const U16Chunk,
+    b: *const U16Chunk,
+) -> bool {
+    debug_assert!(!a.is_null());
+    debug_assert!(!b.is_null());
+
+    let a = unsafe { into_string!(a) };
+    let b = unsafe { into_string!(b) };
+
+    // TODO(perf): slow...
+    let a = a.make_utf16();
+    let b = b.make_utf16();
+    a == b
 }
 
 // 7.2.13 IsLooselyEqual ( x, y )

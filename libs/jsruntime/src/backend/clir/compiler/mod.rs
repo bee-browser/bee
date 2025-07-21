@@ -2857,7 +2857,9 @@ where
             (Operand::Number(lhs, ..), Operand::Number(rhs, ..)) => {
                 self.editor.put_is_same_number(*lhs, *rhs)
             }
-            (Operand::String(_lhs, ..), Operand::String(_rhs, ..)) => todo!(),
+            (Operand::String(lhs, ..), Operand::String(rhs, ..)) => {
+                self.editor.put_is_same_string(self.support, *lhs, *rhs)
+            }
             (Operand::Promise(lhs), Operand::Promise(rhs)) => {
                 self.editor.put_is_same_promise(*lhs, *rhs)
             }
@@ -2878,7 +2880,7 @@ where
             Operand::Null => self.editor.put_is_null(lhs),
             Operand::Boolean(rhs, ..) => self.perform_is_same_boolean(lhs, *rhs),
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
-            Operand::String(_rhs, ..) => todo!(),
+            Operand::String(rhs, ..) => self.perform_is_same_string(lhs, *rhs),
             Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
             Operand::Function(rhs) => self.perform_is_same_function(lhs, *rhs),
             Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
@@ -2931,6 +2933,30 @@ where
         self.editor.switch_to_block(then_block);
         let n = self.editor.put_load_number(value);
         let then_value = self.editor.put_is_same_number(n, number);
+        self.editor.put_jump(merge_block, &[then_value.0.into()]);
+        // } else {
+        self.editor.switch_to_block(else_block);
+        let else_value = self.editor.put_boolean(false);
+        self.editor.put_jump(merge_block, &[else_value.0.into()]);
+        // }
+
+        self.editor.switch_to_block(merge_block);
+        BooleanIr(self.editor.get_block_param(merge_block, 0))
+    }
+
+    fn perform_is_same_string(&mut self, value: AnyIr, string: StringIr) -> BooleanIr {
+        let then_block = self.editor.create_block();
+        let else_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_i8();
+
+        // if value.kind == ValueKind::String
+        let cond = self.editor.put_is_string(value);
+        self.editor
+            .put_branch(cond, then_block, &[], else_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        let s = self.editor.put_load_string(value);
+        let then_value = self.editor.put_is_same_string(self.support, s, string);
         self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);

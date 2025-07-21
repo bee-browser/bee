@@ -68,6 +68,13 @@ functions:
       - name: value
         type: f64
     ret: u32
+  - name: is_same_string
+    args:
+      - name: a
+        type: '&U16Chunk'
+      - name: b
+        type: '&U16Chunk'
+    ret: bool
   - name: is_loosely_equal
     args:
       - name: a

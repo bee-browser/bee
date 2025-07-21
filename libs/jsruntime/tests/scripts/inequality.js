@@ -6,6 +6,7 @@ print(0 != 0); ///=false
 print(+0 != -0); ///=false
 print(1 != 1); ///=false
 print(Infinity != Infinity); ///=false
+print('a' != 'a'); ///=false
 
 print(undefined != true); ///=true
 print(null != true); ///=true
@@ -17,6 +18,7 @@ print(1 != Infinity); ///=true
 print(1 != NaN); ///=true
 print(Infinity != NaN); ///=true
 print(NaN != NaN); ///=true
+print('a' != 'b'); ///=true
 
 let a, b;
 
