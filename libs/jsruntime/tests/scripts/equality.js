@@ -6,6 +6,7 @@ print(0 == 0); ///=true
 print(+0 == -0); ///=true
 print(1 == 1); ///=true
 print(Infinity == Infinity); ///=true
+print('a' == 'a'); ///=true
 
 print(undefined == true); ///=false
 print(null == true); ///=false
@@ -17,6 +18,7 @@ print(1 == Infinity); ///=false
 print(1 == NaN); ///=false
 print(Infinity == NaN); ///=false
 print(NaN == NaN); ///=false
+print('a' == 'b'); ///=false
 
 let a, b;
 

@@ -47,9 +47,11 @@ pub struct RuntimeFunctions {
     pub to_boolean: unsafe extern "C" fn(*mut c_void, *const Value) -> bool,
     pub to_numeric: unsafe extern "C" fn(*mut c_void, *const Value) -> f64,
     pub to_string: unsafe extern "C" fn(*mut c_void, *const Value) -> *const U16Chunk,
+    pub number_to_string: unsafe extern "C" fn(*mut c_void, f64) -> *const U16Chunk,
     pub to_object: unsafe extern "C" fn(*mut c_void, *const Value) -> *mut c_void,
     pub to_int32: unsafe extern "C" fn(*mut c_void, f64) -> i32,
     pub to_uint32: unsafe extern "C" fn(*mut c_void, f64) -> u32,
+    pub is_same_string: unsafe extern "C" fn(*mut c_void, *const U16Chunk, *const U16Chunk) -> bool,
     pub is_loosely_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
     pub is_strictly_equal: unsafe extern "C" fn(*mut c_void, *const Value, *const Value) -> bool,
     pub get_typeof: unsafe extern "C" fn(*mut c_void, *const Value) -> *const U16Chunk,
@@ -113,9 +115,11 @@ impl RuntimeFunctions {
             to_boolean: runtime_to_boolean,
             to_numeric: runtime_to_numeric,
             to_string: runtime_to_string::<X>,
+            number_to_string: runtime_number_to_string::<X>,
             to_object: runtime_to_object::<X>,
             to_int32: runtime_to_int32,
             to_uint32: runtime_to_uint32,
+            is_same_string: runtime_is_same_string,
             is_loosely_equal: runtime_is_loosely_equal,
             is_strictly_equal: runtime_is_strictly_equal,
             get_typeof: runtime_get_typeof,
@@ -387,6 +391,22 @@ unsafe extern "C" fn runtime_to_string<X>(
     result as *const U16Chunk
 }
 
+// 6.1.6.1.20 Number::toString ( x, radix )
+unsafe extern "C" fn runtime_number_to_string<X>(
+    runtime: *mut c_void,
+    value: f64,
+) -> *const U16Chunk {
+    logger::debug!(event = "runtime_number_to_string", ?value);
+
+    let runtime = unsafe { into_runtime!(runtime, X) };
+
+    // TODO(feat): implment Number::toString()
+    let utf16 = runtime.alloc_utf16(&format!("{value}"));
+    let chunk = U16Chunk::new_stack(utf16);
+    let chunk = runtime.migrate_string_to_heap(&chunk);
+    chunk as *const U16Chunk
+}
+
 // 7.1.18 ToObject ( argument )
 unsafe extern "C" fn runtime_to_object<X>(
     runtime: *mut c_void,
@@ -459,6 +479,23 @@ unsafe extern "C" fn runtime_to_uint32(_runtime: *mut c_void, value: f64) -> u32
     } else {
         int32bit as u32
     }
+}
+
+unsafe extern "C" fn runtime_is_same_string(
+    _runtime: *mut c_void,
+    a: *const U16Chunk,
+    b: *const U16Chunk,
+) -> bool {
+    debug_assert!(!a.is_null());
+    debug_assert!(!b.is_null());
+
+    let a = unsafe { into_string!(a) };
+    let b = unsafe { into_string!(b) };
+
+    // TODO(perf): slow...
+    let a = a.make_utf16();
+    let b = b.make_utf16();
+    a == b
 }
 
 // 7.2.13 IsLooselyEqual ( x, y )

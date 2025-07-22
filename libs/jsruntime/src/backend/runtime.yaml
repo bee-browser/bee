@@ -53,6 +53,11 @@ functions:
       - name: value
         type: '&Value'
     ret: '&U16Chunk'
+  - name: number_to_string
+    args:
+      - name: value
+        type: 'f64'
+    ret: '&U16Chunk'
   - name: to_object
     args:
       - name: value
@@ -68,6 +73,13 @@ functions:
       - name: value
         type: f64
     ret: u32
+  - name: is_same_string
+    args:
+      - name: a
+        type: '&U16Chunk'
+      - name: b
+        type: '&U16Chunk'
+    ret: bool
   - name: is_loosely_equal
     args:
       - name: a

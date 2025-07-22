@@ -537,6 +537,11 @@ impl<'a> Editor<'a> {
         NumberIr(self.put_load_f64(any.0, Value::HOLDER_OFFSET))
     }
 
+    pub fn put_load_string(&mut self, any: AnyIr) -> StringIr {
+        logger::debug!(event = "put_load_string", ?any);
+        StringIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
+    }
+
     pub fn put_load_promise(&mut self, any: AnyIr) -> PromiseIr {
         logger::debug!(event = "put_load_promise", ?any);
         PromiseIr(self.put_load_i32(any.0, Value::HOLDER_OFFSET))
@@ -877,6 +882,11 @@ impl<'a> Editor<'a> {
         BooleanIr(self.builder.ins().bxor_imm(value.0, 1))
     }
 
+    pub fn put_logical_or(&mut self, lhs: BooleanIr, rhs: BooleanIr) -> BooleanIr {
+        logger::debug!(event = "put_logical_or", ?lhs, ?rhs);
+        BooleanIr(self.builder.ins().bor(lhs.0, rhs.0))
+    }
+
     // arithmetic binary operators
 
     pub fn put_add(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
@@ -1026,6 +1036,11 @@ impl<'a> Editor<'a> {
         self.put_is_kind_of(Value::KIND_NUMBER, any)
     }
 
+    pub fn put_is_string(&mut self, any: AnyIr) -> BooleanIr {
+        logger::debug!(event = "put_is_string", ?any);
+        self.put_is_kind_of(Value::KIND_STRING, any)
+    }
+
     pub fn put_is_promise(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_promise", ?any);
         self.put_is_kind_of(Value::KIND_PROMISE, any)
@@ -1066,6 +1081,16 @@ impl<'a> Editor<'a> {
     pub fn put_is_same_number(&mut self, lhs: NumberIr, rhs: NumberIr) -> BooleanIr {
         logger::debug!(event = "put_is_same_number", ?lhs, ?rhs);
         self.put_is_same_float_value(lhs.0, rhs.0)
+    }
+
+    pub fn put_is_same_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        lhs: StringIr,
+        rhs: StringIr,
+    ) -> BooleanIr {
+        logger::debug!(event = "put_is_same_string", ?lhs, ?rhs);
+        self.put_runtime_is_same_string(support, lhs, rhs)
     }
 
     pub fn put_is_same_promise(&mut self, lhs: PromiseIr, rhs: PromiseIr) -> BooleanIr {
@@ -1429,6 +1454,20 @@ impl<'a> Editor<'a> {
         StringIr(self.builder.inst_results(call)[0])
     }
 
+    pub fn put_runtime_number_to_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: NumberIr,
+    ) -> StringIr {
+        logger::debug!(event = "put_runtime_number_to_string", ?value);
+        let func = self
+            .runtime_func_cache
+            .import_runtime_number_to_string(support, self.builder.func);
+        let args = [self.runtime(), value.0];
+        let call = self.builder.ins().call(func, &args);
+        StringIr(self.builder.inst_results(call)[0])
+    }
+
     pub fn put_runtime_to_object(
         &mut self,
         support: &mut impl EditorSupport,
@@ -1470,6 +1509,21 @@ impl<'a> Editor<'a> {
         let args = [self.runtime(), value.0];
         let call = self.builder.ins().call(func, &args);
         self.builder.inst_results(call)[0]
+    }
+
+    pub fn put_runtime_is_same_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        lhs: StringIr,
+        rhs: StringIr,
+    ) -> BooleanIr {
+        logger::debug!(event = "put_runtime_is_same_string", ?lhs, ?rhs);
+        let func = self
+            .runtime_func_cache
+            .import_runtime_is_same_string(support, self.builder.func);
+        let args = [self.runtime(), lhs.0, rhs.0];
+        let call = self.builder.ins().call(func, &args);
+        BooleanIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_is_loosely_equal(
