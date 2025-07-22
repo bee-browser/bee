@@ -1104,27 +1104,29 @@ where
 
     // 7.1.17 ToString ( argument )
     fn process_to_string(&mut self) {
+        let (operand, ..) = self.dereference();
+        let result = self.perform_to_string(&operand);
+        self.operand_stack.push(Operand::String(result, None));
+    }
+
+    // TODO(perf): compile-time evaluation
+    fn perform_to_string(&mut self, operand: &Operand) -> StringIr {
         use jsparser::symbol::builtin::names;
 
-        let (operand, ..) = self.dereference();
         match operand {
-            Operand::Undefined => self.process_string(names::UNDEFINED),
-            Operand::Null => self.process_string(names::NULL),
-            Operand::Boolean(_, Some(true)) => self.process_string(names::TRUE),
-            Operand::Boolean(_, Some(false)) => self.process_string(names::FALSE),
-            Operand::Boolean(value, None) => self.perform_boolean_to_string(value),
-            Operand::Number(..) => todo!(),
-            operand @ Operand::String(..) => {
-                // Nothing to do.
-                self.operand_stack.push(operand);
-            }
+            Operand::Undefined => self.editor.put_create_string(names::UNDEFINED),
+            Operand::Null => self.editor.put_create_string(names::NULL),
+            Operand::Boolean(_, Some(true)) => self.editor.put_create_string(names::TRUE),
+            Operand::Boolean(_, Some(false)) => self.editor.put_create_string(names::FALSE),
+            Operand::Boolean(value, None) => self.perform_boolean_to_string(*value),
+            Operand::Number(value, _) => self
+                .editor
+                .put_runtime_number_to_string(self.support, *value),
+            Operand::String(value, _) => *value,
             Operand::Object(_) => todo!(),
             Operand::Function(_) => todo!(),
             Operand::Promise(_) => todo!(),
-            Operand::Any(value, _) => {
-                let result = self.editor.put_runtime_to_string(self.support, value);
-                self.operand_stack.push(Operand::String(result, None));
-            }
+            Operand::Any(value, _) => self.editor.put_runtime_to_string(self.support, *value),
             Operand::Lambda(..)
             | Operand::Closure(_)
             | Operand::Coroutine(_)
@@ -1133,7 +1135,7 @@ where
         }
     }
 
-    fn perform_boolean_to_string(&mut self, value: BooleanIr) {
+    fn perform_boolean_to_string(&mut self, value: BooleanIr) -> StringIr {
         use jsparser::symbol::builtin::names;
         let string_ir = self.editor.put_alloc_string();
         let then_block = self.editor.create_block();
@@ -1148,7 +1150,7 @@ where
         self.editor.put_set_string(names::FALSE, string_ir);
         self.editor.put_jump(merge_block, &[]);
         self.editor.switch_to_block(merge_block);
-        self.operand_stack.push(Operand::String(string_ir, None));
+        string_ir
     }
 
     fn process_concat_strings(&mut self, n: u16) {
@@ -1448,17 +1450,173 @@ where
     }
 
     // 13.8.1.1 Runtime Semantics: Evaluation
+    // TODO(perf): compile-time evaluation
+    // TODO(refactor): refactoring
     fn process_addition(&mut self) {
         let (lhs, ..) = self.dereference();
-        let lhs = self.perform_to_numeric(&lhs);
-
         let (rhs, ..) = self.dereference();
-        let rhs = self.perform_to_numeric(&rhs);
 
-        let number = self.editor.put_add(lhs, rhs);
+        match (&lhs, &rhs) {
+            (Operand::String(lhs, _), Operand::String(rhs, _)) => {
+                let string = self
+                    .editor
+                    .put_runtime_concat_strings(self.support, *lhs, *rhs);
+                self.operand_stack.push(Operand::String(string, None));
+            }
+            (
+                Operand::Any(lhs, Some(Value::String(_))),
+                Operand::Any(rhs, Some(Value::String(_))),
+            ) => {
+                runtime_debug! {{
+                    let is_string = self.editor.put_is_string(*lhs);
+                    self.editor.put_runtime_assert(self.support, is_string, c"process_addition: lhs should be a string");
+                }}
+                let lhs = self.editor.put_load_string(*lhs);
+                runtime_debug! {{
+                    let is_string = self.editor.put_is_string(*rhs);
+                    self.editor.put_runtime_assert(self.support, is_string, c"process_addition: rhs should be a string");
+                }}
+                let rhs = self.editor.put_load_string(*rhs);
+                let string = self
+                    .editor
+                    .put_runtime_concat_strings(self.support, lhs, rhs);
+                self.operand_stack.push(Operand::String(string, None));
+            }
+            (_, Operand::String(rhs, _)) => {
+                let lhs = self.perform_to_string(&lhs);
+                let string = self
+                    .editor
+                    .put_runtime_concat_strings(self.support, lhs, *rhs);
+                self.operand_stack.push(Operand::String(string, None));
+            }
+            (Operand::String(lhs, _), _) => {
+                let rhs = self.perform_to_string(&rhs);
+                let string = self
+                    .editor
+                    .put_runtime_concat_strings(self.support, *lhs, rhs);
+                self.operand_stack.push(Operand::String(string, None));
+            }
+            (Operand::Any(lhs_value, _), Operand::Any(rhs_value, _)) => {
+                // TODO(feat): ToPrimitive(lhs_value)
+                // TODO(feat): ToPrimitive(rhs_value)
 
-        // TODO(perf): compile-time evaluation
-        self.operand_stack.push(Operand::Number(number, None));
+                let then_block = self.editor.create_block();
+                let else_block = self.editor.create_block();
+                let merge_block = self.editor.create_block();
+                let result = self.emit_create_any();
+
+                // if lhs.value.is_string() || rhs.value.is_string()
+                let lhs_is_string = self.editor.put_is_string(*lhs_value);
+                let rhs_is_string = self.editor.put_is_string(*rhs_value);
+                let is_string = self.editor.put_logical_or(lhs_is_string, rhs_is_string);
+                self.editor
+                    .put_branch(is_string, then_block, &[], else_block, &[]);
+                // then
+                {
+                    self.editor.switch_to_block(then_block);
+                    let lhs = self.perform_to_string(&lhs);
+                    let rhs = self.perform_to_string(&rhs);
+                    let string = self
+                        .editor
+                        .put_runtime_concat_strings(self.support, lhs, rhs);
+                    self.editor.put_store_string_to_any(string, result);
+                    self.editor.put_jump(merge_block, &[]);
+                }
+                // else
+                {
+                    self.editor.switch_to_block(else_block);
+                    let lhs = self.perform_to_numeric(&lhs);
+                    let rhs = self.perform_to_numeric(&rhs);
+                    let number = self.editor.put_add(lhs, rhs);
+                    self.editor.put_store_number_to_any(number, result);
+                    self.editor.put_jump(merge_block, &[]);
+                }
+                // end
+
+                self.editor.switch_to_block(merge_block);
+                self.operand_stack.push(Operand::Any(result, None));
+            }
+            (Operand::Any(lhs_value, _), _) => {
+                // TODO(feat): ToPrimitive(lhs_value)
+
+                let then_block = self.editor.create_block();
+                let else_block = self.editor.create_block();
+                let merge_block = self.editor.create_block();
+                let result = self.emit_create_any();
+
+                // if lhs.value.is_string()
+                let is_string = self.editor.put_is_string(*lhs_value);
+                self.editor
+                    .put_branch(is_string, then_block, &[], else_block, &[]);
+                // then
+                {
+                    self.editor.switch_to_block(then_block);
+                    let lhs = self.editor.put_load_string(*lhs_value);
+                    let rhs = self.perform_to_string(&rhs);
+                    let string = self
+                        .editor
+                        .put_runtime_concat_strings(self.support, lhs, rhs);
+                    self.editor.put_store_string_to_any(string, result);
+                    self.editor.put_jump(merge_block, &[]);
+                }
+                // else
+                {
+                    self.editor.switch_to_block(else_block);
+                    let lhs = self.perform_to_numeric(&lhs);
+                    let rhs = self.perform_to_numeric(&rhs);
+                    let number = self.editor.put_add(lhs, rhs);
+                    self.editor.put_store_number_to_any(number, result);
+                    self.editor.put_jump(merge_block, &[]);
+                }
+                // end
+
+                self.editor.switch_to_block(merge_block);
+                self.operand_stack.push(Operand::Any(result, None));
+            }
+            (_, Operand::Any(rhs_value, _)) => {
+                // TODO(feat): ToPrimitive(rhs_value)
+
+                let then_block = self.editor.create_block();
+                let else_block = self.editor.create_block();
+                let merge_block = self.editor.create_block();
+                let result = self.emit_create_any();
+
+                // if rhs.value.is_string()
+                let is_string = self.editor.put_is_string(*rhs_value);
+                self.editor
+                    .put_branch(is_string, then_block, &[], else_block, &[]);
+                // then
+                {
+                    self.editor.switch_to_block(then_block);
+                    let lhs = self.perform_to_string(&lhs);
+                    let rhs = self.editor.put_load_string(*rhs_value);
+                    let string = self
+                        .editor
+                        .put_runtime_concat_strings(self.support, lhs, rhs);
+                    self.editor.put_store_string_to_any(string, result);
+                    self.editor.put_jump(merge_block, &[]);
+                }
+                // else
+                {
+                    self.editor.switch_to_block(else_block);
+                    let lhs = self.perform_to_numeric(&lhs);
+                    let rhs = self.perform_to_numeric(&rhs);
+                    let number = self.editor.put_add(lhs, rhs);
+                    self.editor.put_store_number_to_any(number, result);
+                    self.editor.put_jump(merge_block, &[]);
+                }
+                // end
+
+                self.editor.switch_to_block(merge_block);
+                self.operand_stack.push(Operand::Any(result, None));
+            }
+            _ => {
+                let lhs = self.perform_to_numeric(&lhs);
+                let rhs = self.perform_to_numeric(&rhs);
+                let number = self.editor.put_add(lhs, rhs);
+                self.operand_stack.push(Operand::Number(number, None));
+            }
+        }
     }
 
     // 13.8.2.1 Runtime Semantics: Evaluation

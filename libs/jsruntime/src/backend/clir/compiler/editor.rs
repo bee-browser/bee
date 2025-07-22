@@ -882,6 +882,11 @@ impl<'a> Editor<'a> {
         BooleanIr(self.builder.ins().bxor_imm(value.0, 1))
     }
 
+    pub fn put_logical_or(&mut self, lhs: BooleanIr, rhs: BooleanIr) -> BooleanIr {
+        logger::debug!(event = "put_logical_or", ?lhs, ?rhs);
+        BooleanIr(self.builder.ins().bor(lhs.0, rhs.0))
+    }
+
     // arithmetic binary operators
 
     pub fn put_add(&mut self, lhs: NumberIr, rhs: NumberIr) -> NumberIr {
@@ -1078,7 +1083,12 @@ impl<'a> Editor<'a> {
         self.put_is_same_float_value(lhs.0, rhs.0)
     }
 
-    pub fn put_is_same_string(&mut self, support: &mut impl EditorSupport, lhs: StringIr, rhs: StringIr) -> BooleanIr {
+    pub fn put_is_same_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        lhs: StringIr,
+        rhs: StringIr,
+    ) -> BooleanIr {
         logger::debug!(event = "put_is_same_string", ?lhs, ?rhs);
         self.put_runtime_is_same_string(support, lhs, rhs)
     }
@@ -1439,6 +1449,20 @@ impl<'a> Editor<'a> {
         let func = self
             .runtime_func_cache
             .import_runtime_to_string(support, self.builder.func);
+        let args = [self.runtime(), value.0];
+        let call = self.builder.ins().call(func, &args);
+        StringIr(self.builder.inst_results(call)[0])
+    }
+
+    pub fn put_runtime_number_to_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: NumberIr,
+    ) -> StringIr {
+        logger::debug!(event = "put_runtime_number_to_string", ?value);
+        let func = self
+            .runtime_func_cache
+            .import_runtime_number_to_string(support, self.builder.func);
         let args = [self.runtime(), value.0];
         let call = self.builder.ins().call(func, &args);
         StringIr(self.builder.inst_results(call)[0])

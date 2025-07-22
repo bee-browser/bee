@@ -277,6 +277,12 @@ impl<X> Runtime<X> {
             .alloc(U16Chunk::new_heap_from_raw_parts(chunk.ptr, chunk.len))
     }
 
+    pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
+        // TODO(perf): inefficient
+        let utf16 = utf8.encode_utf16().collect::<Vec<u16>>();
+        self.allocator.alloc_slice_copy(&utf16)
+    }
+
     pub(crate) unsafe fn alloc_string_rec(
         &self,
         head: &U16Chunk,

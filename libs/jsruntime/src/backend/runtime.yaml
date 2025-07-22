@@ -53,6 +53,11 @@ functions:
       - name: value
         type: '&Value'
     ret: '&U16Chunk'
+  - name: number_to_string
+    args:
+      - name: value
+        type: 'f64'
+    ret: '&U16Chunk'
   - name: to_object
     args:
       - name: value
