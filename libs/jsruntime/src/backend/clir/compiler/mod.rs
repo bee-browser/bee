@@ -63,6 +63,10 @@ impl CompilerSupport for Session<'_> {
         self.scope_cleanup_checker_enabled
     }
 
+    fn get_symbol_name(&self, symbol: Symbol) -> &[u16] {
+        self.symbol_registry.resolve(symbol).unwrap()
+    }
+
     fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol {
         self.symbol_registry.intern_utf16(name)
     }
@@ -402,7 +406,7 @@ where
             CompileCommand::Number(value) => self.process_number(*value),
             CompileCommand::String(value) => self.process_string(value),
             CompileCommand::Object => self.process_object(),
-            CompileCommand::Function => self.process_function(),
+            CompileCommand::Function(name) => self.process_function(*name),
             CompileCommand::Lambda(lambda_id) => self.process_lambda(*lambda_id),
             CompileCommand::Closure(prologue, func_scope_ref) => {
                 self.process_closure(func, *prologue, *func_scope_ref)
@@ -576,12 +580,14 @@ where
         self.operand_stack.push(Operand::Object(object));
     }
 
-    fn process_function(&mut self) {
+    fn process_function(&mut self, name: Symbol) {
         let closure = self.pop_closure();
         // TODO(feat): Function object
         let object = self.editor.put_runtime_create_object(self.support);
         self.editor.put_store_closure_to_function(closure, object);
-        self.operand_stack.push(Operand::Function(object));
+        self.perform_set_function_name(object, name);
+        self.perform_make_constructor(object);
+        self.operand_stack.push(Operand::Function(object, name));
     }
 
     fn process_lambda(&mut self, lambda_id: LambdaId) {
@@ -717,7 +723,7 @@ where
                 self.editor.put_store_object_to_any(value, any);
                 any.into()
             }
-            Operand::Function(value) => {
+            Operand::Function(value, _) => {
                 let any = self.editor.put_alloc_any();
                 self.editor.put_store_function_to_any(value, any);
                 any.into()
@@ -752,8 +758,13 @@ where
     }
 
     fn process_mutable_variable(&mut self) {
-        let (_symbol, locator) = self.pop_reference();
+        let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
+
+        if let Operand::Function(object, Symbol::NONE) = operand {
+            // anonymous function
+            self.perform_set_function_name(object, symbol);
+        }
 
         let local = match locator {
             Locator::Local(index) => self.get_local(index),
@@ -764,8 +775,13 @@ where
     }
 
     fn process_immutable_variable(&mut self) {
-        let (_symbol, locator) = self.pop_reference();
+        let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
+
+        if let Operand::Function(object, Symbol::NONE) = operand {
+            // anonymous function
+            self.perform_set_function_name(object, symbol);
+        }
 
         let local = match locator {
             Locator::Local(index) => self.get_local(index),
@@ -821,12 +837,9 @@ where
         let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
         let func_ir = match operand {
-            Operand::Function(value) => value,
+            Operand::Function(value, _) => value,
             _ => unreachable!("{operand:?}"),
         };
-
-        // TODO: 4. Perform SetFunctionName(F, name).
-        self.perform_make_constructor(func_ir);
 
         match locator {
             Locator::Local(index) => {
@@ -845,7 +858,8 @@ where
     }
 
     // 10.2.5 MakeConstructor ( F [ , writablePrototype [ , prototype ] ] )
-    fn perform_make_constructor(&mut self, func_ir: ObjectIr) {
+    fn perform_make_constructor(&mut self, object: ObjectIr) {
+        logger::debug!(event = "make_constructor", ?object);
         // TODO(feat): implement others
         let prototype = self.editor.put_runtime_create_object(self.support);
         let value = self.editor.put_alloc_any();
@@ -853,10 +867,37 @@ where
         let retv = self.editor.put_alloc_any();
         // TODO(feat): [[Writable]]: writablePrototype, [[Enumerable]]: false,
         // [[Configurable]]: false
+        // TODO(feat): retv
         self.editor.put_runtime_create_data_property_by_symbol(
             self.support,
-            func_ir,
+            object,
             Symbol::PROTOTYPE,
+            value,
+            retv,
+        );
+    }
+
+    // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
+    fn perform_set_function_name(&mut self, object: ObjectIr, name: Symbol) {
+        logger::debug!(event = "set_function_name", ?object, ?name);
+        // TODO(feat): private name
+        // TODO(feat): F.[[InitialName]]
+        // TODO(feat): prefix
+        let name = if name == Symbol::NONE {
+            &[]
+        } else {
+            self.support.get_symbol_name(name)
+        };
+        let name = self.editor.put_create_string(name);
+        let value = self.editor.put_alloc_any();
+        self.editor.put_store_string_to_any(name, value);
+        let retv = self.editor.put_alloc_any();
+        // TODO(feat): [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: true
+        // TODO(feat): retv
+        self.editor.put_runtime_create_data_property_by_symbol(
+            self.support,
+            object,
+            Symbol::NAME,
             value,
             retv,
         );
@@ -867,7 +908,7 @@ where
         let (operand, this, _) = self.dereference();
         let closure = match operand {
             Operand::Closure(_) => unreachable!(),
-            Operand::Function(object) => {
+            Operand::Function(object, _) => {
                 // IIFE
                 self.editor.put_load_closure_from_function(object)
             }
@@ -901,7 +942,7 @@ where
         let (operand, ..) = self.dereference();
         let closure = match operand {
             Operand::Closure(_) => unreachable!(),
-            Operand::Function(object) => {
+            Operand::Function(object, _) => {
                 // IIFE
                 self.editor.put_load_closure_from_function(object)
             }
@@ -1124,7 +1165,7 @@ where
                 .put_runtime_number_to_string(self.support, *value),
             Operand::String(value, _) => *value,
             Operand::Object(_) => todo!(),
-            Operand::Function(_) => todo!(),
+            Operand::Function(..) => todo!(),
             Operand::Promise(_) => todo!(),
             Operand::Any(value, _) => self.editor.put_runtime_to_string(self.support, *value),
             Operand::Lambda(..)
@@ -1177,6 +1218,17 @@ where
     fn process_create_data_property(&mut self) {
         let (operand, ..) = self.dereference();
         let key = self.pop_property_reference();
+
+        if let Operand::Function(object, Symbol::NONE) = operand {
+            // anonymous function
+            let name = match key {
+                PropertyKey::Symbol(name) => name,
+                PropertyKey::Number(_) => todo!(),
+                PropertyKey::Any(_) => todo!(),
+            };
+            self.perform_set_function_name(object, name);
+        }
+
         let object = self.peek_object();
         let value = self.editor.put_alloc_any();
         self.emit_store_operand_to_any(&operand, value);
@@ -1904,7 +1956,7 @@ where
 
     fn pop_object(&mut self) -> ObjectIr {
         match self.operand_stack.pop().unwrap() {
-            Operand::Object(value) | Operand::Function(value) => value,
+            Operand::Object(value) | Operand::Function(value, _) => value,
             operand => unreachable!("{operand:?}"),
         }
     }
@@ -1922,8 +1974,7 @@ where
             Operand::Boolean(..) => todo!(),
             Operand::Number(..) => todo!(),
             Operand::String(..) => todo!(),
-            Operand::Object(value) => self.operand_stack.push(Operand::Object(value)),
-            Operand::Function(value) => self.operand_stack.push(Operand::Function(value)),
+            Operand::Object(_) | Operand::Function(..) => self.operand_stack.push(operand),
             Operand::Promise(_value) => todo!(),
             // Variables and properties.
             Operand::Any(value, ..) => {
@@ -2569,7 +2620,7 @@ where
                         .put_write_object_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Function(value) => {
+                Operand::Function(value, _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor.put_write_function_to_scratch_buffer(
                         *value,
@@ -2643,7 +2694,7 @@ where
                         .put_read_object_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Function(value) => {
+                Operand::Function(value, _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
@@ -2717,7 +2768,7 @@ where
                 self.editor
                     .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
-            Operand::Function(value) => {
+            Operand::Function(value, _) => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_function_to_any(value, result);
                 self.editor
@@ -2821,7 +2872,7 @@ where
             Operand::Boolean(..)
             | Operand::Number(..)
             | Operand::Object(_)
-            | Operand::Function(_)
+            | Operand::Function(..)
             | Operand::Promise(_) => self.editor.put_boolean(true),
             Operand::String(..) => todo!("string"),
             Operand::Any(value, ..) => self.editor.put_is_non_nullish(*value),
@@ -2874,7 +2925,7 @@ where
             Operand::Boolean(value, ..) => *value,
             Operand::Number(value, ..) => self.editor.put_number_to_boolean(*value),
             Operand::String(..) => todo!(),
-            Operand::Promise(_) | Operand::Object(_) | Operand::Function(_) => {
+            Operand::Promise(_) | Operand::Object(_) | Operand::Function(..) => {
                 self.editor.put_boolean(true)
             }
             Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
@@ -2897,7 +2948,7 @@ where
             Operand::Boolean(value, ..) => self.editor.put_boolean_to_number(*value),
             Operand::Number(value, ..) => *value,
             Operand::String(..) => unimplemented!("string.to_numeric"),
-            Operand::Object(_) | Operand::Function(_) => unimplemented!("object.to_numeric"),
+            Operand::Object(_) | Operand::Function(..) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -3024,7 +3075,7 @@ where
             (Operand::Object(lhs), Operand::Object(rhs)) => {
                 self.editor.put_is_same_object(*lhs, *rhs)
             }
-            (Operand::Function(lhs), Operand::Function(rhs)) => {
+            (Operand::Function(lhs, _), Operand::Function(rhs, _)) => {
                 self.editor.put_is_same_function(*lhs, *rhs)
             }
             (lhs, rhs) => unreachable!("({lhs:?}, {rhs:?})"),
@@ -3040,7 +3091,7 @@ where
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
             Operand::String(rhs, ..) => self.perform_is_same_string(lhs, *rhs),
             Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
-            Operand::Function(rhs) => self.perform_is_same_function(lhs, *rhs),
+            Operand::Function(rhs, _) => self.perform_is_same_function(lhs, *rhs),
             Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
             Operand::Any(rhs, ..) => {
                 self.editor
@@ -3393,7 +3444,7 @@ where
             Operand::Number(value, _) => self.editor.put_store_number_to_any(*value, any),
             Operand::String(value, _) => self.editor.put_store_string_to_any(*value, any),
             Operand::Object(value) => self.editor.put_store_object_to_any(*value, any),
-            Operand::Function(value) => self.editor.put_store_function_to_any(*value, any),
+            Operand::Function(value, _) => self.editor.put_store_function_to_any(*value, any),
             Operand::Any(value, _) => self.editor.put_store_any_to_any(*value, any),
             Operand::Promise(value) => self.editor.put_store_promise_to_any(*value, any),
             Operand::Lambda(..)
@@ -3574,7 +3625,7 @@ enum Operand {
     Object(ObjectIr),
 
     /// Runtime value of function type.
-    Function(ObjectIr),
+    Function(ObjectIr, Symbol),
 
     /// Runtime value and optional compile-time constant value of any type.
     // TODO(perf): compile-time evaluation

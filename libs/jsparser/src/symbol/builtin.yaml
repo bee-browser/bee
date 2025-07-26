@@ -32,8 +32,10 @@
 - NaN
 - async
 - boolean
+- default
 - globalThis
 - length
+- name
 - number
 - object
 - prototype
