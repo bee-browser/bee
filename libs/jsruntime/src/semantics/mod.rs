@@ -1685,7 +1685,7 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Batch(5));
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
-        self.commands.push(CompileCommand::Function);
+        self.commands.push(CompileCommand::Function(symbol));
         self.commands
             .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareFunction);
@@ -1711,15 +1711,17 @@ impl FunctionAnalysis {
         named: bool,
         coroutine: bool,
     ) {
-        if named {
+        let name = if named {
             debug_assert!(!self.symbol_stack.is_empty());
-            self.symbol_stack.pop();
-        }
+            self.symbol_stack.pop().unwrap().0
+        } else {
+            Symbol::NONE
+        };
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands
             .push(CompileCommand::Closure(false, scope_ref));
         if !coroutine {
-            self.commands.push(CompileCommand::Function);
+            self.commands.push(CompileCommand::Function(name));
         }
     }
 
@@ -2075,7 +2077,7 @@ pub enum CompileCommand {
     Number(f64),
     String(Vec<u16>),
     Object,
-    Function,
+    Function(Symbol),
     Lambda(LambdaId),
     Closure(bool, ScopeRef),
     Coroutine(LambdaId, u16),

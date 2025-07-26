@@ -42,6 +42,7 @@ pub trait CompilerSupport {
     fn is_scope_cleanup_checker_enabled(&self) -> bool;
 
     // SymbolRegistry
+    fn get_symbol_name(&self, symbol: Symbol) -> &[u16];
     fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol;
 
     // LambdaRegistry
@@ -61,6 +62,10 @@ pub trait CompilerSupport {
 impl<X> CompilerSupport for Runtime<X> {
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
         self.pref.enable_scope_cleanup_checker
+    }
+
+    fn get_symbol_name(&self, symbol: Symbol) -> &[u16] {
+        self.symbol_registry.resolve(symbol).unwrap()
     }
 
     fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol {
