@@ -88,11 +88,9 @@ pub struct Runtime<X> {
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
         let functions = backend::RuntimeFunctions::new::<X>();
+        let global_object = Box::pin(Object::default());
 
-        let mut global_object = Box::pin(Object::default());
-        global_object.define_builtin_global_properties();
-
-        Self {
+        let mut runtime = Self {
             pref: Default::default(),
             symbol_registry: Default::default(),
             lambda_registry: LambdaRegistry::new(),
@@ -103,7 +101,11 @@ impl<X> Runtime<X> {
             global_object,
             monitor: None,
             extension,
-        }
+        };
+
+        runtime.define_builtin_global_properties();
+
+        runtime
     }
 
     pub fn extension(&self) -> &X {
@@ -359,6 +361,48 @@ impl<X> Runtime<X> {
 
         target.set_value(&LENGTH, &Value::from(length + 1.0));
         Ok(())
+    }
+
+    // 19 The Global Object
+    fn define_builtin_global_properties(&mut self) {
+        macro_rules! define {
+            ($key:expr => $value:expr,) => {
+                define!(kv: $key, $value);
+            };
+            ($key:expr => $value:expr, $($keys:expr => $values:expr,)+) => {
+                define!(kv: $key, $value);
+                define!($($keys => $values,)+);
+            };
+            (kv: $key:expr, $value:expr) => {
+                let prop = Property::data_xxx($value);
+                let result = self.global_object.define_own_property($key.into(), prop);
+                debug_assert!(matches!(result, Ok(true)));
+            };
+        }
+
+        let this = self.global_object.as_ptr();
+
+        define! {
+            // TODO: 19.1.1 globalThis
+            Symbol::GLOBAL_THIS => Value::Object(this),
+            // 19.1.2 Infinity
+            Symbol::INFINITY => Value::Number(f64::INFINITY),
+            // 19.1.3 NaN
+            Symbol::NAN => Value::Number(f64::NAN),
+            // 19.1.4 undefined
+            Symbol::UNDEFINED => Value::Undefined,
+
+            // 19.3.31 String()
+            Symbol::INTRINSIC_STRING => self.create_builtin_function(objects::builtins::string::constructor::<X>),
+        }
+    }
+
+    fn create_builtin_function(&mut self, lambda: Lambda) -> Value {
+        logger::debug!(event = "creater_builtin_function");
+        let closure = self.create_closure(lambda, LambdaId::HOST, 0);
+        let object = self.create_object();
+        object.set_closure(closure);
+        Value::Function(object.as_ptr())
     }
 }
 

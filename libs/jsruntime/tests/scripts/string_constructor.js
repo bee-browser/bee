@@ -1,0 +1,8 @@
+print(String()); ///=""
+print(String(undefined)); ///="undefined"
+print(String(null)); ///="null"
+print(String(true)); ///="true"
+print(String(false)); ///="false"
+// TODO: print(String(1)); ///="1"
+print(String('a')); ///="a"
+// TODO: print(String({})); ///="[object Object]"

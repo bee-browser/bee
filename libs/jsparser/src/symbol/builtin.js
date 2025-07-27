@@ -41,7 +41,7 @@ async function main(args, options) {
       let rustName;
       if (typeof item === 'string') {
         name = item;
-        rustName = makeRustName(item);
+        rustName = changeCase.constantCase(item);
       } else {
         name = item[0];
         rustName = item[1];
@@ -58,20 +58,6 @@ async function main(args, options) {
       };
     });
   console.log(JSON.stringify(builtins));
-}
-
-function makeRustName(name) {
-  if (name.startsWith('##')) {
-    return `HIDDEN_${changeCase.constantCase(name)}`;
-  }
-  switch (name) {
-    case 'NaN':
-      return 'NAN';
-    case '__proto__':
-      return 'LEGACY_PROTO';
-    default:
-      return changeCase.constantCase(name);
-  }
 }
 
 function makeCodeUnits(name) {
