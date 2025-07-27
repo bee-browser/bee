@@ -860,11 +860,27 @@ where
     // 10.2.5 MakeConstructor ( F [ , writablePrototype [ , prototype ] ] )
     fn perform_make_constructor(&mut self, object: ObjectIr) {
         logger::debug!(event = "make_constructor", ?object);
-        // TODO(feat): implement others
-        let prototype = self.editor.put_runtime_create_object(self.support);
+
         let value = self.editor.put_alloc_any();
-        self.editor.put_store_object_to_any(prototype, value);
         let retv = self.editor.put_alloc_any();
+
+        // TODO(feat): implement others
+
+        let prototype = self.editor.put_runtime_create_object(self.support);
+
+        self.editor.put_store_object_to_any(object, value);
+        // TODO(feat): [[Writable]]: writablePrototype, [[Enumerable]]: false,
+        // [[Configurable]]: true
+        // TODO(feat): retv
+        self.editor.put_runtime_create_data_property_by_symbol(
+            self.support,
+            prototype,
+            Symbol::CONSTRUCTOR,
+            value,
+            retv,
+        );
+
+        self.editor.put_store_object_to_any(prototype, value);
         // TODO(feat): [[Writable]]: writablePrototype, [[Enumerable]]: false,
         // [[Configurable]]: false
         // TODO(feat): retv
