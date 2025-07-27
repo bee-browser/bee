@@ -42,6 +42,7 @@
 - [String, INTRINSIC_STRING]
 - async
 - boolean
+- constructor
 - default
 - globalThis
 - length
