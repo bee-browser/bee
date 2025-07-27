@@ -15,6 +15,7 @@ use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Status;
 use crate::types::U16Chunk;
+use crate::types::U16String;
 use crate::types::Value;
 
 #[derive(Clone)]
@@ -361,34 +362,35 @@ unsafe extern "C" fn runtime_to_string<X>(
     value: *const Value,
 ) -> *const U16Chunk {
     logger::debug!(event = "runtime_to_string", ?value);
-
-    use jsparser::symbol::builtin::names;
-
-    const UNDEFINED: U16Chunk = U16Chunk::new_const(names::UNDEFINED);
-    const NULL: U16Chunk = U16Chunk::new_const(names::NULL);
-    const TRUE: U16Chunk = U16Chunk::new_const(names::TRUE);
-    const FALSE: U16Chunk = U16Chunk::new_const(names::FALSE);
-
-    let _runtime = unsafe { into_runtime!(runtime, X) };
+    let runtime = unsafe { into_runtime!(runtime, X) };
     let value = unsafe { into_value!(value) };
-    let result = match value {
-        Value::None => unreachable!("Value::None"),
-        Value::Undefined => &UNDEFINED,
-        Value::Null => &NULL,
-        Value::Boolean(value) => {
-            if *value {
-                &TRUE
-            } else {
-                &FALSE
-            }
+    let result = runtime.to_string(value);
+    result.first_chunk() as *const U16Chunk
+}
+
+impl<X> Runtime<X> {
+    pub fn to_string(&mut self, value: &Value) -> U16String {
+        logger::debug!(event = "to_string", ?value);
+
+        use jsparser::symbol::builtin::names;
+
+        const UNDEFINED: U16Chunk = U16Chunk::new_const(names::UNDEFINED);
+        const NULL: U16Chunk = U16Chunk::new_const(names::NULL);
+        const TRUE: U16Chunk = U16Chunk::new_const(names::TRUE);
+        const FALSE: U16Chunk = U16Chunk::new_const(names::FALSE);
+
+        match value {
+            Value::None => unreachable!("Value::None"),
+            Value::Undefined => U16String::new(&UNDEFINED),
+            Value::Null => U16String::new(&NULL),
+            Value::Boolean(value) => U16String::new(if *value { &TRUE } else { &FALSE }),
+            Value::Number(_) => todo!(),
+            Value::String(value) => *value,
+            Value::Promise(_) => todo!(),
+            Value::Object(_) => todo!(),
+            Value::Function(_) => todo!(),
         }
-        Value::Number(_) => todo!(),
-        Value::String(value) => value.first_chunk(),
-        Value::Promise(_) => todo!(),
-        Value::Object(_) => todo!(),
-        Value::Function(_) => todo!(),
-    };
-    result as *const U16Chunk
+    }
 }
 
 // 6.1.6.1.20 Number::toString ( x, radix )
@@ -415,19 +417,26 @@ unsafe extern "C" fn runtime_to_object<X>(
     logger::debug!(event = "runtime_to_object", ?value);
 
     debug_assert_ne!(runtime, std::ptr::null_mut());
-    let _runtime = unsafe { into_runtime!(runtime, X) };
+    let runtime = unsafe { into_runtime!(runtime, X) };
 
     debug_assert_ne!(value, std::ptr::null());
     let value = unsafe { into_value!(value) };
 
-    match value {
-        Value::None => unreachable!("Value::None"),
-        Value::Undefined | Value::Null => todo!(),
-        Value::Boolean(_value) => todo!(),
-        Value::Number(_value) => todo!(),
-        Value::String(_value) => todo!(),
-        Value::Object(value) | Value::Function(value) => *value,
-        Value::Promise(_value) => todo!(),
+    runtime.to_object(value)
+}
+
+impl<X> Runtime<X> {
+    fn to_object(&self, value: &Value) -> *mut c_void {
+        logger::debug!(event = "to_object", ?value);
+        match value {
+            Value::None => unreachable!("Value::None"),
+            Value::Undefined | Value::Null => todo!(),
+            Value::Boolean(_value) => todo!(),
+            Value::Number(_value) => todo!(),
+            Value::String(_value) => todo!(),
+            Value::Object(value) | Value::Function(value) => *value,
+            Value::Promise(_value) => todo!(),
+        }
     }
 }
 

@@ -1,9 +1,18 @@
+# List of built-in symbols.
+#
+# A single text entry will be expanded like this:
+#
+#   symbol -> [symbol, SYMBOL]
+#
+# The first text is the symbol name.
+# The second text is the constant name in Rust.
+
 # Hidden symbols must be defined before others.
 # Hidden symbols must start with `##`.
-- '##coroutine'
-- '##promise'
-- '##result'
-- '##error'
+- ['##coroutine', HIDDEN_COROUTINE]
+- ['##promise', HIDDEN_PROMISE]
+- ['##result', HIDDEN_RESULT]
+- ['##error', HIDDEN_ERROR]
 
 # Reserved words defined in the ECMA-262 specification.
 - await
@@ -27,9 +36,10 @@
 
 # Non-reserved, but commonly used words
 # TODO: use separate string table?
-- __proto__
+- [__proto__, LEGACY_PROTO]
 - Infinity
-- NaN
+- [NaN, NAN]
+- [String, INTRINSIC_STRING]
 - async
 - boolean
 - default
