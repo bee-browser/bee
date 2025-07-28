@@ -150,7 +150,9 @@ functions:
       - name: result
         type: '&Value'
   - name: create_object
-    args: []
+    args:
+      - name: prototype
+        type: '&mut Object'
     ret: '&mut Object'
   - name: get_value_by_symbol
     args:

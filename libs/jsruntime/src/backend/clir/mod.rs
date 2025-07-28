@@ -57,6 +57,10 @@ pub trait CompilerSupport {
 
     // GlobalObject
     fn global_object(&mut self) -> *mut c_void;
+
+    // Intrinsics
+    fn object_prototype(&self) -> *mut c_void;
+    fn function_prototype(&self) -> *mut c_void;
 }
 
 impl<X> CompilerSupport for Runtime<X> {
@@ -91,6 +95,16 @@ impl<X> CompilerSupport for Runtime<X> {
 
     fn global_object(&mut self) -> *mut c_void {
         self.global_object.as_ptr()
+    }
+
+    fn object_prototype(&self) -> *mut c_void {
+        debug_assert!(!self.object_prototype.is_null());
+        self.object_prototype
+    }
+
+    fn function_prototype(&self) -> *mut c_void {
+        debug_assert!(!self.function_prototype.is_null());
+        self.function_prototype
     }
 }
 

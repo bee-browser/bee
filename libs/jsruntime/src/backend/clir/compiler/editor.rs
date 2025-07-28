@@ -1706,12 +1706,12 @@ impl<'a> Editor<'a> {
         self.builder.ins().call(func, &args);
     }
 
-    pub fn put_runtime_create_object(&mut self, support: &mut impl EditorSupport) -> ObjectIr {
-        logger::debug!(event = "put_runtime_create_object");
+    pub fn put_runtime_create_object(&mut self, support: &mut impl EditorSupport, prototype: ObjectIr) -> ObjectIr {
+        logger::debug!(event = "put_runtime_create_object", ?prototype);
         let func = self
             .runtime_func_cache
             .import_runtime_create_object(support, self.builder.func);
-        let args = [self.runtime()];
+        let args = [self.runtime(), prototype.0];
         let call = self.builder.ins().call(func, &args);
         ObjectIr(self.builder.inst_results(call)[0])
     }

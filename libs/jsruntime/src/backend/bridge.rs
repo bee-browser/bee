@@ -66,7 +66,7 @@ pub struct RuntimeFunctions {
     pub await_promise: unsafe extern "C" fn(*mut c_void, u32, u32),
     pub resume: unsafe extern "C" fn(*mut c_void, u32),
     pub emit_promise_resolved: unsafe extern "C" fn(*mut c_void, u32, *const Value),
-    pub create_object: unsafe extern "C" fn(*mut c_void) -> *mut c_void,
+    pub create_object: unsafe extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void,
     // TODO(perf): `get_value()` and `set_value()` are slow... Compute the address of the value by
     // using a base address and the offset for each property instead of calling these functions.
     pub get_value_by_symbol:
@@ -736,9 +736,9 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
     runtime.emit_promise_resolved(promise.into(), result.clone());
 }
 
-unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void) -> *mut c_void {
+unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void, prototype: *mut c_void) -> *mut c_void {
     let runtime = unsafe { into_runtime!(runtime, X) };
-    runtime.create_object() as *mut Object as *mut c_void
+    runtime.create_object(prototype).as_ptr()
 }
 
 unsafe extern "C" fn runtime_get_value_by_symbol<X>(

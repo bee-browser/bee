@@ -56,6 +56,8 @@ pub struct Session<'r> {
     pub executor: &'r mut Executor,
     scope_cleanup_checker_enabled: bool,
     global_object: *mut c_void,
+    object_prototype: *mut c_void,
+    function_prototype: *mut c_void,
 }
 
 impl CompilerSupport for Session<'_> {
@@ -90,6 +92,14 @@ impl CompilerSupport for Session<'_> {
 
     fn global_object(&mut self) -> *mut c_void {
         self.global_object
+    }
+
+    fn object_prototype(&self) -> *mut c_void {
+        self.object_prototype
+    }
+
+    fn function_prototype(&self) -> *mut c_void {
+        self.function_prototype
     }
 }
 
@@ -129,6 +139,8 @@ pub fn compile<X>(
                 executor: &mut runtime.executor,
                 scope_cleanup_checker_enabled,
                 global_object,
+                object_prototype: runtime.object_prototype,
+                function_prototype: runtime.function_prototype,
             }
         };
         context.compile_function(func, &mut session, &program.scope_tree);
@@ -172,6 +184,8 @@ pub fn compile_function<X>(
             executor: &mut runtime.executor,
             scope_cleanup_checker_enabled,
             global_object,
+            object_prototype: runtime.object_prototype,
+            function_prototype: runtime.function_prototype,
         }
     };
 
@@ -576,14 +590,18 @@ where
     }
 
     fn process_object(&mut self) {
-        let object = self.editor.put_runtime_create_object(self.support);
+        let prototype_addr = self.support.object_prototype();
+        let prototype = self.editor.put_object(prototype_addr);
+        let object = self.editor.put_runtime_create_object(self.support, prototype);
         self.operand_stack.push(Operand::Object(object));
     }
 
     fn process_function(&mut self, name: Symbol) {
         let closure = self.pop_closure();
         // TODO(feat): Function object
-        let object = self.editor.put_runtime_create_object(self.support);
+        let prototype_addr = self.support.function_prototype();
+        let prototype = self.editor.put_object(prototype_addr);
+        let object = self.editor.put_runtime_create_object(self.support, prototype);
         self.editor.put_store_closure_to_function(closure, object);
         self.perform_set_function_name(object, name);
         self.perform_make_constructor(object);
@@ -866,7 +884,9 @@ where
 
         // TODO(feat): implement others
 
-        let prototype = self.editor.put_runtime_create_object(self.support);
+        let object_prototype_addr = self.support.object_prototype();
+        let object_prototype = self.editor.put_object(object_prototype_addr);
+        let prototype = self.editor.put_runtime_create_object(self.support, object_prototype);
 
         self.editor.put_store_object_to_any(object, value);
         // TODO(feat): [[Writable]]: writablePrototype, [[Enumerable]]: false,
@@ -956,13 +976,10 @@ where
         // TODO: prototype chain
         let argv = self.emit_create_argv(argc);
         let (operand, ..) = self.dereference();
-        let closure = match operand {
+        let function = match operand {
             Operand::Closure(_) => unreachable!(),
-            Operand::Function(object, _) => {
-                // IIFE
-                self.editor.put_load_closure_from_function(object)
-            }
-            Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
+            Operand::Function(function, _) => function,
+            Operand::Any(value, ..) => self.emit_load_function_or_throw_type_error(value),
             _ => {
                 self.process_number(1001.); // TODO: TypeError
                 self.process_throw();
@@ -970,9 +987,18 @@ where
             }
         };
 
+        let closure = self.editor.put_load_closure_from_function(function);
+
+        let prototype = self.editor.put_runtime_get_value_by_symbol(self.support, function, Symbol::PROTOTYPE.into(), false); // TODO: strict
+        runtime_debug! {{
+            let is_object = self.editor.put_is_object(prototype);
+            self.editor.put_runtime_assert(self.support, is_object, c"Prototype must be an object");
+        }}
+        let prototype = self.editor.put_load_object(prototype);
+
         let this = {
             let any = self.emit_create_any();
-            let object = self.editor.put_runtime_create_object(self.support);
+            let object = self.editor.put_runtime_create_object(self.support, prototype);
             self.editor.put_store_object_to_any(object, any);
             any
         };
@@ -3515,6 +3541,32 @@ where
         self.editor.switch_to_block(end_block);
 
         value
+    }
+
+    fn emit_load_function_or_throw_type_error(&mut self, value: AnyIr) -> ObjectIr {
+        logger::debug!(event = "emit_function_closure_or_throw_type_error", ?value);
+        let then_block = self.editor.create_block();
+        let else_block = self.editor.create_block();
+        let end_block = self.editor.create_block_with_addr();
+
+        // if value.is_function()
+        let is_function = self.editor.put_is_function(value);
+        self.editor
+            .put_branch(is_function, then_block, &[], else_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        let object = self.editor.put_load_function(value);
+        self.editor.put_jump(end_block, &[object.0.into()]);
+        // } else {
+        self.editor.switch_to_block(else_block);
+        self.process_number(1001.); // TODO(feat): TypeError
+        self.process_throw();
+        let dummy = self.editor.put_nullptr();
+        self.editor.put_jump(end_block, &[dummy.into()]);
+        // }
+
+        self.editor.switch_to_block(end_block);
+        ObjectIr(self.editor.get_block_param(end_block, 0))
     }
 
     fn emit_load_closure_or_throw_type_error(&mut self, value: AnyIr) -> ClosureIr {

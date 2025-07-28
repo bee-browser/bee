@@ -39,6 +39,7 @@
 - [__proto__, LEGACY_PROTO]
 - Infinity
 - [NaN, NAN]
+- [Object, INTRINSIC_OBJECT]
 - [String, INTRINSIC_STRING]
 - async
 - boolean

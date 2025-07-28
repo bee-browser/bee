@@ -1,7 +1,6 @@
 use std::ffi::c_void;
 
 use crate::Runtime;
-use crate::U16String;
 use crate::types::Status;
 use crate::types::Value;
 
@@ -21,7 +20,7 @@ pub unsafe extern "C" fn constructor<X>(
         unsafe { std::slice::from_raw_parts(argv as *const Value, argc as usize) }
     };
     let retv = unsafe { &mut *retv };
-    match runtime.string_constructor(this, args) {
+    match runtime.object_constructor(this, args) {
         Ok(value) => {
             *retv = value;
             Status::Normal
@@ -34,12 +33,12 @@ pub unsafe extern "C" fn constructor<X>(
 }
 
 impl<X> Runtime<X> {
-    fn string_constructor(&mut self, _this: &mut Value, args: &[Value]) -> Result<Value, Value> {
-        let s = match args.first() {
-            Some(v) => self.to_string(v),
-            None => U16String::EMPTY,
+    fn object_constructor(&mut self, _this: &mut Value, args: &[Value]) -> Result<Value, Value> {
+        let o = match args.first() {
+            None | Some(Value::Undefined) | Some(Value::Null) => self.create_object(self.object_prototype),
+            Some(_v) => todo!(), // TODO(feat): ToObject()
         };
         // TODO(feat): NewTarget
-        Ok(Value::String(s))
+        Ok(Value::Object(o.as_ptr()))
     }
 }
