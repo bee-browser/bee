@@ -264,29 +264,29 @@ impl<X> Runtime<X> {
         &mut self.global_object
     }
 
-    pub fn clone_value(&mut self, value: &Value) -> Value {
+    pub fn ensure_value_on_heap(&mut self, value: &Value) -> Value {
         match value {
-            Value::String(string) if string.first_chunk().on_stack() => {
-                let chunk = self.migrate_string_to_heap(string.first_chunk());
-                Value::String(U16String::new(chunk))
+            Value::String(string) if string.on_stack() => {
+                Value::String(unsafe { self.migrate_string_to_heap(*string) })
             }
             _ => value.clone(),
         }
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    pub fn migrate_string_to_heap(&mut self, chunk: &U16Chunk) -> &U16Chunk {
-        logger::debug!(event = "migrate_string_to_heap", ?chunk);
-        debug_assert!(chunk.on_stack());
+    pub(crate) unsafe fn migrate_string_to_heap(&mut self, string: U16String) -> U16String {
+        logger::debug!(event = "migrate_string_to_heap", ?string);
+        debug_assert!(string.on_stack());
 
-        if chunk.is_empty() {
-            return &U16Chunk::EMPTY;
+        if string.is_empty() {
+            return U16String::EMPTY;
         }
 
         // TODO(issue#237): GcCell
         // TODO: chunk.next
-        self.allocator
-            .alloc(U16Chunk::new_heap_from_raw_parts(chunk.ptr, chunk.len))
+        U16String::new(unsafe {
+            self.alloc_string_rec(string.first_chunk(), std::ptr::null())
+        })
     }
 
     pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
@@ -338,7 +338,8 @@ impl<X> Runtime<X> {
         key: &PropertyKey,
         value: &Value,
     ) -> Result<bool, Value> {
-        object.define_own_property(key.clone(), Property::data_wec(value.clone()))
+        let value = self.ensure_value_on_heap(value);
+        object.define_own_property(key.clone(), Property::data_wec(value))
     }
 
     // 7.3.25 CopyDataProperties ( target, source, excludedItems )

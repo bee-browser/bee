@@ -405,8 +405,8 @@ unsafe extern "C" fn runtime_number_to_string<X>(
     // TODO(feat): implment Number::toString()
     let utf16 = runtime.alloc_utf16(&format!("{value}"));
     let chunk = U16Chunk::new_stack(utf16);
-    let chunk = runtime.migrate_string_to_heap(&chunk);
-    chunk as *const U16Chunk
+    let string = U16String::new(&chunk);
+    unsafe { runtime.migrate_string_to_heap(string).as_ptr() }
 }
 
 // 7.1.18 ToObject ( argument )
@@ -579,11 +579,11 @@ unsafe extern "C" fn runtime_get_typeof(
 
 unsafe extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: *mut c_void,
-    seq: *const U16Chunk,
+    string: *const U16Chunk,
 ) -> *const U16Chunk {
     let runtime = unsafe { into_runtime!(runtime, X) };
-    let seq = unsafe { into_string!(seq) };
-    runtime.migrate_string_to_heap(seq) as *const U16Chunk
+    let chunk = unsafe { into_string!(string) };
+    unsafe { runtime.migrate_string_to_heap(U16String::new(chunk)).as_ptr() }
 }
 
 unsafe extern "C" fn runtime_create_capture<X>(

@@ -463,10 +463,11 @@ impl<'a> Editor<'a> {
         let next = self.builder.ins().iconst(self.addr_type, 0);
         self.put_store_to_slot(next, slot, U16Chunk::NEXT_OFFSET);
 
-        let ptr = self
-            .builder
-            .ins()
-            .iconst(self.addr_type, value.as_ptr() as i64);
+        let ptr = self.builder.ins().iconst(self.addr_type, if value.is_empty() {
+            0
+        } else {
+            value.as_ptr() as i64
+        });
         self.put_store_to_slot(ptr, slot, U16Chunk::PTR_OFFSET);
 
         debug_assert!(value.len() <= u32::MAX as usize);
