@@ -601,11 +601,11 @@ where
         // TODO(feat): Function object
         let prototype_addr = self.support.function_prototype();
         let prototype = self.editor.put_object(prototype_addr);
-        let object = self.editor.put_runtime_create_object(self.support, prototype);
-        self.editor.put_store_closure_to_function(closure, object);
-        self.perform_set_function_name(object, name);
-        self.perform_make_constructor(object);
-        self.operand_stack.push(Operand::Function(object, name));
+        let function = self.editor.put_runtime_create_object(self.support, prototype);
+        self.editor.put_store_closure_to_function(closure, function);
+        self.perform_set_function_name(function, name);
+        self.perform_make_constructor(function);
+        self.operand_stack.push(Operand::Function(function, name));
     }
 
     fn process_lambda(&mut self, lambda_id: LambdaId) {
@@ -779,9 +779,9 @@ where
         let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
 
-        if let Operand::Function(object, Symbol::NONE) = operand {
+        if let Operand::Function(function, Symbol::NONE) = operand {
             // anonymous function
-            self.perform_set_function_name(object, symbol);
+            self.perform_set_function_name(function, symbol);
         }
 
         let local = match locator {
@@ -796,9 +796,9 @@ where
         let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
 
-        if let Operand::Function(object, Symbol::NONE) = operand {
+        if let Operand::Function(function, Symbol::NONE) = operand {
             // anonymous function
-            self.perform_set_function_name(object, symbol);
+            self.perform_set_function_name(function, symbol);
         }
 
         let local = match locator {
@@ -876,8 +876,8 @@ where
     }
 
     // 10.2.5 MakeConstructor ( F [ , writablePrototype [ , prototype ] ] )
-    fn perform_make_constructor(&mut self, object: ObjectIr) {
-        logger::debug!(event = "make_constructor", ?object);
+    fn perform_make_constructor(&mut self, function: ObjectIr) {
+        logger::debug!(event = "make_constructor", ?function);
 
         let value = self.editor.put_alloc_any();
         let retv = self.editor.put_alloc_any();
@@ -888,7 +888,7 @@ where
         let object_prototype = self.editor.put_object(object_prototype_addr);
         let prototype = self.editor.put_runtime_create_object(self.support, object_prototype);
 
-        self.editor.put_store_object_to_any(object, value);
+        self.editor.put_store_function_to_any(function, value);
         // TODO(feat): [[Writable]]: writablePrototype, [[Enumerable]]: false,
         // [[Configurable]]: true
         // TODO(feat): retv
@@ -906,7 +906,7 @@ where
         // TODO(feat): retv
         self.editor.put_runtime_create_data_property_by_symbol(
             self.support,
-            object,
+            function,
             Symbol::PROTOTYPE,
             value,
             retv,
@@ -914,8 +914,8 @@ where
     }
 
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
-    fn perform_set_function_name(&mut self, object: ObjectIr, name: Symbol) {
-        logger::debug!(event = "set_function_name", ?object, ?name);
+    fn perform_set_function_name(&mut self, function: ObjectIr, name: Symbol) {
+        logger::debug!(event = "set_function_name", ?function, ?name);
         // TODO(feat): private name
         // TODO(feat): F.[[InitialName]]
         // TODO(feat): prefix
@@ -932,7 +932,7 @@ where
         // TODO(feat): retv
         self.editor.put_runtime_create_data_property_by_symbol(
             self.support,
-            object,
+            function,
             Symbol::NAME,
             value,
             retv,
@@ -1261,14 +1261,14 @@ where
         let (operand, ..) = self.dereference();
         let key = self.pop_property_reference();
 
-        if let Operand::Function(object, Symbol::NONE) = operand {
+        if let Operand::Function(function, Symbol::NONE) = operand {
             // anonymous function
             let name = match key {
                 PropertyKey::Symbol(name) => name,
                 PropertyKey::Number(_) => todo!(),
                 PropertyKey::Any(_) => todo!(),
             };
-            self.perform_set_function_name(object, name);
+            self.perform_set_function_name(function, name);
         }
 
         let object = self.peek_object();
