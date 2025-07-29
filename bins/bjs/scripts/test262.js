@@ -250,7 +250,7 @@ function handleTestResult(test, code, stdout, tests) {
       case 'start':
         start = event.data.timestamp;
         break;
-      case 'passed':
+      case 'pass':
         if (test.attrs?.negative) {
           tests.push({
             name: test.file,
