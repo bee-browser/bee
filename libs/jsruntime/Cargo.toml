@@ -29,7 +29,7 @@ thiserror = "2.0.12"
 [dev-dependencies]
 assert_matches = "1.5.0"
 criterion = "0.7.0"
-ctor = "0.4.2"
+ctor = "0.4.3"
 
 [[bench]]
 name = "jsruntime-bench"
