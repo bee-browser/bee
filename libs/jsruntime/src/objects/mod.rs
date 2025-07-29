@@ -195,11 +195,21 @@ pub struct Object {
     // [[Call]]
     // TODO(issue#237): GcCellRef
     call: *mut Closure,
+    // [[Prototype]]
+    prototype: *mut c_void,
     properties: FxHashMap<PropertyKey, Property>,
 }
 
 impl Object {
     pub(crate) const CALL_OFFSET: usize = std::mem::offset_of!(Self, call);
+
+    pub fn new(prototype: *mut c_void) -> Self {
+        Self {
+            call: std::ptr::null_mut(),
+            prototype,
+            properties: Default::default(),
+        }
+    }
 
     // TODO(perf): Which one is better?  `Option::None` or `&Value::None`.
     // In JIT-compiled code, we need a `nullptr` check if we choose `Option::None`.
@@ -214,7 +224,15 @@ impl Object {
     // before it's overwritten.  At this point, we are not sure whether or not it's always works in
     // any expression.
     pub fn get_value(&self, key: &PropertyKey) -> Option<&Value> {
-        self.properties.get(key).map(|prop| &prop.value)
+        self.properties
+            .get(key)
+            .map(|prop| &prop.value)
+            .or_else(|| unsafe {
+                self.prototype
+                    .cast::<Self>()
+                    .as_ref()
+                    .and_then(|prototype| prototype.get_value(key))
+            })
     }
 
     // TODO(feat): strict, writable
@@ -248,14 +266,5 @@ impl Object {
 
     pub fn as_ptr(&mut self) -> *mut c_void {
         self as *mut Self as *mut c_void
-    }
-}
-
-impl Default for Object {
-    fn default() -> Self {
-        Self {
-            call: std::ptr::null_mut(),
-            properties: Default::default(),
-        }
     }
 }

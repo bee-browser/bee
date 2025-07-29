@@ -178,6 +178,11 @@ impl U16String {
         unsafe { (*self.0).is_empty() }
     }
 
+    pub fn on_stack(&self) -> bool {
+        debug_assert!(!self.0.is_null());
+        unsafe { (*self.0).on_stack() }
+    }
+
     pub fn len(&self) -> u32 {
         debug_assert!(!self.0.is_null());
         unsafe { (*self.0).total_len() }
@@ -191,6 +196,10 @@ impl U16String {
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
         debug_assert!(!self.0.is_null());
         unsafe { (*self.0).make_utf16() }
+    }
+
+    pub(crate) fn as_ptr(&self) -> *const U16Chunk {
+        self.0
     }
 }
 
