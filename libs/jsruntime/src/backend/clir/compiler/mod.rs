@@ -592,7 +592,9 @@ where
     fn process_object(&mut self) {
         let prototype_addr = self.support.object_prototype();
         let prototype = self.editor.put_object(prototype_addr);
-        let object = self.editor.put_runtime_create_object(self.support, prototype);
+        let object = self
+            .editor
+            .put_runtime_create_object(self.support, prototype);
         self.operand_stack.push(Operand::Object(object));
     }
 
@@ -601,7 +603,9 @@ where
         // TODO(feat): Function object
         let prototype_addr = self.support.function_prototype();
         let prototype = self.editor.put_object(prototype_addr);
-        let function = self.editor.put_runtime_create_object(self.support, prototype);
+        let function = self
+            .editor
+            .put_runtime_create_object(self.support, prototype);
         self.editor.put_store_closure_to_function(closure, function);
         self.perform_set_function_name(function, name);
         self.perform_make_constructor(function);
@@ -886,7 +890,9 @@ where
 
         let object_prototype_addr = self.support.object_prototype();
         let object_prototype = self.editor.put_object(object_prototype_addr);
-        let prototype = self.editor.put_runtime_create_object(self.support, object_prototype);
+        let prototype = self
+            .editor
+            .put_runtime_create_object(self.support, object_prototype);
 
         self.editor.put_store_function_to_any(function, value);
         // TODO(feat): [[Writable]]: writablePrototype, [[Enumerable]]: false,
@@ -989,7 +995,12 @@ where
 
         let closure = self.editor.put_load_closure_from_function(function);
 
-        let prototype = self.editor.put_runtime_get_value_by_symbol(self.support, function, Symbol::PROTOTYPE.into(), false); // TODO: strict
+        let prototype = self.editor.put_runtime_get_value_by_symbol(
+            self.support,
+            function,
+            Symbol::PROTOTYPE.into(),
+            false,
+        ); // TODO: strict
         runtime_debug! {{
             let is_object = self.editor.put_is_object(prototype);
             self.editor.put_runtime_assert(self.support, is_object, c"Prototype must be an object");
@@ -998,7 +1009,9 @@ where
 
         let this = {
             let any = self.emit_create_any();
-            let object = self.editor.put_runtime_create_object(self.support, prototype);
+            let object = self
+                .editor
+                .put_runtime_create_object(self.support, prototype);
             self.editor.put_store_object_to_any(object, any);
             any
         };

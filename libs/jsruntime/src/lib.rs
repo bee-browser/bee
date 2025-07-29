@@ -284,9 +284,7 @@ impl<X> Runtime<X> {
 
         // TODO(issue#237): GcCell
         // TODO: chunk.next
-        U16String::new(unsafe {
-            self.alloc_string_rec(string.first_chunk(), std::ptr::null())
-        })
+        U16String::new(unsafe { self.alloc_string_rec(string.first_chunk(), std::ptr::null()) })
     }
 
     pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {

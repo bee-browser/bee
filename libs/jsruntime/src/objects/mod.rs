@@ -227,7 +227,13 @@ impl Object {
         self.properties
             .get(key)
             .map(|prop| &prop.value)
-            .or_else(|| unsafe { self.prototype.cast::<Self>().as_ref().map(|prototype| prototype.get_value(key)).flatten() })
+            .or_else(|| unsafe {
+                self.prototype
+                    .cast::<Self>()
+                    .as_ref()
+                    .map(|prototype| prototype.get_value(key))
+                    .flatten()
+            })
     }
 
     // TODO(feat): strict, writable

@@ -35,7 +35,9 @@ pub unsafe extern "C" fn constructor<X>(
 impl<X> Runtime<X> {
     fn object_constructor(&mut self, _this: &mut Value, args: &[Value]) -> Result<Value, Value> {
         let o = match args.first() {
-            None | Some(Value::Undefined) | Some(Value::Null) => self.create_object(self.object_prototype),
+            None | Some(Value::Undefined) | Some(Value::Null) => {
+                self.create_object(self.object_prototype)
+            }
             Some(_v) => todo!(), // TODO(feat): ToObject()
         };
         // TODO(feat): NewTarget

@@ -583,7 +583,11 @@ unsafe extern "C" fn runtime_migrate_string_to_heap<X>(
 ) -> *const U16Chunk {
     let runtime = unsafe { into_runtime!(runtime, X) };
     let chunk = unsafe { into_string!(string) };
-    unsafe { runtime.migrate_string_to_heap(U16String::new(chunk)).as_ptr() }
+    unsafe {
+        runtime
+            .migrate_string_to_heap(U16String::new(chunk))
+            .as_ptr()
+    }
 }
 
 unsafe extern "C" fn runtime_create_capture<X>(
@@ -736,7 +740,10 @@ unsafe extern "C" fn runtime_emit_promise_resolved<X>(
     runtime.emit_promise_resolved(promise.into(), result.clone());
 }
 
-unsafe extern "C" fn runtime_create_object<X>(runtime: *mut c_void, prototype: *mut c_void) -> *mut c_void {
+unsafe extern "C" fn runtime_create_object<X>(
+    runtime: *mut c_void,
+    prototype: *mut c_void,
+) -> *mut c_void {
     let runtime = unsafe { into_runtime!(runtime, X) };
     runtime.create_object(prototype).as_ptr()
 }
