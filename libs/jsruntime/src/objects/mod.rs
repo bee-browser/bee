@@ -231,8 +231,7 @@ impl Object {
                 self.prototype
                     .cast::<Self>()
                     .as_ref()
-                    .map(|prototype| prototype.get_value(key))
-                    .flatten()
+                    .and_then(|prototype| prototype.get_value(key))
             })
     }
 

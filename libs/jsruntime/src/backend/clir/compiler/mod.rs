@@ -998,7 +998,7 @@ where
         let prototype = self.editor.put_runtime_get_value_by_symbol(
             self.support,
             function,
-            Symbol::PROTOTYPE.into(),
+            Symbol::PROTOTYPE,
             false,
         ); // TODO: strict
         runtime_debug! {{
