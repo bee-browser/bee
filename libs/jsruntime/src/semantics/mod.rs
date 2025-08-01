@@ -731,14 +731,15 @@ where
         let unresolved_references = self.resolve_references(&mut analysis);
 
         if analysis.is_coroutine() {
-            // The local variables allocated on the heap will be passed as arguments for the
-            // coroutine.  Load the local variables from the environment at first.
+            // The `Environment` compile command performs preparation before jumping to the entry
+            // point of each state.  For example, it loads local variables from the `Coroutine`
+            // data type.
             analysis.set_command(0, CompileCommand::Environment(analysis.num_locals));
             debug_assert!(analysis.coroutine.state <= u16::MAX as u32);
             analysis.set_command(1, CompileCommand::JumpTable(analysis.coroutine.state + 2));
         } else {
-            analysis.set_command(0, CompileCommand::AllocateLocals(analysis.num_locals));
-            analysis.set_command(1, CompileCommand::Nop);
+            analysis.set_command(0, CompileCommand::LoadArguments(analysis.num_params));
+            analysis.set_command(1, CompileCommand::AllocateLocals(analysis.num_locals));
         }
 
         let this_local = analysis
@@ -1140,8 +1141,8 @@ where
 
         let unresolved_references = self.resolve_references(&mut analysis);
 
-        analysis.set_command(0, CompileCommand::AllocateLocals(analysis.num_locals));
-        analysis.set_command(1, CompileCommand::Nop);
+        analysis.set_command(0, CompileCommand::Nop); // No formal parameters
+        analysis.set_command(1, CompileCommand::AllocateLocals(analysis.num_locals));
 
         let mut globals_in_global_scope = FxHashSet::default();
         let mut global_symbols = FxHashSet::default();
@@ -2090,6 +2091,7 @@ pub enum CompileCommand {
     PropertyReference(Symbol),
     ToPropertyKey,
 
+    LoadArguments(u16),
     AllocateLocals(u16),
     MutableVariable,
     ImmutableVariable,
@@ -2405,8 +2407,8 @@ mod tests {
                 assert_eq!(
                     program.functions[0].commands,
                     [
-                        CompileCommand::AllocateLocals(4),
                         CompileCommand::Nop,
+                        CompileCommand::AllocateLocals(4),
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVariables(scope_ref!(1)),
                         CompileCommand::Undefined,
@@ -2436,8 +2438,8 @@ mod tests {
                 assert_eq!(
                     program.functions[0].commands,
                     [
-                        CompileCommand::AllocateLocals(4),
                         CompileCommand::Nop,
+                        CompileCommand::AllocateLocals(4),
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVariables(scope_ref!(1)),
                         CompileCommand::Undefined,
@@ -2469,8 +2471,8 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
+                    CompileCommand::AllocateLocals(0),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
                     CompileCommand::Number(1.0),
@@ -2490,8 +2492,8 @@ mod tests {
             assert_eq!(
                 program.functions[0].commands,
                 [
-                    CompileCommand::AllocateLocals(1),
                     CompileCommand::Nop,
+                    CompileCommand::AllocateLocals(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
                     CompileCommand::Number(1.0),
@@ -2529,8 +2531,8 @@ mod tests {
             assert_eq!(
                 program.functions[1].commands,
                 [
-                    CompileCommand::AllocateLocals(0),
                     CompileCommand::Nop,
+                    CompileCommand::AllocateLocals(0),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
                     CompileCommand::Lambda(program.functions[0].id),
