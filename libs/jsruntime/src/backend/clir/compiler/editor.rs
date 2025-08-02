@@ -156,10 +156,15 @@ impl<'a> Editor<'a> {
 
     // arguments
 
-    pub fn put_get_argument(&mut self, index: u16) -> AnyIr {
+    pub fn put_get_argument(&mut self, support: &mut impl EditorSupport, index: u16) -> AnyIr {
         logger::debug!(event = "put_get_argument", ?index);
-        // TODO: bounds checking
-        let _argc = self.argc();
+        runtime_debug! {{
+            use ir::condcodes::IntCC::UnsignedLessThan;
+            let index = self.builder.ins().iconst(ir::types::I16, index as i64);
+            let argc = self.argc();
+            let cond = BooleanIr(self.builder.ins().icmp(UnsignedLessThan, index, argc));
+            self.put_runtime_assert(support, cond, c"put_get_argument: index out of bounds");
+        }}
         let argv = self.argv();
         let offset = Value::SIZE * index as usize;
         AnyIr(self.builder.ins().iadd_imm(argv.0, offset as i64))

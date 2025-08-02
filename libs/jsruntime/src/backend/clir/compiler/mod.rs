@@ -1,3 +1,9 @@
+macro_rules! runtime_debug {
+    ($block:block) => {
+        if cfg!(debug_assertions) $block
+    };
+}
+
 mod control_flow;
 mod editor;
 
@@ -42,12 +48,6 @@ use super::RuntimeFunctionCache;
 
 use control_flow::ControlFlowStack;
 use editor::Editor;
-
-macro_rules! runtime_debug {
-    ($block:block) => {
-        if cfg!(debug_assertions) $block
-    };
-}
 
 pub struct Session<'r> {
     program: &'r Program,
@@ -781,7 +781,7 @@ where
 
     fn process_load_arguments(&mut self, num_params: u16) {
         for i in 0..num_params {
-            let arg = self.editor.put_get_argument(i);
+            let arg = self.editor.put_get_argument(self.support, i);
             self.arguments.push(arg);
         }
     }
@@ -2580,12 +2580,18 @@ where
         // closure.
 
         // Hidden variables are passed to the coroutine lambda as arguments.
-        self.arguments
-            .push(self.editor.put_get_argument(Self::HIDDEN_PROMISE_INDEX));
-        self.arguments
-            .push(self.editor.put_get_argument(Self::HIDDEN_RESULT_INDEX));
-        self.arguments
-            .push(self.editor.put_get_argument(Self::HIDDEN_ERROR_INDEX));
+        self.arguments.push(
+            self.editor
+                .put_get_argument(self.support, Self::HIDDEN_PROMISE_INDEX),
+        );
+        self.arguments.push(
+            self.editor
+                .put_get_argument(self.support, Self::HIDDEN_RESULT_INDEX),
+        );
+        self.arguments.push(
+            self.editor
+                .put_get_argument(self.support, Self::HIDDEN_ERROR_INDEX),
+        );
 
         // Local variables and captured variables living outer scopes are loaded here from the
         // `Coroutine` data passed via the `env` argument of the coroutine lambda function to be
