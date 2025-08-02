@@ -440,8 +440,8 @@ where
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
             CompileCommand::ToPropertyKey => self.process_to_property_key(),
-            CompileCommand::LoadArguments(num_params) => self.process_load_arguments(*num_params),
-            CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
+            CompileCommand::LoadFormalParameters(n) => self.process_load_formal_parameters(*n),
+            CompileCommand::AllocateLocals(n) => self.process_allocate_locals(*n),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
             CompileCommand::DeclareVariables(scope_ref) => {
@@ -779,7 +779,7 @@ where
         self.operand_stack.push(Operand::PropertyReference(key));
     }
 
-    fn process_load_arguments(&mut self, num_params: u16) {
+    fn process_load_formal_parameters(&mut self, num_params: u16) {
         for i in 0..num_params {
             let arg = self.editor.put_get_argument(self.support, i);
             self.arguments.push(arg);
@@ -2576,10 +2576,11 @@ where
     }
 
     fn process_environment(&mut self, num_locals: u16) {
-        // The arguments of the original async functions are captured by the inner coroutine
-        // closure.
+        // The formal parameters of the original async functions are captured by the inner
+        // coroutine closure.
 
-        // Hidden variables are passed to the coroutine lambda as arguments.
+        // Hidden variables are accessible only in the coroutine lambda function.  These are passed
+        // to the coroutine lambda function as arguments.
         self.arguments.push(
             self.editor
                 .put_get_argument(self.support, Self::HIDDEN_PROMISE_INDEX),

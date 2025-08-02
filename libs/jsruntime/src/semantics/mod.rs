@@ -738,7 +738,7 @@ where
             debug_assert!(analysis.coroutine.state <= u16::MAX as u32);
             analysis.set_command(1, CompileCommand::JumpTable(analysis.coroutine.state + 2));
         } else {
-            analysis.set_command(0, CompileCommand::LoadArguments(analysis.num_params));
+            analysis.set_command(0, CompileCommand::LoadFormalParameters(analysis.num_params));
             analysis.set_command(1, CompileCommand::AllocateLocals(analysis.num_locals));
         }
 
@@ -2091,7 +2091,7 @@ pub enum CompileCommand {
     PropertyReference(Symbol),
     ToPropertyKey,
 
-    LoadArguments(u16),
+    LoadFormalParameters(u16),
     AllocateLocals(u16),
     MutableVariable,
     ImmutableVariable,
