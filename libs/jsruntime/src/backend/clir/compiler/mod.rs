@@ -1,3 +1,9 @@
+macro_rules! runtime_debug {
+    ($block:block) => {
+        if cfg!(debug_assertions) $block
+    };
+}
+
 mod control_flow;
 mod editor;
 
@@ -42,12 +48,6 @@ use super::RuntimeFunctionCache;
 
 use control_flow::ControlFlowStack;
 use editor::Editor;
-
-macro_rules! runtime_debug {
-    ($block:block) => {
-        if cfg!(debug_assertions) $block
-    };
-}
 
 pub struct Session<'r> {
     program: &'r Program,
@@ -249,6 +249,7 @@ struct Compiler<'a, R> {
     // The following values must be reset in the end of compilation for each function.
     this: Option<AnyIr>,
     this_capture: Option<CaptureIr>,
+    params: Vec<AnyIr>,
     locals: Vec<AnyIr>,
     captures: FxHashMap<Locator, CaptureIr>,
 
@@ -261,6 +262,10 @@ impl<'a, R> Compiler<'a, R>
 where
     R: CompilerSupport + EditorSupport,
 {
+    const HIDDEN_PROMISE_INDEX: u16 = 0;
+    const HIDDEN_RESULT_INDEX: u16 = 1;
+    const HIDDEN_ERROR_INDEX: u16 = 2;
+
     fn new(
         func: &Function,
         support: &'a mut R,
@@ -306,6 +311,7 @@ where
             operand_stack: Default::default(),
             this: None,
             this_capture: None,
+            params: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
             max_scratch_buffer_len: 0,
@@ -434,7 +440,8 @@ where
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
             CompileCommand::ToPropertyKey => self.process_to_property_key(),
-            CompileCommand::AllocateLocals(num_locals) => self.process_allocate_locals(*num_locals),
+            CompileCommand::LoadFormalParameters(n) => self.process_load_formal_parameters(*n),
+            CompileCommand::AllocateLocals(n) => self.process_allocate_locals(*n),
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
             CompileCommand::DeclareVariables(scope_ref) => {
@@ -651,7 +658,7 @@ where
             debug_assert_ne!(variable_ref, VariableRef::NONE);
             let locator = self.scope_tree.compute_locator(variable_ref);
             let capture = match locator {
-                Locator::Argument(_) | Locator::Local(_) => {
+                Locator::Param(_) | Locator::Local(_) => {
                     debug_assert!(self.captures.contains_key(&locator));
                     *self.captures.get(&locator).unwrap()
                 }
@@ -770,6 +777,71 @@ where
             }
         };
         self.operand_stack.push(Operand::PropertyReference(key));
+    }
+
+    fn process_load_formal_parameters(&mut self, num_params: u16) {
+        if num_params == 0 {
+            // Nothing to do.
+            return;
+        }
+
+        // `argc` may be smaller than `num_params`.  In this case, remaining formal parameters must
+        // be set to `undefined`.
+
+        // `params` is a list of `Value`s initialized w/ `undefined`.  The `Value`s are used only
+        // if `argc` is smaller than `num_params`.
+        let params = self.editor.put_alloc_argv(num_params);
+        for i in 0..num_params {
+            let arg = self.editor.put_get_arg(params, i);
+            self.editor.put_store_undefined_to_any(arg);
+        }
+
+        // Create destination blocks of the jump table and the merge block where the program flow
+        // reaches eventually.
+        let mut blocks = Vec::with_capacity(num_params as usize);
+        for _ in 0..num_params {
+            blocks.push(self.editor.create_block());
+        }
+        let default_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_argv(num_params);
+
+        // Put the jump table to the instruction buffer.
+        let argc = self.editor.argc_as_jump_table_index();
+        self.editor.put_jump_table(argc, &blocks, default_block);
+
+        // The `block_args` is a temporal buffer to keep `ir::Value`s which are passed to the merge
+        // block.
+        let mut block_args = Vec::with_capacity(num_params as usize);
+
+        // TODO(perf): Another possible implementation is copying values from `argv` to `params`.
+
+        for i in 0..num_params {
+            self.editor.switch_to_block(blocks[i as usize]);
+            for j in 0..i {
+                let arg = self.editor.put_get_argument(self.support, j);
+                block_args.push(arg.0.into());
+            }
+            for j in i..num_params {
+                let arg = self.editor.put_get_arg(params, j);
+                block_args.push(arg.0.into());
+            }
+            self.editor.put_jump(merge_block, &block_args);
+            block_args.clear();
+        }
+
+        self.editor.switch_to_block(default_block);
+        for i in 0..num_params {
+            let arg = self.editor.put_get_argument(self.support, i);
+            block_args.push(arg.0.into());
+        }
+        self.editor.put_jump(merge_block, &block_args);
+
+        // Store `ir::Value`s to `self.params`.
+        self.editor.switch_to_block(merge_block);
+        for i in 0..(num_params as usize) {
+            let arg = AnyIr(self.editor.get_block_param(merge_block, i));
+            self.params.push(arg);
+        }
     }
 
     fn process_allocate_locals(&mut self, num_locals: u16) {
@@ -1057,7 +1129,7 @@ where
             let locator = variable.locator();
             if variable.is_captured() {
                 let target = match locator {
-                    Locator::Argument(index) => self.editor.put_get_argument(index),
+                    Locator::Param(index) => self.get_param(index),
                     Locator::Local(index) => self.get_local(index),
                     _ => unreachable!(),
                 };
@@ -2562,6 +2634,24 @@ where
     }
 
     fn process_environment(&mut self, num_locals: u16) {
+        // The formal parameters of the original async functions are captured by the inner
+        // coroutine closure.
+
+        // Hidden variables are accessible only in the coroutine lambda function.  These are passed
+        // to the coroutine lambda function as arguments.
+        self.params.push(
+            self.editor
+                .put_get_argument(self.support, Self::HIDDEN_PROMISE_INDEX),
+        );
+        self.params.push(
+            self.editor
+                .put_get_argument(self.support, Self::HIDDEN_RESULT_INDEX),
+        );
+        self.params.push(
+            self.editor
+                .put_get_argument(self.support, Self::HIDDEN_ERROR_INDEX),
+        );
+
         // Local variables and captured variables living outer scopes are loaded here from the
         // `Coroutine` data passed via the `env` argument of the coroutine lambda function to be
         // generated by the compiler.
@@ -2575,7 +2665,7 @@ where
         debug_assert!(num_states >= 2);
 
         let state = self.editor.put_load_state_from_coroutine();
-        let blocks = self.editor.put_jump_table(state, num_states);
+        let blocks = self.editor.put_switch_blocks(state, num_states);
         debug_assert_eq!(blocks.len(), num_states as usize);
 
         self.editor.switch_to_block(blocks[num_states as usize - 1]);
@@ -2605,7 +2695,7 @@ where
         let result_block = self.editor.create_block();
 
         // if ##error.has_value()
-        let error = self.editor.put_get_argument(2); // ##error
+        let error = self.get_hidden_error();
         let has_error = self.editor.put_has_value(error);
         self.editor
             .put_branch(has_error, has_error_block, &[], result_block, &[]);
@@ -2619,7 +2709,7 @@ where
         // }
 
         self.editor.switch_to_block(result_block);
-        let result = self.editor.put_get_argument(1); // ##result
+        let result = self.get_hidden_result();
 
         // TODO(pref): compile-time evaluation
         self.operand_stack.push(Operand::Any(result, None));
@@ -2781,7 +2871,7 @@ where
     fn perform_resolve_promise(&mut self) {
         logger::debug!(event = "perform_resolve_promise");
 
-        let promise = self.editor.put_get_argument(0); // ##promise
+        let promise = self.get_hidden_promise();
         let promise = self.editor.put_load_promise(promise);
 
         let (operand, ..) = self.dereference();
@@ -3389,7 +3479,7 @@ where
         logger::debug!(event = "perform_escape_value", ?locator);
         let capture = self.captures.remove(&locator).unwrap();
         let value = match locator {
-            Locator::Argument(index) => self.editor.put_get_argument(index),
+            Locator::Param(index) => self.get_param(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
             Locator::Global => unreachable!(),
@@ -3515,14 +3605,34 @@ where
     fn emit_get_variable(&mut self, symbol: Symbol, locator: Locator) -> AnyIr {
         logger::debug!(event = "emit_get_variable", ?symbol, ?locator);
         match locator {
-            Locator::Argument(index) => self.editor.put_get_argument(index),
+            Locator::Param(index) => self.get_param(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
             Locator::Global => self.emit_get_global_variable(symbol),
         }
     }
 
-    fn get_local(&mut self, index: u16) -> AnyIr {
+    fn get_hidden_promise(&self) -> AnyIr {
+        logger::debug!(event = "get_hidden_promise");
+        self.get_param(Self::HIDDEN_PROMISE_INDEX)
+    }
+
+    fn get_hidden_result(&self) -> AnyIr {
+        logger::debug!(event = "get_hidden_result");
+        self.get_param(Self::HIDDEN_RESULT_INDEX)
+    }
+
+    fn get_hidden_error(&self) -> AnyIr {
+        logger::debug!(event = "get_hidden_error");
+        self.get_param(Self::HIDDEN_ERROR_INDEX)
+    }
+
+    fn get_param(&self, index: u16) -> AnyIr {
+        logger::debug!(event = "get_param", ?index);
+        self.params[index as usize]
+    }
+
+    fn get_local(&self, index: u16) -> AnyIr {
         logger::debug!(event = "get_local", ?index);
         self.locals[index as usize]
     }

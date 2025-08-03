@@ -138,6 +138,11 @@ impl<'a> Editor<'a> {
         self.lambda_params(3)
     }
 
+    pub fn argc_as_jump_table_index(&mut self) -> ir::Value {
+        let argc = self.argc();
+        self.builder.ins().uextend(ir::types::I32, argc)
+    }
+
     fn argv(&self) -> ArgvIr {
         ArgvIr(self.lambda_params(4))
     }
@@ -156,10 +161,15 @@ impl<'a> Editor<'a> {
 
     // arguments
 
-    pub fn put_get_argument(&mut self, index: u16) -> AnyIr {
+    pub fn put_get_argument(&mut self, support: &mut impl EditorSupport, index: u16) -> AnyIr {
         logger::debug!(event = "put_get_argument", ?index);
-        // TODO: bounds checking
-        let _argc = self.argc();
+        runtime_debug! {{
+            use ir::condcodes::IntCC::UnsignedLessThan;
+            let index = self.builder.ins().iconst(ir::types::I16, index as i64);
+            let argc = self.argc();
+            let cond = BooleanIr(self.builder.ins().icmp(UnsignedLessThan, index, argc));
+            self.put_runtime_assert(support, cond, c"put_get_argument: index out of bounds");
+        }}
         let argv = self.argv();
         let offset = Value::SIZE * index as usize;
         AnyIr(self.builder.ins().iadd_imm(argv.0, offset as i64))
@@ -191,6 +201,15 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "create_block_with_addr");
         let block = self.builder.create_block();
         self.builder.append_block_param(block, self.addr_type);
+        block
+    }
+
+    pub fn create_block_with_argv(&mut self, argc: u16) -> ir::Block {
+        logger::debug!(event = "create_block_with_argv");
+        let block = self.builder.create_block();
+        for _ in 0..argc {
+            self.builder.append_block_param(block, self.addr_type);
+        }
         block
     }
 
@@ -333,22 +352,36 @@ impl<'a> Editor<'a> {
         }
     }
 
-    pub fn put_jump_table(&mut self, state: ir::Value, num_states: u32) -> Vec<ir::Block> {
-        logger::debug!(event = "put_jump_table", ?state, num_states);
-        debug_assert!(num_states >= 2);
+    pub fn put_switch_blocks(&mut self, value: ir::Value, num_blocks: u32) -> Vec<ir::Block> {
+        logger::debug!(event = "put_switch_blocks", ?value, num_blocks);
+        debug_assert!(num_blocks >= 2);
         // TODO(perf): use JumpTable
         let mut switch = Switch::new();
         let mut blocks = vec![];
-        for i in 0..num_states - 1 {
+        for i in 0..num_blocks - 1 {
             let block = self.create_block();
             blocks.push(block);
             switch.set_entry(i as u128, block);
         }
         let done_block = self.create_block();
         blocks.push(done_block);
-        debug_assert_eq!(blocks.len(), num_states as usize);
-        switch.emit(&mut self.builder, state, done_block);
+        debug_assert_eq!(blocks.len(), num_blocks as usize);
+        switch.emit(&mut self.builder, value, done_block);
         blocks
+    }
+
+    pub fn put_jump_table(&mut self, index: ir::Value, blocks: &[ir::Block], default: ir::Block) {
+        logger::debug!(event = "put_jump_table", ?index, ?blocks, ?default);
+        debug_assert!(!self.block_terminated);
+        let mut table = Vec::with_capacity(blocks.len());
+        for block in blocks {
+            table.push(self.builder.func.dfg.block_call(*block, &[]));
+        }
+        let default = self.builder.func.dfg.block_call(default, &[]);
+        let jump_table = self
+            .builder
+            .create_jump_table(ir::JumpTableData::new(default, &table));
+        self.builder.ins().br_table(index, jump_table);
     }
 
     pub fn put_return(&mut self) {
