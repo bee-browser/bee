@@ -249,7 +249,7 @@ struct Compiler<'a, R> {
     // The following values must be reset in the end of compilation for each function.
     this: Option<AnyIr>,
     this_capture: Option<CaptureIr>,
-    arguments: Vec<AnyIr>,
+    params: Vec<AnyIr>,
     locals: Vec<AnyIr>,
     captures: FxHashMap<Locator, CaptureIr>,
 
@@ -311,7 +311,7 @@ where
             operand_stack: Default::default(),
             this: None,
             this_capture: None,
-            arguments: Default::default(),
+            params: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
             max_scratch_buffer_len: 0,
@@ -658,7 +658,7 @@ where
             debug_assert_ne!(variable_ref, VariableRef::NONE);
             let locator = self.scope_tree.compute_locator(variable_ref);
             let capture = match locator {
-                Locator::Argument(_) | Locator::Local(_) => {
+                Locator::Param(_) | Locator::Local(_) => {
                     debug_assert!(self.captures.contains_key(&locator));
                     *self.captures.get(&locator).unwrap()
                 }
@@ -836,11 +836,11 @@ where
         }
         self.editor.put_jump(merge_block, &block_args);
 
-        // Store `ir::Value`s to `self.arguments`.
+        // Store `ir::Value`s to `self.params`.
         self.editor.switch_to_block(merge_block);
         for i in 0..(num_params as usize) {
             let arg = AnyIr(self.editor.get_block_param(merge_block, i));
-            self.arguments.push(arg);
+            self.params.push(arg);
         }
     }
 
@@ -1129,7 +1129,7 @@ where
             let locator = variable.locator();
             if variable.is_captured() {
                 let target = match locator {
-                    Locator::Argument(index) => self.get_argument(index),
+                    Locator::Param(index) => self.get_param(index),
                     Locator::Local(index) => self.get_local(index),
                     _ => unreachable!(),
                 };
@@ -2639,15 +2639,15 @@ where
 
         // Hidden variables are accessible only in the coroutine lambda function.  These are passed
         // to the coroutine lambda function as arguments.
-        self.arguments.push(
+        self.params.push(
             self.editor
                 .put_get_argument(self.support, Self::HIDDEN_PROMISE_INDEX),
         );
-        self.arguments.push(
+        self.params.push(
             self.editor
                 .put_get_argument(self.support, Self::HIDDEN_RESULT_INDEX),
         );
-        self.arguments.push(
+        self.params.push(
             self.editor
                 .put_get_argument(self.support, Self::HIDDEN_ERROR_INDEX),
         );
@@ -3479,7 +3479,7 @@ where
         logger::debug!(event = "perform_escape_value", ?locator);
         let capture = self.captures.remove(&locator).unwrap();
         let value = match locator {
-            Locator::Argument(index) => self.get_argument(index),
+            Locator::Param(index) => self.get_param(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
             Locator::Global => unreachable!(),
@@ -3605,7 +3605,7 @@ where
     fn emit_get_variable(&mut self, symbol: Symbol, locator: Locator) -> AnyIr {
         logger::debug!(event = "emit_get_variable", ?symbol, ?locator);
         match locator {
-            Locator::Argument(index) => self.get_argument(index),
+            Locator::Param(index) => self.get_param(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
             Locator::Global => self.emit_get_global_variable(symbol),
@@ -3614,22 +3614,22 @@ where
 
     fn get_hidden_promise(&self) -> AnyIr {
         logger::debug!(event = "get_hidden_promise");
-        self.get_argument(Self::HIDDEN_PROMISE_INDEX)
+        self.get_param(Self::HIDDEN_PROMISE_INDEX)
     }
 
     fn get_hidden_result(&self) -> AnyIr {
         logger::debug!(event = "get_hidden_result");
-        self.get_argument(Self::HIDDEN_RESULT_INDEX)
+        self.get_param(Self::HIDDEN_RESULT_INDEX)
     }
 
     fn get_hidden_error(&self) -> AnyIr {
         logger::debug!(event = "get_hidden_error");
-        self.get_argument(Self::HIDDEN_ERROR_INDEX)
+        self.get_param(Self::HIDDEN_ERROR_INDEX)
     }
 
-    fn get_argument(&self, index: u16) -> AnyIr {
-        logger::debug!(event = "get_argument", ?index);
-        self.arguments[index as usize]
+    fn get_param(&self, index: u16) -> AnyIr {
+        logger::debug!(event = "get_param", ?index);
+        self.params[index as usize]
     }
 
     fn get_local(&self, index: u16) -> AnyIr {

@@ -1634,7 +1634,7 @@ impl FunctionAnalysis {
         assert!(self.num_params < u16::MAX);
         global_analysis
             .scope_tree_builder
-            .add_argument(symbol, self.num_params);
+            .add_param(symbol, self.num_params);
         self.num_params += 1;
     }
 
@@ -2323,7 +2323,7 @@ impl From<AssignmentOperator> for CompileCommand {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Locator {
-    Argument(u16),
+    Param(u16),
     Local(u16),
     Capture(u16),
     Global,

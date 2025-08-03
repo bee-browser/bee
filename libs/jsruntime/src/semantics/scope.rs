@@ -122,7 +122,7 @@ impl ScopeTree {
         let scope = &self.scopes[variable_ref.scope_index()];
         let variable = &scope.variables[variable_ref.variable_index()];
         match variable.kind {
-            VariableKind::Argument => Locator::Argument(variable.index),
+            VariableKind::Param => Locator::Param(variable.index),
             VariableKind::Local => Locator::Local(variable.index),
             VariableKind::Capture => Locator::Capture(variable.index),
             VariableKind::Global => Locator::Global,
@@ -183,12 +183,12 @@ impl ScopeTreeBuilder {
         self.depth -= 1;
     }
 
-    pub fn add_argument(&mut self, symbol: Symbol, index: u16) {
+    pub fn add_param(&mut self, symbol: Symbol, index: u16) {
         let scope = &mut self.scopes[self.current.index()];
         scope.variables.push(Variable {
             symbol,
             index,
-            kind: VariableKind::Argument,
+            kind: VariableKind::Param,
             flags: VariableFlags::empty(),
             function_declaration_batch: 0,
         });
@@ -438,7 +438,7 @@ impl Variable {
 
     pub fn locator(&self) -> Locator {
         match self.kind {
-            VariableKind::Argument => Locator::Argument(self.index),
+            VariableKind::Param => Locator::Param(self.index),
             VariableKind::Local => Locator::Local(self.index),
             VariableKind::Capture => Locator::Capture(self.index),
             VariableKind::Global => Locator::Global,
@@ -495,7 +495,7 @@ impl<'a> std::fmt::Display for VariableDisplay<'a> {
             write!(f, "^")?;
         }
         match variable.kind {
-            VariableKind::Argument => write!(f, "A@{}", variable.index)?,
+            VariableKind::Param => write!(f, "P@{}", variable.index)?,
             VariableKind::Local => write!(f, "L@{}", variable.index)?,
             VariableKind::Capture => write!(f, "C@{}", variable.index)?,
             VariableKind::Global => write!(f, "G@{}", variable.index)?,
@@ -507,7 +507,7 @@ impl<'a> std::fmt::Display for VariableDisplay<'a> {
         if variable.is_captured() {
             debug_assert!(matches!(
                 variable.kind,
-                VariableKind::Local | VariableKind::Argument
+                VariableKind::Local | VariableKind::Param
             ));
             write!(f, "*")?;
         }
@@ -520,7 +520,7 @@ impl<'a> std::fmt::Display for VariableDisplay<'a> {
 
 #[derive(Clone, Copy, Debug)]
 pub enum VariableKind {
-    Argument,
+    Param,
     Local,
     Capture,
     Global,
