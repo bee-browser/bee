@@ -780,8 +780,66 @@ where
     }
 
     fn process_load_formal_parameters(&mut self, num_params: u16) {
+        if num_params == 0 {
+            // Nothing to do.
+            return;
+        }
+
+        // `argc` may be smaller than `num_params`.  In this case, remaining formal parameters must
+        // be set to `undefined`.
+
+        // `params` is a list of `Value`s initialized w/ `undefined`.  The `Value`s are used only
+        // if `argc` is smaller than `num_params`.
+        let params = self.editor.put_alloc_argv(num_params);
+        for i in 0..num_params {
+            let arg = self.editor.put_get_arg(params, i);
+            self.editor.put_store_undefined_to_any(arg);
+        }
+
+        // Create destination blocks of the jump table and the merge block where the program flow
+        // reaches eventually.
+        let mut blocks = Vec::with_capacity(num_params as usize);
+        for _ in 0..num_params {
+            blocks.push(self.editor.create_block());
+        }
+        let default_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_argv(num_params);
+
+        // Put the jump table to the instruction buffer.
+        let argc = self.editor.argc_as_jump_table_index();
+        self.editor.put_jump_table(argc, &blocks, default_block);
+
+        // The `block_args` is a temporal buffer to keep `ir::Value`s which are passed to the merge
+        // block.
+        let mut block_args = Vec::with_capacity(num_params as usize);
+
+        // TODO(perf): Another possible implementation is copying values from `argv` to `params`.
+
+        for i in 0..num_params {
+            self.editor.switch_to_block(blocks[i as usize]);
+            for j in 0..i {
+                let arg = self.editor.put_get_argument(self.support, j);
+                block_args.push(arg.0.into());
+            }
+            for j in i..num_params {
+                let arg = self.editor.put_get_arg(params, j);
+                block_args.push(arg.0.into());
+            }
+            self.editor.put_jump(merge_block, &block_args);
+            block_args.clear();
+        }
+
+        self.editor.switch_to_block(default_block);
         for i in 0..num_params {
             let arg = self.editor.put_get_argument(self.support, i);
+            block_args.push(arg.0.into());
+        }
+        self.editor.put_jump(merge_block, &block_args);
+
+        // Store `ir::Value`s to `self.arguments`.
+        self.editor.switch_to_block(merge_block);
+        for i in 0..(num_params as usize) {
+            let arg = AnyIr(self.editor.get_block_param(merge_block, i));
             self.arguments.push(arg);
         }
     }
@@ -2607,7 +2665,7 @@ where
         debug_assert!(num_states >= 2);
 
         let state = self.editor.put_load_state_from_coroutine();
-        let blocks = self.editor.put_jump_table(state, num_states);
+        let blocks = self.editor.put_switch_blocks(state, num_states);
         debug_assert_eq!(blocks.len(), num_states as usize);
 
         self.editor.switch_to_block(blocks[num_states as usize - 1]);
