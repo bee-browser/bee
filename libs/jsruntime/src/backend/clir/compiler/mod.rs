@@ -788,13 +788,8 @@ where
         // `argc` may be smaller than `num_params`.  In this case, remaining formal parameters must
         // be set to `undefined`.
 
-        // `params` is a list of `Value`s initialized w/ `undefined`.  The `Value`s are used only
-        // if `argc` is smaller than `num_params`.
+        // `params` is a list of `Value`s that are used only if `argc` is smaller than `num_params`.
         let params = self.editor.put_alloc_argv(num_params);
-        for i in 0..num_params {
-            let arg = self.editor.put_get_arg(params, i);
-            self.editor.put_store_undefined_to_any(arg);
-        }
 
         // Create destination blocks of the jump table and the merge block where the program flow
         // reaches eventually.
@@ -818,12 +813,13 @@ where
         for i in 0..num_params {
             self.editor.switch_to_block(blocks[i as usize]);
             for j in 0..i {
-                let arg = self.editor.put_get_argument(self.support, j);
-                block_args.push(arg.0.into());
+                let param = self.editor.put_get_argument(self.support, j);
+                block_args.push(param.0.into());
             }
             for j in i..num_params {
-                let arg = self.editor.put_get_arg(params, j);
-                block_args.push(arg.0.into());
+                let param = self.editor.put_get_arg(params, j);
+                self.editor.put_store_undefined_to_any(param);
+                block_args.push(param.0.into());
             }
             self.editor.put_jump(merge_block, &block_args);
             block_args.clear();
@@ -831,16 +827,16 @@ where
 
         self.editor.switch_to_block(default_block);
         for i in 0..num_params {
-            let arg = self.editor.put_get_argument(self.support, i);
-            block_args.push(arg.0.into());
+            let param = self.editor.put_get_argument(self.support, i);
+            block_args.push(param.0.into());
         }
         self.editor.put_jump(merge_block, &block_args);
 
         // Store `ir::Value`s to `self.params`.
         self.editor.switch_to_block(merge_block);
         for i in 0..(num_params as usize) {
-            let arg = AnyIr(self.editor.get_block_param(merge_block, i));
-            self.params.push(arg);
+            let param = AnyIr(self.editor.get_block_param(merge_block, i));
+            self.params.push(param);
         }
     }
 
