@@ -364,12 +364,12 @@ unsafe extern "C" fn runtime_to_string<X>(
     logger::debug!(event = "runtime_to_string", ?value);
     let runtime = unsafe { into_runtime!(runtime, X) };
     let value = unsafe { into_value!(value) };
-    let result = runtime.to_string(value);
+    let result = runtime.perform_to_string(value);
     result.first_chunk() as *const U16Chunk
 }
 
 impl<X> Runtime<X> {
-    pub fn to_string(&mut self, value: &Value) -> U16String {
+    pub(crate) fn perform_to_string(&mut self, value: &Value) -> U16String {
         logger::debug!(event = "to_string", ?value);
 
         use jsparser::symbol::builtin::names;
@@ -384,7 +384,7 @@ impl<X> Runtime<X> {
             Value::Undefined => U16String::new(&UNDEFINED),
             Value::Null => U16String::new(&NULL),
             Value::Boolean(value) => U16String::new(if *value { &TRUE } else { &FALSE }),
-            Value::Number(_) => todo!(),
+            Value::Number(value) => unsafe { self.number_to_string(*value) },
             Value::String(value) => *value,
             Value::Promise(_) => todo!(),
             Value::Object(_) => todo!(),
@@ -399,14 +399,18 @@ unsafe extern "C" fn runtime_number_to_string<X>(
     value: f64,
 ) -> *const U16Chunk {
     logger::debug!(event = "runtime_number_to_string", ?value);
-
     let runtime = unsafe { into_runtime!(runtime, X) };
+    unsafe { runtime.number_to_string(value).as_ptr() }
+}
 
-    // TODO(feat): implment Number::toString()
-    let utf16 = runtime.alloc_utf16(&format!("{value}"));
-    let chunk = U16Chunk::new_stack(utf16);
-    let string = U16String::new(&chunk);
-    unsafe { runtime.migrate_string_to_heap(string).as_ptr() }
+impl<X> Runtime<X> {
+    unsafe fn number_to_string(&mut self, value: f64) -> U16String {
+        // TODO(feat): implment Number::toString()
+        let utf16 = self.alloc_utf16(&format!("{value}"));
+        let chunk = U16Chunk::new_stack(utf16);
+        let string = U16String::new(&chunk);
+        unsafe { self.migrate_string_to_heap(string) }
+    }
 }
 
 // 7.1.18 ToObject ( argument )

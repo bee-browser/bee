@@ -36,7 +36,7 @@ pub unsafe extern "C" fn constructor<X>(
 impl<X> Runtime<X> {
     fn string_constructor(&mut self, _this: &mut Value, args: &[Value]) -> Result<Value, Value> {
         let s = match args.first() {
-            Some(v) => self.to_string(v),
+            Some(v) => self.perform_to_string(v),
             None => U16String::EMPTY,
         };
         // TODO(feat): NewTarget
