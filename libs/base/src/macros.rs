@@ -136,15 +136,16 @@ macro_rules! utf16 {
 #[macro_export]
 macro_rules! const_utf16 {
     ($name: ident, $utf8:literal) => {
-        const $name: [u16; $crate::utf16!(# $utf8)] = $crate::utf16!($utf8);
+const $name: [u16; $crate::utf16!(# $utf8)] = $crate::utf16!($utf8);
     };
     ($name: ident, & $utf8:literal) => {
-        const $name: &[u16] = $crate::utf16!(& $utf8);
+        const $name: &[u16] = $crate::utf16!(&$utf8);
     };
 }
 
 pub use assert_eq;
 pub use assert_ne;
+pub use const_utf16;
 pub use debug_assert_eq;
 pub use debug_assert_ne;
 pub use delegate_all;
@@ -153,7 +154,6 @@ pub use static_assert_ne;
 pub use static_assert_size;
 pub use static_assert_size_eq;
 pub use utf16;
-pub use const_utf16;
 
 #[cfg(test)]
 mod tests {
@@ -223,7 +223,7 @@ mod tests {
 
     #[test]
     fn test_utf16_slice() {
-        let actual = utf16!(& "test");
+        let actual = utf16!(&"test");
         let expected = "test".encode_utf16().collect::<Vec<_>>();
         assert_eq!(actual, expected);
     }
@@ -237,7 +237,7 @@ mod tests {
 
     #[test]
     fn test_const_utf16_slice() {
-        const_utf16!(ACTUAL, & "test");
+        const_utf16!(ACTUAL, &"test");
         // TODO(test): actual should be &[u16].
         let expected = "test".encode_utf16().collect::<Vec<_>>();
         assert_eq!(ACTUAL, expected);

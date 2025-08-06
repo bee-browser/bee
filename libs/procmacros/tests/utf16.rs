@@ -1,5 +1,5 @@
-use procmacros::utf16_size;
 use procmacros::utf16_array;
+use procmacros::utf16_size;
 use procmacros::utf16_slice;
 
 #[test]
