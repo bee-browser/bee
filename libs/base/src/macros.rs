@@ -120,8 +120,32 @@ macro_rules! static_assert_size_eq {
     };
 }
 
+#[macro_export]
+macro_rules! utf16 {
+    ($utf8:literal) => {
+        $crate::procmacros::utf16_array!($utf8)
+    };
+    (# $utf8:literal) => {
+        $crate::procmacros::utf16_size!($utf8)
+    };
+    (& $utf8:literal) => {
+        $crate::procmacros::utf16_slice!($utf8)
+    };
+}
+
+#[macro_export]
+macro_rules! const_utf16 {
+    ($name: ident, $utf8:literal) => {
+const $name: [u16; $crate::utf16!(# $utf8)] = $crate::utf16!($utf8);
+    };
+    ($name: ident, & $utf8:literal) => {
+        const $name: &[u16] = $crate::utf16!(&$utf8);
+    };
+}
+
 pub use assert_eq;
 pub use assert_ne;
+pub use const_utf16;
 pub use debug_assert_eq;
 pub use debug_assert_ne;
 pub use delegate_all;
@@ -129,6 +153,7 @@ pub use static_assert_eq;
 pub use static_assert_ne;
 pub use static_assert_size;
 pub use static_assert_size_eq;
+pub use utf16;
 
 #[cfg(test)]
 mod tests {
@@ -182,4 +207,39 @@ mod tests {
     static_assert_ne!(0, 1);
     static_assert_size!(u32, 4);
     static_assert_size_eq!(u32, f32);
+
+    #[test]
+    fn test_utf16_array() {
+        let actual = utf16!("test");
+        // TODO(test): actual should be [u16; 4].
+        let expected = "test".encode_utf16().collect::<Vec<_>>();
+        assert_eq!(actual.as_slice(), expected.as_slice());
+    }
+
+    #[test]
+    fn test_utf16_size() {
+        assert_eq!(utf16!(# "test"), 4);
+    }
+
+    #[test]
+    fn test_utf16_slice() {
+        let actual = utf16!(&"test");
+        let expected = "test".encode_utf16().collect::<Vec<_>>();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_const_utf16_array() {
+        const_utf16!(ACTUAL, "test");
+        let expected = "test".encode_utf16().collect::<Vec<_>>();
+        assert_eq!(ACTUAL.as_slice(), expected.as_slice());
+    }
+
+    #[test]
+    fn test_const_utf16_slice() {
+        const_utf16!(ACTUAL, &"test");
+        // TODO(test): actual should be &[u16].
+        let expected = "test".encode_utf16().collect::<Vec<_>>();
+        assert_eq!(ACTUAL, expected);
+    }
 }
