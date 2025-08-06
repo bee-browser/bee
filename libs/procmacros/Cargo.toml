@@ -1,5 +1,5 @@
 [package]
-name = "base"
+name = "procmacros"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -10,15 +10,12 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-procmacros = { path = "../procmacros" }
+proc-macro2 = "1.0.95"
+quote = "1.0.40"
+syn = "2.0.104"
 
 [dev-dependencies]
-criterion = "0.7.0"
 
 [lib]
 bench = false
-
-[[bench]]
-name = "base-bench"
-path = "benches/bench.rs"
-harness = false
+proc-macro = true

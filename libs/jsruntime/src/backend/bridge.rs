@@ -1,6 +1,7 @@
 use std::ffi::c_char;
 use std::ffi::c_void;
 
+use base::utf16;
 use base::static_assert_size_eq;
 
 use crate::Runtime;
@@ -370,24 +371,35 @@ unsafe extern "C" fn runtime_to_string<X>(
 
 impl<X> Runtime<X> {
     pub(crate) fn perform_to_string(&mut self, value: &Value) -> U16String {
-        logger::debug!(event = "to_string", ?value);
-
-        use jsparser::symbol::builtin::names;
-
-        const UNDEFINED: U16Chunk = U16Chunk::new_const(names::UNDEFINED);
-        const NULL: U16Chunk = U16Chunk::new_const(names::NULL);
-        const TRUE: U16Chunk = U16Chunk::new_const(names::TRUE);
-        const FALSE: U16Chunk = U16Chunk::new_const(names::FALSE);
+        logger::debug!(event = "perform_to_string", ?value);
 
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined => U16String::new(&UNDEFINED),
-            Value::Null => U16String::new(&NULL),
-            Value::Boolean(value) => U16String::new(if *value { &TRUE } else { &FALSE }),
-            Value::Number(value) => unsafe { self.number_to_string(*value) },
+            Value::Undefined => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(& "undefined"));
+                U16String::new(&CHUNK)
+            }
+            Value::Null => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(& "null"));
+                U16String::new(&CHUNK)
+            }
+            Value::Boolean(true) => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(& "true"));
+                U16String::new(&CHUNK)
+            }
+            Value::Boolean(false) => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(& "false"));
+                U16String::new(&CHUNK)
+            }
+            Value::Number(value) => {
+                unsafe { self.number_to_string(*value) } // TODO
+            }
             Value::String(value) => *value,
             Value::Promise(_) => todo!(),
-            Value::Object(_) => todo!(),
+            Value::Object(_) => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(& "[object Object]"));
+                U16String::new(&CHUNK)
+            }
             Value::Function(_) => todo!(),
         }
     }
