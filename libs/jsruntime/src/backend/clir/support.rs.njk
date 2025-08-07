@@ -12,7 +12,6 @@ use cranelift_module::Linkage;
 use cranelift_module::Module;
 
 use super::compiler;
-use super::LambdaId;
 use super::RuntimeFunctions;
 
 // TODO(perf): using libm causes the following error in the coverage test w/ llvm-cov:
@@ -112,7 +111,6 @@ pub fn declare_functions(module: &mut impl Module) -> RuntimeFunctionIds {
 }
 
 pub trait EditorSupport {
-    fn import_lambda(&mut self, lambda_id: LambdaId, func: &mut ir::Function) -> ir::FuncRef;
     // TODO(feat): if cfg!(feature = "libm")
     fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef;
     // TODO(feat): if cfg!(feature = "libm")
@@ -123,10 +121,6 @@ pub trait EditorSupport {
 }
 
 impl EditorSupport for compiler::Session<'_> {
-    fn import_lambda(&mut self, lambda_id: LambdaId, func: &mut ir::Function) -> ir::FuncRef {
-        self.executor.import_lambda(lambda_id, func)
-    }
-
     fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef {
         self.executor.import_fmod(func)
     }
@@ -143,11 +137,6 @@ impl EditorSupport for compiler::Session<'_> {
 }
 
 impl EditorSupport for crate::backend::clir::Executor {
-    fn import_lambda(&mut self, lambda_id: LambdaId, func: &mut ir::Function) -> ir::FuncRef {
-        let func_id = *self.id_map.get(&lambda_id).unwrap();
-        self.module.declare_func_in_func(func_id, func)
-    }
-
     fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef {
         self.module.declare_func_in_func(self.runtime_func_ids.fmod, func)
     }
