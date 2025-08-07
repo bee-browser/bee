@@ -3547,7 +3547,13 @@ where
 
     fn store_operand_to_retv(&mut self, operand: &Operand) {
         let retv = self.editor.retv();
-        self.emit_store_operand_to_any(operand, retv);
+        match operand {
+            Operand::String(value, _) => {
+                let value = self.emit_ensure_heap_string(*value);
+                self.editor.put_store_string_to_any(value, retv);
+            }
+            _ => self.emit_store_operand_to_any(operand, retv),
+        }
     }
 
     fn store_any_to_retv(&mut self, any: AnyIr) {

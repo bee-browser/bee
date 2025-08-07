@@ -310,7 +310,7 @@ impl U16Chunk {
 
     pub fn as_slice(&self) -> &[u16] {
         debug_assert_ne!(self.len, 0);
-        debug_assert_ne!(self.ptr, std::ptr::null());
+        debug_assert!(!self.ptr.is_null());
         unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) }
     }
 
