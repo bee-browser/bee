@@ -716,8 +716,9 @@ where
     }
 
     fn process_property_reference(&mut self, symbol: Symbol) {
+        let (operand, ..) = self.dereference();
         self.operand_stack
-            .push(Operand::PropertyReference(symbol.into()));
+            .push(Operand::PropertyReference(operand.into(), symbol.into()));
     }
 
     fn process_to_property_key(&mut self) {
@@ -771,12 +772,14 @@ where
             Operand::Lambda(..)
             | Operand::Closure(_)
             | Operand::Coroutine(_)
-            | Operand::PropertyReference(_)
+            | Operand::PropertyReference(..)
             | Operand::VariableReference(..) => {
                 unreachable!("{operand:?}")
             }
         };
-        self.operand_stack.push(Operand::PropertyReference(key));
+        let (operand, ..) = self.dereference();
+        self.operand_stack
+            .push(Operand::PropertyReference(operand.into(), key));
     }
 
     fn process_load_formal_parameters(&mut self, num_params: u16) {
@@ -1295,7 +1298,7 @@ where
             | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
-            | Operand::PropertyReference(_) => unreachable!(),
+            | Operand::PropertyReference(..) => unreachable!(),
         }
     }
 
@@ -1340,7 +1343,7 @@ where
     // 13.2.5.5 Runtime Semantics: PropertyDefinitionEvaluation
     fn process_create_data_property(&mut self) {
         let (operand, ..) = self.dereference();
-        let key = self.pop_property_reference();
+        let (owner, key) = self.pop_property_reference();
 
         if let Operand::Function(function, Symbol::NONE) = operand {
             // anonymous function
@@ -1352,7 +1355,7 @@ where
             self.perform_set_function_name(function, name);
         }
 
-        let object = self.peek_object();
+        let object = self.perform_owner_to_object(&owner);
         let value = self.editor.put_alloc_any();
         self.emit_store_operand_to_any(&operand, value);
         let retv = self.emit_create_any();
@@ -1412,11 +1415,13 @@ where
         self.editor.put_jump(merge_block, &[]);
         // }
         self.editor.switch_to_block(merge_block);
+
+        self.operand_stack.push(Operand::Object(object));
     }
 
-    fn pop_property_reference(&mut self) -> PropertyKey {
+    fn pop_property_reference(&mut self) -> (PropertyOwner, PropertyKey) {
         match self.operand_stack.pop().unwrap() {
-            Operand::PropertyReference(key) => key,
+            Operand::PropertyReference(owner, key) => (owner, key),
             _ => unreachable!(),
         }
     }
@@ -2042,10 +2047,9 @@ where
                 // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
                 self.emit_store_operand_to_any(&rhs, var);
             }
-            Operand::PropertyReference(key) => {
+            Operand::PropertyReference(owner, key) => {
                 // TODO(refactor): reduce code clone
-                self.perform_to_object();
-                let object = self.pop_object();
+                let object = self.perform_owner_to_object(&owner);
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
                 match key {
@@ -2077,13 +2081,6 @@ where
         self.operand_stack.push(rhs);
     }
 
-    fn pop_object(&mut self) -> ObjectIr {
-        match self.operand_stack.pop().unwrap() {
-            Operand::Object(value) | Operand::Function(value, _) => value,
-            operand => unreachable!("{operand:?}"),
-        }
-    }
-
     // 7.1.18 ToObject ( argument )
     // TODO(perf): directly convert the value referred by the operand into an object.
     fn perform_to_object(&mut self) {
@@ -2108,7 +2105,21 @@ where
             | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
-            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
+            | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
+        }
+    }
+
+    // 7.1.18 ToObject ( argument )
+    // TODO(perf): directly convert the value referred by the operand into an object.
+    fn perform_owner_to_object(&mut self, owner: &PropertyOwner) -> ObjectIr {
+        logger::debug!(event = "perform_owner_to_object", ?owner);
+        match owner {
+            PropertyOwner::Undefined | PropertyOwner::Null => ObjectIr(self.editor.put_nullptr()),
+            PropertyOwner::Boolean(_) => todo!(),
+            PropertyOwner::Number(_) => todo!(),
+            PropertyOwner::String(_) => todo!(),
+            PropertyOwner::Object(value) | PropertyOwner::Function(value) => *value,
+            PropertyOwner::Any(value) => self.editor.put_runtime_to_object(self.support, *value),
         }
     }
 
@@ -2733,17 +2744,20 @@ where
         let mut offset = 0;
         for operand in operand_stack.iter() {
             match operand {
-                Operand::Boolean(value, ..) => {
+                Operand::Boolean(value, _)
+                | Operand::PropertyReference(PropertyOwner::Boolean(value), _) => {
                     self.editor
                         .put_write_boolean_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Number(value, ..) => {
+                Operand::Number(value, _)
+                | Operand::PropertyReference(PropertyOwner::Number(value), _) => {
                     self.editor
                         .put_write_number_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::String(value, ..) => {
+                Operand::String(value, _)
+                | Operand::PropertyReference(PropertyOwner::String(value), _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
                         .put_write_string_to_scratch_buffer(*value, scratch_buffer, offset);
@@ -2755,13 +2769,15 @@ where
                         .put_write_closure_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Object(value) => {
+                Operand::Object(value)
+                | Operand::PropertyReference(PropertyOwner::Object(value), _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
                         .put_write_object_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Function(value, _) => {
+                Operand::Function(value, _)
+                | Operand::PropertyReference(PropertyOwner::Function(value), _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor.put_write_function_to_scratch_buffer(
                         *value,
@@ -2775,7 +2791,8 @@ where
                         .put_write_promise_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Any(value, ..) => {
+                Operand::Any(value, ..)
+                | Operand::PropertyReference(PropertyOwner::Any(value), _) => {
                     self.editor
                         .put_write_any_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::SIZE;
@@ -2783,7 +2800,7 @@ where
                 Operand::Undefined
                 | Operand::Null
                 | Operand::VariableReference(..)
-                | Operand::PropertyReference(_) => (),
+                | Operand::PropertyReference(..) => (),
                 Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2802,19 +2819,22 @@ where
         let mut offset = 0;
         for operand in operand_stack.iter_mut() {
             match operand {
-                Operand::Boolean(value, ..) => {
+                Operand::Boolean(value, _)
+                | Operand::PropertyReference(PropertyOwner::Boolean(value), _) => {
                     *value = self
                         .editor
                         .put_read_boolean_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Number(value, ..) => {
+                Operand::Number(value, _)
+                | Operand::PropertyReference(PropertyOwner::Number(value), _) => {
                     *value = self
                         .editor
                         .put_read_number_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::String(value, ..) => {
+                Operand::String(value, _)
+                | Operand::PropertyReference(PropertyOwner::String(value), _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
@@ -2828,14 +2848,16 @@ where
                         .put_read_closure_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Object(value) => {
+                Operand::Object(value)
+                | Operand::PropertyReference(PropertyOwner::Object(value), _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
                         .put_read_object_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Function(value, _) => {
+                Operand::Function(value, _)
+                | Operand::PropertyReference(PropertyOwner::Function(value), _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
@@ -2848,7 +2870,8 @@ where
                         .put_read_promise_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Any(value, ..) => {
+                Operand::Any(value, ..)
+                | Operand::PropertyReference(PropertyOwner::Any(value), _) => {
                     *value = self
                         .editor
                         .put_read_any_from_scratch_buffer(scratch_buffer, offset);
@@ -2857,7 +2880,7 @@ where
                 Operand::Undefined
                 | Operand::Null
                 | Operand::VariableReference(..)
-                | Operand::PropertyReference(_) => (),
+                | Operand::PropertyReference(..) => (),
                 Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
@@ -2945,7 +2968,7 @@ where
             | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
-            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
+            | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
         }
     }
 
@@ -3021,7 +3044,7 @@ where
             | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
-            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
+            | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
         }
     }
 
@@ -3074,7 +3097,7 @@ where
             | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
-            | Operand::PropertyReference(_) => {
+            | Operand::PropertyReference(..) => {
                 unreachable!("{operand:?}")
             }
         }
@@ -3096,7 +3119,7 @@ where
             | Operand::Coroutine(_)
             | Operand::Promise(_)
             | Operand::VariableReference(..)
-            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
+            | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
         }
     }
 
@@ -3242,7 +3265,7 @@ where
             | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
-            | Operand::PropertyReference(_) => unreachable!("{rhs:?}"),
+            | Operand::PropertyReference(..) => unreachable!("{rhs:?}"),
         }
     }
 
@@ -3421,9 +3444,8 @@ where
                 // TODO(pref): compile-time evaluation
                 (Operand::Any(value, None), None, Some((symbol, locator)))
             }
-            Operand::PropertyReference(key) => {
-                self.perform_to_object();
-                let object = self.pop_object();
+            Operand::PropertyReference(owner, key) => {
+                let object = self.perform_owner_to_object(&owner);
                 let then_block = self.editor.create_block();
                 let end_block = self.editor.create_block();
                 // if object.is_nullptr()
@@ -3488,52 +3510,7 @@ where
         debug_assert!(self.operand_stack.len() > 1);
 
         let last_index = self.operand_stack.len() - 1;
-        if self.operand_stack.len() == 2 {
-            self.operand_stack.swap(last_index - 1, last_index);
-            return;
-        }
-
-        // Operand::PropertyReference must be moved together with the previous operand that is the
-        // target value of the property access.
-        debug_assert!(self.operand_stack.len() > 2);
-        match &self.operand_stack[(last_index - 2)..] {
-            [
-                Operand::PropertyReference(_),
-                Operand::PropertyReference(_),
-                _,
-            ] => {
-                // This case never happens.
-                // The MemberExpression must be evaluated before subsequent terms.
-                // See also: modifyMemberExpression() in //libs/jsparser/src/transpile.js.
-                unreachable!();
-            }
-            [
-                _,
-                Operand::PropertyReference(_),
-                Operand::PropertyReference(_),
-            ] => {
-                // This case never happens.
-                // The MemberExpression must be evaluated before subsequent terms.
-                // See also: modifyMemberExpression() in //libs/jsparser/src/transpile.js.
-                unreachable!();
-            }
-            [
-                Operand::PropertyReference(_),
-                _,
-                Operand::PropertyReference(_),
-            ] => {
-                debug_assert!(self.operand_stack.len() > 3);
-                self.operand_stack.swap(last_index - 3, last_index - 1);
-                self.operand_stack.swap(last_index - 2, last_index);
-            }
-            [_, Operand::PropertyReference(_), _] => {
-                self.operand_stack[(last_index - 2)..].rotate_right(1);
-            }
-            [_, _, Operand::PropertyReference(_)] => {
-                self.operand_stack[(last_index - 2)..].rotate_left(1);
-            }
-            _ => self.operand_stack.swap(last_index - 1, last_index),
-        }
+        self.operand_stack.swap(last_index - 1, last_index);
     }
 
     fn duplicate(&mut self, offset: u8) {
@@ -3598,7 +3575,7 @@ where
             | Operand::Closure(_)
             | Operand::Coroutine(_)
             | Operand::VariableReference(..)
-            | Operand::PropertyReference(_) => unreachable!("{operand:?}"),
+            | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
         }
     }
 
@@ -3834,9 +3811,38 @@ enum Operand {
     /// Runtime value of promise type.
     Promise(PromiseIr),
 
-    // Compile-time constant value types.
+    // Reference types.
     VariableReference(Symbol, Locator),
-    PropertyReference(PropertyKey),
+    PropertyReference(PropertyOwner, PropertyKey),
+}
+
+#[derive(Clone, Debug)]
+#[allow(unused)]
+enum PropertyOwner {
+    Undefined,
+    Null,
+    Boolean(BooleanIr),
+    Number(NumberIr),
+    String(StringIr),
+    Object(ObjectIr),
+    Function(ObjectIr),
+    Any(AnyIr),
+}
+
+impl From<Operand> for PropertyOwner {
+    fn from(value: Operand) -> Self {
+        match value {
+            Operand::Undefined => Self::Undefined,
+            Operand::Null => Self::Null,
+            Operand::Boolean(value, _) => Self::Boolean(value),
+            Operand::Number(value, _) => Self::Number(value),
+            Operand::String(value, _) => Self::String(value),
+            Operand::Object(value) => Self::Object(value),
+            Operand::Function(value, _) => Self::Function(value),
+            Operand::Any(value, _) => Self::Any(value),
+            _ => unreachable!("{value:?}"),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
