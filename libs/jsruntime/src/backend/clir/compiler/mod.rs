@@ -452,15 +452,12 @@ where
             CompileCommand::New(nargs) => self.process_new(*nargs),
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
+            CompileCommand::ToNumeric => self.process_to_numeric(),
             CompileCommand::ToString => self.process_to_string(),
             CompileCommand::ConcatStrings(n) => self.process_concat_strings(*n),
             CompileCommand::CreateDataProperty => self.process_create_data_property(),
             CompileCommand::CopyDataProperties => self.process_copy_data_properties(),
             CompileCommand::PushArrayElement => self.process_push_array_element(),
-            CompileCommand::PostfixIncrement => self.process_postfix_increment(),
-            CompileCommand::PostfixDecrement => self.process_postfix_decrement(),
-            CompileCommand::PrefixIncrement => self.process_prefix_increment(),
-            CompileCommand::PrefixDecrement => self.process_prefix_decrement(),
             CompileCommand::Delete => self.process_delete(),
             CompileCommand::Void => self.process_void(),
             CompileCommand::Typeof => self.process_typeof(),
@@ -1269,6 +1266,13 @@ where
         self.editor.switch_to_block(exit_block);
     }
 
+    // 7.1.3 ToNumeric ( value )
+    fn process_to_numeric(&mut self) {
+        let (operand, ..) = self.dereference();
+        let result = self.perform_to_numeric(&operand);
+        self.operand_stack.push(Operand::Number(result, None));
+    }
+
     // 7.1.17 ToString ( argument )
     fn process_to_string(&mut self) {
         let (operand, ..) = self.dereference();
@@ -1471,26 +1475,6 @@ where
             self.editor
                 .put_runtime_push_array_element(self.support, object, from_value, retv);
         self.emit_check_status_for_exception(status, retv);
-    }
-
-    // 13.4.2.1 Runtime Semantics: Evaluation
-    fn process_postfix_increment(&mut self) {
-        self.perform_incr_decr('$', '+');
-    }
-
-    // 13.4.3.1 Runtime Semantics: Evaluation
-    fn process_postfix_decrement(&mut self) {
-        self.perform_incr_decr('$', '-');
-    }
-
-    // 13.4.4.1 Runtime Semantics: Evaluation
-    fn process_prefix_increment(&mut self) {
-        self.perform_incr_decr('^', '+');
-    }
-
-    // 13.4.5.1 Runtime Semantics: Evaluation
-    fn process_prefix_decrement(&mut self) {
-        self.perform_incr_decr('^', '-');
     }
 
     // 13.5.1.2 Runtime Semantics: Evaluation
@@ -3123,38 +3107,6 @@ where
         }
     }
 
-    // 13.4.2.1 Runtime Semantics: Evaluation
-    // 13.4.3.1 Runtime Semantics: Evaluation
-    // 13.4.4.1 Runtime Semantics: Evaluation
-    // 13.4.5.1 Runtime Semantics: Evaluation
-    fn perform_incr_decr(&mut self, pos: char, op: char) {
-        let (operand, _, reference) = self.dereference();
-        let old_value = self.perform_to_numeric(&operand);
-        // TODO: BigInt
-        let one = self.editor.put_number(1.0);
-        let new_value = if op == '+' {
-            self.editor.put_add(old_value, one)
-        } else {
-            self.editor.put_sub(old_value, one)
-        };
-        match reference {
-            Some((symbol, locator)) if symbol != Symbol::NONE => {
-                self.operand_stack
-                    .push(Operand::VariableReference(symbol, locator));
-                // TODO(perf): compile-time evaluation
-                self.operand_stack.push(Operand::Number(new_value, None));
-                self.process_assignment();
-                self.process_discard();
-            }
-            _ => {
-                // TODO(feat): throw a ReferenceError at runtime
-            }
-        }
-        let value = if pos == '^' { new_value } else { old_value };
-        // TODO(perf): compile-time evaluation
-        self.operand_stack.push(Operand::Number(value, None));
-    }
-
     fn perform_to_any(&mut self, operand: &Operand) -> AnyIr {
         let any = self.editor.put_alloc_any();
         self.emit_store_operand_to_any(operand, any);
@@ -3734,6 +3686,7 @@ impl OperandStack {
     }
 
     fn duplicate(&mut self, index: usize) {
+        debug_assert!(index < self.0.len());
         let dup = self.0[index].clone();
         self.push(dup);
     }
