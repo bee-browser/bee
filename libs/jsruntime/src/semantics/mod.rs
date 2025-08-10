@@ -344,7 +344,7 @@ where
             Node::NewExpression(has_args) => self.handle_new_expression(has_args),
             Node::NonNullish => self.handle_non_nullish(),
             Node::OptionalChain(kind) => self.handle_optional_chain(kind),
-            Node::UpdateExpression(op) => self.handle_operator(op.into()),
+            Node::UpdateExpression(op) => self.handle_update_expression(op),
             Node::UnaryExpression(op) => self.handle_operator(op.into()),
             Node::BinaryExpression(op) => self.handle_binary_expression(op),
             Node::LogicalExpression(_op) => self.handle_conditional_expression(),
@@ -528,6 +528,10 @@ where
 
     fn handle_optional_chain(&mut self, kind: PropertyAccessKind) {
         analysis_mut!(self).process_optional_chain(kind);
+    }
+
+    fn handle_update_expression(&mut self, op: UpdateOperator) {
+        analysis_mut!(self).process_update_expression(op);
     }
 
     fn handle_operator(&mut self, op: CompileCommand) {
@@ -1600,6 +1604,57 @@ impl FunctionAnalysis {
         }
     }
 
+    fn process_update_expression(&mut self, op: UpdateOperator) {
+        match op {
+            // 13.4.2.1 Runtime Semantics: Evaluation
+            UpdateOperator::PostfixIncrement => {
+                // a++ => b = a, a = a + 1, b
+                self.commands.push(CompileCommand::Duplicate(0));
+                self.commands.push(CompileCommand::ToNumeric);
+                self.commands.push(CompileCommand::Swap);
+                self.commands.push(CompileCommand::Duplicate(1));
+                self.commands.push(CompileCommand::Number(1.0));
+                // Ignore CompileCommand::Swap because the addition operator is commutative.
+                self.commands.push(CompileCommand::Addition);
+                self.commands.push(CompileCommand::Assignment);
+                self.commands.push(CompileCommand::Discard);
+            }
+            // 13.4.3.1 Runtime Semantics: Evaluation
+            UpdateOperator::PostfixDecrement => {
+                // a-- => b = a, a = a - 1, b
+                self.commands.push(CompileCommand::Duplicate(0));
+                self.commands.push(CompileCommand::ToNumeric);
+                self.commands.push(CompileCommand::Swap);
+                self.commands.push(CompileCommand::Duplicate(1));
+                self.commands.push(CompileCommand::Number(1.0));
+                self.commands.push(CompileCommand::Swap);
+                self.commands.push(CompileCommand::Subtraction);
+                self.commands.push(CompileCommand::Assignment);
+                self.commands.push(CompileCommand::Discard);
+            }
+            // 13.4.4.1 Runtime Semantics: Evaluation
+            UpdateOperator::PrefixIncrement => {
+                // ++a => a = a + 1, a
+                self.commands.push(CompileCommand::Duplicate(0));
+                self.commands.push(CompileCommand::ToNumeric);
+                self.commands.push(CompileCommand::Number(1.0));
+                // Ignore CompileCommand::Swap because the addition operator is commutative.
+                self.commands.push(CompileCommand::Addition);
+                self.commands.push(CompileCommand::Assignment);
+            }
+            // 13.4.5.1 Runtime Semantics: Evaluation
+            UpdateOperator::PrefixDecrement => {
+                // --a => a = a - 1, a
+                self.commands.push(CompileCommand::Duplicate(0));
+                self.commands.push(CompileCommand::ToNumeric);
+                self.commands.push(CompileCommand::Number(1.0));
+                self.commands.push(CompileCommand::Swap);
+                self.commands.push(CompileCommand::Subtraction);
+                self.commands.push(CompileCommand::Assignment);
+            }
+        }
+    }
+
     fn process_binary_expression(&mut self, op: BinaryOperator) {
         // When a compiler processes the following command, the RHS has been placed on the LHS on
         // the stack of the compiler.  Swap them so that the LHS is evaluated before the RHS.
@@ -2102,6 +2157,9 @@ pub enum CompileCommand {
     PushScope(ScopeRef),
     PopScope(ScopeRef),
 
+    // number
+    ToNumeric,
+
     // string
     ToString,
     ConcatStrings(u16),
@@ -2110,12 +2168,6 @@ pub enum CompileCommand {
     CreateDataProperty,
     CopyDataProperties,
     PushArrayElement,
-
-    // update operators
-    PostfixIncrement,
-    PostfixDecrement,
-    PrefixIncrement,
-    PrefixDecrement,
 
     // unary operators
     Delete,
@@ -2241,17 +2293,6 @@ pub enum CompileCommand {
     // A special command used as a placeholder in a command list, which will be replaced actual
     // command later.  The final command list must not contain placeholder commands.
     PlaceHolder,
-}
-
-impl From<UpdateOperator> for CompileCommand {
-    fn from(value: UpdateOperator) -> Self {
-        match value {
-            UpdateOperator::PostfixIncrement => Self::PostfixIncrement,
-            UpdateOperator::PostfixDecrement => Self::PostfixDecrement,
-            UpdateOperator::PrefixIncrement => Self::PrefixIncrement,
-            UpdateOperator::PrefixDecrement => Self::PrefixDecrement,
-        }
-    }
 }
 
 impl From<UnaryOperator> for CompileCommand {
