@@ -45,7 +45,7 @@ impl<X> Runtime<X> {
             Symbol::UNDEFINED => Value::Undefined,
 
             // 19.3.23 Object()
-            Symbol::INTRINSIC_STRING => self.create_builtin_function(object::constructor::<X>, Value::Object(self.object_prototype)),
+            Symbol::INTRINSIC_OBJECT => self.create_builtin_function(object::constructor::<X>, Value::Object(self.object_prototype)),
 
             // 19.3.31 String()
             Symbol::INTRINSIC_STRING => self.create_builtin_function(string::constructor::<X>, Value::Object(self.string_prototype)),
