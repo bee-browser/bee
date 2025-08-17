@@ -2,6 +2,7 @@ mod compiler;
 mod support;
 
 use std::ffi::c_void;
+use std::marker::PhantomData;
 
 use cranelift::codegen;
 use cranelift::codegen::ir;
@@ -24,7 +25,6 @@ use crate::semantics::Function;
 use crate::types::Lambda;
 
 use super::CompileError;
-use super::RuntimeFunctions;
 
 use support::EditorSupport;
 use support::RuntimeFunctionCache;
@@ -108,15 +108,16 @@ impl<X> CompilerSupport for Runtime<X> {
     }
 }
 
-pub struct Executor {
+pub struct Executor<X> {
     module: Box<JITModule>,
     lambda_sig: ir::Signature,
     runtime_func_ids: RuntimeFunctionIds,
     id_map: FxHashMap<LambdaId, FuncId>,
+    _phantom: PhantomData<X>,
 }
 
-impl Executor {
-    pub fn new(runtime_functions: &RuntimeFunctions) -> Self {
+impl<X> Executor<X> {
+    pub fn new() -> Self {
         let mut flag_builder = codegen::settings::builder();
         flag_builder.set("use_colocated_libcalls", "false").unwrap();
         flag_builder.set("is_pic", "false").unwrap();
@@ -130,7 +131,7 @@ impl Executor {
             .unwrap();
 
         let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
-        support::register_symbols(&mut builder, runtime_functions);
+        support::register_symbols::<X>(&mut builder);
 
         let mut module = Box::new(JITModule::new(builder));
         let lambda_sig = support::make_lambda_signature(&mut module);
@@ -141,6 +142,7 @@ impl Executor {
             lambda_sig,
             runtime_func_ids,
             id_map: Default::default(),
+            _phantom: PhantomData,
         }
     }
 

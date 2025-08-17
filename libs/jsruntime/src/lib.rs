@@ -76,7 +76,7 @@ pub struct Runtime<X> {
     symbol_registry: SymbolRegistry,
     lambda_registry: LambdaRegistry,
     programs: Vec<Program>,
-    executor: Executor,
+    executor: Executor<X>,
     // TODO: GcArena
     allocator: bumpalo::Bump,
     job_runner: JobRunner,
@@ -94,7 +94,6 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let functions = backend::RuntimeFunctions::new::<X>();
         let global_object = Box::pin(Object::new(std::ptr::null_mut())); // TODO: [[Prototype]]
 
         let mut runtime = Self {
@@ -102,7 +101,7 @@ impl<X> Runtime<X> {
             symbol_registry: Default::default(),
             lambda_registry: LambdaRegistry::new(),
             programs: vec![],
-            executor: Executor::new(&functions),
+            executor: Executor::new(),
             allocator: bumpalo::Bump::new(),
             job_runner: JobRunner::new(),
             global_object,

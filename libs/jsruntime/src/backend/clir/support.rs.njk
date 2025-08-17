@@ -11,8 +11,11 @@ use cranelift_module::FuncId;
 use cranelift_module::Linkage;
 use cranelift_module::Module;
 
+{%- for func in data.functions %}
+use crate::backend::bridge::runtime_{{ func.name }};
+{%- endfor %}
+
 use super::compiler;
-use super::RuntimeFunctions;
 
 // TODO(perf): using libm causes the following error in the coverage test w/ llvm-cov:
 // "can't resolve symbol fmod"
@@ -26,11 +29,11 @@ extern "C" fn pow(a: f64, b: f64) -> f64 {
     a.powf(b)
 }
 
-pub fn register_symbols(builder: &mut JITBuilder, funcs: &RuntimeFunctions) {
+pub fn register_symbols<X>(builder: &mut JITBuilder) {
     builder.symbol("fmod", fmod as *const u8);
     builder.symbol("pow", pow as *const u8);
     {%- for func in data.functions %}
-    builder.symbol("runtime_{{ func.name }}", funcs.{{ func.name }} as *const u8);
+    builder.symbol("runtime_{{ func.name }}", runtime_{{ func.name }}::<X> as *const u8);
     {%- endfor %}
 }
 
@@ -51,7 +54,7 @@ pub fn make_lambda_signature(module: &mut impl Module) -> ir::Signature {
     let mut sig = module.make_signature();
     let addr_type = module.target_config().pointer_type();
 
-    // runtime: *mut c_void
+    // runtime: *mut Runtime<X>
     sig.params.push(ir::AbiParam::new(addr_type));
     // context: *mut c_void
     sig.params.push(ir::AbiParam::new(addr_type));
@@ -120,7 +123,7 @@ pub trait EditorSupport {
     {%- endfor %}
 }
 
-impl EditorSupport for compiler::Session<'_> {
+impl<X> EditorSupport for compiler::Session<'_, X> {
     fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef {
         self.executor.import_fmod(func)
     }
@@ -136,7 +139,7 @@ impl EditorSupport for compiler::Session<'_> {
     {%- endfor %}
 }
 
-impl EditorSupport for crate::backend::clir::Executor {
+impl<X> EditorSupport for crate::backend::clir::Executor<X> {
     fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef {
         self.module.declare_func_in_func(self.runtime_func_ids.fmod, func)
     }

@@ -37,7 +37,7 @@ async function main(args, options) {
   const runtimeSpec = yaml.parse(runtimeYaml);
 
   for (const func of runtimeSpec.functions) {
-    func.args = [{ name: 'runtime', type: 'VoidPtr' }].concat(func.args).map(({ name, type }) => {
+    func.args = [{ name: 'runtime', type: '&mut Runtime<X>' }].concat(func.args).map(({ name, type }) => {
       return {
         name,
         type,
@@ -76,7 +76,7 @@ function makeCraneliftIRType(type) {
     case '*mut Value':
     case '&PropertyKey':
     case 'Lambda':
-    case 'VoidPtr':
+    case '&mut Runtime<X>':
       return 'addr_type';
     case undefined:
       return '';

@@ -49,18 +49,18 @@ use super::RuntimeFunctionCache;
 use control_flow::ControlFlowStack;
 use editor::Editor;
 
-pub struct Session<'r> {
+pub struct Session<'r, X> {
     program: &'r Program,
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
-    pub executor: &'r mut Executor,
+    pub executor: &'r mut Executor<X>,
     scope_cleanup_checker_enabled: bool,
     global_object: *mut c_void,
     object_prototype: *mut c_void,
     function_prototype: *mut c_void,
 }
 
-impl CompilerSupport for Session<'_> {
+impl<X> CompilerSupport for Session<'_, X> {
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
         self.scope_cleanup_checker_enabled
     }
