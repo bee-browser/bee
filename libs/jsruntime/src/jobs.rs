@@ -6,8 +6,8 @@ use crate::Runtime;
 use crate::Value;
 use crate::logger;
 use crate::types::Coroutine;
-use crate::types::CoroutineStatus;
 use crate::types::Promise;
+use crate::types::Status;
 
 impl<X> Runtime<X> {
     /// Perform all jobs.
@@ -45,11 +45,36 @@ impl<X> Runtime<X> {
     pub fn process_promise(&mut self, promise: Promise, result: &Value, error: &Value) {
         logger::debug!(event = "process_promise", ?promise, ?result, ?error);
         let coroutine = self.job_runner.get_coroutine(promise);
-        match Coroutine::resume(self.as_void_ptr(), coroutine, promise, result, error) {
-            CoroutineStatus::Done(result) => self.job_runner.resolve_promise(promise, result),
-            CoroutineStatus::Error(error) => self.job_runner.reject_promise(promise, error),
-            CoroutineStatus::Suspend => (),
+        match self.resume(coroutine, promise, result, error) {
+            (Status::Normal, retv) => self.job_runner.resolve_promise(promise, retv),
+            (Status::Exception, retv) => self.job_runner.reject_promise(promise, retv),
+            (Status::Suspend, _) => (),
         }
+    }
+
+    fn resume(
+        &mut self,
+        coroutine: *mut Coroutine,
+        promise: Promise,
+        result: &Value,
+        error: &Value,
+    ) -> (Status, Value) {
+        logger::debug!(event = "resume", ?coroutine, ?promise, ?result, ?error);
+        let mut this = Value::Undefined;
+        let mut args = [promise.into(), result.clone(), error.clone()];
+        let mut retv = Value::None;
+        let status = unsafe {
+            let lambda = (*(*coroutine).closure).lambda;
+            lambda(
+                self.as_void_ptr(),
+                coroutine as *mut std::ffi::c_void,
+                &mut this as *mut Value,
+                args.len() as u16,
+                args.as_mut_ptr(),
+                &mut retv as *mut Value,
+            )
+        };
+        (status, retv)
     }
 
     pub fn emit_promise_resolved(&mut self, promise: Promise, result: Value) {

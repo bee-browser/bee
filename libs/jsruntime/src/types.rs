@@ -500,42 +500,6 @@ impl Coroutine {
     pub(crate) const NUM_LOCALS_OFFSET: usize = std::mem::offset_of!(Self, num_locals);
     pub(crate) const SCOPE_ID_OFFSET: usize = std::mem::offset_of!(Self, scope_id);
     pub(crate) const LOCALS_OFFSET: usize = std::mem::offset_of!(Self, locals);
-
-    pub fn resume(
-        runtime: *mut c_void,
-        coroutine: *mut Coroutine,
-        promise: Promise,
-        result: &Value,
-        error: &Value,
-    ) -> CoroutineStatus {
-        logger::debug!(event = "resume", ?coroutine, ?promise, ?result, ?error);
-        unsafe {
-            let lambda = (*(*coroutine).closure).lambda;
-            let mut this = Value::Undefined;
-            let mut args = [promise.into(), result.clone(), error.clone()];
-            let mut retv = Value::None;
-            let status = lambda(
-                runtime,
-                coroutine as *mut c_void,
-                &mut this as *mut Value,
-                args.len() as u16,
-                args.as_mut_ptr(),
-                &mut retv as *mut Value,
-            );
-            match status {
-                Status::Normal => CoroutineStatus::Done(retv),
-                Status::Exception => CoroutineStatus::Error(retv),
-                Status::Suspend => CoroutineStatus::Suspend,
-            }
-        }
-    }
-}
-
-/// The return value type of `Coroutine::resume()`.
-pub enum CoroutineStatus {
-    Done(Value),
-    Error(Value),
-    Suspend,
 }
 
 pub trait ReturnValue {
