@@ -81,8 +81,6 @@ pub struct Runtime<X> {
     allocator: bumpalo::Bump,
     job_runner: JobRunner,
     global_object: Pin<Box<Object>>,
-    monitor: Option<Box<dyn Monitor>>,
-    extension: X,
 
     // %Object.prototype%
     object_prototype: *mut c_void,
@@ -90,6 +88,9 @@ pub struct Runtime<X> {
     string_prototype: *mut c_void,
     // %Function.prototype%
     function_prototype: *mut c_void,
+
+    monitor: Option<Box<dyn Monitor>>,
+    extension: X,
 }
 
 impl<X> Runtime<X> {
@@ -105,11 +106,11 @@ impl<X> Runtime<X> {
             allocator: bumpalo::Bump::new(),
             job_runner: JobRunner::new(),
             global_object,
-            monitor: None,
-            extension,
             object_prototype: std::ptr::null_mut(),
             string_prototype: std::ptr::null_mut(),
             function_prototype: std::ptr::null_mut(),
+            monitor: None,
+            extension,
         };
 
         runtime.define_builtin_global_properties();
