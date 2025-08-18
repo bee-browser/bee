@@ -39,10 +39,9 @@ use crate::semantics::VariableRef;
 use crate::types::U16Chunk;
 use crate::types::Value;
 
+use super::CodeRegistry;
 use super::CompileError;
-use super::CompilerSupport;
 use super::EditorSupport;
-use super::Executor;
 use super::LambdaId;
 use super::RuntimeFunctionCache;
 
@@ -53,11 +52,37 @@ pub struct Session<'r, X> {
     program: &'r Program,
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
-    pub executor: &'r mut Executor<X>,
+    pub code_registry: &'r mut CodeRegistry<X>,
     scope_cleanup_checker_enabled: bool,
     global_object: *mut c_void,
     object_prototype: *mut c_void,
     function_prototype: *mut c_void,
+}
+
+trait CompilerSupport {
+    // RuntimePref
+    fn is_scope_cleanup_checker_enabled(&self) -> bool;
+
+    // SymbolRegistry
+    fn get_symbol_name(&self, symbol: Symbol) -> &[u16];
+    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol;
+
+    // LambdaRegistry
+    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
+    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
+
+    // Program
+    fn get_function(&self, lambda_id: LambdaId) -> &Function;
+
+    // CodeRegistry
+    fn target_config(&self) -> isa::TargetFrontendConfig;
+
+    // GlobalObject
+    fn global_object(&mut self) -> *mut c_void;
+
+    // Intrinsics
+    fn object_prototype(&self) -> *mut c_void;
+    fn function_prototype(&self) -> *mut c_void;
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
@@ -87,7 +112,7 @@ impl<X> CompilerSupport for Session<'_, X> {
     }
 
     fn target_config(&self) -> isa::TargetFrontendConfig {
-        self.executor.target_config()
+        self.code_registry.target_config()
     }
 
     fn global_object(&mut self) -> *mut c_void {
@@ -136,7 +161,7 @@ pub fn compile<X>(
                 program,
                 symbol_registry: &mut runtime.symbol_registry,
                 lambda_registry: &mut runtime.lambda_registry,
-                executor: &mut runtime.executor,
+                code_registry: &mut runtime.code_registry,
                 scope_cleanup_checker_enabled,
                 global_object,
                 object_prototype: runtime.object_prototype,
@@ -148,7 +173,7 @@ pub fn compile<X>(
             monitor.print_function_ir(func.id, &context.context.func);
         }
 
-        runtime.executor.codegen(func, &mut context.context);
+        runtime.code_registry.codegen(func, &mut context.context);
     }
 
     Ok(())
@@ -181,7 +206,7 @@ pub fn compile_function<X>(
             program,
             symbol_registry: &mut runtime.symbol_registry,
             lambda_registry: &mut runtime.lambda_registry,
-            executor: &mut runtime.executor,
+            code_registry: &mut runtime.code_registry,
             scope_cleanup_checker_enabled,
             global_object,
             object_prototype: runtime.object_prototype,
@@ -194,7 +219,7 @@ pub fn compile_function<X>(
         monitor.print_function_ir(func.id, &context.context.func);
     }
 
-    runtime.executor.codegen(func, &mut context.context);
+    runtime.code_registry.codegen(func, &mut context.context);
 
     Ok(())
 }

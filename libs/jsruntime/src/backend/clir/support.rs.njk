@@ -125,21 +125,21 @@ pub trait EditorSupport {
 
 impl<X> EditorSupport for compiler::Session<'_, X> {
     fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.executor.import_fmod(func)
+        self.code_registry.import_fmod(func)
     }
 
     fn import_pow(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.executor.import_pow(func)
+        self.code_registry.import_pow(func)
     }
     {%- for func in data.functions %}
 
     fn import_runtime_{{ func.name }}(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.executor.import_runtime_{{ func.name }}(func)
+        self.code_registry.import_runtime_{{ func.name }}(func)
     }
     {%- endfor %}
 }
 
-impl<X> EditorSupport for crate::backend::clir::Executor<X> {
+impl<X> EditorSupport for crate::backend::clir::CodeRegistry<X> {
     fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef {
         self.module.declare_func_in_func(self.runtime_func_ids.fmod, func)
     }

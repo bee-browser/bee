@@ -80,7 +80,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     let closure = unsafe { into_closure_mut!(context) };
 
     let lambda_id = closure.lambda_id;
-    let lambda = if let Some(lambda) = runtime.executor.get_lambda(lambda_id) {
+    let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
         lambda
     } else {
         let lambda_info = runtime.lambda_registry.get(lambda_id);
@@ -88,7 +88,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
         let program_id = lambda_info.program_id;
         let function_index = lambda_info.function_index as usize;
         super::compile_function(runtime, program_id, function_index, true).unwrap();
-        runtime.executor.get_lambda(lambda_id).unwrap()
+        runtime.code_registry.get_lambda(lambda_id).unwrap()
     };
 
     debug_assert_eq!(
@@ -114,7 +114,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     let closure = unsafe { into_closure_mut!(context) };
 
     let lambda_id = closure.lambda_id;
-    let lambda = if let Some(lambda) = runtime.executor.get_lambda(lambda_id) {
+    let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
         lambda
     } else {
         let lambda_info = runtime.lambda_registry.get(lambda_id);
@@ -132,7 +132,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
         super::compile_function(runtime, program_id, function_index, true).unwrap();
 
         // Get the lambda function compiled from the ramp function.
-        runtime.executor.get_lambda(lambda_id).unwrap()
+        runtime.code_registry.get_lambda(lambda_id).unwrap()
     };
 
     debug_assert_eq!(
@@ -162,7 +162,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
 
     let lambda_id = closure.lambda_id;
     // The coroutine lambda has already been compiled in `runtime_lazy_compile_ramp()`.
-    let lambda = runtime.executor.get_lambda(lambda_id).unwrap();
+    let lambda = runtime.code_registry.get_lambda(lambda_id).unwrap();
 
     debug_assert_eq!(
         closure.lambda as usize,

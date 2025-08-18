@@ -13,7 +13,7 @@ use std::pin::Pin;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
-use backend::Executor;
+use backend::CodeRegistry;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
@@ -75,8 +75,8 @@ pub struct Runtime<X> {
     pref: RuntimePref,
     symbol_registry: SymbolRegistry,
     lambda_registry: LambdaRegistry,
+    code_registry: CodeRegistry<X>,
     programs: Vec<Program>,
-    executor: Executor<X>,
     // TODO: GcArena
     allocator: bumpalo::Bump,
     job_runner: JobRunner,
@@ -100,8 +100,8 @@ impl<X> Runtime<X> {
             pref: Default::default(),
             symbol_registry: Default::default(),
             lambda_registry: LambdaRegistry::new(),
+            code_registry: CodeRegistry::new(),
             programs: vec![],
-            executor: Executor::new(),
             allocator: bumpalo::Bump::new(),
             job_runner: JobRunner::new(),
             global_object,
@@ -115,6 +115,10 @@ impl<X> Runtime<X> {
         runtime.define_builtin_global_properties();
 
         runtime
+    }
+
+    fn is_scope_cleanup_checker_enabled(&self) -> bool {
+        self.pref.enable_scope_cleanup_checker
     }
 
     pub fn extension(&self) -> &X {
@@ -165,7 +169,7 @@ impl<X> Runtime<X> {
     pub fn evaluate(&mut self, program_id: ProgramId) -> Result<Value, Value> {
         logger::debug!(event = "evaluate", ?program_id);
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
-        let lambda = self.executor.get_lambda(lambda_id).unwrap();
+        let lambda = self.code_registry.get_lambda(lambda_id).unwrap();
         let module = self.programs[program_id.index()].module;
         self.call_entry_lambda(lambda, module)
     }
@@ -176,7 +180,7 @@ impl<X> Runtime<X> {
     pub fn run(&mut self, program_id: ProgramId, optimize: bool) -> Result<Value, Value> {
         logger::debug!(event = "run", ?program_id);
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
-        let lambda = if let Some(lambda) = self.executor.get_lambda(lambda_id) {
+        let lambda = if let Some(lambda) = self.code_registry.get_lambda(lambda_id) {
             lambda
         } else {
             // TODO: compile only top-level statements in the program.
@@ -191,7 +195,7 @@ impl<X> Runtime<X> {
             }
             // TODO(fix): handle compilation errors
             backend::compile_function(self, program_id, function_index, optimize).unwrap();
-            self.executor.get_lambda(lambda_id).unwrap()
+            self.code_registry.get_lambda(lambda_id).unwrap()
         };
         let module = self.programs[program_id.index()].module;
         let value = self.call_entry_lambda(lambda, module)?;
