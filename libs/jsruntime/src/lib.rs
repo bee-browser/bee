@@ -147,7 +147,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let object = self.create_object(std::ptr::null_mut()); // TODO
+        let object = self.create_object(self.function_prototype);
         object.set_closure(closure);
         let value = Value::Function(object.as_ptr());
         // TODO: add `flags` to the arguments.
