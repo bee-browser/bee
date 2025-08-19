@@ -23,6 +23,10 @@ macro_rules! into_runtime {
         debug_assert!(!$runtime.is_null());
         &mut *$runtime
     }};
+    ($runtime:expr, $extension:ident) => {{
+        debug_assert!(!$runtime.is_null());
+        &mut *($runtime as *mut Runtime<$extension>)
+    }};
 }
 
 macro_rules! into_closure_mut {
@@ -67,7 +71,7 @@ macro_rules! into_capture {
 // lazy compilation
 
 pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
-    runtime: *mut Runtime<X>,
+    runtime: *mut c_void,
     context: *mut c_void,
     this: *mut Value,
     argc: u16,
@@ -76,7 +80,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_normal", ?context);
 
-    let runtime = unsafe { into_runtime!(runtime) };
+    let runtime = unsafe { into_runtime!(runtime, X) };
     let closure = unsafe { into_closure_mut!(context) };
 
     let lambda_id = closure.lambda_id;
@@ -92,16 +96,16 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     };
 
     debug_assert_eq!(
-        closure.lambda as usize,
-        runtime_lazy_compile_normal::<X> as usize
+        closure.lambda,
+        (runtime_lazy_compile_normal::<X> as usize).into()
     );
-    closure.lambda = lambda;
+    closure.lambda = lambda.into();
 
     unsafe { lambda(runtime.as_void_ptr(), context, this, argc, argv, retv) }
 }
 
 pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
-    runtime: *mut Runtime<X>,
+    runtime: *mut c_void,
     context: *mut c_void,
     this: *mut Value,
     argc: u16,
@@ -110,7 +114,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_ramp", ?context);
 
-    let runtime = unsafe { into_runtime!(runtime) };
+    let runtime = unsafe { into_runtime!(runtime, X) };
     let closure = unsafe { into_closure_mut!(context) };
 
     let lambda_id = closure.lambda_id;
@@ -136,16 +140,16 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     };
 
     debug_assert_eq!(
-        closure.lambda as usize,
-        runtime_lazy_compile_ramp::<X> as usize
+        closure.lambda,
+        (runtime_lazy_compile_ramp::<X> as usize).into()
     );
-    closure.lambda = lambda;
+    closure.lambda = lambda.into();
 
     unsafe { lambda(runtime.as_void_ptr(), context, this, argc, argv, retv) }
 }
 
 pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
-    runtime: *mut Runtime<X>,
+    runtime: *mut c_void,
     context: *mut c_void,
     this: *mut Value,
     argc: u16,
@@ -154,7 +158,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine", ?context);
 
-    let runtime = unsafe { into_runtime!(runtime) };
+    let runtime = unsafe { into_runtime!(runtime, X) };
     let coroutine = unsafe { into_coroutine_mut!(context) };
 
     debug_assert_ne!(coroutine.closure, std::ptr::null_mut());
@@ -165,10 +169,10 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
     let lambda = runtime.code_registry.get_lambda(lambda_id).unwrap();
 
     debug_assert_eq!(
-        closure.lambda as usize,
-        runtime_lazy_compile_coroutine::<X> as usize
+        closure.lambda,
+        (runtime_lazy_compile_coroutine::<X> as usize).into()
     );
-    closure.lambda = lambda;
+    closure.lambda = lambda.into();
 
     unsafe { lambda(runtime.as_void_ptr(), context, this, argc, argv, retv) }
 }
@@ -511,7 +515,7 @@ impl<X> Runtime<X> {
         let ptr = allocator.alloc_layout(layout);
 
         let closure = unsafe { ptr.cast::<Closure>().as_mut() };
-        closure.lambda = lambda;
+        closure.lambda = lambda.into();
         closure.lambda_id = lambda_id;
         closure.num_captures = num_captures;
         // `closure.captures[]` will be filled with actual pointers to `Captures`.

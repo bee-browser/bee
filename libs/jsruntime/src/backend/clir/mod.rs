@@ -73,7 +73,11 @@ impl<X> CodeRegistry<X> {
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
         let func_id = *self.id_map.get(&lambda_id)?;
         let addr = self.module.get_finalized_function(func_id);
-        (!addr.is_null()).then(|| unsafe { std::mem::transmute::<_, Lambda>(addr) })
+        (!addr.is_null()).then(|| {
+            // SAFETY: `addr` is the address of the lambda function identified by `lambda_id` and
+            // always convertible to `Lambda`.
+            unsafe { std::mem::transmute(addr) }
+        })
     }
 
     fn target_config(&self) -> isa::TargetFrontendConfig {

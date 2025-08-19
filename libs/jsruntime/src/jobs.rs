@@ -6,6 +6,7 @@ use crate::Runtime;
 use crate::Value;
 use crate::logger;
 use crate::types::Coroutine;
+use crate::types::Lambda;
 use crate::types::Promise;
 use crate::types::Status;
 
@@ -64,7 +65,7 @@ impl<X> Runtime<X> {
         let mut args = [promise.into(), result.clone(), error.clone()];
         let mut retv = Value::None;
         let status = unsafe {
-            let lambda = (*(*coroutine).closure).lambda;
+            let lambda = Lambda::from((*(*coroutine).closure).lambda);
             lambda(
                 self.as_void_ptr(),
                 coroutine as *mut std::ffi::c_void,

@@ -371,11 +371,11 @@ pub enum U16ChunkKind {
 // TODO(issue#237): GcCell
 #[repr(C)]
 pub struct Closure {
-    /// A pointer to a lambda function compiled from a JavaScript function definition.
+    /// An address of a lambda function compiled from a JavaScript function definition.
     ///
     /// This filed is initially set to a runtime function that will perform the lazy compilation of
     /// the JavaScript function and set the actual lambda function to this field.
-    pub lambda: Lambda,
+    pub lambda: LambdaAddr,
 
     /// The ID of `lambda`.
     pub lambda_id: LambdaId,
@@ -558,6 +558,14 @@ pub type Lambda = unsafe extern "C" fn(
     retv: *mut Value,
 ) -> Status;
 
+impl From<LambdaAddr> for Lambda {
+    fn from(value: LambdaAddr) -> Self {
+        // SAFETY: `LambdaAddr` contains only an address of a lambda function and it is always
+        // convertible to `Lambda`.
+        unsafe { std::mem::transmute(value.0) }
+    }
+}
+
 // See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 
 // This function generates a wrapper function for each `host_fn` at compile time.
@@ -604,6 +612,30 @@ pub enum Status {
 }
 
 static_assertions::const_assert_eq!(size_of::<Status>(), 4);
+
+/// Address of a lambda function.
+#[derive(Clone, Copy, Eq, PartialEq)]
+#[repr(C)]
+pub struct LambdaAddr(usize);
+
+impl From<usize> for LambdaAddr {
+    fn from(value: usize) -> Self {
+        debug_assert_ne!(value, 0);
+        Self(value)
+    }
+}
+
+impl From<Lambda> for LambdaAddr {
+    fn from(value: Lambda) -> Self {
+        Self(value as usize)
+    }
+}
+
+impl std::fmt::Debug for LambdaAddr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self.0 as *const ())
+    }
+}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
