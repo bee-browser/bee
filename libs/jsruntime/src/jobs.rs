@@ -67,7 +67,7 @@ impl<X> Runtime<X> {
         let status = unsafe {
             let lambda = Lambda::from((*(*coroutine).closure).lambda);
             lambda(
-                self.as_void_ptr(),
+                self,
                 coroutine as *mut std::ffi::c_void,
                 &mut this as *mut Value,
                 args.len() as u16,

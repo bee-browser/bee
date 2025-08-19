@@ -6,14 +6,13 @@ use crate::types::Status;
 use crate::types::Value;
 
 pub unsafe extern "C" fn constructor<X>(
-    runtime: *mut c_void,
+    runtime: &mut Runtime<X>,
     _context: *mut c_void,
     this: *mut Value,
     argc: u16,
     argv: *mut Value,
     retv: *mut Value,
 ) -> Status {
-    let runtime = unsafe { &mut *(runtime as *mut Runtime<X>) };
     let this = unsafe { &mut *this };
     let args = if argc == 0 {
         &[]

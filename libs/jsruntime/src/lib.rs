@@ -225,7 +225,7 @@ impl<X> Runtime<X> {
     }
 
     /// Calls an entry lambda function.
-    fn call_entry_lambda(&mut self, lambda: Lambda, module: bool) -> Result<Value, Value> {
+    fn call_entry_lambda(&mut self, lambda: Lambda<X>, module: bool) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda, module);
         // Specify the global object in the `this` parameter.
         // See also `semantics::Analyzer::start()`.
@@ -236,7 +236,7 @@ impl<X> Runtime<X> {
         let status = unsafe {
             lambda(
                 // runtime
-                self.as_void_ptr(),
+                self,
                 // context
                 std::ptr::null_mut(),
                 // this
@@ -250,10 +250,6 @@ impl<X> Runtime<X> {
             )
         };
         retv.into_result(status)
-    }
-
-    fn as_void_ptr(&mut self) -> *mut c_void {
-        self as *mut Self as *mut c_void
     }
 
     fn allocator(&self) -> &bumpalo::Bump {

@@ -549,8 +549,8 @@ where
 /// * Regular functions: Closure*
 /// * Coroutine functions: Coroutine*
 ///
-pub type Lambda = unsafe extern "C" fn(
-    runtime: *mut c_void,
+pub type Lambda<X> = unsafe extern "C" fn(
+    runtime: &mut Runtime<X>,
     context: *mut c_void,
     this: *mut Value,
     argc: u16,
@@ -558,7 +558,7 @@ pub type Lambda = unsafe extern "C" fn(
     retv: *mut Value,
 ) -> Status;
 
-impl From<LambdaAddr> for Lambda {
+impl<X> From<LambdaAddr> for Lambda<X> {
     fn from(value: LambdaAddr) -> Self {
         // SAFETY: `LambdaAddr` contains only an address of a lambda function and it is always
         // convertible to `Lambda`.
@@ -569,7 +569,7 @@ impl From<LambdaAddr> for Lambda {
 // See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 
 // This function generates a wrapper function for each `host_fn` at compile time.
-pub fn into_lambda<F, R, X>(host_fn: F) -> Lambda
+pub fn into_lambda<F, R, X>(host_fn: F) -> Lambda<X>
 where
     F: Fn(&mut Runtime<X>, &[Value]) -> R + 'static,
     R: Clone + ReturnValue,
@@ -580,7 +580,7 @@ where
 }
 
 unsafe extern "C" fn host_fn_wrapper<F, R, X>(
-    runtime: *mut c_void,
+    runtime: &mut Runtime<X>,
     _context: *mut c_void,
     _this: *mut Value,
     argc: u16,
@@ -593,7 +593,6 @@ where
 {
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = unsafe { std::mem::MaybeUninit::<F>::uninit().assume_init() };
-    let runtime = unsafe { &mut *(runtime as *mut Runtime<X>) };
     let args = unsafe { std::slice::from_raw_parts(argv as *const Value, argc as usize) };
     // TODO: The return value is copied twice.  That's inefficient.
     let result = host_fn(runtime, args);
@@ -625,8 +624,8 @@ impl From<usize> for LambdaAddr {
     }
 }
 
-impl From<Lambda> for LambdaAddr {
-    fn from(value: Lambda) -> Self {
+impl<X> From<Lambda<X>> for LambdaAddr {
+    fn from(value: Lambda<X>) -> Self {
         Self(value as usize)
     }
 }

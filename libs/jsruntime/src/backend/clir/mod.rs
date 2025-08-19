@@ -70,7 +70,7 @@ impl<X> CodeRegistry<X> {
         }
     }
 
-    pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda> {
+    pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda<X>> {
         let func_id = *self.id_map.get(&lambda_id)?;
         let addr = self.module.get_finalized_function(func_id);
         (!addr.is_null()).then(|| {
