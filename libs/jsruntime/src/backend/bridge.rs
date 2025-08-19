@@ -38,6 +38,13 @@ macro_rules! into_string {
     };
 }
 
+macro_rules! into_object {
+    ($value:expr) => {{
+        debug_assert!(!$value.is_null());
+        &mut *($value as *mut crate::objects::Object)
+    }};
+}
+
 macro_rules! into_value {
     ($value:expr) => {{
         debug_assert!(!$value.is_null());
@@ -596,7 +603,7 @@ pub(crate) unsafe extern "C" fn runtime_create_object<X>(
 }
 
 pub(crate) unsafe extern "C" fn runtime_get_value_by_symbol<X>(
-    runtime: &mut Runtime<X>,
+    _runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: u32,
     strict: bool,
@@ -605,18 +612,12 @@ pub(crate) unsafe extern "C" fn runtime_get_value_by_symbol<X>(
     static UNDEFINED: (u8, u64) = (1, 0);
     static_assert_size_eq!((u8, u64), Value);
 
-    // `object` may be null.
-    let object = unsafe { object.cast::<Object>().as_ref() };
+    let object = unsafe { into_object!(object) };
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
 
-    let result = match object {
-        Some(object) => object.get_value(&key),
-        None => runtime.global_object().get_value(&key),
-    };
-
-    match result {
+    match object.get_value(&key) {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
         None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
@@ -624,7 +625,7 @@ pub(crate) unsafe extern "C" fn runtime_get_value_by_symbol<X>(
 }
 
 pub(crate) unsafe extern "C" fn runtime_get_value_by_number<X>(
-    runtime: &mut Runtime<X>,
+    _runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: f64,
     strict: bool,
@@ -633,18 +634,12 @@ pub(crate) unsafe extern "C" fn runtime_get_value_by_number<X>(
     static UNDEFINED: (u8, u64) = (1, 0);
     static_assert_size_eq!((u8, u64), Value);
 
-    // `object` may be null.
-    let object = unsafe { object.cast::<Object>().as_ref() };
+    let object = unsafe { into_object!(object) };
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
 
-    let result = match object {
-        Some(object) => object.get_value(&key),
-        None => runtime.global_object().get_value(&key),
-    };
-
-    match result {
+    match object.get_value(&key) {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
         None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
@@ -661,18 +656,12 @@ pub(crate) unsafe extern "C" fn runtime_get_value_by_value<X>(
     static UNDEFINED: (u8, u64) = (1, 0);
     static_assert_size_eq!((u8, u64), Value);
 
-    // `object` may be null.
-    let object = unsafe { object.cast::<Object>().as_ref() };
+    let object = unsafe { into_object!(object) };
 
     let key = unsafe { into_value!(key) };
     let key = runtime.make_property_key(key);
 
-    let result = match object {
-        Some(object) => object.get_value(&key),
-        None => runtime.global_object().get_value(&key),
-    };
-
-    match result {
+    match object.get_value(&key) {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
         None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
@@ -680,13 +669,12 @@ pub(crate) unsafe extern "C" fn runtime_get_value_by_value<X>(
 }
 
 pub(crate) unsafe extern "C" fn runtime_set_value_by_symbol<X>(
-    runtime: &mut Runtime<X>,
+    _runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: u32,
     value: *const Value,
 ) {
-    // `object` may be null.
-    let object = unsafe { object.cast::<Object>().as_mut() };
+    let object = unsafe { into_object!(object) };
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
@@ -694,20 +682,16 @@ pub(crate) unsafe extern "C" fn runtime_set_value_by_symbol<X>(
     debug_assert_ne!(value, std::ptr::null());
     let value = unsafe { into_value!(value) };
 
-    match object {
-        Some(object) => object.set_value(&key, value),
-        None => runtime.global_object_mut().set_value(&key, value),
-    }
+    object.set_value(&key, value)
 }
 
 pub(crate) unsafe extern "C" fn runtime_set_value_by_number<X>(
-    runtime: &mut Runtime<X>,
+    _runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: f64,
     value: *const Value,
 ) {
-    // `object` may be null.
-    let object = unsafe { object.cast::<Object>().as_mut() };
+    let object = unsafe { into_object!(object) };
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
@@ -715,10 +699,7 @@ pub(crate) unsafe extern "C" fn runtime_set_value_by_number<X>(
     debug_assert_ne!(value, std::ptr::null());
     let value = unsafe { into_value!(value) };
 
-    match object {
-        Some(object) => object.set_value(&key, value),
-        None => runtime.global_object_mut().set_value(&key, value),
-    }
+    object.set_value(&key, value)
 }
 
 pub(crate) unsafe extern "C" fn runtime_set_value_by_value<X>(
@@ -727,8 +708,7 @@ pub(crate) unsafe extern "C" fn runtime_set_value_by_value<X>(
     key: *const Value,
     value: *const Value,
 ) {
-    // `object` may be null.
-    let object = unsafe { object.cast::<Object>().as_mut() };
+    let object = unsafe { into_object!(object) };
 
     debug_assert_ne!(key, std::ptr::null());
     let key = unsafe { into_value!(key) };
@@ -737,10 +717,7 @@ pub(crate) unsafe extern "C" fn runtime_set_value_by_value<X>(
     debug_assert_ne!(value, std::ptr::null());
     let value = unsafe { into_value!(value) };
 
-    match object {
-        Some(object) => object.set_value(&key, value),
-        None => runtime.global_object_mut().set_value(&key, value),
-    }
+    object.set_value(&key, value)
 }
 
 pub(crate) unsafe extern "C" fn runtime_concat_strings<X>(

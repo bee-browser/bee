@@ -964,7 +964,8 @@ where
                 self.editor.put_store_function_to_any(func_ir, local);
             }
             Locator::Global => {
-                let object = ObjectIr(self.editor.put_nullptr());
+                let global_object = self.support.global_object();
+                let object = self.editor.put_object(global_object);
                 let value = self.editor.put_alloc_any();
                 self.editor.put_store_function_to_any(func_ir, value);
                 self.editor
@@ -2045,7 +2046,8 @@ where
 
         match self.operand_stack.pop().unwrap() {
             Operand::VariableReference(symbol, Locator::Global) => {
-                let object = ObjectIr(self.editor.put_nullptr());
+                let global_object = self.support.global_object();
+                let object = self.editor.put_object(global_object);
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
                 // TODO(feat): ReferenceError, TypeError
@@ -3598,7 +3600,8 @@ where
     // TODO(perf): return the value directly if it's a read-only global property.
     fn emit_get_global_variable(&mut self, key: Symbol) -> AnyIr {
         logger::debug!(event = "emit_get_global_variable", ?key);
-        let object = ObjectIr(self.editor.put_nullptr());
+        let global_object = self.support.global_object();
+        let object = self.editor.put_object(global_object);
 
         // TODO: strict mode
         let value = self

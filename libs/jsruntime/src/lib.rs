@@ -257,14 +257,6 @@ impl<X> Runtime<X> {
         &self.allocator
     }
 
-    fn global_object(&self) -> &Object {
-        &self.global_object
-    }
-
-    fn global_object_mut(&mut self) -> &mut Object {
-        &mut self.global_object
-    }
-
     pub fn ensure_value_on_heap(&mut self, value: &Value) -> Value {
         match value {
             Value::String(string) if string.on_stack() => {
