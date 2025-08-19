@@ -596,9 +596,16 @@ where
     F: Fn(&mut Runtime<X>, &[Value]) -> R + 'static,
     R: Clone + ReturnValue,
 {
+    // SAFETY: Parent ensured that F is zero sized and we use `ManuallyDrop` to ensure
+    // it isn't dropped (even if the callback panics).
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = unsafe { std::mem::MaybeUninit::<F>::uninit().assume_init() };
-    let args = unsafe { std::slice::from_raw_parts(argv as *const Value, argc as usize) };
+    // SAFETY: `argv` is always non-null and a valid pointer to an array of `Value`s.
+    let args = unsafe {
+        debug_assert!(!argv.is_null());
+        debug_assert!(argv.is_aligned());
+        std::slice::from_raw_parts(argv as *const Value, argc as usize)
+    };
     // TODO: The return value is copied twice.  That's inefficient.
     let result = host_fn(runtime, args);
     *retv = result.value();

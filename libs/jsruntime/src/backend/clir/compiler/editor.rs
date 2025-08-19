@@ -159,6 +159,39 @@ impl<'a> Editor<'a> {
         self.builder.block_params(self.entry_block)[index]
     }
 
+    pub fn put_assert_lambda_params(&mut self, support: &mut impl EditorSupport) {
+        self.put_assert_runtime_is_non_null(support);
+        self.put_assert_argv_is_non_null(support);
+        self.put_assert_retv_is_non_null(support);
+    }
+
+    fn put_assert_runtime_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            use ir::condcodes::IntCC::NotEqual;
+            let runtime = self.runtime();
+            let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, runtime, 0));
+            self.put_runtime_assert(support, is_non_null, c"runtime must be non-null");
+        }}
+    }
+
+    fn put_assert_argv_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            use ir::condcodes::IntCC::NotEqual;
+            let argv = self.argv();
+            let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, argv.0, 0));
+            self.put_runtime_assert(support, is_non_null, c"argv must be non-null");
+        }}
+    }
+
+    fn put_assert_retv_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            use ir::condcodes::IntCC::NotEqual;
+            let retv = self.retv();
+            let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, retv.0, 0));
+            self.put_runtime_assert(support, is_non_null, c"retv must be non-null");
+        }}
+    }
+
     // arguments
 
     pub fn put_get_argument(&mut self, support: &mut impl EditorSupport, index: u16) -> AnyIr {
@@ -743,9 +776,7 @@ impl<'a> Editor<'a> {
     pub fn put_alloc_argv(&mut self, argc: u16) -> ArgvIr {
         logger::debug!(event = "put_alloc_argv", argc);
 
-        if argc == 0 {
-            return ArgvIr(self.put_nullptr());
-        }
+        // The `argv` argument of a lambda function must be non-null even when `argc` is 0.
 
         let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,

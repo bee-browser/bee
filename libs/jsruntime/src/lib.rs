@@ -232,6 +232,7 @@ impl<X> Runtime<X> {
         //
         // TODO: immutable
         let mut this = Value::Undefined;
+        let mut args = [];
         let mut retv = Value::Undefined;
         let status = unsafe {
             lambda(
@@ -242,9 +243,9 @@ impl<X> Runtime<X> {
                 // this
                 &mut this,
                 // argc
-                0,
+                args.len() as u16,
                 // argv
-                std::ptr::null_mut(),
+                args.as_mut_ptr(),
                 // retv
                 &mut retv,
             )
