@@ -375,6 +375,11 @@ pub struct Closure {
     ///
     /// This filed is initially set to a runtime function that will perform the lazy compilation of
     /// the JavaScript function and set the actual lambda function to this field.
+    //
+    // NOTE: Using Lambda<X> instead of LambdaAddr causes some problems.  For example, functions
+    // such as `std::mem::offset_of!()` and `std::mem::align_of()` does not work with generic
+    // types such as Closure<X> even though the size of Lambda<X> is always equal to the size of
+    // usize regardless of the actual type of X.
     pub lambda: LambdaAddr,
 
     /// The ID of `lambda`.
