@@ -10,7 +10,7 @@ pub unsafe extern "C" fn constructor<X>(
     this: *mut Value,
     argc: u16,
     argv: *mut Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     let this = unsafe { &mut *this };
     let args = if argc == 0 {
@@ -18,7 +18,6 @@ pub unsafe extern "C" fn constructor<X>(
     } else {
         unsafe { std::slice::from_raw_parts(argv as *const Value, argc as usize) }
     };
-    let retv = unsafe { &mut *retv };
     match runtime.object_constructor(this, args) {
         Ok(value) => {
             *retv = value;

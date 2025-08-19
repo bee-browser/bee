@@ -45,12 +45,6 @@ macro_rules! into_value {
     }};
 }
 
-macro_rules! into_value_mut {
-    ($value:expr) => {
-        &mut *($value)
-    };
-}
-
 macro_rules! into_capture {
     ($capture:expr) => {
         &*($capture)
@@ -65,7 +59,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     this: *mut Value,
     argc: u16,
     argv: *mut Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_normal", ?context);
 
@@ -98,7 +92,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     this: *mut Value,
     argc: u16,
     argv: *mut Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_ramp", ?context);
 
@@ -141,7 +135,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
     this: *mut Value,
     argc: u16,
     argv: *mut Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine", ?context);
 
@@ -782,7 +776,7 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_symbol<X>(
     object: *mut c_void,
     key: u32,
     value: *const Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
 
@@ -794,9 +788,6 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_symbol<X>(
 
     debug_assert_ne!(value, std::ptr::null());
     let value = unsafe { into_value!(value) };
-
-    debug_assert_ne!(retv, std::ptr::null_mut());
-    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
@@ -816,7 +807,7 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_number<X>(
     object: *mut c_void,
     key: f64,
     value: *const Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
 
@@ -827,7 +818,6 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_number<X>(
     let key = PropertyKey::from(key);
 
     let value = unsafe { into_value!(value) };
-    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
@@ -847,7 +837,7 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_value<X>(
     object: *mut c_void,
     key: *const Value,
     value: *const Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
 
@@ -856,7 +846,6 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_value<X>(
 
     let key = unsafe { runtime.make_property_key(into_value!(key)) };
     let value = unsafe { into_value!(value) };
-    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
@@ -875,12 +864,11 @@ pub(crate) unsafe extern "C" fn runtime_copy_data_properties<X>(
     runtime: &mut Runtime<X>,
     target: *mut c_void,
     source: *const Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
     let target = unsafe { target.cast::<Object>().as_mut().unwrap() };
     let source = unsafe { into_value!(source) };
-    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.copy_data_properties(target, source) {
         Ok(()) => {
@@ -898,7 +886,7 @@ pub(crate) unsafe extern "C" fn runtime_push_value<X>(
     runtime: &mut Runtime<X>,
     target: *mut c_void,
     value: *const Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
 
@@ -906,7 +894,6 @@ pub(crate) unsafe extern "C" fn runtime_push_value<X>(
     let target = unsafe { target.cast::<Object>().as_mut().unwrap() };
 
     let value = unsafe { into_value!(value) };
-    let retv = unsafe { into_value_mut!(retv) };
 
     match runtime.push_value(target, value) {
         Ok(()) => {

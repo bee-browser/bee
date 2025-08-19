@@ -72,7 +72,7 @@ impl<X> Runtime<X> {
                 &mut this as *mut Value,
                 args.len() as u16,
                 args.as_mut_ptr(),
-                &mut retv as *mut Value,
+                &mut retv,
             )
         };
         (status, retv)

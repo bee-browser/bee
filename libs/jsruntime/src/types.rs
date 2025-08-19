@@ -560,7 +560,7 @@ pub type Lambda<X> = unsafe extern "C" fn(
     this: *mut Value,
     argc: u16,
     argv: *mut Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status;
 
 impl<X> From<LambdaAddr> for Lambda<X> {
@@ -590,7 +590,7 @@ unsafe extern "C" fn host_fn_wrapper<F, R, X>(
     _this: *mut Value,
     argc: u16,
     argv: *mut Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status
 where
     F: Fn(&mut Runtime<X>, &[Value]) -> R + 'static,
@@ -601,7 +601,6 @@ where
     let args = unsafe { std::slice::from_raw_parts(argv as *const Value, argc as usize) };
     // TODO: The return value is copied twice.  That's inefficient.
     let result = host_fn(runtime, args);
-    let retv = unsafe { &mut *retv };
     *retv = result.value();
     result.status()
 }
