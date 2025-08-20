@@ -1,13 +1,11 @@
 use std::ffi::c_void;
 
-use base::static_assert_size_eq;
 use base::utf16;
 
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaKind;
 use crate::logger;
-use crate::objects::Object;
 use crate::objects::PropertyKey;
 use crate::types::Capture;
 use crate::types::Closure;
@@ -42,27 +40,33 @@ macro_rules! into_coroutine_mut {
 
 macro_rules! into_string {
     ($value:expr) => {
-        &*($value)
+        // SAFETY: `value` is always a non-null pointer to a `U16String`.
+        unsafe {
+            debug_assert!(!$value.is_null());
+            debug_assert!($value.is_aligned());
+            &*($value)
+        }
     };
 }
 
 macro_rules! into_object {
-    ($value:expr) => {{
-        debug_assert!(!$value.is_null());
-        &mut *($value as *mut crate::objects::Object)
-    }};
-}
-
-macro_rules! into_value {
-    ($value:expr) => {{
-        debug_assert!(!$value.is_null());
-        &*($value)
-    }};
+    ($value:expr) => {
+        // SAFETY: `value` is always a non-null pointer to an `Object`.
+        unsafe {
+            debug_assert!(!$value.is_null());
+            &mut *($value as *mut crate::objects::Object)
+        }
+    };
 }
 
 macro_rules! into_capture {
     ($capture:expr) => {
-        &*($capture)
+        // SAFETY: `capture` is always a non-null pointer to a `Capture`.
+        unsafe {
+            debug_assert!(!$capture.is_null());
+            debug_assert!($capture.is_aligned());
+            &*($capture)
+        }
     };
 }
 
@@ -177,12 +181,8 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
 }
 
 // 7.1.2 ToBoolean ( argument )
-pub(crate) unsafe extern "C" fn runtime_to_boolean<X>(
-    _runtime: &mut Runtime<X>,
-    value: *const Value,
-) -> bool {
+pub(crate) extern "C" fn runtime_to_boolean<X>(_runtime: &mut Runtime<X>, value: &Value) -> bool {
     logger::debug!(event = "runtime_to_boolean", ?value);
-    let value = unsafe { into_value!(value) };
     match value {
         Value::None => unreachable!("Value::None"),
         Value::Undefined => false,
@@ -201,12 +201,8 @@ pub(crate) unsafe extern "C" fn runtime_to_boolean<X>(
 
 // 7.1.3 ToNumeric ( value )
 // 7.1.4 ToNumber ( argument )
-pub(crate) unsafe extern "C" fn runtime_to_numeric<X>(
-    _runtime: &mut Runtime<X>,
-    value: *const Value,
-) -> f64 {
+pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value: &Value) -> f64 {
     logger::debug!(event = "runtime_to_numeric", ?value);
-    let value = unsafe { into_value!(value) };
     match value {
         Value::None => unreachable!("Value::None"),
         Value::Undefined => f64::NAN,
@@ -221,12 +217,11 @@ pub(crate) unsafe extern "C" fn runtime_to_numeric<X>(
 }
 
 // 7.1.17 ToString ( argument )
-pub(crate) unsafe extern "C" fn runtime_to_string<X>(
+pub(crate) extern "C" fn runtime_to_string<X>(
     runtime: &mut Runtime<X>,
-    value: *const Value,
+    value: &Value,
 ) -> *const U16Chunk {
     logger::debug!(event = "runtime_to_string", ?value);
-    let value = unsafe { into_value!(value) };
     let result = runtime.perform_to_string(value);
     result.first_chunk() as *const U16Chunk
 }
@@ -287,12 +282,11 @@ impl<X> Runtime<X> {
 }
 
 // 7.1.18 ToObject ( argument )
-pub(crate) unsafe extern "C" fn runtime_to_object<X>(
+pub(crate) extern "C" fn runtime_to_object<X>(
     runtime: &mut Runtime<X>,
-    value: *const Value,
+    value: &Value,
 ) -> *mut c_void {
     logger::debug!(event = "runtime_to_object", ?value);
-    let value = unsafe { into_value!(value) };
     runtime.to_object(value)
 }
 
@@ -312,7 +306,7 @@ impl<X> Runtime<X> {
 }
 
 // 7.1.6 ToInt32 ( argument )
-pub(crate) unsafe extern "C" fn runtime_to_int32<X>(_runtime: &mut Runtime<X>, value: f64) -> i32 {
+pub(crate) extern "C" fn runtime_to_int32<X>(_runtime: &mut Runtime<X>, value: f64) -> i32 {
     const EXP2_31: f64 = (2u64 << 31) as f64;
     const EXP2_32: f64 = (2u64 << 32) as f64;
 
@@ -337,7 +331,7 @@ pub(crate) unsafe extern "C" fn runtime_to_int32<X>(_runtime: &mut Runtime<X>, v
 }
 
 // 7.1.7 ToUint32 ( argument )
-pub(crate) unsafe extern "C" fn runtime_to_uint32<X>(_runtime: &mut Runtime<X>, value: f64) -> u32 {
+pub(crate) extern "C" fn runtime_to_uint32<X>(_runtime: &mut Runtime<X>, value: f64) -> u32 {
     const EXP2_31: f64 = (2u64 << 31) as f64;
     const EXP2_32: f64 = (2u64 << 32) as f64;
 
@@ -361,16 +355,13 @@ pub(crate) unsafe extern "C" fn runtime_to_uint32<X>(_runtime: &mut Runtime<X>, 
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_is_same_string<X>(
+pub(crate) extern "C" fn runtime_is_same_string<X>(
     _runtime: &mut Runtime<X>,
     a: *const U16Chunk,
     b: *const U16Chunk,
 ) -> bool {
-    debug_assert!(!a.is_null());
-    debug_assert!(!b.is_null());
-
-    let a = unsafe { into_string!(a) };
-    let b = unsafe { into_string!(b) };
+    let a = into_string!(a);
+    let b = into_string!(b);
 
     // TODO(perf): slow...
     let a = a.make_utf16();
@@ -379,15 +370,12 @@ pub(crate) unsafe extern "C" fn runtime_is_same_string<X>(
 }
 
 // 7.2.13 IsLooselyEqual ( x, y )
-pub(crate) unsafe extern "C" fn runtime_is_loosely_equal<X>(
+pub(crate) extern "C" fn runtime_is_loosely_equal<X>(
     runtime: &mut Runtime<X>,
-    a: *const Value,
-    b: *const Value,
+    x: &Value,
+    y: &Value,
 ) -> bool {
-    let x = unsafe { into_value!(a) };
     debug_assert!(!matches!(x, Value::None));
-
-    let y = unsafe { into_value!(b) };
     debug_assert!(!matches!(y, Value::None));
 
     let x_kind = std::mem::discriminant(x);
@@ -396,7 +384,7 @@ pub(crate) unsafe extern "C" fn runtime_is_loosely_equal<X>(
     // 1. If Type(x) is Type(y)
     if x_kind == y_kind {
         // a. Return IsStrictlyEqual(x, y).
-        return unsafe { runtime_is_strictly_equal(runtime, a, b) };
+        return runtime_is_strictly_equal(runtime, x, y);
     }
 
     match (x, y) {
@@ -413,8 +401,8 @@ pub(crate) unsafe extern "C" fn runtime_is_loosely_equal<X>(
         // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
         // ...
         _ => {
-            let xnum = unsafe { runtime_to_numeric(runtime, a) };
-            let ynum = unsafe { runtime_to_numeric(runtime, b) };
+            let xnum = runtime_to_numeric(runtime, x);
+            let ynum = runtime_to_numeric(runtime, y);
             if xnum.is_nan() || ynum.is_nan() {
                 return false;
             }
@@ -424,46 +412,48 @@ pub(crate) unsafe extern "C" fn runtime_is_loosely_equal<X>(
 }
 
 // 7.2.14 IsStrictlyEqual ( x, y )
-pub(crate) unsafe extern "C" fn runtime_is_strictly_equal<X>(
+pub(crate) extern "C" fn runtime_is_strictly_equal<X>(
     _runtime: &mut Runtime<X>,
-    a: *const Value,
-    b: *const Value,
+    x: &Value,
+    y: &Value,
 ) -> bool {
-    let x = unsafe { into_value!(a) };
     debug_assert!(!matches!(x, Value::None));
-
-    let y = unsafe { into_value!(b) };
     debug_assert!(!matches!(y, Value::None));
-
     x == y
 }
 
-pub(crate) unsafe extern "C" fn runtime_get_typeof<X>(
+pub(crate) extern "C" fn runtime_get_typeof<X>(
     _runtime: &mut Runtime<X>,
-    value: *const Value,
+    value: &Value,
 ) -> *const U16Chunk {
-    let value = unsafe { into_value!(value) };
     debug_assert!(!matches!(value, Value::None));
-
     value.get_typeof() as *const U16Chunk
 }
 
-pub(crate) unsafe extern "C" fn runtime_migrate_string_to_heap<X>(
+pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: &mut Runtime<X>,
     string: *const U16Chunk,
 ) -> *const U16Chunk {
-    let chunk = unsafe { into_string!(string) };
+    let chunk = into_string!(string);
     runtime
         .migrate_string_to_heap(U16String::new(chunk))
         .as_ptr()
 }
 
-pub(crate) unsafe extern "C" fn runtime_create_capture<X>(
+pub(crate) extern "C" fn runtime_create_capture<X>(
     runtime: &mut Runtime<X>,
     target: *mut Value,
 ) -> *mut Capture {
     logger::debug!(event = "runtime_create_capture", ?target);
 
+    debug_assert!(
+        std::alloc::Layout::from_size_align(
+            std::mem::size_of::<Capture>(),
+            std::mem::align_of::<Capture>()
+        )
+        .is_ok()
+    );
+    // SAFETY: `from_size_align()` always succeeds.
     const LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::size_of::<Capture>(),
@@ -476,6 +466,7 @@ pub(crate) unsafe extern "C" fn runtime_create_capture<X>(
     // TODO: GC
     let ptr = allocator.alloc_layout(LAYOUT);
 
+    // SAFETY: `ptr` is a non-null pointer to a `Capture`.
     let capture = unsafe { ptr.cast::<Capture>().as_mut() };
     capture.target = target;
     // `capture.escaped` will be filled with an actual value.
@@ -490,6 +481,14 @@ impl<X> Runtime<X> {
         lambda_id: LambdaId,
         num_captures: u16,
     ) -> *mut Closure {
+        debug_assert!(
+            std::alloc::Layout::from_size_align(
+                std::mem::offset_of!(Closure, captures),
+                std::mem::align_of::<Closure>()
+            )
+            .is_ok(),
+        );
+        // SAFETY: `from_size_align()` always succeeds.
         const BASE_LAYOUT: std::alloc::Layout = unsafe {
             std::alloc::Layout::from_size_align_unchecked(
                 std::mem::offset_of!(Closure, captures),
@@ -506,6 +505,7 @@ impl<X> Runtime<X> {
         // TODO: GC
         let ptr = allocator.alloc_layout(layout);
 
+        // SAFETY: `ptr` is a non-null pointer to a `Closure`.
         let closure = unsafe { ptr.cast::<Closure>().as_mut() };
         closure.lambda = lambda.into();
         closure.lambda_id = lambda_id;
@@ -516,7 +516,7 @@ impl<X> Runtime<X> {
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_create_closure<X>(
+pub(crate) extern "C" fn runtime_create_closure<X>(
     runtime: &mut Runtime<X>,
     lambda: Lambda<X>,
     lambda_id: u32,
@@ -531,7 +531,7 @@ pub(crate) unsafe extern "C" fn runtime_create_closure<X>(
     runtime.create_closure(lambda, lambda_id.into(), num_captures)
 }
 
-pub(crate) unsafe extern "C" fn runtime_create_coroutine<X>(
+pub(crate) extern "C" fn runtime_create_coroutine<X>(
     runtime: &mut Runtime<X>,
     closure: *mut Closure,
     num_locals: u16,
@@ -544,6 +544,14 @@ pub(crate) unsafe extern "C" fn runtime_create_coroutine<X>(
         scratch_buffer_len
     );
 
+    debug_assert!(
+        std::alloc::Layout::from_size_align(
+            std::mem::offset_of!(Coroutine, locals),
+            std::mem::align_of::<Coroutine>()
+        )
+        .is_ok()
+    );
+    // SAFETY: `from_size_align()` always succeeds.
     const BASE_LAYOUT: std::alloc::Layout = unsafe {
         std::alloc::Layout::from_size_align_unchecked(
             std::mem::offset_of!(Coroutine, locals),
@@ -566,6 +574,7 @@ pub(crate) unsafe extern "C" fn runtime_create_coroutine<X>(
     // TODO: GC
     let ptr = allocator.alloc_layout(layout);
 
+    // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
     let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
     coroutine.closure = closure;
     coroutine.state = 0;
@@ -577,18 +586,18 @@ pub(crate) unsafe extern "C" fn runtime_create_coroutine<X>(
     coroutine as *mut Coroutine
 }
 
-pub(crate) unsafe extern "C" fn runtime_register_promise<X>(
+pub(crate) extern "C" fn runtime_register_promise<X>(
     runtime: &mut Runtime<X>,
     coroutine: *mut Coroutine,
 ) -> u32 {
     runtime.register_promise(coroutine).into()
 }
 
-pub(crate) unsafe extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: u32) {
+pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: u32) {
     runtime.process_promise(promise.into(), &Value::None, &Value::None);
 }
 
-pub(crate) unsafe extern "C" fn runtime_await_promise<X>(
+pub(crate) extern "C" fn runtime_await_promise<X>(
     runtime: &mut Runtime<X>,
     promise: u32,
     awaiting: u32,
@@ -596,33 +605,30 @@ pub(crate) unsafe extern "C" fn runtime_await_promise<X>(
     runtime.await_promise(promise.into(), awaiting.into());
 }
 
-pub(crate) unsafe extern "C" fn runtime_emit_promise_resolved<X>(
+pub(crate) extern "C" fn runtime_emit_promise_resolved<X>(
     runtime: &mut Runtime<X>,
     promise: u32,
-    result: *const Value,
+    result: &Value,
 ) {
-    let result = unsafe { into_value!(result) };
     runtime.emit_promise_resolved(promise.into(), result.clone());
 }
 
-pub(crate) unsafe extern "C" fn runtime_create_object<X>(
+pub(crate) extern "C" fn runtime_create_object<X>(
     runtime: &mut Runtime<X>,
     prototype: *mut c_void,
 ) -> *mut c_void {
     runtime.create_object(prototype).as_ptr()
 }
 
-pub(crate) unsafe extern "C" fn runtime_get_value_by_symbol<X>(
+pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
     _runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: u32,
     strict: bool,
 ) -> *const Value {
-    // FIXME: `Value` cannot be defined with `static` because it doesn't implement `Sync`.
-    static UNDEFINED: (u8, u64) = (1, 0);
-    static_assert_size_eq!((u8, u64), Value);
+    const UNDEFINED: Value = Value::Undefined;
 
-    let object = unsafe { into_object!(object) };
+    let object = into_object!(object);
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
@@ -630,21 +636,19 @@ pub(crate) unsafe extern "C" fn runtime_get_value_by_symbol<X>(
     match object.get_value(&key) {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
-        None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
+        None => &UNDEFINED as *const Value,
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_get_value_by_number<X>(
+pub(crate) extern "C" fn runtime_get_value_by_number<X>(
     _runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: f64,
     strict: bool,
 ) -> *const Value {
-    // FIXME: `Value` cannot be defined with `static` because it doesn't implement `Sync`.
-    static UNDEFINED: (u8, u64) = (1, 0);
-    static_assert_size_eq!((u8, u64), Value);
+    const UNDEFINED: Value = Value::Undefined;
 
-    let object = unsafe { into_object!(object) };
+    let object = into_object!(object);
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
@@ -652,85 +656,64 @@ pub(crate) unsafe extern "C" fn runtime_get_value_by_number<X>(
     match object.get_value(&key) {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
-        None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
+        None => &UNDEFINED as *const Value,
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_get_value_by_value<X>(
+pub(crate) extern "C" fn runtime_get_value_by_value<X>(
     runtime: &mut Runtime<X>,
     object: *mut c_void,
-    key: *const Value,
+    key: &Value,
     strict: bool,
 ) -> *const Value {
-    // FIXME: `Value` cannot be defined with `static` because it doesn't implement `Sync`.
-    static UNDEFINED: (u8, u64) = (1, 0);
-    static_assert_size_eq!((u8, u64), Value);
+    const UNDEFINED: Value = Value::Undefined;
 
-    let object = unsafe { into_object!(object) };
-
-    let key = unsafe { into_value!(key) };
+    let object = into_object!(object);
     let key = runtime.make_property_key(key);
 
     match object.get_value(&key) {
         Some(v) => v as *const Value,
         None if strict => std::ptr::null(),
-        None => unsafe { std::mem::transmute::<&(u8, u64), &Value>(&UNDEFINED) as *const Value },
+        None => &UNDEFINED as *const Value,
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_set_value_by_symbol<X>(
+pub(crate) extern "C" fn runtime_set_value_by_symbol<X>(
     _runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: u32,
-    value: *const Value,
+    value: &Value,
 ) {
-    let object = unsafe { into_object!(object) };
-
+    let object = into_object!(object);
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
-
-    debug_assert_ne!(value, std::ptr::null());
-    let value = unsafe { into_value!(value) };
-
     object.set_value(&key, value)
 }
 
-pub(crate) unsafe extern "C" fn runtime_set_value_by_number<X>(
+pub(crate) extern "C" fn runtime_set_value_by_number<X>(
     _runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: f64,
-    value: *const Value,
+    value: &Value,
 ) {
-    let object = unsafe { into_object!(object) };
-
+    let object = into_object!(object);
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
-
-    debug_assert_ne!(value, std::ptr::null());
-    let value = unsafe { into_value!(value) };
-
     object.set_value(&key, value)
 }
 
-pub(crate) unsafe extern "C" fn runtime_set_value_by_value<X>(
+pub(crate) extern "C" fn runtime_set_value_by_value<X>(
     runtime: &mut Runtime<X>,
     object: *mut c_void,
-    key: *const Value,
-    value: *const Value,
+    key: &Value,
+    value: &Value,
 ) {
-    let object = unsafe { into_object!(object) };
-
-    debug_assert_ne!(key, std::ptr::null());
-    let key = unsafe { into_value!(key) };
+    let object = into_object!(object);
     let key = runtime.make_property_key(key);
-
-    debug_assert_ne!(value, std::ptr::null());
-    let value = unsafe { into_value!(value) };
-
     object.set_value(&key, value)
 }
 
-pub(crate) unsafe extern "C" fn runtime_concat_strings<X>(
+pub(crate) extern "C" fn runtime_concat_strings<X>(
     runtime: &mut Runtime<X>,
     head: *const U16Chunk,
     tail: *const U16Chunk,
@@ -738,9 +721,9 @@ pub(crate) unsafe extern "C" fn runtime_concat_strings<X>(
     debug_assert!(!tail.is_null());
     debug_assert!(!head.is_null());
 
-    let tail = unsafe { into_string!(tail) };
+    let tail = into_string!(tail);
     if tail.is_empty() {
-        let head = unsafe { into_string!(head) };
+        let head = into_string!(head);
         return runtime.alloc_string_rec(head, std::ptr::null());
     }
 
@@ -750,7 +733,7 @@ pub(crate) unsafe extern "C" fn runtime_concat_strings<X>(
         tail
     } as *const U16Chunk;
 
-    let head = unsafe { into_string!(head) };
+    let head = into_string!(head);
     if head.is_empty() {
         return tail;
     }
@@ -759,24 +742,19 @@ pub(crate) unsafe extern "C" fn runtime_concat_strings<X>(
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
-pub(crate) unsafe extern "C" fn runtime_create_data_property_by_symbol<X>(
+pub(crate) extern "C" fn runtime_create_data_property_by_symbol<X>(
     runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: u32,
-    value: *const Value,
+    value: &Value,
     retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
-
-    debug_assert_ne!(object, std::ptr::null_mut());
-    let object = unsafe { object.cast::<Object>().as_mut().unwrap() };
+    let object = into_object!(object);
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
 
-    debug_assert_ne!(value, std::ptr::null());
-    let value = unsafe { into_value!(value) };
-
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
             *retv = success.into();
@@ -790,23 +768,20 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_symbol<X>(
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
-pub(crate) unsafe extern "C" fn runtime_create_data_property_by_number<X>(
+pub(crate) extern "C" fn runtime_create_data_property_by_number<X>(
     runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: f64,
-    value: *const Value,
+    value: &Value,
     retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
 
-    debug_assert_ne!(object, std::ptr::null_mut());
-    let object = unsafe { object.cast::<Object>().as_mut().unwrap() };
+    let object = into_object!(object);
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
 
-    let value = unsafe { into_value!(value) };
-
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
             *retv = success.into();
@@ -820,20 +795,17 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_number<X>(
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
-pub(crate) unsafe extern "C" fn runtime_create_data_property_by_value<X>(
+pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
     runtime: &mut Runtime<X>,
     object: *mut c_void,
-    key: *const Value,
-    value: *const Value,
+    key: &Value,
+    value: &Value,
     retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
 
-    debug_assert_ne!(object, std::ptr::null_mut());
-    let object = unsafe { object.cast::<Object>().as_mut().unwrap() };
-
-    let key = unsafe { runtime.make_property_key(into_value!(key)) };
-    let value = unsafe { into_value!(value) };
+    let object = into_object!(object);
+    let key = runtime.make_property_key(key);
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {
@@ -848,15 +820,14 @@ pub(crate) unsafe extern "C" fn runtime_create_data_property_by_value<X>(
 }
 
 // 7.3.25 CopyDataProperties ( target, source, excludedItems )
-pub(crate) unsafe extern "C" fn runtime_copy_data_properties<X>(
+pub(crate) extern "C" fn runtime_copy_data_properties<X>(
     runtime: &mut Runtime<X>,
     target: *mut c_void,
-    source: *const Value,
+    source: &Value,
     retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
-    let target = unsafe { target.cast::<Object>().as_mut().unwrap() };
-    let source = unsafe { into_value!(source) };
+    let target = into_object!(target);
 
     match runtime.copy_data_properties(target, source) {
         Ok(()) => {
@@ -870,18 +841,15 @@ pub(crate) unsafe extern "C" fn runtime_copy_data_properties<X>(
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_push_value<X>(
+pub(crate) extern "C" fn runtime_push_value<X>(
     runtime: &mut Runtime<X>,
     target: *mut c_void,
-    value: *const Value,
+    value: &Value,
     retv: &mut Value,
 ) -> Status {
     // TODO(refactor): generate ffi-conversion code by script
 
-    debug_assert_ne!(target, std::ptr::null_mut());
-    let target = unsafe { target.cast::<Object>().as_mut().unwrap() };
-
-    let value = unsafe { into_value!(value) };
+    let target = into_object!(target);
 
     match runtime.push_value(target, value) {
         Ok(()) => {
@@ -895,23 +863,31 @@ pub(crate) unsafe extern "C" fn runtime_push_value<X>(
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_assert<X>(
+pub(crate) extern "C" fn runtime_assert<X>(
     _runtime: &mut Runtime<X>,
     assertion: bool,
     msg: *const std::os::raw::c_char,
 ) {
     if !assertion {
-        let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+        // SAFETY: `msg` is always non-null.
+        let msg = unsafe {
+            debug_assert!(!msg.is_null());
+            std::ffi::CStr::from_ptr(msg)
+        };
         panic!("runtime_assert: {msg:?}");
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_print_bool<X>(
+pub(crate) extern "C" fn runtime_print_bool<X>(
     _runtime: &mut Runtime<X>,
     value: bool,
     msg: *const std::os::raw::c_char,
 ) {
-    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
     if msg.is_empty() {
         logger::debug!("runtime_print_bool: {value}");
     } else {
@@ -919,12 +895,16 @@ pub(crate) unsafe extern "C" fn runtime_print_bool<X>(
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_print_u32<X>(
+pub(crate) extern "C" fn runtime_print_u32<X>(
     _runtime: &mut Runtime<X>,
     value: u32,
     msg: *const std::os::raw::c_char,
 ) {
-    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
     if msg.is_empty() {
         logger::debug!("runtime_print_u32: {value:08X}");
     } else {
@@ -932,12 +912,16 @@ pub(crate) unsafe extern "C" fn runtime_print_u32<X>(
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_print_f64<X>(
+pub(crate) extern "C" fn runtime_print_f64<X>(
     _runtime: &mut Runtime<X>,
     value: f64,
     msg: *const std::os::raw::c_char,
 ) {
-    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
     if msg.is_empty() {
         logger::debug!("runtime_print_f64: {value}");
     } else {
@@ -945,13 +929,17 @@ pub(crate) unsafe extern "C" fn runtime_print_f64<X>(
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_print_string<X>(
+pub(crate) extern "C" fn runtime_print_string<X>(
     _runtime: &mut Runtime<X>,
     value: *const U16Chunk,
     msg: *const std::os::raw::c_char,
 ) {
-    let value = unsafe { value.as_ref().unwrap() };
-    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+    let value = into_string!(value);
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
     if msg.is_empty() {
         logger::debug!("runtime_print_f64: {value:?}");
     } else {
@@ -959,13 +947,16 @@ pub(crate) unsafe extern "C" fn runtime_print_string<X>(
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_print_value<X>(
+pub(crate) extern "C" fn runtime_print_value<X>(
     _runtime: &mut Runtime<X>,
-    value: *const Value,
+    value: &Value,
     msg: *const std::os::raw::c_char,
 ) {
-    let value = unsafe { into_value!(value) };
-    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
     if msg.is_empty() {
         logger::debug!("runtime_print_value: {value:?}");
     } else {
@@ -973,13 +964,17 @@ pub(crate) unsafe extern "C" fn runtime_print_value<X>(
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_print_capture<X>(
+pub(crate) extern "C" fn runtime_print_capture<X>(
     _runtime: &mut Runtime<X>,
     capture: *const Capture,
     msg: *const std::os::raw::c_char,
 ) {
-    let capture = unsafe { into_capture!(capture) };
-    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+    let capture = into_capture!(capture);
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
     if msg.is_empty() {
         logger::debug!("runtime_print_capture: {capture:?}");
     } else {
@@ -987,15 +982,19 @@ pub(crate) unsafe extern "C" fn runtime_print_capture<X>(
     }
 }
 
-pub(crate) unsafe extern "C" fn runtime_print_message<X>(
+pub(crate) extern "C" fn runtime_print_message<X>(
     _runtime: &mut Runtime<X>,
     msg: *const std::os::raw::c_char,
 ) {
-    let msg = unsafe { std::ffi::CStr::from_ptr(msg) };
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
     logger::debug!("runtime_print_value: {msg:?}");
 }
 
-pub(crate) unsafe extern "C" fn runtime_launch_debugger<X>(_runtime: &mut Runtime<X>) {
+pub(crate) extern "C" fn runtime_launch_debugger<X>(_runtime: &mut Runtime<X>) {
     logger::debug!("runtime_launch_debugger");
     // TODO(feat): Support debuggers such as Chrome DevTools.
 }
