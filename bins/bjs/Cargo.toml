@@ -12,8 +12,8 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.99"
 clap = { version = "4.5.45", features = ["env", "derive", "wrap_help"] }
-cranelift-codegen = "0.122.0"
-cranelift-reader = "0.122.0"
+cranelift-codegen = "0.123.0"
+cranelift-reader = "0.123.0"
 itertools = "0.14.0"
 jsruntime = { path = "../../libs/jsruntime" }
 logging = { path = "../../libs/logging" }
