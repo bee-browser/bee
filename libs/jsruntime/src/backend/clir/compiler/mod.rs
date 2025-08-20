@@ -362,7 +362,8 @@ where
         let entry_block = self.editor.entry_block();
         self.editor.switch_to_block(entry_block);
 
-        self.editor.put_assert_lambda_params(self.support);
+        self.editor
+            .put_assert_lambda_params(self.support, func.is_entry_function());
 
         if matches!(
             self.support.get_lambda_info(func.id).kind,

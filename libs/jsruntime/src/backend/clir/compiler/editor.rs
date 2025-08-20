@@ -159,8 +159,13 @@ impl<'a> Editor<'a> {
         self.builder.block_params(self.entry_block)[index]
     }
 
-    pub fn put_assert_lambda_params(&mut self, support: &mut impl EditorSupport) {
+    pub fn put_assert_lambda_params(&mut self, support: &mut impl EditorSupport, is_entry: bool) {
         self.put_assert_runtime_is_non_null(support);
+        if is_entry {
+            self.put_assert_context_is_null(support);
+        } else {
+            self.put_assert_context_is_non_null(support);
+        }
         self.put_assert_this_is_non_null(support);
         self.put_assert_argv_is_non_null(support);
         self.put_assert_retv_is_non_null(support);
@@ -172,6 +177,24 @@ impl<'a> Editor<'a> {
             let runtime = self.runtime();
             let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, runtime, 0));
             self.put_runtime_assert(support, is_non_null, c"runtime must be non-null");
+        }}
+    }
+
+    fn put_assert_context_is_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            use ir::condcodes::IntCC::Equal;
+            let context = self.lambda_params(1);
+            let is_non_null = BooleanIr(self.builder.ins().icmp_imm(Equal, context, 0));
+            self.put_runtime_assert(support, is_non_null, c"context must be null");
+        }}
+    }
+
+    fn put_assert_context_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            use ir::condcodes::IntCC::NotEqual;
+            let context = self.lambda_params(1);
+            let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, context, 0));
+            self.put_runtime_assert(support, is_non_null, c"context must be non-null");
         }}
     }
 

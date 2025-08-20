@@ -19,17 +19,25 @@ use crate::types::U16String;
 use crate::types::Value;
 
 macro_rules! into_closure_mut {
-    ($context:expr) => {{
-        debug_assert!(!$context.is_null());
-        &mut *($context as *mut crate::types::Closure)
-    }};
+    ($context:expr) => {
+        // SAFETY: `context` is always a non-null pointer to a `Closure`.
+        unsafe {
+            debug_assert!(!$context.is_null());
+            debug_assert!($context.is_aligned());
+            &mut *($context as *mut crate::types::Closure)
+        }
+    };
 }
 
 macro_rules! into_coroutine_mut {
-    ($context:expr) => {{
-        debug_assert!(!$context.is_null());
-        &mut *($context as *mut crate::types::Coroutine)
-    }};
+    ($context:expr) => {
+        // SAFETY: `context` is always a non-null pointer to a `Coroutine`.
+        unsafe {
+            debug_assert!(!$context.is_null());
+            debug_assert!($context.is_aligned());
+            &mut *($context as *mut crate::types::Coroutine)
+        }
+    };
 }
 
 macro_rules! into_string {
@@ -60,7 +68,7 @@ macro_rules! into_capture {
 
 // lazy compilation
 
-pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
+pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     runtime: &mut Runtime<X>,
     context: *mut c_void,
     this: &mut Value,
@@ -70,7 +78,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_normal", ?context);
 
-    let closure = unsafe { into_closure_mut!(context) };
+    let closure = into_closure_mut!(context);
 
     let lambda_id = closure.lambda_id;
     let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
@@ -93,7 +101,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     lambda(runtime, context, this, argc, argv, retv)
 }
 
-pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
+pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     runtime: &mut Runtime<X>,
     context: *mut c_void,
     this: &mut Value,
@@ -103,7 +111,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_ramp", ?context);
 
-    let closure = unsafe { into_closure_mut!(context) };
+    let closure = into_closure_mut!(context);
 
     let lambda_id = closure.lambda_id;
     let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
@@ -136,7 +144,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     lambda(runtime, context, this, argc, argv, retv)
 }
 
-pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
+pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
     runtime: &mut Runtime<X>,
     context: *mut c_void,
     this: &mut Value,
@@ -146,10 +154,14 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine", ?context);
 
-    let coroutine = unsafe { into_coroutine_mut!(context) };
+    let coroutine = into_coroutine_mut!(context);
 
-    debug_assert_ne!(coroutine.closure, std::ptr::null_mut());
-    let closure = unsafe { &mut *coroutine.closure };
+    // SAFETY: `coroutine.closure` is a non-null pointer to a `Closure`.
+    let closure = unsafe {
+        debug_assert!(!coroutine.closure.is_null());
+        debug_assert!(coroutine.closure.is_aligned());
+        &mut *coroutine.closure
+    };
 
     let lambda_id = closure.lambda_id;
     // The coroutine lambda has already been compiled in `runtime_lazy_compile_ramp()`.
