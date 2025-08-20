@@ -16,4 +16,4 @@ clap = { version = "4.5.45", features = ["env", "derive", "wrap_help"] }
 jsparser = { path = "../../libs/jsparser", features = ["location"] }
 logging = { path = "../../libs/logging" }
 serde = { version = "1.0.219", features = ["derive", "rc"] }
-serde_json = { version = "1.0.142", features = ["preserve_order"] }
+serde_json = { version = "1.0.143", features = ["preserve_order"] }
