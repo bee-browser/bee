@@ -5,7 +5,7 @@ use crate::U16String;
 use crate::types::Status;
 use crate::types::Value;
 
-pub unsafe extern "C" fn constructor<X>(
+pub extern "C" fn constructor<X>(
     runtime: &mut Runtime<X>,
     _context: *mut c_void,
     this: &mut Value,
@@ -16,7 +16,12 @@ pub unsafe extern "C" fn constructor<X>(
     let args = if argc == 0 {
         &[]
     } else {
-        unsafe { std::slice::from_raw_parts(argv as *const Value, argc as usize) }
+        // SAFETY: `argv` is always non-null and a valid pointer to an array of `Value`s.
+        unsafe {
+            debug_assert!(!argv.is_null());
+            debug_assert!(argv.is_aligned());
+            std::slice::from_raw_parts(argv as *const Value, argc as usize)
+        }
     };
     match runtime.string_constructor(this, args) {
         Ok(value) => {

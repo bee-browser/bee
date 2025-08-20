@@ -234,22 +234,20 @@ impl<X> Runtime<X> {
         let mut this = Value::Undefined;
         let mut args = [];
         let mut retv = Value::Undefined;
-        let status = unsafe {
-            lambda(
-                // runtime
-                self,
-                // context
-                std::ptr::null_mut(),
-                // this
-                &mut this,
-                // argc
-                args.len() as u16,
-                // argv
-                args.as_mut_ptr(),
-                // retv
-                &mut retv,
-            )
-        };
+        let status = lambda(
+            // runtime
+            self,
+            // context
+            std::ptr::null_mut(),
+            // this
+            &mut this,
+            // argc
+            args.len() as u16,
+            // argv
+            args.as_mut_ptr(),
+            // retv
+            &mut retv,
+        );
         retv.into_result(status)
     }
 

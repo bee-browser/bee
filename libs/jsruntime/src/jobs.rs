@@ -64,17 +64,15 @@ impl<X> Runtime<X> {
         let mut this = Value::Undefined;
         let mut args = [promise.into(), result.clone(), error.clone()];
         let mut retv = Value::None;
-        let status = unsafe {
-            let lambda = Lambda::from((*(*coroutine).closure).lambda);
-            lambda(
-                self,
-                coroutine as *mut std::ffi::c_void,
-                &mut this,
-                args.len() as u16,
-                args.as_mut_ptr(),
-                &mut retv,
-            )
-        };
+        let lambda = unsafe { Lambda::from((*(*coroutine).closure).lambda) };
+        let status = lambda(
+            self,
+            coroutine as *mut std::ffi::c_void,
+            &mut this,
+            args.len() as u16,
+            args.as_mut_ptr(),
+            &mut retv,
+        );
         (status, retv)
     }
 

@@ -554,7 +554,7 @@ where
 /// * Regular functions: Closure*
 /// * Coroutine functions: Coroutine*
 ///
-pub type Lambda<X> = unsafe extern "C" fn(
+pub type Lambda<X> = extern "C" fn(
     runtime: &mut Runtime<X>,
     context: *mut c_void,
     this: &mut Value,
@@ -584,7 +584,7 @@ where
     host_fn_wrapper::<F, R, X>
 }
 
-unsafe extern "C" fn host_fn_wrapper<F, R, X>(
+extern "C" fn host_fn_wrapper<F, R, X>(
     runtime: &mut Runtime<X>,
     _context: *mut c_void,
     _this: &mut Value,

@@ -90,7 +90,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     );
     closure.lambda = lambda.into();
 
-    unsafe { lambda(runtime, context, this, argc, argv, retv) }
+    lambda(runtime, context, this, argc, argv, retv)
 }
 
 pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
@@ -133,7 +133,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     );
     closure.lambda = lambda.into();
 
-    unsafe { lambda(runtime, context, this, argc, argv, retv) }
+    lambda(runtime, context, this, argc, argv, retv)
 }
 
 pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
@@ -161,7 +161,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
     );
     closure.lambda = lambda.into();
 
-    unsafe { lambda(runtime, context, this, argc, argv, retv) }
+    lambda(runtime, context, this, argc, argv, retv)
 }
 
 // 7.1.2 ToBoolean ( argument )
