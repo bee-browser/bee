@@ -63,7 +63,7 @@ macro_rules! into_capture {
 pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
     runtime: &mut Runtime<X>,
     context: *mut c_void,
-    this: *mut Value,
+    this: &mut Value,
     argc: u16,
     argv: *mut Value,
     retv: &mut Value,
@@ -96,7 +96,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_normal<X>(
 pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
     runtime: &mut Runtime<X>,
     context: *mut c_void,
-    this: *mut Value,
+    this: &mut Value,
     argc: u16,
     argv: *mut Value,
     retv: &mut Value,
@@ -139,7 +139,7 @@ pub(crate) unsafe extern "C" fn runtime_lazy_compile_ramp<X>(
 pub(crate) unsafe extern "C" fn runtime_lazy_compile_coroutine<X>(
     runtime: &mut Runtime<X>,
     context: *mut c_void,
-    this: *mut Value,
+    this: &mut Value,
     argc: u16,
     argv: *mut Value,
     retv: &mut Value,

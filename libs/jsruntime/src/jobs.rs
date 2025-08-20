@@ -69,7 +69,7 @@ impl<X> Runtime<X> {
             lambda(
                 self,
                 coroutine as *mut std::ffi::c_void,
-                &mut this as *mut Value,
+                &mut this,
                 args.len() as u16,
                 args.as_mut_ptr(),
                 &mut retv,

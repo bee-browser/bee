@@ -8,12 +8,11 @@ use crate::types::Value;
 pub unsafe extern "C" fn constructor<X>(
     runtime: &mut Runtime<X>,
     _context: *mut c_void,
-    this: *mut Value,
+    this: &mut Value,
     argc: u16,
     argv: *mut Value,
     retv: &mut Value,
 ) -> Status {
-    let this = unsafe { &mut *this };
     let args = if argc == 0 {
         &[]
     } else {

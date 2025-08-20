@@ -161,6 +161,7 @@ impl<'a> Editor<'a> {
 
     pub fn put_assert_lambda_params(&mut self, support: &mut impl EditorSupport) {
         self.put_assert_runtime_is_non_null(support);
+        self.put_assert_this_is_non_null(support);
         self.put_assert_argv_is_non_null(support);
         self.put_assert_retv_is_non_null(support);
     }
@@ -171,6 +172,15 @@ impl<'a> Editor<'a> {
             let runtime = self.runtime();
             let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, runtime, 0));
             self.put_runtime_assert(support, is_non_null, c"runtime must be non-null");
+        }}
+    }
+
+    fn put_assert_this_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            use ir::condcodes::IntCC::NotEqual;
+            let this = self.this_argument();
+            let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, this.0, 0));
+            self.put_runtime_assert(support, is_non_null, c"this must be non-null");
         }}
     }
 

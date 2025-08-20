@@ -557,7 +557,7 @@ where
 pub type Lambda<X> = unsafe extern "C" fn(
     runtime: &mut Runtime<X>,
     context: *mut c_void,
-    this: *mut Value,
+    this: &mut Value,
     argc: u16,
     argv: *mut Value,
     retv: &mut Value,
@@ -587,7 +587,7 @@ where
 unsafe extern "C" fn host_fn_wrapper<F, R, X>(
     runtime: &mut Runtime<X>,
     _context: *mut c_void,
-    _this: *mut Value,
+    _this: &mut Value,
     argc: u16,
     argv: *mut Value,
     retv: &mut Value,
