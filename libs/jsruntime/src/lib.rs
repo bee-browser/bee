@@ -260,14 +260,14 @@ impl<X> Runtime<X> {
     pub fn ensure_value_on_heap(&mut self, value: &Value) -> Value {
         match value {
             Value::String(string) if string.on_stack() => {
-                Value::String(unsafe { self.migrate_string_to_heap(*string) })
+                Value::String(self.migrate_string_to_heap(*string))
             }
             _ => value.clone(),
         }
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    pub(crate) unsafe fn migrate_string_to_heap(&mut self, string: U16String) -> U16String {
+    pub(crate) fn migrate_string_to_heap(&mut self, string: U16String) -> U16String {
         logger::debug!(event = "migrate_string_to_heap", ?string);
         debug_assert!(string.on_stack());
 
@@ -277,7 +277,7 @@ impl<X> Runtime<X> {
 
         // TODO(issue#237): GcCell
         // TODO: chunk.next
-        U16String::new(unsafe { self.alloc_string_rec(string.first_chunk(), std::ptr::null()) })
+        U16String::new(self.alloc_string_rec(string.first_chunk(), std::ptr::null()))
     }
 
     pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
@@ -286,20 +286,16 @@ impl<X> Runtime<X> {
         self.allocator.alloc_slice_copy(&utf16)
     }
 
-    pub(crate) unsafe fn alloc_string_rec(
-        &self,
-        head: &U16Chunk,
-        tail: *const U16Chunk,
-    ) -> &U16Chunk {
+    pub(crate) fn alloc_string_rec(&self, head: &U16Chunk, tail: *const U16Chunk) -> &U16Chunk {
         let result = self
             .allocator
             .alloc(U16Chunk::new_heap_from_raw_parts(head.ptr, head.len));
-        if head.next.is_null() {
-            result.next = tail;
+        // SAFETY: `head.next` is null or a valid pointer to a `U16Chunk`.
+        result.next = if let Some(chunk) = unsafe { head.next.as_ref() } {
+            self.alloc_string_rec(chunk, tail)
         } else {
-            let chunk = unsafe { head.next.as_ref().unwrap() };
-            result.next = unsafe { self.alloc_string_rec(chunk, tail) };
-        }
+            tail
+        };
         result
     }
 

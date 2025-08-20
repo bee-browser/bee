@@ -242,7 +242,7 @@ impl<X> Runtime<X> {
                 U16String::new(&CHUNK)
             }
             Value::Number(value) => {
-                unsafe { self.number_to_string(*value) } // TODO
+                self.number_to_string(*value) // TODO
             }
             Value::String(value) => *value,
             Value::Promise(_) => todo!(),
@@ -256,21 +256,21 @@ impl<X> Runtime<X> {
 }
 
 // 6.1.6.1.20 Number::toString ( x, radix )
-pub(crate) unsafe extern "C" fn runtime_number_to_string<X>(
+pub(crate) extern "C" fn runtime_number_to_string<X>(
     runtime: &mut Runtime<X>,
     value: f64,
 ) -> *const U16Chunk {
     logger::debug!(event = "runtime_number_to_string", ?value);
-    unsafe { runtime.number_to_string(value).as_ptr() }
+    runtime.number_to_string(value).as_ptr()
 }
 
 impl<X> Runtime<X> {
-    unsafe fn number_to_string(&mut self, value: f64) -> U16String {
+    fn number_to_string(&mut self, value: f64) -> U16String {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
         let chunk = U16Chunk::new_stack(utf16);
         let string = U16String::new(&chunk);
-        unsafe { self.migrate_string_to_heap(string) }
+        self.migrate_string_to_heap(string)
     }
 }
 
@@ -441,11 +441,9 @@ pub(crate) unsafe extern "C" fn runtime_migrate_string_to_heap<X>(
     string: *const U16Chunk,
 ) -> *const U16Chunk {
     let chunk = unsafe { into_string!(string) };
-    unsafe {
-        runtime
-            .migrate_string_to_heap(U16String::new(chunk))
-            .as_ptr()
-    }
+    runtime
+        .migrate_string_to_heap(U16String::new(chunk))
+        .as_ptr()
 }
 
 pub(crate) unsafe extern "C" fn runtime_create_capture<X>(
@@ -730,11 +728,12 @@ pub(crate) unsafe extern "C" fn runtime_concat_strings<X>(
 
     let tail = unsafe { into_string!(tail) };
     if tail.is_empty() {
-        return unsafe { runtime.alloc_string_rec(into_string!(head), std::ptr::null()) };
+        let head = unsafe { into_string!(head) };
+        return runtime.alloc_string_rec(head, std::ptr::null());
     }
 
     let tail = if tail.on_stack() {
-        unsafe { runtime.alloc_string_rec(tail, std::ptr::null()) }
+        runtime.alloc_string_rec(tail, std::ptr::null())
     } else {
         tail
     } as *const U16Chunk;
@@ -744,7 +743,7 @@ pub(crate) unsafe extern "C" fn runtime_concat_strings<X>(
         return tail;
     }
 
-    unsafe { runtime.alloc_string_rec(head, tail) }
+    runtime.alloc_string_rec(head, tail)
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
