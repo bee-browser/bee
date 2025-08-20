@@ -64,7 +64,12 @@ impl<X> Runtime<X> {
         let mut this = Value::Undefined;
         let mut args = [promise.into(), result.clone(), error.clone()];
         let mut retv = Value::None;
-        let lambda = unsafe { Lambda::from((*(*coroutine).closure).lambda) };
+        // SAFETY: `coroutine` is always a non-null pointer to a `Coroutine`.
+        let lambda = unsafe {
+            debug_assert!(!coroutine.is_null());
+            debug_assert!(!(*coroutine).closure.is_null());
+            Lambda::from((*(*coroutine).closure).lambda)
+        };
         let status = lambda(
             self,
             coroutine as *mut std::ffi::c_void,

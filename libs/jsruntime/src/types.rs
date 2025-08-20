@@ -60,9 +60,10 @@ impl Value {
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),
             Self::Promise(_value) => unimplemented!("new Promise()"),
-            Self::Object(value) | Self::Function(value) => unsafe {
-                Ok(value.cast::<Object>().as_ref().unwrap())
-            },
+            Self::Object(value) | Self::Function(value) => {
+                // SAFETY: `value` is always a non-null pointer to an `Object`.
+                unsafe { Ok(&*(*value as *const Object)) }
+            }
             Self::None => unreachable!(),
         }
     }
@@ -174,31 +175,29 @@ impl U16String {
     }
 
     pub const fn is_empty(&self) -> bool {
-        debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).is_empty() }
+        self.first_chunk().is_empty()
     }
 
     pub fn on_stack(&self) -> bool {
-        debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).on_stack() }
+        self.first_chunk().on_stack()
     }
 
     pub fn len(&self) -> u32 {
-        debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).total_len() }
+        self.first_chunk().total_len()
     }
 
-    pub(crate) fn first_chunk(&self) -> &U16Chunk {
+    pub(crate) const fn first_chunk(&self) -> &U16Chunk {
         debug_assert!(!self.0.is_null());
+        // SAFETY: `self.0` is non-null.
         unsafe { &(*self.0) }
     }
 
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
-        debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).make_utf16() }
+        self.first_chunk().make_utf16()
     }
 
     pub(crate) fn as_ptr(&self) -> *const U16Chunk {
+        debug_assert!(!self.0.is_null());
         self.0
     }
 }
@@ -208,7 +207,7 @@ impl std::fmt::Debug for U16String {
         if self.is_empty() {
             write!(f, "U16String()")
         } else {
-            unsafe { write!(f, "U16String({:?})", self.0.as_ref().unwrap()) }
+            write!(f, "U16String({:?})", self.first_chunk())
         }
     }
 }
@@ -218,7 +217,7 @@ impl std::fmt::Display for U16String {
         if self.is_empty() {
             Ok(())
         } else {
-            unsafe { write!(f, "{}", self.0.as_ref().unwrap()) }
+            write!(f, "{}", self.first_chunk())
         }
     }
 }
@@ -300,17 +299,20 @@ impl U16Chunk {
     }
 
     pub fn total_len(&self) -> u32 {
-        if self.next.is_null() {
-            self.len
-        } else {
+        // SAFETY: `self.next` is null or a valid pointer to a `U16Chunk`.
+        if let Some(next) = unsafe { self.next.as_ref() } {
             debug_assert!(self.len > 0);
-            self.len + unsafe { self.next.as_ref().unwrap().total_len() }
+            self.len + next.total_len()
+        } else {
+            self.len
         }
     }
 
     pub fn as_slice(&self) -> &[u16] {
         debug_assert_ne!(self.len, 0);
         debug_assert!(!self.ptr.is_null());
+        debug_assert!(self.ptr.is_aligned());
+        // SAFETY: `self.ptr` is always pointer to an array of `u16`.
         unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) }
     }
 
@@ -323,10 +325,12 @@ impl U16Chunk {
         let mut chunk = self;
         loop {
             result.extend_from_slice(chunk.as_slice());
-            if chunk.next.is_null() {
+            // SAFETY: `chunk.next` is null or a valid pointer to a `U16Chunk`.
+            chunk = if let Some(next) = unsafe { chunk.next.as_ref() } {
+                next
+            } else {
                 break;
-            }
-            chunk = unsafe { chunk.next.as_ref().unwrap() };
+            };
         }
         result
     }
@@ -349,10 +353,12 @@ impl std::fmt::Display for U16Chunk {
                 .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
                 .collect();
             write!(f, "{}", chars.escape_default())?;
-            if chunk.next.is_null() {
+            // SAFETY: `chunk.next` is null or a valid pointer to a `U16Chunk`.
+            chunk = if let Some(next) = unsafe { chunk.next.as_ref() } {
+                next
+            } else {
                 break;
-            }
-            chunk = unsafe { chunk.next.as_ref().unwrap() };
+            };
         }
         Ok(())
     }
@@ -410,11 +416,27 @@ impl std::fmt::Debug for Closure {
         write!(f, "closure({:?}, [", self.lambda_id)?;
         let len = self.num_captures as usize;
         let data = self.captures.as_ptr();
-        let mut captures = unsafe { std::slice::from_raw_parts(data, len).iter() };
+        // SAFETY: `data` is a non-null pointer to an array of pointers.
+        let captures = unsafe {
+            debug_assert!(!data.is_null());
+            debug_assert!(data.is_aligned());
+            std::slice::from_raw_parts(data, len)
+        };
+        let mut captures = captures.iter();
         if let Some(capture) = captures.next() {
-            write!(f, "{:?}", unsafe { &**capture })?;
+            // SAFETY: `capture` is a non-null pointer to a `Capture`.
+            write!(f, "{:?}", unsafe {
+                debug_assert!(!(*capture).is_null());
+                debug_assert!((*capture).is_aligned());
+                &**capture
+            })?;
             for capture in captures {
-                write!(f, ", {:?}", unsafe { &**capture })?;
+                // SAFETY: `capture` is a non-null pointer to a `Capture`.
+                write!(f, ", {:?}", unsafe {
+                    debug_assert!(!(*capture).is_null());
+                    debug_assert!((*capture).is_aligned());
+                    &**capture
+                })?;
             }
         }
         write!(f, "])")
@@ -565,6 +587,7 @@ pub type Lambda<X> = extern "C" fn(
 
 impl<X> From<LambdaAddr> for Lambda<X> {
     fn from(value: LambdaAddr) -> Self {
+        debug_assert_ne!(value.0, 0);
         // SAFETY: `LambdaAddr` contains only an address of a lambda function and it is always
         // convertible to `Lambda`.
         unsafe { std::mem::transmute(value.0) }
