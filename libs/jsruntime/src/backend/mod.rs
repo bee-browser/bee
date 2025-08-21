@@ -1,8 +1,7 @@
 mod bridge;
 mod clir;
 
-pub use bridge::RuntimeFunctions;
-pub use clir::Executor;
+pub use clir::CodeRegistry;
 pub use clir::compile;
 pub use clir::compile_function;
 pub use clir::initialize;

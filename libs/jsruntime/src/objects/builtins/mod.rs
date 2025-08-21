@@ -52,7 +52,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn create_builtin_function(&mut self, lambda: Lambda, prototype: Value) -> Value {
+    fn create_builtin_function(&mut self, lambda: Lambda<X>, prototype: Value) -> Value {
         logger::debug!(event = "creater_builtin_function");
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
         let object = self.create_object(self.function_prototype);

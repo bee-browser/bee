@@ -116,14 +116,58 @@ impl<'a> Editor<'a> {
         self.builder.finalize();
     }
 
+    // assertions
+
+    fn put_assert_null(
+        &mut self,
+        support: &mut impl EditorSupport,
+        ptr: ir::Value,
+        msg: &'static CStr,
+    ) {
+        use ir::condcodes::IntCC::Equal;
+        let is_null = BooleanIr(self.builder.ins().icmp_imm(Equal, ptr, 0));
+        self.put_assert(support, is_null, msg);
+    }
+
+    fn put_assert_non_null(
+        &mut self,
+        support: &mut impl EditorSupport,
+        ptr: ir::Value,
+        msg: &'static CStr,
+    ) {
+        use ir::condcodes::IntCC::NotEqual;
+        let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, ptr, 0));
+        self.put_assert(support, is_non_null, msg);
+    }
+
+    pub fn put_assert(
+        &mut self,
+        support: &mut impl EditorSupport,
+        assertion: BooleanIr,
+        msg: &'static CStr,
+    ) {
+        logger::debug!(event = "put_assert", ?assertion, ?msg);
+        let panic_block = self.create_block();
+        let merge_block = self.create_block();
+        self.put_branch(assertion, merge_block, &[], panic_block, &[]);
+        self.switch_to_block(panic_block);
+        self.put_runtime_panic(support, msg);
+        self.put_jump(merge_block, &[]);
+        self.switch_to_block(merge_block);
+    }
+
     // function parameters
 
     fn runtime(&self) -> ir::Value {
         self.lambda_params(0)
     }
 
+    fn context_argument(&self) -> ir::Value {
+        self.lambda_params(1)
+    }
+
     fn coroutine(&self) -> CoroutineIr {
-        CoroutineIr(self.lambda_params(1))
+        CoroutineIr(self.context_argument())
     }
 
     /// Returns the `this` argument of the lambda function.
@@ -159,6 +203,60 @@ impl<'a> Editor<'a> {
         self.builder.block_params(self.entry_block)[index]
     }
 
+    pub fn put_assert_lambda_params(&mut self, support: &mut impl EditorSupport, is_entry: bool) {
+        self.put_assert_runtime_is_non_null(support);
+        if is_entry {
+            self.put_assert_context_is_null(support);
+        } else {
+            self.put_assert_context_is_non_null(support);
+        }
+        self.put_assert_this_is_non_null(support);
+        self.put_assert_argv_is_non_null(support);
+        self.put_assert_retv_is_non_null(support);
+    }
+
+    fn put_assert_runtime_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            let runtime = self.runtime();
+            self.put_assert_non_null(support, runtime, c"runtime must be non-null");
+        }}
+    }
+
+    fn put_assert_context_is_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            let context = self.context_argument();
+            self.put_assert_null(support, context, c"context must be null");
+        }}
+    }
+
+    fn put_assert_context_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            let context = self.context_argument();
+            self.put_assert_non_null(support, context, c"context must be non-null");
+        }}
+    }
+
+    fn put_assert_this_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            let this = self.this_argument();
+            self.put_assert_non_null(support, this.0, c"this must be non-null");
+        }}
+    }
+
+    fn put_assert_argv_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            let argv = self.argv();
+            self.put_assert_non_null(support, argv.0, c"argv must be non-null");
+        }}
+    }
+
+    fn put_assert_retv_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        runtime_debug! {{
+            let retv = self.retv();
+            self.put_assert_non_null(support, retv.0, c"retv must be non-null");
+        }}
+    }
+
     // arguments
 
     pub fn put_get_argument(&mut self, support: &mut impl EditorSupport, index: u16) -> AnyIr {
@@ -168,7 +266,7 @@ impl<'a> Editor<'a> {
             let index = self.builder.ins().iconst(ir::types::I16, index as i64);
             let argc = self.argc();
             let cond = BooleanIr(self.builder.ins().icmp(UnsignedLessThan, index, argc));
-            self.put_runtime_assert(support, cond, c"put_get_argument: index out of bounds");
+            self.put_assert(support, cond, c"put_get_argument: index out of bounds");
         }}
         let argv = self.argv();
         let offset = Value::SIZE * index as usize;
@@ -743,9 +841,7 @@ impl<'a> Editor<'a> {
     pub fn put_alloc_argv(&mut self, argc: u16) -> ArgvIr {
         logger::debug!(event = "put_alloc_argv", argc);
 
-        if argc == 0 {
-            return ArgvIr(self.put_nullptr());
-        }
+        // The `argv` argument of a lambda function must be non-null even when `argc` is 0.
 
         let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
@@ -1455,6 +1551,10 @@ impl<'a> Editor<'a> {
         value: AnyIr,
     ) -> BooleanIr {
         logger::debug!(event = "put_runtime_to_boolean", ?value);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support, value.0, c"value passed to runtime_to_boolean() must be non-null");
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_to_boolean(support, self.builder.func);
@@ -1469,6 +1569,10 @@ impl<'a> Editor<'a> {
         value: AnyIr,
     ) -> NumberIr {
         logger::debug!(event = "put_runtime_to_numeric", ?value);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support, value.0, c"value passed to runtime_to_numeric() must be non-null");
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_to_numeric(support, self.builder.func);
@@ -1483,6 +1587,10 @@ impl<'a> Editor<'a> {
         value: AnyIr,
     ) -> StringIr {
         logger::debug!(event = "put_runtime_to_string", ?value);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support, value.0, c"value passed to runtime_to_string() must be non-null");
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_to_string(support, self.builder.func);
@@ -1511,6 +1619,10 @@ impl<'a> Editor<'a> {
         any: AnyIr,
     ) -> ObjectIr {
         logger::debug!(event = "put_runtime_to_object", ?any);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support, any.0, c"value passed to runtime_to_object() must be non-null");
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_to_object(support, self.builder.func);
@@ -1555,6 +1667,12 @@ impl<'a> Editor<'a> {
         rhs: StringIr,
     ) -> BooleanIr {
         logger::debug!(event = "put_runtime_is_same_string", ?lhs, ?rhs);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support, lhs.0, c"lhs passed to runtime_is_same_string() must be non-null");
+            self.put_assert_non_null(
+                support, rhs.0, c"rhs passed to runtime_is_same_string() must be non-null");
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_is_same_string(support, self.builder.func);
@@ -1570,6 +1688,12 @@ impl<'a> Editor<'a> {
         rhs: AnyIr,
     ) -> BooleanIr {
         logger::debug!(event = "put_runtime_is_loosely_equal", ?lhs, ?rhs);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support, lhs.0, c"lhs passed to runtime_is_loosely_equal() must be non-null");
+            self.put_assert_non_null(
+                support, rhs.0, c"rhs passed to runtime_is_loosely_equal() must be non-null");
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_is_loosely_equal(support, self.builder.func);
@@ -1585,6 +1709,12 @@ impl<'a> Editor<'a> {
         rhs: AnyIr,
     ) -> BooleanIr {
         logger::debug!(event = "put_runtime_is_strictly_equal", ?lhs, ?rhs);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support, lhs.0, c"lhs passed to runtime_is_strictly_equal() must be non-null");
+            self.put_assert_non_null(
+                support, rhs.0, c"rhs passed to runtime_is_strictly_equal() must be non-null");
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_is_strictly_equal(support, self.builder.func);
@@ -1599,6 +1729,10 @@ impl<'a> Editor<'a> {
         value: AnyIr,
     ) -> StringIr {
         logger::debug!(event = "put_runtime_typeof", ?value);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support, value.0, c"value passed to runtime_typeof() must be non-null");
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_get_typeof(support, self.builder.func);
@@ -1612,7 +1746,14 @@ impl<'a> Editor<'a> {
         support: &mut impl EditorSupport,
         string: StringIr,
     ) -> StringIr {
-        logger::debug!(event = "putruntime_migrate_string_to_heap", ?string);
+        logger::debug!(event = "put_runtime_migrate_string_to_heap", ?string);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                string.0,
+                c"string passed to runtime_migrate_string_to_heap() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_migrate_string_to_heap(support, self.builder.func);
@@ -1736,6 +1877,13 @@ impl<'a> Editor<'a> {
             ?promise,
             ?result
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                result.0,
+                c"result passed to runtime_emit_promise_resolved() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_emit_promise_resolved(support, self.builder.func);
@@ -1770,6 +1918,13 @@ impl<'a> Editor<'a> {
             ?key,
             strict
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_get_value_by_symbol() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_get_value_by_symbol(support, self.builder.func);
@@ -1793,6 +1948,13 @@ impl<'a> Editor<'a> {
             key,
             strict
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_get_value_by_number() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_get_value_by_number(support, self.builder.func);
@@ -1816,6 +1978,18 @@ impl<'a> Editor<'a> {
             ?key,
             strict
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_get_value_by_any() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                key.0,
+                c"key passed to runtime_get_value_by_any() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_get_value_by_value(support, self.builder.func);
@@ -1838,6 +2012,18 @@ impl<'a> Editor<'a> {
             ?key,
             ?value
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_set_value_by_symbol() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"value passed to runtime_set_value_by_symbol() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_set_value_by_symbol(support, self.builder.func);
@@ -1859,6 +2045,18 @@ impl<'a> Editor<'a> {
             key,
             ?value
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_set_value_by_number() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"value passed to runtime_set_value_by_number() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_set_value_by_number(support, self.builder.func);
@@ -1880,6 +2078,23 @@ impl<'a> Editor<'a> {
             ?key,
             ?value
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_set_value_by_any() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                key.0,
+                c"key passed to runtime_set_value_by_any() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"value passed to runtime_set_value_by_any() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_set_value_by_value(support, self.builder.func);
@@ -1894,6 +2109,18 @@ impl<'a> Editor<'a> {
         tail: StringIr,
     ) -> StringIr {
         logger::debug!(event = "put_runtime_concat_strings", ?head, ?tail);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                head.0,
+                c"head passed to runtime_concat_strings() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                tail.0,
+                c"tail passed to runtime_concat_strings() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_concat_strings(support, self.builder.func);
@@ -1917,6 +2144,23 @@ impl<'a> Editor<'a> {
             ?value,
             ?retv
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_create_data_property_by_symbol() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"value passed to runtime_create_data_property_by_symbol() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                retv.0,
+                c"retv passed to runtime_create_data_property_by_symbol() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_create_data_property_by_symbol(support, self.builder.func);
@@ -1941,6 +2185,23 @@ impl<'a> Editor<'a> {
             ?value,
             ?retv
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_create_data_property_by_number() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"value passed to runtime_create_data_property_by_number() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                retv.0,
+                c"retv passed to runtime_create_data_property_by_number() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_create_data_property_by_number(support, self.builder.func);
@@ -1965,6 +2226,28 @@ impl<'a> Editor<'a> {
             ?value,
             ?retv
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                object.0,
+                c"object passed to runtime_create_data_property_by_any() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                key.0,
+                c"key passed to runtime_create_data_property_by_any() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"value passed to runtime_create_data_property_by_any() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                retv.0,
+                c"retv passed to runtime_create_data_property_by_any() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_create_data_property_by_value(support, self.builder.func);
@@ -1986,6 +2269,23 @@ impl<'a> Editor<'a> {
             ?source,
             ?retv
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                target.0,
+                c"target passed to runtime_copy_data_properties() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                source.0,
+                c"source passed to runtime_copy_data_properties() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                retv.0,
+                c"retv passed to runtime_copy_data_properties() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_copy_data_properties(support, self.builder.func);
@@ -2007,6 +2307,23 @@ impl<'a> Editor<'a> {
             ?value,
             ?retv
         );
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                target.0,
+                c"target passed to runtime_push_array_element() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"source passed to runtime_push_array_element() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                retv.0,
+                c"retv passed to runtime_push_array_element() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_push_value(support, self.builder.func);
@@ -2015,21 +2332,16 @@ impl<'a> Editor<'a> {
         StatusIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_assert(
-        &mut self,
-        support: &mut impl EditorSupport,
-        assertion: BooleanIr,
-        msg: &'static CStr,
-    ) {
-        logger::debug!(event = "put_runtime_assert", ?assertion, ?msg);
+    pub fn put_runtime_panic(&mut self, support: &mut impl EditorSupport, msg: &'static CStr) {
+        logger::debug!(event = "put_runtime_panic", ?msg);
         let func = self
             .runtime_func_cache
-            .import_runtime_assert(support, self.builder.func);
+            .import_runtime_panic(support, self.builder.func);
         let msg = self
             .builder
             .ins()
             .iconst(self.addr_type, msg.as_ptr() as i64);
-        let args = [self.runtime(), assertion.0, msg];
+        let args = [self.runtime(), msg];
         self.builder.ins().call(func, &args);
     }
 
@@ -2079,6 +2391,13 @@ impl<'a> Editor<'a> {
         msg: &'static CStr,
     ) {
         logger::debug!(event = "put_runtime_print_any", ?value, ?msg);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"value passed to runtime_print_any() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_print_value(support, self.builder.func);
@@ -2098,6 +2417,13 @@ impl<'a> Editor<'a> {
         msg: &'static CStr,
     ) {
         logger::debug!(event = "put_runtime_print_capture", ?capture, ?msg);
+        runtime_debug! {{
+            self.put_assert_non_null(
+                support,
+                capture.0,
+                c"capture passed to runtime_print_capture() must be non-null",
+            );
+        }}
         let func = self
             .runtime_func_cache
             .import_runtime_print_capture(support, self.builder.func);
@@ -2173,6 +2499,6 @@ impl<'a> Editor<'a> {
             .builder
             .ins()
             .icmp_imm(Equal, scope_id, expected.id() as i64);
-        self.put_runtime_assert(support, BooleanIr(assertion), c"invalid scope");
+        self.put_assert(support, BooleanIr(assertion), c"invalid scope");
     }
 }

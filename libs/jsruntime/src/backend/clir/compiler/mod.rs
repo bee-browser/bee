@@ -39,28 +39,53 @@ use crate::semantics::VariableRef;
 use crate::types::U16Chunk;
 use crate::types::Value;
 
+use super::CodeRegistry;
 use super::CompileError;
-use super::CompilerSupport;
 use super::EditorSupport;
-use super::Executor;
 use super::LambdaId;
 use super::RuntimeFunctionCache;
 
 use control_flow::ControlFlowStack;
 use editor::Editor;
 
-pub struct Session<'r> {
+pub struct Session<'r, X> {
     program: &'r Program,
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
-    pub executor: &'r mut Executor,
+    pub code_registry: &'r mut CodeRegistry<X>,
     scope_cleanup_checker_enabled: bool,
     global_object: *mut c_void,
     object_prototype: *mut c_void,
     function_prototype: *mut c_void,
 }
 
-impl CompilerSupport for Session<'_> {
+trait CompilerSupport {
+    // RuntimePref
+    fn is_scope_cleanup_checker_enabled(&self) -> bool;
+
+    // SymbolRegistry
+    fn get_symbol_name(&self, symbol: Symbol) -> &[u16];
+    fn make_symbol_from_name(&mut self, name: Vec<u16>) -> Symbol;
+
+    // LambdaRegistry
+    fn get_lambda_info(&self, lambda_id: LambdaId) -> &LambdaInfo;
+    fn get_lambda_info_mut(&mut self, lambda_id: LambdaId) -> &mut LambdaInfo;
+
+    // Program
+    fn get_function(&self, lambda_id: LambdaId) -> &Function;
+
+    // CodeRegistry
+    fn target_config(&self) -> isa::TargetFrontendConfig;
+
+    // GlobalObject
+    fn global_object(&mut self) -> *mut c_void;
+
+    // Intrinsics
+    fn object_prototype(&self) -> *mut c_void;
+    fn function_prototype(&self) -> *mut c_void;
+}
+
+impl<X> CompilerSupport for Session<'_, X> {
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
         self.scope_cleanup_checker_enabled
     }
@@ -87,7 +112,7 @@ impl CompilerSupport for Session<'_> {
     }
 
     fn target_config(&self) -> isa::TargetFrontendConfig {
-        self.executor.target_config()
+        self.code_registry.target_config()
     }
 
     fn global_object(&mut self) -> *mut c_void {
@@ -136,7 +161,7 @@ pub fn compile<X>(
                 program,
                 symbol_registry: &mut runtime.symbol_registry,
                 lambda_registry: &mut runtime.lambda_registry,
-                executor: &mut runtime.executor,
+                code_registry: &mut runtime.code_registry,
                 scope_cleanup_checker_enabled,
                 global_object,
                 object_prototype: runtime.object_prototype,
@@ -148,7 +173,7 @@ pub fn compile<X>(
             monitor.print_function_ir(func.id, &context.context.func);
         }
 
-        runtime.executor.codegen(func, &mut context.context);
+        runtime.code_registry.codegen(func, &mut context.context);
     }
 
     Ok(())
@@ -181,7 +206,7 @@ pub fn compile_function<X>(
             program,
             symbol_registry: &mut runtime.symbol_registry,
             lambda_registry: &mut runtime.lambda_registry,
-            executor: &mut runtime.executor,
+            code_registry: &mut runtime.code_registry,
             scope_cleanup_checker_enabled,
             global_object,
             object_prototype: runtime.object_prototype,
@@ -194,7 +219,7 @@ pub fn compile_function<X>(
         monitor.print_function_ir(func.id, &context.context.func);
     }
 
-    runtime.executor.codegen(func, &mut context.context);
+    runtime.code_registry.codegen(func, &mut context.context);
 
     Ok(())
 }
@@ -336,6 +361,9 @@ where
 
         let entry_block = self.editor.entry_block();
         self.editor.switch_to_block(entry_block);
+
+        self.editor
+            .put_assert_lambda_params(self.support, func.is_entry_function());
 
         if matches!(
             self.support.get_lambda_info(func.id).kind,
@@ -937,7 +965,8 @@ where
                 self.editor.put_store_function_to_any(func_ir, local);
             }
             Locator::Global => {
-                let object = ObjectIr(self.editor.put_nullptr());
+                let global_object = self.support.global_object();
+                let object = self.editor.put_object(global_object);
                 let value = self.editor.put_alloc_any();
                 self.editor.put_store_function_to_any(func_ir, value);
                 self.editor
@@ -1071,7 +1100,7 @@ where
         ); // TODO: strict
         runtime_debug! {{
             let is_object = self.editor.put_is_object(prototype);
-            self.editor.put_runtime_assert(self.support, is_object, c"Prototype must be an object");
+            self.editor.put_assert(self.support, is_object, c"Prototype must be an object");
         }}
         let prototype = self.editor.put_load_object(prototype);
 
@@ -1394,7 +1423,7 @@ where
         // `retv` holds a boolean value.
         runtime_debug! {{
             let is_boolean = self.editor.put_is_boolean(retv);
-            self.editor.put_runtime_assert(self.support,
+            self.editor.put_assert(self.support,
                 is_boolean,
                 c"runtime.create_data_property() returns a boolan value",
             );
@@ -1633,12 +1662,12 @@ where
             ) => {
                 runtime_debug! {{
                     let is_string = self.editor.put_is_string(*lhs);
-                    self.editor.put_runtime_assert(self.support, is_string, c"process_addition: lhs should be a string");
+                    self.editor.put_assert(self.support, is_string, c"process_addition: lhs should be a string");
                 }}
                 let lhs = self.editor.put_load_string(*lhs);
                 runtime_debug! {{
                     let is_string = self.editor.put_is_string(*rhs);
-                    self.editor.put_runtime_assert(self.support, is_string, c"process_addition: rhs should be a string");
+                    self.editor.put_assert(self.support, is_string, c"process_addition: rhs should be a string");
                 }}
                 let rhs = self.editor.put_load_string(*rhs);
                 let string = self
@@ -2018,7 +2047,8 @@ where
 
         match self.operand_stack.pop().unwrap() {
             Operand::VariableReference(symbol, Locator::Global) => {
-                let object = ObjectIr(self.editor.put_nullptr());
+                let global_object = self.support.global_object();
+                let object = self.editor.put_object(global_object);
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
                 // TODO(feat): ReferenceError, TypeError
@@ -2662,7 +2692,7 @@ where
         self.editor.switch_to_block(blocks[num_states as usize - 1]);
         let x = self.editor.put_boolean(false);
         self.editor
-            .put_runtime_assert(self.support, x, c"the coroutine has already done");
+            .put_assert(self.support, x, c"the coroutine has already done");
         self.editor.put_unreachable();
 
         self.editor.switch_to_block(blocks[0]);
@@ -3431,7 +3461,7 @@ where
                 runtime_debug! {{
                     let is_nullptr = self.editor.put_is_nullptr(value.0);
                     let non_nullptr = self.editor.put_logical_not(is_nullptr);
-                    self.editor.put_runtime_assert(self.support,
+                    self.editor.put_assert(self.support,
                         non_nullptr,
                         c"runtime.get_value() should return a non-null pointer",
                     );
@@ -3571,7 +3601,8 @@ where
     // TODO(perf): return the value directly if it's a read-only global property.
     fn emit_get_global_variable(&mut self, key: Symbol) -> AnyIr {
         logger::debug!(event = "emit_get_global_variable", ?key);
-        let object = ObjectIr(self.editor.put_nullptr());
+        let global_object = self.support.global_object();
+        let object = self.editor.put_object(global_object);
 
         // TODO: strict mode
         let value = self

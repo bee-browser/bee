@@ -227,11 +227,14 @@ impl Object {
         self.properties
             .get(key)
             .map(|prop| &prop.value)
-            .or_else(|| unsafe {
-                self.prototype
-                    .cast::<Self>()
-                    .as_ref()
-                    .and_then(|prototype| prototype.get_value(key))
+            .or_else(|| {
+                // SAFETY: `self.prototype` is null or a valid pointer to an `Object`.
+                unsafe {
+                    self.prototype
+                        .cast::<Self>()
+                        .as_ref()
+                        .and_then(|prototype| prototype.get_value(key))
+                }
             })
     }
 

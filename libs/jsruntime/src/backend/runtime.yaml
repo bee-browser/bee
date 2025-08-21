@@ -271,11 +271,9 @@ functions:
       - name: retv
         type: '&mut Value'
     ret: Status
-  # assertions
-  - name: assert
+  # panic
+  - name: panic
     args:
-      - name: assertion
-        type: bool
       - name: msg
         type: '&std::ffi::CStr'
   # print functions

@@ -60,9 +60,10 @@ impl Value {
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),
             Self::Promise(_value) => unimplemented!("new Promise()"),
-            Self::Object(value) | Self::Function(value) => unsafe {
-                Ok(value.cast::<Object>().as_ref().unwrap())
-            },
+            Self::Object(value) | Self::Function(value) => {
+                // SAFETY: `value` is always a non-null pointer to an `Object`.
+                unsafe { Ok(&*(*value as *const Object)) }
+            }
             Self::None => unreachable!(),
         }
     }
@@ -174,31 +175,29 @@ impl U16String {
     }
 
     pub const fn is_empty(&self) -> bool {
-        debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).is_empty() }
+        self.first_chunk().is_empty()
     }
 
     pub fn on_stack(&self) -> bool {
-        debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).on_stack() }
+        self.first_chunk().on_stack()
     }
 
     pub fn len(&self) -> u32 {
-        debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).total_len() }
+        self.first_chunk().total_len()
     }
 
-    pub(crate) fn first_chunk(&self) -> &U16Chunk {
+    pub(crate) const fn first_chunk(&self) -> &U16Chunk {
         debug_assert!(!self.0.is_null());
+        // SAFETY: `self.0` is non-null.
         unsafe { &(*self.0) }
     }
 
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
-        debug_assert!(!self.0.is_null());
-        unsafe { (*self.0).make_utf16() }
+        self.first_chunk().make_utf16()
     }
 
     pub(crate) fn as_ptr(&self) -> *const U16Chunk {
+        debug_assert!(!self.0.is_null());
         self.0
     }
 }
@@ -208,7 +207,7 @@ impl std::fmt::Debug for U16String {
         if self.is_empty() {
             write!(f, "U16String()")
         } else {
-            unsafe { write!(f, "U16String({:?})", self.0.as_ref().unwrap()) }
+            write!(f, "U16String({:?})", self.first_chunk())
         }
     }
 }
@@ -218,7 +217,7 @@ impl std::fmt::Display for U16String {
         if self.is_empty() {
             Ok(())
         } else {
-            unsafe { write!(f, "{}", self.0.as_ref().unwrap()) }
+            write!(f, "{}", self.first_chunk())
         }
     }
 }
@@ -300,17 +299,20 @@ impl U16Chunk {
     }
 
     pub fn total_len(&self) -> u32 {
-        if self.next.is_null() {
-            self.len
-        } else {
+        // SAFETY: `self.next` is null or a valid pointer to a `U16Chunk`.
+        if let Some(next) = unsafe { self.next.as_ref() } {
             debug_assert!(self.len > 0);
-            self.len + unsafe { self.next.as_ref().unwrap().total_len() }
+            self.len + next.total_len()
+        } else {
+            self.len
         }
     }
 
     pub fn as_slice(&self) -> &[u16] {
         debug_assert_ne!(self.len, 0);
         debug_assert!(!self.ptr.is_null());
+        debug_assert!(self.ptr.is_aligned());
+        // SAFETY: `self.ptr` is always pointer to an array of `u16`.
         unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) }
     }
 
@@ -323,10 +325,12 @@ impl U16Chunk {
         let mut chunk = self;
         loop {
             result.extend_from_slice(chunk.as_slice());
-            if chunk.next.is_null() {
+            // SAFETY: `chunk.next` is null or a valid pointer to a `U16Chunk`.
+            chunk = if let Some(next) = unsafe { chunk.next.as_ref() } {
+                next
+            } else {
                 break;
-            }
-            chunk = unsafe { chunk.next.as_ref().unwrap() };
+            };
         }
         result
     }
@@ -349,10 +353,12 @@ impl std::fmt::Display for U16Chunk {
                 .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
                 .collect();
             write!(f, "{}", chars.escape_default())?;
-            if chunk.next.is_null() {
+            // SAFETY: `chunk.next` is null or a valid pointer to a `U16Chunk`.
+            chunk = if let Some(next) = unsafe { chunk.next.as_ref() } {
+                next
+            } else {
                 break;
-            }
-            chunk = unsafe { chunk.next.as_ref().unwrap() };
+            };
         }
         Ok(())
     }
@@ -371,11 +377,16 @@ pub enum U16ChunkKind {
 // TODO(issue#237): GcCell
 #[repr(C)]
 pub struct Closure {
-    /// A pointer to a lambda function compiled from a JavaScript function definition.
+    /// An address of a lambda function compiled from a JavaScript function definition.
     ///
     /// This filed is initially set to a runtime function that will perform the lazy compilation of
     /// the JavaScript function and set the actual lambda function to this field.
-    pub lambda: Lambda,
+    //
+    // NOTE: Using Lambda<X> instead of LambdaAddr causes some problems.  For example, functions
+    // such as `std::mem::offset_of!()` and `std::mem::align_of()` does not work with generic
+    // types such as Closure<X> even though the size of Lambda<X> is always equal to the size of
+    // usize regardless of the actual type of X.
+    pub lambda: LambdaAddr,
 
     /// The ID of `lambda`.
     pub lambda_id: LambdaId,
@@ -405,11 +416,27 @@ impl std::fmt::Debug for Closure {
         write!(f, "closure({:?}, [", self.lambda_id)?;
         let len = self.num_captures as usize;
         let data = self.captures.as_ptr();
-        let mut captures = unsafe { std::slice::from_raw_parts(data, len).iter() };
+        // SAFETY: `data` is a non-null pointer to an array of pointers.
+        let captures = unsafe {
+            debug_assert!(!data.is_null());
+            debug_assert!(data.is_aligned());
+            std::slice::from_raw_parts(data, len)
+        };
+        let mut captures = captures.iter();
         if let Some(capture) = captures.next() {
-            write!(f, "{:?}", unsafe { &**capture })?;
+            // SAFETY: `capture` is a non-null pointer to a `Capture`.
+            write!(f, "{:?}", unsafe {
+                debug_assert!(!(*capture).is_null());
+                debug_assert!((*capture).is_aligned());
+                &**capture
+            })?;
             for capture in captures {
-                write!(f, ", {:?}", unsafe { &**capture })?;
+                // SAFETY: `capture` is a non-null pointer to a `Capture`.
+                write!(f, ", {:?}", unsafe {
+                    debug_assert!(!(*capture).is_null());
+                    debug_assert!((*capture).is_aligned());
+                    &**capture
+                })?;
             }
         }
         write!(f, "])")
@@ -500,42 +527,6 @@ impl Coroutine {
     pub(crate) const NUM_LOCALS_OFFSET: usize = std::mem::offset_of!(Self, num_locals);
     pub(crate) const SCOPE_ID_OFFSET: usize = std::mem::offset_of!(Self, scope_id);
     pub(crate) const LOCALS_OFFSET: usize = std::mem::offset_of!(Self, locals);
-
-    pub fn resume(
-        runtime: *mut c_void,
-        coroutine: *mut Coroutine,
-        promise: Promise,
-        result: &Value,
-        error: &Value,
-    ) -> CoroutineStatus {
-        logger::debug!(event = "resume", ?coroutine, ?promise, ?result, ?error);
-        unsafe {
-            let lambda = (*(*coroutine).closure).lambda;
-            let mut this = Value::Undefined;
-            let mut args = [promise.into(), result.clone(), error.clone()];
-            let mut retv = Value::None;
-            let status = lambda(
-                runtime,
-                coroutine as *mut c_void,
-                &mut this as *mut Value,
-                args.len() as u16,
-                args.as_mut_ptr(),
-                &mut retv as *mut Value,
-            );
-            match status {
-                Status::Normal => CoroutineStatus::Done(retv),
-                Status::Exception => CoroutineStatus::Error(retv),
-                Status::Suspend => CoroutineStatus::Suspend,
-            }
-        }
-    }
-}
-
-/// The return value type of `Coroutine::resume()`.
-pub enum CoroutineStatus {
-    Done(Value),
-    Error(Value),
-    Suspend,
 }
 
 pub trait ReturnValue {
@@ -585,19 +576,28 @@ where
 /// * Regular functions: Closure*
 /// * Coroutine functions: Coroutine*
 ///
-pub type Lambda = unsafe extern "C" fn(
-    runtime: *mut c_void,
+pub type Lambda<X> = extern "C" fn(
+    runtime: &mut Runtime<X>,
     context: *mut c_void,
-    this: *mut Value,
+    this: &mut Value,
     argc: u16,
     argv: *mut Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status;
+
+impl<X> From<LambdaAddr> for Lambda<X> {
+    fn from(value: LambdaAddr) -> Self {
+        debug_assert_ne!(value.0, 0);
+        // SAFETY: `LambdaAddr` contains only an address of a lambda function and it is always
+        // convertible to `Lambda`.
+        unsafe { std::mem::transmute(value.0) }
+    }
+}
 
 // See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 
 // This function generates a wrapper function for each `host_fn` at compile time.
-pub fn into_lambda<F, R, X>(host_fn: F) -> Lambda
+pub fn into_lambda<F, R, X>(host_fn: F) -> Lambda<X>
 where
     F: Fn(&mut Runtime<X>, &[Value]) -> R + 'static,
     R: Clone + ReturnValue,
@@ -607,25 +607,30 @@ where
     host_fn_wrapper::<F, R, X>
 }
 
-unsafe extern "C" fn host_fn_wrapper<F, R, X>(
-    runtime: *mut c_void,
+extern "C" fn host_fn_wrapper<F, R, X>(
+    runtime: &mut Runtime<X>,
     _context: *mut c_void,
-    _this: *mut Value,
+    _this: &mut Value,
     argc: u16,
     argv: *mut Value,
-    retv: *mut Value,
+    retv: &mut Value,
 ) -> Status
 where
     F: Fn(&mut Runtime<X>, &[Value]) -> R + 'static,
     R: Clone + ReturnValue,
 {
+    // SAFETY: Parent ensured that F is zero sized and we use `ManuallyDrop` to ensure
+    // it isn't dropped (even if the callback panics).
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = unsafe { std::mem::MaybeUninit::<F>::uninit().assume_init() };
-    let runtime = unsafe { &mut *(runtime as *mut Runtime<X>) };
-    let args = unsafe { std::slice::from_raw_parts(argv as *const Value, argc as usize) };
+    // SAFETY: `argv` is always non-null and a valid pointer to an array of `Value`s.
+    let args = unsafe {
+        debug_assert!(!argv.is_null());
+        debug_assert!(argv.is_aligned());
+        std::slice::from_raw_parts(argv as *const Value, argc as usize)
+    };
     // TODO: The return value is copied twice.  That's inefficient.
     let result = host_fn(runtime, args);
-    let retv = unsafe { &mut *retv };
     *retv = result.value();
     result.status()
 }
@@ -640,6 +645,30 @@ pub enum Status {
 }
 
 static_assertions::const_assert_eq!(size_of::<Status>(), 4);
+
+/// Address of a lambda function.
+#[derive(Clone, Copy, Eq, PartialEq)]
+#[repr(C)]
+pub struct LambdaAddr(usize);
+
+impl From<usize> for LambdaAddr {
+    fn from(value: usize) -> Self {
+        debug_assert_ne!(value, 0);
+        Self(value)
+    }
+}
+
+impl<X> From<Lambda<X>> for LambdaAddr {
+    fn from(value: Lambda<X>) -> Self {
+        Self(value as usize)
+    }
+}
+
+impl std::fmt::Debug for LambdaAddr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self.0 as *const ())
+    }
+}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]

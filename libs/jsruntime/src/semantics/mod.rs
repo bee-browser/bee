@@ -196,12 +196,20 @@ pub enum ThisBinding {
 bitflags! {
     #[derive(Debug)]
     struct FunctionFlags: u8 {
+        /// The entry function of the JavaScript program.
+        const ENTRY_FUNCTION = 1 << 0;
+
         /// The `this` binding is captured by descendant closures.
-        const THIS_BINDING_CAPTURED = 1 << 0;
+        const THIS_BINDING_CAPTURED = 1 << 1;
     }
 }
 
 impl Function {
+    /// Returns `true` if this is the entry function.
+    pub fn is_entry_function(&self) -> bool {
+        self.flags.contains(FunctionFlags::ENTRY_FUNCTION)
+    }
+
     /// Returns `true` if the `this` binding is captured.
     pub fn is_this_binding_captured(&self) -> bool {
         self.flags.contains(FunctionFlags::THIS_BINDING_CAPTURED)
@@ -1092,6 +1100,9 @@ where
             (_, false, ThisMode::Global) => ThisBinding::GlobalObject,
         };
         let mut flags = FunctionFlags::empty();
+        if self.analysis_stack.is_empty() {
+            flags.insert(FunctionFlags::ENTRY_FUNCTION);
+        }
         // The global object is never captured.  It can be directly accessible in any scope.
         if this_captured && this_local {
             flags.insert(FunctionFlags::THIS_BINDING_CAPTURED);

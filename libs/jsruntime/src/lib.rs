@@ -13,7 +13,7 @@ use std::pin::Pin;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
-use backend::Executor;
+use backend::CodeRegistry;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
@@ -75,14 +75,12 @@ pub struct Runtime<X> {
     pref: RuntimePref,
     symbol_registry: SymbolRegistry,
     lambda_registry: LambdaRegistry,
+    code_registry: CodeRegistry<X>,
     programs: Vec<Program>,
-    executor: Executor,
     // TODO: GcArena
     allocator: bumpalo::Bump,
     job_runner: JobRunner,
     global_object: Pin<Box<Object>>,
-    monitor: Option<Box<dyn Monitor>>,
-    extension: X,
 
     // %Object.prototype%
     object_prototype: *mut c_void,
@@ -90,32 +88,38 @@ pub struct Runtime<X> {
     string_prototype: *mut c_void,
     // %Function.prototype%
     function_prototype: *mut c_void,
+
+    monitor: Option<Box<dyn Monitor>>,
+    extension: X,
 }
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let functions = backend::RuntimeFunctions::new::<X>();
         let global_object = Box::pin(Object::new(std::ptr::null_mut())); // TODO: [[Prototype]]
 
         let mut runtime = Self {
             pref: Default::default(),
             symbol_registry: Default::default(),
             lambda_registry: LambdaRegistry::new(),
+            code_registry: CodeRegistry::new(),
             programs: vec![],
-            executor: Executor::new(&functions),
             allocator: bumpalo::Bump::new(),
             job_runner: JobRunner::new(),
             global_object,
-            monitor: None,
-            extension,
             object_prototype: std::ptr::null_mut(),
             string_prototype: std::ptr::null_mut(),
             function_prototype: std::ptr::null_mut(),
+            monitor: None,
+            extension,
         };
 
         runtime.define_builtin_global_properties();
 
         runtime
+    }
+
+    fn is_scope_cleanup_checker_enabled(&self) -> bool {
+        self.pref.enable_scope_cleanup_checker
     }
 
     pub fn extension(&self) -> &X {
@@ -143,7 +147,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let object = self.create_object(std::ptr::null_mut()); // TODO
+        let object = self.create_object(self.function_prototype);
         object.set_closure(closure);
         let value = Value::Function(object.as_ptr());
         // TODO: add `flags` to the arguments.
@@ -166,7 +170,7 @@ impl<X> Runtime<X> {
     pub fn evaluate(&mut self, program_id: ProgramId) -> Result<Value, Value> {
         logger::debug!(event = "evaluate", ?program_id);
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
-        let lambda = self.executor.get_lambda(lambda_id).unwrap();
+        let lambda = self.code_registry.get_lambda(lambda_id).unwrap();
         let module = self.programs[program_id.index()].module;
         self.call_entry_lambda(lambda, module)
     }
@@ -177,7 +181,7 @@ impl<X> Runtime<X> {
     pub fn run(&mut self, program_id: ProgramId, optimize: bool) -> Result<Value, Value> {
         logger::debug!(event = "run", ?program_id);
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
-        let lambda = if let Some(lambda) = self.executor.get_lambda(lambda_id) {
+        let lambda = if let Some(lambda) = self.code_registry.get_lambda(lambda_id) {
             lambda
         } else {
             // TODO: compile only top-level statements in the program.
@@ -192,7 +196,7 @@ impl<X> Runtime<X> {
             }
             // TODO(fix): handle compilation errors
             backend::compile_function(self, program_id, function_index, optimize).unwrap();
-            self.executor.get_lambda(lambda_id).unwrap()
+            self.code_registry.get_lambda(lambda_id).unwrap()
         };
         let module = self.programs[program_id.index()].module;
         let value = self.call_entry_lambda(lambda, module)?;
@@ -221,60 +225,47 @@ impl<X> Runtime<X> {
     }
 
     /// Calls an entry lambda function.
-    fn call_entry_lambda(&mut self, lambda: Lambda, module: bool) -> Result<Value, Value> {
+    fn call_entry_lambda(&mut self, lambda: Lambda<X>, module: bool) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda, module);
         // Specify the global object in the `this` parameter.
         // See also `semantics::Analyzer::start()`.
         //
         // TODO: immutable
         let mut this = Value::Undefined;
+        let mut args = [];
         let mut retv = Value::Undefined;
-        let status = unsafe {
-            lambda(
-                // runtime
-                self.as_void_ptr(),
-                // context
-                std::ptr::null_mut(),
-                // this
-                &mut this,
-                // argc
-                0,
-                // argv
-                std::ptr::null_mut(),
-                // retv
-                &mut retv,
-            )
-        };
+        let status = lambda(
+            // runtime
+            self,
+            // context
+            std::ptr::null_mut(),
+            // this
+            &mut this,
+            // argc
+            args.len() as u16,
+            // argv
+            args.as_mut_ptr(),
+            // retv
+            &mut retv,
+        );
         retv.into_result(status)
-    }
-
-    fn as_void_ptr(&mut self) -> *mut c_void {
-        self as *mut Self as *mut c_void
     }
 
     fn allocator(&self) -> &bumpalo::Bump {
         &self.allocator
     }
 
-    fn global_object(&self) -> &Object {
-        &self.global_object
-    }
-
-    fn global_object_mut(&mut self) -> &mut Object {
-        &mut self.global_object
-    }
-
     pub fn ensure_value_on_heap(&mut self, value: &Value) -> Value {
         match value {
             Value::String(string) if string.on_stack() => {
-                Value::String(unsafe { self.migrate_string_to_heap(*string) })
+                Value::String(self.migrate_string_to_heap(*string))
             }
             _ => value.clone(),
         }
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    pub(crate) unsafe fn migrate_string_to_heap(&mut self, string: U16String) -> U16String {
+    pub(crate) fn migrate_string_to_heap(&mut self, string: U16String) -> U16String {
         logger::debug!(event = "migrate_string_to_heap", ?string);
         debug_assert!(string.on_stack());
 
@@ -284,7 +275,7 @@ impl<X> Runtime<X> {
 
         // TODO(issue#237): GcCell
         // TODO: chunk.next
-        U16String::new(unsafe { self.alloc_string_rec(string.first_chunk(), std::ptr::null()) })
+        U16String::new(self.alloc_string_rec(string.first_chunk(), std::ptr::null()))
     }
 
     pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
@@ -293,20 +284,16 @@ impl<X> Runtime<X> {
         self.allocator.alloc_slice_copy(&utf16)
     }
 
-    pub(crate) unsafe fn alloc_string_rec(
-        &self,
-        head: &U16Chunk,
-        tail: *const U16Chunk,
-    ) -> &U16Chunk {
+    pub(crate) fn alloc_string_rec(&self, head: &U16Chunk, tail: *const U16Chunk) -> &U16Chunk {
         let result = self
             .allocator
             .alloc(U16Chunk::new_heap_from_raw_parts(head.ptr, head.len));
-        if head.next.is_null() {
-            result.next = tail;
+        // SAFETY: `head.next` is null or a valid pointer to a `U16Chunk`.
+        result.next = if let Some(chunk) = unsafe { head.next.as_ref() } {
+            self.alloc_string_rec(chunk, tail)
         } else {
-            let chunk = unsafe { head.next.as_ref().unwrap() };
-            result.next = unsafe { self.alloc_string_rec(chunk, tail) };
-        }
+            tail
+        };
         result
     }
 
