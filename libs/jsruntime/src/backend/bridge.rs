@@ -863,19 +863,16 @@ pub(crate) extern "C" fn runtime_push_value<X>(
     }
 }
 
-pub(crate) extern "C" fn runtime_assert<X>(
+pub(crate) extern "C" fn runtime_panic<X>(
     _runtime: &mut Runtime<X>,
-    assertion: bool,
     msg: *const std::os::raw::c_char,
 ) {
-    if !assertion {
-        // SAFETY: `msg` is always non-null.
-        let msg = unsafe {
-            debug_assert!(!msg.is_null());
-            std::ffi::CStr::from_ptr(msg)
-        };
-        panic!("runtime_assert: {msg:?}");
-    }
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
+    panic!("runtime_panic: {msg:?}");
 }
 
 pub(crate) extern "C" fn runtime_print_bool<X>(

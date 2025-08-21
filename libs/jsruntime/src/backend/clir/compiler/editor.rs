@@ -116,6 +116,8 @@ impl<'a> Editor<'a> {
         self.builder.finalize();
     }
 
+    // assertions
+
     fn put_assert_null(
         &mut self,
         support: &mut impl EditorSupport,
@@ -124,7 +126,7 @@ impl<'a> Editor<'a> {
     ) {
         use ir::condcodes::IntCC::Equal;
         let is_null = BooleanIr(self.builder.ins().icmp_imm(Equal, ptr, 0));
-        self.put_runtime_assert(support, is_null, msg);
+        self.put_assert(support, is_null, msg);
     }
 
     fn put_assert_non_null(
@@ -135,7 +137,23 @@ impl<'a> Editor<'a> {
     ) {
         use ir::condcodes::IntCC::NotEqual;
         let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, ptr, 0));
-        self.put_runtime_assert(support, is_non_null, msg);
+        self.put_assert(support, is_non_null, msg);
+    }
+
+    pub fn put_assert(
+        &mut self,
+        support: &mut impl EditorSupport,
+        assertion: BooleanIr,
+        msg: &'static CStr,
+    ) {
+        logger::debug!(event = "put_assert", ?assertion, ?msg);
+        let panic_block = self.create_block();
+        let merge_block = self.create_block();
+        self.put_branch(assertion, merge_block, &[], panic_block, &[]);
+        self.switch_to_block(panic_block);
+        self.put_runtime_panic(support, msg);
+        self.put_jump(merge_block, &[]);
+        self.switch_to_block(merge_block);
     }
 
     // function parameters
@@ -248,7 +266,7 @@ impl<'a> Editor<'a> {
             let index = self.builder.ins().iconst(ir::types::I16, index as i64);
             let argc = self.argc();
             let cond = BooleanIr(self.builder.ins().icmp(UnsignedLessThan, index, argc));
-            self.put_runtime_assert(support, cond, c"put_get_argument: index out of bounds");
+            self.put_assert(support, cond, c"put_get_argument: index out of bounds");
         }}
         let argv = self.argv();
         let offset = Value::SIZE * index as usize;
@@ -2314,21 +2332,16 @@ impl<'a> Editor<'a> {
         StatusIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_assert(
-        &mut self,
-        support: &mut impl EditorSupport,
-        assertion: BooleanIr,
-        msg: &'static CStr,
-    ) {
-        logger::debug!(event = "put_runtime_assert", ?assertion, ?msg);
+    pub fn put_runtime_panic(&mut self, support: &mut impl EditorSupport, msg: &'static CStr) {
+        logger::debug!(event = "put_runtime_panic", ?msg);
         let func = self
             .runtime_func_cache
-            .import_runtime_assert(support, self.builder.func);
+            .import_runtime_panic(support, self.builder.func);
         let msg = self
             .builder
             .ins()
             .iconst(self.addr_type, msg.as_ptr() as i64);
-        let args = [self.runtime(), assertion.0, msg];
+        let args = [self.runtime(), msg];
         self.builder.ins().call(func, &args);
     }
 
@@ -2486,6 +2499,6 @@ impl<'a> Editor<'a> {
             .builder
             .ins()
             .icmp_imm(Equal, scope_id, expected.id() as i64);
-        self.put_runtime_assert(support, BooleanIr(assertion), c"invalid scope");
+        self.put_assert(support, BooleanIr(assertion), c"invalid scope");
     }
 }

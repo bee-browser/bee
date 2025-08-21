@@ -1100,7 +1100,7 @@ where
         ); // TODO: strict
         runtime_debug! {{
             let is_object = self.editor.put_is_object(prototype);
-            self.editor.put_runtime_assert(self.support, is_object, c"Prototype must be an object");
+            self.editor.put_assert(self.support, is_object, c"Prototype must be an object");
         }}
         let prototype = self.editor.put_load_object(prototype);
 
@@ -1423,7 +1423,7 @@ where
         // `retv` holds a boolean value.
         runtime_debug! {{
             let is_boolean = self.editor.put_is_boolean(retv);
-            self.editor.put_runtime_assert(self.support,
+            self.editor.put_assert(self.support,
                 is_boolean,
                 c"runtime.create_data_property() returns a boolan value",
             );
@@ -1662,12 +1662,12 @@ where
             ) => {
                 runtime_debug! {{
                     let is_string = self.editor.put_is_string(*lhs);
-                    self.editor.put_runtime_assert(self.support, is_string, c"process_addition: lhs should be a string");
+                    self.editor.put_assert(self.support, is_string, c"process_addition: lhs should be a string");
                 }}
                 let lhs = self.editor.put_load_string(*lhs);
                 runtime_debug! {{
                     let is_string = self.editor.put_is_string(*rhs);
-                    self.editor.put_runtime_assert(self.support, is_string, c"process_addition: rhs should be a string");
+                    self.editor.put_assert(self.support, is_string, c"process_addition: rhs should be a string");
                 }}
                 let rhs = self.editor.put_load_string(*rhs);
                 let string = self
@@ -2692,7 +2692,7 @@ where
         self.editor.switch_to_block(blocks[num_states as usize - 1]);
         let x = self.editor.put_boolean(false);
         self.editor
-            .put_runtime_assert(self.support, x, c"the coroutine has already done");
+            .put_assert(self.support, x, c"the coroutine has already done");
         self.editor.put_unreachable();
 
         self.editor.switch_to_block(blocks[0]);
@@ -3461,7 +3461,7 @@ where
                 runtime_debug! {{
                     let is_nullptr = self.editor.put_is_nullptr(value.0);
                     let non_nullptr = self.editor.put_logical_not(is_nullptr);
-                    self.editor.put_runtime_assert(self.support,
+                    self.editor.put_assert(self.support,
                         non_nullptr,
                         c"runtime.get_value() should return a non-null pointer",
                     );
