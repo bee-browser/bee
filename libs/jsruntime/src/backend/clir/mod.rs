@@ -18,6 +18,7 @@ use crate::lambda::LambdaId;
 use crate::logger;
 use crate::semantics::Function;
 use crate::types::Lambda;
+use crate::types::LambdaAddr;
 
 use super::CompileError;
 
@@ -72,12 +73,13 @@ impl<X> CodeRegistry<X> {
 
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda<X>> {
         let func_id = *self.id_map.get(&lambda_id)?;
-        let addr = self.module.get_finalized_function(func_id);
-        (!addr.is_null()).then(|| {
-            // SAFETY: `addr` is the address of the lambda function identified by `lambda_id` and
-            // always convertible to `Lambda`.
-            unsafe { std::mem::transmute(addr) }
-        })
+        let ptr = self.module.get_finalized_function(func_id);
+        let addr = if ptr.is_null() {
+            None
+        } else {
+            Some(LambdaAddr::from(ptr.addr()))
+        };
+        addr.map(|addr| addr.into())
     }
 
     fn target_config(&self) -> isa::TargetFrontendConfig {
