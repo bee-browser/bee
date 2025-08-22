@@ -46,6 +46,7 @@
 - constructor
 - default
 - globalThis
+- indexOf
 - length
 - name
 - number

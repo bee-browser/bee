@@ -52,6 +52,10 @@ impl Value {
     pub(crate) const KIND_OFFSET: usize = 0;
     pub(crate) const HOLDER_OFFSET: usize = size_of::<u64>();
 
+    pub fn is_valid(&self) -> bool {
+        !matches!(self, Value::None)
+    }
+
     // 7.1.18 ToObject ( argument )
     pub fn to_object(&self) -> Result<&Object, Value> {
         match self {

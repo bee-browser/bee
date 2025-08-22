@@ -29,8 +29,8 @@ impl<X> Runtime<X> {
         }
 
         self.object_prototype = self.create_object(std::ptr::null_mut()).as_ptr();
-        self.string_prototype = self.create_object(self.object_prototype).as_ptr();
         self.function_prototype = self.create_object(self.object_prototype).as_ptr();
+        self.string_prototype = self.create_string_prototype();
 
         let this = self.global_object.as_ptr();
 
@@ -54,10 +54,14 @@ impl<X> Runtime<X> {
 
     fn create_builtin_function(&mut self, lambda: Lambda<X>, prototype: Value) -> Value {
         logger::debug!(event = "creater_builtin_function");
+        debug_assert!(!self.function_prototype.is_null());
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
         let object = self.create_object(self.function_prototype);
-        let _ = object.define_own_property(Symbol::PROTOTYPE.into(), Property::data_xxx(prototype));
         object.set_closure(closure);
+        if prototype.is_valid() {
+            let _ =
+                object.define_own_property(Symbol::PROTOTYPE.into(), Property::data_xxx(prototype));
+        }
         Value::Function(object.as_ptr())
     }
 }
