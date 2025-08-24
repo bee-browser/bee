@@ -33,10 +33,10 @@ extern "C" fn string_prototype_index_of<X>(
     _context: &mut CallContext,
     _retv: &mut Value,
 ) -> Status {
+    logger::debug!(event = "string_prototype_index_of");
     // TODO
     Status::Normal
 }
-
 
 impl<X> Runtime<X> {
     fn string_constructor(&mut self, context: &mut CallContext) -> Result<Value, Value> {
@@ -48,7 +48,7 @@ impl<X> Runtime<X> {
         Ok(Value::String(s))
     }
 
-    pub(super) fn create_string_prototype(&mut self) -> *mut std::ffi::c_void {
+    pub(super) fn create_string_prototype(&mut self) -> *mut c_void {
         logger::debug!(event = "creater_string_prototype");
         debug_assert!(!self.object_prototype.is_null());
 

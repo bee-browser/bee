@@ -136,7 +136,7 @@ impl<'a> Editor<'a> {
         self.put_assert(support, is_null, msg);
     }
 
-    fn put_assert_non_null(
+    pub fn put_assert_non_null(
         &mut self,
         support: &mut impl EditorSupport,
         ptr: ir::Value,

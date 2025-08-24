@@ -3458,10 +3458,9 @@ where
                     }
                 };
                 runtime_debug! {{
-                    let is_nullptr = self.editor.put_is_nullptr(value.0);
-                    let non_nullptr = self.editor.put_logical_not(is_nullptr);
-                    self.editor.put_assert(self.support,
-                        non_nullptr,
+                    self.editor.put_assert_non_null(
+                        self.support,
+                        value.0,
                         c"runtime.get_value() should return a non-null pointer",
                     );
                 }}
