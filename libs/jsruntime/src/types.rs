@@ -578,8 +578,7 @@ where
 ///
 pub type Lambda<X> = extern "C" fn(
     runtime: &mut Runtime<X>,
-    context: *mut c_void,
-    this: &mut Value,
+    context: &mut CallContext,
     argc: u16,
     argv: *mut Value,
     retv: &mut Value,
@@ -609,8 +608,7 @@ where
 
 extern "C" fn host_fn_wrapper<F, R, X>(
     runtime: &mut Runtime<X>,
-    _context: *mut c_void,
-    _this: &mut Value,
+    _context: &mut CallContext,
     argc: u16,
     argv: *mut Value,
     retv: &mut Value,
@@ -633,6 +631,47 @@ where
     let result = host_fn(runtime, args);
     *retv = result.value();
     result.status()
+}
+
+#[repr(C)]
+pub struct CallContext {
+    /// The `this` argument.
+    pub this: Value,
+
+    /// A pointer to the call environment.
+    ///
+    /// The actual type of the value varies depending on the type of the lambda function:
+    ///
+    /// * Entry functions: 0 (null pointer)
+    /// * Regular functions: &mut Closure
+    /// * Coroutine functions: &mut Coroutine
+    ///
+    pub envp: *mut c_void,
+}
+
+impl CallContext {
+    pub const SIZE: usize = std::mem::size_of::<Self>();
+    pub const ALIGNMENT: usize = std::mem::align_of::<Self>();
+    pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
+    pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
+
+    pub fn closure_mut(&mut self) -> &mut Closure {
+        // SAFETY: `envp` is always a non-null pointer to a `Closure`.
+        unsafe {
+            debug_assert!(!self.envp.is_null());
+            debug_assert!(self.envp.is_aligned());
+            &mut *(self.envp as *mut Closure)
+        }
+    }
+
+    pub fn coroutine_mut(&mut self) -> &mut Coroutine {
+        // SAFETY: `envp` is always a non-null pointer to a `Coroutine`.
+        unsafe {
+            debug_assert!(!self.envp.is_null());
+            debug_assert!(self.envp.is_aligned());
+            &mut *(self.envp as *mut Coroutine)
+        }
+    }
 }
 
 /// The return value type of `Lambda` function.
