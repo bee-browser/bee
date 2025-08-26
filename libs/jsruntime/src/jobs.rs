@@ -62,10 +62,7 @@ impl<X> Runtime<X> {
         error: &Value,
     ) -> (Status, Value) {
         logger::debug!(event = "resume", ?coroutine, ?promise, ?result, ?error);
-        let mut context = CallContext {
-            this: Value::Undefined,
-            envp: coroutine as *mut std::ffi::c_void,
-        };
+        let mut context = CallContext::new_for_promise(coroutine);
         let mut args = [promise.into(), result.clone(), error.clone()];
         let mut retv = Value::None;
         // SAFETY: `coroutine` is always a non-null pointer to a `Coroutine`.

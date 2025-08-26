@@ -228,14 +228,7 @@ impl<X> Runtime<X> {
     /// Calls an entry lambda function.
     fn call_entry_lambda(&mut self, lambda: Lambda<X>, module: bool) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda, module);
-        let mut context = CallContext {
-            // Specify the global object in the `this` parameter.
-            // See also `semantics::Analyzer::start()`.
-            //
-            // TODO: immutable
-            this: Value::Undefined,
-            envp: std::ptr::null_mut(),
-        };
+        let mut context = CallContext::new_for_entry();
         let mut args = [];
         let mut retv = Value::Undefined;
         let status = lambda(

@@ -636,7 +636,7 @@ where
 #[repr(C)]
 pub struct CallContext {
     /// The `this` argument.
-    pub this: Value,
+    this: Value,
 
     /// A pointer to the call environment.
     ///
@@ -646,7 +646,11 @@ pub struct CallContext {
     /// * Regular functions: &mut Closure
     /// * Coroutine functions: &mut Coroutine
     ///
-    pub envp: *mut c_void,
+    envp: *mut c_void,
+
+    /// A pointer to the call context of the caller.
+    #[allow(unused)]
+    caller: *const CallContext,
 }
 
 impl CallContext {
@@ -654,8 +658,25 @@ impl CallContext {
     pub const ALIGNMENT: usize = std::mem::align_of::<Self>();
     pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
     pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
+    pub const CALLER_OFFSET: usize = std::mem::offset_of!(Self, caller);
 
-    pub fn closure_mut(&mut self) -> &mut Closure {
+    pub(crate) fn new_for_entry() -> Self {
+        Self {
+            this: Value::Undefined,
+            envp: std::ptr::null_mut(),
+            caller: std::ptr::null(),
+        }
+    }
+
+    pub(crate) fn new_for_promise(coroutine: *mut Coroutine) -> Self {
+        Self {
+            this: Value::Undefined,
+            envp: coroutine as *mut std::ffi::c_void,
+            caller: std::ptr::null(),
+        }
+    }
+
+    pub(crate) fn closure_mut(&mut self) -> &mut Closure {
         // SAFETY: `envp` is always a non-null pointer to a `Closure`.
         unsafe {
             debug_assert!(!self.envp.is_null());
@@ -664,7 +685,7 @@ impl CallContext {
         }
     }
 
-    pub fn coroutine_mut(&mut self) -> &mut Coroutine {
+    pub(crate) fn coroutine_mut(&mut self) -> &mut Coroutine {
         // SAFETY: `envp` is always a non-null pointer to a `Coroutine`.
         unsafe {
             debug_assert!(!self.envp.is_null());

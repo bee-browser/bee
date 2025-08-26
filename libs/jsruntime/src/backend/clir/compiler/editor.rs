@@ -72,8 +72,6 @@ impl<'a> Editor<'a> {
         // predecessor of the entry block.
         builder.seal_block(entry_block);
 
-        let closure = builder.block_params(entry_block)[1]; // dummy
-
         let call_context = builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
             size: CallContext::SIZE as u32,
@@ -93,7 +91,7 @@ impl<'a> Editor<'a> {
             lambda_sig,
             entry_block,
             call_context,
-            closure,
+            closure: ir::Value::from_u32(0), // dummy
             fcs,
             block_terminated: false,
             coroutine_mode: false,
@@ -850,6 +848,14 @@ impl<'a> Editor<'a> {
     }
 
     // call context
+
+    pub fn put_store_caller_to_call_context(&mut self) {
+        const OFFSET: i32 = CallContext::CALLER_OFFSET as i32;
+        let caller = self.context();
+        self.builder
+            .ins()
+            .stack_store(caller, self.call_context, OFFSET);
+    }
 
     pub fn put_get_this_from_call_context(&mut self) -> AnyIr {
         const OFFSET: i32 = CallContext::THIS_OFFSET as i32;

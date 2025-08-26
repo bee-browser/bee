@@ -363,6 +363,8 @@ where
         self.editor
             .put_assert_lambda_params(self.support, func.is_entry_function());
 
+        self.editor.put_store_caller_to_call_context();
+
         match self.support.get_lambda_info(func.id).kind {
             LambdaKind::Coroutine => self.editor.put_set_coroutine_mode(),
             _ => self.editor.put_set_closure_mode(),
