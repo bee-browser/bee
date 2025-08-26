@@ -13,7 +13,7 @@ version.workspace = true
 flagset = "0.4.7"
 htmltokenizer = { path = "../htmltokenizer" }
 logging = { path = "../logging" }
-phf = { version = "0.12.1", features = ["macros"] }
+phf = { version = "0.13.1", features = ["macros"] }
 thiserror = "2.0.16"
 unicase = "2.8.1"
 
