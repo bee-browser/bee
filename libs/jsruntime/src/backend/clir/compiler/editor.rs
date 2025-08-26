@@ -192,8 +192,9 @@ impl<'a> Editor<'a> {
         CoroutineIr(self.envp())
     }
 
-    fn argc(&self) -> ir::Value {
-        self.lambda_params(2)
+    fn argc(&mut self) -> ir::Value {
+        let context = self.context();
+        self.put_load_i16(context, CallContext::ARGC_OFFSET)
     }
 
     pub fn argc_as_jump_table_index(&mut self) -> ir::Value {
@@ -201,16 +202,17 @@ impl<'a> Editor<'a> {
         self.builder.ins().uextend(ir::types::I32, argc)
     }
 
-    fn argv(&self) -> ArgvIr {
-        ArgvIr(self.lambda_params(3))
+    fn argv(&mut self) -> ArgvIr {
+        let context = self.context();
+        ArgvIr(self.put_load_addr(context, CallContext::ARGV_OFFSET))
     }
 
     pub fn retv(&self) -> AnyIr {
-        AnyIr(self.lambda_params(4))
+        AnyIr(self.lambda_params(2))
     }
 
     pub fn exception(&self) -> AnyIr {
-        AnyIr(self.lambda_params(4))
+        AnyIr(self.lambda_params(2))
     }
 
     fn lambda_params(&self, index: usize) -> ir::Value {
@@ -759,14 +761,8 @@ impl<'a> Editor<'a> {
         self.put_store(capture.0, closure.0, offset);
     }
 
-    pub fn put_call(
-        &mut self,
-        closure: ClosureIr,
-        argc: u16,
-        argv: ArgvIr,
-        retv: AnyIr,
-    ) -> StatusIr {
-        logger::debug!(event = "put_call", ?closure, argc, ?argv, ?retv);
+    pub fn put_call(&mut self, closure: ClosureIr, retv: AnyIr) -> StatusIr {
+        logger::debug!(event = "put_call", ?closure, ?retv);
         self.put_store_closure_to_call_context(closure);
         let lambda = self.put_load_lambda_from_closure(closure);
         let args = &[
@@ -774,8 +770,6 @@ impl<'a> Editor<'a> {
             self.builder
                 .ins()
                 .stack_addr(self.addr_type, self.call_context, 0),
-            self.builder.ins().iconst(ir::types::I16, argc as i64),
-            argv.0,
             retv.0,
         ];
         let call = self
@@ -857,12 +851,44 @@ impl<'a> Editor<'a> {
             .stack_store(caller, self.call_context, OFFSET);
     }
 
+    pub fn put_store_argc_to_call_context(&mut self, argc: u16) {
+        const OFFSET: i32 = CallContext::ARGC_OFFSET as i32;
+        let argc = self.builder.ins().iconst(ir::types::I16, argc as i64);
+        self.builder
+            .ins()
+            .stack_store(argc, self.call_context, OFFSET);
+    }
+
+    pub fn put_store_argc_max_to_call_context(&mut self, argc_max: u16) {
+        const OFFSET: i32 = CallContext::ARGC_MAX_OFFSET as i32;
+        let argc_max = self.builder.ins().iconst(ir::types::I16, argc_max as i64);
+        self.builder
+            .ins()
+            .stack_store(argc_max, self.call_context, OFFSET);
+    }
+
+    pub fn put_store_argv_to_call_context(&mut self, argv: ArgvIr) {
+        const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
+        self.builder
+            .ins()
+            .stack_store(argv.0, self.call_context, OFFSET);
+    }
+
     pub fn put_get_this_from_call_context(&mut self) -> AnyIr {
         const OFFSET: i32 = CallContext::THIS_OFFSET as i32;
         AnyIr(
             self.builder
                 .ins()
                 .stack_addr(self.addr_type, self.call_context, OFFSET),
+        )
+    }
+
+    pub fn put_get_argv_from_call_context(&mut self) -> ArgvIr {
+        const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
+        ArgvIr(
+            self.builder
+                .ins()
+                .stack_load(self.addr_type, self.call_context, OFFSET),
         )
     }
 

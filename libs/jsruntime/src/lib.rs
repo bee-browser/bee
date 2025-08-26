@@ -228,21 +228,10 @@ impl<X> Runtime<X> {
     /// Calls an entry lambda function.
     fn call_entry_lambda(&mut self, lambda: Lambda<X>, module: bool) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda, module);
-        let mut context = CallContext::new_for_entry();
-        let mut args = [];
+        let mut args: [_; 0] = [];
+        let mut context = CallContext::new_for_entry(&mut args);
         let mut retv = Value::Undefined;
-        let status = lambda(
-            // runtime
-            self,
-            // context
-            &mut context,
-            // argc
-            args.len() as u16,
-            // argv
-            args.as_mut_ptr(),
-            // retv
-            &mut retv,
-        );
+        let status = lambda(self, &mut context, &mut retv);
         retv.into_result(status)
     }
 

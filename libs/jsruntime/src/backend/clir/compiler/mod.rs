@@ -310,10 +310,6 @@ where
         params.push(ir::AbiParam::new(addr_type));
         // context: &mut CallContext
         params.push(ir::AbiParam::new(addr_type));
-        // args: u16
-        params.push(ir::AbiParam::new(ir::types::I16));
-        // argv: *mut Value
-        params.push(ir::AbiParam::new(addr_type));
         // retv: &mut Value
         params.push(ir::AbiParam::new(addr_type));
 
@@ -364,6 +360,10 @@ where
             .put_assert_lambda_params(self.support, func.is_entry_function());
 
         self.editor.put_store_caller_to_call_context();
+
+        let argv = self.editor.put_alloc_argv(8);
+        self.editor.put_store_argc_max_to_call_context(8);
+        self.editor.put_store_argv_to_call_context(argv);
 
         match self.support.get_lambda_info(func.id).kind {
             LambdaKind::Coroutine => self.editor.put_set_coroutine_mode(),
@@ -1108,7 +1108,8 @@ where
     }
 
     fn process_call(&mut self, argc: u16) {
-        let argv = self.emit_create_argv(argc);
+        debug_assert!(argc <= 8); // TODO: dynamic allocation
+        self.emit_fill_args(argc);
         let (operand, this, _) = self.dereference();
         let closure = match operand {
             Operand::Closure(_) => unreachable!(),
@@ -1133,7 +1134,7 @@ where
             self.editor.put_store_any_to_any(this, dst);
         }
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, argc, argv, retv);
+        let status = self.editor.put_call(closure, retv);
 
         self.emit_check_status_for_exception(status, retv);
 
@@ -1142,8 +1143,9 @@ where
     }
 
     fn process_new(&mut self, argc: u16) {
+        debug_assert!(argc <= 8); // TODO: dynamic allocation
         // TODO: prototype chain
-        let argv = self.emit_create_argv(argc);
+        self.emit_fill_args(argc);
         let (operand, ..) = self.dereference();
         let function = match operand {
             Operand::Closure(_) => unreachable!(),
@@ -1179,7 +1181,7 @@ where
             object
         };
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, argc, argv, retv);
+        let status = self.editor.put_call(closure, retv);
 
         self.emit_check_status_for_exception(status, retv);
 
@@ -3526,9 +3528,9 @@ where
         any
     }
 
-    fn emit_create_argv(&mut self, argc: u16) -> ArgvIr {
-        logger::debug!(event = "emit_create_argv", argc);
-        let argv = self.editor.put_alloc_argv(argc);
+    fn emit_fill_args(&mut self, argc: u16) {
+        logger::debug!(event = "emit_fill_args", argc);
+        let argv = self.editor.put_get_argv_from_call_context();
         // TODO: evaluation order
         for i in (0..argc).rev() {
             let (operand, ..) = self.dereference();
@@ -3536,7 +3538,7 @@ where
             let arg = self.editor.put_get_arg(argv, i);
             self.emit_store_operand_to_any(&operand, arg);
         }
-        argv
+        self.editor.put_store_argc_to_call_context(argc);
     }
 
     fn emit_store_operand_to_any(&mut self, operand: &Operand, any: AnyIr) {

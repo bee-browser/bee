@@ -54,8 +54,6 @@ macro_rules! into_capture {
 pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
-    argc: u16,
-    argv: *mut Value,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_normal");
@@ -80,14 +78,12 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     );
     closure.lambda = lambda.into();
 
-    lambda(runtime, context, argc, argv, retv)
+    lambda(runtime, context, retv)
 }
 
 pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
-    argc: u16,
-    argv: *mut Value,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_ramp");
@@ -122,14 +118,12 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     );
     closure.lambda = lambda.into();
 
-    lambda(runtime, context, argc, argv, retv)
+    lambda(runtime, context, retv)
 }
 
 pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
-    argc: u16,
-    argv: *mut Value,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine");
@@ -153,7 +147,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
     );
     closure.lambda = lambda.into();
 
-    lambda(runtime, context, argc, argv, retv)
+    lambda(runtime, context, retv)
 }
 
 // 7.1.2 ToBoolean ( argument )
