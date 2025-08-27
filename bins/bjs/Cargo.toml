@@ -11,7 +11,7 @@ version.workspace = true
 
 [dependencies]
 anyhow = "1.0.99"
-clap = { version = "4.5.45", features = ["env", "derive", "wrap_help"] }
+clap = { version = "4.5.46", features = ["env", "derive", "wrap_help"] }
 cranelift-codegen = "0.123.2"
 cranelift-reader = "0.123.2"
 itertools = "0.14.0"
