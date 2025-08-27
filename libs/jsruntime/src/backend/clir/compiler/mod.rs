@@ -1110,7 +1110,7 @@ where
     fn process_call(&mut self, argc: u16) {
         debug_assert!(argc <= 8); // TODO: dynamic allocation
         self.emit_fill_args(argc);
-        let (operand, this, _) = self.dereference();
+        let (operand, this) = self.dereference();
         let closure = match operand {
             Operand::Closure(_) => unreachable!(),
             Operand::Function(object, _) => {
@@ -3409,21 +3409,19 @@ where
     }
 
     // TODO(refactor): need rethink, especially the return value.
-    fn dereference(&mut self) -> (Operand, Option<ObjectIr>, Option<(Symbol, Locator)>) {
+    fn dereference(&mut self) -> (Operand, Option<ObjectIr>) {
         logger::debug!(event = "dereference", operand_stack.top = ?self.operand_stack.last());
 
         let operand = self.operand_stack.pop().unwrap();
         match operand {
             // Shortcut for frequently used reference to `undefined`.
-            Operand::VariableReference(Symbol::UNDEFINED, Locator::Global) => (
-                Operand::Undefined,
-                None,
-                Some((Symbol::UNDEFINED, Locator::Global)),
-            ),
+            Operand::VariableReference(Symbol::UNDEFINED, Locator::Global) => {
+                (Operand::Undefined, None)
+            }
             Operand::VariableReference(symbol, locator) => {
                 let value = self.emit_get_variable(symbol, locator);
                 // TODO(pref): compile-time evaluation
-                (Operand::Any(value, None), None, Some((symbol, locator)))
+                (Operand::Any(value, None), None)
             }
             Operand::PropertyReference(owner, key) => {
                 let object = self.perform_owner_to_object(&owner);
@@ -3465,9 +3463,9 @@ where
                     );
                 }}
                 // TODO(pref): compile-time evaluation
-                (Operand::Any(value, None), Some(object), None)
+                (Operand::Any(value, None), Some(object))
             }
-            _ => (operand, None, None),
+            _ => (operand, None),
         }
     }
 
