@@ -306,17 +306,11 @@ where
 
         // formal parameters
         let params = &mut func_ir.signature.params;
-        // runtime: *mut c_void
+        // runtime: &mut Runtime<X>
         params.push(ir::AbiParam::new(addr_type));
-        // context: *mut c_void
+        // context: &mut CallContext
         params.push(ir::AbiParam::new(addr_type));
-        // this: *mut Value
-        params.push(ir::AbiParam::new(addr_type));
-        // args: u16
-        params.push(ir::AbiParam::new(ir::types::I16));
-        // argv: *mut Value
-        params.push(ir::AbiParam::new(addr_type));
-        // retv: *mut Value
+        // retv: &mut Value
         params.push(ir::AbiParam::new(addr_type));
 
         // #[repr(u32)] Status
@@ -365,12 +359,18 @@ where
         self.editor
             .put_assert_lambda_params(self.support, func.is_entry_function());
 
-        if matches!(
-            self.support.get_lambda_info(func.id).kind,
-            LambdaKind::Coroutine
-        ) {
-            self.editor.put_set_coroutine_mode();
+        self.editor.put_store_caller_to_call_context();
+
+        let argv = self.editor.put_alloc_argv(8);
+        self.editor.put_store_argc_max_to_call_context(8);
+        self.editor.put_store_argv_to_call_context(argv);
+
+        match self.support.get_lambda_info(func.id).kind {
+            LambdaKind::Coroutine => self.editor.put_set_coroutine_mode(),
+            _ => self.editor.put_set_closure_mode(),
         }
+
+        self.resolve_this_binding(func);
 
         // Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from a
         // debugging and readability perspective...
@@ -409,6 +409,71 @@ where
 
         let retv = self.editor.retv();
         self.editor.put_store_undefined_to_any(retv);
+    }
+
+    // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
+    //
+    // See Also:
+    // 9.1.2.4 NewFunctionEnvironment()
+    // 10.2 ECMAScript Function Objects
+    // 10.2.3 OrdinaryFunctionCreate()
+    // 10.2.11 FunctionDeclarationInstantiation()
+    fn resolve_this_binding(&mut self, func: &Function) {
+        logger::debug!(event = "resolve_this_binding", ?func.this_binding);
+        debug_assert!(self.this.is_none());
+        debug_assert!(self.this_capture.is_none());
+
+        match func.this_binding {
+            ThisBinding::None => {
+                // No code is generated for the `this` binding resolution, which improves the
+                // execution time in some situations.
+            }
+            ThisBinding::ThisArgument => {
+                // const this = thisArgument;
+                let this = self.editor.this_argument();
+                self.this = Some(this);
+            }
+            ThisBinding::Capture => {
+                // The capture of the outer `this` binding is always the first element in the
+                // capture list.
+                let this = self.editor.put_load_captured_value(0);
+                self.this = Some(this);
+            }
+            ThisBinding::GlobalObject => {
+                // const this = globalObject;
+                // DO NOT USE `globalThis` HERE.
+                let global_object = self.support.global_object();
+                let value = self.editor.put_object(global_object);
+                let this = self.perform_to_any(&Operand::Object(value));
+                self.this = Some(this);
+            }
+            ThisBinding::Quirk => {
+                // const this =
+                //   thisArgument !== null && thisArgument !== undefined ?
+                //   ToObject(thisArgument) : globalObject;
+                self.operand_stack
+                    .push(Operand::Any(self.editor.this_argument(), None));
+                self.process_non_nullish();
+                self.process_if_then(true);
+                self.operand_stack
+                    .push(Operand::Any(self.editor.this_argument(), None));
+                self.perform_to_object();
+                self.process_else(true);
+                // DO NOT USE `globalThis` HERE.
+                let global_object = self.support.global_object();
+                let value = self.editor.put_object(global_object);
+                self.operand_stack.push(Operand::Object(value));
+                self.process_ternary();
+                let this = self.pop_any();
+                self.this = Some(this);
+            }
+        }
+
+        if func.is_this_binding_captured() {
+            let this = self.this.unwrap();
+            let capture = self.editor.put_runtime_create_capture(self.support, this);
+            self.this_capture = Some(capture);
+        }
     }
 
     fn end_compile(mut self, func: &Function) {
@@ -478,7 +543,7 @@ where
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::New(nargs) => self.process_new(*nargs),
-            CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
+            CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::ToNumeric => self.process_to_numeric(),
             CompileCommand::ToString => self.process_to_string(),
@@ -1043,7 +1108,8 @@ where
     }
 
     fn process_call(&mut self, argc: u16) {
-        let argv = self.emit_create_argv(argc);
+        debug_assert!(argc <= 8); // TODO: dynamic allocation
+        self.emit_fill_args(argc);
         let (operand, this, _) = self.dereference();
         let closure = match operand {
             Operand::Closure(_) => unreachable!(),
@@ -1059,15 +1125,16 @@ where
             }
         };
 
-        let this = if let Some(this) = this {
-            let any = self.emit_create_any();
-            self.editor.put_store_object_to_any(this, any);
-            any
+        if let Some(this) = this {
+            let dst = self.editor.put_get_this_from_call_context();
+            self.editor.put_store_object_to_any(this, dst);
         } else {
-            self.editor.this_argument()
-        };
+            let this = self.editor.this_argument();
+            let dst = self.editor.put_get_this_from_call_context();
+            self.editor.put_store_any_to_any(this, dst);
+        }
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, this, argc, argv, retv);
+        let status = self.editor.put_call(closure, retv);
 
         self.emit_check_status_for_exception(status, retv);
 
@@ -1076,8 +1143,9 @@ where
     }
 
     fn process_new(&mut self, argc: u16) {
+        debug_assert!(argc <= 8); // TODO: dynamic allocation
         // TODO: prototype chain
-        let argv = self.emit_create_argv(argc);
+        self.emit_fill_args(argc);
         let (operand, ..) = self.dereference();
         let function = match operand {
             Operand::Closure(_) => unreachable!(),
@@ -1105,23 +1173,23 @@ where
         let prototype = self.editor.put_load_object(prototype);
 
         let this = {
-            let any = self.emit_create_any();
             let object = self
                 .editor
                 .put_runtime_create_object(self.support, prototype);
-            self.editor.put_store_object_to_any(object, any);
-            any
+            let dst = self.editor.put_get_this_from_call_context();
+            self.editor.put_store_object_to_any(object, dst);
+            object
         };
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, this, argc, argv, retv);
+        let status = self.editor.put_call(closure, retv);
 
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation
-        self.operand_stack.push(Operand::Any(this, None));
+        self.operand_stack.push(Operand::Object(this));
     }
 
-    fn process_push_scope(&mut self, func: &Function, scope_ref: ScopeRef) {
+    fn process_push_scope(&mut self, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
         let init_block = self.editor.create_block();
@@ -1142,10 +1210,6 @@ where
         }
 
         let scope = self.scope_tree.scope(scope_ref);
-
-        if scope.is_function() {
-            self.resolve_this_binding(func);
-        }
 
         for variable in scope.variables.iter() {
             if variable.is_function_scoped() {
@@ -1170,71 +1234,6 @@ where
 
         self.editor.put_jump(body_block, &[]);
         self.editor.switch_to_block(body_block);
-    }
-
-    // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
-    //
-    // See Also:
-    // 9.1.2.4 NewFunctionEnvironment()
-    // 10.2 ECMAScript Function Objects
-    // 10.2.3 OrdinaryFunctionCreate()
-    // 10.2.11 FunctionDeclarationInstantiation()
-    fn resolve_this_binding(&mut self, func: &Function) {
-        logger::debug!(event = "resolve_this_binding", ?func.this_binding);
-        debug_assert!(self.this.is_none());
-        debug_assert!(self.this_capture.is_none());
-
-        match func.this_binding {
-            ThisBinding::None => {
-                // No code is generated for the `this` binding resolution, which improves the
-                // execution time in some situations.
-            }
-            ThisBinding::ThisArgument => {
-                // const this = thisArgument;
-                let this = self.editor.this_argument();
-                self.this = Some(this);
-            }
-            ThisBinding::Capture => {
-                // The capture of the outer `this` binding is always the first element in the
-                // capture list.
-                let this = self.editor.put_load_captured_value(0);
-                self.this = Some(this);
-            }
-            ThisBinding::GlobalObject => {
-                // const this = globalObject;
-                // DO NOT USE `globalThis` HERE.
-                let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object);
-                let this = self.perform_to_any(&Operand::Object(value));
-                self.this = Some(this);
-            }
-            ThisBinding::Quirk => {
-                // const this =
-                //   thisArgument !== null && thisArgument !== undefined ?
-                //   ToObject(thisArgument) : globalObject;
-                self.operand_stack
-                    .push(Operand::Any(self.editor.this_argument(), None));
-                self.process_non_nullish();
-                self.process_if_then(true);
-                self.operand_stack
-                    .push(Operand::Any(self.editor.this_argument(), None));
-                self.perform_to_object();
-                self.process_else(true);
-                // DO NOT USE `globalThis` HERE.
-                let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object);
-                self.operand_stack.push(Operand::Object(value));
-                self.process_ternary();
-                let this = self.pop_any();
-                self.this = Some(this);
-            }
-        }
-
-        if func.is_this_binding_captured() {
-            let this = self.this.unwrap();
-            let capture = self.editor.put_runtime_create_capture(self.support, this);
-            self.this_capture = Some(capture);
-        }
     }
 
     fn process_pop_scope(&mut self, scope_ref: ScopeRef) {
@@ -3529,9 +3528,9 @@ where
         any
     }
 
-    fn emit_create_argv(&mut self, argc: u16) -> ArgvIr {
-        logger::debug!(event = "emit_create_argv", argc);
-        let argv = self.editor.put_alloc_argv(argc);
+    fn emit_fill_args(&mut self, argc: u16) {
+        logger::debug!(event = "emit_fill_args", argc);
+        let argv = self.editor.put_get_argv_from_call_context();
         // TODO: evaluation order
         for i in (0..argc).rev() {
             let (operand, ..) = self.dereference();
@@ -3539,7 +3538,7 @@ where
             let arg = self.editor.put_get_arg(argv, i);
             self.emit_store_operand_to_any(&operand, arg);
         }
-        argv
+        self.editor.put_store_argc_to_call_context(argc);
     }
 
     fn emit_store_operand_to_any(&mut self, operand: &Operand, any: AnyIr) {

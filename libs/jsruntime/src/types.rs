@@ -576,14 +576,8 @@ where
 /// * Regular functions: Closure*
 /// * Coroutine functions: Coroutine*
 ///
-pub type Lambda<X> = extern "C" fn(
-    runtime: &mut Runtime<X>,
-    context: *mut c_void,
-    this: &mut Value,
-    argc: u16,
-    argv: *mut Value,
-    retv: &mut Value,
-) -> Status;
+pub type Lambda<X> =
+    extern "C" fn(runtime: &mut Runtime<X>, context: &mut CallContext, retv: &mut Value) -> Status;
 
 impl<X> From<LambdaAddr> for Lambda<X> {
     fn from(value: LambdaAddr) -> Self {
@@ -609,10 +603,7 @@ where
 
 extern "C" fn host_fn_wrapper<F, R, X>(
     runtime: &mut Runtime<X>,
-    _context: *mut c_void,
-    _this: &mut Value,
-    argc: u16,
-    argv: *mut Value,
+    context: &mut CallContext,
     retv: &mut Value,
 ) -> Status
 where
@@ -623,16 +614,101 @@ where
     // it isn't dropped (even if the callback panics).
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = unsafe { std::mem::MaybeUninit::<F>::uninit().assume_init() };
-    // SAFETY: `argv` is always non-null and a valid pointer to an array of `Value`s.
-    let args = unsafe {
-        debug_assert!(!argv.is_null());
-        debug_assert!(argv.is_aligned());
-        std::slice::from_raw_parts(argv as *const Value, argc as usize)
-    };
+    let args = context.args();
     // TODO: The return value is copied twice.  That's inefficient.
     let result = host_fn(runtime, args);
     *retv = result.value();
     result.status()
+}
+
+#[derive(Debug)]
+#[repr(C)]
+pub struct CallContext {
+    /// The `this` argument.
+    this: Value,
+
+    /// A pointer to the call environment.
+    ///
+    /// The actual type of the value varies depending on the type of the lambda function:
+    ///
+    /// * Entry functions: 0 (null pointer)
+    /// * Regular functions: &mut Closure
+    /// * Coroutine functions: &mut Coroutine
+    ///
+    envp: *mut c_void,
+
+    /// A pointer to the call context of the caller.
+    #[allow(unused)]
+    caller: *const CallContext,
+
+    /// The number of the arguments.
+    argc: u16,
+
+    /// The maximum number of the arguments.
+    argc_max: u16,
+
+    /// A pointer to the arguments.
+    argv: *mut Value,
+}
+
+impl CallContext {
+    pub const SIZE: usize = std::mem::size_of::<Self>();
+    pub const ALIGNMENT: usize = std::mem::align_of::<Self>();
+    pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
+    pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
+    pub const CALLER_OFFSET: usize = std::mem::offset_of!(Self, caller);
+    pub const ARGC_OFFSET: usize = std::mem::offset_of!(Self, argc);
+    pub const ARGC_MAX_OFFSET: usize = std::mem::offset_of!(Self, argc_max);
+    pub const ARGV_OFFSET: usize = std::mem::offset_of!(Self, argv);
+
+    pub(crate) fn new_for_entry(args: &mut [Value]) -> Self {
+        Self {
+            this: Value::Undefined,
+            envp: std::ptr::null_mut(),
+            caller: std::ptr::null(),
+            argc: args.len() as u16,
+            argc_max: args.len() as u16,
+            argv: args.as_mut_ptr(),
+        }
+    }
+
+    pub(crate) fn new_for_promise(coroutine: *mut Coroutine, args: &mut [Value]) -> Self {
+        Self {
+            this: Value::Undefined,
+            envp: coroutine as *mut std::ffi::c_void,
+            caller: std::ptr::null(),
+            argc: args.len() as u16,
+            argc_max: args.len() as u16,
+            argv: args.as_mut_ptr(),
+        }
+    }
+
+    pub(crate) fn closure_mut(&mut self) -> &mut Closure {
+        // SAFETY: `envp` is always a non-null pointer to a `Closure`.
+        unsafe {
+            debug_assert!(!self.envp.is_null());
+            debug_assert!(self.envp.is_aligned());
+            &mut *(self.envp as *mut Closure)
+        }
+    }
+
+    pub(crate) fn coroutine_mut(&mut self) -> &mut Coroutine {
+        // SAFETY: `envp` is always a non-null pointer to a `Coroutine`.
+        unsafe {
+            debug_assert!(!self.envp.is_null());
+            debug_assert!(self.envp.is_aligned());
+            &mut *(self.envp as *mut Coroutine)
+        }
+    }
+
+    pub(crate) fn args(&self) -> &[Value] {
+        // SAFETY: `argv` is always non-null and a valid pointer to an array of `Value`s.
+        unsafe {
+            debug_assert!(!self.argv.is_null());
+            debug_assert!(self.argv.is_aligned());
+            std::slice::from_raw_parts(self.argv as *const Value, self.argc as usize)
+        }
+    }
 }
 
 /// The return value type of `Lambda` function.

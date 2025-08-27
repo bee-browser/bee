@@ -5,6 +5,7 @@ use rustc_hash::FxHashMap;
 use crate::Runtime;
 use crate::Value;
 use crate::logger;
+use crate::types::CallContext;
 use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Promise;
@@ -61,8 +62,8 @@ impl<X> Runtime<X> {
         error: &Value,
     ) -> (Status, Value) {
         logger::debug!(event = "resume", ?coroutine, ?promise, ?result, ?error);
-        let mut this = Value::Undefined;
         let mut args = [promise.into(), result.clone(), error.clone()];
+        let mut context = CallContext::new_for_promise(coroutine, &mut args);
         let mut retv = Value::None;
         // SAFETY: `coroutine` is always a non-null pointer to a `Coroutine`.
         let lambda = unsafe {
@@ -70,14 +71,7 @@ impl<X> Runtime<X> {
             debug_assert!(!(*coroutine).closure.is_null());
             Lambda::from((*(*coroutine).closure).lambda)
         };
-        let status = lambda(
-            self,
-            coroutine as *mut std::ffi::c_void,
-            &mut this,
-            args.len() as u16,
-            args.as_mut_ptr(),
-            &mut retv,
-        );
+        let status = lambda(self, &mut context, &mut retv);
         (status, retv)
     }
 

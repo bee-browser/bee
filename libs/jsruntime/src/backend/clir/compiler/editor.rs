@@ -12,6 +12,7 @@ use base::static_assert_eq;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::objects::Object;
+use crate::types::CallContext;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
@@ -48,6 +49,7 @@ pub struct Editor<'a> {
     lambda_sig: ir::SigRef,
     entry_block: ir::Block,
     closure: ir::Value,
+    call_context: ir::StackSlot,
     fcs: ir::StackSlot,
 
     // FunctionBuilder::is_filled() is a private method.
@@ -70,7 +72,11 @@ impl<'a> Editor<'a> {
         // predecessor of the entry block.
         builder.seal_block(entry_block);
 
-        let closure = builder.block_params(entry_block)[1];
+        let call_context = builder.create_sized_stack_slot(ir::StackSlotData {
+            kind: ir::StackSlotKind::ExplicitSlot,
+            size: CallContext::SIZE as u32,
+            align_shift: CallContext::ALIGNMENT.ilog2() as u8,
+        });
 
         let fcs = builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
@@ -84,7 +90,8 @@ impl<'a> Editor<'a> {
             addr_type: target_config.pointer_type(),
             lambda_sig,
             entry_block,
-            closure,
+            call_context,
+            closure: ir::Value::from_u32(0), // dummy
             fcs,
             block_terminated: false,
             coroutine_mode: false,
@@ -162,24 +169,32 @@ impl<'a> Editor<'a> {
         self.lambda_params(0)
     }
 
-    fn context_argument(&self) -> ir::Value {
+    fn context(&self) -> ir::Value {
         self.lambda_params(1)
-    }
-
-    fn coroutine(&self) -> CoroutineIr {
-        CoroutineIr(self.context_argument())
     }
 
     /// Returns the `this` argument of the lambda function.
     ///
     /// Don't be confused.  The value is **NOT** equal to the return value of
     /// `ResolveThisBinding()` defined in the ECMA-262 specification.
-    pub fn this_argument(&self) -> AnyIr {
-        AnyIr(self.lambda_params(2))
+    pub fn this_argument(&mut self) -> AnyIr {
+        const OFFSET: i64 = CallContext::THIS_OFFSET as i64;
+        let context = self.context();
+        AnyIr(self.builder.ins().iadd_imm(context, OFFSET))
     }
 
-    fn argc(&self) -> ir::Value {
-        self.lambda_params(3)
+    fn envp(&mut self) -> ir::Value {
+        let context = self.context();
+        self.put_load_addr(context, CallContext::ENVP_OFFSET)
+    }
+
+    fn coroutine(&mut self) -> CoroutineIr {
+        CoroutineIr(self.envp())
+    }
+
+    fn argc(&mut self) -> ir::Value {
+        let context = self.context();
+        self.put_load_i16(context, CallContext::ARGC_OFFSET)
     }
 
     pub fn argc_as_jump_table_index(&mut self) -> ir::Value {
@@ -187,16 +202,17 @@ impl<'a> Editor<'a> {
         self.builder.ins().uextend(ir::types::I32, argc)
     }
 
-    fn argv(&self) -> ArgvIr {
-        ArgvIr(self.lambda_params(4))
+    fn argv(&mut self) -> ArgvIr {
+        let context = self.context();
+        ArgvIr(self.put_load_addr(context, CallContext::ARGV_OFFSET))
     }
 
     pub fn retv(&self) -> AnyIr {
-        AnyIr(self.lambda_params(5))
+        AnyIr(self.lambda_params(2))
     }
 
     pub fn exception(&self) -> AnyIr {
-        AnyIr(self.lambda_params(5))
+        AnyIr(self.lambda_params(2))
     }
 
     fn lambda_params(&self, index: usize) -> ir::Value {
@@ -204,57 +220,53 @@ impl<'a> Editor<'a> {
     }
 
     pub fn put_assert_lambda_params(&mut self, support: &mut impl EditorSupport, is_entry: bool) {
-        self.put_assert_runtime_is_non_null(support);
-        if is_entry {
-            self.put_assert_context_is_null(support);
-        } else {
+        runtime_debug! {{
+            self.put_assert_runtime_is_non_null(support);
             self.put_assert_context_is_non_null(support);
-        }
-        self.put_assert_this_is_non_null(support);
-        self.put_assert_argv_is_non_null(support);
-        self.put_assert_retv_is_non_null(support);
+            self.put_assert_this_is_non_null(support);
+            if is_entry {
+                self.put_assert_envp_is_null(support);
+            } else {
+                self.put_assert_envp_is_non_null(support);
+            }
+            self.put_assert_argv_is_non_null(support);
+            self.put_assert_retv_is_non_null(support);
+        }}
     }
 
     fn put_assert_runtime_is_non_null(&mut self, support: &mut impl EditorSupport) {
-        runtime_debug! {{
-            let runtime = self.runtime();
-            self.put_assert_non_null(support, runtime, c"runtime must be non-null");
-        }}
-    }
-
-    fn put_assert_context_is_null(&mut self, support: &mut impl EditorSupport) {
-        runtime_debug! {{
-            let context = self.context_argument();
-            self.put_assert_null(support, context, c"context must be null");
-        }}
+        let runtime = self.runtime();
+        self.put_assert_non_null(support, runtime, c"runtime must be non-null");
     }
 
     fn put_assert_context_is_non_null(&mut self, support: &mut impl EditorSupport) {
-        runtime_debug! {{
-            let context = self.context_argument();
-            self.put_assert_non_null(support, context, c"context must be non-null");
-        }}
+        let context = self.context();
+        self.put_assert_non_null(support, context, c"context must be non-null");
     }
 
     fn put_assert_this_is_non_null(&mut self, support: &mut impl EditorSupport) {
-        runtime_debug! {{
-            let this = self.this_argument();
-            self.put_assert_non_null(support, this.0, c"this must be non-null");
-        }}
+        let this = self.this_argument();
+        self.put_assert_non_null(support, this.0, c"this must be non-null");
+    }
+
+    fn put_assert_envp_is_null(&mut self, support: &mut impl EditorSupport) {
+        let envp = self.envp();
+        self.put_assert_null(support, envp, c"context.envp must be null");
+    }
+
+    fn put_assert_envp_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        let envp = self.envp();
+        self.put_assert_non_null(support, envp, c"context.envp must be non-null");
     }
 
     fn put_assert_argv_is_non_null(&mut self, support: &mut impl EditorSupport) {
-        runtime_debug! {{
-            let argv = self.argv();
-            self.put_assert_non_null(support, argv.0, c"argv must be non-null");
-        }}
+        let argv = self.argv();
+        self.put_assert_non_null(support, argv.0, c"argv must be non-null");
     }
 
     fn put_assert_retv_is_non_null(&mut self, support: &mut impl EditorSupport) {
-        runtime_debug! {{
-            let retv = self.retv();
-            self.put_assert_non_null(support, retv.0, c"retv must be non-null");
-        }}
+        let retv = self.retv();
+        self.put_assert_non_null(support, retv.0, c"retv must be non-null");
     }
 
     // arguments
@@ -749,22 +761,15 @@ impl<'a> Editor<'a> {
         self.put_store(capture.0, closure.0, offset);
     }
 
-    pub fn put_call(
-        &mut self,
-        closure: ClosureIr,
-        this: AnyIr,
-        argc: u16,
-        argv: ArgvIr,
-        retv: AnyIr,
-    ) -> StatusIr {
-        logger::debug!(event = "put_call", ?closure, argc, ?argv, ?retv);
+    pub fn put_call(&mut self, closure: ClosureIr, retv: AnyIr) -> StatusIr {
+        logger::debug!(event = "put_call", ?closure, ?retv);
+        self.put_store_closure_to_call_context(closure);
         let lambda = self.put_load_lambda_from_closure(closure);
         let args = &[
             self.runtime(),
-            closure.0,
-            this.0,
-            self.builder.ins().iconst(ir::types::I16, argc as i64),
-            argv.0,
+            self.builder
+                .ins()
+                .stack_addr(self.addr_type, self.call_context, 0),
             retv.0,
         ];
         let call = self
@@ -834,6 +839,68 @@ impl<'a> Editor<'a> {
         self.builder
             .ins()
             .store(FLAGS, closure.0, object.0, Object::CALL_OFFSET as i32);
+    }
+
+    // call context
+
+    pub fn put_store_caller_to_call_context(&mut self) {
+        const OFFSET: i32 = CallContext::CALLER_OFFSET as i32;
+        let caller = self.context();
+        self.builder
+            .ins()
+            .stack_store(caller, self.call_context, OFFSET);
+    }
+
+    pub fn put_store_argc_to_call_context(&mut self, argc: u16) {
+        const OFFSET: i32 = CallContext::ARGC_OFFSET as i32;
+        let argc = self.builder.ins().iconst(ir::types::I16, argc as i64);
+        self.builder
+            .ins()
+            .stack_store(argc, self.call_context, OFFSET);
+    }
+
+    pub fn put_store_argc_max_to_call_context(&mut self, argc_max: u16) {
+        const OFFSET: i32 = CallContext::ARGC_MAX_OFFSET as i32;
+        let argc_max = self.builder.ins().iconst(ir::types::I16, argc_max as i64);
+        self.builder
+            .ins()
+            .stack_store(argc_max, self.call_context, OFFSET);
+    }
+
+    pub fn put_store_argv_to_call_context(&mut self, argv: ArgvIr) {
+        const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
+        self.builder
+            .ins()
+            .stack_store(argv.0, self.call_context, OFFSET);
+    }
+
+    pub fn put_get_this_from_call_context(&mut self) -> AnyIr {
+        const OFFSET: i32 = CallContext::THIS_OFFSET as i32;
+        AnyIr(
+            self.builder
+                .ins()
+                .stack_addr(self.addr_type, self.call_context, OFFSET),
+        )
+    }
+
+    pub fn put_get_argv_from_call_context(&mut self) -> ArgvIr {
+        const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
+        ArgvIr(
+            self.builder
+                .ins()
+                .stack_load(self.addr_type, self.call_context, OFFSET),
+        )
+    }
+
+    pub fn put_set_closure_mode(&mut self) {
+        self.closure = self.envp();
+    }
+
+    pub fn put_store_closure_to_call_context(&mut self, closure: ClosureIr) {
+        const OFFSET: i32 = CallContext::ENVP_OFFSET as i32;
+        self.builder
+            .ins()
+            .stack_store(closure.0, self.call_context, OFFSET);
     }
 
     // argv
