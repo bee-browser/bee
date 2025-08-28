@@ -830,15 +830,14 @@ impl<'a> Editor<'a> {
 
     pub fn put_load_closure_from_function(&mut self, object: ObjectIr) -> ClosureIr {
         logger::debug!(event = "put_load_closure_from_function", ?object);
-        ClosureIr(self.put_load_addr(object.0, Object::CALL_OFFSET))
+        ClosureIr(self.put_load_addr(object.0, Object::NUCLEUS_OFFSET))
     }
 
     pub fn put_store_closure_to_function(&mut self, closure: ClosureIr, object: ObjectIr) {
         logger::debug!(event = "put_store_closure_from_function", ?object);
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
-        self.builder
-            .ins()
-            .store(FLAGS, closure.0, object.0, Object::CALL_OFFSET as i32);
+        const OFFSET: i32 = Object::NUCLEUS_OFFSET as i32;
+        self.builder.ins().store(FLAGS, closure.0, object.0, OFFSET);
     }
 
     // call context

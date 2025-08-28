@@ -10,6 +10,11 @@ use crate::objects::Property;
 use crate::types::Lambda;
 use crate::types::Value;
 
+#[allow(unused)]
+enum Error {
+    TypeError,
+}
+
 impl<X> Runtime<X> {
     // 19 The Global Object
     pub(crate) fn define_builtin_global_properties(&mut self) {
@@ -63,5 +68,35 @@ impl<X> Runtime<X> {
                 object.define_own_property(Symbol::PROTOTYPE.into(), Property::data_xxx(prototype));
         }
         Value::Function(object.as_ptr())
+    }
+
+    // 7.1.4 ToNumber ( argument )
+    // TODO: code clone, see backend::bridge::runtime_to_numeric
+    fn value_to_number(&mut self, value: &Value) -> Result<f64, Error> {
+        logger::debug!(event = "Runtime::to_numeric", ?value);
+        match value {
+            Value::None => unreachable!("Value::None"),
+            Value::Undefined => Ok(f64::NAN),
+            Value::Null => Ok(0.0),
+            Value::Boolean(true) => Ok(1.0),
+            Value::Boolean(false) => Ok(0.0),
+            Value::Number(value) => Ok(*value),
+            Value::String(_value) => todo!(),
+            Value::Promise(_) => Ok(f64::NAN),
+            // TODO(feat): 7.1.1 ToPrimitive()
+            Value::Object(_) | Value::Function(_) => Ok(f64::NAN),
+        }
+    }
+
+    // 7.1.5 ToIntegerOrInfinity ( argument )
+    fn value_to_integer_or_infinity(&mut self, value: &Value) -> Result<f64, Error> {
+        let number = self.value_to_number(value)?;
+        if number.is_nan() || number == 0.0 || number == -0.0 {
+            Ok(0.0)
+        } else if number.is_infinite() {
+            Ok(number)
+        } else {
+            Ok(number.trunc())
+        }
     }
 }

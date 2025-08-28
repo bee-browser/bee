@@ -645,6 +645,8 @@ pub struct CallContext {
     #[allow(unused)]
     caller: *const CallContext,
 
+    flags: CallContextFlags,
+
     /// The number of the arguments.
     argc: u16,
 
@@ -670,6 +672,7 @@ impl CallContext {
             this: Value::Undefined,
             envp: std::ptr::null_mut(),
             caller: std::ptr::null(),
+            flags: CallContextFlags::empty(),
             argc: args.len() as u16,
             argc_max: args.len() as u16,
             argv: args.as_mut_ptr(),
@@ -681,9 +684,28 @@ impl CallContext {
             this: Value::Undefined,
             envp: coroutine as *mut std::ffi::c_void,
             caller: std::ptr::null(),
+            flags: CallContextFlags::empty(),
             argc: args.len() as u16,
             argc_max: args.len() as u16,
             argv: args.as_mut_ptr(),
+        }
+    }
+
+    pub(crate) fn is_new(&self) -> bool {
+        self.flags.contains(CallContextFlags::NEW)
+    }
+
+    pub(crate) fn this(&self) -> &Value {
+        debug_assert!(self.this.is_valid());
+        &self.this
+    }
+
+    pub(crate) fn closure(&self) -> &Closure {
+        // SAFETY: `envp` is always a non-null pointer to a `Closure`.
+        unsafe {
+            debug_assert!(!self.envp.is_null());
+            debug_assert!(self.envp.is_aligned());
+            &*(self.envp as *const Closure)
         }
     }
 
@@ -696,12 +718,12 @@ impl CallContext {
         }
     }
 
-    pub(crate) fn coroutine_mut(&mut self) -> &mut Coroutine {
+    pub(crate) fn coroutine(&self) -> &Coroutine {
         // SAFETY: `envp` is always a non-null pointer to a `Coroutine`.
         unsafe {
             debug_assert!(!self.envp.is_null());
             debug_assert!(self.envp.is_aligned());
-            &mut *(self.envp as *mut Coroutine)
+            &*(self.envp as *const Coroutine)
         }
     }
 
@@ -712,6 +734,14 @@ impl CallContext {
             debug_assert!(self.argv.is_aligned());
             std::slice::from_raw_parts(self.argv as *const Value, self.argc as usize)
         }
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug)]
+    #[repr(C)]
+    struct CallContextFlags: u32  {
+        const NEW = 1 << 1;
     }
 }
 
