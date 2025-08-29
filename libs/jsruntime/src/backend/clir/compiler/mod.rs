@@ -1110,7 +1110,7 @@ where
     fn process_call(&mut self, argc: u16) {
         debug_assert!(argc <= 8); // TODO: dynamic allocation
         self.emit_fill_args(argc);
-        let (operand, this) = self.dereference();
+        let (operand, owner) = self.dereference();
         let closure = match operand {
             Operand::Closure(_) => unreachable!(),
             Operand::Function(object, _) => {
@@ -1125,9 +1125,9 @@ where
             }
         };
 
-        if let Some(this) = this {
+        if let Some(owner) = owner {
             let dst = self.editor.put_get_this_from_call_context();
-            self.editor.put_store_object_to_any(this, dst);
+            self.emit_store_property_owner_to_any(owner, dst);
         } else {
             let this = self.editor.this_argument();
             let dst = self.editor.put_get_this_from_call_context();
@@ -1140,6 +1140,19 @@ where
 
         // TODO(pref): compile-time evaluation
         self.operand_stack.push(Operand::Any(retv, None));
+    }
+
+    fn emit_store_property_owner_to_any(&mut self, owner: PropertyOwner, any: AnyIr) {
+        match owner {
+            PropertyOwner::Undefined => self.editor.put_store_undefined_to_any(any),
+            PropertyOwner::Null => self.editor.put_store_null_to_any(any),
+            PropertyOwner::Boolean(value) => self.editor.put_store_boolean_to_any(value, any),
+            PropertyOwner::Number(value) => self.editor.put_store_number_to_any(value, any),
+            PropertyOwner::String(value) => self.editor.put_store_string_to_any(value, any),
+            PropertyOwner::Object(value) => self.editor.put_store_object_to_any(value, any),
+            PropertyOwner::Function(value) => self.editor.put_store_function_to_any(value, any),
+            PropertyOwner::Any(value) => self.editor.put_store_any_to_any(value, any),
+        }
     }
 
     fn process_new(&mut self, argc: u16) {
@@ -3409,7 +3422,7 @@ where
     }
 
     // TODO(refactor): need rethink, especially the return value.
-    fn dereference(&mut self) -> (Operand, Option<ObjectIr>) {
+    fn dereference(&mut self) -> (Operand, Option<PropertyOwner>) {
         logger::debug!(event = "dereference", operand_stack.top = ?self.operand_stack.last());
 
         let operand = self.operand_stack.pop().unwrap();
@@ -3463,7 +3476,7 @@ where
                     );
                 }}
                 // TODO(pref): compile-time evaluation
-                (Operand::Any(value, None), Some(object))
+                (Operand::Any(value, None), Some(owner))
             }
             _ => (operand, None),
         }

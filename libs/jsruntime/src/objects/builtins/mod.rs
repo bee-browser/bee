@@ -1,13 +1,17 @@
 mod object;
 mod string;
 
+use base::utf16;
 use jsparser::Symbol;
 
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
+use crate::objects::Object;
 use crate::objects::Property;
 use crate::types::Lambda;
+use crate::types::U16Chunk;
+use crate::types::U16String;
 use crate::types::Value;
 
 #[allow(unused)]
@@ -73,7 +77,7 @@ impl<X> Runtime<X> {
     // 7.1.4 ToNumber ( argument )
     // TODO: code clone, see backend::bridge::runtime_to_numeric
     fn value_to_number(&mut self, value: &Value) -> Result<f64, Error> {
-        logger::debug!(event = "Runtime::to_numeric", ?value);
+        logger::debug!(event = "runtime.value_to_numeric", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined => Ok(f64::NAN),
@@ -90,6 +94,7 @@ impl<X> Runtime<X> {
 
     // 7.1.5 ToIntegerOrInfinity ( argument )
     fn value_to_integer_or_infinity(&mut self, value: &Value) -> Result<f64, Error> {
+        logger::debug!(event = "runtime.value_to_integer_or_infinity", ?value);
         let number = self.value_to_number(value)?;
         if number.is_nan() || number == 0.0 || number == -0.0 {
             Ok(0.0)
@@ -97,6 +102,47 @@ impl<X> Runtime<X> {
             Ok(number)
         } else {
             Ok(number.trunc())
+        }
+    }
+
+    // 7.1.17 ToString ( argument )
+    // TODO: code clone, see backend::bridge::runtime_to_string
+    fn value_to_string(&mut self, value: &Value) -> Result<U16String, Error> {
+        logger::debug!(event = "runtime.value_to_string", ?value);
+        match value {
+            Value::None => unreachable!("Value::None"),
+            Value::Undefined => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"undefined"));
+                Ok(U16String::new(&CHUNK))
+            }
+            Value::Null => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"null"));
+                Ok(U16String::new(&CHUNK))
+            }
+            Value::Boolean(true) => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"true"));
+                Ok(U16String::new(&CHUNK))
+            }
+            Value::Boolean(false) => {
+                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"false"));
+                Ok(U16String::new(&CHUNK))
+            }
+            Value::Number(value) => {
+                Ok(self.number_to_string(*value)) // TODO
+            }
+            Value::String(value) => Ok(*value),
+            Value::Promise(_) => todo!(),
+            Value::Object(value) => {
+                // SAFETY: `value` is a non-null pointer to an `Object`.
+                let object = unsafe { &*((*value) as *const Object) };
+                if self.is_string_object(object) {
+                    Ok(object.string())
+                } else {
+                    const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"[object Object]"));
+                    Ok(U16String::new(&CHUNK))
+                }
+            }
+            Value::Function(_) => todo!(),
         }
     }
 }

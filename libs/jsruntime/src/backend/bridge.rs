@@ -238,7 +238,7 @@ pub(crate) extern "C" fn runtime_number_to_string<X>(
 }
 
 impl<X> Runtime<X> {
-    fn number_to_string(&mut self, value: f64) -> U16String {
+    pub(crate) fn number_to_string(&mut self, value: f64) -> U16String {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
         let chunk = U16Chunk::new_stack(utf16);

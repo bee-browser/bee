@@ -39,16 +39,12 @@ extern "C" fn string_prototype_index_of<X>(
 ) -> Status {
     logger::debug!(event = "string_prototype_index_of");
 
-    // TODO: ToString(this)
-    let string = match context.this() {
-        Value::String(string) => *string,
-        Value::Object(object) => {
-            // SAFETY: `object` is a non-null pointer to an `Object`.
-            let object = unsafe { &*((*object) as *const Object) };
-            debug_assert!(runtime.is_string_object(object));
-            object.string()
+    let string = match runtime.value_to_string(context.this()) {
+        Ok(string) => string,
+        Err(_err) => {
+            // TODO: convert Error to JS error object.
+            return Status::Exception;
         }
-        _ => unreachable!(),
     };
 
     let args = context.args();
@@ -61,9 +57,11 @@ extern "C" fn string_prototype_index_of<X>(
             return Status::Exception;
         }
     };
+
     let len = string.len();
     let start = pos.clamp(0.0, len as f64) as u32;
     let index = string_index_of(string, search_str, start).map_or(-1.0, |i| i as f64);
+
     *retv = Value::Number(index);
     Status::Normal
 }
@@ -88,7 +86,7 @@ fn string_index_of(string: U16String, search_value: U16String, from_index: u32) 
 }
 
 impl<X> Runtime<X> {
-    fn is_string_object(&self, object: &Object) -> bool {
+    pub(crate) fn is_string_object(&self, object: &Object) -> bool {
         object.is_instance_of(self.string_prototype)
     }
 
@@ -134,7 +132,7 @@ impl<X> Runtime<X> {
 }
 
 impl Object {
-    fn string(&self) -> U16String {
+    pub(crate) fn string(&self) -> U16String {
         // SAFETY: `self.nucleus` of a String object is a non-null point to a `U16Chunk`.
         let chunk = unsafe { &*(self.nucleus as *const U16Chunk) };
         U16String::new(chunk)
