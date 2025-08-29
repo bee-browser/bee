@@ -10,6 +10,7 @@ use rustc_hash::FxHashMap;
 use jsparser::Symbol;
 
 use crate::types::Closure;
+use crate::types::U16String;
 use crate::types::Value;
 
 #[derive(Clone, Debug)]
@@ -192,20 +193,23 @@ impl PropertyFlags {
 // We use a simple hash map until we finishes implementing built-in objects.  After than, we'll
 // start reconsidering about the memory layout.
 pub struct Object {
-    // [[Call]]
-    // TODO(issue#237): GcCellRef
-    call: *mut Closure,
+    /// An opaque value representing the *nucleus* of the object.
+    ///
+    /// A pointer to the `Closure` if this is a function object.
+    /// A pointer to the `U16Chunk` if this is a string object.
+    nucleus: usize,
+
     // [[Prototype]]
     prototype: *mut c_void,
     properties: FxHashMap<PropertyKey, Property>,
 }
 
 impl Object {
-    pub(crate) const CALL_OFFSET: usize = std::mem::offset_of!(Self, call);
+    pub(crate) const NUCLEUS_OFFSET: usize = std::mem::offset_of!(Self, nucleus);
 
     pub fn new(prototype: *mut c_void) -> Self {
         Self {
-            call: std::ptr::null_mut(),
+            nucleus: 0,
             prototype,
             properties: Default::default(),
         }
@@ -264,10 +268,19 @@ impl Object {
     }
 
     pub(crate) fn set_closure(&mut self, closure: *mut Closure) {
-        self.call = closure;
+        self.nucleus = closure.addr();
+    }
+
+    pub(crate) fn set_string(&mut self, string: U16String) {
+        self.nucleus = string.as_ptr().addr()
     }
 
     pub fn as_ptr(&mut self) -> *mut c_void {
         self as *mut Self as *mut c_void
+    }
+
+    fn is_instance_of(&self, prototype: *mut c_void) -> bool {
+        // TODO: prototype chain
+        self.prototype == prototype
     }
 }

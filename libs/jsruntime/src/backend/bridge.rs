@@ -58,9 +58,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_normal");
 
-    let closure = context.closure_mut();
-
-    let lambda_id = closure.lambda_id;
+    let lambda_id = context.closure().lambda_id;
     let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
         lambda
     } else {
@@ -73,10 +71,10 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     };
 
     debug_assert_eq!(
-        closure.lambda,
+        context.closure().lambda,
         (runtime_lazy_compile_normal::<X> as usize).into()
     );
-    closure.lambda = lambda.into();
+    context.closure_mut().lambda = lambda.into();
 
     lambda(runtime, context, retv)
 }
@@ -88,9 +86,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_ramp");
 
-    let closure = context.closure_mut();
-
-    let lambda_id = closure.lambda_id;
+    let lambda_id = context.closure().lambda_id;
     let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
         lambda
     } else {
@@ -113,10 +109,10 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     };
 
     debug_assert_eq!(
-        closure.lambda,
+        context.closure().lambda,
         (runtime_lazy_compile_ramp::<X> as usize).into()
     );
-    closure.lambda = lambda.into();
+    context.closure_mut().lambda = lambda.into();
 
     lambda(runtime, context, retv)
 }
@@ -128,7 +124,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine");
 
-    let coroutine = context.coroutine_mut();
+    let coroutine = context.coroutine();
 
     // SAFETY: `coroutine.closure` is a non-null pointer to a `Closure`.
     let closure = unsafe {
@@ -257,18 +253,22 @@ pub(crate) extern "C" fn runtime_to_object<X>(
     value: &Value,
 ) -> *mut c_void {
     logger::debug!(event = "runtime_to_object", ?value);
-    runtime.to_object(value)
+    runtime.value_to_object(value)
 }
 
 impl<X> Runtime<X> {
-    fn to_object(&self, value: &Value) -> *mut c_void {
+    fn value_to_object(&mut self, value: &Value) -> *mut c_void {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined | Value::Null => todo!(),
             Value::Boolean(_value) => todo!(),
             Value::Number(_value) => todo!(),
-            Value::String(_value) => todo!(),
+            Value::String(value) => match self.string_constructor(&[Value::String(*value)], true) {
+                Ok(Value::Object(object)) => object,
+                Ok(_) => unreachable!(),
+                Err(_error) => todo!(),
+            },
             Value::Object(value) | Value::Function(value) => *value,
             Value::Promise(_value) => todo!(),
         }
