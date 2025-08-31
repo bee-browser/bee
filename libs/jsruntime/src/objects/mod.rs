@@ -105,6 +105,12 @@ impl Property {
         Self::data(value, PropertyFlags::WEC)
     }
 
+    /// Creates a data property with `[[Writable]]=true`, `[[Enumerable]]=false` and
+    /// `[[Configurable]]=true`.
+    pub const fn data_wxc(value: Value) -> Self {
+        Self::data(value, PropertyFlags::WXC)
+    }
+
     /// Creates a data property.
     const fn data(value: Value, flags: PropertyFlags) -> Self {
         Self {
@@ -158,6 +164,9 @@ impl PropertyFlags {
     const WEC: Self = Self::WRITABLE
         .union(Self::ENUMERABLE)
         .union(Self::CONFIGURABLE);
+
+    /// `[[Writable]]: true`, `[[Enumerable]]: false`, `[[Configurable]]: true`
+    const WXC: Self = Self::WRITABLE.union(Self::CONFIGURABLE);
 
     const fn is_data_property(&self) -> bool {
         self.contains(Self::DATA)

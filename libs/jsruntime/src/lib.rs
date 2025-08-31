@@ -89,6 +89,20 @@ pub struct Runtime<X> {
     string_prototype: *mut c_void,
     // %Function.prototype%
     function_prototype: *mut c_void,
+    // %Error.prototype%
+    error_prototype: *mut c_void,
+    // %EvalError.prototype%
+    eval_error_prototype: *mut c_void,
+    // %RangeError.prototype%
+    range_error_prototype: *mut c_void,
+    // %ReferenceError.prototype%
+    reference_error_prototype: *mut c_void,
+    // %SyntaxError.prototype%
+    syntax_error_prototype: *mut c_void,
+    // %TypeError.prototype%
+    type_error_prototype: *mut c_void,
+    // URIError.prototype%
+    uri_error_prototype: *mut c_void,
 
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
@@ -110,6 +124,13 @@ impl<X> Runtime<X> {
             object_prototype: std::ptr::null_mut(),
             string_prototype: std::ptr::null_mut(),
             function_prototype: std::ptr::null_mut(),
+            error_prototype: std::ptr::null_mut(),
+            eval_error_prototype: std::ptr::null_mut(),
+            reference_error_prototype: std::ptr::null_mut(),
+            range_error_prototype: std::ptr::null_mut(),
+            syntax_error_prototype: std::ptr::null_mut(),
+            type_error_prototype: std::ptr::null_mut(),
+            uri_error_prototype: std::ptr::null_mut(),
             monitor: None,
             extension,
         };

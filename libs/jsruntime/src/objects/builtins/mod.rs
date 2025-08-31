@@ -1,5 +1,8 @@
+mod error;
 mod object;
 mod string;
+
+use std::ffi::c_void;
 
 use base::utf16;
 use jsparser::Symbol;
@@ -40,6 +43,13 @@ impl<X> Runtime<X> {
         self.object_prototype = self.create_object(std::ptr::null_mut()).as_ptr();
         self.function_prototype = self.create_object(self.object_prototype).as_ptr();
         self.string_prototype = self.create_string_prototype();
+        self.error_prototype = self.create_error_prototype();
+        self.eval_error_prototype = self.create_eval_error_prototype();
+        self.range_error_prototype = self.create_range_error_prototype();
+        self.reference_error_prototype = self.create_reference_error_prototype();
+        self.syntax_error_prototype = self.create_syntax_error_prototype();
+        self.type_error_prototype = self.create_type_error_prototype();
+        self.uri_error_prototype = self.create_uri_error_prototype();
 
         let this = self.global_object.as_ptr();
 
@@ -52,24 +62,47 @@ impl<X> Runtime<X> {
             Symbol::NAN => Value::Number(f64::NAN),
             // 19.1.4 undefined
             Symbol::UNDEFINED => Value::Undefined,
-
+            // 19.3.10 Error ( . . . )
+            Symbol::ERROR => self.create_builtin_function(
+                error::constructor::<X>, self.error_prototype),
+            // 19.3.11 EvalError ( . . . )
+            Symbol::EVAL_ERROR => self.create_builtin_function(
+                eval_error::constructor::<X>, self.eval_error_prototype),
             // 19.3.23 Object()
-            Symbol::INTRINSIC_OBJECT => self.create_builtin_function(object::constructor::<X>, Value::Object(self.object_prototype)),
-
+            Symbol::OBJECT => self.create_builtin_function(
+                object::constructor::<X>, self.object_prototype),
+            // 19.3.26 RangeError ( . . . )
+            Symbol::RANGE_ERROR => self.create_builtin_function(
+                range_error::constructor::<X>, self.range_error_prototype),
+            // 19.3.27 ReferenceError ( . . . )
+            Symbol::REFERENCE_ERROR => self.create_builtin_function(
+                reference_error::constructor::<X>, self.reference_error_prototype),
             // 19.3.31 String()
-            Symbol::INTRINSIC_STRING => self.create_builtin_function(string::constructor::<X>, Value::Object(self.string_prototype)),
+            Symbol::STRING => self.create_builtin_function(
+                string::constructor::<X>, self.string_prototype),
+            // 19.3.33 SyntaxError ( . . . )
+            Symbol::SYNTAX_ERROR => self.create_builtin_function(
+                syntax_error::constructor::<X>, self.syntax_error_prototype),
+            // 19.3.34 TypeError ( . . . )
+            Symbol::TYPE_ERROR => self.create_builtin_function(
+                type_error::constructor::<X>, self.type_error_prototype),
+            // 19.3.39 URIError ( . . . )
+            Symbol::URI_ERROR => self.create_builtin_function(
+                uri_error::constructor::<X>, self.uri_error_prototype),
         }
     }
 
-    fn create_builtin_function(&mut self, lambda: Lambda<X>, prototype: Value) -> Value {
+    fn create_builtin_function(&mut self, lambda: Lambda<X>, prototype: *mut c_void) -> Value {
         logger::debug!(event = "creater_builtin_function");
         debug_assert!(!self.function_prototype.is_null());
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
         let object = self.create_object(self.function_prototype);
         object.set_closure(closure);
-        if prototype.is_valid() {
-            let _ =
-                object.define_own_property(Symbol::PROTOTYPE.into(), Property::data_xxx(prototype));
+        if !prototype.is_null() {
+            let _ = object.define_own_property(
+                Symbol::PROTOTYPE.into(),
+                Property::data_xxx(Value::Object(prototype)),
+            );
         }
         Value::Function(object.as_ptr())
     }
@@ -103,6 +136,25 @@ impl<X> Runtime<X> {
         } else {
             Ok(number.trunc())
         }
+    }
+
+    // TODO(refactor): code clone, see runtime_concat_strings.
+    fn concat_strings(&mut self, a: U16String, b: U16String) -> U16String {
+        if b.is_empty() {
+            return U16String::new(self.alloc_string_rec(a.first_chunk(), std::ptr::null()));
+        }
+
+        let b = if b.on_stack() {
+            U16String::new(self.alloc_string_rec(b.first_chunk(), std::ptr::null()))
+        } else {
+            b
+        };
+
+        if a.is_empty() {
+            return b;
+        }
+
+        U16String::new(self.alloc_string_rec(a.first_chunk(), b.first_chunk() as *const U16Chunk))
     }
 
     // 7.1.17 ToString ( argument )
@@ -145,4 +197,113 @@ impl<X> Runtime<X> {
             Value::Function(_) => todo!(),
         }
     }
+}
+
+macro_rules! define_error {
+    ($name:ident, $create_prototype:ident, $constructor:ident, $symbol:ident) => {
+        mod $name {
+            use std::ffi::c_void;
+
+            use jsparser::Symbol;
+
+            use crate::Runtime;
+            use crate::U16Chunk;
+            use crate::U16String;
+            use crate::logger;
+            use crate::objects::Property;
+            use crate::types::CallContext;
+            use crate::types::Status;
+            use crate::types::Value;
+
+            pub extern "C" fn constructor<X>(
+                runtime: &mut Runtime<X>,
+                context: &mut CallContext,
+                retv: &mut Value,
+            ) -> Status {
+                let args = context.args();
+                let new = context.is_new();
+                match runtime.$constructor(args, new) {
+                    Ok(value) => {
+                        *retv = value;
+                        Status::Normal
+                    }
+                    Err(value) => {
+                        *retv = value;
+                        Status::Exception
+                    }
+                }
+            }
+
+            impl<X> Runtime<X> {
+                pub(super) fn $create_prototype(&mut self) -> *mut c_void {
+                    logger::debug!(event = stringify!($creater_prototype));
+                    debug_assert!(!self.error_prototype.is_null());
+
+                    use jsparser::symbol::builtin::names;
+                    const NAME: U16Chunk = U16Chunk::new_const(names::$symbol);
+
+                    let prototype = self.create_object(self.error_prototype);
+                    let _ = prototype.define_own_property(
+                        Symbol::MESSAGE.into(),
+                        Property::data_xxx(Value::String(U16String::EMPTY)),
+                    );
+                    let _ = prototype.define_own_property(
+                        Symbol::NAME.into(),
+                        Property::data_xxx(Value::String(U16String::new(&NAME))),
+                    );
+
+                    prototype.as_ptr()
+                }
+
+                fn $constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
+                    logger::debug!(event = stringify!($constructor), ?args, new);
+                    // TODO(feat): NewTarget
+                    let object = self.create_object(self.eval_error_prototype);
+                    Ok(Value::Object(object.as_ptr()))
+                }
+            }
+        }
+    };
+}
+
+define_error! {
+    eval_error,
+    create_eval_error_prototype,
+    range_eval_constructor,
+    EVAL_ERROR
+}
+
+define_error! {
+    range_error,
+    create_range_error_prototype,
+    range_error_constructor,
+    RANGE_ERROR
+}
+
+define_error! {
+    reference_error,
+    create_reference_error_prototype,
+    reference_error_constructor,
+    REFERENCE_ERROR
+}
+
+define_error! {
+    syntax_error,
+    create_syntax_error_prototype,
+    syntax_error_constructor,
+    SYNTAX_ERROR
+}
+
+define_error! {
+    type_error,
+    create_type_error_prototype,
+    type_error_constructor,
+    TYPE_ERROR
+}
+
+define_error! {
+    uri_error,
+    create_uri_error_prototype,
+    uri_error_constructor,
+    URI_ERROR
 }

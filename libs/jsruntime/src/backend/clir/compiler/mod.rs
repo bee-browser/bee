@@ -11,6 +11,7 @@ use std::ffi::c_void;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use base::const_utf16;
 use cranelift::codegen;
 use cranelift::codegen::ir;
 use cranelift::codegen::isa;
@@ -1531,25 +1532,30 @@ where
 
     // 13.5.3.1 Runtime Semantics: Evaluation
     fn process_typeof(&mut self) {
-        use jsparser::symbol::builtin::names;
+        const_utf16!(UNDEFINED, "undefined");
+        const_utf16!(BOOLEAN, "boolean");
+        const_utf16!(NUMBER, "number");
+        const_utf16!(STRING, "string");
+        const_utf16!(OBJECT, "object");
+        const_utf16!(FUNCTION, "function");
 
         let (operand, ..) = self.dereference();
         match operand {
-            Operand::Undefined => self.process_string(names::UNDEFINED),
-            Operand::Null => self.process_string(names::OBJECT),
-            Operand::Boolean(..) => self.process_string(names::BOOLEAN),
-            Operand::Number(..) => self.process_string(names::NUMBER),
-            Operand::String(..) => self.process_string(names::STRING),
-            Operand::Object(..) | Operand::Promise(..) => self.process_string(names::OBJECT),
-            Operand::Function(..) => self.process_string(names::FUNCTION),
+            Operand::Undefined => self.process_string(&UNDEFINED),
+            Operand::Null => self.process_string(&OBJECT),
+            Operand::Boolean(..) => self.process_string(&BOOLEAN),
+            Operand::Number(..) => self.process_string(&NUMBER),
+            Operand::String(..) => self.process_string(&STRING),
+            Operand::Object(..) | Operand::Promise(..) => self.process_string(&OBJECT),
+            Operand::Function(..) => self.process_string(&FUNCTION),
             Operand::Any(_, Some(ref value)) => match value {
-                Value::Undefined => self.process_string(names::UNDEFINED),
-                Value::Null => self.process_string(names::OBJECT),
-                Value::Boolean(_) => self.process_string(names::BOOLEAN),
-                Value::Number(_) => self.process_string(names::NUMBER),
-                Value::String(_) => self.process_string(names::STRING),
-                Value::Object(_) | Value::Promise(_) => self.process_string(names::OBJECT),
-                Value::Function(_) => self.process_string(names::FUNCTION),
+                Value::Undefined => self.process_string(&UNDEFINED),
+                Value::Null => self.process_string(&OBJECT),
+                Value::Boolean(_) => self.process_string(&BOOLEAN),
+                Value::Number(_) => self.process_string(&NUMBER),
+                Value::String(_) => self.process_string(&STRING),
+                Value::Object(_) | Value::Promise(_) => self.process_string(&OBJECT),
+                Value::Function(_) => self.process_string(&FUNCTION),
                 Value::None => unreachable!("{value:?}"),
             },
             Operand::Any(value, None) => {

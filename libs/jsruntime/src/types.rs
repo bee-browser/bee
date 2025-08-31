@@ -2,6 +2,8 @@ use std::ffi::c_void;
 use std::mem::offset_of;
 use std::ptr::addr_eq;
 
+use base::utf16;
+
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
@@ -83,14 +85,12 @@ impl Value {
 
     // 13.5.3.1 Runtime Semantics: Evaluation
     pub fn get_typeof(&self) -> &'static U16Chunk {
-        use jsparser::symbol::builtin::names;
-
-        const UNDEFINED: U16Chunk = U16Chunk::new_const(names::UNDEFINED);
-        const BOOLEAN: U16Chunk = U16Chunk::new_const(names::BOOLEAN);
-        const NUMBER: U16Chunk = U16Chunk::new_const(names::NUMBER);
-        const STRING: U16Chunk = U16Chunk::new_const(names::STRING);
-        const FUNCTION: U16Chunk = U16Chunk::new_const(names::FUNCTION);
-        const OBJECT: U16Chunk = U16Chunk::new_const(names::OBJECT);
+        const UNDEFINED: U16Chunk = U16Chunk::new_const(utf16!(&"undefined"));
+        const BOOLEAN: U16Chunk = U16Chunk::new_const(utf16!(&"boolean"));
+        const NUMBER: U16Chunk = U16Chunk::new_const(utf16!(&"number"));
+        const STRING: U16Chunk = U16Chunk::new_const(utf16!(&"string"));
+        const FUNCTION: U16Chunk = U16Chunk::new_const(utf16!(&"function"));
+        const OBJECT: U16Chunk = U16Chunk::new_const(utf16!(&"object"));
 
         match self {
             Self::None => unreachable!(),

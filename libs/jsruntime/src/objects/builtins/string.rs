@@ -122,7 +122,8 @@ impl<X> Runtime<X> {
         logger::debug!(event = "creater_string_prototype");
         debug_assert!(!self.object_prototype.is_null());
 
-        let index_of = self.create_builtin_function(string_prototype_index_of, Value::None);
+        let index_of =
+            self.create_builtin_function(string_prototype_index_of, std::ptr::null_mut());
 
         let prototype = self.create_object(self.object_prototype);
         let _ =
