@@ -166,7 +166,7 @@ impl std::fmt::Display for Value {
 /// allocated on the heap or the stack.
 // TODO(issue#237): GcCell
 // TODO(refactor): refactoring
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy)]
 pub struct U16String(*const U16Chunk); // Non-null
 
 static_assertions::const_assert_eq!(align_of::<U16String>(), align_of::<usize>());
@@ -203,6 +203,15 @@ impl U16String {
     pub(crate) fn as_ptr(&self) -> *const U16Chunk {
         debug_assert!(!self.0.is_null());
         self.0
+    }
+}
+
+impl PartialEq for U16String {
+    fn eq(&self, other: &Self) -> bool {
+        if self.0 == other.0 {
+            return true
+        }
+        self.first_chunk() == other.first_chunk()
     }
 }
 
@@ -343,6 +352,15 @@ impl U16Chunk {
 // The UTF-16 code units never change.
 unsafe impl Send for U16Chunk {}
 unsafe impl Sync for U16Chunk {}
+
+impl PartialEq for U16Chunk {
+    fn eq(&self, other: &Self) -> bool {
+        // TODO(perf): slow...
+        let lhs = self.make_utf16();
+        let rhs = other.make_utf16();
+        lhs == rhs
+    }
+}
 
 impl std::fmt::Display for U16Chunk {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
