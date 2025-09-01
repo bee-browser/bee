@@ -1,4 +1,5 @@
 mod error;
+mod function;
 mod object;
 mod string;
 
@@ -41,7 +42,7 @@ impl<X> Runtime<X> {
         }
 
         self.object_prototype = self.create_object(std::ptr::null_mut()).as_ptr();
-        self.function_prototype = self.create_object(self.object_prototype).as_ptr();
+        self.function_prototype = self.create_function_prototype();
         self.string_prototype = self.create_string_prototype();
         self.error_prototype = self.create_error_prototype();
         self.eval_error_prototype = self.create_eval_error_prototype();
@@ -61,13 +62,16 @@ impl<X> Runtime<X> {
             // 19.1.3 NaN
             Symbol::NAN => Value::Number(f64::NAN),
             // 19.1.4 undefined
-            Symbol::UNDEFINED => Value::Undefined,
+            Symbol::KEYWORD_UNDEFINED => Value::Undefined,
             // 19.3.10 Error ( . . . )
             Symbol::ERROR => self.create_builtin_function(
                 error::constructor::<X>, self.error_prototype),
             // 19.3.11 EvalError ( . . . )
             Symbol::EVAL_ERROR => self.create_builtin_function(
                 eval_error::constructor::<X>, self.eval_error_prototype),
+            // 19.3.16 Function ( . . . )
+            Symbol::FUNCTION => self.create_function_constructor(
+                function::constructor::<X>, self.function_prototype),
             // 19.3.23 Object()
             Symbol::OBJECT => self.create_builtin_function(
                 object::constructor::<X>, self.object_prototype),

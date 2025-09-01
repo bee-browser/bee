@@ -310,10 +310,10 @@ impl<X> Runtime<X> {
     fn make_property_key(&mut self, value: &Value) -> PropertyKey {
         match value {
             Value::None => unreachable!(),
-            Value::Undefined => Symbol::UNDEFINED.into(),
-            Value::Null => Symbol::NULL.into(),
-            Value::Boolean(false) => Symbol::FALSE.into(),
-            Value::Boolean(true) => Symbol::TRUE.into(),
+            Value::Undefined => Symbol::KEYWORD_UNDEFINED.into(),
+            Value::Null => Symbol::KEYWORD_NULL.into(),
+            Value::Boolean(false) => Symbol::KEYWORD_FALSE.into(),
+            Value::Boolean(true) => Symbol::KEYWORD_TRUE.into(),
             Value::Number(value) => (*value).into(),
             Value::String(value) => self.symbol_registry.intern_utf16(value.make_utf16()).into(),
             Value::Object(_) | Value::Function(_) => todo!(),

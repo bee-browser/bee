@@ -209,7 +209,7 @@ impl U16String {
 impl PartialEq for U16String {
     fn eq(&self, other: &Self) -> bool {
         if self.0 == other.0 {
-            return true
+            return true;
         }
         self.first_chunk() == other.first_chunk()
     }

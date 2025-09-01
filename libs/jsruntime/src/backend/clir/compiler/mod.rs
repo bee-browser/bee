@@ -815,10 +815,10 @@ where
     fn process_to_property_key(&mut self) {
         let (operand, ..) = self.dereference();
         let key = match operand {
-            Operand::Undefined => Symbol::UNDEFINED.into(),
-            Operand::Null => Symbol::NULL.into(),
-            Operand::Boolean(_, Some(false)) => Symbol::FALSE.into(),
-            Operand::Boolean(_, Some(true)) => Symbol::TRUE.into(),
+            Operand::Undefined => Symbol::KEYWORD_UNDEFINED.into(),
+            Operand::Null => Symbol::KEYWORD_NULL.into(),
+            Operand::Boolean(_, Some(false)) => Symbol::KEYWORD_FALSE.into(),
+            Operand::Boolean(_, Some(true)) => Symbol::KEYWORD_TRUE.into(),
             Operand::Boolean(value, None) => {
                 let any = self.editor.put_alloc_any();
                 self.editor.put_store_boolean_to_any(value, any);
@@ -850,10 +850,10 @@ where
                 any.into()
             }
             Operand::Promise(_) => todo!(),
-            Operand::Any(_, Some(Value::Undefined)) => Symbol::UNDEFINED.into(),
-            Operand::Any(_, Some(Value::Null)) => Symbol::NULL.into(),
-            Operand::Any(_, Some(Value::Boolean(false))) => Symbol::FALSE.into(),
-            Operand::Any(_, Some(Value::Boolean(true))) => Symbol::FALSE.into(),
+            Operand::Any(_, Some(Value::Undefined)) => Symbol::KEYWORD_UNDEFINED.into(),
+            Operand::Any(_, Some(Value::Null)) => Symbol::KEYWORD_NULL.into(),
+            Operand::Any(_, Some(Value::Boolean(false))) => Symbol::KEYWORD_FALSE.into(),
+            Operand::Any(_, Some(Value::Boolean(true))) => Symbol::KEYWORD_TRUE.into(),
             Operand::Any(_, Some(Value::String(value))) => self
                 .support
                 .make_symbol_from_name(value.make_utf16())
@@ -1327,10 +1327,10 @@ where
         use jsparser::symbol::builtin::names;
 
         match operand {
-            Operand::Undefined => self.editor.put_create_string(names::UNDEFINED),
-            Operand::Null => self.editor.put_create_string(names::NULL),
-            Operand::Boolean(_, Some(true)) => self.editor.put_create_string(names::TRUE),
-            Operand::Boolean(_, Some(false)) => self.editor.put_create_string(names::FALSE),
+            Operand::Undefined => self.editor.put_create_string(names::KEYWORD_UNDEFINED),
+            Operand::Null => self.editor.put_create_string(names::KEYWORD_NULL),
+            Operand::Boolean(_, Some(true)) => self.editor.put_create_string(names::KEYWORD_TRUE),
+            Operand::Boolean(_, Some(false)) => self.editor.put_create_string(names::KEYWORD_FALSE),
             Operand::Boolean(value, None) => self.perform_boolean_to_string(*value),
             Operand::Number(value, _) => self
                 .editor
@@ -1357,10 +1357,10 @@ where
         self.editor
             .put_branch(value, then_block, &[], else_block, &[]);
         self.editor.switch_to_block(then_block);
-        self.editor.put_set_string(names::TRUE, string_ir);
+        self.editor.put_set_string(names::KEYWORD_TRUE, string_ir);
         self.editor.put_jump(merge_block, &[]);
         self.editor.switch_to_block(else_block);
-        self.editor.put_set_string(names::FALSE, string_ir);
+        self.editor.put_set_string(names::KEYWORD_FALSE, string_ir);
         self.editor.put_jump(merge_block, &[]);
         self.editor.switch_to_block(merge_block);
         string_ir
@@ -3434,7 +3434,7 @@ where
         let operand = self.operand_stack.pop().unwrap();
         match operand {
             // Shortcut for frequently used reference to `undefined`.
-            Operand::VariableReference(Symbol::UNDEFINED, Locator::Global) => {
+            Operand::VariableReference(Symbol::KEYWORD_UNDEFINED, Locator::Global) => {
                 (Operand::Undefined, None)
             }
             Operand::VariableReference(symbol, locator) => {
