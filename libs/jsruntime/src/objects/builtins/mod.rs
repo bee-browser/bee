@@ -3,15 +3,13 @@ mod function;
 mod object;
 mod string;
 
-use std::ffi::c_void;
-
 use base::utf16;
 use jsparser::Symbol;
 
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
-use crate::objects::Object;
+use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::Lambda;
 use crate::types::U16Chunk;
@@ -41,18 +39,18 @@ impl<X> Runtime<X> {
             };
         }
 
-        self.object_prototype = self.create_object(std::ptr::null_mut()).as_ptr();
-        self.function_prototype = self.create_function_prototype();
-        self.string_prototype = self.create_string_prototype();
-        self.error_prototype = self.create_error_prototype();
-        self.eval_error_prototype = self.create_eval_error_prototype();
-        self.range_error_prototype = self.create_range_error_prototype();
-        self.reference_error_prototype = self.create_reference_error_prototype();
-        self.syntax_error_prototype = self.create_syntax_error_prototype();
-        self.type_error_prototype = self.create_type_error_prototype();
-        self.uri_error_prototype = self.create_uri_error_prototype();
+        self.object_prototype = Some(self.create_object(None));
+        self.function_prototype = Some(self.create_function_prototype());
+        self.string_prototype = Some(self.create_string_prototype());
+        self.error_prototype = Some(self.create_error_prototype());
+        self.eval_error_prototype = Some(self.create_eval_error_prototype());
+        self.range_error_prototype = Some(self.create_range_error_prototype());
+        self.reference_error_prototype = Some(self.create_reference_error_prototype());
+        self.syntax_error_prototype = Some(self.create_syntax_error_prototype());
+        self.type_error_prototype = Some(self.create_type_error_prototype());
+        self.uri_error_prototype = Some(self.create_uri_error_prototype());
 
-        let this = self.global_object.as_ptr();
+        let this = self.global_object.as_handle();
 
         define! {
             // TODO: 19.1.1 globalThis
@@ -96,19 +94,23 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn create_builtin_function(&mut self, lambda: Lambda<X>, prototype: *mut c_void) -> Value {
+    fn create_builtin_function(
+        &mut self,
+        lambda: Lambda<X>,
+        prototype: Option<ObjectHandle>,
+    ) -> Value {
         logger::debug!(event = "creater_builtin_function");
-        debug_assert!(!self.function_prototype.is_null());
+        debug_assert!(self.function_prototype.is_some());
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let object = self.create_object(self.function_prototype);
+        let mut object = self.create_object(self.function_prototype);
         object.set_closure(closure);
-        if !prototype.is_null() {
+        if let Some(prototype) = prototype {
             let _ = object.define_own_property(
                 Symbol::PROTOTYPE.into(),
                 Property::data_xxx(Value::Object(prototype)),
             );
         }
-        Value::Function(object.as_ptr())
+        Value::Function(object)
     }
 
     // 7.1.4 ToNumber ( argument )
@@ -189,10 +191,9 @@ impl<X> Runtime<X> {
             Value::String(value) => Ok(*value),
             Value::Promise(_) => todo!(),
             Value::Object(value) => {
-                // SAFETY: `value` is a non-null pointer to an `Object`.
-                let object = unsafe { &*((*value) as *const Object) };
-                if self.is_string_object(object) {
-                    Ok(object.string())
+                let value = *value;
+                if self.is_string_object(value) {
+                    Ok(value.string())
                 } else {
                     const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"[object Object]"));
                     Ok(U16String::new(&CHUNK))
@@ -206,14 +207,13 @@ impl<X> Runtime<X> {
 macro_rules! define_error {
     ($name:ident, $create_prototype:ident, $constructor:ident, $symbol:ident) => {
         mod $name {
-            use std::ffi::c_void;
-
             use jsparser::Symbol;
 
             use crate::Runtime;
             use crate::U16Chunk;
             use crate::U16String;
             use crate::logger;
+            use crate::objects::ObjectHandle;
             use crate::objects::Property;
             use crate::types::CallContext;
             use crate::types::Status;
@@ -239,14 +239,14 @@ macro_rules! define_error {
             }
 
             impl<X> Runtime<X> {
-                pub(super) fn $create_prototype(&mut self) -> *mut c_void {
+                pub(super) fn $create_prototype(&mut self) -> ObjectHandle {
                     logger::debug!(event = stringify!($creater_prototype));
-                    debug_assert!(!self.error_prototype.is_null());
+                    debug_assert!(self.error_prototype.is_some());
 
                     use jsparser::symbol::builtin::names;
                     const NAME: U16Chunk = U16Chunk::new_const(names::$symbol);
 
-                    let prototype = self.create_object(self.error_prototype);
+                    let mut prototype = self.create_object(self.error_prototype);
                     let _ = prototype.define_own_property(
                         Symbol::MESSAGE.into(),
                         Property::data_xxx(Value::String(U16String::EMPTY)),
@@ -256,14 +256,14 @@ macro_rules! define_error {
                         Property::data_xxx(Value::String(U16String::new(&NAME))),
                     );
 
-                    prototype.as_ptr()
+                    prototype
                 }
 
                 fn $constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
                     logger::debug!(event = stringify!($constructor), ?args, new);
                     // TODO(feat): NewTarget
                     let object = self.create_object(self.eval_error_prototype);
-                    Ok(Value::Object(object.as_ptr()))
+                    Ok(Value::Object(object))
                 }
             }
         }

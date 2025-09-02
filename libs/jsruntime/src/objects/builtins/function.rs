@@ -1,11 +1,9 @@
-use std::ffi::c_void;
-
 use jsparser::Symbol;
 
 use crate::logger;
 
 use crate::Runtime;
-use crate::objects::Object;
+use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Lambda;
@@ -36,14 +34,12 @@ impl<X> Runtime<X> {
     pub(super) fn create_function_constructor(
         &mut self,
         lambda: Lambda<X>,
-        prototype: *mut c_void,
+        prototype: Option<ObjectHandle>,
     ) -> Value {
         logger::debug!(event = "creater_function_constructor");
         let constructor = self.create_builtin_function(lambda, prototype);
         match constructor {
-            Value::Function(constructor) => {
-                // SAFETY: `constructor` is a non-null pointer to an `Object`.
-                let constructor = unsafe { &mut *(constructor as *mut Object) };
+            Value::Function(mut constructor) => {
                 let _ = constructor.define_own_property(
                     Symbol::LENGTH.into(),
                     Property::data_xxx(Value::Number(1.0)),
@@ -54,11 +50,11 @@ impl<X> Runtime<X> {
         constructor
     }
 
-    pub(super) fn create_function_prototype(&mut self) -> *mut c_void {
+    pub(super) fn create_function_prototype(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_function_prototype");
 
         // TODO(fix): Function.prototype is a built-in function object.
-        let prototype = self.create_object(self.object_prototype);
+        let mut prototype = self.create_object(self.object_prototype);
         let _ = prototype.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxx(Value::Number(0.0)),
@@ -68,6 +64,6 @@ impl<X> Runtime<X> {
             Property::data_xxx(Value::String(U16String::EMPTY)),
         );
 
-        prototype.as_ptr()
+        prototype
     }
 }

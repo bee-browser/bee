@@ -1,5 +1,3 @@
-use std::ffi::c_void;
-
 use jsparser::Symbol;
 
 use crate::Runtime;
@@ -7,6 +5,7 @@ use crate::U16Chunk;
 use crate::U16String;
 use crate::logger;
 use crate::objects::Object;
+use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
@@ -86,7 +85,7 @@ fn string_index_of(string: U16String, search_value: U16String, from_index: u32) 
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn is_string_object(&self, object: &Object) -> bool {
+    pub(crate) fn is_string_object(&self, object: ObjectHandle) -> bool {
         object.is_instance_of(self.string_prototype)
     }
 
@@ -103,8 +102,7 @@ impl<X> Runtime<X> {
         // TODO(feat): NewTarget
         if new {
             // 10.4.3.4 StringCreate ( value, prototype )
-            let protptype = self.string_prototype;
-            let object = self.create_object(protptype);
+            let mut object = self.create_object(self.string_prototype);
             let length = string.len();
             object.set_string(string);
             // TODO: check the result
@@ -112,23 +110,25 @@ impl<X> Runtime<X> {
                 Symbol::LENGTH.into(),
                 Property::data_xxx(Value::Number(length as f64)),
             );
-            Ok(Value::Object(object.as_ptr()))
+            Ok(Value::Object(object))
         } else {
             Ok(Value::String(string))
         }
     }
 
-    pub(super) fn create_string_prototype(&mut self) -> *mut c_void {
+    pub(super) fn create_string_prototype(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_string_prototype");
-        debug_assert!(!self.object_prototype.is_null());
+        debug_assert!(self.object_prototype.is_some());
+        debug_assert!(self.function_prototype.is_some());
+
+        let mut prototype = self.create_object(self.object_prototype);
 
         let index_of =
-            self.create_builtin_function(string_prototype_index_of, std::ptr::null_mut());
-
-        let prototype = self.create_object(self.object_prototype);
+            self.create_builtin_function(string_prototype_index_of, self.function_prototype);
         let _ =
             prototype.define_own_property(Symbol::INDEX_OF.into(), Property::data_xxx(index_of));
-        prototype.as_ptr()
+
+        prototype
     }
 }
 

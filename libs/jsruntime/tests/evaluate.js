@@ -49,9 +49,9 @@ async function main(args, options) {
       case '-Infinity':
         return 'Value::Number(-f64::INFINITY)';
       case 'function':
-        return 'Value::Function(std::ptr::null_mut())';
+        return 'Value::dummy_function()'
       case 'object':
-        return 'Value::Object(std::ptr::null_mut())';
+        return 'Value::dummy_object()';
       case 'promise':
         return 'Value::Promise(0.into())';
       default:

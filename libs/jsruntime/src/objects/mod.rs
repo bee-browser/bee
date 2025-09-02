@@ -1,8 +1,12 @@
 pub(crate) mod builtins;
 
 use std::ffi::c_void;
+use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::Hasher;
+use std::num::NonZeroUsize;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
@@ -209,14 +213,14 @@ pub struct Object {
     nucleus: usize,
 
     // [[Prototype]]
-    prototype: *mut c_void,
+    prototype: Option<ObjectHandle>,
     properties: FxHashMap<PropertyKey, Property>,
 }
 
 impl Object {
     pub(crate) const NUCLEUS_OFFSET: usize = std::mem::offset_of!(Self, nucleus);
 
-    pub fn new(prototype: *mut c_void) -> Self {
+    pub fn new(prototype: Option<ObjectHandle>) -> Self {
         Self {
             nucleus: 0,
             prototype,
@@ -241,13 +245,9 @@ impl Object {
             .get(key)
             .map(|prop| &prop.value)
             .or_else(|| {
-                // SAFETY: `self.prototype` is null or a valid pointer to an `Object`.
-                unsafe {
-                    self.prototype
-                        .cast::<Self>()
-                        .as_ref()
-                        .and_then(|prototype| prototype.get_value(key))
-                }
+                self.prototype
+                    .map(ObjectHandle::as_object)
+                    .and_then(|prototype| prototype.get_value(key))
             })
     }
 
@@ -284,12 +284,73 @@ impl Object {
         self.nucleus = string.as_ptr().addr()
     }
 
-    pub fn as_ptr(&mut self) -> *mut c_void {
-        self as *mut Self as *mut c_void
+    pub fn as_handle(&mut self) -> ObjectHandle {
+        // SAFETY: `self` is a non-null pointer to an `Object`.
+        ObjectHandle(unsafe { NonZeroUsize::new_unchecked(self as *mut Self as usize) })
     }
 
-    fn is_instance_of(&self, prototype: *mut c_void) -> bool {
+    fn is_instance_of(&self, prototype: Option<ObjectHandle>) -> bool {
+        debug_assert!(prototype.is_some());
         // TODO: prototype chain
         self.prototype == prototype
+    }
+}
+
+// TODO(issue#237): GcCellRef
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct ObjectHandle(NonZeroUsize);
+
+static_assertions::const_assert_eq!(size_of::<ObjectHandle>(), size_of::<*const Object>());
+
+impl ObjectHandle {
+    pub fn from_ptr(ptr: *mut c_void) -> Option<ObjectHandle> {
+        NonZeroUsize::new(ptr as usize).map(ObjectHandle)
+    }
+
+    pub fn as_ptr(self) -> *mut c_void {
+        self.0.get() as *mut c_void
+    }
+
+    pub fn as_addr(self) -> usize {
+        self.0.get()
+    }
+
+    pub fn as_object<'a>(self) -> &'a Object {
+        let ptr = self.0.get() as *const Object;
+        debug_assert!(ptr.is_null() || ptr.is_aligned());
+        // SAFETY: `ptr` is a non-null pointer to an `Object`.
+        unsafe { &*ptr }
+    }
+
+    pub fn as_object_mut<'a>(self) -> &'a mut Object {
+        let ptr = self.0.get() as *mut Object;
+        debug_assert!(ptr.is_null() || ptr.is_aligned());
+        // SAFETY: `ptr` is a non-null pointer to an `Object`.
+        unsafe { &mut *ptr }
+    }
+
+    pub fn dummy_for_testing() -> Self {
+        // SAFETY: it's just a dummy data for testing.
+        Self(unsafe { NonZeroUsize::new_unchecked(16) })
+    }
+}
+
+impl Deref for ObjectHandle {
+    type Target = Object;
+
+    fn deref(&self) -> &Self::Target {
+        self.as_object()
+    }
+}
+
+impl DerefMut for ObjectHandle {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.as_object_mut()
+    }
+}
+
+impl Debug for ObjectHandle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self.0.get() as *const Object)
     }
 }

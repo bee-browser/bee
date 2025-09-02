@@ -8,6 +8,7 @@ use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
 use crate::objects::Object;
+use crate::objects::ObjectHandle;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
 // memory layout of a type you want to change.  It's recommended to use compile-time assertions
@@ -27,10 +28,8 @@ pub enum Value {
     Number(f64) = Self::KIND_NUMBER,
     String(U16String) = Self::KIND_STRING,
     Promise(Promise) = Self::KIND_PROMISE,
-    // TODO(issue#237): GcCellRef
-    // TODO: *mut Object
-    Object(*mut c_void) = Self::KIND_OBJECT,
-    Function(*mut c_void) = Self::KIND_FUNCTION,
+    Object(ObjectHandle) = Self::KIND_OBJECT,
+    Function(ObjectHandle) = Self::KIND_FUNCTION,
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
@@ -66,10 +65,8 @@ impl Value {
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),
             Self::Promise(_value) => unimplemented!("new Promise()"),
-            Self::Object(value) | Self::Function(value) => {
-                // SAFETY: `value` is always a non-null pointer to an `Object`.
-                unsafe { Ok(&*(*value as *const Object)) }
-            }
+            Self::Object(value) => Ok(value.as_object()),
+            Self::Function(value) => Ok(value.as_object()),
             Self::None => unreachable!(),
         }
     }
@@ -103,6 +100,14 @@ impl Value {
             Self::Function(_) => &FUNCTION,
             Self::Promise(_) => &OBJECT,
         }
+    }
+
+    pub fn dummy_object() -> Self {
+        Self::Object(ObjectHandle::dummy_for_testing())
+    }
+
+    pub fn dummy_function() -> Self {
+        Self::Function(ObjectHandle::dummy_for_testing())
     }
 }
 

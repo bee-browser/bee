@@ -7,7 +7,6 @@ macro_rules! runtime_debug {
 mod control_flow;
 mod editor;
 
-use std::ffi::c_void;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
@@ -29,6 +28,7 @@ use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;
 use crate::logger;
+use crate::objects::ObjectHandle;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
 use crate::semantics::Locator;
@@ -55,9 +55,9 @@ pub struct Session<'r, X> {
     lambda_registry: &'r mut LambdaRegistry,
     pub code_registry: &'r mut CodeRegistry<X>,
     scope_cleanup_checker_enabled: bool,
-    global_object: *mut c_void,
-    object_prototype: *mut c_void,
-    function_prototype: *mut c_void,
+    global_object: ObjectHandle,
+    object_prototype: ObjectHandle,
+    function_prototype: ObjectHandle,
 }
 
 trait CompilerSupport {
@@ -79,11 +79,11 @@ trait CompilerSupport {
     fn target_config(&self) -> isa::TargetFrontendConfig;
 
     // GlobalObject
-    fn global_object(&mut self) -> *mut c_void;
+    fn global_object(&mut self) -> ObjectHandle;
 
     // Intrinsics
-    fn object_prototype(&self) -> *mut c_void;
-    fn function_prototype(&self) -> *mut c_void;
+    fn object_prototype(&self) -> ObjectHandle;
+    fn function_prototype(&self) -> ObjectHandle;
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
@@ -116,15 +116,15 @@ impl<X> CompilerSupport for Session<'_, X> {
         self.code_registry.target_config()
     }
 
-    fn global_object(&mut self) -> *mut c_void {
+    fn global_object(&mut self) -> ObjectHandle {
         self.global_object
     }
 
-    fn object_prototype(&self) -> *mut c_void {
+    fn object_prototype(&self) -> ObjectHandle {
         self.object_prototype
     }
 
-    fn function_prototype(&self) -> *mut c_void {
+    fn function_prototype(&self) -> ObjectHandle {
         self.function_prototype
     }
 }
@@ -157,7 +157,7 @@ pub fn compile<X>(
     for func in program.functions.iter() {
         let mut session = {
             let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
-            let global_object = runtime.global_object.as_ptr();
+            let global_object = runtime.global_object.as_handle();
             Session {
                 program,
                 symbol_registry: &mut runtime.symbol_registry,
@@ -165,8 +165,8 @@ pub fn compile<X>(
                 code_registry: &mut runtime.code_registry,
                 scope_cleanup_checker_enabled,
                 global_object,
-                object_prototype: runtime.object_prototype,
-                function_prototype: runtime.function_prototype,
+                object_prototype: runtime.object_prototype.unwrap(),
+                function_prototype: runtime.function_prototype.unwrap(),
             }
         };
         context.compile_function(func, &mut session, &program.scope_tree);
@@ -202,7 +202,7 @@ pub fn compile_function<X>(
 
     let mut session = {
         let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
-        let global_object = runtime.global_object.as_ptr();
+        let global_object = runtime.global_object.as_handle();
         Session {
             program,
             symbol_registry: &mut runtime.symbol_registry,
@@ -210,8 +210,8 @@ pub fn compile_function<X>(
             code_registry: &mut runtime.code_registry,
             scope_cleanup_checker_enabled,
             global_object,
-            object_prototype: runtime.object_prototype,
-            function_prototype: runtime.function_prototype,
+            object_prototype: runtime.object_prototype.unwrap(),
+            function_prototype: runtime.function_prototype.unwrap(),
         }
     };
 
@@ -444,7 +444,7 @@ where
                 // const this = globalObject;
                 // DO NOT USE `globalThis` HERE.
                 let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object);
+                let value = self.editor.put_object(global_object.as_addr());
                 let this = self.perform_to_any(&Operand::Object(value));
                 self.this = Some(this);
             }
@@ -462,7 +462,7 @@ where
                 self.process_else(true);
                 // DO NOT USE `globalThis` HERE.
                 let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object);
+                let value = self.editor.put_object(global_object.as_addr());
                 self.operand_stack.push(Operand::Object(value));
                 self.process_ternary();
                 let this = self.pop_any();
@@ -688,8 +688,8 @@ where
     }
 
     fn process_object(&mut self) {
-        let prototype_addr = self.support.object_prototype();
-        let prototype = self.editor.put_object(prototype_addr);
+        let prototype = self.support.object_prototype();
+        let prototype = self.editor.put_object(prototype.as_addr());
         let object = self
             .editor
             .put_runtime_create_object(self.support, prototype);
@@ -699,8 +699,8 @@ where
     fn process_function(&mut self, name: Symbol) {
         let closure = self.pop_closure();
         // TODO(feat): Function object
-        let prototype_addr = self.support.function_prototype();
-        let prototype = self.editor.put_object(prototype_addr);
+        let prototype = self.support.function_prototype();
+        let prototype = self.editor.put_object(prototype.as_addr());
         let function = self
             .editor
             .put_runtime_create_object(self.support, prototype);
@@ -1032,7 +1032,7 @@ where
             }
             Locator::Global => {
                 let global_object = self.support.global_object();
-                let object = self.editor.put_object(global_object);
+                let object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
                 self.editor.put_store_function_to_any(func_ir, value);
                 self.editor
@@ -1051,8 +1051,8 @@ where
 
         // TODO(feat): implement others
 
-        let object_prototype_addr = self.support.object_prototype();
-        let object_prototype = self.editor.put_object(object_prototype_addr);
+        let object_prototype = self.support.object_prototype();
+        let object_prototype = self.editor.put_object(object_prototype.as_addr());
         let prototype = self
             .editor
             .put_runtime_create_object(self.support, object_prototype);
@@ -2066,7 +2066,7 @@ where
         match self.operand_stack.pop().unwrap() {
             Operand::VariableReference(symbol, Locator::Global) => {
                 let global_object = self.support.global_object();
-                let object = self.editor.put_object(global_object);
+                let object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
                 // TODO(feat): ReferenceError, TypeError
@@ -3617,7 +3617,7 @@ where
     fn emit_get_global_variable(&mut self, key: Symbol) -> AnyIr {
         logger::debug!(event = "emit_get_global_variable", ?key);
         let global_object = self.support.global_object();
-        let object = self.editor.put_object(global_object);
+        let object = self.editor.put_object(global_object.as_addr());
 
         // TODO: strict mode
         let value = self

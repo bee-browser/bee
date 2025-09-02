@@ -6,6 +6,7 @@ use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaKind;
 use crate::logger;
+use crate::objects::ObjectHandle;
 use crate::objects::PropertyKey;
 use crate::types::CallContext;
 use crate::types::Capture;
@@ -265,11 +266,11 @@ impl<X> Runtime<X> {
             Value::Boolean(_value) => todo!(),
             Value::Number(_value) => todo!(),
             Value::String(value) => match self.string_constructor(&[Value::String(*value)], true) {
-                Ok(Value::Object(object)) => object,
+                Ok(Value::Object(object)) => object.as_ptr(),
                 Ok(_) => unreachable!(),
                 Err(_error) => todo!(),
             },
-            Value::Object(value) | Value::Function(value) => *value,
+            Value::Object(value) | Value::Function(value) => value.as_ptr(),
             Value::Promise(_value) => todo!(),
         }
     }
@@ -587,6 +588,7 @@ pub(crate) extern "C" fn runtime_create_object<X>(
     runtime: &mut Runtime<X>,
     prototype: *mut c_void,
 ) -> *mut c_void {
+    let prototype = ObjectHandle::from_ptr(prototype);
     runtime.create_object(prototype).as_ptr()
 }
 

@@ -1,12 +1,10 @@
-use std::ffi::c_void;
-
 use jsparser::Symbol;
 
 use crate::Runtime;
 use crate::U16Chunk;
 use crate::U16String;
 use crate::logger;
-use crate::objects::Object;
+use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
@@ -40,17 +38,10 @@ extern "C" fn error_prototype_to_string<X>(
     retv: &mut Value,
 ) -> Status {
     let object = match context.this() {
-        Value::Object(object) => {
-            // SAFETY: `object` is a non-null pointer to an `Object`.
-            unsafe {
-                debug_assert!(!object.is_null());
-                debug_assert!((*object as *const Object).is_aligned());
-                &*(*object as *const Object)
-            }
-        }
+        Value::Object(object) => object,
         _ => {
             let type_error = runtime.create_object(runtime.type_error_prototype);
-            *retv = Value::Object(type_error.as_ptr());
+            *retv = Value::Object(type_error);
             return Status::Exception;
         }
     };
@@ -80,26 +71,28 @@ extern "C" fn error_prototype_to_string<X>(
 }
 
 impl<X> Runtime<X> {
-    pub(super) fn create_error_prototype(&mut self) -> *mut c_void {
+    pub(super) fn create_error_prototype(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_error_prototype");
-        debug_assert!(!self.object_prototype.is_null());
+        debug_assert!(self.object_prototype.is_some());
 
-        let to_string =
-            self.create_builtin_function(error_prototype_to_string, std::ptr::null_mut());
+        let mut prototype = self.create_object(self.object_prototype);
 
-        let prototype = self.create_object(self.object_prototype);
         let _ = prototype.define_own_property(
             Symbol::NAME.into(),
             Property::data_xxx(Value::String(U16String::new(&NAME))),
         );
+
         let _ = prototype.define_own_property(
             Symbol::MESSAGE.into(),
             Property::data_xxx(Value::String(U16String::EMPTY)),
         );
+
+        let to_string =
+            self.create_builtin_function(error_prototype_to_string, self.function_prototype);
         let _ =
             prototype.define_own_property(Symbol::TO_STRING.into(), Property::data_xxx(to_string));
 
-        prototype.as_ptr()
+        prototype
     }
 
     fn error_constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
@@ -107,6 +100,6 @@ impl<X> Runtime<X> {
         // TODO(feat): NewTarget
         let object = self.create_object(self.error_prototype);
         // TODO(feat): message
-        Ok(Value::Object(object.as_ptr()))
+        Ok(Value::Object(object))
     }
 }

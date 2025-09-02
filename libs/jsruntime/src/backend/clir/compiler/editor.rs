@@ -1,5 +1,4 @@
 use std::ffi::CStr;
-use std::ffi::c_void;
 
 use cranelift::codegen::ir;
 use cranelift::codegen::ir::InstBuilder as _;
@@ -821,7 +820,7 @@ impl<'a> Editor<'a> {
 
     // object
 
-    pub fn put_object(&mut self, addr: *mut c_void) -> ObjectIr {
+    pub fn put_object(&mut self, addr: usize) -> ObjectIr {
         logger::debug!(event = "put_object", ?addr);
         ObjectIr(self.builder.ins().iconst(self.addr_type, addr as i64))
     }

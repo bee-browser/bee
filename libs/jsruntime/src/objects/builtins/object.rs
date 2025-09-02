@@ -29,6 +29,6 @@ impl<X> Runtime<X> {
             Some(_v) => todo!(), // TODO(feat): ToObject()
         };
         // TODO(feat): NewTarget
-        Ok(Value::Object(o.as_ptr()))
+        Ok(Value::Object(o))
     }
 }
