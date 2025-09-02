@@ -212,6 +212,9 @@ pub struct Object {
     /// A pointer to the `U16Chunk` if this is a string object.
     nucleus: usize,
 
+    // TODO: bitflags
+    is_error: bool,
+
     // [[Prototype]]
     prototype: Option<ObjectHandle>,
     properties: FxHashMap<PropertyKey, Property>,
@@ -223,6 +226,7 @@ impl Object {
     pub fn new(prototype: Option<ObjectHandle>) -> Self {
         Self {
             nucleus: 0,
+            is_error: false,
             prototype,
             properties: Default::default(),
         }
@@ -293,6 +297,14 @@ impl Object {
         debug_assert!(prototype.is_some());
         // TODO: prototype chain
         self.prototype == prototype
+    }
+
+    fn is_error(&self) -> bool {
+        self.is_error
+    }
+
+    fn set_error(&mut self) {
+        self.is_error = true;
     }
 }
 

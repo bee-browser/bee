@@ -52,10 +52,12 @@
 - Infinity
 - [NaN, NAN]
 - [async, ASYNC]
+- cause
 - constructor
 - default
 - globalThis
 - indexOf
+- isError
 - length
 - message
 - name

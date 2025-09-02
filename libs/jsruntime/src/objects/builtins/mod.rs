@@ -62,35 +62,27 @@ impl<X> Runtime<X> {
             // 19.1.4 undefined
             Symbol::KEYWORD_UNDEFINED => Value::Undefined,
             // 19.3.10 Error ( . . . )
-            Symbol::ERROR => self.create_builtin_function(
-                error::constructor::<X>, self.error_prototype),
+            Symbol::ERROR => self.create_error_constructor(),
             // 19.3.11 EvalError ( . . . )
-            Symbol::EVAL_ERROR => self.create_builtin_function(
-                eval_error::constructor::<X>, self.eval_error_prototype),
+            Symbol::EVAL_ERROR => self.create_eval_error_constructor(),
             // 19.3.16 Function ( . . . )
-            Symbol::FUNCTION => self.create_function_constructor(
-                function::constructor::<X>, self.function_prototype),
+            Symbol::FUNCTION => self.create_function_constructor(),
             // 19.3.23 Object()
             Symbol::OBJECT => self.create_builtin_function(
                 object::constructor::<X>, self.object_prototype),
             // 19.3.26 RangeError ( . . . )
-            Symbol::RANGE_ERROR => self.create_builtin_function(
-                range_error::constructor::<X>, self.range_error_prototype),
+            Symbol::RANGE_ERROR => self.create_range_error_constructor(),
             // 19.3.27 ReferenceError ( . . . )
-            Symbol::REFERENCE_ERROR => self.create_builtin_function(
-                reference_error::constructor::<X>, self.reference_error_prototype),
+            Symbol::REFERENCE_ERROR => self.create_reference_error_constructor(),
             // 19.3.31 String()
             Symbol::STRING => self.create_builtin_function(
                 string::constructor::<X>, self.string_prototype),
             // 19.3.33 SyntaxError ( . . . )
-            Symbol::SYNTAX_ERROR => self.create_builtin_function(
-                syntax_error::constructor::<X>, self.syntax_error_prototype),
+            Symbol::SYNTAX_ERROR => self.create_syntax_error_constructor(),
             // 19.3.34 TypeError ( . . . )
-            Symbol::TYPE_ERROR => self.create_builtin_function(
-                type_error::constructor::<X>, self.type_error_prototype),
+            Symbol::TYPE_ERROR => self.create_type_error_constructor(),
             // 19.3.39 URIError ( . . . )
-            Symbol::URI_ERROR => self.create_builtin_function(
-                uri_error::constructor::<X>, self.uri_error_prototype),
+            Symbol::URI_ERROR => self.create_uri_error_constructor(),
         }
     }
 
@@ -205,7 +197,7 @@ impl<X> Runtime<X> {
 }
 
 macro_rules! define_error {
-    ($name:ident, $create_prototype:ident, $constructor:ident, $symbol:ident) => {
+    ($name:ident, $create_constructor:ident, $create_prototype:ident, $constructor:ident, $symbol:ident) => {
         mod $name {
             use jsparser::Symbol;
 
@@ -219,26 +211,13 @@ macro_rules! define_error {
             use crate::types::Status;
             use crate::types::Value;
 
-            pub extern "C" fn constructor<X>(
-                runtime: &mut Runtime<X>,
-                context: &mut CallContext,
-                retv: &mut Value,
-            ) -> Status {
-                let args = context.args();
-                let new = context.is_new();
-                match runtime.$constructor(args, new) {
-                    Ok(value) => {
-                        *retv = value;
-                        Status::Normal
-                    }
-                    Err(value) => {
-                        *retv = value;
-                        Status::Exception
-                    }
-                }
-            }
-
             impl<X> Runtime<X> {
+                pub(super) fn $create_constructor(&mut self) -> Value {
+                    logger::debug!(event = stringify!($create_constructor));
+                    // TODO: error constructor
+                    self.create_builtin_function(constructor::<X>, self.error_prototype)
+                }
+
                 pub(super) fn $create_prototype(&mut self) -> ObjectHandle {
                     logger::debug!(event = stringify!($creater_prototype));
                     debug_assert!(self.error_prototype.is_some());
@@ -266,12 +245,32 @@ macro_rules! define_error {
                     Ok(Value::Object(object))
                 }
             }
+
+            extern "C" fn constructor<X>(
+                runtime: &mut Runtime<X>,
+                context: &mut CallContext,
+                retv: &mut Value,
+            ) -> Status {
+                let args = context.args();
+                let new = context.is_new();
+                match runtime.$constructor(args, new) {
+                    Ok(value) => {
+                        *retv = value;
+                        Status::Normal
+                    }
+                    Err(value) => {
+                        *retv = value;
+                        Status::Exception
+                    }
+                }
+            }
         }
     };
 }
 
 define_error! {
     eval_error,
+    create_eval_error_constructor,
     create_eval_error_prototype,
     range_eval_constructor,
     EVAL_ERROR
@@ -279,6 +278,7 @@ define_error! {
 
 define_error! {
     range_error,
+    create_range_error_constructor,
     create_range_error_prototype,
     range_error_constructor,
     RANGE_ERROR
@@ -286,6 +286,7 @@ define_error! {
 
 define_error! {
     reference_error,
+    create_reference_error_constructor,
     create_reference_error_prototype,
     reference_error_constructor,
     REFERENCE_ERROR
@@ -293,6 +294,7 @@ define_error! {
 
 define_error! {
     syntax_error,
+    create_syntax_error_constructor,
     create_syntax_error_prototype,
     syntax_error_constructor,
     SYNTAX_ERROR
@@ -300,6 +302,7 @@ define_error! {
 
 define_error! {
     type_error,
+    create_type_error_constructor,
     create_type_error_prototype,
     type_error_constructor,
     TYPE_ERROR
@@ -307,6 +310,7 @@ define_error! {
 
 define_error! {
     uri_error,
+    create_uri_error_constructor,
     create_uri_error_prototype,
     uri_error_constructor,
     URI_ERROR
