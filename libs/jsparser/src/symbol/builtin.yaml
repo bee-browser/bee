@@ -15,45 +15,54 @@
 - ['##error', HIDDEN_ERROR]
 
 # Reserved words defined in the ECMA-262 specification.
-- await
-- arguments
-- eval
-- 'false'
-- function
-- implements
-- interface
-- let
-- 'null'
-- package
-- private
-- protected
-- public
-- static
-- this
-- 'true'
-- undefined
-- yield
+- [await, KEYWORD_AWAIT]
+- [arguments, KEYWORD_ARGUMENTS]
+- [eval, KEYWORD_EVAL]
+- ['false', KEYWORD_FALSE]
+- [function, KEYWORD_FUNCTION]
+- [implements, KEYWORD_IMPLEMENTS]
+- [interface, KEYWORD_INTERFACE]
+- [let, KEYWORD_LET]
+- ['null', KEYWORD_NULL]
+- [package, KEYWORD_PACKAGE]
+- [private, KEYWORD_PRIVATE]
+- [protected, KEYWORD_PROTECTED]
+- [public, KEYWORD_PUBLIC]
+- [static, KEYWORD_STATIC]
+- [this, KEYWORD_THIS]
+- ['true', KEYWORD_TRUE]
+- [undefined, KEYWORD_UNDEFINED]
+- [yield, KEYWORD_YIELD]
+
+# Non-reserved symbols for well-known intrinsic objects.
+- Error
+- EvalError
+- Function
+- Object
+- RangeError
+- ReferenceError
+- String
+- SyntaxError
+- TypeError
+- URIError
 
 # Non-reserved, but commonly used words
 # TODO: use separate string table?
 - [__proto__, LEGACY_PROTO]
 - Infinity
 - [NaN, NAN]
-- [Object, INTRINSIC_OBJECT]
-- [String, INTRINSIC_STRING]
-- async
-- boolean
+- [async, ASYNC]
+- cause
 - constructor
 - default
 - globalThis
 - indexOf
+- isError
 - length
+- message
 - name
-- number
-- object
 - prototype
-- string
-- symbol
+- toString
 
 # Special symbols for internal use only.
 - ['-Infinity', NEG_INFINITY]

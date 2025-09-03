@@ -7,10 +7,10 @@ macro_rules! runtime_debug {
 mod control_flow;
 mod editor;
 
-use std::ffi::c_void;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use base::const_utf16;
 use cranelift::codegen;
 use cranelift::codegen::ir;
 use cranelift::codegen::isa;
@@ -28,6 +28,7 @@ use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;
 use crate::logger;
+use crate::objects::ObjectHandle;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
 use crate::semantics::Locator;
@@ -54,9 +55,9 @@ pub struct Session<'r, X> {
     lambda_registry: &'r mut LambdaRegistry,
     pub code_registry: &'r mut CodeRegistry<X>,
     scope_cleanup_checker_enabled: bool,
-    global_object: *mut c_void,
-    object_prototype: *mut c_void,
-    function_prototype: *mut c_void,
+    global_object: ObjectHandle,
+    object_prototype: ObjectHandle,
+    function_prototype: ObjectHandle,
 }
 
 trait CompilerSupport {
@@ -78,11 +79,11 @@ trait CompilerSupport {
     fn target_config(&self) -> isa::TargetFrontendConfig;
 
     // GlobalObject
-    fn global_object(&mut self) -> *mut c_void;
+    fn global_object(&mut self) -> ObjectHandle;
 
     // Intrinsics
-    fn object_prototype(&self) -> *mut c_void;
-    fn function_prototype(&self) -> *mut c_void;
+    fn object_prototype(&self) -> ObjectHandle;
+    fn function_prototype(&self) -> ObjectHandle;
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
@@ -115,15 +116,15 @@ impl<X> CompilerSupport for Session<'_, X> {
         self.code_registry.target_config()
     }
 
-    fn global_object(&mut self) -> *mut c_void {
+    fn global_object(&mut self) -> ObjectHandle {
         self.global_object
     }
 
-    fn object_prototype(&self) -> *mut c_void {
+    fn object_prototype(&self) -> ObjectHandle {
         self.object_prototype
     }
 
-    fn function_prototype(&self) -> *mut c_void {
+    fn function_prototype(&self) -> ObjectHandle {
         self.function_prototype
     }
 }
@@ -156,7 +157,7 @@ pub fn compile<X>(
     for func in program.functions.iter() {
         let mut session = {
             let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
-            let global_object = runtime.global_object.as_ptr();
+            let global_object = runtime.global_object.as_handle();
             Session {
                 program,
                 symbol_registry: &mut runtime.symbol_registry,
@@ -164,8 +165,8 @@ pub fn compile<X>(
                 code_registry: &mut runtime.code_registry,
                 scope_cleanup_checker_enabled,
                 global_object,
-                object_prototype: runtime.object_prototype,
-                function_prototype: runtime.function_prototype,
+                object_prototype: runtime.object_prototype.unwrap(),
+                function_prototype: runtime.function_prototype.unwrap(),
             }
         };
         context.compile_function(func, &mut session, &program.scope_tree);
@@ -201,7 +202,7 @@ pub fn compile_function<X>(
 
     let mut session = {
         let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
-        let global_object = runtime.global_object.as_ptr();
+        let global_object = runtime.global_object.as_handle();
         Session {
             program,
             symbol_registry: &mut runtime.symbol_registry,
@@ -209,8 +210,8 @@ pub fn compile_function<X>(
             code_registry: &mut runtime.code_registry,
             scope_cleanup_checker_enabled,
             global_object,
-            object_prototype: runtime.object_prototype,
-            function_prototype: runtime.function_prototype,
+            object_prototype: runtime.object_prototype.unwrap(),
+            function_prototype: runtime.function_prototype.unwrap(),
         }
     };
 
@@ -443,7 +444,7 @@ where
                 // const this = globalObject;
                 // DO NOT USE `globalThis` HERE.
                 let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object);
+                let value = self.editor.put_object(global_object.as_addr());
                 let this = self.perform_to_any(&Operand::Object(value));
                 self.this = Some(this);
             }
@@ -461,7 +462,7 @@ where
                 self.process_else(true);
                 // DO NOT USE `globalThis` HERE.
                 let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object);
+                let value = self.editor.put_object(global_object.as_addr());
                 self.operand_stack.push(Operand::Object(value));
                 self.process_ternary();
                 let this = self.pop_any();
@@ -687,8 +688,8 @@ where
     }
 
     fn process_object(&mut self) {
-        let prototype_addr = self.support.object_prototype();
-        let prototype = self.editor.put_object(prototype_addr);
+        let prototype = self.support.object_prototype();
+        let prototype = self.editor.put_object(prototype.as_addr());
         let object = self
             .editor
             .put_runtime_create_object(self.support, prototype);
@@ -698,8 +699,8 @@ where
     fn process_function(&mut self, name: Symbol) {
         let closure = self.pop_closure();
         // TODO(feat): Function object
-        let prototype_addr = self.support.function_prototype();
-        let prototype = self.editor.put_object(prototype_addr);
+        let prototype = self.support.function_prototype();
+        let prototype = self.editor.put_object(prototype.as_addr());
         let function = self
             .editor
             .put_runtime_create_object(self.support, prototype);
@@ -814,10 +815,10 @@ where
     fn process_to_property_key(&mut self) {
         let (operand, ..) = self.dereference();
         let key = match operand {
-            Operand::Undefined => Symbol::UNDEFINED.into(),
-            Operand::Null => Symbol::NULL.into(),
-            Operand::Boolean(_, Some(false)) => Symbol::FALSE.into(),
-            Operand::Boolean(_, Some(true)) => Symbol::TRUE.into(),
+            Operand::Undefined => Symbol::KEYWORD_UNDEFINED.into(),
+            Operand::Null => Symbol::KEYWORD_NULL.into(),
+            Operand::Boolean(_, Some(false)) => Symbol::KEYWORD_FALSE.into(),
+            Operand::Boolean(_, Some(true)) => Symbol::KEYWORD_TRUE.into(),
             Operand::Boolean(value, None) => {
                 let any = self.editor.put_alloc_any();
                 self.editor.put_store_boolean_to_any(value, any);
@@ -849,10 +850,10 @@ where
                 any.into()
             }
             Operand::Promise(_) => todo!(),
-            Operand::Any(_, Some(Value::Undefined)) => Symbol::UNDEFINED.into(),
-            Operand::Any(_, Some(Value::Null)) => Symbol::NULL.into(),
-            Operand::Any(_, Some(Value::Boolean(false))) => Symbol::FALSE.into(),
-            Operand::Any(_, Some(Value::Boolean(true))) => Symbol::FALSE.into(),
+            Operand::Any(_, Some(Value::Undefined)) => Symbol::KEYWORD_UNDEFINED.into(),
+            Operand::Any(_, Some(Value::Null)) => Symbol::KEYWORD_NULL.into(),
+            Operand::Any(_, Some(Value::Boolean(false))) => Symbol::KEYWORD_FALSE.into(),
+            Operand::Any(_, Some(Value::Boolean(true))) => Symbol::KEYWORD_TRUE.into(),
             Operand::Any(_, Some(Value::String(value))) => self
                 .support
                 .make_symbol_from_name(value.make_utf16())
@@ -1031,7 +1032,7 @@ where
             }
             Locator::Global => {
                 let global_object = self.support.global_object();
-                let object = self.editor.put_object(global_object);
+                let object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
                 self.editor.put_store_function_to_any(func_ir, value);
                 self.editor
@@ -1050,8 +1051,8 @@ where
 
         // TODO(feat): implement others
 
-        let object_prototype_addr = self.support.object_prototype();
-        let object_prototype = self.editor.put_object(object_prototype_addr);
+        let object_prototype = self.support.object_prototype();
+        let object_prototype = self.editor.put_object(object_prototype.as_addr());
         let prototype = self
             .editor
             .put_runtime_create_object(self.support, object_prototype);
@@ -1119,8 +1120,7 @@ where
             }
             Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
             _ => {
-                self.process_number(1001.); // TODO: TypeError
-                self.process_throw();
+                self.emit_throw_type_error();
                 return;
             }
         };
@@ -1165,8 +1165,7 @@ where
             Operand::Function(function, _) => function,
             Operand::Any(value, ..) => self.emit_load_function_or_throw_type_error(value),
             _ => {
-                self.process_number(1001.); // TODO: TypeError
-                self.process_throw();
+                self.emit_throw_type_error();
                 return;
             }
         };
@@ -1326,10 +1325,10 @@ where
         use jsparser::symbol::builtin::names;
 
         match operand {
-            Operand::Undefined => self.editor.put_create_string(names::UNDEFINED),
-            Operand::Null => self.editor.put_create_string(names::NULL),
-            Operand::Boolean(_, Some(true)) => self.editor.put_create_string(names::TRUE),
-            Operand::Boolean(_, Some(false)) => self.editor.put_create_string(names::FALSE),
+            Operand::Undefined => self.editor.put_create_string(names::KEYWORD_UNDEFINED),
+            Operand::Null => self.editor.put_create_string(names::KEYWORD_NULL),
+            Operand::Boolean(_, Some(true)) => self.editor.put_create_string(names::KEYWORD_TRUE),
+            Operand::Boolean(_, Some(false)) => self.editor.put_create_string(names::KEYWORD_FALSE),
             Operand::Boolean(value, None) => self.perform_boolean_to_string(*value),
             Operand::Number(value, _) => self
                 .editor
@@ -1356,10 +1355,10 @@ where
         self.editor
             .put_branch(value, then_block, &[], else_block, &[]);
         self.editor.switch_to_block(then_block);
-        self.editor.put_set_string(names::TRUE, string_ir);
+        self.editor.put_set_string(names::KEYWORD_TRUE, string_ir);
         self.editor.put_jump(merge_block, &[]);
         self.editor.switch_to_block(else_block);
-        self.editor.put_set_string(names::FALSE, string_ir);
+        self.editor.put_set_string(names::KEYWORD_FALSE, string_ir);
         self.editor.put_jump(merge_block, &[]);
         self.editor.switch_to_block(merge_block);
         string_ir
@@ -1454,9 +1453,7 @@ where
         self.editor.put_jump(merge_block, &[]);
         // } else {
         self.editor.switch_to_block(else_block);
-        // TODO(feat): TypeError
-        self.process_number(1001.);
-        self.process_throw();
+        self.emit_throw_type_error();
         self.editor.put_jump(merge_block, &[]);
         // }
         self.editor.switch_to_block(merge_block);
@@ -1531,25 +1528,30 @@ where
 
     // 13.5.3.1 Runtime Semantics: Evaluation
     fn process_typeof(&mut self) {
-        use jsparser::symbol::builtin::names;
+        const_utf16!(UNDEFINED, "undefined");
+        const_utf16!(BOOLEAN, "boolean");
+        const_utf16!(NUMBER, "number");
+        const_utf16!(STRING, "string");
+        const_utf16!(OBJECT, "object");
+        const_utf16!(FUNCTION, "function");
 
         let (operand, ..) = self.dereference();
         match operand {
-            Operand::Undefined => self.process_string(names::UNDEFINED),
-            Operand::Null => self.process_string(names::OBJECT),
-            Operand::Boolean(..) => self.process_string(names::BOOLEAN),
-            Operand::Number(..) => self.process_string(names::NUMBER),
-            Operand::String(..) => self.process_string(names::STRING),
-            Operand::Object(..) | Operand::Promise(..) => self.process_string(names::OBJECT),
-            Operand::Function(..) => self.process_string(names::FUNCTION),
+            Operand::Undefined => self.process_string(&UNDEFINED),
+            Operand::Null => self.process_string(&OBJECT),
+            Operand::Boolean(..) => self.process_string(&BOOLEAN),
+            Operand::Number(..) => self.process_string(&NUMBER),
+            Operand::String(..) => self.process_string(&STRING),
+            Operand::Object(..) | Operand::Promise(..) => self.process_string(&OBJECT),
+            Operand::Function(..) => self.process_string(&FUNCTION),
             Operand::Any(_, Some(ref value)) => match value {
-                Value::Undefined => self.process_string(names::UNDEFINED),
-                Value::Null => self.process_string(names::OBJECT),
-                Value::Boolean(_) => self.process_string(names::BOOLEAN),
-                Value::Number(_) => self.process_string(names::NUMBER),
-                Value::String(_) => self.process_string(names::STRING),
-                Value::Object(_) | Value::Promise(_) => self.process_string(names::OBJECT),
-                Value::Function(_) => self.process_string(names::FUNCTION),
+                Value::Undefined => self.process_string(&UNDEFINED),
+                Value::Null => self.process_string(&OBJECT),
+                Value::Boolean(_) => self.process_string(&BOOLEAN),
+                Value::Number(_) => self.process_string(&NUMBER),
+                Value::String(_) => self.process_string(&STRING),
+                Value::Object(_) | Value::Promise(_) => self.process_string(&OBJECT),
+                Value::Function(_) => self.process_string(&FUNCTION),
                 Value::None => unreachable!("{value:?}"),
             },
             Operand::Any(value, None) => {
@@ -2060,7 +2062,7 @@ where
         match self.operand_stack.pop().unwrap() {
             Operand::VariableReference(symbol, Locator::Global) => {
                 let global_object = self.support.global_object();
-                let object = self.editor.put_object(global_object);
+                let object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
                 // TODO(feat): ReferenceError, TypeError
@@ -3428,7 +3430,7 @@ where
         let operand = self.operand_stack.pop().unwrap();
         match operand {
             // Shortcut for frequently used reference to `undefined`.
-            Operand::VariableReference(Symbol::UNDEFINED, Locator::Global) => {
+            Operand::VariableReference(Symbol::KEYWORD_UNDEFINED, Locator::Global) => {
                 (Operand::Undefined, None)
             }
             Operand::VariableReference(symbol, locator) => {
@@ -3446,8 +3448,7 @@ where
                     .put_branch(is_nullptr, then_block, &[], end_block, &[]);
                 // {
                 self.editor.switch_to_block(then_block);
-                self.process_number(1001.); // TODO: TypeError
-                self.process_throw();
+                self.emit_throw_type_error();
                 // }
                 self.editor.switch_to_block(end_block);
                 let value = match key {
@@ -3611,7 +3612,7 @@ where
     fn emit_get_global_variable(&mut self, key: Symbol) -> AnyIr {
         logger::debug!(event = "emit_get_global_variable", ?key);
         let global_object = self.support.global_object();
-        let object = self.editor.put_object(global_object);
+        let object = self.editor.put_object(global_object.as_addr());
 
         // TODO: strict mode
         let value = self
@@ -3627,9 +3628,7 @@ where
             .put_branch(is_nullptr, then_block, &[], end_block, &[]);
         // {
         self.editor.switch_to_block(then_block);
-        // TODO(feat): ReferenceError
-        self.process_number(1000.);
-        self.process_throw();
+        self.emit_throw_reference_error();
         self.editor.put_jump(end_block, &[]);
         // }
         self.editor.switch_to_block(end_block);
@@ -3638,7 +3637,7 @@ where
     }
 
     fn emit_load_function_or_throw_type_error(&mut self, value: AnyIr) -> ObjectIr {
-        logger::debug!(event = "emit_function_closure_or_throw_type_error", ?value);
+        logger::debug!(event = "emit_load_function_or_throw_type_error", ?value);
         let then_block = self.editor.create_block();
         let else_block = self.editor.create_block();
         let end_block = self.editor.create_block_with_addr();
@@ -3653,8 +3652,7 @@ where
         self.editor.put_jump(end_block, &[object.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
-        self.process_number(1001.); // TODO(feat): TypeError
-        self.process_throw();
+        self.emit_throw_type_error();
         let dummy = self.editor.put_nullptr();
         self.editor.put_jump(end_block, &[dummy.into()]);
         // }
@@ -3680,8 +3678,7 @@ where
         self.editor.put_jump(end_block, &[closure.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
-        self.process_number(1001.); // TODO(feat): TypeError
-        self.process_throw();
+        self.emit_throw_type_error();
         let dummy = self.editor.put_nullptr();
         self.editor.put_jump(end_block, &[dummy.into()]);
         // }
@@ -3713,6 +3710,22 @@ where
         // }
 
         self.editor.switch_to_block(merge_block);
+    }
+
+    // throws
+
+    fn emit_throw_reference_error(&mut self) {
+        logger::debug!(event = "emit_throw_reference_error");
+        let error = self.editor.put_runtime_create_reference_error(self.support);
+        self.operand_stack.push(Operand::Object(error));
+        self.process_throw();
+    }
+
+    fn emit_throw_type_error(&mut self) {
+        logger::debug!(event = "emit_throw_type_error");
+        let error = self.editor.put_runtime_create_type_error(self.support);
+        self.operand_stack.push(Operand::Object(error));
+        self.process_throw();
     }
 }
 

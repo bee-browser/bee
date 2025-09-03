@@ -7,7 +7,6 @@ mod objects;
 mod semantics;
 mod types;
 
-use std::ffi::c_void;
 use std::pin::Pin;
 
 use jsparser::Symbol;
@@ -18,6 +17,7 @@ use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
 use objects::Object;
+use objects::ObjectHandle;
 use objects::Property;
 use objects::PropertyKey;
 use semantics::Program;
@@ -84,11 +84,25 @@ pub struct Runtime<X> {
     global_object: Pin<Box<Object>>,
 
     // %Object.prototype%
-    object_prototype: *mut c_void,
+    object_prototype: Option<ObjectHandle>,
     // %String.prototype%
-    string_prototype: *mut c_void,
+    string_prototype: Option<ObjectHandle>,
     // %Function.prototype%
-    function_prototype: *mut c_void,
+    function_prototype: Option<ObjectHandle>,
+    // %Error.prototype%
+    error_prototype: Option<ObjectHandle>,
+    // %EvalError.prototype%
+    eval_error_prototype: Option<ObjectHandle>,
+    // %RangeError.prototype%
+    range_error_prototype: Option<ObjectHandle>,
+    // %ReferenceError.prototype%
+    reference_error_prototype: Option<ObjectHandle>,
+    // %SyntaxError.prototype%
+    syntax_error_prototype: Option<ObjectHandle>,
+    // %TypeError.prototype%
+    type_error_prototype: Option<ObjectHandle>,
+    // URIError.prototype%
+    uri_error_prototype: Option<ObjectHandle>,
 
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
@@ -96,7 +110,8 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let global_object = Box::pin(Object::new(std::ptr::null_mut())); // TODO: [[Prototype]]
+        // TODO: pass [[Prototype]] of the global object.
+        let global_object = Box::pin(Object::new(Default::default()));
 
         let mut runtime = Self {
             pref: Default::default(),
@@ -107,9 +122,16 @@ impl<X> Runtime<X> {
             allocator: bumpalo::Bump::new(),
             job_runner: JobRunner::new(),
             global_object,
-            object_prototype: std::ptr::null_mut(),
-            string_prototype: std::ptr::null_mut(),
-            function_prototype: std::ptr::null_mut(),
+            object_prototype: None,
+            string_prototype: None,
+            function_prototype: None,
+            error_prototype: None,
+            eval_error_prototype: None,
+            reference_error_prototype: None,
+            range_error_prototype: None,
+            syntax_error_prototype: None,
+            type_error_prototype: None,
+            uri_error_prototype: None,
             monitor: None,
             extension,
         };
@@ -148,9 +170,9 @@ impl<X> Runtime<X> {
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let object = self.create_object(self.function_prototype);
+        let mut object = self.create_object(self.function_prototype);
         object.set_closure(closure);
-        let value = Value::Function(object.as_ptr());
+        let value = Value::Function(object);
         // TODO: add `flags` to the arguments.
         let prop = Property::data_xxx(value);
         let result = self.global_object.define_own_property(symbol.into(), prop);
@@ -281,18 +303,18 @@ impl<X> Runtime<X> {
         result
     }
 
-    fn create_object(&mut self, prototype: *mut c_void) -> &mut Object {
+    fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {
         // TODO: GC
-        self.allocator.alloc(Object::new(prototype))
+        self.allocator.alloc(Object::new(prototype)).as_handle()
     }
 
     fn make_property_key(&mut self, value: &Value) -> PropertyKey {
         match value {
             Value::None => unreachable!(),
-            Value::Undefined => Symbol::UNDEFINED.into(),
-            Value::Null => Symbol::NULL.into(),
-            Value::Boolean(false) => Symbol::FALSE.into(),
-            Value::Boolean(true) => Symbol::TRUE.into(),
+            Value::Undefined => Symbol::KEYWORD_UNDEFINED.into(),
+            Value::Null => Symbol::KEYWORD_NULL.into(),
+            Value::Boolean(false) => Symbol::KEYWORD_FALSE.into(),
+            Value::Boolean(true) => Symbol::KEYWORD_TRUE.into(),
             Value::Number(value) => (*value).into(),
             Value::String(value) => self.symbol_registry.intern_utf16(value.make_utf16()).into(),
             Value::Object(_) | Value::Function(_) => todo!(),

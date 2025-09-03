@@ -1,5 +1,4 @@
 use std::ffi::CStr;
-use std::ffi::c_void;
 
 use cranelift::codegen::ir;
 use cranelift::codegen::ir::InstBuilder as _;
@@ -821,7 +820,7 @@ impl<'a> Editor<'a> {
 
     // object
 
-    pub fn put_object(&mut self, addr: *mut c_void) -> ObjectIr {
+    pub fn put_object(&mut self, addr: usize) -> ObjectIr {
         logger::debug!(event = "put_object", ?addr);
         ObjectIr(self.builder.ins().iconst(self.addr_type, addr as i64))
     }
@@ -1967,6 +1966,29 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_create_object(support, self.builder.func);
         let args = [self.runtime(), prototype.0];
+        let call = self.builder.ins().call(func, &args);
+        ObjectIr(self.builder.inst_results(call)[0])
+    }
+
+    pub fn put_runtime_create_reference_error(
+        &mut self,
+        support: &mut impl EditorSupport,
+    ) -> ObjectIr {
+        logger::debug!(event = "put_runtime_create_reference_error");
+        let func = self
+            .runtime_func_cache
+            .import_runtime_create_reference_error(support, self.builder.func);
+        let args = [self.runtime()];
+        let call = self.builder.ins().call(func, &args);
+        ObjectIr(self.builder.inst_results(call)[0])
+    }
+
+    pub fn put_runtime_create_type_error(&mut self, support: &mut impl EditorSupport) -> ObjectIr {
+        logger::debug!(event = "put_runtime_create_type_error");
+        let func = self
+            .runtime_func_cache
+            .import_runtime_create_type_error(support, self.builder.func);
+        let args = [self.runtime()];
         let call = self.builder.ins().call(func, &args);
         ObjectIr(self.builder.inst_results(call)[0])
     }

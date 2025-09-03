@@ -154,6 +154,12 @@ functions:
       - name: prototype
         type: '&mut Object'
     ret: '&mut Object'
+  - name: create_reference_error
+    args: []
+    ret: '&mut Object'
+  - name: create_type_error
+    args: []
+    ret: '&mut Object'
   - name: get_value_by_symbol
     args:
       - name: object
