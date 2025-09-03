@@ -13,7 +13,7 @@ version.workspace = true
 location = []
 
 [dependencies]
-bitflags = "2.9.3"
+bitflags = "2.9.4"
 indexmap = "2.11.0"
 logging = { path = "../../libs/logging" }
 phf = { version = "0.13.1", features = ["macros"] }
