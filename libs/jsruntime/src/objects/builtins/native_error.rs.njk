@@ -49,11 +49,37 @@ impl<X> Runtime<X> {
         prototype
     }
 
-    pub(crate) fn create_{{ data.name }}(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
-        logger::debug!(event = "create_{{ data.name }}", ?args, new);
+    pub(crate) fn create_{{ data.name }}(&mut self, new: bool, message: &Value, options: &Value) -> Result<ObjectHandle, Value> {
+        logger::debug!(event = "create_{{ data.name }}", new, ?message, ?options);
         // TODO(feat): NewTarget
-        let object = self.create_object(self.{{ data.name }}_prototype);
-        Ok(Value::Object(object))
+        let mut object = self.create_object(self.{{ data.name }}_prototype);
+
+        object.set_error();
+
+        match message {
+            Value::Undefined => (),
+            _ => {
+                let msg = self.perform_to_string(message);
+                // TODO: error handling
+                let _ = object.define_own_property(
+                    Symbol::MESSAGE.into(),
+                    Property::data_wxc(Value::String(msg)),
+                );
+            }
+        }
+
+        match options {
+            Value::Object(value) | Value::Function(value) => {
+                let key = Symbol::CAUSE.into();
+                if let Some(value) = value.get_value(&key) {
+                    // TODO: error handling
+                    let _ = object.define_own_property(key, Property::data_wxc(value.clone()));
+                }
+            }
+            _ => (),
+        }
+
+        Ok(object)
     }
 }
 
@@ -64,11 +90,13 @@ extern "C" fn constructor<X>(
     context: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
-    let args = context.args();
     let new = context.is_new();
-    match runtime.create_{{ data.name }}(args, new) {
+    let args = context.args();
+    let message = args.first().unwrap_or(&Value::Undefined);
+    let options = args.get(1).unwrap_or(&Value::Undefined);
+    match runtime.create_{{ data.name }}(new, message, options) {
         Ok(value) => {
-            *retv = value;
+            *retv = Value::Object(value);
             Status::Normal
         }
         Err(value) => {

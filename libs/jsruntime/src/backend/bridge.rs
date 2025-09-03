@@ -593,6 +593,22 @@ pub(crate) extern "C" fn runtime_create_object<X>(
     runtime.create_object(prototype).as_ptr()
 }
 
+pub(crate) extern "C" fn runtime_create_reference_error<X>(
+    runtime: &mut Runtime<X>,
+) -> *mut c_void {
+    runtime
+        .create_reference_error(true, &Value::Undefined, &Value::Undefined)
+        .unwrap()
+        .as_ptr()
+}
+
+pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) -> *mut c_void {
+    runtime
+        .create_type_error(true, &Value::Undefined, &Value::Undefined)
+        .unwrap()
+        .as_ptr()
+}
+
 pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
     _runtime: &mut Runtime<X>,
     object: *mut c_void,

@@ -1,8 +1,7 @@
 try {
   print(a);
 } catch (e) {
-  // TODO(feat): ReferenceError
-  print(e); ///=1000
+  print(e.name); ///="ReferenceError"
 }
 
 // `a` is never captured because it's a global variable.

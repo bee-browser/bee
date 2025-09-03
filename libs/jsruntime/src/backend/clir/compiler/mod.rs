@@ -1120,8 +1120,7 @@ where
             }
             Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
             _ => {
-                self.process_number(1001.); // TODO: TypeError
-                self.process_throw();
+                self.emit_throw_type_error();
                 return;
             }
         };
@@ -1166,8 +1165,7 @@ where
             Operand::Function(function, _) => function,
             Operand::Any(value, ..) => self.emit_load_function_or_throw_type_error(value),
             _ => {
-                self.process_number(1001.); // TODO: TypeError
-                self.process_throw();
+                self.emit_throw_type_error();
                 return;
             }
         };
@@ -1455,9 +1453,7 @@ where
         self.editor.put_jump(merge_block, &[]);
         // } else {
         self.editor.switch_to_block(else_block);
-        // TODO(feat): TypeError
-        self.process_number(1001.);
-        self.process_throw();
+        self.emit_throw_type_error();
         self.editor.put_jump(merge_block, &[]);
         // }
         self.editor.switch_to_block(merge_block);
@@ -3452,8 +3448,7 @@ where
                     .put_branch(is_nullptr, then_block, &[], end_block, &[]);
                 // {
                 self.editor.switch_to_block(then_block);
-                self.process_number(1001.); // TODO: TypeError
-                self.process_throw();
+                self.emit_throw_type_error();
                 // }
                 self.editor.switch_to_block(end_block);
                 let value = match key {
@@ -3633,9 +3628,7 @@ where
             .put_branch(is_nullptr, then_block, &[], end_block, &[]);
         // {
         self.editor.switch_to_block(then_block);
-        // TODO(feat): ReferenceError
-        self.process_number(1000.);
-        self.process_throw();
+        self.emit_throw_reference_error();
         self.editor.put_jump(end_block, &[]);
         // }
         self.editor.switch_to_block(end_block);
@@ -3644,7 +3637,7 @@ where
     }
 
     fn emit_load_function_or_throw_type_error(&mut self, value: AnyIr) -> ObjectIr {
-        logger::debug!(event = "emit_function_closure_or_throw_type_error", ?value);
+        logger::debug!(event = "emit_load_function_or_throw_type_error", ?value);
         let then_block = self.editor.create_block();
         let else_block = self.editor.create_block();
         let end_block = self.editor.create_block_with_addr();
@@ -3659,8 +3652,7 @@ where
         self.editor.put_jump(end_block, &[object.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
-        self.process_number(1001.); // TODO(feat): TypeError
-        self.process_throw();
+        self.emit_throw_type_error();
         let dummy = self.editor.put_nullptr();
         self.editor.put_jump(end_block, &[dummy.into()]);
         // }
@@ -3686,8 +3678,7 @@ where
         self.editor.put_jump(end_block, &[closure.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
-        self.process_number(1001.); // TODO(feat): TypeError
-        self.process_throw();
+        self.emit_throw_type_error();
         let dummy = self.editor.put_nullptr();
         self.editor.put_jump(end_block, &[dummy.into()]);
         // }
@@ -3719,6 +3710,22 @@ where
         // }
 
         self.editor.switch_to_block(merge_block);
+    }
+
+    // throws
+
+    fn emit_throw_reference_error(&mut self) {
+        logger::debug!(event = "emit_throw_reference_error");
+        let error = self.editor.put_runtime_create_reference_error(self.support);
+        self.operand_stack.push(Operand::Object(error));
+        self.process_throw();
+    }
+
+    fn emit_throw_type_error(&mut self) {
+        logger::debug!(event = "emit_throw_type_error");
+        let error = self.editor.put_runtime_create_type_error(self.support);
+        self.operand_stack.push(Operand::Object(error));
+        self.process_throw();
     }
 }
 

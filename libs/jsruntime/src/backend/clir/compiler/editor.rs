@@ -1970,6 +1970,29 @@ impl<'a> Editor<'a> {
         ObjectIr(self.builder.inst_results(call)[0])
     }
 
+    pub fn put_runtime_create_reference_error(
+        &mut self,
+        support: &mut impl EditorSupport,
+    ) -> ObjectIr {
+        logger::debug!(event = "put_runtime_create_reference_error");
+        let func = self
+            .runtime_func_cache
+            .import_runtime_create_reference_error(support, self.builder.func);
+        let args = [self.runtime()];
+        let call = self.builder.ins().call(func, &args);
+        ObjectIr(self.builder.inst_results(call)[0])
+    }
+
+    pub fn put_runtime_create_type_error(&mut self, support: &mut impl EditorSupport) -> ObjectIr {
+        logger::debug!(event = "put_runtime_create_type_error");
+        let func = self
+            .runtime_func_cache
+            .import_runtime_create_type_error(support, self.builder.func);
+        let args = [self.runtime()];
+        let call = self.builder.ins().call(func, &args);
+        ObjectIr(self.builder.inst_results(call)[0])
+    }
+
     pub fn put_runtime_get_value_by_symbol(
         &mut self,
         support: &mut impl EditorSupport,
