@@ -54,8 +54,8 @@ impl<X> Runtime<X> {
         prototype
     }
 
-    fn error_constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
-        logger::debug!(event = "error_constructor", ?args, new);
+    pub(crate) fn create_error(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
+        logger::debug!(event = "create_error", ?args, new);
         // TODO(feat): NewTarget
         let mut object = self.create_object(self.error_prototype);
 
@@ -97,7 +97,7 @@ extern "C" fn constructor<X>(
 ) -> Status {
     let args = context.args();
     let new = context.is_new();
-    match runtime.error_constructor(args, new) {
+    match runtime.create_error(args, new) {
         Ok(value) => {
             *retv = value;
             Status::Normal

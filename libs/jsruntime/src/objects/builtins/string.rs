@@ -21,8 +21,12 @@ impl<X> Runtime<X> {
         self.create_builtin_function(constructor::<X>, self.string_prototype)
     }
 
-    pub(crate) fn string_constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
-        logger::debug!(event = "string_constructor", ?args, new);
+    pub(crate) fn create_string_object(
+        &mut self,
+        args: &[Value],
+        new: bool,
+    ) -> Result<Value, Value> {
+        logger::debug!(event = "create_string_object", ?args, new);
         let string = match args.first() {
             Some(v) => {
                 // TODO: a. If NewTarget is undefined and value is a Symbol,
@@ -82,7 +86,7 @@ extern "C" fn constructor<X>(
 ) -> Status {
     let args = context.args();
     let new = context.is_new();
-    match runtime.string_constructor(args, new) {
+    match runtime.create_string_object(args, new) {
         Ok(value) => {
             *retv = value;
             Status::Normal

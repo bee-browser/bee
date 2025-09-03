@@ -265,7 +265,8 @@ impl<X> Runtime<X> {
             Value::Undefined | Value::Null => todo!(),
             Value::Boolean(_value) => todo!(),
             Value::Number(_value) => todo!(),
-            Value::String(value) => match self.string_constructor(&[Value::String(*value)], true) {
+            Value::String(value) => match self.create_string_object(&[Value::String(*value)], true)
+            {
                 Ok(Value::Object(object)) => object.as_ptr(),
                 Ok(_) => unreachable!(),
                 Err(_error) => todo!(),

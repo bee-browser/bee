@@ -11,7 +11,7 @@ impl<X> Runtime<X> {
         self.create_builtin_function(constructor::<X>, self.object_prototype)
     }
 
-    fn object_constructor(&mut self, context: &mut CallContext) -> Result<Value, Value> {
+    fn create_object_object(&mut self, context: &mut CallContext) -> Result<Value, Value> {
         let o = match context.args().first() {
             None | Some(Value::Undefined) | Some(Value::Null) => {
                 self.create_object(self.object_prototype)
@@ -30,7 +30,7 @@ extern "C" fn constructor<X>(
     context: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
-    match runtime.object_constructor(context) {
+    match runtime.create_object_object(context) {
         Ok(value) => {
             *retv = value;
             Status::Normal

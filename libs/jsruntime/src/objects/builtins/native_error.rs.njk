@@ -49,8 +49,8 @@ impl<X> Runtime<X> {
         prototype
     }
 
-    fn {{ data.name }}_constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
-        logger::debug!(event = "{{ data.name }}_constructor", ?args, new);
+    pub(crate) fn create_{{ data.name }}(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
+        logger::debug!(event = "create_{{ data.name }}", ?args, new);
         // TODO(feat): NewTarget
         let object = self.create_object(self.{{ data.name }}_prototype);
         Ok(Value::Object(object))
@@ -66,7 +66,7 @@ extern "C" fn constructor<X>(
 ) -> Status {
     let args = context.args();
     let new = context.is_new();
-    match runtime.{{ data.name }}_constructor(args, new) {
+    match runtime.create_{{ data.name }}(args, new) {
         Ok(value) => {
             *retv = value;
             Status::Normal

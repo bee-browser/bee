@@ -43,20 +43,9 @@ impl<X> Runtime<X> {
 // lambda functions
 
 extern "C" fn constructor<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-    retv: &mut Value,
+    _runtime: &mut Runtime<X>,
+    _context: &mut CallContext,
+    _retv: &mut Value,
 ) -> Status {
-    let args = context.args();
-    let new = context.is_new();
-    match runtime.string_constructor(args, new) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
-        }
-        Err(value) => {
-            *retv = value;
-            Status::Exception
-        }
-    }
+    todo!();
 }
