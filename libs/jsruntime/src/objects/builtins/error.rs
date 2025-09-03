@@ -11,17 +11,14 @@ use crate::types::Status;
 use crate::types::Value;
 
 impl<X> Runtime<X> {
-    pub(super) fn create_error_constructor(&mut self) -> Value {
+    pub(super) fn create_error_constructor(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_error_constructor");
-        let constructor = self.create_builtin_function(constructor::<X>, self.error_prototype);
-        match constructor {
-            Value::Function(mut constructor) => {
-                let func = self.create_builtin_function(error_is_error, self.function_prototype);
-                let _ = constructor
-                    .define_own_property(Symbol::IS_ERROR.into(), Property::data_xxx(func));
-            }
-            _ => unreachable!(),
-        }
+        let mut constructor = self.create_builtin_function(constructor::<X>, self.error_prototype);
+        let func = self.create_builtin_function(error_is_error, self.function_prototype);
+        let _ = constructor.define_own_property(
+            Symbol::IS_ERROR.into(),
+            Property::data_xxx(Value::Function(func)),
+        );
         constructor
     }
 
@@ -43,8 +40,10 @@ impl<X> Runtime<X> {
 
         let to_string =
             self.create_builtin_function(error_prototype_to_string, self.function_prototype);
-        let _ =
-            prototype.define_own_property(Symbol::TO_STRING.into(), Property::data_xxx(to_string));
+        let _ = prototype.define_own_property(
+            Symbol::TO_STRING.into(),
+            Property::data_xxx(Value::Function(to_string)),
+        );
 
         prototype
     }
@@ -82,6 +81,8 @@ impl<X> Runtime<X> {
         Ok(Value::Object(object))
     }
 }
+
+// lambda functions
 
 extern "C" fn constructor<X>(
     runtime: &mut Runtime<X>,

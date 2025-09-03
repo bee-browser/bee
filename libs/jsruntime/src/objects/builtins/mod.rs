@@ -62,27 +62,25 @@ impl<X> Runtime<X> {
             // 19.1.4 undefined
             Symbol::KEYWORD_UNDEFINED => Value::Undefined,
             // 19.3.10 Error ( . . . )
-            Symbol::ERROR => self.create_error_constructor(),
+            Symbol::ERROR => Value::Function(self.create_error_constructor()),
             // 19.3.11 EvalError ( . . . )
-            Symbol::EVAL_ERROR => self.create_eval_error_constructor(),
+            Symbol::EVAL_ERROR => Value::Function(self.create_eval_error_constructor()),
             // 19.3.16 Function ( . . . )
-            Symbol::FUNCTION => self.create_function_constructor(),
+            Symbol::FUNCTION => Value::Function(self.create_function_constructor()),
             // 19.3.23 Object()
-            Symbol::OBJECT => self.create_builtin_function(
-                object::constructor::<X>, self.object_prototype),
+            Symbol::OBJECT => Value::Function(self.create_object_constructor()),
             // 19.3.26 RangeError ( . . . )
-            Symbol::RANGE_ERROR => self.create_range_error_constructor(),
+            Symbol::RANGE_ERROR => Value::Function(self.create_range_error_constructor()),
             // 19.3.27 ReferenceError ( . . . )
-            Symbol::REFERENCE_ERROR => self.create_reference_error_constructor(),
+            Symbol::REFERENCE_ERROR => Value::Function(self.create_reference_error_constructor()),
             // 19.3.31 String()
-            Symbol::STRING => self.create_builtin_function(
-                string::constructor::<X>, self.string_prototype),
+            Symbol::STRING => Value::Function(self.create_string_constructor()),
             // 19.3.33 SyntaxError ( . . . )
-            Symbol::SYNTAX_ERROR => self.create_syntax_error_constructor(),
+            Symbol::SYNTAX_ERROR => Value::Function(self.create_syntax_error_constructor()),
             // 19.3.34 TypeError ( . . . )
-            Symbol::TYPE_ERROR => self.create_type_error_constructor(),
+            Symbol::TYPE_ERROR => Value::Function(self.create_type_error_constructor()),
             // 19.3.39 URIError ( . . . )
-            Symbol::URI_ERROR => self.create_uri_error_constructor(),
+            Symbol::URI_ERROR => Value::Function(self.create_uri_error_constructor()),
         }
     }
 
@@ -90,19 +88,19 @@ impl<X> Runtime<X> {
         &mut self,
         lambda: Lambda<X>,
         prototype: Option<ObjectHandle>,
-    ) -> Value {
+    ) -> ObjectHandle {
         logger::debug!(event = "creater_builtin_function");
         debug_assert!(self.function_prototype.is_some());
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let mut object = self.create_object(self.function_prototype);
-        object.set_closure(closure);
+        let mut func = self.create_object(self.function_prototype);
+        func.set_closure(closure);
         if let Some(prototype) = prototype {
-            let _ = object.define_own_property(
+            let _ = func.define_own_property(
                 Symbol::PROTOTYPE.into(),
                 Property::data_xxx(Value::Object(prototype)),
             );
         }
-        Value::Function(object)
+        func
     }
 
     // 7.1.4 ToNumber ( argument )
@@ -212,7 +210,7 @@ macro_rules! define_error {
             use crate::types::Value;
 
             impl<X> Runtime<X> {
-                pub(super) fn $create_constructor(&mut self) -> Value {
+                pub(super) fn $create_constructor(&mut self) -> ObjectHandle {
                     logger::debug!(event = stringify!($create_constructor));
                     // TODO: error constructor
                     self.create_builtin_function(constructor::<X>, self.error_prototype)
@@ -245,6 +243,8 @@ macro_rules! define_error {
                     Ok(Value::Object(object))
                 }
             }
+
+            // lambda functions
 
             extern "C" fn constructor<X>(
                 runtime: &mut Runtime<X>,

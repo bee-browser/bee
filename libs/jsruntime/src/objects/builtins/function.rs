@@ -11,18 +11,14 @@ use crate::types::U16String;
 use crate::types::Value;
 
 impl<X> Runtime<X> {
-    pub(super) fn create_function_constructor(&mut self) -> Value {
+    pub(super) fn create_function_constructor(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_function_constructor");
-        let constructor = self.create_builtin_function(constructor::<X>, self.function_prototype);
-        match constructor {
-            Value::Function(mut constructor) => {
-                let _ = constructor.define_own_property(
-                    Symbol::LENGTH.into(),
-                    Property::data_xxx(Value::Number(1.0)),
-                );
-            }
-            _ => unreachable!(),
-        }
+        let mut constructor =
+            self.create_builtin_function(constructor::<X>, self.function_prototype);
+        let _ = constructor.define_own_property(
+            Symbol::LENGTH.into(),
+            Property::data_xxx(Value::Number(1.0)),
+        );
         constructor
     }
 
@@ -43,6 +39,8 @@ impl<X> Runtime<X> {
         prototype
     }
 }
+
+// lambda functions
 
 extern "C" fn constructor<X>(
     runtime: &mut Runtime<X>,

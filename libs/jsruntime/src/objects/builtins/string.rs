@@ -11,7 +11,72 @@ use crate::types::CallContext;
 use crate::types::Status;
 use crate::types::Value;
 
-pub extern "C" fn constructor<X>(
+impl<X> Runtime<X> {
+    pub(crate) fn is_string_object(&self, object: ObjectHandle) -> bool {
+        object.is_instance_of(self.string_prototype)
+    }
+
+    pub(super) fn create_string_constructor(&mut self) -> ObjectHandle {
+        logger::debug!(event = "create_string_constructor");
+        self.create_builtin_function(constructor::<X>, self.string_prototype)
+    }
+
+    pub(crate) fn string_constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
+        logger::debug!(event = "string_constructor", ?args, new);
+        let string = match args.first() {
+            Some(v) => {
+                // TODO: a. If NewTarget is undefined and value is a Symbol,
+                // return SymbolDescriptiveString(value).
+                self.perform_to_string(v)
+            }
+            None => U16String::EMPTY,
+        };
+        // TODO(feat): NewTarget
+        if new {
+            // 10.4.3.4 StringCreate ( value, prototype )
+            let mut object = self.create_object(self.string_prototype);
+            let length = string.len();
+            object.set_string(string);
+            // TODO: check the result
+            let _ = object.define_own_property(
+                Symbol::LENGTH.into(),
+                Property::data_xxx(Value::Number(length as f64)),
+            );
+            Ok(Value::Object(object))
+        } else {
+            Ok(Value::String(string))
+        }
+    }
+
+    pub(super) fn create_string_prototype(&mut self) -> ObjectHandle {
+        logger::debug!(event = "creater_string_prototype");
+        debug_assert!(self.object_prototype.is_some());
+        debug_assert!(self.function_prototype.is_some());
+
+        let mut prototype = self.create_object(self.object_prototype);
+
+        let index_of =
+            self.create_builtin_function(string_prototype_index_of, self.function_prototype);
+        let _ = prototype.define_own_property(
+            Symbol::INDEX_OF.into(),
+            Property::data_xxx(Value::Function(index_of)),
+        );
+
+        prototype
+    }
+}
+
+impl Object {
+    pub(crate) fn string(&self) -> U16String {
+        // SAFETY: `self.nucleus` of a String object is a non-null point to a `U16Chunk`.
+        let chunk = unsafe { &*(self.nucleus as *const U16Chunk) };
+        U16String::new(chunk)
+    }
+}
+
+// lambda functions
+
+extern "C" fn constructor<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
     retv: &mut Value,
@@ -82,60 +147,4 @@ fn string_index_of(string: U16String, search_value: U16String, from_index: u32) 
         }
     }
     None
-}
-
-impl<X> Runtime<X> {
-    pub(crate) fn is_string_object(&self, object: ObjectHandle) -> bool {
-        object.is_instance_of(self.string_prototype)
-    }
-
-    pub(crate) fn string_constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
-        logger::debug!(event = "string_constructor", ?args, new);
-        let string = match args.first() {
-            Some(v) => {
-                // TODO: a. If NewTarget is undefined and value is a Symbol,
-                // return SymbolDescriptiveString(value).
-                self.perform_to_string(v)
-            }
-            None => U16String::EMPTY,
-        };
-        // TODO(feat): NewTarget
-        if new {
-            // 10.4.3.4 StringCreate ( value, prototype )
-            let mut object = self.create_object(self.string_prototype);
-            let length = string.len();
-            object.set_string(string);
-            // TODO: check the result
-            let _ = object.define_own_property(
-                Symbol::LENGTH.into(),
-                Property::data_xxx(Value::Number(length as f64)),
-            );
-            Ok(Value::Object(object))
-        } else {
-            Ok(Value::String(string))
-        }
-    }
-
-    pub(super) fn create_string_prototype(&mut self) -> ObjectHandle {
-        logger::debug!(event = "creater_string_prototype");
-        debug_assert!(self.object_prototype.is_some());
-        debug_assert!(self.function_prototype.is_some());
-
-        let mut prototype = self.create_object(self.object_prototype);
-
-        let index_of =
-            self.create_builtin_function(string_prototype_index_of, self.function_prototype);
-        let _ =
-            prototype.define_own_property(Symbol::INDEX_OF.into(), Property::data_xxx(index_of));
-
-        prototype
-    }
-}
-
-impl Object {
-    pub(crate) fn string(&self) -> U16String {
-        // SAFETY: `self.nucleus` of a String object is a non-null point to a `U16Chunk`.
-        let chunk = unsafe { &*(self.nucleus as *const U16Chunk) };
-        U16String::new(chunk)
-    }
 }
