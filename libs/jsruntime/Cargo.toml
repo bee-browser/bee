@@ -11,7 +11,7 @@ version.workspace = true
 
 [dependencies]
 base = { path = "../base" }
-bitflags = "2.9.3"
+bitflags = "2.9.4"
 # TODO(issue#237): replace `bumpalo` with `jsgc = { path = "../jsgc" }`
 bumpalo = "3.19.0"
 cranelift = "0.123.2"
