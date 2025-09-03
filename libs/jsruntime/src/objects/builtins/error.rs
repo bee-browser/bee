@@ -13,12 +13,19 @@ use crate::types::Value;
 impl<X> Runtime<X> {
     pub(super) fn create_error_constructor(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_error_constructor");
+        debug_assert!(self.error_prototype.is_some());
         let mut constructor = self.create_builtin_function(constructor::<X>, self.error_prototype);
         let func = self.create_builtin_function(error_is_error, self.function_prototype);
         let _ = constructor.define_own_property(
             Symbol::IS_ERROR.into(),
             Property::data_xxx(Value::Function(func)),
         );
+        if let Some(mut prototype) = self.error_prototype {
+            let _ = prototype.define_own_property(
+                Symbol::CONSTRUCTOR.into(),
+                Property::data_xxx(Value::Function(constructor)),
+            );
+        }
         constructor
     }
 

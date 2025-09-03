@@ -1,7 +1,13 @@
 mod error;
+mod eval_error;
 mod function;
 mod object;
+mod range_error;
+mod reference_error;
 mod string;
+mod syntax_error;
+mod type_error;
+mod uri_error;
 
 use base::utf16;
 use jsparser::Symbol;
@@ -192,126 +198,4 @@ impl<X> Runtime<X> {
             Value::Function(_) => todo!(),
         }
     }
-}
-
-macro_rules! define_error {
-    ($name:ident, $create_constructor:ident, $create_prototype:ident, $constructor:ident, $symbol:ident) => {
-        mod $name {
-            use jsparser::Symbol;
-
-            use crate::Runtime;
-            use crate::U16Chunk;
-            use crate::U16String;
-            use crate::logger;
-            use crate::objects::ObjectHandle;
-            use crate::objects::Property;
-            use crate::types::CallContext;
-            use crate::types::Status;
-            use crate::types::Value;
-
-            impl<X> Runtime<X> {
-                pub(super) fn $create_constructor(&mut self) -> ObjectHandle {
-                    logger::debug!(event = stringify!($create_constructor));
-                    // TODO: error constructor
-                    self.create_builtin_function(constructor::<X>, self.error_prototype)
-                }
-
-                pub(super) fn $create_prototype(&mut self) -> ObjectHandle {
-                    logger::debug!(event = stringify!($creater_prototype));
-                    debug_assert!(self.error_prototype.is_some());
-
-                    use jsparser::symbol::builtin::names;
-                    const NAME: U16Chunk = U16Chunk::new_const(names::$symbol);
-
-                    let mut prototype = self.create_object(self.error_prototype);
-                    let _ = prototype.define_own_property(
-                        Symbol::MESSAGE.into(),
-                        Property::data_xxx(Value::String(U16String::EMPTY)),
-                    );
-                    let _ = prototype.define_own_property(
-                        Symbol::NAME.into(),
-                        Property::data_xxx(Value::String(U16String::new(&NAME))),
-                    );
-
-                    prototype
-                }
-
-                fn $constructor(&mut self, args: &[Value], new: bool) -> Result<Value, Value> {
-                    logger::debug!(event = stringify!($constructor), ?args, new);
-                    // TODO(feat): NewTarget
-                    let object = self.create_object(self.eval_error_prototype);
-                    Ok(Value::Object(object))
-                }
-            }
-
-            // lambda functions
-
-            extern "C" fn constructor<X>(
-                runtime: &mut Runtime<X>,
-                context: &mut CallContext,
-                retv: &mut Value,
-            ) -> Status {
-                let args = context.args();
-                let new = context.is_new();
-                match runtime.$constructor(args, new) {
-                    Ok(value) => {
-                        *retv = value;
-                        Status::Normal
-                    }
-                    Err(value) => {
-                        *retv = value;
-                        Status::Exception
-                    }
-                }
-            }
-        }
-    };
-}
-
-define_error! {
-    eval_error,
-    create_eval_error_constructor,
-    create_eval_error_prototype,
-    range_eval_constructor,
-    EVAL_ERROR
-}
-
-define_error! {
-    range_error,
-    create_range_error_constructor,
-    create_range_error_prototype,
-    range_error_constructor,
-    RANGE_ERROR
-}
-
-define_error! {
-    reference_error,
-    create_reference_error_constructor,
-    create_reference_error_prototype,
-    reference_error_constructor,
-    REFERENCE_ERROR
-}
-
-define_error! {
-    syntax_error,
-    create_syntax_error_constructor,
-    create_syntax_error_prototype,
-    syntax_error_constructor,
-    SYNTAX_ERROR
-}
-
-define_error! {
-    type_error,
-    create_type_error_constructor,
-    create_type_error_prototype,
-    type_error_constructor,
-    TYPE_ERROR
-}
-
-define_error! {
-    uri_error,
-    create_uri_error_constructor,
-    create_uri_error_prototype,
-    uri_error_constructor,
-    URI_ERROR
 }
