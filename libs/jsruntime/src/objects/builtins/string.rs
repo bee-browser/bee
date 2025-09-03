@@ -55,8 +55,7 @@ impl<X> Runtime<X> {
 
         let mut prototype = self.create_object(self.object_prototype);
 
-        let index_of =
-            self.create_builtin_function(string_prototype_index_of, self.function_prototype);
+        let index_of = self.create_builtin_function(string_prototype_index_of, None);
         let _ = prototype.define_own_property(
             Symbol::INDEX_OF.into(),
             Property::data_xxx(Value::Function(index_of)),

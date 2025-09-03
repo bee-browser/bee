@@ -95,7 +95,7 @@ impl<X> Runtime<X> {
         lambda: Lambda<X>,
         prototype: Option<ObjectHandle>,
     ) -> ObjectHandle {
-        logger::debug!(event = "creater_builtin_function");
+        logger::debug!(event = "create_builtin_function");
         debug_assert!(self.function_prototype.is_some());
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
         let mut func = self.create_object(self.function_prototype);

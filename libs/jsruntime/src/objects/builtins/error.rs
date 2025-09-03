@@ -15,7 +15,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "creater_error_constructor");
         debug_assert!(self.error_prototype.is_some());
         let mut constructor = self.create_builtin_function(constructor::<X>, self.error_prototype);
-        let func = self.create_builtin_function(error_is_error, self.function_prototype);
+        let func = self.create_builtin_function(error_is_error, None);
         let _ = constructor.define_own_property(
             Symbol::IS_ERROR.into(),
             Property::data_xxx(Value::Function(func)),
@@ -45,8 +45,7 @@ impl<X> Runtime<X> {
             Property::data_xxx(Value::String(U16String::EMPTY)),
         );
 
-        let to_string =
-            self.create_builtin_function(error_prototype_to_string, self.function_prototype);
+        let to_string = self.create_builtin_function(error_prototype_to_string, None);
         let _ = prototype.define_own_property(
             Symbol::TO_STRING.into(),
             Property::data_xxx(Value::Function(to_string)),
