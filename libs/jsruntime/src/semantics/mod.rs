@@ -1,6 +1,7 @@
 mod scope;
 
 use bitflags::bitflags;
+use jsparser::SymbolRegistry;
 use jsparser::syntax::LiteralPropertyName;
 use jsparser::syntax::MemberExpressionKind;
 use jsparser::syntax::PropertyAccessKind;
@@ -70,8 +71,12 @@ impl<X> Runtime<X> {
 
     /// Prints functions in a program.
     pub fn print_functions(&self, program_id: ProgramId) {
-        for func in self.programs[program_id.index()].functions.iter() {
-            func.print("");
+        for (index, func) in self.programs[program_id.index()]
+            .functions
+            .iter()
+            .enumerate()
+        {
+            func.print(&self.symbol_registry, index, "");
         }
     }
 
@@ -215,8 +220,15 @@ impl Function {
         self.flags.contains(FunctionFlags::THIS_BINDING_CAPTURED)
     }
 
-    pub fn print(&self, indent: &str) {
-        println!("{indent}function: name={:?} id={:?}", self.name, self.id);
+    pub fn print(&self, symbol_registry: &SymbolRegistry, index: usize, indent: &str) {
+        let name = symbol_registry.resolve(self.name);
+        debug_assert!(name.is_some());
+        let name = name.unwrap();
+        let name = String::from_utf16_lossy(name);
+        println!(
+            "{indent}function#{index}: name={name}{} id={:?} scope={:?}",
+            self.name, self.id, self.scope_ref,
+        );
         if !self.commands.is_empty() {
             println!("{indent} commands:");
             for command in self.commands.iter() {

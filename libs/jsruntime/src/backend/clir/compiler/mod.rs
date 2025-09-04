@@ -743,7 +743,7 @@ where
             .iter()
             .filter(|variable| variable.is_capture())
         {
-            // TODO(perf): improve if `find_variable()` is the primary case of performance
+            // TODO(perf): improve if `find_variable()` is the primary cause of performance
             // bottleneck.
             let variable_ref = self.scope_tree.find_variable(scope_ref, variable.symbol);
             debug_assert_ne!(variable_ref, VariableRef::NONE);
@@ -1224,9 +1224,6 @@ where
         let scope = self.scope_tree.scope(scope_ref);
 
         for variable in scope.variables.iter() {
-            if variable.is_function_scoped() {
-                continue;
-            }
             let locator = variable.locator();
             if variable.is_captured() {
                 let target = match locator {
