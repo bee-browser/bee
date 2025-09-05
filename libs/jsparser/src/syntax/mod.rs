@@ -3003,7 +3003,7 @@ where
     //   throw [no LineTerminator here] Expression[+In, ?Yield, ?Await] ;
     fn process_throw_statement(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ThrowStatement);
-        self.replace(2, Detail::ThrowStatement);
+        self.replace(3, Detail::ThrowStatement);
         Ok(())
     }
 
