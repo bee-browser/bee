@@ -62,7 +62,9 @@ functions:
     args:
       - name: value
         type: '&Value'
-    ret: '&mut Object'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
   - name: to_int32
     args:
       - name: value

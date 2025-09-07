@@ -237,17 +237,24 @@ impl<X> Runtime<X> {
 pub(crate) extern "C" fn runtime_to_object<X>(
     runtime: &mut Runtime<X>,
     value: &Value,
-) -> *mut c_void {
+    retv: &mut Value,
+) -> Status {
     logger::debug!(event = "runtime_to_object", ?value);
-    runtime.value_to_object(value)
+    runtime.value_to_object(value, retv)
 }
 
 impl<X> Runtime<X> {
-    fn value_to_object(&mut self, value: &Value) -> *mut c_void {
+    fn value_to_object(&mut self, value: &Value, retv: &mut Value) -> Status {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined | Value::Null => todo!(),
+            Value::Undefined | Value::Null => {
+                match self.create_type_error(true, &Value::Undefined, &Value::Undefined) {
+                    Ok(value) => *retv = Value::Object(value),
+                    Err(err) => *retv = err,
+                }
+                Status::Exception
+            }
             Value::Boolean(_value) => todo!(),
             Value::Number(_value) => todo!(),
             Value::String(value) => match self.create_string_object(&[Value::String(*value)], true)
@@ -257,6 +264,9 @@ impl<X> Runtime<X> {
                 Err(_error) => todo!(),
             },
             Value::Object(value) => value.as_ptr(),
+                *retv = value.clone();
+                Status::Normal
+            }
             Value::Promise(_value) => todo!(),
         }
     }
