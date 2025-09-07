@@ -5,7 +5,7 @@ let a = {
 };
 
 print(a.await); ///=0
-print(a.async); ///=function
+print(typeof a.async); ///="function"
 print(await a.async()); ///=1
-print(a.asyncArrow); ///=function
+print(typeof a.asyncArrow); ///="function"
 print(await a.asyncArrow()); ///=2

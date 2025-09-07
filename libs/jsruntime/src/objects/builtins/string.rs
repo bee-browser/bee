@@ -62,7 +62,7 @@ impl<X> Runtime<X> {
         let index_of = self.create_builtin_function(string_prototype_index_of, None);
         let _ = prototype.define_own_property(
             Symbol::INDEX_OF.into(),
-            Property::data_xxx(Value::Function(index_of)),
+            Property::data_xxx(Value::Object(index_of)),
         );
 
         prototype

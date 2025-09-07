@@ -11,6 +11,7 @@ use base::static_assert_eq;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::objects::Object;
+use crate::objects::ObjectFlags;
 use crate::types::CallContext;
 use crate::types::Capture;
 use crate::types::Closure;
@@ -698,11 +699,6 @@ impl<'a> Editor<'a> {
         ObjectIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
     }
 
-    pub fn put_load_function(&mut self, any: AnyIr) -> ObjectIr {
-        logger::debug!(event = "put_load_function", ?any);
-        ObjectIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
-    }
-
     // capture
 
     pub fn put_load_capture(&mut self, index: u16) -> CaptureIr {
@@ -820,23 +816,50 @@ impl<'a> Editor<'a> {
 
     // object
 
+    pub fn put_is_callable(&mut self, object: ObjectIr) -> BooleanIr {
+        logger::debug!(event = "put_is_callable", ?object);
+        use ir::condcodes::IntCC::NotEqual;
+        let flags = self.put_load_flags_from_object(object);
+        let masked = self
+            .builder
+            .ins()
+            .band_imm(flags, ObjectFlags::CALLABLE.bits() as i64);
+        BooleanIr(self.builder.ins().icmp_imm(NotEqual, masked, 0))
+    }
+
+    fn put_load_flags_from_object(&mut self, object: ObjectIr) -> ir::Value {
+        self.put_load_i8(object.0, Object::FLAGS_OFFSET)
+    }
+
     pub fn put_object(&mut self, addr: usize) -> ObjectIr {
         logger::debug!(event = "put_object", ?addr);
         ObjectIr(self.builder.ins().iconst(self.addr_type, addr as i64))
     }
 
-    // function
-
-    pub fn put_load_closure_from_function(&mut self, object: ObjectIr) -> ClosureIr {
-        logger::debug!(event = "put_load_closure_from_function", ?object);
+    pub fn put_load_closure_from_object(&mut self, object: ObjectIr) -> ClosureIr {
+        logger::debug!(event = "put_load_closure_from_object", ?object);
         ClosureIr(self.put_load_addr(object.0, Object::NUCLEUS_OFFSET))
     }
 
-    pub fn put_store_closure_to_function(&mut self, closure: ClosureIr, object: ObjectIr) {
-        logger::debug!(event = "put_store_closure_from_function", ?object);
+    pub fn put_store_closure_to_object(&mut self, closure: ClosureIr, object: ObjectIr) {
+        logger::debug!(event = "put_store_closure_from_object", ?object);
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
         const OFFSET: i32 = Object::NUCLEUS_OFFSET as i32;
         self.builder.ins().store(FLAGS, closure.0, object.0, OFFSET);
+        // Set callable flag
+        let flags = self.put_load_flags_from_object(object);
+        let flags = self
+            .builder
+            .ins()
+            .bor_imm(flags, ObjectFlags::CALLABLE.bits() as i64);
+        self.put_store_flags_to_object(flags, object);
+    }
+
+    fn put_store_flags_to_object(&mut self, flags: ir::Value, object: ObjectIr) {
+        logger::debug!(event = "put_store_flags_from_object", ?flags, ?object);
+        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = Object::FLAGS_OFFSET as i32;
+        self.builder.ins().store(FLAGS, flags, object.0, OFFSET);
     }
 
     // call context
@@ -1025,11 +1048,6 @@ impl<'a> Editor<'a> {
     pub fn put_store_object_to_any(&mut self, object: ObjectIr, any: AnyIr) {
         logger::debug!(event = "put_store_object_to_any", ?object, ?any);
         self.put_store_kind_and_value_to_any(Value::KIND_OBJECT, object.0, any);
-    }
-
-    pub fn put_store_function_to_any(&mut self, object: ObjectIr, any: AnyIr) {
-        logger::debug!(event = "put_store_function_to_any", ?object, ?any);
-        self.put_store_kind_and_value_to_any(Value::KIND_FUNCTION, object.0, any);
     }
 
     pub fn put_store_any_to_any(&mut self, src: AnyIr, dst: AnyIr) {
@@ -1249,11 +1267,6 @@ impl<'a> Editor<'a> {
         self.put_is_kind_of(Value::KIND_OBJECT, any)
     }
 
-    pub fn put_is_function(&mut self, any: AnyIr) -> BooleanIr {
-        logger::debug!(event = "put_is_function", ?any);
-        self.put_is_kind_of(Value::KIND_FUNCTION, any)
-    }
-
     pub fn put_is_non_nullish(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_non_nullish", ?any);
         use ir::condcodes::IntCC::UnsignedGreaterThan;
@@ -1298,11 +1311,6 @@ impl<'a> Editor<'a> {
 
     pub fn put_is_same_object(&mut self, lhs: ObjectIr, rhs: ObjectIr) -> BooleanIr {
         logger::debug!(event = "put_is_same_object", ?lhs, ?rhs);
-        self.put_is_same_int_value(lhs.0, rhs.0)
-    }
-
-    pub fn put_is_same_function(&mut self, lhs: ObjectIr, rhs: ObjectIr) -> BooleanIr {
-        logger::debug!(event = "put_is_same_function", ?lhs, ?rhs);
         self.put_is_same_int_value(lhs.0, rhs.0)
     }
 
@@ -1457,21 +1465,6 @@ impl<'a> Editor<'a> {
         self.put_store(value.0, scratch_buffer, offset);
     }
 
-    pub fn put_write_function_to_scratch_buffer(
-        &mut self,
-        value: ObjectIr,
-        scratch_buffer: ir::Value,
-        offset: usize,
-    ) {
-        logger::debug!(
-            event = "put_write_function_to_scratch_buffer",
-            ?value,
-            ?scratch_buffer,
-            offset,
-        );
-        self.put_store(value.0, scratch_buffer, offset);
-    }
-
     pub fn put_write_promise_to_scratch_buffer(
         &mut self,
         value: PromiseIr,
@@ -1562,19 +1555,6 @@ impl<'a> Editor<'a> {
     ) -> ObjectIr {
         logger::debug!(
             event = "put_read_object_from_scratch_buffer",
-            ?scratch_buffer,
-            offset
-        );
-        ObjectIr(self.put_load_addr(scratch_buffer, offset))
-    }
-
-    pub fn put_read_function_from_scratch_buffer(
-        &mut self,
-        scratch_buffer: ir::Value,
-        offset: usize,
-    ) -> ObjectIr {
-        logger::debug!(
-            event = "put_read_function_from_scratch_buffer",
             ?scratch_buffer,
             offset
         );

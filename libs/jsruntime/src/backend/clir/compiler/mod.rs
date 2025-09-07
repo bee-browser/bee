@@ -704,7 +704,7 @@ where
         let function = self
             .editor
             .put_runtime_create_object(self.support, prototype);
-        self.editor.put_store_closure_to_function(closure, function);
+        self.editor.put_store_closure_to_object(closure, function);
         self.perform_set_function_name(function, name);
         self.perform_make_constructor(function);
         self.operand_stack.push(Operand::Function(function));
@@ -839,14 +839,9 @@ where
                 self.editor.put_store_string_to_any(value, any);
                 any.into()
             }
-            Operand::Object(value) => {
+            Operand::Object(value) | Operand::Function(value) => {
                 let any = self.editor.put_alloc_any();
                 self.editor.put_store_object_to_any(value, any);
-                any.into()
-            }
-            Operand::Function(value) => {
-                let any = self.editor.put_alloc_any();
-                self.editor.put_store_function_to_any(value, any);
                 any.into()
             }
             Operand::Promise(_) => todo!(),
@@ -1018,13 +1013,13 @@ where
         match locator {
             Locator::Local(index) => {
                 let local = self.get_local(index);
-                self.editor.put_store_function_to_any(func_ir, local);
+                self.editor.put_store_object_to_any(func_ir, local);
             }
             Locator::Global => {
                 let global_object = self.support.global_object();
                 let object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
-                self.editor.put_store_function_to_any(func_ir, value);
+                self.editor.put_store_object_to_any(func_ir, value);
                 self.editor
                     .put_runtime_set_value_by_symbol(self.support, object, symbol, value);
             }
@@ -1047,7 +1042,7 @@ where
             .editor
             .put_runtime_create_object(self.support, object_prototype);
 
-        self.editor.put_store_function_to_any(function, value);
+        self.editor.put_store_object_to_any(function, value);
         // TODO(feat): [[Writable]]: writablePrototype, [[Enumerable]]: false,
         // [[Configurable]]: true
         // TODO(feat): retv
@@ -1106,7 +1101,7 @@ where
             Operand::Closure(_) => unreachable!(),
             Operand::Function(object) => {
                 // IIFE
-                self.editor.put_load_closure_from_function(object)
+                self.editor.put_load_closure_from_object(object)
             }
             Operand::Any(value, ..) => self.emit_load_closure_or_throw_type_error(value),
             _ => {
@@ -1140,7 +1135,6 @@ where
             PropertyOwner::Number(value) => self.editor.put_store_number_to_any(value, any),
             PropertyOwner::String(value) => self.editor.put_store_string_to_any(value, any),
             PropertyOwner::Object(value) => self.editor.put_store_object_to_any(value, any),
-            PropertyOwner::Function(value) => self.editor.put_store_function_to_any(value, any),
             PropertyOwner::Any(value) => self.editor.put_store_any_to_any(value, any),
         }
     }
@@ -1150,21 +1144,21 @@ where
         // TODO: prototype chain
         self.emit_fill_args(argc);
         let (operand, ..) = self.dereference();
-        let function = match operand {
+        let constructor = match operand {
             Operand::Closure(_) => unreachable!(),
-            Operand::Function(function) => function,
-            Operand::Any(value, ..) => self.emit_load_function_or_throw_type_error(value),
+            Operand::Function(object) => object,
+            Operand::Any(value, ..) => self.emit_load_callable_or_throw_type_error(value),
             _ => {
                 self.emit_throw_type_error();
                 return;
             }
         };
 
-        let closure = self.editor.put_load_closure_from_function(function);
+        let closure = self.editor.put_load_closure_from_object(constructor);
 
         let prototype = self.editor.put_runtime_get_value_by_symbol(
             self.support,
-            function,
+            constructor,
             Symbol::PROTOTYPE,
             false,
         ); // TODO: strict
@@ -1522,14 +1516,20 @@ where
             Operand::Object(..) | Operand::Promise(..) => self.process_string(&OBJECT),
             Operand::Function(_) => self.process_string(&FUNCTION),
             Operand::Any(_, Some(ref value)) => match value {
+                Value::None => unreachable!("{value:?}"),
                 Value::Undefined => self.process_string(&UNDEFINED),
                 Value::Null => self.process_string(&OBJECT),
                 Value::Boolean(_) => self.process_string(&BOOLEAN),
                 Value::Number(_) => self.process_string(&NUMBER),
                 Value::String(_) => self.process_string(&STRING),
-                Value::Object(_) | Value::Promise(_) => self.process_string(&OBJECT),
-                Value::Function(_) => self.process_string(&FUNCTION),
-                Value::None => unreachable!("{value:?}"),
+                Value::Object(object) => {
+                    if object.is_callable() {
+                        self.process_string(&FUNCTION);
+                    } else {
+                        self.process_string(&OBJECT);
+                    }
+                }
+                Value::Promise(_) => self.process_string(&OBJECT),
             },
             Operand::Any(value, None) => {
                 let string = self.editor.put_runtime_typeof(self.support, value);
@@ -2123,7 +2123,7 @@ where
             PropertyOwner::Boolean(_) => todo!(),
             PropertyOwner::Number(_) => todo!(),
             PropertyOwner::String(_) => todo!(),
-            PropertyOwner::Object(value) | PropertyOwner::Function(value) => *value,
+            PropertyOwner::Object(value) => *value,
             PropertyOwner::Any(value) => self.editor.put_runtime_to_object(self.support, *value),
         }
     }
@@ -2781,14 +2781,10 @@ where
                         .put_write_object_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Function(value)
-                | Operand::PropertyReference(PropertyOwner::Function(value), _) => {
+                Operand::Function(value) => {
                     // TODO(issue#237): GcCellRef
-                    self.editor.put_write_function_to_scratch_buffer(
-                        *value,
-                        scratch_buffer,
-                        offset,
-                    );
+                    self.editor
+                        .put_write_object_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
                 Operand::Promise(value) => {
@@ -2861,12 +2857,11 @@ where
                         .put_read_object_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Function(value)
-                | Operand::PropertyReference(PropertyOwner::Function(value), _) => {
+                Operand::Function(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
-                        .put_read_function_from_scratch_buffer(scratch_buffer, offset);
+                        .put_read_object_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
                 Operand::Promise(value) => {
@@ -2931,15 +2926,9 @@ where
                 self.editor
                     .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
-            Operand::Object(value) => {
+            Operand::Object(value) | Operand::Function(value) => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_object_to_any(value, result);
-                self.editor
-                    .put_runtime_emit_promise_resolved(self.support, promise, result);
-            }
-            Operand::Function(value) => {
-                let result = self.editor.put_alloc_any();
-                self.editor.put_store_function_to_any(value, result);
                 self.editor
                     .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
@@ -3213,7 +3202,7 @@ where
                 self.editor.put_is_same_object(*lhs, *rhs)
             }
             (Operand::Function(lhs), Operand::Function(rhs)) => {
-                self.editor.put_is_same_function(*lhs, *rhs)
+                self.editor.put_is_same_object(*lhs, *rhs)
             }
             (lhs, rhs) => unreachable!("({lhs:?}, {rhs:?})"),
         }
@@ -3228,7 +3217,7 @@ where
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
             Operand::String(rhs, ..) => self.perform_is_same_string(lhs, *rhs),
             Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
-            Operand::Function(rhs) => self.perform_is_same_function(lhs, *rhs),
+            Operand::Function(rhs) => self.perform_is_same_object(lhs, *rhs),
             Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
             Operand::Any(rhs, ..) => {
                 self.editor
@@ -3327,30 +3316,6 @@ where
         self.editor.switch_to_block(then_block);
         let v = self.editor.put_load_object(value);
         let then_value = self.editor.put_is_same_object(v, object);
-        self.editor.put_jump(merge_block, &[then_value.0.into()]);
-        // } else {
-        self.editor.switch_to_block(else_block);
-        let else_value = self.editor.put_boolean(false);
-        self.editor.put_jump(merge_block, &[else_value.0.into()]);
-        // }
-
-        self.editor.switch_to_block(merge_block);
-        BooleanIr(self.editor.get_block_param(merge_block, 0))
-    }
-
-    fn perform_is_same_function(&mut self, value: AnyIr, object: ObjectIr) -> BooleanIr {
-        let then_block = self.editor.create_block();
-        let else_block = self.editor.create_block();
-        let merge_block = self.editor.create_block_with_i8();
-
-        // if value.kind == ValueKind::Function
-        let cond = self.editor.put_is_function(value);
-        self.editor
-            .put_branch(cond, then_block, &[], else_block, &[]);
-        // {
-        self.editor.switch_to_block(then_block);
-        let v = self.editor.put_load_function(value);
-        let then_value = self.editor.put_is_same_function(v, object);
         self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
@@ -3537,7 +3502,7 @@ where
             Operand::Number(value, _) => self.editor.put_store_number_to_any(*value, any),
             Operand::String(value, _) => self.editor.put_store_string_to_any(*value, any),
             Operand::Object(value) => self.editor.put_store_object_to_any(*value, any),
-            Operand::Function(value) => self.editor.put_store_function_to_any(*value, any),
+            Operand::Function(value) => self.editor.put_store_object_to_any(*value, any),
             Operand::Any(value, _) => self.editor.put_store_any_to_any(*value, any),
             Operand::Promise(value) => self.editor.put_store_promise_to_any(*value, any),
             Operand::Lambda(..)
@@ -3613,19 +3578,19 @@ where
         value
     }
 
-    fn emit_load_function_or_throw_type_error(&mut self, value: AnyIr) -> ObjectIr {
-        logger::debug!(event = "emit_load_function_or_throw_type_error", ?value);
+    fn emit_load_callable_or_throw_type_error(&mut self, value: AnyIr) -> ObjectIr {
+        logger::debug!(event = "emit_load_callable_or_throw_type_error", ?value);
         let then_block = self.editor.create_block();
         let else_block = self.editor.create_block();
         let end_block = self.editor.create_block_with_addr();
 
-        // if value.is_function()
-        let is_function = self.editor.put_is_function(value);
+        // if value.is_callable()
+        let is_callable = self.emit_is_callable(value);
         self.editor
-            .put_branch(is_function, then_block, &[], else_block, &[]);
+            .put_branch(is_callable, then_block, &[], else_block, &[]);
         // {
         self.editor.switch_to_block(then_block);
-        let object = self.editor.put_load_function(value);
+        let object = self.editor.put_load_object(value);
         self.editor.put_jump(end_block, &[object.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
@@ -3644,14 +3609,14 @@ where
         let else_block = self.editor.create_block();
         let end_block = self.editor.create_block_with_addr();
 
-        // if value.is_function()
-        let is_function = self.editor.put_is_function(value);
+        // if value.is_callable()
+        let is_callable = self.emit_is_callable(value);
         self.editor
-            .put_branch(is_function, then_block, &[], else_block, &[]);
+            .put_branch(is_callable, then_block, &[], else_block, &[]);
         // {
         self.editor.switch_to_block(then_block);
-        let object = self.editor.put_load_function(value);
-        let closure = self.editor.put_load_closure_from_function(object);
+        let object = self.editor.put_load_object(value);
+        let closure = self.editor.put_load_closure_from_object(object);
         self.editor.put_jump(end_block, &[closure.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
@@ -3662,6 +3627,32 @@ where
 
         self.editor.switch_to_block(end_block);
         ClosureIr(self.editor.get_block_param(end_block, 0))
+    }
+
+    // TODO(perf): inefficient. the caller loads object from value.
+    fn emit_is_callable(&mut self, value: AnyIr) -> BooleanIr {
+        logger::debug!(event = "emit_is_callable", ?value);
+        let then_block = self.editor.create_block();
+        let else_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_i8();
+
+        // if value.is_object()
+        let is_object = self.editor.put_is_object(value);
+        self.editor
+            .put_branch(is_object, then_block, &[], else_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        let object = self.editor.put_load_object(value);
+        let is_callable = self.editor.put_is_callable(object);
+        self.editor.put_jump(merge_block, &[is_callable.0.into()]);
+        // } else {
+        self.editor.switch_to_block(else_block);
+        let is_callable = self.editor.put_boolean(false);
+        self.editor.put_jump(merge_block, &[is_callable.0.into()]);
+        // }
+
+        self.editor.switch_to_block(merge_block);
+        BooleanIr(self.editor.get_block_param(merge_block, 0))
     }
 
     // captures
@@ -3808,7 +3799,6 @@ enum PropertyOwner {
     Number(NumberIr),
     String(StringIr),
     Object(ObjectIr),
-    Function(ObjectIr),
     Any(AnyIr),
 }
 
@@ -3821,7 +3811,7 @@ impl From<Operand> for PropertyOwner {
             Operand::Number(value, _) => Self::Number(value),
             Operand::String(value, _) => Self::String(value),
             Operand::Object(value) => Self::Object(value),
-            Operand::Function(value) => Self::Function(value),
+            Operand::Function(value) => Self::Object(value),
             Operand::Any(value, _) => Self::Any(value),
             _ => unreachable!("{value:?}"),
         }

@@ -18,12 +18,12 @@ impl<X> Runtime<X> {
         let func = self.create_builtin_function(error_is_error, None);
         let _ = constructor.define_own_property(
             Symbol::IS_ERROR.into(),
-            Property::data_xxx(Value::Function(func)),
+            Property::data_xxx(Value::Object(func)),
         );
         if let Some(mut prototype) = self.error_prototype {
             let _ = prototype.define_own_property(
                 Symbol::CONSTRUCTOR.into(),
-                Property::data_xxx(Value::Function(constructor)),
+                Property::data_xxx(Value::Object(constructor)),
             );
         }
         constructor
@@ -48,7 +48,7 @@ impl<X> Runtime<X> {
         let to_string = self.create_builtin_function(error_prototype_to_string, None);
         let _ = prototype.define_own_property(
             Symbol::TO_STRING.into(),
-            Property::data_xxx(Value::Function(to_string)),
+            Property::data_xxx(Value::Object(to_string)),
         );
 
         prototype
@@ -78,15 +78,12 @@ impl<X> Runtime<X> {
             }
         }
 
-        match options {
-            Value::Object(value) | Value::Function(value) => {
-                let key = Symbol::CAUSE.into();
-                if let Some(value) = value.get_value(&key) {
-                    // TODO: error handling
-                    let _ = object.define_own_property(key, Property::data_wxc(value.clone()));
-                }
+        if let Value::Object(value) = options {
+            let key = Symbol::CAUSE.into();
+            if let Some(value) = value.get_value(&key) {
+                // TODO: error handling
+                let _ = object.define_own_property(key, Property::data_wxc(value.clone()));
             }
-            _ => (),
         }
 
         Ok(object)
@@ -125,7 +122,7 @@ extern "C" fn error_is_error<X>(
     retv: &mut Value,
 ) -> Status {
     match context.args().first() {
-        Some(Value::Object(value)) | Some(Value::Function(value)) => {
+        Some(Value::Object(value)) => {
             *retv = Value::Boolean(value.is_error());
         }
         _ => *retv = Value::Boolean(false),
