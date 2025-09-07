@@ -495,11 +495,7 @@ where
     }
 
     fn handle_literal_property_name(&mut self, name: LiteralPropertyName) {
-        match name {
-            LiteralPropertyName::IdentifierName(key) => {
-                push_commands!(self; CompileCommand::PropertyReference(key));
-            }
-        }
+        analysis_mut!(self).process_literal_property_name(name);
     }
 
     fn handle_property_definition(&mut self, kind: PropertyDefinitionKind) {
@@ -1537,6 +1533,17 @@ impl FunctionAnalysis {
         // TODO: type info
     }
 
+    fn process_literal_property_name(&mut self, name: LiteralPropertyName) {
+        match name {
+            LiteralPropertyName::IdentifierName(key) => {
+                self.commands.push(CompileCommand::PropertyReference(key));
+                // The symbol will be popped in process_property_definition().
+                // See the PropertyDefinitionKind::KeyValue case.
+                self.symbol_stack.push((key, 0));
+            }
+        }
+    }
+
     fn process_property_definition(&mut self, kind: PropertyDefinitionKind) {
         match kind {
             PropertyDefinitionKind::ArrayElement => {
@@ -1563,6 +1570,13 @@ impl FunctionAnalysis {
                 self.commands.push(CompileCommand::CreateDataProperty);
             }
             PropertyDefinitionKind::KeyValue => {
+                debug_assert!(!self.symbol_stack.is_empty());
+                let (symbol, _) = self.symbol_stack.pop().unwrap();
+                debug_assert!(!self.commands.is_empty());
+                if let Some(CompileCommand::Function(Symbol::NONE)) = self.commands.last() {
+                    // 8.4.5 Runtime Semantics: NamedEvaluation
+                    *self.commands.last_mut().unwrap() = CompileCommand::Function(symbol);
+                }
                 self.commands.push(CompileCommand::CreateDataProperty);
             }
             PropertyDefinitionKind::Spread => {
@@ -1720,6 +1734,11 @@ impl FunctionAnalysis {
         debug_assert!(self.symbol_stack.len() >= n as usize);
         let i = self.symbol_stack.len() - n as usize;
         for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
+            dbg!(&self.commands[index - 1]);
+            if let CompileCommand::Function(Symbol::NONE) = self.commands[index - 1] {
+                // 8.4.5 Runtime Semantics: NamedEvaluation
+                self.commands[index - 1] = CompileCommand::Function(symbol);
+            }
             debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
             self.commands[index] = CompileCommand::VariableReference(symbol);
             debug_assert!(matches!(
@@ -1739,6 +1758,12 @@ impl FunctionAnalysis {
         debug_assert!(self.symbol_stack.len() >= n as usize);
         let i = self.symbol_stack.len() - n as usize;
         for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
+            debug_assert!(index > 0);
+            dbg!(&self.commands[index - 1]);
+            if let CompileCommand::Function(Symbol::NONE) = self.commands[index - 1] {
+                // 8.4.5 Runtime Semantics: NamedEvaluation
+                self.commands[index - 1] = CompileCommand::Function(symbol);
+            }
             debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
             self.commands[index] = CompileCommand::VariableReference(symbol);
             debug_assert!(matches!(

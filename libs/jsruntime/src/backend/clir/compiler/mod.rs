@@ -707,7 +707,7 @@ where
         self.editor.put_store_closure_to_function(closure, function);
         self.perform_set_function_name(function, name);
         self.perform_make_constructor(function);
-        self.operand_stack.push(Operand::Function(function, name));
+        self.operand_stack.push(Operand::Function(function));
     }
 
     fn process_lambda(&mut self, lambda_id: LambdaId) {
@@ -844,7 +844,7 @@ where
                 self.editor.put_store_object_to_any(value, any);
                 any.into()
             }
-            Operand::Function(value, _) => {
+            Operand::Function(value) => {
                 let any = self.editor.put_alloc_any();
                 self.editor.put_store_function_to_any(value, any);
                 any.into()
@@ -942,13 +942,8 @@ where
     }
 
     fn process_mutable_variable(&mut self) {
-        let (symbol, locator) = self.pop_reference();
+        let (_, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
-
-        if let Operand::Function(function, Symbol::NONE) = operand {
-            // anonymous function
-            self.perform_set_function_name(function, symbol);
-        }
 
         let local = match locator {
             Locator::Local(index) => self.get_local(index),
@@ -959,13 +954,8 @@ where
     }
 
     fn process_immutable_variable(&mut self) {
-        let (symbol, locator) = self.pop_reference();
+        let (_, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
-
-        if let Operand::Function(function, Symbol::NONE) = operand {
-            // anonymous function
-            self.perform_set_function_name(function, symbol);
-        }
 
         let local = match locator {
             Locator::Local(index) => self.get_local(index),
@@ -1021,7 +1011,7 @@ where
         let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
         let func_ir = match operand {
-            Operand::Function(value, _) => value,
+            Operand::Function(value) => value,
             _ => unreachable!("{operand:?}"),
         };
 
@@ -1114,7 +1104,7 @@ where
         let (operand, owner) = self.dereference();
         let closure = match operand {
             Operand::Closure(_) => unreachable!(),
-            Operand::Function(object, _) => {
+            Operand::Function(object) => {
                 // IIFE
                 self.editor.put_load_closure_from_function(object)
             }
@@ -1162,7 +1152,7 @@ where
         let (operand, ..) = self.dereference();
         let function = match operand {
             Operand::Closure(_) => unreachable!(),
-            Operand::Function(function, _) => function,
+            Operand::Function(function) => function,
             Operand::Any(value, ..) => self.emit_load_function_or_throw_type_error(value),
             _ => {
                 self.emit_throw_type_error();
@@ -1332,7 +1322,7 @@ where
                 .put_runtime_number_to_string(self.support, *value),
             Operand::String(value, _) => *value,
             Operand::Object(_) => todo!(),
-            Operand::Function(..) => todo!(),
+            Operand::Function(_) => todo!(),
             Operand::Promise(_) => todo!(),
             Operand::Any(value, _) => self.editor.put_runtime_to_string(self.support, *value),
             Operand::Lambda(..)
@@ -1385,16 +1375,6 @@ where
     fn process_create_data_property(&mut self) {
         let (operand, ..) = self.dereference();
         let (owner, key) = self.pop_property_reference();
-
-        if let Operand::Function(function, Symbol::NONE) = operand {
-            // anonymous function
-            let name = match key {
-                PropertyKey::Symbol(name) => name,
-                PropertyKey::Number(_) => todo!(),
-                PropertyKey::Any(_) => todo!(),
-            };
-            self.perform_set_function_name(function, name);
-        }
 
         let object = self.perform_owner_to_object(&owner);
         let value = self.editor.put_alloc_any();
@@ -1540,7 +1520,7 @@ where
             Operand::Number(..) => self.process_string(&NUMBER),
             Operand::String(..) => self.process_string(&STRING),
             Operand::Object(..) | Operand::Promise(..) => self.process_string(&OBJECT),
-            Operand::Function(..) => self.process_string(&FUNCTION),
+            Operand::Function(_) => self.process_string(&FUNCTION),
             Operand::Any(_, Some(ref value)) => match value {
                 Value::Undefined => self.process_string(&UNDEFINED),
                 Value::Null => self.process_string(&OBJECT),
@@ -2119,7 +2099,7 @@ where
             Operand::Boolean(..) => todo!(),
             Operand::Number(..) => todo!(),
             Operand::String(..) => todo!(),
-            Operand::Object(_) | Operand::Function(..) => self.operand_stack.push(operand),
+            Operand::Object(_) | Operand::Function(_) => self.operand_stack.push(operand),
             Operand::Promise(_value) => todo!(),
             // Variables and properties.
             Operand::Any(value, ..) => {
@@ -2801,7 +2781,7 @@ where
                         .put_write_object_to_scratch_buffer(*value, scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Function(value, _)
+                Operand::Function(value)
                 | Operand::PropertyReference(PropertyOwner::Function(value), _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor.put_write_function_to_scratch_buffer(
@@ -2881,7 +2861,7 @@ where
                         .put_read_object_from_scratch_buffer(scratch_buffer, offset);
                     offset += Value::HOLDER_SIZE;
                 }
-                Operand::Function(value, _)
+                Operand::Function(value)
                 | Operand::PropertyReference(PropertyOwner::Function(value), _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
@@ -2957,7 +2937,7 @@ where
                 self.editor
                     .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
-            Operand::Function(value, _) => {
+            Operand::Function(value) => {
                 let result = self.editor.put_alloc_any();
                 self.editor.put_store_function_to_any(value, result);
                 self.editor
@@ -3061,7 +3041,7 @@ where
             Operand::Boolean(..)
             | Operand::Number(..)
             | Operand::Object(_)
-            | Operand::Function(..)
+            | Operand::Function(_)
             | Operand::Promise(_) => self.editor.put_boolean(true),
             Operand::String(..) => todo!("string"),
             Operand::Any(value, ..) => self.editor.put_is_non_nullish(*value),
@@ -3114,7 +3094,7 @@ where
             Operand::Boolean(value, ..) => *value,
             Operand::Number(value, ..) => self.editor.put_number_to_boolean(*value),
             Operand::String(..) => todo!(),
-            Operand::Promise(_) | Operand::Object(_) | Operand::Function(..) => {
+            Operand::Promise(_) | Operand::Object(_) | Operand::Function(_) => {
                 self.editor.put_boolean(true)
             }
             Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
@@ -3137,7 +3117,7 @@ where
             Operand::Boolean(value, ..) => self.editor.put_boolean_to_number(*value),
             Operand::Number(value, ..) => *value,
             Operand::String(..) => unimplemented!("string.to_numeric"),
-            Operand::Object(_) | Operand::Function(..) => unimplemented!("object.to_numeric"),
+            Operand::Object(_) | Operand::Function(_) => unimplemented!("object.to_numeric"),
             Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -3232,7 +3212,7 @@ where
             (Operand::Object(lhs), Operand::Object(rhs)) => {
                 self.editor.put_is_same_object(*lhs, *rhs)
             }
-            (Operand::Function(lhs, _), Operand::Function(rhs, _)) => {
+            (Operand::Function(lhs), Operand::Function(rhs)) => {
                 self.editor.put_is_same_function(*lhs, *rhs)
             }
             (lhs, rhs) => unreachable!("({lhs:?}, {rhs:?})"),
@@ -3248,7 +3228,7 @@ where
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
             Operand::String(rhs, ..) => self.perform_is_same_string(lhs, *rhs),
             Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
-            Operand::Function(rhs, _) => self.perform_is_same_function(lhs, *rhs),
+            Operand::Function(rhs) => self.perform_is_same_function(lhs, *rhs),
             Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
             Operand::Any(rhs, ..) => {
                 self.editor
@@ -3557,7 +3537,7 @@ where
             Operand::Number(value, _) => self.editor.put_store_number_to_any(*value, any),
             Operand::String(value, _) => self.editor.put_store_string_to_any(*value, any),
             Operand::Object(value) => self.editor.put_store_object_to_any(*value, any),
-            Operand::Function(value, _) => self.editor.put_store_function_to_any(*value, any),
+            Operand::Function(value) => self.editor.put_store_function_to_any(*value, any),
             Operand::Any(value, _) => self.editor.put_store_any_to_any(*value, any),
             Operand::Promise(value) => self.editor.put_store_promise_to_any(*value, any),
             Operand::Lambda(..)
@@ -3798,7 +3778,7 @@ enum Operand {
     Object(ObjectIr),
 
     /// Runtime value of function type.
-    Function(ObjectIr, Symbol),
+    Function(ObjectIr),
 
     /// Runtime value and optional compile-time constant value of any type.
     // TODO(perf): compile-time evaluation
@@ -3841,7 +3821,7 @@ impl From<Operand> for PropertyOwner {
             Operand::Number(value, _) => Self::Number(value),
             Operand::String(value, _) => Self::String(value),
             Operand::Object(value) => Self::Object(value),
-            Operand::Function(value, _) => Self::Function(value),
+            Operand::Function(value) => Self::Function(value),
             Operand::Any(value, _) => Self::Any(value),
             _ => unreachable!("{value:?}"),
         }
