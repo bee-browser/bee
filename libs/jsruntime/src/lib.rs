@@ -172,7 +172,7 @@ impl<X> Runtime<X> {
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
         let mut object = self.create_object(self.function_prototype);
         object.set_closure(closure);
-        let value = Value::Function(object);
+        let value = Value::Object(object);
         // TODO: add `flags` to the arguments.
         let prop = Property::data_xxx(value);
         let result = self.global_object.define_own_property(symbol.into(), prop);
@@ -317,8 +317,8 @@ impl<X> Runtime<X> {
             Value::Boolean(true) => Symbol::KEYWORD_TRUE.into(),
             Value::Number(value) => (*value).into(),
             Value::String(value) => self.symbol_registry.intern_utf16(value.make_utf16()).into(),
-            Value::Object(_) | Value::Function(_) => todo!(),
             Value::Promise(_) => todo!(),
+            Value::Object(_) => todo!(),
         }
     }
 

@@ -162,7 +162,6 @@ pub(crate) extern "C" fn runtime_to_boolean<X>(_runtime: &mut Runtime<X>, value:
         Value::String(_) => true,
         Value::Promise(_) => true,
         Value::Object(_) => true,
-        Value::Function(_) => true,
     }
 }
 
@@ -179,7 +178,7 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
         Value::Number(value) => *value,
         Value::String(_value) => todo!(),
         Value::Promise(_) => f64::NAN,
-        Value::Object(_) | Value::Function(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
+        Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
     }
 }
 
@@ -224,7 +223,6 @@ impl<X> Runtime<X> {
                 const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"[object Object]"));
                 U16String::new(&CHUNK)
             }
-            Value::Function(_) => todo!(),
         }
     }
 }
@@ -271,7 +269,7 @@ impl<X> Runtime<X> {
                 Ok(_) => unreachable!(),
                 Err(_error) => todo!(),
             },
-            Value::Object(value) | Value::Function(value) => value.as_ptr(),
+            Value::Object(value) => value.as_ptr(),
             Value::Promise(_value) => todo!(),
         }
     }

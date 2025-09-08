@@ -29,7 +29,6 @@ pub enum Value {
     String(U16String) = Self::KIND_STRING,
     Promise(Promise) = Self::KIND_PROMISE,
     Object(ObjectHandle) = Self::KIND_OBJECT,
-    Function(ObjectHandle) = Self::KIND_FUNCTION,
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
@@ -45,7 +44,6 @@ impl Value {
     pub(crate) const KIND_STRING: u8 = 5;
     pub(crate) const KIND_PROMISE: u8 = 6;
     pub(crate) const KIND_OBJECT: u8 = 7;
-    pub(crate) const KIND_FUNCTION: u8 = 8;
 
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
@@ -66,7 +64,6 @@ impl Value {
             Self::String(_value) => unimplemented!("new String(value)"),
             Self::Promise(_value) => unimplemented!("new Promise()"),
             Self::Object(value) => Ok(value.as_object()),
-            Self::Function(value) => Ok(value.as_object()),
             Self::None => unreachable!(),
         }
     }
@@ -86,8 +83,8 @@ impl Value {
         const BOOLEAN: U16Chunk = U16Chunk::new_const(utf16!(&"boolean"));
         const NUMBER: U16Chunk = U16Chunk::new_const(utf16!(&"number"));
         const STRING: U16Chunk = U16Chunk::new_const(utf16!(&"string"));
-        const FUNCTION: U16Chunk = U16Chunk::new_const(utf16!(&"function"));
         const OBJECT: U16Chunk = U16Chunk::new_const(utf16!(&"object"));
+        const FUNCTION: U16Chunk = U16Chunk::new_const(utf16!(&"function"));
 
         match self {
             Self::None => unreachable!(),
@@ -96,18 +93,19 @@ impl Value {
             Self::Boolean(_) => &BOOLEAN,
             Self::Number(_) => &NUMBER,
             Self::String(_) => &STRING,
-            Self::Object(_) => &OBJECT,
-            Self::Function(_) => &FUNCTION,
             Self::Promise(_) => &OBJECT,
+            Self::Object(object) => {
+                if object.is_callable() {
+                    &FUNCTION
+                } else {
+                    &OBJECT
+                }
+            }
         }
     }
 
     pub fn dummy_object() -> Self {
         Self::Object(ObjectHandle::dummy_for_testing())
-    }
-
-    pub fn dummy_function() -> Self {
-        Self::Function(ObjectHandle::dummy_for_testing())
     }
 }
 
@@ -158,7 +156,6 @@ impl std::fmt::Display for Value {
             Self::String(value) => write!(f, "{value}"),
             Self::Promise(value) => write!(f, "{value:?}"),
             Self::Object(value) => write!(f, "object({value:?})"),
-            Self::Function(value) => write!(f, "function({value:?})"),
         }
     }
 }

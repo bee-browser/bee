@@ -212,8 +212,7 @@ pub struct Object {
     /// A pointer to the `U16Chunk` if this is a string object.
     nucleus: usize,
 
-    // TODO: bitflags
-    is_error: bool,
+    flags: ObjectFlags,
 
     // [[Prototype]]
     prototype: Option<ObjectHandle>,
@@ -222,11 +221,12 @@ pub struct Object {
 
 impl Object {
     pub(crate) const NUCLEUS_OFFSET: usize = std::mem::offset_of!(Self, nucleus);
+    pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     pub fn new(prototype: Option<ObjectHandle>) -> Self {
         Self {
             nucleus: 0,
-            is_error: false,
+            flags: ObjectFlags::empty(),
             prototype,
             properties: Default::default(),
         }
@@ -282,6 +282,7 @@ impl Object {
 
     pub(crate) fn set_closure(&mut self, closure: *mut Closure) {
         self.nucleus = closure.addr();
+        self.set_callable();
     }
 
     pub(crate) fn set_string(&mut self, string: U16String) {
@@ -299,12 +300,28 @@ impl Object {
         self.prototype == prototype
     }
 
+    pub fn is_callable(&self) -> bool {
+        self.flags.contains(ObjectFlags::CALLABLE)
+    }
+
+    fn set_callable(&mut self) {
+        self.flags.insert(ObjectFlags::CALLABLE);
+    }
+
     fn is_error(&self) -> bool {
-        self.is_error
+        self.flags.contains(ObjectFlags::ERROR)
     }
 
     fn set_error(&mut self) {
-        self.is_error = true;
+        self.flags.insert(ObjectFlags::ERROR);
+    }
+}
+
+bitflags! {
+    #[derive(Clone, Copy)]
+    pub(crate) struct ObjectFlags: u8 {
+        const CALLABLE = 1 << 0;
+        const ERROR    = 1 << 1;
     }
 }
 

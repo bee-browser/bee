@@ -68,25 +68,25 @@ impl<X> Runtime<X> {
             // 19.1.4 undefined
             Symbol::KEYWORD_UNDEFINED => Value::Undefined,
             // 19.3.10 Error ( . . . )
-            Symbol::ERROR => Value::Function(self.create_error_constructor()),
+            Symbol::ERROR => Value::Object(self.create_error_constructor()),
             // 19.3.11 EvalError ( . . . )
-            Symbol::EVAL_ERROR => Value::Function(self.create_eval_error_constructor()),
+            Symbol::EVAL_ERROR => Value::Object(self.create_eval_error_constructor()),
             // 19.3.16 Function ( . . . )
-            Symbol::FUNCTION => Value::Function(self.create_function_constructor()),
+            Symbol::FUNCTION => Value::Object(self.create_function_constructor()),
             // 19.3.23 Object()
-            Symbol::OBJECT => Value::Function(self.create_object_constructor()),
+            Symbol::OBJECT => Value::Object(self.create_object_constructor()),
             // 19.3.26 RangeError ( . . . )
-            Symbol::RANGE_ERROR => Value::Function(self.create_range_error_constructor()),
+            Symbol::RANGE_ERROR => Value::Object(self.create_range_error_constructor()),
             // 19.3.27 ReferenceError ( . . . )
-            Symbol::REFERENCE_ERROR => Value::Function(self.create_reference_error_constructor()),
+            Symbol::REFERENCE_ERROR => Value::Object(self.create_reference_error_constructor()),
             // 19.3.31 String()
-            Symbol::STRING => Value::Function(self.create_string_constructor()),
+            Symbol::STRING => Value::Object(self.create_string_constructor()),
             // 19.3.33 SyntaxError ( . . . )
-            Symbol::SYNTAX_ERROR => Value::Function(self.create_syntax_error_constructor()),
+            Symbol::SYNTAX_ERROR => Value::Object(self.create_syntax_error_constructor()),
             // 19.3.34 TypeError ( . . . )
-            Symbol::TYPE_ERROR => Value::Function(self.create_type_error_constructor()),
+            Symbol::TYPE_ERROR => Value::Object(self.create_type_error_constructor()),
             // 19.3.39 URIError ( . . . )
-            Symbol::URI_ERROR => Value::Function(self.create_uri_error_constructor()),
+            Symbol::URI_ERROR => Value::Object(self.create_uri_error_constructor()),
         }
     }
 
@@ -123,7 +123,7 @@ impl<X> Runtime<X> {
             Value::String(_value) => todo!(),
             Value::Promise(_) => Ok(f64::NAN),
             // TODO(feat): 7.1.1 ToPrimitive()
-            Value::Object(_) | Value::Function(_) => Ok(f64::NAN),
+            Value::Object(_) => Ok(f64::NAN),
         }
     }
 
@@ -195,7 +195,6 @@ impl<X> Runtime<X> {
                     Ok(U16String::new(&CHUNK))
                 }
             }
-            Value::Function(_) => todo!(),
         }
     }
 }
