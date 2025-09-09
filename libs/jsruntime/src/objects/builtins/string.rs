@@ -1,14 +1,13 @@
 use jsparser::Symbol;
 
 use crate::Runtime;
-use crate::U16Chunk;
-use crate::U16String;
 use crate::logger;
 use crate::objects::Object;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
+use crate::types::StringHandle;
 use crate::types::Value;
 
 impl<X> Runtime<X> {
@@ -33,7 +32,7 @@ impl<X> Runtime<X> {
                 // return SymbolDescriptiveString(value).
                 self.perform_to_string(v)
             }
-            None => U16String::EMPTY,
+            None => StringHandle::EMPTY,
         };
         // TODO(feat): NewTarget
         if new {
@@ -70,10 +69,9 @@ impl<X> Runtime<X> {
 }
 
 impl Object {
-    pub(crate) fn string(&self) -> U16String {
-        // SAFETY: `self.nucleus` of a String object is a non-null point to a `U16Chunk`.
-        let chunk = unsafe { &*(self.nucleus as *const U16Chunk) };
-        U16String::new(chunk)
+    pub(crate) fn string(&self) -> StringHandle {
+        // SAFETY: `self.nucleus` is non-null and convertible to a reference.
+        unsafe { StringHandle::from_addr(self.nucleus) }
     }
 }
 
@@ -134,7 +132,11 @@ extern "C" fn string_prototype_index_of<X>(
 }
 
 // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
-fn string_index_of(string: U16String, search_value: U16String, from_index: u32) -> Option<u32> {
+fn string_index_of(
+    string: StringHandle,
+    search_value: StringHandle,
+    from_index: u32,
+) -> Option<u32> {
     // TODO(perf): slow and inefficient
     let len = string.len();
     if search_value.is_empty() && from_index <= len {

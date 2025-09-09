@@ -37,7 +37,7 @@ use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
-use crate::types::U16Chunk;
+use crate::types::StringFragment;
 use crate::types::Value;
 
 use super::CodeRegistry;
@@ -683,8 +683,10 @@ where
         // Theoretically, the heap memory pointed by `value` can be freed after the IR built by the
         // compiler is freed.
         let string_ir = self.editor.put_create_string(value);
-        self.operand_stack
-            .push(Operand::String(string_ir, Some(U16Chunk::new_stack(value))));
+        self.operand_stack.push(Operand::String(
+            string_ir,
+            Some(StringFragment::new_stack(value)),
+        ));
     }
 
     fn process_object(&mut self) {
@@ -1369,7 +1371,7 @@ where
         self.operand_stack.push(Operand::String(tail, None));
     }
 
-    fn pop_string(&mut self) -> (StringIr, Option<U16Chunk>) {
+    fn pop_string(&mut self) -> (StringIr, Option<StringFragment>) {
         match self.operand_stack.pop().unwrap() {
             Operand::String(value_rt, value_ct) => (value_rt, value_ct),
             operand => unreachable!("{operand:?}"),
@@ -3729,7 +3731,7 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    String(StringIr, #[allow(unused)] Option<U16Chunk>),
+    String(StringIr, #[allow(unused)] Option<StringFragment>),
 
     /// Runtime value of closure type.
     Closure(ClosureIr),

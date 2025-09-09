@@ -33,7 +33,7 @@ async function main(args, options) {
   function mapValue(value, strings) {
     if (strings.includes(value)) {
       const index = strings.indexOf(value);
-      return `Value::String(U16String::new(&STRING${index}))`;
+      return `Value::String(StringHandle::new(&STRING${index}))`;
     }
     switch (value) {
       case undefined:

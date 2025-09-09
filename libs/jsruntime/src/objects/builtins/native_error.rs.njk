@@ -6,13 +6,13 @@
 use jsparser::Symbol;
 
 use crate::Runtime;
-use crate::U16Chunk;
-use crate::U16String;
 use crate::logger;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
+use crate::types::StringFragment;
+use crate::types::StringHandle;
 use crate::types::Value;
 
 impl<X> Runtime<X> {
@@ -34,16 +34,16 @@ impl<X> Runtime<X> {
         debug_assert!(self.error_prototype.is_some());
 
         use jsparser::symbol::builtin::names;
-        const NAME: U16Chunk = U16Chunk::new_const(names::{{ data.name | upper }});
+        const NAME: StringFragment = StringFragment::new_const(names::{{ data.name | upper }});
 
         let mut prototype = self.create_object(self.error_prototype);
         let _ = prototype.define_own_property(
             Symbol::MESSAGE.into(),
-            Property::data_xxx(Value::String(U16String::EMPTY)),
+            Property::data_xxx(Value::String(StringHandle::EMPTY)),
         );
         let _ = prototype.define_own_property(
             Symbol::NAME.into(),
-            Property::data_xxx(Value::String(U16String::new(&NAME))),
+            Property::data_xxx(Value::String(StringHandle::new(&NAME))),
         );
 
         prototype

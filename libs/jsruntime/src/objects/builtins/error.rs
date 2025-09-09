@@ -1,13 +1,13 @@
 use jsparser::Symbol;
 
 use crate::Runtime;
-use crate::U16Chunk;
-use crate::U16String;
 use crate::logger;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
+use crate::types::StringFragment;
+use crate::types::StringHandle;
 use crate::types::Value;
 
 impl<X> Runtime<X> {
@@ -37,12 +37,12 @@ impl<X> Runtime<X> {
 
         let _ = prototype.define_own_property(
             Symbol::NAME.into(),
-            Property::data_xxx(Value::String(U16String::new(&NAME))),
+            Property::data_xxx(Value::String(StringHandle::new(&NAME))),
         );
 
         let _ = prototype.define_own_property(
             Symbol::MESSAGE.into(),
-            Property::data_xxx(Value::String(U16String::EMPTY)),
+            Property::data_xxx(Value::String(StringHandle::EMPTY)),
         );
 
         let to_string = self.create_builtin_function(error_prototype_to_string, None);
@@ -113,7 +113,7 @@ extern "C" fn constructor<X>(
     }
 }
 
-const NAME: U16Chunk = U16Chunk::new_const(jsparser::symbol::builtin::names::ERROR);
+const NAME: StringFragment = StringFragment::new_const(jsparser::symbol::builtin::names::ERROR);
 
 // 20.5.2.1 Error.isError ( arg )
 extern "C" fn error_is_error<X>(
@@ -146,12 +146,12 @@ extern "C" fn error_prototype_to_string<X>(
     };
 
     let name = match object.get_value(&Symbol::NAME.into()) {
-        None | Some(Value::Undefined) => U16String::new(&NAME),
+        None | Some(Value::Undefined) => StringHandle::new(&NAME),
         Some(value) => runtime.perform_to_string(value),
     };
 
     let message = match object.get_value(&Symbol::MESSAGE.into()) {
-        None | Some(Value::Undefined) => U16String::EMPTY,
+        None | Some(Value::Undefined) => StringHandle::EMPTY,
         Some(value) => runtime.perform_to_string(value),
     };
 
@@ -160,8 +160,8 @@ extern "C" fn error_prototype_to_string<X>(
     } else if message.is_empty() {
         name
     } else {
-        const SEP: U16Chunk = U16Chunk::new_const(&[0x003A, 0x0020]);
-        let result = runtime.concat_strings(U16String::new(&SEP), message);
+        const SEP: StringFragment = StringFragment::new_const(&[0x003A, 0x0020]);
+        let result = runtime.concat_strings(StringHandle::new(&SEP), message);
         runtime.concat_strings(name, result)
     };
 

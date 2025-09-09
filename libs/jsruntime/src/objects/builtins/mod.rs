@@ -18,8 +18,8 @@ use crate::logger;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::Lambda;
-use crate::types::U16Chunk;
-use crate::types::U16String;
+use crate::types::StringFragment;
+use crate::types::StringHandle;
 use crate::types::Value;
 
 #[allow(unused)]
@@ -141,13 +141,13 @@ impl<X> Runtime<X> {
     }
 
     // TODO(refactor): code clone, see runtime_concat_strings.
-    fn concat_strings(&mut self, a: U16String, b: U16String) -> U16String {
+    fn concat_strings(&mut self, a: StringHandle, b: StringHandle) -> StringHandle {
         if b.is_empty() {
-            return U16String::new(self.alloc_string_rec(a.first_chunk(), std::ptr::null()));
+            return StringHandle::new(self.alloc_string_fragment_recursively(a.fragment(), None));
         }
 
         let b = if b.on_stack() {
-            U16String::new(self.alloc_string_rec(b.first_chunk(), std::ptr::null()))
+            StringHandle::new(self.alloc_string_fragment_recursively(b.fragment(), None))
         } else {
             b
         };
@@ -156,30 +156,30 @@ impl<X> Runtime<X> {
             return b;
         }
 
-        U16String::new(self.alloc_string_rec(a.first_chunk(), b.first_chunk() as *const U16Chunk))
+        StringHandle::new(self.alloc_string_fragment_recursively(a.fragment(), Some(b.fragment())))
     }
 
     // 7.1.17 ToString ( argument )
     // TODO: code clone, see backend::bridge::runtime_to_string
-    fn value_to_string(&mut self, value: &Value) -> Result<U16String, Error> {
+    fn value_to_string(&mut self, value: &Value) -> Result<StringHandle, Error> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"undefined"));
-                Ok(U16String::new(&CHUNK))
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"undefined"));
+                Ok(StringHandle::new(&CHUNK))
             }
             Value::Null => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"null"));
-                Ok(U16String::new(&CHUNK))
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"null"));
+                Ok(StringHandle::new(&CHUNK))
             }
             Value::Boolean(true) => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"true"));
-                Ok(U16String::new(&CHUNK))
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"true"));
+                Ok(StringHandle::new(&CHUNK))
             }
             Value::Boolean(false) => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"false"));
-                Ok(U16String::new(&CHUNK))
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"false"));
+                Ok(StringHandle::new(&CHUNK))
             }
             Value::Number(value) => {
                 Ok(self.number_to_string(*value)) // TODO
@@ -191,8 +191,9 @@ impl<X> Runtime<X> {
                 if self.is_string_object(value) {
                     Ok(value.string())
                 } else {
-                    const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"[object Object]"));
-                    Ok(U16String::new(&CHUNK))
+                    const CHUNK: StringFragment =
+                        StringFragment::new_const(utf16!(&"[object Object]"));
+                    Ok(StringHandle::new(&CHUNK))
                 }
             }
         }

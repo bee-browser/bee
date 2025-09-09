@@ -27,8 +27,8 @@ use types::ReturnValue;
 
 pub use backend::CompileError;
 pub use lambda::LambdaId; // TODO: private
-pub use types::U16Chunk; // TODO: remove
-pub use types::U16String;
+pub use types::StringFragment; // TODO: private
+pub use types::StringHandle;
 pub use types::Value;
 
 pub type ParseError = jsparser::Error;
@@ -271,17 +271,16 @@ impl<X> Runtime<X> {
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    pub(crate) fn migrate_string_to_heap(&mut self, string: U16String) -> U16String {
+    pub(crate) fn migrate_string_to_heap(&mut self, string: StringHandle) -> StringHandle {
         logger::debug!(event = "migrate_string_to_heap", ?string);
         debug_assert!(string.on_stack());
 
         if string.is_empty() {
-            return U16String::EMPTY;
+            return StringHandle::EMPTY;
         }
 
         // TODO(issue#237): GcCell
-        // TODO: chunk.next
-        U16String::new(self.alloc_string_rec(string.first_chunk(), std::ptr::null()))
+        StringHandle::new(self.alloc_string_fragment_recursively(string.fragment(), None))
     }
 
     pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
@@ -290,17 +289,20 @@ impl<X> Runtime<X> {
         self.allocator.alloc_slice_copy(&utf16)
     }
 
-    pub(crate) fn alloc_string_rec(&self, head: &U16Chunk, tail: *const U16Chunk) -> &U16Chunk {
-        let result = self
-            .allocator
-            .alloc(U16Chunk::new_heap_from_raw_parts(head.ptr, head.len));
-        // SAFETY: `head.next` is null or a valid pointer to a `U16Chunk`.
-        result.next = if let Some(chunk) = unsafe { head.next.as_ref() } {
-            self.alloc_string_rec(chunk, tail)
+    pub(crate) fn alloc_string_fragment_recursively(
+        &self,
+        frag: &StringFragment,
+        last: Option<&StringFragment>,
+    ) -> &StringFragment {
+        let next = if let Some(next) = frag.next() {
+            self.alloc_string_fragment_recursively(next, last).as_ptr()
         } else {
-            tail
+            last.map_or(std::ptr::null(), StringFragment::as_ptr)
         };
-        result
+        self.allocator
+            .alloc(StringFragment::new_heap_from_raw_parts(
+                next, frag.ptr, frag.len,
+            ))
     }
 
     fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {
