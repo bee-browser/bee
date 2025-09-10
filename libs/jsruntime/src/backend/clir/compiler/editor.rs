@@ -1662,7 +1662,8 @@ impl<'a> Editor<'a> {
         &mut self,
         support: &mut impl EditorSupport,
         any: AnyIr,
-    ) -> ObjectIr {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(event = "put_runtime_to_object", ?any);
         runtime_debug! {{
             self.put_assert_non_null(
@@ -1671,9 +1672,9 @@ impl<'a> Editor<'a> {
         let func = self
             .runtime_func_cache
             .import_runtime_to_object(support, self.builder.func);
-        let args = [self.runtime(), any.0];
+        let args = [self.runtime(), any.0, retv.0];
         let call = self.builder.ins().call(func, &args);
-        ObjectIr(self.builder.inst_results(call)[0])
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     // 7.1.6 ToInt32 ( argument )

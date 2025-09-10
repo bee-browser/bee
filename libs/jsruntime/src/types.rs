@@ -3,8 +3,6 @@ use std::mem::offset_of;
 use std::ptr::NonNull;
 use std::ptr::addr_eq;
 
-use base::utf16;
-
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
@@ -80,29 +78,29 @@ impl Value {
 
     // 13.5.3.1 Runtime Semantics: Evaluation
     pub fn get_typeof(&self) -> StringHandle {
-        const UNDEFINED: StringFragment = StringFragment::new_const(utf16!(&"undefined"));
-        const BOOLEAN: StringFragment = StringFragment::new_const(utf16!(&"boolean"));
-        const NUMBER: StringFragment = StringFragment::new_const(utf16!(&"number"));
-        const STRING: StringFragment = StringFragment::new_const(utf16!(&"string"));
-        const OBJECT: StringFragment = StringFragment::new_const(utf16!(&"object"));
-        const FUNCTION: StringFragment = StringFragment::new_const(utf16!(&"function"));
+        const UNDEFINED: StringHandle = const_string!("undefined");
+        const BOOLEAN: StringHandle = const_string!("boolean");
+        const NUMBER: StringHandle = const_string!("number");
+        const STRING: StringHandle = const_string!("string");
+        const OBJECT: StringHandle = const_string!("object");
+        const FUNCTION: StringHandle = const_string!("function");
 
-        StringHandle::new(match self {
+        match self {
             Self::None => unreachable!(),
-            Self::Undefined => &UNDEFINED,
-            Self::Null => &OBJECT,
-            Self::Boolean(_) => &BOOLEAN,
-            Self::Number(_) => &NUMBER,
-            Self::String(_) => &STRING,
-            Self::Promise(_) => &OBJECT,
+            Self::Undefined => UNDEFINED,
+            Self::Null => OBJECT,
+            Self::Boolean(_) => BOOLEAN,
+            Self::Number(_) => NUMBER,
+            Self::String(_) => STRING,
+            Self::Promise(_) => OBJECT,
             Self::Object(object) => {
                 if object.is_callable() {
-                    &FUNCTION
+                    FUNCTION
                 } else {
-                    &OBJECT
+                    OBJECT
                 }
             }
-        })
+        }
     }
 
     pub fn dummy_object() -> Self {
@@ -179,8 +177,14 @@ impl StringHandle {
     pub const EMPTY: Self = Self::new(&StringFragment::EMPTY);
 
     /// Creates a new UTF-16 string.
-    pub const fn new(first_chunk: &StringFragment) -> Self {
-        Self(NonNull::from_ref(first_chunk))
+    pub const fn new(frag: &StringFragment) -> Self {
+        Self(NonNull::from_ref(frag))
+    }
+
+    /// Creates a new constant UTF-16 string.
+    pub const fn new_const(frag: &'static StringFragment) -> Self {
+        debug_assert!(frag.is_const());
+        Self(NonNull::from_ref(frag))
     }
 
     /// Returns `true` if the string is empty.
@@ -284,7 +288,7 @@ impl StringFragment {
     pub(crate) const KIND_OFFSET: usize = std::mem::offset_of!(Self, kind);
 
     // TODO(refactor): should be private
-    pub const fn new_const(slice: &[u16]) -> Self {
+    pub const fn new_const(slice: &'static [u16]) -> Self {
         Self::new_const_from_raw_parts(slice.as_ptr(), slice.len() as u32)
     }
 
@@ -328,7 +332,11 @@ impl StringFragment {
         self.len == 0
     }
 
-    pub(crate) fn on_stack(&self) -> bool {
+    pub(crate) const fn is_const(&self) -> bool {
+        matches!(self.kind, StringFragmentKind::Const)
+    }
+
+    pub(crate) const fn on_stack(&self) -> bool {
         matches!(self.kind, StringFragmentKind::Stack)
     }
 

@@ -3,7 +3,15 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 PROJ_DIR := ../../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
-NATIVE_ERROR_NAMES := eval_error range_error reference_error syntax_error type_error uri_error
+NATIVE_ERROR_NAMES := \
+  aggregate_error \
+  eval_error \
+  internal_error \
+  range_error \
+  reference_error \
+  syntax_error \
+  type_error \
+  uri_error
 
 CODEGEN_TARGETS := $(addsuffix .rs,$(NATIVE_ERROR_NAMES))
 
@@ -14,9 +22,21 @@ codegen: $(CODEGEN_TARGETS)
 clean:
 	@rm -f $(CODEGEN_TARGETS)
 
+aggregate_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "aggregate_error" }' | \
+	  rustfmt --emit=stdout >$@
+
 eval_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
 	@echo 'Generating $(abspath $@)...'
 	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "eval_error" }' | \
+	  rustfmt --emit=stdout >$@
+
+# https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError
+# Non-standard error type.  We use this error type for throwing internal errors.
+internal_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "internal_error" }' | \
 	  rustfmt --emit=stdout >$@
 
 range_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js

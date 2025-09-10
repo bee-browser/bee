@@ -1,6 +1,8 @@
+mod aggregate_error;
 mod error;
 mod eval_error;
 mod function;
+mod internal_error;
 mod object;
 mod range_error;
 mod reference_error;
@@ -9,7 +11,6 @@ mod syntax_error;
 mod type_error;
 mod uri_error;
 
-use base::utf16;
 use jsparser::Symbol;
 
 use crate::Runtime;
@@ -18,7 +19,6 @@ use crate::logger;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::Lambda;
-use crate::types::StringFragment;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -49,7 +49,9 @@ impl<X> Runtime<X> {
         self.function_prototype = Some(self.create_function_prototype());
         self.string_prototype = Some(self.create_string_prototype());
         self.error_prototype = Some(self.create_error_prototype());
+        self.aggregate_error_prototype = Some(self.create_aggregate_error_prototype());
         self.eval_error_prototype = Some(self.create_eval_error_prototype());
+        self.internal_error_prototype = Some(self.create_internal_error_prototype());
         self.range_error_prototype = Some(self.create_range_error_prototype());
         self.reference_error_prototype = Some(self.create_reference_error_prototype());
         self.syntax_error_prototype = Some(self.create_syntax_error_prototype());
@@ -67,12 +69,16 @@ impl<X> Runtime<X> {
             Symbol::NAN => Value::Number(f64::NAN),
             // 19.1.4 undefined
             Symbol::KEYWORD_UNDEFINED => Value::Undefined,
+            // 19.3.1 AggregateError ( . . . )
+            Symbol::AGGREGATE_ERROR => Value::Object(self.create_aggregate_error_constructor()),
             // 19.3.10 Error ( . . . )
             Symbol::ERROR => Value::Object(self.create_error_constructor()),
             // 19.3.11 EvalError ( . . . )
             Symbol::EVAL_ERROR => Value::Object(self.create_eval_error_constructor()),
             // 19.3.16 Function ( . . . )
             Symbol::FUNCTION => Value::Object(self.create_function_constructor()),
+            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError
+            Symbol::INTERNAL_ERROR => Value::Object(self.create_internal_error_constructor()),
             // 19.3.23 Object()
             Symbol::OBJECT => Value::Object(self.create_object_constructor()),
             // 19.3.26 RangeError ( . . . )
@@ -165,22 +171,10 @@ impl<X> Runtime<X> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"undefined"));
-                Ok(StringHandle::new(&CHUNK))
-            }
-            Value::Null => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"null"));
-                Ok(StringHandle::new(&CHUNK))
-            }
-            Value::Boolean(true) => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"true"));
-                Ok(StringHandle::new(&CHUNK))
-            }
-            Value::Boolean(false) => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"false"));
-                Ok(StringHandle::new(&CHUNK))
-            }
+            Value::Undefined => Ok(const_string!("undefined")),
+            Value::Null => Ok(const_string!("null")),
+            Value::Boolean(true) => Ok(const_string!("true")),
+            Value::Boolean(false) => Ok(const_string!("false")),
             Value::Number(value) => {
                 Ok(self.number_to_string(*value)) // TODO
             }
@@ -191,9 +185,7 @@ impl<X> Runtime<X> {
                 if self.is_string_object(value) {
                     Ok(value.string())
                 } else {
-                    const CHUNK: StringFragment =
-                        StringFragment::new_const(utf16!(&"[object Object]"));
-                    Ok(StringHandle::new(&CHUNK))
+                    Ok(const_string!("[object Object]"))
                 }
             }
         }

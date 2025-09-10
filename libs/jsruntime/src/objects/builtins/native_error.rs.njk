@@ -11,7 +11,6 @@ use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
-use crate::types::StringFragment;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -33,9 +32,6 @@ impl<X> Runtime<X> {
         logger::debug!(event = "creater_{{ data.name }}_prototype");
         debug_assert!(self.error_prototype.is_some());
 
-        use jsparser::symbol::builtin::names;
-        const NAME: StringFragment = StringFragment::new_const(names::{{ data.name | upper }});
-
         let mut prototype = self.create_object(self.error_prototype);
         let _ = prototype.define_own_property(
             Symbol::MESSAGE.into(),
@@ -43,7 +39,7 @@ impl<X> Runtime<X> {
         );
         let _ = prototype.define_own_property(
             Symbol::NAME.into(),
-            Property::data_xxx(Value::String(StringHandle::new(&NAME))),
+            Property::data_xxx(Value::String(const_string!(jsparser::symbol::builtin::names::{{ data.name | upper }}))),
         );
 
         prototype

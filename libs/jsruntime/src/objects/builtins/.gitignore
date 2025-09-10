@@ -1,4 +1,6 @@
+aggregate_error.rs
 eval_error.rs
+internal_error.rs
 range_error.rs
 reference_error.rs
 syntax_error.rs

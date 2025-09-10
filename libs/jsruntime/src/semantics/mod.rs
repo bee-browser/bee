@@ -1734,7 +1734,6 @@ impl FunctionAnalysis {
         debug_assert!(self.symbol_stack.len() >= n as usize);
         let i = self.symbol_stack.len() - n as usize;
         for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
-            dbg!(&self.commands[index - 1]);
             if let CompileCommand::Function(Symbol::NONE) = self.commands[index - 1] {
                 // 8.4.5 Runtime Semantics: NamedEvaluation
                 self.commands[index - 1] = CompileCommand::Function(symbol);
@@ -1759,7 +1758,6 @@ impl FunctionAnalysis {
         let i = self.symbol_stack.len() - n as usize;
         for (symbol, index) in self.symbol_stack[i..].iter().cloned() {
             debug_assert!(index > 0);
-            dbg!(&self.commands[index - 1]);
             if let CompileCommand::Function(Symbol::NONE) = self.commands[index - 1] {
                 // 8.4.5 Runtime Semantics: NamedEvaluation
                 self.commands[index - 1] = CompileCommand::Function(symbol);
