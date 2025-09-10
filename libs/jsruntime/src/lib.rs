@@ -301,7 +301,9 @@ impl<X> Runtime<X> {
         };
         self.allocator
             .alloc(StringFragment::new_heap_from_raw_parts(
-                next, frag.ptr, frag.len,
+                next,
+                frag.raw_ptr(),
+                frag.len(),
             ))
     }
 

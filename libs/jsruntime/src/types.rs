@@ -161,12 +161,12 @@ impl std::fmt::Display for Value {
     }
 }
 
-/// A data type to hold a UTF-16 string.
+/// A data type to hold an **immutable** UTF-16 string.
 ///
-/// A UTF-16 string is represented as a *chain* of UTF-16 code sequences.
+/// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
 ///
 /// This type is usually allocated on the stack and holds a pointer to a `StringFragment` that is
-/// allocated on the heap or the stack.
+/// allocated in the heap or on the stack.
 // TODO(issue#237): GcCell
 #[derive(Clone, Copy)]
 #[repr(transparent)]
@@ -193,7 +193,7 @@ impl StringHandle {
         self.fragment().on_stack()
     }
 
-    /// Returns the length of the string.
+    /// Returns the number of UTF-16 code units in the string.
     pub fn len(&self) -> u32 {
         self.fragment().total_len()
     }
@@ -204,7 +204,7 @@ impl StringHandle {
         unsafe { self.0.as_ref() }
     }
 
-    /// Creates a `Vec` containing UTF-16 code units.
+    /// Creates a `Vec` containing UTF-16 code units of the string.
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
         self.fragment().make_utf16()
     }
@@ -252,29 +252,29 @@ impl std::fmt::Display for StringHandle {
     }
 }
 
-/// A data type representing a sequence of UTF-16 code units.
+/// A data type representing an **immutable** fragment of UTF-16 code units.
 ///
 /// This type may be allocated on the stack.
 // TODO(issue#237): GcCell
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct StringFragment {
-    /// A pointer to the next fragment if it exists.
+    /// A pointer to the next string fragment if it exists.
     next: *const StringFragment,
 
     /// A pointer to the array of UTF-16 code units if it exists.
-    pub(crate) ptr: *const u16,
+    ptr: *const u16,
 
-    /// The number of the UTF-16 code units.
-    pub(crate) len: u32,
+    /// The number of the UTF-16 code units in the string fragment.
+    len: u32,
 
-    pub(crate) kind: StringFragmentKind,
+    kind: StringFragmentKind,
 }
 
 static_assertions::const_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
 
 impl StringFragment {
-    pub const EMPTY: Self = Self::new_const_from_raw_parts(std::ptr::null(), 0);
+    pub(crate) const EMPTY: Self = Self::new_const_from_raw_parts(std::ptr::null(), 0);
 
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
@@ -283,15 +283,16 @@ impl StringFragment {
     pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
     pub(crate) const KIND_OFFSET: usize = std::mem::offset_of!(Self, kind);
 
+    // TODO(refactor): should be private
     pub const fn new_const(slice: &[u16]) -> Self {
         Self::new_const_from_raw_parts(slice.as_ptr(), slice.len() as u32)
     }
 
-    pub const fn new_stack(slice: &[u16]) -> Self {
+    pub(crate) const fn new_stack(slice: &[u16]) -> Self {
         Self::new_stack_from_raw_parts(slice.as_ptr(), slice.len() as u32)
     }
 
-    pub const fn new_const_from_raw_parts(ptr: *const u16, len: u32) -> Self {
+    pub(crate) const fn new_const_from_raw_parts(ptr: *const u16, len: u32) -> Self {
         Self {
             next: std::ptr::null(),
             ptr,
@@ -300,7 +301,7 @@ impl StringFragment {
         }
     }
 
-    pub const fn new_stack_from_raw_parts(ptr: *const u16, len: u32) -> Self {
+    pub(crate) const fn new_stack_from_raw_parts(ptr: *const u16, len: u32) -> Self {
         Self {
             next: std::ptr::null(),
             ptr,
@@ -309,7 +310,11 @@ impl StringFragment {
         }
     }
 
-    pub const fn new_heap_from_raw_parts(next: *const Self, ptr: *const u16, len: u32) -> Self {
+    pub(crate) const fn new_heap_from_raw_parts(
+        next: *const Self,
+        ptr: *const u16,
+        len: u32,
+    ) -> Self {
         Self {
             next,
             ptr,
@@ -318,16 +323,16 @@ impl StringFragment {
         }
     }
 
-    pub const fn is_empty(&self) -> bool {
+    pub(crate) const fn is_empty(&self) -> bool {
         debug_assert!(self.len > 0 || self.next.is_null());
         self.len == 0
     }
 
-    pub fn on_stack(&self) -> bool {
+    pub(crate) fn on_stack(&self) -> bool {
         matches!(self.kind, StringFragmentKind::Stack)
     }
 
-    pub fn total_len(&self) -> u32 {
+    pub(crate) fn total_len(&self) -> u32 {
         // SAFETY: `self.next` is null or a valid pointer to a `StringFragment`.
         if let Some(next) = unsafe { self.next.as_ref() } {
             debug_assert!(self.len > 0);
@@ -337,7 +342,15 @@ impl StringFragment {
         }
     }
 
-    pub fn as_slice(&self) -> &[u16] {
+    pub(crate) fn raw_ptr(&self) -> *const u16 {
+        self.ptr
+    }
+
+    pub(crate) fn len(&self) -> u32 {
+        self.len
+    }
+
+    pub(crate) fn as_slice(&self) -> &[u16] {
         debug_assert_ne!(self.len, 0);
         debug_assert!(!self.ptr.is_null());
         debug_assert!(self.ptr.is_aligned());
