@@ -35,9 +35,11 @@
 - [yield, KEYWORD_YIELD]
 
 # Non-reserved symbols for well-known intrinsic objects.
+- AggregateError
 - Error
 - EvalError
 - Function
+- InternalError
 - Object
 - RangeError
 - ReferenceError

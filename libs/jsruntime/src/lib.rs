@@ -1,5 +1,8 @@
 logging::define_logger! {"bee::jsruntime"}
 
+#[macro_use]
+mod macros;
+
 mod backend;
 mod jobs;
 mod lambda;
@@ -24,6 +27,7 @@ use semantics::Program;
 use types::CallContext;
 use types::Lambda;
 use types::ReturnValue;
+use types::Status;
 
 pub use backend::CompileError;
 pub use lambda::LambdaId; // TODO: private
@@ -91,8 +95,12 @@ pub struct Runtime<X> {
     function_prototype: Option<ObjectHandle>,
     // %Error.prototype%
     error_prototype: Option<ObjectHandle>,
+    // %AggregateError.prototype%
+    aggregate_error_prototype: Option<ObjectHandle>,
     // %EvalError.prototype%
     eval_error_prototype: Option<ObjectHandle>,
+    // %InternalError.prototype%
+    internal_error_prototype: Option<ObjectHandle>,
     // %RangeError.prototype%
     range_error_prototype: Option<ObjectHandle>,
     // %ReferenceError.prototype%
@@ -126,7 +134,9 @@ impl<X> Runtime<X> {
             string_prototype: None,
             function_prototype: None,
             error_prototype: None,
+            aggregate_error_prototype: None,
             eval_error_prototype: None,
+            internal_error_prototype: None,
             reference_error_prototype: None,
             range_error_prototype: None,
             syntax_error_prototype: None,
@@ -367,6 +377,14 @@ impl<X> Runtime<X> {
 
         target.set_value(&LENGTH, &Value::from(length + 1.0));
         Ok(())
+    }
+
+    fn throw_internal_error(&mut self, message: StringHandle, retv: &mut Value) -> Status {
+        match self.create_internal_error(true, &Value::String(message), &Value::Undefined) {
+            Ok(value) => *retv = Value::Object(value),
+            Err(err) => *retv = err,
+        }
+        Status::Exception
     }
 }
 

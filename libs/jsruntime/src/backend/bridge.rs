@@ -1,7 +1,5 @@
 use std::ffi::c_void;
 
-use base::utf16;
-
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaKind;
@@ -185,31 +183,15 @@ impl<X> Runtime<X> {
         logger::debug!(event = "perform_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"undefined"));
-                StringHandle::new(&CHUNK)
-            }
-            Value::Null => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"null"));
-                StringHandle::new(&CHUNK)
-            }
-            Value::Boolean(true) => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"true"));
-                StringHandle::new(&CHUNK)
-            }
-            Value::Boolean(false) => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"false"));
-                StringHandle::new(&CHUNK)
-            }
+            Value::Undefined => const_string!("undefined"),
+            Value::Null => const_string!("null"),
+            Value::Boolean(true) => const_string!("true"),
+            Value::Boolean(false) => const_string!("false"),
             Value::Number(value) => {
                 self.number_to_string(*value) // TODO
             }
             Value::String(value) => *value,
-            Value::Promise(_) => todo!(),
-            Value::Object(_) => {
-                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"[object Object]"));
-                StringHandle::new(&CHUNK)
-            }
+            Value::Promise(_) | Value::Object(_) => const_string!("[object Object]"),
         }
     }
 }
@@ -255,8 +237,16 @@ impl<X> Runtime<X> {
                 }
                 Status::Exception
             }
-            Value::Boolean(_value) => todo!(),
-            Value::Number(_value) => todo!(),
+            Value::Boolean(_value) => runtime_todo!(
+                self,
+                "ToObject: not yet implemented for Boolean values",
+                retv
+            ),
+            Value::Number(_value) => runtime_todo!(
+                self,
+                "ToObject: not yet implemented for Number values",
+                retv
+            ),
             Value::String(value) => {
                 match self.create_string_object(&[Value::String(*value)], true) {
                     Ok(Value::Object(object)) => {
@@ -270,7 +260,11 @@ impl<X> Runtime<X> {
                     }
                 }
             }
-            Value::Promise(_value) => todo!(),
+            Value::Promise(_value) => runtime_todo!(
+                self,
+                "ToObject: not yet implemented for internal promise values",
+                retv
+            ),
             Value::Object(_) => {
                 *retv = value.clone();
                 Status::Normal

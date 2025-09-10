@@ -6,7 +6,6 @@ use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
-use crate::types::StringFragment;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -35,10 +34,8 @@ impl<X> Runtime<X> {
 
         let mut prototype = self.create_object(self.object_prototype);
 
-        let _ = prototype.define_own_property(
-            Symbol::NAME.into(),
-            Property::data_xxx(Value::String(StringHandle::new(&NAME))),
-        );
+        let _ = prototype
+            .define_own_property(Symbol::NAME.into(), Property::data_xxx(Value::String(NAME)));
 
         let _ = prototype.define_own_property(
             Symbol::MESSAGE.into(),
@@ -113,7 +110,7 @@ extern "C" fn constructor<X>(
     }
 }
 
-const NAME: StringFragment = StringFragment::new_const(jsparser::symbol::builtin::names::ERROR);
+const NAME: StringHandle = const_string!(jsparser::symbol::builtin::names::ERROR);
 
 // 20.5.2.1 Error.isError ( arg )
 extern "C" fn error_is_error<X>(
@@ -146,7 +143,7 @@ extern "C" fn error_prototype_to_string<X>(
     };
 
     let name = match object.get_value(&Symbol::NAME.into()) {
-        None | Some(Value::Undefined) => StringHandle::new(&NAME),
+        None | Some(Value::Undefined) => NAME,
         Some(value) => runtime.perform_to_string(value),
     };
 
@@ -160,8 +157,7 @@ extern "C" fn error_prototype_to_string<X>(
     } else if message.is_empty() {
         name
     } else {
-        const SEP: StringFragment = StringFragment::new_const(&[0x003A, 0x0020]);
-        let result = runtime.concat_strings(StringHandle::new(&SEP), message);
+        let result = runtime.concat_strings(const_string!(&[0x003A, 0x0020]), message);
         runtime.concat_strings(name, result)
     };
 
