@@ -16,8 +16,8 @@ use crate::types::CallContext;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
-use crate::types::U16Chunk;
-use crate::types::U16ChunkKind;
+use crate::types::StringFragment;
+use crate::types::StringFragmentKind;
 use crate::types::Value;
 
 use super::AnyIr;
@@ -556,18 +556,18 @@ impl<'a> Editor<'a> {
 
         let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
-            size: U16Chunk::SIZE as u32,
-            align_shift: U16Chunk::ALIGNMENT.ilog2() as u8,
+            size: StringFragment::SIZE as u32,
+            align_shift: StringFragment::ALIGNMENT.ilog2() as u8,
         });
 
         let next = self.builder.ins().iconst(self.addr_type, 0);
-        self.put_store_to_slot(next, slot, U16Chunk::NEXT_OFFSET);
+        self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
 
         let kind = self
             .builder
             .ins()
-            .iconst(ir::types::I8, U16ChunkKind::Stack as i64);
-        self.put_store_to_slot(kind, slot, U16Chunk::KIND_OFFSET);
+            .iconst(ir::types::I8, StringFragmentKind::Stack as i64);
+        self.put_store_to_slot(kind, slot, StringFragment::KIND_OFFSET);
 
         StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
@@ -582,7 +582,7 @@ impl<'a> Editor<'a> {
             .iconst(self.addr_type, value.as_ptr() as i64);
         self.builder
             .ins()
-            .store(FLAGS, ptr, target.0, U16Chunk::PTR_OFFSET as i32);
+            .store(FLAGS, ptr, target.0, StringFragment::PTR_OFFSET as i32);
 
         debug_assert!(value.len() <= u32::MAX as usize);
         let len = self
@@ -591,7 +591,7 @@ impl<'a> Editor<'a> {
             .iconst(ir::types::I32, value.len() as i64);
         self.builder
             .ins()
-            .store(FLAGS, len, target.0, U16Chunk::LEN_OFFSET as i32);
+            .store(FLAGS, len, target.0, StringFragment::LEN_OFFSET as i32);
     }
 
     pub fn put_create_string(&mut self, value: &[u16]) -> StringIr {
@@ -599,12 +599,12 @@ impl<'a> Editor<'a> {
 
         let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
             kind: ir::StackSlotKind::ExplicitSlot,
-            size: U16Chunk::SIZE as u32,
-            align_shift: U16Chunk::ALIGNMENT.ilog2() as u8,
+            size: StringFragment::SIZE as u32,
+            align_shift: StringFragment::ALIGNMENT.ilog2() as u8,
         });
 
         let next = self.builder.ins().iconst(self.addr_type, 0);
-        self.put_store_to_slot(next, slot, U16Chunk::NEXT_OFFSET);
+        self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
 
         let ptr = self.builder.ins().iconst(
             self.addr_type,
@@ -614,20 +614,20 @@ impl<'a> Editor<'a> {
                 value.as_ptr() as i64
             },
         );
-        self.put_store_to_slot(ptr, slot, U16Chunk::PTR_OFFSET);
+        self.put_store_to_slot(ptr, slot, StringFragment::PTR_OFFSET);
 
         debug_assert!(value.len() <= u32::MAX as usize);
         let len = self
             .builder
             .ins()
             .iconst(ir::types::I32, value.len() as i64);
-        self.put_store_to_slot(len, slot, U16Chunk::LEN_OFFSET);
+        self.put_store_to_slot(len, slot, StringFragment::LEN_OFFSET);
 
         let kind = self
             .builder
             .ins()
-            .iconst(ir::types::I8, U16ChunkKind::Stack as i64);
-        self.put_store_to_slot(kind, slot, U16Chunk::KIND_OFFSET);
+            .iconst(ir::types::I8, StringFragmentKind::Stack as i64);
+        self.put_store_to_slot(kind, slot, StringFragment::KIND_OFFSET);
 
         StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
@@ -639,12 +639,12 @@ impl<'a> Editor<'a> {
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(Equal, kind, U16ChunkKind::Stack as i64),
+                .icmp_imm(Equal, kind, StringFragmentKind::Stack as i64),
         )
     }
 
     fn put_load_kind_from_string(&mut self, string: StringIr) -> ir::Value {
-        self.put_load_i8(string.0, U16Chunk::KIND_OFFSET)
+        self.put_load_i8(string.0, StringFragment::KIND_OFFSET)
     }
 
     // any

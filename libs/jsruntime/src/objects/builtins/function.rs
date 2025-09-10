@@ -7,7 +7,7 @@ use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
-use crate::types::U16String;
+use crate::types::StringHandle;
 use crate::types::Value;
 
 impl<X> Runtime<X> {
@@ -33,7 +33,7 @@ impl<X> Runtime<X> {
         );
         let _ = prototype.define_own_property(
             Symbol::NAME.into(),
-            Property::data_xxx(Value::String(U16String::EMPTY)),
+            Property::data_xxx(Value::String(StringHandle::EMPTY)),
         );
 
         prototype

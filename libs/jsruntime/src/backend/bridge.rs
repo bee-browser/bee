@@ -14,20 +14,9 @@ use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Status;
-use crate::types::U16Chunk;
-use crate::types::U16String;
+use crate::types::StringFragment;
+use crate::types::StringHandle;
 use crate::types::Value;
-
-macro_rules! into_string {
-    ($value:expr) => {
-        // SAFETY: `value` is always a non-null pointer to a `U16String`.
-        unsafe {
-            debug_assert!(!$value.is_null());
-            debug_assert!($value.is_aligned());
-            &*($value)
-        }
-    };
-}
 
 macro_rules! into_object {
     ($value:expr) => {
@@ -186,33 +175,31 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
 pub(crate) extern "C" fn runtime_to_string<X>(
     runtime: &mut Runtime<X>,
     value: &Value,
-) -> *const U16Chunk {
+) -> StringHandle {
     logger::debug!(event = "runtime_to_string", ?value);
-    let result = runtime.perform_to_string(value);
-    result.first_chunk() as *const U16Chunk
+    runtime.perform_to_string(value)
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn perform_to_string(&mut self, value: &Value) -> U16String {
+    pub(crate) fn perform_to_string(&mut self, value: &Value) -> StringHandle {
         logger::debug!(event = "perform_to_string", ?value);
-
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"undefined"));
-                U16String::new(&CHUNK)
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"undefined"));
+                StringHandle::new(&CHUNK)
             }
             Value::Null => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"null"));
-                U16String::new(&CHUNK)
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"null"));
+                StringHandle::new(&CHUNK)
             }
             Value::Boolean(true) => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"true"));
-                U16String::new(&CHUNK)
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"true"));
+                StringHandle::new(&CHUNK)
             }
             Value::Boolean(false) => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"false"));
-                U16String::new(&CHUNK)
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"false"));
+                StringHandle::new(&CHUNK)
             }
             Value::Number(value) => {
                 self.number_to_string(*value) // TODO
@@ -220,8 +207,8 @@ impl<X> Runtime<X> {
             Value::String(value) => *value,
             Value::Promise(_) => todo!(),
             Value::Object(_) => {
-                const CHUNK: U16Chunk = U16Chunk::new_const(utf16!(&"[object Object]"));
-                U16String::new(&CHUNK)
+                const CHUNK: StringFragment = StringFragment::new_const(utf16!(&"[object Object]"));
+                StringHandle::new(&CHUNK)
             }
         }
     }
@@ -231,17 +218,17 @@ impl<X> Runtime<X> {
 pub(crate) extern "C" fn runtime_number_to_string<X>(
     runtime: &mut Runtime<X>,
     value: f64,
-) -> *const U16Chunk {
+) -> StringHandle {
     logger::debug!(event = "runtime_number_to_string", ?value);
-    runtime.number_to_string(value).as_ptr()
+    runtime.number_to_string(value)
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn number_to_string(&mut self, value: f64) -> U16String {
+    pub(crate) fn number_to_string(&mut self, value: f64) -> StringHandle {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
-        let chunk = U16Chunk::new_stack(utf16);
-        let string = U16String::new(&chunk);
+        let chunk = StringFragment::new_stack(utf16);
+        let string = StringHandle::new(&chunk);
         self.migrate_string_to_heap(string)
     }
 }
@@ -327,12 +314,9 @@ pub(crate) extern "C" fn runtime_to_uint32<X>(_runtime: &mut Runtime<X>, value: 
 
 pub(crate) extern "C" fn runtime_is_same_string<X>(
     _runtime: &mut Runtime<X>,
-    a: *const U16Chunk,
-    b: *const U16Chunk,
+    a: StringHandle,
+    b: StringHandle,
 ) -> bool {
-    let a = into_string!(a);
-    let b = into_string!(b);
-
     // TODO(perf): slow...
     let a = a.make_utf16();
     let b = b.make_utf16();
@@ -395,19 +379,16 @@ pub(crate) extern "C" fn runtime_is_strictly_equal<X>(
 pub(crate) extern "C" fn runtime_get_typeof<X>(
     _runtime: &mut Runtime<X>,
     value: &Value,
-) -> *const U16Chunk {
+) -> StringHandle {
     debug_assert!(!matches!(value, Value::None));
-    value.get_typeof() as *const U16Chunk
+    value.get_typeof()
 }
 
 pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: &mut Runtime<X>,
-    string: *const U16Chunk,
-) -> *const U16Chunk {
-    let chunk = into_string!(string);
-    runtime
-        .migrate_string_to_heap(U16String::new(chunk))
-        .as_ptr()
+    string: StringHandle,
+) -> StringHandle {
+    runtime.migrate_string_to_heap(string)
 }
 
 pub(crate) extern "C" fn runtime_create_capture<X>(
@@ -702,30 +683,24 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
 
 pub(crate) extern "C" fn runtime_concat_strings<X>(
     runtime: &mut Runtime<X>,
-    head: *const U16Chunk,
-    tail: *const U16Chunk,
-) -> *const U16Chunk {
-    debug_assert!(!tail.is_null());
-    debug_assert!(!head.is_null());
-
-    let tail = into_string!(tail);
+    head: StringHandle,
+    tail: StringHandle,
+) -> StringHandle {
     if tail.is_empty() {
-        let head = into_string!(head);
-        return runtime.alloc_string_rec(head, std::ptr::null());
+        return StringHandle::new(runtime.alloc_string_fragment_recursively(head.fragment(), None));
     }
 
     let tail = if tail.on_stack() {
-        runtime.alloc_string_rec(tail, std::ptr::null())
+        runtime.alloc_string_fragment_recursively(tail.fragment(), None)
     } else {
-        tail
-    } as *const U16Chunk;
+        tail.fragment()
+    };
 
-    let head = into_string!(head);
     if head.is_empty() {
-        return tail;
+        return StringHandle::new(tail);
     }
 
-    runtime.alloc_string_rec(head, tail)
+    StringHandle::new(runtime.alloc_string_fragment_recursively(head.fragment(), Some(tail)))
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
@@ -915,10 +890,9 @@ pub(crate) extern "C" fn runtime_print_f64<X>(
 
 pub(crate) extern "C" fn runtime_print_string<X>(
     _runtime: &mut Runtime<X>,
-    value: *const U16Chunk,
+    value: StringHandle,
     msg: *const std::os::raw::c_char,
 ) {
-    let value = into_string!(value);
     // SAFETY: `msg` is always non-null.
     let msg = unsafe {
         debug_assert!(!msg.is_null());

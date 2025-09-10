@@ -8,10 +8,10 @@
 
 use assert_matches::assert_matches;
 use base::macros::assert_eq;
-use jsruntime::U16Chunk;
 use jsruntime::Runtime;
+use jsruntime::StringFragment;
+use jsruntime::StringHandle;
 use jsruntime::Value;
-use jsruntime::U16String;
 
 logging::init!();
 
@@ -71,8 +71,8 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
 #[test]
 fn {{ test.name }}() {
     {%- for string in test.strings %}
-    static CODE_UNITS{{ loop.index0 }}: [u16; {{ string.size }}] = [{{ string.data | join(", ") }}];
-    static STRING{{ loop.index0 }}: U16Chunk = U16Chunk::new_const(&CODE_UNITS{{ loop.index0 }});
+    const CODE_UNITS{{ loop.index0 }}: [u16; {{ string.size }}] = [{{ string.data | join(", ") }}];
+    const STRING{{ loop.index0 }}: StringFragment = StringFragment::new_const(&CODE_UNITS{{ loop.index0 }});
     {%- endfor %}
     let src = include_str!("{{ test.filename }}");
     let result = evaluate(src, {{ test.module }}, true, false, vec![

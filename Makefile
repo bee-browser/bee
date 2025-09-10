@@ -38,7 +38,7 @@ check: check-rust check-js
 check-rust:
 	cargo fmt --all --check
 	cargo check --workspace --all-targets --all-features
-	cargo clippy --workspace --all-targets --all-features -- -D warnings
+	cargo clippy --workspace --all-targets --all-features -- -D warnings -A 'clippy::collapsible_if'
 
 .PHONY: check-js
 # TODO

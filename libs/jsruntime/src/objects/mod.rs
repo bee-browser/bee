@@ -14,7 +14,7 @@ use rustc_hash::FxHashMap;
 use jsparser::Symbol;
 
 use crate::types::Closure;
-use crate::types::U16String;
+use crate::types::StringHandle;
 use crate::types::Value;
 
 #[derive(Clone, Debug)]
@@ -209,7 +209,7 @@ pub struct Object {
     /// An opaque value representing the *nucleus* of the object.
     ///
     /// A pointer to the `Closure` if this is a function object.
-    /// A pointer to the `U16Chunk` if this is a string object.
+    /// A string handle if this is a string object.
     nucleus: usize,
 
     flags: ObjectFlags,
@@ -285,8 +285,8 @@ impl Object {
         self.set_callable();
     }
 
-    pub(crate) fn set_string(&mut self, string: U16String) {
-        self.nucleus = string.as_ptr().addr()
+    pub(crate) fn set_string(&mut self, string: StringHandle) {
+        self.nucleus = string.as_addr();
     }
 
     pub fn as_handle(&mut self) -> ObjectHandle {

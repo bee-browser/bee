@@ -1,5 +1,6 @@
 use std::ffi::c_void;
 use std::mem::offset_of;
+use std::ptr::NonNull;
 use std::ptr::addr_eq;
 
 use base::utf16;
@@ -26,7 +27,7 @@ pub enum Value {
     Null = Self::KIND_NULL,
     Boolean(bool) = Self::KIND_BOOLEAN,
     Number(f64) = Self::KIND_NUMBER,
-    String(U16String) = Self::KIND_STRING,
+    String(StringHandle) = Self::KIND_STRING,
     Promise(Promise) = Self::KIND_PROMISE,
     Object(ObjectHandle) = Self::KIND_OBJECT,
 }
@@ -78,15 +79,15 @@ impl Value {
     }
 
     // 13.5.3.1 Runtime Semantics: Evaluation
-    pub fn get_typeof(&self) -> &'static U16Chunk {
-        const UNDEFINED: U16Chunk = U16Chunk::new_const(utf16!(&"undefined"));
-        const BOOLEAN: U16Chunk = U16Chunk::new_const(utf16!(&"boolean"));
-        const NUMBER: U16Chunk = U16Chunk::new_const(utf16!(&"number"));
-        const STRING: U16Chunk = U16Chunk::new_const(utf16!(&"string"));
-        const OBJECT: U16Chunk = U16Chunk::new_const(utf16!(&"object"));
-        const FUNCTION: U16Chunk = U16Chunk::new_const(utf16!(&"function"));
+    pub fn get_typeof(&self) -> StringHandle {
+        const UNDEFINED: StringFragment = StringFragment::new_const(utf16!(&"undefined"));
+        const BOOLEAN: StringFragment = StringFragment::new_const(utf16!(&"boolean"));
+        const NUMBER: StringFragment = StringFragment::new_const(utf16!(&"number"));
+        const STRING: StringFragment = StringFragment::new_const(utf16!(&"string"));
+        const OBJECT: StringFragment = StringFragment::new_const(utf16!(&"object"));
+        const FUNCTION: StringFragment = StringFragment::new_const(utf16!(&"function"));
 
-        match self {
+        StringHandle::new(match self {
             Self::None => unreachable!(),
             Self::Undefined => &UNDEFINED,
             Self::Null => &OBJECT,
@@ -101,7 +102,7 @@ impl Value {
                     &OBJECT
                 }
             }
-        }
+        })
     }
 
     pub fn dummy_object() -> Self {
@@ -160,107 +161,120 @@ impl std::fmt::Display for Value {
     }
 }
 
-/// A data type to hold a UTF-16 string.
+/// A data type to hold an **immutable** UTF-16 string.
 ///
-/// A UTF-16 string is represented as a *chain* of UTF-16 code sequences.
+/// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
 ///
-/// This type is usually allocated on the stack and holds a pointer to a `U16Chunk` that is
-/// allocated on the heap or the stack.
+/// This type is usually allocated on the stack and holds a pointer to a `StringFragment` that is
+/// allocated in the heap or on the stack.
 // TODO(issue#237): GcCell
-// TODO(refactor): refactoring
 #[derive(Clone, Copy)]
-pub struct U16String(*const U16Chunk); // Non-null
+#[repr(transparent)]
+pub struct StringHandle(NonNull<StringFragment>);
 
-static_assertions::const_assert_eq!(align_of::<U16String>(), align_of::<usize>());
+static_assertions::const_assert_eq!(align_of::<StringHandle>(), align_of::<usize>());
 
-impl U16String {
-    pub const EMPTY: Self = Self(std::ptr::from_ref(&U16Chunk::EMPTY));
+impl StringHandle {
+    /// An empty string.
+    pub const EMPTY: Self = Self::new(&StringFragment::EMPTY);
 
-    pub const fn new(chunk: &U16Chunk) -> Self {
-        Self(std::ptr::from_ref(chunk))
+    /// Creates a new UTF-16 string.
+    pub const fn new(first_chunk: &StringFragment) -> Self {
+        Self(NonNull::from_ref(first_chunk))
     }
 
+    /// Returns `true` if the string is empty.
     pub const fn is_empty(&self) -> bool {
-        self.first_chunk().is_empty()
+        self.fragment().is_empty()
     }
 
-    pub fn on_stack(&self) -> bool {
-        self.first_chunk().on_stack()
+    /// Returns `true` if the string is allocated on the stack.
+    pub(crate) fn on_stack(&self) -> bool {
+        self.fragment().on_stack()
     }
 
+    /// Returns the number of UTF-16 code units in the string.
     pub fn len(&self) -> u32 {
-        self.first_chunk().total_len()
+        self.fragment().total_len()
     }
 
-    pub(crate) const fn first_chunk(&self) -> &U16Chunk {
-        debug_assert!(!self.0.is_null());
-        // SAFETY: `self.0` is non-null.
-        unsafe { &(*self.0) }
+    /// Returns the first string fragment.
+    pub(crate) const fn fragment(&self) -> &StringFragment {
+        // SAFETY: `self.0` is always convertible to a reference.
+        unsafe { self.0.as_ref() }
     }
 
+    /// Creates a `Vec` containing UTF-16 code units of the string.
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
-        self.first_chunk().make_utf16()
+        self.fragment().make_utf16()
     }
 
-    pub(crate) fn as_ptr(&self) -> *const U16Chunk {
-        debug_assert!(!self.0.is_null());
-        self.0
+    pub(crate) unsafe fn from_addr(addr: usize) -> Self {
+        debug_assert_ne!(addr, 0);
+        Self::new(unsafe {
+            let ptr = addr as *const StringFragment;
+            debug_assert!(ptr.is_aligned());
+            &*ptr
+        })
+    }
+
+    pub(crate) fn as_addr(&self) -> usize {
+        self.0.addr().get()
     }
 }
 
-impl PartialEq for U16String {
+impl PartialEq for StringHandle {
     fn eq(&self, other: &Self) -> bool {
         if self.0 == other.0 {
             return true;
         }
-        self.first_chunk() == other.first_chunk()
+        self.fragment() == other.fragment()
     }
 }
 
-impl std::fmt::Debug for U16String {
+impl std::fmt::Debug for StringHandle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_empty() {
-            write!(f, "U16String()")
+            write!(f, "StringHandle()")
         } else {
-            write!(f, "U16String({:?})", self.first_chunk())
+            write!(f, "StringHandle({:?})", self.fragment())
         }
     }
 }
 
-impl std::fmt::Display for U16String {
+impl std::fmt::Display for StringHandle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_empty() {
             Ok(())
         } else {
-            write!(f, "{}", self.first_chunk())
+            write!(f, "{}", self.fragment())
         }
     }
 }
 
-/// A data type representing a sequence of UTF-16 code units.
+/// A data type representing an **immutable** fragment of UTF-16 code units.
 ///
 /// This type may be allocated on the stack.
 // TODO(issue#237): GcCell
-// TODO(refactor): refactoring
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct U16Chunk {
-    /// A pointer to the next sequence if it exists.
-    pub(crate) next: *const U16Chunk,
+pub struct StringFragment {
+    /// A pointer to the next string fragment if it exists.
+    next: *const StringFragment,
 
     /// A pointer to the array of UTF-16 code units if it exists.
-    pub(crate) ptr: *const u16,
+    ptr: *const u16,
 
-    /// The number of the UTF-16 code units.
-    pub(crate) len: u32,
+    /// The number of the UTF-16 code units in the string fragment.
+    len: u32,
 
-    pub(crate) kind: U16ChunkKind,
+    kind: StringFragmentKind,
 }
 
-static_assertions::const_assert_eq!(align_of::<U16Chunk>(), align_of::<usize>());
+static_assertions::const_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
 
-impl U16Chunk {
-    pub const EMPTY: Self = Self::new_const_from_raw_parts(std::ptr::null(), 0);
+impl StringFragment {
+    pub(crate) const EMPTY: Self = Self::new_const_from_raw_parts(std::ptr::null(), 0);
 
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
@@ -269,52 +283,57 @@ impl U16Chunk {
     pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
     pub(crate) const KIND_OFFSET: usize = std::mem::offset_of!(Self, kind);
 
+    // TODO(refactor): should be private
     pub const fn new_const(slice: &[u16]) -> Self {
         Self::new_const_from_raw_parts(slice.as_ptr(), slice.len() as u32)
     }
 
-    pub const fn new_stack(slice: &[u16]) -> Self {
+    pub(crate) const fn new_stack(slice: &[u16]) -> Self {
         Self::new_stack_from_raw_parts(slice.as_ptr(), slice.len() as u32)
     }
 
-    pub const fn new_const_from_raw_parts(ptr: *const u16, len: u32) -> Self {
+    pub(crate) const fn new_const_from_raw_parts(ptr: *const u16, len: u32) -> Self {
         Self {
             next: std::ptr::null(),
             ptr,
             len,
-            kind: U16ChunkKind::Const,
+            kind: StringFragmentKind::Const,
         }
     }
 
-    pub const fn new_stack_from_raw_parts(ptr: *const u16, len: u32) -> Self {
+    pub(crate) const fn new_stack_from_raw_parts(ptr: *const u16, len: u32) -> Self {
         Self {
             next: std::ptr::null(),
             ptr,
             len,
-            kind: U16ChunkKind::Stack,
+            kind: StringFragmentKind::Stack,
         }
     }
 
-    pub const fn new_heap_from_raw_parts(ptr: *const u16, len: u32) -> Self {
+    pub(crate) const fn new_heap_from_raw_parts(
+        next: *const Self,
+        ptr: *const u16,
+        len: u32,
+    ) -> Self {
         Self {
-            next: std::ptr::null(),
+            next,
             ptr,
             len,
-            kind: U16ChunkKind::Heap,
+            kind: StringFragmentKind::Heap,
         }
     }
 
-    pub const fn is_empty(&self) -> bool {
+    pub(crate) const fn is_empty(&self) -> bool {
         debug_assert!(self.len > 0 || self.next.is_null());
         self.len == 0
     }
 
-    pub fn on_stack(&self) -> bool {
-        matches!(self.kind, U16ChunkKind::Stack)
+    pub(crate) fn on_stack(&self) -> bool {
+        matches!(self.kind, StringFragmentKind::Stack)
     }
 
-    pub fn total_len(&self) -> u32 {
-        // SAFETY: `self.next` is null or a valid pointer to a `U16Chunk`.
+    pub(crate) fn total_len(&self) -> u32 {
+        // SAFETY: `self.next` is null or a valid pointer to a `StringFragment`.
         if let Some(next) = unsafe { self.next.as_ref() } {
             debug_assert!(self.len > 0);
             self.len + next.total_len()
@@ -323,12 +342,26 @@ impl U16Chunk {
         }
     }
 
-    pub fn as_slice(&self) -> &[u16] {
+    pub(crate) fn raw_ptr(&self) -> *const u16 {
+        self.ptr
+    }
+
+    pub(crate) fn len(&self) -> u32 {
+        self.len
+    }
+
+    pub(crate) fn as_slice(&self) -> &[u16] {
         debug_assert_ne!(self.len, 0);
         debug_assert!(!self.ptr.is_null());
         debug_assert!(self.ptr.is_aligned());
         // SAFETY: `self.ptr` is always pointer to an array of `u16`.
         unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) }
+    }
+
+    pub(crate) fn next(&self) -> Option<&Self> {
+        // SAFETY: `self.next` is null or convertible to a reference.
+        debug_assert!(self.next.is_null() || self.next.is_aligned());
+        unsafe { self.next.as_ref() }
     }
 
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
@@ -340,7 +373,7 @@ impl U16Chunk {
         let mut chunk = self;
         loop {
             result.extend_from_slice(chunk.as_slice());
-            // SAFETY: `chunk.next` is null or a valid pointer to a `U16Chunk`.
+            // SAFETY: `chunk.next` is null or a valid pointer to a `StringFragment`.
             chunk = if let Some(next) = unsafe { chunk.next.as_ref() } {
                 next
             } else {
@@ -349,13 +382,17 @@ impl U16Chunk {
         }
         result
     }
+
+    pub(crate) fn as_ptr(&self) -> *const Self {
+        self as *const Self
+    }
 }
 
 // The UTF-16 code units never change.
-unsafe impl Send for U16Chunk {}
-unsafe impl Sync for U16Chunk {}
+unsafe impl Send for StringFragment {}
+unsafe impl Sync for StringFragment {}
 
-impl PartialEq for U16Chunk {
+impl PartialEq for StringFragment {
     fn eq(&self, other: &Self) -> bool {
         // TODO(perf): slow...
         let lhs = self.make_utf16();
@@ -364,7 +401,7 @@ impl PartialEq for U16Chunk {
     }
 }
 
-impl std::fmt::Display for U16Chunk {
+impl std::fmt::Display for StringFragment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_empty() {
             return Ok(());
@@ -377,7 +414,7 @@ impl std::fmt::Display for U16Chunk {
                 .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
                 .collect();
             write!(f, "{}", chars.escape_default())?;
-            // SAFETY: `chunk.next` is null or a valid pointer to a `U16Chunk`.
+            // SAFETY: `chunk.next` is null or a valid pointer to a `StringFragment`.
             chunk = if let Some(next) = unsafe { chunk.next.as_ref() } {
                 next
             } else {
@@ -390,7 +427,7 @@ impl std::fmt::Display for U16Chunk {
 
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)]
-pub enum U16ChunkKind {
+pub enum StringFragmentKind {
     Const = 0,
     Stack,
     Heap,
