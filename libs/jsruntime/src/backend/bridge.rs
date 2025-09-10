@@ -257,17 +257,24 @@ impl<X> Runtime<X> {
             }
             Value::Boolean(_value) => todo!(),
             Value::Number(_value) => todo!(),
-            Value::String(value) => match self.create_string_object(&[Value::String(*value)], true)
-            {
-                Ok(Value::Object(object)) => object.as_ptr(),
-                Ok(_) => unreachable!(),
-                Err(_error) => todo!(),
-            },
-            Value::Object(value) => value.as_ptr(),
+            Value::String(value) => {
+                match self.create_string_object(&[Value::String(*value)], true) {
+                    Ok(Value::Object(object)) => {
+                        *retv = Value::Object(object);
+                        Status::Normal
+                    }
+                    Ok(_) => unreachable!(),
+                    Err(err) => {
+                        *retv = err;
+                        Status::Exception
+                    }
+                }
+            }
+            Value::Promise(_value) => todo!(),
+            Value::Object(_) => {
                 *retv = value.clone();
                 Status::Normal
             }
-            Value::Promise(_value) => todo!(),
         }
     }
 }

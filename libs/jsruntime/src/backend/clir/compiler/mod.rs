@@ -371,8 +371,6 @@ where
             _ => self.editor.put_set_closure_mode(),
         }
 
-        self.resolve_this_binding(func);
-
         // Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from a
         // debugging and readability perspective...
         let body_block = self.editor.create_block();
@@ -410,6 +408,11 @@ where
 
         let retv = self.editor.retv();
         self.editor.put_store_undefined_to_any(retv);
+
+        // NOTE: Methods emitting code that may throw an exception must be called after
+        // `self.control_flow_stack.push_function_flow()`.
+
+        self.resolve_this_binding(func);
     }
 
     // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
@@ -2161,8 +2164,24 @@ where
             PropertyOwner::Boolean(_) => todo!(),
             PropertyOwner::Number(_) => todo!(),
             PropertyOwner::String(_) => todo!(),
-            PropertyOwner::Object(value) => *value,
-            PropertyOwner::Any(value) => self.editor.put_runtime_to_object(self.support, *value),
+            PropertyOwner::Object(value) => Some(*value),
+            PropertyOwner::Any(value) => {
+                let retv = self.emit_create_any();
+                let status = self
+                    .editor
+                    .put_runtime_to_object(self.support, *value, retv);
+                self.emit_check_status_for_exception(status, retv);
+                runtime_debug! {{
+                    let is_object = self.editor.put_is_object(retv);
+                    self.editor.put_assert(
+                        self.support,
+                        is_object,
+                        c"ToObject() should return an Object",
+                    );
+                }}
+                let object = self.editor.put_load_object(retv);
+                Some(object)
+            }
         }
     }
 
