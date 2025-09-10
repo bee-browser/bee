@@ -80,7 +80,6 @@ where
                     token = self.next_token()?;
                     logger::trace!(opcode = "token", ?token.kind, token.lexeme);
                 }
-                ParserResult::SyntaxError => return Err(Error::SyntaxError),
                 ParserResult::Error
                     if !auto_semicolon_inserted && self.is_auto_semicolon_allowed(&token) =>
                 {
@@ -89,20 +88,23 @@ where
                             ParserResult::Accept(artifact) => return Ok(artifact),
                             ParserResult::Reconsume => (),
                             ParserResult::NextToken => break,
-                            ParserResult::SyntaxError => {
-                                return Err(Error::SyntaxError);
-                            }
-                            ParserResult::Error => {
-                                self.report_error(&token);
-                                return Err(Error::SyntaxError);
+                            _ => {
+                                let err = Error::SyntaxError;
+                                self.report_error(&err, &token);
+                                return Err(err);
                             }
                         }
                     }
                     auto_semicolon_inserted = true;
                 }
-                _ => {
-                    self.report_error(&token);
-                    return Err(Error::SyntaxError);
+                ParserResult::Error => {
+                    let err = Error::SyntaxError;
+                    self.report_error(&err, &token);
+                    return Err(err);
+                }
+                ParserResult::SyntaxError(err) => {
+                    self.report_error(&err, &token);
+                    return Err(err);
                 }
             }
         }
@@ -245,7 +247,7 @@ where
                         self.push_state(next);
                         ParserResult::NextToken
                     }
-                    Err(_err) => ParserResult::SyntaxError, // TODO: error reporting
+                    Err(err) => ParserResult::SyntaxError(err),
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
@@ -263,7 +265,7 @@ where
                         self.push_state(next);
                         ParserResult::Reconsume
                     }
-                    Err(_err) => ParserResult::SyntaxError, // TODO: error reporting
+                    Err(err) => ParserResult::SyntaxError(err),
                 }
             }
             Action::Replace(next) => {
@@ -299,7 +301,7 @@ where
                 self.handler.location(self.lexer.location());
                 match self.handler.accept() {
                     Ok(artifact) => ParserResult::Accept(artifact),
-                    Err(_err) => ParserResult::Error, // TODO: error reporting
+                    Err(err) => ParserResult::SyntaxError(err),
                 }
             }
             Action::Shift(next) => {
@@ -313,7 +315,7 @@ where
                             self.push_state(next);
                             ParserResult::NextToken
                         }
-                        Err(_err) => ParserResult::Error, // TODO: error reporting
+                        Err(err) => ParserResult::SyntaxError(err),
                     }
                 }
             }
@@ -328,20 +330,21 @@ where
                         self.push_state(next);
                         ParserResult::Reconsume
                     }
-                    Err(_err) => ParserResult::Error, // TODO: error reporting
+                    Err(err) => ParserResult::SyntaxError(err),
                 }
             }
             Action::Replace(_) => unreachable!(),
             Action::Ignore => unreachable!(),
-            Action::Error => ParserResult::Error,
+            Action::Error => ParserResult::SyntaxError(Error::SyntaxError),
         }
     }
 
-    fn report_error(&self, token: &Token<'s>) {
+    fn report_error(&self, err: &Error, token: &Token<'s>) {
         let pos = self.lexer.pos();
         let src = self.lexer.src();
         let state = self.state();
         logger::error!(
+            ?err,
             pos,
             parsed = &src[pos.saturating_sub(10)..pos],
             remaianing = &src[pos..((pos + 10).min(src.len()))],
@@ -386,12 +389,11 @@ enum ParserResult<T> {
     Reconsume,
     NextToken,
     Error,
-    SyntaxError,
+    SyntaxError(Error),
 }
 
 pub trait SyntaxHandler<'s> {
     type Artifact;
-    type Error: std::fmt::Debug + std::fmt::Display;
 
     /// Called before parsing.
     fn start(&mut self) {}
@@ -401,13 +403,13 @@ pub trait SyntaxHandler<'s> {
     fn source(&mut self, src: &'s str) {}
 
     /// Called when the accept state has been reached.
-    fn accept(&mut self) -> Result<Self::Artifact, Self::Error>;
+    fn accept(&mut self) -> Result<Self::Artifact, Error>;
 
     /// Called when a shift action has been performed.
-    fn shift(&mut self, token: &Token<'s>) -> Result<(), Self::Error>;
+    fn shift(&mut self, token: &Token<'s>) -> Result<(), Error>;
 
     /// Called when a reduce action has been performed.
-    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error>;
+    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Error>;
 
     /// Called before calling other methods in order to inform the location in the source text
     /// where the event occurs.
@@ -425,15 +427,14 @@ mod tests {
 
     impl SyntaxHandler<'_> for NullHandler {
         type Artifact = ();
-        type Error = std::convert::Infallible;
         fn start(&mut self) {}
-        fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+        fn accept(&mut self) -> Result<Self::Artifact, Error> {
             Ok(())
         }
-        fn shift(&mut self, _token: &Token<'_>) -> Result<(), Self::Error> {
+        fn shift(&mut self, _token: &Token<'_>) -> Result<(), Error> {
             Ok(())
         }
-        fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
+        fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Error> {
             Ok(())
         }
     }

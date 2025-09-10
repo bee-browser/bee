@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
+use jsparser::Error;
 use jsparser::Location;
 use jsparser::string_literal_to_string;
 use jsparser::template_literal_to_cooked_string;
@@ -1026,11 +1027,12 @@ impl Node {
         }
     }
 
-    pub fn into_expression(node: NodeRef) -> Result<NodeRef, String> {
+    pub fn into_expression(node: NodeRef) -> Result<NodeRef, Error> {
         match *node {
             Self::CpeaaplExpr(ref expr) => Self::into_expression(expr.clone()),
             Self::CpeaaplExprComma(_) | Self::CpeaaplEmpty => {
-                Err("Early errors: PrimaryExpression".to_string())
+                eprintln!("Early errors: PrimaryExpression");
+                Err(Error::SyntaxError)
             }
             Self::CpeaaplRest(ref rest) => Self::into_expression(rest.clone()),
             Self::ObjectExpression(ref expr) => Self::to_object_expression(expr),
@@ -1053,7 +1055,7 @@ impl Node {
     }
 
     // TODO: AssignmentTargetType
-    pub fn into_pattern(node: NodeRef, in_paren: bool) -> Result<NodeRef, String> {
+    pub fn into_pattern(node: NodeRef, in_paren: bool) -> Result<NodeRef, Error> {
         match *node {
             Self::CpeaaplExpr(ref expr) => {
                 // TODO: It is a Syntax Error if AssignmentTargetType of LeftHandSideExpression is
@@ -1063,17 +1065,22 @@ impl Node {
             Self::CpeaaplExprComma(_)
             | Self::CpeaaplEmpty
             | Self::CpeaaplRest(_)
-            | Self::CpeaaplExprRest(_) => Err("Early errors: PropertyDefinition".to_string()),
+            | Self::CpeaaplExprRest(_) => {
+                eprintln!("Early errors: PropertyDefinition");
+                Err(Error::SyntaxError)
+            }
             Node::ObjectExpression(ref expr) => {
                 if in_paren {
-                    Err("AssignmentTargetType is invalid".to_string())
+                    eprintln!("AssignmentTargetType is invalid");
+                    Err(Error::SyntaxError)
                 } else {
                     Self::to_object_pattern(expr)
                 }
             }
             Node::ArrayExpression(ref expr) => {
                 if in_paren {
-                    Err("AssignmentTargetType is invalid".to_string())
+                    eprintln!("AssignmentTargetType is invalid");
+                    Err(Error::SyntaxError)
                 } else {
                     Self::to_array_pattern(expr)
                 }
@@ -1118,7 +1125,7 @@ impl Node {
         }
     }
 
-    fn to_object_expression(expr: &ObjectExpression) -> Result<NodeRef, String> {
+    fn to_object_expression(expr: &ObjectExpression) -> Result<NodeRef, Error> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let properties = expr
@@ -1130,7 +1137,7 @@ impl Node {
         Ok(Self::object_expression(&start, &end, properties))
     }
 
-    fn to_object_pattern(expr: &ObjectExpression) -> Result<NodeRef, String> {
+    fn to_object_pattern(expr: &ObjectExpression) -> Result<NodeRef, Error> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let properties = expr
@@ -1142,7 +1149,7 @@ impl Node {
         Ok(Self::object_pattern(&start, &end, properties))
     }
 
-    fn to_array_expression(expr: &ArrayExpression) -> Result<NodeRef, String> {
+    fn to_array_expression(expr: &ArrayExpression) -> Result<NodeRef, Error> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let mut elements = vec![];
@@ -1163,7 +1170,7 @@ impl Node {
         ))
     }
 
-    fn to_array_pattern(expr: &ArrayExpression) -> Result<NodeRef, String> {
+    fn to_array_pattern(expr: &ArrayExpression) -> Result<NodeRef, Error> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let mut elements = vec![];
@@ -1174,14 +1181,14 @@ impl Node {
                     let node = Self::into_pattern(node.clone(), false)?;
                     if let Node::RestElement(_) = *node {
                         if rest_found {
-                            return Err(
+                            eprintln!(
                                 "Multiple RestElements are not allowed in ArrayAssignmentPattern"
-                                    .to_string(),
                             );
+                            return Err(Error::SyntaxError);
                         }
                         if expr.trailing_comma {
-                            return Err("Trailing comma is not allowed in ArrayAssignmentPattern"
-                                .to_string());
+                            eprintln!("Trailing comma is not allowed in ArrayAssignmentPattern");
+                            return Err(Error::SyntaxError);
                         }
                         rest_found = true;
                     }
@@ -1189,9 +1196,8 @@ impl Node {
                 }
                 None => {
                     if rest_found {
-                        return Err(
-                            "Trailing comma is not allowed in ArrayAssignmentPattern".to_string()
-                        );
+                        eprintln!("Trailing comma is not allowed in ArrayAssignmentPattern");
+                        return Err(Error::SyntaxError);
                     }
                     elements.push(None)
                 }
@@ -1200,7 +1206,7 @@ impl Node {
         Ok(Self::array_pattern(&start, &end, elements))
     }
 
-    fn to_assignment_pattern(expr: &AssignmentExpression) -> Result<NodeRef, String> {
+    fn to_assignment_pattern(expr: &AssignmentExpression) -> Result<NodeRef, Error> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let right = Self::into_expression(expr.right.clone())?;
@@ -1212,21 +1218,21 @@ impl Node {
         ))
     }
 
-    fn to_spread_element(expr: &SpreadElement) -> Result<NodeRef, String> {
+    fn to_spread_element(expr: &SpreadElement) -> Result<NodeRef, Error> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let argument = Self::into_expression(expr.argument.clone())?;
         Ok(Self::spread_element(&start, &end, argument))
     }
 
-    fn to_rest_element(expr: &SpreadElement) -> Result<NodeRef, String> {
+    fn to_rest_element(expr: &SpreadElement) -> Result<NodeRef, Error> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let argument = Self::into_pattern(expr.argument.clone(), false)?;
         Ok(Self::rest_element(&start, &end, argument))
     }
 
-    fn to_property(property: &Property) -> Result<NodeRef, String> {
+    fn to_property(property: &Property) -> Result<NodeRef, Error> {
         let start = property.location.start_location();
         let end = property.location.end_location();
         let value = Self::into_expression(property.value.clone())?;
@@ -1241,7 +1247,7 @@ impl Node {
         })))
     }
 
-    fn to_assignment_property(property: &Property) -> Result<NodeRef, String> {
+    fn to_assignment_property(property: &Property) -> Result<NodeRef, Error> {
         let start = property.location.start_location();
         let end = property.location.end_location();
         let value = Self::into_pattern(property.value.clone(), false)?;
@@ -1268,7 +1274,7 @@ impl Node {
         list
     }
 
-    pub fn into_arrow_parameters(cpeaapl: NodeRef) -> Result<Vec<NodeRef>, String> {
+    pub fn into_arrow_parameters(cpeaapl: NodeRef) -> Result<Vec<NodeRef>, Error> {
         match *cpeaapl {
             Self::CpeaaplExpr(ref expr) => Self::into_arrow_formal_parameters(expr.clone()),
             Self::CpeaaplExprComma(ref expr) => Self::into_arrow_formal_parameters(expr.clone()),
@@ -1283,13 +1289,16 @@ impl Node {
         }
     }
 
-    fn into_arrow_formal_parameters(expr: NodeRef) -> Result<Vec<NodeRef>, String> {
+    fn into_arrow_formal_parameters(expr: NodeRef) -> Result<Vec<NodeRef>, Error> {
         match *expr {
             Self::CpeaaplExpr(_)
             | Self::CpeaaplExprComma(_)
             | Self::CpeaaplEmpty
             | Self::CpeaaplRest(_)
-            | Self::CpeaaplExprRest(_) => Err("Early errors: ArrowParameter".to_string()),
+            | Self::CpeaaplExprRest(_) => {
+                eprintln!("Early errors: ArrowParameter");
+                Err(Error::SyntaxError)
+            }
             Self::SequenceExpression(ref seq) => seq
                 .expressions
                 .iter()
@@ -1302,7 +1311,7 @@ impl Node {
 
     // validation
 
-    pub fn validate_expression(&self) -> Result<(), String> {
+    pub fn validate_expression(&self) -> Result<(), Error> {
         match *self {
             Node::ArrayExpression(ref expr) => expr.validate(),
             Node::ObjectExpression(ref expr) => expr.validate(),
@@ -1328,19 +1337,25 @@ impl Node {
             Node::SpreadElement(ref elem) => elem.validate(),
             // 13.2.5.1 Static Semantics: Early Errors
             // CoverInitializedName is not allowed in ObjectLiteral
-            Node::CoverInitializedName(_) => Err("Early error: CoverInitializedName".to_string()),
+            Node::CoverInitializedName(_) => {
+                eprintln!("Early error: CoverInitializedName");
+                Err(Error::SyntaxError)
+            }
             _ => Ok(()),
         }
     }
 
-    pub fn validate_primary_expression(&self) -> Result<(), String> {
+    pub fn validate_primary_expression(&self) -> Result<(), Error> {
         match *self {
             Node::ObjectExpression(ref expr) => expr.validate(),
             Node::ArrayExpression(ref expr) => expr.validate(),
             Node::CpeaaplExprComma(_)
             | Node::CpeaaplEmpty
             | Node::CpeaaplRest(_)
-            | Node::CpeaaplExprRest(_) => Err("Early error: PrimaryExpression".to_string()),
+            | Node::CpeaaplExprRest(_) => {
+                eprintln!("Early error: PrimaryExpression");
+                Err(Error::SyntaxError)
+            }
             _ => Ok(()),
         }
     }
@@ -1552,7 +1567,7 @@ impl Function {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.body.validate_expression()
     }
 }
@@ -2258,7 +2273,7 @@ impl ArrayExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         for element in self.elements.iter().filter_map(Option::as_ref) {
             element.validate_expression()?;
         }
@@ -2281,7 +2296,7 @@ impl ObjectExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         for property in self.properties.iter() {
             property.validate_expression()?;
         }
@@ -2327,7 +2342,7 @@ impl Property {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.value.validate_expression()
     }
 }
@@ -2366,7 +2381,7 @@ impl FunctionExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.function.validate()
     }
 }
@@ -2390,7 +2405,7 @@ impl UnaryExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.argument.validate_expression()
     }
 }
@@ -2455,7 +2470,7 @@ impl UpdateExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.argument.validate_expression()
     }
 }
@@ -2505,7 +2520,7 @@ impl BinaryExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.right.validate_expression()
     }
 }
@@ -2615,7 +2630,7 @@ impl AssignmentExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.right.validate_expression()
     }
 }
@@ -2707,7 +2722,7 @@ impl LogicalExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.left.validate_expression()?;
         self.right.validate_expression()
     }
@@ -2764,7 +2779,7 @@ impl MemberExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.object.validate_expression()?;
         self.property.validate_expression()
     }
@@ -2795,7 +2810,7 @@ impl ConditionalExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.test.validate_expression()?;
         self.consequent.validate_expression()?;
         self.alternate.validate_expression()
@@ -2827,7 +2842,7 @@ impl CallExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.callee.validate_expression()?;
         for argument in self.arguments.iter() {
             argument.validate_expression()?;
@@ -2853,7 +2868,7 @@ impl NewExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.callee.validate_expression()?;
         for argument in self.arguments.iter() {
             argument.validate_expression()?;
@@ -2880,7 +2895,7 @@ impl SequenceExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         for expr in self.expressions.iter() {
             expr.validate_expression()?;
         }
@@ -2911,7 +2926,7 @@ impl ArrowFunctionExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.function.validate()
     }
 }
@@ -2933,7 +2948,7 @@ impl YieldExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         match self.argument {
             Some(ref argument) => argument.validate_expression(),
             None => Ok(()),
@@ -2963,7 +2978,7 @@ impl TemplateLiteral {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         for expr in self.expressions.iter() {
             expr.validate_expression()?;
         }
@@ -2988,7 +3003,7 @@ impl TaggedTemplateExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.tag.validate_expression()?;
         self.quasi.validate_expression()
     }
@@ -3044,7 +3059,7 @@ impl AwaitExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.argument.validate_expression()
     }
 }
@@ -3064,7 +3079,7 @@ impl ImportExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.source.validate_expression()
     }
 }
@@ -3084,7 +3099,7 @@ impl ChainExpression {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.expression.validate_expression()
     }
 }
@@ -3184,7 +3199,7 @@ impl SpreadElement {
         }
     }
 
-    fn validate(&self) -> Result<(), String> {
+    fn validate(&self) -> Result<(), Error> {
         self.argument.validate_expression()
     }
 }

@@ -4,8 +4,9 @@
 // template: {{@template}}
 
 use super::Builder;
+use super::Error;
 
-type Action = fn(&mut Builder) -> Result<(), String>;
+type Action = fn(&mut Builder) -> Result<(), Error>;
 
 pub static ACTIONS: [Option<(Action, &'static str)>; {{length .}}] = [
     {{#each .}}

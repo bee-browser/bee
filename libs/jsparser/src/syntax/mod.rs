@@ -3468,7 +3468,6 @@ where
     H: NodeHandler<'s>,
 {
     type Artifact = H::Artifact;
-    type Error = Error;
 
     fn start(&mut self) {
         logger::debug!(event = "start");
@@ -3480,14 +3479,14 @@ where
         self.source = src;
     }
 
-    fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+    fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
         let nodes = std::mem::take(&mut self.nodes);
         self.handler.handle_nodes(nodes.into_iter())?;
         self.handler.accept()
     }
 
-    fn shift(&mut self, token: &Token<'s>) -> Result<(), Self::Error> {
+    fn shift(&mut self, token: &Token<'s>) -> Result<(), Error> {
         logger::debug!(
             event = "shift",
             ?token.kind,
@@ -3513,9 +3512,9 @@ where
         Ok(())
     }
 
-    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error> {
+    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Error> {
         match Self::ACTIONS[rule.id() as usize] {
-            Action::Undefined => unimplemented!("No action defined for: {rule}"),
+            Action::Undefined => Err(Error::NotYetImplemented),
             Action::Nop => {
                 logger::debug!(event = "reduce", action = "nop", %rule);
                 Ok(())
@@ -3567,17 +3566,16 @@ where
     H: NodeHandler<'s>,
 {
     type Artifact = ();
-    type Error = Error;
 
-    fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+    fn accept(&mut self) -> Result<Self::Artifact, Error> {
         Ok(())
     }
 
-    fn shift(&mut self, token: &Token<'s>) -> Result<(), Self::Error> {
+    fn shift(&mut self, token: &Token<'s>) -> Result<(), Error> {
         self.processor.shift(token)
     }
 
-    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error> {
+    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Error> {
         self.processor.reduce(rule)
     }
 

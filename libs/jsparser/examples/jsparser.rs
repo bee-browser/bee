@@ -5,6 +5,7 @@ use anyhow::Result;
 use anyhow::anyhow;
 use clap::Parser as _;
 
+use jsparser::Error;
 use jsparser::Parser;
 use jsparser::ProductionRule;
 use jsparser::SyntaxHandler;
@@ -68,15 +69,14 @@ struct NullHandler;
 
 impl SyntaxHandler<'_> for NullHandler {
     type Artifact = ();
-    type Error = std::convert::Infallible;
     fn start(&mut self) {}
-    fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+    fn accept(&mut self) -> Result<Self::Artifact, Error> {
         Ok(())
     }
-    fn shift(&mut self, _token: &Token<'_>) -> Result<(), Self::Error> {
+    fn shift(&mut self, _token: &Token<'_>) -> Result<(), Error> {
         Ok(())
     }
-    fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
+    fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Error> {
         Ok(())
     }
 }

@@ -41,6 +41,7 @@
 
 mod actions;
 
+use jsparser::Error;
 use jsparser::Location;
 use jsparser::ProductionRule;
 use jsparser::SyntaxHandler;
@@ -77,7 +78,7 @@ impl Builder {
         }
     }
 
-    fn empty_script(&mut self) -> Result<(), String> {
+    fn empty_script(&mut self) -> Result<(), Error> {
         assert!(self.stack.is_empty());
         let start = Location::default();
         let end = self.location.clone();
@@ -86,7 +87,7 @@ impl Builder {
         Ok(())
     }
 
-    fn script(&mut self) -> Result<(), String> {
+    fn script(&mut self) -> Result<(), Error> {
         let (body, ..) = self.pop_list();
         let start = Location::default();
         let end = self.location.clone();
@@ -95,7 +96,7 @@ impl Builder {
         Ok(())
     }
 
-    fn empty_module(&mut self) -> Result<(), String> {
+    fn empty_module(&mut self) -> Result<(), Error> {
         assert!(self.stack.is_empty());
         let start = Location::default();
         let end = self.location.clone();
@@ -104,7 +105,7 @@ impl Builder {
         Ok(())
     }
 
-    fn module(&mut self) -> Result<(), String> {
+    fn module(&mut self) -> Result<(), Error> {
         let (body, ..) = self.pop_list();
         let start = Location::default();
         let end = self.location.clone();
@@ -113,7 +114,7 @@ impl Builder {
         Ok(())
     }
 
-    fn import_from(&mut self) -> Result<(), String> {
+    fn import_from(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (source, ..) = self.pop_node();
         let (specifiers, ..) = self.pop_list();
@@ -123,7 +124,7 @@ impl Builder {
         Ok(())
     }
 
-    fn side_effect_import(&mut self) -> Result<(), String> {
+    fn side_effect_import(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (source, ..) = self.pop_node();
         let (start, _) = self.check("import");
@@ -132,14 +133,14 @@ impl Builder {
         Ok(())
     }
 
-    fn import_default_specifier(&mut self) -> Result<(), String> {
+    fn import_default_specifier(&mut self) -> Result<(), Error> {
         let (local, start, end) = self.pop_node();
         let node = node!(import_default_specifier@start..end; local);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn import_namespace_specifier(&mut self) -> Result<(), String> {
+    fn import_namespace_specifier(&mut self) -> Result<(), Error> {
         let (local, _, end) = self.pop_node();
         self.check("as");
         let (start, _) = self.check("*");
@@ -148,14 +149,14 @@ impl Builder {
         Ok(())
     }
 
-    fn import_specifier(&mut self) -> Result<(), String> {
+    fn import_specifier(&mut self) -> Result<(), Error> {
         let (imported, start, end) = self.pop_node();
         let node = node!(import_specifier@start..end; imported);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn import_specifier_as(&mut self) -> Result<(), String> {
+    fn import_specifier_as(&mut self) -> Result<(), Error> {
         let (local, _, end) = self.pop_node();
         self.check("as");
         let (imported, start, _) = self.pop_node();
@@ -164,7 +165,7 @@ impl Builder {
         Ok(())
     }
 
-    fn export_from(&mut self) -> Result<(), String> {
+    fn export_from(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (source, ..) = self.pop_node();
         let (clause, ..) = self.stack.pop().unwrap();
@@ -183,7 +184,7 @@ impl Builder {
         Ok(())
     }
 
-    fn export_list(&mut self) -> Result<(), String> {
+    fn export_list(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (specifiers, ..) = self.pop_list();
         let (start, _) = self.check("export");
@@ -192,7 +193,7 @@ impl Builder {
         Ok(())
     }
 
-    fn export_vars(&mut self) -> Result<(), String> {
+    fn export_vars(&mut self) -> Result<(), Error> {
         let (declaration, _, end) = self.pop_node();
         let (start, _) = self.check("export");
         let node = node!(export_named_declaration@start..end; declaration => declaration);
@@ -200,7 +201,7 @@ impl Builder {
         Ok(())
     }
 
-    fn export_decl(&mut self) -> Result<(), String> {
+    fn export_decl(&mut self) -> Result<(), Error> {
         let (declaration, _, end) = self.pop_node();
         let (start, _) = self.check("export");
         let node = node!(export_named_declaration@start..end; declaration => declaration);
@@ -208,7 +209,7 @@ impl Builder {
         Ok(())
     }
 
-    fn default_export_decl(&mut self) -> Result<(), String> {
+    fn default_export_decl(&mut self) -> Result<(), Error> {
         let (declaration, _, end) = self.pop_node();
         self.check("default");
         let (start, _) = self.check("export");
@@ -217,7 +218,7 @@ impl Builder {
         Ok(())
     }
 
-    fn default_export_class(&mut self) -> Result<(), String> {
+    fn default_export_class(&mut self) -> Result<(), Error> {
         let (declaration, _, end) = self.pop_node();
         self.check("default");
         let (start, _) = self.check("export");
@@ -226,7 +227,7 @@ impl Builder {
         Ok(())
     }
 
-    fn default_export_expr(&mut self) -> Result<(), String> {
+    fn default_export_expr(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (expression, ..) = self.pop_node();
         self.check("default");
@@ -237,14 +238,14 @@ impl Builder {
         Ok(())
     }
 
-    fn export_specifier(&mut self) -> Result<(), String> {
+    fn export_specifier(&mut self) -> Result<(), Error> {
         let (local, start, end) = self.pop_node();
         let node = node!(export_specifier@start..end; local);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn export_specifier_as(&mut self) -> Result<(), String> {
+    fn export_specifier_as(&mut self) -> Result<(), Error> {
         let (exported, _, end) = self.pop_node();
         self.check("as");
         let (local, start, _) = self.pop_node();
@@ -253,7 +254,7 @@ impl Builder {
         Ok(())
     }
 
-    fn variable_declaration(&mut self) -> Result<(), String> {
+    fn variable_declaration(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (declarations, ..) = self.pop_list();
         let (kind, start, _) = self.pop_token();
@@ -262,14 +263,14 @@ impl Builder {
         Ok(())
     }
 
-    fn empty_statement(&mut self) -> Result<(), String> {
+    fn empty_statement(&mut self) -> Result<(), Error> {
         let (start, end) = self.check(";");
         let node = node!(empty_statement@start..end);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn expression_statement(&mut self) -> Result<(), String> {
+    fn expression_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (expression, start, _) = self.pop_node();
         let expression = node!(into_expression; expression)?; // may be CPEAAPL
@@ -278,7 +279,7 @@ impl Builder {
         Ok(())
     }
 
-    fn if_else_statement(&mut self) -> Result<(), String> {
+    fn if_else_statement(&mut self) -> Result<(), Error> {
         let (alternate, _, end) = self.pop_node();
         self.check("else");
         let (consequent, ..) = self.pop_node();
@@ -292,7 +293,7 @@ impl Builder {
         Ok(())
     }
 
-    fn if_statement(&mut self) -> Result<(), String> {
+    fn if_statement(&mut self) -> Result<(), Error> {
         let (consequent, _, end) = self.pop_node();
         self.check(")");
         let (test, ..) = self.pop_node();
@@ -304,7 +305,7 @@ impl Builder {
         Ok(())
     }
 
-    fn continue_statement(&mut self) -> Result<(), String> {
+    fn continue_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (start, _) = self.check("continue");
         let node = node!(continue_statement@start..end);
@@ -312,7 +313,7 @@ impl Builder {
         Ok(())
     }
 
-    fn labeled_continue_statement(&mut self) -> Result<(), String> {
+    fn labeled_continue_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (label, ..) = self.pop_node();
         let (start, _) = self.check("continue");
@@ -321,7 +322,7 @@ impl Builder {
         Ok(())
     }
 
-    fn break_statement(&mut self) -> Result<(), String> {
+    fn break_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (start, _) = self.check("break");
         let node = node!(break_statement@start..end);
@@ -329,7 +330,7 @@ impl Builder {
         Ok(())
     }
 
-    fn labeled_break_statement(&mut self) -> Result<(), String> {
+    fn labeled_break_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (label, ..) = self.pop_node();
         let (start, _) = self.check("break");
@@ -338,7 +339,7 @@ impl Builder {
         Ok(())
     }
 
-    fn with_statement(&mut self) -> Result<(), String> {
+    fn with_statement(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (object, ..) = self.pop_node();
@@ -350,7 +351,7 @@ impl Builder {
         Ok(())
     }
 
-    fn labeled_statement(&mut self) -> Result<(), String> {
+    fn labeled_statement(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(":");
         let (label, start, _) = self.pop_node();
@@ -359,7 +360,7 @@ impl Builder {
         Ok(())
     }
 
-    fn throw_statement(&mut self) -> Result<(), String> {
+    fn throw_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (argument, ..) = self.pop_node();
         let (start, _) = self.check("throw");
@@ -369,7 +370,7 @@ impl Builder {
         Ok(())
     }
 
-    fn try_catch_statement(&mut self) -> Result<(), String> {
+    fn try_catch_statement(&mut self) -> Result<(), Error> {
         let (handler, _, end) = self.pop_node();
         let (block, ..) = self.pop_node();
         let (start, _) = self.check("try");
@@ -378,7 +379,7 @@ impl Builder {
         Ok(())
     }
 
-    fn try_finally_statement(&mut self) -> Result<(), String> {
+    fn try_finally_statement(&mut self) -> Result<(), Error> {
         let (finalizer, _, end) = self.pop_node();
         let (block, ..) = self.pop_node();
         let (start, _) = self.check("try");
@@ -387,7 +388,7 @@ impl Builder {
         Ok(())
     }
 
-    fn try_catch_finally_statement(&mut self) -> Result<(), String> {
+    fn try_catch_finally_statement(&mut self) -> Result<(), Error> {
         let (finalizer, _, end) = self.pop_node();
         let (handler, ..) = self.pop_node();
         let (block, ..) = self.pop_node();
@@ -397,7 +398,7 @@ impl Builder {
         Ok(())
     }
 
-    fn catch_clause(&mut self) -> Result<(), String> {
+    fn catch_clause(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (param, ..) = self.pop_node();
@@ -408,7 +409,7 @@ impl Builder {
         Ok(())
     }
 
-    fn catch_clause_no_param(&mut self) -> Result<(), String> {
+    fn catch_clause_no_param(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         let (start, _) = self.check("catch");
         let node = node!(catch_clause@start..end; body);
@@ -416,14 +417,14 @@ impl Builder {
         Ok(())
     }
 
-    fn finally_clause(&mut self) -> Result<(), String> {
+    fn finally_clause(&mut self) -> Result<(), Error> {
         let (node, _, end) = self.pop_node();
         let (start, _) = self.check("finally");
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn debugger_statement(&mut self) -> Result<(), String> {
+    fn debugger_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (start, _) = self.check("debugger");
         let node = node!(debugger_statement@start..end);
@@ -431,7 +432,7 @@ impl Builder {
         Ok(())
     }
 
-    fn switch_statement(&mut self) -> Result<(), String> {
+    fn switch_statement(&mut self) -> Result<(), Error> {
         let (cases, _, end) = self.pop_list();
         self.check(")");
         let (discriminant, ..) = self.pop_node();
@@ -443,7 +444,7 @@ impl Builder {
         Ok(())
     }
 
-    fn case_block_default(&mut self) -> Result<(), String> {
+    fn case_block_default(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (default, ..) = self.pop_node();
         let (start, _) = self.check("{");
@@ -451,7 +452,7 @@ impl Builder {
         Ok(())
     }
 
-    fn case_block_cases_default(&mut self) -> Result<(), String> {
+    fn case_block_cases_default(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (default, ..) = self.pop_node();
         let (mut cases, ..) = self.pop_list();
@@ -461,7 +462,7 @@ impl Builder {
         Ok(())
     }
 
-    fn case_block_default_cases(&mut self) -> Result<(), String> {
+    fn case_block_default_cases(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (mut cases, ..) = self.pop_list();
         let (default, ..) = self.pop_node();
@@ -471,7 +472,7 @@ impl Builder {
         Ok(())
     }
 
-    fn case_block_cases_default_cases(&mut self) -> Result<(), String> {
+    fn case_block_cases_default_cases(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (mut remaining, ..) = self.pop_list();
         let (default, ..) = self.pop_node();
@@ -483,7 +484,7 @@ impl Builder {
         Ok(())
     }
 
-    fn switch_case_no_consequent(&mut self) -> Result<(), String> {
+    fn switch_case_no_consequent(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(":");
         let (test, ..) = self.pop_node();
         let (start, _) = self.check("case");
@@ -493,7 +494,7 @@ impl Builder {
         Ok(())
     }
 
-    fn switch_case(&mut self) -> Result<(), String> {
+    fn switch_case(&mut self) -> Result<(), Error> {
         let (consequent, _, end) = self.pop_list();
         self.check(":");
         let (test, ..) = self.pop_node();
@@ -504,7 +505,7 @@ impl Builder {
         Ok(())
     }
 
-    fn switch_case_default_no_consequent(&mut self) -> Result<(), String> {
+    fn switch_case_default_no_consequent(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(":");
         let (start, _) = self.check("default");
         let node = node!(switch_default@start..end);
@@ -512,7 +513,7 @@ impl Builder {
         Ok(())
     }
 
-    fn switch_case_default(&mut self) -> Result<(), String> {
+    fn switch_case_default(&mut self) -> Result<(), Error> {
         let (consequent, _, end) = self.pop_list();
         self.check(":");
         let (start, _) = self.check("default");
@@ -521,7 +522,7 @@ impl Builder {
         Ok(())
     }
 
-    fn do_while_statement(&mut self) -> Result<(), String> {
+    fn do_while_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         self.check(")");
         let (test, ..) = self.pop_node();
@@ -535,7 +536,7 @@ impl Builder {
         Ok(())
     }
 
-    fn while_statement(&mut self) -> Result<(), String> {
+    fn while_statement(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (test, ..) = self.pop_node();
@@ -547,7 +548,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_no_init_test_update(&mut self) -> Result<(), String> {
+    fn for_statement_no_init_test_update(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         self.check(";");
@@ -559,7 +560,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_no_test_update(&mut self) -> Result<(), String> {
+    fn for_statement_no_test_update(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         self.check(";");
@@ -573,7 +574,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_no_init_update(&mut self) -> Result<(), String> {
+    fn for_statement_no_init_update(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         self.check(";");
@@ -587,7 +588,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_no_update(&mut self) -> Result<(), String> {
+    fn for_statement_no_update(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         self.check(";");
@@ -603,7 +604,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_no_init_test(&mut self) -> Result<(), String> {
+    fn for_statement_no_init_test(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (update, ..) = self.pop_node();
@@ -617,7 +618,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_no_test(&mut self) -> Result<(), String> {
+    fn for_statement_no_test(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (update, ..) = self.pop_node();
@@ -633,7 +634,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_no_init(&mut self) -> Result<(), String> {
+    fn for_statement_no_init(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (update, ..) = self.pop_node();
@@ -649,7 +650,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement(&mut self) -> Result<(), String> {
+    fn for_statement(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (update, ..) = self.pop_node();
@@ -667,7 +668,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_vars_no_test_update(&mut self) -> Result<(), String> {
+    fn for_statement_vars_no_test_update(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         self.check(";");
@@ -682,7 +683,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_vars_no_update(&mut self) -> Result<(), String> {
+    fn for_statement_vars_no_update(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         self.check(";");
@@ -699,7 +700,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_vars_no_test(&mut self) -> Result<(), String> {
+    fn for_statement_vars_no_test(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (update, ..) = self.pop_node();
@@ -716,7 +717,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_vars(&mut self) -> Result<(), String> {
+    fn for_statement_vars(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (update, ..) = self.pop_node();
@@ -735,7 +736,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_decl_no_test_update(&mut self) -> Result<(), String> {
+    fn for_statement_decl_no_test_update(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         self.check(";");
@@ -748,7 +749,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_decl_no_update(&mut self) -> Result<(), String> {
+    fn for_statement_decl_no_update(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         self.check(";");
@@ -763,7 +764,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_decl_no_test(&mut self) -> Result<(), String> {
+    fn for_statement_decl_no_test(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (update, ..) = self.pop_node();
@@ -778,7 +779,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_statement_decl(&mut self) -> Result<(), String> {
+    fn for_statement_decl(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (update, ..) = self.pop_node();
@@ -795,7 +796,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_in_statement(&mut self) -> Result<(), String> {
+    fn for_in_statement(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (right, ..) = self.pop_node();
@@ -810,7 +811,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_in_statement_vars(&mut self) -> Result<(), String> {
+    fn for_in_statement_vars(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (right, ..) = self.pop_node();
@@ -826,7 +827,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_of_statement(&mut self) -> Result<(), String> {
+    fn for_of_statement(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (right, ..) = self.pop_node();
@@ -841,7 +842,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_of_statement_vars(&mut self) -> Result<(), String> {
+    fn for_of_statement_vars(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (right, ..) = self.pop_node();
@@ -857,7 +858,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_of_statement_await(&mut self) -> Result<(), String> {
+    fn for_of_statement_await(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (right, ..) = self.pop_node();
@@ -873,7 +874,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_of_statement_await_vars(&mut self) -> Result<(), String> {
+    fn for_of_statement_await_vars(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check(")");
         let (right, ..) = self.pop_node();
@@ -890,7 +891,7 @@ impl Builder {
         Ok(())
     }
 
-    fn for_declaration(&mut self) -> Result<(), String> {
+    fn for_declaration(&mut self) -> Result<(), Error> {
         let (binding, _, end) = self.pop_node();
         let (kind, start, _) = self.pop_token();
         let node = node!(variable_declaration@start..end; kind, vec![binding]);
@@ -898,14 +899,14 @@ impl Builder {
         Ok(())
     }
 
-    fn for_binding(&mut self) -> Result<(), String> {
+    fn for_binding(&mut self) -> Result<(), Error> {
         let (id, start, end) = self.pop_node();
         let node = node!(variable_declarator@start..end; id);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn return_statement_no_argument(&mut self) -> Result<(), String> {
+    fn return_statement_no_argument(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (start, _) = self.check("return");
         let node = node!(return_statement@start..end);
@@ -913,7 +914,7 @@ impl Builder {
         Ok(())
     }
 
-    fn return_statement(&mut self) -> Result<(), String> {
+    fn return_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (argument, ..) = self.pop_node();
         let (start, _) = self.check("return");
@@ -923,7 +924,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_declaration(&mut self) -> Result<(), String> {
+    fn class_declaration(&mut self) -> Result<(), Error> {
         let (class_tail, _, end) = self.pop_node();
         let (id, ..) = self.pop_node();
         let (start, _) = self.check("class");
@@ -932,7 +933,7 @@ impl Builder {
         Ok(())
     }
 
-    fn anonymous_class_declaration(&mut self) -> Result<(), String> {
+    fn anonymous_class_declaration(&mut self) -> Result<(), Error> {
         let (class_tail, _, end) = self.pop_node();
         let (start, _) = self.check("class");
         let node = node!(class_declaration@start..end; class_tail);
@@ -940,7 +941,7 @@ impl Builder {
         Ok(())
     }
 
-    fn empty_class_tail(&mut self) -> Result<(), String> {
+    fn empty_class_tail(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (start, _) = self.check("{");
         let body = node!(class_body@start..end);
@@ -949,7 +950,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_tail_no_body(&mut self) -> Result<(), String> {
+    fn class_tail_no_body(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body_start, _) = self.check("{");
         let (super_class, start, ..) = self.pop_node();
@@ -959,7 +960,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_tail_no_super_class(&mut self) -> Result<(), String> {
+    fn class_tail_no_super_class(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (list, ..) = self.pop_list();
         let (start, _) = self.check("{");
@@ -969,7 +970,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_tail(&mut self) -> Result<(), String> {
+    fn class_tail(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (list, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -980,7 +981,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_heritage(&mut self) -> Result<(), String> {
+    fn class_heritage(&mut self) -> Result<(), Error> {
         let (super_class, _, end) = self.pop_node();
         let (start, _) = self.check("extends");
         let super_class = node!(into_expression; super_class)?;
@@ -988,7 +989,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_element_list(&mut self) -> Result<(), String> {
+    fn class_element_list(&mut self) -> Result<(), Error> {
         let (nullable, start, end) = self.pop_nullable();
         let list = match nullable {
             Some(node) => vec![node],
@@ -998,7 +999,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_element_list_append(&mut self) -> Result<(), String> {
+    fn class_element_list_append(&mut self) -> Result<(), Error> {
         let (nullable, _, end) = self.pop_nullable();
         let (mut list, start, _) = self.pop_list();
         if let Some(node) = nullable {
@@ -1008,7 +1009,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_element_static_method_definition(&mut self) -> Result<(), String> {
+    fn class_element_static_method_definition(&mut self) -> Result<(), Error> {
         let (method, _, end) = self.pop_node();
         let (start, _) = self.check("static");
         let node = node!(static_method_definition@start..end; method);
@@ -1016,7 +1017,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_element_property_definition(&mut self) -> Result<(), String> {
+    fn class_element_property_definition(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (def, start, _) = self.pop_node();
         let node = node!(end_property_definition@start..end; def);
@@ -1024,7 +1025,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_element_static_property_definition(&mut self) -> Result<(), String> {
+    fn class_element_static_property_definition(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(";");
         let (def, ..) = self.pop_node();
         let (start, _) = self.check("static");
@@ -1033,13 +1034,13 @@ impl Builder {
         Ok(())
     }
 
-    fn class_element_semicolon(&mut self) -> Result<(), String> {
+    fn class_element_semicolon(&mut self) -> Result<(), Error> {
         let (start, end) = self.check(";");
         self.push_nullable(None, start, end);
         Ok(())
     }
 
-    fn class_element_name_private(&mut self) -> Result<(), String> {
+    fn class_element_name_private(&mut self) -> Result<(), Error> {
         let (name, start, end) = self.pop_token();
         let name = name[1..].to_owned(); // remove '#'
         let node = node!(private_identifier@start..end; name);
@@ -1047,7 +1048,7 @@ impl Builder {
         Ok(())
     }
 
-    fn static_block(&mut self) -> Result<(), String> {
+    fn static_block(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         self.check("{");
@@ -1057,14 +1058,14 @@ impl Builder {
         Ok(())
     }
 
-    fn property_definition(&mut self) -> Result<(), String> {
+    fn property_definition(&mut self) -> Result<(), Error> {
         let (key, start, end) = self.pop_node();
         let node = node!(property_definition@start..end; key);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn property_definition_value(&mut self) -> Result<(), String> {
+    fn property_definition_value(&mut self) -> Result<(), Error> {
         let (value, _, end) = self.pop_node();
         let (key, start, _) = self.pop_node();
         let node = node!(property_definition@start..end; key, value);
@@ -1072,7 +1073,7 @@ impl Builder {
         Ok(())
     }
 
-    fn method_definition(&mut self) -> Result<(), String> {
+    fn method_definition(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1087,7 +1088,7 @@ impl Builder {
         Ok(())
     }
 
-    fn method_definition_generator(&mut self) -> Result<(), String> {
+    fn method_definition_generator(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1103,7 +1104,7 @@ impl Builder {
         Ok(())
     }
 
-    fn method_definition_async(&mut self) -> Result<(), String> {
+    fn method_definition_async(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1119,7 +1120,7 @@ impl Builder {
         Ok(())
     }
 
-    fn method_definition_async_generator(&mut self) -> Result<(), String> {
+    fn method_definition_async_generator(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1136,7 +1137,7 @@ impl Builder {
         Ok(())
     }
 
-    fn method_definition_get(&mut self) -> Result<(), String> {
+    fn method_definition_get(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1151,7 +1152,7 @@ impl Builder {
         Ok(())
     }
 
-    fn method_definition_set(&mut self) -> Result<(), String> {
+    fn method_definition_set(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1167,15 +1168,15 @@ impl Builder {
         Ok(())
     }
 
-    fn function_declaration(&mut self) -> Result<(), String> {
+    fn function_declaration(&mut self) -> Result<(), Error> {
         self.function(true)
     }
 
-    fn function_expression(&mut self) -> Result<(), String> {
+    fn function_expression(&mut self) -> Result<(), Error> {
         self.function(false)
     }
 
-    fn function(&mut self, decl: bool) -> Result<(), String> {
+    fn function(&mut self, decl: bool) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1194,15 +1195,15 @@ impl Builder {
         Ok(())
     }
 
-    fn anonymous_function_declaration(&mut self) -> Result<(), String> {
+    fn anonymous_function_declaration(&mut self) -> Result<(), Error> {
         self.anonymous_function(true)
     }
 
-    fn anonymous_function_expression(&mut self) -> Result<(), String> {
+    fn anonymous_function_expression(&mut self) -> Result<(), Error> {
         self.anonymous_function(false)
     }
 
-    fn anonymous_function(&mut self, decl: bool) -> Result<(), String> {
+    fn anonymous_function(&mut self, decl: bool) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1220,15 +1221,15 @@ impl Builder {
         Ok(())
     }
 
-    fn generator_declaration(&mut self) -> Result<(), String> {
+    fn generator_declaration(&mut self) -> Result<(), Error> {
         self.generator(true)
     }
 
-    fn generator_expression(&mut self) -> Result<(), String> {
+    fn generator_expression(&mut self) -> Result<(), Error> {
         self.generator(false)
     }
 
-    fn generator(&mut self, decl: bool) -> Result<(), String> {
+    fn generator(&mut self, decl: bool) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1248,15 +1249,15 @@ impl Builder {
         Ok(())
     }
 
-    fn anonymous_generator_declaration(&mut self) -> Result<(), String> {
+    fn anonymous_generator_declaration(&mut self) -> Result<(), Error> {
         self.anonymous_generator(true)
     }
 
-    fn anonymous_generator_expression(&mut self) -> Result<(), String> {
+    fn anonymous_generator_expression(&mut self) -> Result<(), Error> {
         self.anonymous_generator(false)
     }
 
-    fn anonymous_generator(&mut self, decl: bool) -> Result<(), String> {
+    fn anonymous_generator(&mut self, decl: bool) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1275,15 +1276,15 @@ impl Builder {
         Ok(())
     }
 
-    fn async_function_declaration(&mut self) -> Result<(), String> {
+    fn async_function_declaration(&mut self) -> Result<(), Error> {
         self.async_function(true)
     }
 
-    fn async_function_expression(&mut self) -> Result<(), String> {
+    fn async_function_expression(&mut self) -> Result<(), Error> {
         self.async_function(false)
     }
 
-    fn async_function(&mut self, decl: bool) -> Result<(), String> {
+    fn async_function(&mut self, decl: bool) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1303,15 +1304,15 @@ impl Builder {
         Ok(())
     }
 
-    fn anonymous_async_function_declaration(&mut self) -> Result<(), String> {
+    fn anonymous_async_function_declaration(&mut self) -> Result<(), Error> {
         self.anonymous_async_function(true)
     }
 
-    fn anonymous_async_function_expression(&mut self) -> Result<(), String> {
+    fn anonymous_async_function_expression(&mut self) -> Result<(), Error> {
         self.anonymous_async_function(false)
     }
 
-    fn anonymous_async_function(&mut self, decl: bool) -> Result<(), String> {
+    fn anonymous_async_function(&mut self, decl: bool) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1330,15 +1331,15 @@ impl Builder {
         Ok(())
     }
 
-    fn async_generator_declaration(&mut self) -> Result<(), String> {
+    fn async_generator_declaration(&mut self) -> Result<(), Error> {
         self.async_generator(true)
     }
 
-    fn async_generator_expression(&mut self) -> Result<(), String> {
+    fn async_generator_expression(&mut self) -> Result<(), Error> {
         self.async_generator(false)
     }
 
-    fn async_generator(&mut self, decl: bool) -> Result<(), String> {
+    fn async_generator(&mut self, decl: bool) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1359,15 +1360,15 @@ impl Builder {
         Ok(())
     }
 
-    fn anonymous_async_generator_declaration(&mut self) -> Result<(), String> {
+    fn anonymous_async_generator_declaration(&mut self) -> Result<(), Error> {
         self.anonymous_async_generator(true)
     }
 
-    fn anonymous_async_generator_expression(&mut self) -> Result<(), String> {
+    fn anonymous_async_generator_expression(&mut self) -> Result<(), Error> {
         self.anonymous_async_generator(false)
     }
 
-    fn anonymous_async_generator(&mut self, decl: bool) -> Result<(), String> {
+    fn anonymous_async_generator(&mut self, decl: bool) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (body_start, _) = self.check("{");
@@ -1387,7 +1388,7 @@ impl Builder {
         Ok(())
     }
 
-    fn rest_element(&mut self) -> Result<(), String> {
+    fn rest_element(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("...");
         let node = node!(rest_element@start..end; argument);
@@ -1395,7 +1396,7 @@ impl Builder {
         Ok(())
     }
 
-    fn function_body_block(&mut self) -> Result<(), String> {
+    fn function_body_block(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (start, _) = self.check("{");
@@ -1404,14 +1405,14 @@ impl Builder {
         Ok(())
     }
 
-    fn process_from_clause(&mut self) -> Result<(), String> {
+    fn process_from_clause(&mut self) -> Result<(), Error> {
         let (source, _, end) = self.pop_node();
         let (start, _) = self.check("from");
         self.push_node(source, start, end);
         Ok(())
     }
 
-    fn export_all_as(&mut self) -> Result<(), String> {
+    fn export_all_as(&mut self) -> Result<(), Error> {
         let (exported, _, end) = self.pop_node();
         self.check("as");
         let (start, _) = self.check("*");
@@ -1419,7 +1420,7 @@ impl Builder {
         Ok(())
     }
 
-    fn member_expression(&mut self) -> Result<(), String> {
+    fn member_expression(&mut self) -> Result<(), Error> {
         let (property, _, end) = self.pop_node();
         self.check(".");
         let (object, start, _) = self.pop_node();
@@ -1429,7 +1430,7 @@ impl Builder {
         Ok(())
     }
 
-    fn member_expression_computed(&mut self) -> Result<(), String> {
+    fn member_expression_computed(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (property, ..) = self.pop_node();
         self.check("[");
@@ -1441,7 +1442,7 @@ impl Builder {
         Ok(())
     }
 
-    fn member_expression_private(&mut self) -> Result<(), String> {
+    fn member_expression_private(&mut self) -> Result<(), Error> {
         let (name, id_start, end) = self.pop_token();
         self.check(".");
         let (object, start, _) = self.pop_node();
@@ -1453,7 +1454,7 @@ impl Builder {
         Ok(())
     }
 
-    fn member_expression_call(&mut self) -> Result<(), String> {
+    fn member_expression_call(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (property, ..) = self.pop_node();
         self.check("[");
@@ -1465,7 +1466,7 @@ impl Builder {
         Ok(())
     }
 
-    fn super_property_computed(&mut self) -> Result<(), String> {
+    fn super_property_computed(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (property, ..) = self.pop_node();
         self.check("[");
@@ -1477,7 +1478,7 @@ impl Builder {
         Ok(())
     }
 
-    fn super_property(&mut self) -> Result<(), String> {
+    fn super_property(&mut self) -> Result<(), Error> {
         let (property, _, end) = self.pop_node();
         self.check(".");
         let (start, super_end) = self.check("super");
@@ -1487,7 +1488,7 @@ impl Builder {
         Ok(())
     }
 
-    fn tagged_template_expression(&mut self) -> Result<(), String> {
+    fn tagged_template_expression(&mut self) -> Result<(), Error> {
         let (quasi, _, end) = self.pop_node();
         let (tag, start, _) = self.pop_node();
         let tag = node!(into_expression; tag)?; // may be CPEAAPL
@@ -1496,7 +1497,7 @@ impl Builder {
         Ok(())
     }
 
-    fn call_expression(&mut self) -> Result<(), String> {
+    fn call_expression(&mut self) -> Result<(), Error> {
         let (arguments, _, end) = self.pop_list();
         let (callee, start, _) = self.pop_node();
         let callee = node!(into_expression; callee)?; // may be CPEAAPL
@@ -1509,7 +1510,7 @@ impl Builder {
         Ok(())
     }
 
-    fn call_expression_super(&mut self) -> Result<(), String> {
+    fn call_expression_super(&mut self) -> Result<(), Error> {
         let (arguments, _, end) = self.pop_list();
         let (start, super_end) = self.check("super");
         let callee = node!(super_@start..super_end);
@@ -1522,7 +1523,7 @@ impl Builder {
         Ok(())
     }
 
-    fn import_expression(&mut self) -> Result<(), String> {
+    fn import_expression(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         let (source, ..) = self.pop_node();
         self.check("(");
@@ -1532,7 +1533,7 @@ impl Builder {
         Ok(())
     }
 
-    fn assignment_expression(&mut self) -> Result<(), String> {
+    fn assignment_expression(&mut self) -> Result<(), Error> {
         let (right, _, end) = self.pop_node();
         let (operator, ..) = self.pop_token();
         let (left, start, _) = self.pop_node();
@@ -1545,7 +1546,7 @@ impl Builder {
         Ok(())
     }
 
-    fn conditional_expression(&mut self) -> Result<(), String> {
+    fn conditional_expression(&mut self) -> Result<(), Error> {
         let (alternate, _, end) = self.pop_node();
         self.check(":");
         let (consequent, ..) = self.pop_node();
@@ -1559,7 +1560,7 @@ impl Builder {
         Ok(())
     }
 
-    fn binary_expression(&mut self) -> Result<(), String> {
+    fn binary_expression(&mut self) -> Result<(), Error> {
         let (right, _, end) = self.pop_node();
         let (operator, ..) = self.pop_token();
         let (left, start, _) = self.pop_node();
@@ -1570,7 +1571,7 @@ impl Builder {
         Ok(())
     }
 
-    fn binary_expression_private(&mut self) -> Result<(), String> {
+    fn binary_expression_private(&mut self) -> Result<(), Error> {
         let (right, _, end) = self.pop_node();
         let (operator, ..) = self.pop_token();
         let (name, start, id_end) = self.pop_token();
@@ -1582,7 +1583,7 @@ impl Builder {
         Ok(())
     }
 
-    fn logical_expression(&mut self) -> Result<(), String> {
+    fn logical_expression(&mut self) -> Result<(), Error> {
         let (right, _, end) = self.pop_node();
         let (operator, ..) = self.pop_token();
         let (left, start, _) = self.pop_node();
@@ -1593,14 +1594,14 @@ impl Builder {
         Ok(())
     }
 
-    fn this_expression(&mut self) -> Result<(), String> {
+    fn this_expression(&mut self) -> Result<(), Error> {
         let (start, end) = self.check("this");
         let node = node!(this_expression@start..end);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn update_expression_prefix(&mut self) -> Result<(), String> {
+    fn update_expression_prefix(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         let (operator, start, _) = self.pop_token();
         let argument = node!(into_expression; argument)?; // may be CPEAAPL
@@ -1609,7 +1610,7 @@ impl Builder {
         Ok(())
     }
 
-    fn update_expression_suffix(&mut self) -> Result<(), String> {
+    fn update_expression_suffix(&mut self) -> Result<(), Error> {
         let (operator, _, end) = self.pop_token();
         let (argument, start, _) = self.pop_node();
         let argument = node!(into_expression; argument)?; // may be CPEAAPL
@@ -1618,7 +1619,7 @@ impl Builder {
         Ok(())
     }
 
-    fn unary_expression(&mut self) -> Result<(), String> {
+    fn unary_expression(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         let (operator, start, _) = self.pop_token();
         let argument = node!(into_expression; argument)?; // may be CPEAAPL
@@ -1627,7 +1628,7 @@ impl Builder {
         Ok(())
     }
 
-    fn await_expression(&mut self) -> Result<(), String> {
+    fn await_expression(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("await");
         let argument = node!(into_expression; argument)?; // may be CPEAAPL
@@ -1636,14 +1637,14 @@ impl Builder {
         Ok(())
     }
 
-    fn yield_expression_no_argument(&mut self) -> Result<(), String> {
+    fn yield_expression_no_argument(&mut self) -> Result<(), Error> {
         let (start, end) = self.check("yield");
         let node = node!(yield_expression@start..end; false);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn yield_expression(&mut self) -> Result<(), String> {
+    fn yield_expression(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("yield");
         let argument = node!(into_expression; argument)?; // may be CPEAAPL
@@ -1652,7 +1653,7 @@ impl Builder {
         Ok(())
     }
 
-    fn yield_expression_delegate(&mut self) -> Result<(), String> {
+    fn yield_expression_delegate(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         self.check("*");
         let (start, _) = self.check("yield");
@@ -1662,7 +1663,7 @@ impl Builder {
         Ok(())
     }
 
-    fn new_expression(&mut self) -> Result<(), String> {
+    fn new_expression(&mut self) -> Result<(), Error> {
         let (callee, _, end) = self.pop_node();
         let (start, _) = self.check("new");
         let callee = node!(into_expression; callee)?; // may be CPEAAPL
@@ -1671,7 +1672,7 @@ impl Builder {
         Ok(())
     }
 
-    fn new_expression_arguments(&mut self) -> Result<(), String> {
+    fn new_expression_arguments(&mut self) -> Result<(), Error> {
         let (arguments, _, end) = self.pop_list();
         let (callee, ..) = self.pop_node();
         let (start, _) = self.check("new");
@@ -1681,7 +1682,7 @@ impl Builder {
         Ok(())
     }
 
-    fn arrow_function_expression(&mut self) -> Result<(), String> {
+    fn arrow_function_expression(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check("=>");
         let (params, start, _) = self.pop_list();
@@ -1690,7 +1691,7 @@ impl Builder {
         Ok(())
     }
 
-    fn async_arrow_function_expression_single_param(&mut self) -> Result<(), String> {
+    fn async_arrow_function_expression_single_param(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check("=>");
         let (param, ..) = self.pop_node();
@@ -1700,7 +1701,7 @@ impl Builder {
         Ok(())
     }
 
-    fn async_arrow_function_expression(&mut self) -> Result<(), String> {
+    fn async_arrow_function_expression(&mut self) -> Result<(), Error> {
         let (body, _, end) = self.pop_node();
         self.check("=>");
         let (params, ..) = self.pop_list();
@@ -1718,18 +1719,19 @@ impl Builder {
             self.push_node(node, start, end);
             Ok(())
         } else {
-            Err("async".to_string())
+            eprintln!("async");
+            Err(Error::SyntaxError)
         }
     }
 
-    fn arrow_parameters(&mut self) -> Result<(), String> {
+    fn arrow_parameters(&mut self) -> Result<(), Error> {
         let (cpeaapl, start, end) = self.pop_node();
         let list = node!(into_arrow_parameters; cpeaapl)?;
         self.push_list(list, start, end);
         Ok(())
     }
 
-    fn sequence_expression(&mut self) -> Result<(), String> {
+    fn sequence_expression(&mut self) -> Result<(), Error> {
         let (expr2, _, end) = self.pop_node();
         self.check(",");
         let (expr1, start, _) = self.pop_node();
@@ -1746,7 +1748,7 @@ impl Builder {
         Ok(())
     }
 
-    fn anonymous_class_expression(&mut self) -> Result<(), String> {
+    fn anonymous_class_expression(&mut self) -> Result<(), Error> {
         let (class_tail, _, end) = self.pop_node();
         let (start, _) = self.check("class");
         let node = node!(class_expression@start..end; class_tail);
@@ -1754,7 +1756,7 @@ impl Builder {
         Ok(())
     }
 
-    fn class_expression(&mut self) -> Result<(), String> {
+    fn class_expression(&mut self) -> Result<(), Error> {
         let (class_tail, _, end) = self.pop_node();
         let (id, ..) = self.pop_node();
         let (start, _) = self.check("class");
@@ -1763,7 +1765,7 @@ impl Builder {
         Ok(())
     }
 
-    fn new_target(&mut self) -> Result<(), String> {
+    fn new_target(&mut self) -> Result<(), Error> {
         let (property_start, end) = self.check("target");
         self.check(".");
         let (start, new_end) = self.check("new");
@@ -1774,7 +1776,7 @@ impl Builder {
         Ok(())
     }
 
-    fn import_meta(&mut self) -> Result<(), String> {
+    fn import_meta(&mut self) -> Result<(), Error> {
         let (property_start, end) = self.check("meta");
         self.check(".");
         let (start, meta_end) = self.check("import");
@@ -1785,7 +1787,7 @@ impl Builder {
         Ok(())
     }
 
-    fn object_expression_empty(&mut self) -> Result<(), String> {
+    fn object_expression_empty(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (start, _) = self.check("{");
         let node = node!(object_expression@start..end);
@@ -1793,7 +1795,7 @@ impl Builder {
         Ok(())
     }
 
-    fn object_expression(&mut self) -> Result<(), String> {
+    fn object_expression(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (properties, ..) = self.pop_list();
         let (start, _) = self.check("{");
@@ -1802,14 +1804,14 @@ impl Builder {
         Ok(())
     }
 
-    fn property(&mut self) -> Result<(), String> {
+    fn property(&mut self) -> Result<(), Error> {
         let (key, start, end) = self.pop_node();
         let node = node!(property@start..end; key);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn cover_initialized_name(&mut self) -> Result<(), String> {
+    fn cover_initialized_name(&mut self) -> Result<(), Error> {
         let (value, _, end) = self.pop_node();
         let (name, start, _) = self.pop_node();
         let node = node!(cover_initialized_name@start..end; name, value);
@@ -1817,7 +1819,7 @@ impl Builder {
         Ok(())
     }
 
-    fn property_cover_initialized_name(&mut self) -> Result<(), String> {
+    fn property_cover_initialized_name(&mut self) -> Result<(), Error> {
         let (cover, start, end) = self.pop_node();
         // 13.2.5.1 Static Semantics: Early Errors
         // CoverInitializedName has to be handled a syntax error in ObjectLiteral.
@@ -1830,7 +1832,7 @@ impl Builder {
         Ok(())
     }
 
-    fn property_value(&mut self) -> Result<(), String> {
+    fn property_value(&mut self) -> Result<(), Error> {
         let (value, _, end) = self.pop_node();
         self.check(":");
         let (key, start, _) = self.pop_node();
@@ -1839,14 +1841,14 @@ impl Builder {
         Ok(())
     }
 
-    fn property_method(&mut self) -> Result<(), String> {
+    fn property_method(&mut self) -> Result<(), Error> {
         let (method, start, end) = self.pop_node();
         let node = node!(into_property; method);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn object_expression_comma(&mut self) -> Result<(), String> {
+    fn object_expression_comma(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         self.check(",");
         let (properties, ..) = self.pop_list();
@@ -1856,7 +1858,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_expression_empty(&mut self) -> Result<(), String> {
+    fn array_expression_empty(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (start, _) = self.check("[");
         let node = node!(array_expression@start..end);
@@ -1864,7 +1866,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_expression(&mut self) -> Result<(), String> {
+    fn array_expression(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (elements, ..) = self.pop_array();
         let (start, _) = self.check("[");
@@ -1873,7 +1875,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_expression_comma(&mut self) -> Result<(), String> {
+    fn array_expression_comma(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         self.check(",");
         let (elements, ..) = self.pop_array();
@@ -1883,7 +1885,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_expression_comma_elision(&mut self) -> Result<(), String> {
+    fn array_expression_comma_elision(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (mut elision, ..) = self.pop_array();
         self.check(",");
@@ -1895,14 +1897,14 @@ impl Builder {
         Ok(())
     }
 
-    fn variable_declarator(&mut self) -> Result<(), String> {
+    fn variable_declarator(&mut self) -> Result<(), Error> {
         let (id, start, end) = self.pop_node();
         let node = node!(variable_declarator@start..end; id);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn variable_declarator_init(&mut self) -> Result<(), String> {
+    fn variable_declarator_init(&mut self) -> Result<(), Error> {
         let (init, _, end) = self.pop_node();
         let (id, start, _) = self.pop_node();
         let init = node!(into_expression; init)?; // may be CPEAAPL
@@ -1911,7 +1913,7 @@ impl Builder {
         Ok(())
     }
 
-    fn arguments(&mut self) -> Result<(), String> {
+    fn arguments(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         let (list, ..) = self.pop_list();
         let (start, _) = self.check("(");
@@ -1919,14 +1921,14 @@ impl Builder {
         Ok(())
     }
 
-    fn arguments_empty(&mut self) -> Result<(), String> {
+    fn arguments_empty(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         let (start, _) = self.check("(");
         self.push_list(vec![], start, end);
         Ok(())
     }
 
-    fn arguments_comma(&mut self) -> Result<(), String> {
+    fn arguments_comma(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         self.check(",");
         let (list, ..) = self.pop_list();
@@ -1935,14 +1937,14 @@ impl Builder {
         Ok(())
     }
 
-    fn argument_list(&mut self) -> Result<(), String> {
+    fn argument_list(&mut self) -> Result<(), Error> {
         let (node, start, end) = self.pop_node();
         let node = node!(into_expression; node)?;
         self.push_list(vec![node], start, end);
         Ok(())
     }
 
-    fn argument_list_rest(&mut self) -> Result<(), String> {
+    fn argument_list_rest(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("...");
         let node = node!(spread_element@start..end; argument);
@@ -1950,7 +1952,7 @@ impl Builder {
         Ok(())
     }
 
-    fn argument_list_append(&mut self) -> Result<(), String> {
+    fn argument_list_append(&mut self) -> Result<(), Error> {
         let (node, _, end) = self.pop_node();
         self.check(",");
         let (mut list, start, _) = self.pop_list();
@@ -1960,7 +1962,7 @@ impl Builder {
         Ok(())
     }
 
-    fn argument_list_append_rest(&mut self) -> Result<(), String> {
+    fn argument_list_append_rest(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         let (rest_start, _) = self.check("...");
         self.check(",");
@@ -1971,7 +1973,7 @@ impl Builder {
         Ok(())
     }
 
-    fn cpeaapl_expr(&mut self) -> Result<(), String> {
+    fn cpeaapl_expr(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         let (expr, ..) = self.pop_node();
         let (start, _) = self.check("(");
@@ -1980,7 +1982,7 @@ impl Builder {
         Ok(())
     }
 
-    fn cpeaapl_expr_comma(&mut self) -> Result<(), String> {
+    fn cpeaapl_expr_comma(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         self.check(",");
         let (expr, ..) = self.pop_node();
@@ -1990,7 +1992,7 @@ impl Builder {
         Ok(())
     }
 
-    fn cpeaapl_empty(&mut self) -> Result<(), String> {
+    fn cpeaapl_empty(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         let (start, _) = self.check("(");
         let node = node!(cpeaapl);
@@ -1998,7 +2000,7 @@ impl Builder {
         Ok(())
     }
 
-    fn cpeaapl_rest(&mut self) -> Result<(), String> {
+    fn cpeaapl_rest(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         let (argument, _, rest_end) = self.pop_node();
         let (rest_start, _) = self.check("...");
@@ -2009,7 +2011,7 @@ impl Builder {
         Ok(())
     }
 
-    fn cpeaapl_expr_rest(&mut self) -> Result<(), String> {
+    fn cpeaapl_expr_rest(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(")");
         let (argument, _, rest_end) = self.pop_node();
         let (rest_start, _) = self.check("...");
@@ -2022,7 +2024,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_expression(&mut self) -> Result<(), String> {
+    fn optional_expression(&mut self) -> Result<(), Error> {
         let (chains, _, end) = self.pop_list();
         let (expr, start, _) = self.pop_node();
         let expr = node!(into_expression; expr)?; // may be CPEAAPL
@@ -2031,19 +2033,19 @@ impl Builder {
         Ok(())
     }
 
-    fn either_left(&mut self) -> Result<(), String> {
+    fn either_left(&mut self) -> Result<(), Error> {
         let (node, start, end) = self.pop_left();
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn either_right(&mut self) -> Result<(), String> {
+    fn either_right(&mut self) -> Result<(), Error> {
         let (node, start, end) = self.pop_right();
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn optional_call(&mut self) -> Result<(), String> {
+    fn optional_call(&mut self) -> Result<(), Error> {
         let (arguments, _, end) = self.pop_list();
         let (start, _) = self.check("?.");
         let node = node!(optional_call@end; arguments);
@@ -2051,7 +2053,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_computed_property(&mut self) -> Result<(), String> {
+    fn optional_computed_property(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (expr, ..) = self.pop_node();
         self.check("[");
@@ -2061,7 +2063,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_member(&mut self) -> Result<(), String> {
+    fn optional_member(&mut self) -> Result<(), Error> {
         let (expr, _, end) = self.pop_node();
         let (start, _) = self.check("?.");
         let node = node!(optional_member@end; expr, false);
@@ -2069,7 +2071,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_private_identifier(&mut self) -> Result<(), String> {
+    fn optional_private_identifier(&mut self) -> Result<(), Error> {
         let (name, name_start, end) = self.pop_token();
         let (start, _) = self.check("?.");
         let name = name[1..].to_owned(); // remove '#'
@@ -2079,7 +2081,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_chain_append_call(&mut self) -> Result<(), String> {
+    fn optional_chain_append_call(&mut self) -> Result<(), Error> {
         let (arguments, _, end) = self.pop_list();
         let (mut list, start, ..) = self.pop_list();
         let node = node!(optional_call@end; arguments);
@@ -2088,7 +2090,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_chain_append_computed_property(&mut self) -> Result<(), String> {
+    fn optional_chain_append_computed_property(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (expr, ..) = self.pop_node();
         self.check("[");
@@ -2099,7 +2101,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_chain_append_property(&mut self) -> Result<(), String> {
+    fn optional_chain_append_property(&mut self) -> Result<(), Error> {
         let (property, _, end) = self.pop_node();
         self.check(".");
         let (mut list, start, ..) = self.pop_list();
@@ -2109,7 +2111,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_chain_append_tagged_template(&mut self) -> Result<(), String> {
+    fn optional_chain_append_tagged_template(&mut self) -> Result<(), Error> {
         let (template, _, end) = self.pop_node();
         let (mut list, start, ..) = self.pop_list();
         let node = node!(optional_member@end; template, false);
@@ -2118,7 +2120,7 @@ impl Builder {
         Ok(())
     }
 
-    fn optional_chain_append_private_identifier(&mut self) -> Result<(), String> {
+    fn optional_chain_append_private_identifier(&mut self) -> Result<(), Error> {
         let (name, name_start, end) = self.pop_token();
         self.check(".");
         let (mut list, start, ..) = self.pop_list();
@@ -2130,7 +2132,7 @@ impl Builder {
         Ok(())
     }
 
-    fn object_pattern_empty(&mut self) -> Result<(), String> {
+    fn object_pattern_empty(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (start, _) = self.check("{");
         let node = node!(object_pattern@start..end);
@@ -2138,7 +2140,7 @@ impl Builder {
         Ok(())
     }
 
-    fn object_pattern_rest(&mut self) -> Result<(), String> {
+    fn object_pattern_rest(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (rest, ..) = self.pop_node();
         let (start, _) = self.check("{");
@@ -2147,7 +2149,7 @@ impl Builder {
         Ok(())
     }
 
-    fn object_pattern(&mut self) -> Result<(), String> {
+    fn object_pattern(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (properties, ..) = self.pop_list();
         let (start, _) = self.check("{");
@@ -2156,7 +2158,7 @@ impl Builder {
         Ok(())
     }
 
-    fn object_pattern_comma(&mut self) -> Result<(), String> {
+    fn object_pattern_comma(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         self.check(",");
         let (properties, ..) = self.pop_list();
@@ -2166,7 +2168,7 @@ impl Builder {
         Ok(())
     }
 
-    fn object_pattern_comma_rest(&mut self) -> Result<(), String> {
+    fn object_pattern_comma_rest(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (rest, ..) = self.pop_node();
         self.check(",");
@@ -2178,7 +2180,7 @@ impl Builder {
         Ok(())
     }
 
-    fn single_name_binding(&mut self) -> Result<(), String> {
+    fn single_name_binding(&mut self) -> Result<(), Error> {
         let (key, start, end) = self.pop_node();
         // left for BindingElement, right for BindingProperty
         let left = key.clone();
@@ -2187,7 +2189,7 @@ impl Builder {
         Ok(())
     }
 
-    fn single_name_binding_init(&mut self) -> Result<(), String> {
+    fn single_name_binding_init(&mut self) -> Result<(), Error> {
         let (value, _, end) = self.pop_node();
         let (key, start, _) = self.pop_node();
         let value = node!(into_expression; value)?; // may be CPEAAPL
@@ -2198,7 +2200,7 @@ impl Builder {
         Ok(())
     }
 
-    fn assignment_pattern(&mut self) -> Result<(), String> {
+    fn assignment_pattern(&mut self) -> Result<(), Error> {
         let (right, _, end) = self.pop_node();
         let (left, start, _) = self.pop_node();
         let right = node!(into_expression; right)?; // may be CPEAAPL
@@ -2207,7 +2209,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_pattern_empty(&mut self) -> Result<(), String> {
+    fn array_pattern_empty(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (start, _) = self.check("[");
         let node = node!(array_pattern@start..end);
@@ -2215,7 +2217,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_pattern_rest(&mut self) -> Result<(), String> {
+    fn array_pattern_rest(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (rest, ..) = self.pop_node();
         let (start, _) = self.check("[");
@@ -2224,7 +2226,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_pattern_elision_rest(&mut self) -> Result<(), String> {
+    fn array_pattern_elision_rest(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (rest, ..) = self.pop_node();
         let (mut elements, ..) = self.pop_array();
@@ -2235,7 +2237,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_pattern_comma(&mut self) -> Result<(), String> {
+    fn array_pattern_comma(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         self.check(",");
         let (elements, ..) = self.pop_array();
@@ -2245,7 +2247,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_pattern_concat(&mut self) -> Result<(), String> {
+    fn array_pattern_concat(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (mut array, ..) = self.pop_array();
         self.check(",");
@@ -2257,7 +2259,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_pattern_comma_rest(&mut self) -> Result<(), String> {
+    fn array_pattern_comma_rest(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (rest, ..) = self.pop_node();
         self.check(",");
@@ -2269,7 +2271,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_pattern_concat_rest(&mut self) -> Result<(), String> {
+    fn array_pattern_concat_rest(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (rest, ..) = self.pop_node();
         let (mut array, ..) = self.pop_array();
@@ -2283,7 +2285,7 @@ impl Builder {
         Ok(())
     }
 
-    fn array_pattern(&mut self) -> Result<(), String> {
+    fn array_pattern(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (elements, ..) = self.pop_array();
         let (start, _) = self.check("[");
@@ -2292,7 +2294,7 @@ impl Builder {
         Ok(())
     }
 
-    fn spread_element(&mut self) -> Result<(), String> {
+    fn spread_element(&mut self) -> Result<(), Error> {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("...");
         let node = node!(spread_element@start..end; argument);
@@ -2300,14 +2302,14 @@ impl Builder {
         Ok(())
     }
 
-    fn convert_to_expression(&mut self) -> Result<(), String> {
+    fn convert_to_expression(&mut self) -> Result<(), Error> {
         let (node, start, end) = self.pop_node();
         let node = node!(into_expression; node)?;
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn computed_property_name(&mut self) -> Result<(), String> {
+    fn computed_property_name(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("]");
         let (expr, ..) = self.pop_node();
         let (start, _) = self.check("[");
@@ -2317,7 +2319,7 @@ impl Builder {
         Ok(())
     }
 
-    fn identifier(&mut self) -> Result<(), String> {
+    fn identifier(&mut self) -> Result<(), Error> {
         let (name, start, end) = self.pop_token();
         // name may contain escaped character.
         let name = literal_content_to_string(&name).unwrap();
@@ -2326,49 +2328,49 @@ impl Builder {
         Ok(())
     }
 
-    fn null_literal(&mut self) -> Result<(), String> {
+    fn null_literal(&mut self) -> Result<(), Error> {
         let (start, end) = self.check("null");
         let node = node!(null@start..end);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn boolean_literal_true(&mut self) -> Result<(), String> {
+    fn boolean_literal_true(&mut self) -> Result<(), Error> {
         let (start, end) = self.check("true");
         let node = node!(true@start..end);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn boolean_literal_false(&mut self) -> Result<(), String> {
+    fn boolean_literal_false(&mut self) -> Result<(), Error> {
         let (start, end) = self.check("false");
         let node = node!(false@start..end);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn numeric_literal(&mut self) -> Result<(), String> {
+    fn numeric_literal(&mut self) -> Result<(), Error> {
         let (token, start, end) = self.pop_token();
         let node = node!(number@start..end; token);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn string_literal(&mut self) -> Result<(), String> {
+    fn string_literal(&mut self) -> Result<(), Error> {
         let (token, start, end) = self.pop_token();
         let node = node!(string@start..end; token);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn regexp_literal(&mut self) -> Result<(), String> {
+    fn regexp_literal(&mut self) -> Result<(), Error> {
         let (token, start, end) = self.pop_token();
         let node = node!(regexp@start..end; token);
         self.push_node(node, start, end);
         Ok(())
     }
 
-    fn template_literal_no_subst(&mut self) -> Result<(), String> {
+    fn template_literal_no_subst(&mut self) -> Result<(), Error> {
         let (token, start, end) = self.pop_token();
         let raw = &token[TEMPLATE_START_LEN..(token.len() - TEMPLATE_END_LEN)];
         let element_start = start.forward(TEMPLATE_START_LEN);
@@ -2379,7 +2381,7 @@ impl Builder {
         Ok(())
     }
 
-    fn template_literal(&mut self) -> Result<(), String> {
+    fn template_literal(&mut self) -> Result<(), Error> {
         let (mut expressions, ..) = self.pop_list();
         let (mut quasis, _, end) = self.pop_list();
         let (expr, ..) = self.pop_node();
@@ -2395,7 +2397,7 @@ impl Builder {
         Ok(())
     }
 
-    fn template_spans_tail(&mut self) -> Result<(), String> {
+    fn template_spans_tail(&mut self) -> Result<(), Error> {
         let (token, start, end) = self.pop_token();
         let raw = &token[TEMPLATE_SUBST_END_LEN..(token.len() - TEMPLATE_END_LEN)];
         let element_start = start.forward(TEMPLATE_SUBST_END_LEN);
@@ -2406,7 +2408,7 @@ impl Builder {
         Ok(())
     }
 
-    fn template_spans_append(&mut self) -> Result<(), String> {
+    fn template_spans_append(&mut self) -> Result<(), Error> {
         let (token, token_start, end) = self.pop_token();
         let (expressions, ..) = self.pop_list();
         let (mut quasis, start, _) = self.pop_list();
@@ -2420,7 +2422,7 @@ impl Builder {
         Ok(())
     }
 
-    fn template_middle_list(&mut self) -> Result<(), String> {
+    fn template_middle_list(&mut self) -> Result<(), Error> {
         let (expr, _, end) = self.pop_node();
         let (token, start, token_end) = self.pop_token();
         let raw = &token[TEMPLATE_SUBST_END_LEN..(token.len() - TEMPLATE_SUBST_START_LEN)];
@@ -2432,7 +2434,7 @@ impl Builder {
         Ok(())
     }
 
-    fn template_middle_list_append(&mut self) -> Result<(), String> {
+    fn template_middle_list_append(&mut self) -> Result<(), Error> {
         let (expr, _, end) = self.pop_node();
         let (token, token_start, token_end) = self.pop_token();
         let (mut expressions, ..) = self.pop_list();
@@ -2448,7 +2450,7 @@ impl Builder {
         Ok(())
     }
 
-    fn block_statement_empty(&mut self) -> Result<(), String> {
+    fn block_statement_empty(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (start, _) = self.check("{");
         let node = node!(block_statement@start..end);
@@ -2456,7 +2458,7 @@ impl Builder {
         Ok(())
     }
 
-    fn block_statement(&mut self) -> Result<(), String> {
+    fn block_statement(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (start, _) = self.check("{");
@@ -2465,14 +2467,14 @@ impl Builder {
         Ok(())
     }
 
-    fn empty_list_block(&mut self) -> Result<(), String> {
+    fn empty_list_block(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (start, _) = self.check("{");
         self.push_list(vec![], start, end);
         Ok(())
     }
 
-    fn list_block(&mut self) -> Result<(), String> {
+    fn list_block(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         let (list, ..) = self.pop_list();
         let (start, _) = self.check("{");
@@ -2480,7 +2482,7 @@ impl Builder {
         Ok(())
     }
 
-    fn list_block_ended_with_comma(&mut self) -> Result<(), String> {
+    fn list_block_ended_with_comma(&mut self) -> Result<(), Error> {
         let (_, end) = self.check("}");
         self.check(",");
         let (list, ..) = self.pop_list();
@@ -2489,7 +2491,7 @@ impl Builder {
         Ok(())
     }
 
-    fn csv_list(&mut self) -> Result<(), String> {
+    fn csv_list(&mut self) -> Result<(), Error> {
         let (node1, _, end) = self.pop_node();
         self.check(",");
         let (node0, start, _) = self.pop_node();
@@ -2497,7 +2499,7 @@ impl Builder {
         Ok(())
     }
 
-    fn prepend_to_csv_list(&mut self) -> Result<(), String> {
+    fn prepend_to_csv_list(&mut self) -> Result<(), Error> {
         let (mut list, _, end) = self.pop_list();
         self.check(",");
         let (node, start, _) = self.pop_node();
@@ -2506,13 +2508,13 @@ impl Builder {
         Ok(())
     }
 
-    fn elision(&mut self) -> Result<(), String> {
+    fn elision(&mut self) -> Result<(), Error> {
         let (start, end) = self.check(",");
         self.push_array(vec![None], start, end);
         Ok(())
     }
 
-    fn elision_append(&mut self) -> Result<(), String> {
+    fn elision_append(&mut self) -> Result<(), Error> {
         let (_, end) = self.check(",");
         let (mut array, start, _) = self.pop_array();
         array.push(None);
@@ -2520,14 +2522,14 @@ impl Builder {
         Ok(())
     }
 
-    fn initializer(&mut self) -> Result<(), String> {
+    fn initializer(&mut self) -> Result<(), Error> {
         let (expr, _, end) = self.pop_node();
         let (start, _) = self.check("=");
         self.push_node(expr, start, end);
         Ok(())
     }
 
-    fn append_to_csv_list(&mut self) -> Result<(), String> {
+    fn append_to_csv_list(&mut self) -> Result<(), Error> {
         let (node, _, end) = self.pop_node();
         self.check(",");
         let (mut list, start, _) = self.pop_list();
@@ -2536,13 +2538,13 @@ impl Builder {
         Ok(())
     }
 
-    fn create_nullable(&mut self) -> Result<(), String> {
+    fn create_nullable(&mut self) -> Result<(), Error> {
         let (node, start, end) = self.pop_node();
         self.push_nullable(Some(node), start, end);
         Ok(())
     }
 
-    fn primary_expression_cpeaapl(&mut self) -> Result<(), String> {
+    fn primary_expression_cpeaapl(&mut self) -> Result<(), Error> {
         let (cpeaapl, start, end) = self.pop_node();
         // See the supplemental syntax defined in "13.2 Primary Expression".
         cpeaapl.validate_primary_expression()?;
@@ -2550,20 +2552,20 @@ impl Builder {
         Ok(())
     }
 
-    fn empty_list(&mut self) -> Result<(), String> {
+    fn empty_list(&mut self) -> Result<(), Error> {
         let start = self.location.clone();
         let end = self.location.clone();
         self.push_list(vec![], start, end);
         Ok(())
     }
 
-    fn create_list(&mut self) -> Result<(), String> {
+    fn create_list(&mut self) -> Result<(), Error> {
         let (node, start, end) = self.pop_node();
         self.push_list(vec![node], start, end);
         Ok(())
     }
 
-    fn append_to_list(&mut self) -> Result<(), String> {
+    fn append_to_list(&mut self) -> Result<(), Error> {
         let (node, _, end) = self.pop_node();
         let (mut list, start, _) = self.pop_list();
         list.push(node);
@@ -2571,13 +2573,13 @@ impl Builder {
         Ok(())
     }
 
-    fn create_array(&mut self) -> Result<(), String> {
+    fn create_array(&mut self) -> Result<(), Error> {
         let (node, start, end) = self.pop_node();
         self.push_array(vec![Some(node)], start, end);
         Ok(())
     }
 
-    fn append_to_array(&mut self) -> Result<(), String> {
+    fn append_to_array(&mut self) -> Result<(), Error> {
         let (node, _, end) = self.pop_node();
         let (mut array, start, _) = self.pop_array();
         array.push(Some(node));
@@ -2585,7 +2587,7 @@ impl Builder {
         Ok(())
     }
 
-    fn append_to_csv_array(&mut self) -> Result<(), String> {
+    fn append_to_csv_array(&mut self) -> Result<(), Error> {
         let (node, _, end) = self.pop_node();
         self.check(",");
         let (mut array, start, _) = self.pop_array();
@@ -2594,7 +2596,7 @@ impl Builder {
         Ok(())
     }
 
-    fn concat_csv_arrays(&mut self) -> Result<(), String> {
+    fn concat_csv_arrays(&mut self) -> Result<(), Error> {
         let (mut tail, _, end) = self.pop_array();
         self.check(",");
         let (mut array, start, _) = self.pop_array();
@@ -2603,7 +2605,7 @@ impl Builder {
         Ok(())
     }
 
-    fn concat_and_append_array(&mut self) -> Result<(), String> {
+    fn concat_and_append_array(&mut self) -> Result<(), Error> {
         let (node, _, end) = self.pop_node();
         let (mut sparse, ..) = self.pop_array();
         self.check(",");
@@ -2614,12 +2616,12 @@ impl Builder {
         Ok(())
     }
 
-    fn remove_comma(&mut self) -> Result<(), String> {
+    fn remove_comma(&mut self) -> Result<(), Error> {
         self.check(",");
         Ok(())
     }
 
-    fn nop(&mut self) -> Result<(), String> {
+    fn nop(&mut self) -> Result<(), Error> {
         Ok(())
     }
 
@@ -2707,13 +2709,12 @@ impl Builder {
 
 impl SyntaxHandler<'_> for Builder {
     type Artifact = NodeRef;
-    type Error = String;
 
     fn start(&mut self) {
         logger::debug!(op = "start");
     }
 
-    fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+    fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(op = "accept");
         assert_eq!(self.stack.len(), 1);
         let (node, ..) = self.pop_node();
@@ -2722,7 +2723,7 @@ impl SyntaxHandler<'_> for Builder {
         Ok(node)
     }
 
-    fn shift(&mut self, token: &Token<'_>) -> Result<(), Self::Error> {
+    fn shift(&mut self, token: &Token<'_>) -> Result<(), Error> {
         let start = self.location.clone();
         let end = token.compute_end(&start);
         logger::debug!(
@@ -2736,7 +2737,7 @@ impl SyntaxHandler<'_> for Builder {
         Ok(())
     }
 
-    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error> {
+    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Error> {
         match ACTIONS[rule.id() as usize] {
             Some((action, name)) => {
                 logger::debug!(op = "reduce", action = name, %rule);
@@ -2744,7 +2745,7 @@ impl SyntaxHandler<'_> for Builder {
             }
             None => {
                 logger::error!("No action defined for: {rule}");
-                Err(format!("No action defined for: {rule}"))
+                Err(Error::NotYetImplemented)
             }
         }
     }

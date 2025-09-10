@@ -38,6 +38,8 @@ pub enum Error {
     UnexpectedCharacter,
     #[error("Syntax error")]
     SyntaxError,
+    #[error("Not yet implemented")]
+    NotYetImplemented,
 }
 
 pub fn for_script<'s, H>(src: &'s str, handler: H) -> Parser<'s, syntax::Processor<'s, H>>
