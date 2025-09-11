@@ -1054,7 +1054,12 @@ where
             TokenKind::False => self.enqueue(Node::Boolean(false)),
             TokenKind::NumericLiteral => {
                 // TODO: perform `NumericValue`
-                let value = token.lexeme.parse::<f64>().unwrap();
+                let value = if token.lexeme.ends_with('n') {
+                    // TODO: BigInt
+                    return Err(Error::NotYetImplemented);
+                } else {
+                    token.lexeme.parse::<f64>().unwrap()
+                };
                 self.enqueue(Node::Number(value, token.lexeme))
             }
             TokenKind::StringLiteral => {
