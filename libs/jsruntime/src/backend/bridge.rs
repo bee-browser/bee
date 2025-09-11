@@ -226,7 +226,7 @@ pub(crate) extern "C" fn runtime_to_object<X>(
 }
 
 impl<X> Runtime<X> {
-    fn value_to_object(&mut self, value: &Value, retv: &mut Value) -> Status {
+    pub(crate) fn value_to_object(&mut self, value: &Value, retv: &mut Value) -> Status {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
