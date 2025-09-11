@@ -1119,7 +1119,7 @@ where
             self.emit_throw_internal_error(const_string!("TODO: too many arguments"));
             let len = self.operand_stack.len() - (argc as usize) - 1;
             self.operand_stack.truncate(len);
-            self.operand_stack.push(Operand::Undefined);
+            self.operand_stack.push(Operand::Undefined); // TODO: dummy
             return;
         }
 
@@ -1133,6 +1133,7 @@ where
             Operand::Any(value, ..) => self.emit_load_object_or_throw_type_error(value),
             _ => {
                 self.emit_throw_type_error();
+                self.operand_stack.push(Operand::Undefined); // TODO: dummy
                 return;
             }
         };
@@ -1174,7 +1175,7 @@ where
             self.emit_throw_internal_error(const_string!("TODO: too many arguments"));
             let len = self.operand_stack.len() - (argc as usize) - 1;
             self.operand_stack.truncate(len);
-            self.operand_stack.push(Operand::Undefined);
+            self.operand_stack.push(Operand::Undefined); // TODO: dummy
             return;
         }
 
@@ -1187,6 +1188,7 @@ where
             Operand::Any(value, ..) => self.emit_load_object_or_throw_type_error(value),
             _ => {
                 self.emit_throw_type_error();
+                self.operand_stack.push(Operand::Undefined); // TODO: dummy
                 return;
             }
         };
@@ -2201,9 +2203,18 @@ where
                 self.emit_throw_type_error();
                 None
             }
-            PropertyOwner::Boolean(_) => todo!(),
-            PropertyOwner::Number(_) => todo!(),
-            PropertyOwner::String(_) => todo!(),
+            PropertyOwner::Boolean(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToObject(boolean)"));
+                None
+            }
+            PropertyOwner::Number(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToObject(number)"));
+                None
+            }
+            PropertyOwner::String(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToObject(string)"));
+                None
+            }
             PropertyOwner::Object(value) => Some(*value),
             PropertyOwner::Any(value) => {
                 let retv = self.emit_create_any();
@@ -3766,7 +3777,7 @@ where
     }
 
     fn emit_throw_internal_error(&mut self, message: StringHandle) {
-        logger::debug!(event = "emit_throw_type_error", ?message);
+        logger::debug!(event = "emit_throw_internal_error", ?message);
         let error = self
             .editor
             .put_runtime_create_internal_error(self.support, message);
