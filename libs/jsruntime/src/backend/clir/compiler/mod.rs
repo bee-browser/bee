@@ -1111,7 +1111,15 @@ where
     }
 
     fn process_call(&mut self, argc: u16) {
-        debug_assert!(argc <= 8); // TODO: dynamic allocation
+        // TODO: dynamic allocation
+        if argc > 8 {
+            self.emit_throw_internal_error(const_string!("TODO: too many arguments"));
+            let len = self.operand_stack.len() - (argc as usize) - 1;
+            self.operand_stack.truncate(len);
+            self.operand_stack.push(Operand::Undefined);
+            return;
+        }
+
         self.emit_fill_args(argc);
 
         let (operand, owner) = self.dereference();
@@ -1158,7 +1166,15 @@ where
     }
 
     fn process_new(&mut self, argc: u16) {
-        debug_assert!(argc <= 8); // TODO: dynamic allocation
+        // TODO: dynamic allocation
+        if argc > 8 {
+            self.emit_throw_internal_error(const_string!("TODO: too many arguments"));
+            let len = self.operand_stack.len() - (argc as usize) - 1;
+            self.operand_stack.truncate(len);
+            self.operand_stack.push(Operand::Undefined);
+            return;
+        }
+
         self.emit_fill_args(argc);
 
         let (operand, ..) = self.dereference();
