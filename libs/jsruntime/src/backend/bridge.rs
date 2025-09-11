@@ -231,10 +231,10 @@ impl<X> Runtime<X> {
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined | Value::Null => {
-                match self.create_type_error(true, &Value::Undefined, &Value::Undefined) {
-                    Ok(value) => *retv = Value::Object(value),
-                    Err(err) => *retv = err,
-                }
+                let err = self
+                    .create_type_error(true, &Value::Undefined, &Value::Undefined)
+                    .unwrap();
+                *retv = Value::Object(err);
                 Status::Exception
             }
             Value::Boolean(_value) => runtime_todo!(
@@ -610,42 +610,64 @@ pub(crate) extern "C" fn runtime_create_internal_error<X>(
 }
 
 pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
-    _runtime: &mut Runtime<X>,
+    runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: u32,
     strict: bool,
-) -> *const Value {
-    const UNDEFINED: Value = Value::Undefined;
-
+    retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
 
     match object.get_value(&key) {
-        Some(v) => v as *const Value,
-        None if strict => std::ptr::null(),
-        None => &UNDEFINED as *const Value,
+        Some(v) => {
+            *retv = v.clone();
+            Status::Normal
+        }
+        None if strict => {
+            let err = runtime
+                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap();
+            *retv = Value::Object(err);
+            Status::Exception
+        }
+        None => {
+            *retv = Value::Undefined;
+            Status::Normal
+        }
     }
 }
 
 pub(crate) extern "C" fn runtime_get_value_by_number<X>(
-    _runtime: &mut Runtime<X>,
+    runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: f64,
     strict: bool,
-) -> *const Value {
-    const UNDEFINED: Value = Value::Undefined;
-
+    retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
 
     match object.get_value(&key) {
-        Some(v) => v as *const Value,
-        None if strict => std::ptr::null(),
-        None => &UNDEFINED as *const Value,
+        Some(v) => {
+            *retv = v.clone();
+            Status::Normal
+        }
+        None if strict => {
+            let err = runtime
+                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap();
+            *retv = Value::Object(err);
+            Status::Exception
+        }
+        None => {
+            *retv = Value::Undefined;
+            Status::Normal
+        }
     }
 }
 
@@ -654,16 +676,33 @@ pub(crate) extern "C" fn runtime_get_value_by_value<X>(
     object: *mut c_void,
     key: &Value,
     strict: bool,
-) -> *const Value {
-    const UNDEFINED: Value = Value::Undefined;
-
+    retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
-    let key = runtime.make_property_key(key);
+    let key = match runtime.make_property_key(key) {
+        Ok(key) => key,
+        Err(err) => {
+            *retv = err;
+            return Status::Exception;
+        }
+    };
 
     match object.get_value(&key) {
-        Some(v) => v as *const Value,
-        None if strict => std::ptr::null(),
-        None => &UNDEFINED as *const Value,
+        Some(v) => {
+            *retv = v.clone();
+            Status::Normal
+        }
+        None if strict => {
+            let err = runtime
+                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap();
+            *retv = Value::Object(err);
+            Status::Exception
+        }
+        None => {
+            *retv = Value::Undefined;
+            Status::Normal
+        }
     }
 }
 
@@ -672,11 +711,13 @@ pub(crate) extern "C" fn runtime_set_value_by_symbol<X>(
     object: *mut c_void,
     key: u32,
     value: &Value,
-) {
+    _retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
-    object.set_value(&key, value)
+    object.set_value(&key, value);
+    Status::Normal
 }
 
 pub(crate) extern "C" fn runtime_set_value_by_number<X>(
@@ -684,11 +725,13 @@ pub(crate) extern "C" fn runtime_set_value_by_number<X>(
     object: *mut c_void,
     key: f64,
     value: &Value,
-) {
+    _retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
-    object.set_value(&key, value)
+    object.set_value(&key, value);
+    Status::Normal
 }
 
 pub(crate) extern "C" fn runtime_set_value_by_value<X>(
@@ -696,10 +739,18 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
     object: *mut c_void,
     key: &Value,
     value: &Value,
-) {
+    retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
-    let key = runtime.make_property_key(key);
-    object.set_value(&key, value)
+    let key = match runtime.make_property_key(key) {
+        Ok(key) => key,
+        Err(err) => {
+            *retv = err;
+            return Status::Exception;
+        }
+    };
+    object.set_value(&key, value);
+    Status::Normal
 }
 
 pub(crate) extern "C" fn runtime_concat_strings<X>(
@@ -788,7 +839,13 @@ pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
     // TODO(refactor): generate ffi-conversion code by script
 
     let object = into_object!(object);
-    let key = runtime.make_property_key(key);
+    let key = match runtime.make_property_key(key) {
+        Ok(key) => key,
+        Err(err) => {
+            *retv = err;
+            return Status::Exception;
+        }
+    };
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {

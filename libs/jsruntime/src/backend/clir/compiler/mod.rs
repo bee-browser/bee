@@ -1033,12 +1033,15 @@ where
                 let global_object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
                 self.editor.put_store_object_to_any(object, value);
-                self.editor.put_runtime_set_value_by_symbol(
+                let retv = self.emit_create_any();
+                let status = self.editor.put_runtime_set_value_by_symbol(
                     self.support,
                     global_object,
                     symbol,
                     value,
+                    retv,
                 );
+                self.emit_check_status_for_exception(status, retv);
             }
             _ => unreachable!("{locator:?}"),
         };
@@ -1190,12 +1193,15 @@ where
 
         let closure = self.emit_load_closure_or_throw_type_error(constructor);
 
-        let prototype = self.editor.put_runtime_get_value_by_symbol(
+        let prototype = self.emit_create_any();
+        let status = self.editor.put_runtime_get_value_by_symbol(
             self.support,
             constructor,
             Symbol::PROTOTYPE,
             false,
+            prototype,
         ); // TODO: strict
+        self.emit_check_status_for_exception(status, prototype);
         runtime_debug! {{
             let is_object = self.editor.put_is_object(prototype);
             self.editor.put_assert(self.support, is_object, c"Prototype must be an object");
@@ -2091,8 +2097,15 @@ where
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
                 // TODO(feat): ReferenceError, TypeError
-                self.editor
-                    .put_runtime_set_value_by_symbol(self.support, object, symbol, value);
+                let retv = self.emit_create_any();
+                let status = self.editor.put_runtime_set_value_by_symbol(
+                    self.support,
+                    object,
+                    symbol,
+                    value,
+                    retv,
+                );
+                self.emit_check_status_for_exception(status, retv);
             }
             Operand::VariableReference(symbol, locator) => {
                 let var = self.emit_get_variable(symbol, locator);
@@ -2111,28 +2124,31 @@ where
                 };
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
-                match key {
-                    PropertyKey::Symbol(key) => {
-                        self.editor.put_runtime_set_value_by_symbol(
-                            self.support,
-                            object,
-                            key,
-                            value,
-                        );
-                    }
-                    PropertyKey::Number(key) => {
-                        self.editor.put_runtime_set_value_by_number(
-                            self.support,
-                            object,
-                            key,
-                            value,
-                        );
-                    }
-                    PropertyKey::Any(key) => {
-                        self.editor
-                            .put_runtime_set_value_by_any(self.support, object, key, value);
-                    }
-                }
+                let retv = self.emit_create_any();
+                let status = match key {
+                    PropertyKey::Symbol(key) => self.editor.put_runtime_set_value_by_symbol(
+                        self.support,
+                        object,
+                        key,
+                        value,
+                        retv,
+                    ),
+                    PropertyKey::Number(key) => self.editor.put_runtime_set_value_by_number(
+                        self.support,
+                        object,
+                        key,
+                        value,
+                        retv,
+                    ),
+                    PropertyKey::Any(key) => self.editor.put_runtime_set_value_by_any(
+                        self.support,
+                        object,
+                        key,
+                        value,
+                        retv,
+                    ),
+                };
+                self.emit_check_status_for_exception(status, retv);
             }
             operand => unreachable!("{operand:?}"),
         }
@@ -3455,24 +3471,31 @@ where
                 self.emit_throw_type_error();
                 // }
                 self.editor.switch_to_block(end_block);
-                let value = match key {
+                let value = self.emit_create_any();
+                let status = match key {
                     PropertyKey::Symbol(key) => self.editor.put_runtime_get_value_by_symbol(
                         self.support,
                         object,
                         key,
                         false,
+                        value,
                     ),
                     PropertyKey::Number(key) => self.editor.put_runtime_get_value_by_number(
                         self.support,
                         object,
                         key,
                         false,
+                        value,
                     ),
-                    PropertyKey::Any(key) => {
-                        self.editor
-                            .put_runtime_get_value_by_any(self.support, object, key, false)
-                    }
+                    PropertyKey::Any(key) => self.editor.put_runtime_get_value_by_any(
+                        self.support,
+                        object,
+                        key,
+                        false,
+                        value,
+                    ),
                 };
+                self.emit_check_status_for_exception(status, value);
                 runtime_debug! {{
                     self.editor.put_assert_non_null(
                         self.support,
@@ -3618,9 +3641,11 @@ where
         let object = self.editor.put_object(global_object.as_addr());
 
         // TODO: strict mode
-        let value = self
-            .editor
-            .put_runtime_get_value_by_symbol(self.support, object, key, true);
+        let value = self.emit_create_any();
+        let status =
+            self.editor
+                .put_runtime_get_value_by_symbol(self.support, object, key, true, value);
+        self.emit_check_status_for_exception(status, value);
 
         let then_block = self.editor.create_block();
         let end_block = self.editor.create_block();

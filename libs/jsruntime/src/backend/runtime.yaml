@@ -175,8 +175,10 @@ functions:
         type: u32
       - name: strict
         type: bool
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
-    ret: '&Value' # may be null
+    ret: Status
   - name: get_value_by_number
     args:
       - name: object
@@ -185,8 +187,10 @@ functions:
         type: f64
       - name: strict
         type: bool
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
-    ret: '&Value' # may be null
+    ret: Status
   - name: get_value_by_value
     args:
       - name: object
@@ -195,8 +199,10 @@ functions:
         type: '&Value'
       - name: strict
         type: bool
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
-    ret: '&Value' # may be null
+    ret: Status
   - name: set_value_by_symbol
     args:
       - name: object
@@ -205,7 +211,10 @@ functions:
         type: u32
       - name: value
         type: '&Value'
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
+    ret: Status
   - name: set_value_by_number
     args:
       - name: object
@@ -214,7 +223,10 @@ functions:
         type: f64
       - name: value
         type: '&Value'
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
+    ret: Status
   - name: set_value_by_value
     args:
       - name: object
@@ -223,7 +235,10 @@ functions:
         type: '&Value'
       - name: value
         type: '&Value'
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
+    ret: Status
   - name: concat_strings
     args:
       - name: str1

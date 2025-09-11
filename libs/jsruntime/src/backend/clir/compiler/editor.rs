@@ -2000,12 +2000,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: Symbol,
         strict: bool,
-    ) -> AnyIr {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_get_value_by_symbol",
             ?object,
             ?key,
-            strict
+            strict,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2019,9 +2021,9 @@ impl<'a> Editor<'a> {
             .import_runtime_get_value_by_symbol(support, self.builder.func);
         let key = self.builder.ins().iconst(ir::types::I32, key.id() as i64);
         let strict = self.put_boolean(strict);
-        let args = [self.runtime(), object.0, key, strict.0];
+        let args = [self.runtime(), object.0, key, strict.0, retv.0];
         let call = self.builder.ins().call(func, &args);
-        AnyIr(self.builder.inst_results(call)[0])
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_get_value_by_number(
@@ -2030,12 +2032,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: f64,
         strict: bool,
-    ) -> AnyIr {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_get_value_by_number",
             ?object,
             key,
-            strict
+            strict,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2049,9 +2053,9 @@ impl<'a> Editor<'a> {
             .import_runtime_get_value_by_number(support, self.builder.func);
         let key = self.put_number(key);
         let strict = self.put_boolean(strict);
-        let args = [self.runtime(), object.0, key.0, strict.0];
+        let args = [self.runtime(), object.0, key.0, strict.0, retv.0];
         let call = self.builder.ins().call(func, &args);
-        AnyIr(self.builder.inst_results(call)[0])
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_get_value_by_any(
@@ -2060,12 +2064,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: AnyIr,
         strict: bool,
-    ) -> AnyIr {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_get_value_by_any",
             ?object,
             ?key,
-            strict
+            strict,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2083,9 +2089,9 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_get_value_by_value(support, self.builder.func);
         let strict = self.put_boolean(strict);
-        let args = [self.runtime(), object.0, key.0, strict.0];
+        let args = [self.runtime(), object.0, key.0, strict.0, retv.0];
         let call = self.builder.ins().call(func, &args);
-        AnyIr(self.builder.inst_results(call)[0])
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_set_value_by_symbol(
@@ -2094,12 +2100,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: Symbol,
         value: AnyIr,
-    ) {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_set_value_by_symbol",
             ?object,
             ?key,
-            ?value
+            ?value,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2117,8 +2125,9 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_set_value_by_symbol(support, self.builder.func);
         let key = self.builder.ins().iconst(ir::types::I32, key.id() as i64);
-        let args = [self.runtime(), object.0, key, value.0];
-        self.builder.ins().call(func, &args);
+        let args = [self.runtime(), object.0, key, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_set_value_by_number(
@@ -2127,12 +2136,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: f64,
         value: AnyIr,
-    ) {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_set_value_by_number",
             ?object,
             key,
-            ?value
+            ?value,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2150,8 +2161,9 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_set_value_by_number(support, self.builder.func);
         let key = self.builder.ins().f64const(key);
-        let args = [self.runtime(), object.0, key, value.0];
-        self.builder.ins().call(func, &args);
+        let args = [self.runtime(), object.0, key, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_set_value_by_any(
@@ -2160,12 +2172,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: AnyIr,
         value: AnyIr,
-    ) {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_set_value_by_any",
             ?object,
             ?key,
-            ?value
+            ?value,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2187,8 +2201,9 @@ impl<'a> Editor<'a> {
         let func = self
             .runtime_func_cache
             .import_runtime_set_value_by_value(support, self.builder.func);
-        let args = [self.runtime(), object.0, key.0, value.0];
-        self.builder.ins().call(func, &args);
+        let args = [self.runtime(), object.0, key.0, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_concat_strings(
