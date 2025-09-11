@@ -1983,7 +1983,10 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_in(&mut self) {
-        unimplemented!("in operator");
+        let (_lhs, ..) = self.dereference();
+        let (_rhs, ..) = self.dereference();
+        self.emit_throw_internal_error(const_string!("TODO: in operator"));
+        self.process_boolean(false);
     }
 
     // 13.11.1 Runtime Semantics: Evaluation
