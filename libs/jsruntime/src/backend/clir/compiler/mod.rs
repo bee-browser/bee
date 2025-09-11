@@ -3184,8 +3184,14 @@ where
             Operand::Null => self.editor.put_number(0.0),
             Operand::Boolean(value, ..) => self.editor.put_boolean_to_number(*value),
             Operand::Number(value, ..) => *value,
-            Operand::String(..) => unimplemented!("string.to_numeric"),
-            Operand::Object(_) => unimplemented!("object.to_numeric"),
+            Operand::String(..) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToNumber(string)"));
+                self.editor.put_number(f64::NAN)
+            }
+            Operand::Object(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToNumber(object)"));
+                self.editor.put_number(f64::NAN)
+            }
             Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
             Operand::Lambda(..)
             | Operand::Closure(_)
