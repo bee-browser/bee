@@ -8,6 +8,7 @@ use cranelift::frontend::Switch;
 
 use base::static_assert_eq;
 
+use crate::StringHandle;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::objects::Object;
@@ -19,7 +20,6 @@ use crate::types::Coroutine;
 use crate::types::StringFragment;
 use crate::types::StringFragmentKind;
 use crate::types::Value;
-use crate::StringHandle;
 
 use super::AnyIr;
 use super::ArgvIr;
@@ -1975,13 +1975,20 @@ impl<'a> Editor<'a> {
         ObjectIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_create_internal_error(&mut self, support: &mut impl EditorSupport, message: StringHandle) -> ObjectIr {
+    pub fn put_runtime_create_internal_error(
+        &mut self,
+        support: &mut impl EditorSupport,
+        message: StringHandle,
+    ) -> ObjectIr {
         logger::debug!(event = "put_runtime_create_internal_error", ?message);
         debug_assert!(message.is_const());
         let func = self
             .runtime_func_cache
             .import_runtime_create_internal_error(support, self.builder.func);
-        let message = self.builder.ins().iconst(self.addr_type, message.as_addr() as i64);
+        let message = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, message.as_addr() as i64);
         let args = [self.runtime(), message];
         let call = self.builder.ins().call(func, &args);
         ObjectIr(self.builder.inst_results(call)[0])

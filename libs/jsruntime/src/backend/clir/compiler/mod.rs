@@ -24,6 +24,7 @@ use jsparser::syntax::LoopFlags;
 
 use crate::ProgramId;
 use crate::Runtime;
+use crate::StringHandle;
 use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;
@@ -39,7 +40,6 @@ use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::StringFragment;
 use crate::types::Value;
-use crate::StringHandle;
 
 use super::CodeRegistry;
 use super::CompileError;
@@ -3716,7 +3716,9 @@ where
 
     fn emit_throw_internal_error(&mut self, message: StringHandle) {
         logger::debug!(event = "emit_throw_type_error", ?message);
-        let error = self.editor.put_runtime_create_internal_error(self.support, message);
+        let error = self
+            .editor
+            .put_runtime_create_internal_error(self.support, message);
         self.operand_stack.push(Operand::Object(error));
         self.process_throw();
     }

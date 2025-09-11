@@ -1057,6 +1057,9 @@ where
                 let value = if token.lexeme.ends_with('n') {
                     // TODO: BigInt
                     return Err(Error::NotYetImplemented);
+                } else if token.lexeme.starts_with("0x") || token.lexeme.starts_with("0X") {
+                    let n = u64::from_str_radix(&token.lexeme[2..], 16).unwrap();
+                    n as f64
                 } else {
                     token.lexeme.parse::<f64>().unwrap()
                 };
