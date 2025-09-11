@@ -1355,8 +1355,10 @@ where
                 .editor
                 .put_runtime_number_to_string(self.support, *value),
             Operand::String(value, _) => *value,
-            Operand::Object(_) => todo!(),
-            Operand::Promise(_) => todo!(),
+            Operand::Promise(_) | Operand::Object(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToString(object)"));
+                self.editor.put_create_string(&[])
+            }
             Operand::Any(value, _) => self.editor.put_runtime_to_string(self.support, *value),
             Operand::Lambda(..)
             | Operand::Closure(_)
