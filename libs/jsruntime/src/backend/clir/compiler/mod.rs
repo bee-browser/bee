@@ -1533,7 +1533,9 @@ where
 
     // 13.5.1.2 Runtime Semantics: Evaluation
     fn process_delete(&mut self) {
-        unimplemented!("delete operator");
+        let (_operand, ..) = self.dereference();
+        self.emit_throw_internal_error(const_string!("TODO: delete operator"));
+        self.process_boolean(true);
     }
 
     // 13.5.2.1 Runtime Semantics: Evaluation
