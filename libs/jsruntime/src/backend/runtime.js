@@ -79,6 +79,7 @@ function makeCraneliftIRType(type) {
     case '&PropertyKey':
     case 'Lambda':
     case '&mut Runtime<X>':
+    case 'StringHandle':
       return 'addr_type';
     case undefined:
       return '';

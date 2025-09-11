@@ -39,6 +39,7 @@ use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::StringFragment;
 use crate::types::Value;
+use crate::StringHandle;
 
 use super::CodeRegistry;
 use super::CompileError;
@@ -1946,7 +1947,10 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_instanceof(&mut self) {
-        unimplemented!("instanceof operator");
+        let (_lhs, ..) = self.dereference();
+        let (_rhs, ..) = self.dereference();
+        self.emit_throw_internal_error(const_string!("TODO: instanceof operator"));
+        self.process_boolean(false);
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
@@ -3706,6 +3710,13 @@ where
     fn emit_throw_type_error(&mut self) {
         logger::debug!(event = "emit_throw_type_error");
         let error = self.editor.put_runtime_create_type_error(self.support);
+        self.operand_stack.push(Operand::Object(error));
+        self.process_throw();
+    }
+
+    fn emit_throw_internal_error(&mut self, message: StringHandle) {
+        logger::debug!(event = "emit_throw_type_error", ?message);
+        let error = self.editor.put_runtime_create_internal_error(self.support, message);
         self.operand_stack.push(Operand::Object(error));
         self.process_throw();
     }

@@ -192,6 +192,11 @@ impl StringHandle {
         self.fragment().is_empty()
     }
 
+    pub(crate) fn is_const(&self) -> bool {
+        let frag = self.fragment();
+        frag.is_const() && frag.next().is_none()
+    }
+
     /// Returns `true` if the string is allocated on the stack.
     pub(crate) fn on_stack(&self) -> bool {
         self.fragment().on_stack()
