@@ -737,6 +737,13 @@ where
     fn process_identifier_reference(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::Identifier(symbol) => symbol,
+            Detail::Token(index) => {
+                debug_assert!(matches!(
+                    self.tokens[index].kind,
+                    TokenKind::Await | TokenKind::Yield
+                ));
+                self.make_symbol(index)
+            }
             _ => unreachable!(),
         };
         self.enqueue(Node::IdentifierReference(symbol));
@@ -801,6 +808,13 @@ where
     fn process_binding_identifier(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::Identifier(symbol) => symbol,
+            Detail::Token(index) => {
+                debug_assert!(matches!(
+                    self.tokens[index].kind,
+                    TokenKind::Await | TokenKind::Yield
+                ));
+                self.make_symbol(index)
+            }
             _ => unreachable!(),
         };
         self.enqueue(Node::BindingIdentifier(symbol));
