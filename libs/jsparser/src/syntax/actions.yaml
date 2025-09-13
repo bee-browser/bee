@@ -2090,25 +2090,25 @@
 - rule: PrimaryExpression_Await -> IdentifierReference_Await
   action: process_primary_expression_identifier_reference
 - rule: PrimaryExpression_Await -> Literal
-  action: nop
+  action: process_primary_expression_literal
 - rule: PrimaryExpression_Await -> ArrayLiteral_Await
-  action: nop
+  action: process_primary_expression_array_literal
 - rule: PrimaryExpression_Await -> ObjectLiteral_Await
-  action: nop
+  action: process_primary_expression_object_literal
 - rule: PrimaryExpression_Await -> FunctionExpression
-  action: nop
+  action: process_primary_expression_function_expression
 - rule: PrimaryExpression_Await -> ClassExpression_Await
   action: undefined
 - rule: PrimaryExpression_Await -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Await -> AsyncFunctionExpression
-  action: nop
+  action: process_primary_expression_async_function_expression
 - rule: PrimaryExpression_Await -> AsyncGeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Await -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression_Await -> TemplateLiteral_Await
-  action: nop
+  action: process_primary_expression_template_literal
 - rule: >-
     PrimaryExpression_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Await
@@ -2894,25 +2894,25 @@
 - rule: PrimaryExpression -> IdentifierReference
   action: process_primary_expression_identifier_reference
 - rule: PrimaryExpression -> Literal
-  action: nop
+  action: process_primary_expression_literal
 - rule: PrimaryExpression -> ArrayLiteral
-  action: nop
+  action: process_primary_expression_array_literal
 - rule: PrimaryExpression -> ObjectLiteral
-  action: nop
+  action: process_primary_expression_object_literal
 - rule: PrimaryExpression -> FunctionExpression
-  action: nop
+  action: process_primary_expression_function_expression
 - rule: PrimaryExpression -> ClassExpression
   action: undefined
 - rule: PrimaryExpression -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression -> AsyncFunctionExpression
-  action: nop
+  action: process_primary_expression_async_function_expression
 - rule: PrimaryExpression -> AsyncGeneratorExpression
   action: undefined
 - rule: PrimaryExpression -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression -> TemplateLiteral
-  action: nop
+  action: process_primary_expression_template_literal
 - rule: PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
   action: process_primary_expression_cpeaapl
 - rule: SuperProperty -> SUPER LBRACK Expression_In RBRACK
@@ -3129,25 +3129,25 @@
 - rule: PrimaryExpression_Yield -> IdentifierReference_Yield
   action: process_primary_expression_identifier_reference
 - rule: PrimaryExpression_Yield -> Literal
-  action: nop
+  action: process_primary_expression_literal
 - rule: PrimaryExpression_Yield -> ArrayLiteral_Yield
-  action: nop
+  action: process_primary_expression_array_literal
 - rule: PrimaryExpression_Yield -> ObjectLiteral_Yield
-  action: nop
+  action: process_primary_expression_object_literal
 - rule: PrimaryExpression_Yield -> FunctionExpression
-  action: nop
+  action: process_primary_expression_function_expression
 - rule: PrimaryExpression_Yield -> ClassExpression_Yield
   action: undefined
 - rule: PrimaryExpression_Yield -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield -> AsyncFunctionExpression
-  action: nop
+  action: process_primary_expression_async_function_expression
 - rule: PrimaryExpression_Yield -> AsyncGeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression_Yield -> TemplateLiteral_Yield
-  action: nop
+  action: process_primary_expression_template_literal
 - rule: >-
     PrimaryExpression_Yield ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield
@@ -3191,25 +3191,25 @@
 - rule: PrimaryExpression_Yield_Await -> IdentifierReference_Yield_Await
   action: process_primary_expression_identifier_reference
 - rule: PrimaryExpression_Yield_Await -> Literal
-  action: nop
+  action: process_primary_expression_literal
 - rule: PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
-  action: nop
+  action: process_primary_expression_array_literal
 - rule: PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
-  action: nop
+  action: process_primary_expression_object_literal
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
-  action: nop
+  action: process_primary_expression_function_expression
 - rule: PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> AsyncFunctionExpression
-  action: nop
+  action: process_primary_expression_async_function_expression
 - rule: PrimaryExpression_Yield_Await -> AsyncGeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> REGULAR_EXPRESSION_LITERAL
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
-  action: nop
+  action: process_primary_expression_template_literal
 - rule: >-
     PrimaryExpression_Yield_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await

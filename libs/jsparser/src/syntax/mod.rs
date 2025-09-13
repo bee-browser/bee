@@ -54,6 +54,7 @@ pub struct Processor<'s, H> {
     iteration_statement_depth: usize,
     switch_statement_depth: usize,
 
+    web_compat_mode: bool,
     strict_mode: bool,
     module: bool,
 }
@@ -73,10 +74,12 @@ enum Detail {
     TemplateString,
     TemplateLiteral(u16),
     Identifier(Symbol),
-    IdentifierReference(#[allow(unused)] Symbol), // TODO: SS
+    IdentifierReference(Symbol), // TODO: SS
     BindingIdentifier(Symbol),
     LabelIdentifier(Symbol),
-    CpeaaplExpression,
+    CpeaaplExpression {
+        assignment_target_type: AssignmentTargetType,
+    },
     CpeaaplFormalParameters,
     CpeaaplEmpty,
     CpeaaplRestParameter,
@@ -85,8 +88,12 @@ enum Detail {
     CpeaaplFormalParametersWithRestPattern,
     Arguments,
     ArgumentList,
-    OptionalChain,
-    Expression,
+    OptionalChain {
+        assignment_target_type: AssignmentTargetType,
+    },
+    Expression {
+        assignment_target_type: AssignmentTargetType,
+    },
     ArrayLiteral,
     ElementList(u32, bool),
     ArrayInitializerElision(u32),
@@ -135,6 +142,13 @@ enum Detail {
     StatementList,
     CoverCallExpressionAndAsyncArrowHead,
     ModuleItemList,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum AssignmentTargetType {
+    Simple,
+    WebCompat,
+    Invalid,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -478,6 +492,7 @@ where
             label_stack: Vec::with_capacity(Self::INITIAL_LABEL_STACK_CAPACITY),
             iteration_statement_depth: 0,
             switch_statement_depth: 0,
+            web_compat_mode: false,
             strict_mode: false,
             module,
         }
@@ -949,22 +964,30 @@ where
 
     // 13.2 Primary Expression
 
-    // 13.2.1 The this Keyword
-
     // PrimaryExpression[Yield, Await] :
-    //   this
-    fn process_primary_expression_this(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::This);
-        self.top_mut().detail = Detail::Expression;
+    //   FunctionExpression
+    fn process_primary_expression_function_expression(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: AssignmentTargetType::Invalid,
+        };
         Ok(())
     }
 
-    // 13.2.2 Identifier Reference
+    // PrimaryExpression[Yield, Await] :
+    //   AsyncFunctionExpression
+    fn process_primary_expression_async_function_expression(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: AssignmentTargetType::Invalid,
+        };
+        Ok(())
+    }
 
     // PrimaryExpression[Yield, Await] :
-    //   IdentifierReference[?Yield, ?Await]
-    fn process_primary_expression_identifier_reference(&mut self) -> Result<(), Error> {
-        self.top_mut().detail = Detail::Expression;
+    //   TemplateLiteral[?Yield, ?Await, ~Tagged]
+    fn process_primary_expression_template_literal(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: AssignmentTargetType::Invalid,
+        };
         Ok(())
     }
 
@@ -974,8 +997,12 @@ where
         match self.top().detail {
             // ParenthesizedExpression[Yield, Await] :
             //   ( Expression[+In, ?Yield, ?Await] )
-            Detail::CpeaaplExpression => {
-                self.top_mut().detail = Detail::Expression;
+            Detail::CpeaaplExpression {
+                assignment_target_type,
+            } => {
+                self.top_mut().detail = Detail::Expression {
+                    assignment_target_type,
+                };
                 Ok(())
             }
             Detail::CpeaaplFormalParameters
@@ -991,7 +1018,19 @@ where
     // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
     //   ( Expression[+In, ?Yield, ?Await] )
     fn process_cpeaapl_expression(&mut self) -> Result<(), Error> {
-        self.replace(3, Detail::CpeaaplExpression);
+        dbg!(&self.stack);
+        let assignment_target_type = match self.nth(1).detail {
+            Detail::Expression {
+                assignment_target_type,
+            } => assignment_target_type,
+            _ => unreachable!(),
+        };
+        self.replace(
+            3,
+            Detail::CpeaaplExpression {
+                assignment_target_type,
+            },
+        );
         Ok(())
     }
 
@@ -1043,8 +1082,55 @@ where
         Ok(())
     }
 
+    // 13.2.1 The this Keyword
+
+    // PrimaryExpression[Yield, Await] :
+    //   this
+    fn process_primary_expression_this(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::This);
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: AssignmentTargetType::Invalid,
+        };
+        Ok(())
+    }
+
+    // 13.2.2 Identifier Reference
+
+    // PrimaryExpression[Yield, Await] :
+    //   IdentifierReference[?Yield, ?Await]
+    fn process_primary_expression_identifier_reference(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::IdentifierReference(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: match symbol {
+                // TODO(feat): if strict
+                Symbol::KEYWORD_ARGUMENTS | Symbol::KEYWORD_EVAL if self.strict_mode => {
+                    AssignmentTargetType::Invalid
+                }
+                _ => AssignmentTargetType::Simple,
+            },
+        };
+        Ok(())
+    }
+
     // 13.2.3 Literals
 
+    // PrimaryExpression[Yield, Await] :
+    //   Literal
+    fn process_primary_expression_literal(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: AssignmentTargetType::Invalid,
+        };
+        Ok(())
+    }
+
+    // Literal :
+    //   NullLiteral
+    //   BooleanLiteral
+    //   NumericLiteral
+    //   StringLiteral
     fn process_literal(&mut self) -> Result<(), Error> {
         let token_index = self.tokens.len() - 1;
         let token = &self.tokens[token_index];
@@ -1080,6 +1166,15 @@ where
     }
 
     // 13.2.4 Array Initializer
+
+    // PrimaryExpression[Yield, Await] :
+    //   ArrayLiteral[?Yield, ?Await]
+    fn process_primary_expression_array_literal(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: AssignmentTargetType::Invalid,
+        };
+        Ok(())
+    }
 
     // ArrayLiteral[Yield, Await] :
     //   [ ]
@@ -1208,6 +1303,7 @@ where
         Ok(())
     }
 
+    // ElementList[Yield, Await] :
     //   ElementList[?Yield, ?Await] , ArrayInitializerElision SpreadElement[?Yield, ?Await]
     fn process_element_list_list_elision_spread(&mut self) -> Result<(), Error> {
         self.pop(); // SpreadElement
@@ -1272,6 +1368,15 @@ where
     }
 
     // 13.2.5 Object Initializer
+
+    // PrimaryExpression[Yield, Await] :
+    //   ObjectLiteral[?Yield, ?Await]
+    fn process_primary_expression_object_literal(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: AssignmentTargetType::Invalid,
+        };
+        Ok(())
+    }
 
     // ObjectLiteral[Yield, Await] :
     //   { }
@@ -1548,7 +1653,12 @@ where
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithExpressionKey,
         ));
-        self.replace(4, Detail::Expression);
+        self.replace(
+            4,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Simple,
+            },
+        );
         Ok(())
     }
 
@@ -1560,7 +1670,12 @@ where
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithIdentifierKey(symbol),
         ));
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Simple,
+            },
+        );
         Ok(())
     }
 
@@ -1570,7 +1685,12 @@ where
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithExpressionKey,
         ));
-        self.replace(4, Detail::Expression);
+        self.replace(
+            4,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Simple,
+            },
+        );
         Ok(())
     }
 
@@ -1582,7 +1702,12 @@ where
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithIdentifierKey(symbol),
         ));
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Simple,
+            },
+        );
         Ok(())
     }
 
@@ -1592,7 +1717,18 @@ where
     //   CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
     fn process_call_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::CallExpression);
-        self.replace(1, Detail::Expression);
+        self.replace(
+            1,
+            Detail::Expression {
+                // TODO(feat): supports Runtime Errors for Function Call Assignment Targets and
+                // IsStrict(this CallExpression) is false
+                assignment_target_type: if self.web_compat_mode {
+                    AssignmentTargetType::WebCompat
+                } else {
+                    AssignmentTargetType::Invalid
+                },
+            },
+        );
         Ok(())
     }
 
@@ -1600,7 +1736,18 @@ where
     //   CallExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
     fn process_call_expression_call(&mut self) -> Result<(), Error> {
         self.enqueue(Node::CallExpression);
-        self.replace(2, Detail::Expression);
+        self.replace(
+            2,
+            Detail::Expression {
+                // TODO(feat): supports Runtime Errors for Function Call Assignment Targets and
+                // IsStrict(this CallExpression) is false
+                assignment_target_type: if self.web_compat_mode {
+                    AssignmentTargetType::WebCompat
+                } else {
+                    AssignmentTargetType::Invalid
+                },
+            },
+        );
         Ok(())
     }
 
@@ -1651,7 +1798,12 @@ where
     //   new NewExpression[?Yield, ?Await]
     fn process_new_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::NewExpression(false));
-        self.replace(2, Detail::Expression);
+        self.replace(
+            2,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -1659,7 +1811,12 @@ where
     //   new MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
     fn process_member_expression_new(&mut self) -> Result<(), Error> {
         self.enqueue(Node::NewExpression(true));
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -1668,21 +1825,54 @@ where
     // OptionalExpression[Yield, Await] :
     //   MemberExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
     fn process_optional_expression_member(&mut self) -> Result<(), Error> {
-        self.replace(2, Detail::Expression);
+        let assignment_target_type = match self.top().detail {
+            Detail::OptionalChain {
+                assignment_target_type,
+            } => assignment_target_type,
+            _ => unreachable!(),
+        };
+        self.replace(
+            2,
+            Detail::Expression {
+                assignment_target_type,
+            },
+        );
         Ok(())
     }
 
     // OptionalExpression[Yield, Await] :
     //   CallExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
     fn process_optional_expression_call(&mut self) -> Result<(), Error> {
-        self.replace(2, Detail::Expression);
+        let assignment_target_type = match self.top().detail {
+            Detail::OptionalChain {
+                assignment_target_type,
+            } => assignment_target_type,
+            _ => unreachable!(),
+        };
+        self.replace(
+            2,
+            Detail::Expression {
+                assignment_target_type,
+            },
+        );
         Ok(())
     }
 
     // OptionalExpression[Yield, Await] :
     //   OptionalExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
     fn process_optional_expression_chain(&mut self) -> Result<(), Error> {
-        self.replace(2, Detail::Expression);
+        let assignment_target_type = match self.top().detail {
+            Detail::OptionalChain {
+                assignment_target_type,
+            } => assignment_target_type,
+            _ => unreachable!(),
+        };
+        self.replace(
+            2,
+            Detail::Expression {
+                assignment_target_type,
+            },
+        );
         Ok(())
     }
 
@@ -1690,7 +1880,12 @@ where
     //   ?. Arguments[?Yield, ?Await]
     fn process_optional_chain_call(&mut self) -> Result<(), Error> {
         self.enqueue(Node::OptionalChain(PropertyAccessKind::Call));
-        self.replace(2, Detail::OptionalChain);
+        self.replace(
+            2,
+            Detail::OptionalChain {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -1700,7 +1895,12 @@ where
         let token_index = self.tokens.len() - 1;
         let key = self.make_symbol(token_index);
         self.enqueue(Node::OptionalChain(PropertyAccessKind::IdentifierKey(key)));
-        self.replace(2, Detail::OptionalChain);
+        self.replace(
+            2,
+            Detail::OptionalChain {
+                assignment_target_type: AssignmentTargetType::Simple,
+            },
+        );
         Ok(())
     }
 
@@ -1708,7 +1908,12 @@ where
     //   OptionalChain[?Yield, ?Await] Arguments[?Yield, ?Await]
     fn process_optional_chain_call_chain(&mut self) -> Result<(), Error> {
         self.enqueue(Node::CallExpression);
-        self.replace(2, Detail::OptionalChain);
+        self.replace(
+            2,
+            Detail::OptionalChain {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -1720,7 +1925,12 @@ where
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithIdentifierKey(key),
         ));
-        self.replace(3, Detail::OptionalChain);
+        self.replace(
+            3,
+            Detail::OptionalChain {
+                assignment_target_type: AssignmentTargetType::Simple,
+            },
+        );
         Ok(())
     }
 
@@ -1728,35 +1938,72 @@ where
 
     fn process_update_expression(&mut self, op: UpdateOperator) -> Result<(), Error> {
         self.enqueue(Node::UpdateExpression(op));
-        self.replace(2, Detail::Expression);
+        self.replace(
+            2,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
     // UpdateExpression[Yield, Await] :
     //   LeftHandSideExpression[?Yield, ?Await] [no LineTerminator here] ++
     fn process_postfix_increment(&mut self) -> Result<(), Error> {
-        // TODO: 13.4.1 Static Semantics: Early Errors
+        // 13.4.1 Static Semantics: Early Errors
+        if matches!(
+            self.nth(1).detail,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            }
+        ) {
+            return Err(Error::SyntaxError);
+        }
         self.process_update_expression(UpdateOperator::PostfixIncrement)
     }
 
     // UpdateExpression[Yield, Await] :
     //   LeftHandSideExpression[?Yield, ?Await] [no LineTerminator here] --
     fn process_postfix_decrement(&mut self) -> Result<(), Error> {
-        // TODO: 13.4.1 Static Semantics: Early Errors
+        // 13.4.1 Static Semantics: Early Errors
+        if matches!(
+            self.nth(1).detail,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            }
+        ) {
+            return Err(Error::SyntaxError);
+        }
         self.process_update_expression(UpdateOperator::PostfixDecrement)
     }
 
     // UpdateExpression[Yield, Await] :
     //   ++ UnaryExpression[?Yield, ?Await]
     fn process_prefix_increment(&mut self) -> Result<(), Error> {
-        // TODO: 13.4.1 Static Semantics: Early Errors
+        // 13.4.1 Static Semantics: Early Errors
+        if matches!(
+            self.top().detail,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            }
+        ) {
+            return Err(Error::SyntaxError);
+        }
         self.process_update_expression(UpdateOperator::PrefixIncrement)
     }
 
     // UpdateExpression[Yield, Await] :
     //   -- UnaryExpression[?Yield, ?Await]
     fn process_prefix_decrement(&mut self) -> Result<(), Error> {
-        // TODO: 13.4.1 Static Semantics: Early Errors
+        // 13.4.1 Static Semantics: Early Errors
+        if matches!(
+            self.top().detail,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            }
+        ) {
+            return Err(Error::SyntaxError);
+        }
         self.process_update_expression(UpdateOperator::PrefixDecrement)
     }
 
@@ -1764,7 +2011,12 @@ where
 
     fn process_unary_expression(&mut self, op: UnaryOperator) -> Result<(), Error> {
         self.enqueue(Node::UnaryExpression(op));
-        self.replace(2, Detail::Expression);
+        self.replace(
+            2,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -1816,7 +2068,12 @@ where
     #[inline(always)]
     fn process_binary_expression(&mut self, op: BinaryOperator) -> Result<(), Error> {
         self.enqueue(Node::BinaryExpression(op));
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -1969,7 +2226,12 @@ where
     #[inline(always)]
     fn process_logical_expression(&mut self, op: LogicalOperator) -> Result<(), Error> {
         self.enqueue(Node::LogicalExpression(op));
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -1999,7 +2261,12 @@ where
     //     : AssignmentExpression[?In, ?Yield, ?Await]
     fn process_conditional_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ConditionalExpression);
-        self.replace(5, Detail::Expression);
+        self.replace(
+            5,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -2007,7 +2274,12 @@ where
 
     fn process_assignment_expression(&mut self, op: AssignmentOperator) -> Result<(), Error> {
         self.enqueue(Node::AssignmentExpression(op));
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -2071,7 +2343,12 @@ where
     //   Expression[?In, ?Yield, ?Await] , AssignmentExpression[?In, ?Yield, ?Await]
     fn process_comma_operator(&mut self) -> Result<(), Error> {
         self.enqueue(Node::SequenceExpression);
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -3196,7 +3473,12 @@ where
     //   function ( FormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] }
     fn process_anonymous_function_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FunctionExpression(false));
-        self.replace(7, Detail::Expression);
+        self.replace(
+            7,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -3205,7 +3487,12 @@ where
     //   { FunctionBody[~Yield, ~Await] }
     fn process_function_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FunctionExpression(true));
-        self.replace(8, Detail::Expression);
+        self.replace(
+            8,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -3231,7 +3518,12 @@ where
     fn process_arrow_function(&mut self) -> Result<(), Error> {
         // TODO: 15.3.1 Static Semantics: Early Errors
         self.enqueue(Node::ArrowFunction);
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -3328,7 +3620,12 @@ where
     //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
     fn process_async_function_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::AsyncFunctionExpression(true));
-        self.replace(9, Detail::Expression);
+        self.replace(
+            9,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -3337,7 +3634,12 @@ where
     //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
     fn process_anonymous_async_function_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::AsyncFunctionExpression(false));
-        self.replace(8, Detail::Expression);
+        self.replace(
+            8,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -3345,7 +3647,12 @@ where
     //   await UnaryExpression[?Yield, +Await]
     fn process_await(&mut self) -> Result<(), Error> {
         self.enqueue(Node::AwaitExpression);
-        self.replace(2, Detail::Expression);
+        self.replace(
+            2,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -3356,7 +3663,12 @@ where
     //   [no LineTerminator here] => AsyncConciseBody[?In]
     fn process_async_arrow_function(&mut self) -> Result<(), Error> {
         self.enqueue(Node::AsyncArrowFunction);
-        self.replace(4, Detail::Expression);
+        self.replace(
+            4,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
@@ -3365,7 +3677,12 @@ where
     //   AsyncConciseBody[?In]
     fn process_async_arrow_function_cceaaah(&mut self) -> Result<(), Error> {
         self.enqueue(Node::AsyncArrowFunction);
-        self.replace(3, Detail::Expression);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 
