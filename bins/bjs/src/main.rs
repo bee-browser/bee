@@ -194,7 +194,7 @@ fn main() -> Result<()> {
             let mut runner = Runner::new();
             runner.setup_runtime();
             if let Some((_input, source)) = cl.sources().next() {
-                runner.run(&source);
+                runner.run(&source, &cl);
             }
         }
     }
@@ -284,8 +284,12 @@ impl Runner {
         self.runtime.register_host_function("print", Self::print); // TODO
     }
 
-    fn run(&mut self, src: &str) {
-        let program_id = match self.runtime.parse_script(src) {
+    fn run(&mut self, src: &str, cl: &CommandLine) {
+        let result = match cl.parse_as {
+            SourceType::Module => self.runtime.parse_module(src),
+            _ => self.runtime.parse_script(src),
+        };
+        let program_id = match result {
             Ok(program_id) => program_id,
             Err(_err) => {
                 let event = Test262Event::parse_error();
