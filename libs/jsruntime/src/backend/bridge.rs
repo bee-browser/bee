@@ -163,7 +163,7 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
         Value::Boolean(true) => 1.0,
         Value::Boolean(false) => 0.0,
         Value::Number(value) => *value,
-        Value::String(_value) => todo!(),
+        Value::String(_value) => f64::NAN, // TODO(feat): 7.1.4.1.1 StringToNumber ( str )
         Value::Promise(_) => f64::NAN,
         Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
     }
