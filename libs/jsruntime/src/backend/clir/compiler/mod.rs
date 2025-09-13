@@ -342,13 +342,7 @@ where
 
     fn compile(mut self, func: &Function) {
         self.start_compile(func);
-        for command in func.commands.iter() {
-            if self.skip_count > 0 {
-                self.skip_count -= 1;
-                continue;
-            }
-            self.process_command(func, command);
-        }
+        self.process_commands(func, &func.commands[..]);
         self.end_compile(func);
     }
 
@@ -478,6 +472,16 @@ where
             let this = self.this.unwrap();
             let capture = self.editor.put_runtime_create_capture(self.support, this);
             self.this_capture = Some(capture);
+        }
+    }
+
+    fn process_commands(&mut self, func: &Function, commands: &[CompileCommand]) {
+        for command in commands {
+            if self.skip_count > 0 {
+                self.skip_count -= 1;
+                continue;
+            }
+            self.process_command(func, command);
         }
     }
 
@@ -2577,9 +2581,7 @@ where
                         CompileCommand::Batch(n) => n as usize,
                         _ => unreachable!(),
                     };
-                for command in func.commands[start..end].iter() {
-                    self.process_command(func, command);
-                }
+                self.process_commands(func, &func.commands[start..end]);
             }
             self.editor
                 .put_jump_if_not_terminated(fall_through_block, &[]);
