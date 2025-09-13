@@ -1161,7 +1161,13 @@ where
                     let n = u64::from_str_radix(&token.lexeme[2..], 16).unwrap();
                     n as f64
                 } else {
-                    token.lexeme.parse::<f64>().unwrap()
+                    match token.lexeme.parse::<f64>() {
+                        Ok(value) => value,
+                        Err(_) => {
+                            // TODO: perform `NumericValue`
+                            return Err(Error::NotYetImplemented);
+                        }
+                    }
                 };
                 self.enqueue(Node::Number(value, token.lexeme))
             }
