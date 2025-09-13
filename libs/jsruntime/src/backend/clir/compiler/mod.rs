@@ -951,7 +951,7 @@ where
 
         let local = match locator {
             Locator::Local(index) => self.get_local(index),
-            _ => unreachable!(),
+            _ => unreachable!("{locator:?}"),
         };
 
         self.emit_store_operand_to_any(&operand, local);

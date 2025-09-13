@@ -3,6 +3,7 @@
 //   16.1.7 GlobalDeclarationInstantiation ( script, env )
 
 use bitflags::bitflags;
+use itertools::Itertools;
 use jsparser::SymbolRegistry;
 
 use super::Locator;
@@ -78,6 +79,15 @@ pub struct ScopeTree {
 impl ScopeTree {
     pub fn scope(&self, scope_ref: ScopeRef) -> &Scope {
         &self.scopes[scope_ref.index()]
+    }
+
+    pub fn validate(&self) -> bool {
+        for scope in self.scopes.iter() {
+            if !scope.validate() {
+                return false;
+            }
+        }
+        true
     }
 
     pub fn iter_variables(
@@ -371,6 +381,13 @@ impl Scope {
 
     pub fn is_function(&self) -> bool {
         matches!(self.kind, ScopeKind::Function)
+    }
+
+    fn validate(&self) -> bool {
+        self.variables
+            .iter()
+            .map(|variable| variable.symbol)
+            .all_unique()
     }
 
     fn display<'a>(

@@ -1231,9 +1231,14 @@ where
 
         self.apply_analysis(analysis, global_scope_ref);
 
+        let scope_tree = self.global_analysis.scope_tree_builder.build();
+        if !scope_tree.validate() {
+            return Err(Error::SyntaxError);
+        }
+
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
-            scope_tree: self.global_analysis.scope_tree_builder.build(),
+            scope_tree,
             global_symbols,
             module: self.module,
         })
