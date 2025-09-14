@@ -789,7 +789,11 @@ where
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
+        let batch_index = analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
+        let scope_ref = self.analysis().scope_ref();
+        self.global_analysis
+            .scope_tree_builder
+            .add_function_declaration(scope_ref, batch_index);
     }
 
     fn handle_async_function_declaration(&mut self) {
@@ -913,7 +917,7 @@ where
 
     fn handle_start_block_scope(&mut self) {
         let scope_ref = self.global_analysis.scope_tree_builder.push_block();
-        analysis_mut!(self).start_scope(scope_ref);
+        analysis_mut!(self).start_scope(scope_ref, false);
     }
 
     fn handle_end_block_scope(&mut self) {
@@ -937,8 +941,7 @@ where
         analysis.reserve_commands(2);
 
         let scope_ref = self.global_analysis.scope_tree_builder.push_function();
-        analysis.start_scope(scope_ref);
-        analysis.push_command(CompileCommand::DeclareVariables(scope_ref));
+        analysis.start_scope(scope_ref, true);
 
         // The `this` binding will be always resolved to the global object in the entry function.
         if !is_entry_function && matches!(this_mode, ThisMode::Strict | ThisMode::Global) {
@@ -1175,19 +1178,15 @@ where
             match reference.func_index {
                 Some(func_index) => {
                     let func_scope_ref = self.functions[func_index].scope_ref;
-                    self.global_analysis.scope_tree_builder.add_global(
-                        func_scope_ref,
-                        reference.symbol,
-                        Default::default(),
-                    );
+                    self.global_analysis
+                        .scope_tree_builder
+                        .add_global(func_scope_ref, reference.symbol);
                 }
                 None => {
                     if !globals_in_global_scope.contains(&reference.symbol) {
-                        self.global_analysis.scope_tree_builder.add_global(
-                            global_scope_ref,
-                            reference.symbol,
-                            Default::default(),
-                        );
+                        self.global_analysis
+                            .scope_tree_builder
+                            .add_global(global_scope_ref, reference.symbol);
                         globals_in_global_scope.insert(reference.symbol);
                     }
                 }
@@ -1201,7 +1200,7 @@ where
         //
         // TODO(test): probably, the order of error handling may be different fro the
         // specification.
-        for (&symbol, entry) in analysis.function_scoped_variables.iter() {
+        for (&symbol, _entry) in analysis.function_scoped_variables.iter() {
             // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
             // `function.commands` must be rewritten to throw the "Error".
             let result = self
@@ -1210,21 +1209,10 @@ where
             debug_assert!(matches!(result, Ok(true)));
             // TODO: this
             if !globals_in_global_scope.contains(&symbol) {
-                self.global_analysis.scope_tree_builder.add_global(
-                    global_scope_ref,
-                    symbol,
-                    entry.function_declaration_batch,
-                );
-                globals_in_global_scope.insert(symbol);
-            } else {
-                // TODO(perf): rethink the algorithm.  somewhat inefficient...
                 self.global_analysis
                     .scope_tree_builder
-                    .set_function_declaration_batch(
-                        global_scope_ref,
-                        symbol,
-                        entry.function_declaration_batch,
-                    );
+                    .add_global(global_scope_ref, symbol);
+                globals_in_global_scope.insert(symbol);
             }
             global_symbols.insert(symbol);
         }
@@ -1345,29 +1333,17 @@ struct FunctionAnalysis {
 }
 
 struct FunctionScopedVariableEntry {
-    /// The index of the [`CompileCommand::Batch`] for the variable.
-    ///
-    /// `0` means that there is no [`CompileCommand::Batch`] for a function declaration.
-    function_declaration_batch: usize,
-
     /// The mutability of the variable.
     mutable: bool,
 }
 
 impl FunctionScopedVariableEntry {
     fn var() -> Self {
-        Self {
-            function_declaration_batch: 0,
-            mutable: true,
-        }
+        Self { mutable: true }
     }
 
-    fn function(declaration_batch: usize) -> Self {
-        debug_assert_ne!(declaration_batch, 0);
-        Self {
-            function_declaration_batch: declaration_batch,
-            mutable: true,
-        }
+    fn function() -> Self {
+        Self { mutable: true }
     }
 }
 
@@ -1782,7 +1758,7 @@ impl FunctionAnalysis {
         self.symbol_stack.truncate(i);
     }
 
-    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
+    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) -> usize {
         debug_assert!(!self.symbol_stack.is_empty());
         let (symbol, _) = self.symbol_stack.pop().unwrap();
 
@@ -1801,14 +1777,9 @@ impl FunctionAnalysis {
         // Such "VariableStatement"s can overwrite the variable.
         self.function_scoped_variables
             .entry(symbol)
-            .and_modify(|entry| {
-                debug_assert_eq!(
-                    entry.function_declaration_batch, 0,
-                    "Multiple function declarations with the same symbol are not allowed."
-                );
-                entry.function_declaration_batch = index;
-            })
-            .or_insert(FunctionScopedVariableEntry::function(index));
+            .or_insert(FunctionScopedVariableEntry::function());
+
+        index
     }
 
     fn process_closure_expression(
@@ -1833,7 +1804,7 @@ impl FunctionAnalysis {
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
-        self.start_scope(scope_ref);
+        self.start_scope(scope_ref, false);
 
         // The placeholder command will be replaced with an appropriate command in
         // `process_loop_end()`.
@@ -1895,7 +1866,7 @@ impl FunctionAnalysis {
 
     fn process_case_block(&mut self, scope_ref: ScopeRef) {
         // Step#3..7 in 14.12.4 Runtime Semantics: Evaluation
-        self.start_scope(scope_ref);
+        self.start_scope(scope_ref, false);
 
         // The placeholder commands will be replaced in `process_switch_statement()`.
         let case_block_index = self.reserve_commands(1);
@@ -2020,7 +1991,7 @@ impl FunctionAnalysis {
         let index = self.put_command(CompileCommand::Catch(true));
         self.try_stack.last_mut().unwrap().catch_index = index;
 
-        self.start_scope(scope_ref);
+        self.start_scope(scope_ref, false);
     }
 
     fn process_catch_clause(&mut self, _has_parameter: bool) {
@@ -2059,11 +2030,16 @@ impl FunctionAnalysis {
         self.scope_stack.last().unwrap().scope_ref
     }
 
-    fn start_scope(&mut self, scope_ref: ScopeRef) {
+    fn start_scope(&mut self, scope_ref: ScopeRef, func_scope: bool) {
         // NOTE(perf): The scope may has no variable.  In this case, we can remove the
         // PushScope command safely and reduce the number of the commands.  We can add a
         // post-process for optimization if it's needed.
         self.commands.push(CompileCommand::PushScope(scope_ref));
+        if func_scope {
+            self.commands.push(CompileCommand::DeclareVariables(scope_ref));
+        }
+        // TODO(perf): can skip if there are no function declarations in the scope.
+        self.commands.push(CompileCommand::DeclareFunctions(scope_ref));
         self.scope_stack.push(Scope { scope_ref });
     }
 
@@ -2083,12 +2059,7 @@ impl FunctionAnalysis {
         for (&symbol, entry) in self.function_scoped_variables.iter() {
             global_analysis
                 .scope_tree_builder
-                .add_function_scoped_variable(
-                    symbol,
-                    self.num_locals,
-                    entry.mutable,
-                    entry.function_declaration_batch,
-                );
+                .add_function_scoped_variable(symbol, self.num_locals, entry.mutable);
             self.num_locals += 1;
         }
     }
@@ -2202,6 +2173,7 @@ pub enum CompileCommand {
     MutableVariable,
     ImmutableVariable,
     DeclareVariables(ScopeRef),
+    DeclareFunctions(ScopeRef),
     DeclareFunction,
     Call(u16),
     New(u16),
@@ -2503,6 +2475,7 @@ mod tests {
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVariables(scope_ref!(1)),
+                        CompileCommand::DeclareFunctions(scope_ref!(1)),
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2534,15 +2507,18 @@ mod tests {
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVariables(scope_ref!(1)),
+                        CompileCommand::DeclareFunctions(scope_ref!(1)),
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PushScope(scope_ref!(2)),
+                        CompileCommand::DeclareFunctions(scope_ref!(2)),
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(2)),
                         CompileCommand::PushScope(scope_ref!(3)),
+                        CompileCommand::DeclareFunctions(scope_ref!(3)),
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2567,6 +2543,7 @@ mod tests {
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
+                    CompileCommand::DeclareFunctions(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
                     CompileCommand::Swap,
@@ -2588,6 +2565,7 @@ mod tests {
                     CompileCommand::AllocateLocals(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
+                    CompileCommand::DeclareFunctions(scope_ref!(1)),
                     CompileCommand::Number(1.0),
                     CompileCommand::VariableReference(symbol!(stub, "a")),
                     CompileCommand::MutableVariable,
@@ -2614,6 +2592,7 @@ mod tests {
                     CompileCommand::JumpTable(3),
                     CompileCommand::PushScope(scope_ref!(2)),
                     CompileCommand::DeclareVariables(scope_ref!(2)),
+                    CompileCommand::DeclareFunctions(scope_ref!(2)),
                     CompileCommand::Number(0.0),
                     CompileCommand::Await(1),
                     CompileCommand::Discard,
@@ -2627,6 +2606,7 @@ mod tests {
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
+                    CompileCommand::DeclareFunctions(scope_ref!(1)),
                     CompileCommand::Lambda(program.functions[0].id),
                     CompileCommand::Closure(false, scope_ref!(2)),
                     CompileCommand::Coroutine(program.functions[0].id, 0),

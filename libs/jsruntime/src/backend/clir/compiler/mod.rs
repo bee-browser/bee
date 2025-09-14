@@ -547,7 +547,10 @@ where
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
             CompileCommand::DeclareVariables(scope_ref) => {
-                self.process_declare_variables(func, *scope_ref)
+                self.process_declare_variables(*scope_ref)
+            }
+            CompileCommand::DeclareFunctions(scope_ref) => {
+                self.process_declare_functions(func, *scope_ref)
             }
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
@@ -969,8 +972,7 @@ where
         self.emit_store_operand_to_any(&operand, local);
     }
 
-    // NOTE: This function may call `process_command()`.
-    fn process_declare_variables(&mut self, func: &Function, scope_ref: ScopeRef) {
+    fn process_declare_variables(&mut self, scope_ref: ScopeRef) {
         debug_assert!(self.scope_tree.scope(scope_ref).is_function());
 
         // In the specification, function-scoped variables defined by "VariableStatement"s are
@@ -993,15 +995,20 @@ where
             };
             self.editor.put_store_undefined_to_any(local);
         }
+    }
 
-        // TODO(fix): preserve declaration order.
-        for variable in self.scope_tree.scope(scope_ref).variables.iter() {
-            if variable.function_declaration_batch == 0 {
-                continue;
-            }
-            let start = variable.function_declaration_batch + 1;
+    // NOTE: This function may call `process_command()`.
+    fn process_declare_functions(&mut self, func: &Function, scope_ref: ScopeRef) {
+        for batch_index in self
+            .scope_tree
+            .scope(scope_ref)
+            .function_declarations
+            .iter()
+            .cloned()
+        {
+            let start = batch_index + 1;
             let end = start
-                + match func.commands[variable.function_declaration_batch] {
+                + match func.commands[batch_index] {
                     CompileCommand::Batch(n) => n as usize,
                     _ => unreachable!(),
                 };
