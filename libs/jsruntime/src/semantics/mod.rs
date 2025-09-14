@@ -1,6 +1,7 @@
 mod scope;
 
 use bitflags::bitflags;
+use itertools::Itertools;
 use jsparser::SymbolRegistry;
 use jsparser::syntax::LiteralPropertyName;
 use jsparser::syntax::MemberExpressionKind;
@@ -1462,6 +1463,14 @@ impl FunctionAnalysis {
         *self.nargs_stack.last_mut().unwrap() += 1;
     }
 
+    fn todo(&mut self, message: &str) {
+        self.process_identifier_reference(Symbol::INTERNAL_ERROR);
+        let utf16 = message.encode_utf16().collect_vec();
+        self.commands.push(CompileCommand::String(utf16));
+        self.commands.push(CompileCommand::New(1));
+        self.commands.push(CompileCommand::Throw);
+    }
+
     fn process_call_expression(&mut self) {
         let nargs = self.nargs_stack.pop().unwrap();
         self.commands.push(CompileCommand::Call(nargs));
@@ -1537,7 +1546,8 @@ impl FunctionAnalysis {
             }
             PropertyDefinitionKind::ArraySpread => {
                 // 13.2.4.1 Runtime Semantics: ArrayAccumulation
-                todo!("feat(jsruntime): GetIterator(spreadObj, sync)");
+                self.commands.push(CompileCommand::Discard); // AssignmentExpression
+                self.todo("TODO(feat): GetIterator(spreadObj, sync)");
             }
             PropertyDefinitionKind::Reference => {
                 let symbol = match self.commands.pop() {
@@ -2036,10 +2046,12 @@ impl FunctionAnalysis {
         // post-process for optimization if it's needed.
         self.commands.push(CompileCommand::PushScope(scope_ref));
         if func_scope {
-            self.commands.push(CompileCommand::DeclareVariables(scope_ref));
+            self.commands
+                .push(CompileCommand::DeclareVariables(scope_ref));
         }
         // TODO(perf): can skip if there are no function declarations in the scope.
-        self.commands.push(CompileCommand::DeclareFunctions(scope_ref));
+        self.commands
+            .push(CompileCommand::DeclareFunctions(scope_ref));
         self.scope_stack.push(Scope { scope_ref });
     }
 
