@@ -3196,7 +3196,10 @@ where
             Operand::Undefined | Operand::Null => self.editor.put_boolean(false),
             Operand::Boolean(value, ..) => *value,
             Operand::Number(value, ..) => self.editor.put_number_to_boolean(*value),
-            Operand::String(..) => todo!(),
+            Operand::String(..) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToBoolean(string)"));
+                self.editor.put_boolean(false)
+            }
             Operand::Promise(_) | Operand::Object(_) => self.editor.put_boolean(true),
             Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
             Operand::Lambda(..)
