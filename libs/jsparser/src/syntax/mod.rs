@@ -2306,7 +2306,11 @@ where
     // AssignmentExpression[In, Yield, Await] :
     //   LeftHandSideExpression[?Yield, ?Await] = AssignmentExpression[?In, ?Yield, ?Await]
     fn process_assignment(&mut self) -> Result<(), Error> {
-        // TODO: 13.15.1 Static Semantics: Early Errors
+        // 13.15.1 Static Semantics: Early Errors
+        self.validate_assignment_target_type(2, |v| {
+            // TODO: check ObjectLiteral, ArrayLiteral
+            !matches!(v, AssignmentTargetType::Invalid)
+        })?;
         self.process_assignment_expression(AssignmentOperator::Assignment)
     }
 
@@ -2314,10 +2318,11 @@ where
     //   LeftHandSideExpression[?Yield, ?Await] AssignmentOperator
     //     AssignmentExpression[?In, ?Yield, ?Await]
     fn process_assignment_operator(&mut self) -> Result<(), Error> {
-        // TODO: 13.15.1 Static Semantics: Early Errors
-        let kind = match self.stack[self.stack.len() - 2].detail {
+        // 13.15.1 Static Semantics: Early Errors
+        self.validate_assignment_target_type(2, |v| !matches!(v, AssignmentTargetType::Invalid))?;
+        let kind = match self.nth(1).detail {
             Detail::Token(index) => self.tokens[index].kind,
-            _ => unreachable!(),
+            ref detail => unreachable!("{detail:?}"),
         };
         self.process_assignment_expression(match kind {
             TokenKind::MulAssign => AssignmentOperator::MultiplicationAssignment,
@@ -2339,22 +2344,43 @@ where
     // AssignmentExpression[In, Yield, Await] :
     //   LeftHandSideExpression[?Yield, ?Await] &&= AssignmentExpression[?In, ?Yield, ?Await]
     fn process_logical_and_assignment(&mut self) -> Result<(), Error> {
-        // TODO: 13.15.1 Static Semantics: Early Errors
+        // 13.15.1 Static Semantics: Early Errors
+        self.validate_assignment_target_type(2, |v| matches!(v, AssignmentTargetType::Simple))?;
         self.process_assignment_expression(AssignmentOperator::LogicalAndAssignment)
     }
 
     // AssignmentExpression[In, Yield, Await] :
     //   LeftHandSideExpression[?Yield, ?Await] ||= AssignmentExpression[?In, ?Yield, ?Await]
     fn process_logical_or_assignment(&mut self) -> Result<(), Error> {
-        // TODO: 13.15.1 Static Semantics: Early Errors
+        // 13.15.1 Static Semantics: Early Errors
+        self.validate_assignment_target_type(2, |v| matches!(v, AssignmentTargetType::Simple))?;
         self.process_assignment_expression(AssignmentOperator::LogicalOrAssignment)
     }
 
     // AssignmentExpression[In, Yield, Await] :
     //   LeftHandSideExpression[?Yield, ?Await] ??= AssignmentExpression[?In, ?Yield, ?Await]
     fn process_nullish_coalescing_assignment(&mut self) -> Result<(), Error> {
-        // TODO: 13.15.1 Static Semantics: Early Errors
+        // 13.15.1 Static Semantics: Early Errors
+        self.validate_assignment_target_type(2, |v| matches!(v, AssignmentTargetType::Simple))?;
         self.process_assignment_expression(AssignmentOperator::NullishCoalescingAssignment)
+    }
+
+    fn validate_assignment_target_type(
+        &self,
+        nth: usize,
+        validator: fn(AssignmentTargetType) -> bool,
+    ) -> Result<(), Error> {
+        match self.nth(nth).detail {
+            Detail::Expression {
+                assignment_target_type,
+            } => {
+                if !validator(assignment_target_type) {
+                    return Err(Error::SyntaxError);
+                }
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
+        Ok(())
     }
 
     // 13.16 Comma Operator ( , )
