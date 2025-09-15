@@ -1030,7 +1030,6 @@ where
     // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
     //   ( Expression[+In, ?Yield, ?Await] )
     fn process_cpeaapl_expression(&mut self) -> Result<(), Error> {
-        dbg!(&self.stack);
         let assignment_target_type = match self.nth(1).detail {
             Detail::Expression {
                 assignment_target_type,

@@ -495,9 +495,14 @@ impl<'a> Editor<'a> {
         self.builder.ins().br_table(index, jump_table);
     }
 
-    pub fn put_return(&mut self) {
+    pub fn put_return(&mut self, support: &mut impl EditorSupport) {
         logger::debug!(event = "put_return");
         debug_assert!(!self.block_terminated);
+        runtime_debug! {{
+            let retv = self.retv();
+            let is_return_safe = self.put_is_return_safe(retv);
+            self.put_assert(support, is_return_safe, c"retv must be return-safe");
+        }}
         let status = self.put_load_status();
         let masked = self.builder.ins().band_imm(status.0, Status::MASK as i64);
         self.builder.ins().return_(&[masked]);
@@ -673,6 +678,32 @@ impl<'a> Editor<'a> {
                 .ins()
                 .icmp_imm(NotEqual, kind, Value::KIND_NONE as i64),
         )
+    }
+
+    fn put_is_return_safe(&mut self, any: AnyIr) -> BooleanIr {
+        logger::debug!(event = "put_is_return_safe", ?any);
+        let then_block = self.create_block();
+        let merge_block = self.create_block_with_i8();
+
+        // if any.is_string()
+        let is_string = self.put_is_string(any);
+        self.put_branch(
+            is_string,
+            then_block,
+            &[],
+            merge_block,
+            &[is_string.0.into()],
+        );
+        // {
+        self.switch_to_block(then_block);
+        let string = self.put_load_string(any);
+        let on_stack = self.put_string_on_stack(string);
+        self.put_jump(merge_block, &[on_stack.0.into()]);
+        // }
+
+        self.switch_to_block(merge_block);
+        let not_return_safe = BooleanIr(self.get_block_param(merge_block, 0));
+        self.put_logical_not(not_return_safe)
     }
 
     pub fn put_load_boolean(&mut self, any: AnyIr) -> BooleanIr {

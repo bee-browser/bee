@@ -507,7 +507,7 @@ where
             self.editor
                 .put_assert_scope_id(self.support, ScopeRef::NONE);
         }
-        self.editor.put_return();
+        self.editor.put_return(self.support);
 
         let info = self.support.get_lambda_info_mut(func.id);
         if matches!(info.kind, LambdaKind::Coroutine) {
@@ -3073,26 +3073,6 @@ where
         }
     }
 
-    fn emit_ensure_heap_string(&mut self, string: StringIr) -> StringIr {
-        logger::debug!(event = "emit_ensure_heap_string", ?string);
-        let then_block = self.editor.create_block();
-        let merge_block = self.editor.create_block_with_addr();
-
-        // if string.on_stack()
-        let on_stack = self.editor.put_string_on_stack(string);
-        self.editor
-            .put_branch(on_stack, then_block, &[], merge_block, &[string.0.into()]);
-        // {
-        self.editor.switch_to_block(then_block);
-        let heap_string = self
-            .editor
-            .put_runtime_migrate_string_to_heap(self.support, string);
-        self.editor.put_jump(merge_block, &[heap_string.0.into()]);
-        // }
-        self.editor.switch_to_block(merge_block);
-        StringIr(self.editor.get_block_param(merge_block, 0))
-    }
-
     fn process_discard(&mut self) {
         debug_assert!(!self.operand_stack.is_empty());
         self.operand_stack.pop();
@@ -3554,6 +3534,7 @@ where
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
             Locator::Global => unreachable!(),
         };
+        self.emit_ensure_return_safe(value);
         self.editor.put_escape_value(capture, value);
     }
 
@@ -3575,11 +3556,17 @@ where
     // retv
 
     fn store_operand_to_retv(&mut self, operand: &Operand) {
+        logger::debug!(event = "store_operand_to_retv", ?operand);
         let retv = self.editor.retv();
         match operand {
             Operand::String(value, _) => {
                 let value = self.emit_ensure_heap_string(*value);
                 self.editor.put_store_string_to_any(value, retv);
+            }
+            Operand::Any(value, _) => {
+                let value = *value;
+                self.emit_ensure_return_safe(value);
+                self.editor.put_store_any_to_any(value, retv);
             }
             _ => self.emit_store_operand_to_any(operand, retv),
         }
@@ -3795,6 +3782,50 @@ where
             .put_runtime_create_internal_error(self.support, message);
         self.operand_stack.push(Operand::Object(error));
         self.process_throw();
+    }
+
+    // helpers
+
+    fn emit_ensure_heap_string(&mut self, string: StringIr) -> StringIr {
+        logger::debug!(event = "emit_ensure_heap_string", ?string);
+
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_addr();
+
+        // if string.on_stack()
+        let on_stack = self.editor.put_string_on_stack(string);
+        self.editor
+            .put_branch(on_stack, then_block, &[], merge_block, &[string.0.into()]);
+        // {
+        self.editor.switch_to_block(then_block);
+        let heap_string = self
+            .editor
+            .put_runtime_migrate_string_to_heap(self.support, string);
+        self.editor.put_jump(merge_block, &[heap_string.0.into()]);
+        // }
+        self.editor.switch_to_block(merge_block);
+        StringIr(self.editor.get_block_param(merge_block, 0))
+    }
+
+    fn emit_ensure_return_safe(&mut self, value: AnyIr) {
+        logger::debug!(event = "emit_ensure_return_safe", ?value);
+
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+
+        // if value.is_string()
+        let is_string = self.editor.put_is_string(value);
+        self.editor
+            .put_branch(is_string, then_block, &[], merge_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        let string = self.editor.put_load_string(value);
+        let string = self.emit_ensure_heap_string(string);
+        self.editor.put_store_string_to_any(string, value);
+        self.editor.put_jump(merge_block, &[]);
+        // }
+
+        self.editor.switch_to_block(merge_block);
     }
 }
 
