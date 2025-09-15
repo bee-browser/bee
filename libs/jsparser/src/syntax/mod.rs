@@ -88,9 +88,7 @@ enum Detail {
     CpeaaplFormalParametersWithRestPattern,
     Arguments,
     ArgumentList,
-    OptionalChain {
-        assignment_target_type: AssignmentTargetType,
-    },
+    OptionalChain,
     Expression {
         assignment_target_type: AssignmentTargetType,
     },
@@ -1845,16 +1843,10 @@ where
     // OptionalExpression[Yield, Await] :
     //   MemberExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
     fn process_optional_expression_member(&mut self) -> Result<(), Error> {
-        let assignment_target_type = match self.top().detail {
-            Detail::OptionalChain {
-                assignment_target_type,
-            } => assignment_target_type,
-            _ => unreachable!(),
-        };
         self.replace(
             2,
             Detail::Expression {
-                assignment_target_type,
+                assignment_target_type: AssignmentTargetType::Invalid,
             },
         );
         Ok(())
@@ -1863,16 +1855,10 @@ where
     // OptionalExpression[Yield, Await] :
     //   CallExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
     fn process_optional_expression_call(&mut self) -> Result<(), Error> {
-        let assignment_target_type = match self.top().detail {
-            Detail::OptionalChain {
-                assignment_target_type,
-            } => assignment_target_type,
-            _ => unreachable!(),
-        };
         self.replace(
             2,
             Detail::Expression {
-                assignment_target_type,
+                assignment_target_type: AssignmentTargetType::Invalid,
             },
         );
         Ok(())
@@ -1881,16 +1867,10 @@ where
     // OptionalExpression[Yield, Await] :
     //   OptionalExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
     fn process_optional_expression_chain(&mut self) -> Result<(), Error> {
-        let assignment_target_type = match self.top().detail {
-            Detail::OptionalChain {
-                assignment_target_type,
-            } => assignment_target_type,
-            _ => unreachable!(),
-        };
         self.replace(
             2,
             Detail::Expression {
-                assignment_target_type,
+                assignment_target_type: AssignmentTargetType::Invalid,
             },
         );
         Ok(())
@@ -1900,12 +1880,7 @@ where
     //   ?. Arguments[?Yield, ?Await]
     fn process_optional_chain_call(&mut self) -> Result<(), Error> {
         self.enqueue(Node::OptionalChain(PropertyAccessKind::Call));
-        self.replace(
-            2,
-            Detail::OptionalChain {
-                assignment_target_type: AssignmentTargetType::Invalid,
-            },
-        );
+        self.replace(2, Detail::OptionalChain);
         Ok(())
     }
 
@@ -1915,12 +1890,7 @@ where
         let token_index = self.tokens.len() - 1;
         let key = self.make_symbol(token_index);
         self.enqueue(Node::OptionalChain(PropertyAccessKind::IdentifierKey(key)));
-        self.replace(
-            2,
-            Detail::OptionalChain {
-                assignment_target_type: AssignmentTargetType::Simple,
-            },
-        );
+        self.replace(2, Detail::OptionalChain);
         Ok(())
     }
 
@@ -1928,12 +1898,7 @@ where
     //   OptionalChain[?Yield, ?Await] Arguments[?Yield, ?Await]
     fn process_optional_chain_call_chain(&mut self) -> Result<(), Error> {
         self.enqueue(Node::CallExpression);
-        self.replace(
-            2,
-            Detail::OptionalChain {
-                assignment_target_type: AssignmentTargetType::Invalid,
-            },
-        );
+        self.replace(2, Detail::OptionalChain);
         Ok(())
     }
 
@@ -1945,12 +1910,7 @@ where
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithIdentifierKey(key),
         ));
-        self.replace(
-            3,
-            Detail::OptionalChain {
-                assignment_target_type: AssignmentTargetType::Simple,
-            },
-        );
+        self.replace(3, Detail::OptionalChain);
         Ok(())
     }
 
