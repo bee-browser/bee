@@ -55,6 +55,7 @@ pub struct Session<'r, X> {
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
     pub code_registry: &'r mut CodeRegistry<X>,
+    max_call_stack_depth: u16,
     scope_cleanup_checker_enabled: bool,
     global_object: ObjectHandle,
     object_prototype: ObjectHandle,
@@ -63,6 +64,7 @@ pub struct Session<'r, X> {
 
 trait CompilerSupport {
     // RuntimePref
+    fn max_call_stack_depth(&self) -> u16;
     fn is_scope_cleanup_checker_enabled(&self) -> bool;
 
     // SymbolRegistry
@@ -88,6 +90,10 @@ trait CompilerSupport {
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
+    fn max_call_stack_depth(&self) -> u16 {
+        self.max_call_stack_depth
+    }
+
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
         self.scope_cleanup_checker_enabled
     }
@@ -157,6 +163,7 @@ pub fn compile<X>(
     let program = &runtime.programs[program_id.index()];
     for func in program.functions.iter() {
         let mut session = {
+            let max_call_stack_depth = runtime.max_call_stack_depth();
             let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
             let global_object = runtime.global_object.as_handle();
             Session {
@@ -164,6 +171,7 @@ pub fn compile<X>(
                 symbol_registry: &mut runtime.symbol_registry,
                 lambda_registry: &mut runtime.lambda_registry,
                 code_registry: &mut runtime.code_registry,
+                max_call_stack_depth,
                 scope_cleanup_checker_enabled,
                 global_object,
                 object_prototype: runtime.object_prototype.unwrap(),
@@ -202,6 +210,7 @@ pub fn compile_function<X>(
     let func = &program.functions[function_index];
 
     let mut session = {
+        let max_call_stack_depth = runtime.max_call_stack_depth();
         let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
         let global_object = runtime.global_object.as_handle();
         Session {
@@ -209,6 +218,7 @@ pub fn compile_function<X>(
             symbol_registry: &mut runtime.symbol_registry,
             lambda_registry: &mut runtime.lambda_registry,
             code_registry: &mut runtime.code_registry,
+            max_call_stack_depth,
             scope_cleanup_checker_enabled,
             global_object,
             object_prototype: runtime.object_prototype.unwrap(),
@@ -356,6 +366,7 @@ where
             .put_assert_lambda_params(self.support, func.is_entry_function());
 
         self.editor.put_store_caller_to_call_context();
+        self.editor.put_store_depth_to_call_context();
 
         let argv = self.editor.put_alloc_argv(8);
         self.editor.put_store_argc_max_to_call_context(8);
@@ -398,16 +409,33 @@ where
 
         self.editor.switch_to_block(body_block);
 
-        self.control_flow_stack
-            .push_function_flow(entry_block, body_block, exit_block);
-
         let retv = self.editor.retv();
         self.editor.put_store_undefined_to_any(retv);
+
+        self.control_flow_stack
+            .push_function_flow(entry_block, body_block, exit_block);
 
         // NOTE: Methods emitting code that may throw an exception must be called after
         // `self.control_flow_stack.push_function_flow()`.
 
+        self.check_call_depth();
+
         self.resolve_this_binding(func);
+    }
+
+    fn check_call_depth(&mut self) {
+        logger::debug!(event = "check_call_depth");
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+        let too_deep = self
+            .editor
+            .put_call_stack_too_deep(self.support.max_call_stack_depth());
+        self.editor
+            .put_branch(too_deep, then_block, &[], merge_block, &[]);
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_internal_error(const_string!("Call stack too deep"));
+        self.editor.put_jump(merge_block, &[]);
+        self.editor.switch_to_block(merge_block);
     }
 
     // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"

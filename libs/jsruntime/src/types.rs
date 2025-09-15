@@ -715,7 +715,11 @@ pub struct CallContext {
     #[allow(unused)]
     caller: *const CallContext,
 
+    /// Flags.
     flags: CallContextFlags,
+
+    /// The depth of the call.
+    depth: u16,
 
     /// The number of the arguments.
     argc: u16,
@@ -733,6 +737,7 @@ impl CallContext {
     pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
     pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
     pub const CALLER_OFFSET: usize = std::mem::offset_of!(Self, caller);
+    pub const DEPTH_OFFSET: usize = std::mem::offset_of!(Self, depth);
     pub const ARGC_OFFSET: usize = std::mem::offset_of!(Self, argc);
     pub const ARGC_MAX_OFFSET: usize = std::mem::offset_of!(Self, argc_max);
     pub const ARGV_OFFSET: usize = std::mem::offset_of!(Self, argv);
@@ -743,6 +748,7 @@ impl CallContext {
             envp: std::ptr::null_mut(),
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
+            depth: 0,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
             argv: args.as_mut_ptr(),
@@ -755,6 +761,7 @@ impl CallContext {
             envp: coroutine as *mut std::ffi::c_void,
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
+            depth: 0,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
             argv: args.as_mut_ptr(),
@@ -810,7 +817,7 @@ impl CallContext {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug)]
     #[repr(C)]
-    struct CallContextFlags: u32  {
+    struct CallContextFlags: u16  {
         const NEW = 1 << 1;
     }
 }

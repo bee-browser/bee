@@ -42,13 +42,24 @@ pub fn initialize() {
 }
 
 /// Runtime preferences.
-#[derive(Default)]
 struct RuntimePref {
+    /// The maximum call stack depth.
+    max_call_stack_depth: u16,
+
     /// Enables the scope cleanup checker.
     ///
     /// Insert IR instructions to check if the cleanup for each scope is performed properly.
     /// Immediately panic the current thread evaluating a JavaScript program if the check fails.
     enable_scope_cleanup_checker: bool,
+}
+
+impl Default for RuntimePref {
+    fn default() -> Self {
+        Self {
+            max_call_stack_depth: 4096,
+            enable_scope_cleanup_checker: false,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -149,6 +160,10 @@ impl<X> Runtime<X> {
         runtime.define_builtin_global_properties();
 
         runtime
+    }
+
+    fn max_call_stack_depth(&self) -> u16 {
+        self.pref.max_call_stack_depth
     }
 
     fn is_scope_cleanup_checker_enabled(&self) -> bool {

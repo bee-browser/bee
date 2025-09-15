@@ -904,6 +904,16 @@ impl<'a> Editor<'a> {
             .stack_store(caller, self.call_context, OFFSET);
     }
 
+    pub fn put_store_depth_to_call_context(&mut self) {
+        const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
+        let caller = self.context();
+        let depth = self.put_load_i16(caller, CallContext::DEPTH_OFFSET);
+        let depth = self.builder.ins().iadd_imm(depth, 1);
+        self.builder
+            .ins()
+            .stack_store(depth, self.call_context, OFFSET);
+    }
+
     pub fn put_store_argc_to_call_context(&mut self, argc: u16) {
         const OFFSET: i32 = CallContext::ARGC_OFFSET as i32;
         let argc = self.builder.ins().iconst(ir::types::I16, argc as i64);
@@ -954,6 +964,20 @@ impl<'a> Editor<'a> {
         self.builder
             .ins()
             .stack_store(closure.0, self.call_context, OFFSET);
+    }
+
+    pub fn put_call_stack_too_deep(&mut self, max: u16) -> BooleanIr {
+        use ir::condcodes::IntCC::UnsignedGreaterThan;
+        const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
+        let depth = self
+            .builder
+            .ins()
+            .stack_load(ir::types::I16, self.call_context, OFFSET);
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(UnsignedGreaterThan, depth, max as i64),
+        )
     }
 
     // argv
