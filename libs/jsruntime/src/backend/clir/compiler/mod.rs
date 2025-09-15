@@ -3144,9 +3144,9 @@ where
             Operand::Undefined | Operand::Null => self.editor.put_boolean(false),
             Operand::Boolean(..)
             | Operand::Number(..)
+            | Operand::String(..)
             | Operand::Object(_)
             | Operand::Promise(_) => self.editor.put_boolean(true),
-            Operand::String(..) => todo!("string"),
             Operand::Any(value, ..) => self.editor.put_is_non_nullish(*value),
             Operand::Lambda(..)
             | Operand::Closure(_)
