@@ -2718,7 +2718,8 @@ where
             _ => unreachable!(),
         };
         self.replace(2, Detail::SingleNameBinding(symbol, true));
-        Ok(())
+        // TODO(feat): implement jsruntime::semantics
+        Err(Error::NotYetImplemented)
     }
 
     // 14.4 Empty Statement
