@@ -475,7 +475,7 @@ pub struct Closure {
     /// A variable-length list of captures used in the lambda function.
     //
     // TODO(issue#237): GcCellRef
-    pub captures: [*mut Capture; 32],
+    pub captures: [*mut Capture; 0],
 }
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
@@ -587,10 +587,13 @@ pub struct Coroutine {
     /// The size of the scratch buffer in bytes.
     pub scratch_buffer_len: u16,
 
+    /// The size of the capture buffer in bytes.
+    pub capture_buffer_len: u16,
+
     /// A variable-length list of local variables used in the coroutine.
     ///
     /// `Capture::target` may point to one of `locals[]`.
-    pub locals: [Value; 32],
+    pub locals: [Value; 0],
 }
 
 static_assertions::const_assert_eq!(align_of::<Coroutine>(), 8);
@@ -600,6 +603,8 @@ impl Coroutine {
     pub(crate) const STATE_OFFSET: usize = std::mem::offset_of!(Self, state);
     pub(crate) const NUM_LOCALS_OFFSET: usize = std::mem::offset_of!(Self, num_locals);
     pub(crate) const SCOPE_ID_OFFSET: usize = std::mem::offset_of!(Self, scope_id);
+    pub(crate) const SCRATCH_BUFFER_LEN_OFFSET: usize =
+        std::mem::offset_of!(Self, scratch_buffer_len);
     pub(crate) const LOCALS_OFFSET: usize = std::mem::offset_of!(Self, locals);
 }
 

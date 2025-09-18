@@ -498,12 +498,14 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
     closure: *mut Closure,
     num_locals: u16,
     scratch_buffer_len: u16,
+    capture_buffer_len: u16,
 ) -> *mut Coroutine {
     logger::debug!(
         event = "runtime_create_coroutine",
         ?closure,
         num_locals,
-        scratch_buffer_len
+        scratch_buffer_len,
+        capture_buffer_len,
     );
 
     debug_assert!(
@@ -527,8 +529,10 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
 
     // scratch_buffer_len may be 0.
     debug_assert_eq!(scratch_buffer_len as usize % size_of::<u64>(), 0);
-    let n = scratch_buffer_len as usize / size_of::<u64>();
-    let scratch_buffer_layout = std::alloc::Layout::array::<u64>(n).unwrap();
+    // capture_buffer_len may be 0.
+    debug_assert_eq!(capture_buffer_len as usize % size_of::<usize>(), 0);
+    let n = scratch_buffer_len as usize + capture_buffer_len as usize;
+    let scratch_buffer_layout = std::alloc::Layout::array::<u8>(n).unwrap();
     let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
     let allocator = runtime.allocator();
@@ -543,6 +547,7 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
     coroutine.num_locals = num_locals;
     coroutine.scope_id = 0;
     coroutine.scratch_buffer_len = scratch_buffer_len;
+    coroutine.capture_buffer_len = capture_buffer_len;
     // `coroutine.locals[]` will be initialized in the coroutine.
 
     coroutine as *mut Coroutine

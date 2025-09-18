@@ -129,6 +129,8 @@ functions:
         type: u16
       - name: scratch_buffer_len
         type: u16
+      - name: capture_buffer_len
+        type: u16
     ret: '&mut Coroutine'
   - name: register_promise
     args:

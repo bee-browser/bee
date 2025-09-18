@@ -16,10 +16,10 @@ use cranelift::codegen::ir;
 use cranelift::codegen::isa;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
-use jsparser::SymbolRegistry;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
+use jsparser::SymbolRegistry;
 use jsparser::syntax::LoopFlags;
 
 use crate::ProgramId;
@@ -285,12 +285,13 @@ struct Compiler<'a, R> {
 
     // The following values must be reset in the end of compilation for each function.
     this: Option<AnyIr>,
-    this_capture: Option<CaptureIr>,
+    this_capture: Option<CaptureAddr>,
     params: Vec<AnyIr>,
     locals: Vec<AnyIr>,
-    captures: FxHashMap<Locator, CaptureIr>,
+    captures: FxHashMap<Locator, CaptureAddr>,
 
-    max_scratch_buffer_len: u32,
+    max_scratch_buffer_len: u16,
+    max_capture_buffer_len: u16,
 
     skip_count: u16,
 }
@@ -346,6 +347,7 @@ where
             locals: Default::default(),
             captures: Default::default(),
             max_scratch_buffer_len: 0,
+            max_capture_buffer_len: 0,
             skip_count: 0,
         }
     }
@@ -372,9 +374,10 @@ where
         self.editor.put_store_argc_max_to_call_context(8);
         self.editor.put_store_argv_to_call_context(argv);
 
-        match self.support.get_lambda_info(func.id).kind {
-            LambdaKind::Coroutine => self.editor.put_set_coroutine_mode(),
-            _ => self.editor.put_set_closure_mode(),
+        if self.is_coroutine(func) {
+            self.editor.put_set_coroutine_mode();
+        } else {
+            self.editor.put_set_closure_mode();
         }
 
         // Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from a
@@ -496,10 +499,12 @@ where
             }
         }
 
+        debug_assert_eq!(self.max_capture_buffer_len, 0);
         if func.is_this_binding_captured() {
             let this = self.this.unwrap();
-            let capture = self.editor.put_runtime_create_capture(self.support, this);
-            self.this_capture = Some(capture);
+            let capture_addr = self.perform_create_capture(func, this);
+            self.this_capture = Some(capture_addr);
+            self.max_capture_buffer_len = size_of::<usize>() as u16;
         }
     }
 
@@ -518,10 +523,7 @@ where
 
         debug_assert!(self.operand_stack.is_empty());
 
-        if matches!(
-            self.support.get_lambda_info(func.id).kind,
-            LambdaKind::Coroutine
-        ) {
+        if self.is_coroutine(func) {
             self.control_flow_stack.pop_coroutine_flow();
         }
 
@@ -540,6 +542,7 @@ where
         let info = self.support.get_lambda_info_mut(func.id);
         if matches!(info.kind, LambdaKind::Coroutine) {
             info.scratch_buffer_len = self.max_scratch_buffer_len;
+            info.capture_buffer_len = self.max_capture_buffer_len;
         }
 
         self.editor.end();
@@ -583,7 +586,7 @@ where
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::New(nargs) => self.process_new(*nargs),
-            CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
+            CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::ToNumeric => self.process_to_numeric(),
             CompileCommand::ToString => self.process_to_string(),
@@ -759,6 +762,15 @@ where
         self.operand_stack.push(Operand::Lambda(lambda, lambda_id));
     }
 
+    fn perform_load_capture(&mut self, capture_addr: CaptureAddr) -> CaptureIr {
+        match capture_addr {
+            CaptureAddr::Direct(capture) => capture,
+            CaptureAddr::CaptureBuffer(offset) => {
+                self.editor.put_load_capture_from_capture_buffer(offset)
+            }
+        }
+    }
+
     fn process_closure(&mut self, func: &Function, _prologue: bool, func_scope_ref: ScopeRef) {
         let scope = self.scope_tree.scope(func_scope_ref);
         debug_assert!(scope.is_function());
@@ -772,7 +784,7 @@ where
                 .put_runtime_create_closure(self.support, lambda, lambda_id, num_captures);
 
         if func.is_this_binding_captured() {
-            let capture = self.this_capture.unwrap();
+            let capture = self.perform_load_capture(self.this_capture.unwrap());
             self.editor
                 .put_store_capture_to_closure(capture, closure, 0);
         }
@@ -791,7 +803,7 @@ where
             let capture = match locator {
                 Locator::Param(_) | Locator::Local(_) => {
                     debug_assert!(self.captures.contains_key(&locator));
-                    *self.captures.get(&locator).unwrap()
+                    self.perform_load_capture(*self.captures.get(&locator).unwrap())
                 }
                 Locator::Capture(i) => self.editor.put_load_capture(i),
                 _ => unreachable!(),
@@ -804,14 +816,14 @@ where
     }
 
     fn process_coroutine(&mut self, lambda_id: LambdaId, num_locals: u16) {
-        let scrach_buffer_len = self.support.get_lambda_info(lambda_id).scratch_buffer_len;
-        debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();
+        let lambda_info = self.support.get_lambda_info(lambda_id);
         let coroutine = self.editor.put_runtime_create_coroutine(
             self.support,
             closure,
             num_locals,
-            scrach_buffer_len as u16,
+            lambda_info.scratch_buffer_len,
+            lambda_info.capture_buffer_len,
         );
         self.operand_stack.push(Operand::Coroutine(coroutine));
     }
@@ -1266,7 +1278,7 @@ where
         self.operand_stack.push(Operand::Object(this));
     }
 
-    fn process_push_scope(&mut self, scope_ref: ScopeRef) {
+    fn process_push_scope(&mut self, func: &Function, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
         let init_block = self.editor.create_block();
@@ -1296,15 +1308,16 @@ where
                     Locator::Local(index) => self.get_local(index),
                     _ => unreachable!(),
                 };
-                let capture = self.editor.put_runtime_create_capture(self.support, target);
+                let capture_addr = self.perform_create_capture(func, target);
                 debug_assert!(!self.captures.contains_key(&locator));
-                self.captures.insert(locator, capture);
+                self.captures.insert(locator, capture_addr);
             }
             if let Locator::Local(index) = locator {
                 let value = self.get_local(index);
                 self.editor.put_store_none_to_any(value);
             }
         }
+        self.update_max_capture_buffer_len();
 
         self.editor.put_jump(body_block, &[]);
         self.editor.switch_to_block(body_block);
@@ -1339,12 +1352,14 @@ where
             }
         }
         if scope.is_function() {
-            if let Some(this_capture) = self.this_capture {
+            if let Some(this_capture) = self.this_capture.take() {
+                let capture = self.perform_load_capture(this_capture);
                 let this = self.this.unwrap();
-                self.editor.put_escape_value(this_capture, this);
+                self.editor.put_escape_value(capture, this);
             }
             // tidy this value if it exists
             // TODO: GC
+            debug_assert!(self.captures.is_empty());
         }
         self.editor.put_jump(postcheck_block, &[]);
 
@@ -2842,14 +2857,15 @@ where
 
     fn process_await(&mut self, next_state: u32) {
         self.perform_resolve_promise();
-        self.perform_save_operands_to_scratch_buffer();
+        let offset_save = self.perform_save_temporals_to_scratch_buffer();
         self.editor.put_store_state_to_coroutine(next_state);
         self.editor.put_suspend();
 
         // resume block
         let block = self.control_flow_stack.coroutine_next_block();
         self.editor.switch_to_block(block);
-        self.perform_load_operands_from_scratch_buffer();
+        let offset_load = self.perform_load_temporals_from_scratch_buffer();
+        debug_assert_eq!(offset_save, offset_load);
 
         let has_error_block = self.editor.create_block();
         let result_block = self.editor.create_block();
@@ -2889,56 +2905,46 @@ where
     // NOTE: It's best to implement a special pass to determine which value on the operand stack
     // has to be saved, but we don't like to tightly depend on LLVM.  Because we plan to replace it
     // with another library written in Rust such as Cranelift in the future.
-    fn perform_save_operands_to_scratch_buffer(&mut self) {
-        logger::debug!(event = "perform_save_operands_to_scratch_buffer");
-        let scratch_buffer = self.editor.put_get_scratch_buffer_from_coroutine();
-        // Take the whole operand stack in order to avoid the borrow checker.
-        let operand_stack = std::mem::take(&mut self.operand_stack);
-        let mut offset = 0;
-        for operand in operand_stack.iter() {
+    fn perform_save_temporals_to_scratch_buffer(&mut self) -> usize {
+        logger::debug!(event = "perform_save_temporals_to_scratch_buffer");
+        let mut scratch_buffer = self.editor.put_get_scratch_buffer_from_coroutine();
+        for operand in self.operand_stack.iter() {
             match operand {
                 Operand::Boolean(value, _)
                 | Operand::PropertyReference(PropertyOwner::Boolean(value), _) => {
                     self.editor
-                        .put_write_boolean_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_boolean_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Number(value, _)
                 | Operand::PropertyReference(PropertyOwner::Number(value), _) => {
                     self.editor
-                        .put_write_number_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_number_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::String(value, _)
                 | Operand::PropertyReference(PropertyOwner::String(value), _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
-                        .put_write_string_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_string_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
-                        .put_write_closure_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_closure_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Object(value)
                 | Operand::PropertyReference(PropertyOwner::Object(value), _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
-                        .put_write_object_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_object_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Promise(value) => {
                     self.editor
-                        .put_write_promise_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_promise_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Any(value, ..)
                 | Operand::PropertyReference(PropertyOwner::Any(value), _) => {
                     self.editor
-                        .put_write_any_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::SIZE;
+                        .put_write_any_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Undefined
                 | Operand::Null
@@ -2947,70 +2953,62 @@ where
                 Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
-        self.operand_stack = operand_stack;
 
+        let offset = scratch_buffer.offset;
         // TODO: Should return a compile error.
         assert!(offset <= u16::MAX as usize);
-        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset as u32);
+        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset as u16);
+
+        offset
     }
 
-    fn perform_load_operands_from_scratch_buffer(&mut self) {
-        logger::debug!(event = "perform_load_operands_from_scratch_buffer");
-        let scratch_buffer = self.editor.put_get_scratch_buffer_from_coroutine();
-        // Take the whole operand stack in order to avoid the borrow checker.
-        let mut operand_stack = std::mem::take(&mut self.operand_stack);
-        let mut offset = 0;
-        for operand in operand_stack.iter_mut() {
+    fn perform_load_temporals_from_scratch_buffer(&mut self) -> usize {
+        logger::debug!(event = "perform_load_temporals_from_scratch_buffer");
+        let mut scratch_buffer = self.editor.put_get_scratch_buffer_from_coroutine();
+        for operand in self.operand_stack.iter_mut() {
             match operand {
                 Operand::Boolean(value, _)
                 | Operand::PropertyReference(PropertyOwner::Boolean(value), _) => {
                     *value = self
                         .editor
-                        .put_read_boolean_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_boolean_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Number(value, _)
                 | Operand::PropertyReference(PropertyOwner::Number(value), _) => {
                     *value = self
                         .editor
-                        .put_read_number_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_number_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::String(value, _)
                 | Operand::PropertyReference(PropertyOwner::String(value), _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
-                        .put_read_string_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_string_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
-                        .put_read_closure_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_closure_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Object(value)
                 | Operand::PropertyReference(PropertyOwner::Object(value), _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
-                        .put_read_object_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_object_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Promise(value) => {
                     *value = self
                         .editor
-                        .put_read_promise_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_promise_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Any(value, ..)
                 | Operand::PropertyReference(PropertyOwner::Any(value), _) => {
                     *value = self
                         .editor
-                        .put_read_any_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::SIZE;
+                        .put_read_any_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Undefined
                 | Operand::Null
@@ -3019,7 +3017,8 @@ where
                 Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
-        self.operand_stack = operand_stack;
+
+        scratch_buffer.offset
     }
 
     fn perform_resolve_promise(&mut self) {
@@ -3558,7 +3557,8 @@ where
         debug_assert!(!locator.is_capture());
         debug_assert!(self.captures.contains_key(&locator));
         logger::debug!(event = "perform_escape_value", ?locator);
-        let capture = self.captures.remove(&locator).unwrap();
+        let capture_addr = self.captures.remove(&locator).unwrap();
+        let capture = self.perform_load_capture(capture_addr);
         let value = match locator {
             Locator::Param(index) => self.get_param(index),
             Locator::Local(index) => self.get_local(index),
@@ -3767,6 +3767,34 @@ where
 
     // captures
 
+    fn compute_num_captured(&self) -> usize {
+        self.captures.len() + if self.this_capture.is_none() { 0 } else { 1 }
+    }
+
+    fn compute_next_offset_in_capture_buffer(&self) -> usize {
+        self.compute_num_captured() * size_of::<usize>()
+    }
+
+    fn update_max_capture_buffer_len(&mut self) {
+        let offset = self.compute_next_offset_in_capture_buffer();
+        debug_assert!(offset <= u16::MAX as usize);
+        self.max_capture_buffer_len = self.max_capture_buffer_len.max(offset as u16);
+    }
+
+    fn perform_create_capture(&mut self, func: &Function, target: AnyIr) -> CaptureAddr {
+        let capture = self.editor.put_runtime_create_capture(self.support, target);
+        if self.is_coroutine(func) {
+            let offset = self.compute_next_offset_in_capture_buffer();
+            self.editor
+                .put_store_capture_to_capture_buffer(capture, offset);
+            CaptureAddr::CaptureBuffer(offset)
+        } else {
+            CaptureAddr::Direct(capture)
+        }
+    }
+
+    // return value
+
     fn emit_check_status_for_exception(&mut self, status: StatusIr, retv: AnyIr) {
         logger::debug!(event = "emit_check_status_for_exception", ?status, ?retv);
 
@@ -3816,6 +3844,13 @@ where
     }
 
     // helpers
+
+    fn is_coroutine(&self, func: &Function) -> bool {
+        matches!(
+            self.support.get_lambda_info(func.id).kind,
+            LambdaKind::Coroutine
+        )
+    }
 
     fn emit_ensure_heap_string(&mut self, string: StringIr) -> StringIr {
         logger::debug!(event = "emit_ensure_heap_string", ?string);
@@ -3948,6 +3983,12 @@ enum Operand {
     // Reference types.
     VariableReference(Symbol, Locator),
     PropertyReference(PropertyOwner, PropertyKey),
+}
+
+#[derive(Clone, Copy)]
+enum CaptureAddr {
+    Direct(CaptureIr),
+    CaptureBuffer(usize),
 }
 
 #[derive(Clone, Debug)]
