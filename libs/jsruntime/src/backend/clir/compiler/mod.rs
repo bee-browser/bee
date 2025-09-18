@@ -3493,6 +3493,7 @@ where
             }
             Operand::VariableReference(symbol, locator) => {
                 let value = self.emit_get_variable(symbol, locator);
+                self.emit_check_none(value);
                 // TODO(pref): compile-time evaluation
                 (Operand::Any(value, None), None)
             }
@@ -3551,6 +3552,25 @@ where
             }
             _ => (operand, None),
         }
+    }
+
+    fn emit_check_none(&mut self, value: AnyIr) {
+        logger::debug!(event = "emit_check_none", ?value);
+
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+
+        // if value.is_none()
+        let is_none = self.editor.put_is_none(value);
+        self.editor
+            .put_branch(is_none, then_block, &[], merge_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_reference_error();
+        self.editor.put_jump(merge_block, &[]);
+        // }
+
+        self.editor.switch_to_block(merge_block);
     }
 
     fn perform_escape_value(&mut self, locator: Locator) {

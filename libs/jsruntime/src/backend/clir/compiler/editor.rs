@@ -1307,6 +1307,11 @@ impl<'a> Editor<'a> {
 
     // equality operators
 
+    pub fn put_is_none(&mut self, any: AnyIr) -> BooleanIr {
+        logger::debug!(event = "put_is_none", ?any);
+        self.put_is_kind_of(Value::KIND_NONE, any)
+    }
+
     pub fn put_is_undefined(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_undefined", ?any);
         self.put_is_kind_of(Value::KIND_UNDEFINED, any)
