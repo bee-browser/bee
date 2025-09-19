@@ -328,9 +328,6 @@ pub(crate) extern "C" fn runtime_is_same_string<X>(
     a: StringHandle,
     b: StringHandle,
 ) -> bool {
-    // TODO(perf): slow...
-    let a = a.make_utf16();
-    let b = b.make_utf16();
     a == b
 }
 
