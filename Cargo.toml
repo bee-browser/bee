@@ -10,7 +10,7 @@ homepage = "https://github.com/bee-browser/bee"
 license = "Apache-2.0 OR MIT"
 publish = false
 repository = "https://github.com/bee-browser/bee.git"
-rust-version = "1.89.0"
+rust-version = "1.90.0"
 version = "0.0.0"
 
 [profile.release]

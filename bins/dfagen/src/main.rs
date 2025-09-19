@@ -16,7 +16,6 @@ use serde::Serialize;
 use automaton::Dfa;
 use grammar::Grammar;
 use grammar::Rule;
-use unicode::CodePoint;
 use unicode::UnicodeSet;
 
 #[derive(Parser)]
@@ -96,13 +95,4 @@ struct DfaSpec {
     unicode_sets: Vec<UnicodeSet>,
     unicode_set_labels: Vec<String>,
     dfa: Dfa,
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct NonAsciiEntry {
-    span: bool,
-    first_code_point: CodePoint,
-    last_code_point: CodePoint,
-    unicode_set: usize,
 }
