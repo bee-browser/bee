@@ -2155,6 +2155,7 @@ where
                 let object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
+                self.emit_ensure_return_safe(value); // TODO(refactor)
                 // TODO(feat): ReferenceError, TypeError
                 let retv = self.emit_create_any();
                 let status = self.editor.put_runtime_set_value_by_symbol(
@@ -2183,6 +2184,7 @@ where
                 };
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
+                self.emit_ensure_return_safe(value); // TODO(refactor)
                 let retv = self.emit_create_any();
                 let status = match key {
                     PropertyKey::Symbol(key) => self.editor.put_runtime_set_value_by_symbol(
