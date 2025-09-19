@@ -735,14 +735,12 @@ where
     fn process_identifier_reference(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::Identifier(symbol) => symbol,
-            Detail::Token(index) => {
-                debug_assert!(matches!(
-                    self.tokens[index].kind,
-                    TokenKind::Await | TokenKind::Yield
-                ));
-                self.make_symbol(index)
-            }
-            _ => unreachable!(),
+            Detail::Token(index) => match self.tokens[index].kind {
+                TokenKind::Await => Symbol::KEYWORD_AWAIT,
+                TokenKind::Yield => Symbol::KEYWORD_YIELD,
+                kind => unreachable!("{kind:?}"),
+            },
+            ref detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::IdentifierReference(symbol));
         self.replace(1, Detail::IdentifierReference(symbol));
@@ -806,14 +804,12 @@ where
     fn process_binding_identifier(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::Identifier(symbol) => symbol,
-            Detail::Token(index) => {
-                debug_assert!(matches!(
-                    self.tokens[index].kind,
-                    TokenKind::Await | TokenKind::Yield
-                ));
-                self.make_symbol(index)
-            }
-            _ => unreachable!(),
+            Detail::Token(index) => match self.tokens[index].kind {
+                TokenKind::Await => Symbol::KEYWORD_AWAIT,
+                TokenKind::Yield => Symbol::KEYWORD_YIELD,
+                kind => unreachable!("{kind:?}"),
+            },
+            ref detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::BindingIdentifier(symbol));
         self.replace(1, Detail::BindingIdentifier(symbol));
@@ -891,7 +887,12 @@ where
     fn process_label_identifier(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::Identifier(symbol) => symbol,
-            _ => unreachable!(),
+            Detail::Token(index) => match self.tokens[index].kind {
+                TokenKind::Await => Symbol::KEYWORD_AWAIT,
+                TokenKind::Yield => Symbol::KEYWORD_YIELD,
+                kind => unreachable!("{kind:?}"),
+            },
+            ref detail => unreachable!("{detail:?}"),
         };
         self.replace(1, Detail::LabelIdentifier(symbol));
         Ok(())
@@ -951,23 +952,21 @@ where
     //   IdentifierName but not ReservedWord
     fn process_identifier(&mut self) -> Result<(), Error> {
         let token_index = self.tokens.len() - 1;
-        let symbol = self.make_symbol(token_index);
-        match symbol {
-            // 13.1.1 Static Semantics: Early Errors
-            Symbol::KEYWORD_IMPLEMENTS
-            | Symbol::KEYWORD_LET
-            | Symbol::KEYWORD_PACKAGE
-            | Symbol::KEYWORD_PRIVATE
-            | Symbol::KEYWORD_PROTECTED
-            | Symbol::KEYWORD_PUBLIC
-            | Symbol::KEYWORD_STATIC
-            | Symbol::KEYWORD_YIELD
+        match self.tokens[token_index].kind {
+            TokenKind::Implements
+            | TokenKind::Let
+            | TokenKind::Package
+            | TokenKind::Private
+            | TokenKind::Protected
+            | TokenKind::Public
+            | TokenKind::Static
+            | TokenKind::Yield
                 if self.strict_mode =>
             {
                 Err(Error::SyntaxError)
             }
-            Symbol::KEYWORD_AWAIT if self.module => Err(Error::SyntaxError),
             _ => {
+                let symbol = self.make_symbol(token_index);
                 self.top_mut().detail = Detail::Identifier(symbol);
                 Ok(())
             }
