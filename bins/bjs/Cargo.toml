@@ -10,7 +10,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = "1.0.99"
+anyhow = "1.0.100"
 clap = { version = "4.5.47", features = ["env", "derive", "wrap_help"] }
 cranelift-codegen = "0.123.2"
 cranelift-reader = "0.123.2"
