@@ -37,6 +37,51 @@ fn test_13_2_5_1_duplicate_proto() {
 }
 
 #[test]
+fn test_13_4_1_postfix_increment() {
+    parse_fail!(script: "static_semantics_13_4_1_postfix_increment.js");
+}
+
+#[test]
+fn test_13_4_1_postfix_decrement() {
+    parse_fail!(script: "static_semantics_13_4_1_postfix_decrement.js");
+}
+
+#[test]
+fn test_13_4_1_prefix_increment() {
+    parse_fail!(script: "static_semantics_13_4_1_prefix_increment.js");
+}
+
+#[test]
+fn test_13_4_1_prefix_decrement() {
+    parse_fail!(script: "static_semantics_13_4_1_prefix_decrement.js");
+}
+
+#[test]
+fn test_13_15_1_assignment() {
+    parse_fail!(script: "static_semantics_13_15_1_assignment.js");
+}
+
+#[test]
+fn test_13_15_1_assignment_operator() {
+    parse_fail!(script: "static_semantics_13_15_1_assignment_operator.js");
+}
+
+#[test]
+fn test_13_15_1_logical_and_assignment() {
+    parse_fail!(script: "static_semantics_13_15_1_logical_and_assignment.js");
+}
+
+#[test]
+fn test_13_15_1_logical_or_assignment() {
+    parse_fail!(script: "static_semantics_13_15_1_logical_or_assignment.js");
+}
+
+#[test]
+fn test_13_15_1_nullish_coalescing_assignment() {
+    parse_fail!(script: "static_semantics_13_15_1_nullish_coalescing_assignment.js");
+}
+
+#[test]
 fn test_14_3_1_1_missing_initializer() {
     parse_fail!(script: "static_semantics_14_3_1_1_missing_initializer.js");
 }

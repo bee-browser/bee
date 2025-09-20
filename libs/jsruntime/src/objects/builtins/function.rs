@@ -43,9 +43,9 @@ impl<X> Runtime<X> {
 // lambda functions
 
 extern "C" fn constructor<X>(
-    _runtime: &mut Runtime<X>,
+    runtime: &mut Runtime<X>,
     _context: &mut CallContext,
-    _retv: &mut Value,
+    retv: &mut Value,
 ) -> Status {
-    todo!();
+    runtime_todo!(runtime, "TODO: Function constructor", retv)
 }

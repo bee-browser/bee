@@ -129,6 +129,8 @@ functions:
         type: u16
       - name: scratch_buffer_len
         type: u16
+      - name: capture_buffer_len
+        type: u16
     ret: '&mut Coroutine'
   - name: register_promise
     args:
@@ -162,6 +164,11 @@ functions:
   - name: create_type_error
     args: []
     ret: '&mut Object'
+  - name: create_internal_error
+    args:
+      - name: message
+        type: 'StringHandle'
+    ret: '&mut Object'
   - name: get_value_by_symbol
     args:
       - name: object
@@ -170,8 +177,10 @@ functions:
         type: u32
       - name: strict
         type: bool
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
-    ret: '&Value' # may be null
+    ret: Status
   - name: get_value_by_number
     args:
       - name: object
@@ -180,8 +189,10 @@ functions:
         type: f64
       - name: strict
         type: bool
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
-    ret: '&Value' # may be null
+    ret: Status
   - name: get_value_by_value
     args:
       - name: object
@@ -190,8 +201,10 @@ functions:
         type: '&Value'
       - name: strict
         type: bool
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
-    ret: '&Value' # may be null
+    ret: Status
   - name: set_value_by_symbol
     args:
       - name: object
@@ -200,7 +213,10 @@ functions:
         type: u32
       - name: value
         type: '&Value'
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
+    ret: Status
   - name: set_value_by_number
     args:
       - name: object
@@ -209,7 +225,10 @@ functions:
         type: f64
       - name: value
         type: '&Value'
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
+    ret: Status
   - name: set_value_by_value
     args:
       - name: object
@@ -218,7 +237,10 @@ functions:
         type: '&Value'
       - name: value
         type: '&Value'
+      - name: retv
+        type: '&mut Value'
       # TODO(perf): add arguments for inline caching
+    ret: Status
   - name: concat_strings
     args:
       - name: str1

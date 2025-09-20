@@ -163,7 +163,7 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
         Value::Boolean(true) => 1.0,
         Value::Boolean(false) => 0.0,
         Value::Number(value) => *value,
-        Value::String(_value) => todo!(),
+        Value::String(_value) => f64::NAN, // TODO(feat): 7.1.4.1.1 StringToNumber ( str )
         Value::Promise(_) => f64::NAN,
         Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
     }
@@ -226,15 +226,15 @@ pub(crate) extern "C" fn runtime_to_object<X>(
 }
 
 impl<X> Runtime<X> {
-    fn value_to_object(&mut self, value: &Value, retv: &mut Value) -> Status {
+    pub(crate) fn value_to_object(&mut self, value: &Value, retv: &mut Value) -> Status {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined | Value::Null => {
-                match self.create_type_error(true, &Value::Undefined, &Value::Undefined) {
-                    Ok(value) => *retv = Value::Object(value),
-                    Err(err) => *retv = err,
-                }
+                let err = self
+                    .create_type_error(true, &Value::Undefined, &Value::Undefined)
+                    .unwrap();
+                *retv = Value::Object(err);
                 Status::Exception
             }
             Value::Boolean(_value) => runtime_todo!(
@@ -328,9 +328,6 @@ pub(crate) extern "C" fn runtime_is_same_string<X>(
     a: StringHandle,
     b: StringHandle,
 ) -> bool {
-    // TODO(perf): slow...
-    let a = a.make_utf16();
-    let b = b.make_utf16();
     a == b
 }
 
@@ -498,12 +495,14 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
     closure: *mut Closure,
     num_locals: u16,
     scratch_buffer_len: u16,
+    capture_buffer_len: u16,
 ) -> *mut Coroutine {
     logger::debug!(
         event = "runtime_create_coroutine",
         ?closure,
         num_locals,
-        scratch_buffer_len
+        scratch_buffer_len,
+        capture_buffer_len,
     );
 
     debug_assert!(
@@ -527,8 +526,10 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
 
     // scratch_buffer_len may be 0.
     debug_assert_eq!(scratch_buffer_len as usize % size_of::<u64>(), 0);
-    let n = scratch_buffer_len as usize / size_of::<u64>();
-    let scratch_buffer_layout = std::alloc::Layout::array::<u64>(n).unwrap();
+    // capture_buffer_len may be 0.
+    debug_assert_eq!(capture_buffer_len as usize % size_of::<usize>(), 0);
+    let n = scratch_buffer_len as usize + capture_buffer_len as usize;
+    let scratch_buffer_layout = std::alloc::Layout::array::<u8>(n).unwrap();
     let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
     let allocator = runtime.allocator();
@@ -543,6 +544,7 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
     coroutine.num_locals = num_locals;
     coroutine.scope_id = 0;
     coroutine.scratch_buffer_len = scratch_buffer_len;
+    coroutine.capture_buffer_len = capture_buffer_len;
     // `coroutine.locals[]` will be initialized in the coroutine.
 
     coroutine as *mut Coroutine
@@ -599,43 +601,75 @@ pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) 
         .as_ptr()
 }
 
+pub(crate) extern "C" fn runtime_create_internal_error<X>(
+    runtime: &mut Runtime<X>,
+    message: StringHandle,
+) -> *mut c_void {
+    runtime
+        .create_internal_error(true, &Value::String(message), &Value::Undefined)
+        .unwrap()
+        .as_ptr()
+}
+
 pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
-    _runtime: &mut Runtime<X>,
+    runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: u32,
     strict: bool,
-) -> *const Value {
-    const UNDEFINED: Value = Value::Undefined;
-
+    retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
 
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
 
     match object.get_value(&key) {
-        Some(v) => v as *const Value,
-        None if strict => std::ptr::null(),
-        None => &UNDEFINED as *const Value,
+        Some(v) => {
+            *retv = v.clone();
+            Status::Normal
+        }
+        None if strict => {
+            let err = runtime
+                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap();
+            *retv = Value::Object(err);
+            Status::Exception
+        }
+        None => {
+            *retv = Value::Undefined;
+            Status::Normal
+        }
     }
 }
 
 pub(crate) extern "C" fn runtime_get_value_by_number<X>(
-    _runtime: &mut Runtime<X>,
+    runtime: &mut Runtime<X>,
     object: *mut c_void,
     key: f64,
     strict: bool,
-) -> *const Value {
-    const UNDEFINED: Value = Value::Undefined;
-
+    retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
 
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
 
     match object.get_value(&key) {
-        Some(v) => v as *const Value,
-        None if strict => std::ptr::null(),
-        None => &UNDEFINED as *const Value,
+        Some(v) => {
+            *retv = v.clone();
+            Status::Normal
+        }
+        None if strict => {
+            let err = runtime
+                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap();
+            *retv = Value::Object(err);
+            Status::Exception
+        }
+        None => {
+            *retv = Value::Undefined;
+            Status::Normal
+        }
     }
 }
 
@@ -644,16 +678,33 @@ pub(crate) extern "C" fn runtime_get_value_by_value<X>(
     object: *mut c_void,
     key: &Value,
     strict: bool,
-) -> *const Value {
-    const UNDEFINED: Value = Value::Undefined;
-
+    retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
-    let key = runtime.make_property_key(key);
+    let key = match runtime.make_property_key(key) {
+        Ok(key) => key,
+        Err(err) => {
+            *retv = err;
+            return Status::Exception;
+        }
+    };
 
     match object.get_value(&key) {
-        Some(v) => v as *const Value,
-        None if strict => std::ptr::null(),
-        None => &UNDEFINED as *const Value,
+        Some(v) => {
+            *retv = v.clone();
+            Status::Normal
+        }
+        None if strict => {
+            let err = runtime
+                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap();
+            *retv = Value::Object(err);
+            Status::Exception
+        }
+        None => {
+            *retv = Value::Undefined;
+            Status::Normal
+        }
     }
 }
 
@@ -662,11 +713,13 @@ pub(crate) extern "C" fn runtime_set_value_by_symbol<X>(
     object: *mut c_void,
     key: u32,
     value: &Value,
-) {
+    _retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
     debug_assert_ne!(key, 0);
     let key = PropertyKey::from(key);
-    object.set_value(&key, value)
+    object.set_value(&key, value);
+    Status::Normal
 }
 
 pub(crate) extern "C" fn runtime_set_value_by_number<X>(
@@ -674,11 +727,13 @@ pub(crate) extern "C" fn runtime_set_value_by_number<X>(
     object: *mut c_void,
     key: f64,
     value: &Value,
-) {
+    _retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
     debug_assert!(f64::is_finite(key));
     let key = PropertyKey::from(key);
-    object.set_value(&key, value)
+    object.set_value(&key, value);
+    Status::Normal
 }
 
 pub(crate) extern "C" fn runtime_set_value_by_value<X>(
@@ -686,10 +741,18 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
     object: *mut c_void,
     key: &Value,
     value: &Value,
-) {
+    retv: &mut Value,
+) -> Status {
     let object = into_object!(object);
-    let key = runtime.make_property_key(key);
-    object.set_value(&key, value)
+    let key = match runtime.make_property_key(key) {
+        Ok(key) => key,
+        Err(err) => {
+            *retv = err;
+            return Status::Exception;
+        }
+    };
+    object.set_value(&key, value);
+    Status::Normal
 }
 
 pub(crate) extern "C" fn runtime_concat_strings<X>(
@@ -778,7 +841,13 @@ pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
     // TODO(refactor): generate ffi-conversion code by script
 
     let object = into_object!(object);
-    let key = runtime.make_property_key(key);
+    let key = match runtime.make_property_key(key) {
+        Ok(key) => key,
+        Err(err) => {
+            *retv = err;
+            return Status::Exception;
+        }
+    };
 
     match runtime.create_data_property(object, &key, value) {
         Ok(success) => {

@@ -109,7 +109,7 @@ async function main(options, args) {
 
   for await (const test of stream) {
     spinner.text = test.file;
-    const bjs = spawnBjs(options);
+    const bjs = spawnBjs(options, test);
     const output = runTest(bjs, test);
     jobs.push({ test, output });
     if (jobs.length === NUM_JOBS) {
@@ -138,7 +138,7 @@ async function main(options, args) {
   return showSummary(tests) ? 0 : 1;
 }
 
-function spawnBjs(options) {
+function spawnBjs(options, test) {
   const commandOptions = {
     stdin: 'piped',
     stdout: 'piped',
@@ -148,11 +148,14 @@ function spawnBjs(options) {
     },
   };
 
+  let sourceType = test.attrs.flags.module ? 'module' : 'script';
+
   switch (options.profile) {
     case 'release':
       commandOptions.args = [
         options.timeout,
         path.join(PROJ_DIR, 'target', 'release', 'bjs'),
+        `--as=${sourceType}`,
         'test262',
       ];
       break;
@@ -160,6 +163,7 @@ function spawnBjs(options) {
       commandOptions.args = [
         options.timeout,
         path.join(PROJ_DIR, 'target', 'debug', 'bjs'),
+        `--as=${sourceType}`,
         'test262',
       ];
       break;

@@ -1,7 +1,10 @@
 use std::ffi::c_void;
 use std::mem::offset_of;
+use std::ops::Index;
 use std::ptr::NonNull;
 use std::ptr::addr_eq;
+
+use itertools::Itertools;
 
 use crate::Runtime;
 use crate::lambda::LambdaId;
@@ -192,6 +195,11 @@ impl StringHandle {
         self.fragment().is_empty()
     }
 
+    pub(crate) fn is_const(&self) -> bool {
+        let frag = self.fragment();
+        frag.is_const() && frag.next().is_none()
+    }
+
     /// Returns `true` if the string is allocated on the stack.
     pub(crate) fn on_stack(&self) -> bool {
         self.fragment().on_stack()
@@ -208,9 +216,13 @@ impl StringHandle {
         unsafe { self.0.as_ref() }
     }
 
+    pub(crate) fn code_units(&self) -> impl Iterator<Item = u16> {
+        self.fragment().code_units()
+    }
+
     /// Creates a `Vec` containing UTF-16 code units of the string.
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
-        self.fragment().make_utf16()
+        self.code_units().collect_vec()
     }
 
     pub(crate) unsafe fn from_addr(addr: usize) -> Self {
@@ -260,7 +272,7 @@ impl std::fmt::Display for StringHandle {
 ///
 /// This type may be allocated on the stack.
 // TODO(issue#237): GcCell
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[repr(C)]
 pub struct StringFragment {
     /// A pointer to the next string fragment if it exists.
@@ -372,23 +384,8 @@ impl StringFragment {
         unsafe { self.next.as_ref() }
     }
 
-    pub(crate) fn make_utf16(&self) -> Vec<u16> {
-        if self.is_empty() {
-            return vec![];
-        }
-
-        let mut result = vec![];
-        let mut chunk = self;
-        loop {
-            result.extend_from_slice(chunk.as_slice());
-            // SAFETY: `chunk.next` is null or a valid pointer to a `StringFragment`.
-            chunk = if let Some(next) = unsafe { chunk.next.as_ref() } {
-                next
-            } else {
-                break;
-            };
-        }
-        result
+    pub(crate) fn code_units(&self) -> impl Iterator<Item = u16> {
+        CodeUnits::new(self)
     }
 
     pub(crate) fn as_ptr(&self) -> *const Self {
@@ -402,32 +399,52 @@ unsafe impl Sync for StringFragment {}
 
 impl PartialEq for StringFragment {
     fn eq(&self, other: &Self) -> bool {
-        // TODO(perf): slow...
-        let lhs = self.make_utf16();
-        let rhs = other.make_utf16();
-        lhs == rhs
+        self.code_units().eq(other.code_units())
+    }
+}
+
+impl Index<u32> for StringFragment {
+    type Output = u16;
+
+    fn index(&self, index: u32) -> &Self::Output {
+        assert!(index < self.len);
+        // SAFETY: `self.ptr` points to `[u16; self.len]`.
+        unsafe { &*self.ptr.add(index as usize) }
+    }
+}
+
+impl std::fmt::Debug for StringFragment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.kind {
+            StringFragmentKind::Const => write!(f, r#"const""#)?,
+            StringFragmentKind::Stack => write!(f, r#"stack""#)?,
+            StringFragmentKind::Heap => write!(f, r#"heap""#)?,
+        }
+        let utf16 = self.as_slice().iter().cloned();
+        for c in std::char::decode_utf16(utf16).map(|r| r.map_err(|e| e.unpaired_surrogate())) {
+            match c {
+                Ok(c) => write!(f, "{}", c.escape_debug())?,
+                Err(code_unit) => write!(f, "\\u{code_unit:04X}")?,
+            }
+        }
+        write!(f, r#"""#)?;
+        if let Some(next) = self.next() {
+            write!(f, " ")?;
+            std::fmt::Debug::fmt(next, f)?;
+        }
+        Ok(())
     }
 }
 
 impl std::fmt::Display for StringFragment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.is_empty() {
-            return Ok(());
-        }
-
-        let mut chunk = self;
-        loop {
-            let slice = chunk.as_slice();
-            let chars: String = char::decode_utf16(slice.iter().cloned())
-                .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
-                .collect();
-            write!(f, "{}", chars.escape_default())?;
-            // SAFETY: `chunk.next` is null or a valid pointer to a `StringFragment`.
-            chunk = if let Some(next) = unsafe { chunk.next.as_ref() } {
-                next
-            } else {
-                break;
-            };
+        for c in std::char::decode_utf16(self.code_units())
+            .map(|r| r.map_err(|e| e.unpaired_surrogate()))
+        {
+            match c {
+                Ok(c) => write!(f, "{}", c.escape_debug())?,
+                Err(code_unit) => write!(f, "\\u{code_unit:04X}")?,
+            }
         }
         Ok(())
     }
@@ -439,6 +456,37 @@ pub enum StringFragmentKind {
     Const = 0,
     Stack,
     Heap,
+}
+
+struct CodeUnits<'a> {
+    fragment: &'a StringFragment,
+    pos: u32,
+}
+
+impl<'a> CodeUnits<'a> {
+    fn new(fragment: &'a StringFragment) -> Self {
+        Self { fragment, pos: 0 }
+    }
+}
+
+impl<'a> Iterator for CodeUnits<'a> {
+    type Item = u16;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.pos < self.fragment.len {
+            let code_unit = self.fragment[self.pos];
+            self.pos += 1;
+            return Some(code_unit);
+        }
+
+        if let Some(next) = self.fragment.next() {
+            self.fragment = next;
+            self.pos = 0;
+            return self.next();
+        }
+
+        None
+    }
 }
 
 /// A data type to represent a closure.
@@ -470,7 +518,7 @@ pub struct Closure {
     /// A variable-length list of captures used in the lambda function.
     //
     // TODO(issue#237): GcCellRef
-    pub captures: [*mut Capture; 32],
+    pub captures: [*mut Capture; 0],
 }
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
@@ -582,10 +630,13 @@ pub struct Coroutine {
     /// The size of the scratch buffer in bytes.
     pub scratch_buffer_len: u16,
 
+    /// The size of the capture buffer in bytes.
+    pub capture_buffer_len: u16,
+
     /// A variable-length list of local variables used in the coroutine.
     ///
     /// `Capture::target` may point to one of `locals[]`.
-    pub locals: [Value; 32],
+    pub locals: [Value; 0],
 }
 
 static_assertions::const_assert_eq!(align_of::<Coroutine>(), 8);
@@ -595,6 +646,8 @@ impl Coroutine {
     pub(crate) const STATE_OFFSET: usize = std::mem::offset_of!(Self, state);
     pub(crate) const NUM_LOCALS_OFFSET: usize = std::mem::offset_of!(Self, num_locals);
     pub(crate) const SCOPE_ID_OFFSET: usize = std::mem::offset_of!(Self, scope_id);
+    pub(crate) const SCRATCH_BUFFER_LEN_OFFSET: usize =
+        std::mem::offset_of!(Self, scratch_buffer_len);
     pub(crate) const LOCALS_OFFSET: usize = std::mem::offset_of!(Self, locals);
 }
 
@@ -710,7 +763,11 @@ pub struct CallContext {
     #[allow(unused)]
     caller: *const CallContext,
 
+    /// Flags.
     flags: CallContextFlags,
+
+    /// The depth of the call.
+    depth: u16,
 
     /// The number of the arguments.
     argc: u16,
@@ -728,6 +785,8 @@ impl CallContext {
     pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
     pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
     pub const CALLER_OFFSET: usize = std::mem::offset_of!(Self, caller);
+    pub const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
+    pub const DEPTH_OFFSET: usize = std::mem::offset_of!(Self, depth);
     pub const ARGC_OFFSET: usize = std::mem::offset_of!(Self, argc);
     pub const ARGC_MAX_OFFSET: usize = std::mem::offset_of!(Self, argc_max);
     pub const ARGV_OFFSET: usize = std::mem::offset_of!(Self, argv);
@@ -738,6 +797,7 @@ impl CallContext {
             envp: std::ptr::null_mut(),
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
+            depth: 0,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
             argv: args.as_mut_ptr(),
@@ -750,6 +810,7 @@ impl CallContext {
             envp: coroutine as *mut std::ffi::c_void,
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
+            depth: 0,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
             argv: args.as_mut_ptr(),
@@ -805,7 +866,7 @@ impl CallContext {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug)]
     #[repr(C)]
-    struct CallContextFlags: u32  {
+    pub(crate) struct CallContextFlags: u16  {
         const NEW = 1 << 1;
     }
 }

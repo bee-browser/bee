@@ -42,13 +42,24 @@ pub fn initialize() {
 }
 
 /// Runtime preferences.
-#[derive(Default)]
 struct RuntimePref {
+    /// The maximum call stack depth.
+    max_call_stack_depth: u16,
+
     /// Enables the scope cleanup checker.
     ///
     /// Insert IR instructions to check if the cleanup for each scope is performed properly.
     /// Immediately panic the current thread evaluating a JavaScript program if the check fails.
     enable_scope_cleanup_checker: bool,
+}
+
+impl Default for RuntimePref {
+    fn default() -> Self {
+        Self {
+            max_call_stack_depth: 4096,
+            enable_scope_cleanup_checker: false,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -151,6 +162,10 @@ impl<X> Runtime<X> {
         runtime
     }
 
+    fn max_call_stack_depth(&self) -> u16 {
+        self.pref.max_call_stack_depth
+    }
+
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
         self.pref.enable_scope_cleanup_checker
     }
@@ -205,7 +220,7 @@ impl<X> Runtime<X> {
         let lambda_id = self.programs[program_id.index()].entry_lambda_id();
         let lambda = self.code_registry.get_lambda(lambda_id).unwrap();
         let module = self.programs[program_id.index()].module;
-        self.call_entry_lambda(lambda, module)
+        self.call_entry_lambda(lambda_id, lambda, module)
     }
 
     /// Runs a program.
@@ -232,7 +247,7 @@ impl<X> Runtime<X> {
             self.code_registry.get_lambda(lambda_id).unwrap()
         };
         let module = self.programs[program_id.index()].module;
-        let value = self.call_entry_lambda(lambda, module)?;
+        let value = self.call_entry_lambda(lambda_id, lambda, module)?;
         // TODO(perf): Memory related to `lambda` can be removed safely after the call.
         // Because the top-level statements are performed only once.
         Ok(value)
@@ -258,8 +273,13 @@ impl<X> Runtime<X> {
     }
 
     /// Calls an entry lambda function.
-    fn call_entry_lambda(&mut self, lambda: Lambda<X>, module: bool) -> Result<Value, Value> {
-        logger::debug!(event = "call_entry_lambda", ?lambda, module);
+    fn call_entry_lambda(
+        &mut self,
+        lambda_id: LambdaId,
+        lambda: Lambda<X>,
+        module: bool,
+    ) -> Result<Value, Value> {
+        logger::debug!(event = "call_entry_lambda", ?lambda_id, ?lambda, module);
         let mut args: [_; 0] = [];
         let mut context = CallContext::new_for_entry(&mut args);
         let mut retv = Value::Undefined;
@@ -322,17 +342,24 @@ impl<X> Runtime<X> {
         self.allocator.alloc(Object::new(prototype)).as_handle()
     }
 
-    fn make_property_key(&mut self, value: &Value) -> PropertyKey {
+    fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Value> {
         match value {
             Value::None => unreachable!(),
-            Value::Undefined => Symbol::KEYWORD_UNDEFINED.into(),
-            Value::Null => Symbol::KEYWORD_NULL.into(),
-            Value::Boolean(false) => Symbol::KEYWORD_FALSE.into(),
-            Value::Boolean(true) => Symbol::KEYWORD_TRUE.into(),
-            Value::Number(value) => (*value).into(),
-            Value::String(value) => self.symbol_registry.intern_utf16(value.make_utf16()).into(),
-            Value::Promise(_) => todo!(),
-            Value::Object(_) => todo!(),
+            Value::Undefined => Ok(Symbol::KEYWORD_UNDEFINED.into()),
+            Value::Null => Ok(Symbol::KEYWORD_NULL.into()),
+            Value::Boolean(false) => Ok(Symbol::KEYWORD_FALSE.into()),
+            Value::Boolean(true) => Ok(Symbol::KEYWORD_TRUE.into()),
+            Value::Number(value) => Ok((*value).into()),
+            Value::String(value) => {
+                Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
+            }
+            Value::Promise(_) | Value::Object(_) => {
+                const MESSAGE: StringHandle = const_string!("TODO: make_property_key");
+                match self.create_internal_error(true, &Value::String(MESSAGE), &Value::Undefined) {
+                    Ok(err) => Err(Value::Object(err)),
+                    Err(err) => Err(err),
+                }
+            }
         }
     }
 

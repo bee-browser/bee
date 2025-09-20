@@ -12,14 +12,24 @@ impl<X> Runtime<X> {
     }
 
     fn create_object_object(&mut self, context: &mut CallContext) -> Result<Value, Value> {
-        let o = match context.args().first() {
+        match context.args().first() {
             None | Some(Value::Undefined) | Some(Value::Null) => {
-                self.create_object(self.object_prototype)
+                let object = self.create_object(self.object_prototype);
+                // TODO(feat): NewTarget
+                Ok(Value::Object(object))
             }
-            Some(_v) => todo!(), // TODO(feat): ToObject()
-        };
-        // TODO(feat): NewTarget
-        Ok(Value::Object(o))
+            Some(value) => {
+                let mut retv = Value::None;
+                match self.value_to_object(value, &mut retv) {
+                    Status::Normal => {
+                        debug_assert!(matches!(retv, Value::Object(_)));
+                        Ok(retv)
+                    }
+                    Status::Exception => Err(retv),
+                    Status::Suspend => unreachable!(),
+                }
+            }
+        }
     }
 }
 

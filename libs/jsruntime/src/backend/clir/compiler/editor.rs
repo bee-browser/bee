@@ -8,11 +8,13 @@ use cranelift::frontend::Switch;
 
 use base::static_assert_eq;
 
+use crate::StringHandle;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::objects::Object;
 use crate::objects::ObjectFlags;
 use crate::types::CallContext;
+use crate::types::CallContextFlags;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
@@ -494,9 +496,14 @@ impl<'a> Editor<'a> {
         self.builder.ins().br_table(index, jump_table);
     }
 
-    pub fn put_return(&mut self) {
+    pub fn put_return(&mut self, support: &mut impl EditorSupport) {
         logger::debug!(event = "put_return");
         debug_assert!(!self.block_terminated);
+        runtime_debug! {{
+            let retv = self.retv();
+            let is_return_safe = self.put_is_return_safe(retv);
+            self.put_assert(support, is_return_safe, c"retv must be return-safe");
+        }}
         let status = self.put_load_status();
         let masked = self.builder.ins().band_imm(status.0, Status::MASK as i64);
         self.builder.ins().return_(&[masked]);
@@ -674,6 +681,32 @@ impl<'a> Editor<'a> {
         )
     }
 
+    fn put_is_return_safe(&mut self, any: AnyIr) -> BooleanIr {
+        logger::debug!(event = "put_is_return_safe", ?any);
+        let then_block = self.create_block();
+        let merge_block = self.create_block_with_i8();
+
+        // if any.is_string()
+        let is_string = self.put_is_string(any);
+        self.put_branch(
+            is_string,
+            then_block,
+            &[],
+            merge_block,
+            &[is_string.0.into()],
+        );
+        // {
+        self.switch_to_block(then_block);
+        let string = self.put_load_string(any);
+        let on_stack = self.put_string_on_stack(string);
+        self.put_jump(merge_block, &[on_stack.0.into()]);
+        // }
+
+        self.switch_to_block(merge_block);
+        let not_return_safe = BooleanIr(self.get_block_param(merge_block, 0));
+        self.put_logical_not(not_return_safe)
+    }
+
     pub fn put_load_boolean(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_load_boolean", ?any);
         BooleanIr(self.put_load_i8(any.0, Value::HOLDER_OFFSET))
@@ -723,7 +756,7 @@ impl<'a> Editor<'a> {
             .ins()
             .iadd_imm(capture.0, Capture::ESCAPED_OFFSET as i64);
         self.put_store(escaped, capture.0, Capture::TARGET_OFFSET);
-        self.put_copy_i128(value.0, escaped);
+        self.put_safe_copy_i128(value.0, escaped, 0);
     }
 
     // closure
@@ -756,9 +789,15 @@ impl<'a> Editor<'a> {
         self.put_store(capture.0, closure.0, offset);
     }
 
-    pub fn put_call(&mut self, closure: ClosureIr, retv: AnyIr) -> StatusIr {
-        logger::debug!(event = "put_call", ?closure, ?retv);
+    pub fn put_call(
+        &mut self,
+        closure: ClosureIr,
+        flags: CallContextFlags,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(event = "put_call", ?closure, ?flags, ?retv);
         self.put_store_closure_to_call_context(closure);
+        self.put_store_flags_to_call_context(flags);
         let lambda = self.put_load_lambda_from_closure(closure);
         let args = &[
             self.runtime(),
@@ -784,16 +823,22 @@ impl<'a> Editor<'a> {
         self.closure = self.put_load_addr(coroutine.0, Coroutine::CLOSURE_OFFSET);
     }
 
+    pub fn put_load_state_from_coroutine(&mut self) -> ir::Value {
+        logger::debug!(event = "put_load_state_from_coroutine");
+        let coroutine = self.coroutine();
+        self.put_load_i32(coroutine.0, Coroutine::STATE_OFFSET)
+    }
+
     pub fn put_load_num_locals_from_coroutine(&mut self) -> ir::Value {
         logger::debug!(event = "put_load_num_locals_from_coroutine");
         let coroutine = self.coroutine();
         self.put_load_i16(coroutine.0, Coroutine::NUM_LOCALS_OFFSET)
     }
 
-    pub fn put_load_state_from_coroutine(&mut self) -> ir::Value {
-        logger::debug!(event = "put_load_state_from_coroutine");
+    pub fn put_load_scratch_buffer_len_from_coroutine(&mut self) -> ir::Value {
+        logger::debug!(event = "put_load_scratch_buffer_len_from_coroutine");
         let coroutine = self.coroutine();
-        self.put_load_i32(coroutine.0, Coroutine::STATE_OFFSET)
+        self.put_load_i16(coroutine.0, Coroutine::SCRATCH_BUFFER_LEN_OFFSET)
     }
 
     pub fn put_get_local_from_coroutine(&mut self, index: u16) -> AnyIr {
@@ -872,6 +917,27 @@ impl<'a> Editor<'a> {
             .stack_store(caller, self.call_context, OFFSET);
     }
 
+    pub fn put_store_flags_to_call_context(&mut self, flags: CallContextFlags) {
+        const OFFSET: i32 = CallContext::FLAGS_OFFSET as i32;
+        let flags = self
+            .builder
+            .ins()
+            .iconst(ir::types::I16, flags.bits() as i64);
+        self.builder
+            .ins()
+            .stack_store(flags, self.call_context, OFFSET);
+    }
+
+    pub fn put_store_depth_to_call_context(&mut self) {
+        const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
+        let caller = self.context();
+        let depth = self.put_load_i16(caller, CallContext::DEPTH_OFFSET);
+        let depth = self.builder.ins().iadd_imm(depth, 1);
+        self.builder
+            .ins()
+            .stack_store(depth, self.call_context, OFFSET);
+    }
+
     pub fn put_store_argc_to_call_context(&mut self, argc: u16) {
         const OFFSET: i32 = CallContext::ARGC_OFFSET as i32;
         let argc = self.builder.ins().iconst(ir::types::I16, argc as i64);
@@ -924,6 +990,20 @@ impl<'a> Editor<'a> {
             .stack_store(closure.0, self.call_context, OFFSET);
     }
 
+    pub fn put_call_stack_too_deep(&mut self, max: u16) -> BooleanIr {
+        use ir::condcodes::IntCC::UnsignedGreaterThan;
+        const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
+        let depth = self
+            .builder
+            .ins()
+            .stack_load(ir::types::I16, self.call_context, OFFSET);
+        BooleanIr(
+            self.builder
+                .ins()
+                .icmp_imm(UnsignedGreaterThan, depth, max as i64),
+        )
+    }
+
     // argv
 
     pub fn put_alloc_argv(&mut self, argc: u16) -> ArgvIr {
@@ -973,6 +1053,16 @@ impl<'a> Editor<'a> {
             .load(ir::types::I32, FLAGS, addr, offset as i32)
     }
 
+    fn put_load_i64(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
+        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        debug_assert!(offset <= i32::MAX as usize);
+        self.builder
+            .ins()
+            .load(ir::types::I64, FLAGS, addr, offset as i32)
+    }
+
+    // TODO(perf): using this method is faster than put_load_i64() * 2 for loading a `Value`.
+    #[allow(unused)]
     fn put_load_i128(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
@@ -1054,7 +1144,7 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_store_any_to_any", ?src, ?dst);
         // TODO(perf): should use memcpy?
         static_assert_eq!(Value::SIZE * 8, 128);
-        self.put_copy_i128(src.0, dst.0);
+        self.put_safe_copy_i128(src.0, dst.0, 0);
     }
 
     fn put_store_kind_and_value_to_any(&mut self, kind: u8, value: ir::Value, any: AnyIr) {
@@ -1069,9 +1159,12 @@ impl<'a> Editor<'a> {
 
     // copy operations
 
-    fn put_copy_i128(&mut self, src: ir::Value, dst: ir::Value) {
-        let opaque = self.put_load_i128(src, 0);
-        self.put_store(opaque, dst, 0);
+    fn put_safe_copy_i128(&mut self, src: ir::Value, dst: ir::Value, offset: usize) {
+        // The address may not be 128-bit aligned, but 64-bit aligned.
+        let opaque64 = self.put_load_i64(src, 0);
+        self.put_store(opaque64, dst, offset);
+        let opaque64 = self.put_load_i64(src, 8);
+        self.put_store(opaque64, dst, offset + 8);
     }
 
     // unary operators
@@ -1232,6 +1325,11 @@ impl<'a> Editor<'a> {
 
     // equality operators
 
+    pub fn put_is_none(&mut self, any: AnyIr) -> BooleanIr {
+        logger::debug!(event = "put_is_none", ?any);
+        self.put_is_kind_of(Value::KIND_NONE, any)
+    }
+
     pub fn put_is_undefined(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_undefined", ?any);
         self.put_is_kind_of(Value::KIND_UNDEFINED, any)
@@ -1374,9 +1472,9 @@ impl<'a> Editor<'a> {
         self.put_i32_to_f64(result)
     }
 
-    // operations on a scratch buffer
+    // operations on the scratch buffer of the coroutine
 
-    pub fn put_get_scratch_buffer_from_coroutine(&mut self) -> ir::Value {
+    pub fn put_get_scratch_buffer_from_coroutine(&mut self) -> ScratchBuffer {
         logger::debug!(event = "put_get_scratch_buffer_from_coroutine");
         let coroutine = self.coroutine();
         // TODO(perf): compile-time evaluation
@@ -1387,205 +1485,243 @@ impl<'a> Editor<'a> {
             .builder
             .ins()
             .iadd_imm(offset, Coroutine::LOCALS_OFFSET as i64);
-        self.builder.ins().iadd(coroutine.0, offset)
+        ScratchBuffer {
+            addr: self.builder.ins().iadd(coroutine.0, offset),
+            offset: 0,
+        }
     }
 
     pub fn put_write_boolean_to_scratch_buffer(
         &mut self,
         value: BooleanIr,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) {
         logger::debug!(
             event = "put_write_boolean_to_scratch_buffer",
             ?value,
             ?scratch_buffer,
-            offset,
         );
-        self.put_store(value.0, scratch_buffer, offset);
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        self.put_store(value.0, addr, offset);
     }
 
     pub fn put_write_number_to_scratch_buffer(
         &mut self,
         value: NumberIr,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) {
         logger::debug!(
             event = "put_write_number_to_scratch_buffer",
             ?value,
             ?scratch_buffer,
-            offset,
         );
-        self.put_store(value.0, scratch_buffer, offset);
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        self.put_store(value.0, addr, offset);
     }
 
     pub fn put_write_string_to_scratch_buffer(
         &mut self,
         value: StringIr,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) {
         logger::debug!(
             event = "put_write_string_to_scratch_buffer",
             ?value,
             ?scratch_buffer,
-            offset,
         );
-        self.put_store(value.0, scratch_buffer, offset);
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        self.put_store(value.0, addr, offset);
     }
 
     pub fn put_write_closure_to_scratch_buffer(
         &mut self,
         value: ClosureIr,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) {
         logger::debug!(
             event = "put_write_closure_to_scratch_buffer",
             ?value,
             ?scratch_buffer,
-            offset,
         );
-        self.put_store(value.0, scratch_buffer, offset);
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        self.put_store(value.0, addr, offset);
     }
 
     pub fn put_write_object_to_scratch_buffer(
         &mut self,
         value: ObjectIr,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) {
         logger::debug!(
             event = "put_write_object_to_scratch_buffer",
             ?value,
             ?scratch_buffer,
-            offset,
         );
-        self.put_store(value.0, scratch_buffer, offset);
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        self.put_store(value.0, addr, offset);
     }
 
     pub fn put_write_promise_to_scratch_buffer(
         &mut self,
         value: PromiseIr,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) {
         logger::debug!(
             event = "put_write_promise_to_scratch_buffer",
             ?value,
             ?scratch_buffer,
-            offset,
         );
-        self.put_store(value.0, scratch_buffer, offset);
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        self.put_store(value.0, addr, offset);
     }
 
     pub fn put_write_any_to_scratch_buffer(
         &mut self,
         value: AnyIr,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) {
         logger::debug!(
             event = "put_write_any_to_scratch_buffer",
             ?value,
             ?scratch_buffer,
-            offset,
         );
-        let opaque = self.put_load_i128(value.0, 0);
-        self.put_store(opaque, scratch_buffer, offset);
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        static_assert_eq!(Value::SIZE, Value::HOLDER_SIZE * 2);
+        scratch_buffer.offset += Value::SIZE;
+        self.put_safe_copy_i128(value.0, addr, offset);
     }
 
     pub fn put_read_boolean_from_scratch_buffer(
         &mut self,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) -> BooleanIr {
         logger::debug!(
             event = "put_read_boolean_from_scratch_buffer",
             ?scratch_buffer,
-            offset
         );
-        BooleanIr(self.put_load_i8(scratch_buffer, offset))
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        BooleanIr(self.put_load_i8(addr, offset))
     }
 
     pub fn put_read_number_from_scratch_buffer(
         &mut self,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) -> NumberIr {
         logger::debug!(
             event = "put_read_number_from_scratch_buffer",
             ?scratch_buffer,
-            offset
         );
-        NumberIr(self.put_load_f64(scratch_buffer, offset))
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        NumberIr(self.put_load_f64(addr, offset))
     }
 
     pub fn put_read_string_from_scratch_buffer(
         &mut self,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) -> StringIr {
         logger::debug!(
             event = "put_read_string_from_scratch_buffer",
             ?scratch_buffer,
-            offset
         );
-        StringIr(self.put_load_addr(scratch_buffer, offset))
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        StringIr(self.put_load_addr(addr, offset))
     }
 
     pub fn put_read_closure_from_scratch_buffer(
         &mut self,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) -> ClosureIr {
         logger::debug!(
             event = "put_read_closure_from_scratch_buffer",
             ?scratch_buffer,
-            offset
         );
-        ClosureIr(self.put_load_addr(scratch_buffer, offset))
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        ClosureIr(self.put_load_addr(addr, offset))
     }
 
     pub fn put_read_object_from_scratch_buffer(
         &mut self,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) -> ObjectIr {
         logger::debug!(
             event = "put_read_object_from_scratch_buffer",
             ?scratch_buffer,
-            offset
         );
-        ObjectIr(self.put_load_addr(scratch_buffer, offset))
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        ObjectIr(self.put_load_addr(addr, offset))
     }
 
     pub fn put_read_promise_from_scratch_buffer(
         &mut self,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) -> PromiseIr {
         logger::debug!(
             event = "put_read_promise_from_scratch_buffer",
             ?scratch_buffer,
-            offset
         );
-        PromiseIr(self.put_load_i32(scratch_buffer, offset))
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::HOLDER_SIZE;
+        PromiseIr(self.put_load_i32(addr, offset))
     }
 
     pub fn put_read_any_from_scratch_buffer(
         &mut self,
-        scratch_buffer: ir::Value,
-        offset: usize,
+        scratch_buffer: &mut ScratchBuffer,
     ) -> AnyIr {
         logger::debug!(
             event = "put_read_boolean_from_scratch_buffer",
             ?scratch_buffer,
-            offset
         );
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        static_assert_eq!(Value::SIZE, Value::HOLDER_SIZE * 2);
+        scratch_buffer.offset += Value::SIZE;
         // Just return the address on the scratch buffer where the value has been stored.
-        AnyIr(self.builder.ins().iadd_imm(scratch_buffer, offset as i64))
+        static_assert_eq!(Value::ALIGNMENT, Value::HOLDER_SIZE);
+        AnyIr(self.builder.ins().iadd_imm(addr, offset as i64))
+    }
+
+    // operations on the capture buffer of the coroutine
+
+    pub fn put_get_capture_buffer_from_coroutine(&mut self) -> ir::Value {
+        let coroutine = self.coroutine();
+        // TODO(perf): compile-time evaluation
+        let num_locals = self.put_load_num_locals_from_coroutine();
+        let num_locals = self.builder.ins().uextend(self.addr_type, num_locals);
+        let offset = self.builder.ins().imul_imm(num_locals, Value::SIZE as i64);
+        let offset = self
+            .builder
+            .ins()
+            .iadd_imm(offset, Coroutine::LOCALS_OFFSET as i64);
+        let scratch_buffer_len = self.put_load_scratch_buffer_len_from_coroutine();
+        let scratch_buffer_len = self
+            .builder
+            .ins()
+            .uextend(self.addr_type, scratch_buffer_len);
+        let offset = self.builder.ins().iadd(offset, scratch_buffer_len);
+        self.builder.ins().iadd(coroutine.0, offset)
+    }
+
+    pub fn put_load_capture_from_capture_buffer(&mut self, offset: usize) -> CaptureIr {
+        logger::debug!(event = "put_load_capture_from_capture_buffer");
+        let addr = self.put_get_capture_buffer_from_coroutine(); // TODO(perf): inefficient
+        CaptureIr(self.put_load_addr(addr, offset))
+    }
+
+    pub fn put_store_capture_to_capture_buffer(&mut self, capture: CaptureIr, offset: usize) {
+        logger::debug!(event = "put_store_capture_from_capture_buffer");
+        let addr = self.put_get_capture_buffer_from_coroutine(); // TODO(perf): inefficient
+        self.put_store(capture.0, addr, offset);
     }
 
     // runtime function calls
@@ -1855,12 +1991,14 @@ impl<'a> Editor<'a> {
         closure: ClosureIr,
         num_locals: u16,
         scratch_buffer_len: u16,
+        capture_buffer_len: u16,
     ) -> CoroutineIr {
         logger::debug!(
             event = "put_runtime_create_coroutine",
             ?closure,
             num_locals,
-            scratch_buffer_len
+            scratch_buffer_len,
+            capture_buffer_len,
         );
         let func = self
             .runtime_func_cache
@@ -1870,7 +2008,17 @@ impl<'a> Editor<'a> {
             .builder
             .ins()
             .iconst(ir::types::I16, scratch_buffer_len as i64);
-        let args = [self.runtime(), closure.0, num_locals, scratch_buffer_len];
+        let capture_buffer_len = self
+            .builder
+            .ins()
+            .iconst(ir::types::I16, capture_buffer_len as i64);
+        let args = [
+            self.runtime(),
+            closure.0,
+            num_locals,
+            scratch_buffer_len,
+            capture_buffer_len,
+        ];
         let call = self.builder.ins().call(func, &args);
         CoroutineIr(self.builder.inst_results(call)[0])
     }
@@ -1974,18 +2122,39 @@ impl<'a> Editor<'a> {
         ObjectIr(self.builder.inst_results(call)[0])
     }
 
+    pub fn put_runtime_create_internal_error(
+        &mut self,
+        support: &mut impl EditorSupport,
+        message: StringHandle,
+    ) -> ObjectIr {
+        logger::debug!(event = "put_runtime_create_internal_error", ?message);
+        debug_assert!(message.is_const());
+        let func = self
+            .runtime_func_cache
+            .import_runtime_create_internal_error(support, self.builder.func);
+        let message = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, message.as_addr() as i64);
+        let args = [self.runtime(), message];
+        let call = self.builder.ins().call(func, &args);
+        ObjectIr(self.builder.inst_results(call)[0])
+    }
+
     pub fn put_runtime_get_value_by_symbol(
         &mut self,
         support: &mut impl EditorSupport,
         object: ObjectIr,
         key: Symbol,
         strict: bool,
-    ) -> AnyIr {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_get_value_by_symbol",
             ?object,
             ?key,
-            strict
+            strict,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -1999,9 +2168,9 @@ impl<'a> Editor<'a> {
             .import_runtime_get_value_by_symbol(support, self.builder.func);
         let key = self.builder.ins().iconst(ir::types::I32, key.id() as i64);
         let strict = self.put_boolean(strict);
-        let args = [self.runtime(), object.0, key, strict.0];
+        let args = [self.runtime(), object.0, key, strict.0, retv.0];
         let call = self.builder.ins().call(func, &args);
-        AnyIr(self.builder.inst_results(call)[0])
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_get_value_by_number(
@@ -2010,12 +2179,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: f64,
         strict: bool,
-    ) -> AnyIr {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_get_value_by_number",
             ?object,
             key,
-            strict
+            strict,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2029,9 +2200,9 @@ impl<'a> Editor<'a> {
             .import_runtime_get_value_by_number(support, self.builder.func);
         let key = self.put_number(key);
         let strict = self.put_boolean(strict);
-        let args = [self.runtime(), object.0, key.0, strict.0];
+        let args = [self.runtime(), object.0, key.0, strict.0, retv.0];
         let call = self.builder.ins().call(func, &args);
-        AnyIr(self.builder.inst_results(call)[0])
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_get_value_by_any(
@@ -2040,12 +2211,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: AnyIr,
         strict: bool,
-    ) -> AnyIr {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_get_value_by_any",
             ?object,
             ?key,
-            strict
+            strict,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2063,9 +2236,9 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_get_value_by_value(support, self.builder.func);
         let strict = self.put_boolean(strict);
-        let args = [self.runtime(), object.0, key.0, strict.0];
+        let args = [self.runtime(), object.0, key.0, strict.0, retv.0];
         let call = self.builder.ins().call(func, &args);
-        AnyIr(self.builder.inst_results(call)[0])
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_set_value_by_symbol(
@@ -2074,12 +2247,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: Symbol,
         value: AnyIr,
-    ) {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_set_value_by_symbol",
             ?object,
             ?key,
-            ?value
+            ?value,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2097,8 +2272,9 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_set_value_by_symbol(support, self.builder.func);
         let key = self.builder.ins().iconst(ir::types::I32, key.id() as i64);
-        let args = [self.runtime(), object.0, key, value.0];
-        self.builder.ins().call(func, &args);
+        let args = [self.runtime(), object.0, key, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_set_value_by_number(
@@ -2107,12 +2283,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: f64,
         value: AnyIr,
-    ) {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_set_value_by_number",
             ?object,
             key,
-            ?value
+            ?value,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2130,8 +2308,9 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_set_value_by_number(support, self.builder.func);
         let key = self.builder.ins().f64const(key);
-        let args = [self.runtime(), object.0, key, value.0];
-        self.builder.ins().call(func, &args);
+        let args = [self.runtime(), object.0, key, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_set_value_by_any(
@@ -2140,12 +2319,14 @@ impl<'a> Editor<'a> {
         object: ObjectIr,
         key: AnyIr,
         value: AnyIr,
-    ) {
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_set_value_by_any",
             ?object,
             ?key,
-            ?value
+            ?value,
+            ?retv,
         );
         runtime_debug! {{
             self.put_assert_non_null(
@@ -2167,8 +2348,9 @@ impl<'a> Editor<'a> {
         let func = self
             .runtime_func_cache
             .import_runtime_set_value_by_value(support, self.builder.func);
-        let args = [self.runtime(), object.0, key.0, value.0];
-        self.builder.ins().call(func, &args);
+        let args = [self.runtime(), object.0, key.0, value.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
     }
 
     pub fn put_runtime_concat_strings(
@@ -2570,4 +2752,10 @@ impl<'a> Editor<'a> {
             .icmp_imm(Equal, scope_id, expected.id() as i64);
         self.put_assert(support, BooleanIr(assertion), c"invalid scope");
     }
+}
+
+#[derive(Debug)]
+pub struct ScratchBuffer {
+    addr: ir::Value,
+    pub offset: usize,
 }

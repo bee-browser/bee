@@ -16,10 +16,10 @@ use cranelift::codegen::ir;
 use cranelift::codegen::isa;
 use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
-use jsparser::SymbolRegistry;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
+use jsparser::SymbolRegistry;
 use jsparser::syntax::LoopFlags;
 
 use crate::ProgramId;
@@ -37,7 +37,8 @@ use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
-use crate::types::StringFragment;
+use crate::types::CallContextFlags;
+use crate::types::StringHandle;
 use crate::types::Value;
 
 use super::CodeRegistry;
@@ -54,6 +55,7 @@ pub struct Session<'r, X> {
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
     pub code_registry: &'r mut CodeRegistry<X>,
+    max_call_stack_depth: u16,
     scope_cleanup_checker_enabled: bool,
     global_object: ObjectHandle,
     object_prototype: ObjectHandle,
@@ -62,6 +64,7 @@ pub struct Session<'r, X> {
 
 trait CompilerSupport {
     // RuntimePref
+    fn max_call_stack_depth(&self) -> u16;
     fn is_scope_cleanup_checker_enabled(&self) -> bool;
 
     // SymbolRegistry
@@ -87,6 +90,10 @@ trait CompilerSupport {
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
+    fn max_call_stack_depth(&self) -> u16 {
+        self.max_call_stack_depth
+    }
+
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
         self.scope_cleanup_checker_enabled
     }
@@ -156,6 +163,7 @@ pub fn compile<X>(
     let program = &runtime.programs[program_id.index()];
     for func in program.functions.iter() {
         let mut session = {
+            let max_call_stack_depth = runtime.max_call_stack_depth();
             let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
             let global_object = runtime.global_object.as_handle();
             Session {
@@ -163,6 +171,7 @@ pub fn compile<X>(
                 symbol_registry: &mut runtime.symbol_registry,
                 lambda_registry: &mut runtime.lambda_registry,
                 code_registry: &mut runtime.code_registry,
+                max_call_stack_depth,
                 scope_cleanup_checker_enabled,
                 global_object,
                 object_prototype: runtime.object_prototype.unwrap(),
@@ -201,6 +210,7 @@ pub fn compile_function<X>(
     let func = &program.functions[function_index];
 
     let mut session = {
+        let max_call_stack_depth = runtime.max_call_stack_depth();
         let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
         let global_object = runtime.global_object.as_handle();
         Session {
@@ -208,6 +218,7 @@ pub fn compile_function<X>(
             symbol_registry: &mut runtime.symbol_registry,
             lambda_registry: &mut runtime.lambda_registry,
             code_registry: &mut runtime.code_registry,
+            max_call_stack_depth,
             scope_cleanup_checker_enabled,
             global_object,
             object_prototype: runtime.object_prototype.unwrap(),
@@ -274,12 +285,13 @@ struct Compiler<'a, R> {
 
     // The following values must be reset in the end of compilation for each function.
     this: Option<AnyIr>,
-    this_capture: Option<CaptureIr>,
+    this_capture: Option<CaptureAddr>,
     params: Vec<AnyIr>,
     locals: Vec<AnyIr>,
-    captures: FxHashMap<Locator, CaptureIr>,
+    captures: FxHashMap<Locator, CaptureAddr>,
 
-    max_scratch_buffer_len: u32,
+    max_scratch_buffer_len: u16,
+    max_capture_buffer_len: u16,
 
     skip_count: u16,
 }
@@ -335,19 +347,14 @@ where
             locals: Default::default(),
             captures: Default::default(),
             max_scratch_buffer_len: 0,
+            max_capture_buffer_len: 0,
             skip_count: 0,
         }
     }
 
     fn compile(mut self, func: &Function) {
         self.start_compile(func);
-        for command in func.commands.iter() {
-            if self.skip_count > 0 {
-                self.skip_count -= 1;
-                continue;
-            }
-            self.process_command(func, command);
-        }
+        self.process_commands(func, &func.commands[..]);
         self.end_compile(func);
     }
 
@@ -361,14 +368,16 @@ where
             .put_assert_lambda_params(self.support, func.is_entry_function());
 
         self.editor.put_store_caller_to_call_context();
+        self.editor.put_store_depth_to_call_context();
 
         let argv = self.editor.put_alloc_argv(8);
         self.editor.put_store_argc_max_to_call_context(8);
         self.editor.put_store_argv_to_call_context(argv);
 
-        match self.support.get_lambda_info(func.id).kind {
-            LambdaKind::Coroutine => self.editor.put_set_coroutine_mode(),
-            _ => self.editor.put_set_closure_mode(),
+        if self.is_coroutine(func) {
+            self.editor.put_set_coroutine_mode();
+        } else {
+            self.editor.put_set_closure_mode();
         }
 
         // Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from a
@@ -403,16 +412,33 @@ where
 
         self.editor.switch_to_block(body_block);
 
-        self.control_flow_stack
-            .push_function_flow(entry_block, body_block, exit_block);
-
         let retv = self.editor.retv();
         self.editor.put_store_undefined_to_any(retv);
+
+        self.control_flow_stack
+            .push_function_flow(entry_block, body_block, exit_block);
 
         // NOTE: Methods emitting code that may throw an exception must be called after
         // `self.control_flow_stack.push_function_flow()`.
 
+        self.check_call_depth();
+
         self.resolve_this_binding(func);
+    }
+
+    fn check_call_depth(&mut self) {
+        logger::debug!(event = "check_call_depth");
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+        let too_deep = self
+            .editor
+            .put_call_stack_too_deep(self.support.max_call_stack_depth());
+        self.editor
+            .put_branch(too_deep, then_block, &[], merge_block, &[]);
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_internal_error(const_string!("Call stack too deep"));
+        self.editor.put_jump(merge_block, &[]);
+        self.editor.switch_to_block(merge_block);
     }
 
     // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
@@ -473,10 +499,22 @@ where
             }
         }
 
+        debug_assert_eq!(self.max_capture_buffer_len, 0);
         if func.is_this_binding_captured() {
             let this = self.this.unwrap();
-            let capture = self.editor.put_runtime_create_capture(self.support, this);
-            self.this_capture = Some(capture);
+            let capture_addr = self.perform_create_capture(func, this);
+            self.this_capture = Some(capture_addr);
+            self.max_capture_buffer_len = size_of::<usize>() as u16;
+        }
+    }
+
+    fn process_commands(&mut self, func: &Function, commands: &[CompileCommand]) {
+        for command in commands {
+            if self.skip_count > 0 {
+                self.skip_count -= 1;
+                continue;
+            }
+            self.process_command(func, command);
         }
     }
 
@@ -485,10 +523,7 @@ where
 
         debug_assert!(self.operand_stack.is_empty());
 
-        if matches!(
-            self.support.get_lambda_info(func.id).kind,
-            LambdaKind::Coroutine
-        ) {
+        if self.is_coroutine(func) {
             self.control_flow_stack.pop_coroutine_flow();
         }
 
@@ -502,11 +537,12 @@ where
             self.editor
                 .put_assert_scope_id(self.support, ScopeRef::NONE);
         }
-        self.editor.put_return();
+        self.editor.put_return(self.support);
 
         let info = self.support.get_lambda_info_mut(func.id);
         if matches!(info.kind, LambdaKind::Coroutine) {
             info.scratch_buffer_len = self.max_scratch_buffer_len;
+            info.capture_buffer_len = self.max_capture_buffer_len;
         }
 
         self.editor.end();
@@ -542,12 +578,15 @@ where
             CompileCommand::MutableVariable => self.process_mutable_variable(),
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
             CompileCommand::DeclareVariables(scope_ref) => {
-                self.process_declare_variables(func, *scope_ref)
+                self.process_declare_variables(*scope_ref)
+            }
+            CompileCommand::DeclareFunctions(scope_ref) => {
+                self.process_declare_functions(func, *scope_ref)
             }
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
             CompileCommand::New(nargs) => self.process_new(*nargs),
-            CompileCommand::PushScope(scope_ref) => self.process_push_scope(*scope_ref),
+            CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::ToNumeric => self.process_to_numeric(),
             CompileCommand::ToString => self.process_to_string(),
@@ -686,10 +725,7 @@ where
         // Theoretically, the heap memory pointed by `value` can be freed after the IR built by the
         // compiler is freed.
         let string_ir = self.editor.put_create_string(value);
-        self.operand_stack.push(Operand::String(
-            string_ir,
-            Some(StringFragment::new_stack(value)),
-        ));
+        self.operand_stack.push(Operand::String(string_ir, None));
     }
 
     fn process_object(&mut self) {
@@ -723,6 +759,15 @@ where
         self.operand_stack.push(Operand::Lambda(lambda, lambda_id));
     }
 
+    fn perform_load_capture(&mut self, capture_addr: CaptureAddr) -> CaptureIr {
+        match capture_addr {
+            CaptureAddr::Direct(capture) => capture,
+            CaptureAddr::CaptureBuffer(offset) => {
+                self.editor.put_load_capture_from_capture_buffer(offset)
+            }
+        }
+    }
+
     fn process_closure(&mut self, func: &Function, _prologue: bool, func_scope_ref: ScopeRef) {
         let scope = self.scope_tree.scope(func_scope_ref);
         debug_assert!(scope.is_function());
@@ -736,7 +781,7 @@ where
                 .put_runtime_create_closure(self.support, lambda, lambda_id, num_captures);
 
         if func.is_this_binding_captured() {
-            let capture = self.this_capture.unwrap();
+            let capture = self.perform_load_capture(self.this_capture.unwrap());
             self.editor
                 .put_store_capture_to_closure(capture, closure, 0);
         }
@@ -755,7 +800,7 @@ where
             let capture = match locator {
                 Locator::Param(_) | Locator::Local(_) => {
                     debug_assert!(self.captures.contains_key(&locator));
-                    *self.captures.get(&locator).unwrap()
+                    self.perform_load_capture(*self.captures.get(&locator).unwrap())
                 }
                 Locator::Capture(i) => self.editor.put_load_capture(i),
                 _ => unreachable!(),
@@ -768,14 +813,14 @@ where
     }
 
     fn process_coroutine(&mut self, lambda_id: LambdaId, num_locals: u16) {
-        let scrach_buffer_len = self.support.get_lambda_info(lambda_id).scratch_buffer_len;
-        debug_assert!(scrach_buffer_len <= u16::MAX as u32);
         let closure = self.pop_closure();
+        let lambda_info = self.support.get_lambda_info(lambda_id);
         let coroutine = self.editor.put_runtime_create_coroutine(
             self.support,
             closure,
             num_locals,
-            scrach_buffer_len as u16,
+            lambda_info.scratch_buffer_len,
+            lambda_info.capture_buffer_len,
         );
         self.operand_stack.push(Operand::Coroutine(coroutine));
     }
@@ -946,7 +991,7 @@ where
 
         let local = match locator {
             Locator::Local(index) => self.get_local(index),
-            _ => unreachable!(),
+            _ => unreachable!("{locator:?}"),
         };
 
         self.emit_store_operand_to_any(&operand, local);
@@ -964,8 +1009,7 @@ where
         self.emit_store_operand_to_any(&operand, local);
     }
 
-    // NOTE: This function may call `process_command()`.
-    fn process_declare_variables(&mut self, func: &Function, scope_ref: ScopeRef) {
+    fn process_declare_variables(&mut self, scope_ref: ScopeRef) {
         debug_assert!(self.scope_tree.scope(scope_ref).is_function());
 
         // In the specification, function-scoped variables defined by "VariableStatement"s are
@@ -988,15 +1032,20 @@ where
             };
             self.editor.put_store_undefined_to_any(local);
         }
+    }
 
-        // TODO(fix): preserve declaration order.
-        for variable in self.scope_tree.scope(scope_ref).variables.iter() {
-            if variable.function_declaration_batch == 0 {
-                continue;
-            }
-            let start = variable.function_declaration_batch + 1;
+    // NOTE: This function may call `process_command()`.
+    fn process_declare_functions(&mut self, func: &Function, scope_ref: ScopeRef) {
+        for batch_index in self
+            .scope_tree
+            .scope(scope_ref)
+            .function_declarations
+            .iter()
+            .cloned()
+        {
+            let start = batch_index + 1;
             let end = start
-                + match func.commands[variable.function_declaration_batch] {
+                + match func.commands[batch_index] {
                     CompileCommand::Batch(n) => n as usize,
                     _ => unreachable!(),
                 };
@@ -1032,12 +1081,15 @@ where
                 let global_object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
                 self.editor.put_store_object_to_any(object, value);
-                self.editor.put_runtime_set_value_by_symbol(
+                let retv = self.emit_create_any();
+                let status = self.editor.put_runtime_set_value_by_symbol(
                     self.support,
                     global_object,
                     symbol,
                     value,
+                    retv,
                 );
+                self.emit_check_status_for_exception(status, retv);
             }
             _ => unreachable!("{locator:?}"),
         };
@@ -1110,7 +1162,15 @@ where
     }
 
     fn process_call(&mut self, argc: u16) {
-        debug_assert!(argc <= 8); // TODO: dynamic allocation
+        // TODO: dynamic allocation
+        if argc > 8 {
+            self.emit_throw_internal_error(const_string!("TODO: too many arguments"));
+            let len = self.operand_stack.len() - (argc as usize) - 1;
+            self.operand_stack.truncate(len);
+            self.operand_stack.push(Operand::Undefined); // TODO: dummy
+            return;
+        }
+
         self.emit_fill_args(argc);
 
         let (operand, owner) = self.dereference();
@@ -1121,6 +1181,7 @@ where
             Operand::Any(value, ..) => self.emit_load_object_or_throw_type_error(value),
             _ => {
                 self.emit_throw_type_error();
+                self.operand_stack.push(Operand::Undefined); // TODO: dummy
                 return;
             }
         };
@@ -1137,7 +1198,9 @@ where
         }
 
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, retv);
+        let status = self
+            .editor
+            .put_call(closure, CallContextFlags::empty(), retv);
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation
@@ -1157,7 +1220,15 @@ where
     }
 
     fn process_new(&mut self, argc: u16) {
-        debug_assert!(argc <= 8); // TODO: dynamic allocation
+        // TODO: dynamic allocation
+        if argc > 8 {
+            self.emit_throw_internal_error(const_string!("TODO: too many arguments"));
+            let len = self.operand_stack.len() - (argc as usize) - 1;
+            self.operand_stack.truncate(len);
+            self.operand_stack.push(Operand::Undefined); // TODO: dummy
+            return;
+        }
+
         self.emit_fill_args(argc);
 
         let (operand, ..) = self.dereference();
@@ -1167,18 +1238,22 @@ where
             Operand::Any(value, ..) => self.emit_load_object_or_throw_type_error(value),
             _ => {
                 self.emit_throw_type_error();
+                self.operand_stack.push(Operand::Undefined); // TODO: dummy
                 return;
             }
         };
 
         let closure = self.emit_load_closure_or_throw_type_error(constructor);
 
-        let prototype = self.editor.put_runtime_get_value_by_symbol(
+        let prototype = self.emit_create_any();
+        let status = self.editor.put_runtime_get_value_by_symbol(
             self.support,
             constructor,
             Symbol::PROTOTYPE,
             false,
+            prototype,
         ); // TODO: strict
+        self.emit_check_status_for_exception(status, prototype);
         runtime_debug! {{
             let is_object = self.editor.put_is_object(prototype);
             self.editor.put_assert(self.support, is_object, c"Prototype must be an object");
@@ -1195,14 +1270,14 @@ where
         };
 
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, retv);
+        let status = self.editor.put_call(closure, CallContextFlags::NEW, retv);
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation
         self.operand_stack.push(Operand::Object(this));
     }
 
-    fn process_push_scope(&mut self, scope_ref: ScopeRef) {
+    fn process_push_scope(&mut self, func: &Function, scope_ref: ScopeRef) {
         debug_assert_ne!(scope_ref, ScopeRef::NONE);
 
         let init_block = self.editor.create_block();
@@ -1232,15 +1307,16 @@ where
                     Locator::Local(index) => self.get_local(index),
                     _ => unreachable!(),
                 };
-                let capture = self.editor.put_runtime_create_capture(self.support, target);
+                let capture_addr = self.perform_create_capture(func, target);
                 debug_assert!(!self.captures.contains_key(&locator));
-                self.captures.insert(locator, capture);
+                self.captures.insert(locator, capture_addr);
             }
             if let Locator::Local(index) = locator {
                 let value = self.get_local(index);
                 self.editor.put_store_none_to_any(value);
             }
         }
+        self.update_max_capture_buffer_len();
 
         self.editor.put_jump(body_block, &[]);
         self.editor.switch_to_block(body_block);
@@ -1275,12 +1351,14 @@ where
             }
         }
         if scope.is_function() {
-            if let Some(this_capture) = self.this_capture {
+            if let Some(this_capture) = self.this_capture.take() {
+                let capture = self.perform_load_capture(this_capture);
                 let this = self.this.unwrap();
-                self.editor.put_escape_value(this_capture, this);
+                self.editor.put_escape_value(capture, this);
             }
             // tidy this value if it exists
             // TODO: GC
+            debug_assert!(self.captures.is_empty());
         }
         self.editor.put_jump(postcheck_block, &[]);
 
@@ -1332,8 +1410,10 @@ where
                 .editor
                 .put_runtime_number_to_string(self.support, *value),
             Operand::String(value, _) => *value,
-            Operand::Object(_) => todo!(),
-            Operand::Promise(_) => todo!(),
+            Operand::Promise(_) | Operand::Object(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToString(object)"));
+                self.editor.put_create_string(&[])
+            }
             Operand::Any(value, _) => self.editor.put_runtime_to_string(self.support, *value),
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -1374,7 +1454,7 @@ where
         self.operand_stack.push(Operand::String(tail, None));
     }
 
-    fn pop_string(&mut self) -> (StringIr, Option<StringFragment>) {
+    fn pop_string(&mut self) -> (StringIr, Option<StringHandle>) {
         match self.operand_stack.pop().unwrap() {
             Operand::String(value_rt, value_ct) => (value_rt, value_ct),
             operand => unreachable!("{operand:?}"),
@@ -1510,7 +1590,9 @@ where
 
     // 13.5.1.2 Runtime Semantics: Evaluation
     fn process_delete(&mut self) {
-        unimplemented!("delete operator");
+        let (_operand, ..) = self.dereference();
+        self.emit_throw_internal_error(const_string!("TODO: delete operator"));
+        self.process_boolean(true);
     }
 
     // 13.5.2.1 Runtime Semantics: Evaluation
@@ -1946,12 +2028,18 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_instanceof(&mut self) {
-        unimplemented!("instanceof operator");
+        let (_lhs, ..) = self.dereference();
+        let (_rhs, ..) = self.dereference();
+        self.emit_throw_internal_error(const_string!("TODO: instanceof operator"));
+        self.process_boolean(false);
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_in(&mut self) {
-        unimplemented!("in operator");
+        let (_lhs, ..) = self.dereference();
+        let (_rhs, ..) = self.dereference();
+        self.emit_throw_internal_error(const_string!("TODO: in operator"));
+        self.process_boolean(false);
     }
 
     // 13.11.1 Runtime Semantics: Evaluation
@@ -2070,15 +2158,26 @@ where
                 let object = self.editor.put_object(global_object.as_addr());
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
+                self.emit_ensure_return_safe(value); // TODO(refactor)
                 // TODO(feat): ReferenceError, TypeError
-                self.editor
-                    .put_runtime_set_value_by_symbol(self.support, object, symbol, value);
+                let retv = self.emit_create_any();
+                let status = self.editor.put_runtime_set_value_by_symbol(
+                    self.support,
+                    object,
+                    symbol,
+                    value,
+                    retv,
+                );
+                self.emit_check_status_for_exception(status, retv);
             }
             Operand::VariableReference(symbol, locator) => {
                 let var = self.emit_get_variable(symbol, locator);
                 // TODO: throw a TypeError in the strict mode.
                 // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
                 self.emit_store_operand_to_any(&rhs, var);
+                if matches!(locator, Locator::Capture(_)) {
+                    self.emit_ensure_return_safe(var); // TODO(refactor)
+                }
             }
             Operand::PropertyReference(owner, key) => {
                 // TODO(refactor): reduce code clone
@@ -2091,28 +2190,32 @@ where
                 };
                 let value = self.editor.put_alloc_any();
                 self.emit_store_operand_to_any(&rhs, value);
-                match key {
-                    PropertyKey::Symbol(key) => {
-                        self.editor.put_runtime_set_value_by_symbol(
-                            self.support,
-                            object,
-                            key,
-                            value,
-                        );
-                    }
-                    PropertyKey::Number(key) => {
-                        self.editor.put_runtime_set_value_by_number(
-                            self.support,
-                            object,
-                            key,
-                            value,
-                        );
-                    }
-                    PropertyKey::Any(key) => {
-                        self.editor
-                            .put_runtime_set_value_by_any(self.support, object, key, value);
-                    }
-                }
+                self.emit_ensure_return_safe(value); // TODO(refactor)
+                let retv = self.emit_create_any();
+                let status = match key {
+                    PropertyKey::Symbol(key) => self.editor.put_runtime_set_value_by_symbol(
+                        self.support,
+                        object,
+                        key,
+                        value,
+                        retv,
+                    ),
+                    PropertyKey::Number(key) => self.editor.put_runtime_set_value_by_number(
+                        self.support,
+                        object,
+                        key,
+                        value,
+                        retv,
+                    ),
+                    PropertyKey::Any(key) => self.editor.put_runtime_set_value_by_any(
+                        self.support,
+                        object,
+                        key,
+                        value,
+                        retv,
+                    ),
+                };
+                self.emit_check_status_for_exception(status, retv);
             }
             operand => unreachable!("{operand:?}"),
         }
@@ -2161,9 +2264,18 @@ where
                 self.emit_throw_type_error();
                 None
             }
-            PropertyOwner::Boolean(_) => todo!(),
-            PropertyOwner::Number(_) => todo!(),
-            PropertyOwner::String(_) => todo!(),
+            PropertyOwner::Boolean(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToObject(boolean)"));
+                None
+            }
+            PropertyOwner::Number(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToObject(number)"));
+                None
+            }
+            PropertyOwner::String(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToObject(string)"));
+                None
+            }
             PropertyOwner::Object(value) => Some(*value),
             PropertyOwner::Any(value) => {
                 let retv = self.emit_create_any();
@@ -2523,9 +2635,7 @@ where
                         CompileCommand::Batch(n) => n as usize,
                         _ => unreachable!(),
                     };
-                for command in func.commands[start..end].iter() {
-                    self.process_command(func, command);
-                }
+                self.process_commands(func, &func.commands[start..end]);
             }
             self.editor
                 .put_jump_if_not_terminated(fall_through_block, &[]);
@@ -2751,14 +2861,15 @@ where
 
     fn process_await(&mut self, next_state: u32) {
         self.perform_resolve_promise();
-        self.perform_save_operands_to_scratch_buffer();
+        let offset_save = self.perform_save_temporals_to_scratch_buffer();
         self.editor.put_store_state_to_coroutine(next_state);
         self.editor.put_suspend();
 
         // resume block
         let block = self.control_flow_stack.coroutine_next_block();
         self.editor.switch_to_block(block);
-        self.perform_load_operands_from_scratch_buffer();
+        let offset_load = self.perform_load_temporals_from_scratch_buffer();
+        debug_assert_eq!(offset_save, offset_load);
 
         let has_error_block = self.editor.create_block();
         let result_block = self.editor.create_block();
@@ -2798,56 +2909,46 @@ where
     // NOTE: It's best to implement a special pass to determine which value on the operand stack
     // has to be saved, but we don't like to tightly depend on LLVM.  Because we plan to replace it
     // with another library written in Rust such as Cranelift in the future.
-    fn perform_save_operands_to_scratch_buffer(&mut self) {
-        logger::debug!(event = "perform_save_operands_to_scratch_buffer");
-        let scratch_buffer = self.editor.put_get_scratch_buffer_from_coroutine();
-        // Take the whole operand stack in order to avoid the borrow checker.
-        let operand_stack = std::mem::take(&mut self.operand_stack);
-        let mut offset = 0;
-        for operand in operand_stack.iter() {
+    fn perform_save_temporals_to_scratch_buffer(&mut self) -> usize {
+        logger::debug!(event = "perform_save_temporals_to_scratch_buffer");
+        let mut scratch_buffer = self.editor.put_get_scratch_buffer_from_coroutine();
+        for operand in self.operand_stack.iter() {
             match operand {
                 Operand::Boolean(value, _)
                 | Operand::PropertyReference(PropertyOwner::Boolean(value), _) => {
                     self.editor
-                        .put_write_boolean_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_boolean_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Number(value, _)
                 | Operand::PropertyReference(PropertyOwner::Number(value), _) => {
                     self.editor
-                        .put_write_number_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_number_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::String(value, _)
                 | Operand::PropertyReference(PropertyOwner::String(value), _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
-                        .put_write_string_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_string_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
-                        .put_write_closure_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_closure_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Object(value)
                 | Operand::PropertyReference(PropertyOwner::Object(value), _) => {
                     // TODO(issue#237): GcCellRef
                     self.editor
-                        .put_write_object_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_object_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Promise(value) => {
                     self.editor
-                        .put_write_promise_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_write_promise_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Any(value, ..)
                 | Operand::PropertyReference(PropertyOwner::Any(value), _) => {
                     self.editor
-                        .put_write_any_to_scratch_buffer(*value, scratch_buffer, offset);
-                    offset += Value::SIZE;
+                        .put_write_any_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Undefined
                 | Operand::Null
@@ -2856,70 +2957,62 @@ where
                 Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
-        self.operand_stack = operand_stack;
 
+        let offset = scratch_buffer.offset;
         // TODO: Should return a compile error.
         assert!(offset <= u16::MAX as usize);
-        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset as u32);
+        self.max_scratch_buffer_len = self.max_scratch_buffer_len.max(offset as u16);
+
+        offset
     }
 
-    fn perform_load_operands_from_scratch_buffer(&mut self) {
-        logger::debug!(event = "perform_load_operands_from_scratch_buffer");
-        let scratch_buffer = self.editor.put_get_scratch_buffer_from_coroutine();
-        // Take the whole operand stack in order to avoid the borrow checker.
-        let mut operand_stack = std::mem::take(&mut self.operand_stack);
-        let mut offset = 0;
-        for operand in operand_stack.iter_mut() {
+    fn perform_load_temporals_from_scratch_buffer(&mut self) -> usize {
+        logger::debug!(event = "perform_load_temporals_from_scratch_buffer");
+        let mut scratch_buffer = self.editor.put_get_scratch_buffer_from_coroutine();
+        for operand in self.operand_stack.iter_mut() {
             match operand {
                 Operand::Boolean(value, _)
                 | Operand::PropertyReference(PropertyOwner::Boolean(value), _) => {
                     *value = self
                         .editor
-                        .put_read_boolean_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_boolean_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Number(value, _)
                 | Operand::PropertyReference(PropertyOwner::Number(value), _) => {
                     *value = self
                         .editor
-                        .put_read_number_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_number_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::String(value, _)
                 | Operand::PropertyReference(PropertyOwner::String(value), _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
-                        .put_read_string_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_string_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
-                        .put_read_closure_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_closure_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Object(value)
                 | Operand::PropertyReference(PropertyOwner::Object(value), _) => {
                     // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
-                        .put_read_object_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_object_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Promise(value) => {
                     *value = self
                         .editor
-                        .put_read_promise_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::HOLDER_SIZE;
+                        .put_read_promise_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Any(value, ..)
                 | Operand::PropertyReference(PropertyOwner::Any(value), _) => {
                     *value = self
                         .editor
-                        .put_read_any_from_scratch_buffer(scratch_buffer, offset);
-                    offset += Value::SIZE;
+                        .put_read_any_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Undefined
                 | Operand::Null
@@ -2928,7 +3021,8 @@ where
                 Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
-        self.operand_stack = operand_stack;
+
+        scratch_buffer.offset
     }
 
     fn perform_resolve_promise(&mut self) {
@@ -3010,26 +3104,6 @@ where
         }
     }
 
-    fn emit_ensure_heap_string(&mut self, string: StringIr) -> StringIr {
-        logger::debug!(event = "emit_ensure_heap_string", ?string);
-        let then_block = self.editor.create_block();
-        let merge_block = self.editor.create_block_with_addr();
-
-        // if string.on_stack()
-        let on_stack = self.editor.put_string_on_stack(string);
-        self.editor
-            .put_branch(on_stack, then_block, &[], merge_block, &[string.0.into()]);
-        // {
-        self.editor.switch_to_block(then_block);
-        let heap_string = self
-            .editor
-            .put_runtime_migrate_string_to_heap(self.support, string);
-        self.editor.put_jump(merge_block, &[heap_string.0.into()]);
-        // }
-        self.editor.switch_to_block(merge_block);
-        StringIr(self.editor.get_block_param(merge_block, 0))
-    }
-
     fn process_discard(&mut self) {
         debug_assert!(!self.operand_stack.is_empty());
         self.operand_stack.pop();
@@ -3073,9 +3147,9 @@ where
             Operand::Undefined | Operand::Null => self.editor.put_boolean(false),
             Operand::Boolean(..)
             | Operand::Number(..)
+            | Operand::String(..)
             | Operand::Object(_)
             | Operand::Promise(_) => self.editor.put_boolean(true),
-            Operand::String(..) => todo!("string"),
             Operand::Any(value, ..) => self.editor.put_is_non_nullish(*value),
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -3125,7 +3199,10 @@ where
             Operand::Undefined | Operand::Null => self.editor.put_boolean(false),
             Operand::Boolean(value, ..) => *value,
             Operand::Number(value, ..) => self.editor.put_number_to_boolean(*value),
-            Operand::String(..) => todo!(),
+            Operand::String(..) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToBoolean(string)"));
+                self.editor.put_boolean(false)
+            }
             Operand::Promise(_) | Operand::Object(_) => self.editor.put_boolean(true),
             Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
             Operand::Lambda(..)
@@ -3146,8 +3223,14 @@ where
             Operand::Null => self.editor.put_number(0.0),
             Operand::Boolean(value, ..) => self.editor.put_boolean_to_number(*value),
             Operand::Number(value, ..) => *value,
-            Operand::String(..) => unimplemented!("string.to_numeric"),
-            Operand::Object(_) => unimplemented!("object.to_numeric"),
+            Operand::String(..) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToNumber(string)"));
+                self.editor.put_number(f64::NAN)
+            }
+            Operand::Object(_) => {
+                self.emit_throw_internal_error(const_string!("TODO: ToNumber(object)"));
+                self.editor.put_number(f64::NAN)
+            }
             Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -3414,6 +3497,7 @@ where
             }
             Operand::VariableReference(symbol, locator) => {
                 let value = self.emit_get_variable(symbol, locator);
+                self.emit_check_none(value);
                 // TODO(pref): compile-time evaluation
                 (Operand::Any(value, None), None)
             }
@@ -3435,24 +3519,31 @@ where
                 self.emit_throw_type_error();
                 // }
                 self.editor.switch_to_block(end_block);
-                let value = match key {
+                let value = self.emit_create_any();
+                let status = match key {
                     PropertyKey::Symbol(key) => self.editor.put_runtime_get_value_by_symbol(
                         self.support,
                         object,
                         key,
                         false,
+                        value,
                     ),
                     PropertyKey::Number(key) => self.editor.put_runtime_get_value_by_number(
                         self.support,
                         object,
                         key,
                         false,
+                        value,
                     ),
-                    PropertyKey::Any(key) => {
-                        self.editor
-                            .put_runtime_get_value_by_any(self.support, object, key, false)
-                    }
+                    PropertyKey::Any(key) => self.editor.put_runtime_get_value_by_any(
+                        self.support,
+                        object,
+                        key,
+                        false,
+                        value,
+                    ),
                 };
+                self.emit_check_status_for_exception(status, value);
                 runtime_debug! {{
                     self.editor.put_assert_non_null(
                         self.support,
@@ -3467,17 +3558,38 @@ where
         }
     }
 
+    fn emit_check_none(&mut self, value: AnyIr) {
+        logger::debug!(event = "emit_check_none", ?value);
+
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+
+        // if value.is_none()
+        let is_none = self.editor.put_is_none(value);
+        self.editor
+            .put_branch(is_none, then_block, &[], merge_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_reference_error();
+        self.editor.put_jump(merge_block, &[]);
+        // }
+
+        self.editor.switch_to_block(merge_block);
+    }
+
     fn perform_escape_value(&mut self, locator: Locator) {
         debug_assert!(!locator.is_capture());
         debug_assert!(self.captures.contains_key(&locator));
         logger::debug!(event = "perform_escape_value", ?locator);
-        let capture = self.captures.remove(&locator).unwrap();
+        let capture_addr = self.captures.remove(&locator).unwrap();
+        let capture = self.perform_load_capture(capture_addr);
         let value = match locator {
             Locator::Param(index) => self.get_param(index),
             Locator::Local(index) => self.get_local(index),
             Locator::Capture(index) => self.editor.put_load_captured_value(index),
             Locator::Global => unreachable!(),
         };
+        self.emit_ensure_return_safe(value);
         self.editor.put_escape_value(capture, value);
     }
 
@@ -3499,11 +3611,17 @@ where
     // retv
 
     fn store_operand_to_retv(&mut self, operand: &Operand) {
+        logger::debug!(event = "store_operand_to_retv", ?operand);
         let retv = self.editor.retv();
         match operand {
             Operand::String(value, _) => {
                 let value = self.emit_ensure_heap_string(*value);
                 self.editor.put_store_string_to_any(value, retv);
+            }
+            Operand::Any(value, _) => {
+                let value = *value;
+                self.emit_ensure_return_safe(value);
+                self.editor.put_store_any_to_any(value, retv);
             }
             _ => self.emit_store_operand_to_any(operand, retv),
         }
@@ -3598,9 +3716,11 @@ where
         let object = self.editor.put_object(global_object.as_addr());
 
         // TODO: strict mode
-        let value = self
-            .editor
-            .put_runtime_get_value_by_symbol(self.support, object, key, true);
+        let value = self.emit_create_any();
+        let status =
+            self.editor
+                .put_runtime_get_value_by_symbol(self.support, object, key, true, value);
+        self.emit_check_status_for_exception(status, value);
 
         let then_block = self.editor.create_block();
         let end_block = self.editor.create_block();
@@ -3671,6 +3791,34 @@ where
 
     // captures
 
+    fn compute_num_captured(&self) -> usize {
+        self.captures.len() + if self.this_capture.is_none() { 0 } else { 1 }
+    }
+
+    fn compute_next_offset_in_capture_buffer(&self) -> usize {
+        self.compute_num_captured() * size_of::<usize>()
+    }
+
+    fn update_max_capture_buffer_len(&mut self) {
+        let offset = self.compute_next_offset_in_capture_buffer();
+        debug_assert!(offset <= u16::MAX as usize);
+        self.max_capture_buffer_len = self.max_capture_buffer_len.max(offset as u16);
+    }
+
+    fn perform_create_capture(&mut self, func: &Function, target: AnyIr) -> CaptureAddr {
+        let capture = self.editor.put_runtime_create_capture(self.support, target);
+        if self.is_coroutine(func) {
+            let offset = self.compute_next_offset_in_capture_buffer();
+            self.editor
+                .put_store_capture_to_capture_buffer(capture, offset);
+            CaptureAddr::CaptureBuffer(offset)
+        } else {
+            CaptureAddr::Direct(capture)
+        }
+    }
+
+    // return value
+
     fn emit_check_status_for_exception(&mut self, status: StatusIr, retv: AnyIr) {
         logger::debug!(event = "emit_check_status_for_exception", ?status, ?retv);
 
@@ -3708,6 +3856,66 @@ where
         let error = self.editor.put_runtime_create_type_error(self.support);
         self.operand_stack.push(Operand::Object(error));
         self.process_throw();
+    }
+
+    fn emit_throw_internal_error(&mut self, message: StringHandle) {
+        logger::debug!(event = "emit_throw_internal_error", ?message);
+        let error = self
+            .editor
+            .put_runtime_create_internal_error(self.support, message);
+        self.operand_stack.push(Operand::Object(error));
+        self.process_throw();
+    }
+
+    // helpers
+
+    fn is_coroutine(&self, func: &Function) -> bool {
+        matches!(
+            self.support.get_lambda_info(func.id).kind,
+            LambdaKind::Coroutine
+        )
+    }
+
+    fn emit_ensure_heap_string(&mut self, string: StringIr) -> StringIr {
+        logger::debug!(event = "emit_ensure_heap_string", ?string);
+
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_addr();
+
+        // if string.on_stack()
+        let on_stack = self.editor.put_string_on_stack(string);
+        self.editor
+            .put_branch(on_stack, then_block, &[], merge_block, &[string.0.into()]);
+        // {
+        self.editor.switch_to_block(then_block);
+        let heap_string = self
+            .editor
+            .put_runtime_migrate_string_to_heap(self.support, string);
+        self.editor.put_jump(merge_block, &[heap_string.0.into()]);
+        // }
+        self.editor.switch_to_block(merge_block);
+        StringIr(self.editor.get_block_param(merge_block, 0))
+    }
+
+    fn emit_ensure_return_safe(&mut self, value: AnyIr) {
+        logger::debug!(event = "emit_ensure_return_safe", ?value);
+
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+
+        // if value.is_string()
+        let is_string = self.editor.put_is_string(value);
+        self.editor
+            .put_branch(is_string, then_block, &[], merge_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        let string = self.editor.put_load_string(value);
+        let string = self.emit_ensure_heap_string(string);
+        self.editor.put_store_string_to_any(string, value);
+        self.editor.put_jump(merge_block, &[]);
+        // }
+
+        self.editor.switch_to_block(merge_block);
     }
 }
 
@@ -3774,7 +3982,7 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    String(StringIr, #[allow(unused)] Option<StringFragment>),
+    String(StringIr, #[allow(unused)] Option<StringHandle>),
 
     /// Runtime value of closure type.
     Closure(ClosureIr),
@@ -3799,6 +4007,12 @@ enum Operand {
     // Reference types.
     VariableReference(Symbol, Locator),
     PropertyReference(PropertyOwner, PropertyKey),
+}
+
+#[derive(Clone, Copy)]
+enum CaptureAddr {
+    Direct(CaptureIr),
+    CaptureBuffer(usize),
 }
 
 #[derive(Clone, Debug)]

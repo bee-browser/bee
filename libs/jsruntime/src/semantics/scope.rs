@@ -3,6 +3,7 @@
 //   16.1.7 GlobalDeclarationInstantiation ( script, env )
 
 use bitflags::bitflags;
+use itertools::Itertools;
 use jsparser::SymbolRegistry;
 
 use super::Locator;
@@ -78,6 +79,15 @@ pub struct ScopeTree {
 impl ScopeTree {
     pub fn scope(&self, scope_ref: ScopeRef) -> &Scope {
         &self.scopes[scope_ref.index()]
+    }
+
+    pub fn validate(&self) -> bool {
+        for scope in self.scopes.iter() {
+            if !scope.validate() {
+                return false;
+            }
+        }
+        true
     }
 
     pub fn iter_variables(
@@ -156,6 +166,7 @@ impl ScopeTreeBuilder {
         let index = self.scopes.len();
         self.scopes.push(Scope {
             variables: vec![],
+            function_declarations: vec![],
             outer: self.current,
             depth: self.depth,
             max_child_block_depth: self.depth,
@@ -190,7 +201,6 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Param,
             flags: VariableFlags::empty(),
-            function_declaration_batch: 0,
         });
     }
 
@@ -205,17 +215,10 @@ impl ScopeTreeBuilder {
             } else {
                 VariableFlags::empty()
             },
-            function_declaration_batch: 0,
         });
     }
 
-    pub fn add_function_scoped_variable(
-        &mut self,
-        symbol: Symbol,
-        index: u16,
-        mutable: bool,
-        declaration_batch: usize,
-    ) {
+    pub fn add_function_scoped_variable(&mut self, symbol: Symbol, index: u16, mutable: bool) {
         let scope = &mut self.scopes[self.current.index()];
         scope.variables.push(Variable {
             symbol,
@@ -227,7 +230,6 @@ impl ScopeTreeBuilder {
                 } else {
                     VariableFlags::empty()
                 },
-            function_declaration_batch: declaration_batch,
         });
     }
 
@@ -239,19 +241,13 @@ impl ScopeTreeBuilder {
             index,
             kind: VariableKind::Capture,
             flags: VariableFlags::empty(),
-            function_declaration_batch: 0,
         });
         scope
             .variables
             .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
-    pub fn add_global(
-        &mut self,
-        scope_ref: ScopeRef,
-        symbol: Symbol,
-        function_declaration_batch: usize,
-    ) {
+    pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
         let scope = &mut self.scopes[scope_ref.index()];
         debug_assert!(scope.is_function());
         scope.variables.push(Variable {
@@ -259,26 +255,15 @@ impl ScopeTreeBuilder {
             index: 0, // TODO
             kind: VariableKind::Global,
             flags: VariableFlags::empty(),
-            function_declaration_batch,
         });
         scope
             .variables
             .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
-    // TODO(perf)
-    pub fn set_function_declaration_batch(
-        &mut self,
-        scope_ref: ScopeRef,
-        symbol: Symbol,
-        function_declaration_batch: usize,
-    ) {
+    pub fn add_function_declaration(&mut self, scope_ref: ScopeRef, batch_index: usize) {
         let scope = &mut self.scopes[scope_ref.index()];
-        debug_assert!(scope.is_function());
-        match scope.variables.iter_mut().find(|v| v.symbol == symbol) {
-            Some(variable) => variable.function_declaration_batch = function_declaration_batch,
-            None => panic!(),
-        }
+        scope.function_declarations.push(batch_index);
     }
 
     pub fn set_captured(&mut self, variable_ref: VariableRef) {
@@ -354,6 +339,7 @@ impl Default for ScopeTreeBuilder {
 // Block scopes hold only lexically-scoped variables.
 pub struct Scope {
     pub variables: Vec<Variable>,
+    pub function_declarations: Vec<usize>,
     outer: ScopeRef,
     depth: u16,
     max_child_block_depth: u16,
@@ -363,6 +349,7 @@ pub struct Scope {
 impl Scope {
     const NONE: Self = Self {
         variables: vec![],
+        function_declarations: vec![],
         outer: ScopeRef::NONE,
         depth: 0,
         max_child_block_depth: 0,
@@ -371,6 +358,13 @@ impl Scope {
 
     pub fn is_function(&self) -> bool {
         matches!(self.kind, ScopeKind::Function)
+    }
+
+    fn validate(&self) -> bool {
+        self.variables
+            .iter()
+            .map(|variable| variable.symbol)
+            .all_unique()
     }
 
     fn display<'a>(
@@ -409,6 +403,9 @@ impl std::fmt::Display for ScopeDisplay<'_> {
         for variable in self.scope.variables.iter() {
             write!(f, " {}", variable.display(self.symbol_registry))?;
         }
+        for index in self.scope.function_declarations.iter() {
+            write!(f, " FD@{index}")?;
+        }
         Ok(())
     }
 }
@@ -424,7 +421,6 @@ pub struct Variable {
     pub index: u16,
     pub kind: VariableKind,
     flags: VariableFlags,
-    pub function_declaration_batch: usize,
 }
 
 impl Variable {
@@ -510,9 +506,6 @@ impl<'a> std::fmt::Display for VariableDisplay<'a> {
                 VariableKind::Local | VariableKind::Param
             ));
             write!(f, "*")?;
-        }
-        if variable.function_declaration_batch > 0 {
-            write!(f, "#{}", variable.function_declaration_batch)?;
         }
         Ok(())
     }

@@ -47,6 +47,7 @@ impl LambdaRegistry {
             program_id: ProgramId::INVALID,
             function_index: u32::MAX,
             scratch_buffer_len: 0,
+            capture_buffer_len: 0,
             kind,
         });
         LambdaId::new(index)
@@ -67,7 +68,8 @@ pub struct LambdaInfo {
     // [[ECMAScriptCode]]
     pub program_id: ProgramId,
     pub function_index: u32,
-    pub scratch_buffer_len: u32,
+    pub scratch_buffer_len: u16,
+    pub capture_buffer_len: u16,
     pub kind: LambdaKind,
 }
 
