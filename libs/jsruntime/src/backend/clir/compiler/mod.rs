@@ -2172,6 +2172,9 @@ where
                 // TODO: throw a TypeError in the strict mode.
                 // auto* flags_ptr = CreateGetFlagsPtr(value_ptr);
                 self.emit_store_operand_to_any(&rhs, var);
+                if matches!(locator, Locator::Capture(_)) {
+                    self.emit_ensure_return_safe(var); // TODO(refactor)
+                }
             }
             Operand::PropertyReference(owner, key) => {
                 // TODO(refactor): reduce code clone
