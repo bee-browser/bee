@@ -1154,7 +1154,9 @@ where
                     // TODO: BigInt
                     return Err(Error::NotYetImplemented);
                 } else if token.lexeme.starts_with("0x") || token.lexeme.starts_with("0X") {
-                    let n = u64::from_str_radix(&token.lexeme[2..], 16).unwrap();
+                    // TODO(perf)
+                    let s = token.lexeme[2..].replace("_", "");
+                    let n = u64::from_str_radix(&s, 16).unwrap();
                     n as f64
                 } else {
                     match token.lexeme.parse::<f64>() {
