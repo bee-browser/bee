@@ -37,6 +37,7 @@ use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
+use crate::types::CallContextFlags;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -1197,7 +1198,9 @@ where
         }
 
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, retv);
+        let status = self
+            .editor
+            .put_call(closure, CallContextFlags::empty(), retv);
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation
@@ -1267,7 +1270,7 @@ where
         };
 
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, retv);
+        let status = self.editor.put_call(closure, CallContextFlags::NEW, retv);
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation

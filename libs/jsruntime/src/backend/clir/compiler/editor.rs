@@ -14,6 +14,7 @@ use crate::logger;
 use crate::objects::Object;
 use crate::objects::ObjectFlags;
 use crate::types::CallContext;
+use crate::types::CallContextFlags;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
@@ -788,9 +789,15 @@ impl<'a> Editor<'a> {
         self.put_store(capture.0, closure.0, offset);
     }
 
-    pub fn put_call(&mut self, closure: ClosureIr, retv: AnyIr) -> StatusIr {
-        logger::debug!(event = "put_call", ?closure, ?retv);
+    pub fn put_call(
+        &mut self,
+        closure: ClosureIr,
+        flags: CallContextFlags,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(event = "put_call", ?closure, ?flags, ?retv);
         self.put_store_closure_to_call_context(closure);
+        self.put_store_flags_to_call_context(flags);
         let lambda = self.put_load_lambda_from_closure(closure);
         let args = &[
             self.runtime(),
@@ -908,6 +915,17 @@ impl<'a> Editor<'a> {
         self.builder
             .ins()
             .stack_store(caller, self.call_context, OFFSET);
+    }
+
+    pub fn put_store_flags_to_call_context(&mut self, flags: CallContextFlags) {
+        const OFFSET: i32 = CallContext::FLAGS_OFFSET as i32;
+        let flags = self
+            .builder
+            .ins()
+            .iconst(ir::types::I16, flags.bits() as i64);
+        self.builder
+            .ins()
+            .stack_store(flags, self.call_context, OFFSET);
     }
 
     pub fn put_store_depth_to_call_context(&mut self) {

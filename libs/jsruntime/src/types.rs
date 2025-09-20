@@ -785,6 +785,7 @@ impl CallContext {
     pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
     pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
     pub const CALLER_OFFSET: usize = std::mem::offset_of!(Self, caller);
+    pub const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
     pub const DEPTH_OFFSET: usize = std::mem::offset_of!(Self, depth);
     pub const ARGC_OFFSET: usize = std::mem::offset_of!(Self, argc);
     pub const ARGC_MAX_OFFSET: usize = std::mem::offset_of!(Self, argc_max);
@@ -865,7 +866,7 @@ impl CallContext {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug)]
     #[repr(C)]
-    struct CallContextFlags: u16  {
+    pub(crate) struct CallContextFlags: u16  {
         const NEW = 1 << 1;
     }
 }
