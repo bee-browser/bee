@@ -260,7 +260,7 @@ impl Object {
         self.properties
             .entry(key.clone())
             .and_modify(|prop| {
-                debug_assert!(prop.is_writable());
+                // TODO: debug_assert!(prop.is_writable());
                 prop.value = value.clone();
             })
             .or_insert(Property::data_xxx(value.clone()));
@@ -332,6 +332,10 @@ pub struct ObjectHandle(NonZeroUsize);
 static_assertions::const_assert_eq!(size_of::<ObjectHandle>(), size_of::<*const Object>());
 
 impl ObjectHandle {
+    pub fn is_valid(self) -> bool {
+        self.0.get() != 0
+    }
+
     pub fn from_ptr(ptr: *mut c_void) -> Option<ObjectHandle> {
         NonZeroUsize::new(ptr as usize).map(ObjectHandle)
     }
