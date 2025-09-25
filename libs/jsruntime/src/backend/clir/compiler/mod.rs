@@ -1248,22 +1248,7 @@ where
         self.editor.switch_to_block(merge_block);
 
         let closure = self.emit_load_closure_or_throw_type_error(constructor);
-
-        let prototype = self.emit_create_any();
-        let status = self.editor.put_runtime_get_value_by_symbol(
-            self.support,
-            constructor,
-            Symbol::PROTOTYPE,
-            false,
-            prototype,
-        ); // TODO: strict
-        self.emit_check_status_for_exception(status, prototype);
-        if self.support.is_runtime_assert_enabled() {
-            let is_object = self.editor.put_is_object(prototype);
-            self.editor
-                .put_assert(self.support, is_object, c"Prototype must be an object");
-        }
-        let prototype = self.editor.put_load_object(prototype);
+        let prototype = self.emit_get_prototype_from_constructor(constructor);
 
         let this = {
             let object = self
@@ -3801,6 +3786,39 @@ where
 
         self.editor.switch_to_block(end_block);
         ClosureIr(self.editor.get_block_param(end_block, 0))
+    }
+
+    // 10.1.14 GetPrototypeFromConstructor
+    fn emit_get_prototype_from_constructor(&mut self, constructor: ObjectIr) -> ObjectIr {
+        let prototype = self.emit_create_any();
+        let status = self.editor.put_runtime_get_value_by_symbol(
+            self.support,
+            constructor,
+            Symbol::PROTOTYPE,
+            false,
+            prototype,
+        ); // TODO: strict
+        self.emit_check_status_for_exception(status, prototype);
+
+        let is_object = self.editor.put_is_object(prototype);
+        let then_block = self.editor.create_block();
+        let else_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_addr();
+        self.editor
+            .put_branch(is_object, then_block, &[], else_block, &[]);
+        self.editor.switch_to_block(then_block);
+        let prototype = self.editor.put_load_object(prototype);
+        self.editor.put_jump(merge_block, &[prototype.0.into()]);
+        self.editor.switch_to_block(else_block);
+        // TODO:
+        // a. Let realm be ? GetFunctionRealm(constructor).
+        // b. Set proto to realm's intrinsic object named intrinsicDefaultProto.
+        let prototype = self.support.object_prototype();
+        let prototype = self.editor.put_object(prototype.as_addr());
+        self.editor.put_jump(merge_block, &[prototype.0.into()]);
+        self.editor.switch_to_block(merge_block);
+
+        ObjectIr(self.editor.get_block_param(merge_block, 0))
     }
 
     // captures
