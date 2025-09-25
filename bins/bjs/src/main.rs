@@ -32,6 +32,10 @@ struct CommandLine {
     #[arg(global = true, long)]
     scope_cleanup_checker: bool,
 
+    /// Enables the scope cleanup checker.
+    #[arg(global = true, long)]
+    runtime_assert: bool,
+
     /// The JavaScript source files to compile.
     ///
     /// Reads the source text from STDIN if this argument is not specified.
@@ -117,6 +121,9 @@ fn main() -> Result<()> {
     let mut runtime = Runtime::with_extension(Context);
     if cl.scope_cleanup_checker {
         runtime.enable_scope_cleanup_checker();
+    }
+    if cl.runtime_assert {
+        runtime.enable_runtime_assert();
     }
     runtime.register_host_function("print", print);
 
@@ -281,6 +288,7 @@ impl Runner {
 
     fn setup_runtime(&mut self) {
         self.runtime.enable_scope_cleanup_checker();
+        self.runtime.enable_runtime_assert();
         self.runtime.register_host_function("print", Self::print); // TODO
     }
 

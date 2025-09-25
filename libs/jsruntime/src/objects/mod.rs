@@ -300,6 +300,10 @@ impl Object {
         self.prototype == prototype
     }
 
+    pub fn set_constructor(&mut self) {
+        self.flags.insert(ObjectFlags::CONSTRUCTOR)
+    }
+
     pub fn is_callable(&self) -> bool {
         self.flags.contains(ObjectFlags::CALLABLE)
     }
@@ -320,8 +324,9 @@ impl Object {
 bitflags! {
     #[derive(Clone, Copy)]
     pub(crate) struct ObjectFlags: u8 {
-        const CALLABLE = 1 << 0;
-        const ERROR    = 1 << 1;
+        const CONSTRUCTOR = 1 << 0;
+        const CALLABLE    = 1 << 1;
+        const ERROR       = 1 << 2;
     }
 }
 

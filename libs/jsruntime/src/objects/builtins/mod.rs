@@ -107,6 +107,7 @@ impl<X> Runtime<X> {
         let mut func = self.create_object(self.function_prototype);
         func.set_closure(closure);
         if let Some(prototype) = prototype {
+            func.set_constructor();
             let _ = func.define_own_property(
                 Symbol::PROTOTYPE.into(),
                 Property::data_xxx(Value::Object(prototype)),

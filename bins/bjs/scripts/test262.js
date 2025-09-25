@@ -47,6 +47,9 @@ Options:
   --timeout <timeout> [default: ${DEFAULT_TIMEOUT}]
     Duration passed to 'timeout' commands.
 
+  --stderr
+    Show messages coming from STDERR.
+
 Arguments:
   <tests> [default: ${DEFAULT_TESTS}]
     Tests to perform.
@@ -142,7 +145,7 @@ function spawnBjs(options, test) {
   const commandOptions = {
     stdin: 'piped',
     stdout: 'piped',
-    stderr: 'null',
+    stderr: options.stderr ? 'inherit' : 'null',
     env: {
       RUST_LOG: 'off',
     },
