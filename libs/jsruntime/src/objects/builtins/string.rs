@@ -143,6 +143,9 @@ fn string_index_of(
         return Some(from_index);
     }
     let search_len = search_value.len();
+    if len < search_len {
+        return None;
+    }
     let string = string.make_utf16();
     let search = search_value.make_utf16();
     for i in from_index..(len - search_len + 1) {
