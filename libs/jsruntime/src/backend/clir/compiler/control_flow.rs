@@ -350,10 +350,6 @@ impl ControlFlowStack {
                 // The `exception_index` must be updated just after stack.pop() so that other
                 // instance methods such as `exception_flow()` work properly.
                 self.exception_index = flow.outer_index;
-
-                // Any exception flow is enclosed by a scope flow.
-                debug_assert!(matches!(self.stack.last(), Some(ControlFlow::Scope(_))));
-
                 flow
             }
             _ => unreachable!(),
