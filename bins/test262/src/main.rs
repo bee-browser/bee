@@ -1,4 +1,5 @@
 mod driver;
+mod launcher;
 mod metadata;
 mod report;
 mod runner;
@@ -7,6 +8,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::Parser as _;
+use is_executable::IsExecutable;
 
 use driver::Driver;
 
@@ -19,10 +21,10 @@ use driver::Driver;
 #[derive(clap::Parser)]
 struct CommandLine {
     /// Path to tc39/test262.
-    #[arg(long)]
+    #[arg(long, env = "BEE_TEST262_DIR")]
     test262_dir: PathBuf,
 
-    /// Show progress.
+    /// Shows progress.
     #[arg(long)]
     progress: bool,
 
@@ -33,6 +35,13 @@ struct CommandLine {
     /// Time limit in milliseconds.
     #[arg(long, default_value = "5000")]
     timeout: i64,
+
+    /// Path to a launcher script to perform a test.
+    ///
+    /// The launcher script is executed on a separate process.  And the execution continues even
+    /// if a runtime crashes in the test on the separate process.
+    #[arg(long)]
+    launcher: Option<PathBuf>,
 
     /// Tests to be run.
     ///
@@ -63,6 +72,13 @@ impl CommandLine {
             "<test262-dir>: no test folder contained: {}",
             self.test262_dir.display()
         );
+        if let Some(launcher) = self.launcher.as_deref() {
+            anyhow::ensure!(
+                launcher.is_executable(),
+                "<launcher>: must be an executable file: {}",
+                launcher.display()
+            );
+        }
         Ok(())
     }
 }
@@ -71,7 +87,7 @@ fn main() -> Result<()> {
     let cl = CommandLine::parse();
     cl.validate()?;
     jsruntime::initialize();
-    let mut driver = Driver::new(cl);
+    let mut driver = Driver::new(&cl);
     driver.load();
     let report = driver.run();
     serde_json::to_writer(std::io::stdout().lock(), &report)?;

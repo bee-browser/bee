@@ -44,7 +44,6 @@ impl TestResults {
     }
 }
 
-
 #[derive(Debug, Default, Serialize)]
 pub struct TestSummary {
     tests: u32,

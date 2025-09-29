@@ -1,21 +1,21 @@
-use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
-use jsruntime::ParseError;
 use jsruntime::Runtime;
 use jsruntime::Value;
 
-use crate::driver::Harness;
+use crate::driver::Error;
 use crate::driver::TestCase;
 
 pub fn run(test_case: &TestCase) -> Result<Duration, Error> {
-    eprintln!("{}...", test_case.name);
+    //eprintln!("{}...", test_case.name);
     let mut runner = Runner::new();
     runner.setup_runtime();
     runner.load_harness(test_case)?;
     runner.perform_test(test_case)
 }
+
+// in-process runner
 
 struct Runner {
     runtime: Runtime<Context>,
@@ -23,7 +23,7 @@ struct Runner {
 }
 
 impl Runner {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             runtime: Runtime::with_extension(Default::default()),
             start: Instant::now(),
@@ -32,6 +32,7 @@ impl Runner {
 
     fn setup_runtime(&mut self) {
         self.runtime.enable_scope_cleanup_checker();
+        self.runtime.enable_runtime_assert();
         self.runtime.register_host_function("print", Self::print); // TODO
     }
 
@@ -53,6 +54,7 @@ impl Runner {
             Err(err) => panic!("{}: {err:?}", test_case.path.display()),
         };
         let content = if test_case.strict {
+            // TODO: the source location is shifted...
             format!("use strict;\n{content}")
         } else {
             content
@@ -96,22 +98,6 @@ impl Default for Context {
     fn default() -> Self {
         Self
     }
-}
-
-pub enum Error {
-    Harness {
-        duration: Duration,
-        #[allow(unused)]
-        harness: Arc<Harness>,
-    },
-    Parse {
-        duration: Duration,
-        #[allow(unused)]
-        error: ParseError,
-    },
-    Runtime {
-        duration: Duration,
-    },
 }
 
 enum Source<'a> {

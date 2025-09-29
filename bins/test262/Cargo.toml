@@ -12,6 +12,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.100"
 clap = { version = "4.5.47", features = ["env", "derive", "wrap_help"] }
+is_executable = "1.0.5"
 itertools = "0.14.0"
 jsruntime = { path = "../../libs/jsruntime" }
 logging = { path = "../../libs/logging" }

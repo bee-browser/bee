@@ -8,25 +8,28 @@ use itertools::Itertools;
 use pathdiff::diff_paths;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use rustc_hash::FxHashSet;
 use walkdir::DirEntry;
 use walkdir::WalkDir;
 
+use jsruntime::ParseError;
+
 use crate::CommandLine;
+use crate::launcher;
 use crate::metadata;
 use crate::metadata::Metadata;
 use crate::report::TestReport;
 use crate::report::TestResult;
 use crate::runner;
-use crate::runner::Error;
 
-pub struct Driver {
-    cl: CommandLine,
+pub struct Driver<'a> {
+    cl: &'a CommandLine,
     harnesses: FxHashMap<String, Arc<Harness>>,
     test_cases: Vec<TestCase>,
 }
 
-impl Driver {
-    pub fn new(cl: CommandLine) -> Self {
+impl<'a> Driver<'a> {
+    pub fn new(cl: &'a CommandLine) -> Self {
         Self {
             cl,
             harnesses: Default::default(),
@@ -67,12 +70,17 @@ impl Driver {
                     self.harnesses.get("assert.js").unwrap().clone(),
                     self.harnesses.get("sta.js").unwrap().clone(),
                 ];
+                let mut included = FxHashSet::default();
+                included.insert("assert.js");
+                included.insert("sta.js");
+                if metadata.flags.contains(&metadata::Flag::Async) {
+                    includes.push(self.harnesses.get("doneprintHandle.js").unwrap().clone());
+                    included.insert("doneprintHandle.js");
+                }
+
                 assert!(metadata.includes.iter().all_unique());
                 for include in metadata.includes.iter() {
-                    if include == "assert.js" {
-                        continue;
-                    }
-                    if include == "sta.js" {
+                    if included.contains(include.as_str()) {
                         continue;
                     }
                     let harness = match self.harnesses.get(include) {
@@ -80,39 +88,41 @@ impl Driver {
                         None => panic!("{include}: no such harness file"),
                     };
                     includes.push(harness);
+                    included.insert(include.as_str());
                 }
+
                 if metadata.flags.contains(&metadata::Flag::Module) {
                     self.test_cases.push(TestCase {
-                        name,
-                        includes,
+                        name: name.clone(),
+                        includes: includes.clone(),
                         path: entry.path().to_owned(),
-                        strict: true,
+                        strict: false,
                         metadata: metadata.clone(),
                     });
                 } else if metadata.flags.contains(&metadata::Flag::Raw) {
                     self.test_cases.push(TestCase {
-                        name,
+                        name: name.clone(),
                         includes: vec![],
                         path: entry.path().to_owned(),
-                        strict: true,
+                        strict: false,
                         metadata: metadata.clone(),
                     });
                 } else {
-                    if !metadata.flags.contains(&metadata::Flag::NoStrict) {
+                    if !metadata.flags.contains(&metadata::Flag::OnlyStrict) {
                         self.test_cases.push(TestCase {
-                            name: format!("{name}#strict"),
+                            name: name.clone(),
                             includes: includes.clone(),
                             path: entry.path().to_owned(),
-                            strict: true,
+                            strict: false,
                             metadata: metadata.clone(),
                         });
                     }
-                    if !metadata.flags.contains(&metadata::Flag::OnlyStrict) {
+                    if !metadata.flags.contains(&metadata::Flag::NoStrict) {
                         self.test_cases.push(TestCase {
-                            name,
+                            name: format!("{name}#strict"),
                             includes,
                             path: entry.path().to_owned(),
-                            strict: false,
+                            strict: true,
                             metadata,
                         });
                     }
@@ -124,14 +134,22 @@ impl Driver {
 
     pub fn run(&mut self) -> TestReport {
         fn now() -> u128 {
-            SystemTime::elapsed(&SystemTime::UNIX_EPOCH).unwrap().as_millis()
+            SystemTime::elapsed(&SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
         }
 
         let start = now();
         let results = self
             .test_cases
             .par_iter()
-            .map(|test_case| (test_case, runner::run(test_case)))
+            .map(|test_case| {
+                if let Some(launcher) = self.cl.launcher.as_deref() {
+                    (test_case, launcher::run(test_case, launcher))
+                } else {
+                    (test_case, runner::run(test_case))
+                }
+            })
             .map(TestResult::from)
             .collect::<Vec<_>>();
         let end = now();
@@ -199,7 +217,7 @@ impl<'a> Iterator for JsFiles<'a> {
             if !matches!(entry.path().extension(), Some(ext) if ext == "js") {
                 continue;
             }
-            if entry.file_name().to_str().unwrap().ends_with("_FIXTURE.js") {
+            if entry.file_name().to_str().unwrap().contains("_FIXTURE") {
                 continue;
             }
             let path_diff = diff_paths(entry.path(), &self.test262_dir).unwrap();
@@ -255,4 +273,20 @@ impl TestCase {
             false
         }
     }
+}
+
+pub enum Error {
+    Harness {
+        duration: Duration,
+        #[allow(unused)]
+        harness: Arc<Harness>,
+    },
+    Parse {
+        duration: Duration,
+        #[allow(unused)]
+        error: ParseError,
+    },
+    Runtime {
+        duration: Duration,
+    },
 }
