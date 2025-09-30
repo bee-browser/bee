@@ -44,6 +44,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ inputs.rust }}
+          components: clippy, rustfmt
       - uses: rui314/setup-mold@v1
       - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v2
