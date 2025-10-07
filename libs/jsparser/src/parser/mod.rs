@@ -343,11 +343,11 @@ where
         let pos = self.lexer.pos();
         let src = self.lexer.src();
         let state = self.state();
+        let next_10_chars: String = src[pos..].chars().take(10).collect();
         logger::error!(
             ?err,
             pos,
-            parsed = &src[pos.saturating_sub(10)..pos],
-            remaianing = &src[pos..((pos + 10).min(src.len()))],
+            next_10_chars,
             ?token.kind,
             ?token.lexeme,
             state.id = state.id(),
