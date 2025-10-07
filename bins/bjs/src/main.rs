@@ -1,13 +1,10 @@
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
-use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
 
 use anyhow::Result;
 use clap::Parser as _;
 use itertools::Itertools;
-use serde::Serialize;
 
 use jsruntime::Runtime;
 use jsruntime::Value;
@@ -39,7 +36,7 @@ struct CommandLine {
     /// The JavaScript source files to compile.
     ///
     /// Reads the source text from STDIN if this argument is not specified.
-    #[arg(global = true)]
+    #[arg(global = true, value_parser)]
     sources: Vec<PathBuf>,
 }
 
@@ -69,9 +66,6 @@ enum Command {
 
     /// Runs a JavaScript program.
     Run(Run),
-
-    /// Runs a test262 test.
-    Test262,
 }
 
 #[derive(clap::Args)]
@@ -92,6 +86,10 @@ struct Compile {
 
 #[derive(clap::Args)]
 struct Run {
+    /// List of script files to be pre-loaded
+    #[arg(long, value_parser)]
+    preload_scripts: Vec<PathBuf>,
+
     /// Disable optimization.
     #[arg(long)]
     no_optimize: bool,
@@ -131,8 +129,8 @@ fn main() -> Result<()> {
     // code clones.  By using the macro, we can avoid additional `use` directives needed for the
     // return type.
     macro_rules! parse {
-        ($input:expr, $source:expr, $cl:expr) => {
-            match $cl.parse_as {
+        ($input:expr, $source:expr, $source_type:expr) => {{
+            let result = match $source_type {
                 SourceType::Auto => match $input.extension() {
                     Some(ext) if ext == "js" => runtime.parse_script(&$source),
                     Some(ext) if ext == "mjs" => runtime.parse_module(&$source),
@@ -140,15 +138,22 @@ fn main() -> Result<()> {
                 },
                 SourceType::Script => runtime.parse_script(&$source),
                 SourceType::Module => runtime.parse_module(&$source),
+            };
+            match result {
+                Ok(program_id) => program_id,
+                Err(err) => {
+                    println!("Failed parsing {:?}: {err:?}", $input);
+                    std::process::exit(2);
+                }
             }
-        };
+        }};
     }
 
     match cl.command {
         Command::Parse(ref args) => {
             for (input, source) in cl.sources() {
                 println!("## {}", input.display());
-                let program_id = parse!(input, source, cl)?;
+                let program_id = parse!(input, source, cl.parse_as);
                 for kind in args.print.chars() {
                     match kind {
                         'f' => {
@@ -173,7 +178,7 @@ fn main() -> Result<()> {
             runtime.set_monitor(printer);
             for (input, source) in cl.sources() {
                 println!("## {}", input.display());
-                let program_id = parse!(input, source, cl)?;
+                let program_id = parse!(input, source, cl.parse_as);
                 runtime.compile(program_id, !args.no_optimize)?;
             }
         }
@@ -182,27 +187,29 @@ fn main() -> Result<()> {
             runtime.set_monitor(printer);
             for (input, source) in cl.sources() {
                 println!("## {}", input.display());
-                let program_id = parse!(input, source, cl)?;
+                let program_id = parse!(input, source, cl.parse_as);
                 runtime.compile(program_id, true)?;
             }
         }
         Command::Run(ref args) => {
+            for path in args.preload_scripts.iter() {
+                println!("## {} (preload script)", path.display());
+                let source = std::fs::read_to_string(path)?;
+                let program_id = parse!(path, source, SourceType::Script);
+                let result = runtime.run(program_id, !args.no_optimize);
+                runtime.process_jobs();
+                if let Err(v) = result {
+                    anyhow::bail!("Uncaught {v:?} in {path:?}");
+                }
+            }
             for (input, source) in cl.sources() {
                 println!("## {}", input.display());
-                let program_id = parse!(input, source, cl)?;
-                match runtime.run(program_id, !args.no_optimize) {
-                    Ok(_) => (),
-                    Err(v) => println!("Uncaught {v:?}"),
+                let program_id = parse!(input, source, cl.parse_as);
+                if let Err(v) = runtime.run(program_id, !args.no_optimize) {
+                    anyhow::bail!("Uncaught {v:?} in {input:?}");
                 }
             }
             runtime.process_jobs();
-        }
-        Command::Test262 => {
-            let mut runner = Runner::new();
-            runner.setup_runtime();
-            if let Some((_input, source)) = cl.sources().next() {
-                runner.run(&source, &cl);
-            }
         }
     }
 
@@ -269,122 +276,3 @@ impl<'a> Iterator for Sources<'a> {
 }
 
 struct Context;
-
-// TODO: move to //bins/test262/src
-
-struct Runner {
-    runtime: Runtime<Context>,
-}
-
-impl Runner {
-    fn new() -> Self {
-        let event = Test262Event::start();
-        println!("{}", serde_json::to_value(&event).unwrap());
-
-        Self {
-            runtime: Runtime::with_extension(Context),
-        }
-    }
-
-    fn setup_runtime(&mut self) {
-        self.runtime.enable_scope_cleanup_checker();
-        self.runtime.enable_runtime_assert();
-        self.runtime.register_host_function("print", Self::print); // TODO
-    }
-
-    fn run(&mut self, src: &str, cl: &CommandLine) {
-        let result = match cl.parse_as {
-            SourceType::Module => self.runtime.parse_module(src),
-            _ => self.runtime.parse_script(src),
-        };
-        let program_id = match result {
-            Ok(program_id) => program_id,
-            Err(_err) => {
-                let event = Test262Event::parse_error();
-                println!("{}", serde_json::to_value(&event).unwrap());
-                return;
-            }
-        };
-
-        let result = self.runtime.run(program_id, true);
-        self.runtime.process_jobs();
-        match result {
-            Ok(_value) => {
-                let event = Test262Event::pass();
-                println!("{}", serde_json::to_value(&event).unwrap());
-            }
-            Err(_value) => {
-                let event = Test262Event::runtime_error();
-                println!("{}", serde_json::to_value(&event).unwrap());
-            }
-        }
-    }
-
-    fn print(_runtime: &mut Runtime<Context>, args: &[Value]) {
-        let event = Test262Event::print(format!("{}", args[0])); // TODO: ToString()
-        println!("{}", serde_json::to_value(&event).unwrap());
-    }
-}
-
-#[derive(Clone, Debug, Serialize)]
-#[serde(tag = "type", content = "data")]
-enum Test262Event {
-    #[serde(rename = "start")]
-    Start { timestamp: u64 },
-    #[serde(rename = "pass")]
-    Pass { timestamp: u64 },
-    #[serde(rename = "parse-error")]
-    ParseError { timestamp: u64 },
-    #[serde(rename = "runtime-error")]
-    RuntimeError { timestamp: u64 },
-    #[serde(rename = "print")]
-    Print { timestamp: u64, value: String },
-}
-
-impl Test262Event {
-    fn start() -> Self {
-        Self::Start {
-            timestamp: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis() as u64,
-        }
-    }
-
-    fn pass() -> Self {
-        Self::Pass {
-            timestamp: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis() as u64,
-        }
-    }
-
-    fn parse_error() -> Self {
-        Self::ParseError {
-            timestamp: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis() as u64,
-        }
-    }
-
-    fn runtime_error() -> Self {
-        Self::RuntimeError {
-            timestamp: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis() as u64,
-        }
-    }
-
-    fn print(value: String) -> Self {
-        Self::Print {
-            timestamp: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis() as u64,
-            value,
-        }
-    }
-}

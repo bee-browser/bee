@@ -7,26 +7,26 @@ use jsruntime::Value;
 use crate::driver::Error;
 use crate::driver::TestCase;
 
-pub fn run(test_case: &TestCase) -> Result<Duration, Error> {
+pub fn run(test_case: &TestCase) -> (Result<(), Error>, Duration) {
     //eprintln!("{}...", test_case.name);
+    let start = Instant::now();
     let mut runner = Runner::new();
     runner.setup_runtime();
-    runner.load_harness(test_case)?;
-    runner.perform_test(test_case)
+    let result = runner.perform_test(test_case);
+    let duration = Instant::elapsed(&start);
+    (result, duration)
 }
 
 // in-process runner
 
 struct Runner {
     runtime: Runtime<Context>,
-    start: Instant,
 }
 
 impl Runner {
     fn new() -> Self {
         Self {
             runtime: Runtime::with_extension(Default::default()),
-            start: Instant::now(),
         }
     }
 
@@ -38,17 +38,14 @@ impl Runner {
 
     fn load_harness(&mut self, test_case: &TestCase) -> Result<(), Error> {
         for harness in test_case.includes.iter() {
-            if self.run(Source::Script(harness.content())).is_err() {
-                return Err(Error::Harness {
-                    duration: Instant::elapsed(&self.start),
-                    harness: harness.clone(),
-                });
-            }
+            self.run(Source::Script(harness.content()))?;
         }
         Ok(())
     }
 
-    fn perform_test(&mut self, test_case: &TestCase) -> Result<Duration, Error> {
+    fn perform_test(&mut self, test_case: &TestCase) -> Result<(), Error> {
+        self.load_harness(test_case)?;
+
         let content = match std::fs::read_to_string(&test_case.path) {
             Ok(content) => content,
             Err(err) => panic!("{}: {err:?}", test_case.path.display()),
@@ -67,25 +64,20 @@ impl Runner {
         self.run(source)
     }
 
-    fn run(&mut self, source: Source<'_>) -> Result<Duration, Error> {
+    fn run(&mut self, source: Source<'_>) -> Result<(), Error> {
         let result = match source {
             Source::Module(source) => self.runtime.parse_module(source),
             Source::Script(source) => self.runtime.parse_script(source),
         };
         let program_id = match result {
             Ok(program_id) => program_id,
-            Err(error) => {
-                return Err(Error::Parse {
-                    duration: Instant::elapsed(&self.start),
-                    error,
-                });
-            }
+            Err(_error) => return Err(Error::Parse),
         };
-        match self.runtime.run(program_id, true) {
-            Ok(_value) => Ok(Instant::elapsed(&self.start)),
-            Err(_value) => Err(Error::Runtime {
-                duration: Instant::elapsed(&self.start),
-            }),
+        let result = self.runtime.run(program_id, true);
+        self.runtime.process_jobs();
+        match result {
+            Ok(_value) => Ok(()),
+            Err(_value) => Err(Error::Runtime),
         }
     }
 

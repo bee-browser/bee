@@ -5,12 +5,15 @@ mod report;
 mod runner;
 
 use std::path::PathBuf;
+use std::time::Duration;
 
 use anyhow::Result;
 use clap::Parser as _;
 use is_executable::IsExecutable;
 
 use driver::Driver;
+use report::TestReport;
+use report::TestStatus;
 
 /// A test262 runner for jsruntime.
 ///
@@ -24,30 +27,22 @@ struct CommandLine {
     #[arg(long, env = "BEE_TEST262_DIR")]
     test262_dir: PathBuf,
 
-    /// Shows progress.
+    /// Show progress.
     #[arg(long)]
     progress: bool,
 
-    /// Enables the scope cleanup checker.
+    /// Enable the scope cleanup checker.
     #[arg(long)]
     scope_cleanup_checker: bool,
 
-    /// Time limit in milliseconds.
-    #[arg(long, default_value = "5000")]
-    timeout: i64,
-
-    /// Path to a launcher script to perform a test.
-    ///
-    /// The launcher script is executed on a separate process.  And the execution continues even
-    /// if a runtime crashes in the test on the separate process.
-    #[arg(long)]
-    launcher: Option<PathBuf>,
-
     /// Tests to be run.
     ///
-    /// All tests are run when no test is specified.
-    #[arg()]
-    tests: Vec<String>,
+    /// All tests are run when no filter is specified.
+    #[arg(long)]
+    filters: Vec<String>,
+
+    #[command(subcommand)]
+    command: Command,
 }
 
 impl CommandLine {
@@ -72,13 +67,62 @@ impl CommandLine {
             "<test262-dir>: no test folder contained: {}",
             self.test262_dir.display()
         );
-        if let Some(launcher) = self.launcher.as_deref() {
-            anyhow::ensure!(
-                launcher.is_executable(),
-                "<launcher>: must be an executable file: {}",
-                launcher.display()
-            );
+        self.command.validate()
+    }
+}
+
+#[derive(clap::Subcommand)]
+enum Command {
+    Run(Run),
+    Launch(Launch),
+}
+
+impl Command {
+    fn validate(&self) -> Result<()> {
+        match self {
+            Self::Run(run) => run.validate(),
+            Self::Launch(launch) => launch.validate(),
         }
+    }
+}
+
+/// Run the tests in threads.
+#[derive(clap::Args)]
+struct Run {
+}
+
+impl Run {
+    fn validate(&self) -> Result<()> {
+        Ok(())
+    }
+}
+
+/// Run the tests in processes.
+#[derive(clap::Args)]
+struct Launch {
+    /// The time limit of each test case.
+    #[arg(long, default_value = "30s", value_parser = humantime::parse_duration)]
+    timeout: Duration,
+
+    /// Path to a launcher program to perform a test.
+    ///
+    /// The launcher script is executed on a separate process.  And the execution continues even
+    /// if a runtime crashes in the test on the separate process.
+    #[arg(value_parser)]
+    program: PathBuf,
+
+    /// Optional arguments passed to the launcher program.
+    #[arg()]
+    args: Vec<String>,
+}
+
+impl Launch {
+    fn validate(&self) -> Result<()> {
+        anyhow::ensure!(
+            self.program.is_executable(),
+            "launch: <program>: must be an executable file: {}",
+            self.program.display()
+        );
         Ok(())
     }
 }
@@ -90,6 +134,28 @@ fn main() -> Result<()> {
     let mut driver = Driver::new(&cl);
     driver.load();
     let report = driver.run();
+    show_summary(&report);
     serde_json::to_writer(std::io::stdout().lock(), &report)?;
     Ok(())
+}
+
+fn show_summary(report: &TestReport) {
+    let num_tests = report.results.len();
+    let mut num_passed = 0;
+    let mut num_failed = 0;
+    let mut num_timed_out = 0;
+    let mut num_panics = 0;
+
+    for result in report.results.iter() {
+        match result.status {
+            TestStatus::Passed => num_passed += 1,
+            TestStatus::Failed => num_failed += 1,
+            TestStatus::TimedOut => num_timed_out += 1,
+            TestStatus::Panic => num_panics += 1,
+        }
+    }
+
+    eprintln!(
+        "{num_tests} tests: {num_passed} passed, {num_failed} failed, {num_timed_out} timed-out, {num_panics} panics"
+    );
 }

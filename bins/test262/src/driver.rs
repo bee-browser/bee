@@ -1,8 +1,6 @@
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
-use std::time::SystemTime;
 
 use itertools::Itertools;
 use pathdiff::diff_paths;
@@ -12,8 +10,7 @@ use rustc_hash::FxHashSet;
 use walkdir::DirEntry;
 use walkdir::WalkDir;
 
-use jsruntime::ParseError;
-
+use crate::Command;
 use crate::CommandLine;
 use crate::launcher;
 use crate::metadata;
@@ -61,10 +58,7 @@ impl<'a> Driver<'a> {
     }
 
     fn load_tests(&mut self) {
-        let test_dir = self.cl.test262_dir.join("test");
-        for entry in JsFiles::new(&self.cl.test262_dir, "test", &self.cl.tests) {
-            let path_diff = diff_paths(entry.path(), &test_dir).unwrap();
-            let name = path_diff.to_str().unwrap().to_owned();
+        for entry in JsFiles::new(&self.cl.test262_dir, "test", &self.cl.filters) {
             if let Some(metadata) = Metadata::extract(entry.path()) {
                 let mut includes = vec![
                     self.harnesses.get("assert.js").unwrap().clone(),
@@ -93,7 +87,6 @@ impl<'a> Driver<'a> {
 
                 if metadata.flags.contains(&metadata::Flag::Module) {
                     self.test_cases.push(TestCase {
-                        name: name.clone(),
                         includes: includes.clone(),
                         path: entry.path().to_owned(),
                         strict: false,
@@ -101,7 +94,6 @@ impl<'a> Driver<'a> {
                     });
                 } else if metadata.flags.contains(&metadata::Flag::Raw) {
                     self.test_cases.push(TestCase {
-                        name: name.clone(),
                         includes: vec![],
                         path: entry.path().to_owned(),
                         strict: false,
@@ -110,7 +102,6 @@ impl<'a> Driver<'a> {
                 } else {
                     if !metadata.flags.contains(&metadata::Flag::OnlyStrict) {
                         self.test_cases.push(TestCase {
-                            name: name.clone(),
                             includes: includes.clone(),
                             path: entry.path().to_owned(),
                             strict: false,
@@ -119,7 +110,6 @@ impl<'a> Driver<'a> {
                     }
                     if !metadata.flags.contains(&metadata::Flag::NoStrict) {
                         self.test_cases.push(TestCase {
-                            name: format!("{name}#strict"),
                             includes,
                             path: entry.path().to_owned(),
                             strict: true,
@@ -133,57 +123,50 @@ impl<'a> Driver<'a> {
     }
 
     pub fn run(&mut self) -> TestReport {
-        fn now() -> u128 {
-            SystemTime::elapsed(&SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_millis()
-        }
-
-        let start = now();
         let results = self
             .test_cases
             .par_iter()
             .map(|test_case| {
-                if let Some(launcher) = self.cl.launcher.as_deref() {
-                    (test_case, launcher::run(test_case, launcher))
-                } else {
-                    (test_case, runner::run(test_case))
+                match &self.cl.command {
+                    Command::Run(_run) =>(test_case, runner::run(test_case)),
+                    Command::Launch(launcher) => (test_case, launcher::run(test_case, launcher))
                 }
             })
-            .map(TestResult::from)
+            .map(|(test_case, (result, duration))| {
+                let base_dir = self.cl.test262_dir.join("test");
+                match result {
+                    Ok(_) => {
+                        if let Some(ref _negative) = test_case.metadata.negative {
+                            TestResult::failed(&base_dir, test_case, duration)
+                        } else {
+                            TestResult::passed(&base_dir, test_case, duration)
+                        }
+                    }
+                    Err(Error::Panic) => {
+                        TestResult::panic(&base_dir, test_case, duration)
+                    }
+                    Err(Error::Parse) => {
+                        if test_case.should_be_syntax_error() {
+                            TestResult::passed(&base_dir, test_case, duration)
+                        } else {
+                            TestResult::failed(&base_dir, test_case, duration)
+                        }
+                    }
+                    Err(Error::Runtime) => {
+                        // TODO: check error type
+                        if test_case.should_be_runtime_error() {
+                            TestResult::passed(&base_dir, test_case, duration)
+                        } else {
+                            TestResult::failed(&base_dir, test_case, duration)
+                        }
+                    }
+                    Err(Error::TimedOut) => {
+                        TestResult::timed_out(&base_dir, test_case, duration)
+                    }
+                }
+            })
             .collect::<Vec<_>>();
-        let end = now();
-        TestReport::new(start, end, results)
-    }
-}
-
-impl From<(&TestCase, Result<Duration, Error>)> for TestResult {
-    fn from((test_case, result): (&TestCase, Result<Duration, Error>)) -> Self {
-        match result {
-            Ok(duration) => {
-                if let Some(ref _negative) = test_case.metadata.negative {
-                    TestResult::failed(test_case, duration)
-                } else {
-                    TestResult::passed(test_case, duration)
-                }
-            }
-            Err(Error::Harness { duration, .. }) => TestResult::other(test_case, duration),
-            Err(Error::Parse { duration, .. }) => {
-                if test_case.should_be_syntax_error() {
-                    TestResult::passed(test_case, duration)
-                } else {
-                    TestResult::failed(test_case, duration)
-                }
-            }
-            Err(Error::Runtime { duration, .. }) => {
-                // TODO: check error type
-                if test_case.should_be_runtime_error() {
-                    TestResult::passed(test_case, duration)
-                } else {
-                    TestResult::failed(test_case, duration)
-                }
-            }
-        }
+        TestReport::new(results)
     }
 }
 
@@ -252,7 +235,6 @@ impl Harness {
 pub struct TestCase {
     pub includes: Vec<Arc<Harness>>,
     pub path: PathBuf,
-    pub name: String,
     pub strict: bool,
     pub metadata: Arc<Metadata>,
 }
@@ -276,17 +258,8 @@ impl TestCase {
 }
 
 pub enum Error {
-    Harness {
-        duration: Duration,
-        #[allow(unused)]
-        harness: Arc<Harness>,
-    },
-    Parse {
-        duration: Duration,
-        #[allow(unused)]
-        error: ParseError,
-    },
-    Runtime {
-        duration: Duration,
-    },
+    Panic,
+    Parse,
+    Runtime,
+    TimedOut,
 }
