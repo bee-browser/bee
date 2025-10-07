@@ -29,6 +29,7 @@ impl TestReport {
 #[derive(Debug, Serialize)]
 pub struct TestResult {
     pub file: PathBuf,
+    pub strict: bool,
     pub status: TestStatus,
     pub duration: Duration,
     pub metadata: Arc<Metadata>,
@@ -39,6 +40,7 @@ impl TestResult {
         let file = test_case.path.strip_prefix(base_dir).unwrap().to_owned();
         Self {
             file,
+            strict: test_case.strict,
             status,
             duration,
             metadata: test_case.metadata.clone(),

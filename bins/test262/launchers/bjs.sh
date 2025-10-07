@@ -14,6 +14,9 @@ OPTIONS:
   --debug
     Launch a debug executable.
 
+  --strict
+    Evaluate <program> in the strict mode.
+
   --script
     Evaluate <program> as a script.
 
@@ -31,6 +34,7 @@ EOF
 }
 
 BJS="$PROJ_DIR/target/release/bjs"
+STRICT=
 GLOBAL_OPTIONS=
 RUN_OPTIONS=
 
@@ -42,6 +46,10 @@ do
       ;;
     '--debug')
       BJS="$PROJ_DIR/target/debug/bjs"
+      shift
+      ;;
+    '--strict')
+      STRICT=1
       shift
       ;;
     '--script')
@@ -67,4 +75,13 @@ then
   exit 101
 fi
 
-exec $BJS $GLOBAL_OPTIONS run $RUN_OPTIONS $@
+CONTENT=$(mktemp)
+trap "rm -f $CONTENT" EXIT INT TERM
+
+if [ "$STRICT" = 1 ]
+then
+  echo 'use strict;' >$CONTENT
+fi
+cat $@ >>$CONTENT
+
+exec $BJS $GLOBAL_OPTIONS run $RUN_OPTIONS $CONTENT

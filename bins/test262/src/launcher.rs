@@ -10,6 +10,9 @@ use crate::Launch;
 pub fn run(test_case: &TestCase, launch: &Launch) -> (Result<(), Error>, Duration) {
     let start = Instant::now();
     let mut args = launch.args.clone();
+    if test_case.strict {
+        args.push("--strict".to_string());
+    }
     if test_case.metadata.is_module() {
         args.push("--module".to_string());
     } else {
