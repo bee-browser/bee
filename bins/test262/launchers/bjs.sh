@@ -33,7 +33,7 @@ EOF
   exit 0
 }
 
-BJS="$PROJ_DIR/target/release/bjs"
+PROFILE=release
 STRICT=
 GLOBAL_OPTIONS=
 RUN_OPTIONS=
@@ -44,9 +44,9 @@ do
     '-h' | '--help')
       help
       ;;
-    '--debug')
-      BJS="$PROJ_DIR/target/debug/bjs"
-      shift
+    '--profile')
+      PROFILE=$2
+      shift 2
       ;;
     '--strict')
       STRICT=1
@@ -70,6 +70,7 @@ do
   esac
 done
 
+BJS="$PROJ_DIR/target/$PROFILE/bjs"
 if [ ! -e "$BJS" ]
 then
   exit 101

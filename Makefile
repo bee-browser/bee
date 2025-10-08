@@ -55,12 +55,11 @@ test: TESTNAME ?=
 test:
 	cargo nextest run $(OPTIONS) $(TESTNAME)
 
-# TODO: remove '-' once we've fixed all failures.
 .PHONY: test262
+test262: PROFILE ?= release
 test262: ARGS ?= --progress
 test262:
-	-sh bins/estree/scripts/test262_parser_tests.sh $(ARGS)
-	-sh bins/estree/scripts/test262.sh $(ARGS)
+	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- $(ARGS) run >/dev/null
 
 # DO NOT REMOVE '-'.
 # Continue the execution in order to generate the report even if test commands fail.
@@ -70,7 +69,7 @@ coverage: TEST262_ARGS ?= --progress
 coverage:
 	cargo llvm-cov clean --workspace
 	-cargo llvm-cov nextest --no-report --all-features
-	-$(MAKE) test262 ARGS='--profile=coverage $(TEST262_ARGS)'
+	-$(MAKE) test262 PROFILE=release-symbols ARGS='$(TEST262_ARGS)'
 	cargo llvm-cov report $(LLVM_COV_ARGS)
 
 .PHONY: bench
@@ -82,9 +81,9 @@ bench:
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
 	cargo clean --profile=dev
-	cargo clean --profile=profiling
 	cargo clean --profile=release
 	cargo clean --profile=release-lto
+	cargo clean --profile=release-symbols
 
 .PHONY: clean-all
 clean-all: $(CLEAN_TARGETS)

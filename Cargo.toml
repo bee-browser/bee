@@ -21,7 +21,7 @@ strip = true
 inherits = "release"
 lto = true
 
-[profile.profiling]
+[profile.release-symbols]
 inherits = "release"
 debug = true
 strip = false
