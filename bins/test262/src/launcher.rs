@@ -1,11 +1,11 @@
+use std::process::Command;
 use std::process::Stdio;
 use std::time::Duration;
-use std::process::Command;
 use std::time::Instant;
 
+use crate::Launch;
 use crate::driver::Error;
 use crate::driver::TestCase;
-use crate::Launch;
 
 pub fn run(test_case: &TestCase, launch: &Launch) -> (Result<(), Error>, Duration) {
     let start = Instant::now();

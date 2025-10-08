@@ -88,8 +88,7 @@ impl Command {
 
 /// Run the tests in threads.
 #[derive(clap::Args)]
-struct Run {
-}
+struct Run {}
 
 impl Run {
     fn validate(&self) -> Result<()> {

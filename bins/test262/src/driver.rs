@@ -126,11 +126,9 @@ impl<'a> Driver<'a> {
         let results = self
             .test_cases
             .par_iter()
-            .map(|test_case| {
-                match &self.cl.command {
-                    Command::Run(_run) =>(test_case, runner::run(test_case)),
-                    Command::Launch(launcher) => (test_case, launcher::run(test_case, launcher))
-                }
+            .map(|test_case| match &self.cl.command {
+                Command::Run(_run) => (test_case, runner::run(test_case)),
+                Command::Launch(launcher) => (test_case, launcher::run(test_case, launcher)),
             })
             .map(|(test_case, (result, duration))| {
                 let base_dir = self.cl.test262_dir.join("test");
@@ -142,9 +140,7 @@ impl<'a> Driver<'a> {
                             TestResult::passed(&base_dir, test_case, duration)
                         }
                     }
-                    Err(Error::Panic) => {
-                        TestResult::panic(&base_dir, test_case, duration)
-                    }
+                    Err(Error::Panic) => TestResult::panic(&base_dir, test_case, duration),
                     Err(Error::Parse) => {
                         if test_case.should_be_syntax_error() {
                             TestResult::passed(&base_dir, test_case, duration)
@@ -160,9 +156,7 @@ impl<'a> Driver<'a> {
                             TestResult::failed(&base_dir, test_case, duration)
                         }
                     }
-                    Err(Error::TimedOut) => {
-                        TestResult::timed_out(&base_dir, test_case, duration)
-                    }
+                    Err(Error::TimedOut) => TestResult::timed_out(&base_dir, test_case, duration),
                 }
             })
             .collect::<Vec<_>>();
