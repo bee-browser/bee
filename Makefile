@@ -59,7 +59,7 @@ test:
 test262: PROFILE ?= release
 test262: ARGS ?= --progress
 test262:
-	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- $(ARGS) run >/dev/null
+	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- --test262-dir vendor/src/tc39/test262 $(ARGS) run >/dev/null
 
 # DO NOT REMOVE '-'.
 # Continue the execution in order to generate the report even if test commands fail.
