@@ -58,8 +58,14 @@ test:
 .PHONY: test262
 test262: PROFILE ?= release
 test262: ARGS ?= --progress
+test262: OOP ?=
 test262:
-	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- --test262-dir vendor/src/tc39/test262 $(ARGS) run >/dev/null
+ifdef OOP
+	cargo build --bin=bjs --profile=$(PROFILE) --all-features
+	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- --test262-dir vendor/src/tc39/test262 $(ARGS) launch -- /bin/sh bins/test262/launchers/bjs.sh --profile $(PROFILE) >test262.json
+else
+	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- --test262-dir vendor/src/tc39/test262 $(ARGS) run >test262.json
+endif
 
 # DO NOT REMOVE '-'.
 # Continue the execution in order to generate the report even if test commands fail.
