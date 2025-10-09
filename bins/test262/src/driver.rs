@@ -2,6 +2,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use indicatif::ProgressBar;
 use itertools::Itertools;
 use pathdiff::diff_paths;
 use rayon::prelude::*;
@@ -35,9 +36,10 @@ impl<'a> Driver<'a> {
     }
 
     /// Loads.
-    pub fn load(&mut self) {
+    pub fn load(&mut self) -> usize {
         self.load_harness();
         self.load_tests();
+        self.test_cases.len()
     }
 
     fn load_harness(&mut self) {
@@ -54,7 +56,6 @@ impl<'a> Driver<'a> {
             });
             self.harnesses.insert(name, harness);
         }
-        eprintln!("{} harnesses", self.harnesses.len());
     }
 
     fn load_tests(&mut self) {
@@ -119,10 +120,9 @@ impl<'a> Driver<'a> {
                 }
             }
         }
-        eprintln!("{} test cases", self.test_cases.len());
     }
 
-    pub fn run(&mut self) -> TestReport {
+    pub fn run(&mut self, progress: Option<&ProgressBar>) -> TestReport {
         let results = self
             .test_cases
             .par_iter()
@@ -131,6 +131,9 @@ impl<'a> Driver<'a> {
                 Command::Launch(launcher) => (test_case, launcher::run(test_case, launcher)),
             })
             .map(|(test_case, (result, duration))| {
+                if let Some(progress) = progress {
+                    progress.inc(1);
+                }
                 let base_dir = self.cl.test262_dir.join("test");
                 match result {
                     Ok(_) => {

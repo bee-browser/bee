@@ -9,6 +9,8 @@ use std::time::Duration;
 
 use anyhow::Result;
 use clap::Parser as _;
+use indicatif::ProgressBar;
+use indicatif::ProgressStyle;
 use is_executable::IsExecutable;
 
 use driver::Driver;
@@ -131,14 +133,26 @@ fn main() -> Result<()> {
     cl.validate()?;
     jsruntime::initialize();
     let mut driver = Driver::new(&cl);
-    driver.load();
-    let report = driver.run();
-    show_summary(&report);
+    let num_test_cases = driver.load();
+    let progress = if cl.progress {
+        let style = ProgressStyle::with_template(
+            "{spinner} [{elapsed_precise}] [{bar}] {pos}/{len}\n{msg}",
+        )?
+        .progress_chars("#>-");
+        Some(ProgressBar::new(num_test_cases as u64).with_style(style))
+    } else {
+        None
+    };
+    let report = driver.run(progress.as_ref());
+    let summary = summarize(&report);
+    if let Some(progress) = progress {
+        progress.finish_with_message(summary);
+    }
     serde_json::to_writer(std::io::stdout().lock(), &report)?;
     Ok(())
 }
 
-fn show_summary(report: &TestReport) {
+fn summarize(report: &TestReport) -> String {
     let num_tests = report.results.len();
     let mut num_passed = 0;
     let mut num_failed = 0;
@@ -154,7 +168,7 @@ fn show_summary(report: &TestReport) {
         }
     }
 
-    eprintln!(
+    format!(
         "{num_tests} tests: {num_passed} passed, {num_failed} failed, {num_timed_out} timed-out, {num_panics} panics"
-    );
+    )
 }
