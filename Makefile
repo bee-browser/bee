@@ -69,14 +69,13 @@ endif
 
 # DO NOT REMOVE '-'.
 # Continue the execution in order to generate the report even if test commands fail.
-# TODO: Remove OOP=1
 .PHONY: coverage
 coverage: LLVM_COV_ARGS ?= --html
 coverage: TEST262_ARGS ?= --progress
 coverage:
 	cargo llvm-cov clean --workspace
 	-cargo llvm-cov nextest --no-report --all-features
-	-$(MAKE) test262 PROFILE=release-symbols ARGS='$(TEST262_ARGS)' OOP=1
+	-$(MAKE) test262 PROFILE=release-symbols ARGS='$(TEST262_ARGS)'
 	cargo llvm-cov report $(LLVM_COV_ARGS)
 
 .PHONY: bench

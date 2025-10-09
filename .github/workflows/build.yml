@@ -67,5 +67,4 @@ jobs:
       - name: Run tests
         run: make test
       - name: Run tc39/test262
-        # TODO: Remove OOP=1
-        run: make test262 ARGS='' OOP=1
+        run: make test262 ARGS=''
