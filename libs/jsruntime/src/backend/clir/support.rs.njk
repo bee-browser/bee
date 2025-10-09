@@ -135,16 +135,16 @@ impl<X> EditorSupport for compiler::Session<'_, X> {
 
 impl<X> EditorSupport for crate::backend::clir::CodeRegistry<X> {
     fn import_fmod(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.module.declare_func_in_func(self.runtime_func_ids.fmod, func)
+        self.module.as_mut().unwrap().declare_func_in_func(self.runtime_func_ids.fmod, func)
     }
 
     fn import_pow(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.module.declare_func_in_func(self.runtime_func_ids.pow, func)
+        self.module.as_mut().unwrap().declare_func_in_func(self.runtime_func_ids.pow, func)
     }
     {%- for func in data.functions %}
 
     fn import_runtime_{{ func.name }}(&mut self, func: &mut ir::Function) -> ir::FuncRef {
-        self.module.declare_func_in_func(self.runtime_func_ids.{{ func.name }}, func)
+        self.module.as_mut().unwrap().declare_func_in_func(self.runtime_func_ids.{{ func.name }}, func)
     }
     {%- endfor %}
 }
