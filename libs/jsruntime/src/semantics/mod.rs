@@ -1911,12 +1911,14 @@ impl FunctionAnalysis {
         if has_statement {
             let end_index = self.commands.len();
             debug_assert!(end_index - index - 1 < u16::MAX as usize);
-            self.commands[index] = CompileCommand::Batch((end_index - index - 1) as u16);
-            Some(index)
-        } else {
-            self.commands[index] = CompileCommand::Nop;
-            None
+            let n = end_index - index - 1;
+            if n > 0 {
+                self.commands[index] = CompileCommand::Batch((end_index - index - 1) as u16);
+                return Some(index);
+            }
         }
+        self.commands[index] = CompileCommand::Nop;
+        None
     }
 
     fn process_default_selector(&mut self) {

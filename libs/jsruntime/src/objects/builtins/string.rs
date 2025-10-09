@@ -22,10 +22,11 @@ impl<X> Runtime<X> {
 
     pub(crate) fn create_string_object(
         &mut self,
+        this: Option<&Value>,
         args: &[Value],
         new: bool,
     ) -> Result<Value, Value> {
-        logger::debug!(event = "create_string_object", ?args, new);
+        logger::debug!(event = "create_string_object", ?this, ?args, new);
         let string = match args.first() {
             Some(v) => {
                 // TODO: a. If NewTarget is undefined and value is a Symbol,
@@ -36,8 +37,12 @@ impl<X> Runtime<X> {
         };
         // TODO(feat): NewTarget
         if new {
-            // 10.4.3.4 StringCreate ( value, prototype )
-            let mut object = self.create_object(self.string_prototype);
+            let mut object = if let Some(&Value::Object(this)) = this {
+                this
+            } else {
+                // 10.4.3.4 StringCreate ( value, prototype )
+                self.create_object(self.string_prototype)
+            };
             let length = string.len();
             object.set_string(string);
             // TODO: check the result
@@ -82,9 +87,11 @@ extern "C" fn constructor<X>(
     context: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
+    let this = context.this();
     let args = context.args();
     let new = context.is_new();
-    match runtime.create_string_object(args, new) {
+    // TODO(feat): target
+    match runtime.create_string_object(Some(this), args, new) {
         Ok(value) => {
             *retv = value;
             Status::Normal
@@ -143,6 +150,9 @@ fn string_index_of(
         return Some(from_index);
     }
     let search_len = search_value.len();
+    if len < search_len {
+        return None;
+    }
     let string = string.make_utf16();
     let search = search_value.make_utf16();
     for i in from_index..(len - search_len + 1) {

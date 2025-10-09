@@ -55,22 +55,26 @@ test: TESTNAME ?=
 test:
 	cargo nextest run $(OPTIONS) $(TESTNAME)
 
-# TODO: remove '-' once we've fixed all failures.
 .PHONY: test262
+test262: PROFILE ?= release
 test262: ARGS ?= --progress
+test262: OOP ?=
 test262:
-	-sh bins/estree/scripts/test262_parser_tests.sh $(ARGS)
-	-sh bins/estree/scripts/test262.sh $(ARGS)
+ifdef OOP
+	cargo build --bin=bjs --profile=$(PROFILE) --all-features
+	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- --test262-dir vendor/src/tc39/test262 $(ARGS) launch -- /bin/sh bins/test262/launchers/bjs.sh --profile $(PROFILE) >test262.json
+else
+	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- --test262-dir vendor/src/tc39/test262 $(ARGS) run >test262.json
+endif
 
 # DO NOT REMOVE '-'.
 # Continue the execution in order to generate the report even if test commands fail.
 .PHONY: coverage
 coverage: LLVM_COV_ARGS ?= --html
-coverage: TEST262_ARGS ?= --progress
 coverage:
 	cargo llvm-cov clean --workspace
 	-cargo llvm-cov nextest --no-report --all-features
-	-$(MAKE) test262 ARGS='--profile=coverage $(TEST262_ARGS)'
+	-cargo llvm-cov run --bin=test262 --no-report --all-features -- --test262-dir=vendor/src/tc39/test262 run >/dev/null
 	cargo llvm-cov report $(LLVM_COV_ARGS)
 
 .PHONY: bench
@@ -82,9 +86,9 @@ bench:
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
 	cargo clean --profile=dev
-	cargo clean --profile=profiling
 	cargo clean --profile=release
 	cargo clean --profile=release-lto
+	cargo clean --profile=release-symbols
 
 .PHONY: clean-all
 clean-all: $(CLEAN_TARGETS)

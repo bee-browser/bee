@@ -91,7 +91,7 @@ impl JobRunner {
         Self {
             messages: Default::default(),
             promises: Default::default(),
-            next_promise: 0,
+            next_promise: 1, // 0 is invalid.
         }
     }
 
@@ -107,10 +107,14 @@ impl JobRunner {
         assert!(self.promises.len() < u32::MAX as usize);
         loop {
             let promise = self.next_promise.into();
+            if self.next_promise == u32::MAX {
+                self.next_promise = 1;
+            } else {
+                self.next_promise += 1;
+            }
             if !self.promises.contains_key(&promise) {
                 return promise;
             }
-            self.next_promise = self.next_promise.wrapping_add(1);
         }
         // never reach here
     }

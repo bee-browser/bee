@@ -1,9 +1,3 @@
-macro_rules! runtime_debug {
-    ($block:block) => {
-        if cfg!(debug_assertions) $block
-    };
-}
-
 mod control_flow;
 mod editor;
 
@@ -24,6 +18,7 @@ use jsparser::syntax::LoopFlags;
 
 use crate::ProgramId;
 use crate::Runtime;
+use crate::RuntimePref;
 use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;
@@ -51,12 +46,11 @@ use control_flow::ControlFlowStack;
 use editor::Editor;
 
 pub struct Session<'r, X> {
+    pref: &'r RuntimePref,
     program: &'r Program,
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
     pub code_registry: &'r mut CodeRegistry<X>,
-    max_call_stack_depth: u16,
-    scope_cleanup_checker_enabled: bool,
     global_object: ObjectHandle,
     object_prototype: ObjectHandle,
     function_prototype: ObjectHandle,
@@ -66,6 +60,7 @@ trait CompilerSupport {
     // RuntimePref
     fn max_call_stack_depth(&self) -> u16;
     fn is_scope_cleanup_checker_enabled(&self) -> bool;
+    fn is_runtime_assert_enabled(&self) -> bool;
 
     // SymbolRegistry
     fn get_symbol_name(&self, symbol: Symbol) -> &[u16];
@@ -91,11 +86,15 @@ trait CompilerSupport {
 
 impl<X> CompilerSupport for Session<'_, X> {
     fn max_call_stack_depth(&self) -> u16 {
-        self.max_call_stack_depth
+        self.pref.max_call_stack_depth
     }
 
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
-        self.scope_cleanup_checker_enabled
+        self.pref.enable_scope_cleanup_checker
+    }
+
+    fn is_runtime_assert_enabled(&self) -> bool {
+        self.pref.enable_runtime_assert
     }
 
     fn get_symbol_name(&self, symbol: Symbol) -> &[u16] {
@@ -163,16 +162,13 @@ pub fn compile<X>(
     let program = &runtime.programs[program_id.index()];
     for func in program.functions.iter() {
         let mut session = {
-            let max_call_stack_depth = runtime.max_call_stack_depth();
-            let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
             let global_object = runtime.global_object.as_handle();
             Session {
+                pref: &runtime.pref,
                 program,
                 symbol_registry: &mut runtime.symbol_registry,
                 lambda_registry: &mut runtime.lambda_registry,
                 code_registry: &mut runtime.code_registry,
-                max_call_stack_depth,
-                scope_cleanup_checker_enabled,
                 global_object,
                 object_prototype: runtime.object_prototype.unwrap(),
                 function_prototype: runtime.function_prototype.unwrap(),
@@ -210,16 +206,13 @@ pub fn compile_function<X>(
     let func = &program.functions[function_index];
 
     let mut session = {
-        let max_call_stack_depth = runtime.max_call_stack_depth();
-        let scope_cleanup_checker_enabled = runtime.is_scope_cleanup_checker_enabled();
         let global_object = runtime.global_object.as_handle();
         Session {
+            pref: &runtime.pref,
             program,
             symbol_registry: &mut runtime.symbol_registry,
             lambda_registry: &mut runtime.lambda_registry,
             code_registry: &mut runtime.code_registry,
-            max_call_stack_depth,
-            scope_cleanup_checker_enabled,
             global_object,
             object_prototype: runtime.object_prototype.unwrap(),
             function_prototype: runtime.function_prototype.unwrap(),
@@ -311,6 +304,7 @@ where
         func_ir: &'a mut ir::Function,
         builder_context: &'a mut FunctionBuilderContext,
     ) -> Self {
+        let runtime_assert_enabled = support.is_runtime_assert_enabled();
         let target_config = support.target_config();
         let addr_type = target_config.pointer_type();
 
@@ -339,7 +333,7 @@ where
             scope_tree,
             control_flow_stack: Default::default(),
             pending_labels: Default::default(),
-            editor: Editor::new(builder, target_config),
+            editor: Editor::new(runtime_assert_enabled, builder, target_config),
             operand_stack: Default::default(),
             this: None,
             this_capture: None,
@@ -1062,14 +1056,11 @@ where
             Operand::Object(value) => value,
             _ => unreachable!("{operand:?}"),
         };
-        runtime_debug! {{
+        if self.support.is_runtime_assert_enabled() {
             let is_callable = self.editor.put_is_callable(object);
-            self.editor.put_assert(
-                self.support,
-                is_callable,
-                c"object must be callable",
-            );
-        }}
+            self.editor
+                .put_assert(self.support, is_callable, c"object must be callable");
+        }
 
         match locator {
             Locator::Local(index) => {
@@ -1243,22 +1234,21 @@ where
             }
         };
 
-        let closure = self.emit_load_closure_or_throw_type_error(constructor);
+        let is_constructor = self.editor.put_is_constructor(constructor);
+        let then_block = self.editor.create_block();
+        let else_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+        self.editor
+            .put_branch(is_constructor, then_block, &[], else_block, &[]);
+        self.editor.switch_to_block(then_block);
+        self.editor.put_jump(merge_block, &[]);
+        self.editor.switch_to_block(else_block);
+        self.emit_throw_type_error();
+        self.editor.put_jump(merge_block, &[]);
+        self.editor.switch_to_block(merge_block);
 
-        let prototype = self.emit_create_any();
-        let status = self.editor.put_runtime_get_value_by_symbol(
-            self.support,
-            constructor,
-            Symbol::PROTOTYPE,
-            false,
-            prototype,
-        ); // TODO: strict
-        self.emit_check_status_for_exception(status, prototype);
-        runtime_debug! {{
-            let is_object = self.editor.put_is_object(prototype);
-            self.editor.put_assert(self.support, is_object, c"Prototype must be an object");
-        }}
-        let prototype = self.editor.put_load_object(prototype);
+        let closure = self.emit_load_closure_or_throw_type_error(constructor);
+        let prototype = self.emit_get_prototype_from_constructor(constructor);
 
         let this = {
             let object = self
@@ -1505,13 +1495,14 @@ where
         };
         self.emit_check_status_for_exception(status, retv);
         // `retv` holds a boolean value.
-        runtime_debug! {{
+        if self.support.is_runtime_assert_enabled() {
             let is_boolean = self.editor.put_is_boolean(retv);
-            self.editor.put_assert(self.support,
+            self.editor.put_assert(
+                self.support,
                 is_boolean,
                 c"runtime.create_data_property() returns a boolan value",
             );
-        }}
+        }
         let success = self.editor.put_load_boolean(retv);
 
         // 2. If success is false, throw a TypeError exception.
@@ -1761,15 +1752,23 @@ where
                 Operand::Any(lhs, Some(Value::String(_))),
                 Operand::Any(rhs, Some(Value::String(_))),
             ) => {
-                runtime_debug! {{
+                if self.support.is_runtime_assert_enabled() {
                     let is_string = self.editor.put_is_string(*lhs);
-                    self.editor.put_assert(self.support, is_string, c"process_addition: lhs should be a string");
-                }}
+                    self.editor.put_assert(
+                        self.support,
+                        is_string,
+                        c"process_addition: lhs should be a string",
+                    );
+                }
                 let lhs = self.editor.put_load_string(*lhs);
-                runtime_debug! {{
+                if self.support.is_runtime_assert_enabled() {
                     let is_string = self.editor.put_is_string(*rhs);
-                    self.editor.put_assert(self.support, is_string, c"process_addition: rhs should be a string");
-                }}
+                    self.editor.put_assert(
+                        self.support,
+                        is_string,
+                        c"process_addition: rhs should be a string",
+                    );
+                }
                 let rhs = self.editor.put_load_string(*rhs);
                 let string = self
                     .editor
@@ -2283,14 +2282,14 @@ where
                     .editor
                     .put_runtime_to_object(self.support, *value, retv);
                 self.emit_check_status_for_exception(status, retv);
-                runtime_debug! {{
+                if self.support.is_runtime_assert_enabled() {
                     let is_object = self.editor.put_is_object(retv);
                     self.editor.put_assert(
                         self.support,
                         is_object,
                         c"ToObject() should return an Object",
                     );
-                }}
+                }
                 let object = self.editor.put_load_object(retv);
                 Some(object)
             }
@@ -3544,13 +3543,13 @@ where
                     ),
                 };
                 self.emit_check_status_for_exception(status, value);
-                runtime_debug! {{
+                if self.support.is_runtime_assert_enabled() {
                     self.editor.put_assert_non_null(
                         self.support,
                         value.0,
                         c"runtime.get_value() should return a non-null pointer",
                     );
-                }}
+                }
                 // TODO(pref): compile-time evaluation
                 (Operand::Any(value, None), Some(owner))
             }
@@ -3787,6 +3786,39 @@ where
 
         self.editor.switch_to_block(end_block);
         ClosureIr(self.editor.get_block_param(end_block, 0))
+    }
+
+    // 10.1.14 GetPrototypeFromConstructor
+    fn emit_get_prototype_from_constructor(&mut self, constructor: ObjectIr) -> ObjectIr {
+        let prototype = self.emit_create_any();
+        let status = self.editor.put_runtime_get_value_by_symbol(
+            self.support,
+            constructor,
+            Symbol::PROTOTYPE,
+            false,
+            prototype,
+        ); // TODO: strict
+        self.emit_check_status_for_exception(status, prototype);
+
+        let is_object = self.editor.put_is_object(prototype);
+        let then_block = self.editor.create_block();
+        let else_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_addr();
+        self.editor
+            .put_branch(is_object, then_block, &[], else_block, &[]);
+        self.editor.switch_to_block(then_block);
+        let prototype = self.editor.put_load_object(prototype);
+        self.editor.put_jump(merge_block, &[prototype.0.into()]);
+        self.editor.switch_to_block(else_block);
+        // TODO:
+        // a. Let realm be ? GetFunctionRealm(constructor).
+        // b. Set proto to realm's intrinsic object named intrinsicDefaultProto.
+        let prototype = self.support.object_prototype();
+        let prototype = self.editor.put_object(prototype.as_addr());
+        self.editor.put_jump(merge_block, &[prototype.0.into()]);
+        self.editor.switch_to_block(merge_block);
+
+        ObjectIr(self.editor.get_block_param(merge_block, 0))
     }
 
     // captures

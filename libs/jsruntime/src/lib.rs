@@ -51,6 +51,9 @@ struct RuntimePref {
     /// Insert IR instructions to check if the cleanup for each scope is performed properly.
     /// Immediately panic the current thread evaluating a JavaScript program if the check fails.
     enable_scope_cleanup_checker: bool,
+
+    /// Enables the runtime assertions.
+    enable_runtime_assert: bool,
 }
 
 impl Default for RuntimePref {
@@ -58,6 +61,7 @@ impl Default for RuntimePref {
         Self {
             max_call_stack_depth: 4096,
             enable_scope_cleanup_checker: false,
+            enable_runtime_assert: false,
         }
     }
 }
@@ -162,14 +166,6 @@ impl<X> Runtime<X> {
         runtime
     }
 
-    fn max_call_stack_depth(&self) -> u16 {
-        self.pref.max_call_stack_depth
-    }
-
-    fn is_scope_cleanup_checker_enabled(&self) -> bool {
-        self.pref.enable_scope_cleanup_checker
-    }
-
     pub fn extension(&self) -> &X {
         &self.extension
     }
@@ -180,6 +176,10 @@ impl<X> Runtime<X> {
 
     pub fn enable_scope_cleanup_checker(&mut self) {
         self.pref.enable_scope_cleanup_checker = true;
+    }
+
+    pub fn enable_runtime_assert(&mut self) {
+        self.pref.enable_runtime_assert = true;
     }
 
     pub fn set_monitor(&mut self, monitor: Box<dyn Monitor>) {

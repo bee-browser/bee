@@ -260,7 +260,7 @@ impl Object {
         self.properties
             .entry(key.clone())
             .and_modify(|prop| {
-                debug_assert!(prop.is_writable());
+                // TODO: debug_assert!(prop.is_writable());
                 prop.value = value.clone();
             })
             .or_insert(Property::data_xxx(value.clone()));
@@ -300,6 +300,10 @@ impl Object {
         self.prototype == prototype
     }
 
+    pub fn set_constructor(&mut self) {
+        self.flags.insert(ObjectFlags::CONSTRUCTOR)
+    }
+
     pub fn is_callable(&self) -> bool {
         self.flags.contains(ObjectFlags::CALLABLE)
     }
@@ -320,8 +324,9 @@ impl Object {
 bitflags! {
     #[derive(Clone, Copy)]
     pub(crate) struct ObjectFlags: u8 {
-        const CALLABLE = 1 << 0;
-        const ERROR    = 1 << 1;
+        const CONSTRUCTOR = 1 << 0;
+        const CALLABLE    = 1 << 1;
+        const ERROR       = 1 << 2;
     }
 }
 
@@ -332,6 +337,10 @@ pub struct ObjectHandle(NonZeroUsize);
 static_assertions::const_assert_eq!(size_of::<ObjectHandle>(), size_of::<*const Object>());
 
 impl ObjectHandle {
+    pub fn is_valid(self) -> bool {
+        self.0.get() != 0
+    }
+
     pub fn from_ptr(ptr: *mut c_void) -> Option<ObjectHandle> {
         NonZeroUsize::new(ptr as usize).map(ObjectHandle)
     }

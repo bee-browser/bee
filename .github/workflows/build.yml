@@ -67,4 +67,4 @@ jobs:
       - name: Run tests
         run: make test
       - name: Run tc39/test262
-        run: make test262 ARGS=
+        run: make test262 ARGS=''

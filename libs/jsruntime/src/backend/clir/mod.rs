@@ -34,7 +34,14 @@ pub fn initialize() {
 }
 
 pub struct CodeRegistry<X> {
-    module: Box<JITModule>,
+    // `JITModule::free_memory()` must be called manually in order to free memory blocks allocated
+    // for compiled functions.  Without this, the memory blocks will leak even though the
+    // `JITModule` object is disposed.
+    //
+    // `JITModule::free_memory()` takes the ownership of the object.  The type of `module` must
+    // allow transfer of the ownership so that we call `JITModule::free_memory()` in `drop()`.
+    // This is the reason why `Option<T>` is used here.
+    module: Option<Box<JITModule>>,
     lambda_sig: ir::Signature,
     runtime_func_ids: RuntimeFunctionIds,
     id_map: FxHashMap<LambdaId, FuncId>,
@@ -63,7 +70,7 @@ impl<X> CodeRegistry<X> {
         let runtime_func_ids = support::declare_functions(&mut module);
 
         Self {
-            module,
+            module: Some(module),
             lambda_sig,
             runtime_func_ids,
             id_map: Default::default(),
@@ -73,7 +80,11 @@ impl<X> CodeRegistry<X> {
 
     pub fn get_lambda(&self, lambda_id: LambdaId) -> Option<Lambda<X>> {
         let func_id = *self.id_map.get(&lambda_id)?;
-        let ptr = self.module.get_finalized_function(func_id);
+        let ptr = self
+            .module
+            .as_ref()
+            .unwrap()
+            .get_finalized_function(func_id);
         let addr = if ptr.is_null() {
             None
         } else {
@@ -83,7 +94,7 @@ impl<X> CodeRegistry<X> {
     }
 
     fn target_config(&self) -> isa::TargetFrontendConfig {
-        self.module.target_config()
+        self.module.as_ref().unwrap().target_config()
     }
 
     fn codegen(&mut self, func: &Function, ctx: &mut codegen::Context) {
@@ -91,14 +102,22 @@ impl<X> CodeRegistry<X> {
         // It's unnecessary to declare JavaScript functions called in a JavaScript function before
         // the JIT compilation.  Because every JavaScript function will be called indirectly.
         let name = func.id.make_name();
-        let func_id = self
-            .module
+        let module = self.module.as_mut().unwrap();
+        let func_id = module
             .declare_function(&name, Linkage::Local, &self.lambda_sig)
             .unwrap();
         self.id_map.insert(func.id, func_id);
-        self.module.define_function(func_id, ctx).unwrap();
-        self.module.clear_context(ctx);
-        self.module.finalize_definitions().unwrap();
+        module.define_function(func_id, ctx).unwrap();
+        module.clear_context(ctx);
+        module.finalize_definitions().unwrap();
+    }
+}
+
+impl<X> Drop for CodeRegistry<X> {
+    fn drop(&mut self) {
+        unsafe {
+            self.module.take().unwrap().free_memory();
+        }
     }
 }
 

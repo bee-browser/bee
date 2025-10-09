@@ -54,7 +54,12 @@ impl Value {
     pub(crate) const HOLDER_OFFSET: usize = size_of::<u64>();
 
     pub fn is_valid(&self) -> bool {
-        !matches!(self, Value::None)
+        match self {
+            Self::None => false,
+            Self::Object(value) => value.is_valid(),
+            Self::Promise(value) => value.is_valid(),
+            _ => true,
+        }
     }
 
     // 7.1.18 ToObject ( argument )
@@ -912,6 +917,12 @@ pub struct Promise(u32);
 
 static_assertions::const_assert_eq!(size_of::<Promise>(), 4);
 static_assertions::const_assert_eq!(align_of::<Promise>(), 4);
+
+impl Promise {
+    const fn is_valid(self) -> bool {
+        self.0 != 0
+    }
+}
 
 impl From<u32> for Promise {
     fn from(value: u32) -> Self {

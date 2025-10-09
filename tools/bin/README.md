@@ -36,7 +36,7 @@ DESCRIPTION:
   command for a performance measurement.
 
 EXAMPLES:
-  $PROGNAME -- cargo flamegraph --bin=jstb --profile=profiling -- \\
+  $PROGNAME -- cargo flamegraph --bin=bjs --profile=release-symbols -- \\
     run libs/jsruntime/benches/dataset/fib32.js
 ```
 
