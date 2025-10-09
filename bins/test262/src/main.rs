@@ -136,10 +136,8 @@ fn main() -> Result<()> {
     let mut driver = Driver::new(&cl);
     let num_test_cases = driver.load();
     let progress = if cl.progress {
-        let style = ProgressStyle::with_template(
-            "[{elapsed_precise}] [{bar}] {pos}/{len}",
-        )?
-        .progress_chars("#>-");
+        let style = ProgressStyle::with_template("[{elapsed_precise}] [{bar}] {pos}/{len}")?
+            .progress_chars("#>-");
         Some(ProgressBar::new(num_test_cases as u64).with_style(style))
     } else {
         None
