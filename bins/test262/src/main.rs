@@ -6,6 +6,7 @@ mod runner;
 
 use std::path::PathBuf;
 use std::time::Duration;
+use std::time::Instant;
 
 use anyhow::Result;
 use clap::Parser as _;
@@ -136,23 +137,25 @@ fn main() -> Result<()> {
     let num_test_cases = driver.load();
     let progress = if cl.progress {
         let style = ProgressStyle::with_template(
-            "{spinner} [{elapsed_precise}] [{bar}] {pos}/{len}\n{msg}",
+            "[{elapsed_precise}] [{bar}] {pos}/{len}",
         )?
         .progress_chars("#>-");
         Some(ProgressBar::new(num_test_cases as u64).with_style(style))
     } else {
         None
     };
+    let start = Instant::now();
     let report = driver.run(progress.as_ref());
-    let summary = summarize(&report);
+    let elapsed = Instant::elapsed(&start);
     if let Some(progress) = progress {
-        progress.finish_with_message(summary);
+        progress.finish_and_clear();
     }
+    print_summary(&report, &elapsed);
     serde_json::to_writer(std::io::stdout().lock(), &report)?;
     Ok(())
 }
 
-fn summarize(report: &TestReport) -> String {
+fn print_summary(report: &TestReport, elapsed: &Duration) {
     let num_tests = report.results.len();
     let mut num_passed = 0;
     let mut num_failed = 0;
@@ -168,7 +171,11 @@ fn summarize(report: &TestReport) -> String {
         }
     }
 
-    format!(
-        "{num_tests} tests: {num_passed} passed, {num_failed} failed, {num_timed_out} timed-out, {num_panics} panics"
-    )
+    let elapsed = elapsed.as_secs();
+
+    eprintln!("{num_tests} tests ({elapsed}s):");
+    eprintln!("  {num_passed} passed");
+    eprintln!("  {num_failed} failed");
+    eprintln!("  {num_timed_out} timed-out");
+    eprintln!("  {num_panics} panics");
 }
