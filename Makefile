@@ -71,11 +71,10 @@ endif
 # Continue the execution in order to generate the report even if test commands fail.
 .PHONY: coverage
 coverage: LLVM_COV_ARGS ?= --html
-coverage: TEST262_ARGS ?= --progress
 coverage:
 	cargo llvm-cov clean --workspace
 	-cargo llvm-cov nextest --no-report --all-features
-	-$(MAKE) test262 PROFILE=release-symbols ARGS='$(TEST262_ARGS)'
+	-cargo llvm-cov run --bin=test262 --no-report --all-features -- --test262-dir=vendor/src/tc39/test262 run >/dev/null
 	cargo llvm-cov report $(LLVM_COV_ARGS)
 
 .PHONY: bench
