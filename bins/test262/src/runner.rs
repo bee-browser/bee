@@ -52,7 +52,7 @@ impl Runner {
         };
         let content = if test_case.strict {
             // TODO: the source location is shifted...
-            format!("use strict;\n{content}")
+            format!("'use strict';\n{content}")
         } else {
             content
         };

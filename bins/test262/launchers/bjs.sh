@@ -89,7 +89,7 @@ trap "rm -f $CONTENT" EXIT INT TERM
 
 if [ "$STRICT" = 1 ]
 then
-  echo 'use strict;' >$CONTENT
+  echo "'use strict';" >$CONTENT
 fi
 cat $@ >>$CONTENT
 
