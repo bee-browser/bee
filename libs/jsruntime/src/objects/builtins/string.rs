@@ -31,7 +31,10 @@ impl<X> Runtime<X> {
             Some(v) => {
                 // TODO: a. If NewTarget is undefined and value is a Symbol,
                 // return SymbolDescriptiveString(value).
-                self.perform_to_string(v)
+                match self.value_to_string(v) {
+                    Ok(string) => string,
+                    Err(err) => return Err(self.create_exception(err)),
+                }
             }
             None => StringHandle::EMPTY,
         };
@@ -113,53 +116,36 @@ extern "C" fn string_prototype_index_of<X>(
 
     let string = match runtime.value_to_string(context.this()) {
         Ok(string) => string,
-        Err(_err) => {
-            // TODO: convert Error to JS error object.
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             return Status::Exception;
         }
     };
 
     let args = context.args();
-    let search_str = runtime.perform_to_string(args.first().unwrap_or(&Value::Undefined));
+    let search_str = args.first().unwrap_or(&Value::Undefined);
+    let search_str = match runtime.value_to_string(search_str) {
+        Ok(string) => string,
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            return Status::Exception;
+        }
+    };
     let position = args.get(1).unwrap_or(&Value::Undefined);
     let pos = match runtime.value_to_integer_or_infinity(position) {
         Ok(pos) => pos,
-        Err(_err) => {
-            // TODO: convert Error to JS error object.
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             return Status::Exception;
         }
     };
 
     let len = string.len();
     let start = pos.clamp(0.0, len as f64) as u32;
-    let index = string_index_of(string, search_str, start).map_or(-1.0, |i| i as f64);
+    let index = string
+        .index_of(search_str, start)
+        .map_or(-1.0, |i| i as f64);
 
     *retv = Value::Number(index);
     Status::Normal
-}
-
-// 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
-fn string_index_of(
-    string: StringHandle,
-    search_value: StringHandle,
-    from_index: u32,
-) -> Option<u32> {
-    // TODO(perf): slow and inefficient
-    let len = string.len();
-    if search_value.is_empty() && from_index <= len {
-        return Some(from_index);
-    }
-    let search_len = search_value.len();
-    if len < search_len {
-        return None;
-    }
-    let string = string.make_utf16();
-    let search = search_value.make_utf16();
-    for i in from_index..(len - search_len + 1) {
-        let canditate = &string[(i as usize)..((i + search_len) as usize)];
-        if canditate == search {
-            return Some(i);
-        }
-    }
-    None
 }
