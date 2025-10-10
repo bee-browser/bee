@@ -11,8 +11,8 @@ USAGE:
   $PROGNAME -h | --help
 
 OPTIONS:
-  --debug
-    Launch a debug executable.
+  --profile <profile>
+    A profile of the 'bjs' executable file to launch.
 
   --strict
     Evaluate <program> in the strict mode.
@@ -70,7 +70,15 @@ do
   esac
 done
 
-BJS="$PROJ_DIR/target/$PROFILE/bjs"
+case $PROFILE in
+  'dev' | 'test')
+    BJS="$PROJ_DIR/target/debug/bjs"
+    ;;
+  *)
+    BJS="$PROJ_DIR/target/$PROFILE/bjs"
+    ;;
+esac
+
 if [ ! -e "$BJS" ]
 then
   exit 101
