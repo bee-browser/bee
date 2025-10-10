@@ -169,18 +169,18 @@ impl<'a> Driver<'a> {
 
 struct JsFiles<'a> {
     walk: walkdir::IntoIter,
-    test262_dir: PathBuf,
-    tests: &'a [String],
+    base_dir: PathBuf,
+    filters: &'a [String],
 }
 
 impl<'a> JsFiles<'a> {
-    fn new(test262_dir: &Path, holder: &str, tests: &'a [String]) -> Self {
+    fn new(test262_dir: &Path, holder: &str, filters: &'a [String]) -> Self {
         let base_dir = test262_dir.join(holder);
         let walk = WalkDir::new(&base_dir).into_iter();
         Self {
             walk,
-            test262_dir: test262_dir.to_owned(),
-            tests,
+            base_dir,
+            filters,
         }
     }
 }
@@ -200,9 +200,9 @@ impl<'a> Iterator for JsFiles<'a> {
             if entry.file_name().to_str().unwrap().contains("_FIXTURE") {
                 continue;
             }
-            let path_diff = diff_paths(entry.path(), &self.test262_dir).unwrap();
+            let path_diff = diff_paths(entry.path(), &self.base_dir).unwrap();
             let matched =
-                self.tests.is_empty() || self.tests.iter().any(|test| path_diff.starts_with(test));
+                self.filters.is_empty() || self.filters.iter().any(|test| path_diff.starts_with(test));
             if !matched {
                 continue;
             }
@@ -212,14 +212,13 @@ impl<'a> Iterator for JsFiles<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Harness {
-    #[allow(unused)]
     path: PathBuf,
     content: String,
 }
 
 impl Harness {
-    #[allow(unused)]
     pub fn path(&self) -> &Path {
         &self.path
     }
@@ -229,6 +228,7 @@ impl Harness {
     }
 }
 
+#[derive(Debug)]
 pub struct TestCase {
     pub includes: Vec<Arc<Harness>>,
     pub path: PathBuf,
@@ -254,6 +254,7 @@ impl TestCase {
     }
 }
 
+#[derive(Debug)]
 pub enum Error {
     Panic,
     Parse,
