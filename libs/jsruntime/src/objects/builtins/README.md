@@ -42,7 +42,7 @@
 * [x] [String.prototype.constructor](https://tc39.es/ecma262/#sec-string.prototype.constructor)
 * [ ] [String.prototype.endsWith](https://tc39.es/ecma262/#sec-string.prototype.endswith)
 * [ ] [String.prototype.includes](https://tc39.es/ecma262/#sec-string.prototype.includes)
-* [ ] [String.prototype.indexOf](https://tc39.es/ecma262/#sec-string.prototype.indexof)
+* [x] [String.prototype.indexOf](https://tc39.es/ecma262/#sec-string.prototype.indexof)
 * [ ] [String.prototype.isWellFormed](https://tc39.es/ecma262/#sec-string.prototype.iswellformed)
 * [ ] [String.prototype.lastIndexOf](https://tc39.es/ecma262/#sec-string.prototype.lastindexof)
 * [ ] [String.prototype.localeCompare](https://tc39.es/ecma262/#sec-string.prototype.localecompare)

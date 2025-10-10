@@ -175,25 +175,7 @@ pub(crate) extern "C" fn runtime_to_string<X>(
     value: &Value,
 ) -> StringHandle {
     logger::debug!(event = "runtime_to_string", ?value);
-    runtime.perform_to_string(value)
-}
-
-impl<X> Runtime<X> {
-    pub(crate) fn perform_to_string(&mut self, value: &Value) -> StringHandle {
-        logger::debug!(event = "perform_to_string", ?value);
-        match value {
-            Value::None => unreachable!("Value::None"),
-            Value::Undefined => const_string!("undefined"),
-            Value::Null => const_string!("null"),
-            Value::Boolean(true) => const_string!("true"),
-            Value::Boolean(false) => const_string!("false"),
-            Value::Number(value) => {
-                self.number_to_string(*value) // TODO
-            }
-            Value::String(value) => *value,
-            Value::Promise(_) | Value::Object(_) => const_string!("[object Object]"),
-        }
-    }
+    runtime.value_to_string(value).unwrap()
 }
 
 // 6.1.6.1.20 Number::toString ( x, radix )

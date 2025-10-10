@@ -66,7 +66,10 @@ impl<X> Runtime<X> {
         match message {
             Value::Undefined => (),
             _ => {
-                let msg = self.perform_to_string(message);
+                let msg = match self.value_to_string(message) {
+                    Ok(string) => string,
+                    Err(err) => return Err(self.create_exception(err)),
+                };
                 // TODO: error handling
                 let _ = object.define_own_property(
                     Symbol::MESSAGE.into(),
@@ -144,12 +147,24 @@ extern "C" fn error_prototype_to_string<X>(
 
     let name = match object.get_value(&Symbol::NAME.into()) {
         None | Some(Value::Undefined) => NAME,
-        Some(value) => runtime.perform_to_string(value),
+        Some(value) => match runtime.value_to_string(value) {
+            Ok(string) => string,
+            Err(err) => {
+                *retv = runtime.create_exception(err);
+                return Status::Exception;
+            }
+        }
     };
 
     let message = match object.get_value(&Symbol::MESSAGE.into()) {
         None | Some(Value::Undefined) => StringHandle::EMPTY,
-        Some(value) => runtime.perform_to_string(value),
+        Some(value) => match runtime.value_to_string(value) {
+            Ok(string) => string,
+            Err(err) => {
+                *retv = runtime.create_exception(err);
+                return Status::Exception;
+            }
+        }
     };
 
     let result = if name.is_empty() {

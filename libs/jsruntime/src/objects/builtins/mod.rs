@@ -22,8 +22,9 @@ use crate::types::Lambda;
 use crate::types::StringHandle;
 use crate::types::Value;
 
-#[allow(unused)]
-enum Error {
+#[derive(Debug)]
+pub(crate) enum Error {
+    #[allow(unused)]
     TypeError,
 }
 
@@ -168,7 +169,7 @@ impl<X> Runtime<X> {
 
     // 7.1.17 ToString ( argument )
     // TODO: code clone, see backend::bridge::runtime_to_string
-    fn value_to_string(&mut self, value: &Value) -> Result<StringHandle, Error> {
+    pub(crate) fn value_to_string(&mut self, value: &Value) -> Result<StringHandle, Error> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
@@ -176,19 +177,27 @@ impl<X> Runtime<X> {
             Value::Null => Ok(const_string!("null")),
             Value::Boolean(true) => Ok(const_string!("true")),
             Value::Boolean(false) => Ok(const_string!("false")),
-            Value::Number(value) => {
-                Ok(self.number_to_string(*value)) // TODO
-            }
+            Value::Number(value) => Ok(self.number_to_string(*value)),
             Value::String(value) => Ok(*value),
+            // TODO(feat): Value::Symbol(_) => Err(Error::TypeError),
             Value::Promise(_) => todo!(),
-            Value::Object(value) => {
-                let value = *value;
-                if self.is_string_object(value) {
-                    Ok(value.string())
-                } else {
-                    Ok(const_string!("[object Object]"))
-                }
-            }
+            Value::Object(value) => self.object_to_string(*value),
         }
+    }
+
+    fn object_to_string(&mut self, object: ObjectHandle) -> Result<StringHandle, Error> {
+        // TODO(feat): ToPrimitive(object, STRING)
+        if self.is_string_object(object) {
+            Ok(object.string())
+        } else {
+            Ok(const_string!("[object Object]"))
+        }
+    }
+
+    fn create_exception(&mut self, err: Error) -> Value {
+        let object = match err {
+            Error::TypeError => self.create_type_error(true, &Value::Undefined, &Value::Undefined).unwrap(),
+        };
+        Value::Object(object)
     }
 }
