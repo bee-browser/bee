@@ -201,8 +201,8 @@ impl<'a> Iterator for JsFiles<'a> {
                 continue;
             }
             let path_diff = diff_paths(entry.path(), &self.base_dir).unwrap();
-            let matched =
-                self.filters.is_empty() || self.filters.iter().any(|test| path_diff.starts_with(test));
+            let matched = self.filters.is_empty()
+                || self.filters.iter().any(|test| path_diff.starts_with(test));
             if !matched {
                 continue;
             }

@@ -196,7 +196,9 @@ impl<X> Runtime<X> {
 
     fn create_exception(&mut self, err: Error) -> Value {
         let object = match err {
-            Error::TypeError => self.create_type_error(true, &Value::Undefined, &Value::Undefined).unwrap(),
+            Error::TypeError => self
+                .create_type_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap(),
         };
         Value::Object(object)
     }
