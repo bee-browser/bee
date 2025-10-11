@@ -153,7 +153,7 @@ extern "C" fn error_prototype_to_string<X>(
                 *retv = runtime.create_exception(err);
                 return Status::Exception;
             }
-        }
+        },
     };
 
     let message = match object.get_value(&Symbol::MESSAGE.into()) {
@@ -164,7 +164,7 @@ extern "C" fn error_prototype_to_string<X>(
                 *retv = runtime.create_exception(err);
                 return Status::Exception;
             }
-        }
+        },
     };
 
     let result = if name.is_empty() {
