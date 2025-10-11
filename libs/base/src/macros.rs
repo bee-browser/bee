@@ -88,6 +88,14 @@ macro_rules! debug_assert_ne {
 }
 
 #[macro_export]
+macro_rules! static_assert {
+    ($cond:expr) => {
+        // assert!() cannot be used as a compile-time assertion.
+        const _: () = std::assert!($cond);
+    };
+}
+
+#[macro_export]
 macro_rules! static_assert_eq {
     ($lhs:expr, $rhs:expr) => {
         // assert_eq!() cannot be used as a compile-time assertion.
@@ -149,6 +157,7 @@ pub use const_utf16;
 pub use debug_assert_eq;
 pub use debug_assert_ne;
 pub use delegate_all;
+pub use static_assert;
 pub use static_assert_eq;
 pub use static_assert_ne;
 pub use static_assert_size;
@@ -203,6 +212,7 @@ mod tests {
         debug_assert_ne!(0, 0);
     }
 
+    static_assert!(true);
     static_assert_eq!(0, 0);
     static_assert_ne!(0, 1);
     static_assert_size!(u32, 4);
