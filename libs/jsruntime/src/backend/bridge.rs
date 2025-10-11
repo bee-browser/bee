@@ -191,7 +191,7 @@ impl<X> Runtime<X> {
     pub(crate) fn number_to_string(&mut self, value: f64) -> StringHandle {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
-        let chunk = StringFragment::new_stack(utf16);
+        let chunk = StringFragment::new_stack(utf16, true);
         let string = StringHandle::new(&chunk);
         self.migrate_string_to_heap(string)
     }

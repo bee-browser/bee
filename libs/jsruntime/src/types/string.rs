@@ -1,6 +1,8 @@
 use std::ops::Index;
 use std::ptr::NonNull;
 
+use bitflags::bitflags;
+use bitflags::bitflags_match;
 use itertools::Itertools;
 
 /// A data type to hold an **immutable** UTF-16 string.
@@ -14,7 +16,7 @@ use itertools::Itertools;
 #[repr(transparent)]
 pub struct StringHandle(NonNull<StringFragment>);
 
-static_assertions::const_assert_eq!(align_of::<StringHandle>(), align_of::<usize>());
+base::static_assert_eq!(align_of::<StringHandle>(), align_of::<usize>());
 
 impl StringHandle {
     /// An empty string.
@@ -142,63 +144,62 @@ pub struct StringFragment {
     next: *const StringFragment,
 
     /// A pointer to the array of UTF-16 code units if it exists.
+    ///
+    /// The `ptr` points to one of the following memory block:
+    ///
+    ///   * A constant array of UTF-16 code units
+    ///   * An array of UTF-16 code units allocated in the string pool (not yet implemented)
+    ///   * A memory block allocated in the GC heap
     ptr: *const u16,
 
     /// The number of the UTF-16 code units in the string fragment.
     len: u32,
 
-    kind: StringFragmentKind,
+    flags: StringFragmentFlags,
 }
 
-static_assertions::const_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
+base::static_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
 
 impl StringFragment {
-    pub(crate) const EMPTY: Self = Self::new_const_from_raw_parts(std::ptr::null(), 0);
+    pub(crate) const EMPTY: Self = Self::new_const(&[]);
 
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
     pub(crate) const NEXT_OFFSET: usize = std::mem::offset_of!(Self, next);
     pub(crate) const PTR_OFFSET: usize = std::mem::offset_of!(Self, ptr);
     pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
-    pub(crate) const KIND_OFFSET: usize = std::mem::offset_of!(Self, kind);
+    pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     // TODO(refactor): should be private
     pub const fn new_const(slice: &'static [u16]) -> Self {
-        Self::new_const_from_raw_parts(slice.as_ptr(), slice.len() as u32)
-    }
-
-    pub(crate) const fn new_stack(slice: &[u16]) -> Self {
-        Self::new_stack_from_raw_parts(slice.as_ptr(), slice.len() as u32)
-    }
-
-    pub(crate) const fn new_const_from_raw_parts(ptr: *const u16, len: u32) -> Self {
         Self {
             next: std::ptr::null(),
-            ptr,
-            len,
-            kind: StringFragmentKind::Const,
+            ptr: slice.as_ptr(),
+            len: slice.len() as u32,
+            flags: StringFragmentFlags::CONST,
         }
     }
 
-    pub(crate) const fn new_stack_from_raw_parts(ptr: *const u16, len: u32) -> Self {
+    // TODO(feat): support DYNAMIC
+    pub(crate) const fn new_stack(slice: &[u16], dynamic: bool) -> Self {
         Self {
             next: std::ptr::null(),
-            ptr,
-            len,
-            kind: StringFragmentKind::Stack,
+            ptr: slice.as_ptr(),
+            len: slice.len() as u32,
+            flags: if dynamic {
+                StringFragmentFlags::STACK.union(StringFragmentFlags::DYNAMIC)
+            } else {
+                StringFragmentFlags::STACK
+            },
         }
     }
 
-    pub(crate) const fn new_heap_from_raw_parts(
-        next: *const Self,
-        ptr: *const u16,
-        len: u32,
-    ) -> Self {
+    pub(crate) fn new_heap_from_raw_parts(next: *const Self, ptr: *const u16, len: u32) -> Self {
         Self {
             next,
             ptr,
             len,
-            kind: StringFragmentKind::Heap,
+            flags: StringFragmentFlags::HEAP,
         }
     }
 
@@ -208,11 +209,11 @@ impl StringFragment {
     }
 
     pub(crate) const fn is_const(&self) -> bool {
-        matches!(self.kind, StringFragmentKind::Const)
+        self.flags.contains(StringFragmentFlags::CONST)
     }
 
     pub(crate) const fn on_stack(&self) -> bool {
-        matches!(self.kind, StringFragmentKind::Stack)
+        self.flags.contains(StringFragmentFlags::STACK)
     }
 
     pub(crate) fn total_len(&self) -> u32 {
@@ -278,11 +279,15 @@ impl Index<u32> for StringFragment {
 
 impl std::fmt::Debug for StringFragment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.kind {
-            StringFragmentKind::Const => write!(f, r#"const""#)?,
-            StringFragmentKind::Stack => write!(f, r#"stack""#)?,
-            StringFragmentKind::Heap => write!(f, r#"heap""#)?,
-        }
+        let prefix = bitflags_match!(self.flags, {
+            StringFragmentFlags::CONST => r#"const""#,
+            StringFragmentFlags::STACK => r#"stack""#,
+            StringFragmentFlags::STACK | StringFragmentFlags::DYNAMIC => r#"stack!""#,
+            StringFragmentFlags::HEAP => r#"heap""#,
+            StringFragmentFlags::HEAP | StringFragmentFlags::DYNAMIC => r#"heap!""#,
+            _ => unreachable!(),
+        });
+        write!(f, "{prefix}")?;
         let utf16 = self.as_slice().iter().cloned();
         for c in std::char::decode_utf16(utf16).map(|r| r.map_err(|e| e.unpaired_surrogate())) {
             match c {
@@ -313,12 +318,21 @@ impl std::fmt::Display for StringFragment {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-#[repr(u8)]
-pub enum StringFragmentKind {
-    Const = 0,
-    Stack,
-    Heap,
+bitflags! {
+    #[derive(Clone, Copy, PartialEq)]
+    pub struct StringFragmentFlags: u8 {
+        /// The object is a constant value.
+        const CONST   = 1 << 0;
+
+        /// The object has been allocated on the stack.
+        const STACK   = 1 << 1;
+
+        /// The object has been allocated in the heap.
+        const HEAP    = 1 << 2;
+
+        /// The UTF-16 code units has allocated in the heap at runtime.
+        const DYNAMIC = 1 << 3;
+    }
 }
 
 struct CodeUnits<'a> {

@@ -19,7 +19,7 @@ use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::StringFragment;
-use crate::types::StringFragmentKind;
+use crate::types::StringFragmentFlags;
 use crate::types::Value;
 
 use super::AnyIr;
@@ -578,11 +578,11 @@ impl<'a> Editor<'a> {
         let next = self.builder.ins().iconst(self.addr_type, 0);
         self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
 
-        let kind = self
+        let flags = self
             .builder
             .ins()
-            .iconst(ir::types::I8, StringFragmentKind::Stack as i64);
-        self.put_store_to_slot(kind, slot, StringFragment::KIND_OFFSET);
+            .iconst(ir::types::I8, StringFragmentFlags::STACK.bits() as i64);
+        self.put_store_to_slot(flags, slot, StringFragment::FLAGS_OFFSET);
 
         StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
@@ -638,11 +638,11 @@ impl<'a> Editor<'a> {
             .iconst(ir::types::I32, value.len() as i64);
         self.put_store_to_slot(len, slot, StringFragment::LEN_OFFSET);
 
-        let kind = self
+        let flags = self
             .builder
             .ins()
-            .iconst(ir::types::I8, StringFragmentKind::Stack as i64);
-        self.put_store_to_slot(kind, slot, StringFragment::KIND_OFFSET);
+            .iconst(ir::types::I8, StringFragmentFlags::STACK.bits() as i64);
+        self.put_store_to_slot(flags, slot, StringFragment::FLAGS_OFFSET);
 
         StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
@@ -650,16 +650,14 @@ impl<'a> Editor<'a> {
     pub fn put_string_on_stack(&mut self, string: StringIr) -> BooleanIr {
         logger::debug!(event = "put_string_on_stack", ?string);
         use ir::condcodes::IntCC::Equal;
-        let kind = self.put_load_kind_from_string(string);
-        BooleanIr(
-            self.builder
-                .ins()
-                .icmp_imm(Equal, kind, StringFragmentKind::Stack as i64),
-        )
+        const FLAG: i64 = StringFragmentFlags::STACK.bits() as i64;
+        let flags = self.put_load_flags_from_string(string);
+        let on_stack = self.builder.ins().band_imm(flags, FLAG);
+        BooleanIr(self.builder.ins().icmp_imm(Equal, on_stack, FLAG))
     }
 
-    fn put_load_kind_from_string(&mut self, string: StringIr) -> ir::Value {
-        self.put_load_i8(string.0, StringFragment::KIND_OFFSET)
+    fn put_load_flags_from_string(&mut self, string: StringIr) -> ir::Value {
+        self.put_load_i8(string.0, StringFragment::FLAGS_OFFSET)
     }
 
     // any
