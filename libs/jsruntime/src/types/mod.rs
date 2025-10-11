@@ -11,7 +11,7 @@ use crate::objects::Object;
 use crate::objects::ObjectHandle;
 
 pub use string::StringFragment;
-pub use string::StringFragmentKind;
+pub use string::StringFragmentFlags;
 pub use string::StringHandle;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
