@@ -1,3 +1,5 @@
+use core::f64;
+
 use jsparser::Symbol;
 
 use super::into_lambda;
@@ -101,6 +103,12 @@ impl<X> Runtime<X> {
         let method = self.create_builtin_function(into_lambda(string_prototype_char_at), None);
         let _ = prototype.define_own_property(
             Symbol::CHAR_AT.into(),
+            Property::data_xxx(Value::Object(method)),
+        );
+
+        let method = self.create_builtin_function(into_lambda(string_prototype_char_code_at), None);
+        let _ = prototype.define_own_property(
+            Symbol::CHAR_CODE_AT.into(),
             Property::data_xxx(Value::Object(method)),
         );
 
@@ -237,6 +245,25 @@ fn string_prototype_char_at<X>(
     let frag = StringFragment::new_stack(slice, true);
     let string = StringHandle::new(&frag);
     Ok(Value::String(runtime.migrate_string_to_heap(string)))
+}
+
+// 22.1.3.3 String.prototype.charCodeAt ( pos )
+fn string_prototype_char_code_at<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_char_code_at");
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+    let pos = context.args().first().unwrap_or(&Value::Undefined);
+    let position = runtime.value_to_integer_or_infinity(pos)?;
+    let size = s.len() as f64;
+    if position < 0.0 || position >= size {
+        return Ok(Value::Number(f64::NAN));
+    }
+    let code_unit = s.at(position as u32).unwrap();
+    Ok(Value::Number(code_unit as f64))
 }
 
 // 7.2.1 RequireObjectCoercible ( argument )
