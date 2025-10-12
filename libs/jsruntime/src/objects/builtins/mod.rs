@@ -125,7 +125,7 @@ impl<X> Runtime<X> {
             Value::Boolean(true) => Ok(1.0),
             Value::Boolean(false) => Ok(0.0),
             Value::Number(value) => Ok(*value),
-            Value::String(_value) => todo!(),
+            Value::String(_value) => Err(Error::InternalError), // TODO
             Value::Promise(_) => Ok(f64::NAN),
             // TODO(feat): 7.1.1 ToPrimitive()
             Value::Object(_) => Ok(f64::NAN),
@@ -198,6 +198,9 @@ impl<X> Runtime<X> {
                 .unwrap(),
             Error::RangeError => self
                 .create_range_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap(),
+            Error::InternalError => self
+                .create_internal_error(true, &Value::Undefined, &Value::Undefined)
                 .unwrap(),
         };
         Value::Object(object)
