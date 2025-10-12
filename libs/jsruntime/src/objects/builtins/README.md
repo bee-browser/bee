@@ -34,7 +34,7 @@
 * [x] [String.fromCharCode](https://tc39.es/ecma262/#sec-string.fromcharcode)
 * [x] [String.fromCodePoint](https://tc39.es/ecma262/#sec-string.fromcodepoint)
 * [ ] [String.raw](https://tc39.es/ecma262/#sec-string.raw)
-* [ ] [String.prototype.at](https://tc39.es/ecma262/#sec-string.prototype.at)
+* [x] [String.prototype.at](https://tc39.es/ecma262/#sec-string.prototype.at)
 * [ ] [String.prototype.charAt](https://tc39.es/ecma262/#sec-string.prototype.charat)
 * [ ] [String.prototype.charCodeAt](https://tc39.es/ecma262/#sec-string.prototype.charcodeat)
 * [ ] [String.prototype.codePointAt](https://tc39.es/ecma262/#sec-string.prototype.codepointat)

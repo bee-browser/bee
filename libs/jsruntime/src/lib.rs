@@ -428,9 +428,10 @@ pub trait Monitor {
     fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
 pub(crate) enum Error {
-    #[allow(unused)]
     TypeError,
     RangeError,
+    InternalError,
 }

@@ -94,6 +94,10 @@ impl<X> Runtime<X> {
 
         let mut prototype = self.create_object(self.object_prototype);
 
+        let method = self.create_builtin_function(into_lambda(string_prototype_at), None);
+        let _ = prototype
+            .define_own_property(Symbol::AT.into(), Property::data_xxx(Value::Object(method)));
+
         let method = self.create_builtin_function(into_lambda(string_prototype_index_of), None);
         let _ = prototype.define_own_property(
             Symbol::INDEX_OF.into(),
@@ -176,6 +180,43 @@ fn string_from_code_point<X>(
     let frag = StringFragment::new_stack(slice, true);
     let string = StringHandle::new(&frag);
     Ok(Value::String(runtime.migrate_string_to_heap(string)))
+}
+
+// 22.1.3.1 String.prototype.at ( index )
+fn string_prototype_at<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_at");
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+    let len = s.len() as f64;
+    let index = context.args().first().unwrap_or(&Value::Undefined);
+    let relative_index = runtime.value_to_integer_or_infinity(index)?;
+    let k = if relative_index >= 0.0 {
+        relative_index
+    } else {
+        len + relative_index
+    };
+    if k < 0.0 || k >= len {
+        return Ok(Value::Undefined);
+    }
+    // TODO(perf): memory inefficient
+    let code_unit = s.at(k as u32);
+    let slice = runtime.allocator.alloc_slice_copy(code_unit.as_slice());
+    let frag = StringFragment::new_stack(slice, true);
+    let string = StringHandle::new(&frag);
+    Ok(Value::String(runtime.migrate_string_to_heap(string)))
+}
+
+// 7.2.1 RequireObjectCoercible ( argument )
+fn require_object_coercible(value: &Value) -> Result<(), Error> {
+    match value {
+        Value::None => unreachable!(),
+        Value::Undefined | Value::Null => Err(Error::TypeError),
+        _ => Ok(()),
+    }
 }
 
 // 22.1.3.9 String.prototype.indexOf ( searchString [ , position ] )

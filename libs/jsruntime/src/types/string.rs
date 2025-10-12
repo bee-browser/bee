@@ -81,6 +81,10 @@ impl StringHandle {
         self.0.addr().get()
     }
 
+    pub fn at(&self, index: u32) -> Option<u16> {
+        self.fragment().at(index as usize)
+    }
+
     // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
     pub fn index_of(&self, search_value: Self, from_index: u32) -> Option<u32> {
         // TODO(perf): slow and inefficient
@@ -254,6 +258,14 @@ impl StringFragment {
 
     pub(crate) fn as_ptr(&self) -> *const Self {
         self as *const Self
+    }
+
+    fn at(&self, index: usize) -> Option<u16> {
+        let slice = self.as_slice();
+        match slice.get(index) {
+            Some(code_unit) => Some(*code_unit),
+            None => self.next().and_then(|next| next.at(index - slice.len())),
+        }
     }
 }
 
