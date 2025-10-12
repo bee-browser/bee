@@ -13,6 +13,7 @@ mod uri_error;
 
 use jsparser::Symbol;
 
+use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
@@ -21,12 +22,6 @@ use crate::objects::Property;
 use crate::types::Lambda;
 use crate::types::StringHandle;
 use crate::types::Value;
-
-#[derive(Debug)]
-pub(crate) enum Error {
-    #[allow(unused)]
-    TypeError,
-}
 
 impl<X> Runtime<X> {
     // 19 The Global Object

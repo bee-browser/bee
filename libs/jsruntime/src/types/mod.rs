@@ -1,3 +1,4 @@
+pub mod number;
 mod string;
 
 use std::ffi::c_void;
