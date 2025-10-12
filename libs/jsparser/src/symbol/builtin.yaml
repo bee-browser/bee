@@ -58,6 +58,7 @@
 - cause
 - charAt
 - charCodeAt
+- codePointAt
 - constructor
 - default
 - fromCharCode
