@@ -112,6 +112,12 @@ impl<X> Runtime<X> {
             Property::data_xxx(Value::Object(method)),
         );
 
+        let method = self.create_builtin_function(into_lambda(string_prototype_code_point_at), None);
+        let _ = prototype.define_own_property(
+            Symbol::CODE_POINT_AT.into(),
+            Property::data_xxx(Value::Object(method)),
+        );
+
         let method = self.create_builtin_function(into_lambda(string_prototype_index_of), None);
         let _ = prototype.define_own_property(
             Symbol::INDEX_OF.into(),
@@ -264,6 +270,25 @@ fn string_prototype_char_code_at<X>(
     }
     let code_unit = s.at(position as u32).unwrap();
     Ok(Value::Number(code_unit as f64))
+}
+
+// 22.1.3.4 String.prototype.codePointAt ( pos )
+fn string_prototype_code_point_at<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_code_point_at");
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+    let pos = context.args().first().unwrap_or(&Value::Undefined);
+    let position = runtime.value_to_integer_or_infinity(pos)?;
+    let size = s.len() as f64;
+    if position < 0.0 || position >= size {
+        return Ok(Value::Undefined);
+    }
+    let result = s.code_point_at(position as u32);
+    Ok(Value::Number(result.code_point as f64))
 }
 
 // 7.2.1 RequireObjectCoercible ( argument )

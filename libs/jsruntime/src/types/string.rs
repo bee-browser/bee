@@ -85,6 +85,49 @@ impl StringHandle {
         self.fragment().at(index as usize)
     }
 
+    pub fn code_point_at(&self, index: u32) -> CodePointAt {
+        fn is_leading_surrogate(code_unit: u16) -> bool {
+            (0xD800..=0xDBFF).contains(&code_unit)
+        }
+
+        fn is_trailing_surrogate(code_unit: u16) -> bool {
+            (0xDC00..=0xDFFF).contains(&code_unit)
+        }
+
+        let first = self.at(index).unwrap();
+        let size = self.len();
+        if !is_leading_surrogate(first) && !is_trailing_surrogate(first) {
+            return CodePointAt {
+                code_point: first as u32,
+                code_unit_count: 1,
+                is_unpaired_surrogate: false,
+            }
+        }
+        if is_trailing_surrogate(first) || index + 1 == size {
+            return CodePointAt {
+                code_point: first as u32,
+                code_unit_count: 1,
+                is_unpaired_surrogate: true,
+            }
+        }
+        // TODO(perf): inefficient
+        let second = self.at(index + 1).unwrap();
+        if !is_trailing_surrogate(second) {
+            return CodePointAt {
+                code_point: first as u32,
+                code_unit_count: 1,
+                is_unpaired_surrogate: true,
+            }
+        }
+        // 11.1.3 Static Semantics: UTF16SurrogatePairToCodePoint ( lead, trail )
+        let cp = (first as u32 - 0xD800) * 0x400 + (second as u32 - 0xDC00) + 0x10000;
+        CodePointAt {
+            code_point: cp,
+            code_unit_count: 2,
+            is_unpaired_surrogate: false,
+        }
+    }
+
     // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
     pub fn index_of(&self, search_value: Self, from_index: u32) -> Option<u32> {
         // TODO(perf): slow and inefficient
@@ -356,6 +399,12 @@ impl<'a> CodeUnits<'a> {
     fn new(fragment: &'a StringFragment) -> Self {
         Self { fragment, pos: 0 }
     }
+}
+
+pub struct CodePointAt {
+    pub code_point: u32,
+    pub code_unit_count: u32,
+    pub is_unpaired_surrogate: bool,
 }
 
 impl<'a> Iterator for CodeUnits<'a> {
