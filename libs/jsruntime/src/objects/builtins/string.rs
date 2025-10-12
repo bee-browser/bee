@@ -1,5 +1,7 @@
 use jsparser::Symbol;
 
+use super::into_lambda;
+
 use crate::Error;
 use crate::Runtime;
 use crate::StringFragment;
@@ -23,65 +25,27 @@ impl<X> Runtime<X> {
 
         let mut constructor = self.create_builtin_function(constructor::<X>, self.string_prototype);
 
-        let mut from_char_code = self.create_builtin_function(string_from_char_code, None);
-        let _ = from_char_code.define_own_property(
+        let mut method = self.create_builtin_function(into_lambda(string_from_char_code), None);
+        let _ = method.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxx(Value::Number(1.0)),
         );
         let _ = constructor.define_own_property(
             Symbol::FROM_CHAR_CODE.into(),
-            Property::data_xxx(Value::Object(from_char_code)),
+            Property::data_xxx(Value::Object(method)),
         );
 
-        let mut from_code_point = self.create_builtin_function(string_from_code_point, None);
-        let _ = from_code_point.define_own_property(
+        let mut method = self.create_builtin_function(into_lambda(string_from_code_point), None);
+        let _ = method.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxx(Value::Number(1.0)),
         );
         let _ = constructor.define_own_property(
             Symbol::FROM_CODE_POINT.into(),
-            Property::data_xxx(Value::Object(from_code_point)),
+            Property::data_xxx(Value::Object(method)),
         );
 
         constructor
-    }
-
-    // 22.1.2.1 String.fromCharCode ( ...codeUnits )
-    fn string_from_char_code(&mut self, context: &mut CallContext) -> Result<Value, Error> {
-        logger::debug!(event = "string_from_char_code");
-        let mut utf16 = vec![];
-        for arg in context.args().iter() {
-            let code_unit = crate::types::number::to_uint16(arg)?;
-            utf16.push(code_unit);
-        }
-        let slice = self.allocator.alloc_slice_copy(&utf16);
-        let frag = StringFragment::new_stack(slice, true);
-        let string = StringHandle::new(&frag);
-        Ok(Value::String(self.migrate_string_to_heap(string)))
-    }
-
-    // 22.1.2.2 String.fromCodePoint ( ...codePoints )
-    fn string_from_code_point(&mut self, context: &mut CallContext) -> Result<Value, Error> {
-        logger::debug!(event = "string_from_code_point");
-        let mut buf = [0; 2];
-        let mut utf16 = vec![];
-        for arg in context.args().iter() {
-            let num = crate::types::number::to_number(arg)?;
-            if num.is_infinite() || num.is_nan() || num.fract() != 0.0 {
-                return Err(Error::RangeError);
-            }
-            let cp = num as i64;
-            if !(0..0x10FFFF).contains(&cp) {
-                return Err(Error::RangeError);
-            }
-            // TODO(perf): inefficient.  implement an iterator to encode a code point to UTF-16
-            // code units.
-            utf16.extend_from_slice(char::from_u32(cp as u32).unwrap().encode_utf16(&mut buf));
-        }
-        let slice = self.allocator.alloc_slice_copy(&utf16);
-        let frag = StringFragment::new_stack(slice, true);
-        let string = StringHandle::new(&frag);
-        Ok(Value::String(self.migrate_string_to_heap(string)))
     }
 
     pub(crate) fn create_string_object(
@@ -130,10 +94,10 @@ impl<X> Runtime<X> {
 
         let mut prototype = self.create_object(self.object_prototype);
 
-        let index_of = self.create_builtin_function(string_prototype_index_of, None);
+        let method = self.create_builtin_function(into_lambda(string_prototype_index_of), None);
         let _ = prototype.define_own_property(
             Symbol::INDEX_OF.into(),
-            Property::data_xxx(Value::Object(index_of)),
+            Property::data_xxx(Value::Object(method)),
         );
 
         prototype
@@ -170,73 +134,65 @@ extern "C" fn constructor<X>(
     }
 }
 
-extern "C" fn string_from_char_code<X>(
+// 22.1.2 Properties of the String Constructor
+fn string_from_char_code<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
-    retv: &mut Value,
-) -> Status {
-    match runtime.string_from_char_code(context) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
-        }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
-        }
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_from_char_code");
+    let mut utf16 = vec![];
+    for arg in context.args().iter() {
+        let code_unit = crate::types::number::to_uint16(arg)?;
+        utf16.push(code_unit);
     }
+    let slice = runtime.allocator.alloc_slice_copy(&utf16);
+    let frag = StringFragment::new_stack(slice, true);
+    let string = StringHandle::new(&frag);
+    Ok(Value::String(runtime.migrate_string_to_heap(string)))
 }
 
-extern "C" fn string_from_code_point<X>(
+// 22.1.2.2 String.fromCodePoint ( ...codePoints )
+fn string_from_code_point<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
-    retv: &mut Value,
-) -> Status {
-    match runtime.string_from_code_point(context) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_from_code_point");
+    let mut buf = [0; 2];
+    let mut utf16 = vec![];
+    for arg in context.args().iter() {
+        let num = crate::types::number::to_number(arg)?;
+        if num.is_infinite() || num.is_nan() || num.fract() != 0.0 {
+            return Err(Error::RangeError);
         }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
+        let cp = num as i64;
+        if !(0..0x10FFFF).contains(&cp) {
+            return Err(Error::RangeError);
         }
+        // TODO(perf): inefficient.  implement an iterator to encode a code point to UTF-16
+        // code units.
+        utf16.extend_from_slice(char::from_u32(cp as u32).unwrap().encode_utf16(&mut buf));
     }
+    let slice = runtime.allocator.alloc_slice_copy(&utf16);
+    let frag = StringFragment::new_stack(slice, true);
+    let string = StringHandle::new(&frag);
+    Ok(Value::String(runtime.migrate_string_to_heap(string)))
 }
 
 // 22.1.3.9 String.prototype.indexOf ( searchString [ , position ] )
-extern "C" fn string_prototype_index_of<X>(
+fn string_prototype_index_of<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
-    retv: &mut Value,
-) -> Status {
+) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_index_of");
 
-    let string = match runtime.value_to_string(context.this()) {
-        Ok(string) => string,
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            return Status::Exception;
-        }
-    };
+    let string = runtime.value_to_string(context.this())?;
 
     let args = context.args();
     let search_str = args.first().unwrap_or(&Value::Undefined);
-    let search_str = match runtime.value_to_string(search_str) {
-        Ok(string) => string,
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            return Status::Exception;
-        }
-    };
+    let search_str = runtime.value_to_string(search_str)?;
+
     let position = args.get(1).unwrap_or(&Value::Undefined);
-    let pos = match runtime.value_to_integer_or_infinity(position) {
-        Ok(pos) => pos,
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            return Status::Exception;
-        }
-    };
+    let pos = runtime.value_to_integer_or_infinity(position)?;
 
     let len = string.len();
     let start = pos.clamp(0.0, len as f64) as u32;
@@ -244,6 +200,5 @@ extern "C" fn string_prototype_index_of<X>(
         .index_of(search_str, start)
         .map_or(-1.0, |i| i as f64);
 
-    *retv = Value::Number(index);
-    Status::Normal
+    Ok(Value::Number(index))
 }
