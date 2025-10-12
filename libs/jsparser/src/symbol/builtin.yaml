@@ -57,6 +57,7 @@
 - cause
 - constructor
 - default
+- fromCharCode
 - globalThis
 - indexOf
 - isError

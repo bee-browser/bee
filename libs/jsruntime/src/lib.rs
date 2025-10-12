@@ -427,3 +427,9 @@ where
 pub trait Monitor {
     fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
 }
+
+#[derive(Debug)]
+pub(crate) enum Error {
+    #[allow(unused)]
+    TypeError,
+}
