@@ -230,6 +230,7 @@ impl<X> Runtime<X> {
                 retv
             ),
             Value::String(value) => {
+                // TODO(refactor): rewrite using `new String(value)`
                 match self.create_string_object(None, &[Value::String(*value)], true) {
                     Ok(Value::Object(object)) => {
                         *retv = Value::Object(object);
