@@ -57,6 +57,7 @@
 - at
 - cause
 - charAt
+- charCodeAt
 - constructor
 - default
 - fromCharCode
