@@ -194,6 +194,9 @@ impl<X> Runtime<X> {
             Error::TypeError => self
                 .create_type_error(true, &Value::Undefined, &Value::Undefined)
                 .unwrap(),
+            Error::RangeError => self
+                .create_range_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap(),
         };
         Value::Object(object)
     }
