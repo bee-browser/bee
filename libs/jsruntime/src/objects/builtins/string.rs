@@ -98,6 +98,12 @@ impl<X> Runtime<X> {
         let _ = prototype
             .define_own_property(Symbol::AT.into(), Property::data_xxx(Value::Object(method)));
 
+        let method = self.create_builtin_function(into_lambda(string_prototype_char_at), None);
+        let _ = prototype.define_own_property(
+            Symbol::CHAR_AT.into(),
+            Property::data_xxx(Value::Object(method)),
+        );
+
         let method = self.create_builtin_function(into_lambda(string_prototype_index_of), None);
         let _ = prototype.define_own_property(
             Symbol::INDEX_OF.into(),
@@ -204,6 +210,29 @@ fn string_prototype_at<X>(
     }
     // TODO(perf): memory inefficient
     let code_unit = s.at(k as u32);
+    let slice = runtime.allocator.alloc_slice_copy(code_unit.as_slice());
+    let frag = StringFragment::new_stack(slice, true);
+    let string = StringHandle::new(&frag);
+    Ok(Value::String(runtime.migrate_string_to_heap(string)))
+}
+
+// 22.1.3.2 String.prototype.charAt ( pos )
+fn string_prototype_char_at<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_char_at");
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+    let pos = context.args().first().unwrap_or(&Value::Undefined);
+    let position = runtime.value_to_integer_or_infinity(pos)?;
+    let size = s.len() as f64;
+    if position < 0.0 || position >= size {
+        return Ok(Value::String(StringHandle::EMPTY));
+    }
+    // TODO(perf): memory inefficient
+    let code_unit = s.at(position as u32);
     let slice = runtime.allocator.alloc_slice_copy(code_unit.as_slice());
     let frag = StringFragment::new_stack(slice, true);
     let string = StringHandle::new(&frag);
