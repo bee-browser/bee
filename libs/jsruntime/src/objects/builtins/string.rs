@@ -23,15 +23,24 @@ impl<X> Runtime<X> {
 
         let mut constructor = self.create_builtin_function(constructor::<X>, self.string_prototype);
 
-        let from_char_code = self.create_builtin_function(string_from_char_code, None);
+        let mut from_char_code = self.create_builtin_function(string_from_char_code, None);
+        let _ = from_char_code.define_own_property(
+            Symbol::LENGTH.into(),
+            Property::data_xxx(Value::Number(1.0)),
+        );
         let _ = constructor.define_own_property(
             Symbol::FROM_CHAR_CODE.into(),
             Property::data_xxx(Value::Object(from_char_code)),
         );
 
-        let _ = constructor.define_own_property(
+        let mut from_code_point = self.create_builtin_function(string_from_code_point, None);
+        let _ = from_code_point.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxx(Value::Number(1.0)),
+        );
+        let _ = constructor.define_own_property(
+            Symbol::FROM_CODE_POINT.into(),
+            Property::data_xxx(Value::Object(from_code_point)),
         );
 
         constructor
@@ -44,6 +53,30 @@ impl<X> Runtime<X> {
         for arg in context.args().iter() {
             let code_unit = crate::types::number::to_uint16(arg)?;
             utf16.push(code_unit);
+        }
+        let slice = self.allocator.alloc_slice_copy(&utf16);
+        let frag = StringFragment::new_stack(slice, true);
+        let string = StringHandle::new(&frag);
+        Ok(Value::String(self.migrate_string_to_heap(string)))
+    }
+
+    // 22.1.2.2 String.fromCodePoint ( ...codePoints )
+    fn string_from_code_point(&mut self, context: &mut CallContext) -> Result<Value, Error> {
+        logger::debug!(event = "string_from_code_point");
+        let mut buf = [0; 2];
+        let mut utf16 = vec![];
+        for arg in context.args().iter() {
+            let num = crate::types::number::to_number(arg)?;
+            if num.is_infinite() || num.is_nan() || num.fract() != 0.0 {
+                return Err(Error::RangeError);
+            }
+            let cp = num as i64;
+            if !(0..0x10FFFF).contains(&cp) {
+                return Err(Error::RangeError);
+            }
+            // TODO(perf): inefficient.  implement an iterator to encode a code point to UTF-16
+            // code units.
+            utf16.extend_from_slice(char::from_u32(cp as u32).unwrap().encode_utf16(&mut buf));
         }
         let slice = self.allocator.alloc_slice_copy(&utf16);
         let frag = StringFragment::new_stack(slice, true);
@@ -137,13 +170,29 @@ extern "C" fn constructor<X>(
     }
 }
 
-// 22.1.2.1 String.fromCharCode ( ...codeUnits )
 extern "C" fn string_from_char_code<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     match runtime.string_from_char_code(context) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
+}
+
+extern "C" fn string_from_code_point<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    match runtime.string_from_code_point(context) {
         Ok(value) => {
             *retv = value;
             Status::Normal

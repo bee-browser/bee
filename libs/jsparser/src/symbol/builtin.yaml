@@ -58,6 +58,7 @@
 - constructor
 - default
 - fromCharCode
+- fromCodePoint
 - globalThis
 - indexOf
 - isError
