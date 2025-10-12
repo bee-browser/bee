@@ -1,6 +1,8 @@
 use jsparser::Symbol;
 
+use crate::Error;
 use crate::Runtime;
+use crate::StringFragment;
 use crate::logger;
 use crate::objects::Object;
 use crate::objects::ObjectHandle;
@@ -15,9 +17,38 @@ impl<X> Runtime<X> {
         object.is_instance_of(self.string_prototype)
     }
 
+    // 22.1.2 Properties of the String Constructor
     pub(super) fn create_string_constructor(&mut self) -> ObjectHandle {
         logger::debug!(event = "create_string_constructor");
-        self.create_builtin_function(constructor::<X>, self.string_prototype)
+
+        let mut constructor = self.create_builtin_function(constructor::<X>, self.string_prototype);
+
+        let from_char_code = self.create_builtin_function(string_from_char_code, None);
+        let _ = constructor.define_own_property(
+            Symbol::FROM_CHAR_CODE.into(),
+            Property::data_xxx(Value::Object(from_char_code)),
+        );
+
+        let _ = constructor.define_own_property(
+            Symbol::LENGTH.into(),
+            Property::data_xxx(Value::Number(1.0)),
+        );
+
+        constructor
+    }
+
+    // 22.1.2.1 String.fromCharCode ( ...codeUnits )
+    fn string_from_char_code(&mut self, context: &mut CallContext) -> Result<Value, Error> {
+        logger::debug!(event = "string_from_char_code");
+        let mut utf16 = vec![];
+        for arg in context.args().iter() {
+            let code_unit = crate::types::number::to_uint16(arg)?;
+            utf16.push(code_unit);
+        }
+        let slice = self.allocator.alloc_slice_copy(&utf16);
+        let frag = StringFragment::new_stack(slice, true);
+        let string = StringHandle::new(&frag);
+        Ok(Value::String(self.migrate_string_to_heap(string)))
     }
 
     pub(crate) fn create_string_object(
@@ -101,6 +132,24 @@ extern "C" fn constructor<X>(
         }
         Err(value) => {
             *retv = value;
+            Status::Exception
+        }
+    }
+}
+
+// 22.1.2.1 String.fromCharCode ( ...codeUnits )
+extern "C" fn string_from_char_code<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    match runtime.string_from_char_code(context) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
