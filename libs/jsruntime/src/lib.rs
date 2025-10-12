@@ -432,4 +432,5 @@ pub trait Monitor {
 pub(crate) enum Error {
     #[allow(unused)]
     TypeError,
+    RangeError,
 }

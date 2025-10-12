@@ -32,7 +32,7 @@
 * [ ] [Constructor](https://tc39.es/ecma262/#sec-string-constructor)
 * [x] [String](https://tc39.es/ecma262/#sec-string-constructor)
 * [x] [String.fromCharCode](https://tc39.es/ecma262/#sec-string.fromcharcode)
-* [ ] [String.fromCodePoint](https://tc39.es/ecma262/#sec-string.fromcodepoint)
+* [x] [String.fromCodePoint](https://tc39.es/ecma262/#sec-string.fromcodepoint)
 * [ ] [String.raw](https://tc39.es/ecma262/#sec-string.raw)
 * [ ] [String.prototype.at](https://tc39.es/ecma262/#sec-string.prototype.at)
 * [ ] [String.prototype.charAt](https://tc39.es/ecma262/#sec-string.prototype.charat)
