@@ -41,10 +41,10 @@ async function main(args, options) {
   for (const line of readme.split(EOL)) {
     if (!line.startsWith('* [')) {
       lines.push(line);
-      continue
+      continue;
     }
     const parts = line.split(ECMA262_SPEC_URL_BASE);
-    const id = parts[1].substring(0, parts[1].length - 1);  // remove the last ')'
+    const id = parts[1].substring(0, parts[1].length - 1); // remove the last ')'
     // TODO(feat): constructor
     let func = data.constructorProperties.functions.find((func) => func.id === id);
     if (func) {
