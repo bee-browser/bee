@@ -59,6 +59,7 @@
 - charAt
 - charCodeAt
 - codePointAt
+- concat
 - constructor
 - default
 - fromCharCode

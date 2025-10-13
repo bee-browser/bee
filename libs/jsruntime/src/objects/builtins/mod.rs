@@ -204,3 +204,12 @@ impl<X> Runtime<X> {
         Value::Object(object)
     }
 }
+
+// 7.2.1 RequireObjectCoercible ( argument )
+fn require_object_coercible(value: &Value) -> Result<(), Error> {
+    match value {
+        Value::None => unreachable!(),
+        Value::Undefined | Value::Null => Err(Error::TypeError),
+        _ => Ok(()),
+    }
+}
