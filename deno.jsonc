@@ -37,6 +37,8 @@
     "deep-diff": "npm:deep-diff@1.0.2",
     "docopt": "npm:@eyalsh/docopt@1.0.7",
     "handlebars": "npm:handlebars@4.7.8",
+    "jsdom": "npm:jsdom@27.0.0",
+    "mustache": "npm:mustache@4.2.0",
     "nunjucks": "npm:nunjucks@3.2.4",
     "ora": "npm:ora@9.0.0",
     "test262-stream": "npm:test262-stream@1.4.0"
