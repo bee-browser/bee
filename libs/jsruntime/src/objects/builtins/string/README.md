@@ -9,7 +9,7 @@
 * [x] [String.prototype.charAt](https://tc39.es/ecma262/#sec-string.prototype.charat)
 * [x] [String.prototype.charCodeAt](https://tc39.es/ecma262/#sec-string.prototype.charcodeat)
 * [x] [String.prototype.codePointAt](https://tc39.es/ecma262/#sec-string.prototype.codepointat)
-* [ ] [String.prototype.concat](https://tc39.es/ecma262/#sec-string.prototype.concat)
+* [x] [String.prototype.concat](https://tc39.es/ecma262/#sec-string.prototype.concat)
 * [ ] [String.prototype.constructor](https://tc39.es/ecma262/#sec-string.prototype.constructor)
 * [ ] [String.prototype.endsWith](https://tc39.es/ecma262/#sec-string.prototype.endswith)
 * [ ] [String.prototype.includes](https://tc39.es/ecma262/#sec-string.prototype.includes)

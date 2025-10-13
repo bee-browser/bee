@@ -40,7 +40,6 @@ async function main(args, options) {
   const spec = new JSDOM(await Deno.readTextFile(ECMA262_SPEC_HTML));
 
   const json = {
-    template: 'libs/jsruntime/src/object/builtins/string/mod.rs.mustache',
     constructorProperties: {
       functions: [],
     },
