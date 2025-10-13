@@ -14,11 +14,20 @@ NATIVE_ERROR_NAMES := \
   type_error \
   uri_error
 
-CODEGEN_TARGETS := $(addsuffix .rs,$(NATIVE_ERROR_NAMES)) string/mod.rs
-CLEAN_TARGETS := $(CODEGEN_TARGETS) string/imp.json
+BUILTINS := string
+BUILTINS_README_MD_FILES := $(addsuffix /README.md,$(BUILTINS))
+BUILTINS_MOD_RS_FILES := $(addsuffix /mod.rs,$(BUILTINS))
+BUILTINS_IMP_JSON_FILES := $(addsuffix /imp.json,$(BUILTINS))
+
+CODEGEN_TARGETS := $(addsuffix .rs,$(NATIVE_ERROR_NAMES)) $(BUILTINS_MOD_RS_FILES)
+UPDATE_TARGETS := $(addprefix update-,$(BUILTINS_README_MD_FILES))
+CLEAN_TARGETS := $(CODEGEN_TARGETS) $(BUILTINS_IMP_JSON_FILES)
 
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
+
+.PHONY: update
+update: $(UPDATE_TARGETS)
 
 .PHONY: clean
 clean:
@@ -79,3 +88,8 @@ uri_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
 %/imp.json: %/imp.rs imp.js
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | deno run -q --allow-env --allow-read imp.js >$@
+
+.PHONY: update-%/README.md
+update-%/README.md: %/imp.json
+	@echo 'Updating $(abspath $(<D)/README.md)...'
+	@deno run -q --allow-read=$(<D) --allow-write=$(<D) update_readme_md.js $(<D)/README.md $<

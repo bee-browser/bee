@@ -1,7 +1,7 @@
 # String
 
-* [x] [Constructor](https://tc39.es/ecma262/#sec-string-constructor)
-* [x] [String](https://tc39.es/ecma262/#sec-string-constructor)
+* [ ] [Constructor](https://tc39.es/ecma262/#sec-string-constructor)
+* [ ] [String](https://tc39.es/ecma262/#sec-string-constructor)
 * [x] [String.fromCharCode](https://tc39.es/ecma262/#sec-string.fromcharcode)
 * [x] [String.fromCodePoint](https://tc39.es/ecma262/#sec-string.fromcodepoint)
 * [ ] [String.raw](https://tc39.es/ecma262/#sec-string.raw)
@@ -10,7 +10,7 @@
 * [x] [String.prototype.charCodeAt](https://tc39.es/ecma262/#sec-string.prototype.charcodeat)
 * [x] [String.prototype.codePointAt](https://tc39.es/ecma262/#sec-string.prototype.codepointat)
 * [ ] [String.prototype.concat](https://tc39.es/ecma262/#sec-string.prototype.concat)
-* [x] [String.prototype.constructor](https://tc39.es/ecma262/#sec-string.prototype.constructor)
+* [ ] [String.prototype.constructor](https://tc39.es/ecma262/#sec-string.prototype.constructor)
 * [ ] [String.prototype.endsWith](https://tc39.es/ecma262/#sec-string.prototype.endswith)
 * [ ] [String.prototype.includes](https://tc39.es/ecma262/#sec-string.prototype.includes)
 * [x] [String.prototype.indexOf](https://tc39.es/ecma262/#sec-string.prototype.indexof)

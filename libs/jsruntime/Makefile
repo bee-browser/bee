@@ -12,6 +12,10 @@ codegen:
 	@$(MAKE) -s -C src codegen
 	@$(MAKE) -s -C tests codegen
 
+.PHONY: update
+update:
+	@$(MAKE) -s -C src update
+
 .PHONY: clean
 clean:
 	@$(MAKE) -s -C src clean

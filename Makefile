@@ -15,6 +15,9 @@ CODEGEN_PATHS := \
   libs/jsruntime \
   libs/layout
 
+UPDATE_PATHS := \
+  libs/jsruntime
+
 CLEAN_TARGETS := $(addprefix clean-,\
   $(CODEGEN_PATHS) \
   webui \
@@ -22,6 +25,10 @@ CLEAN_TARGETS := $(addprefix clean-,\
 
 CODEGEN_TARGETS := $(addprefix codegen-,\
   $(CODEGEN_PATHS) \
+)
+
+UPDATE_TARGETS := $(addprefix update-,\
+  $(UPDATE_PATHS) \
 )
 
 .PHONY: all
@@ -104,6 +111,10 @@ codegen:
 	@$(MAKE) -s codegen-libs/layout
 	@$(MAKE) -s codegen-bins/estree
 
+.PHONY: update
+update:
+	@$(MAKE) -s update-libs/jsruntime
+
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno
 
@@ -153,6 +164,10 @@ $(BUILD_TARGETS):
 .PHONY: $(CODEGEN_TARGETS)
 $(CODEGEN_TARGETS):
 	@$(MAKE) -s -C $(subst codegen-,,$@) codegen
+
+.PHONY: $(UPDATE_TARGETS)
+$(UPDATE_TARGETS):
+	@$(MAKE) -s -C $(subst update-,,$@) update
 
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):

@@ -1,5 +1,6 @@
 'use strict';
 
+import { EOL } from '@std/fs';
 import * as log from '@std/log';
 import * as path from '@std/path';
 import { TextLineStream, toTransformStream } from '@std/streams';
@@ -120,7 +121,7 @@ function dataStream(impRs) {
 function collectDataFromSpec(spec, data) {
   let clause = spec.window.document.getElementById(data.id);
   data.signature = parseSignature(clause.firstElementChild.textContent.trim());
-  data.alg = clause.getElementsByTagName('emu-alg').item(0).textContent;
+  data.alg = parseAlg(clause.getElementsByTagName('emu-alg').item(0).textContent);
   data.length = 0;
   for (const arg of data.signature.args) {
     if (!arg.optional) {
@@ -175,4 +176,33 @@ function parseArgs(text) {
     }
   }
   return args;
+}
+
+function parseAlg(text) {
+  let steps = [];
+
+  let base;
+  for (const line of text.split(EOL)) {
+    if (line.length === 0) {
+      continue;
+    }
+    base = line.indexOf('1.');
+    break;
+  }
+
+  const indent = 2;
+  for (const line of text.split(EOL)) {
+    if (line.length === 0) {
+      continue;
+    }
+    let offset = line.indexOf('1.');
+    if (offset === -1) {
+      continue;
+    }
+    let depth = (offset - base) / indent;
+    let description = line.substring(offset + 3);
+    steps.push({ description, depth });
+  }
+
+  return steps;
 }
