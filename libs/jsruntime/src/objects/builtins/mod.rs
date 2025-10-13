@@ -19,9 +19,7 @@ use crate::lambda::LambdaId;
 use crate::logger;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
-use crate::types::CallContext;
 use crate::types::Lambda;
-use crate::types::Status;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -204,68 +202,5 @@ impl<X> Runtime<X> {
                 .unwrap(),
         };
         Value::Object(object)
-    }
-}
-
-// TODO(refactor): It might be better to create a procedural macro that expand a function like
-// this:
-//
-// ```rust
-// extern "C" method(
-//     runtime: &mut Runtime<X>,
-//     context: &mut CallContext,
-//     retv: &mut Value,
-// ) -> Status {
-//     fn inner(
-//     ) -> Result<Value, Error> {
-//         ...
-//     }
-//     match inner(runtime, context) {
-//         Ok(value) => {
-//             *retv = value;
-//             Status::Normal
-//         }
-//         Err(err) => {
-//             *retv = runtime.create_exception(err);
-//             Status::Exception
-//         }
-//     }
-// }
-// ```
-//
-// The `inner` function can be expand in the `method` body.  This method may generate a faster code
-// than the `into_lambda()`.
-
-// This function generates a wrapper function for each `host_fn` at compile time.
-fn into_lambda<F, X>(builtin_fn: F) -> Lambda<X>
-where
-    F: Fn(&mut Runtime<X>, &mut CallContext) -> Result<Value, Error>,
-{
-    debug_assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
-    std::mem::forget(builtin_fn);
-    builtin_fn_wrapper::<F, X>
-}
-
-extern "C" fn builtin_fn_wrapper<F, X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-    retv: &mut Value,
-) -> Status
-where
-    F: Fn(&mut Runtime<X>, &mut CallContext) -> Result<Value, Error>,
-{
-    // SAFETY: Parent ensured that F is zero sized and we use `ManuallyDrop` to ensure
-    // it isn't dropped (even if the callback panics).
-    #[allow(clippy::uninit_assumed_init)]
-    let buitin_fn = unsafe { std::mem::MaybeUninit::<F>::uninit().assume_init() };
-    match buitin_fn(runtime, context) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
-        }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
-        }
     }
 }

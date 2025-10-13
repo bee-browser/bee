@@ -101,14 +101,14 @@ impl StringHandle {
                 code_point: first as u32,
                 code_unit_count: 1,
                 is_unpaired_surrogate: false,
-            }
+            };
         }
         if is_trailing_surrogate(first) || index + 1 == size {
             return CodePointAt {
                 code_point: first as u32,
                 code_unit_count: 1,
                 is_unpaired_surrogate: true,
-            }
+            };
         }
         // TODO(perf): inefficient
         let second = self.at(index + 1).unwrap();
@@ -117,7 +117,7 @@ impl StringHandle {
                 code_point: first as u32,
                 code_unit_count: 1,
                 is_unpaired_surrogate: true,
-            }
+            };
         }
         // 11.1.3 Static Semantics: UTF16SurrogatePairToCodePoint ( lead, trail )
         let cp = (first as u32 - 0xD800) * 0x400 + (second as u32 - 0xDC00) + 0x10000;
