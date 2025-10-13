@@ -167,6 +167,51 @@ pub fn string_prototype_concat<X>(
     Ok(Value::String(s))
 }
 
+//#sec-string.prototype.endswith prototype.function
+pub fn string_prototype_ends_with<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_ends_with");
+
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    let args = context.args();
+
+    let search_str = args.first().unwrap_or(&Value::Undefined);
+    // TODO(feat): RegExp
+    let search_str = runtime.value_to_string(search_str)?;
+
+    let len = s.len() as f64;
+
+    let pos = if let Some(end_position) = args.get(1) {
+        runtime.value_to_integer_or_infinity(end_position)?
+    } else {
+        len
+    };
+
+    let end = pos.clamp(0.0, len) as i64;
+
+    let search_len = search_str.len() as i64;
+    if search_len == 0 {
+        return Ok(Value::Boolean(true));
+    }
+
+    let start = end - search_len;
+    if start < 0 {
+        return Ok(Value::Boolean(false));
+    }
+
+    // TODO(perf): inefficient
+    let substring = s
+        .code_units()
+        .skip(start as usize)
+        .take(search_len as usize);
+    Ok(Value::Boolean(substring.eq(search_str.code_units())))
+}
+
 //#sec-string.prototype.indexof prototype.function
 pub fn string_prototype_index_of<X>(
     runtime: &mut Runtime<X>,

@@ -62,6 +62,7 @@
 - concat
 - constructor
 - default
+- endsWith
 - fromCharCode
 - fromCodePoint
 - globalThis
