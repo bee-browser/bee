@@ -2,6 +2,7 @@ use crate::Error;
 use crate::Runtime;
 use crate::StringFragment;
 use crate::logger;
+use crate::objects::builtins::require_object_coercible;
 use crate::types::CallContext;
 use crate::types::StringHandle;
 use crate::types::Value;
@@ -139,13 +140,31 @@ pub fn string_prototype_code_point_at<X>(
     Ok(Value::Number(result.code_point as f64))
 }
 
-// 7.2.1 RequireObjectCoercible ( argument )
-pub fn require_object_coercible(value: &Value) -> Result<(), Error> {
-    match value {
-        Value::None => unreachable!(),
-        Value::Undefined | Value::Null => Err(Error::TypeError),
-        _ => Ok(()),
+//#sec-string.prototype.concat prototype.function
+pub fn string_prototype_concat<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_concat");
+    let mut s = None;
+    // TODO(refactor): process in the reverse order
+    for arg in context.args().iter().rev() {
+        let r = runtime.value_to_string(arg)?;
+        s = if let Some(s) = s {
+            Some(runtime.concat_strings(r, s))
+        } else {
+            Some(r)
+        };
     }
+    let o = context.this();
+    require_object_coercible(o)?;
+    let r = runtime.value_to_string(o)?;
+    let s = if let Some(s) = s {
+        runtime.concat_strings(r, s)
+    } else {
+        r
+    };
+    Ok(Value::String(s))
 }
 
 //#sec-string.prototype.indexof prototype.function
