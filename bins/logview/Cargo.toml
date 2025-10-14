@@ -23,6 +23,6 @@ serde = { version = "1.0.228", features = ["derive", "rc"] }
 serde_yaml = "0.9.34"
 shell-words = "1.1.0"
 tempfile = "3.23.0"
-tokio = { version = "1.47.1", features = ["io-util", "macros", "process", "rt-multi-thread"] }
+tokio = { version = "1.48.0", features = ["io-util", "macros", "process", "rt-multi-thread"] }
 tokio-stream = "0.1.17"
 tower-http = { version = "0.6.6", features = ["fs", "set-header", "trace"] }
