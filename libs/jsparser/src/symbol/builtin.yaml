@@ -69,6 +69,7 @@
 - includes
 - indexOf
 - isError
+- isWellFormed
 - length
 - message
 - name
