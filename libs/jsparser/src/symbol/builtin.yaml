@@ -66,6 +66,7 @@
 - fromCharCode
 - fromCodePoint
 - globalThis
+- includes
 - indexOf
 - isError
 - length

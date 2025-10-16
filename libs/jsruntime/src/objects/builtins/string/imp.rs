@@ -212,6 +212,33 @@ pub fn string_prototype_ends_with<X>(
     Ok(Value::Boolean(substring.eq(search_str.code_units())))
 }
 
+//#sec-string.prototype.includes prototype.function
+pub fn string_prototype_includes<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_includes");
+
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    let args = context.args();
+
+    let search_str = args.first().unwrap_or(&Value::Undefined);
+    // TODO(feat): RegExp
+    let search_str = runtime.value_to_string(search_str)?;
+
+    let position = args.get(1).unwrap_or(&Value::Undefined);
+    let pos = runtime.value_to_integer_or_infinity(position)?;
+
+    let len = s.len() as f64;
+
+    let start = pos.clamp(0.0, len) as u32;
+    let result = s.index_of(search_str, start).is_some();
+    Ok(Value::Boolean(result))
+}
+
 //#sec-string.prototype.indexof prototype.function
 pub fn string_prototype_index_of<X>(
     runtime: &mut Runtime<X>,
