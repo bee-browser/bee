@@ -246,20 +246,35 @@ pub fn string_prototype_index_of<X>(
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_index_of");
 
-    let string = runtime.value_to_string(context.this())?;
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
 
     let args = context.args();
+
     let search_str = args.first().unwrap_or(&Value::Undefined);
     let search_str = runtime.value_to_string(search_str)?;
 
     let position = args.get(1).unwrap_or(&Value::Undefined);
     let pos = runtime.value_to_integer_or_infinity(position)?;
 
-    let len = string.len();
-    let start = pos.clamp(0.0, len as f64) as u32;
-    let index = string
-        .index_of(search_str, start)
-        .map_or(-1.0, |i| i as f64);
+    let len = s.len() as f64;
 
+    let start = pos.clamp(0.0, len) as u32;
+    let index = s.index_of(search_str, start).map_or(-1.0, |i| i as f64);
     Ok(Value::Number(index))
+}
+
+//#sec-string.prototype.iswellformed prototype.function
+pub fn string_prototype_is_well_formed<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_is_well_formed");
+
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    Ok(Value::Boolean(s.is_well_formed()))
 }
