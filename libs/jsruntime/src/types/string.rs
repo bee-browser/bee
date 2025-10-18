@@ -149,6 +149,23 @@ impl StringHandle {
         None
     }
 
+    // 6.1.4.2 StringLastIndexOf ( string, searchValue, fromIndex )
+    pub fn last_index_of(&self, search_value: Self, from_index: u32) -> Option<u32> {
+        // TODO(perf): slow and inefficient
+        let len = self.len();
+        let search_len = search_value.len();
+        debug_assert!(from_index + search_len <= len);
+        let string = self.make_utf16();
+        let search = search_value.make_utf16();
+        for i in (0..from_index).rev() {
+            let canditate = &string[(i as usize)..((i + search_len) as usize)];
+            if canditate == search {
+                return Some(i);
+            }
+        }
+        None
+    }
+
     // 7.2.7 Static Semantics: IsStringWellFormedUnicode ( string )
     pub fn is_well_formed(&self) -> bool {
         for code_unit_at in self.code_points() {

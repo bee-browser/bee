@@ -278,3 +278,41 @@ pub fn string_prototype_is_well_formed<X>(
 
     Ok(Value::Boolean(s.is_well_formed()))
 }
+
+//#sec-string.prototype.lastindexof prototype.function
+pub fn string_prototype_last_index_of<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_last_index_of");
+
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    let args = context.args();
+
+    let search_str = args.first().unwrap_or(&Value::Undefined);
+    let search_str = runtime.value_to_string(search_str)?;
+
+    let position = args.get(1).unwrap_or(&Value::Undefined);
+    let num_pos = runtime.value_to_number(position)?;
+    let pos = if num_pos.is_nan() {
+        f64::INFINITY
+    } else {
+        runtime.value_to_integer_or_infinity(&Value::Number(num_pos))?
+    };
+
+    let len = s.len() as f64;
+    let search_len = search_str.len() as f64;
+
+    if len < search_len {
+        return Ok(Value::Number(-1.0));
+    }
+
+    let start = pos.clamp(0.0, len - search_len) as u32;
+    let index = s
+        .last_index_of(search_str, start)
+        .map_or(-1.0, |i| i as f64);
+    Ok(Value::Number(index))
+}
