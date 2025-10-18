@@ -2,6 +2,9 @@ logging::define_logger! {"bee::jsparser::syntax"}
 
 mod actions;
 
+#[cfg(test)]
+mod tests;
+
 use std::ops::Range;
 
 use bitflags::bitflags;
@@ -1170,9 +1173,8 @@ where
                 self.enqueue(Node::Number(value, token.lexeme))
             }
             TokenKind::StringLiteral => {
-                // TODO: perform `SV`
-                let content = &token.lexeme[1..(token.lexeme.len() - 1)];
-                let value = content.encode_utf16().collect();
+                // TODO(perf): introduce a dedicated heap for strings.
+                let value = token.to_string_value()?;
                 self.enqueue(Node::String(value, token.lexeme))
             }
             _ => unreachable!(),
@@ -3919,4 +3921,191 @@ where
         // the error message.
         self.processor.location(&location);
     }
+}
+
+impl Token<'_> {
+    fn to_string_value(&self) -> Result<Vec<u16>, Error> {
+        // remove enclosing quote characters.
+        let content = &self.lexeme[1..(self.lexeme.len() - 1)];
+        to_string_value(content)
+    }
+}
+
+fn to_string_value(content: &str) -> Result<Vec<u16>, Error> {
+    let mut builder = StringBuilder::default();
+    for ch in content.chars() {
+        builder.push(ch)?
+    }
+    Ok(builder.build())
+}
+
+#[derive(Default)]
+struct StringBuilder {
+    state: StringBuilderState,
+    buf: Vec<u16>,
+}
+
+impl StringBuilder {
+    fn push(&mut self, ch: char) -> Result<(), Error> {
+        match (self.state, ch) {
+            (StringBuilderState::Char, '\\') => {
+                self.state = StringBuilderState::EscapeSequence;
+            }
+            (StringBuilderState::Char, ch) => {
+                self.push_code_point(ch as u32);
+            }
+            // SingleEscapeCharacter
+            (StringBuilderState::EscapeSequence, 'b') => {
+                self.buf.push(0x0008);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, 't') => {
+                self.buf.push(0x0009);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, 'n') => {
+                self.buf.push(0x000A);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, 'v') => {
+                self.buf.push(0x000B);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, 'f') => {
+                self.buf.push(0x000C);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, 'r') => {
+                self.buf.push(0x000D);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, '"') => {
+                self.buf.push(0x0022);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, '\'') => {
+                self.buf.push(0x0027);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, '\\') => {
+                self.buf.push(0x005C);
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, '0') => {
+                // TODO(feat): legacy octal escape sequence
+                self.buf.push(0);
+                self.state = StringBuilderState::Char;
+            }
+            // line terminator sequence
+            (StringBuilderState::EscapeSequence, '\u{000A}') => { // <LF>
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, '\u{000D}') => { // <CR>
+                self.state = StringBuilderState::EscapeSequenceCr;
+            }
+            (StringBuilderState::EscapeSequence, '\u{2028}') => { // <LS>
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequence, '\u{2029}') => { // <PS>
+                self.state = StringBuilderState::Char;
+            }
+            // unicode escape sequence
+            (StringBuilderState::EscapeSequence, 'u') => {
+                self.state = StringBuilderState::UnicodeEscapeSequence(0, 0);
+            }
+            // hex escape sequence
+            (StringBuilderState::EscapeSequence, 'x') => {
+                self.state = StringBuilderState::HexEscapeSequence(0, 0);
+            }
+            (StringBuilderState::EscapeSequence, ch) => {
+                self.push_code_point(ch as u32);
+                self.state = StringBuilderState::Char;
+            }
+            // line terminator sequencee (<CR><LF>)
+            (StringBuilderState::EscapeSequenceCr, '\u{000A}') => { // <LF>
+                self.state = StringBuilderState::Char;
+            }
+            (StringBuilderState::EscapeSequenceCr, ch) => {
+                self.state = StringBuilderState::Char;
+                // Process the character again on StringBuilderState::Char.
+                self.push(ch)?;
+            }
+            // \xHH
+            (StringBuilderState::HexEscapeSequence(n, code_unit), hex) => {
+                let digit = hex.to_digit(16).unwrap() as u16;
+                let code_unit = (code_unit << 4) + digit;
+                if n == 1 {
+                    self.buf.push(code_unit);
+                    self.state = StringBuilderState::Char;
+                } else {
+                    self.state = StringBuilderState::HexEscapeSequence(1, code_unit);
+                }
+            }
+            (StringBuilderState::UnicodeEscapeSequence(..), '{') => {
+                self.state = StringBuilderState::UnicodeEscapeSequenceCodePoint(0);
+            }
+            (StringBuilderState::UnicodeEscapeSequence(..), '_') => {
+                // Just ignore the separator.
+            }
+            // \uHHHH
+            (StringBuilderState::UnicodeEscapeSequence(n, code_unit), hex) => {
+                let digit = hex.to_digit(16).unwrap() as u16;
+                let code_unit = (code_unit << 4) + digit;
+                if n == 3 {
+                    self.buf.push(code_unit);
+                    self.state = StringBuilderState::Char;
+                } else {
+                    self.state = StringBuilderState::UnicodeEscapeSequence(n + 1, code_unit);
+                }
+            }
+            (StringBuilderState::UnicodeEscapeSequenceCodePoint(cp), '}') => {
+                self.push_code_point(cp);
+                self.state = StringBuilderState::Char;
+            }
+            // \u{H+}
+            (StringBuilderState::UnicodeEscapeSequenceCodePoint(cp), hex) => {
+                let digit = hex.to_digit(16).unwrap() as u32;
+                let cp = (cp << 4) + digit;
+                if cp > 0x10FFFF {
+                    // TODO: it's better that the lexer checks the range.
+                    return Err(Error::SyntaxError);
+                }
+                self.state = StringBuilderState::UnicodeEscapeSequenceCodePoint(cp);
+            }
+        }
+        Ok(())
+    }
+
+    fn push_code_point(&mut self, cp: u32) {
+        if is_single_code_unit(cp) {
+            self.buf.push(cp as u16);
+        } else {
+            let u = cp - 0x10000;
+            let hi = 0xD800 | (u >> 10);
+            debug_assert!(hi < 0xDC00);
+            let lo = 0xDC00 | (u & 0x003FF);
+            debug_assert!(lo < 0xE000);
+            self.buf.push(hi as u16);
+            self.buf.push(lo as u16);
+        }
+    }
+
+    fn build(mut self) -> Vec<u16> {
+        std::mem::take(&mut self.buf)
+    }
+}
+
+#[derive(Clone, Copy, Default)]
+enum StringBuilderState {
+    #[default]
+    Char,
+    EscapeSequence,
+    EscapeSequenceCr,
+    HexEscapeSequence(u8, u16),
+    UnicodeEscapeSequence(u8, u16),
+    UnicodeEscapeSequenceCodePoint(u32),
+}
+
+fn is_single_code_unit(cp: u32) -> bool {
+    cp < 0xD800 || (0xE000..0x10000).contains(&cp)
 }
