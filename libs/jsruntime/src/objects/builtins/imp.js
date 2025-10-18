@@ -66,6 +66,10 @@ async function main(args, options) {
 function dataStream(impRs) {
   function parseId(line) {
     const parts = line.substring(3).split(' ');
+    if (parts.length < 2) {
+      log.error(`Incorrect ID line: ${line}`);
+      Deno.exit(1);
+    }
     return {
       id: parts[0],
       kind: parts[1],
@@ -113,6 +117,10 @@ function dataStream(impRs) {
             data = undefined;
             break;
         }
+      }
+      if (state === 'imp') {
+        log.error(`No implementation for ${data.id}`);
+        Deno.exit(1);
       }
     }));
 }
