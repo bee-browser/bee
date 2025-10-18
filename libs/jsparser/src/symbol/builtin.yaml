@@ -70,6 +70,7 @@
 - indexOf
 - isError
 - isWellFormed
+- lastIndexOf
 - length
 - message
 - name
