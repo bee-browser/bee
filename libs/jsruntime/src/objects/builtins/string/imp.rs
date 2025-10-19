@@ -316,3 +316,83 @@ pub fn string_prototype_last_index_of<X>(
         .map_or(-1.0, |i| i as f64);
     Ok(Value::Number(index))
 }
+
+//#sec-string.prototype.padend prototype.function
+pub fn string_prototype_pad_end<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_pad_end");
+    string_padding_builtins_impl(runtime, context, PaddingPlacement::End)
+}
+
+//#sec-string.prototype.padstart prototype.function
+pub fn string_prototype_pad_start<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_pad_start");
+    string_padding_builtins_impl(runtime, context, PaddingPlacement::Start)
+}
+
+// 22.1.3.17.1 StringPaddingBuiltinsImpl ( O, maxLength, fillString, placement )
+fn string_padding_builtins_impl<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    placement: PaddingPlacement,
+) -> Result<Value, Error> {
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    let args = context.args();
+
+    let max_length = args.first().unwrap_or(&Value::Undefined);
+    let int_max_length = runtime.value_to_length(max_length)?;
+
+    let string_length = s.len() as u64;
+    if int_max_length <= string_length {
+        return Ok(Value::String(s));
+    }
+
+    if int_max_length > u32::MAX as u64 {
+        return Err(Error::InternalError);
+    }
+
+    let fill_string = args.get(1).unwrap_or(&Value::Undefined);
+    let fill_string = match fill_string {
+        Value::Undefined => StringHandle::SPACE,
+        _ => runtime.value_to_string(fill_string)?,
+    };
+
+    string_pad(runtime, s, int_max_length as u32, fill_string, placement)
+}
+
+// 22.1.3.17.2 StringPad ( S, maxLength, fillString, placement )
+fn string_pad<X>(
+    runtime: &mut Runtime<X>,
+    s: StringHandle,
+    max_length: u32,
+    fill_string: StringHandle,
+    placement: PaddingPlacement,
+) -> Result<Value, Error> {
+    let string_length = s.len();
+    if max_length <= string_length {
+        return Ok(Value::String(s));
+    }
+    if fill_string.is_empty() {
+        return Ok(Value::String(s));
+    }
+    let fill_len = max_length - string_length;
+    let filler = runtime.make_string_filler(fill_string, fill_len);
+    let result = match placement {
+        PaddingPlacement::Start => runtime.concat_strings(filler, s),
+        PaddingPlacement::End => runtime.concat_strings(s, filler),
+    };
+    Ok(Value::String(result))
+}
+
+enum PaddingPlacement {
+    Start,
+    End,
+}

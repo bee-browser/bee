@@ -3997,16 +3997,20 @@ impl StringBuilder {
                 self.state = StringBuilderState::Char;
             }
             // line terminator sequence
-            (StringBuilderState::EscapeSequence, '\u{000A}') => { // <LF>
+            (StringBuilderState::EscapeSequence, '\u{000A}') => {
+                // <LF>
                 self.state = StringBuilderState::Char;
             }
-            (StringBuilderState::EscapeSequence, '\u{000D}') => { // <CR>
+            (StringBuilderState::EscapeSequence, '\u{000D}') => {
+                // <CR>
                 self.state = StringBuilderState::EscapeSequenceCr;
             }
-            (StringBuilderState::EscapeSequence, '\u{2028}') => { // <LS>
+            (StringBuilderState::EscapeSequence, '\u{2028}') => {
+                // <LS>
                 self.state = StringBuilderState::Char;
             }
-            (StringBuilderState::EscapeSequence, '\u{2029}') => { // <PS>
+            (StringBuilderState::EscapeSequence, '\u{2029}') => {
+                // <PS>
                 self.state = StringBuilderState::Char;
             }
             // unicode escape sequence
@@ -4022,7 +4026,8 @@ impl StringBuilder {
                 self.state = StringBuilderState::Char;
             }
             // line terminator sequencee (<CR><LF>)
-            (StringBuilderState::EscapeSequenceCr, '\u{000A}') => { // <LF>
+            (StringBuilderState::EscapeSequenceCr, '\u{000A}') => {
+                // <LF>
                 self.state = StringBuilderState::Char;
             }
             (StringBuilderState::EscapeSequenceCr, ch) => {
@@ -4064,7 +4069,7 @@ impl StringBuilder {
             }
             // \u{H+}
             (StringBuilderState::UnicodeEscapeSequenceCodePoint(cp), hex) => {
-                let digit = hex.to_digit(16).unwrap() as u32;
+                let digit = hex.to_digit(16).unwrap();
                 let cp = (cp << 4) + digit;
                 if cp > 0x10FFFF {
                     // TODO: it's better that the lexer checks the range.

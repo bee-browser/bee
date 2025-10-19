@@ -74,6 +74,8 @@
 - length
 - message
 - name
+- padEnd
+- padStart
 - prototype
 - toString
 

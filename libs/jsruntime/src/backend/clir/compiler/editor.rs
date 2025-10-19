@@ -584,6 +584,9 @@ impl<'a> Editor<'a> {
             .iconst(ir::types::I8, StringFragmentFlags::STACK.bits() as i64);
         self.put_store_to_slot(flags, slot, StringFragment::FLAGS_OFFSET);
 
+        let repetitions = self.builder.ins().iconst(ir::types::I8, 1);
+        self.put_store_to_slot(repetitions, slot, StringFragment::REPETITIONS_OFFSET);
+
         StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
 
@@ -621,14 +624,10 @@ impl<'a> Editor<'a> {
         let next = self.builder.ins().iconst(self.addr_type, 0);
         self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
 
-        let ptr = self.builder.ins().iconst(
-            self.addr_type,
-            if value.is_empty() {
-                0
-            } else {
-                value.as_ptr() as i64
-            },
-        );
+        let ptr = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, value.as_ptr() as i64);
         self.put_store_to_slot(ptr, slot, StringFragment::PTR_OFFSET);
 
         debug_assert!(value.len() <= u32::MAX as usize);
@@ -643,6 +642,10 @@ impl<'a> Editor<'a> {
             .ins()
             .iconst(ir::types::I8, StringFragmentFlags::STACK.bits() as i64);
         self.put_store_to_slot(flags, slot, StringFragment::FLAGS_OFFSET);
+
+        let repetitions = self.builder.ins().iconst(ir::types::I8, 1);
+        self.put_store_to_slot(flags, slot, StringFragment::REPETITIONS_OFFSET);
+        self.put_store_to_slot(repetitions, slot, StringFragment::REPETITIONS_OFFSET);
 
         StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
