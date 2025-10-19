@@ -281,6 +281,11 @@ impl StringFragment {
         }
     }
 
+    // TODO(refactor): remove
+    pub(crate) fn set_repetitions(&mut self, repetitions: u8) {
+        self.repetitions = repetitions;
+    }
+
     pub(crate) fn new_heap(next: *const Self, frag: &StringFragment) -> Self {
         Self {
             next,
@@ -525,6 +530,7 @@ impl<'a> Iterator for CodeUnits<'a> {
 
         if let Some(next) = self.fragment.next() {
             self.fragment = next;
+            self.repetitions = 0;
             return self.next();
         }
 
