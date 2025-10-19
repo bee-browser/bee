@@ -396,3 +396,35 @@ enum PaddingPlacement {
     Start,
     End,
 }
+
+//#sec-string.prototype.repeat prototype.function
+pub fn string_prototype_repeat<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_repeat");
+
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    let args = context.args();
+
+    let count = args.first().unwrap_or(&Value::Undefined);
+    let n = runtime.value_to_integer_or_infinity(count)?;
+
+    if n < 0.0 || n.is_infinite() {
+        return Err(Error::RangeError);
+    }
+
+    if n == 0.0 {
+        return Ok(Value::String(StringHandle::EMPTY));
+    }
+
+    if n > u8::MAX as f64 {
+        return Err(Error::InternalError);
+    }
+
+    let result = runtime.repeat_string(s, n as u8);
+    Ok(Value::String(result))
+}

@@ -20,6 +20,7 @@ use crate::logger;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::Lambda;
+use crate::types::StringFragment;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -237,6 +238,28 @@ impl<X> Runtime<X> {
 
         let last = fill_string.fragment().sub_fragment(0, remaining);
         StringHandle::new(self.alloc_string_fragment_recursively(&frag, Some(&last)))
+    }
+
+    fn repeat_string(&mut self, s: StringHandle, n: u8) -> StringHandle {
+        if n == 1 {
+            return s;
+        }
+
+        if s.is_empty() {
+            return s;
+        }
+
+        if s.is_simple() {
+            let frag = s.fragment().repeat(n);
+            return StringHandle::new(self.alloc_string_fragment_recursively(&frag, None));
+        }
+
+        // TODO(perf): inefficient
+        let utf16 = s.make_utf16();
+        let slice = self.allocator().alloc_slice_copy(&utf16);
+        let mut frag = StringFragment::new_stack(slice, true);
+        frag.set_repetitions(n);
+        StringHandle::new(self.alloc_string_fragment_recursively(&frag, None))
     }
 }
 

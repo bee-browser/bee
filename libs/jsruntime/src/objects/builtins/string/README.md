@@ -22,7 +22,7 @@
 * [ ] [String.prototype.normalize](https://tc39.es/ecma262/#sec-string.prototype.normalize)
 * [x] [String.prototype.padEnd](https://tc39.es/ecma262/#sec-string.prototype.padend)
 * [x] [String.prototype.padStart](https://tc39.es/ecma262/#sec-string.prototype.padstart)
-* [ ] [String.prototype.repeat](https://tc39.es/ecma262/#sec-string.prototype.repeat)
+* [x] [String.prototype.repeat](https://tc39.es/ecma262/#sec-string.prototype.repeat)
 * [ ] [String.prototype.replace](https://tc39.es/ecma262/#sec-string.prototype.replace)
 * [ ] [String.prototype.replaceAll](https://tc39.es/ecma262/#sec-string.prototype.replaceall)
 * [ ] [String.prototype.search](https://tc39.es/ecma262/#sec-string.prototype.search)
