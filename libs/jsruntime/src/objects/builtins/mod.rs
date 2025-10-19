@@ -143,6 +143,17 @@ impl<X> Runtime<X> {
         }
     }
 
+    // 7.1.20 ToLength ( argument )
+    fn value_to_length(&mut self, value: &Value) -> Result<u64, Error> {
+        logger::debug!(event = "runtime.value_to_length", ?value);
+        let len = self.value_to_integer_or_infinity(value)?;
+        if len < 0.0 {
+            Ok(0)
+        } else {
+            Ok(len.min(0x1F_FFFF_FFFF_FFFFu64 as f64) as u64)
+        }
+    }
+
     // TODO(refactor): code clone, see runtime_concat_strings.
     fn concat_strings(&mut self, a: StringHandle, b: StringHandle) -> StringHandle {
         if b.is_empty() {
@@ -202,6 +213,30 @@ impl<X> Runtime<X> {
                 .unwrap(),
         };
         Value::Object(object)
+    }
+
+    fn make_string_filler(&mut self, fill_string: StringHandle, fill_len: u32) -> StringHandle {
+        debug_assert!(fill_string.is_simple());
+        debug_assert!(!fill_string.is_empty());
+
+        let fill_string_len = fill_string.len();
+        let repetitions = fill_len / fill_string_len;
+        let remaining = fill_len % fill_string_len;
+
+        if repetitions == 0 {
+            debug_assert!(remaining > 0);
+            let frag = fill_string.fragment().sub_fragment(0, remaining);
+            return StringHandle::new(self.alloc_string_fragment_recursively(&frag, None));
+        }
+
+        debug_assert!(repetitions <= u8::MAX as u32);
+        let frag = fill_string.fragment().repeat(repetitions as u8);
+        if remaining == 0 {
+            return StringHandle::new(self.alloc_string_fragment_recursively(&frag, None));
+        }
+
+        let last = fill_string.fragment().sub_fragment(0, remaining);
+        StringHandle::new(self.alloc_string_fragment_recursively(&frag, Some(&last)))
     }
 }
 

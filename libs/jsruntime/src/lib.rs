@@ -329,12 +329,7 @@ impl<X> Runtime<X> {
         } else {
             last.map_or(std::ptr::null(), StringFragment::as_ptr)
         };
-        self.allocator
-            .alloc(StringFragment::new_heap_from_raw_parts(
-                next,
-                frag.raw_ptr(),
-                frag.len(),
-            ))
+        self.allocator.alloc(StringFragment::new_heap(next, frag))
     }
 
     fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {

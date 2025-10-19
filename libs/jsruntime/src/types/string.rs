@@ -22,6 +22,9 @@ impl StringHandle {
     /// An empty string.
     pub const EMPTY: Self = Self::new(&StringFragment::EMPTY);
 
+    /// A single U+0020 character.
+    pub const SPACE: Self = Self::new(&StringFragment::SPACE);
+
     /// Creates a new UTF-16 string.
     pub const fn new(frag: &StringFragment) -> Self {
         Self(NonNull::from_ref(frag))
@@ -31,6 +34,10 @@ impl StringHandle {
     pub const fn new_const(frag: &'static StringFragment) -> Self {
         debug_assert!(frag.is_const());
         Self(NonNull::from_ref(frag))
+    }
+
+    pub const fn is_simple(&self) -> bool {
+        self.fragment().is_simple()
     }
 
     /// Returns `true` if the string is empty.
@@ -216,7 +223,7 @@ pub struct StringFragment {
     /// A pointer to the next string fragment if it exists.
     next: *const StringFragment,
 
-    /// A pointer to the array of UTF-16 code units if it exists.
+    /// A pointer to the UTF-16 code unit sequence if it exists.
     ///
     /// The `ptr` points to one of the following memory block:
     ///
@@ -229,12 +236,16 @@ pub struct StringFragment {
     len: u32,
 
     flags: StringFragmentFlags,
+
+    /// The number of repetitions of the UTF-16 code unit sequence.
+    repetitions: u8,
 }
 
 base::static_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
 
 impl StringFragment {
     pub(crate) const EMPTY: Self = Self::new_const(&[]);
+    pub(crate) const SPACE: Self = Self::new_const(&[0x0020]);
 
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
@@ -242,6 +253,7 @@ impl StringFragment {
     pub(crate) const PTR_OFFSET: usize = std::mem::offset_of!(Self, ptr);
     pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
+    pub(crate) const REPETITIONS_OFFSET: usize = std::mem::offset_of!(Self, repetitions);
 
     // TODO(refactor): should be private
     pub const fn new_const(slice: &'static [u16]) -> Self {
@@ -250,6 +262,7 @@ impl StringFragment {
             ptr: slice.as_ptr(),
             len: slice.len() as u32,
             flags: StringFragmentFlags::CONST,
+            repetitions: 1,
         }
     }
 
@@ -264,16 +277,23 @@ impl StringFragment {
             } else {
                 StringFragmentFlags::STACK
             },
+            repetitions: 1,
         }
     }
 
-    pub(crate) fn new_heap_from_raw_parts(next: *const Self, ptr: *const u16, len: u32) -> Self {
+    pub(crate) fn new_heap(next: *const Self, frag: &StringFragment) -> Self {
         Self {
             next,
-            ptr,
-            len,
-            flags: StringFragmentFlags::HEAP,
+            ptr: frag.ptr,
+            len: frag.len,
+            flags: StringFragmentFlags::HEAP
+                | frag.flags.intersection(StringFragmentFlags::DYNAMIC),
+            repetitions: frag.repetitions,
         }
+    }
+
+    pub(crate) const fn is_simple(&self) -> bool {
+        self.next.is_null() && self.repetitions == 1
     }
 
     pub(crate) const fn is_empty(&self) -> bool {
@@ -293,20 +313,18 @@ impl StringFragment {
         // SAFETY: `self.next` is null or a valid pointer to a `StringFragment`.
         if let Some(next) = unsafe { self.next.as_ref() } {
             debug_assert!(self.len > 0);
-            self.len + next.total_len()
+            self.len() + next.total_len()
         } else {
-            self.len
+            self.len()
         }
     }
 
-    pub(crate) fn raw_ptr(&self) -> *const u16 {
-        self.ptr
-    }
-
     pub(crate) fn len(&self) -> u32 {
-        self.len
+        debug_assert!(self.repetitions > 0);
+        self.len * self.repetitions as u32
     }
 
+    // Returns a *raw* UTF-16 code unit sequence.
     pub(crate) fn as_slice(&self) -> &[u16] {
         debug_assert_ne!(self.len, 0);
         debug_assert!(!self.ptr.is_null());
@@ -340,6 +358,31 @@ impl StringFragment {
             None => self.next().and_then(|next| next.at(index - slice.len())),
         }
     }
+
+    pub(crate) fn repeat(&self, repetitions: u8) -> Self {
+        debug_assert!(self.is_simple());
+        debug_assert!(repetitions > 0);
+        Self {
+            next: std::ptr::null_mut(),
+            ptr: self.ptr,
+            len: self.len,
+            flags: self.flags,
+            repetitions,
+        }
+    }
+
+    pub(crate) fn sub_fragment(&self, start: u32, end: u32) -> Self {
+        debug_assert!(self.is_simple());
+        let slice = self.as_slice();
+        let sub = &slice[(start as usize)..(end as usize)];
+        Self {
+            next: std::ptr::null_mut(),
+            ptr: sub.as_ptr(),
+            len: sub.len() as u32,
+            flags: self.flags,
+            repetitions: 1,
+        }
+    }
 }
 
 // The UTF-16 code units never change.
@@ -356,7 +399,8 @@ impl Index<u32> for StringFragment {
     type Output = u16;
 
     fn index(&self, index: u32) -> &Self::Output {
-        assert!(index < self.len);
+        assert!(index < self.len());
+        let index = index % self.len;
         // SAFETY: `self.ptr` points to `[u16; self.len]`.
         unsafe { &*self.ptr.add(index as usize) }
     }
@@ -381,6 +425,9 @@ impl std::fmt::Debug for StringFragment {
             }
         }
         write!(f, r#"""#)?;
+        if self.repetitions > 1 {
+            write!(f, "*{}", self.repetitions)?;
+        }
         if let Some(next) = self.next() {
             write!(f, " ")?;
             std::fmt::Debug::fmt(next, f)?;
@@ -423,15 +470,33 @@ bitflags! {
 struct CodeUnits<'a> {
     fragment: &'a StringFragment,
     pos: u32,
+    repetitions: u8,
 }
 
 impl<'a> CodeUnits<'a> {
     fn new(fragment: &'a StringFragment) -> Self {
-        Self { fragment, pos: 0 }
+        Self {
+            fragment,
+            pos: 0,
+            repetitions: 0,
+        }
     }
 
     fn has_next(&self) -> bool {
+        // We can solve the following warning by changing like this:
+        //
+        // ```
+        // if self.pos < self.fragment.len || self.repetitions < self.fragment.repetitions {
+        //     true
+        // } else if let Some(next) = self.fragment.next() {
+        //     ...
+        // ```
+        //
+        // But we keep the code for readability.
+        #[allow(clippy::if_same_then_else)]
         if self.pos < self.fragment.len {
+            true
+        } else if self.repetitions < self.fragment.repetitions {
             true
         } else if let Some(next) = self.fragment.next() {
             !next.is_empty()
@@ -451,9 +516,15 @@ impl<'a> Iterator for CodeUnits<'a> {
             return Some(code_unit);
         }
 
+        self.repetitions += 1;
+        self.pos = 0;
+
+        if self.repetitions < self.fragment.repetitions {
+            return self.next();
+        }
+
         if let Some(next) = self.fragment.next() {
             self.fragment = next;
-            self.pos = 0;
             return self.next();
         }
 
