@@ -28,7 +28,7 @@
 * [ ] [String.prototype.search](https://tc39.es/ecma262/#sec-string.prototype.search)
 * [ ] [String.prototype.slice](https://tc39.es/ecma262/#sec-string.prototype.slice)
 * [ ] [String.prototype.splice](https://tc39.es/ecma262/#sec-string.prototype.split)
-* [ ] [String.prototype.startsWith](https://tc39.es/ecma262/#sec-string.prototype.startswith)
+* [x] [String.prototype.startsWith](https://tc39.es/ecma262/#sec-string.prototype.startswith)
 * [ ] [String.prototype.substring](https://tc39.es/ecma262/#sec-string.prototype.substring)
 * [ ] [String.prototype.toLocaleLowerCase](https://tc39.es/ecma262/#sec-string.prototype.tolocalelowercase)
 * [ ] [String.prototype.toLocaleUpperCase](https://tc39.es/ecma262/#sec-string.prototype.tolocaleuppercase)

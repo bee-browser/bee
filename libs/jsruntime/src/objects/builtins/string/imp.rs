@@ -428,3 +428,48 @@ pub fn string_prototype_repeat<X>(
     let result = runtime.repeat_string(s, n as u8);
     Ok(Value::String(result))
 }
+
+//#sec-string.prototype.startswith prototype.function
+pub fn string_prototype_starts_with<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_starts_with");
+
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    let args = context.args();
+
+    let search_str = args.first().unwrap_or(&Value::Undefined);
+    // TODO(feat): RegExp
+    let search_str = runtime.value_to_string(search_str)?;
+
+    let len = s.len();
+
+    let pos = if let Some(position) = args.get(1) {
+        runtime.value_to_integer_or_infinity(position)?
+    } else {
+        0.0
+    };
+
+    let start = pos.clamp(0.0, len as f64) as u32;
+
+    let search_len = search_str.len();
+    if search_len == 0 {
+        return Ok(Value::Boolean(true));
+    }
+
+    let end = start + search_len;
+    if end > len {
+        return Ok(Value::Boolean(false));
+    }
+
+    // TODO(perf): inefficient
+    let substring = s
+        .code_units()
+        .skip(start as usize)
+        .take(search_len as usize);
+    Ok(Value::Boolean(substring.eq(search_str.code_units())))
+}

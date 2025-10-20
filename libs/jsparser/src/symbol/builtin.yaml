@@ -78,6 +78,7 @@
 - padStart
 - prototype
 - repeat
+- startsWith
 - toString
 
 # Special symbols for internal use only.
