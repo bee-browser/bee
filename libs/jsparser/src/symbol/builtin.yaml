@@ -79,6 +79,7 @@
 - prototype
 - repeat
 - startsWith
+- substring
 - toString
 - trim
 - trimEnd
