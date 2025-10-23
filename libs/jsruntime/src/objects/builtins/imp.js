@@ -15,7 +15,7 @@ const ECMA262_SPEC_HTML = path.join(VENDOR_DIR, 'src', 'tc39', 'ecma262', 'spec.
 
 const DOC = `
 Usage:
-  ${PROGNAME} [<imp.rs>]
+  ${PROGNAME} [options] [<imp.rs>]
   ${PROGNAME} -h | --help
 
 Options:

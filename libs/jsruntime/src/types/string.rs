@@ -1,3 +1,5 @@
+use std::iter::Enumerate;
+use std::iter::Peekable;
 use std::ops::Index;
 use std::ptr::NonNull;
 
@@ -102,6 +104,7 @@ impl StringHandle {
 
         if !is_leading_surrogate(first) && !is_trailing_surrogate(first) {
             return CodePointAt {
+                index,
                 code_point: first as u32,
                 code_unit_count: 1,
                 is_unpaired_surrogate: false,
@@ -110,6 +113,7 @@ impl StringHandle {
 
         if is_trailing_surrogate(first) || index + 1 == size {
             return CodePointAt {
+                index,
                 code_point: first as u32,
                 code_unit_count: 1,
                 is_unpaired_surrogate: true,
@@ -120,6 +124,7 @@ impl StringHandle {
         let second = self.at(index + 1).unwrap();
         if !is_trailing_surrogate(second) {
             return CodePointAt {
+                index,
                 code_point: first as u32,
                 code_unit_count: 1,
                 is_unpaired_surrogate: true,
@@ -128,10 +133,37 @@ impl StringHandle {
 
         let cp = utf16_surrogate_pair_to_code_point(first, second);
         CodePointAt {
+            index,
             code_point: cp,
             code_unit_count: 2,
             is_unpaired_surrogate: false,
         }
+    }
+
+    pub fn position<P>(&self, predicate: P) -> Option<u32>
+    where
+        P: Fn(u32) -> bool,
+    {
+        for code_point_at in self.code_points() {
+            if predicate(code_point_at.code_point) {
+                return Some(code_point_at.index);
+            }
+        }
+        None
+    }
+
+    // TODO(perf): inefficient
+    pub fn last_position<P>(&self, predicate: P) -> Option<u32>
+    where
+        P: Fn(u32) -> bool,
+    {
+        let mut candidate = None;
+        for code_point_at in self.code_points() {
+            if predicate(code_point_at.code_point) {
+                candidate = Some(code_point_at.index);
+            }
+        }
+        candidate
     }
 
     // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
@@ -473,7 +505,7 @@ bitflags! {
 }
 
 struct CodeUnits<'a> {
-    fragment: &'a StringFragment,
+    fragment: Option<&'a StringFragment>,
     pos: u32,
     repetitions: u8,
 }
@@ -481,13 +513,19 @@ struct CodeUnits<'a> {
 impl<'a> CodeUnits<'a> {
     fn new(fragment: &'a StringFragment) -> Self {
         Self {
-            fragment,
+            fragment: Some(fragment),
             pos: 0,
             repetitions: 0,
         }
     }
 
+    #[allow(unused)]
     fn has_next(&self) -> bool {
+        let fragment = match self.fragment {
+            Some(fragment) => fragment,
+            None => return false,
+        };
+
         // We can solve the following warning by changing like this:
         //
         // ```
@@ -499,11 +537,11 @@ impl<'a> CodeUnits<'a> {
         //
         // But we keep the code for readability.
         #[allow(clippy::if_same_then_else)]
-        if self.pos < self.fragment.len {
+        if self.pos < fragment.len {
             true
-        } else if self.repetitions < self.fragment.repetitions {
+        } else if self.repetitions < fragment.repetitions {
             true
-        } else if let Some(next) = self.fragment.next() {
+        } else if let Some(next) = fragment.next() {
             !next.is_empty()
         } else {
             false
@@ -515,8 +553,10 @@ impl<'a> Iterator for CodeUnits<'a> {
     type Item = u16;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.pos < self.fragment.len {
-            let code_unit = self.fragment[self.pos];
+        let fragment = self.fragment?;
+
+        if self.pos < fragment.len {
+            let code_unit = fragment[self.pos];
             self.pos += 1;
             return Some(code_unit);
         }
@@ -524,28 +564,27 @@ impl<'a> Iterator for CodeUnits<'a> {
         self.repetitions += 1;
         self.pos = 0;
 
-        if self.repetitions < self.fragment.repetitions {
-            return self.next();
+        if self.repetitions < fragment.repetitions {
+            let code_unit = fragment[0];
+            self.pos = 1;
+            return Some(code_unit);
         }
 
-        if let Some(next) = self.fragment.next() {
-            self.fragment = next;
-            self.repetitions = 0;
-            return self.next();
-        }
+        self.fragment = fragment.next();
+        self.repetitions = 0;
 
-        None
+        self.next()
     }
 }
 
 struct CodePoints<'a> {
-    code_units: CodeUnits<'a>,
+    code_units: Peekable<Enumerate<CodeUnits<'a>>>,
 }
 
 impl<'a> CodePoints<'a> {
     fn new(fragment: &'a StringFragment) -> Self {
         Self {
-            code_units: CodeUnits::new(fragment),
+            code_units: CodeUnits::new(fragment).enumerate().peekable(),
         }
     }
 }
@@ -554,35 +593,43 @@ impl<'a> Iterator for CodePoints<'a> {
     type Item = CodePointAt;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let first = self.code_units.next()?;
+        let (index, first) = self.code_units.next()?;
 
         if !is_leading_surrogate(first) && !is_trailing_surrogate(first) {
             return Some(CodePointAt {
+                index: index as u32,
                 code_point: first as u32,
                 code_unit_count: 1,
                 is_unpaired_surrogate: false,
             });
         }
 
-        if is_trailing_surrogate(first) || !self.code_units.has_next() {
+        if is_trailing_surrogate(first) {
             return Some(CodePointAt {
+                index: index as u32,
                 code_point: first as u32,
                 code_unit_count: 1,
                 is_unpaired_surrogate: true,
             });
         }
 
-        let second = self.code_units.next().unwrap();
-
-        if !is_trailing_surrogate(second) {
-            return Some(CodePointAt {
-                code_point: first as u32,
-                code_unit_count: 1,
-                is_unpaired_surrogate: true,
-            });
-        }
+        let second = match self
+            .code_units
+            .next_if(|(_, second)| is_trailing_surrogate(*second))
+        {
+            Some((_, second)) => second,
+            None => {
+                return Some(CodePointAt {
+                    index: index as u32,
+                    code_point: first as u32,
+                    code_unit_count: 1,
+                    is_unpaired_surrogate: true,
+                });
+            }
+        };
 
         Some(CodePointAt {
+            index: index as u32,
             code_point: utf16_surrogate_pair_to_code_point(first, second),
             code_unit_count: 2,
             is_unpaired_surrogate: false,
@@ -591,6 +638,7 @@ impl<'a> Iterator for CodePoints<'a> {
 }
 
 pub struct CodePointAt {
+    pub index: u32,
     pub code_point: u32,
     pub code_unit_count: u32,
     pub is_unpaired_surrogate: bool,

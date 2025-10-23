@@ -473,3 +473,72 @@ pub fn string_prototype_starts_with<X>(
         .take(search_len as usize);
     Ok(Value::Boolean(substring.eq(search_str.code_units())))
 }
+
+//#sec-string.prototype.trim prototype.function
+pub fn string_prototype_trim<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_trim");
+    trim_string(runtime, context, true, true)
+}
+
+//#sec-string.prototype.trimend prototype.function
+pub fn string_prototype_trim_end<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_trim_end");
+    trim_string(runtime, context, false, true)
+}
+
+//#sec-string.prototype.trimstart prototype.function
+pub fn string_prototype_trim_start<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_trim_start");
+    trim_string(runtime, context, true, false)
+}
+
+// 22.1.3.32.1 TrimString ( string, where )
+fn trim_string<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    start: bool,
+    end: bool,
+) -> Result<Value, Error> {
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    let start_index = if start {
+        match s.position(is_non_whitespace) {
+            Some(index) => index,
+            None => return Ok(Value::String(StringHandle::EMPTY)),
+        }
+    } else {
+        0
+    };
+
+    let end_index = if end {
+        match s.last_position(is_non_whitespace) {
+            Some(index) => {
+                debug_assert!(index < u32::MAX);
+                index + 1
+            }
+            None => unreachable!(),
+        }
+    } else {
+        s.len()
+    };
+
+    let result = runtime.create_substring(s, start_index, end_index);
+    Ok(Value::String(result))
+}
+
+fn is_non_whitespace(cp: u32) -> bool {
+    char::from_u32(cp)
+        .map(|c| !char::is_whitespace(c))
+        .unwrap_or(true)
+}

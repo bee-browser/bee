@@ -80,6 +80,9 @@
 - repeat
 - startsWith
 - toString
+- trim
+- trimEnd
+- trimStart
 
 # Special symbols for internal use only.
 - ['-Infinity', NEG_INFINITY]
