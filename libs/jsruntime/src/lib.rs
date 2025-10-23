@@ -12,6 +12,8 @@ mod types;
 
 use std::pin::Pin;
 
+use itertools::Itertools;
+
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -330,6 +332,22 @@ impl<X> Runtime<X> {
             last.map_or(std::ptr::null(), StringFragment::as_ptr)
         };
         self.allocator.alloc(StringFragment::new_heap(next, frag))
+    }
+
+    fn create_substring(&mut self, string: StringHandle, start: u32, end: u32) -> StringHandle {
+        debug_assert!(start < end);
+        // TODO(perf): inefficient
+        let utf16 = string
+            .code_units()
+            .skip(start as usize)
+            .take((end - start) as usize)
+            .collect_vec();
+        let utf16 = self.allocator().alloc_slice_copy(&utf16);
+        let frag = StringFragment::new_stack(utf16, true);
+        let frag = self
+            .allocator()
+            .alloc(StringFragment::new_heap(std::ptr::null_mut(), &frag));
+        StringHandle::new(frag)
     }
 
     fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {
