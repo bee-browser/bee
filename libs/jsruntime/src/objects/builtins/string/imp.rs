@@ -474,6 +474,40 @@ pub fn string_prototype_starts_with<X>(
     Ok(Value::Boolean(substring.eq(search_str.code_units())))
 }
 
+//#sec-string.prototype.substring prototype.function
+pub fn string_prototype_substring<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "string_prototype_substring");
+
+    let o = context.this();
+    require_object_coercible(o)?;
+    let s = runtime.value_to_string(o)?;
+
+    let args = context.args();
+
+    let len = s.len() as f64;
+
+    let start = args.first().unwrap_or(&Value::Undefined);
+    let int_start = runtime.value_to_integer_or_infinity(start)?;
+
+    let int_end = if let Some(end) = args.get(1) {
+        runtime.value_to_integer_or_infinity(end)?
+    } else {
+        len
+    };
+
+    let final_start = int_start.clamp(0.0, len);
+    let final_end = int_end.clamp(0.0, len);
+
+    let from = final_start.min(final_end) as u32;
+    let to = final_start.max(final_end) as u32;
+
+    let result = runtime.create_substring(s, from, to);
+    Ok(Value::String(result))
+}
+
 //#sec-string.prototype.trim prototype.function
 pub fn string_prototype_trim<X>(
     runtime: &mut Runtime<X>,
