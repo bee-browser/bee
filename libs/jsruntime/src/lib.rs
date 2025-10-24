@@ -12,6 +12,8 @@ mod types;
 
 use std::pin::Pin;
 
+use itertools::Itertools;
+
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -329,12 +331,23 @@ impl<X> Runtime<X> {
         } else {
             last.map_or(std::ptr::null(), StringFragment::as_ptr)
         };
-        self.allocator
-            .alloc(StringFragment::new_heap_from_raw_parts(
-                next,
-                frag.raw_ptr(),
-                frag.len(),
-            ))
+        self.allocator.alloc(StringFragment::new_heap(next, frag))
+    }
+
+    fn create_substring(&mut self, string: StringHandle, start: u32, end: u32) -> StringHandle {
+        debug_assert!(start < end);
+        // TODO(perf): inefficient
+        let utf16 = string
+            .code_units()
+            .skip(start as usize)
+            .take((end - start) as usize)
+            .collect_vec();
+        let utf16 = self.allocator().alloc_slice_copy(&utf16);
+        let frag = StringFragment::new_stack(utf16, true);
+        let frag = self
+            .allocator()
+            .alloc(StringFragment::new_heap(std::ptr::null_mut(), &frag));
+        StringHandle::new(frag)
     }
 
     fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {
@@ -426,4 +439,12 @@ where
 
 pub trait Monitor {
     fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
+}
+
+#[allow(clippy::enum_variant_names)]
+#[derive(Debug)]
+pub(crate) enum Error {
+    TypeError,
+    RangeError,
+    InternalError,
 }

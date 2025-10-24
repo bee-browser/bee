@@ -171,9 +171,11 @@ fn print_summary(report: &TestReport, elapsed: &Duration) {
 
     let elapsed = elapsed.as_secs();
 
-    eprintln!("{num_tests} tests ({elapsed}s):");
-    eprintln!("  {num_passed} passed");
-    eprintln!("  {num_failed} failed");
-    eprintln!("  {num_timed_out} timed-out");
-    eprintln!("  {num_panics} panics");
+    eprintln!(
+        "{num_tests} tests ({elapsed}s): \
+               {num_passed} passed, \
+               {num_failed} failed, \
+               {num_timed_out} timed-out, \
+               {num_panics} panics"
+    );
 }
