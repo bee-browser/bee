@@ -504,6 +504,10 @@ pub fn string_prototype_substring<X>(
     let from = final_start.min(final_end) as u32;
     let to = final_start.max(final_end) as u32;
 
+    if from == to {
+        return Ok(Value::String(StringHandle::EMPTY));
+    }
+
     let result = runtime.create_substring(s, from, to);
     Ok(Value::String(result))
 }
