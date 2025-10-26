@@ -192,8 +192,7 @@ impl<X> Runtime<X> {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
         let chunk = StringFragment::new_stack(utf16, true);
-        let string = StringHandle::new(&chunk);
-        self.migrate_string_to_heap(string)
+        StringHandle::new(&chunk).ensure_return_safe(self.allocator())
     }
 }
 
@@ -379,7 +378,7 @@ pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: &mut Runtime<X>,
     string: StringHandle,
 ) -> StringHandle {
-    runtime.migrate_string_to_heap(string)
+    string.ensure_return_safe(runtime.allocator())
 }
 
 pub(crate) extern "C" fn runtime_create_capture<X>(
@@ -743,21 +742,7 @@ pub(crate) extern "C" fn runtime_concat_strings<X>(
     head: StringHandle,
     tail: StringHandle,
 ) -> StringHandle {
-    if tail.is_empty() {
-        return StringHandle::new(runtime.alloc_string_fragment_recursively(head.fragment(), None));
-    }
-
-    let tail = if tail.on_stack() {
-        runtime.alloc_string_fragment_recursively(tail.fragment(), None)
-    } else {
-        tail.fragment()
-    };
-
-    if head.is_empty() {
-        return StringHandle::new(tail);
-    }
-
-    StringHandle::new(runtime.alloc_string_fragment_recursively(head.fragment(), Some(tail)))
+    head.concat(tail, runtime.allocator())
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )

@@ -157,21 +157,7 @@ impl<X> Runtime<X> {
 
     // TODO(refactor): code clone, see runtime_concat_strings.
     fn concat_strings(&mut self, a: StringHandle, b: StringHandle) -> StringHandle {
-        if b.is_empty() {
-            return StringHandle::new(self.alloc_string_fragment_recursively(a.fragment(), None));
-        }
-
-        let b = if b.on_stack() {
-            StringHandle::new(self.alloc_string_fragment_recursively(b.fragment(), None))
-        } else {
-            b
-        };
-
-        if a.is_empty() {
-            return b;
-        }
-
-        StringHandle::new(self.alloc_string_fragment_recursively(a.fragment(), Some(b.fragment())))
+        a.concat(b, self.allocator())
     }
 
     // 7.1.17 ToString ( argument )
@@ -227,20 +213,20 @@ impl<X> Runtime<X> {
         if repetitions == 0 {
             debug_assert!(remaining > 0);
             let frag = fill_string.fragment().sub_fragment(0, remaining);
-            return StringHandle::new(self.alloc_string_fragment_recursively(&frag, None));
+            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
         }
 
-        debug_assert!(repetitions <= u8::MAX as u32);
-        let frag = fill_string.fragment().repeat(repetitions as u8);
+        debug_assert!(repetitions <= u32::MAX);
+        let frag = fill_string.fragment().repeat(repetitions as u32);
         if remaining == 0 {
-            return StringHandle::new(self.alloc_string_fragment_recursively(&frag, None));
+            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
         }
 
         let last = fill_string.fragment().sub_fragment(0, remaining);
-        StringHandle::new(self.alloc_string_fragment_recursively(&frag, Some(&last)))
+        StringHandle::new(&frag).concat(StringHandle::new(&last), self.allocator())
     }
 
-    fn repeat_string(&mut self, s: StringHandle, n: u8) -> StringHandle {
+    fn repeat_string(&mut self, s: StringHandle, n: u32) -> StringHandle {
         if n == 1 {
             return s;
         }
@@ -251,7 +237,7 @@ impl<X> Runtime<X> {
 
         if s.is_simple() {
             let frag = s.fragment().repeat(n);
-            return StringHandle::new(self.alloc_string_fragment_recursively(&frag, None));
+            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
         }
 
         // TODO(perf): inefficient
@@ -259,7 +245,7 @@ impl<X> Runtime<X> {
         let slice = self.allocator().alloc_slice_copy(&utf16);
         let mut frag = StringFragment::new_stack(slice, true);
         frag.set_repetitions(n);
-        StringHandle::new(self.alloc_string_fragment_recursively(&frag, None))
+        StringHandle::new(&frag).ensure_return_safe(self.allocator())
     }
 }
 

@@ -5,6 +5,7 @@ use std::ptr::NonNull;
 
 use bitflags::bitflags;
 use bitflags::bitflags_match;
+use bumpalo::Bump;
 use itertools::Itertools;
 
 /// A data type to hold an **immutable** UTF-16 string.
@@ -214,6 +215,72 @@ impl StringHandle {
         }
         true
     }
+
+    pub fn concat(&self, tail: Self, allocator: &Bump) -> Self {
+        if self.is_empty() {
+            return tail.ensure_return_safe(allocator);
+        }
+        if tail.is_empty() {
+            return self.ensure_return_safe(allocator);
+        }
+
+        let mut fragment = self.fragment();
+        let mut new_fragment =
+            allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        let inner = NonNull::from_ref(new_fragment);
+
+        while let Some(next) = fragment.next() {
+            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            new_fragment.next = new_next.as_ptr();
+            fragment = next;
+            new_fragment = new_next;
+        }
+
+        fragment = tail.fragment();
+        let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        new_fragment.next = new_next.as_ptr();
+        new_fragment = new_next;
+
+        while let Some(next) = fragment.next() {
+            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            new_fragment.next = new_next.as_ptr();
+            fragment = next;
+            new_fragment = new_next;
+        }
+
+        // TODO(issue#237): GcCell
+        Self(inner)
+    }
+
+    pub fn ensure_return_safe(&self, allocator: &Bump) -> Self {
+        if !self.on_stack() {
+            return self.clone();
+        }
+
+        if self.is_empty() {
+            return StringHandle::EMPTY;
+        }
+
+        self.migrate_to_heap(allocator)
+    }
+
+    // Migrate a UTF-16 string from the stack to the heap.
+    fn migrate_to_heap(&self, allocator: &Bump) -> Self {
+        let mut fragment = self.fragment();
+        let mut new_fragment =
+            allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        let inner = NonNull::from_ref(new_fragment);
+
+        while let Some(next) = fragment.next() {
+            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            new_fragment.next = new_next.as_ptr();
+            fragment = next;
+            new_fragment = new_next;
+        }
+
+        // TODO(issue#237): GcCell
+        Self(inner)
+    }
 }
 
 impl PartialEq for StringHandle {
@@ -267,10 +334,10 @@ pub struct StringFragment {
     /// The number of the UTF-16 code units in the string fragment.
     len: u32,
 
-    flags: StringFragmentFlags,
-
     /// The number of repetitions of the UTF-16 code unit sequence.
-    repetitions: u8,
+    repetitions: u32,
+
+    flags: StringFragmentFlags,
 }
 
 base::static_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
@@ -284,8 +351,8 @@ impl StringFragment {
     pub(crate) const NEXT_OFFSET: usize = std::mem::offset_of!(Self, next);
     pub(crate) const PTR_OFFSET: usize = std::mem::offset_of!(Self, ptr);
     pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
-    pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
     pub(crate) const REPETITIONS_OFFSET: usize = std::mem::offset_of!(Self, repetitions);
+    pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     // TODO(refactor): should be private
     pub const fn new_const(slice: &'static [u16]) -> Self {
@@ -314,7 +381,7 @@ impl StringFragment {
     }
 
     // TODO(refactor): remove
-    pub(crate) fn set_repetitions(&mut self, repetitions: u8) {
+    pub(crate) fn set_repetitions(&mut self, repetitions: u32) {
         self.repetitions = repetitions;
     }
 
@@ -396,7 +463,7 @@ impl StringFragment {
         }
     }
 
-    pub(crate) fn repeat(&self, repetitions: u8) -> Self {
+    pub(crate) fn repeat(&self, repetitions: u32) -> Self {
         debug_assert!(self.is_simple());
         debug_assert!(repetitions > 0);
         Self {
@@ -507,7 +574,7 @@ bitflags! {
 struct CodeUnits<'a> {
     fragment: Option<&'a StringFragment>,
     pos: u32,
-    repetitions: u8,
+    repetitions: u32,
 }
 
 impl<'a> CodeUnits<'a> {

@@ -1,5 +1,5 @@
 pub mod number;
-mod string;
+pub mod string;
 
 use std::ffi::c_void;
 use std::mem::offset_of;

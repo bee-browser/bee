@@ -19,9 +19,9 @@ pub fn string_from_char_code<X>(
         utf16.push(code_unit);
     }
     let slice = runtime.allocator.alloc_slice_copy(&utf16);
-    let frag = StringFragment::new_stack(slice, true);
-    let string = StringHandle::new(&frag);
-    Ok(Value::String(runtime.migrate_string_to_heap(string)))
+    let fragment = StringFragment::new_stack(slice, true);
+    let string = StringHandle::new(&fragment).ensure_return_safe(runtime.allocator());
+    Ok(Value::String(string))
 }
 
 //#sec-string.fromcodepoint constructor.function
@@ -46,9 +46,9 @@ pub fn string_from_code_point<X>(
         utf16.extend_from_slice(char::from_u32(cp as u32).unwrap().encode_utf16(&mut buf));
     }
     let slice = runtime.allocator.alloc_slice_copy(&utf16);
-    let frag = StringFragment::new_stack(slice, true);
-    let string = StringHandle::new(&frag);
-    Ok(Value::String(runtime.migrate_string_to_heap(string)))
+    let fragment = StringFragment::new_stack(slice, true);
+    let string = StringHandle::new(&fragment).ensure_return_safe(runtime.allocator());
+    Ok(Value::String(string))
 }
 
 //#sec-string.prototype.at prototype.function
@@ -74,9 +74,9 @@ pub fn string_prototype_at<X>(
     // TODO(perf): memory inefficient
     let code_unit = s.at(k as u32);
     let slice = runtime.allocator.alloc_slice_copy(code_unit.as_slice());
-    let frag = StringFragment::new_stack(slice, true);
-    let string = StringHandle::new(&frag);
-    Ok(Value::String(runtime.migrate_string_to_heap(string)))
+    let fragment = StringFragment::new_stack(slice, true);
+    let string = StringHandle::new(&fragment).ensure_return_safe(runtime.allocator());
+    Ok(Value::String(string))
 }
 
 //#sec-string.prototype.charat prototype.function
@@ -97,9 +97,9 @@ pub fn string_prototype_char_at<X>(
     // TODO(perf): memory inefficient
     let code_unit = s.at(position as u32);
     let slice = runtime.allocator.alloc_slice_copy(code_unit.as_slice());
-    let frag = StringFragment::new_stack(slice, true);
-    let string = StringHandle::new(&frag);
-    Ok(Value::String(runtime.migrate_string_to_heap(string)))
+    let fragment = StringFragment::new_stack(slice, true);
+    let string = StringHandle::new(&fragment).ensure_return_safe(runtime.allocator());
+    Ok(Value::String(string))
 }
 
 //#sec-string.prototype.charcodeat prototype.function
@@ -421,11 +421,11 @@ pub fn string_prototype_repeat<X>(
         return Ok(Value::String(StringHandle::EMPTY));
     }
 
-    if n > u8::MAX as f64 {
+    if n > u32::MAX as f64 {
         return Err(Error::InternalError);
     }
 
-    let result = runtime.repeat_string(s, n as u8);
+    let result = runtime.repeat_string(s, n as u32);
     Ok(Value::String(result))
 }
 
