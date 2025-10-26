@@ -254,7 +254,7 @@ impl StringHandle {
 
     pub fn ensure_return_safe(&self, allocator: &Bump) -> Self {
         if !self.on_stack() {
-            return self.clone();
+            return *self;
         }
 
         if self.is_empty() {
@@ -425,7 +425,7 @@ impl StringFragment {
 
     pub(crate) fn len(&self) -> u32 {
         debug_assert!(self.repetitions > 0);
-        self.len * self.repetitions as u32
+        self.len * self.repetitions
     }
 
     // Returns a *raw* UTF-16 code unit sequence.

@@ -216,8 +216,7 @@ impl<X> Runtime<X> {
             return StringHandle::new(&frag).ensure_return_safe(self.allocator());
         }
 
-        debug_assert!(repetitions <= u32::MAX);
-        let frag = fill_string.fragment().repeat(repetitions as u32);
+        let frag = fill_string.fragment().repeat(repetitions);
         if remaining == 0 {
             return StringHandle::new(&frag).ensure_return_safe(self.allocator());
         }
