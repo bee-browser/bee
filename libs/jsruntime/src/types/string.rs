@@ -360,8 +360,8 @@ impl StringFragment {
             next: std::ptr::null(),
             ptr: slice.as_ptr(),
             len: slice.len() as u32,
-            flags: StringFragmentFlags::CONST,
             repetitions: 1,
+            flags: StringFragmentFlags::CONST,
         }
     }
 
@@ -371,12 +371,12 @@ impl StringFragment {
             next: std::ptr::null(),
             ptr: slice.as_ptr(),
             len: slice.len() as u32,
+            repetitions: 1,
             flags: if dynamic {
                 StringFragmentFlags::STACK.union(StringFragmentFlags::DYNAMIC)
             } else {
                 StringFragmentFlags::STACK
             },
-            repetitions: 1,
         }
     }
 
@@ -390,9 +390,9 @@ impl StringFragment {
             next,
             ptr: frag.ptr,
             len: frag.len,
+            repetitions: frag.repetitions,
             flags: StringFragmentFlags::HEAP
                 | frag.flags.intersection(StringFragmentFlags::DYNAMIC),
-            repetitions: frag.repetitions,
         }
     }
 
