@@ -175,25 +175,7 @@ pub(crate) extern "C" fn runtime_to_string<X>(
     value: &Value,
 ) -> StringHandle {
     logger::debug!(event = "runtime_to_string", ?value);
-    runtime.perform_to_string(value)
-}
-
-impl<X> Runtime<X> {
-    pub(crate) fn perform_to_string(&mut self, value: &Value) -> StringHandle {
-        logger::debug!(event = "perform_to_string", ?value);
-        match value {
-            Value::None => unreachable!("Value::None"),
-            Value::Undefined => const_string!("undefined"),
-            Value::Null => const_string!("null"),
-            Value::Boolean(true) => const_string!("true"),
-            Value::Boolean(false) => const_string!("false"),
-            Value::Number(value) => {
-                self.number_to_string(*value) // TODO
-            }
-            Value::String(value) => *value,
-            Value::Promise(_) | Value::Object(_) => const_string!("[object Object]"),
-        }
-    }
+    runtime.value_to_string(value).unwrap()
 }
 
 // 6.1.6.1.20 Number::toString ( x, radix )
@@ -209,9 +191,8 @@ impl<X> Runtime<X> {
     pub(crate) fn number_to_string(&mut self, value: f64) -> StringHandle {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
-        let chunk = StringFragment::new_stack(utf16);
-        let string = StringHandle::new(&chunk);
-        self.migrate_string_to_heap(string)
+        let chunk = StringFragment::new_stack(utf16, true);
+        StringHandle::new(&chunk).ensure_return_safe(self.allocator())
     }
 }
 
@@ -248,6 +229,7 @@ impl<X> Runtime<X> {
                 retv
             ),
             Value::String(value) => {
+                // TODO(refactor): rewrite using `new String(value)`
                 match self.create_string_object(None, &[Value::String(*value)], true) {
                     Ok(Value::Object(object)) => {
                         *retv = Value::Object(object);
@@ -396,7 +378,7 @@ pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: &mut Runtime<X>,
     string: StringHandle,
 ) -> StringHandle {
-    runtime.migrate_string_to_heap(string)
+    string.ensure_return_safe(runtime.allocator())
 }
 
 pub(crate) extern "C" fn runtime_create_capture<X>(
@@ -760,21 +742,7 @@ pub(crate) extern "C" fn runtime_concat_strings<X>(
     head: StringHandle,
     tail: StringHandle,
 ) -> StringHandle {
-    if tail.is_empty() {
-        return StringHandle::new(runtime.alloc_string_fragment_recursively(head.fragment(), None));
-    }
-
-    let tail = if tail.on_stack() {
-        runtime.alloc_string_fragment_recursively(tail.fragment(), None)
-    } else {
-        tail.fragment()
-    };
-
-    if head.is_empty() {
-        return StringHandle::new(tail);
-    }
-
-    StringHandle::new(runtime.alloc_string_fragment_recursively(head.fragment(), Some(tail)))
+    head.concat(tail, runtime.allocator())
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )

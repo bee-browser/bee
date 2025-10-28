@@ -82,7 +82,7 @@ pub fn evaluate_multiple_programs(
     let mut runtime = Runtime::with_extension(Validator::new(expected_values));
     runtime.enable_scope_cleanup_checker();
     runtime.register_host_function("print", |runtime, args| {
-        let value = runtime.ensure_value_on_heap(&args[0]);
+        let value = runtime.ensure_value_return_safe(&args[0]);
         runtime.extension_mut().actual_values.push(value);
     });
     for (source, module) in sources.iter().cloned() {

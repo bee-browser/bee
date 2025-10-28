@@ -12,6 +12,8 @@ mod types;
 
 use std::pin::Pin;
 
+use itertools::Itertools;
+
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -291,26 +293,11 @@ impl<X> Runtime<X> {
         &self.allocator
     }
 
-    pub fn ensure_value_on_heap(&mut self, value: &Value) -> Value {
+    pub fn ensure_value_return_safe(&mut self, value: &Value) -> Value {
         match value {
-            Value::String(string) if string.on_stack() => {
-                Value::String(self.migrate_string_to_heap(*string))
-            }
+            Value::String(string) => Value::String(string.ensure_return_safe(self.allocator())),
             _ => value.clone(),
         }
-    }
-
-    // Migrate a UTF-16 string from the stack to the heap.
-    pub(crate) fn migrate_string_to_heap(&mut self, string: StringHandle) -> StringHandle {
-        logger::debug!(event = "migrate_string_to_heap", ?string);
-        debug_assert!(string.on_stack());
-
-        if string.is_empty() {
-            return StringHandle::EMPTY;
-        }
-
-        // TODO(issue#237): GcCell
-        StringHandle::new(self.alloc_string_fragment_recursively(string.fragment(), None))
     }
 
     pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
@@ -319,22 +306,20 @@ impl<X> Runtime<X> {
         self.allocator.alloc_slice_copy(&utf16)
     }
 
-    pub(crate) fn alloc_string_fragment_recursively(
-        &self,
-        frag: &StringFragment,
-        last: Option<&StringFragment>,
-    ) -> &StringFragment {
-        let next = if let Some(next) = frag.next() {
-            self.alloc_string_fragment_recursively(next, last).as_ptr()
-        } else {
-            last.map_or(std::ptr::null(), StringFragment::as_ptr)
-        };
-        self.allocator
-            .alloc(StringFragment::new_heap_from_raw_parts(
-                next,
-                frag.raw_ptr(),
-                frag.len(),
-            ))
+    fn create_substring(&mut self, string: StringHandle, start: u32, end: u32) -> StringHandle {
+        debug_assert!(start < end);
+        // TODO(perf): inefficient
+        let utf16 = string
+            .code_units()
+            .skip(start as usize)
+            .take((end - start) as usize)
+            .collect_vec();
+        let utf16 = self.allocator().alloc_slice_copy(&utf16);
+        let frag = StringFragment::new_stack(utf16, true);
+        let frag = self
+            .allocator()
+            .alloc(StringFragment::new_heap(std::ptr::null_mut(), &frag));
+        StringHandle::new(frag)
     }
 
     fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {
@@ -370,7 +355,7 @@ impl<X> Runtime<X> {
         key: &PropertyKey,
         value: &Value,
     ) -> Result<bool, Value> {
-        let value = self.ensure_value_on_heap(value);
+        let value = self.ensure_value_return_safe(value);
         object.define_own_property(key.clone(), Property::data_wec(value))
     }
 
@@ -426,4 +411,12 @@ where
 
 pub trait Monitor {
     fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
+}
+
+#[allow(clippy::enum_variant_names)]
+#[derive(Debug)]
+pub(crate) enum Error {
+    TypeError,
+    RangeError,
+    InternalError,
 }

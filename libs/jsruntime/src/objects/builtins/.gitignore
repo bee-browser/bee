@@ -6,3 +6,5 @@ reference_error.rs
 syntax_error.rs
 type_error.rs
 uri_error.rs
+/*/mod.rs
+/*/imp.json

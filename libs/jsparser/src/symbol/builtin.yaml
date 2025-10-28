@@ -54,17 +54,36 @@
 - Infinity
 - [NaN, NAN]
 - [async, ASYNC]
+- at
 - cause
+- charAt
+- charCodeAt
+- codePointAt
+- concat
 - constructor
 - default
+- endsWith
+- fromCharCode
+- fromCodePoint
 - globalThis
+- includes
 - indexOf
 - isError
+- isWellFormed
+- lastIndexOf
 - length
 - message
 - name
+- padEnd
+- padStart
 - prototype
+- repeat
+- startsWith
+- substring
 - toString
+- trim
+- trimEnd
+- trimStart
 
 # Special symbols for internal use only.
 - ['-Infinity', NEG_INFINITY]

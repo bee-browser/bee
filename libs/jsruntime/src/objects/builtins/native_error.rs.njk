@@ -55,7 +55,10 @@ impl<X> Runtime<X> {
         match message {
             Value::Undefined => (),
             _ => {
-                let msg = self.perform_to_string(message);
+                let msg = match self.value_to_string(message) {
+                    Ok(string) => string,
+                    Err(err) => return Err(self.create_exception(err)),
+                };
                 // TODO: error handling
                 let _ = object.define_own_property(
                     Symbol::MESSAGE.into(),

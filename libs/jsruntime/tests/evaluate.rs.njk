@@ -53,7 +53,7 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
         // TODO
     }
     runtime.register_host_function("print", |runtime, args| {
-        let value = runtime.ensure_value_on_heap(&args[0]);
+        let value = runtime.ensure_value_return_safe(&args[0]);
         runtime.extension_mut().actual_values.push(value);
     });
     let program_id = if module {

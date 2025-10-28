@@ -13,19 +13,16 @@ mod uri_error;
 
 use jsparser::Symbol;
 
+use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::Lambda;
+use crate::types::StringFragment;
 use crate::types::StringHandle;
 use crate::types::Value;
-
-#[allow(unused)]
-enum Error {
-    TypeError,
-}
 
 impl<X> Runtime<X> {
     // 19 The Global Object
@@ -127,7 +124,7 @@ impl<X> Runtime<X> {
             Value::Boolean(true) => Ok(1.0),
             Value::Boolean(false) => Ok(0.0),
             Value::Number(value) => Ok(*value),
-            Value::String(_value) => todo!(),
+            Value::String(_value) => Err(Error::InternalError), // TODO
             Value::Promise(_) => Ok(f64::NAN),
             // TODO(feat): 7.1.1 ToPrimitive()
             Value::Object(_) => Ok(f64::NAN),
@@ -147,28 +144,25 @@ impl<X> Runtime<X> {
         }
     }
 
+    // 7.1.20 ToLength ( argument )
+    fn value_to_length(&mut self, value: &Value) -> Result<u64, Error> {
+        logger::debug!(event = "runtime.value_to_length", ?value);
+        let len = self.value_to_integer_or_infinity(value)?;
+        if len < 0.0 {
+            Ok(0)
+        } else {
+            Ok(len.min(0x1F_FFFF_FFFF_FFFFu64 as f64) as u64)
+        }
+    }
+
     // TODO(refactor): code clone, see runtime_concat_strings.
     fn concat_strings(&mut self, a: StringHandle, b: StringHandle) -> StringHandle {
-        if b.is_empty() {
-            return StringHandle::new(self.alloc_string_fragment_recursively(a.fragment(), None));
-        }
-
-        let b = if b.on_stack() {
-            StringHandle::new(self.alloc_string_fragment_recursively(b.fragment(), None))
-        } else {
-            b
-        };
-
-        if a.is_empty() {
-            return b;
-        }
-
-        StringHandle::new(self.alloc_string_fragment_recursively(a.fragment(), Some(b.fragment())))
+        a.concat(b, self.allocator())
     }
 
     // 7.1.17 ToString ( argument )
     // TODO: code clone, see backend::bridge::runtime_to_string
-    fn value_to_string(&mut self, value: &Value) -> Result<StringHandle, Error> {
+    pub(crate) fn value_to_string(&mut self, value: &Value) -> Result<StringHandle, Error> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
@@ -176,19 +170,89 @@ impl<X> Runtime<X> {
             Value::Null => Ok(const_string!("null")),
             Value::Boolean(true) => Ok(const_string!("true")),
             Value::Boolean(false) => Ok(const_string!("false")),
-            Value::Number(value) => {
-                Ok(self.number_to_string(*value)) // TODO
-            }
+            Value::Number(value) => Ok(self.number_to_string(*value)),
             Value::String(value) => Ok(*value),
+            // TODO(feat): Value::Symbol(_) => Err(Error::TypeError),
             Value::Promise(_) => todo!(),
-            Value::Object(value) => {
-                let value = *value;
-                if self.is_string_object(value) {
-                    Ok(value.string())
-                } else {
-                    Ok(const_string!("[object Object]"))
-                }
-            }
+            Value::Object(value) => self.object_to_string(*value),
         }
+    }
+
+    fn object_to_string(&mut self, object: ObjectHandle) -> Result<StringHandle, Error> {
+        // TODO(feat): ToPrimitive(object, STRING)
+        if self.is_string_object(object) {
+            Ok(object.string())
+        } else {
+            Ok(const_string!("[object Object]"))
+        }
+    }
+
+    fn create_exception(&mut self, err: Error) -> Value {
+        let object = match err {
+            Error::TypeError => self
+                .create_type_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap(),
+            Error::RangeError => self
+                .create_range_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap(),
+            Error::InternalError => self
+                .create_internal_error(true, &Value::Undefined, &Value::Undefined)
+                .unwrap(),
+        };
+        Value::Object(object)
+    }
+
+    fn make_string_filler(&mut self, fill_string: StringHandle, fill_len: u32) -> StringHandle {
+        debug_assert!(fill_string.is_simple());
+        debug_assert!(!fill_string.is_empty());
+
+        let fill_string_len = fill_string.len();
+        let repetitions = fill_len / fill_string_len;
+        let remaining = fill_len % fill_string_len;
+
+        if repetitions == 0 {
+            debug_assert!(remaining > 0);
+            let frag = fill_string.fragment().sub_fragment(0, remaining);
+            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
+        }
+
+        let frag = fill_string.fragment().repeat(repetitions);
+        if remaining == 0 {
+            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
+        }
+
+        let last = fill_string.fragment().sub_fragment(0, remaining);
+        StringHandle::new(&frag).concat(StringHandle::new(&last), self.allocator())
+    }
+
+    fn repeat_string(&mut self, s: StringHandle, n: u32) -> StringHandle {
+        if n == 1 {
+            return s;
+        }
+
+        if s.is_empty() {
+            return s;
+        }
+
+        if s.is_simple() {
+            let frag = s.fragment().repeat(n);
+            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
+        }
+
+        // TODO(perf): inefficient
+        let utf16 = s.make_utf16();
+        let slice = self.allocator().alloc_slice_copy(&utf16);
+        let mut frag = StringFragment::new_stack(slice, true);
+        frag.set_repetitions(n);
+        StringHandle::new(&frag).ensure_return_safe(self.allocator())
+    }
+}
+
+// 7.2.1 RequireObjectCoercible ( argument )
+fn require_object_coercible(value: &Value) -> Result<(), Error> {
+    match value {
+        Value::None => unreachable!(),
+        Value::Undefined | Value::Null => Err(Error::TypeError),
+        _ => Ok(()),
     }
 }

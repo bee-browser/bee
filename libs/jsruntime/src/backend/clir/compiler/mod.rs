@@ -2925,9 +2925,33 @@ where
                 }
                 Operand::String(value, _)
                 | Operand::PropertyReference(PropertyOwner::String(value), _) => {
-                    // TODO(issue#237): GcCellRef
+                    let value = *value;
+
+                    let then_block = self.editor.create_block_with_addr();
+                    let merge_block = self.editor.create_block_with_addr();
+
+                    // if value.on_stack()
+                    let on_stack = self.editor.put_string_on_stack(value);
+                    self.editor.put_branch(
+                        on_stack,
+                        then_block,
+                        &[value.0.into()],
+                        merge_block,
+                        &[value.0.into()],
+                    );
+                    // {
+                    self.editor.switch_to_block(then_block);
+                    let value = StringIr(self.editor.get_block_param(then_block, 0));
+                    let value = self
+                        .editor
+                        .put_runtime_migrate_string_to_heap(self.support, value);
+                    self.editor.put_jump(merge_block, &[value.0.into()]);
+                    self.editor.switch_to_block(merge_block);
+                    // }
+
+                    let value = StringIr(self.editor.get_block_param(merge_block, 0));
                     self.editor
-                        .put_write_string_to_scratch_buffer(*value, &mut scratch_buffer);
+                        .put_write_string_to_scratch_buffer(value, &mut scratch_buffer);
                 }
                 Operand::Closure(value) => {
                     // TODO(issue#237): GcCellRef
