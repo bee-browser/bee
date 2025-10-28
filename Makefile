@@ -76,12 +76,26 @@ endif
 
 # DO NOT REMOVE '-'.
 # Continue the execution in order to generate the report even if test commands fail.
+# TODO(test): Add test cases for jsruntime.
 .PHONY: coverage
 coverage: LLVM_COV_ARGS ?= --html
+coverage: TEST262_ARGS ?=
 coverage:
 	cargo llvm-cov clean --workspace
-	-cargo llvm-cov nextest --no-report --all-features
-	-cargo llvm-cov run --bin=test262 --no-report --all-features -- --test262-dir=vendor/src/tc39/test262 run >/dev/null
+	cargo llvm-cov nextest --no-report --all-features
+	-sh bins/estree/scripts/test262_parser_tests.sh --profile=coverage $(TEST262_ARGS)
+	-sh bins/estree/scripts/test262.sh --profile=coverage $(TEST262_ARGS)
+	cargo llvm-cov report $(LLVM_COV_ARGS)
+
+# TODO(test): Very slow...
+# This takes nearly an hour on a high performance PC.
+# This takes several hours in the GitHub Actions.
+.PHONY: coverage-jsruntime
+coverage-jsruntime: LLVM_COV_ARGS ?= --html
+coverage-jsruntime: TEST262_ARGS ?=
+coverage-jsruntime:
+	cargo llvm-cov clean --workspace
+	cargo llvm-cov run --bin=test262 --no-report --all-features -- --test262-dir=vendor/src/tc39/test262 $(TEST262_ARGS) run >/dev/null
 	cargo llvm-cov report $(LLVM_COV_ARGS)
 
 .PHONY: bench
