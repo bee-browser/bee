@@ -106,10 +106,12 @@ pub struct Runtime<X> {
 
     // %Object.prototype%
     object_prototype: Option<ObjectHandle>,
-    // %String.prototype%
-    string_prototype: Option<ObjectHandle>,
     // %Function.prototype%
     function_prototype: Option<ObjectHandle>,
+    // %String.prototype%
+    string_prototype: Option<ObjectHandle>,
+    // %Promise.prototype%
+    promise_prototype: Option<ObjectHandle>,
     // %Error.prototype%
     error_prototype: Option<ObjectHandle>,
     // %AggregateError.prototype%
@@ -148,8 +150,9 @@ impl<X> Runtime<X> {
             job_runner: JobRunner::new(),
             global_object,
             object_prototype: None,
-            string_prototype: None,
             function_prototype: None,
+            string_prototype: None,
+            promise_prototype: None,
             error_prototype: None,
             aggregate_error_prototype: None,
             eval_error_prototype: None,

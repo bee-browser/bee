@@ -65,6 +65,14 @@ impl Value {
         }
     }
 
+    pub fn is_callable(&self) -> bool {
+        debug_assert!(self.is_valid());
+        match self {
+            Self::Object(object) => object.is_callable(),
+            _ => false,
+        }
+    }
+
     // 7.1.18 ToObject ( argument )
     pub fn to_object(&self) -> Result<&Object, Value> {
         match self {

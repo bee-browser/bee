@@ -4,6 +4,7 @@ mod eval_error;
 mod function;
 mod internal_error;
 mod object;
+mod promise;
 mod range_error;
 mod reference_error;
 mod string;
@@ -45,6 +46,7 @@ impl<X> Runtime<X> {
         self.object_prototype = Some(self.create_object(None));
         self.function_prototype = Some(self.create_function_prototype());
         self.string_prototype = Some(self.create_string_prototype());
+        self.promise_prototype = Some(self.create_promise_prototype());
         self.error_prototype = Some(self.create_error_prototype());
         self.aggregate_error_prototype = Some(self.create_aggregate_error_prototype());
         self.eval_error_prototype = Some(self.create_eval_error_prototype());
@@ -76,8 +78,10 @@ impl<X> Runtime<X> {
             Symbol::FUNCTION => Value::Object(self.create_function_constructor()),
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError
             Symbol::INTERNAL_ERROR => Value::Object(self.create_internal_error_constructor()),
-            // 19.3.23 Object()
+            // 19.3.23 Object ( . . . )
             Symbol::OBJECT => Value::Object(self.create_object_constructor()),
+            // 19.3.24 Promise ( . . . )
+            Symbol::PROMISE => Value::Object(self.create_promise_constructor()),
             // 19.3.26 RangeError ( . . . )
             Symbol::RANGE_ERROR => Value::Object(self.create_range_error_constructor()),
             // 19.3.27 ReferenceError ( . . . )

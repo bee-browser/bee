@@ -45,8 +45,12 @@ async function main(args, options) {
     }
     const parts = line.split(ECMA262_SPEC_URL_BASE);
     const id = parts[1].substring(0, parts[1].length - 1); // remove the last ')'
-    // TODO(feat): constructor
-    let func = data.constructorProperties.functions.find((func) => func.id === id);
+    let func = data.constructor?.id === id ? data.constructor : null;
+    if (func) {
+      lines.push(`* [x] [${func.signature.name}](${ECMA262_SPEC_URL_BASE}${func.id})`);
+      continue;
+    }
+    func = data.constructorProperties.functions.find((func) => func.id === id);
     if (func) {
       lines.push(`* [x] [${func.signature.name}](${ECMA262_SPEC_URL_BASE}${func.id})`);
       continue;
