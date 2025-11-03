@@ -16,5 +16,8 @@ serde = { version = "1.0.228", features = ["derive"], optional = true }
 [dev-dependencies]
 serde_test = "1.0.177"
 
+[lints]
+workspace = true
+
 [lib]
 bench = false

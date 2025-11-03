@@ -14,7 +14,8 @@ proc-macro2 = "1.0.103"
 quote = "1.0.41"
 syn = "2.0.108"
 
-[dev-dependencies]
+[lints]
+workspace = true
 
 [lib]
 bench = false

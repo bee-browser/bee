@@ -27,6 +27,9 @@ assert_matches = "1.5.0"
 clap = { version = "4.5.51", features = ["env", "derive", "wrap_help"] }
 ctor = "0.6.0"
 
+[lints]
+workspace = true
+
 [lib]
 bench = false
 

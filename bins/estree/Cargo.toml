@@ -17,3 +17,6 @@ jsparser = { path = "../../libs/jsparser", features = ["location"] }
 logging = { path = "../../libs/logging" }
 serde = { version = "1.0.228", features = ["derive", "rc"] }
 serde_json = { version = "1.0.145", features = ["preserve_order"] }
+
+[lints]
+workspace = true

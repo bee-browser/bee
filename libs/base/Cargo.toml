@@ -15,6 +15,9 @@ procmacros = { path = "../procmacros" }
 [dev-dependencies]
 criterion = "0.7.0"
 
+[lints]
+workspace = true
+
 [lib]
 bench = false
 

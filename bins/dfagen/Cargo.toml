@@ -23,3 +23,6 @@ smallvec = "1.15.1"
 
 [dev-dependencies]
 ctor = "0.6.0"
+
+[lints]
+workspace = true

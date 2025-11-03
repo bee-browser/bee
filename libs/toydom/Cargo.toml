@@ -13,5 +13,8 @@ version.workspace = true
 htmlparser = { path = "../htmlparser" }
 logging = { path = "../logging" }
 
+[lints]
+workspace = true
+
 [lib]
 bench = false
