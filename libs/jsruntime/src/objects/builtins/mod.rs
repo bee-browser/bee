@@ -129,7 +129,6 @@ impl<X> Runtime<X> {
             Value::Boolean(false) => Ok(0.0),
             Value::Number(value) => Ok(*value),
             Value::String(_value) => Err(Error::InternalError), // TODO
-            Value::Promise(_) => Ok(f64::NAN),
             // TODO(feat): 7.1.1 ToPrimitive()
             Value::Object(_) => Ok(f64::NAN),
         }
@@ -177,7 +176,6 @@ impl<X> Runtime<X> {
             Value::Number(value) => Ok(self.number_to_string(*value)),
             Value::String(value) => Ok(*value),
             // TODO(feat): Value::Symbol(_) => Err(Error::TypeError),
-            Value::Promise(_) => todo!(),
             Value::Object(value) => self.object_to_string(*value),
         }
     }

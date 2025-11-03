@@ -289,6 +289,10 @@ impl Object {
         self.properties.iter()
     }
 
+    pub(crate) fn userdata(&self) -> usize {
+        self.nucleus
+    }
+
     pub(crate) fn set_closure(&mut self, closure: *mut Closure) {
         self.nucleus = closure.addr();
         self.set_callable();

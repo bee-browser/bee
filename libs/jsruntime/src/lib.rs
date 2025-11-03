@@ -341,7 +341,7 @@ impl<X> Runtime<X> {
             Value::String(value) => {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
-            Value::Promise(_) | Value::Object(_) => {
+            Value::Object(_) => {
                 const MESSAGE: StringHandle = const_string!("TODO: make_property_key");
                 match self.create_internal_error(true, &Value::String(MESSAGE), &Value::Undefined) {
                     Ok(err) => Err(Value::Object(err)),

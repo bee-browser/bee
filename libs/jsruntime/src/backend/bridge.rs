@@ -147,7 +147,6 @@ pub(crate) extern "C" fn runtime_to_boolean<X>(_runtime: &mut Runtime<X>, value:
         Value::Number(_) => true,
         Value::String(value) if value.is_empty() => false,
         Value::String(_) => true,
-        Value::Promise(_) => true,
         Value::Object(_) => true,
     }
 }
@@ -164,8 +163,7 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
         Value::Boolean(false) => 0.0,
         Value::Number(value) => *value,
         Value::String(_value) => f64::NAN, // TODO(feat): 7.1.4.1.1 StringToNumber ( str )
-        Value::Promise(_) => f64::NAN,
-        Value::Object(_) => f64::NAN, // TODO(feat): 7.1.1 ToPrimitive()
+        Value::Object(_) => f64::NAN,      // TODO(feat): 7.1.1 ToPrimitive()
     }
 }
 
@@ -242,11 +240,6 @@ impl<X> Runtime<X> {
                     }
                 }
             }
-            Value::Promise(_value) => runtime_todo!(
-                self,
-                "ToObject: not yet implemented for internal promise values",
-                retv
-            ),
             Value::Object(_) => {
                 *retv = value.clone();
                 Status::Normal
@@ -539,24 +532,20 @@ pub(crate) extern "C" fn runtime_register_promise<X>(
     runtime.register_promise(coroutine).into()
 }
 
-pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: u32) {
-    runtime.process_promise(promise.into(), &Value::None, &Value::None);
-}
-
-pub(crate) extern "C" fn runtime_await_promise<X>(
-    runtime: &mut Runtime<X>,
-    promise: u32,
-    awaiting: u32,
-) {
-    runtime.await_promise(promise.into(), awaiting.into());
+pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: *mut c_void) {
+    let promise = ObjectHandle::from_ptr(promise).unwrap();
+    debug_assert!(runtime.is_promise_object(promise));
+    runtime.process_promise(promise, &Value::None, &Value::None);
 }
 
 pub(crate) extern "C" fn runtime_emit_promise_resolved<X>(
     runtime: &mut Runtime<X>,
-    promise: u32,
+    promise: *mut c_void,
     result: &Value,
 ) {
-    runtime.emit_promise_resolved(promise.into(), result.clone());
+    let promise = ObjectHandle::from_ptr(promise).unwrap();
+    debug_assert!(runtime.is_promise_object(promise));
+    runtime.emit_promise_resolved(promise, result.clone());
 }
 
 pub(crate) extern "C" fn runtime_create_object<X>(

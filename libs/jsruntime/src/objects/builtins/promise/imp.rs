@@ -1,14 +1,13 @@
 use crate::Error;
 use crate::Runtime;
 use crate::logger;
+use crate::objects::ObjectHandle;
 use crate::types::CallContext;
+use crate::types::Promise;
 use crate::types::Value;
 
 //#sec-promise-executor constructor
-pub fn promise<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-) -> Result<Value, Error> {
+pub fn promise<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "promise");
 
     // TODO(feat): NewTarget
@@ -24,7 +23,7 @@ pub fn promise<X>(
     }
 
     // TODO(feat): OrdinaryCreateFromConstructor()
-    let mut promise = if let &Value::Object(this) = context.this() {
+    let promise = if let &Value::Object(this) = context.this() {
         this
     } else {
         runtime.create_object(runtime.promise_prototype)
@@ -42,4 +41,12 @@ pub fn promise_all<X>(
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_from_char_code");
     Err(Error::InternalError)
+}
+
+// helpers
+
+impl ObjectHandle {
+    pub(crate) fn get_promise(&self) -> Promise {
+        Promise::from(self.as_object().userdata() as u32)
+    }
 }

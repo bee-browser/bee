@@ -54,6 +54,7 @@ pub struct Session<'r, X> {
     global_object: ObjectHandle,
     object_prototype: ObjectHandle,
     function_prototype: ObjectHandle,
+    promise_prototype: ObjectHandle,
 }
 
 trait CompilerSupport {
@@ -82,6 +83,7 @@ trait CompilerSupport {
     // Intrinsics
     fn object_prototype(&self) -> ObjectHandle;
     fn function_prototype(&self) -> ObjectHandle;
+    fn promise_prototype(&self) -> ObjectHandle;
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
@@ -133,6 +135,10 @@ impl<X> CompilerSupport for Session<'_, X> {
     fn function_prototype(&self) -> ObjectHandle {
         self.function_prototype
     }
+
+    fn promise_prototype(&self) -> ObjectHandle {
+        self.promise_prototype
+    }
 }
 
 // TODO: Deferring the compilation until it's actually called improves the performance.
@@ -172,6 +178,7 @@ pub fn compile<X>(
                 global_object,
                 object_prototype: runtime.object_prototype.unwrap(),
                 function_prototype: runtime.function_prototype.unwrap(),
+                promise_prototype: runtime.promise_prototype.unwrap(),
             }
         };
         context.compile_function(func, &mut session, &program.scope_tree);
@@ -216,6 +223,7 @@ pub fn compile_function<X>(
             global_object,
             object_prototype: runtime.object_prototype.unwrap(),
             function_prototype: runtime.function_prototype.unwrap(),
+            promise_prototype: runtime.promise_prototype.unwrap(),
         }
     };
 
@@ -723,8 +731,7 @@ where
     }
 
     fn process_object(&mut self) {
-        let prototype = self.support.object_prototype();
-        let prototype = self.editor.put_object(prototype.as_addr());
+        let prototype = self.object_prototype();
         let object = self
             .editor
             .put_runtime_create_object(self.support, prototype);
@@ -733,8 +740,7 @@ where
 
     fn process_function(&mut self, name: Symbol) {
         let closure = self.pop_closure();
-        let prototype = self.support.function_prototype();
-        let prototype = self.editor.put_object(prototype.as_addr());
+        let prototype = self.function_prototype();
         let function = self
             .editor
             .put_runtime_create_object(self.support, prototype);
@@ -824,7 +830,12 @@ where
         let promise = self
             .editor
             .put_runtime_register_promise(self.support, coroutine);
-        self.operand_stack.push(Operand::Promise(promise));
+        let prototype = self.promise_prototype();
+        let object = self
+            .editor
+            .put_runtime_create_object(self.support, prototype);
+        self.editor.put_store_promise_to_object(promise, object);
+        self.operand_stack.push(Operand::Object(object));
     }
 
     fn process_exception(&mut self) {
@@ -887,7 +898,6 @@ where
                 self.editor.put_store_object_to_any(value, any);
                 any.into()
             }
-            Operand::Promise(_) => todo!(),
             Operand::Any(_, Some(Value::Undefined)) => Symbol::KEYWORD_UNDEFINED.into(),
             Operand::Any(_, Some(Value::Null)) => Symbol::KEYWORD_NULL.into(),
             Operand::Any(_, Some(Value::Boolean(false))) => Symbol::KEYWORD_FALSE.into(),
@@ -1095,8 +1105,7 @@ where
 
         // TODO(feat): implement others
 
-        let object_prototype = self.support.object_prototype();
-        let object_prototype = self.editor.put_object(object_prototype.as_addr());
+        let object_prototype = self.object_prototype();
         let prototype = self
             .editor
             .put_runtime_create_object(self.support, object_prototype);
@@ -1400,7 +1409,7 @@ where
                 .editor
                 .put_runtime_number_to_string(self.support, *value),
             Operand::String(value, _) => *value,
-            Operand::Promise(_) | Operand::Object(_) => {
+            Operand::Object(_) => {
                 self.emit_throw_internal_error(const_string!("TODO: ToString(object)"));
                 self.editor.put_create_string(&[])
             }
@@ -1608,7 +1617,6 @@ where
             Operand::Boolean(..) => self.process_string(&BOOLEAN),
             Operand::Number(..) => self.process_string(&NUMBER),
             Operand::String(..) => self.process_string(&STRING),
-            Operand::Promise(..) => self.process_string(&OBJECT),
             Operand::Object(object) => {
                 // TODO(perf): inefficient
                 let value = self.emit_create_any();
@@ -1623,7 +1631,6 @@ where
                 Value::Boolean(_) => self.process_string(&BOOLEAN),
                 Value::Number(_) => self.process_string(&NUMBER),
                 Value::String(_) => self.process_string(&STRING),
-                Value::Promise(_) => self.process_string(&OBJECT),
                 Value::Object(object) => {
                     if object.is_callable() {
                         self.process_string(&FUNCTION);
@@ -2237,7 +2244,6 @@ where
             Operand::Boolean(..) => todo!(),
             Operand::Number(..) => todo!(),
             Operand::String(..) => todo!(),
-            Operand::Promise(_value) => todo!(),
             Operand::Object(_) => self.operand_stack.push(operand),
             // Variables and properties.
             Operand::Any(value, ..) => {
@@ -2895,7 +2901,7 @@ where
     }
 
     fn process_resume(&mut self) {
-        let promise = self.pop_promise();
+        let promise = self.pop_object();
         self.editor.put_runtime_resume(self.support, promise);
     }
 
@@ -2964,10 +2970,6 @@ where
                     self.editor
                         .put_write_object_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
-                Operand::Promise(value) => {
-                    self.editor
-                        .put_write_promise_to_scratch_buffer(*value, &mut scratch_buffer);
-                }
                 Operand::Any(value, ..)
                 | Operand::PropertyReference(PropertyOwner::Any(value), _) => {
                     self.editor
@@ -3026,11 +3028,6 @@ where
                         .editor
                         .put_read_object_from_scratch_buffer(&mut scratch_buffer);
                 }
-                Operand::Promise(value) => {
-                    *value = self
-                        .editor
-                        .put_read_promise_from_scratch_buffer(&mut scratch_buffer);
-                }
                 Operand::Any(value, ..)
                 | Operand::PropertyReference(PropertyOwner::Any(value), _) => {
                     *value = self
@@ -3052,7 +3049,10 @@ where
         logger::debug!(event = "perform_resolve_promise");
 
         let promise = self.get_hidden_promise();
-        let promise = self.editor.put_load_promise(promise);
+        if self.support.is_runtime_assert_enabled() {
+            // TODO(refactor): assert(promise.is_object())
+        }
+        let promise = self.editor.put_load_object(promise);
 
         let (operand, ..) = self.dereference();
         match operand {
@@ -3093,31 +3093,9 @@ where
                 self.editor
                     .put_runtime_emit_promise_resolved(self.support, promise, result);
             }
-            Operand::Promise(value) => {
-                self.editor
-                    .put_runtime_await_promise(self.support, value, promise);
-            }
             Operand::Any(value, ..) => {
-                let then_block = self.editor.create_block();
-                let else_block = self.editor.create_block();
-                let merge_block = self.editor.create_block();
-                // if value.is_promise()
-                let is_promise = self.editor.put_is_promise(value);
-                self.editor
-                    .put_branch(is_promise, then_block, &[], else_block, &[]);
-                // {
-                self.editor.switch_to_block(then_block);
-                let target = self.editor.put_load_promise(value);
-                self.editor
-                    .put_runtime_await_promise(self.support, target, promise);
-                self.editor.put_jump(merge_block, &[]);
-                // } else {
-                self.editor.switch_to_block(else_block);
                 self.editor
                     .put_runtime_emit_promise_resolved(self.support, promise, value);
-                self.editor.put_jump(merge_block, &[]);
-                // }
-                self.editor.switch_to_block(merge_block);
             }
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -3171,8 +3149,7 @@ where
             Operand::Boolean(..)
             | Operand::Number(..)
             | Operand::String(..)
-            | Operand::Object(_)
-            | Operand::Promise(_) => self.editor.put_boolean(true),
+            | Operand::Object(_) => self.editor.put_boolean(true),
             Operand::Any(value, ..) => self.editor.put_is_non_nullish(*value),
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -3210,9 +3187,9 @@ where
         }
     }
 
-    fn pop_promise(&mut self) -> PromiseIr {
+    fn pop_object(&mut self) -> ObjectIr {
         match self.operand_stack.pop().unwrap() {
-            Operand::Promise(value) => value,
+            Operand::Object(value) => value,
             _ => unreachable!(),
         }
     }
@@ -3226,7 +3203,7 @@ where
                 self.emit_throw_internal_error(const_string!("TODO: ToBoolean(string)"));
                 self.editor.put_boolean(false)
             }
-            Operand::Promise(_) | Operand::Object(_) => self.editor.put_boolean(true),
+            Operand::Object(_) => self.editor.put_boolean(true),
             Operand::Any(value, ..) => self.editor.put_runtime_to_boolean(self.support, *value),
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -3258,7 +3235,6 @@ where
             Operand::Lambda(..)
             | Operand::Closure(_)
             | Operand::Coroutine(_)
-            | Operand::Promise(_)
             | Operand::VariableReference(..)
             | Operand::PropertyReference(..) => unreachable!("{operand:?}"),
         }
@@ -3342,9 +3318,6 @@ where
             (Operand::String(lhs, ..), Operand::String(rhs, ..)) => {
                 self.editor.put_is_same_string(self.support, *lhs, *rhs)
             }
-            (Operand::Promise(lhs), Operand::Promise(rhs)) => {
-                self.editor.put_is_same_promise(*lhs, *rhs)
-            }
             (Operand::Object(lhs), Operand::Object(rhs)) => {
                 self.editor.put_is_same_object(*lhs, *rhs)
             }
@@ -3361,7 +3334,6 @@ where
             Operand::Number(rhs, ..) => self.perform_is_same_number(lhs, *rhs),
             Operand::String(rhs, ..) => self.perform_is_same_string(lhs, *rhs),
             Operand::Object(rhs) => self.perform_is_same_object(lhs, *rhs),
-            Operand::Promise(rhs) => self.perform_is_same_promise(lhs, *rhs),
             Operand::Any(rhs, ..) => {
                 self.editor
                     .put_runtime_is_strictly_equal(self.support, lhs, *rhs)
@@ -3459,30 +3431,6 @@ where
         self.editor.switch_to_block(then_block);
         let v = self.editor.put_load_object(value);
         let then_value = self.editor.put_is_same_object(v, object);
-        self.editor.put_jump(merge_block, &[then_value.0.into()]);
-        // } else {
-        self.editor.switch_to_block(else_block);
-        let else_value = self.editor.put_boolean(false);
-        self.editor.put_jump(merge_block, &[else_value.0.into()]);
-        // }
-
-        self.editor.switch_to_block(merge_block);
-        BooleanIr(self.editor.get_block_param(merge_block, 0))
-    }
-
-    fn perform_is_same_promise(&mut self, value: AnyIr, promise: PromiseIr) -> BooleanIr {
-        let then_block = self.editor.create_block();
-        let else_block = self.editor.create_block();
-        let merge_block = self.editor.create_block_with_i8();
-
-        // if value.kind == ValueKind::Promise
-        let cond = self.editor.put_is_promise(value);
-        self.editor
-            .put_branch(cond, then_block, &[], else_block, &[]);
-        // {
-        self.editor.switch_to_block(then_block);
-        let v = self.editor.put_load_promise(value);
-        let then_value = self.editor.put_is_same_promise(v, promise);
         self.editor.put_jump(merge_block, &[then_value.0.into()]);
         // } else {
         self.editor.switch_to_block(else_block);
@@ -3686,7 +3634,6 @@ where
             Operand::String(value, _) => self.editor.put_store_string_to_any(*value, any),
             Operand::Object(value) => self.editor.put_store_object_to_any(*value, any),
             Operand::Any(value, _) => self.editor.put_store_any_to_any(*value, any),
-            Operand::Promise(value) => self.editor.put_store_promise_to_any(*value, any),
             Operand::Lambda(..)
             | Operand::Closure(_)
             | Operand::Coroutine(_)
@@ -3837,8 +3784,7 @@ where
         // TODO:
         // a. Let realm be ? GetFunctionRealm(constructor).
         // b. Set proto to realm's intrinsic object named intrinsicDefaultProto.
-        let prototype = self.support.object_prototype();
-        let prototype = self.editor.put_object(prototype.as_addr());
+        let prototype = self.object_prototype();
         self.editor.put_jump(merge_block, &[prototype.0.into()]);
         self.editor.switch_to_block(merge_block);
 
@@ -3924,6 +3870,21 @@ where
     }
 
     // helpers
+
+    fn object_prototype(&mut self) -> ObjectIr {
+        let prototype = self.support.object_prototype();
+        self.editor.put_object(prototype.as_addr())
+    }
+
+    fn function_prototype(&mut self) -> ObjectIr {
+        let prototype = self.support.function_prototype();
+        self.editor.put_object(prototype.as_addr())
+    }
+
+    fn promise_prototype(&mut self) -> ObjectIr {
+        let prototype = self.support.promise_prototype();
+        self.editor.put_object(prototype.as_addr())
+    }
 
     fn is_coroutine(&self, func: &Function) -> bool {
         matches!(
@@ -4056,9 +4017,6 @@ enum Operand {
 
     /// Runtime value of coroutine type.
     Coroutine(CoroutineIr),
-
-    /// Runtime value of promise type.
-    Promise(PromiseIr),
 
     // Reference types.
     VariableReference(Symbol, Locator),

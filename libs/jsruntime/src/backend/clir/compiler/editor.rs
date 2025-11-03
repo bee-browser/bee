@@ -730,11 +730,6 @@ impl<'a> Editor<'a> {
         StringIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
     }
 
-    pub fn put_load_promise(&mut self, any: AnyIr) -> PromiseIr {
-        logger::debug!(event = "put_load_promise", ?any);
-        PromiseIr(self.put_load_i32(any.0, Value::HOLDER_OFFSET))
-    }
-
     pub fn put_load_object(&mut self, any: AnyIr) -> ObjectIr {
         logger::debug!(event = "put_load_object", ?any);
         ObjectIr(self.put_load_addr(any.0, Value::HOLDER_OFFSET))
@@ -919,6 +914,14 @@ impl<'a> Editor<'a> {
             .ins()
             .bor_imm(flags, OBJECT_FLAGS.bits() as i64);
         self.put_store_flags_to_object(flags, object);
+    }
+
+    pub fn put_store_promise_to_object(&mut self, promise: PromiseIr, object: ObjectIr) {
+        logger::debug!(event = "put_store_promise_to_object", ?object);
+        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const OFFSET: i32 = Object::NUCLEUS_OFFSET as i32;
+        let userdata = self.builder.ins().uextend(self.addr_type, promise.0);
+        self.builder.ins().store(FLAGS, userdata, object.0, OFFSET);
     }
 
     fn put_store_flags_to_object(&mut self, flags: ir::Value, object: ObjectIr) {
@@ -1151,11 +1154,6 @@ impl<'a> Editor<'a> {
         self.put_store_kind_and_value_to_any(Value::KIND_STRING, string.0, any);
     }
 
-    pub fn put_store_promise_to_any(&mut self, promise: PromiseIr, any: AnyIr) {
-        logger::debug!(event = "put_store_promise_to_any", ?promise, ?any);
-        self.put_store_kind_and_value_to_any(Value::KIND_PROMISE, promise.0, any);
-    }
-
     pub fn put_store_object_to_any(&mut self, object: ObjectIr, any: AnyIr) {
         logger::debug!(event = "put_store_object_to_any", ?object, ?any);
         self.put_store_kind_and_value_to_any(Value::KIND_OBJECT, object.0, any);
@@ -1376,11 +1374,6 @@ impl<'a> Editor<'a> {
         self.put_is_kind_of(Value::KIND_STRING, any)
     }
 
-    pub fn put_is_promise(&mut self, any: AnyIr) -> BooleanIr {
-        logger::debug!(event = "put_is_promise", ?any);
-        self.put_is_kind_of(Value::KIND_PROMISE, any)
-    }
-
     pub fn put_is_object(&mut self, any: AnyIr) -> BooleanIr {
         logger::debug!(event = "put_is_object", ?any);
         self.put_is_kind_of(Value::KIND_OBJECT, any)
@@ -1421,11 +1414,6 @@ impl<'a> Editor<'a> {
     ) -> BooleanIr {
         logger::debug!(event = "put_is_same_string", ?lhs, ?rhs);
         self.put_runtime_is_same_string(support, lhs, rhs)
-    }
-
-    pub fn put_is_same_promise(&mut self, lhs: PromiseIr, rhs: PromiseIr) -> BooleanIr {
-        logger::debug!(event = "put_is_same_promise", ?lhs, ?rhs);
-        self.put_is_same_int_value(lhs.0, rhs.0)
     }
 
     pub fn put_is_same_object(&mut self, lhs: ObjectIr, rhs: ObjectIr) -> BooleanIr {
@@ -1587,21 +1575,6 @@ impl<'a> Editor<'a> {
         self.put_store(value.0, addr, offset);
     }
 
-    pub fn put_write_promise_to_scratch_buffer(
-        &mut self,
-        value: PromiseIr,
-        scratch_buffer: &mut ScratchBuffer,
-    ) {
-        logger::debug!(
-            event = "put_write_promise_to_scratch_buffer",
-            ?value,
-            ?scratch_buffer,
-        );
-        let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        self.put_store(value.0, addr, offset);
-    }
-
     pub fn put_write_any_to_scratch_buffer(
         &mut self,
         value: AnyIr,
@@ -1681,19 +1654,6 @@ impl<'a> Editor<'a> {
         let ScratchBuffer { addr, offset } = *scratch_buffer;
         scratch_buffer.offset += Value::HOLDER_SIZE;
         ObjectIr(self.put_load_addr(addr, offset))
-    }
-
-    pub fn put_read_promise_from_scratch_buffer(
-        &mut self,
-        scratch_buffer: &mut ScratchBuffer,
-    ) -> PromiseIr {
-        logger::debug!(
-            event = "put_read_promise_from_scratch_buffer",
-            ?scratch_buffer,
-        );
-        let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        PromiseIr(self.put_load_i32(addr, offset))
     }
 
     pub fn put_read_any_from_scratch_buffer(
@@ -2091,21 +2051,7 @@ impl<'a> Editor<'a> {
         PromiseIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_await_promise(
-        &mut self,
-        support: &mut impl EditorSupport,
-        promise: PromiseIr,
-        awaiting: PromiseIr,
-    ) {
-        logger::debug!(event = "put_runtime_await_promise", ?promise, ?awaiting);
-        let func = self
-            .runtime_func_cache
-            .import_runtime_await_promise(support, self.builder.func);
-        let args = [self.runtime(), promise.0, awaiting.0];
-        self.builder.ins().call(func, &args);
-    }
-
-    pub fn put_runtime_resume(&mut self, support: &mut impl EditorSupport, promise: PromiseIr) {
+    pub fn put_runtime_resume(&mut self, support: &mut impl EditorSupport, promise: ObjectIr) {
         logger::debug!(event = "put_runtime_resume", ?promise);
         let func = self
             .runtime_func_cache
@@ -2117,7 +2063,7 @@ impl<'a> Editor<'a> {
     pub fn put_runtime_emit_promise_resolved(
         &mut self,
         support: &mut impl EditorSupport,
-        promise: PromiseIr,
+        promise: ObjectIr,
         result: AnyIr,
     ) {
         logger::debug!(

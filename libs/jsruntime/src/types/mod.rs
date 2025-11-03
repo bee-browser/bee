@@ -32,7 +32,6 @@ pub enum Value {
     Boolean(bool) = Self::KIND_BOOLEAN,
     Number(f64) = Self::KIND_NUMBER,
     String(StringHandle) = Self::KIND_STRING,
-    Promise(Promise) = Self::KIND_PROMISE,
     Object(ObjectHandle) = Self::KIND_OBJECT,
 }
 
@@ -47,8 +46,7 @@ impl Value {
     pub(crate) const KIND_BOOLEAN: u8 = 3;
     pub(crate) const KIND_NUMBER: u8 = 4;
     pub(crate) const KIND_STRING: u8 = 5;
-    pub(crate) const KIND_PROMISE: u8 = 6;
-    pub(crate) const KIND_OBJECT: u8 = 7;
+    pub(crate) const KIND_OBJECT: u8 = 6;
 
     pub(crate) const SIZE: usize = size_of::<Self>();
     pub(crate) const ALIGNMENT: usize = align_of::<Self>();
@@ -60,7 +58,6 @@ impl Value {
         match self {
             Self::None => false,
             Self::Object(value) => value.is_valid(),
-            Self::Promise(value) => value.is_valid(),
             _ => true,
         }
     }
@@ -80,7 +77,6 @@ impl Value {
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),
-            Self::Promise(_value) => unimplemented!("new Promise()"),
             Self::Object(value) => Ok(value.as_object()),
             Self::None => unreachable!(),
         }
@@ -111,7 +107,6 @@ impl Value {
             Self::Boolean(_) => BOOLEAN,
             Self::Number(_) => NUMBER,
             Self::String(_) => STRING,
-            Self::Promise(_) => OBJECT,
             Self::Object(object) => {
                 if object.is_callable() {
                     FUNCTION
@@ -157,9 +152,9 @@ impl From<u32> for Value {
     }
 }
 
-impl From<Promise> for Value {
-    fn from(value: Promise) -> Self {
-        Self::Promise(value)
+impl From<ObjectHandle> for Value {
+    fn from(value: ObjectHandle) -> Self {
+        Self::Object(value)
     }
 }
 
@@ -172,7 +167,6 @@ impl std::fmt::Display for Value {
             Self::Boolean(value) => write!(f, "{value}"),
             Self::Number(value) => write!(f, "{value}"),
             Self::String(value) => write!(f, "{value}"),
-            Self::Promise(value) => write!(f, "{value:?}"),
             Self::Object(value) => write!(f, "object({value:?})"),
         }
     }
@@ -603,7 +597,7 @@ static_assertions::const_assert_eq!(size_of::<Promise>(), 4);
 static_assertions::const_assert_eq!(align_of::<Promise>(), 4);
 
 impl Promise {
-    const fn is_valid(self) -> bool {
+    pub const fn is_valid(self) -> bool {
         self.0 != 0
     }
 }
