@@ -17,6 +17,7 @@
 # Reserved words defined in the ECMA-262 specification.
 - [await, KEYWORD_AWAIT]
 - [arguments, KEYWORD_ARGUMENTS]
+- [catch, KEYWORD_CATCH, CATCH]
 - [eval, KEYWORD_EVAL]
 - ['false', KEYWORD_FALSE]
 - [function, KEYWORD_FUNCTION]

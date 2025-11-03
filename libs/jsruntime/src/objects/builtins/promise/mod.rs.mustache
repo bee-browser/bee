@@ -40,6 +40,11 @@ impl<X> Runtime<X> {
         let _ = constructor.define_own_property(Symbol::{{{symbol}}}.into(), Property::data_wxc(Value::Object(func)));
 
         {{/functions}}
+        // TODO(refactor): bind outside this function
+        if let Some(mut prototype) = self.promise_prototype {
+            let _ = prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(constructor)));
+        }
+
         constructor
     }
     {{/constructorProperties}}

@@ -11,7 +11,7 @@
 * [ ] [Promise.try](https://tc39.es/ecma262/#sec-promise.try)
 * [ ] [Promise.withResolver](https://tc39.es/ecma262/#sec-promise.withResolvers)
 * [ ] [get Promise \[ %Symbol.species% \]](https://tc39.es/ecma262/#sec-get-promise-%symbol.species%)
-* [ ] [Promise.prototype.catch](https://tc39.es/ecma262/#sec-promise.prototype.catch)
+* [x] [Promise.prototype.catch](https://tc39.es/ecma262/#sec-promise.prototype.catch)
 * [ ] [Promise.prototype.constructor](https://tc39.es/ecma262/#sec-promise.prototype.constructor)
 * [ ] [Promise.prototype.finally](https://tc39.es/ecma262/#sec-promise.prototype.finally)
 * [ ] [Promise.prototype.then](https://tc39.es/ecma262/#sec-promise.prototype.then)

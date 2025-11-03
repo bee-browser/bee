@@ -39,7 +39,16 @@ pub fn promise_all<X>(
     _runtime: &mut Runtime<X>,
     _context: &mut CallContext,
 ) -> Result<Value, Error> {
-    logger::debug!(event = "string_from_char_code");
+    logger::debug!(event = "promise_all");
+    Err(Error::InternalError)
+}
+
+//#sec-promise.prototype.catch prototype.function
+pub fn promise_prototype_catch<X>(
+    _runtime: &mut Runtime<X>,
+    _context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "promise_prototype_catch");
     Err(Error::InternalError)
 }
 
