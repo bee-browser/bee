@@ -45,7 +45,7 @@ async function main(args, options) {
         name = item;
         rustName = changeCase.constantCase(item);
       } else if (Array.isArray(item)) {
-        name = item.shift()
+        name = item.shift();
         rustName = item.shift();
         if (item.length > 0) {
           aliases = item;
