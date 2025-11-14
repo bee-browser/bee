@@ -13,7 +13,7 @@ version.workspace = true
 anyhow = "1.0.100"
 async-stream = "0.3.6"
 axum = "0.8.6"
-bytes = "1.10.1"
+bytes = "1.11.0"
 clap = { version = "4.5.51", features = ["derive"] }
 logging = { path = "../../libs/logging" }
 mime = "0.3.17"
