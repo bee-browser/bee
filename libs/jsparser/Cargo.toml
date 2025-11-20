@@ -14,7 +14,7 @@ location = []
 
 [dependencies]
 bitflags = "2.10.0"
-indexmap = "2.12.0"
+indexmap = "2.12.1"
 logging = { path = "../../libs/logging" }
 phf = { version = "0.13.1", features = ["macros"] }
 smallvec = "1.15.1"
