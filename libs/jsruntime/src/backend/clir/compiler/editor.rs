@@ -81,17 +81,17 @@ impl<'a> Editor<'a> {
         // predecessor of the entry block.
         builder.seal_block(entry_block);
 
-        let call_context = builder.create_sized_stack_slot(ir::StackSlotData {
-            kind: ir::StackSlotKind::ExplicitSlot,
-            size: CallContext::SIZE as u32,
-            align_shift: CallContext::ALIGNMENT.ilog2() as u8,
-        });
+        let call_context = builder.create_sized_stack_slot(ir::StackSlotData::new(
+            ir::StackSlotKind::ExplicitSlot,
+            CallContext::SIZE as u32,
+            CallContext::ALIGNMENT.ilog2() as u8,
+        ));
 
-        let fcs = builder.create_sized_stack_slot(ir::StackSlotData {
-            kind: ir::StackSlotKind::ExplicitSlot,
-            size: 10, // [status, flow_selector, scope_id]
-            align_shift: 2,
-        });
+        let fcs = builder.create_sized_stack_slot(ir::StackSlotData::new(
+            ir::StackSlotKind::ExplicitSlot,
+            10, // [status, flow_selector, scope_id]
+            2,
+        ));
 
         Self {
             builder,
@@ -569,11 +569,11 @@ impl<'a> Editor<'a> {
     pub fn put_alloc_string(&mut self) -> StringIr {
         logger::debug!(event = "put_alloc_string");
 
-        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
-            kind: ir::StackSlotKind::ExplicitSlot,
-            size: StringFragment::SIZE as u32,
-            align_shift: StringFragment::ALIGNMENT.ilog2() as u8,
-        });
+        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
+            ir::StackSlotKind::ExplicitSlot,
+            StringFragment::SIZE as u32,
+            StringFragment::ALIGNMENT.ilog2() as u8,
+        ));
 
         let next = self.builder.ins().iconst(self.addr_type, 0);
         self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
@@ -615,11 +615,11 @@ impl<'a> Editor<'a> {
     pub fn put_create_string(&mut self, value: &[u16]) -> StringIr {
         logger::debug!(event = "put_create_string", ?value);
 
-        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
-            kind: ir::StackSlotKind::ExplicitSlot,
-            size: StringFragment::SIZE as u32,
-            align_shift: StringFragment::ALIGNMENT.ilog2() as u8,
-        });
+        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
+            ir::StackSlotKind::ExplicitSlot,
+            StringFragment::SIZE as u32,
+            StringFragment::ALIGNMENT.ilog2() as u8,
+        ));
 
         let next = self.builder.ins().iconst(self.addr_type, 0);
         self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
@@ -666,11 +666,11 @@ impl<'a> Editor<'a> {
 
     pub fn put_alloc_any(&mut self) -> AnyIr {
         logger::debug!(event = "put_alloc_any");
-        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
-            kind: ir::StackSlotKind::ExplicitSlot,
-            size: Value::SIZE as u32,
-            align_shift: Value::ALIGNMENT.ilog2() as u8,
-        });
+        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
+            ir::StackSlotKind::ExplicitSlot,
+            Value::SIZE as u32,
+            Value::ALIGNMENT.ilog2() as u8,
+        ));
         AnyIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
 
@@ -1032,11 +1032,11 @@ impl<'a> Editor<'a> {
 
         // The `argv` argument of a lambda function must be non-null even when `argc` is 0.
 
-        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData {
-            kind: ir::StackSlotKind::ExplicitSlot,
-            size: (Value::SIZE as u32) * (argc as u32),
-            align_shift: Value::ALIGNMENT.ilog2() as u8,
-        });
+        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
+            ir::StackSlotKind::ExplicitSlot,
+            (Value::SIZE as u32) * (argc as u32),
+            Value::ALIGNMENT.ilog2() as u8,
+        ));
 
         ArgvIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
     }
