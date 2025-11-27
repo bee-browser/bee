@@ -18,6 +18,7 @@ use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
+use crate::objects::Object;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::Lambda;
@@ -97,24 +98,44 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn create_builtin_function(
-        &mut self,
-        lambda: Lambda<X>,
-        prototype: Option<ObjectHandle>,
-    ) -> ObjectHandle {
-        logger::debug!(event = "create_builtin_function");
+    fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> ObjectHandle {
+        logger::debug!(
+            event = "create_builtin_function",
+            ?params.lambda,
+            ?params.name,
+            params.length,
+            ?params.slots,
+            ?params.prototype
+        );
         debug_assert!(self.function_prototype.is_some());
-        let closure = self.create_closure(lambda, LambdaId::HOST, 0);
+        let closure = self.create_closure(params.lambda, LambdaId::HOST, 0);
         let mut func = self.create_object(self.function_prototype);
         func.set_closure(closure);
-        if let Some(prototype) = prototype {
+        if let Some(prototype) = params.prototype {
             func.set_constructor();
             let _ = func.define_own_property(
                 Symbol::PROTOTYPE.into(),
                 Property::data_xxx(Value::Object(prototype)),
             );
         }
+        self.set_function_length(func.as_object_mut(), params.length);
+        // TODO: prefix
+        self.set_function_name(func.as_object_mut(), params.name);
         func
+    }
+
+    // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
+    fn set_function_name(&mut self, func: &mut Object, name: StringHandle) {
+        let _ =
+            func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
+    }
+
+    // 10.2.10 SetFunctionLength ( F, length )
+    fn set_function_length(&mut self, func: &mut Object, length: u16) {
+        let _ = func.define_own_property(
+            Symbol::LENGTH.into(),
+            Property::data_xxc(Value::Number(length as f64)),
+        );
     }
 
     // 7.1.4 ToNumber ( argument )
@@ -257,4 +278,13 @@ fn require_object_coercible(value: &Value) -> Result<(), Error> {
         Value::Undefined | Value::Null => Err(Error::TypeError),
         _ => Ok(()),
     }
+}
+
+struct BuiltinFunctionParams<'a, X> {
+    lambda: Lambda<X>,
+    #[allow(unused)]
+    name: StringHandle,
+    length: u16,
+    slots: &'a [Value],
+    prototype: Option<ObjectHandle>,
 }

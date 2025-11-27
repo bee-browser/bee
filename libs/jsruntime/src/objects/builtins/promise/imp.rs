@@ -7,7 +7,7 @@ use crate::types::Promise;
 use crate::types::Value;
 
 //#sec-promise-executor constructor
-pub fn promise<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+pub fn promise<X>(_runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "promise");
 
     // TODO(feat): NewTarget
@@ -22,16 +22,8 @@ pub fn promise<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result
         return Err(Error::InternalError);
     }
 
-    // TODO(feat): OrdinaryCreateFromConstructor()
-    let promise = if let &Value::Object(this) = context.this() {
-        this
-    } else {
-        runtime.create_object(runtime.promise_prototype)
-    };
-
-    // TODO(feat): step#4..12
-
-    Ok(Value::Object(promise))
+    // TODO(feat): step#3..12
+    Err(Error::InternalError)
 }
 
 //#sec-promise.all constructor.function

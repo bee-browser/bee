@@ -15,6 +15,8 @@ use crate::types::CallContext;
 use crate::types::Status;
 use crate::types::Value;
 
+use super::BuiltinFunctionParams;
+
 impl<X> Runtime<X> {
     /// Returns `true` if `object` is a Promise object.
     pub fn is_promise_object(&self, object: ObjectHandle) -> bool {
@@ -31,12 +33,22 @@ impl<X> Runtime<X> {
         logger::debug!(event = "create_promise_constructor");
         debug_assert!(self.promise_prototype.is_some());
 
-        let mut constructor = self.create_builtin_function(constructor, self.promise_prototype);
+        let mut constructor = self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: constructor::<X>,
+            name: const_string!("Promise"),
+            length: 1,
+            slots: &[],
+            prototype: self.promise_prototype,
+        });
 
         {{#functions}}
-        let mut func = self.create_builtin_function({{{imp}}}, None);
-        let _ = func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(const_string!("{{{name}}}"))));
-        let _ = func.define_own_property(Symbol::LENGTH.into(), Property::data_xxc(Value::Number({{{length}}}.0)));
+        let func = self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: {{{imp}}},
+            name: const_string!("{{{name}}}"),
+            length: {{{length}}},
+            slots: &[],
+            prototype: None,
+        });
         let _ = constructor.define_own_property(Symbol::{{{symbol}}}.into(), Property::data_wxc(Value::Object(func)));
 
         {{/functions}}
@@ -58,9 +70,13 @@ impl<X> Runtime<X> {
         let mut prototype = self.create_object(self.object_prototype);
 
         {{#functions}}
-        let mut func = self.create_builtin_function({{{imp}}}, None);
-        let _ = func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(const_string!("{{{name}}}"))));
-        let _ = func.define_own_property(Symbol::LENGTH.into(), Property::data_xxc(Value::Number({{{length}}}.0)));
+        let func = self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: {{{imp}}},
+            name: const_string!("{{{name}}}"),
+            length: {{{length}}},
+            slots: &[],
+            prototype: None,
+        });
         let _ = prototype.define_own_property(Symbol::{{{symbol}}}.into(), Property::data_wxc(Value::Object(func)));
 
         {{/functions}}

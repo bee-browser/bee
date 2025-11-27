@@ -9,12 +9,26 @@ use crate::types::Status;
 use crate::types::StringHandle;
 use crate::types::Value;
 
+use super::BuiltinFunctionParams;
+
 impl<X> Runtime<X> {
     pub(super) fn create_error_constructor(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_error_constructor");
         debug_assert!(self.error_prototype.is_some());
-        let mut constructor = self.create_builtin_function(constructor::<X>, self.error_prototype);
-        let func = self.create_builtin_function(error_is_error, None);
+        let mut constructor = self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: constructor::<X>,
+            name: const_string!(jsparser::symbol::builtin::names::ERROR),
+            length: 1,
+            slots: &[],
+            prototype: self.error_prototype,
+        });
+        let func = self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: error_is_error,
+            name: const_string!(jsparser::symbol::builtin::names::IS_ERROR),
+            length: 1,
+            slots: &[],
+            prototype: None,
+        });
         let _ = constructor.define_own_property(
             Symbol::IS_ERROR.into(),
             Property::data_xxx(Value::Object(func)),
@@ -42,7 +56,13 @@ impl<X> Runtime<X> {
             Property::data_xxx(Value::String(StringHandle::EMPTY)),
         );
 
-        let to_string = self.create_builtin_function(error_prototype_to_string, None);
+        let to_string = self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: error_prototype_to_string,
+            name: const_string!(jsparser::symbol::builtin::names::TO_STRING),
+            length: 0,
+            slots: &[],
+            prototype: None,
+        });
         let _ = prototype.define_own_property(
             Symbol::TO_STRING.into(),
             Property::data_xxx(Value::Object(to_string)),

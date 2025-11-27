@@ -5,10 +5,18 @@ use crate::types::CallContext;
 use crate::types::Status;
 use crate::types::Value;
 
+use super::BuiltinFunctionParams;
+
 impl<X> Runtime<X> {
     pub(super) fn create_object_constructor(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_object_constructor");
-        self.create_builtin_function(constructor::<X>, self.object_prototype)
+        self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: constructor::<X>,
+            name: const_string!(jsparser::symbol::builtin::names::OBJECT),
+            length: 0,
+            slots: &[],
+            prototype: self.object_prototype,
+        })
     }
 
     fn create_object_object(&mut self, context: &mut CallContext) -> Result<Value, Value> {
