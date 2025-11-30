@@ -9,7 +9,6 @@ use jsparser::Symbol;
 
 use crate::Runtime;
 use crate::logger;
-use crate::objects::Object;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
@@ -118,13 +117,6 @@ impl<X> Runtime<X> {
         prototype
     }
     {{/prototypeProperties}}
-}
-
-impl Object {
-    pub(crate) fn string(&self) -> StringHandle {
-        // SAFETY: `self.nucleus` is non-null and convertible to a reference.
-        unsafe { StringHandle::from_addr(self.nucleus) }
-    }
 }
 
 // lambda functions
