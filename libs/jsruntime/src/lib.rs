@@ -280,6 +280,21 @@ impl<X> Runtime<X> {
         coroutine_index
     }
 
+    fn call(
+        &mut self,
+        caller: &CallContext,
+        callable: ObjectHandle,
+        args: &mut [Value],
+        retv: &mut Value,
+    ) -> Status {
+        let closure = callable.closure();
+        debug_assert!(!closure.is_null());
+        let mut context = caller.new_child(callable, closure, args);
+        // SAFETY: `closure` always holds a lambda function.
+        let lambda = unsafe { Lambda::from((*closure).lambda) };
+        lambda(self, &mut context, retv)
+    }
+
     /// Calls an entry lambda function.
     fn call_entry_lambda(
         &mut self,

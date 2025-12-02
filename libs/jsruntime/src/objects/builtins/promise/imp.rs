@@ -6,7 +6,6 @@ use crate::logger;
 use crate::objects::ObjectHandle;
 use crate::objects::builtins::BuiltinFunctionParams;
 use crate::types::CallContext;
-use crate::types::Lambda;
 use crate::types::Promise;
 use crate::types::Status;
 use crate::types::Value;
@@ -27,33 +26,27 @@ pub fn promise<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result
         _ => return Err(Error::TypeError),
     };
 
-    // TODO(feat): step#3..12
     let closure = runtime.create_closure(promise_coroutine, LambdaId::HOST, 0);
     let coroutine = runtime.create_coroutine(closure, 0, 0, 0);
     let promise = runtime.register_promise(coroutine);
 
-    let mut object = if context.is_new() {
-        if let Value::Object(this) = context.this() {
-            *this
-        } else {
-            runtime.create_object(runtime.promise_prototype)
-        }
+    let mut object = if let Value::Object(this) = context.this() {
+        *this
     } else {
-        unreachable!();
+        runtime.create_object(runtime.promise_prototype)
     };
 
     object.set_promise(promise);
 
     let (resolve, reject) = runtime.create_resolving_functions(object);
     let mut retv = Value::None;
-    match runtime.call(
+    if let Status::Exception = runtime.call(
         context,
         executor,
         &mut [Value::Object(resolve), Value::Object(reject)],
         &mut retv,
     ) {
-        Status::Exception => runtime.emit_promise_rejected(object, retv),
-        _ => (),
+        runtime.emit_promise_rejected(object, retv);
     }
 
     Ok(Value::Object(object))
@@ -76,6 +69,7 @@ extern "C" fn promise_coroutine<X>(
     }
 }
 
+// 27.2.1.3 CreateResolvingFunctions ( promise )
 impl<X> Runtime<X> {
     fn create_resolving_functions(
         &mut self,
@@ -98,21 +92,6 @@ impl<X> Runtime<X> {
         });
 
         (resolve, reject)
-    }
-
-    fn call(
-        &mut self,
-        caller: &CallContext,
-        callable: ObjectHandle,
-        args: &mut [Value],
-        retv: &mut Value,
-    ) -> Status {
-        let closure = callable.closure();
-        debug_assert!(!closure.is_null());
-        let mut context = caller.new_child(callable, closure, args);
-        // SAFETY:
-        let lambda = unsafe { Lambda::from((*closure).lambda) };
-        lambda(self, &mut context, retv)
     }
 }
 
@@ -159,6 +138,7 @@ fn promise_resolve_sync<X>(
     }
 }
 
+// 27.2.1.3.1 Promise Reject Functions
 extern "C" fn promise_reject<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,

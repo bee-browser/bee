@@ -303,7 +303,7 @@ impl Object {
         self.set_callable();
     }
 
-    fn closure(&self) -> *mut Closure {
+    pub(crate) fn closure(&self) -> *mut Closure {
         debug_assert!(self.is_callable());
         self.userdata as *mut Closure
     }
