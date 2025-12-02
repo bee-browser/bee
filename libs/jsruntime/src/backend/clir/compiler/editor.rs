@@ -794,12 +794,14 @@ impl<'a> Editor<'a> {
 
     pub fn put_call(
         &mut self,
+        function: ObjectIr,
         closure: ClosureIr,
         flags: CallContextFlags,
         retv: AnyIr,
     ) -> StatusIr {
-        logger::debug!(event = "put_call", ?closure, ?flags, ?retv);
+        logger::debug!(event = "put_call", ?function, ?closure, ?flags, ?retv);
         self.put_store_closure_to_call_context(closure);
+        self.put_store_function_to_call_context(function);
         self.put_store_flags_to_call_context(flags);
         let lambda = self.put_load_lambda_from_closure(closure);
         let args = &[
@@ -897,13 +899,13 @@ impl<'a> Editor<'a> {
 
     pub fn put_load_closure_from_object(&mut self, object: ObjectIr) -> ClosureIr {
         logger::debug!(event = "put_load_closure_from_object", ?object);
-        ClosureIr(self.put_load_addr(object.0, Object::NUCLEUS_OFFSET))
+        ClosureIr(self.put_load_addr(object.0, Object::USERDATA_OFFSET))
     }
 
     pub fn put_store_closure_to_object(&mut self, closure: ClosureIr, object: ObjectIr) {
         logger::debug!(event = "put_store_closure_to_object", ?object);
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
-        const OFFSET: i32 = Object::NUCLEUS_OFFSET as i32;
+        const OFFSET: i32 = Object::USERDATA_OFFSET as i32;
         // TODO: The CONSTRUCTOR flag should be set in MakeConstructor()
         const OBJECT_FLAGS: ObjectFlags = ObjectFlags::CONSTRUCTOR.union(ObjectFlags::CALLABLE);
         self.builder.ins().store(FLAGS, closure.0, object.0, OFFSET);
@@ -919,7 +921,7 @@ impl<'a> Editor<'a> {
     pub fn put_store_promise_to_object(&mut self, promise: PromiseIr, object: ObjectIr) {
         logger::debug!(event = "put_store_promise_to_object", ?object);
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
-        const OFFSET: i32 = Object::NUCLEUS_OFFSET as i32;
+        const OFFSET: i32 = Object::USERDATA_OFFSET as i32;
         let userdata = self.builder.ins().uextend(self.addr_type, promise.0);
         self.builder.ins().store(FLAGS, userdata, object.0, OFFSET);
     }
@@ -1012,6 +1014,13 @@ impl<'a> Editor<'a> {
         self.builder
             .ins()
             .stack_store(closure.0, self.call_context, OFFSET);
+    }
+
+    pub fn put_store_function_to_call_context(&mut self, function: ObjectIr) {
+        const OFFSET: i32 = CallContext::FUNC_OFFSET as i32;
+        self.builder
+            .ins()
+            .stack_store(function.0, self.call_context, OFFSET);
     }
 
     pub fn put_call_stack_too_deep(&mut self, max: u16) -> BooleanIr {

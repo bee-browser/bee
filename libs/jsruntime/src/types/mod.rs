@@ -429,9 +429,6 @@ where
 #[derive(Debug)]
 #[repr(C)]
 pub struct CallContext {
-    /// The `this` argument.
-    this: Value,
-
     /// A pointer to the call environment.
     ///
     /// The actual type of the value varies depending on the type of the lambda function:
@@ -441,6 +438,13 @@ pub struct CallContext {
     /// * Coroutine functions: &mut Coroutine
     ///
     envp: *mut c_void,
+
+    /// The `this` argument.
+    this: Value,
+
+    /// The active function object.
+    #[allow(unused)]
+    func: Option<ObjectHandle>,
 
     /// A pointer to the call context of the caller.
     #[allow(unused)]
@@ -465,8 +469,9 @@ pub struct CallContext {
 impl CallContext {
     pub const SIZE: usize = std::mem::size_of::<Self>();
     pub const ALIGNMENT: usize = std::mem::align_of::<Self>();
-    pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
     pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
+    pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
+    pub const FUNC_OFFSET: usize = std::mem::offset_of!(Self, func);
     pub const CALLER_OFFSET: usize = std::mem::offset_of!(Self, caller);
     pub const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
     pub const DEPTH_OFFSET: usize = std::mem::offset_of!(Self, depth);
@@ -476,8 +481,9 @@ impl CallContext {
 
     pub(crate) fn new_for_entry(args: &mut [Value]) -> Self {
         Self {
-            this: Value::Undefined,
             envp: std::ptr::null_mut(),
+            this: Value::Undefined,
+            func: None,
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
             depth: 0,
@@ -489,11 +495,31 @@ impl CallContext {
 
     pub(crate) fn new_for_promise(coroutine: *mut Coroutine, args: &mut [Value]) -> Self {
         Self {
-            this: Value::Undefined,
             envp: coroutine as *mut std::ffi::c_void,
+            this: Value::Undefined,
+            func: None,
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
             depth: 0,
+            argc: args.len() as u16,
+            argc_max: args.len() as u16,
+            argv: args.as_mut_ptr(),
+        }
+    }
+
+    pub(crate) fn new_child(
+        &self,
+        func: ObjectHandle,
+        closure: *mut Closure,
+        args: &mut [Value],
+    ) -> Self {
+        Self {
+            envp: closure as *mut std::ffi::c_void,
+            this: Value::Undefined,
+            func: Some(func),
+            caller: self,
+            flags: CallContextFlags::empty(),
+            depth: self.depth + 1,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
             argv: args.as_mut_ptr(),
@@ -507,6 +533,10 @@ impl CallContext {
     pub(crate) fn this(&self) -> &Value {
         debug_assert!(self.this.is_valid());
         &self.this
+    }
+
+    pub(crate) fn func(&self) -> Option<ObjectHandle> {
+        self.func
     }
 
     pub(crate) fn closure(&self) -> &Closure {
@@ -597,8 +627,12 @@ static_assertions::const_assert_eq!(size_of::<Promise>(), 4);
 static_assertions::const_assert_eq!(align_of::<Promise>(), 4);
 
 impl Promise {
-    pub const fn is_valid(self) -> bool {
+    pub const fn is_valid(&self) -> bool {
         self.0 != 0
+    }
+
+    pub const fn as_userdata(&self) -> usize {
+        self.0 as usize
     }
 }
 

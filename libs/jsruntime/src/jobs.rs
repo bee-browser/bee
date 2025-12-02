@@ -40,13 +40,6 @@ impl<X> Runtime<X> {
         self.job_runner.register_promise(coroutine)
     }
 
-    pub fn await_promise(&mut self, promise: ObjectHandle, awaiting: ObjectHandle) {
-        logger::debug!(event = "await_promise", ?promise, ?awaiting);
-        debug_assert!(self.is_promise_object(promise));
-        debug_assert!(self.is_promise_object(awaiting));
-        self.job_runner.await_promise(promise, awaiting);
-    }
-
     pub fn process_promise(&mut self, promise: ObjectHandle, result: &Value, error: &Value) {
         // TODO(feat): `result` may hold a Promise object
         logger::debug!(event = "process_promise", ?promise, ?result, ?error);
@@ -91,6 +84,11 @@ impl<X> Runtime<X> {
             _ => self.job_runner.emit_promise_resolved(promise, result),
         }
     }
+
+    pub fn emit_promise_rejected(&mut self, promise: ObjectHandle, error: Value) {
+        debug_assert!(self.is_promise_object(promise));
+        self.job_runner.emit_promise_rejected(promise, error);
+    }
 }
 
 pub struct JobRunner {
@@ -133,6 +131,7 @@ impl JobRunner {
     }
 
     fn await_promise(&mut self, promise: ObjectHandle, awaiting: ObjectHandle) {
+        logger::debug!(event = "await_promise", ?promise, ?awaiting);
         let promise_id = promise.get_promise();
         debug_assert!(promise_id.is_valid());
         let awaiting_id = awaiting.get_promise();

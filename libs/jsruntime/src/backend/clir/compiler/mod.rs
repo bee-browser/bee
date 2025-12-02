@@ -1200,7 +1200,7 @@ where
         let retv = self.emit_create_any();
         let status = self
             .editor
-            .put_call(closure, CallContextFlags::empty(), retv);
+            .put_call(object, closure, CallContextFlags::empty(), retv);
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation
@@ -1269,7 +1269,9 @@ where
         };
 
         let retv = self.emit_create_any();
-        let status = self.editor.put_call(closure, CallContextFlags::NEW, retv);
+        let status = self
+            .editor
+            .put_call(constructor, closure, CallContextFlags::NEW, retv);
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation

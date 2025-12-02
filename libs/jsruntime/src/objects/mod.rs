@@ -14,6 +14,7 @@ use rustc_hash::FxHashMap;
 use jsparser::Symbol;
 
 use crate::types::Closure;
+use crate::types::Promise;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -226,10 +227,13 @@ pub struct Object {
     // [[Prototype]]
     prototype: Option<ObjectHandle>,
     properties: FxHashMap<PropertyKey, Property>,
+
+    // TODO: rethink the memory layout.
+    slots: Vec<Value>,
 }
 
 impl Object {
-    pub(crate) const NUCLEUS_OFFSET: usize = std::mem::offset_of!(Self, userdata);
+    pub(crate) const USERDATA_OFFSET: usize = std::mem::offset_of!(Self, userdata);
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     pub fn new(prototype: Option<ObjectHandle>) -> Self {
@@ -238,6 +242,7 @@ impl Object {
             flags: ObjectFlags::empty(),
             prototype,
             properties: Default::default(),
+            slots: Default::default(),
         }
     }
 
@@ -298,6 +303,11 @@ impl Object {
         self.set_callable();
     }
 
+    fn closure(&self) -> *mut Closure {
+        debug_assert!(self.is_callable());
+        self.userdata as *mut Closure
+    }
+
     pub(crate) fn string(&self) -> StringHandle {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
         unsafe { StringHandle::from_addr(self.userdata) }
@@ -305,6 +315,10 @@ impl Object {
 
     pub(crate) fn set_string(&mut self, string: StringHandle) {
         self.userdata = string.as_addr();
+    }
+
+    fn set_promise(&mut self, promise: Promise) {
+        self.userdata = promise.as_userdata();
     }
 
     pub fn as_handle(&mut self) -> ObjectHandle {

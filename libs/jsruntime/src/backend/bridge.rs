@@ -1,7 +1,6 @@
 use std::ffi::c_void;
 
 use crate::Runtime;
-use crate::lambda::LambdaId;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::objects::ObjectHandle;
@@ -408,48 +407,6 @@ pub(crate) extern "C" fn runtime_create_capture<X>(
     capture as *mut Capture
 }
 
-impl<X> Runtime<X> {
-    pub(crate) fn create_closure(
-        &mut self,
-        lambda: Lambda<X>,
-        lambda_id: LambdaId,
-        num_captures: u16,
-    ) -> *mut Closure {
-        debug_assert!(
-            std::alloc::Layout::from_size_align(
-                std::mem::offset_of!(Closure, captures),
-                std::mem::align_of::<Closure>()
-            )
-            .is_ok(),
-        );
-        // SAFETY: `from_size_align()` always succeeds.
-        const BASE_LAYOUT: std::alloc::Layout = unsafe {
-            std::alloc::Layout::from_size_align_unchecked(
-                std::mem::offset_of!(Closure, captures),
-                std::mem::align_of::<Closure>(),
-            )
-        };
-
-        let storage_layout =
-            std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
-        let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
-
-        let allocator = self.allocator();
-
-        // TODO: GC
-        let ptr = allocator.alloc_layout(layout);
-
-        // SAFETY: `ptr` is a non-null pointer to a `Closure`.
-        let closure = unsafe { ptr.cast::<Closure>().as_mut() };
-        closure.lambda = lambda.into();
-        closure.lambda_id = lambda_id;
-        closure.num_captures = num_captures;
-        // `closure.captures[]` will be filled with actual pointers to `Captures`.
-
-        closure as *mut Closure
-    }
-}
-
 pub(crate) extern "C" fn runtime_create_closure<X>(
     runtime: &mut Runtime<X>,
     lambda: Lambda<X>,
@@ -479,50 +436,7 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
         scratch_buffer_len,
         capture_buffer_len,
     );
-
-    debug_assert!(
-        std::alloc::Layout::from_size_align(
-            std::mem::offset_of!(Coroutine, locals),
-            std::mem::align_of::<Coroutine>()
-        )
-        .is_ok()
-    );
-    // SAFETY: `from_size_align()` always succeeds.
-    const BASE_LAYOUT: std::alloc::Layout = unsafe {
-        std::alloc::Layout::from_size_align_unchecked(
-            std::mem::offset_of!(Coroutine, locals),
-            std::mem::align_of::<Coroutine>(),
-        )
-    };
-
-    // num_locals may be 0.
-    let locals_layout = std::alloc::Layout::array::<Value>(num_locals as usize).unwrap();
-    let (layout, _) = BASE_LAYOUT.extend(locals_layout).unwrap();
-
-    // scratch_buffer_len may be 0.
-    debug_assert_eq!(scratch_buffer_len as usize % size_of::<u64>(), 0);
-    // capture_buffer_len may be 0.
-    debug_assert_eq!(capture_buffer_len as usize % size_of::<usize>(), 0);
-    let n = scratch_buffer_len as usize + capture_buffer_len as usize;
-    let scratch_buffer_layout = std::alloc::Layout::array::<u8>(n).unwrap();
-    let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
-
-    let allocator = runtime.allocator();
-
-    // TODO: GC
-    let ptr = allocator.alloc_layout(layout);
-
-    // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
-    let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
-    coroutine.closure = closure;
-    coroutine.state = 0;
-    coroutine.num_locals = num_locals;
-    coroutine.scope_id = 0;
-    coroutine.scratch_buffer_len = scratch_buffer_len;
-    coroutine.capture_buffer_len = capture_buffer_len;
-    // `coroutine.locals[]` will be initialized in the coroutine.
-
-    coroutine as *mut Coroutine
+    runtime.create_coroutine(closure, num_locals, scratch_buffer_len, capture_buffer_len)
 }
 
 pub(crate) extern "C" fn runtime_register_promise<X>(
