@@ -234,7 +234,7 @@ impl<X> Runtime<X> {
                     }
                     Ok(_) => unreachable!(),
                     Err(err) => {
-                        *retv = err;
+                        *retv = self.create_exception(err);
                         Status::Exception
                     }
                 }
