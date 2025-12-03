@@ -33,7 +33,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "create_promise_constructor");
         debug_assert!(self.promise_prototype.is_some());
 
-        let mut constructor = self.create_builtin_function(&BuiltinFunctionParams {
+        let {{#functions.length}}mut {{/functions.length}}constructor = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: constructor::<X>,
             name: const_string!("Promise"),
             length: 1,
@@ -67,6 +67,7 @@ impl<X> Runtime<X> {
         debug_assert!(self.object_prototype.is_some());
         debug_assert!(self.function_prototype.is_some());
 
+        {{#functions.length}}
         let mut prototype = self.create_object(self.object_prototype);
 
         {{#functions}}
@@ -81,6 +82,10 @@ impl<X> Runtime<X> {
 
         {{/functions}}
         prototype
+        {{/functions.length}}
+        {{^functions.length}}
+        self.create_object(self.object_prototype)
+        {{/functions.length}}
     }
     {{/prototypeProperties}}
 }

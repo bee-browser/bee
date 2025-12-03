@@ -1,7 +1,7 @@
 # Promise
 
 * [x] [Promise](https://tc39.es/ecma262/#sec-promise-executor)
-* [x] [Promise.all](https://tc39.es/ecma262/#sec-promise.all)
+* [ ] [Promise.all](https://tc39.es/ecma262/#sec-promise.all)
 * [ ] [Promise.allSettled](https://tc39.es/ecma262/#sec-promise.allsettled)
 * [ ] [Promise.any](https://tc39.es/ecma262/#sec-promise.any)
 * [ ] [Promise.prototype](https://tc39.es/ecma262/#sec-promise.prototype)
@@ -11,7 +11,7 @@
 * [ ] [Promise.try](https://tc39.es/ecma262/#sec-promise.try)
 * [ ] [Promise.withResolver](https://tc39.es/ecma262/#sec-promise.withResolvers)
 * [ ] [get Promise \[ %Symbol.species% \]](https://tc39.es/ecma262/#sec-get-promise-%symbol.species%)
-* [x] [Promise.prototype.catch](https://tc39.es/ecma262/#sec-promise.prototype.catch)
+* [ ] [Promise.prototype.catch](https://tc39.es/ecma262/#sec-promise.prototype.catch)
 * [ ] [Promise.prototype.constructor](https://tc39.es/ecma262/#sec-promise.prototype.constructor)
 * [ ] [Promise.prototype.finally](https://tc39.es/ecma262/#sec-promise.prototype.finally)
 * [ ] [Promise.prototype.then](https://tc39.es/ecma262/#sec-promise.prototype.then)
