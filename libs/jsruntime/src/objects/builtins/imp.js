@@ -40,6 +40,7 @@ async function main(args, options) {
   const spec = new JSDOM(await Deno.readTextFile(ECMA262_SPEC_HTML));
 
   const json = {
+    constructor: null,
     constructorProperties: {
       functions: [],
     },
@@ -51,6 +52,9 @@ async function main(args, options) {
   for await (const data of dataStream(args.impRs)) {
     collectDataFromSpec(spec, data);
     switch (data.kind) {
+      case 'constructor':
+        json.constructor = data;
+        break;
       case 'constructor.function':
         json.constructorProperties.functions.push(data);
         break;
@@ -136,6 +140,10 @@ function collectDataFromSpec(spec, data) {
     }
   }
   switch (data.kind) {
+    case 'constructor':
+      data.name = data.signature.name;
+      data.symbol = constantCase(data.signature.name);
+      break;
     case 'constructor.function':
       data.name = data.signature.name.split('.')[1];
       data.symbol = constantCase(data.signature.name.split('.')[1]);

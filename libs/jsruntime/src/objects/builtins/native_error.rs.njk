@@ -14,11 +14,19 @@ use crate::types::Status;
 use crate::types::StringHandle;
 use crate::types::Value;
 
+use super::BuiltinFunctionParams;
+
 impl<X> Runtime<X> {
     pub(super) fn create_{{ data.name }}_constructor(&mut self) -> ObjectHandle {
         logger::debug!(event = "create_{{ data.name }}_constructor");
         debug_assert!(self.{{ data.name }}_prototype.is_some());
-        let constructor = self.create_builtin_function(constructor::<X>, self.{{ data.name }}_prototype);
+        let constructor = self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: constructor::<X>,
+            name: const_string!(jsparser::symbol::builtin::names::{{ data.name | upper }}),
+            length: 1,
+            slots: &[],
+            prototype: self.{{ data.name }}_prototype,
+        });
         if let Some(mut prototype) = self.{{ data.name }}_prototype {
             let _ = prototype.define_own_property(
                 Symbol::CONSTRUCTOR.into(),

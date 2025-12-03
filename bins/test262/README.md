@@ -7,7 +7,7 @@
 Perform the tests in threads:
 
 ```shell
-test262 --test262-dir=path/to/tc39/test262 run
+test262 --test262-dir=path/to/tc39/test262 --progress run
 ```
 
 This command is faster than others.  However, the `test262` process crashes before the all the
@@ -19,10 +19,10 @@ Perform the tests in processes:
 # Build 'bjs' before running the following commands.
 
 # Use //target/release/bjs.
-test262 --test262-dir=path/to/tc39/test262 launch /bin/sh launchers/bjs.sh
+test262 --test262-dir=path/to/tc39/test262 --progress launch /bin/sh launchers/bjs.sh
 
 # Use //target/debug/bjs.
-test262 --test262-dir=path/to/tc39/test262 launch -- /bin/sh launchers/bjs.sh --debug
+test262 --test262-dir=path/to/tc39/test262 --progress launch -- /bin/sh launchers/bjs.sh --debug
 ```
 
 This command is slower than the previous command.  However, the `test262` process will perform all
@@ -70,5 +70,5 @@ The both commands will output the test results to STDOUT in the JSON format.
 Run the tests one by one:
 
 ```shell
-RAYON_NUM_THREAD=1 test262 --test262-dir=path/to/tc39/test262 run
+RAYON_NUM_THREADS=1 test262 --test262-dir=path/to/tc39/test262 --progress run
 ```

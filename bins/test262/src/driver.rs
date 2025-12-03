@@ -35,7 +35,6 @@ impl<'a> Driver<'a> {
         }
     }
 
-    /// Loads.
     pub fn load(&mut self) -> usize {
         self.load_harness();
         self.load_tests();
@@ -133,6 +132,7 @@ impl<'a> Driver<'a> {
             .map(|(test_case, (result, duration))| {
                 if let Some(progress) = progress {
                     progress.inc(1);
+                    progress.set_message(format!("{}", test_case.path.display()));
                 }
                 let base_dir = self.cl.test262_dir.join("test");
                 match result {

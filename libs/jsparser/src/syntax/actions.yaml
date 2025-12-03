@@ -1308,7 +1308,7 @@
 - rule: >-
     Expression_In_Await -> Expression_In_Await COMMA
     AssignmentExpression_In_Await
-  action: undefined
+  action: process_comma_operator
 - rule: IterationStatement_Await -> DoWhileStatement_Await
   action: process_iteration_statement
 - rule: IterationStatement_Await -> WhileStatement_Await

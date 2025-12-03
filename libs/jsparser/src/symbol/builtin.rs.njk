@@ -12,6 +12,12 @@ impl Symbol {
     pub const {{ symbol.rustName }}: Self = Self({{ loop.index }});
     {%- endfor %}
 
+    {%- for symbol in data %}
+    {%- for alias in symbol.aliases %}
+    pub const {{ alias }}: Self = Self::{{ symbol.rustName }};
+    {%- endfor %}
+    {%- endfor %}
+
     pub fn is_hidden(&self) -> bool {
         self.0 <= {{ data | selectattr('hidden') | length }}
     }

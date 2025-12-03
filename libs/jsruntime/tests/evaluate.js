@@ -50,8 +50,6 @@ async function main(args, options) {
         return 'Value::Number(-f64::INFINITY)';
       case 'object':
         return 'Value::dummy_object()';
-      case 'promise':
-        return 'Value::Promise(0.into())';
       default:
         return `Value::from(${value})`;
     }

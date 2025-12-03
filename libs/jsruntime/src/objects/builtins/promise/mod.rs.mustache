@@ -13,28 +13,32 @@ use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::CallContext;
 use crate::types::Status;
-use crate::types::StringHandle;
 use crate::types::Value;
 
 use super::BuiltinFunctionParams;
 
 impl<X> Runtime<X> {
-    pub(crate) fn is_string_object(&self, object: ObjectHandle) -> bool {
-        object.is_instance_of(self.string_prototype)
+    /// Returns `true` if `object` is a Promise object.
+    pub fn is_promise_object(&self, object: ObjectHandle) -> bool {
+        object.is_instance_of(self.promise_prototype)
     }
 
+    /// Returns `true` if `value` holds a Promise object.
+    pub fn value_is_promise_object(&self, value: &Value) -> bool {
+        matches!(value, Value::Object(object) if self.is_promise_object(*object))
+    }
     {{#constructorProperties}}
-    // 22.1.2 Properties of the String Constructor
-    pub(super) fn create_string_constructor(&mut self) -> ObjectHandle {
-        logger::debug!(event = "create_string_constructor");
-        debug_assert!(self.string_prototype.is_some());
 
-        let mut constructor = self.create_builtin_function(&BuiltinFunctionParams {
-            lambda: constructor,
-            name: const_string!("String"),
+    pub(super) fn create_promise_constructor(&mut self) -> ObjectHandle {
+        logger::debug!(event = "create_promise_constructor");
+        debug_assert!(self.promise_prototype.is_some());
+
+        let {{#functions.length}}mut {{/functions.length}}constructor = self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: constructor::<X>,
+            name: const_string!("Promise"),
             length: 1,
             slots: &[],
-            prototype: self.string_prototype,
+            prototype: self.promise_prototype,
         });
 
         {{#functions}}
@@ -48,59 +52,22 @@ impl<X> Runtime<X> {
         let _ = constructor.define_own_property(Symbol::{{{symbol}}}.into(), Property::data_wxc(Value::Object(func)));
 
         {{/functions}}
-        if let Some(mut prototype) = self.string_prototype {
+        // TODO(refactor): bind outside this function
+        if let Some(mut prototype) = self.promise_prototype {
             let _ = prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(constructor)));
         }
 
         constructor
     }
     {{/constructorProperties}}
-
-    pub(crate) fn create_string_object(
-        &mut self,
-        this: Option<&Value>,
-        args: &[Value],
-        new: bool,
-    ) -> Result<Value, Value> {
-        logger::debug!(event = "create_string_object", ?this, ?args, new);
-        let string = match args.first() {
-            Some(v) => {
-                // TODO: a. If NewTarget is undefined and value is a Symbol,
-                // return SymbolDescriptiveString(value).
-                match self.value_to_string(v) {
-                    Ok(string) => string,
-                    Err(err) => return Err(self.create_exception(err)),
-                }
-            }
-            None => StringHandle::EMPTY,
-        };
-        // TODO(feat): NewTarget
-        if new {
-            let mut object = if let Some(&Value::Object(this)) = this {
-                this
-            } else {
-                // 10.4.3.4 StringCreate ( value, prototype )
-                self.create_object(self.string_prototype)
-            };
-            let length = string.len();
-            object.set_string(string);
-            // TODO: check the result
-            let _ = object.define_own_property(
-                Symbol::LENGTH.into(),
-                Property::data_xxc(Value::Number(length as f64)),
-            );
-            Ok(Value::Object(object))
-        } else {
-            Ok(Value::String(string))
-        }
-    }
-
     {{#prototypeProperties}}
-    pub(super) fn create_string_prototype(&mut self) -> ObjectHandle {
-        logger::debug!(event = "creater_string_prototype");
+
+    pub(super) fn create_promise_prototype(&mut self) -> ObjectHandle {
+        logger::debug!(event = "creater_promise_prototype");
         debug_assert!(self.object_prototype.is_some());
         debug_assert!(self.function_prototype.is_some());
 
+        {{#functions.length}}
         let mut prototype = self.create_object(self.object_prototype);
 
         {{#functions}}
@@ -115,6 +82,10 @@ impl<X> Runtime<X> {
 
         {{/functions}}
         prototype
+        {{/functions.length}}
+        {{^functions.length}}
+        self.create_object(self.object_prototype)
+        {{/functions.length}}
     }
     {{/prototypeProperties}}
 }
@@ -126,17 +97,13 @@ extern "C" fn constructor<X>(
     context: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
-    let this = context.this();
-    let args = context.args();
-    let new = context.is_new();
-    // TODO(feat): target
-    match runtime.create_string_object(Some(this), args, new) {
+    match imp::promise(runtime, context) {
         Ok(value) => {
             *retv = value;
             Status::Normal
         }
-        Err(value) => {
-            *retv = value;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }

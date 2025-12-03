@@ -137,20 +137,14 @@ functions:
       - name: coroutine
         type: '&mut Coroutine'
     ret: 'u32'
-  - name: await_promise
-    args:
-      - name: promise
-        type: u32
-      - name: awaiting
-        type: u32
   - name: resume
     args:
       - name: promise
-        type: u32
+        type: '&mut Object'
   - name: emit_promise_resolved
     args:
       - name: promise
-        type: u32
+        type: '&mut Object'
       - name: result
         type: '&Value'
   - name: create_object

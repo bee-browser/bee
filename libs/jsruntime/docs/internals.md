@@ -143,7 +143,7 @@ function func() {
       //
       // A special variable called ##coroutine can be used inside the coroutine.
       //
-      // The lambda function of the coroutine will be called with the following arguments the
+      // The lambda function of the coroutine will be called with the following arguments when the
       // coroutine resumes:
       //
       //   ##promise: The promise returned from the ramp function.
@@ -169,6 +169,8 @@ function func() {
       // Those will be placed in the special memory called the scratch buffer allocated in the heap
       // memory.
       SCRATCH_BUFFER_LEN,
+      // The size of the buffer in bytes, that is needed for storing pointers to captures.
+      CAPTURE_BUFFER_LEN,
     ),
   );
 

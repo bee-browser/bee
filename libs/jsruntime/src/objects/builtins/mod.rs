@@ -4,6 +4,7 @@ mod eval_error;
 mod function;
 mod internal_error;
 mod object;
+mod promise;
 mod range_error;
 mod reference_error;
 mod string;
@@ -17,6 +18,7 @@ use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
+use crate::objects::Object;
 use crate::objects::ObjectHandle;
 use crate::objects::Property;
 use crate::types::Lambda;
@@ -45,6 +47,7 @@ impl<X> Runtime<X> {
         self.object_prototype = Some(self.create_object(None));
         self.function_prototype = Some(self.create_function_prototype());
         self.string_prototype = Some(self.create_string_prototype());
+        self.promise_prototype = Some(self.create_promise_prototype());
         self.error_prototype = Some(self.create_error_prototype());
         self.aggregate_error_prototype = Some(self.create_aggregate_error_prototype());
         self.eval_error_prototype = Some(self.create_eval_error_prototype());
@@ -76,8 +79,10 @@ impl<X> Runtime<X> {
             Symbol::FUNCTION => Value::Object(self.create_function_constructor()),
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError
             Symbol::INTERNAL_ERROR => Value::Object(self.create_internal_error_constructor()),
-            // 19.3.23 Object()
+            // 19.3.23 Object ( . . . )
             Symbol::OBJECT => Value::Object(self.create_object_constructor()),
+            // 19.3.24 Promise ( . . . )
+            Symbol::PROMISE => Value::Object(self.create_promise_constructor()),
             // 19.3.26 RangeError ( . . . )
             Symbol::RANGE_ERROR => Value::Object(self.create_range_error_constructor()),
             // 19.3.27 ReferenceError ( . . . )
@@ -93,24 +98,45 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn create_builtin_function(
-        &mut self,
-        lambda: Lambda<X>,
-        prototype: Option<ObjectHandle>,
-    ) -> ObjectHandle {
-        logger::debug!(event = "create_builtin_function");
+    fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> ObjectHandle {
+        logger::debug!(
+            event = "create_builtin_function",
+            ?params.lambda,
+            ?params.name,
+            params.length,
+            ?params.slots,
+            ?params.prototype
+        );
         debug_assert!(self.function_prototype.is_some());
-        let closure = self.create_closure(lambda, LambdaId::HOST, 0);
+        let closure = self.create_closure(params.lambda, LambdaId::HOST, 0);
         let mut func = self.create_object(self.function_prototype);
+        func.slots.extend_from_slice(params.slots);
         func.set_closure(closure);
-        if let Some(prototype) = prototype {
+        if let Some(prototype) = params.prototype {
             func.set_constructor();
             let _ = func.define_own_property(
                 Symbol::PROTOTYPE.into(),
                 Property::data_xxx(Value::Object(prototype)),
             );
         }
+        self.set_function_length(func.as_object_mut(), params.length);
+        // TODO: prefix
+        self.set_function_name(func.as_object_mut(), params.name);
         func
+    }
+
+    // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
+    fn set_function_name(&mut self, func: &mut Object, name: StringHandle) {
+        let _ =
+            func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
+    }
+
+    // 10.2.10 SetFunctionLength ( F, length )
+    fn set_function_length(&mut self, func: &mut Object, length: u16) {
+        let _ = func.define_own_property(
+            Symbol::LENGTH.into(),
+            Property::data_xxc(Value::Number(length as f64)),
+        );
     }
 
     // 7.1.4 ToNumber ( argument )
@@ -125,7 +151,6 @@ impl<X> Runtime<X> {
             Value::Boolean(false) => Ok(0.0),
             Value::Number(value) => Ok(*value),
             Value::String(_value) => Err(Error::InternalError), // TODO
-            Value::Promise(_) => Ok(f64::NAN),
             // TODO(feat): 7.1.1 ToPrimitive()
             Value::Object(_) => Ok(f64::NAN),
         }
@@ -173,7 +198,6 @@ impl<X> Runtime<X> {
             Value::Number(value) => Ok(self.number_to_string(*value)),
             Value::String(value) => Ok(*value),
             // TODO(feat): Value::Symbol(_) => Err(Error::TypeError),
-            Value::Promise(_) => todo!(),
             Value::Object(value) => self.object_to_string(*value),
         }
     }
@@ -255,4 +279,13 @@ fn require_object_coercible(value: &Value) -> Result<(), Error> {
         Value::Undefined | Value::Null => Err(Error::TypeError),
         _ => Ok(()),
     }
+}
+
+struct BuiltinFunctionParams<'a, X> {
+    lambda: Lambda<X>,
+    #[allow(unused)]
+    name: StringHandle,
+    length: u16,
+    slots: &'a [Value],
+    prototype: Option<ObjectHandle>,
 }

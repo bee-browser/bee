@@ -14,6 +14,7 @@ use rustc_hash::FxHashMap;
 use jsparser::Symbol;
 
 use crate::types::Closure;
+use crate::types::Promise;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -215,29 +216,33 @@ impl PropertyFlags {
 // We use a simple hash map until we finishes implementing built-in objects.  After than, we'll
 // start reconsidering about the memory layout.
 pub struct Object {
-    /// An opaque value representing the *nucleus* of the object.
+    /// An opaque value of the object.
     ///
     /// A pointer to the `Closure` if this is a function object.
     /// A string handle if this is a string object.
-    nucleus: usize,
+    userdata: usize,
 
     flags: ObjectFlags,
 
     // [[Prototype]]
     prototype: Option<ObjectHandle>,
     properties: FxHashMap<PropertyKey, Property>,
+
+    // TODO: rethink the memory layout.
+    slots: Vec<Value>,
 }
 
 impl Object {
-    pub(crate) const NUCLEUS_OFFSET: usize = std::mem::offset_of!(Self, nucleus);
+    pub(crate) const USERDATA_OFFSET: usize = std::mem::offset_of!(Self, userdata);
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     pub fn new(prototype: Option<ObjectHandle>) -> Self {
         Self {
-            nucleus: 0,
+            userdata: 0,
             flags: ObjectFlags::empty(),
             prototype,
             properties: Default::default(),
+            slots: Default::default(),
         }
     }
 
@@ -289,13 +294,31 @@ impl Object {
         self.properties.iter()
     }
 
+    pub(crate) fn userdata(&self) -> usize {
+        self.userdata
+    }
+
     pub(crate) fn set_closure(&mut self, closure: *mut Closure) {
-        self.nucleus = closure.addr();
+        self.userdata = closure.addr();
         self.set_callable();
     }
 
+    pub(crate) fn closure(&self) -> *mut Closure {
+        debug_assert!(self.is_callable());
+        self.userdata as *mut Closure
+    }
+
+    pub(crate) fn string(&self) -> StringHandle {
+        // SAFETY: `self.userdata` is non-null and convertible to a reference.
+        unsafe { StringHandle::from_addr(self.userdata) }
+    }
+
     pub(crate) fn set_string(&mut self, string: StringHandle) {
-        self.nucleus = string.as_addr();
+        self.userdata = string.as_addr();
+    }
+
+    fn set_promise(&mut self, promise: Promise) {
+        self.userdata = promise.as_userdata();
     }
 
     pub fn as_handle(&mut self) -> ObjectHandle {

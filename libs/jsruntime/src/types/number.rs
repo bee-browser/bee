@@ -11,7 +11,6 @@ pub fn to_number(value: &Value) -> Result<f64, Error> {
         Value::Boolean(true) => Ok(1.0),
         Value::Number(value) => Ok(*value),
         Value::String(_) => Ok(f64::NAN), // TODO(feat): 7.1.4.1.1 StringToNumber ( str )
-        Value::Promise(_) => Ok(f64::NAN),
         Value::Object(_) => Ok(f64::NAN), // TODO(feat): 7.1.1 ToPrimitive()
     }
 }

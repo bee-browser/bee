@@ -27,6 +27,9 @@ use objects::Property;
 use objects::PropertyKey;
 use semantics::Program;
 use types::CallContext;
+use types::Capture;
+use types::Closure;
+use types::Coroutine;
 use types::Lambda;
 use types::ReturnValue;
 use types::Status;
@@ -106,10 +109,12 @@ pub struct Runtime<X> {
 
     // %Object.prototype%
     object_prototype: Option<ObjectHandle>,
-    // %String.prototype%
-    string_prototype: Option<ObjectHandle>,
     // %Function.prototype%
     function_prototype: Option<ObjectHandle>,
+    // %String.prototype%
+    string_prototype: Option<ObjectHandle>,
+    // %Promise.prototype%
+    promise_prototype: Option<ObjectHandle>,
     // %Error.prototype%
     error_prototype: Option<ObjectHandle>,
     // %AggregateError.prototype%
@@ -148,8 +153,9 @@ impl<X> Runtime<X> {
             job_runner: JobRunner::new(),
             global_object,
             object_prototype: None,
-            string_prototype: None,
             function_prototype: None,
+            string_prototype: None,
+            promise_prototype: None,
             error_prototype: None,
             aggregate_error_prototype: None,
             eval_error_prototype: None,
@@ -274,6 +280,21 @@ impl<X> Runtime<X> {
         coroutine_index
     }
 
+    fn call(
+        &mut self,
+        caller: &CallContext,
+        callable: ObjectHandle,
+        args: &mut [Value],
+        retv: &mut Value,
+    ) -> Status {
+        let closure = callable.closure();
+        debug_assert!(!closure.is_null());
+        let mut context = caller.new_child(callable, closure, args);
+        // SAFETY: `closure` always holds a lambda function.
+        let lambda = unsafe { Lambda::from((*closure).lambda) };
+        lambda(self, &mut context, retv)
+    }
+
     /// Calls an entry lambda function.
     fn call_entry_lambda(
         &mut self,
@@ -322,6 +343,98 @@ impl<X> Runtime<X> {
         StringHandle::new(frag)
     }
 
+    fn create_closure(
+        &mut self,
+        lambda: Lambda<X>,
+        lambda_id: LambdaId,
+        num_captures: u16,
+    ) -> *mut Closure {
+        debug_assert!(
+            std::alloc::Layout::from_size_align(
+                std::mem::offset_of!(Closure, captures),
+                std::mem::align_of::<Closure>()
+            )
+            .is_ok(),
+        );
+        // SAFETY: `from_size_align()` always succeeds.
+        const BASE_LAYOUT: std::alloc::Layout = unsafe {
+            std::alloc::Layout::from_size_align_unchecked(
+                std::mem::offset_of!(Closure, captures),
+                std::mem::align_of::<Closure>(),
+            )
+        };
+
+        let storage_layout =
+            std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
+        let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
+
+        let allocator = self.allocator();
+
+        // TODO: GC
+        let ptr = allocator.alloc_layout(layout);
+
+        // SAFETY: `ptr` is a non-null pointer to a `Closure`.
+        let closure = unsafe { ptr.cast::<Closure>().as_mut() };
+        closure.lambda = lambda.into();
+        closure.lambda_id = lambda_id;
+        closure.num_captures = num_captures;
+        // `closure.captures[]` will be filled with actual pointers to `Captures`.
+
+        closure as *mut Closure
+    }
+
+    fn create_coroutine(
+        &mut self,
+        closure: *mut Closure,
+        num_locals: u16,
+        scratch_buffer_len: u16,
+        capture_buffer_len: u16,
+    ) -> *mut Coroutine {
+        debug_assert!(
+            std::alloc::Layout::from_size_align(
+                std::mem::offset_of!(Coroutine, locals),
+                std::mem::align_of::<Coroutine>()
+            )
+            .is_ok()
+        );
+        // SAFETY: `from_size_align()` always succeeds.
+        const BASE_LAYOUT: std::alloc::Layout = unsafe {
+            std::alloc::Layout::from_size_align_unchecked(
+                std::mem::offset_of!(Coroutine, locals),
+                std::mem::align_of::<Coroutine>(),
+            )
+        };
+
+        // num_locals may be 0.
+        let locals_layout = std::alloc::Layout::array::<Value>(num_locals as usize).unwrap();
+        let (layout, _) = BASE_LAYOUT.extend(locals_layout).unwrap();
+
+        // scratch_buffer_len may be 0.
+        debug_assert_eq!(scratch_buffer_len as usize % size_of::<u64>(), 0);
+        // capture_buffer_len may be 0.
+        debug_assert_eq!(capture_buffer_len as usize % size_of::<usize>(), 0);
+        let n = scratch_buffer_len as usize + capture_buffer_len as usize;
+        let scratch_buffer_layout = std::alloc::Layout::array::<u8>(n).unwrap();
+        let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
+
+        let allocator = self.allocator();
+
+        // TODO: GC
+        let ptr = allocator.alloc_layout(layout);
+
+        // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
+        let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
+        coroutine.closure = closure;
+        coroutine.state = 0;
+        coroutine.num_locals = num_locals;
+        coroutine.scope_id = 0;
+        coroutine.scratch_buffer_len = scratch_buffer_len;
+        coroutine.capture_buffer_len = capture_buffer_len;
+        // `coroutine.locals[]` will be initialized in the coroutine.
+
+        coroutine as *mut Coroutine
+    }
+
     fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {
         // TODO: GC
         self.allocator.alloc(Object::new(prototype)).as_handle()
@@ -338,7 +451,7 @@ impl<X> Runtime<X> {
             Value::String(value) => {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
-            Value::Promise(_) | Value::Object(_) => {
+            Value::Object(_) => {
                 const MESSAGE: StringHandle = const_string!("TODO: make_property_key");
                 match self.create_internal_error(true, &Value::String(MESSAGE), &Value::Undefined) {
                     Ok(err) => Err(Value::Object(err)),

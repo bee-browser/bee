@@ -8,7 +8,6 @@ use crate::driver::Error;
 use crate::driver::TestCase;
 
 pub fn run(test_case: &TestCase) -> (Result<(), Error>, Duration) {
-    //eprintln!("{}...", test_case.name);
     let start = Instant::now();
     let mut runner = Runner::new();
     runner.setup_runtime();

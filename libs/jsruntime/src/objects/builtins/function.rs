@@ -10,16 +10,18 @@ use crate::types::Status;
 use crate::types::StringHandle;
 use crate::types::Value;
 
+use super::BuiltinFunctionParams;
+
 impl<X> Runtime<X> {
     pub(super) fn create_function_constructor(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_function_constructor");
-        let mut constructor =
-            self.create_builtin_function(constructor::<X>, self.function_prototype);
-        let _ = constructor.define_own_property(
-            Symbol::LENGTH.into(),
-            Property::data_xxx(Value::Number(1.0)),
-        );
-        constructor
+        self.create_builtin_function(&BuiltinFunctionParams {
+            lambda: constructor::<X>,
+            name: const_string!(jsparser::symbol::builtin::names::FUNCTION),
+            length: 1,
+            slots: &[],
+            prototype: self.function_prototype,
+        })
     }
 
     pub(super) fn create_function_prototype(&mut self) -> ObjectHandle {
