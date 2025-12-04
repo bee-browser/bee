@@ -40,6 +40,7 @@ async function main(args, options) {
   const spec = new JSDOM(await Deno.readTextFile(ECMA262_SPEC_HTML));
 
   const json = {
+    metadata: {},
     constructor: null,
     constructorProperties: {
       functions: [],
@@ -50,15 +51,20 @@ async function main(args, options) {
   };
 
   for await (const data of dataStream(args.impRs)) {
-    collectDataFromSpec(spec, data);
     switch (data.kind) {
+      case 'metadata':
+        json.metadata[data.name] = data.value;
+        break;
       case 'constructor':
+        collectDataFromSpec(spec, data);
         json.constructor = data;
         break;
       case 'constructor.function':
+        collectDataFromSpec(spec, data);
         json.constructorProperties.functions.push(data);
         break;
       case 'prototype.function':
+        collectDataFromSpec(spec, data);
         json.prototypeProperties.functions.push(data);
         break;
     }
@@ -68,6 +74,19 @@ async function main(args, options) {
 }
 
 function dataStream(impRs) {
+  function parseMetadata(line) {
+    const parts = line.substring(3).split(' ', 2);
+    if (parts.length < 2) {
+      log.error(`Incorrect metadata line: ${line}`);
+      Deno.exit(1);
+    }
+    return {
+      kind: 'metadata',
+      name: parts[0],
+      value: parts[1],
+    }
+  }
+
   function parseId(line) {
     const parts = line.substring(3).split(' ');
     if (parts.length < 2) {
@@ -101,6 +120,12 @@ function dataStream(impRs) {
       for await (let line of lines) {
         line = line.trim();
         if (line.length === 0) {
+          continue;
+        }
+        if (line.startsWith('//$')) {
+          data = parseMetadata(line);
+          yield data;
+          data = undefined;
           continue;
         }
         switch (state) {

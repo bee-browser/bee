@@ -1,3 +1,6 @@
+//$id promise
+//$class Promise
+
 use crate::Error;
 use crate::Runtime;
 use crate::StringHandle;
@@ -11,7 +14,7 @@ use crate::types::Status;
 use crate::types::Value;
 
 //#sec-promise-executor constructor
-pub fn promise<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "promise");
 
     // TODO(feat): NewTarget

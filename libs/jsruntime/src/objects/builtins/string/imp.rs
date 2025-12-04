@@ -1,11 +1,26 @@
+//$id string
+//$class String
+
+use jsparser::Symbol;
+
 use crate::Error;
 use crate::Runtime;
 use crate::StringFragment;
 use crate::logger;
+use crate::objects::Property;
 use crate::objects::builtins::require_object_coercible;
 use crate::types::CallContext;
 use crate::types::StringHandle;
 use crate::types::Value;
+
+//#sec-string-constructor-string-value constructor
+pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+    logger::debug!(event = "promise");
+    let this = context.this();
+    let args = context.args();
+    let new = context.is_new();
+    runtime.create_string_object(Some(this), args, new)
+}
 
 //#sec-string.fromcharcode constructor.function
 pub fn string_from_char_code<X>(
@@ -579,4 +594,44 @@ fn is_non_whitespace(cp: u32) -> bool {
     char::from_u32(cp)
         .map(|c| !char::is_whitespace(c))
         .unwrap_or(true)
+}
+
+// helpers
+
+impl<X> Runtime<X> {
+    pub(crate) fn create_string_object(
+        &mut self,
+        this: Option<&Value>,
+        args: &[Value],
+        new: bool,
+    ) -> Result<Value, Error> {
+        logger::debug!(event = "create_string_object", ?this, ?args, new);
+        let string = match args.first() {
+            Some(v) => {
+                // TODO: a. If NewTarget is undefined and value is a Symbol,
+                // return SymbolDescriptiveString(value).
+                self.value_to_string(v)?
+            }
+            None => StringHandle::EMPTY,
+        };
+        // TODO(feat): NewTarget
+        if new {
+            let mut object = if let Some(&Value::Object(this)) = this {
+                this
+            } else {
+                // 10.4.3.4 StringCreate ( value, prototype )
+                self.create_object(self.string_prototype)
+            };
+            let length = string.len();
+            object.set_string(string);
+            // TODO: check the result
+            let _ = object.define_own_property(
+                Symbol::LENGTH.into(),
+                Property::data_xxc(Value::Number(length as f64)),
+            );
+            Ok(Value::Object(object))
+        } else {
+            Ok(Value::String(string))
+        }
+    }
 }
