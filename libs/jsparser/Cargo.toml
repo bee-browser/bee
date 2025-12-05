@@ -25,7 +25,7 @@ unicode-id-start = "1.4.0"
 anyhow = "1.0.100"
 assert_matches = "1.5.0"
 clap = { version = "4.5.53", features = ["env", "derive", "wrap_help"] }
-ctor = "0.6.2"
+ctor = "0.6.3"
 
 [lints]
 workspace = true
