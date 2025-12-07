@@ -38,6 +38,8 @@ impl<X> Runtime<X> {
             Property::data_xxx(Value::String(StringHandle::EMPTY)),
         );
 
+        // TODO: Function.prototype.constructor
+
         prototype
     }
 }
