@@ -13,7 +13,7 @@ version.workspace = true
 procmacros = { path = "../procmacros" }
 
 [dev-dependencies]
-criterion = "0.8.0"
+criterion = "0.8.1"
 
 [lints]
 workspace = true
