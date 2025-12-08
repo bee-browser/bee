@@ -1,5 +1,6 @@
 'use strict';
 
+import { unreachable } from '@std/assert';
 import { EOL } from '@std/fs';
 import * as log from '@std/log';
 import * as path from '@std/path';
@@ -42,12 +43,8 @@ async function main(args, options) {
   const json = {
     metadata: {},
     constructor: null,
-    constructorProperties: {
-      functions: [],
-    },
-    prototypeProperties: {
-      functions: [],
-    },
+    constructorProperties: [],
+    prototypeProperties: [],
   };
 
   for await (const data of dataStream(args.impRs)) {
@@ -56,16 +53,19 @@ async function main(args, options) {
         json.metadata[data.name] = data.value;
         break;
       case 'constructor':
-        collectDataFromSpec(spec, data);
+        collectFunctionDataFromSpec(spec, data);
         json.constructor = data;
         break;
       case 'constructor.function':
-        collectDataFromSpec(spec, data);
-        json.constructorProperties.functions.push(data);
+        collectFunctionDataFromSpec(spec, data);
+        json.constructorProperties.push(data);
         break;
       case 'prototype.function':
-        collectDataFromSpec(spec, data);
-        json.prototypeProperties.functions.push(data);
+        collectFunctionDataFromSpec(spec, data);
+        json.prototypeProperties.push(data);
+        break;
+      default:
+        unreachable();
         break;
     }
   }
@@ -145,6 +145,8 @@ function dataStream(impRs) {
             yield data;
             data = undefined;
             break;
+          default:
+            unreachable();
         }
       }
       if (state === 'imp') {
@@ -154,7 +156,7 @@ function dataStream(impRs) {
     }));
 }
 
-function collectDataFromSpec(spec, data) {
+function collectFunctionDataFromSpec(spec, data) {
   let clause = spec.window.document.getElementById(data.id);
   data.signature = parseSignature(clause.firstElementChild.textContent.trim());
   data.alg = parseAlg(clause.getElementsByTagName('emu-alg').item(0).textContent);
@@ -167,16 +169,18 @@ function collectDataFromSpec(spec, data) {
   switch (data.kind) {
     case 'constructor':
       data.name = data.signature.name;
-      data.symbol = constantCase(data.signature.name);
+      data.symbol = constantCase(data.name);
       break;
     case 'constructor.function':
       data.name = data.signature.name.split('.')[1];
-      data.symbol = constantCase(data.signature.name.split('.')[1]);
+      data.symbol = constantCase(data.name);
       break;
     case 'prototype.function':
       data.name = data.signature.name.split('.')[2];
-      data.symbol = constantCase(data.signature.name.split('.')[2]);
+      data.symbol = constantCase(data.name);
       break;
+    default:
+      unreachable();
   }
   return data;
 }

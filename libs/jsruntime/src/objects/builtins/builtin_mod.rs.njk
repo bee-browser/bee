@@ -44,7 +44,7 @@ impl<X> Runtime<X> {
             prototype: self.{{ data.metadata.id }}_prototype,
         });
 
-        {%- for func in data.constructorProperties.functions %}
+        {%- for func in data.constructorProperties %}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: {{ func.imp }},
             name: const_string!("{{ func.name }}"),
@@ -72,7 +72,7 @@ impl<X> Runtime<X> {
         #[allow(unused_mut)]
         let mut prototype = self.create_object(self.object_prototype);
 
-        {%- for func in data.prototypeProperties.functions %}
+        {%- for func in data.prototypeProperties %}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: {{ func.imp }},
             name: const_string!("{{ func.name }}"),
@@ -106,7 +106,7 @@ extern "C" fn constructor<X>(
         }
     }
 }
-{%- for func in data.constructorProperties.functions %}
+{%- for func in data.constructorProperties %}
 
 extern "C" fn {{ func.imp }}<X>(
     runtime: &mut Runtime<X>,
@@ -125,7 +125,7 @@ extern "C" fn {{ func.imp }}<X>(
     }
 }
 {%- endfor %}
-{%- for func in data.prototypeProperties.functions %}
+{%- for func in data.prototypeProperties %}
 
 extern "C" fn {{ func.imp }}<X>(
     runtime: &mut Runtime<X>,
