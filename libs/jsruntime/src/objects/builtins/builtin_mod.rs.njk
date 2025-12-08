@@ -44,7 +44,8 @@ impl<X> Runtime<X> {
             prototype: self.{{ data.metadata.id }}_prototype,
         });
 
-        {%- for func in data.constructorProperties %}
+        {% for func in data.constructorProperties %}
+        {% if func.kind == "constructor.function" %}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: {{ func.imp }},
             name: const_string!("{{ func.name }}"),
@@ -54,7 +55,8 @@ impl<X> Runtime<X> {
         });
         let _ = constructor.define_own_property(Symbol::{{ func.symbol }}.into(), Property::data_wxc(Value::Object(func)));
 
-        {%- endfor %}
+        {% endif %}
+        {% endfor %}
         // TODO(refactor): bind outside this function
         if let Some(mut prototype) = self.{{ data.metadata.id }}_prototype {
             let _ = prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(constructor)));
@@ -72,17 +74,22 @@ impl<X> Runtime<X> {
         #[allow(unused_mut)]
         let mut prototype = self.create_object(self.object_prototype);
 
-        {%- for func in data.prototypeProperties %}
+        {% for prop in data.prototypeProperties %}
+        {% if prop.kind == "prototype.property" %}
+        imp::{{ prop.imp }}(self, prototype);
+
+        {% elif prop.kind == "prototype.function" %}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
-            lambda: {{ func.imp }},
+            lambda: {{ prop.imp }},
             name: const_string!("{{ func.name }}"),
-            length: {{ func.length }},
+            length: {{ prop.length }},
             slots: &[],
             prototype: None,
         });
-        let _ = prototype.define_own_property(Symbol::{{ func.symbol }}.into(), Property::data_wxc(Value::Object(func)));
+        let _ = prototype.define_own_property(Symbol::{{ prop.symbol }}.into(), Property::data_wxc(Value::Object(func)));
 
-        {%- endfor %}
+        {% endif %}
+        {% endfor %}
         prototype
     }
 }
@@ -106,7 +113,8 @@ extern "C" fn constructor<X>(
         }
     }
 }
-{%- for func in data.constructorProperties %}
+{% for func in data.constructorProperties %}
+{% if func.kind == "constructor.function" %}
 
 extern "C" fn {{ func.imp }}<X>(
     runtime: &mut Runtime<X>,
@@ -124,8 +132,10 @@ extern "C" fn {{ func.imp }}<X>(
         }
     }
 }
-{%- endfor %}
-{%- for func in data.prototypeProperties %}
+{% endif %}
+{% endfor %}
+{% for func in data.prototypeProperties %}
+{% if func.kind == "prototype.function" %}
 
 extern "C" fn {{ func.imp }}<X>(
     runtime: &mut Runtime<X>,
@@ -143,4 +153,5 @@ extern "C" fn {{ func.imp }}<X>(
         }
     }
 }
-{%- endfor %}
+{% endif %}
+{% endfor %}

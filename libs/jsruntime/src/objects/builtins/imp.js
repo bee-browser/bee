@@ -60,6 +60,10 @@ async function main(args, options) {
         collectFunctionDataFromSpec(spec, data);
         json.constructorProperties.push(data);
         break;
+      case 'prototype.property':
+        collectPropertyDataFromSpec(spec, data);
+        json.prototypeProperties.push(data);
+        break;
       case 'prototype.function':
         collectFunctionDataFromSpec(spec, data);
         json.prototypeProperties.push(data);
@@ -84,7 +88,7 @@ function dataStream(impRs) {
       kind: 'metadata',
       name: parts[0],
       value: parts[1],
-    }
+    };
   }
 
   function parseId(line) {
@@ -93,10 +97,14 @@ function dataStream(impRs) {
       log.error(`Incorrect ID line: ${line}`);
       Deno.exit(1);
     }
+    let options = undefined;
+    if (parts.length > 2) {
+      options = JSON.parse(parts.slice(2).join(' '));
+    }
     return {
       id: parts[0],
       kind: parts[1],
-      options: parts.slice(2),
+      options,
     };
   }
 
@@ -156,10 +164,23 @@ function dataStream(impRs) {
     }));
 }
 
-function collectFunctionDataFromSpec(spec, data) {
+function collectPropertyDataFromSpec(spec, data) {
   let clause = spec.window.document.getElementById(data.id);
-  data.signature = parseSignature(clause.firstElementChild.textContent.trim());
-  data.alg = parseAlg(clause.getElementsByTagName('emu-alg').item(0).textContent);
+  data.property = clause.firstElementChild.textContent.trim();
+  data.name = data.property.split('.').at(-1);
+  data.symbol = constantCase(data.name);
+  return data;
+}
+
+function collectFunctionDataFromSpec(spec, data) {
+  const clause = spec.window.document.getElementById(data.id);
+  if (clause) {
+    data.signature = parseSignature(clause.firstElementChild.textContent.trim());
+    data.alg = parseAlg(clause.getElementsByTagName('emu-alg').item(0).textContent);
+  } else {
+    data.signature = parseSignature(data.options.signature);
+    data.alg = undefined;
+  }
   data.length = 0;
   for (const arg of data.signature.args) {
     if (!arg.optional) {
