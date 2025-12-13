@@ -166,8 +166,6 @@ pub use utf16;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_assert_eq() {
         assert_eq!(0, 0);
