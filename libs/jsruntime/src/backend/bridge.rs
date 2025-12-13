@@ -209,10 +209,7 @@ impl<X> Runtime<X> {
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined | Value::Null => {
-                let err = self
-                    .create_type_error(true, &Value::Undefined, &Value::Undefined)
-                    .unwrap();
-                *retv = Value::Object(err);
+                *retv = Value::Object(self.create_type_error(None));
                 Status::Exception
             }
             Value::Boolean(_value) => runtime_todo!(
@@ -473,27 +470,18 @@ pub(crate) extern "C" fn runtime_create_object<X>(
 pub(crate) extern "C" fn runtime_create_reference_error<X>(
     runtime: &mut Runtime<X>,
 ) -> *mut c_void {
-    runtime
-        .create_reference_error(true, &Value::Undefined, &Value::Undefined)
-        .unwrap()
-        .as_ptr()
+    runtime.create_reference_error(None).as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) -> *mut c_void {
-    runtime
-        .create_type_error(true, &Value::Undefined, &Value::Undefined)
-        .unwrap()
-        .as_ptr()
+    runtime.create_type_error(None).as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_create_internal_error<X>(
     runtime: &mut Runtime<X>,
     message: StringHandle,
 ) -> *mut c_void {
-    runtime
-        .create_internal_error(true, &Value::String(message), &Value::Undefined)
-        .unwrap()
-        .as_ptr()
+    runtime.create_internal_error(Some(message)).as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
@@ -514,10 +502,7 @@ pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
             Status::Normal
         }
         None if strict => {
-            let err = runtime
-                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
-                .unwrap();
-            *retv = Value::Object(err);
+            *retv = Value::Object(runtime.create_reference_error(None));
             Status::Exception
         }
         None => {
@@ -545,10 +530,7 @@ pub(crate) extern "C" fn runtime_get_value_by_number<X>(
             Status::Normal
         }
         None if strict => {
-            let err = runtime
-                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
-                .unwrap();
-            *retv = Value::Object(err);
+            *retv = Value::Object(runtime.create_reference_error(None));
             Status::Exception
         }
         None => {
@@ -580,10 +562,7 @@ pub(crate) extern "C" fn runtime_get_value_by_value<X>(
             Status::Normal
         }
         None if strict => {
-            let err = runtime
-                .create_reference_error(true, &Value::Undefined, &Value::Undefined)
-                .unwrap();
-            *retv = Value::Object(err);
+            *retv = Value::Object(runtime.create_reference_error(None));
             Status::Exception
         }
         None => {

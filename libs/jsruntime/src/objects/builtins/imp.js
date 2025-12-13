@@ -41,7 +41,9 @@ async function main(args, options) {
   const spec = new JSDOM(await Deno.readTextFile(ECMA262_SPEC_HTML));
 
   const json = {
-    metadata: {},
+    metadata: {
+      inherits: 'object',
+    },
     constructor: null,
     constructorProperties: [],
     prototypeProperties: [],

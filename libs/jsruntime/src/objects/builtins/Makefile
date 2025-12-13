@@ -13,13 +13,14 @@ NATIVE_ERROR_NAMES := \
   syntax_error \
   type_error \
   uri_error
+NATIVE_ERROR_IMP_RS_FILES := $(addsuffix /imp.rs,$(NATIVE_ERROR_NAMES))
 
-BUILTINS := error promise string
+BUILTINS := error promise string $(NATIVE_ERROR_NAMES)
 BUILTINS_README_MD_FILES := $(addsuffix /README.md,$(BUILTINS))
 BUILTINS_MOD_RS_FILES := $(addsuffix /mod.rs,$(BUILTINS))
 BUILTINS_IMP_JSON_FILES := $(addsuffix /imp.json,$(BUILTINS))
 
-CODEGEN_TARGETS := $(addsuffix .rs,$(NATIVE_ERROR_NAMES)) $(BUILTINS_MOD_RS_FILES)
+CODEGEN_TARGETS := $(BUILTINS_MOD_RS_FILES) $(NATIVE_ERROR_IMP_RS_FILES)
 UPDATE_TARGETS := $(addprefix update-,$(BUILTINS_README_MD_FILES))
 CLEAN_TARGETS := $(CODEGEN_TARGETS) $(BUILTINS_IMP_JSON_FILES)
 
@@ -32,48 +33,6 @@ update: $(UPDATE_TARGETS)
 .PHONY: clean
 clean:
 	@rm -f $(CLEAN_TARGETS)
-
-aggregate_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "aggregate_error" }' | \
-	  rustfmt --emit=stdout >$@
-
-eval_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "eval_error" }' | \
-	  rustfmt --emit=stdout >$@
-
-# https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError
-# Non-standard error type.  We use this error type for throwing internal errors.
-internal_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "internal_error" }' | \
-	  rustfmt --emit=stdout >$@
-
-range_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "range_error" }' | \
-	  rustfmt --emit=stdout >$@
-
-reference_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "reference_error" }' | \
-	  rustfmt --emit=stdout >$@
-
-syntax_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "syntax_error" }' | \
-	  rustfmt --emit=stdout >$@
-
-type_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "type_error" }' | \
-	  rustfmt --emit=stdout >$@
-
-uri_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
-	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "name": "uri_error" }' | \
-	  rustfmt --emit=stdout >$@
 
 %/mod.rs: %/imp.json builtin_mod.rs.njk
 	@echo 'Generating $(abspath $@)...'
@@ -94,3 +53,61 @@ uri_error.rs: native_error.rs.njk $(TOOLS_BIN)/nunjucks.js
 update-%/README.md: %/imp.json
 	@echo 'Updating $(abspath $(<D)/README.md)...'
 	@deno run -q --allow-read=$(<D) --allow-write=$(<D) update_readme_md.js $(<D)/README.md $<
+
+.PRECIOUS: aggregate_error/imp.rs
+aggregate_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@mkdir -p $(@D)
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "aggregate_error", "class": "AggregateError" }' | \
+	  rustfmt --emit=stdout >$@
+
+.PRECIOUS: eval_error/imp.rs
+eval_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@mkdir -p $(@D)
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "eval_error", "class": "EvalError" }' | \
+	  rustfmt --emit=stdout >$@
+
+# https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError
+# Non-standard error type.  We use this error type for throwing internal errors.
+.PRECIOUS: internal_error/imp.rs
+internal_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@mkdir -p $(@D)
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "internal_error", "class": "InternalError" }' | \
+	  rustfmt --emit=stdout >$@
+
+.PRECIOUS: range_error/imp.rs
+range_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@mkdir -p $(@D)
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "range_error", "class": "RangeError" }' | \
+	  rustfmt --emit=stdout >$@
+
+.PRECIOUS: reference_error/imp.rs
+reference_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@mkdir -p $(@D)
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "reference_error", "class": "ReferenceError" }' | \
+	  rustfmt --emit=stdout >$@
+
+.PRECIOUS: syntax_error/imp.rs
+syntax_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@mkdir -p $(@D)
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "syntax_error", "class": "SyntaxError" }' | \
+	  rustfmt --emit=stdout >$@
+
+.PRECIOUS: type_error/imp.rs
+type_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@mkdir -p $(@D)
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "type_error", "class": "TypeError" }' | \
+	  rustfmt --emit=stdout >$@
+
+.PRECIOUS: uri_error/imp.rs
+uri_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+	@echo 'Generating $(abspath $@)...'
+	@mkdir -p $(@D)
+	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "uri_error", "class": "URIError" }' | \
+	  rustfmt --emit=stdout >$@

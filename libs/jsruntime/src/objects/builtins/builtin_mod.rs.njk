@@ -68,11 +68,11 @@ impl<X> Runtime<X> {
     /// Creates the {{ data.metadata.class }} prototype object.
     pub(super) fn create_{{ data.metadata.id }}_prototype(&mut self) -> ObjectHandle {
         logger::debug!(event = "creater_{{ data.metadata.id }}_prototype");
-        debug_assert!(self.object_prototype.is_some());
+        debug_assert!(self.{{ data.metadata.inherits }}_prototype.is_some());
         debug_assert!(self.function_prototype.is_some());
 
         #[allow(unused_mut)]
-        let mut prototype = self.create_object(self.object_prototype);
+        let mut prototype = self.create_object(self.{{ data.metadata.inherits }}_prototype);
 
         {% for prop in data.prototypeProperties %}
         {% if prop.kind == "prototype.property" %}

@@ -15,3 +15,4 @@ update:
 .PHONY: clean
 clean:
 	@$(MAKE) -s -C backend/clir clean
+	@$(MAKE) -s -C objects/builtins clean
