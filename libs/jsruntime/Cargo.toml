@@ -15,9 +15,9 @@ bitflags = "2.10.0"
 # TODO(issue#237): replace `bumpalo` with `jsgc = { path = "../jsgc" }`
 bumpalo = "3.19.0"
 cranelift = "0.126.1"
-cranelift-module = "0.126.0"
+cranelift-module = "0.126.1"
 cranelift-jit = "0.126.1"
-cranelift-native = "0.126.0"
+cranelift-native = "0.126.1"
 indexmap = "2.12.1"
 itertools = "0.14.0"
 jsparser = { path = "../jsparser", features = ["location"] }
