@@ -55,19 +55,19 @@ async function main(args, options) {
         json.metadata[data.name] = data.value;
         break;
       case 'constructor':
-        collectFunctionDataFromSpec(spec, data);
+        collectFunctionDataFromSpec(spec, data, json.metadata);
         json.constructor = data;
         break;
       case 'constructor.function':
-        collectFunctionDataFromSpec(spec, data);
+        collectFunctionDataFromSpec(spec, data, json.metadata);
         json.constructorProperties.push(data);
         break;
       case 'prototype.property':
-        collectPropertyDataFromSpec(spec, data);
+        collectPropertyDataFromSpec(spec, data, json.metadata);
         json.prototypeProperties.push(data);
         break;
       case 'prototype.function':
-        collectFunctionDataFromSpec(spec, data);
+        collectFunctionDataFromSpec(spec, data, json.metadata);
         json.prototypeProperties.push(data);
         break;
       default:
@@ -166,18 +166,24 @@ function dataStream(impRs) {
     }));
 }
 
-function collectPropertyDataFromSpec(spec, data) {
+function collectPropertyDataFromSpec(spec, data, metadata) {
   let clause = spec.window.document.getElementById(data.id);
   data.property = clause.firstElementChild.textContent.trim();
+  if (data.property.startsWith('_NativeError_.')) {
+    data.property = data.property.replace('_NativeError_', metadata['class']);
+  }
   data.name = data.property.split('.').at(-1);
   data.symbol = constantCase(data.name);
   return data;
 }
 
-function collectFunctionDataFromSpec(spec, data) {
+function collectFunctionDataFromSpec(spec, data, metadata) {
   const clause = spec.window.document.getElementById(data.id);
   if (clause) {
     data.signature = parseSignature(clause.firstElementChild.textContent.trim());
+    if (data.signature.name === '_NativeError_') {
+      data.signature.name = metadata['class'];
+    }
     data.alg = parseAlg(clause.getElementsByTagName('emu-alg').item(0).textContent);
   } else {
     data.signature = parseSignature(data.options.signature);
@@ -208,7 +214,7 @@ function collectFunctionDataFromSpec(spec, data) {
   return data;
 }
 
-function parseSignature(text, data) {
+function parseSignature(text) {
   let parts = text.split('(');
   let name = parts[0].trim();
   let args = parseArgs(parts[1].split(')')[0].trim());
