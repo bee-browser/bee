@@ -96,5 +96,5 @@ lalr/%.rs: lalrgen/lalr.json lalr/%.rs.hbs lalr.js $(TOKENS_JSON)
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
 	  deno run --allow-read=.. lalr.js $(TOKENS_JSON) | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $@.hbs | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --input-stdin --no-escape $@.hbs | \
 	  rustfmt --emit=stdout >$@

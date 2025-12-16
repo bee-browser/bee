@@ -111,7 +111,7 @@ dfagen/%.json: grammar.yaml tokens.yaml
 dfa/%.rs: dfagen/%.json dfa/dfa.rs.hbs dfa.js
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | deno run dfa.js | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin dfa/dfa.rs.hbs | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-stdin dfa/dfa.rs.hbs | \
 	  rustfmt --emit=stdout >$@
 
 # 5. Generate a wrapper function
@@ -121,14 +121,14 @@ dfa/%.rs: dfagen/%.json dfa/dfa.rs.hbs dfa.js
 dfa/mod.rs: tokens.yaml dfa/mod.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | yq -o=json | jq -r '[.goals[].name]' | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $@.hbs | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@
 
 # 6. Generate an enum type for goal symbols
 goals.rs: tokens.yaml goals.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | yq -o=json | jq -r '[.goals[].name]' | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $@.hbs | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@
 
 # 7. Collect tokens from tokens.yaml
@@ -145,5 +145,5 @@ tokens.json: tokens.yaml
 tokens.rs: tokens.json tokens.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $@.hbs | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@

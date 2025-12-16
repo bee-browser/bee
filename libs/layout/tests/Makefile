@@ -39,7 +39,7 @@ codegen-rust: layout_tests.rs
 
 html/index.html: html/index.html.hbs html/index.json html/tests.js
 	@echo 'Generating $(abspath $@)...'
-	@deno run -qA $(TOOLS_BIN)/codegen.js $< html/index.json >$@
+	@deno run -qA $(TOOLS_BIN)/handlebars.js $< html/index.json >$@
 
 html/index.json: $(LAYOUT_TEST_SRC_FILES)
 	@echo 'Generating $(abspath $@)...'
@@ -54,7 +54,7 @@ html/tests.js: $(LAYOUT_TEST_JSON_FILES) $(LAYOUT_TEST_HTML_FILES)
 
 layout_tests.rs: layout_test.rs.hbs layout_tests.json $(LAYOUT_TEST_SCENARIO_FILES)
 	@echo 'Generating $(abspath $@)...'
-	@deno run -qA $(TOOLS_BIN)/codegen.js $< layout_tests.json >$@
+	@deno run -qA $(TOOLS_BIN)/handlebars.js $< layout_tests.json >$@
 
 layout_tests.json: $(LAYOUT_TEST_EXPECTED_FILES)
 	@echo 'Generating $(abspath $@)...'
@@ -72,7 +72,7 @@ layout_tests.json: $(LAYOUT_TEST_EXPECTED_FILES)
 .PRECIOUS: html/%.test.html
 html/%.test.html: %.test.json html/test.html.hbs
 	@echo 'Generating $(abspath $@)...'
-	@deno run -qA $(TOOLS_BIN)/codegen.js html/test.html.hbs $< >$@
+	@deno run -qA $(TOOLS_BIN)/handlebars.js html/test.html.hbs $< >$@
 
 .PRECIOUS: %.test.json
 %.test.json: %.test.yaml
@@ -82,9 +82,9 @@ html/%.test.html: %.test.json html/test.html.hbs
 .PRECIOUS: %.test.yaml
 %.test.yaml: data/%.test.yaml.hbs
 	@echo 'Generating $(abspath $@)...'
-	@deno run -qA $(TOOLS_BIN)/codegen.js -p data/partials $< >$@
+	@deno run -qA $(TOOLS_BIN)/handlebars.js -p data/partials $< >$@
 
 .PRECIOUS: %.test.yaml.d
 %.test.yaml.d: data/%.test.yaml.hbs
 	@echo 'Generating $(abspath $@)...'
-	@deno run -qA $(TOOLS_BIN)/codegen.js -p data/partials --deps $(subst .d,,$@) $< >$@
+	@deno run -qA $(TOOLS_BIN)/handlebars.js -p data/partials --deps $(subst .d,,$@) $< >$@

@@ -15,5 +15,5 @@ clean:
 %.rs: %.yaml %.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | yq -o=json | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $@.hbs | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@

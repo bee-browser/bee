@@ -10,7 +10,7 @@ define html5lib_tests
 html5lib_tests_$(shell echo $1 | tr '-' '_' | sed -e 's/innerHTML/inner_html/g').rs: $$(DATA_DIR)/$1.dat html5lib_tests.js html5lib_tests.rs.hbs
 	@echo 'Generating $$(abspath $$@)...'
 	@deno run -q --allow-read=$$< html5lib_tests.js $$< | \
-	  deno run -q --allow-read=. $$(TOOLS_BIN)/codegen.js --input-stdin --no-escape html5lib_tests.rs.hbs $$< | \
+	  deno run -q --allow-read=. $$(TOOLS_BIN)/handlebars.js --input-stdin --no-escape html5lib_tests.rs.hbs $$< | \
 	  rustfmt --emit=stdout >$$@
 SRCS += html5lib_tests_$(shell echo $1 | tr '-' '_' | sed -e 's/innerHTML/inner_html/g').rs
 endef
