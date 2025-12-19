@@ -15,12 +15,12 @@ codegen: $(CODEGEN_TARGETS)
 clean:
 	@rm -f $(CLEAN_TARGETS)
 
-evaluate.rs: evaluate.rs.hbs evaluate.json
+evaluate.rs: evaluate.rs.hbs evaluate.json $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js $^ | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape $< evaluate.json | \
 	  rustfmt --emit=stdout >$@
 
-.PHONY: evaluate.json
+.PRECIOUS: evaluate.json
 evaluate.json: $(EVALUATE_TESTS) evaluate.js
 	@echo 'Generating $(abspath $@)...'
 	@deno run -q --allow-read=. evaluate.js $(EVALUATE_TESTS) >$@

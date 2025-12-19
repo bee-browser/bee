@@ -2,7 +2,7 @@
 
 import * as fs from '@std/fs';
 import * as path from '@std/path';
-import * as changeCase from 'change-case';
+import { pascalCase, snakeCase } from 'change-case';
 import Handlebars from 'handlebars';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { PROJ_DIR } from '../lib/consts.js';
@@ -54,61 +54,39 @@ CUSTOM DATA:
 
   @template
     Relatie path to the template file from the project root.
-
-HELPER:
-  * json as JSON.stringify
-  * padStart, padEnd
-  * npm:change-case
-  * escapeForRust
-  * escapeUnicodeForRust
 `.trim();
 
-const { options, args } = await parseCommand({
-  doc: DOC,
-});
+const HELPERS = {
+  eq: (a, b) => a === b,
 
-Deno.exit(await run(args, options));
+  join: (array, sep) => {
+    return array.join(sep);
+  },
 
-async function run(args, options) {
-  const src = await Deno.readTextFile(args.template);
-  const input = await loadJson(args.input, options);
-  registerHelpers();
-  if (options.deps) {
-    return await depsgen(src, input, args, options);
-  }
-  await codegen(src, input, args, options);
-}
-
-function registerHelpers() {
-  Handlebars.registerHelper('join', (v, sep) => {
-    return v.join(sep);
-  });
-
-  Handlebars.registerHelper('length', (v) => {
+  length: (v) => {
     if (typeof v.length === 'number') {
       return v.length;
     } else {
       return Object.keys(v).length;
     }
-  });
+  },
 
-  Handlebars.registerHelper('padStart', (v, n, pad) => {
+  padStart: (v, n, pad) => {
     return v.toString().padStart(n, pad);
-  });
+  },
 
-  Handlebars.registerHelper('padEnd', (v, n, pad) => {
+  padEnd: (v, n, pad) => {
     return v.toString().padEnd(n, pad);
-  });
+  },
 
-  Handlebars.registerHelper('json', JSON.stringify);
+  json: JSON.stringify,
 
-  for (var name in changeCase) {
-    Handlebars.registerHelper(name, changeCase[name]);
-  }
-  Handlebars.registerHelper('lowerCase', (str) => str.toLowerCase());
-  Handlebars.registerHelper('upperCase', (str) => str.toUpperCase());
+  pascalCase,
+  snakeCase,
+  lowerCase: (str) => str.toLowerCase(),
+  upperCase: (str) => str.toUpperCase(),
 
-  Handlebars.registerHelper('escapeForRust', (str) => {
+  escapeForRust: (str) => {
     const CHARMAP = {
       '\0': '\\0',
       '\n': '\\n',
@@ -127,9 +105,9 @@ function registerHelpers() {
       }
     }
     return escaped;
-  });
+  },
 
-  Handlebars.registerHelper('escapeUnicodeForRust', (str) => {
+  escapeUnicodeForRust: (str) => {
     let escaped = '';
     let i = 0;
     while (i < str.length) {
@@ -139,7 +117,27 @@ function registerHelpers() {
       i += String.fromCodePoint(cp).length;
     }
     return escaped;
-  });
+  },
+};
+
+const { options, args } = await parseCommand({
+  doc: DOC + `
+
+HELPERS:
+${Object.keys(HELPERS).map((k) => '  * ' + k).join('\n')}
+`,
+});
+
+Deno.exit(await run(args, options));
+
+async function run(args, options) {
+  const src = await Deno.readTextFile(args.template);
+  const input = await loadJson(args.input, options);
+  Handlebars.registerHelper(HELPERS);
+  if (options.deps) {
+    return await depsgen(src, input, args, options);
+  }
+  await codegen(src, input, args, options);
 }
 
 async function codegen(src, input, args, options) {

@@ -4,16 +4,22 @@ PROJ_DIR := ../../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 CODEGEN_TARGETS := support.rs
+CLEAN_TARGETS := $(CODEGEN_TARGETS) ../runtime.json
 
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
 .PHONY: clean
 clean:
-	@rm -f $(CODEGEN_TARGETS)
+	@rm -f $(CLEAN_TARGETS)
 
-%.rs: %.rs.njk ../runtime.yaml ../runtime.js $(TOOLS_BIN)/nunjucks.js
+%.rs: ../runtime.json %.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=.. ../runtime.js ../runtime.yaml | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< | \
+	@cat $< | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@
+
+.PRECIOUS: ../runtime.json
+../runtime.json: ../runtime.js ../runtime.yaml
+	@echo 'Generating $(abspath $@)...'
+	@deno run -q --allow-read=.. $^ >$@

@@ -56,7 +56,6 @@
     "npm:handlebars@4.7.8": "4.7.8",
     "npm:jsdom@27.3.0": "27.3.0",
     "npm:mustache@4.2.0": "4.2.0",
-    "npm:nunjucks@3.2.4": "3.2.4",
     "npm:ora@9.0.0": "9.0.0",
     "npm:path-to-regexp@^6.3.0": "6.3.0",
     "npm:test262-stream@1.4.0": "1.4.0"
@@ -342,9 +341,6 @@
     "@eyalsh/docopt@1.0.7": {
       "integrity": "sha512-xuNkr0oMNM75NACp6byAVutKiv1Pm7ujqR4A9/bEsX9Sqf/SPIG4gS6y0N1KnKwS5Qs3faPGdh8yJMRzM5CaWQ=="
     },
-    "a-sync-waterfall@1.0.1": {
-      "integrity": "sha512-RYTOHHdWipFUliRFMCS4X2Yn2X8M87V/OpSqWzKKOGhzqyUxzyVmhHDH9sAvG+ZuQf/TAOFsLCpMw09I1ufUnA=="
-    },
     "acorn@8.15.0": {
       "integrity": "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==",
       "bin": true
@@ -360,9 +356,6 @@
       "dependencies": [
         "sprintf-js"
       ]
-    },
-    "asap@2.0.6": {
-      "integrity": "sha512-BSHWgDSAiKs50o2Re8ppvp3seVHXSRM44cdSsT9FfNEUUZLOGWVCsiWaRPWM1Znn+mqZ1OfVZ3z3DWEzSp7hRA=="
     },
     "bidi-js@1.0.3": {
       "integrity": "sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw==",
@@ -384,9 +377,6 @@
     },
     "cli-spinners@3.2.1": {
       "integrity": "sha512-Xh+cRh7dzk9n7gYE+M1Lusy3yg5ADy9m6zOHqmcu9kSkWpo7ySWVUS3dXleR3konJOEOdHzsKjWkGed6g2eJuA=="
-    },
-    "commander@5.1.0": {
-      "integrity": "sha512-P0CysNDQ7rtVw4QIQtm+MRxV66vKFSvlsQvGYXZWR3qFU0jlMKHZZZgw8e+8DSah4UDKMqnknRDQz+xuQXQ/Zg=="
     },
     "css-tree@3.1.0": {
       "integrity": "sha512-0eW44TGN5SQXU1mWSkKwFstI/22X2bG1nYzZTYMAWjylYURhse752YgbE4Cx46AC+bAvI+/dYTPRk1LqSUnu6w==",
@@ -554,15 +544,6 @@
     },
     "neo-async@2.6.2": {
       "integrity": "sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw=="
-    },
-    "nunjucks@3.2.4": {
-      "integrity": "sha512-26XRV6BhkgK0VOxfbU5cQI+ICFUtMLixv1noZn1tGU38kQH5A5nmmbk/O45xdyBhD1esk47nKrY0mvQpZIhRjQ==",
-      "dependencies": [
-        "a-sync-waterfall",
-        "asap",
-        "commander"
-      ],
-      "bin": true
     },
     "onetime@7.0.0": {
       "integrity": "sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==",
@@ -873,7 +854,6 @@
       "npm:handlebars@4.7.8",
       "npm:jsdom@27.3.0",
       "npm:mustache@4.2.0",
-      "npm:nunjucks@3.2.4",
       "npm:ora@9.0.0",
       "npm:test262-stream@1.4.0"
     ]

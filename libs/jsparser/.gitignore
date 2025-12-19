@@ -17,5 +17,6 @@
 /src/parser/lalr/lexical_goal.rs
 /src/parser/lalr/non_terminals.rs
 /src/parser/lalrgen/
+/src/symbol/builtin.json
 /src/symbol/builtin.rs
 /src/syntax/actions.rs

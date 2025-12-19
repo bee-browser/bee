@@ -34,9 +34,9 @@ update: $(UPDATE_TARGETS)
 clean:
 	@rm -f $(CLEAN_TARGETS)
 
-%/mod.rs: %/imp.json builtin_mod.rs.njk
+%/mod.rs: %/imp.json builtin_mod.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js builtin_mod.rs.njk | \
+	@cat $< | deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-stdin builtin_mod.rs.hbs | \
 	  rustfmt --emit=stdout >$@
 
 # `jsdom` reads
@@ -55,59 +55,59 @@ update-%/README.md: %/imp.json
 	@deno run -q --allow-read=$(<D) --allow-write=$(<D) update_readme_md.js $(<D)/README.md $<
 
 .PRECIOUS: aggregate_error/imp.rs
-aggregate_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+aggregate_error/imp.rs: native_error_imp.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p $(@D)
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "aggregate_error", "class": "AggregateError" }' | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-inline $< '{ "id": "aggregate_error", "class": "AggregateError" }' | \
 	  rustfmt --emit=stdout >$@
 
 .PRECIOUS: eval_error/imp.rs
-eval_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+eval_error/imp.rs: native_error_imp.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p $(@D)
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "eval_error", "class": "EvalError" }' | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-inline $< '{ "id": "eval_error", "class": "EvalError" }' | \
 	  rustfmt --emit=stdout >$@
 
 # https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError
 # Non-standard error type.  We use this error type for throwing internal errors.
 .PRECIOUS: internal_error/imp.rs
-internal_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+internal_error/imp.rs: native_error_imp.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p $(@D)
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "internal_error", "class": "InternalError" }' | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-inline $< '{ "id": "internal_error", "class": "InternalError" }' | \
 	  rustfmt --emit=stdout >$@
 
 .PRECIOUS: range_error/imp.rs
-range_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+range_error/imp.rs: native_error_imp.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p $(@D)
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "range_error", "class": "RangeError" }' | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-inline $< '{ "id": "range_error", "class": "RangeError" }' | \
 	  rustfmt --emit=stdout >$@
 
 .PRECIOUS: reference_error/imp.rs
-reference_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+reference_error/imp.rs: native_error_imp.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p $(@D)
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "reference_error", "class": "ReferenceError" }' | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-inline $< '{ "id": "reference_error", "class": "ReferenceError" }' | \
 	  rustfmt --emit=stdout >$@
 
 .PRECIOUS: syntax_error/imp.rs
-syntax_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+syntax_error/imp.rs: native_error_imp.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p $(@D)
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "syntax_error", "class": "SyntaxError" }' | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-inline $< '{ "id": "syntax_error", "class": "SyntaxError" }' | \
 	  rustfmt --emit=stdout >$@
 
 .PRECIOUS: type_error/imp.rs
-type_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+type_error/imp.rs: native_error_imp.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p $(@D)
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "type_error", "class": "TypeError" }' | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-inline $< '{ "id": "type_error", "class": "TypeError" }' | \
 	  rustfmt --emit=stdout >$@
 
 .PRECIOUS: uri_error/imp.rs
-uri_error/imp.rs: native_error_imp.rs.njk $(TOOLS_BIN)/nunjucks.js
+uri_error/imp.rs: native_error_imp.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
 	@mkdir -p $(@D)
-	@deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< '{ "id": "uri_error", "class": "URIError" }' | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-inline $< '{ "id": "uri_error", "class": "URIError" }' | \
 	  rustfmt --emit=stdout >$@

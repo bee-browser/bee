@@ -5,18 +5,19 @@ TOOLS_BIN := $(PROJ_DIR)/tools/bin
 LALR_JSON := ../parser/lalrgen/lalr.json
 
 CODEGEN_TARGETS := actions.rs
+CLEAN_TARGETS := $(CODEGEN_TARGETS)
 
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
 .PHONY: clean
 clean:
-	@rm -f $(CODEGEN_TARGETS)
+	@rm -f $(CLEAN_TARGETS)
 
-actions.rs: actions.rs.njk actions.yaml $(TOOLS_BIN)/nunjucks.js
+actions.rs: actions.yaml actions.rs.hbs $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
-	@cat actions.yaml | yq -o=json | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< | \
+	@cat $< | yq -o=json | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@
 
 actions.yaml: $(LALR_JSON) actions.js
