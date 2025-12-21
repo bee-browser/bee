@@ -35,9 +35,9 @@ Deno.exit(await main(args, options));
 async function main(args, options) {
   log.debug(`Loading ${args.builtinsYaml}...`);
   const builtinsYaml = await Deno.readTextFile(args.builtinsYaml);
-  const builtins = yaml
+  const symbols = yaml
     .parse(builtinsYaml)
-    .map((item) => {
+    .map((item, index) => {
       let name;
       let rustName;
       let aliases;
@@ -58,6 +58,7 @@ async function main(args, options) {
         codeUnits.push(name.charCodeAt(i));
       }
       return {
+        id: index + 1,
         name,
         rustName,
         aliases,
@@ -65,7 +66,10 @@ async function main(args, options) {
         hidden: name.startsWith('##'),
       };
     });
-  console.log(JSON.stringify(builtins));
+  console.log(JSON.stringify({
+    symbols,
+    lastHiddenId: symbols.findLast((symbol) => symbol.name.startsWith('##')).id,
+  }));
 }
 
 function makeCodeUnits(name) {

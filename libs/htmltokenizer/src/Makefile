@@ -18,7 +18,7 @@ clean:
 
 charref/trie.rs: charref/trie.codegen.json charref/trie.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape $@.hbs $< | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape $@.hbs $< | \
 	  rustfmt --emit=stdout >$@
 
 # TODO: Use JSON5 and add comments at the beginning of the file like other

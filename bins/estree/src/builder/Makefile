@@ -16,7 +16,7 @@ clean:
 actions.rs: actions.yaml actions.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | yq -o=json | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $@.hbs | \
+	  deno run -qA $(TOOLS_BIN)/handlebars.js --input-stdin --no-escape $@.hbs | \
 	  rustfmt --emit=stdout >$@
 
 actions.yaml: actions.js $(LALR_JSON)

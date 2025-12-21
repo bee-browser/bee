@@ -1,5 +1,6 @@
 'use strict';
 
+import { unreachable } from '@std/assert';
 import { EOL } from '@std/fs';
 import * as log from '@std/log';
 import * as path from '@std/path';
@@ -45,19 +46,34 @@ async function main(args, options) {
     }
     const parts = line.split(ECMA262_SPEC_URL_BASE);
     const id = parts[1].substring(0, parts[1].length - 1); // remove the last ')'
-    let func = data.constructor?.id === id ? data.constructor : null;
-    if (func) {
-      lines.push(`* [x] [${func.signature.name}](${ECMA262_SPEC_URL_BASE}${func.id})`);
+    if (data.constructor?.id === id) {
+      const ctor = data.constructor;
+      lines.push(`* [x] [${ctor.signature.name}](${ECMA262_SPEC_URL_BASE}${ctor.id})`);
       continue;
     }
-    func = data.constructorProperties.functions.find((func) => func.id === id);
-    if (func) {
-      lines.push(`* [x] [${func.signature.name}](${ECMA262_SPEC_URL_BASE}${func.id})`);
+    let prop = data.constructorProperties.find((prop) => prop.id === id);
+    if (prop) {
+      switch (prop.kind) {
+        case 'constructor.function':
+          lines.push(`* [x] [${prop.signature.name}](${ECMA262_SPEC_URL_BASE}${prop.id})`);
+          break;
+        default:
+          unreachable();
+      }
       continue;
     }
-    func = data.prototypeProperties.functions.find((func) => func.id === id);
-    if (func) {
-      lines.push(`* [x] [${func.signature.name}](${ECMA262_SPEC_URL_BASE}${func.id})`);
+    prop = data.prototypeProperties.find((prop) => prop.id === id);
+    if (prop) {
+      switch (prop.kind) {
+        case 'prototype.property':
+          lines.push(`* [x] [${prop.property}](${ECMA262_SPEC_URL_BASE}${prop.id})`);
+          break;
+        case 'prototype.function':
+          lines.push(`* [x] [${prop.signature.name}](${ECMA262_SPEC_URL_BASE}${prop.id})`);
+          break;
+        default:
+          unreachable();
+      }
       continue;
     }
     lines.push(line.replace('[x]', '[ ]'));

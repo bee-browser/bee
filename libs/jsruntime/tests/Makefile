@@ -4,6 +4,7 @@ PROJ_DIR := ../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 CODEGEN_TARGETS := evaluate.rs
+CLEAN_TARGETS := $(CODEGEN_TARGETS) evaluate.json
 
 EVALUATE_TESTS := $(wildcard scripts/*.js) $(wildcard modules/*.mjs)
 
@@ -12,10 +13,14 @@ codegen: $(CODEGEN_TARGETS)
 
 .PHONY: clean
 clean:
-	@rm -f $(CODEGEN_TARGETS)
+	@rm -f $(CLEAN_TARGETS)
 
-evaluate.rs: evaluate.rs.njk $(EVALUATE_TESTS) evaluate.js
+evaluate.rs: evaluate.rs.hbs evaluate.json $(TOOLS_BIN)/handlebars.js
 	@echo 'Generating $(abspath $@)...'
-	@deno run -q --allow-read=. evaluate.js $(EVALUATE_TESTS) | \
-	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $< | \
+	@deno run -q --allow-read=. $(TOOLS_BIN)/handlebars.js --no-escape $< evaluate.json | \
 	  rustfmt --emit=stdout >$@
+
+.PRECIOUS: evaluate.json
+evaluate.json: $(EVALUATE_TESTS) evaluate.js
+	@echo 'Generating $(abspath $@)...'
+	@deno run -q --allow-read=. evaluate.js $(EVALUATE_TESTS) >$@

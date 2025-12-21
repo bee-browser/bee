@@ -453,10 +453,7 @@ impl<X> Runtime<X> {
             }
             Value::Object(_) => {
                 const MESSAGE: StringHandle = const_string!("TODO: make_property_key");
-                match self.create_internal_error(true, &Value::String(MESSAGE), &Value::Undefined) {
-                    Ok(err) => Err(Value::Object(err)),
-                    Err(err) => Err(err),
-                }
+                Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
             }
         }
     }
@@ -505,10 +502,7 @@ impl<X> Runtime<X> {
     }
 
     fn throw_internal_error(&mut self, message: StringHandle, retv: &mut Value) -> Status {
-        match self.create_internal_error(true, &Value::String(message), &Value::Undefined) {
-            Ok(value) => *retv = Value::Object(value),
-            Err(err) => *retv = err,
-        }
+        *retv = Value::Object(self.create_internal_error(Some(message)));
         Status::Exception
     }
 }

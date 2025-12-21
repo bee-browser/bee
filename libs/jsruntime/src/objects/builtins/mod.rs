@@ -212,18 +212,11 @@ impl<X> Runtime<X> {
     }
 
     pub(crate) fn create_exception(&mut self, err: Error) -> Value {
-        let object = match err {
-            Error::TypeError => self
-                .create_type_error(true, &Value::Undefined, &Value::Undefined)
-                .unwrap(),
-            Error::RangeError => self
-                .create_range_error(true, &Value::Undefined, &Value::Undefined)
-                .unwrap(),
-            Error::InternalError => self
-                .create_internal_error(true, &Value::Undefined, &Value::Undefined)
-                .unwrap(),
-        };
-        Value::Object(object)
+        Value::Object(match err {
+            Error::TypeError => self.create_type_error(None),
+            Error::RangeError => self.create_range_error(None),
+            Error::InternalError => self.create_internal_error(None),
+        })
     }
 
     fn make_string_filler(&mut self, fill_string: StringHandle, fill_len: u32) -> StringHandle {
