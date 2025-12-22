@@ -18,12 +18,12 @@ geometry = { path = "../geometry" }
 logging = { path = "../logging" }
 num-traits = "0.2.19"
 serde = { version = "1.0.228", features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0.145", optional = true }
+serde_json = { version = "1.0.146", optional = true }
 
 [dev-dependencies]
 assert-json-diff = "2.0.2"
 assert_matches = "1.5.0"
-serde_json = "1.0.145"
+serde_json = "1.0.146"
 serde_yaml = "0.9.34"
 
 [lints]
