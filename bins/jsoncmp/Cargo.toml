@@ -16,7 +16,7 @@ clap = { version = "4.5.53", features = ["env", "derive", "wrap_help"] }
 serde = { version = "1.0.228", features = ["derive"] }
 # "unbounded_depth" is needed for parsing a large JSON.
 # See https://github.com/serde-rs/json/issues/334.
-serde_json = { version = "1.0.146", features = ["preserve_order", "unbounded_depth"] }
+serde_json = { version = "1.0.147", features = ["preserve_order", "unbounded_depth"] }
 
 [lints]
 workspace = true
