@@ -1,4 +1,5 @@
 pub mod number;
+pub mod object;
 pub mod string;
 
 use std::ffi::c_void;
@@ -8,9 +9,12 @@ use std::ptr::addr_eq;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
-use crate::objects::Object;
-use crate::objects::ObjectHandle;
 
+pub use object::Object;
+pub use object::ObjectFlags;
+pub use object::ObjectHandle;
+pub use object::Property;
+pub use object::PropertyKey;
 pub use string::StringFragment;
 pub use string::StringFragmentFlags;
 pub use string::StringHandle;

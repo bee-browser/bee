@@ -4,9 +4,9 @@ logging::define_logger! {"bee::jsruntime"}
 mod macros;
 
 mod backend;
+mod builtins;
 mod jobs;
 mod lambda;
-mod objects;
 mod semantics;
 mod types;
 
@@ -21,16 +21,16 @@ use backend::CodeRegistry;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
-use objects::Object;
-use objects::ObjectHandle;
-use objects::Property;
-use objects::PropertyKey;
 use semantics::Program;
 use types::CallContext;
 use types::Capture;
 use types::Closure;
 use types::Coroutine;
 use types::Lambda;
+use types::Object;
+use types::ObjectHandle;
+use types::Property;
+use types::PropertyKey;
 use types::ReturnValue;
 use types::Status;
 

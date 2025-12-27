@@ -18,10 +18,10 @@ use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
-use crate::objects::Object;
-use crate::objects::ObjectHandle;
-use crate::objects::Property;
 use crate::types::Lambda;
+use crate::types::Object;
+use crate::types::ObjectHandle;
+use crate::types::Property;
 use crate::types::StringFragment;
 use crate::types::StringHandle;
 use crate::types::Value;
@@ -110,7 +110,7 @@ impl<X> Runtime<X> {
         debug_assert!(self.function_prototype.is_some());
         let closure = self.create_closure(params.lambda, LambdaId::HOST, 0);
         let mut func = self.create_object(self.function_prototype);
-        func.slots.extend_from_slice(params.slots);
+        func.slots_mut().extend_from_slice(params.slots);
         func.set_closure(closure);
         if let Some(prototype) = params.prototype {
             func.set_constructor();

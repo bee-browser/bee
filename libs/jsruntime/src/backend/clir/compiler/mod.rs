@@ -23,7 +23,6 @@ use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;
 use crate::logger;
-use crate::objects::ObjectHandle;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
 use crate::semantics::Locator;
@@ -33,6 +32,7 @@ use crate::semantics::ScopeTree;
 use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::CallContextFlags;
+use crate::types::ObjectHandle;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -4077,7 +4077,7 @@ impl From<Symbol> for PropertyKey {
 impl From<f64> for PropertyKey {
     fn from(value: f64) -> Self {
         // Use objects::PropertyKey::from() in order to remove code clone.
-        use crate::objects::PropertyKey;
+        use crate::types::PropertyKey;
         match PropertyKey::from(value) {
             PropertyKey::Symbol(value) => Self::Symbol(value),
             PropertyKey::Number(value) => Self::Number(value),

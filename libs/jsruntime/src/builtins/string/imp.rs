@@ -5,11 +5,11 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::StringFragment;
+use crate::builtins::require_object_coercible;
 use crate::logger;
-use crate::objects::Property;
-use crate::objects::builtins::require_object_coercible;
 use crate::types::CallContext;
+use crate::types::Property;
+use crate::types::StringFragment;
 use crate::types::StringHandle;
 use crate::types::Value;
 

@@ -5,10 +5,10 @@ use rustc_hash::FxHashMap;
 use crate::Runtime;
 use crate::Value;
 use crate::logger;
-use crate::objects::ObjectHandle;
 use crate::types::CallContext;
 use crate::types::Coroutine;
 use crate::types::Lambda;
+use crate::types::ObjectHandle;
 use crate::types::Promise;
 use crate::types::Status;
 

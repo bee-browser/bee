@@ -1,5 +1,3 @@
-pub(crate) mod builtins;
-
 use std::ffi::c_void;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -317,7 +315,7 @@ impl Object {
         self.userdata = string.as_addr();
     }
 
-    fn set_promise(&mut self, promise: Promise) {
+    pub(crate) fn set_promise(&mut self, promise: Promise) {
         self.userdata = promise.as_userdata();
     }
 
@@ -326,13 +324,13 @@ impl Object {
         ObjectHandle(unsafe { NonZeroUsize::new_unchecked(self as *mut Self as usize) })
     }
 
-    fn is_instance_of(&self, prototype: Option<ObjectHandle>) -> bool {
+    pub fn is_instance_of(&self, prototype: Option<ObjectHandle>) -> bool {
         debug_assert!(prototype.is_some());
         // TODO: prototype chain
         self.prototype == prototype
     }
 
-    pub fn set_constructor(&mut self) {
+    pub(crate) fn set_constructor(&mut self) {
         self.flags.insert(ObjectFlags::CONSTRUCTOR)
     }
 
@@ -340,22 +338,30 @@ impl Object {
         self.flags.contains(ObjectFlags::CALLABLE)
     }
 
-    fn set_callable(&mut self) {
+    pub(crate) fn set_callable(&mut self) {
         self.flags.insert(ObjectFlags::CALLABLE);
     }
 
-    fn is_error(&self) -> bool {
+    pub(crate) fn is_error(&self) -> bool {
         self.flags.contains(ObjectFlags::ERROR)
     }
 
-    fn set_error(&mut self) {
+    pub(crate) fn set_error(&mut self) {
         self.flags.insert(ObjectFlags::ERROR);
+    }
+
+    pub(crate) fn slots(&self) -> &[Value] {
+        &self.slots
+    }
+
+    pub(crate) fn slots_mut(&mut self) -> &mut Vec<Value> {
+        &mut self.slots
     }
 }
 
 bitflags! {
     #[derive(Clone, Copy)]
-    pub(crate) struct ObjectFlags: u8 {
+    pub struct ObjectFlags: u8 {
         const CONSTRUCTOR = 1 << 0;
         const CALLABLE    = 1 << 1;
         const ERROR       = 1 << 2;

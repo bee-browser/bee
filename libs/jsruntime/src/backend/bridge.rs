@@ -3,13 +3,13 @@ use std::ffi::c_void;
 use crate::Runtime;
 use crate::lambda::LambdaKind;
 use crate::logger;
-use crate::objects::ObjectHandle;
-use crate::objects::PropertyKey;
 use crate::types::CallContext;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
+use crate::types::ObjectHandle;
+use crate::types::PropertyKey;
 use crate::types::Status;
 use crate::types::StringFragment;
 use crate::types::StringHandle;
@@ -20,7 +20,7 @@ macro_rules! into_object {
         // SAFETY: `value` is always a non-null pointer to an `Object`.
         unsafe {
             debug_assert!(!$value.is_null());
-            &mut *($value as *mut crate::objects::Object)
+            &mut *($value as *mut crate::types::Object)
         }
     };
 }

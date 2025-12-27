@@ -6,9 +6,9 @@ use jsparser::Symbol;
 use crate::Error;
 use crate::Runtime;
 use crate::logger;
-use crate::objects::ObjectHandle;
-use crate::objects::Property;
 use crate::types::CallContext;
+use crate::types::ObjectHandle;
+use crate::types::Property;
 use crate::types::StringHandle;
 use crate::types::Value;
 

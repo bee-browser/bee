@@ -6,13 +6,13 @@ TOOLS_BIN := $(PROJ_DIR)/tools/bin
 .PHONY: codegen
 codegen:
 	@$(MAKE) -s -C backend/clir codegen
-	@$(MAKE) -s -C objects/builtins codegen
+	@$(MAKE) -s -C builtins codegen
 
 .PHONY: update
 update:
-	@$(MAKE) -s -C objects/builtins update
+	@$(MAKE) -s -C builtins update
 
 .PHONY: clean
 clean:
 	@$(MAKE) -s -C backend/clir clean
-	@$(MAKE) -s -C objects/builtins clean
+	@$(MAKE) -s -C builtins clean

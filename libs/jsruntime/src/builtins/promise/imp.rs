@@ -6,12 +6,13 @@ use crate::Runtime;
 use crate::StringHandle;
 use crate::lambda::LambdaId;
 use crate::logger;
-use crate::objects::ObjectHandle;
-use crate::objects::builtins::BuiltinFunctionParams;
 use crate::types::CallContext;
+use crate::types::ObjectHandle;
 use crate::types::Promise;
 use crate::types::Status;
 use crate::types::Value;
+
+use super::BuiltinFunctionParams;
 
 //#sec-promise-executor constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
@@ -123,7 +124,7 @@ fn promise_resolve_sync<X>(
 ) -> Result<Value, Error> {
     let func = context.func().ok_or(Error::InternalError)?;
 
-    let promise = match func.slots.first() {
+    let promise = match func.slots().first() {
         Some(Value::Object(promise)) => *promise,
         _ => return Err(Error::InternalError),
     };
@@ -154,7 +155,7 @@ extern "C" fn promise_reject<X>(
         _ => unreachable!(),
     };
 
-    let promise = match func.slots.first() {
+    let promise = match func.slots().first() {
         Some(Value::Object(promise)) => *promise,
         _ => unreachable!(),
     };

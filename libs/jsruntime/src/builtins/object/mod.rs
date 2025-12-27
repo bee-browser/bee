@@ -1,7 +1,7 @@
 use crate::Runtime;
 use crate::logger;
-use crate::objects::ObjectHandle;
 use crate::types::CallContext;
+use crate::types::ObjectHandle;
 use crate::types::Status;
 use crate::types::Value;
 

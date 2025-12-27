@@ -3,9 +3,9 @@ use jsparser::Symbol;
 use crate::logger;
 
 use crate::Runtime;
-use crate::objects::ObjectHandle;
-use crate::objects::Property;
 use crate::types::CallContext;
+use crate::types::ObjectHandle;
+use crate::types::Property;
 use crate::types::Status;
 use crate::types::StringHandle;
 use crate::types::Value;
