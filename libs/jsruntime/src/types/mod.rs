@@ -59,11 +59,7 @@ impl Value {
     pub(crate) const HOLDER_OFFSET: usize = size_of::<u64>();
 
     pub fn is_valid(&self) -> bool {
-        match self {
-            Self::None => false,
-            Self::Object(value) => value.is_valid(),
-            _ => true,
-        }
+        !matches!(self, Self::None)
     }
 
     pub fn is_callable(&self) -> bool {

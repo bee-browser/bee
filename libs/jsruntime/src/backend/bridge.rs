@@ -1,5 +1,3 @@
-use std::ffi::c_void;
-
 use crate::Runtime;
 use crate::lambda::LambdaKind;
 use crate::logger;
@@ -8,6 +6,7 @@ use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
+use crate::types::Object;
 use crate::types::ObjectHandle;
 use crate::types::PropertyKey;
 use crate::types::Status;
@@ -443,7 +442,7 @@ pub(crate) extern "C" fn runtime_register_promise<X>(
     runtime.register_promise(coroutine).into()
 }
 
-pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: *mut c_void) {
+pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: *mut Object) {
     let promise = ObjectHandle::from_ptr(promise).unwrap();
     debug_assert!(runtime.is_promise_object(promise));
     runtime.process_promise(promise, &Value::None, &Value::None);
@@ -451,7 +450,7 @@ pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: *m
 
 pub(crate) extern "C" fn runtime_emit_promise_resolved<X>(
     runtime: &mut Runtime<X>,
-    promise: *mut c_void,
+    promise: *mut Object,
     result: &Value,
 ) {
     let promise = ObjectHandle::from_ptr(promise).unwrap();
@@ -461,32 +460,32 @@ pub(crate) extern "C" fn runtime_emit_promise_resolved<X>(
 
 pub(crate) extern "C" fn runtime_create_object<X>(
     runtime: &mut Runtime<X>,
-    prototype: *mut c_void,
-) -> *mut c_void {
+    prototype: *mut Object,
+) -> *mut Object {
     let prototype = ObjectHandle::from_ptr(prototype);
     runtime.create_object(prototype).as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_create_reference_error<X>(
     runtime: &mut Runtime<X>,
-) -> *mut c_void {
+) -> *mut Object {
     runtime.create_reference_error(None).as_ptr()
 }
 
-pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) -> *mut c_void {
+pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) -> *mut Object {
     runtime.create_type_error(None).as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_create_internal_error<X>(
     runtime: &mut Runtime<X>,
     message: StringHandle,
-) -> *mut c_void {
+) -> *mut Object {
     runtime.create_internal_error(Some(message)).as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
     runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: u32,
     strict: bool,
     retv: &mut Value,
@@ -514,7 +513,7 @@ pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
 
 pub(crate) extern "C" fn runtime_get_value_by_number<X>(
     runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: f64,
     strict: bool,
     retv: &mut Value,
@@ -542,7 +541,7 @@ pub(crate) extern "C" fn runtime_get_value_by_number<X>(
 
 pub(crate) extern "C" fn runtime_get_value_by_value<X>(
     runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: &Value,
     strict: bool,
     retv: &mut Value,
@@ -574,7 +573,7 @@ pub(crate) extern "C" fn runtime_get_value_by_value<X>(
 
 pub(crate) extern "C" fn runtime_set_value_by_symbol<X>(
     _runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: u32,
     value: &Value,
     _retv: &mut Value,
@@ -588,7 +587,7 @@ pub(crate) extern "C" fn runtime_set_value_by_symbol<X>(
 
 pub(crate) extern "C" fn runtime_set_value_by_number<X>(
     _runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: f64,
     value: &Value,
     _retv: &mut Value,
@@ -602,7 +601,7 @@ pub(crate) extern "C" fn runtime_set_value_by_number<X>(
 
 pub(crate) extern "C" fn runtime_set_value_by_value<X>(
     runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: &Value,
     value: &Value,
     retv: &mut Value,
@@ -630,7 +629,7 @@ pub(crate) extern "C" fn runtime_concat_strings<X>(
 // 7.3.5 CreateDataProperty ( O, P, V )
 pub(crate) extern "C" fn runtime_create_data_property_by_symbol<X>(
     runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: u32,
     value: &Value,
     retv: &mut Value,
@@ -656,7 +655,7 @@ pub(crate) extern "C" fn runtime_create_data_property_by_symbol<X>(
 // 7.3.5 CreateDataProperty ( O, P, V )
 pub(crate) extern "C" fn runtime_create_data_property_by_number<X>(
     runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: f64,
     value: &Value,
     retv: &mut Value,
@@ -683,7 +682,7 @@ pub(crate) extern "C" fn runtime_create_data_property_by_number<X>(
 // 7.3.5 CreateDataProperty ( O, P, V )
 pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
     runtime: &mut Runtime<X>,
-    object: *mut c_void,
+    object: *mut Object,
     key: &Value,
     value: &Value,
     retv: &mut Value,
@@ -714,7 +713,7 @@ pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
 // 7.3.25 CopyDataProperties ( target, source, excludedItems )
 pub(crate) extern "C" fn runtime_copy_data_properties<X>(
     runtime: &mut Runtime<X>,
-    target: *mut c_void,
+    target: *mut Object,
     source: &Value,
     retv: &mut Value,
 ) -> Status {
@@ -735,7 +734,7 @@ pub(crate) extern "C" fn runtime_copy_data_properties<X>(
 
 pub(crate) extern "C" fn runtime_push_value<X>(
     runtime: &mut Runtime<X>,
-    target: *mut c_void,
+    target: *mut Object,
     value: &Value,
     retv: &mut Value,
 ) -> Status {
