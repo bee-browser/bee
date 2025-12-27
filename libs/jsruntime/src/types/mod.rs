@@ -7,12 +7,12 @@ use std::mem::offset_of;
 use std::ptr::addr_eq;
 
 use crate::Runtime;
+use crate::gc::Handle;
 use crate::lambda::LambdaId;
 use crate::logger;
 
 pub use object::Object;
 pub use object::ObjectFlags;
-pub use object::ObjectHandle;
 pub use object::Property;
 pub use object::PropertyKey;
 pub use string::StringFragment;
@@ -36,7 +36,7 @@ pub enum Value {
     Boolean(bool) = Self::KIND_BOOLEAN,
     Number(f64) = Self::KIND_NUMBER,
     String(StringHandle) = Self::KIND_STRING,
-    Object(ObjectHandle) = Self::KIND_OBJECT,
+    Object(Handle<Object>) = Self::KIND_OBJECT,
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
@@ -71,7 +71,7 @@ impl Value {
     }
 
     // 7.1.18 ToObject ( argument )
-    pub fn to_object(&self) -> Result<ObjectHandle, Value> {
+    pub fn to_object(&self) -> Result<Handle<Object>, Value> {
         match self {
             Self::Undefined | Self::Null => Err(1001.into()), // TODO: TypeError
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
@@ -118,7 +118,7 @@ impl Value {
     }
 
     pub fn dummy_object() -> Self {
-        Self::Object(ObjectHandle::dummy_for_testing())
+        Self::Object(Handle::dummy_for_testing())
     }
 }
 
@@ -152,8 +152,8 @@ impl From<u32> for Value {
     }
 }
 
-impl From<ObjectHandle> for Value {
-    fn from(value: ObjectHandle) -> Self {
+impl From<Handle<Object>> for Value {
+    fn from(value: Handle<Object>) -> Self {
         Self::Object(value)
     }
 }
@@ -444,7 +444,7 @@ pub struct CallContext {
 
     /// The active function object.
     #[allow(unused)]
-    func: Option<ObjectHandle>,
+    func: Option<Handle<Object>>,
 
     /// A pointer to the call context of the caller.
     #[allow(unused)]
@@ -509,7 +509,7 @@ impl CallContext {
 
     pub(crate) fn new_child(
         &self,
-        func: ObjectHandle,
+        func: Handle<Object>,
         closure: *mut Closure,
         args: &mut [Value],
     ) -> Self {
@@ -535,7 +535,7 @@ impl CallContext {
         &self.this
     }
 
-    pub(crate) fn func(&self) -> Option<ObjectHandle> {
+    pub(crate) fn func(&self) -> Option<Handle<Object>> {
         self.func
     }
 

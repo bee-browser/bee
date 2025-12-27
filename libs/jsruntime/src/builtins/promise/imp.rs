@@ -4,10 +4,11 @@
 use crate::Error;
 use crate::Runtime;
 use crate::StringHandle;
+use crate::gc::Handle;
 use crate::lambda::LambdaId;
 use crate::logger;
 use crate::types::CallContext;
-use crate::types::ObjectHandle;
+use crate::types::Object;
 use crate::types::Promise;
 use crate::types::Status;
 use crate::types::Value;
@@ -77,8 +78,8 @@ extern "C" fn promise_coroutine<X>(
 impl<X> Runtime<X> {
     fn create_resolving_functions(
         &mut self,
-        promise: ObjectHandle,
-    ) -> (ObjectHandle, ObjectHandle) {
+        promise: Handle<Object>,
+    ) -> (Handle<Object>, Handle<Object>) {
         let resolve = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: promise_resolve,
             name: StringHandle::EMPTY,
@@ -169,7 +170,7 @@ extern "C" fn promise_reject<X>(
 
 // helpers
 
-impl ObjectHandle {
+impl Object {
     pub(crate) fn get_promise(&self) -> Promise {
         Promise::from(self.userdata() as u32)
     }

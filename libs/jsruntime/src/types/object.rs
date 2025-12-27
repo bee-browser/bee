@@ -1,15 +1,13 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::Hasher;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::ptr::NonNull;
 
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
 use jsparser::Symbol;
 
+use crate::gc::Handle;
 use crate::types::Closure;
 use crate::types::Promise;
 use crate::types::StringHandle;
@@ -222,7 +220,7 @@ pub struct Object {
     flags: ObjectFlags,
 
     // [[Prototype]]
-    prototype: Option<ObjectHandle>,
+    prototype: Option<Handle<Self>>,
     properties: FxHashMap<PropertyKey, Property>,
 
     // TODO: rethink the memory layout.
@@ -233,7 +231,7 @@ impl Object {
     pub(crate) const USERDATA_OFFSET: usize = std::mem::offset_of!(Self, userdata);
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
-    pub fn new(prototype: Option<ObjectHandle>) -> Self {
+    pub fn new(prototype: Option<Handle<Self>>) -> Self {
         Self {
             userdata: 0,
             flags: ObjectFlags::empty(),
@@ -318,12 +316,12 @@ impl Object {
         self.userdata = promise.as_userdata();
     }
 
-    pub fn as_handle(&mut self) -> ObjectHandle {
+    pub fn as_handle(&mut self) -> Handle<Self> {
         // SAFETY: `self` is a non-null pointer to an `Object`.
-        ObjectHandle::from_ref(self)
+        Handle::from_ref(self)
     }
 
-    pub fn is_instance_of(&self, prototype: Option<ObjectHandle>) -> bool {
+    pub fn is_instance_of(&self, prototype: Option<Handle<Self>>) -> bool {
         debug_assert!(prototype.is_some());
         // TODO: prototype chain
         self.prototype == prototype
@@ -364,64 +362,5 @@ bitflags! {
         const CONSTRUCTOR = 1 << 0;
         const CALLABLE    = 1 << 1;
         const ERROR       = 1 << 2;
-    }
-}
-
-// TODO(issue#237): GcCellRef
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct ObjectHandle(NonNull<Object>);
-
-static_assertions::const_assert_eq!(size_of::<ObjectHandle>(), size_of::<*const Object>());
-
-impl ObjectHandle {
-    pub fn from_ref(r: &mut Object) -> ObjectHandle {
-        Self(NonNull::from_ref(r))
-    }
-
-    pub fn from_ptr(ptr: *mut Object) -> Option<ObjectHandle> {
-        NonNull::new(ptr).map(ObjectHandle)
-    }
-
-    pub fn as_ptr(&self) -> *mut Object {
-        self.0.as_ptr()
-    }
-
-    pub fn as_addr(&self) -> usize {
-        self.0.addr().get()
-    }
-
-    pub fn dummy_for_testing() -> Self {
-        // SAFETY: it's just a dummy data for testing.
-        Self(unsafe { NonNull::new_unchecked(16 as *mut Object) })
-    }
-
-    fn as_ref<'a>(&self) -> &'a Object {
-        // SAFETY: `ptr` is a non-null pointer to an `Object`.
-        unsafe { self.0.as_ref() }
-    }
-
-    fn as_mut<'a>(&mut self) -> &'a mut Object {
-        // SAFETY: `ptr` is a non-null pointer to an `Object`.
-        unsafe { self.0.as_mut() }
-    }
-}
-
-impl Deref for ObjectHandle {
-    type Target = Object;
-
-    fn deref(&self) -> &Self::Target {
-        self.as_ref()
-    }
-}
-
-impl DerefMut for ObjectHandle {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.as_mut()
-    }
-}
-
-impl Debug for ObjectHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", self.as_ptr())
     }
 }

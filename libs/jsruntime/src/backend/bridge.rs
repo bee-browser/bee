@@ -1,4 +1,5 @@
 use crate::Runtime;
+use crate::gc::Handle;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::types::CallContext;
@@ -7,7 +8,6 @@ use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Object;
-use crate::types::ObjectHandle;
 use crate::types::PropertyKey;
 use crate::types::Status;
 use crate::types::StringFragment;
@@ -443,7 +443,7 @@ pub(crate) extern "C" fn runtime_register_promise<X>(
 }
 
 pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: *mut Object) {
-    let promise = ObjectHandle::from_ptr(promise).unwrap();
+    let promise = Handle::from_ptr(promise).unwrap();
     debug_assert!(runtime.is_promise_object(promise));
     runtime.process_promise(promise, &Value::None, &Value::None);
 }
@@ -453,7 +453,7 @@ pub(crate) extern "C" fn runtime_emit_promise_resolved<X>(
     promise: *mut Object,
     result: &Value,
 ) {
-    let promise = ObjectHandle::from_ptr(promise).unwrap();
+    let promise = Handle::from_ptr(promise).unwrap();
     debug_assert!(runtime.is_promise_object(promise));
     runtime.emit_promise_resolved(promise, result.clone());
 }
@@ -462,7 +462,7 @@ pub(crate) extern "C" fn runtime_create_object<X>(
     runtime: &mut Runtime<X>,
     prototype: *mut Object,
 ) -> *mut Object {
-    let prototype = ObjectHandle::from_ptr(prototype);
+    let prototype = Handle::from_ptr(prototype);
     runtime.create_object(prototype).as_ptr()
 }
 

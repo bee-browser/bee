@@ -11,9 +11,10 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
+use crate::gc::Handle;
 use crate::logger;
 use crate::types::CallContext;
-use crate::types::ObjectHandle;
+use crate::types::Object;
 use crate::types::Property;
 use crate::types::StringHandle;
 use crate::types::Value;
@@ -59,7 +60,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 }
 
 //#sec-nativeerror.prototype.message prototype.property
-pub fn {{id}}_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: ObjectHandle) {
+pub fn {{id}}_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
     let _ = prototype.define_own_property(
         Symbol::MESSAGE.into(),
         Property::data_xxx(Value::String(StringHandle::EMPTY)),
@@ -67,7 +68,7 @@ pub fn {{id}}_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Obj
 }
 
 //#sec-nativeerror.prototype.name prototype.property
-pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: ObjectHandle) {
+pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
     let _ = prototype.define_own_property(
         Symbol::NAME.into(),
         Property::data_xxx(Value::String(const_string!("{{class}}"))),
@@ -76,7 +77,7 @@ pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Object
 
 impl<X> Runtime<X> {
     #[allow(unused)]
-    pub(crate) fn create_{{id}}(&mut self, msg: Option<StringHandle>) -> ObjectHandle {
+    pub(crate) fn create_{{id}}(&mut self, msg: Option<StringHandle>) -> Handle<Object> {
         let mut object = self.create_object(self.{{id}}_prototype);
         if let Some(msg) = msg {
             let _ = object.define_own_property(

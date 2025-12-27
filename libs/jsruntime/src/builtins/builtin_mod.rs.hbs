@@ -8,9 +8,10 @@ mod imp;
 use jsparser::Symbol;
 
 use crate::Runtime;
+use crate::gc::Handle;
 use crate::logger;
 use crate::types::CallContext;
-use crate::types::ObjectHandle;
+use crate::types::Object;
 use crate::types::Property;
 use crate::types::Status;
 use crate::types::Value;
@@ -20,7 +21,7 @@ use super::BuiltinFunctionParams;
 impl<X> Runtime<X> {
     /// Returns `true` if `object` is a {{metadata.class}} object.
     #[allow(unused)]
-    pub(crate) fn is_{{metadata.id}}_object(&self, object: ObjectHandle) -> bool {
+    pub(crate) fn is_{{metadata.id}}_object(&self, object: Handle<Object>) -> bool {
         object.is_instance_of(self.{{metadata.id}}_prototype)
     }
 
@@ -31,7 +32,7 @@ impl<X> Runtime<X> {
     }
 
     /// Creates the {{metadata.class}} constructor.
-    pub(super) fn create_{{metadata.id}}_constructor(&mut self) -> ObjectHandle {
+    pub(super) fn create_{{metadata.id}}_constructor(&mut self) -> Handle<Object> {
         logger::debug!(event = "create_{{metadata.id}}_constructor");
         debug_assert!(self.{{metadata.id}}_prototype.is_some());
 
@@ -66,7 +67,7 @@ impl<X> Runtime<X> {
     }
 
     /// Creates the {{metadata.class}} prototype object.
-    pub(super) fn create_{{metadata.id}}_prototype(&mut self) -> ObjectHandle {
+    pub(super) fn create_{{metadata.id}}_prototype(&mut self) -> Handle<Object> {
         logger::debug!(event = "creater_{{metadata.id}}_prototype");
         debug_assert!(self.{{metadata.inherits}}_prototype.is_some());
         debug_assert!(self.function_prototype.is_some());

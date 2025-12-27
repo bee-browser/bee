@@ -5,6 +5,7 @@ mod macros;
 
 mod backend;
 mod builtins;
+mod gc;
 mod jobs;
 mod lambda;
 mod semantics;
@@ -18,6 +19,7 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use backend::CodeRegistry;
+use gc::Handle;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
@@ -28,7 +30,6 @@ use types::Closure;
 use types::Coroutine;
 use types::Lambda;
 use types::Object;
-use types::ObjectHandle;
 use types::Property;
 use types::PropertyKey;
 use types::ReturnValue;
@@ -108,31 +109,31 @@ pub struct Runtime<X> {
     global_object: Pin<Box<Object>>,
 
     // %Object.prototype%
-    object_prototype: Option<ObjectHandle>,
+    object_prototype: Option<Handle<Object>>,
     // %Function.prototype%
-    function_prototype: Option<ObjectHandle>,
+    function_prototype: Option<Handle<Object>>,
     // %String.prototype%
-    string_prototype: Option<ObjectHandle>,
+    string_prototype: Option<Handle<Object>>,
     // %Promise.prototype%
-    promise_prototype: Option<ObjectHandle>,
+    promise_prototype: Option<Handle<Object>>,
     // %Error.prototype%
-    error_prototype: Option<ObjectHandle>,
+    error_prototype: Option<Handle<Object>>,
     // %AggregateError.prototype%
-    aggregate_error_prototype: Option<ObjectHandle>,
+    aggregate_error_prototype: Option<Handle<Object>>,
     // %EvalError.prototype%
-    eval_error_prototype: Option<ObjectHandle>,
+    eval_error_prototype: Option<Handle<Object>>,
     // %InternalError.prototype%
-    internal_error_prototype: Option<ObjectHandle>,
+    internal_error_prototype: Option<Handle<Object>>,
     // %RangeError.prototype%
-    range_error_prototype: Option<ObjectHandle>,
+    range_error_prototype: Option<Handle<Object>>,
     // %ReferenceError.prototype%
-    reference_error_prototype: Option<ObjectHandle>,
+    reference_error_prototype: Option<Handle<Object>>,
     // %SyntaxError.prototype%
-    syntax_error_prototype: Option<ObjectHandle>,
+    syntax_error_prototype: Option<Handle<Object>>,
     // %TypeError.prototype%
-    type_error_prototype: Option<ObjectHandle>,
+    type_error_prototype: Option<Handle<Object>>,
     // URIError.prototype%
-    uri_error_prototype: Option<ObjectHandle>,
+    uri_error_prototype: Option<Handle<Object>>,
 
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
@@ -283,7 +284,7 @@ impl<X> Runtime<X> {
     fn call(
         &mut self,
         caller: &CallContext,
-        callable: ObjectHandle,
+        callable: Handle<Object>,
         args: &mut [Value],
         retv: &mut Value,
     ) -> Status {
@@ -435,7 +436,7 @@ impl<X> Runtime<X> {
         coroutine as *mut Coroutine
     }
 
-    fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {
+    fn create_object(&mut self, prototype: Option<Handle<Object>>) -> Handle<Object> {
         // TODO: GC
         self.allocator.alloc(Object::new(prototype)).as_handle()
     }

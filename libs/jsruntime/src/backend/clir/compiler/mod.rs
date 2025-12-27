@@ -19,6 +19,7 @@ use jsparser::syntax::LoopFlags;
 use crate::ProgramId;
 use crate::Runtime;
 use crate::RuntimePref;
+use crate::gc::Handle;
 use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;
@@ -32,7 +33,7 @@ use crate::semantics::ScopeTree;
 use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::CallContextFlags;
-use crate::types::ObjectHandle;
+use crate::types::Object;
 use crate::types::StringHandle;
 use crate::types::Value;
 
@@ -51,10 +52,10 @@ pub struct Session<'r, X> {
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
     pub code_registry: &'r mut CodeRegistry<X>,
-    global_object: ObjectHandle,
-    object_prototype: ObjectHandle,
-    function_prototype: ObjectHandle,
-    promise_prototype: ObjectHandle,
+    global_object: Handle<Object>,
+    object_prototype: Handle<Object>,
+    function_prototype: Handle<Object>,
+    promise_prototype: Handle<Object>,
 }
 
 trait CompilerSupport {
@@ -78,12 +79,12 @@ trait CompilerSupport {
     fn target_config(&self) -> isa::TargetFrontendConfig;
 
     // GlobalObject
-    fn global_object(&mut self) -> ObjectHandle;
+    fn global_object(&mut self) -> Handle<Object>;
 
     // Intrinsics
-    fn object_prototype(&self) -> ObjectHandle;
-    fn function_prototype(&self) -> ObjectHandle;
-    fn promise_prototype(&self) -> ObjectHandle;
+    fn object_prototype(&self) -> Handle<Object>;
+    fn function_prototype(&self) -> Handle<Object>;
+    fn promise_prototype(&self) -> Handle<Object>;
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
@@ -124,19 +125,19 @@ impl<X> CompilerSupport for Session<'_, X> {
         self.code_registry.target_config()
     }
 
-    fn global_object(&mut self) -> ObjectHandle {
+    fn global_object(&mut self) -> Handle<Object> {
         self.global_object
     }
 
-    fn object_prototype(&self) -> ObjectHandle {
+    fn object_prototype(&self) -> Handle<Object> {
         self.object_prototype
     }
 
-    fn function_prototype(&self) -> ObjectHandle {
+    fn function_prototype(&self) -> Handle<Object> {
         self.function_prototype
     }
 
-    fn promise_prototype(&self) -> ObjectHandle {
+    fn promise_prototype(&self) -> Handle<Object> {
         self.promise_prototype
     }
 }

@@ -5,9 +5,10 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
+use crate::gc::Handle;
 use crate::logger;
 use crate::types::CallContext;
-use crate::types::ObjectHandle;
+use crate::types::Object;
 use crate::types::Property;
 use crate::types::StringHandle;
 use crate::types::Value;
@@ -65,7 +66,7 @@ pub fn error_is_error<X>(
 }
 
 //#sec-error.prototype.message prototype.property
-pub fn error_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: ObjectHandle) {
+pub fn error_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
     let _ = prototype.define_own_property(
         Symbol::MESSAGE.into(),
         Property::data_xxx(Value::String(StringHandle::EMPTY)),
@@ -73,7 +74,7 @@ pub fn error_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Obje
 }
 
 //#sec-error.prototype.name prototype.property
-pub fn error_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: ObjectHandle) {
+pub fn error_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
     let _ = prototype.define_own_property(
         Symbol::NAME.into(),
         Property::data_xxx(Value::String(StringHandle::EMPTY)),

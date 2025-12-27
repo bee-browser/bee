@@ -16,10 +16,11 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
+use crate::gc::Handle;
 use crate::lambda::LambdaId;
 use crate::logger;
 use crate::types::Lambda;
-use crate::types::ObjectHandle;
+use crate::types::Object;
 use crate::types::Property;
 use crate::types::StringFragment;
 use crate::types::StringHandle;
@@ -97,7 +98,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> ObjectHandle {
+    fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> Handle<Object> {
         logger::debug!(
             event = "create_builtin_function",
             ?params.lambda,
@@ -125,13 +126,13 @@ impl<X> Runtime<X> {
     }
 
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
-    fn set_function_name(&mut self, func: &mut ObjectHandle, name: StringHandle) {
+    fn set_function_name(&mut self, func: &mut Handle<Object>, name: StringHandle) {
         let _ =
             func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
     }
 
     // 10.2.10 SetFunctionLength ( F, length )
-    fn set_function_length(&mut self, func: &mut ObjectHandle, length: u16) {
+    fn set_function_length(&mut self, func: &mut Handle<Object>, length: u16) {
         let _ = func.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxc(Value::Number(length as f64)),
@@ -201,7 +202,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn object_to_string(&mut self, object: ObjectHandle) -> Result<StringHandle, Error> {
+    fn object_to_string(&mut self, object: Handle<Object>) -> Result<StringHandle, Error> {
         // TODO(feat): ToPrimitive(object, STRING)
         if self.is_string_object(object) {
             Ok(object.string())
@@ -279,5 +280,5 @@ struct BuiltinFunctionParams<'a, X> {
     name: StringHandle,
     length: u16,
     slots: &'a [Value],
-    prototype: Option<ObjectHandle>,
+    prototype: Option<Handle<Object>>,
 }

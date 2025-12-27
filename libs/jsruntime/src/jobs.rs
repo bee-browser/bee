@@ -4,11 +4,12 @@ use rustc_hash::FxHashMap;
 
 use crate::Runtime;
 use crate::Value;
+use crate::gc::Handle;
 use crate::logger;
 use crate::types::CallContext;
 use crate::types::Coroutine;
 use crate::types::Lambda;
-use crate::types::ObjectHandle;
+use crate::types::Object;
 use crate::types::Promise;
 use crate::types::Status;
 
@@ -40,7 +41,7 @@ impl<X> Runtime<X> {
         self.job_runner.register_promise(coroutine)
     }
 
-    pub fn process_promise(&mut self, promise: ObjectHandle, result: &Value, error: &Value) {
+    pub fn process_promise(&mut self, promise: Handle<Object>, result: &Value, error: &Value) {
         // TODO(feat): `result` may hold a Promise object
         logger::debug!(event = "process_promise", ?promise, ?result, ?error);
         debug_assert!(self.is_promise_object(promise));
@@ -57,7 +58,7 @@ impl<X> Runtime<X> {
     fn resume(
         &mut self,
         coroutine: *mut Coroutine,
-        promise: ObjectHandle,
+        promise: Handle<Object>,
         result: &Value,
         error: &Value,
     ) -> (Status, Value) {
@@ -75,7 +76,7 @@ impl<X> Runtime<X> {
         (status, retv)
     }
 
-    pub fn emit_promise_resolved(&mut self, promise: ObjectHandle, result: Value) {
+    pub fn emit_promise_resolved(&mut self, promise: Handle<Object>, result: Value) {
         debug_assert!(self.is_promise_object(promise));
         match result {
             Value::Object(object) if self.is_promise_object(object) => {
@@ -85,7 +86,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    pub fn emit_promise_rejected(&mut self, promise: ObjectHandle, error: Value) {
+    pub fn emit_promise_rejected(&mut self, promise: Handle<Object>, error: Value) {
         debug_assert!(self.is_promise_object(promise));
         self.job_runner.emit_promise_rejected(promise, error);
     }
@@ -130,7 +131,7 @@ impl JobRunner {
         // never reach here
     }
 
-    fn await_promise(&mut self, promise: ObjectHandle, awaiting: ObjectHandle) {
+    fn await_promise(&mut self, promise: Handle<Object>, awaiting: Handle<Object>) {
         logger::debug!(event = "await_promise", ?promise, ?awaiting);
         let promise_id = promise.get_promise();
         debug_assert!(promise_id.is_valid());
@@ -159,13 +160,13 @@ impl JobRunner {
         self.promises.get(&promise).unwrap().coroutine
     }
 
-    fn emit_promise_resolved(&mut self, promise: ObjectHandle, result: Value) {
+    fn emit_promise_resolved(&mut self, promise: Handle<Object>, result: Value) {
         logger::debug!(event = "emit_promise_resolved", ?promise, ?result);
         self.messages
             .push_back(Message::PromiseResolved { promise, result });
     }
 
-    fn emit_promise_rejected(&mut self, promise: ObjectHandle, error: Value) {
+    fn emit_promise_rejected(&mut self, promise: Handle<Object>, error: Value) {
         logger::debug!(event = "emit_promise_rejected", ?promise, ?error);
         self.messages
             .push_back(Message::PromiseRejected { promise, error });
@@ -205,11 +206,11 @@ impl JobRunner {
 #[derive(Debug)]
 enum Message {
     PromiseResolved {
-        promise: ObjectHandle,
+        promise: Handle<Object>,
         result: Value,
     },
     PromiseRejected {
-        promise: ObjectHandle,
+        promise: Handle<Object>,
         error: Value,
     },
 }
@@ -220,7 +221,7 @@ enum Message {
 struct PromiseDriver {
     // TODO(issue#237): GcCellRef
     coroutine: *mut Coroutine,
-    awaiting: Option<ObjectHandle>,
+    awaiting: Option<Handle<Object>>,
     state: PromiseState,
 }
 
