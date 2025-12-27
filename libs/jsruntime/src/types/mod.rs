@@ -71,13 +71,13 @@ impl Value {
     }
 
     // 7.1.18 ToObject ( argument )
-    pub fn to_object(&self) -> Result<&Object, Value> {
+    pub fn to_object(&self) -> Result<ObjectHandle, Value> {
         match self {
             Self::Undefined | Self::Null => Err(1001.into()), // TODO: TypeError
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),
-            Self::Object(value) => Ok(value.as_object()),
+            Self::Object(value) => Ok(*value),
             Self::None => unreachable!(),
         }
     }

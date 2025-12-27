@@ -19,7 +19,6 @@ use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
 use crate::types::Lambda;
-use crate::types::Object;
 use crate::types::ObjectHandle;
 use crate::types::Property;
 use crate::types::StringFragment;
@@ -119,20 +118,20 @@ impl<X> Runtime<X> {
                 Property::data_xxx(Value::Object(prototype)),
             );
         }
-        self.set_function_length(func.as_object_mut(), params.length);
+        self.set_function_length(&mut func, params.length);
         // TODO: prefix
-        self.set_function_name(func.as_object_mut(), params.name);
+        self.set_function_name(&mut func, params.name);
         func
     }
 
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
-    fn set_function_name(&mut self, func: &mut Object, name: StringHandle) {
+    fn set_function_name(&mut self, func: &mut ObjectHandle, name: StringHandle) {
         let _ =
             func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
     }
 
     // 10.2.10 SetFunctionLength ( F, length )
-    fn set_function_length(&mut self, func: &mut Object, length: u16) {
+    fn set_function_length(&mut self, func: &mut ObjectHandle, length: u16) {
         let _ = func.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxc(Value::Number(length as f64)),

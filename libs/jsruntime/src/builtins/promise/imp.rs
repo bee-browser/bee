@@ -171,6 +171,6 @@ extern "C" fn promise_reject<X>(
 
 impl ObjectHandle {
     pub(crate) fn get_promise(&self) -> Promise {
-        Promise::from(self.as_object().userdata() as u32)
+        Promise::from(self.userdata() as u32)
     }
 }

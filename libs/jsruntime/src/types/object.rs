@@ -390,19 +390,19 @@ impl ObjectHandle {
         self.0.addr().get()
     }
 
-    pub fn as_object<'a>(&self) -> &'a Object {
+    pub fn dummy_for_testing() -> Self {
+        // SAFETY: it's just a dummy data for testing.
+        Self(unsafe { NonNull::new_unchecked(16 as *mut Object) })
+    }
+
+    fn as_ref<'a>(&self) -> &'a Object {
         // SAFETY: `ptr` is a non-null pointer to an `Object`.
         unsafe { self.0.as_ref() }
     }
 
-    pub fn as_object_mut<'a>(&mut self) -> &'a mut Object {
+    fn as_mut<'a>(&mut self) -> &'a mut Object {
         // SAFETY: `ptr` is a non-null pointer to an `Object`.
         unsafe { self.0.as_mut() }
-    }
-
-    pub fn dummy_for_testing() -> Self {
-        // SAFETY: it's just a dummy data for testing.
-        Self(unsafe { NonNull::new_unchecked(16 as *mut Object) })
     }
 }
 
@@ -410,13 +410,13 @@ impl Deref for ObjectHandle {
     type Target = Object;
 
     fn deref(&self) -> &Self::Target {
-        self.as_object()
+        self.as_ref()
     }
 }
 
 impl DerefMut for ObjectHandle {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.as_object_mut()
+        self.as_mut()
     }
 }
 
