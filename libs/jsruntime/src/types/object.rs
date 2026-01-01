@@ -294,14 +294,14 @@ impl Object {
         self.userdata
     }
 
-    pub(crate) fn set_closure(&mut self, closure: *mut Closure) {
-        self.userdata = closure.addr();
+    pub(crate) fn set_closure(&mut self, closure: Handle<Closure>) {
+        self.userdata = closure.as_addr();
         self.set_callable();
     }
 
-    pub(crate) fn closure(&self) -> *mut Closure {
+    pub(crate) fn closure(&self) -> Handle<Closure> {
         debug_assert!(self.is_callable());
-        self.userdata as *mut Closure
+        Handle::from_addr(self.userdata).expect("must be a non-null pointer to a Closure")
     }
 
     pub(crate) fn string(&self) -> Handle<StringFragment> {

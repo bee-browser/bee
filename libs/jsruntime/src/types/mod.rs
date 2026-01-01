@@ -155,11 +155,11 @@ impl PartialEq for Value {
             (Self::String(a), Self::String(b)) => {
                 debug_assert_eq!(
                     std::any::type_name_of_val(a.deref()),
-                    std::any::type_name::<&StringFragment>()
+                    std::any::type_name::<StringFragment>()
                 );
                 debug_assert_eq!(
                     std::any::type_name_of_val(b.deref()),
-                    std::any::type_name::<&StringFragment>()
+                    std::any::type_name::<StringFragment>()
                 );
                 a.deref() == b.deref()
             }
@@ -184,8 +184,6 @@ impl std::fmt::Display for Value {
 }
 
 /// A data type to represent a closure.
-//
-// TODO(issue#237): GcCell
 #[repr(C)]
 pub struct Closure {
     /// An address of a lambda function compiled from a JavaScript function definition.
@@ -210,9 +208,7 @@ pub struct Closure {
     pub num_captures: u16,
 
     /// A variable-length list of captures used in the lambda function.
-    //
-    // TODO(issue#237): GcCellRef
-    pub captures: [*mut Capture; 0],
+    pub captures: [Handle<Capture>; 0],
 }
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
@@ -235,19 +231,9 @@ impl std::fmt::Debug for Closure {
         };
         let mut captures = captures.iter();
         if let Some(capture) = captures.next() {
-            // SAFETY: `capture` is a non-null pointer to a `Capture`.
-            write!(f, "{:?}", unsafe {
-                debug_assert!(!(*capture).is_null());
-                debug_assert!((*capture).is_aligned());
-                &**capture
-            })?;
+            write!(f, "{:?}", capture)?;
             for capture in captures {
-                // SAFETY: `capture` is a non-null pointer to a `Capture`.
-                write!(f, ", {:?}", unsafe {
-                    debug_assert!(!(*capture).is_null());
-                    debug_assert!((*capture).is_aligned());
-                    &**capture
-                })?;
+                write!(f, ", {:?}", capture)?
             }
         }
         write!(f, "])")
@@ -258,8 +244,6 @@ impl std::fmt::Debug for Closure {
 //
 // NOTE: The `target` may point to the `escaped`.  In this case, the `target` must be updated if
 // the capture is moved during GC, so that the `target` points to the `escaped` correctly.
-//
-// TODO(issue#237): GcCell
 #[repr(C)]
 pub struct Capture {
     /// A captured value.
@@ -302,15 +286,11 @@ impl std::fmt::Debug for Capture {
 /// A data type to represent a coroutine.
 ///
 /// The scratch_buffer starts from `&Coroutine::locals[Coroutine::num_locals]`.
-//
-// TODO(issue#237): GcCell
 #[derive(Debug)]
 #[repr(C)]
 pub struct Coroutine {
     /// The closure of the coroutine.
-    //
-    // TODO(issue#237): GcCellRef
-    pub closure: *mut Closure,
+    pub closure: Handle<Closure>,
 
     /// The state of the coroutine.
     pub state: u32,
@@ -385,13 +365,6 @@ where
 }
 
 /// Lambda function.
-///
-/// The actual type of `context` varies depending on usage of the lambda function:
-///
-/// * Entry function: 0 (null pointer)
-/// * Regular functions: Closure*
-/// * Coroutine functions: Coroutine*
-///
 pub type Lambda<X> =
     extern "C" fn(runtime: &mut Runtime<X>, context: &mut CallContext, retv: &mut Value) -> Status;
 
@@ -445,8 +418,8 @@ pub struct CallContext {
     /// The actual type of the value varies depending on the type of the lambda function:
     ///
     /// * Entry functions: 0 (null pointer)
-    /// * Regular functions: &mut Closure
-    /// * Coroutine functions: &mut Coroutine
+    /// * Regular functions: the address of the `Closure`
+    /// * Coroutine functions: the address of the `Coroutine`
     ///
     envp: *mut c_void,
 
@@ -504,9 +477,9 @@ impl CallContext {
         }
     }
 
-    pub(crate) fn new_for_promise(coroutine: *mut Coroutine, args: &mut [Value]) -> Self {
+    pub(crate) fn new_for_promise(coroutine: Handle<Coroutine>, args: &mut [Value]) -> Self {
         Self {
-            envp: coroutine as *mut std::ffi::c_void,
+            envp: coroutine.as_ptr() as *mut std::ffi::c_void,
             this: Value::Undefined,
             func: None,
             caller: std::ptr::null(),
@@ -521,11 +494,11 @@ impl CallContext {
     pub(crate) fn new_child(
         &self,
         func: Handle<Object>,
-        closure: *mut Closure,
+        closure: Handle<Closure>,
         args: &mut [Value],
     ) -> Self {
         Self {
-            envp: closure as *mut std::ffi::c_void,
+            envp: closure.as_ptr() as *mut std::ffi::c_void,
             this: Value::Undefined,
             func: Some(func),
             caller: self,
@@ -550,30 +523,27 @@ impl CallContext {
         self.func
     }
 
-    pub(crate) fn closure(&self) -> &Closure {
-        // SAFETY: `envp` is always a non-null pointer to a `Closure`.
-        unsafe {
-            debug_assert!(!self.envp.is_null());
-            debug_assert!(self.envp.is_aligned());
-            &*(self.envp as *const Closure)
-        }
+    pub(crate) fn closure(&self) -> Handle<Closure> {
+        Handle::from_ptr(self.envp as *mut Closure)
+            .expect("must be a non-null pointer to a Closure")
     }
 
-    pub(crate) fn closure_mut(&mut self) -> &mut Closure {
-        // SAFETY: `envp` is always a non-null pointer to a `Closure`.
-        unsafe {
-            debug_assert!(!self.envp.is_null());
-            debug_assert!(self.envp.is_aligned());
-            &mut *(self.envp as *mut Closure)
-        }
-    }
-
+    #[allow(unused)]
     pub(crate) fn coroutine(&self) -> &Coroutine {
         // SAFETY: `envp` is always a non-null pointer to a `Coroutine`.
         unsafe {
             debug_assert!(!self.envp.is_null());
             debug_assert!(self.envp.is_aligned());
             &*(self.envp as *const Coroutine)
+        }
+    }
+
+    pub(crate) fn coroutine_mut(&mut self) -> &mut Coroutine {
+        // SAFETY: `envp` is always a non-null pointer to a `Coroutine`.
+        unsafe {
+            debug_assert!(!self.envp.is_null());
+            debug_assert!(self.envp.is_aligned());
+            &mut *(self.envp as *mut Coroutine)
         }
     }
 

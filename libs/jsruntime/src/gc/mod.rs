@@ -15,6 +15,7 @@ use std::ptr::NonNull;
 pub struct Handle<T>(NonNull<T>);
 
 base::static_assert_eq!(size_of::<Handle<u8>>(), size_of::<usize>());
+base::static_assert_eq!(size_of::<Option<Handle<u8>>>(), size_of::<usize>());
 
 impl<T> Handle<T> {
     pub const fn from_ref(r: &T) -> Self {
@@ -44,12 +45,16 @@ impl<T> Handle<T> {
         Self(unsafe { NonNull::new_unchecked(16 as *mut T) })
     }
 
-    const fn as_ref<'a>(&self) -> &'a T {
+    fn as_ref<'a>(&self) -> &'a T {
+        //debug_assert!(!self.0.as_ptr().is_null());
+        debug_assert!(self.0.as_ptr().is_aligned());
         // SAFETY: `self` holds a valid pointer to `T`.
         unsafe { self.0.as_ref() }
     }
 
-    const fn as_mut<'a>(&mut self) -> &'a mut T {
+    fn as_mut<'a>(&mut self) -> &'a mut T {
+        //debug_assert!(!self.0.as_ptr().is_null());
+        debug_assert!(self.0.as_ptr().is_aligned());
         // SAFETY: `self` holds a valid pointer to `T`.
         unsafe { self.0.as_mut() }
     }
@@ -98,5 +103,18 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Handle({})", self.as_ref())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Check sizes of Handle types at runtime for safety.
+    // Though, these are checked w/ base::static_assert_eq!().
+    #[test]
+    fn test_size() {
+        assert_eq!(size_of::<Handle<u8>>(), size_of::<usize>());
+        assert_eq!(size_of::<Option<Handle<u8>>>(), size_of::<usize>());
     }
 }

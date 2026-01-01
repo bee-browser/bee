@@ -59,7 +59,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
         context.closure().lambda,
         (runtime_lazy_compile_normal::<X> as usize).into()
     );
-    context.closure_mut().lambda = lambda.into();
+    context.closure().lambda = lambda.into();
 
     lambda(runtime, context, retv)
 }
@@ -97,7 +97,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
         context.closure().lambda,
         (runtime_lazy_compile_ramp::<X> as usize).into()
     );
-    context.closure_mut().lambda = lambda.into();
+    context.closure().lambda = lambda.into();
 
     lambda(runtime, context, retv)
 }
@@ -109,24 +109,17 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine");
 
-    let coroutine = context.coroutine();
+    let coroutine = context.coroutine_mut();
 
-    // SAFETY: `coroutine.closure` is a non-null pointer to a `Closure`.
-    let closure = unsafe {
-        debug_assert!(!coroutine.closure.is_null());
-        debug_assert!(coroutine.closure.is_aligned());
-        &mut *coroutine.closure
-    };
-
-    let lambda_id = closure.lambda_id;
+    let lambda_id = coroutine.closure.lambda_id;
     // The coroutine lambda has already been compiled in `runtime_lazy_compile_ramp()`.
     let lambda = runtime.code_registry.get_lambda(lambda_id).unwrap();
 
     debug_assert_eq!(
-        closure.lambda,
+        coroutine.closure.lambda,
         (runtime_lazy_compile_coroutine::<X> as usize).into()
     );
-    closure.lambda = lambda.into();
+    coroutine.closure.lambda = lambda.into();
 
     lambda(runtime, context, retv)
 }
@@ -413,7 +406,9 @@ pub(crate) extern "C" fn runtime_create_closure<X>(
         lambda_id,
         num_captures
     );
-    runtime.create_closure(lambda, lambda_id.into(), num_captures)
+    runtime
+        .create_closure(lambda, lambda_id.into(), num_captures)
+        .as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_create_coroutine<X>(
@@ -430,13 +425,17 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
         scratch_buffer_len,
         capture_buffer_len,
     );
-    runtime.create_coroutine(closure, num_locals, scratch_buffer_len, capture_buffer_len)
+    let closure = Handle::from_ptr(closure).expect("closure must be a non-null pointer");
+    runtime
+        .create_coroutine(closure, num_locals, scratch_buffer_len, capture_buffer_len)
+        .as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_register_promise<X>(
     runtime: &mut Runtime<X>,
     coroutine: *mut Coroutine,
 ) -> u32 {
+    let coroutine = Handle::from_ptr(coroutine).expect("coroutine must be a non-null pointer");
     runtime.register_promise(coroutine).into()
 }
 

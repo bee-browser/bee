@@ -2,7 +2,6 @@ use std::iter::Enumerate;
 use std::iter::Peekable;
 use std::ops::Deref;
 use std::ops::Index;
-use std::ptr::NonNull;
 
 use bitflags::bitflags;
 use bitflags::bitflags_match;
@@ -22,11 +21,11 @@ pub const SPACE: Handle<StringFragment> = Handle::from_ref(&StringFragment::SPAC
 /// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
 ///
 /// This type may be allocated on the stack.
-// TODO(issue#237): GcCell
 #[derive(Clone)]
 #[repr(C)]
 pub struct StringFragment {
     /// A pointer to the next string fragment if it exists.
+    // TODO(issue#237): GcCellRef
     next: *const StringFragment,
 
     /// A pointer to the UTF-16 code unit sequence if it exists.
@@ -36,6 +35,7 @@ pub struct StringFragment {
     ///   * A constant array of UTF-16 code units
     ///   * An array of UTF-16 code units allocated in the string pool (not yet implemented)
     ///   * A memory block allocated in the GC heap
+    // TODO(issue#237): GcCellRef
     ptr: *const u16,
 
     /// The number of the UTF-16 code units in the string fragment.
@@ -291,7 +291,7 @@ impl StringFragment {
         let mut fragment = self;
         let mut new_fragment =
             allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        let inner = NonNull::from_ref(new_fragment);
+        let handle = Handle::from_ref(new_fragment);
 
         while let Some(next) = fragment.next() {
             let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
@@ -312,8 +312,7 @@ impl StringFragment {
             new_fragment = new_next;
         }
 
-        // TODO(issue#237): GcCell
-        Handle::from_ref(unsafe { inner.as_ref() })
+        handle
     }
 
     pub fn ensure_return_safe(&self, allocator: &Bump) -> Handle<Self> {
@@ -333,7 +332,7 @@ impl StringFragment {
         let mut fragment = self;
         let mut new_fragment =
             allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        let inner = NonNull::from_ref(new_fragment);
+        let handle = Handle::from_ref(new_fragment);
 
         while let Some(next) = fragment.next() {
             let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
@@ -342,8 +341,7 @@ impl StringFragment {
             new_fragment = new_next;
         }
 
-        // TODO(issue#237): GcCell
-        Handle::from_ref(unsafe { inner.as_ref() })
+        handle
     }
 
     pub(crate) fn code_units(&self) -> impl Iterator<Item = u16> {

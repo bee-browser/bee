@@ -288,10 +288,8 @@ impl<X> Runtime<X> {
         retv: &mut Value,
     ) -> Status {
         let closure = callable.closure();
-        debug_assert!(!closure.is_null());
         let mut context = caller.new_child(callable, closure, args);
-        // SAFETY: `closure` always holds a lambda function.
-        let lambda = unsafe { Lambda::from((*closure).lambda) };
+        let lambda = Lambda::from(closure.lambda);
         lambda(self, &mut context, retv)
     }
 
@@ -349,7 +347,7 @@ impl<X> Runtime<X> {
         lambda: Lambda<X>,
         lambda_id: LambdaId,
         num_captures: u16,
-    ) -> *mut Closure {
+    ) -> Handle<Closure> {
         debug_assert!(
             std::alloc::Layout::from_size_align(
                 std::mem::offset_of!(Closure, captures),
@@ -381,16 +379,16 @@ impl<X> Runtime<X> {
         closure.num_captures = num_captures;
         // `closure.captures[]` will be filled with actual pointers to `Captures`.
 
-        closure as *mut Closure
+        Handle::from_ref(closure)
     }
 
     fn create_coroutine(
         &mut self,
-        closure: *mut Closure,
+        closure: Handle<Closure>,
         num_locals: u16,
         scratch_buffer_len: u16,
         capture_buffer_len: u16,
-    ) -> *mut Coroutine {
+    ) -> Handle<Coroutine> {
         debug_assert!(
             std::alloc::Layout::from_size_align(
                 std::mem::offset_of!(Coroutine, locals),
@@ -433,7 +431,7 @@ impl<X> Runtime<X> {
         coroutine.capture_buffer_len = capture_buffer_len;
         // `coroutine.locals[]` will be initialized in the coroutine.
 
-        coroutine as *mut Coroutine
+        Handle::from_ref(coroutine)
     }
 
     fn create_object(&mut self, prototype: Option<Handle<Object>>) -> Handle<Object> {

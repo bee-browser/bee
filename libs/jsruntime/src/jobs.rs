@@ -36,7 +36,7 @@ impl<X> Runtime<X> {
 
     // promise
 
-    pub fn register_promise(&mut self, coroutine: *mut Coroutine) -> Promise {
+    pub fn register_promise(&mut self, coroutine: Handle<Coroutine>) -> Promise {
         logger::debug!(event = "register_promise", ?coroutine);
         self.job_runner.register_promise(coroutine)
     }
@@ -57,7 +57,7 @@ impl<X> Runtime<X> {
 
     fn resume(
         &mut self,
-        coroutine: *mut Coroutine,
+        coroutine: Handle<Coroutine>,
         promise: Handle<Object>,
         result: &Value,
         error: &Value,
@@ -66,12 +66,7 @@ impl<X> Runtime<X> {
         let mut args = [promise.into(), result.clone(), error.clone()];
         let mut context = CallContext::new_for_promise(coroutine, &mut args);
         let mut retv = Value::None;
-        // SAFETY: `coroutine` is always a non-null pointer to a `Coroutine`.
-        let lambda = unsafe {
-            debug_assert!(!coroutine.is_null());
-            debug_assert!(!(*coroutine).closure.is_null());
-            Lambda::from((*(*coroutine).closure).lambda)
-        };
+        let lambda = Lambda::from(coroutine.closure.lambda);
         let status = lambda(self, &mut context, &mut retv);
         (status, retv)
     }
@@ -109,7 +104,7 @@ impl JobRunner {
 
     // promises
 
-    fn register_promise(&mut self, coroutine: *mut Coroutine) -> Promise {
+    fn register_promise(&mut self, coroutine: Handle<Coroutine>) -> Promise {
         let promise = self.new_promise();
         self.promises.insert(promise, PromiseDriver::new(coroutine));
         promise
@@ -156,7 +151,7 @@ impl JobRunner {
         }
     }
 
-    fn get_coroutine(&self, promise: Promise) -> *mut Coroutine {
+    fn get_coroutine(&self, promise: Promise) -> Handle<Coroutine> {
         self.promises.get(&promise).unwrap().coroutine
     }
 
@@ -179,6 +174,7 @@ impl JobRunner {
     fn resolve_promise(&mut self, promise: Promise, result: Value) {
         logger::debug!(event = "resolve_promise", ?promise, ?result);
         let driver = self.promises.get_mut(&promise).unwrap();
+        // TODO(fix): the following assertion fails in test262.
         debug_assert!(matches!(driver.state, PromiseState::Pending));
         if let Some(awaiting) = driver.awaiting {
             self.promises.remove(&promise);
@@ -191,6 +187,7 @@ impl JobRunner {
     fn reject_promise(&mut self, promise: Promise, error: Value) {
         logger::debug!(event = "reject_promise", ?promise, ?error);
         let driver = self.promises.get_mut(&promise).unwrap();
+        // TODO(fix): the following assertion fails in test262.
         debug_assert!(matches!(driver.state, PromiseState::Pending));
         if let Some(awaiting) = driver.awaiting {
             self.promises.remove(&promise);
@@ -219,14 +216,13 @@ enum Message {
 
 // TODO: should the coroutine be separated from the promise?
 struct PromiseDriver {
-    // TODO(issue#237): GcCellRef
-    coroutine: *mut Coroutine,
+    coroutine: Handle<Coroutine>,
     awaiting: Option<Handle<Object>>,
     state: PromiseState,
 }
 
 impl PromiseDriver {
-    fn new(coroutine: *mut Coroutine) -> Self {
+    fn new(coroutine: Handle<Coroutine>) -> Self {
         Self {
             coroutine,
             awaiting: None,
