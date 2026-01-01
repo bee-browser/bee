@@ -187,8 +187,7 @@ impl<X> Runtime<X> {
     pub(crate) fn number_to_string(&mut self, value: f64) -> StringHandle {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
-        let chunk = StringFragment::new_stack(utf16, true);
-        StringHandle::new(&chunk).ensure_return_safe(self.allocator())
+        StringFragment::new_stack(utf16, true).ensure_return_safe(self.allocator())
     }
 }
 

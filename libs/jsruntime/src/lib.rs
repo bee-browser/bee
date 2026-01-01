@@ -337,11 +337,7 @@ impl<X> Runtime<X> {
             .take((end - start) as usize)
             .collect_vec();
         let utf16 = self.allocator().alloc_slice_copy(&utf16);
-        let frag = StringFragment::new_stack(utf16, true);
-        let frag = self
-            .allocator()
-            .alloc(StringFragment::new_heap(std::ptr::null_mut(), &frag));
-        StringHandle::new(frag)
+        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.allocator)
     }
 
     fn create_closure(

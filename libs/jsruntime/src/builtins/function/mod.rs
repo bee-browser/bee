@@ -8,7 +8,6 @@ use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::Status;
-use crate::types::StringHandle;
 use crate::types::Value;
 
 use super::BuiltinFunctionParams;
@@ -36,7 +35,7 @@ impl<X> Runtime<X> {
         );
         let _ = prototype.define_own_property(
             Symbol::NAME.into(),
-            Property::data_xxx(Value::String(StringHandle::EMPTY)),
+            Property::data_xxx(Value::String(crate::types::string::EMPTY)),
         );
 
         // TODO: Function.prototype.constructor

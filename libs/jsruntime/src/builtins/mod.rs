@@ -229,17 +229,18 @@ impl<X> Runtime<X> {
 
         if repetitions == 0 {
             debug_assert!(remaining > 0);
-            let frag = fill_string.fragment().sub_fragment(0, remaining);
-            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
+            return fill_string
+                .sub_fragment(0, remaining)
+                .ensure_return_safe(self.allocator());
         }
 
-        let frag = fill_string.fragment().repeat(repetitions);
+        let frag = fill_string.repeat(repetitions);
         if remaining == 0 {
-            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
+            return frag.ensure_return_safe(self.allocator());
         }
 
-        let last = fill_string.fragment().sub_fragment(0, remaining);
-        StringHandle::new(&frag).concat(StringHandle::new(&last), self.allocator())
+        let last = fill_string.sub_fragment(0, remaining);
+        frag.concat(StringHandle::from_ref(&last), self.allocator())
     }
 
     fn repeat_string(&mut self, s: StringHandle, n: u32) -> StringHandle {
@@ -252,8 +253,7 @@ impl<X> Runtime<X> {
         }
 
         if s.is_simple() {
-            let frag = s.fragment().repeat(n);
-            return StringHandle::new(&frag).ensure_return_safe(self.allocator());
+            return s.repeat(n).ensure_return_safe(self.allocator());
         }
 
         // TODO(perf): inefficient
@@ -261,7 +261,7 @@ impl<X> Runtime<X> {
         let slice = self.allocator().alloc_slice_copy(&utf16);
         let mut frag = StringFragment::new_stack(slice, true);
         frag.set_repetitions(n);
-        StringHandle::new(&frag).ensure_return_safe(self.allocator())
+        frag.ensure_return_safe(self.allocator())
     }
 }
 

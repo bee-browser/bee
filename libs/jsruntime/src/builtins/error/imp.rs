@@ -69,7 +69,7 @@ pub fn error_is_error<X>(
 pub fn error_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
     let _ = prototype.define_own_property(
         Symbol::MESSAGE.into(),
-        Property::data_xxx(Value::String(StringHandle::EMPTY)),
+        Property::data_xxx(Value::String(crate::types::string::EMPTY)),
     );
 }
 
@@ -77,7 +77,7 @@ pub fn error_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Hand
 pub fn error_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
     let _ = prototype.define_own_property(
         Symbol::NAME.into(),
-        Property::data_xxx(Value::String(StringHandle::EMPTY)),
+        Property::data_xxx(Value::String(crate::types::string::EMPTY)),
     );
 }
 
@@ -98,7 +98,7 @@ pub fn error_prototype_to_string<X>(
     };
 
     let message = match object.get_value(&Symbol::MESSAGE.into()) {
-        None | Some(Value::Undefined) => StringHandle::EMPTY,
+        None | Some(Value::Undefined) => crate::types::string::EMPTY,
         Some(value) => runtime.value_to_string(value)?,
     };
 

@@ -305,7 +305,7 @@ impl Object {
 
     pub(crate) fn string(&self) -> StringHandle {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        unsafe { StringHandle::from_addr(self.userdata) }
+        StringHandle::from_addr(self.userdata).unwrap()
     }
 
     pub(crate) fn set_string(&mut self, string: StringHandle) {

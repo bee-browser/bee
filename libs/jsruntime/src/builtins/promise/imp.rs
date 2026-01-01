@@ -3,7 +3,6 @@
 
 use crate::Error;
 use crate::Runtime;
-use crate::StringHandle;
 use crate::gc::Handle;
 use crate::lambda::LambdaId;
 use crate::logger;
@@ -82,7 +81,7 @@ impl<X> Runtime<X> {
     ) -> (Handle<Object>, Handle<Object>) {
         let resolve = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: promise_resolve,
-            name: StringHandle::EMPTY,
+            name: crate::types::string::EMPTY,
             length: 1,
             slots: &[Value::Object(promise)],
             prototype: None,
@@ -90,7 +89,7 @@ impl<X> Runtime<X> {
 
         let reject = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: promise_reject,
-            name: StringHandle::EMPTY,
+            name: crate::types::string::EMPTY,
             length: 1,
             slots: &[Value::Object(promise)],
             prototype: None,
