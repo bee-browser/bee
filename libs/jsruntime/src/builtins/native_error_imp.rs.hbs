@@ -16,7 +16,7 @@ use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
-use crate::types::StringHandle;
+use crate::types::StringFragment;
 use crate::types::Value;
 
 //#sec-nativeerror constructor
@@ -77,7 +77,7 @@ pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle
 
 impl<X> Runtime<X> {
     #[allow(unused)]
-    pub(crate) fn create_{{id}}(&mut self, msg: Option<StringHandle>) -> Handle<Object> {
+    pub(crate) fn create_{{id}}(&mut self, msg: Option<Handle<StringFragment>>) -> Handle<Object> {
         let mut object = self.create_object(self.{{id}}_prototype);
         if let Some(msg) = msg {
             let _ = object.define_own_property(

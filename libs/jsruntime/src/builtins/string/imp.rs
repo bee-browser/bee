@@ -6,11 +6,11 @@ use jsparser::Symbol;
 use crate::Error;
 use crate::Runtime;
 use crate::builtins::require_object_coercible;
+use crate::gc::Handle;
 use crate::logger;
 use crate::types::CallContext;
 use crate::types::Property;
 use crate::types::StringFragment;
-use crate::types::StringHandle;
 use crate::types::Value;
 use crate::types::string::EMPTY;
 use crate::types::string::SPACE;
@@ -388,9 +388,9 @@ fn string_padding_builtins_impl<X>(
 // 22.1.3.17.2 StringPad ( S, maxLength, fillString, placement )
 fn string_pad<X>(
     runtime: &mut Runtime<X>,
-    s: StringHandle,
+    s: Handle<StringFragment>,
     max_length: u32,
-    fill_string: StringHandle,
+    fill_string: Handle<StringFragment>,
     placement: PaddingPlacement,
 ) -> Result<Value, Error> {
     let string_length = s.len();

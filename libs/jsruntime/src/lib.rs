@@ -19,7 +19,6 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use backend::CodeRegistry;
-use gc::Handle;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
@@ -36,9 +35,9 @@ use types::ReturnValue;
 use types::Status;
 
 pub use backend::CompileError;
+pub use gc::Handle;
 pub use lambda::LambdaId; // TODO: private
 pub use types::StringFragment; // TODO: private
-pub use types::StringHandle;
 pub use types::Value;
 
 pub type ParseError = jsparser::Error;
@@ -328,7 +327,12 @@ impl<X> Runtime<X> {
         self.allocator.alloc_slice_copy(&utf16)
     }
 
-    fn create_substring(&mut self, string: StringHandle, start: u32, end: u32) -> StringHandle {
+    fn create_substring(
+        &mut self,
+        string: Handle<StringFragment>,
+        start: u32,
+        end: u32,
+    ) -> Handle<StringFragment> {
         debug_assert!(start < end);
         // TODO(perf): inefficient
         let utf16 = string
@@ -449,7 +453,7 @@ impl<X> Runtime<X> {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
             Value::Object(_) => {
-                const MESSAGE: StringHandle = const_string!("TODO: make_property_key");
+                const MESSAGE: Handle<StringFragment> = const_string!("TODO: make_property_key");
                 Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
             }
         }
@@ -498,7 +502,11 @@ impl<X> Runtime<X> {
         Ok(())
     }
 
-    fn throw_internal_error(&mut self, message: StringHandle, retv: &mut Value) -> Status {
+    fn throw_internal_error(
+        &mut self,
+        message: Handle<StringFragment>,
+        retv: &mut Value,
+    ) -> Status {
         *retv = Value::Object(self.create_internal_error(Some(message)));
         Status::Exception
     }

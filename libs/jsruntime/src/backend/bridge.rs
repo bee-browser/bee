@@ -11,7 +11,6 @@ use crate::types::Object;
 use crate::types::PropertyKey;
 use crate::types::Status;
 use crate::types::StringFragment;
-use crate::types::StringHandle;
 use crate::types::Value;
 
 macro_rules! into_object {
@@ -169,7 +168,7 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
 pub(crate) extern "C" fn runtime_to_string<X>(
     runtime: &mut Runtime<X>,
     value: &Value,
-) -> StringHandle {
+) -> Handle<StringFragment> {
     logger::debug!(event = "runtime_to_string", ?value);
     runtime.value_to_string(value).unwrap()
 }
@@ -178,13 +177,13 @@ pub(crate) extern "C" fn runtime_to_string<X>(
 pub(crate) extern "C" fn runtime_number_to_string<X>(
     runtime: &mut Runtime<X>,
     value: f64,
-) -> StringHandle {
+) -> Handle<StringFragment> {
     logger::debug!(event = "runtime_number_to_string", ?value);
     runtime.number_to_string(value)
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn number_to_string(&mut self, value: f64) -> StringHandle {
+    pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<StringFragment> {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
         StringFragment::new_stack(utf16, true).ensure_return_safe(self.allocator())
@@ -294,10 +293,10 @@ pub(crate) extern "C" fn runtime_to_uint32<X>(_runtime: &mut Runtime<X>, value: 
 
 pub(crate) extern "C" fn runtime_is_same_string<X>(
     _runtime: &mut Runtime<X>,
-    a: StringHandle,
-    b: StringHandle,
+    a: Handle<StringFragment>,
+    b: Handle<StringFragment>,
 ) -> bool {
-    a == b
+    *a == *b
 }
 
 // 7.2.13 IsLooselyEqual ( x, y )
@@ -356,15 +355,15 @@ pub(crate) extern "C" fn runtime_is_strictly_equal<X>(
 pub(crate) extern "C" fn runtime_get_typeof<X>(
     _runtime: &mut Runtime<X>,
     value: &Value,
-) -> StringHandle {
+) -> Handle<StringFragment> {
     debug_assert!(!matches!(value, Value::None));
     value.get_typeof()
 }
 
 pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: &mut Runtime<X>,
-    string: StringHandle,
-) -> StringHandle {
+    string: Handle<StringFragment>,
+) -> Handle<StringFragment> {
     string.ensure_return_safe(runtime.allocator())
 }
 
@@ -477,7 +476,7 @@ pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) 
 
 pub(crate) extern "C" fn runtime_create_internal_error<X>(
     runtime: &mut Runtime<X>,
-    message: StringHandle,
+    message: Handle<StringFragment>,
 ) -> *mut Object {
     runtime.create_internal_error(Some(message)).as_ptr()
 }
@@ -619,9 +618,9 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
 
 pub(crate) extern "C" fn runtime_concat_strings<X>(
     runtime: &mut Runtime<X>,
-    head: StringHandle,
-    tail: StringHandle,
-) -> StringHandle {
+    head: Handle<StringFragment>,
+    tail: Handle<StringFragment>,
+) -> Handle<StringFragment> {
     head.concat(tail, runtime.allocator())
 }
 
@@ -818,7 +817,7 @@ pub(crate) extern "C" fn runtime_print_f64<X>(
 
 pub(crate) extern "C" fn runtime_print_string<X>(
     _runtime: &mut Runtime<X>,
-    value: StringHandle,
+    value: Handle<StringFragment>,
     msg: *const std::os::raw::c_char,
 ) {
     // SAFETY: `msg` is always non-null.

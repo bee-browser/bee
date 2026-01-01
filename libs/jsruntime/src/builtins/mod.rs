@@ -23,7 +23,6 @@ use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::StringFragment;
-use crate::types::StringHandle;
 use crate::types::Value;
 
 impl<X> Runtime<X> {
@@ -126,7 +125,7 @@ impl<X> Runtime<X> {
     }
 
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
-    fn set_function_name(&mut self, func: &mut Handle<Object>, name: StringHandle) {
+    fn set_function_name(&mut self, func: &mut Handle<Object>, name: Handle<StringFragment>) {
         let _ =
             func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
     }
@@ -181,13 +180,20 @@ impl<X> Runtime<X> {
     }
 
     // TODO(refactor): code clone, see runtime_concat_strings.
-    fn concat_strings(&mut self, a: StringHandle, b: StringHandle) -> StringHandle {
+    fn concat_strings(
+        &mut self,
+        a: Handle<StringFragment>,
+        b: Handle<StringFragment>,
+    ) -> Handle<StringFragment> {
         a.concat(b, self.allocator())
     }
 
     // 7.1.17 ToString ( argument )
     // TODO: code clone, see backend::bridge::runtime_to_string
-    pub(crate) fn value_to_string(&mut self, value: &Value) -> Result<StringHandle, Error> {
+    pub(crate) fn value_to_string(
+        &mut self,
+        value: &Value,
+    ) -> Result<Handle<StringFragment>, Error> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
@@ -202,7 +208,10 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn object_to_string(&mut self, object: Handle<Object>) -> Result<StringHandle, Error> {
+    fn object_to_string(
+        &mut self,
+        object: Handle<Object>,
+    ) -> Result<Handle<StringFragment>, Error> {
         // TODO(feat): ToPrimitive(object, STRING)
         if self.is_string_object(object) {
             Ok(object.string())
@@ -219,7 +228,11 @@ impl<X> Runtime<X> {
         })
     }
 
-    fn make_string_filler(&mut self, fill_string: StringHandle, fill_len: u32) -> StringHandle {
+    fn make_string_filler(
+        &mut self,
+        fill_string: Handle<StringFragment>,
+        fill_len: u32,
+    ) -> Handle<StringFragment> {
         debug_assert!(fill_string.is_simple());
         debug_assert!(!fill_string.is_empty());
 
@@ -240,10 +253,10 @@ impl<X> Runtime<X> {
         }
 
         let last = fill_string.sub_fragment(0, remaining);
-        frag.concat(StringHandle::from_ref(&last), self.allocator())
+        frag.concat(Handle::from_ref(&last), self.allocator())
     }
 
-    fn repeat_string(&mut self, s: StringHandle, n: u32) -> StringHandle {
+    fn repeat_string(&mut self, s: Handle<StringFragment>, n: u32) -> Handle<StringFragment> {
         if n == 1 {
             return s;
         }
@@ -277,7 +290,7 @@ fn require_object_coercible(value: &Value) -> Result<(), Error> {
 struct BuiltinFunctionParams<'a, X> {
     lambda: Lambda<X>,
     #[allow(unused)]
-    name: StringHandle,
+    name: Handle<StringFragment>,
     length: u16,
     slots: &'a [Value],
     prototype: Option<Handle<Object>>,

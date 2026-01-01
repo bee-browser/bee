@@ -9,104 +9,17 @@ use bitflags::bitflags_match;
 use bumpalo::Bump;
 use itertools::Itertools;
 
+use crate::gc::Handle;
+
 /// An empty string.
-pub const EMPTY: StringHandle = StringHandle::from_ref(&StringFragment::EMPTY);
+pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);
 
 /// A single U+0020 character.
-pub const SPACE: StringHandle = StringHandle::from_ref(&StringFragment::SPACE);
-
-/// A data type to hold an **immutable** UTF-16 string.
-///
-/// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
-///
-/// This type is usually allocated on the stack and holds a pointer to a `StringFragment` that is
-/// allocated in the heap or on the stack.
-// TODO(issue#237): GcCell
-#[derive(Eq)]
-#[repr(transparent)]
-pub struct StringHandle(NonNull<StringFragment>);
-
-base::static_assert_eq!(align_of::<StringHandle>(), align_of::<usize>());
-
-impl StringHandle {
-    /// Creates a new UTF-16 string.
-    pub const fn from_ref(frag: &StringFragment) -> Self {
-        Self(NonNull::from_ref(frag))
-    }
-
-    /// Creates a new constant UTF-16 string.
-    pub const fn from_const(frag: &'static StringFragment) -> Self {
-        debug_assert!(frag.is_const());
-        Self(NonNull::from_ref(frag))
-    }
-
-    pub fn from_ptr(p: *mut StringFragment) -> Option<Self> {
-        NonNull::new(p).map(StringHandle)
-    }
-
-    pub fn from_addr(addr: usize) -> Option<Self> {
-        debug_assert_ne!(addr, 0);
-        debug_assert_eq!(addr % std::mem::align_of::<StringFragment>(), 0);
-        Self::from_ptr(addr as *mut StringFragment)
-    }
-
-    pub(crate) fn as_addr(&self) -> usize {
-        self.0.addr().get()
-    }
-
-    /// Returns the first string fragment.
-    const fn fragment(&self) -> &StringFragment {
-        // SAFETY: `self.0` is always convertible to a reference.
-        unsafe { self.0.as_ref() }
-    }
-}
-
-impl Clone for StringHandle {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl Copy for StringHandle {}
-
-impl PartialEq for StringHandle {
-    fn eq(&self, other: &Self) -> bool {
-        if self.0 == other.0 {
-            return true;
-        }
-        self.fragment() == other.fragment()
-    }
-}
-
-impl std::fmt::Debug for StringHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.is_empty() {
-            write!(f, "StringHandle()")
-        } else {
-            write!(f, "StringHandle({:?})", self.fragment())
-        }
-    }
-}
-
-impl std::fmt::Display for StringHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.is_empty() {
-            Ok(())
-        } else {
-            write!(f, "{}", self.fragment())
-        }
-    }
-}
-
-impl Deref for StringHandle {
-    type Target = StringFragment;
-
-    fn deref(&self) -> &Self::Target {
-        self.fragment()
-    }
-}
+pub const SPACE: Handle<StringFragment> = Handle::from_ref(&StringFragment::SPACE);
 
 /// A data type representing an **immutable** fragment of UTF-16 code units.
+///
+/// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
 ///
 /// This type may be allocated on the stack.
 // TODO(issue#237): GcCell
@@ -319,7 +232,7 @@ impl StringFragment {
     }
 
     // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
-    pub fn index_of(&self, search_value: StringHandle, from_index: u32) -> Option<u32> {
+    pub fn index_of(&self, search_value: Handle<Self>, from_index: u32) -> Option<u32> {
         // TODO(perf): slow and inefficient
         let len = self.len();
         if search_value.is_empty() && from_index <= len {
@@ -341,7 +254,7 @@ impl StringFragment {
     }
 
     // 6.1.4.2 StringLastIndexOf ( string, searchValue, fromIndex )
-    pub fn last_index_of(&self, search_value: StringHandle, from_index: u32) -> Option<u32> {
+    pub fn last_index_of(&self, search_value: Handle<Self>, from_index: u32) -> Option<u32> {
         // TODO(perf): slow and inefficient
         let len = self.len();
         let search_len = search_value.len();
@@ -367,7 +280,7 @@ impl StringFragment {
         true
     }
 
-    pub fn concat(&self, tail: StringHandle, allocator: &Bump) -> StringHandle {
+    pub fn concat(&self, tail: Handle<Self>, allocator: &Bump) -> Handle<Self> {
         if self.is_empty() {
             return tail.ensure_return_safe(allocator);
         }
@@ -387,7 +300,7 @@ impl StringFragment {
             new_fragment = new_next;
         }
 
-        fragment = tail.fragment();
+        fragment = tail.deref();
         let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
         new_fragment.next = new_next.as_ptr();
         new_fragment = new_next;
@@ -400,12 +313,12 @@ impl StringFragment {
         }
 
         // TODO(issue#237): GcCell
-        StringHandle(inner)
+        Handle::from_ref(unsafe { inner.as_ref() })
     }
 
-    pub fn ensure_return_safe(&self, allocator: &Bump) -> StringHandle {
+    pub fn ensure_return_safe(&self, allocator: &Bump) -> Handle<Self> {
         if !self.on_stack() {
-            return StringHandle::from_ref(self);
+            return Handle::from_ref(self);
         }
 
         if self.is_empty() {
@@ -416,7 +329,7 @@ impl StringFragment {
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    fn migrate_to_heap(&self, allocator: &Bump) -> StringHandle {
+    fn migrate_to_heap(&self, allocator: &Bump) -> Handle<Self> {
         let mut fragment = self;
         let mut new_fragment =
             allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
@@ -430,7 +343,7 @@ impl StringFragment {
         }
 
         // TODO(issue#237): GcCell
-        StringHandle(inner)
+        Handle::from_ref(unsafe { inner.as_ref() })
     }
 
     pub(crate) fn code_units(&self) -> impl Iterator<Item = u16> {

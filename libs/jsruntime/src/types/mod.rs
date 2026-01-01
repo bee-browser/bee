@@ -4,6 +4,7 @@ pub mod string;
 
 use std::ffi::c_void;
 use std::mem::offset_of;
+use std::ops::Deref;
 use std::ptr::addr_eq;
 
 use crate::Runtime;
@@ -17,7 +18,6 @@ pub use object::Property;
 pub use object::PropertyKey;
 pub use string::StringFragment;
 pub use string::StringFragmentFlags;
-pub use string::StringHandle;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
 // memory layout of a type you want to change.  It's recommended to use compile-time assertions
@@ -28,14 +28,14 @@ pub use string::StringHandle;
 // DO NOT CHANGE THE ORDER OF THE VARIANTS.
 // Some operations heavily rely on the order.
 #[repr(C, u8)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Value {
     None = Self::KIND_NONE,
     Undefined = Self::KIND_UNDEFINED,
     Null = Self::KIND_NULL,
     Boolean(bool) = Self::KIND_BOOLEAN,
     Number(f64) = Self::KIND_NUMBER,
-    String(StringHandle) = Self::KIND_STRING,
+    String(Handle<StringFragment>) = Self::KIND_STRING,
     Object(Handle<Object>) = Self::KIND_OBJECT,
 }
 
@@ -92,28 +92,15 @@ impl Value {
     }
 
     // 13.5.3.1 Runtime Semantics: Evaluation
-    pub fn get_typeof(&self) -> StringHandle {
-        const UNDEFINED: StringHandle = const_string!("undefined");
-        const BOOLEAN: StringHandle = const_string!("boolean");
-        const NUMBER: StringHandle = const_string!("number");
-        const STRING: StringHandle = const_string!("string");
-        const OBJECT: StringHandle = const_string!("object");
-        const FUNCTION: StringHandle = const_string!("function");
-
+    pub fn get_typeof(&self) -> Handle<StringFragment> {
         match self {
             Self::None => unreachable!(),
-            Self::Undefined => UNDEFINED,
-            Self::Null => OBJECT,
-            Self::Boolean(_) => BOOLEAN,
-            Self::Number(_) => NUMBER,
-            Self::String(_) => STRING,
-            Self::Object(object) => {
-                if object.is_callable() {
-                    FUNCTION
-                } else {
-                    OBJECT
-                }
-            }
+            Self::Undefined => const_string!("undefined"),
+            Self::Boolean(_) => const_string!("boolean"),
+            Self::Number(_) => const_string!("number"),
+            Self::String(_) => const_string!("string"),
+            Self::Object(object) if object.is_callable() => const_string!("function"),
+            Self::Null | Self::Object(_) => const_string!("object"),
         }
     }
 
@@ -155,6 +142,30 @@ impl From<u32> for Value {
 impl From<Handle<Object>> for Value {
     fn from(value: Handle<Object>) -> Self {
         Self::Object(value)
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Undefined, Self::Undefined) => true,
+            (Self::Null, Self::Null) => true,
+            (Self::Boolean(a), Self::Boolean(b)) => a == b,
+            (Self::Number(a), Self::Number(b)) => a == b,
+            (Self::String(a), Self::String(b)) => {
+                debug_assert_eq!(
+                    std::any::type_name_of_val(a.deref()),
+                    std::any::type_name::<&StringFragment>()
+                );
+                debug_assert_eq!(
+                    std::any::type_name_of_val(b.deref()),
+                    std::any::type_name::<&StringFragment>()
+                );
+                a.deref() == b.deref()
+            }
+            (Self::Object(a), Self::Object(b)) => a == b,
+            _ => false,
+        }
     }
 }
 

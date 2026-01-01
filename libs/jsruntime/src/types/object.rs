@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::fmt::Display;
 use std::hash::Hash;
 use std::hash::Hasher;
 
@@ -10,7 +11,7 @@ use jsparser::Symbol;
 use crate::gc::Handle;
 use crate::types::Closure;
 use crate::types::Promise;
-use crate::types::StringHandle;
+use crate::types::StringFragment;
 use crate::types::Value;
 
 #[derive(Clone, Debug)]
@@ -303,12 +304,12 @@ impl Object {
         self.userdata as *mut Closure
     }
 
-    pub(crate) fn string(&self) -> StringHandle {
+    pub(crate) fn string(&self) -> Handle<StringFragment> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        StringHandle::from_addr(self.userdata).unwrap()
+        Handle::from_addr(self.userdata).unwrap()
     }
 
-    pub(crate) fn set_string(&mut self, string: StringHandle) {
+    pub(crate) fn set_string(&mut self, string: Handle<StringFragment>) {
         self.userdata = string.as_addr();
     }
 
@@ -353,6 +354,18 @@ impl Object {
 
     pub(crate) fn slots_mut(&mut self) -> &mut Vec<Value> {
         &mut self.slots
+    }
+}
+
+impl Debug for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self as *const Object)
+    }
+}
+
+impl Display for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self as *const Object)
     }
 }
 

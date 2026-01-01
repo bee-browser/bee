@@ -8,7 +8,7 @@ use cranelift::frontend::Switch;
 
 use base::static_assert_eq;
 
-use crate::StringHandle;
+use crate::gc::Handle;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::types::CallContext;
@@ -2134,7 +2134,7 @@ impl<'a> Editor<'a> {
     pub fn put_runtime_create_internal_error(
         &mut self,
         support: &mut impl EditorSupport,
-        message: StringHandle,
+        message: Handle<StringFragment>,
     ) -> ObjectIr {
         logger::debug!(event = "put_runtime_create_internal_error", ?message);
         debug_assert!(message.is_const());
