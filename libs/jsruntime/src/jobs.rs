@@ -2,9 +2,10 @@ use std::collections::VecDeque;
 
 use rustc_hash::FxHashMap;
 
+use jsgc::Handle;
+
 use crate::Runtime;
 use crate::Value;
-use crate::gc::Handle;
 use crate::logger;
 use crate::types::CallContext;
 use crate::types::Coroutine;

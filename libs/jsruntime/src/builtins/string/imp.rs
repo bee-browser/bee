@@ -1,12 +1,12 @@
 //$id string
 //$class String
 
+use jsgc::Handle;
 use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
 use crate::builtins::require_object_coercible;
-use crate::gc::Handle;
 use crate::logger;
 use crate::types::CallContext;
 use crate::types::Property;

@@ -5,7 +5,6 @@ mod macros;
 
 mod backend;
 mod builtins;
-mod gc;
 mod jobs;
 mod lambda;
 mod semantics;
@@ -15,6 +14,7 @@ use std::pin::Pin;
 
 use itertools::Itertools;
 
+use jsgc::Handle;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -35,7 +35,6 @@ use types::ReturnValue;
 use types::Status;
 
 pub use backend::CompileError;
-pub use gc::Handle;
 pub use lambda::LambdaId; // TODO: private
 pub use types::StringFragment; // TODO: private
 pub use types::Value;

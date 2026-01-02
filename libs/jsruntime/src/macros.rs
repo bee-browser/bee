@@ -2,12 +2,12 @@ macro_rules! const_string {
     ($utf8:literal) => {{
         const STRING: $crate::types::StringFragment =
             $crate::types::StringFragment::new_const(base::utf16!(&$utf8));
-        $crate::gc::Handle::from_ref(&STRING)
+        jsgc::Handle::from_ref(&STRING)
     }};
     ($slice:expr) => {{
         const STRING: $crate::types::StringFragment =
             $crate::types::StringFragment::new_const($slice);
-        $crate::gc::Handle::from_ref(&STRING)
+        jsgc::Handle::from_ref(&STRING)
     }};
 }
 

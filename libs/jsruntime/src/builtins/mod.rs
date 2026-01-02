@@ -12,11 +12,11 @@ mod syntax_error;
 mod type_error;
 mod uri_error;
 
+use jsgc::Handle;
 use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::gc::Handle;
 use crate::lambda::LambdaId;
 use crate::logger;
 use crate::types::Lambda;

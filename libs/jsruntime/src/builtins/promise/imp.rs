@@ -1,9 +1,10 @@
 //$id promise
 //$class Promise
 
+use jsgc::Handle;
+
 use crate::Error;
 use crate::Runtime;
-use crate::gc::Handle;
 use crate::lambda::LambdaId;
 use crate::logger;
 use crate::types::CallContext;

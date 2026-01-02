@@ -7,8 +7,7 @@ use bitflags::bitflags;
 use bitflags::bitflags_match;
 use bumpalo::Bump;
 use itertools::Itertools;
-
-use crate::gc::Handle;
+use jsgc::Handle;
 
 /// An empty string.
 pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);

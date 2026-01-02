@@ -12,6 +12,7 @@ use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
 use rustc_hash::FxHashMap;
 
+use jsgc::Handle;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 use jsparser::syntax::LoopFlags;
@@ -19,7 +20,6 @@ use jsparser::syntax::LoopFlags;
 use crate::ProgramId;
 use crate::Runtime;
 use crate::RuntimePref;
-use crate::gc::Handle;
 use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;

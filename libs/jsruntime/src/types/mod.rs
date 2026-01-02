@@ -7,8 +7,9 @@ use std::mem::offset_of;
 use std::ops::Deref;
 use std::ptr::addr_eq;
 
+use jsgc::Handle;
+
 use crate::Runtime;
-use crate::gc::Handle;
 use crate::lambda::LambdaId;
 use crate::logger;
 

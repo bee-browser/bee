@@ -1,9 +1,9 @@
+use jsgc::Handle;
 use jsparser::Symbol;
 
 use crate::logger;
 
 use crate::Runtime;
-use crate::gc::Handle;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;

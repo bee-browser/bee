@@ -1,5 +1,6 @@
+use jsgc::Handle;
+
 use crate::Runtime;
-use crate::gc::Handle;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::types::CallContext;

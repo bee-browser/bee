@@ -1,11 +1,11 @@
 //$id error
 //$class Error
 
+use jsgc::Handle;
 use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::gc::Handle;
 use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;

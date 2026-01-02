@@ -6,9 +6,9 @@ use std::hash::Hasher;
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
+use jsgc::Handle;
 use jsparser::Symbol;
 
-use crate::gc::Handle;
 use crate::types::Closure;
 use crate::types::Promise;
 use crate::types::StringFragment;

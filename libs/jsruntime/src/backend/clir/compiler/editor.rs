@@ -7,8 +7,8 @@ use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::Switch;
 
 use base::static_assert_eq;
+use jsgc::Handle;
 
-use crate::gc::Handle;
 use crate::lambda::LambdaKind;
 use crate::logger;
 use crate::types::CallContext;
