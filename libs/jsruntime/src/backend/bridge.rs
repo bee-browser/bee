@@ -180,7 +180,7 @@ impl<X> Runtime<X> {
     pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<StringFragment> {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
-        StringFragment::new_stack(utf16, true).ensure_return_safe(self.allocator())
+        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.heap)
     }
 }
 
@@ -358,7 +358,7 @@ pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: &mut Runtime<X>,
     string: Handle<StringFragment>,
 ) -> Handle<StringFragment> {
-    string.ensure_return_safe(runtime.allocator())
+    string.ensure_return_safe(&runtime.heap)
 }
 
 pub(crate) extern "C" fn runtime_create_capture<X>(
@@ -382,17 +382,14 @@ pub(crate) extern "C" fn runtime_create_capture<X>(
         )
     };
 
-    let allocator = runtime.allocator();
+    let handle = runtime.heap.alloc_layout::<Capture, _>(LAYOUT, move |ptr| {
+        // SAFETY: `ptr` is a non-null pointer to a `Capture`.
+        let capture = unsafe { ptr.cast::<Capture>().as_mut() };
+        capture.target = target;
+        // `capture.escaped` will be filled with an actual value.
+    });
 
-    // TODO: GC
-    let ptr = allocator.alloc_layout(LAYOUT);
-
-    // SAFETY: `ptr` is a non-null pointer to a `Capture`.
-    let capture = unsafe { ptr.cast::<Capture>().as_mut() };
-    capture.target = target;
-    // `capture.escaped` will be filled with an actual value.
-
-    capture as *mut Capture
+    handle.as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_create_closure<X>(
@@ -621,7 +618,7 @@ pub(crate) extern "C" fn runtime_concat_strings<X>(
     head: Handle<StringFragment>,
     tail: Handle<StringFragment>,
 ) -> Handle<StringFragment> {
-    head.concat(tail, runtime.allocator())
+    head.concat(tail, &runtime.heap)
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )

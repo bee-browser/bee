@@ -1175,6 +1175,7 @@ name = "jsgc"
 version = "0.0.0"
 dependencies = [
  "base",
+ "bumpalo",
  "logging",
 ]
 
@@ -1213,7 +1214,6 @@ dependencies = [
  "assert_matches",
  "base",
  "bitflags 2.10.0",
- "bumpalo",
  "cranelift",
  "cranelift-jit",
  "cranelift-module",

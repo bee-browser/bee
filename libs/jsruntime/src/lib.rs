@@ -15,6 +15,7 @@ use std::pin::Pin;
 use itertools::Itertools;
 
 use jsgc::Handle;
+use jsgc::Heap;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -101,8 +102,7 @@ pub struct Runtime<X> {
     lambda_registry: LambdaRegistry,
     code_registry: CodeRegistry<X>,
     programs: Vec<Program>,
-    // TODO: GcArena
-    allocator: bumpalo::Bump,
+    heap: Heap,
     job_runner: JobRunner,
     global_object: Pin<Box<Object>>,
 
@@ -139,6 +139,8 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
+        let heap = Heap::new();
+
         // TODO: pass [[Prototype]] of the global object.
         let global_object = Box::pin(Object::new(Default::default()));
 
@@ -148,7 +150,7 @@ impl<X> Runtime<X> {
             lambda_registry: LambdaRegistry::new(),
             code_registry: CodeRegistry::new(),
             programs: vec![],
-            allocator: bumpalo::Bump::new(),
+            heap,
             job_runner: JobRunner::new(),
             global_object,
             object_prototype: None,
@@ -307,13 +309,9 @@ impl<X> Runtime<X> {
         retv.into_result(status)
     }
 
-    fn allocator(&self) -> &bumpalo::Bump {
-        &self.allocator
-    }
-
     pub fn ensure_value_return_safe(&mut self, value: &Value) -> Value {
         match value {
-            Value::String(string) => Value::String(string.ensure_return_safe(self.allocator())),
+            Value::String(string) => Value::String(string.ensure_return_safe(&self.heap)),
             _ => value.clone(),
         }
     }
@@ -321,7 +319,7 @@ impl<X> Runtime<X> {
     pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
         // TODO(perf): inefficient
         let utf16 = utf8.encode_utf16().collect::<Vec<u16>>();
-        self.allocator.alloc_slice_copy(&utf16)
+        self.heap.alloc_slice_copy(&utf16)
     }
 
     fn create_substring(
@@ -337,8 +335,8 @@ impl<X> Runtime<X> {
             .skip(start as usize)
             .take((end - start) as usize)
             .collect_vec();
-        let utf16 = self.allocator().alloc_slice_copy(&utf16);
-        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.allocator)
+        let utf16 = self.heap.alloc_slice_copy(&utf16);
+        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.heap)
     }
 
     fn create_closure(
@@ -366,19 +364,14 @@ impl<X> Runtime<X> {
             std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
         let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
-        let allocator = self.allocator();
-
-        // TODO: GC
-        let ptr = allocator.alloc_layout(layout);
-
-        // SAFETY: `ptr` is a non-null pointer to a `Closure`.
-        let closure = unsafe { ptr.cast::<Closure>().as_mut() };
-        closure.lambda = lambda.into();
-        closure.lambda_id = lambda_id;
-        closure.num_captures = num_captures;
-        // `closure.captures[]` will be filled with actual pointers to `Captures`.
-
-        Handle::from_ref(closure)
+        self.heap.alloc_layout(layout, move |ptr| {
+            // SAFETY: `ptr` is a non-null pointer to a `Closure`.
+            let closure = unsafe { ptr.cast::<Closure>().as_mut() };
+            closure.lambda = lambda.into();
+            closure.lambda_id = lambda_id;
+            closure.num_captures = num_captures;
+            // `closure.captures[]` will be filled with actual pointers to `Captures`.
+        })
     }
 
     fn create_coroutine(
@@ -415,27 +408,21 @@ impl<X> Runtime<X> {
         let scratch_buffer_layout = std::alloc::Layout::array::<u8>(n).unwrap();
         let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
-        let allocator = self.allocator();
-
-        // TODO: GC
-        let ptr = allocator.alloc_layout(layout);
-
-        // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
-        let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
-        coroutine.closure = closure;
-        coroutine.state = 0;
-        coroutine.num_locals = num_locals;
-        coroutine.scope_id = 0;
-        coroutine.scratch_buffer_len = scratch_buffer_len;
-        coroutine.capture_buffer_len = capture_buffer_len;
-        // `coroutine.locals[]` will be initialized in the coroutine.
-
-        Handle::from_ref(coroutine)
+        self.heap.alloc_layout(layout, move |ptr| {
+            // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
+            let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
+            coroutine.closure = closure;
+            coroutine.state = 0;
+            coroutine.num_locals = num_locals;
+            coroutine.scope_id = 0;
+            coroutine.scratch_buffer_len = scratch_buffer_len;
+            coroutine.capture_buffer_len = capture_buffer_len;
+            // `coroutine.locals[]` will be initialized in the coroutine.
+        })
     }
 
     fn create_object(&mut self, prototype: Option<Handle<Object>>) -> Handle<Object> {
-        // TODO: GC
-        self.allocator.alloc(Object::new(prototype)).as_handle()
+        self.heap.alloc(Object::new(prototype))
     }
 
     fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Value> {

@@ -5,9 +5,10 @@ use std::ops::Index;
 
 use bitflags::bitflags;
 use bitflags::bitflags_match;
-use bumpalo::Bump;
 use itertools::Itertools;
+
 use jsgc::Handle;
+use jsgc::Heap;
 
 /// An empty string.
 pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);
@@ -279,33 +280,32 @@ impl StringFragment {
         true
     }
 
-    pub fn concat(&self, tail: Handle<Self>, allocator: &Bump) -> Handle<Self> {
+    pub fn concat(&self, tail: Handle<Self>, heap: &Heap) -> Handle<Self> {
         if self.is_empty() {
-            return tail.ensure_return_safe(allocator);
+            return tail.ensure_return_safe(heap);
         }
         if tail.is_empty() {
-            return self.ensure_return_safe(allocator);
+            return self.ensure_return_safe(heap);
         }
 
         let mut fragment = self;
-        let mut new_fragment =
-            allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        let handle = Handle::from_ref(new_fragment);
+        let mut new_fragment = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        let handle = new_fragment;
 
         while let Some(next) = fragment.next() {
-            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
             new_fragment.next = new_next.as_ptr();
             fragment = next;
             new_fragment = new_next;
         }
 
         fragment = tail.deref();
-        let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
         new_fragment.next = new_next.as_ptr();
         new_fragment = new_next;
 
         while let Some(next) = fragment.next() {
-            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
             new_fragment.next = new_next.as_ptr();
             fragment = next;
             new_fragment = new_next;
@@ -314,7 +314,7 @@ impl StringFragment {
         handle
     }
 
-    pub fn ensure_return_safe(&self, allocator: &Bump) -> Handle<Self> {
+    pub fn ensure_return_safe(&self, heap: &Heap) -> Handle<Self> {
         if !self.on_stack() {
             return Handle::from_ref(self);
         }
@@ -323,18 +323,17 @@ impl StringFragment {
             return EMPTY;
         }
 
-        self.migrate_to_heap(allocator)
+        self.migrate_to_heap(heap)
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    fn migrate_to_heap(&self, allocator: &Bump) -> Handle<Self> {
+    fn migrate_to_heap(&self, heap: &Heap) -> Handle<Self> {
         let mut fragment = self;
-        let mut new_fragment =
-            allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        let handle = Handle::from_ref(new_fragment);
+        let mut new_fragment = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        let handle = new_fragment;
 
         while let Some(next) = fragment.next() {
-            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
             new_fragment.next = new_next.as_ptr();
             fragment = next;
             new_fragment = new_next;
@@ -354,10 +353,6 @@ impl StringFragment {
     /// Creates a `Vec` containing UTF-16 code units of the string.
     pub(crate) fn make_utf16(&self) -> Vec<u16> {
         self.code_units().collect_vec()
-    }
-
-    pub(crate) fn as_ptr(&self) -> *const Self {
-        self as *const Self
     }
 
     pub(crate) fn repeat(&self, repetitions: u32) -> Self {
