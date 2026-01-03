@@ -69,7 +69,7 @@ test262: OOP ?=
 test262:
 ifdef OOP
 	cargo build --bin=bjs --profile=$(PROFILE) --all-features
-	cargo run -r --bin=test262 --all-features -- --test262-dir=vendor/src/tc39/test262 $(ARGS) launch -- /bin/sh bins/test262/launchers/bjs.sh --profile=$(PROFILE) >test262.json
+	cargo run -r --bin=test262 --all-features -- --test262-dir=vendor/src/tc39/test262 $(ARGS) launch -- /bin/sh bins/test262/launchers/bjs.sh --profile $(PROFILE) >test262.json
 else
 	cargo run --bin=test262 --profile=$(PROFILE) --all-features -- --test262-dir=vendor/src/tc39/test262 $(ARGS) run >test262.json
 endif
