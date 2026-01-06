@@ -362,7 +362,8 @@ impl StringFragment {
             next: std::ptr::null_mut(),
             ptr: self.ptr,
             len: self.len,
-            flags: self.flags,
+            flags: StringFragmentFlags::STACK
+                | self.flags.intersection(StringFragmentFlags::DYNAMIC),
             repetitions,
         }
     }
@@ -375,7 +376,8 @@ impl StringFragment {
             next: std::ptr::null_mut(),
             ptr: sub.as_ptr(),
             len: sub.len() as u32,
-            flags: self.flags,
+            flags: StringFragmentFlags::STACK
+                | self.flags.intersection(StringFragmentFlags::DYNAMIC),
             repetitions: 1,
         }
     }
