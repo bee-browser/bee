@@ -18,7 +18,7 @@ cranelift = "0.127.0"
 cranelift-module = "0.127.0"
 cranelift-jit = "0.127.0"
 cranelift-native = "0.127.0"
-indexmap = "2.12.1"
+indexmap = "2.13.0"
 itertools = "0.14.0"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
