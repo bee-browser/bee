@@ -885,7 +885,7 @@ where
                 self.editor.put_store_number_to_any(value, any);
                 any.into()
             }
-            Operand::String(_, Some(ref value)) => self
+            Operand::String(_, Some(value)) => self
                 .support
                 .make_symbol_from_name(value.make_utf16())
                 .into(),
