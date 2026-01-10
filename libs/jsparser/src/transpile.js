@@ -184,6 +184,10 @@ class Transpiler {
           modifyDefaultClause,
           modifyLabelledStatement,
           modifyTryStatement,
+          // Rewrite the `WithClause` and `WithEntries` in order to avoid a shift-reduce conflict.
+          // This means that the original syntactic grammar is not LALR(1).
+          rewriteWithClause,
+          rewriteWithEntries,
           expandOptionals,
           modifyForStatement,
           modifyForInOfStatement,
@@ -1249,6 +1253,26 @@ function modifyTryStatement(rules) {
     action: '_CATCH_BLOCK_',
     insertBefore: false,
   });
+  return rules;
+}
+
+function rewriteWithClause(rules) {
+  log.debug('Rewriting WithClause...');
+  const rule = rules.find((rule) => rule.name === 'WithClause');
+  assert(rule !== undefined);
+  assert(rule.values.length === 2);
+  assert(rule.values[1] === '`with` `{` WithEntries `,`? `}`');
+  rule.values[1] = '`with` `{` WithEntries `}`'
+  return rules;
+}
+
+function rewriteWithEntries(rules) {
+  log.debug('Rewriting WithEntries...');
+  const rule = rules.find((rule) => rule.name === 'WithEntries');
+  assert(rule !== undefined);
+  assert(rule.values.length === 2);
+  assert(rule.values[0] === 'AttributeKey `:` StringLiteral');
+  rule.values[0] = 'AttributeKey `:` StringLiteral `,`?'
   return rules;
 }
 
