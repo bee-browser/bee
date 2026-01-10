@@ -55,17 +55,29 @@ pub fn string_from_code_point<X>(
             return Err(Error::RangeError);
         }
         let cp = num as i64;
-        if !(0..0x10FFFF).contains(&cp) {
+        if !(0..=0x10FFFF).contains(&cp) {
             return Err(Error::RangeError);
         }
-        // TODO(perf): inefficient.  implement an iterator to encode a code point to UTF-16
-        // code units.
-        utf16.extend_from_slice(char::from_u32(cp as u32).unwrap().encode_utf16(&mut buf));
+        utf16.extend_from_slice(encode_code_point(cp, &mut buf));
     }
     let slice = runtime.heap.alloc_slice_copy(&utf16);
     let fragment = StringFragment::new_stack(slice, true);
     let string = fragment.ensure_return_safe(&runtime.heap);
     Ok(Value::String(string))
+}
+
+// 11.1.1 Static Semantics: UTF16EncodeCodePoint ( cp )
+fn encode_code_point(cp: i64, buf: &mut [u16; 2]) -> &[u16] {
+    debug_assert!((0..=0x10FFFF).contains(&cp));
+    if cp <= 0xFFFF {
+        buf[0] = cp as u16;
+        &buf[0..1]
+    } else {
+        let v = (cp - 0x10000) as u16;
+        buf[0] = (v >> 10) + 0xD800;
+        buf[1] = (v & 0x03FF) + 0xDC00;
+        buf.as_slice()
+    }
 }
 
 //#sec-string.prototype.at prototype.function

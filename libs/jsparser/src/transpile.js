@@ -1262,7 +1262,7 @@ function rewriteWithClause(rules) {
   assert(rule !== undefined);
   assert(rule.values.length === 2);
   assert(rule.values[1] === '`with` `{` WithEntries `,`? `}`');
-  rule.values[1] = '`with` `{` WithEntries `}`'
+  rule.values[1] = '`with` `{` WithEntries `}`';
   return rules;
 }
 
@@ -1272,7 +1272,7 @@ function rewriteWithEntries(rules) {
   assert(rule !== undefined);
   assert(rule.values.length === 2);
   assert(rule.values[0] === 'AttributeKey `:` StringLiteral');
-  rule.values[0] = 'AttributeKey `:` StringLiteral `,`?'
+  rule.values[0] = 'AttributeKey `:` StringLiteral `,`?';
   return rules;
 }
 
