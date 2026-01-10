@@ -55,7 +55,7 @@ pub fn string_from_code_point<X>(
             return Err(Error::RangeError);
         }
         let cp = num as i64;
-        if cp < 0 || cp > 0x10FFFF {
+        if !(0..=0x10FFFF).contains(&cp) {
             return Err(Error::RangeError);
         }
         utf16.extend_from_slice(encode_code_point(cp, &mut buf));
@@ -68,7 +68,7 @@ pub fn string_from_code_point<X>(
 
 // 11.1.1 Static Semantics: UTF16EncodeCodePoint ( cp )
 fn encode_code_point(cp: i64, buf: &mut [u16; 2]) -> &[u16] {
-    debug_assert!(cp >= 0 && cp <= 0x10FFFF);
+    debug_assert!((0..=0x10FFFF).contains(&cp));
     if cp <= 0xFFFF {
         buf[0] = cp as u16;
         &buf[0..1]
