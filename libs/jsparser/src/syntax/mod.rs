@@ -4112,5 +4112,5 @@ enum StringBuilderState {
 }
 
 fn is_single_code_unit(cp: u32) -> bool {
-    cp < 0xD800 || (0xE000..0x10000).contains(&cp)
+    cp < 0x10000
 }
