@@ -162,9 +162,15 @@
   action: process_declaration
 - rule: ImportDeclaration -> IMPORT ImportClause FromClause SEMICOLON
   action: undefined
+- rule: ImportDeclaration -> IMPORT ImportClause FromClause WithClause SEMICOLON
+  action: undefined
 - rule: ImportDeclaration -> IMPORT ModuleSpecifier SEMICOLON
   action: undefined
+- rule: ImportDeclaration -> IMPORT ModuleSpecifier WithClause SEMICOLON
+  action: undefined
 - rule: ExportDeclaration -> EXPORT ExportFromClause FromClause SEMICOLON
+  action: undefined
+- rule: ExportDeclaration -> EXPORT ExportFromClause FromClause WithClause SEMICOLON
   action: undefined
 - rule: ExportDeclaration -> EXPORT NamedExports SEMICOLON
   action: undefined
@@ -281,6 +287,10 @@
 - rule: ImportClause -> ImportedDefaultBinding COMMA NamedImports
   action: undefined
 - rule: FromClause -> FROM ModuleSpecifier
+  action: undefined
+- rule: WithClause -> WITH LBRACE RBRACE
+  action: undefined
+- rule: WithClause -> WITH LBRACE WithEntries RBRACE
   action: undefined
 - rule: ModuleSpecifier -> STRING_LITERAL
   action: undefined
@@ -532,6 +542,12 @@
 - rule: NamedImports -> LBRACE ImportsList RBRACE
   action: undefined
 - rule: NamedImports -> LBRACE ImportsList COMMA RBRACE
+  action: undefined
+- rule: WithEntries -> AttributeKey COLON STRING_LITERAL
+  action: undefined
+- rule: WithEntries -> AttributeKey COLON STRING_LITERAL COMMA
+  action: undefined
+- rule: WithEntries -> AttributeKey COLON STRING_LITERAL COMMA WithEntries
   action: undefined
 - rule: ModuleExportName -> KeywordOrIdentifierName
   action: undefined
@@ -1097,6 +1113,10 @@
   action: undefined
 - rule: ImportsList -> ImportsList COMMA ImportSpecifier
   action: undefined
+- rule: AttributeKey -> KeywordOrIdentifierName
+  action: undefined
+- rule: AttributeKey -> STRING_LITERAL
+  action: undefined
 - rule: KeywordOrIdentifierName -> IDENTIFIER_NAME
   action: nop
 - rule: KeywordOrIdentifierName -> AWAIT
@@ -1656,6 +1676,16 @@
 - rule: SuperCall_Await -> SUPER Arguments_Await
   action: undefined
 - rule: ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await RPAREN
+  action: undefined
+- rule: ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await COMMA RPAREN
+  action: undefined
+- rule: >-
+    ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await COMMA
+    AssignmentExpression_In_Await RPAREN
+  action: undefined
+- rule: >-
+    ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await COMMA
+    AssignmentExpression_In_Await COMMA RPAREN
   action: undefined
 - rule: Arguments_Await -> LPAREN RPAREN
   action: process_arguments_empty
@@ -2345,6 +2375,16 @@
   action: undefined
 - rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
   action: undefined
+- rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In COMMA RPAREN
+  action: undefined
+- rule: >-
+    ImportCall -> IMPORT LPAREN AssignmentExpression_In COMMA
+    AssignmentExpression_In RPAREN
+  action: undefined
+- rule: >-
+    ImportCall -> IMPORT LPAREN AssignmentExpression_In COMMA
+    AssignmentExpression_In COMMA RPAREN
+  action: undefined
 - rule: Arguments -> LPAREN RPAREN
   action: process_arguments_empty
 - rule: Arguments -> LPAREN ArgumentList RPAREN
@@ -2693,6 +2733,16 @@
   action: undefined
 - rule: ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN
   action: undefined
+- rule: ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield COMMA RPAREN
+  action: undefined
+- rule: >-
+    ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield COMMA
+    AssignmentExpression_In_Yield RPAREN
+  action: undefined
+- rule: >-
+    ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield COMMA
+    AssignmentExpression_In_Yield COMMA RPAREN
+  action: undefined
 - rule: Arguments_Yield -> LPAREN RPAREN
   action: process_arguments_empty
 - rule: Arguments_Yield -> LPAREN ArgumentList_Yield RPAREN
@@ -2816,6 +2866,18 @@
 - rule: >-
     ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await
     RPAREN
+  action: undefined
+- rule: >-
+    ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await
+    COMMA RPAREN
+  action: undefined
+- rule: >-
+    ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await
+    COMMA AssignmentExpression_In_Yield_Await RPAREN
+  action: undefined
+- rule: >-
+    ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await
+    COMMA AssignmentExpression_In_Yield_Await COMMA RPAREN
   action: undefined
 - rule: Arguments_Yield_Await -> LPAREN RPAREN
   action: process_arguments_empty
