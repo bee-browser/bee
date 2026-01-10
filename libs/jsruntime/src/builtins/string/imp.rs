@@ -1,17 +1,19 @@
 //$id string
 //$class String
 
+use jsgc::Handle;
 use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::StringFragment;
+use crate::builtins::require_object_coercible;
 use crate::logger;
-use crate::objects::Property;
-use crate::objects::builtins::require_object_coercible;
 use crate::types::CallContext;
-use crate::types::StringHandle;
+use crate::types::Property;
+use crate::types::StringFragment;
 use crate::types::Value;
+use crate::types::string::EMPTY;
+use crate::types::string::SPACE;
 
 //#sec-string-constructor-string-value constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
@@ -33,9 +35,9 @@ pub fn string_from_char_code<X>(
         let code_unit = crate::types::number::to_uint16(arg)?;
         utf16.push(code_unit);
     }
-    let slice = runtime.allocator.alloc_slice_copy(&utf16);
+    let slice = runtime.heap.alloc_slice_copy(&utf16);
     let fragment = StringFragment::new_stack(slice, true);
-    let string = StringHandle::new(&fragment).ensure_return_safe(runtime.allocator());
+    let string = fragment.ensure_return_safe(&runtime.heap);
     Ok(Value::String(string))
 }
 
@@ -60,9 +62,9 @@ pub fn string_from_code_point<X>(
         // code units.
         utf16.extend_from_slice(char::from_u32(cp as u32).unwrap().encode_utf16(&mut buf));
     }
-    let slice = runtime.allocator.alloc_slice_copy(&utf16);
+    let slice = runtime.heap.alloc_slice_copy(&utf16);
     let fragment = StringFragment::new_stack(slice, true);
-    let string = StringHandle::new(&fragment).ensure_return_safe(runtime.allocator());
+    let string = fragment.ensure_return_safe(&runtime.heap);
     Ok(Value::String(string))
 }
 
@@ -88,9 +90,9 @@ pub fn string_prototype_at<X>(
     }
     // TODO(perf): memory inefficient
     let code_unit = s.at(k as u32);
-    let slice = runtime.allocator.alloc_slice_copy(code_unit.as_slice());
+    let slice = runtime.heap.alloc_slice_copy(code_unit.as_slice());
     let fragment = StringFragment::new_stack(slice, true);
-    let string = StringHandle::new(&fragment).ensure_return_safe(runtime.allocator());
+    let string = fragment.ensure_return_safe(&runtime.heap);
     Ok(Value::String(string))
 }
 
@@ -107,13 +109,13 @@ pub fn string_prototype_char_at<X>(
     let position = runtime.value_to_integer_or_infinity(pos)?;
     let size = s.len() as f64;
     if position < 0.0 || position >= size {
-        return Ok(Value::String(StringHandle::EMPTY));
+        return Ok(Value::String(EMPTY));
     }
     // TODO(perf): memory inefficient
     let code_unit = s.at(position as u32);
-    let slice = runtime.allocator.alloc_slice_copy(code_unit.as_slice());
+    let slice = runtime.heap.alloc_slice_copy(code_unit.as_slice());
     let fragment = StringFragment::new_stack(slice, true);
-    let string = StringHandle::new(&fragment).ensure_return_safe(runtime.allocator());
+    let string = fragment.ensure_return_safe(&runtime.heap);
     Ok(Value::String(string))
 }
 
@@ -376,7 +378,7 @@ fn string_padding_builtins_impl<X>(
 
     let fill_string = args.get(1).unwrap_or(&Value::Undefined);
     let fill_string = match fill_string {
-        Value::Undefined => StringHandle::SPACE,
+        Value::Undefined => SPACE,
         _ => runtime.value_to_string(fill_string)?,
     };
 
@@ -386,9 +388,9 @@ fn string_padding_builtins_impl<X>(
 // 22.1.3.17.2 StringPad ( S, maxLength, fillString, placement )
 fn string_pad<X>(
     runtime: &mut Runtime<X>,
-    s: StringHandle,
+    s: Handle<StringFragment>,
     max_length: u32,
-    fill_string: StringHandle,
+    fill_string: Handle<StringFragment>,
     placement: PaddingPlacement,
 ) -> Result<Value, Error> {
     let string_length = s.len();
@@ -433,7 +435,7 @@ pub fn string_prototype_repeat<X>(
     }
 
     if n == 0.0 {
-        return Ok(Value::String(StringHandle::EMPTY));
+        return Ok(Value::String(EMPTY));
     }
 
     if n > u32::MAX as f64 {
@@ -520,7 +522,7 @@ pub fn string_prototype_substring<X>(
     let to = final_start.max(final_end) as u32;
 
     if from == to {
-        return Ok(Value::String(StringHandle::EMPTY));
+        return Ok(Value::String(EMPTY));
     }
 
     let result = runtime.create_substring(s, from, to);
@@ -568,7 +570,7 @@ fn trim_string<X>(
     let start_index = if start {
         match s.position(is_non_whitespace) {
             Some(index) => index,
-            None => return Ok(Value::String(StringHandle::EMPTY)),
+            None => return Ok(Value::String(EMPTY)),
         }
     } else {
         0
@@ -612,7 +614,7 @@ impl<X> Runtime<X> {
                 // return SymbolDescriptiveString(value).
                 self.value_to_string(v)?
             }
-            None => StringHandle::EMPTY,
+            None => EMPTY,
         };
         // TODO(feat): NewTarget
         if new {

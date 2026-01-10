@@ -7,10 +7,12 @@
 // We'll use tc39/test262 eventually.
 
 use assert_matches::assert_matches;
+
 use base::macros::assert_eq;
+use jsgc::Handle;
+
 use jsruntime::Runtime;
 use jsruntime::StringFragment;
-use jsruntime::StringHandle;
 use jsruntime::Value;
 
 logging::init!();

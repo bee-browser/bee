@@ -4,9 +4,9 @@ logging::define_logger! {"bee::jsruntime"}
 mod macros;
 
 mod backend;
+mod builtins;
 mod jobs;
 mod lambda;
-mod objects;
 mod semantics;
 mod types;
 
@@ -14,6 +14,8 @@ use std::pin::Pin;
 
 use itertools::Itertools;
 
+use jsgc::Handle;
+use jsgc::Heap;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -21,23 +23,21 @@ use backend::CodeRegistry;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
-use objects::Object;
-use objects::ObjectHandle;
-use objects::Property;
-use objects::PropertyKey;
 use semantics::Program;
 use types::CallContext;
 use types::Capture;
 use types::Closure;
 use types::Coroutine;
 use types::Lambda;
+use types::Object;
+use types::Property;
+use types::PropertyKey;
 use types::ReturnValue;
 use types::Status;
 
 pub use backend::CompileError;
 pub use lambda::LambdaId; // TODO: private
 pub use types::StringFragment; // TODO: private
-pub use types::StringHandle;
 pub use types::Value;
 
 pub type ParseError = jsparser::Error;
@@ -102,37 +102,36 @@ pub struct Runtime<X> {
     lambda_registry: LambdaRegistry,
     code_registry: CodeRegistry<X>,
     programs: Vec<Program>,
-    // TODO: GcArena
-    allocator: bumpalo::Bump,
+    heap: Heap,
     job_runner: JobRunner,
     global_object: Pin<Box<Object>>,
 
     // %Object.prototype%
-    object_prototype: Option<ObjectHandle>,
+    object_prototype: Option<Handle<Object>>,
     // %Function.prototype%
-    function_prototype: Option<ObjectHandle>,
+    function_prototype: Option<Handle<Object>>,
     // %String.prototype%
-    string_prototype: Option<ObjectHandle>,
+    string_prototype: Option<Handle<Object>>,
     // %Promise.prototype%
-    promise_prototype: Option<ObjectHandle>,
+    promise_prototype: Option<Handle<Object>>,
     // %Error.prototype%
-    error_prototype: Option<ObjectHandle>,
+    error_prototype: Option<Handle<Object>>,
     // %AggregateError.prototype%
-    aggregate_error_prototype: Option<ObjectHandle>,
+    aggregate_error_prototype: Option<Handle<Object>>,
     // %EvalError.prototype%
-    eval_error_prototype: Option<ObjectHandle>,
+    eval_error_prototype: Option<Handle<Object>>,
     // %InternalError.prototype%
-    internal_error_prototype: Option<ObjectHandle>,
+    internal_error_prototype: Option<Handle<Object>>,
     // %RangeError.prototype%
-    range_error_prototype: Option<ObjectHandle>,
+    range_error_prototype: Option<Handle<Object>>,
     // %ReferenceError.prototype%
-    reference_error_prototype: Option<ObjectHandle>,
+    reference_error_prototype: Option<Handle<Object>>,
     // %SyntaxError.prototype%
-    syntax_error_prototype: Option<ObjectHandle>,
+    syntax_error_prototype: Option<Handle<Object>>,
     // %TypeError.prototype%
-    type_error_prototype: Option<ObjectHandle>,
+    type_error_prototype: Option<Handle<Object>>,
     // URIError.prototype%
-    uri_error_prototype: Option<ObjectHandle>,
+    uri_error_prototype: Option<Handle<Object>>,
 
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
@@ -140,6 +139,8 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
+        let heap = Heap::new();
+
         // TODO: pass [[Prototype]] of the global object.
         let global_object = Box::pin(Object::new(Default::default()));
 
@@ -149,7 +150,7 @@ impl<X> Runtime<X> {
             lambda_registry: LambdaRegistry::new(),
             code_registry: CodeRegistry::new(),
             programs: vec![],
-            allocator: bumpalo::Bump::new(),
+            heap,
             job_runner: JobRunner::new(),
             global_object,
             object_prototype: None,
@@ -283,15 +284,13 @@ impl<X> Runtime<X> {
     fn call(
         &mut self,
         caller: &CallContext,
-        callable: ObjectHandle,
+        callable: Handle<Object>,
         args: &mut [Value],
         retv: &mut Value,
     ) -> Status {
         let closure = callable.closure();
-        debug_assert!(!closure.is_null());
         let mut context = caller.new_child(callable, closure, args);
-        // SAFETY: `closure` always holds a lambda function.
-        let lambda = unsafe { Lambda::from((*closure).lambda) };
+        let lambda = Lambda::from(closure.lambda);
         lambda(self, &mut context, retv)
     }
 
@@ -310,13 +309,9 @@ impl<X> Runtime<X> {
         retv.into_result(status)
     }
 
-    fn allocator(&self) -> &bumpalo::Bump {
-        &self.allocator
-    }
-
     pub fn ensure_value_return_safe(&mut self, value: &Value) -> Value {
         match value {
-            Value::String(string) => Value::String(string.ensure_return_safe(self.allocator())),
+            Value::String(string) => Value::String(string.ensure_return_safe(&self.heap)),
             _ => value.clone(),
         }
     }
@@ -324,10 +319,15 @@ impl<X> Runtime<X> {
     pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
         // TODO(perf): inefficient
         let utf16 = utf8.encode_utf16().collect::<Vec<u16>>();
-        self.allocator.alloc_slice_copy(&utf16)
+        self.heap.alloc_slice_copy(&utf16)
     }
 
-    fn create_substring(&mut self, string: StringHandle, start: u32, end: u32) -> StringHandle {
+    fn create_substring(
+        &mut self,
+        string: Handle<StringFragment>,
+        start: u32,
+        end: u32,
+    ) -> Handle<StringFragment> {
         debug_assert!(start < end);
         // TODO(perf): inefficient
         let utf16 = string
@@ -335,12 +335,8 @@ impl<X> Runtime<X> {
             .skip(start as usize)
             .take((end - start) as usize)
             .collect_vec();
-        let utf16 = self.allocator().alloc_slice_copy(&utf16);
-        let frag = StringFragment::new_stack(utf16, true);
-        let frag = self
-            .allocator()
-            .alloc(StringFragment::new_heap(std::ptr::null_mut(), &frag));
-        StringHandle::new(frag)
+        let utf16 = self.heap.alloc_slice_copy(&utf16);
+        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.heap)
     }
 
     fn create_closure(
@@ -348,7 +344,7 @@ impl<X> Runtime<X> {
         lambda: Lambda<X>,
         lambda_id: LambdaId,
         num_captures: u16,
-    ) -> *mut Closure {
+    ) -> Handle<Closure> {
         debug_assert!(
             std::alloc::Layout::from_size_align(
                 std::mem::offset_of!(Closure, captures),
@@ -368,28 +364,23 @@ impl<X> Runtime<X> {
             std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
         let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
-        let allocator = self.allocator();
-
-        // TODO: GC
-        let ptr = allocator.alloc_layout(layout);
-
-        // SAFETY: `ptr` is a non-null pointer to a `Closure`.
-        let closure = unsafe { ptr.cast::<Closure>().as_mut() };
-        closure.lambda = lambda.into();
-        closure.lambda_id = lambda_id;
-        closure.num_captures = num_captures;
-        // `closure.captures[]` will be filled with actual pointers to `Captures`.
-
-        closure as *mut Closure
+        self.heap.alloc_layout(layout, move |ptr| {
+            // SAFETY: `ptr` is a non-null pointer to a `Closure`.
+            let closure = unsafe { ptr.cast::<Closure>().as_mut() };
+            closure.lambda = lambda.into();
+            closure.lambda_id = lambda_id;
+            closure.num_captures = num_captures;
+            // `closure.captures[]` will be filled with actual pointers to `Captures`.
+        })
     }
 
     fn create_coroutine(
         &mut self,
-        closure: *mut Closure,
+        closure: Handle<Closure>,
         num_locals: u16,
         scratch_buffer_len: u16,
         capture_buffer_len: u16,
-    ) -> *mut Coroutine {
+    ) -> Handle<Coroutine> {
         debug_assert!(
             std::alloc::Layout::from_size_align(
                 std::mem::offset_of!(Coroutine, locals),
@@ -417,27 +408,21 @@ impl<X> Runtime<X> {
         let scratch_buffer_layout = std::alloc::Layout::array::<u8>(n).unwrap();
         let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
-        let allocator = self.allocator();
-
-        // TODO: GC
-        let ptr = allocator.alloc_layout(layout);
-
-        // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
-        let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
-        coroutine.closure = closure;
-        coroutine.state = 0;
-        coroutine.num_locals = num_locals;
-        coroutine.scope_id = 0;
-        coroutine.scratch_buffer_len = scratch_buffer_len;
-        coroutine.capture_buffer_len = capture_buffer_len;
-        // `coroutine.locals[]` will be initialized in the coroutine.
-
-        coroutine as *mut Coroutine
+        self.heap.alloc_layout(layout, move |ptr| {
+            // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
+            let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
+            coroutine.closure = closure;
+            coroutine.state = 0;
+            coroutine.num_locals = num_locals;
+            coroutine.scope_id = 0;
+            coroutine.scratch_buffer_len = scratch_buffer_len;
+            coroutine.capture_buffer_len = capture_buffer_len;
+            // `coroutine.locals[]` will be initialized in the coroutine.
+        })
     }
 
-    fn create_object(&mut self, prototype: Option<ObjectHandle>) -> ObjectHandle {
-        // TODO: GC
-        self.allocator.alloc(Object::new(prototype)).as_handle()
+    fn create_object(&mut self, prototype: Option<Handle<Object>>) -> Handle<Object> {
+        self.heap.alloc(Object::new(prototype))
     }
 
     fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Value> {
@@ -452,7 +437,7 @@ impl<X> Runtime<X> {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
             Value::Object(_) => {
-                const MESSAGE: StringHandle = const_string!("TODO: make_property_key");
+                const MESSAGE: Handle<StringFragment> = const_string!("TODO: make_property_key");
                 Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
             }
         }
@@ -501,7 +486,11 @@ impl<X> Runtime<X> {
         Ok(())
     }
 
-    fn throw_internal_error(&mut self, message: StringHandle, retv: &mut Value) -> Status {
+    fn throw_internal_error(
+        &mut self,
+        message: Handle<StringFragment>,
+        retv: &mut Value,
+    ) -> Status {
         *retv = Value::Object(self.create_internal_error(Some(message)));
         Status::Exception
     }

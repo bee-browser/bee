@@ -1,14 +1,16 @@
+use jsgc::Handle;
+
 use crate::Runtime;
 use crate::logger;
-use crate::objects::ObjectHandle;
 use crate::types::CallContext;
+use crate::types::Object;
 use crate::types::Status;
 use crate::types::Value;
 
 use super::BuiltinFunctionParams;
 
 impl<X> Runtime<X> {
-    pub(super) fn create_object_constructor(&mut self) -> ObjectHandle {
+    pub(super) fn create_object_constructor(&mut self) -> Handle<Object> {
         logger::debug!(event = "creater_object_constructor");
         self.create_builtin_function(&BuiltinFunctionParams {
             lambda: constructor::<X>,

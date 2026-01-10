@@ -7,9 +7,9 @@ import * as path from '@std/path';
 import { TextLineStream, toTransformStream } from '@std/streams';
 import { constantCase } from 'change-case';
 import { JSDOM } from 'jsdom';
-import { parseCommand } from '../../../../../tools/lib/cli.js';
-import { VENDOR_DIR } from '../../../../../tools/lib/consts.js';
-import { setup } from '../../../../../tools/lib/log.js';
+import { parseCommand } from '../../../../tools/lib/cli.js';
+import { VENDOR_DIR } from '../../../../tools/lib/consts.js';
+import { setup } from '../../../../tools/lib/log.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const ECMA262_SPEC_HTML = path.join(VENDOR_DIR, 'src', 'tc39', 'ecma262', 'spec.html');

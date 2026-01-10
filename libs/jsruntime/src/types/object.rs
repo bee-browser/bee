@@ -1,21 +1,17 @@
-pub(crate) mod builtins;
-
-use std::ffi::c_void;
 use std::fmt::Debug;
+use std::fmt::Display;
 use std::hash::Hash;
 use std::hash::Hasher;
-use std::num::NonZeroUsize;
-use std::ops::Deref;
-use std::ops::DerefMut;
 
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
+use jsgc::Handle;
 use jsparser::Symbol;
 
 use crate::types::Closure;
 use crate::types::Promise;
-use crate::types::StringHandle;
+use crate::types::StringFragment;
 use crate::types::Value;
 
 #[derive(Clone, Debug)]
@@ -225,7 +221,7 @@ pub struct Object {
     flags: ObjectFlags,
 
     // [[Prototype]]
-    prototype: Option<ObjectHandle>,
+    prototype: Option<Handle<Self>>,
     properties: FxHashMap<PropertyKey, Property>,
 
     // TODO: rethink the memory layout.
@@ -236,7 +232,7 @@ impl Object {
     pub(crate) const USERDATA_OFFSET: usize = std::mem::offset_of!(Self, userdata);
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
-    pub fn new(prototype: Option<ObjectHandle>) -> Self {
+    pub fn new(prototype: Option<Handle<Self>>) -> Self {
         Self {
             userdata: 0,
             flags: ObjectFlags::empty(),
@@ -264,7 +260,7 @@ impl Object {
             .map(|prop| &prop.value)
             .or_else(|| {
                 self.prototype
-                    .map(ObjectHandle::as_object)
+                    .as_ref()
                     .and_then(|prototype| prototype.get_value(key))
             })
     }
@@ -298,41 +294,41 @@ impl Object {
         self.userdata
     }
 
-    pub(crate) fn set_closure(&mut self, closure: *mut Closure) {
-        self.userdata = closure.addr();
+    pub(crate) fn set_closure(&mut self, closure: Handle<Closure>) {
+        self.userdata = closure.as_addr();
         self.set_callable();
     }
 
-    pub(crate) fn closure(&self) -> *mut Closure {
+    pub(crate) fn closure(&self) -> Handle<Closure> {
         debug_assert!(self.is_callable());
-        self.userdata as *mut Closure
+        Handle::from_addr(self.userdata).expect("must be a non-null pointer to a Closure")
     }
 
-    pub(crate) fn string(&self) -> StringHandle {
+    pub(crate) fn string(&self) -> Handle<StringFragment> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        unsafe { StringHandle::from_addr(self.userdata) }
+        Handle::from_addr(self.userdata).unwrap()
     }
 
-    pub(crate) fn set_string(&mut self, string: StringHandle) {
+    pub(crate) fn set_string(&mut self, string: Handle<StringFragment>) {
         self.userdata = string.as_addr();
     }
 
-    fn set_promise(&mut self, promise: Promise) {
+    pub(crate) fn set_promise(&mut self, promise: Promise) {
         self.userdata = promise.as_userdata();
     }
 
-    pub fn as_handle(&mut self) -> ObjectHandle {
+    pub fn as_handle(&mut self) -> Handle<Self> {
         // SAFETY: `self` is a non-null pointer to an `Object`.
-        ObjectHandle(unsafe { NonZeroUsize::new_unchecked(self as *mut Self as usize) })
+        Handle::from_ref(self)
     }
 
-    fn is_instance_of(&self, prototype: Option<ObjectHandle>) -> bool {
+    pub fn is_instance_of(&self, prototype: Option<Handle<Self>>) -> bool {
         debug_assert!(prototype.is_some());
         // TODO: prototype chain
         self.prototype == prototype
     }
 
-    pub fn set_constructor(&mut self) {
+    pub(crate) fn set_constructor(&mut self) {
         self.flags.insert(ObjectFlags::CONSTRUCTOR)
     }
 
@@ -340,87 +336,44 @@ impl Object {
         self.flags.contains(ObjectFlags::CALLABLE)
     }
 
-    fn set_callable(&mut self) {
+    pub(crate) fn set_callable(&mut self) {
         self.flags.insert(ObjectFlags::CALLABLE);
     }
 
-    fn is_error(&self) -> bool {
+    pub(crate) fn is_error(&self) -> bool {
         self.flags.contains(ObjectFlags::ERROR)
     }
 
-    fn set_error(&mut self) {
+    pub(crate) fn set_error(&mut self) {
         self.flags.insert(ObjectFlags::ERROR);
+    }
+
+    pub(crate) fn slots(&self) -> &[Value] {
+        &self.slots
+    }
+
+    pub(crate) fn slots_mut(&mut self) -> &mut Vec<Value> {
+        &mut self.slots
+    }
+}
+
+impl Debug for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self as *const Object)
+    }
+}
+
+impl Display for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self as *const Object)
     }
 }
 
 bitflags! {
     #[derive(Clone, Copy)]
-    pub(crate) struct ObjectFlags: u8 {
+    pub struct ObjectFlags: u8 {
         const CONSTRUCTOR = 1 << 0;
         const CALLABLE    = 1 << 1;
         const ERROR       = 1 << 2;
-    }
-}
-
-// TODO(issue#237): GcCellRef
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct ObjectHandle(NonZeroUsize);
-
-static_assertions::const_assert_eq!(size_of::<ObjectHandle>(), size_of::<*const Object>());
-
-impl ObjectHandle {
-    pub fn is_valid(self) -> bool {
-        self.0.get() != 0
-    }
-
-    pub fn from_ptr(ptr: *mut c_void) -> Option<ObjectHandle> {
-        NonZeroUsize::new(ptr as usize).map(ObjectHandle)
-    }
-
-    pub fn as_ptr(self) -> *mut c_void {
-        self.0.get() as *mut c_void
-    }
-
-    pub fn as_addr(self) -> usize {
-        self.0.get()
-    }
-
-    pub fn as_object<'a>(self) -> &'a Object {
-        let ptr = self.0.get() as *const Object;
-        debug_assert!(ptr.is_null() || ptr.is_aligned());
-        // SAFETY: `ptr` is a non-null pointer to an `Object`.
-        unsafe { &*ptr }
-    }
-
-    pub fn as_object_mut<'a>(self) -> &'a mut Object {
-        let ptr = self.0.get() as *mut Object;
-        debug_assert!(ptr.is_null() || ptr.is_aligned());
-        // SAFETY: `ptr` is a non-null pointer to an `Object`.
-        unsafe { &mut *ptr }
-    }
-
-    pub fn dummy_for_testing() -> Self {
-        // SAFETY: it's just a dummy data for testing.
-        Self(unsafe { NonZeroUsize::new_unchecked(16) })
-    }
-}
-
-impl Deref for ObjectHandle {
-    type Target = Object;
-
-    fn deref(&self) -> &Self::Target {
-        self.as_object()
-    }
-}
-
-impl DerefMut for ObjectHandle {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.as_object_mut()
-    }
-}
-
-impl Debug for ObjectHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", self.0.get() as *const Object)
     }
 }

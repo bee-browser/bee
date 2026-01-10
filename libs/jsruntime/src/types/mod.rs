@@ -1,19 +1,24 @@
 pub mod number;
+pub mod object;
 pub mod string;
 
 use std::ffi::c_void;
 use std::mem::offset_of;
+use std::ops::Deref;
 use std::ptr::addr_eq;
+
+use jsgc::Handle;
 
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
-use crate::objects::Object;
-use crate::objects::ObjectHandle;
 
+pub use object::Object;
+pub use object::ObjectFlags;
+pub use object::Property;
+pub use object::PropertyKey;
 pub use string::StringFragment;
 pub use string::StringFragmentFlags;
-pub use string::StringHandle;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
 // memory layout of a type you want to change.  It's recommended to use compile-time assertions
@@ -24,15 +29,15 @@ pub use string::StringHandle;
 // DO NOT CHANGE THE ORDER OF THE VARIANTS.
 // Some operations heavily rely on the order.
 #[repr(C, u8)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Value {
     None = Self::KIND_NONE,
     Undefined = Self::KIND_UNDEFINED,
     Null = Self::KIND_NULL,
     Boolean(bool) = Self::KIND_BOOLEAN,
     Number(f64) = Self::KIND_NUMBER,
-    String(StringHandle) = Self::KIND_STRING,
-    Object(ObjectHandle) = Self::KIND_OBJECT,
+    String(Handle<StringFragment>) = Self::KIND_STRING,
+    Object(Handle<Object>) = Self::KIND_OBJECT,
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
@@ -55,11 +60,7 @@ impl Value {
     pub(crate) const HOLDER_OFFSET: usize = size_of::<u64>();
 
     pub fn is_valid(&self) -> bool {
-        match self {
-            Self::None => false,
-            Self::Object(value) => value.is_valid(),
-            _ => true,
-        }
+        !matches!(self, Self::None)
     }
 
     pub fn is_callable(&self) -> bool {
@@ -71,13 +72,13 @@ impl Value {
     }
 
     // 7.1.18 ToObject ( argument )
-    pub fn to_object(&self) -> Result<&Object, Value> {
+    pub fn to_object(&self) -> Result<Handle<Object>, Value> {
         match self {
             Self::Undefined | Self::Null => Err(1001.into()), // TODO: TypeError
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),
-            Self::Object(value) => Ok(value.as_object()),
+            Self::Object(value) => Ok(*value),
             Self::None => unreachable!(),
         }
     }
@@ -92,33 +93,20 @@ impl Value {
     }
 
     // 13.5.3.1 Runtime Semantics: Evaluation
-    pub fn get_typeof(&self) -> StringHandle {
-        const UNDEFINED: StringHandle = const_string!("undefined");
-        const BOOLEAN: StringHandle = const_string!("boolean");
-        const NUMBER: StringHandle = const_string!("number");
-        const STRING: StringHandle = const_string!("string");
-        const OBJECT: StringHandle = const_string!("object");
-        const FUNCTION: StringHandle = const_string!("function");
-
+    pub fn get_typeof(&self) -> Handle<StringFragment> {
         match self {
             Self::None => unreachable!(),
-            Self::Undefined => UNDEFINED,
-            Self::Null => OBJECT,
-            Self::Boolean(_) => BOOLEAN,
-            Self::Number(_) => NUMBER,
-            Self::String(_) => STRING,
-            Self::Object(object) => {
-                if object.is_callable() {
-                    FUNCTION
-                } else {
-                    OBJECT
-                }
-            }
+            Self::Undefined => const_string!("undefined"),
+            Self::Boolean(_) => const_string!("boolean"),
+            Self::Number(_) => const_string!("number"),
+            Self::String(_) => const_string!("string"),
+            Self::Object(object) if object.is_callable() => const_string!("function"),
+            Self::Null | Self::Object(_) => const_string!("object"),
         }
     }
 
     pub fn dummy_object() -> Self {
-        Self::Object(ObjectHandle::dummy_for_testing())
+        Self::Object(Handle::dummy_for_testing())
     }
 }
 
@@ -152,9 +140,33 @@ impl From<u32> for Value {
     }
 }
 
-impl From<ObjectHandle> for Value {
-    fn from(value: ObjectHandle) -> Self {
+impl From<Handle<Object>> for Value {
+    fn from(value: Handle<Object>) -> Self {
         Self::Object(value)
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Undefined, Self::Undefined) => true,
+            (Self::Null, Self::Null) => true,
+            (Self::Boolean(a), Self::Boolean(b)) => a == b,
+            (Self::Number(a), Self::Number(b)) => a == b,
+            (Self::String(a), Self::String(b)) => {
+                debug_assert_eq!(
+                    std::any::type_name_of_val(a.deref()),
+                    std::any::type_name::<StringFragment>()
+                );
+                debug_assert_eq!(
+                    std::any::type_name_of_val(b.deref()),
+                    std::any::type_name::<StringFragment>()
+                );
+                a.deref() == b.deref()
+            }
+            (Self::Object(a), Self::Object(b)) => a == b,
+            _ => false,
+        }
     }
 }
 
@@ -173,8 +185,6 @@ impl std::fmt::Display for Value {
 }
 
 /// A data type to represent a closure.
-//
-// TODO(issue#237): GcCell
 #[repr(C)]
 pub struct Closure {
     /// An address of a lambda function compiled from a JavaScript function definition.
@@ -199,9 +209,7 @@ pub struct Closure {
     pub num_captures: u16,
 
     /// A variable-length list of captures used in the lambda function.
-    //
-    // TODO(issue#237): GcCellRef
-    pub captures: [*mut Capture; 0],
+    pub captures: [Handle<Capture>; 0],
 }
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
@@ -224,19 +232,9 @@ impl std::fmt::Debug for Closure {
         };
         let mut captures = captures.iter();
         if let Some(capture) = captures.next() {
-            // SAFETY: `capture` is a non-null pointer to a `Capture`.
-            write!(f, "{:?}", unsafe {
-                debug_assert!(!(*capture).is_null());
-                debug_assert!((*capture).is_aligned());
-                &**capture
-            })?;
+            write!(f, "{:?}", capture)?;
             for capture in captures {
-                // SAFETY: `capture` is a non-null pointer to a `Capture`.
-                write!(f, ", {:?}", unsafe {
-                    debug_assert!(!(*capture).is_null());
-                    debug_assert!((*capture).is_aligned());
-                    &**capture
-                })?;
+                write!(f, ", {:?}", capture)?
             }
         }
         write!(f, "])")
@@ -247,8 +245,6 @@ impl std::fmt::Debug for Closure {
 //
 // NOTE: The `target` may point to the `escaped`.  In this case, the `target` must be updated if
 // the capture is moved during GC, so that the `target` points to the `escaped` correctly.
-//
-// TODO(issue#237): GcCell
 #[repr(C)]
 pub struct Capture {
     /// A captured value.
@@ -291,15 +287,11 @@ impl std::fmt::Debug for Capture {
 /// A data type to represent a coroutine.
 ///
 /// The scratch_buffer starts from `&Coroutine::locals[Coroutine::num_locals]`.
-//
-// TODO(issue#237): GcCell
 #[derive(Debug)]
 #[repr(C)]
 pub struct Coroutine {
     /// The closure of the coroutine.
-    //
-    // TODO(issue#237): GcCellRef
-    pub closure: *mut Closure,
+    pub closure: Handle<Closure>,
 
     /// The state of the coroutine.
     pub state: u32,
@@ -374,13 +366,6 @@ where
 }
 
 /// Lambda function.
-///
-/// The actual type of `context` varies depending on usage of the lambda function:
-///
-/// * Entry function: 0 (null pointer)
-/// * Regular functions: Closure*
-/// * Coroutine functions: Coroutine*
-///
 pub type Lambda<X> =
     extern "C" fn(runtime: &mut Runtime<X>, context: &mut CallContext, retv: &mut Value) -> Status;
 
@@ -434,8 +419,8 @@ pub struct CallContext {
     /// The actual type of the value varies depending on the type of the lambda function:
     ///
     /// * Entry functions: 0 (null pointer)
-    /// * Regular functions: &mut Closure
-    /// * Coroutine functions: &mut Coroutine
+    /// * Regular functions: the address of the `Closure`
+    /// * Coroutine functions: the address of the `Coroutine`
     ///
     envp: *mut c_void,
 
@@ -444,7 +429,7 @@ pub struct CallContext {
 
     /// The active function object.
     #[allow(unused)]
-    func: Option<ObjectHandle>,
+    func: Option<Handle<Object>>,
 
     /// A pointer to the call context of the caller.
     #[allow(unused)]
@@ -493,9 +478,9 @@ impl CallContext {
         }
     }
 
-    pub(crate) fn new_for_promise(coroutine: *mut Coroutine, args: &mut [Value]) -> Self {
+    pub(crate) fn new_for_promise(coroutine: Handle<Coroutine>, args: &mut [Value]) -> Self {
         Self {
-            envp: coroutine as *mut std::ffi::c_void,
+            envp: coroutine.as_ptr() as *mut std::ffi::c_void,
             this: Value::Undefined,
             func: None,
             caller: std::ptr::null(),
@@ -509,12 +494,12 @@ impl CallContext {
 
     pub(crate) fn new_child(
         &self,
-        func: ObjectHandle,
-        closure: *mut Closure,
+        func: Handle<Object>,
+        closure: Handle<Closure>,
         args: &mut [Value],
     ) -> Self {
         Self {
-            envp: closure as *mut std::ffi::c_void,
+            envp: closure.as_ptr() as *mut std::ffi::c_void,
             this: Value::Undefined,
             func: Some(func),
             caller: self,
@@ -535,34 +520,31 @@ impl CallContext {
         &self.this
     }
 
-    pub(crate) fn func(&self) -> Option<ObjectHandle> {
+    pub(crate) fn func(&self) -> Option<Handle<Object>> {
         self.func
     }
 
-    pub(crate) fn closure(&self) -> &Closure {
-        // SAFETY: `envp` is always a non-null pointer to a `Closure`.
-        unsafe {
-            debug_assert!(!self.envp.is_null());
-            debug_assert!(self.envp.is_aligned());
-            &*(self.envp as *const Closure)
-        }
+    pub(crate) fn closure(&self) -> Handle<Closure> {
+        Handle::from_ptr(self.envp as *mut Closure)
+            .expect("must be a non-null pointer to a Closure")
     }
 
-    pub(crate) fn closure_mut(&mut self) -> &mut Closure {
-        // SAFETY: `envp` is always a non-null pointer to a `Closure`.
-        unsafe {
-            debug_assert!(!self.envp.is_null());
-            debug_assert!(self.envp.is_aligned());
-            &mut *(self.envp as *mut Closure)
-        }
-    }
-
+    #[allow(unused)]
     pub(crate) fn coroutine(&self) -> &Coroutine {
         // SAFETY: `envp` is always a non-null pointer to a `Coroutine`.
         unsafe {
             debug_assert!(!self.envp.is_null());
             debug_assert!(self.envp.is_aligned());
             &*(self.envp as *const Coroutine)
+        }
+    }
+
+    pub(crate) fn coroutine_mut(&mut self) -> &mut Coroutine {
+        // SAFETY: `envp` is always a non-null pointer to a `Coroutine`.
+        unsafe {
+            debug_assert!(!self.envp.is_null());
+            debug_assert!(self.envp.is_aligned());
+            &mut *(self.envp as *mut Coroutine)
         }
     }
 

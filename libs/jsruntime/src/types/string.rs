@@ -1,325 +1,31 @@
 use std::iter::Enumerate;
 use std::iter::Peekable;
+use std::ops::Deref;
 use std::ops::Index;
-use std::ptr::NonNull;
 
 use bitflags::bitflags;
 use bitflags::bitflags_match;
-use bumpalo::Bump;
 use itertools::Itertools;
 
-/// A data type to hold an **immutable** UTF-16 string.
-///
-/// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
-///
-/// This type is usually allocated on the stack and holds a pointer to a `StringFragment` that is
-/// allocated in the heap or on the stack.
-// TODO(issue#237): GcCell
-#[derive(Clone, Copy)]
-#[repr(transparent)]
-pub struct StringHandle(NonNull<StringFragment>);
+use jsgc::Handle;
+use jsgc::Heap;
 
-base::static_assert_eq!(align_of::<StringHandle>(), align_of::<usize>());
+/// An empty string.
+pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);
 
-impl StringHandle {
-    /// An empty string.
-    pub const EMPTY: Self = Self::new(&StringFragment::EMPTY);
-
-    /// A single U+0020 character.
-    pub const SPACE: Self = Self::new(&StringFragment::SPACE);
-
-    /// Creates a new UTF-16 string.
-    pub const fn new(frag: &StringFragment) -> Self {
-        Self(NonNull::from_ref(frag))
-    }
-
-    /// Creates a new constant UTF-16 string.
-    pub const fn new_const(frag: &'static StringFragment) -> Self {
-        debug_assert!(frag.is_const());
-        Self(NonNull::from_ref(frag))
-    }
-
-    pub const fn is_simple(&self) -> bool {
-        self.fragment().is_simple()
-    }
-
-    /// Returns `true` if the string is empty.
-    pub const fn is_empty(&self) -> bool {
-        self.fragment().is_empty()
-    }
-
-    pub(crate) fn is_const(&self) -> bool {
-        let frag = self.fragment();
-        frag.is_const() && frag.next().is_none()
-    }
-
-    /// Returns `true` if the string is allocated on the stack.
-    pub(crate) fn on_stack(&self) -> bool {
-        self.fragment().on_stack()
-    }
-
-    /// Returns the number of UTF-16 code units in the string.
-    pub fn len(&self) -> u32 {
-        self.fragment().total_len()
-    }
-
-    /// Returns the first string fragment.
-    pub(crate) const fn fragment(&self) -> &StringFragment {
-        // SAFETY: `self.0` is always convertible to a reference.
-        unsafe { self.0.as_ref() }
-    }
-
-    pub(crate) fn code_units(&self) -> impl Iterator<Item = u16> {
-        self.fragment().code_units()
-    }
-
-    pub fn code_points(&self) -> impl Iterator<Item = CodePointAt> {
-        self.fragment().code_points()
-    }
-
-    /// Creates a `Vec` containing UTF-16 code units of the string.
-    pub(crate) fn make_utf16(&self) -> Vec<u16> {
-        self.code_units().collect_vec()
-    }
-
-    pub(crate) unsafe fn from_addr(addr: usize) -> Self {
-        debug_assert_ne!(addr, 0);
-        Self::new(unsafe {
-            let ptr = addr as *const StringFragment;
-            debug_assert!(ptr.is_aligned());
-            &*ptr
-        })
-    }
-
-    pub(crate) fn as_addr(&self) -> usize {
-        self.0.addr().get()
-    }
-
-    pub fn at(&self, index: u32) -> Option<u16> {
-        self.fragment().at(index as usize)
-    }
-
-    pub fn code_point_at(&self, index: u32) -> CodePointAt {
-        let first = self.at(index).unwrap();
-        let size = self.len();
-
-        if !is_leading_surrogate(first) && !is_trailing_surrogate(first) {
-            return CodePointAt {
-                index,
-                code_point: first as u32,
-                code_unit_count: 1,
-                is_unpaired_surrogate: false,
-            };
-        }
-
-        if is_trailing_surrogate(first) || index + 1 == size {
-            return CodePointAt {
-                index,
-                code_point: first as u32,
-                code_unit_count: 1,
-                is_unpaired_surrogate: true,
-            };
-        }
-
-        // TODO(perf): inefficient
-        let second = self.at(index + 1).unwrap();
-        if !is_trailing_surrogate(second) {
-            return CodePointAt {
-                index,
-                code_point: first as u32,
-                code_unit_count: 1,
-                is_unpaired_surrogate: true,
-            };
-        }
-
-        let cp = utf16_surrogate_pair_to_code_point(first, second);
-        CodePointAt {
-            index,
-            code_point: cp,
-            code_unit_count: 2,
-            is_unpaired_surrogate: false,
-        }
-    }
-
-    pub fn position<P>(&self, predicate: P) -> Option<u32>
-    where
-        P: Fn(u32) -> bool,
-    {
-        for code_point_at in self.code_points() {
-            if predicate(code_point_at.code_point) {
-                return Some(code_point_at.index);
-            }
-        }
-        None
-    }
-
-    // TODO(perf): inefficient
-    pub fn last_position<P>(&self, predicate: P) -> Option<u32>
-    where
-        P: Fn(u32) -> bool,
-    {
-        let mut candidate = None;
-        for code_point_at in self.code_points() {
-            if predicate(code_point_at.code_point) {
-                candidate = Some(code_point_at.index);
-            }
-        }
-        candidate
-    }
-
-    // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
-    pub fn index_of(&self, search_value: Self, from_index: u32) -> Option<u32> {
-        // TODO(perf): slow and inefficient
-        let len = self.len();
-        if search_value.is_empty() && from_index <= len {
-            return Some(from_index);
-        }
-        let search_len = search_value.len();
-        if len < search_len {
-            return None;
-        }
-        let string = self.make_utf16();
-        let search = search_value.make_utf16();
-        for i in from_index..(len - search_len + 1) {
-            let canditate = &string[(i as usize)..((i + search_len) as usize)];
-            if canditate == search {
-                return Some(i);
-            }
-        }
-        None
-    }
-
-    // 6.1.4.2 StringLastIndexOf ( string, searchValue, fromIndex )
-    pub fn last_index_of(&self, search_value: Self, from_index: u32) -> Option<u32> {
-        // TODO(perf): slow and inefficient
-        let len = self.len();
-        let search_len = search_value.len();
-        debug_assert!(from_index + search_len <= len);
-        let string = self.make_utf16();
-        let search = search_value.make_utf16();
-        for i in (0..from_index).rev() {
-            let canditate = &string[(i as usize)..((i + search_len) as usize)];
-            if canditate == search {
-                return Some(i);
-            }
-        }
-        None
-    }
-
-    // 7.2.7 Static Semantics: IsStringWellFormedUnicode ( string )
-    pub fn is_well_formed(&self) -> bool {
-        for code_unit_at in self.code_points() {
-            if code_unit_at.is_unpaired_surrogate {
-                return false;
-            }
-        }
-        true
-    }
-
-    pub fn concat(&self, tail: Self, allocator: &Bump) -> Self {
-        if self.is_empty() {
-            return tail.ensure_return_safe(allocator);
-        }
-        if tail.is_empty() {
-            return self.ensure_return_safe(allocator);
-        }
-
-        let mut fragment = self.fragment();
-        let mut new_fragment =
-            allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        let inner = NonNull::from_ref(new_fragment);
-
-        while let Some(next) = fragment.next() {
-            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
-            new_fragment.next = new_next.as_ptr();
-            fragment = next;
-            new_fragment = new_next;
-        }
-
-        fragment = tail.fragment();
-        let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        new_fragment.next = new_next.as_ptr();
-        new_fragment = new_next;
-
-        while let Some(next) = fragment.next() {
-            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
-            new_fragment.next = new_next.as_ptr();
-            fragment = next;
-            new_fragment = new_next;
-        }
-
-        // TODO(issue#237): GcCell
-        Self(inner)
-    }
-
-    pub fn ensure_return_safe(&self, allocator: &Bump) -> Self {
-        if !self.on_stack() {
-            return *self;
-        }
-
-        if self.is_empty() {
-            return StringHandle::EMPTY;
-        }
-
-        self.migrate_to_heap(allocator)
-    }
-
-    // Migrate a UTF-16 string from the stack to the heap.
-    fn migrate_to_heap(&self, allocator: &Bump) -> Self {
-        let mut fragment = self.fragment();
-        let mut new_fragment =
-            allocator.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        let inner = NonNull::from_ref(new_fragment);
-
-        while let Some(next) = fragment.next() {
-            let new_next = allocator.alloc(StringFragment::new_heap(std::ptr::null(), next));
-            new_fragment.next = new_next.as_ptr();
-            fragment = next;
-            new_fragment = new_next;
-        }
-
-        // TODO(issue#237): GcCell
-        Self(inner)
-    }
-}
-
-impl PartialEq for StringHandle {
-    fn eq(&self, other: &Self) -> bool {
-        if self.0 == other.0 {
-            return true;
-        }
-        self.fragment() == other.fragment()
-    }
-}
-
-impl std::fmt::Debug for StringHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.is_empty() {
-            write!(f, "StringHandle()")
-        } else {
-            write!(f, "StringHandle({:?})", self.fragment())
-        }
-    }
-}
-
-impl std::fmt::Display for StringHandle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.is_empty() {
-            Ok(())
-        } else {
-            write!(f, "{}", self.fragment())
-        }
-    }
-}
+/// A single U+0020 character.
+pub const SPACE: Handle<StringFragment> = Handle::from_ref(&StringFragment::SPACE);
 
 /// A data type representing an **immutable** fragment of UTF-16 code units.
 ///
+/// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
+///
 /// This type may be allocated on the stack.
-// TODO(issue#237): GcCell
 #[derive(Clone)]
 #[repr(C)]
 pub struct StringFragment {
     /// A pointer to the next string fragment if it exists.
+    // TODO(issue#237): GcCellRef
     next: *const StringFragment,
 
     /// A pointer to the UTF-16 code unit sequence if it exists.
@@ -329,6 +35,7 @@ pub struct StringFragment {
     ///   * A constant array of UTF-16 code units
     ///   * An array of UTF-16 code units allocated in the string pool (not yet implemented)
     ///   * A memory block allocated in the GC heap
+    // TODO(issue#237): GcCellRef
     ptr: *const u16,
 
     /// The number of the UTF-16 code units in the string fragment.
@@ -406,24 +113,25 @@ impl StringFragment {
     }
 
     pub(crate) const fn is_const(&self) -> bool {
-        self.flags.contains(StringFragmentFlags::CONST)
+        self.flags.contains(StringFragmentFlags::CONST) && self.next.is_null()
     }
 
     pub(crate) const fn on_stack(&self) -> bool {
         self.flags.contains(StringFragmentFlags::STACK)
     }
 
-    pub(crate) fn total_len(&self) -> u32 {
+    /// Returns the number of UTF-16 code units in the string.
+    pub(crate) fn len(&self) -> u32 {
         // SAFETY: `self.next` is null or a valid pointer to a `StringFragment`.
         if let Some(next) = unsafe { self.next.as_ref() } {
             debug_assert!(self.len > 0);
-            self.len() + next.total_len()
+            self.fragment_len() + next.len()
         } else {
-            self.len()
+            self.fragment_len()
         }
     }
 
-    pub(crate) fn len(&self) -> u32 {
+    pub(crate) fn fragment_len(&self) -> u32 {
         debug_assert!(self.repetitions > 0);
         self.len * self.repetitions
     }
@@ -443,6 +151,197 @@ impl StringFragment {
         unsafe { self.next.as_ref() }
     }
 
+    pub fn at(&self, index: u32) -> Option<u16> {
+        let i = index as usize;
+        let slice = self.as_slice();
+        match slice.get(i) {
+            Some(code_unit) => Some(*code_unit),
+            None => {
+                let next_index = (i - slice.len()) as u32;
+                self.next().and_then(|next| next.at(next_index))
+            }
+        }
+    }
+
+    pub fn code_point_at(&self, index: u32) -> CodePointAt {
+        let first = self.at(index).unwrap();
+        let size = self.len();
+
+        if !is_leading_surrogate(first) && !is_trailing_surrogate(first) {
+            return CodePointAt {
+                index,
+                code_point: first as u32,
+                code_unit_count: 1,
+                is_unpaired_surrogate: false,
+            };
+        }
+
+        if is_trailing_surrogate(first) || index + 1 == size {
+            return CodePointAt {
+                index,
+                code_point: first as u32,
+                code_unit_count: 1,
+                is_unpaired_surrogate: true,
+            };
+        }
+
+        // TODO(perf): inefficient
+        let second = self.at(index + 1).unwrap();
+        if !is_trailing_surrogate(second) {
+            return CodePointAt {
+                index,
+                code_point: first as u32,
+                code_unit_count: 1,
+                is_unpaired_surrogate: true,
+            };
+        }
+
+        let cp = utf16_surrogate_pair_to_code_point(first, second);
+        CodePointAt {
+            index,
+            code_point: cp,
+            code_unit_count: 2,
+            is_unpaired_surrogate: false,
+        }
+    }
+
+    pub fn position<P>(&self, predicate: P) -> Option<u32>
+    where
+        P: Fn(u32) -> bool,
+    {
+        for code_point_at in self.code_points() {
+            if predicate(code_point_at.code_point) {
+                return Some(code_point_at.index);
+            }
+        }
+        None
+    }
+
+    // TODO(perf): inefficient
+    pub fn last_position<P>(&self, predicate: P) -> Option<u32>
+    where
+        P: Fn(u32) -> bool,
+    {
+        let mut candidate = None;
+        for code_point_at in self.code_points() {
+            if predicate(code_point_at.code_point) {
+                candidate = Some(code_point_at.index);
+            }
+        }
+        candidate
+    }
+
+    // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
+    pub fn index_of(&self, search_value: Handle<Self>, from_index: u32) -> Option<u32> {
+        // TODO(perf): slow and inefficient
+        let len = self.len();
+        if search_value.is_empty() && from_index <= len {
+            return Some(from_index);
+        }
+        let search_len = search_value.len();
+        if len < search_len {
+            return None;
+        }
+        let string = self.make_utf16();
+        let search = search_value.make_utf16();
+        for i in from_index..(len - search_len + 1) {
+            let canditate = &string[(i as usize)..((i + search_len) as usize)];
+            if canditate == search {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    // 6.1.4.2 StringLastIndexOf ( string, searchValue, fromIndex )
+    pub fn last_index_of(&self, search_value: Handle<Self>, from_index: u32) -> Option<u32> {
+        // TODO(perf): slow and inefficient
+        let len = self.len();
+        let search_len = search_value.len();
+        debug_assert!(from_index + search_len <= len);
+        let string = self.make_utf16();
+        let search = search_value.make_utf16();
+        for i in (0..from_index).rev() {
+            let canditate = &string[(i as usize)..((i + search_len) as usize)];
+            if canditate == search {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    // 7.2.7 Static Semantics: IsStringWellFormedUnicode ( string )
+    pub fn is_well_formed(&self) -> bool {
+        for code_unit_at in self.code_points() {
+            if code_unit_at.is_unpaired_surrogate {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn concat(&self, tail: Handle<Self>, heap: &Heap) -> Handle<Self> {
+        if self.is_empty() {
+            return tail.ensure_return_safe(heap);
+        }
+        if tail.is_empty() {
+            return self.ensure_return_safe(heap);
+        }
+
+        let mut fragment = self;
+        let mut new_fragment = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        let handle = new_fragment;
+
+        while let Some(next) = fragment.next() {
+            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            new_fragment.next = new_next.as_ptr();
+            fragment = next;
+            new_fragment = new_next;
+        }
+
+        fragment = tail.deref();
+        let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        new_fragment.next = new_next.as_ptr();
+        new_fragment = new_next;
+
+        while let Some(next) = fragment.next() {
+            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            new_fragment.next = new_next.as_ptr();
+            fragment = next;
+            new_fragment = new_next;
+        }
+
+        handle
+    }
+
+    pub fn ensure_return_safe(&self, heap: &Heap) -> Handle<Self> {
+        if !self.on_stack() {
+            return Handle::from_ref(self);
+        }
+
+        if self.is_empty() {
+            return EMPTY;
+        }
+
+        self.migrate_to_heap(heap)
+    }
+
+    // Migrate a UTF-16 string from the stack to the heap.
+    fn migrate_to_heap(&self, heap: &Heap) -> Handle<Self> {
+        let mut fragment = self;
+        let mut new_fragment = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
+        let handle = new_fragment;
+
+        while let Some(next) = fragment.next() {
+            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
+            new_fragment.next = new_next.as_ptr();
+            fragment = next;
+            new_fragment = new_next;
+        }
+
+        handle
+    }
+
     pub(crate) fn code_units(&self) -> impl Iterator<Item = u16> {
         CodeUnits::new(self)
     }
@@ -451,16 +350,9 @@ impl StringFragment {
         CodePoints::new(self)
     }
 
-    pub(crate) fn as_ptr(&self) -> *const Self {
-        self as *const Self
-    }
-
-    fn at(&self, index: usize) -> Option<u16> {
-        let slice = self.as_slice();
-        match slice.get(index) {
-            Some(code_unit) => Some(*code_unit),
-            None => self.next().and_then(|next| next.at(index - slice.len())),
-        }
+    /// Creates a `Vec` containing UTF-16 code units of the string.
+    pub(crate) fn make_utf16(&self) -> Vec<u16> {
+        self.code_units().collect_vec()
     }
 
     pub(crate) fn repeat(&self, repetitions: u32) -> Self {
@@ -470,7 +362,8 @@ impl StringFragment {
             next: std::ptr::null_mut(),
             ptr: self.ptr,
             len: self.len,
-            flags: self.flags,
+            flags: StringFragmentFlags::STACK
+                | self.flags.intersection(StringFragmentFlags::DYNAMIC),
             repetitions,
         }
     }
@@ -483,7 +376,8 @@ impl StringFragment {
             next: std::ptr::null_mut(),
             ptr: sub.as_ptr(),
             len: sub.len() as u32,
-            flags: self.flags,
+            flags: StringFragmentFlags::STACK
+                | self.flags.intersection(StringFragmentFlags::DYNAMIC),
             repetitions: 1,
         }
     }

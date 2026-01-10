@@ -28,7 +28,7 @@ use crate::Value;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaKind;
 use crate::logger;
-use crate::objects::Property;
+use crate::types::Property;
 
 use scope::ScopeTreeBuilder;
 

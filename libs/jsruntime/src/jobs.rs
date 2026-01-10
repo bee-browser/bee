@@ -2,13 +2,15 @@ use std::collections::VecDeque;
 
 use rustc_hash::FxHashMap;
 
+use jsgc::Handle;
+
 use crate::Runtime;
 use crate::Value;
 use crate::logger;
-use crate::objects::ObjectHandle;
 use crate::types::CallContext;
 use crate::types::Coroutine;
 use crate::types::Lambda;
+use crate::types::Object;
 use crate::types::Promise;
 use crate::types::Status;
 
@@ -35,12 +37,12 @@ impl<X> Runtime<X> {
 
     // promise
 
-    pub fn register_promise(&mut self, coroutine: *mut Coroutine) -> Promise {
+    pub fn register_promise(&mut self, coroutine: Handle<Coroutine>) -> Promise {
         logger::debug!(event = "register_promise", ?coroutine);
         self.job_runner.register_promise(coroutine)
     }
 
-    pub fn process_promise(&mut self, promise: ObjectHandle, result: &Value, error: &Value) {
+    pub fn process_promise(&mut self, promise: Handle<Object>, result: &Value, error: &Value) {
         // TODO(feat): `result` may hold a Promise object
         logger::debug!(event = "process_promise", ?promise, ?result, ?error);
         debug_assert!(self.is_promise_object(promise));
@@ -56,8 +58,8 @@ impl<X> Runtime<X> {
 
     fn resume(
         &mut self,
-        coroutine: *mut Coroutine,
-        promise: ObjectHandle,
+        coroutine: Handle<Coroutine>,
+        promise: Handle<Object>,
         result: &Value,
         error: &Value,
     ) -> (Status, Value) {
@@ -65,17 +67,12 @@ impl<X> Runtime<X> {
         let mut args = [promise.into(), result.clone(), error.clone()];
         let mut context = CallContext::new_for_promise(coroutine, &mut args);
         let mut retv = Value::None;
-        // SAFETY: `coroutine` is always a non-null pointer to a `Coroutine`.
-        let lambda = unsafe {
-            debug_assert!(!coroutine.is_null());
-            debug_assert!(!(*coroutine).closure.is_null());
-            Lambda::from((*(*coroutine).closure).lambda)
-        };
+        let lambda = Lambda::from(coroutine.closure.lambda);
         let status = lambda(self, &mut context, &mut retv);
         (status, retv)
     }
 
-    pub fn emit_promise_resolved(&mut self, promise: ObjectHandle, result: Value) {
+    pub fn emit_promise_resolved(&mut self, promise: Handle<Object>, result: Value) {
         debug_assert!(self.is_promise_object(promise));
         match result {
             Value::Object(object) if self.is_promise_object(object) => {
@@ -85,7 +82,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    pub fn emit_promise_rejected(&mut self, promise: ObjectHandle, error: Value) {
+    pub fn emit_promise_rejected(&mut self, promise: Handle<Object>, error: Value) {
         debug_assert!(self.is_promise_object(promise));
         self.job_runner.emit_promise_rejected(promise, error);
     }
@@ -108,7 +105,7 @@ impl JobRunner {
 
     // promises
 
-    fn register_promise(&mut self, coroutine: *mut Coroutine) -> Promise {
+    fn register_promise(&mut self, coroutine: Handle<Coroutine>) -> Promise {
         let promise = self.new_promise();
         self.promises.insert(promise, PromiseDriver::new(coroutine));
         promise
@@ -130,7 +127,7 @@ impl JobRunner {
         // never reach here
     }
 
-    fn await_promise(&mut self, promise: ObjectHandle, awaiting: ObjectHandle) {
+    fn await_promise(&mut self, promise: Handle<Object>, awaiting: Handle<Object>) {
         logger::debug!(event = "await_promise", ?promise, ?awaiting);
         let promise_id = promise.get_promise();
         debug_assert!(promise_id.is_valid());
@@ -155,17 +152,17 @@ impl JobRunner {
         }
     }
 
-    fn get_coroutine(&self, promise: Promise) -> *mut Coroutine {
+    fn get_coroutine(&self, promise: Promise) -> Handle<Coroutine> {
         self.promises.get(&promise).unwrap().coroutine
     }
 
-    fn emit_promise_resolved(&mut self, promise: ObjectHandle, result: Value) {
+    fn emit_promise_resolved(&mut self, promise: Handle<Object>, result: Value) {
         logger::debug!(event = "emit_promise_resolved", ?promise, ?result);
         self.messages
             .push_back(Message::PromiseResolved { promise, result });
     }
 
-    fn emit_promise_rejected(&mut self, promise: ObjectHandle, error: Value) {
+    fn emit_promise_rejected(&mut self, promise: Handle<Object>, error: Value) {
         logger::debug!(event = "emit_promise_rejected", ?promise, ?error);
         self.messages
             .push_back(Message::PromiseRejected { promise, error });
@@ -178,6 +175,7 @@ impl JobRunner {
     fn resolve_promise(&mut self, promise: Promise, result: Value) {
         logger::debug!(event = "resolve_promise", ?promise, ?result);
         let driver = self.promises.get_mut(&promise).unwrap();
+        // TODO(fix): the following assertion fails in test262.
         debug_assert!(matches!(driver.state, PromiseState::Pending));
         if let Some(awaiting) = driver.awaiting {
             self.promises.remove(&promise);
@@ -190,6 +188,7 @@ impl JobRunner {
     fn reject_promise(&mut self, promise: Promise, error: Value) {
         logger::debug!(event = "reject_promise", ?promise, ?error);
         let driver = self.promises.get_mut(&promise).unwrap();
+        // TODO(fix): the following assertion fails in test262.
         debug_assert!(matches!(driver.state, PromiseState::Pending));
         if let Some(awaiting) = driver.awaiting {
             self.promises.remove(&promise);
@@ -205,11 +204,11 @@ impl JobRunner {
 #[derive(Debug)]
 enum Message {
     PromiseResolved {
-        promise: ObjectHandle,
+        promise: Handle<Object>,
         result: Value,
     },
     PromiseRejected {
-        promise: ObjectHandle,
+        promise: Handle<Object>,
         error: Value,
     },
 }
@@ -218,14 +217,13 @@ enum Message {
 
 // TODO: should the coroutine be separated from the promise?
 struct PromiseDriver {
-    // TODO(issue#237): GcCellRef
-    coroutine: *mut Coroutine,
-    awaiting: Option<ObjectHandle>,
+    coroutine: Handle<Coroutine>,
+    awaiting: Option<Handle<Object>>,
     state: PromiseState,
 }
 
 impl PromiseDriver {
-    fn new(coroutine: *mut Coroutine) -> Self {
+    fn new(coroutine: Handle<Coroutine>) -> Self {
         Self {
             coroutine,
             awaiting: None,

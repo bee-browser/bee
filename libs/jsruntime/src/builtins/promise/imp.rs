@@ -1,17 +1,19 @@
 //$id promise
 //$class Promise
 
+use jsgc::Handle;
+
 use crate::Error;
 use crate::Runtime;
-use crate::StringHandle;
 use crate::lambda::LambdaId;
 use crate::logger;
-use crate::objects::ObjectHandle;
-use crate::objects::builtins::BuiltinFunctionParams;
 use crate::types::CallContext;
+use crate::types::Object;
 use crate::types::Promise;
 use crate::types::Status;
 use crate::types::Value;
+
+use super::BuiltinFunctionParams;
 
 //#sec-promise-executor constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
@@ -76,11 +78,11 @@ extern "C" fn promise_coroutine<X>(
 impl<X> Runtime<X> {
     fn create_resolving_functions(
         &mut self,
-        promise: ObjectHandle,
-    ) -> (ObjectHandle, ObjectHandle) {
+        promise: Handle<Object>,
+    ) -> (Handle<Object>, Handle<Object>) {
         let resolve = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: promise_resolve,
-            name: StringHandle::EMPTY,
+            name: crate::types::string::EMPTY,
             length: 1,
             slots: &[Value::Object(promise)],
             prototype: None,
@@ -88,7 +90,7 @@ impl<X> Runtime<X> {
 
         let reject = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: promise_reject,
-            name: StringHandle::EMPTY,
+            name: crate::types::string::EMPTY,
             length: 1,
             slots: &[Value::Object(promise)],
             prototype: None,
@@ -123,7 +125,7 @@ fn promise_resolve_sync<X>(
 ) -> Result<Value, Error> {
     let func = context.func().ok_or(Error::InternalError)?;
 
-    let promise = match func.slots.first() {
+    let promise = match func.slots().first() {
         Some(Value::Object(promise)) => *promise,
         _ => return Err(Error::InternalError),
     };
@@ -154,7 +156,7 @@ extern "C" fn promise_reject<X>(
         _ => unreachable!(),
     };
 
-    let promise = match func.slots.first() {
+    let promise = match func.slots().first() {
         Some(Value::Object(promise)) => *promise,
         _ => unreachable!(),
     };
@@ -168,8 +170,8 @@ extern "C" fn promise_reject<X>(
 
 // helpers
 
-impl ObjectHandle {
+impl Object {
     pub(crate) fn get_promise(&self) -> Promise {
-        Promise::from(self.as_object().userdata() as u32)
+        Promise::from(self.userdata() as u32)
     }
 }

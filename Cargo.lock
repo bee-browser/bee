@@ -1171,6 +1171,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsgc"
+version = "0.0.0"
+dependencies = [
+ "base",
+ "bumpalo",
+ "logging",
+]
+
+[[package]]
 name = "jsoncmp"
 version = "0.0.0"
 dependencies = [
@@ -1205,7 +1214,6 @@ dependencies = [
  "assert_matches",
  "base",
  "bitflags 2.10.0",
- "bumpalo",
  "cranelift",
  "cranelift-jit",
  "cranelift-module",
@@ -1214,6 +1222,7 @@ dependencies = [
  "ctor",
  "indexmap",
  "itertools 0.14.0",
+ "jsgc",
  "jsparser",
  "logging",
  "paste",

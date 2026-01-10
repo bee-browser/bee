@@ -1,6 +1,6 @@
 SHELL := $(shell which bash) -eu -o pipefail -c
 
-PROJ_DIR := ../../../../..
+PROJ_DIR := ../../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 ECMA262_SPEC_HTML := $(PROJ_DIR)/vendor/src/tc39/ecma262/spec.html
 

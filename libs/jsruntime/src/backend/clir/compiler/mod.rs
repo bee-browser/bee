@@ -12,6 +12,7 @@ use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
 use rustc_hash::FxHashMap;
 
+use jsgc::Handle;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 use jsparser::syntax::LoopFlags;
@@ -23,7 +24,6 @@ use crate::lambda::LambdaInfo;
 use crate::lambda::LambdaKind;
 use crate::lambda::LambdaRegistry;
 use crate::logger;
-use crate::objects::ObjectHandle;
 use crate::semantics::CompileCommand;
 use crate::semantics::Function;
 use crate::semantics::Locator;
@@ -33,7 +33,8 @@ use crate::semantics::ScopeTree;
 use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::CallContextFlags;
-use crate::types::StringHandle;
+use crate::types::Object;
+use crate::types::StringFragment;
 use crate::types::Value;
 
 use super::CodeRegistry;
@@ -51,10 +52,10 @@ pub struct Session<'r, X> {
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
     pub code_registry: &'r mut CodeRegistry<X>,
-    global_object: ObjectHandle,
-    object_prototype: ObjectHandle,
-    function_prototype: ObjectHandle,
-    promise_prototype: ObjectHandle,
+    global_object: Handle<Object>,
+    object_prototype: Handle<Object>,
+    function_prototype: Handle<Object>,
+    promise_prototype: Handle<Object>,
 }
 
 trait CompilerSupport {
@@ -78,12 +79,12 @@ trait CompilerSupport {
     fn target_config(&self) -> isa::TargetFrontendConfig;
 
     // GlobalObject
-    fn global_object(&mut self) -> ObjectHandle;
+    fn global_object(&mut self) -> Handle<Object>;
 
     // Intrinsics
-    fn object_prototype(&self) -> ObjectHandle;
-    fn function_prototype(&self) -> ObjectHandle;
-    fn promise_prototype(&self) -> ObjectHandle;
+    fn object_prototype(&self) -> Handle<Object>;
+    fn function_prototype(&self) -> Handle<Object>;
+    fn promise_prototype(&self) -> Handle<Object>;
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
@@ -124,19 +125,19 @@ impl<X> CompilerSupport for Session<'_, X> {
         self.code_registry.target_config()
     }
 
-    fn global_object(&mut self) -> ObjectHandle {
+    fn global_object(&mut self) -> Handle<Object> {
         self.global_object
     }
 
-    fn object_prototype(&self) -> ObjectHandle {
+    fn object_prototype(&self) -> Handle<Object> {
         self.object_prototype
     }
 
-    fn function_prototype(&self) -> ObjectHandle {
+    fn function_prototype(&self) -> Handle<Object> {
         self.function_prototype
     }
 
-    fn promise_prototype(&self) -> ObjectHandle {
+    fn promise_prototype(&self) -> Handle<Object> {
         self.promise_prototype
     }
 }
@@ -884,7 +885,7 @@ where
                 self.editor.put_store_number_to_any(value, any);
                 any.into()
             }
-            Operand::String(_, Some(ref value)) => self
+            Operand::String(_, Some(value)) => self
                 .support
                 .make_symbol_from_name(value.make_utf16())
                 .into(),
@@ -1455,7 +1456,7 @@ where
         self.operand_stack.push(Operand::String(tail, None));
     }
 
-    fn pop_string(&mut self) -> (StringIr, Option<StringHandle>) {
+    fn pop_string(&mut self) -> (StringIr, Option<Handle<StringFragment>>) {
         match self.operand_stack.pop().unwrap() {
             Operand::String(value_rt, value_ct) => (value_rt, value_ct),
             operand => unreachable!("{operand:?}"),
@@ -3862,7 +3863,7 @@ where
         self.process_throw();
     }
 
-    fn emit_throw_internal_error(&mut self, message: StringHandle) {
+    fn emit_throw_internal_error(&mut self, message: Handle<StringFragment>) {
         logger::debug!(event = "emit_throw_internal_error", ?message);
         let error = self
             .editor
@@ -4001,7 +4002,7 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    String(StringIr, #[allow(unused)] Option<StringHandle>),
+    String(StringIr, #[allow(unused)] Option<Handle<StringFragment>>),
 
     /// Runtime value of closure type.
     Closure(ClosureIr),
@@ -4077,7 +4078,7 @@ impl From<Symbol> for PropertyKey {
 impl From<f64> for PropertyKey {
     fn from(value: f64) -> Self {
         // Use objects::PropertyKey::from() in order to remove code clone.
-        use crate::objects::PropertyKey;
+        use crate::types::PropertyKey;
         match PropertyKey::from(value) {
             PropertyKey::Symbol(value) => Self::Symbol(value),
             PropertyKey::Number(value) => Self::Number(value),

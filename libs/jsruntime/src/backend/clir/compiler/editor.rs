@@ -7,17 +7,17 @@ use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::Switch;
 
 use base::static_assert_eq;
+use jsgc::Handle;
 
-use crate::StringHandle;
 use crate::lambda::LambdaKind;
 use crate::logger;
-use crate::objects::Object;
-use crate::objects::ObjectFlags;
 use crate::types::CallContext;
 use crate::types::CallContextFlags;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
+use crate::types::Object;
+use crate::types::ObjectFlags;
 use crate::types::StringFragment;
 use crate::types::StringFragmentFlags;
 use crate::types::Value;
@@ -2134,7 +2134,7 @@ impl<'a> Editor<'a> {
     pub fn put_runtime_create_internal_error(
         &mut self,
         support: &mut impl EditorSupport,
-        message: StringHandle,
+        message: Handle<StringFragment>,
     ) -> ObjectIr {
         logger::debug!(event = "put_runtime_create_internal_error", ?message);
         debug_assert!(message.is_const());
