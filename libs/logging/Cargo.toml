@@ -10,7 +10,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-chrono = { version = "0.4.42", default-features = false, features = ["clock"] }
+chrono = { version = "0.4.43", default-features = false, features = ["clock"] }
 ctor = "0.6.3"
 is-terminal = "0.4.17"
 tracing = "0.1.44"
