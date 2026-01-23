@@ -58,7 +58,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
 
     debug_assert_eq!(
         context.closure().lambda,
-        (runtime_lazy_compile_normal::<X> as usize).into()
+        (runtime_lazy_compile_normal::<X> as *const () as usize).into()
     );
     context.closure().lambda = lambda.into();
 
@@ -96,7 +96,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
 
     debug_assert_eq!(
         context.closure().lambda,
-        (runtime_lazy_compile_ramp::<X> as usize).into()
+        (runtime_lazy_compile_ramp::<X> as *const () as usize).into()
     );
     context.closure().lambda = lambda.into();
 
@@ -118,7 +118,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
 
     debug_assert_eq!(
         coroutine.closure.lambda,
-        (runtime_lazy_compile_coroutine::<X> as usize).into()
+        (runtime_lazy_compile_coroutine::<X> as *const () as usize).into()
     );
     coroutine.closure.lambda = lambda.into();
 
