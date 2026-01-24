@@ -37,7 +37,16 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - uses: davidlattimore/wild-action@latest
+      # The following error occurs when using davidlattimore/wild-action@latest in this workflow.
+      #
+      # ```
+      # error: linker `clang` not found
+      #   |
+      #   = note: No such file or directory (os error 2)
+      # ```
+      #
+      # Probably, jlumbroso/free-disk-space uninstalls clang-* and this causes the error.
+      - uses: rui314/setup-mold@v1
       - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v2
         with:
