@@ -37,7 +37,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - uses: rui314/setup-mold@v1
+      - uses: davidlattimore/wild-action@latest
       - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v2
         with:
