@@ -12,9 +12,9 @@ version.workspace = true
 [dependencies]
 base = { path = "../base" }
 bitflags = "2.10.0"
-cranelift = "0.128.0"
+cranelift = "0.128.1"
 cranelift-module = "0.128.0"
-cranelift-jit = "0.128.0"
+cranelift-jit = "0.128.1"
 cranelift-native = "0.128.0"
 indexmap = "2.13.0"
 itertools = "0.14.0"
