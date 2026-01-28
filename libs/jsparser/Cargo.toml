@@ -24,7 +24,7 @@ unicode-id-start = "1.4.0"
 [dev-dependencies]
 anyhow = "1.0.100"
 assert_matches = "1.5.0"
-clap = { version = "4.5.54", features = ["env", "derive", "wrap_help"] }
+clap = { version = "4.5.55", features = ["env", "derive", "wrap_help"] }
 ctor = "0.6.3"
 
 [lints]
