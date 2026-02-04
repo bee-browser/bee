@@ -19,7 +19,7 @@ unicase = "2.9.0"
 
 [dev-dependencies]
 anyhow = "1.0.100"
-criterion = "0.8.1"
+criterion = "0.8.2"
 ctor = "0.6.3"
 itertools = "0.14.0"
 toydom = { path = "../toydom" }
