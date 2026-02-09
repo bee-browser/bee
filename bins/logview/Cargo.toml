@@ -22,7 +22,7 @@ open = "5.3.3"
 serde = { version = "1.0.228", features = ["derive", "rc"] }
 serde_yaml = "0.9.34"
 shell-words = "1.1.1"
-tempfile = "3.24.0"
+tempfile = "3.25.0"
 tokio = { version = "1.49.0", features = ["io-util", "macros", "process", "rt-multi-thread"] }
 tokio-stream = "0.1.18"
 tower-http = { version = "0.6.8", features = ["fs", "set-header", "trace"] }
