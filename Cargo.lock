@@ -1193,6 +1193,7 @@ dependencies = [
  "base",
  "bumpalo",
  "logging",
+ "rustc-hash",
 ]
 
 [[package]]

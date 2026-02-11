@@ -9,6 +9,9 @@ use itertools::Itertools;
 
 use jsgc::Handle;
 use jsgc::Heap;
+use jsgc::Unknown;
+use jsgc::UnknownVtable;
+use jsgc::VisitList;
 
 /// An empty string.
 pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);
@@ -280,7 +283,7 @@ impl StringFragment {
         true
     }
 
-    pub fn concat(&self, tail: Handle<Self>, heap: &Heap) -> Handle<Self> {
+    pub fn concat(&self, tail: Handle<Self>, heap: &mut Heap) -> Handle<Self> {
         if self.is_empty() {
             return tail.ensure_return_safe(heap);
         }
@@ -314,7 +317,7 @@ impl StringFragment {
         handle
     }
 
-    pub fn ensure_return_safe(&self, heap: &Heap) -> Handle<Self> {
+    pub fn ensure_return_safe(&self, heap: &mut Heap) -> Handle<Self> {
         if !self.on_stack() {
             return Handle::from_ref(self);
         }
@@ -327,7 +330,7 @@ impl StringFragment {
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    fn migrate_to_heap(&self, heap: &Heap) -> Handle<Self> {
+    fn migrate_to_heap(&self, heap: &mut Heap) -> Handle<Self> {
         let mut fragment = self;
         let mut new_fragment = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
         let handle = new_fragment;
@@ -380,6 +383,15 @@ impl StringFragment {
                 | self.flags.intersection(StringFragmentFlags::DYNAMIC),
             repetitions: 1,
         }
+    }
+
+    fn trace(&self, visit_list: &mut VisitList) {
+        if !self.next.is_null() {
+            // It is safe to add the address of a string fragment on the stack.
+            visit_list.push(self.next as usize);
+        }
+
+        // TODO: ptr
     }
 }
 
@@ -445,6 +457,23 @@ impl std::fmt::Display for StringFragment {
             }
         }
         Ok(())
+    }
+}
+
+impl Unknown for StringFragment {
+    fn vtable() -> &'static UnknownVtable {
+        fn trace(addr: usize, visit_list: &mut VisitList) {
+            Handle::<StringFragment>::from_addr(addr)
+                .unwrap()
+                .trace(visit_list);
+        }
+
+        static VTABLE: UnknownVtable = UnknownVtable {
+            tidy: None,
+            trace: Some(trace),
+        };
+
+        &VTABLE
     }
 }
 

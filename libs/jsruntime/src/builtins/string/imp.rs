@@ -37,7 +37,7 @@ pub fn string_from_char_code<X>(
     }
     let slice = runtime.heap.alloc_slice_copy(&utf16);
     let fragment = StringFragment::new_stack(slice, true);
-    let string = fragment.ensure_return_safe(&runtime.heap);
+    let string = fragment.ensure_return_safe(&mut runtime.heap);
     Ok(Value::String(string))
 }
 
@@ -62,7 +62,7 @@ pub fn string_from_code_point<X>(
     }
     let slice = runtime.heap.alloc_slice_copy(&utf16);
     let fragment = StringFragment::new_stack(slice, true);
-    let string = fragment.ensure_return_safe(&runtime.heap);
+    let string = fragment.ensure_return_safe(&mut runtime.heap);
     Ok(Value::String(string))
 }
 
@@ -104,7 +104,7 @@ pub fn string_prototype_at<X>(
     let code_unit = s.at(k as u32);
     let slice = runtime.heap.alloc_slice_copy(code_unit.as_slice());
     let fragment = StringFragment::new_stack(slice, true);
-    let string = fragment.ensure_return_safe(&runtime.heap);
+    let string = fragment.ensure_return_safe(&mut runtime.heap);
     Ok(Value::String(string))
 }
 
@@ -127,7 +127,7 @@ pub fn string_prototype_char_at<X>(
     let code_unit = s.at(position as u32);
     let slice = runtime.heap.alloc_slice_copy(code_unit.as_slice());
     let fragment = StringFragment::new_stack(slice, true);
-    let string = fragment.ensure_return_safe(&runtime.heap);
+    let string = fragment.ensure_return_safe(&mut runtime.heap);
     Ok(Value::String(string))
 }
 
