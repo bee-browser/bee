@@ -8,6 +8,9 @@ use std::ops::Deref;
 use std::ptr::addr_eq;
 
 use jsgc::Handle;
+use jsgc::Unknown;
+use jsgc::UnknownVtable;
+use jsgc::VisitList;
 
 use crate::Runtime;
 use crate::lambda::LambdaId;
@@ -217,20 +220,27 @@ static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
 impl Closure {
     pub(crate) const LAMBDA_OFFSET: usize = std::mem::offset_of!(Self, lambda);
     pub(crate) const CAPTURES_OFFSET: usize = std::mem::offset_of!(Self, captures);
+
+    fn captures(&self) -> &[Handle<Capture>] {
+        let len = self.num_captures as usize;
+        let data = self.captures.as_ptr();
+        // SAFETY: `data` is a non-null pointer to an array of pointers.
+        unsafe {
+            debug_assert!(!data.is_null());
+            debug_assert!(data.is_aligned());
+            std::slice::from_raw_parts(data, len)
+        }
+    }
+
+    fn trace(&self, visit_list: &mut VisitList) {
+        visit_list.extend(self.captures().iter().map(|capture| capture.as_addr()));
+    }
 }
 
 impl std::fmt::Debug for Closure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "closure({:?}, [", self.lambda_id)?;
-        let len = self.num_captures as usize;
-        let data = self.captures.as_ptr();
-        // SAFETY: `data` is a non-null pointer to an array of pointers.
-        let captures = unsafe {
-            debug_assert!(!data.is_null());
-            debug_assert!(data.is_aligned());
-            std::slice::from_raw_parts(data, len)
-        };
-        let mut captures = captures.iter();
+        let mut captures = self.captures().iter();
         if let Some(capture) = captures.next() {
             write!(f, "{:?}", capture)?;
             for capture in captures {
@@ -238,6 +248,23 @@ impl std::fmt::Debug for Closure {
             }
         }
         write!(f, "])")
+    }
+}
+
+impl Unknown for Closure {
+    fn vtable() -> &'static UnknownVtable {
+        fn trace(addr: usize, visit_list: &mut VisitList) {
+            Handle::<Closure>::from_addr(addr)
+                .unwrap()
+                .trace(visit_list)
+        }
+
+        static VTABLE: UnknownVtable = UnknownVtable {
+            tidy: None,
+            trace: Some(trace),
+        };
+
+        &VTABLE
     }
 }
 
@@ -268,6 +295,18 @@ impl Capture {
         debug_assert!(!self.target.is_null());
         addr_eq(self.target, &self.escaped)
     }
+
+    fn trace(&self, visit_list: &mut VisitList) {
+        if !self.is_escaped() {
+            return;
+        }
+
+        match self.escaped {
+            Value::String(_string) => (), // TODO
+            Value::Object(object) => visit_list.push(object.as_addr()),
+            _ => (),
+        }
+    }
 }
 
 impl std::fmt::Debug for Capture {
@@ -284,9 +323,38 @@ impl std::fmt::Debug for Capture {
     }
 }
 
+impl Unknown for Capture {
+    fn vtable() -> &'static UnknownVtable {
+        fn trace(addr: usize, visit_list: &mut VisitList) {
+            Handle::<Capture>::from_addr(addr)
+                .unwrap()
+                .trace(visit_list);
+        }
+
+        static VTABLE: UnknownVtable = UnknownVtable {
+            tidy: None,
+            trace: Some(trace),
+        };
+
+        &VTABLE
+    }
+}
+
 /// A data type to represent a coroutine.
 ///
-/// The scratch_buffer starts from `&Coroutine::locals[Coroutine::num_locals]`.
+/// Memory layout:
+///
+/// ```
+/// +----------------------------------------+
+/// | Coroutine                              |
+/// +----------------------------------------+
+/// | locals[Value; num_locals]              |
+/// +----------------------------------------+
+/// | scratch_buffer[u8; scratch_buffer_len] |
+/// +----------------------------------------+
+/// | capture_buffer[u8; capture_buffer_len] |
+/// +----------------------------------------+
+/// ```
 #[derive(Debug)]
 #[repr(C)]
 pub struct Coroutine {
@@ -324,6 +392,48 @@ impl Coroutine {
     pub(crate) const SCRATCH_BUFFER_LEN_OFFSET: usize =
         std::mem::offset_of!(Self, scratch_buffer_len);
     pub(crate) const LOCALS_OFFSET: usize = std::mem::offset_of!(Self, locals);
+
+    fn locals(&self) -> &[Value] {
+        let len = self.num_locals as usize;
+        let data = self.locals.as_ptr();
+        // SAFETY: `data` is a non-null pointer to an array of pointers.
+        unsafe {
+            debug_assert!(!data.is_null());
+            debug_assert!(data.is_aligned());
+            std::slice::from_raw_parts(data, len)
+        }
+    }
+
+    fn trace(&self, visit_list: &mut VisitList) {
+        visit_list.push(self.closure.as_addr());
+
+        for local in self.locals() {
+            match local {
+                Value::String(_string) => (), // TODO
+                Value::Object(object) => visit_list.push(object.as_addr()),
+                _ => (),
+            }
+        }
+
+        // TODO: scan the scratch buffer and the capture buffer
+    }
+}
+
+impl Unknown for Coroutine {
+    fn vtable() -> &'static UnknownVtable {
+        fn trace(addr: usize, visit_list: &mut VisitList) {
+            Handle::<Coroutine>::from_addr(addr)
+                .unwrap()
+                .trace(visit_list);
+        }
+
+        static VTABLE: UnknownVtable = UnknownVtable {
+            tidy: None,
+            trace: Some(trace),
+        };
+
+        &VTABLE
+    }
 }
 
 pub trait ReturnValue {

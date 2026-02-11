@@ -311,7 +311,7 @@ impl<X> Runtime<X> {
 
     pub fn ensure_value_return_safe(&mut self, value: &Value) -> Value {
         match value {
-            Value::String(string) => Value::String(string.ensure_return_safe(&self.heap)),
+            Value::String(string) => Value::String(string.ensure_return_safe(&mut self.heap)),
             _ => value.clone(),
         }
     }
@@ -336,7 +336,7 @@ impl<X> Runtime<X> {
             .take((end - start) as usize)
             .collect_vec();
         let utf16 = self.heap.alloc_slice_copy(&utf16);
-        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.heap)
+        StringFragment::new_stack(utf16, true).ensure_return_safe(&mut self.heap)
     }
 
     fn create_closure(

@@ -185,7 +185,7 @@ impl<X> Runtime<X> {
         a: Handle<StringFragment>,
         b: Handle<StringFragment>,
     ) -> Handle<StringFragment> {
-        a.concat(b, &self.heap)
+        a.concat(b, &mut self.heap)
     }
 
     // 7.1.17 ToString ( argument )
@@ -244,16 +244,16 @@ impl<X> Runtime<X> {
             debug_assert!(remaining > 0);
             return fill_string
                 .sub_fragment(0, remaining)
-                .ensure_return_safe(&self.heap);
+                .ensure_return_safe(&mut self.heap);
         }
 
         let frag = fill_string.repeat(repetitions);
         if remaining == 0 {
-            return frag.ensure_return_safe(&self.heap);
+            return frag.ensure_return_safe(&mut self.heap);
         }
 
         let last = fill_string.sub_fragment(0, remaining);
-        frag.concat(Handle::from_ref(&last), &self.heap)
+        frag.concat(Handle::from_ref(&last), &mut self.heap)
     }
 
     fn repeat_string(&mut self, s: Handle<StringFragment>, n: u32) -> Handle<StringFragment> {
@@ -266,7 +266,7 @@ impl<X> Runtime<X> {
         }
 
         if s.is_simple() {
-            return s.repeat(n).ensure_return_safe(&self.heap);
+            return s.repeat(n).ensure_return_safe(&mut self.heap);
         }
 
         // TODO(perf): inefficient
@@ -274,7 +274,7 @@ impl<X> Runtime<X> {
         let slice = self.heap.alloc_slice_copy(&utf16);
         let mut frag = StringFragment::new_stack(slice, true);
         frag.set_repetitions(n);
-        frag.ensure_return_safe(&self.heap)
+        frag.ensure_return_safe(&mut self.heap)
     }
 }
 

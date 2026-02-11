@@ -180,7 +180,7 @@ impl<X> Runtime<X> {
     pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<StringFragment> {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
-        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.heap)
+        StringFragment::new_stack(utf16, true).ensure_return_safe(&mut self.heap)
     }
 }
 
@@ -358,7 +358,7 @@ pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: &mut Runtime<X>,
     string: Handle<StringFragment>,
 ) -> Handle<StringFragment> {
-    string.ensure_return_safe(&runtime.heap)
+    string.ensure_return_safe(&mut runtime.heap)
 }
 
 pub(crate) extern "C" fn runtime_create_capture<X>(
@@ -618,7 +618,7 @@ pub(crate) extern "C" fn runtime_concat_strings<X>(
     head: Handle<StringFragment>,
     tail: Handle<StringFragment>,
 ) -> Handle<StringFragment> {
-    head.concat(tail, &runtime.heap)
+    head.concat(tail, &mut runtime.heap)
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
