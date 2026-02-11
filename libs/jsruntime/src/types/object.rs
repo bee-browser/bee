@@ -7,6 +7,9 @@ use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
 use jsgc::Handle;
+use jsgc::Unknown;
+use jsgc::UnknownVtable;
+use jsgc::VisitList;
 use jsparser::Symbol;
 
 use crate::types::Closure;
@@ -216,7 +219,7 @@ pub struct Object {
     ///
     /// A pointer to the `Closure` if this is a function object.
     /// A string handle if this is a string object.
-    userdata: usize,
+    kernel: Kernel,
 
     flags: ObjectFlags,
 
@@ -229,12 +232,13 @@ pub struct Object {
 }
 
 impl Object {
-    pub(crate) const USERDATA_OFFSET: usize = std::mem::offset_of!(Self, userdata);
+    pub(crate) const USERDATA_OFFSET: usize =
+        std::mem::offset_of!(Self, kernel) + Kernel::DATA_OFFSET;
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     pub fn new(prototype: Option<Handle<Self>>) -> Self {
         Self {
-            userdata: 0,
+            kernel: Default::default(),
             flags: ObjectFlags::empty(),
             prototype,
             properties: Default::default(),
@@ -291,30 +295,39 @@ impl Object {
     }
 
     pub(crate) fn userdata(&self) -> usize {
-        self.userdata
+        self.kernel.data
     }
 
     pub(crate) fn set_closure(&mut self, closure: Handle<Closure>) {
-        self.userdata = closure.as_addr();
+        static VTABLE: KernelVtable = KernelVtable { drop: None };
+        self.kernel.vtable = &VTABLE;
+        self.kernel.data = closure.as_addr();
+        self.kernel.need_tracing = true;
         self.set_callable();
     }
 
     pub(crate) fn closure(&self) -> Handle<Closure> {
         debug_assert!(self.is_callable());
-        Handle::from_addr(self.userdata).expect("must be a non-null pointer to a Closure")
+        Handle::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
     }
 
     pub(crate) fn string(&self) -> Handle<StringFragment> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        Handle::from_addr(self.userdata).unwrap()
+        Handle::from_addr(self.kernel.data).unwrap()
     }
 
     pub(crate) fn set_string(&mut self, string: Handle<StringFragment>) {
-        self.userdata = string.as_addr();
+        static VTABLE: KernelVtable = KernelVtable { drop: None };
+        self.kernel.vtable = &VTABLE;
+        self.kernel.data = string.as_addr();
+        self.kernel.need_tracing = false; // TODO: GC
     }
 
     pub(crate) fn set_promise(&mut self, promise: Promise) {
-        self.userdata = promise.as_userdata();
+        static VTABLE: KernelVtable = KernelVtable { drop: None };
+        self.kernel.vtable = &VTABLE;
+        self.kernel.data = promise.as_userdata();
+        self.kernel.need_tracing = false; // TODO: GC
     }
 
     pub fn as_handle(&mut self) -> Handle<Self> {
@@ -355,6 +368,35 @@ impl Object {
     pub(crate) fn slots_mut(&mut self) -> &mut Vec<Value> {
         &mut self.slots
     }
+
+    unsafe fn tidy(&mut self) {
+        unsafe {
+            std::ptr::drop_in_place(self as *mut Self);
+        }
+    }
+
+    fn trace(&self, visit_list: &mut VisitList) {
+        if self.kernel.need_tracing {
+            visit_list.push(self.kernel.data);
+        }
+        if let Some(prototype) = self.prototype {
+            visit_list.push(prototype.as_addr());
+        }
+        for prop in self.properties.values() {
+            match prop.value() {
+                Value::String(_string) => (), // TODO
+                Value::Object(object) => visit_list.push(object.as_addr()),
+                _ => (),
+            }
+        }
+        for slot in self.slots.iter() {
+            match slot {
+                Value::String(_string) => (), // TODO
+                Value::Object(object) => visit_list.push(object.as_addr()),
+                _ => (),
+            }
+        }
+    }
 }
 
 impl Debug for Object {
@@ -368,6 +410,65 @@ impl Display for Object {
         write!(f, "{:p}", self as *const Object)
     }
 }
+
+impl Unknown for Object {
+    fn vtable() -> &'static UnknownVtable {
+        fn tidy(addr: usize) {
+            let mut object = Handle::<Object>::from_addr(addr).unwrap();
+            // SAFETY: XXX
+            unsafe {
+                object.tidy();
+            }
+        }
+
+        fn trace(addr: usize, visit_list: &mut jsgc::VisitList) {
+            let object = Handle::<Object>::from_addr(addr).unwrap();
+            object.trace(visit_list);
+        }
+
+        static VTABLE: UnknownVtable = UnknownVtable {
+            tidy: Some(tidy),
+            trace: Some(trace),
+        };
+
+        &VTABLE
+    }
+}
+
+struct Kernel {
+    data: usize,
+    vtable: &'static KernelVtable,
+    need_tracing: bool,
+}
+
+impl Kernel {
+    const DATA_OFFSET: usize = std::mem::offset_of!(Self, data);
+}
+
+impl Default for Kernel {
+    fn default() -> Self {
+        static VTABLE: KernelVtable = KernelVtable::none();
+
+        Self {
+            data: 0,
+            vtable: &VTABLE,
+            need_tracing: false,
+        }
+    }
+}
+
+pub struct KernelVtable {
+    #[allow(unused)]
+    pub drop: Option<DropFn>,
+}
+
+impl KernelVtable {
+    const fn none() -> Self {
+        Self { drop: None }
+    }
+}
+
+type DropFn = fn(usize);
 
 bitflags! {
     #[derive(Clone, Copy)]
