@@ -13,7 +13,7 @@ version.workspace = true
 base = { path = "../base" }
 logging = { path = "../logging" }
 # TODO(issue#237): replace w/ own allocator
-bumpalo = "3.19.1"
+bumpalo = "3.20.1"
 
 [lints]
 workspace = true
