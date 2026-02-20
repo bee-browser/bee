@@ -10,7 +10,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = "1.0.101"
+anyhow = "1.0.102"
 base = { path = "../../libs/base" }
 clap = { version = "4.5.60", features = ["derive", "env"] }
 indexmap = { version = "2.13.0", features = ["serde"] }
