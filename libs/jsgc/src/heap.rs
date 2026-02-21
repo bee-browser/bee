@@ -10,10 +10,7 @@ use crate::Handle;
 /// A heap memory managed by GC.
 pub struct Heap {
     // TODO(perf): inefficient
-    holders: FxHashMap<usize, ObjectHolder>,
-
-    // TODO: remove
-    bump: bumpalo::Bump,
+    holders: FxHashMap<usize, MemoryHolder>,
 }
 
 impl Heap {
@@ -21,7 +18,6 @@ impl Heap {
     pub fn new() -> Self {
         Self {
             holders: Default::default(),
-            bump: bumpalo::Bump::new(),
         }
     }
 
@@ -40,10 +36,10 @@ impl Heap {
 
         self.holders.insert(
             ptr as usize,
-            ObjectHolder {
+            MemoryHolder {
                 vtable: T::vtable(),
                 layout: Layout::new::<T>(),
-                object_addr: ptr as usize,
+                addr: ptr as usize,
             },
         );
 
@@ -63,21 +59,43 @@ impl Heap {
         init(ptr);
         self.holders.insert(
             ptr.addr().get(),
-            ObjectHolder {
+            MemoryHolder {
                 vtable: T::vtable(),
                 layout,
-                object_addr: ptr.addr().get(),
+                addr: ptr.addr().get(),
             },
         );
         Handle::from_ref(unsafe { ptr.cast::<T>().as_ref() })
     }
 
     // TODO: return Handle
-    pub fn alloc_slice_copy<T>(&self, src: &[T]) -> &mut [T]
+    // TODO: there is no way to restrict the type of `T` to an integer type.
+    pub fn alloc_slice_copy<T>(&mut self, src: &[T]) -> &mut [T]
     where
         T: Copy,
     {
-        self.bump.alloc_slice_copy(src)
+        static VTABLE: UnknownVtable = UnknownVtable {
+            tidy: None,
+            trace: None,
+        };
+        let len = src.len();
+        let layout = Layout::array::<T>(len).unwrap();
+        let ptr = unsafe {
+            // TODO(perf): use a dedicated memory pool
+            let ptr = NonNull::new(std::alloc::alloc(layout)).unwrap().cast::<T>();
+            ptr.as_ptr().copy_from(src.as_ptr(), len);
+            ptr
+        };
+        let addr = ptr.as_ptr() as usize;
+        self.holders.insert(
+            addr,
+            MemoryHolder {
+                vtable: &VTABLE,
+                layout,
+                addr,
+            },
+        );
+        unsafe { std::slice::from_raw_parts_mut(ptr.as_ptr(), len) }
     }
 
     /// Reclaims objects that are not reachable from a specified root objects.
@@ -103,8 +121,7 @@ impl Heap {
 
     /// Performs the sweep phase.
     fn sweep(&mut self, state: &mut GcState) {
-        self.holders
-            .retain(|object_addr, _| state.visited.contains(object_addr));
+        self.holders.retain(|addr, _| state.visited.contains(addr));
     }
 
     /// Returns statistics.
@@ -167,19 +184,19 @@ impl VisitList {
     }
 }
 
-struct ObjectHolder {
+struct MemoryHolder {
     vtable: &'static UnknownVtable,
     layout: Layout,
-    object_addr: usize,
+    addr: usize,
 }
 
-impl Drop for ObjectHolder {
+impl Drop for MemoryHolder {
     fn drop(&mut self) {
         if let Some(tidy) = self.vtable.tidy {
-            tidy(self.object_addr);
+            tidy(self.addr);
         }
         unsafe {
-            std::alloc::dealloc(self.object_addr as *mut u8, self.layout);
+            std::alloc::dealloc(self.addr as *mut u8, self.layout);
         }
     }
 }
