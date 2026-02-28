@@ -1,7 +1,7 @@
 //$id promise
 //$class Promise
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 
 use crate::Error;
 use crate::Runtime;
@@ -78,8 +78,8 @@ extern "C" fn promise_coroutine<X>(
 impl<X> Runtime<X> {
     fn create_resolving_functions(
         &mut self,
-        promise: Handle<Object>,
-    ) -> (Handle<Object>, Handle<Object>) {
+        promise: HandleMut<Object>,
+    ) -> (HandleMut<Object>, HandleMut<Object>) {
         let resolve = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: promise_resolve,
             name: crate::types::string::EMPTY,

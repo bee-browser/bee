@@ -7,17 +7,17 @@ use bitflags::bitflags;
 use bitflags::bitflags_match;
 use itertools::Itertools;
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsgc::Heap;
 use jsgc::Unknown;
 use jsgc::UnknownVtable;
 use jsgc::VisitList;
 
 /// An empty string.
-pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);
+pub const EMPTY: HandleMut<StringFragment> = HandleMut::from_ref(&StringFragment::EMPTY);
 
 /// A single U+0020 character.
-pub const SPACE: Handle<StringFragment> = Handle::from_ref(&StringFragment::SPACE);
+pub const SPACE: HandleMut<StringFragment> = HandleMut::from_ref(&StringFragment::SPACE);
 
 /// A data type representing an **immutable** fragment of UTF-16 code units.
 ///
@@ -235,7 +235,7 @@ impl StringFragment {
     }
 
     // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
-    pub fn index_of(&self, search_value: Handle<Self>, from_index: u32) -> Option<u32> {
+    pub fn index_of(&self, search_value: HandleMut<Self>, from_index: u32) -> Option<u32> {
         // TODO(perf): slow and inefficient
         let len = self.len();
         if search_value.is_empty() && from_index <= len {
@@ -257,7 +257,7 @@ impl StringFragment {
     }
 
     // 6.1.4.2 StringLastIndexOf ( string, searchValue, fromIndex )
-    pub fn last_index_of(&self, search_value: Handle<Self>, from_index: u32) -> Option<u32> {
+    pub fn last_index_of(&self, search_value: HandleMut<Self>, from_index: u32) -> Option<u32> {
         // TODO(perf): slow and inefficient
         let len = self.len();
         let search_len = search_value.len();
@@ -283,7 +283,7 @@ impl StringFragment {
         true
     }
 
-    pub fn concat(&self, tail: Handle<Self>, heap: &mut Heap) -> Handle<Self> {
+    pub fn concat(&self, tail: HandleMut<Self>, heap: &mut Heap) -> HandleMut<Self> {
         if self.is_empty() {
             return tail.ensure_return_safe(heap);
         }
@@ -317,9 +317,9 @@ impl StringFragment {
         handle
     }
 
-    pub fn ensure_return_safe(&self, heap: &mut Heap) -> Handle<Self> {
+    pub fn ensure_return_safe(&self, heap: &mut Heap) -> HandleMut<Self> {
         if !self.on_stack() {
-            return Handle::from_ref(self);
+            return HandleMut::from_ref(self);
         }
 
         if self.is_empty() {
@@ -330,7 +330,7 @@ impl StringFragment {
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    fn migrate_to_heap(&self, heap: &mut Heap) -> Handle<Self> {
+    fn migrate_to_heap(&self, heap: &mut Heap) -> HandleMut<Self> {
         let mut fragment = self;
         let mut new_fragment = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
         let handle = new_fragment;
@@ -463,7 +463,7 @@ impl std::fmt::Display for StringFragment {
 impl Unknown for StringFragment {
     fn vtable() -> &'static UnknownVtable {
         fn trace(addr: usize, visit_list: &mut VisitList) {
-            Handle::<StringFragment>::from_addr(addr)
+            HandleMut::<StringFragment>::from_addr(addr)
                 .unwrap()
                 .trace(visit_list);
         }

@@ -1,4 +1,4 @@
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::logger;
@@ -13,7 +13,7 @@ use crate::types::Value;
 use super::BuiltinFunctionParams;
 
 impl<X> Runtime<X> {
-    pub(super) fn create_function_constructor(&mut self) -> Handle<Object> {
+    pub(super) fn create_function_constructor(&mut self) -> HandleMut<Object> {
         logger::debug!(event = "creater_function_constructor");
         self.create_builtin_function(&BuiltinFunctionParams {
             lambda: constructor::<X>,
@@ -24,7 +24,7 @@ impl<X> Runtime<X> {
         })
     }
 
-    pub(super) fn create_function_prototype(&mut self) -> Handle<Object> {
+    pub(super) fn create_function_prototype(&mut self) -> HandleMut<Object> {
         logger::debug!(event = "creater_function_prototype");
 
         // TODO(fix): Function.prototype is a built-in function object.

@@ -5,25 +5,25 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ptr::NonNull;
 
-/// A data type to hold a non-null pointer to a data type managed on the heap memory.
+/// A data type to hold a non-null pointer to a mutable data type managed on the heap memory.
 ///
 /// This type treats the pointee type as an opaque type and simply copy the pointer when the value
 /// is cloned.
 // TODO(issue#237): GcCellRef
 #[derive(Eq)]
 #[repr(transparent)]
-pub struct Handle<T>(NonNull<T>);
+pub struct HandleMut<T>(NonNull<T>);
 
-base::static_assert_eq!(size_of::<Handle<u8>>(), size_of::<usize>());
-base::static_assert_eq!(size_of::<Option<Handle<u8>>>(), size_of::<usize>());
+base::static_assert_eq!(size_of::<HandleMut<u8>>(), size_of::<usize>());
+base::static_assert_eq!(size_of::<Option<HandleMut<u8>>>(), size_of::<usize>());
 
-impl<T> Handle<T> {
+impl<T> HandleMut<T> {
     pub const fn from_ref(r: &T) -> Self {
         Self(NonNull::from_ref(r))
     }
 
     pub fn from_ptr(p: *mut T) -> Option<Self> {
-        NonNull::new(p).map(Handle)
+        NonNull::new(p).map(HandleMut)
     }
 
     pub fn from_addr(addr: usize) -> Option<Self> {
@@ -60,21 +60,21 @@ impl<T> Handle<T> {
     }
 }
 
-impl<T> Clone for Handle<T> {
+impl<T> Clone for HandleMut<T> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<T> Copy for Handle<T> {}
+impl<T> Copy for HandleMut<T> {}
 
-impl<T> PartialEq for Handle<T> {
+impl<T> PartialEq for HandleMut<T> {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
 }
 
-impl<T> Deref for Handle<T> {
+impl<T> Deref for HandleMut<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -82,27 +82,27 @@ impl<T> Deref for Handle<T> {
     }
 }
 
-impl<T> DerefMut for Handle<T> {
+impl<T> DerefMut for HandleMut<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut()
     }
 }
 
-impl<T> Debug for Handle<T>
+impl<T> Debug for HandleMut<T>
 where
     T: Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Handle({:?})", self.as_ref())
+        write!(f, "HandleMut({:?})", self.as_ref())
     }
 }
 
-impl<T> Display for Handle<T>
+impl<T> Display for HandleMut<T>
 where
     T: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Handle({})", self.as_ref())
+        write!(f, "HandleMut({})", self.as_ref())
     }
 }
 
@@ -110,11 +110,11 @@ where
 mod tests {
     use super::*;
 
-    // Check sizes of Handle types at runtime for safety.
+    // Check sizes of HandleMut types at runtime for safety.
     // Though, these are checked w/ base::static_assert_eq!().
     #[test]
     fn test_size() {
-        assert_eq!(size_of::<Handle<u8>>(), size_of::<usize>());
-        assert_eq!(size_of::<Option<Handle<u8>>>(), size_of::<usize>());
+        assert_eq!(size_of::<HandleMut<u8>>(), size_of::<usize>());
+        assert_eq!(size_of::<Option<HandleMut<u8>>>(), size_of::<usize>());
     }
 }

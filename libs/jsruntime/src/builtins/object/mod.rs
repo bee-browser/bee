@@ -1,4 +1,4 @@
-use jsgc::Handle;
+use jsgc::HandleMut;
 
 use crate::Runtime;
 use crate::logger;
@@ -10,7 +10,7 @@ use crate::types::Value;
 use super::BuiltinFunctionParams;
 
 impl<X> Runtime<X> {
-    pub(super) fn create_object_constructor(&mut self) -> Handle<Object> {
+    pub(super) fn create_object_constructor(&mut self) -> HandleMut<Object> {
         logger::debug!(event = "creater_object_constructor");
         self.create_builtin_function(&BuiltinFunctionParams {
             lambda: constructor::<X>,

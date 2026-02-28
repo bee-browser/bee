@@ -7,7 +7,7 @@ use std::mem::offset_of;
 use std::ops::Deref;
 use std::ptr::addr_eq;
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsgc::Unknown;
 use jsgc::UnknownVtable;
 use jsgc::VisitList;
@@ -39,8 +39,8 @@ pub enum Value {
     Null = Self::KIND_NULL,
     Boolean(bool) = Self::KIND_BOOLEAN,
     Number(f64) = Self::KIND_NUMBER,
-    String(Handle<StringFragment>) = Self::KIND_STRING,
-    Object(Handle<Object>) = Self::KIND_OBJECT,
+    String(HandleMut<StringFragment>) = Self::KIND_STRING,
+    Object(HandleMut<Object>) = Self::KIND_OBJECT,
 }
 
 static_assertions::const_assert_eq!(size_of::<Value>(), 16);
@@ -75,7 +75,7 @@ impl Value {
     }
 
     // 7.1.18 ToObject ( argument )
-    pub fn to_object(&self) -> Result<Handle<Object>, Value> {
+    pub fn to_object(&self) -> Result<HandleMut<Object>, Value> {
         match self {
             Self::Undefined | Self::Null => Err(1001.into()), // TODO: TypeError
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
@@ -96,7 +96,7 @@ impl Value {
     }
 
     // 13.5.3.1 Runtime Semantics: Evaluation
-    pub fn get_typeof(&self) -> Handle<StringFragment> {
+    pub fn get_typeof(&self) -> HandleMut<StringFragment> {
         match self {
             Self::None => unreachable!(),
             Self::Undefined => const_string!("undefined"),
@@ -109,7 +109,7 @@ impl Value {
     }
 
     pub fn dummy_object() -> Self {
-        Self::Object(Handle::dummy_for_testing())
+        Self::Object(HandleMut::dummy_for_testing())
     }
 }
 
@@ -143,8 +143,8 @@ impl From<u32> for Value {
     }
 }
 
-impl From<Handle<Object>> for Value {
-    fn from(value: Handle<Object>) -> Self {
+impl From<HandleMut<Object>> for Value {
+    fn from(value: HandleMut<Object>) -> Self {
         Self::Object(value)
     }
 }
@@ -212,7 +212,7 @@ pub struct Closure {
     pub num_captures: u16,
 
     /// A variable-length list of captures used in the lambda function.
-    pub captures: [Handle<Capture>; 0],
+    pub captures: [HandleMut<Capture>; 0],
 }
 
 static_assertions::const_assert_eq!(align_of::<Closure>(), 8);
@@ -221,7 +221,7 @@ impl Closure {
     pub(crate) const LAMBDA_OFFSET: usize = std::mem::offset_of!(Self, lambda);
     pub(crate) const CAPTURES_OFFSET: usize = std::mem::offset_of!(Self, captures);
 
-    fn captures(&self) -> &[Handle<Capture>] {
+    fn captures(&self) -> &[HandleMut<Capture>] {
         let len = self.num_captures as usize;
         let data = self.captures.as_ptr();
         // SAFETY: `data` is a non-null pointer to an array of pointers.
@@ -254,7 +254,7 @@ impl std::fmt::Debug for Closure {
 impl Unknown for Closure {
     fn vtable() -> &'static UnknownVtable {
         fn trace(addr: usize, visit_list: &mut VisitList) {
-            Handle::<Closure>::from_addr(addr)
+            HandleMut::<Closure>::from_addr(addr)
                 .unwrap()
                 .trace(visit_list)
         }
@@ -326,7 +326,7 @@ impl std::fmt::Debug for Capture {
 impl Unknown for Capture {
     fn vtable() -> &'static UnknownVtable {
         fn trace(addr: usize, visit_list: &mut VisitList) {
-            Handle::<Capture>::from_addr(addr)
+            HandleMut::<Capture>::from_addr(addr)
                 .unwrap()
                 .trace(visit_list);
         }
@@ -359,7 +359,7 @@ impl Unknown for Capture {
 #[repr(C)]
 pub struct Coroutine {
     /// The closure of the coroutine.
-    pub closure: Handle<Closure>,
+    pub closure: HandleMut<Closure>,
 
     /// The state of the coroutine.
     pub state: u32,
@@ -422,7 +422,7 @@ impl Coroutine {
 impl Unknown for Coroutine {
     fn vtable() -> &'static UnknownVtable {
         fn trace(addr: usize, visit_list: &mut VisitList) {
-            Handle::<Coroutine>::from_addr(addr)
+            HandleMut::<Coroutine>::from_addr(addr)
                 .unwrap()
                 .trace(visit_list);
         }
@@ -539,7 +539,7 @@ pub struct CallContext {
 
     /// The active function object.
     #[allow(unused)]
-    func: Option<Handle<Object>>,
+    func: Option<HandleMut<Object>>,
 
     /// A pointer to the call context of the caller.
     #[allow(unused)]
@@ -588,7 +588,7 @@ impl CallContext {
         }
     }
 
-    pub(crate) fn new_for_promise(coroutine: Handle<Coroutine>, args: &mut [Value]) -> Self {
+    pub(crate) fn new_for_promise(coroutine: HandleMut<Coroutine>, args: &mut [Value]) -> Self {
         Self {
             envp: coroutine.as_ptr() as *mut std::ffi::c_void,
             this: Value::Undefined,
@@ -604,8 +604,8 @@ impl CallContext {
 
     pub(crate) fn new_child(
         &self,
-        func: Handle<Object>,
-        closure: Handle<Closure>,
+        func: HandleMut<Object>,
+        closure: HandleMut<Closure>,
         args: &mut [Value],
     ) -> Self {
         Self {
@@ -630,12 +630,12 @@ impl CallContext {
         &self.this
     }
 
-    pub(crate) fn func(&self) -> Option<Handle<Object>> {
+    pub(crate) fn func(&self) -> Option<HandleMut<Object>> {
         self.func
     }
 
-    pub(crate) fn closure(&self) -> Handle<Closure> {
-        Handle::from_ptr(self.envp as *mut Closure)
+    pub(crate) fn closure(&self) -> HandleMut<Closure> {
+        HandleMut::from_ptr(self.envp as *mut Closure)
             .expect("must be a non-null pointer to a Closure")
     }
 

@@ -14,7 +14,7 @@ use std::pin::Pin;
 
 use itertools::Itertools;
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsgc::Heap;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
@@ -107,31 +107,31 @@ pub struct Runtime<X> {
     global_object: Pin<Box<Object>>,
 
     // %Object.prototype%
-    object_prototype: Option<Handle<Object>>,
+    object_prototype: Option<HandleMut<Object>>,
     // %Function.prototype%
-    function_prototype: Option<Handle<Object>>,
+    function_prototype: Option<HandleMut<Object>>,
     // %String.prototype%
-    string_prototype: Option<Handle<Object>>,
+    string_prototype: Option<HandleMut<Object>>,
     // %Promise.prototype%
-    promise_prototype: Option<Handle<Object>>,
+    promise_prototype: Option<HandleMut<Object>>,
     // %Error.prototype%
-    error_prototype: Option<Handle<Object>>,
+    error_prototype: Option<HandleMut<Object>>,
     // %AggregateError.prototype%
-    aggregate_error_prototype: Option<Handle<Object>>,
+    aggregate_error_prototype: Option<HandleMut<Object>>,
     // %EvalError.prototype%
-    eval_error_prototype: Option<Handle<Object>>,
+    eval_error_prototype: Option<HandleMut<Object>>,
     // %InternalError.prototype%
-    internal_error_prototype: Option<Handle<Object>>,
+    internal_error_prototype: Option<HandleMut<Object>>,
     // %RangeError.prototype%
-    range_error_prototype: Option<Handle<Object>>,
+    range_error_prototype: Option<HandleMut<Object>>,
     // %ReferenceError.prototype%
-    reference_error_prototype: Option<Handle<Object>>,
+    reference_error_prototype: Option<HandleMut<Object>>,
     // %SyntaxError.prototype%
-    syntax_error_prototype: Option<Handle<Object>>,
+    syntax_error_prototype: Option<HandleMut<Object>>,
     // %TypeError.prototype%
-    type_error_prototype: Option<Handle<Object>>,
+    type_error_prototype: Option<HandleMut<Object>>,
     // URIError.prototype%
-    uri_error_prototype: Option<Handle<Object>>,
+    uri_error_prototype: Option<HandleMut<Object>>,
 
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
@@ -284,7 +284,7 @@ impl<X> Runtime<X> {
     fn call(
         &mut self,
         caller: &CallContext,
-        callable: Handle<Object>,
+        callable: HandleMut<Object>,
         args: &mut [Value],
         retv: &mut Value,
     ) -> Status {
@@ -324,10 +324,10 @@ impl<X> Runtime<X> {
 
     fn create_substring(
         &mut self,
-        string: Handle<StringFragment>,
+        string: HandleMut<StringFragment>,
         start: u32,
         end: u32,
-    ) -> Handle<StringFragment> {
+    ) -> HandleMut<StringFragment> {
         debug_assert!(start < end);
         // TODO(perf): inefficient
         let utf16 = string
@@ -344,7 +344,7 @@ impl<X> Runtime<X> {
         lambda: Lambda<X>,
         lambda_id: LambdaId,
         num_captures: u16,
-    ) -> Handle<Closure> {
+    ) -> HandleMut<Closure> {
         debug_assert!(
             std::alloc::Layout::from_size_align(
                 std::mem::offset_of!(Closure, captures),
@@ -376,11 +376,11 @@ impl<X> Runtime<X> {
 
     fn create_coroutine(
         &mut self,
-        closure: Handle<Closure>,
+        closure: HandleMut<Closure>,
         num_locals: u16,
         scratch_buffer_len: u16,
         capture_buffer_len: u16,
-    ) -> Handle<Coroutine> {
+    ) -> HandleMut<Coroutine> {
         debug_assert!(
             std::alloc::Layout::from_size_align(
                 std::mem::offset_of!(Coroutine, locals),
@@ -421,7 +421,7 @@ impl<X> Runtime<X> {
         })
     }
 
-    fn create_object(&mut self, prototype: Option<Handle<Object>>) -> Handle<Object> {
+    fn create_object(&mut self, prototype: Option<HandleMut<Object>>) -> HandleMut<Object> {
         self.heap.alloc(Object::new(prototype))
     }
 
@@ -437,7 +437,7 @@ impl<X> Runtime<X> {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
             Value::Object(_) => {
-                const MESSAGE: Handle<StringFragment> = const_string!("TODO: make_property_key");
+                const MESSAGE: HandleMut<StringFragment> = const_string!("TODO: make_property_key");
                 Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
             }
         }
@@ -488,7 +488,7 @@ impl<X> Runtime<X> {
 
     fn throw_internal_error(
         &mut self,
-        message: Handle<StringFragment>,
+        message: HandleMut<StringFragment>,
         retv: &mut Value,
     ) -> Status {
         *retv = Value::Object(self.create_internal_error(Some(message)));

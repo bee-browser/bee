@@ -6,7 +6,7 @@ use std::hash::Hasher;
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsgc::Unknown;
 use jsgc::UnknownVtable;
 use jsgc::VisitList;
@@ -224,7 +224,7 @@ pub struct Object {
     flags: ObjectFlags,
 
     // [[Prototype]]
-    prototype: Option<Handle<Self>>,
+    prototype: Option<HandleMut<Self>>,
     properties: FxHashMap<PropertyKey, Property>,
 
     // TODO: rethink the memory layout.
@@ -236,7 +236,7 @@ impl Object {
         std::mem::offset_of!(Self, kernel) + Kernel::DATA_OFFSET;
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
-    pub fn new(prototype: Option<Handle<Self>>) -> Self {
+    pub fn new(prototype: Option<HandleMut<Self>>) -> Self {
         Self {
             kernel: Default::default(),
             flags: ObjectFlags::empty(),
@@ -298,7 +298,7 @@ impl Object {
         self.kernel.data
     }
 
-    pub(crate) fn set_closure(&mut self, closure: Handle<Closure>) {
+    pub(crate) fn set_closure(&mut self, closure: HandleMut<Closure>) {
         static VTABLE: KernelVtable = KernelVtable { drop: None };
         self.kernel.vtable = &VTABLE;
         self.kernel.data = closure.as_addr();
@@ -306,17 +306,17 @@ impl Object {
         self.set_callable();
     }
 
-    pub(crate) fn closure(&self) -> Handle<Closure> {
+    pub(crate) fn closure(&self) -> HandleMut<Closure> {
         debug_assert!(self.is_callable());
-        Handle::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
+        HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
     }
 
-    pub(crate) fn string(&self) -> Handle<StringFragment> {
+    pub(crate) fn string(&self) -> HandleMut<StringFragment> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        Handle::from_addr(self.kernel.data).unwrap()
+        HandleMut::from_addr(self.kernel.data).unwrap()
     }
 
-    pub(crate) fn set_string(&mut self, string: Handle<StringFragment>) {
+    pub(crate) fn set_string(&mut self, string: HandleMut<StringFragment>) {
         static VTABLE: KernelVtable = KernelVtable { drop: None };
         self.kernel.vtable = &VTABLE;
         self.kernel.data = string.as_addr();
@@ -330,12 +330,12 @@ impl Object {
         self.kernel.need_tracing = false; // TODO: GC
     }
 
-    pub fn as_handle(&mut self) -> Handle<Self> {
+    pub fn as_handle(&mut self) -> HandleMut<Self> {
         // SAFETY: `self` is a non-null pointer to an `Object`.
-        Handle::from_ref(self)
+        HandleMut::from_ref(self)
     }
 
-    pub fn is_instance_of(&self, prototype: Option<Handle<Self>>) -> bool {
+    pub fn is_instance_of(&self, prototype: Option<HandleMut<Self>>) -> bool {
         debug_assert!(prototype.is_some());
         // TODO: prototype chain
         self.prototype == prototype
@@ -414,7 +414,7 @@ impl Display for Object {
 impl Unknown for Object {
     fn vtable() -> &'static UnknownVtable {
         fn tidy(addr: usize) {
-            let mut object = Handle::<Object>::from_addr(addr).unwrap();
+            let mut object = HandleMut::<Object>::from_addr(addr).unwrap();
             // SAFETY: XXX
             unsafe {
                 object.tidy();
@@ -422,7 +422,7 @@ impl Unknown for Object {
         }
 
         fn trace(addr: usize, visit_list: &mut jsgc::VisitList) {
-            let object = Handle::<Object>::from_addr(addr).unwrap();
+            let object = HandleMut::<Object>::from_addr(addr).unwrap();
             object.trace(visit_list);
         }
 
