@@ -12,7 +12,7 @@ use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
 use rustc_hash::FxHashMap;
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 use jsparser::syntax::LoopFlags;
@@ -52,10 +52,10 @@ pub struct Session<'r, X> {
     symbol_registry: &'r mut SymbolRegistry,
     lambda_registry: &'r mut LambdaRegistry,
     pub code_registry: &'r mut CodeRegistry<X>,
-    global_object: Handle<Object>,
-    object_prototype: Handle<Object>,
-    function_prototype: Handle<Object>,
-    promise_prototype: Handle<Object>,
+    global_object: HandleMut<Object>,
+    object_prototype: HandleMut<Object>,
+    function_prototype: HandleMut<Object>,
+    promise_prototype: HandleMut<Object>,
 }
 
 trait CompilerSupport {
@@ -79,12 +79,12 @@ trait CompilerSupport {
     fn target_config(&self) -> isa::TargetFrontendConfig;
 
     // GlobalObject
-    fn global_object(&mut self) -> Handle<Object>;
+    fn global_object(&mut self) -> HandleMut<Object>;
 
     // Intrinsics
-    fn object_prototype(&self) -> Handle<Object>;
-    fn function_prototype(&self) -> Handle<Object>;
-    fn promise_prototype(&self) -> Handle<Object>;
+    fn object_prototype(&self) -> HandleMut<Object>;
+    fn function_prototype(&self) -> HandleMut<Object>;
+    fn promise_prototype(&self) -> HandleMut<Object>;
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
@@ -125,19 +125,19 @@ impl<X> CompilerSupport for Session<'_, X> {
         self.code_registry.target_config()
     }
 
-    fn global_object(&mut self) -> Handle<Object> {
+    fn global_object(&mut self) -> HandleMut<Object> {
         self.global_object
     }
 
-    fn object_prototype(&self) -> Handle<Object> {
+    fn object_prototype(&self) -> HandleMut<Object> {
         self.object_prototype
     }
 
-    fn function_prototype(&self) -> Handle<Object> {
+    fn function_prototype(&self) -> HandleMut<Object> {
         self.function_prototype
     }
 
-    fn promise_prototype(&self) -> Handle<Object> {
+    fn promise_prototype(&self) -> HandleMut<Object> {
         self.promise_prototype
     }
 }
@@ -1456,7 +1456,7 @@ where
         self.operand_stack.push(Operand::String(tail, None));
     }
 
-    fn pop_string(&mut self) -> (StringIr, Option<Handle<StringFragment>>) {
+    fn pop_string(&mut self) -> (StringIr, Option<HandleMut<StringFragment>>) {
         match self.operand_stack.pop().unwrap() {
             Operand::String(value_rt, value_ct) => (value_rt, value_ct),
             operand => unreachable!("{operand:?}"),
@@ -3863,7 +3863,7 @@ where
         self.process_throw();
     }
 
-    fn emit_throw_internal_error(&mut self, message: Handle<StringFragment>) {
+    fn emit_throw_internal_error(&mut self, message: HandleMut<StringFragment>) {
         logger::debug!(event = "emit_throw_internal_error", ?message);
         let error = self
             .editor
@@ -4002,7 +4002,7 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    String(StringIr, #[allow(unused)] Option<Handle<StringFragment>>),
+    String(StringIr, #[allow(unused)] Option<HandleMut<StringFragment>>),
 
     /// Runtime value of closure type.
     Closure(ClosureIr),

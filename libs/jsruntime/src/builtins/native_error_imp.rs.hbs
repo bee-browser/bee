@@ -7,7 +7,7 @@
 //$class {{class}}
 //$inherits error
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::Error;
@@ -60,7 +60,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 }
 
 //#sec-nativeerror.prototype.message prototype.property
-pub fn {{id}}_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
+pub fn {{id}}_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: HandleMut<Object>) {
     let _ = prototype.define_own_property(
         Symbol::MESSAGE.into(),
         Property::data_xxx(Value::String(crate::types::string::EMPTY)),
@@ -68,7 +68,7 @@ pub fn {{id}}_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Han
 }
 
 //#sec-nativeerror.prototype.name prototype.property
-pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
+pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: HandleMut<Object>) {
     let _ = prototype.define_own_property(
         Symbol::NAME.into(),
         Property::data_xxx(Value::String(const_string!("{{class}}"))),
@@ -77,7 +77,7 @@ pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle
 
 impl<X> Runtime<X> {
     #[allow(unused)]
-    pub(crate) fn create_{{id}}(&mut self, msg: Option<Handle<StringFragment>>) -> Handle<Object> {
+    pub(crate) fn create_{{id}}(&mut self, msg: Option<HandleMut<StringFragment>>) -> HandleMut<Object> {
         let mut object = self.create_object(self.{{id}}_prototype);
         if let Some(msg) = msg {
             let _ = object.define_own_property(

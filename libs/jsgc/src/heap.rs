@@ -5,7 +5,7 @@ use std::ptr::NonNull;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::Handle;
+use crate::handle::HandleMut;
 
 /// A heap memory managed by GC.
 pub struct Heap {
@@ -22,7 +22,7 @@ impl Heap {
     }
 
     /// Populates a specified object on memory allocated from the heap.
-    pub fn alloc<T>(&mut self, object: T) -> Handle<T>
+    pub fn alloc<T>(&mut self, object: T) -> HandleMut<T>
     where
         T: Sized + Unknown,
     {
@@ -43,11 +43,11 @@ impl Heap {
             },
         );
 
-        Handle::from_ptr(ptr).unwrap()
+        HandleMut::from_ptr(ptr).unwrap()
     }
 
     /// Populates a specified object on memory allocated from the heap.
-    pub fn alloc_layout<T, F>(&mut self, layout: Layout, init: F) -> Handle<T>
+    pub fn alloc_layout<T, F>(&mut self, layout: Layout, init: F) -> HandleMut<T>
     where
         T: Sized + Unknown,
         F: FnOnce(NonNull<u8>),
@@ -65,10 +65,10 @@ impl Heap {
                 addr: ptr.addr().get(),
             },
         );
-        Handle::from_ref(unsafe { ptr.cast::<T>().as_ref() })
+        HandleMut::from_ref(unsafe { ptr.cast::<T>().as_mut() })
     }
 
-    // TODO: return Handle
+    // TODO: return HandleMut
     // TODO: there is no way to restrict the type of `T` to an integer type.
     pub fn alloc_slice_copy<T>(&mut self, src: &[T]) -> &mut [T]
     where

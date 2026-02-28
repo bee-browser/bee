@@ -1,4 +1,4 @@
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsgc::Heap;
 use jsgc::Unknown;
 use jsgc::UnknownVtable;
@@ -6,8 +6,8 @@ use jsgc::VisitList;
 
 #[derive(Default)]
 struct Cell {
-    car: Option<Handle<Cell>>,
-    cdr: Option<Handle<Cell>>,
+    car: Option<HandleMut<Cell>>,
+    cdr: Option<HandleMut<Cell>>,
 }
 
 impl Cell {
@@ -24,7 +24,9 @@ impl Cell {
 impl Unknown for Cell {
     fn vtable() -> &'static UnknownVtable {
         fn trace(addr: usize, visit_list: &mut VisitList) {
-            Handle::<Cell>::from_addr(addr).unwrap().trace(visit_list);
+            HandleMut::<Cell>::from_addr(addr)
+                .unwrap()
+                .trace(visit_list);
         }
 
         static VTABLE: UnknownVtable = UnknownVtable {

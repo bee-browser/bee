@@ -12,7 +12,7 @@ mod syntax_error;
 mod type_error;
 mod uri_error;
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::Error;
@@ -97,7 +97,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> Handle<Object> {
+    fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> HandleMut<Object> {
         logger::debug!(
             event = "create_builtin_function",
             ?params.lambda,
@@ -125,13 +125,13 @@ impl<X> Runtime<X> {
     }
 
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
-    fn set_function_name(&mut self, func: &mut Handle<Object>, name: Handle<StringFragment>) {
+    fn set_function_name(&mut self, func: &mut HandleMut<Object>, name: HandleMut<StringFragment>) {
         let _ =
             func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
     }
 
     // 10.2.10 SetFunctionLength ( F, length )
-    fn set_function_length(&mut self, func: &mut Handle<Object>, length: u16) {
+    fn set_function_length(&mut self, func: &mut HandleMut<Object>, length: u16) {
         let _ = func.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxc(Value::Number(length as f64)),
@@ -182,9 +182,9 @@ impl<X> Runtime<X> {
     // TODO(refactor): code clone, see runtime_concat_strings.
     fn concat_strings(
         &mut self,
-        a: Handle<StringFragment>,
-        b: Handle<StringFragment>,
-    ) -> Handle<StringFragment> {
+        a: HandleMut<StringFragment>,
+        b: HandleMut<StringFragment>,
+    ) -> HandleMut<StringFragment> {
         a.concat(b, &mut self.heap)
     }
 
@@ -193,7 +193,7 @@ impl<X> Runtime<X> {
     pub(crate) fn value_to_string(
         &mut self,
         value: &Value,
-    ) -> Result<Handle<StringFragment>, Error> {
+    ) -> Result<HandleMut<StringFragment>, Error> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
@@ -210,8 +210,8 @@ impl<X> Runtime<X> {
 
     fn object_to_string(
         &mut self,
-        object: Handle<Object>,
-    ) -> Result<Handle<StringFragment>, Error> {
+        object: HandleMut<Object>,
+    ) -> Result<HandleMut<StringFragment>, Error> {
         // TODO(feat): ToPrimitive(object, STRING)
         if self.is_string_object(object) {
             Ok(object.string())
@@ -230,9 +230,9 @@ impl<X> Runtime<X> {
 
     fn make_string_filler(
         &mut self,
-        fill_string: Handle<StringFragment>,
+        fill_string: HandleMut<StringFragment>,
         fill_len: u32,
-    ) -> Handle<StringFragment> {
+    ) -> HandleMut<StringFragment> {
         debug_assert!(fill_string.is_simple());
         debug_assert!(!fill_string.is_empty());
 
@@ -253,10 +253,10 @@ impl<X> Runtime<X> {
         }
 
         let last = fill_string.sub_fragment(0, remaining);
-        frag.concat(Handle::from_ref(&last), &mut self.heap)
+        frag.concat(HandleMut::from_ref(&last), &mut self.heap)
     }
 
-    fn repeat_string(&mut self, s: Handle<StringFragment>, n: u32) -> Handle<StringFragment> {
+    fn repeat_string(&mut self, s: HandleMut<StringFragment>, n: u32) -> HandleMut<StringFragment> {
         if n == 1 {
             return s;
         }
@@ -290,8 +290,8 @@ fn require_object_coercible(value: &Value) -> Result<(), Error> {
 struct BuiltinFunctionParams<'a, X> {
     lambda: Lambda<X>,
     #[allow(unused)]
-    name: Handle<StringFragment>,
+    name: HandleMut<StringFragment>,
     length: u16,
     slots: &'a [Value],
-    prototype: Option<Handle<Object>>,
+    prototype: Option<HandleMut<Object>>,
 }

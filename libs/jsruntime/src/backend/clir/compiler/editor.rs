@@ -7,7 +7,7 @@ use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::Switch;
 
 use base::static_assert_eq;
-use jsgc::Handle;
+use jsgc::HandleMut;
 
 use crate::lambda::LambdaKind;
 use crate::logger;
@@ -2134,7 +2134,7 @@ impl<'a> Editor<'a> {
     pub fn put_runtime_create_internal_error(
         &mut self,
         support: &mut impl EditorSupport,
-        message: Handle<StringFragment>,
+        message: HandleMut<StringFragment>,
     ) -> ObjectIr {
         logger::debug!(event = "put_runtime_create_internal_error", ?message);
         debug_assert!(message.is_const());
