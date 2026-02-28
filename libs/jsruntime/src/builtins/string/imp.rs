@@ -1,7 +1,7 @@
 //$id string
 //$class String
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::Error;
@@ -400,9 +400,9 @@ fn string_padding_builtins_impl<X>(
 // 22.1.3.17.2 StringPad ( S, maxLength, fillString, placement )
 fn string_pad<X>(
     runtime: &mut Runtime<X>,
-    s: Handle<StringFragment>,
+    s: HandleMut<StringFragment>,
     max_length: u32,
-    fill_string: Handle<StringFragment>,
+    fill_string: HandleMut<StringFragment>,
     placement: PaddingPlacement,
 ) -> Result<Value, Error> {
     let string_length = s.len();
