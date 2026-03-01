@@ -12,6 +12,7 @@ use cranelift::frontend::FunctionBuilder;
 use cranelift::frontend::FunctionBuilderContext;
 use rustc_hash::FxHashMap;
 
+use jsgc::Handle;
 use jsgc::HandleMut;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
@@ -1456,7 +1457,7 @@ where
         self.operand_stack.push(Operand::String(tail, None));
     }
 
-    fn pop_string(&mut self) -> (StringIr, Option<HandleMut<StringFragment>>) {
+    fn pop_string(&mut self) -> (StringIr, Option<Handle<StringFragment>>) {
         match self.operand_stack.pop().unwrap() {
             Operand::String(value_rt, value_ct) => (value_rt, value_ct),
             operand => unreachable!("{operand:?}"),
@@ -3863,7 +3864,7 @@ where
         self.process_throw();
     }
 
-    fn emit_throw_internal_error(&mut self, message: HandleMut<StringFragment>) {
+    fn emit_throw_internal_error(&mut self, message: Handle<StringFragment>) {
         logger::debug!(event = "emit_throw_internal_error", ?message);
         let error = self
             .editor
@@ -4002,7 +4003,7 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    String(StringIr, #[allow(unused)] Option<HandleMut<StringFragment>>),
+    String(StringIr, #[allow(unused)] Option<Handle<StringFragment>>),
 
     /// Runtime value of closure type.
     Closure(ClosureIr),

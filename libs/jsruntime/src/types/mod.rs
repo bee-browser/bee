@@ -7,6 +7,7 @@ use std::mem::offset_of;
 use std::ops::Deref;
 use std::ptr::addr_eq;
 
+use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Unknown;
 use jsgc::UnknownVtable;
@@ -39,7 +40,7 @@ pub enum Value {
     Null = Self::KIND_NULL,
     Boolean(bool) = Self::KIND_BOOLEAN,
     Number(f64) = Self::KIND_NUMBER,
-    String(HandleMut<StringFragment>) = Self::KIND_STRING,
+    String(Handle<StringFragment>) = Self::KIND_STRING,
     Object(HandleMut<Object>) = Self::KIND_OBJECT,
 }
 
@@ -96,7 +97,7 @@ impl Value {
     }
 
     // 13.5.3.1 Runtime Semantics: Evaluation
-    pub fn get_typeof(&self) -> HandleMut<StringFragment> {
+    pub fn get_typeof(&self) -> Handle<StringFragment> {
         match self {
             Self::None => unreachable!(),
             Self::Undefined => const_string!("undefined"),

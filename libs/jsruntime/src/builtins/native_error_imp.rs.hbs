@@ -7,6 +7,7 @@
 //$class {{class}}
 //$inherits error
 
+use jsgc::Handle;
 use jsgc::HandleMut;
 use jsparser::Symbol;
 
@@ -77,7 +78,7 @@ pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle
 
 impl<X> Runtime<X> {
     #[allow(unused)]
-    pub(crate) fn create_{{id}}(&mut self, msg: Option<HandleMut<StringFragment>>) -> HandleMut<Object> {
+    pub(crate) fn create_{{id}}(&mut self, msg: Option<Handle<StringFragment>>) -> HandleMut<Object> {
         let mut object = self.create_object(self.{{id}}_prototype);
         if let Some(msg) = msg {
             let _ = object.define_own_property(

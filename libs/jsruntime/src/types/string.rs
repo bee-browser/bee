@@ -7,17 +7,17 @@ use bitflags::bitflags;
 use bitflags::bitflags_match;
 use itertools::Itertools;
 
-use jsgc::HandleMut;
+use jsgc::Handle;
 use jsgc::Heap;
 use jsgc::Unknown;
 use jsgc::UnknownVtable;
 use jsgc::VisitList;
 
 /// An empty string.
-pub const EMPTY: HandleMut<StringFragment> = HandleMut::from_ref(&StringFragment::EMPTY);
+pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);
 
 /// A single U+0020 character.
-pub const SPACE: HandleMut<StringFragment> = HandleMut::from_ref(&StringFragment::SPACE);
+pub const SPACE: Handle<StringFragment> = Handle::from_ref(&StringFragment::SPACE);
 
 /// A data type representing an **immutable** fragment of UTF-16 code units.
 ///
@@ -35,7 +35,7 @@ pub struct StringFragment {
     ///   * An array of UTF-16 code units allocated in the string pool (not yet implemented)
     ///   * A memory block allocated in the GC heap
     // TODO(issue#237): GcCellRef
-    ptr: *const u16,
+    ptr: Handle<u16>,
 
     offset: u32,
 
@@ -61,7 +61,7 @@ impl StringFragment {
     // TODO(refactor): should be private
     pub const fn new_const(slice: &'static [u16]) -> Self {
         Self {
-            ptr: slice.as_ptr(),
+            ptr: Handle::from_ptr(slice.as_ptr()).unwrap(),
             offset: 0,
             len: slice.len() as u32,
             flags: StringFragmentFlags::CONST,
@@ -71,7 +71,7 @@ impl StringFragment {
     // TODO(feat): support DYNAMIC
     pub(crate) const fn new_stack(slice: &[u16], dynamic: bool) -> Self {
         Self {
-            ptr: slice.as_ptr(),
+            ptr: Handle::from_ptr(slice.as_ptr()).unwrap(),
             offset: 0,
             len: slice.len() as u32,
             flags: if dynamic {
@@ -102,10 +102,8 @@ impl StringFragment {
     // Returns a *raw* UTF-16 code unit sequence.
     pub(crate) fn as_slice(&self) -> &[u16] {
         debug_assert_ne!(self.len, 0);
-        debug_assert!(!self.ptr.is_null());
-        debug_assert!(self.ptr.is_aligned());
-        // SAFETY: `self.ptr` is always pointer to an array of `u16`.
-        unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) }
+        // SAFETY: `self.ptr.as_ptr()` is always pointer to an array of `u16`.
+        unsafe { std::slice::from_raw_parts(self.ptr.as_ptr(), self.len as usize) }
     }
 
     pub fn at(&self, index: u32) -> Option<u16> {
@@ -181,7 +179,7 @@ impl StringFragment {
     }
 
     // 6.1.4.1 StringIndexOf ( string, searchValue, fromIndex )
-    pub fn index_of(&self, search_value: HandleMut<Self>, from_index: u32) -> Option<u32> {
+    pub fn index_of(&self, search_value: Handle<Self>, from_index: u32) -> Option<u32> {
         // TODO(perf): slow and inefficient
         let len = self.len();
         if search_value.is_empty() && from_index <= len {
@@ -203,7 +201,7 @@ impl StringFragment {
     }
 
     // 6.1.4.2 StringLastIndexOf ( string, searchValue, fromIndex )
-    pub fn last_index_of(&self, search_value: HandleMut<Self>, from_index: u32) -> Option<u32> {
+    pub fn last_index_of(&self, search_value: Handle<Self>, from_index: u32) -> Option<u32> {
         // TODO(perf): slow and inefficient
         let len = self.len();
         let search_len = search_value.len();
@@ -229,7 +227,7 @@ impl StringFragment {
         true
     }
 
-    pub fn concat(&self, tail: HandleMut<Self>, heap: &mut Heap) -> HandleMut<Self> {
+    pub fn concat(&self, tail: Handle<Self>, heap: &mut Heap) -> Handle<Self> {
         if self.is_empty() {
             return tail.ensure_return_safe(heap);
         }
@@ -240,32 +238,33 @@ impl StringFragment {
         let len = (self.len() + tail.len()) as usize;
         let layout = Layout::array::<u16>(len).unwrap();
 
-        let handle: HandleMut<u16> = heap.alloc_layout(layout, |ptr| unsafe {
+        let handle: Handle<u16> = heap.alloc_layout(layout, |ptr| unsafe {
             let code_units = ptr.cast::<u16>();
             dbg!(self.offset);
             dbg!(self.len);
             dbg!(tail.offset);
             dbg!(tail.len);
-            code_units
-                .as_ptr()
-                .copy_from(self.ptr.add(self.offset as usize), self.len as usize);
-            code_units
-                .offset(self.len as isize)
-                .as_ptr()
-                .copy_from(tail.ptr.add(tail.offset as usize), tail.len as usize);
+            code_units.as_ptr().copy_from(
+                self.ptr.as_ptr().add(self.offset as usize),
+                self.len as usize,
+            );
+            code_units.offset(self.len as isize).as_ptr().copy_from(
+                tail.ptr.as_ptr().add(tail.offset as usize),
+                tail.len as usize,
+            );
         });
 
         heap.alloc(StringFragment {
-            ptr: handle.as_ptr(),
+            ptr: handle,
             offset: 0,
             len: len as u32,
             flags: StringFragmentFlags::HEAP | StringFragmentFlags::DYNAMIC,
         })
     }
 
-    pub fn ensure_return_safe(&self, heap: &mut Heap) -> HandleMut<Self> {
+    pub fn ensure_return_safe(&self, heap: &mut Heap) -> Handle<Self> {
         if !self.on_stack() {
-            return HandleMut::from_ref(self);
+            return Handle::from_ref(self);
         }
 
         if self.is_empty() {
@@ -276,7 +275,7 @@ impl StringFragment {
     }
 
     // Migrate a UTF-16 string from the stack to the heap.
-    fn migrate_to_heap(&self, heap: &mut Heap) -> HandleMut<Self> {
+    fn migrate_to_heap(&self, heap: &mut Heap) -> Handle<Self> {
         heap.alloc(self.clone())
     }
 
@@ -293,9 +292,9 @@ impl StringFragment {
         self.code_units().collect_vec()
     }
 
-    pub(crate) fn repeat(&self, repetitions: u32, heap: &mut Heap) -> HandleMut<Self> {
+    pub(crate) fn repeat(&self, repetitions: u32, heap: &mut Heap) -> Handle<Self> {
         debug_assert!(repetitions > 0);
-        let mut head = HandleMut::from_ref(self);
+        let mut head = Handle::from_ref(self);
         for _ in 0..repetitions {
             head = head.concat(head, heap);
         }
@@ -312,8 +311,8 @@ impl StringFragment {
         }
     }
 
-    fn trace(&self, _visit_list: &mut VisitList) {
-        // TODO: ptr
+    fn trace(&self, visit_list: &mut VisitList) {
+        visit_list.push(self.ptr.as_addr());
     }
 }
 
@@ -331,10 +330,7 @@ impl Index<u32> for StringFragment {
     type Output = u16;
 
     fn index(&self, index: u32) -> &Self::Output {
-        assert!(index < self.len());
-        let index = index % self.len;
-        // SAFETY: `self.ptr` points to `[u16; self.len]`.
-        unsafe { &*self.ptr.add(index as usize) }
+        self.as_slice().get(index as usize).unwrap()
     }
 }
 
@@ -378,7 +374,7 @@ impl std::fmt::Display for StringFragment {
 impl Unknown for StringFragment {
     fn vtable() -> &'static UnknownVtable {
         fn trace(addr: usize, visit_list: &mut VisitList) {
-            HandleMut::<StringFragment>::from_addr(addr)
+            Handle::<StringFragment>::from_addr(addr)
                 .unwrap()
                 .trace(visit_list);
         }

@@ -44,7 +44,7 @@ fn test_collect_garbage() {
 
     macro_rules! cell {
         () => {
-            heap.alloc(Cell::default())
+            heap.alloc_mut(Cell::default())
         };
     }
 
@@ -55,7 +55,7 @@ fn test_collect_garbage() {
         ($car:expr, $cdr:expr) => {{
             let car = Some($car);
             let cdr = Some($cdr);
-            heap.alloc(Cell { car, cdr })
+            heap.alloc_mut(Cell { car, cdr })
         }};
     }
 
