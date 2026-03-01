@@ -1,3 +1,4 @@
+use jsgc::Handle;
 use jsgc::HandleMut;
 
 use crate::Runtime;
@@ -162,7 +163,7 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
 pub(crate) extern "C" fn runtime_to_string<X>(
     runtime: &mut Runtime<X>,
     value: &Value,
-) -> HandleMut<StringFragment> {
+) -> Handle<StringFragment> {
     logger::debug!(event = "runtime_to_string", ?value);
     runtime.value_to_string(value).unwrap()
 }
@@ -171,13 +172,13 @@ pub(crate) extern "C" fn runtime_to_string<X>(
 pub(crate) extern "C" fn runtime_number_to_string<X>(
     runtime: &mut Runtime<X>,
     value: f64,
-) -> HandleMut<StringFragment> {
+) -> Handle<StringFragment> {
     logger::debug!(event = "runtime_number_to_string", ?value);
     runtime.number_to_string(value)
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn number_to_string(&mut self, value: f64) -> HandleMut<StringFragment> {
+    pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<StringFragment> {
         // TODO(feat): implment Number::toString()
         let utf16 = self.alloc_utf16(&format!("{value}"));
         StringFragment::new_stack(utf16, true).ensure_return_safe(&mut self.heap)
@@ -287,8 +288,8 @@ pub(crate) extern "C" fn runtime_to_uint32<X>(_runtime: &mut Runtime<X>, value: 
 
 pub(crate) extern "C" fn runtime_is_same_string<X>(
     _runtime: &mut Runtime<X>,
-    a: HandleMut<StringFragment>,
-    b: HandleMut<StringFragment>,
+    a: Handle<StringFragment>,
+    b: Handle<StringFragment>,
 ) -> bool {
     *a == *b
 }
@@ -349,15 +350,15 @@ pub(crate) extern "C" fn runtime_is_strictly_equal<X>(
 pub(crate) extern "C" fn runtime_get_typeof<X>(
     _runtime: &mut Runtime<X>,
     value: &Value,
-) -> HandleMut<StringFragment> {
+) -> Handle<StringFragment> {
     debug_assert!(!matches!(value, Value::None));
     value.get_typeof()
 }
 
 pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     runtime: &mut Runtime<X>,
-    string: HandleMut<StringFragment>,
-) -> HandleMut<StringFragment> {
+    string: Handle<StringFragment>,
+) -> Handle<StringFragment> {
     string.ensure_return_safe(&mut runtime.heap)
 }
 
@@ -382,12 +383,14 @@ pub(crate) extern "C" fn runtime_create_capture<X>(
         )
     };
 
-    let handle = runtime.heap.alloc_layout::<Capture, _>(LAYOUT, move |ptr| {
-        // SAFETY: `ptr` is a non-null pointer to a `Capture`.
-        let capture = unsafe { ptr.cast::<Capture>().as_mut() };
-        capture.target = target;
-        // `capture.escaped` will be filled with an actual value.
-    });
+    let handle = runtime
+        .heap
+        .alloc_layout_mut::<Capture, _>(LAYOUT, move |ptr| {
+            // SAFETY: `ptr` is a non-null pointer to a `Capture`.
+            let capture = unsafe { ptr.cast::<Capture>().as_mut() };
+            capture.target = target;
+            // `capture.escaped` will be filled with an actual value.
+        });
 
     handle.as_ptr()
 }
@@ -473,7 +476,7 @@ pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) 
 
 pub(crate) extern "C" fn runtime_create_internal_error<X>(
     runtime: &mut Runtime<X>,
-    message: HandleMut<StringFragment>,
+    message: Handle<StringFragment>,
 ) -> *mut Object {
     runtime.create_internal_error(Some(message)).as_ptr()
 }
@@ -615,9 +618,9 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
 
 pub(crate) extern "C" fn runtime_concat_strings<X>(
     runtime: &mut Runtime<X>,
-    head: HandleMut<StringFragment>,
-    tail: HandleMut<StringFragment>,
-) -> HandleMut<StringFragment> {
+    head: Handle<StringFragment>,
+    tail: Handle<StringFragment>,
+) -> Handle<StringFragment> {
     head.concat(tail, &mut runtime.heap)
 }
 
@@ -814,7 +817,7 @@ pub(crate) extern "C" fn runtime_print_f64<X>(
 
 pub(crate) extern "C" fn runtime_print_string<X>(
     _runtime: &mut Runtime<X>,
-    value: HandleMut<StringFragment>,
+    value: Handle<StringFragment>,
     msg: *const std::os::raw::c_char,
 ) {
     // SAFETY: `msg` is always non-null.

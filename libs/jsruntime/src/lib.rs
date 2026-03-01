@@ -14,6 +14,7 @@ use std::pin::Pin;
 
 use itertools::Itertools;
 
+use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Heap;
 use jsparser::Symbol;
@@ -324,10 +325,10 @@ impl<X> Runtime<X> {
 
     fn create_substring(
         &mut self,
-        string: HandleMut<StringFragment>,
+        string: Handle<StringFragment>,
         start: u32,
         end: u32,
-    ) -> HandleMut<StringFragment> {
+    ) -> Handle<StringFragment> {
         debug_assert!(start < end);
         // TODO(perf): inefficient
         let utf16 = string
@@ -364,7 +365,7 @@ impl<X> Runtime<X> {
             std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
         let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
-        self.heap.alloc_layout(layout, move |ptr| {
+        self.heap.alloc_layout_mut(layout, move |ptr| {
             // SAFETY: `ptr` is a non-null pointer to a `Closure`.
             let closure = unsafe { ptr.cast::<Closure>().as_mut() };
             closure.lambda = lambda.into();
@@ -408,7 +409,7 @@ impl<X> Runtime<X> {
         let scratch_buffer_layout = std::alloc::Layout::array::<u8>(n).unwrap();
         let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
-        self.heap.alloc_layout(layout, move |ptr| {
+        self.heap.alloc_layout_mut(layout, move |ptr| {
             // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
             let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
             coroutine.closure = closure;
@@ -422,7 +423,7 @@ impl<X> Runtime<X> {
     }
 
     fn create_object(&mut self, prototype: Option<HandleMut<Object>>) -> HandleMut<Object> {
-        self.heap.alloc(Object::new(prototype))
+        self.heap.alloc_mut(Object::new(prototype))
     }
 
     fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Value> {
@@ -437,7 +438,7 @@ impl<X> Runtime<X> {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
             Value::Object(_) => {
-                const MESSAGE: HandleMut<StringFragment> = const_string!("TODO: make_property_key");
+                const MESSAGE: Handle<StringFragment> = const_string!("TODO: make_property_key");
                 Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
             }
         }
@@ -488,7 +489,7 @@ impl<X> Runtime<X> {
 
     fn throw_internal_error(
         &mut self,
-        message: HandleMut<StringFragment>,
+        message: Handle<StringFragment>,
         retv: &mut Value,
     ) -> Status {
         *retv = Value::Object(self.create_internal_error(Some(message)));

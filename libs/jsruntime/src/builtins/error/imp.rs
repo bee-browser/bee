@@ -1,6 +1,7 @@
 //$id error
 //$class Error
 
+use jsgc::Handle;
 use jsgc::HandleMut;
 use jsparser::Symbol;
 
@@ -114,4 +115,4 @@ pub fn error_prototype_to_string<X>(
     Ok(Value::String(result))
 }
 
-const NAME: HandleMut<StringFragment> = const_string!(jsparser::symbol::builtin::names::ERROR);
+const NAME: Handle<StringFragment> = const_string!(jsparser::symbol::builtin::names::ERROR);

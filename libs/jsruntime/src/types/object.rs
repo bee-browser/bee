@@ -6,6 +6,7 @@ use std::hash::Hasher;
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
+use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Unknown;
 use jsgc::UnknownVtable;
@@ -311,12 +312,12 @@ impl Object {
         HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
     }
 
-    pub(crate) fn string(&self) -> HandleMut<StringFragment> {
+    pub(crate) fn string(&self) -> Handle<StringFragment> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        HandleMut::from_addr(self.kernel.data).unwrap()
+        Handle::from_addr(self.kernel.data).unwrap()
     }
 
-    pub(crate) fn set_string(&mut self, string: HandleMut<StringFragment>) {
+    pub(crate) fn set_string(&mut self, string: Handle<StringFragment>) {
         static VTABLE: KernelVtable = KernelVtable { drop: None };
         self.kernel.vtable = &VTABLE;
         self.kernel.data = string.as_addr();
