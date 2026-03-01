@@ -233,7 +233,6 @@ impl<X> Runtime<X> {
         fill_string: HandleMut<StringFragment>,
         fill_len: u32,
     ) -> HandleMut<StringFragment> {
-        debug_assert!(fill_string.is_simple());
         debug_assert!(!fill_string.is_empty());
 
         let fill_string_len = fill_string.len();
@@ -247,7 +246,7 @@ impl<X> Runtime<X> {
                 .ensure_return_safe(&mut self.heap);
         }
 
-        let frag = fill_string.repeat(repetitions);
+        let frag = fill_string.repeat(repetitions, &mut self.heap);
         if remaining == 0 {
             return frag.ensure_return_safe(&mut self.heap);
         }
@@ -257,24 +256,11 @@ impl<X> Runtime<X> {
     }
 
     fn repeat_string(&mut self, s: HandleMut<StringFragment>, n: u32) -> HandleMut<StringFragment> {
-        if n == 1 {
-            return s;
+        if s.is_empty() || n == 1 {
+            s.ensure_return_safe(&mut self.heap)
+        } else {
+            s.repeat(n, &mut self.heap)
         }
-
-        if s.is_empty() {
-            return s;
-        }
-
-        if s.is_simple() {
-            return s.repeat(n).ensure_return_safe(&mut self.heap);
-        }
-
-        // TODO(perf): inefficient
-        let utf16 = s.make_utf16();
-        let slice = self.heap.alloc_slice_copy(&utf16);
-        let mut frag = StringFragment::new_stack(slice, true);
-        frag.set_repetitions(n);
-        frag.ensure_return_safe(&mut self.heap)
     }
 }
 
