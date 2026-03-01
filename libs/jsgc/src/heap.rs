@@ -5,6 +5,7 @@ use std::ptr::NonNull;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
+use crate::handle::Handle;
 use crate::handle::HandleMut;
 
 /// A heap memory managed by GC.
@@ -22,7 +23,32 @@ impl Heap {
     }
 
     /// Populates a specified object on memory allocated from the heap.
-    pub fn alloc<T>(&mut self, object: T) -> HandleMut<T>
+    pub fn alloc<T>(&mut self, object: T) -> Handle<T>
+    where
+        T: Sized + Unknown,
+    {
+        let ptr = unsafe {
+            // TODO(perf): use a dedicated memory pool
+            let ptr = std::alloc::alloc(Layout::new::<T>()) as *mut T;
+            assert!(!ptr.is_null());
+            std::ptr::write(ptr, object);
+            ptr
+        };
+
+        self.holders.insert(
+            ptr as usize,
+            MemoryHolder {
+                vtable: T::vtable(),
+                layout: Layout::new::<T>(),
+                addr: ptr as usize,
+            },
+        );
+
+        Handle::from_ptr(ptr).unwrap()
+    }
+
+    /// Populates a specified object on memory allocated from the heap.
+    pub fn alloc_mut<T>(&mut self, object: T) -> HandleMut<T>
     where
         T: Sized + Unknown,
     {
@@ -47,7 +73,29 @@ impl Heap {
     }
 
     /// Populates a specified object on memory allocated from the heap.
-    pub fn alloc_layout<T, F>(&mut self, layout: Layout, init: F) -> HandleMut<T>
+    pub fn alloc_layout<T, F>(&mut self, layout: Layout, init: F) -> Handle<T>
+    where
+        T: Sized + Unknown,
+        F: FnOnce(NonNull<u8>),
+    {
+        let ptr = unsafe {
+            // TODO(perf): use a dedicated memory pool
+            NonNull::new(std::alloc::alloc(layout)).unwrap()
+        };
+        init(ptr);
+        self.holders.insert(
+            ptr.addr().get(),
+            MemoryHolder {
+                vtable: T::vtable(),
+                layout,
+                addr: ptr.addr().get(),
+            },
+        );
+        Handle::from_ref(unsafe { ptr.cast::<T>().as_ref() })
+    }
+
+    /// Populates a specified object on memory allocated from the heap.
+    pub fn alloc_layout_mut<T, F>(&mut self, layout: Layout, init: F) -> HandleMut<T>
     where
         T: Sized + Unknown,
         F: FnOnce(NonNull<u8>),
