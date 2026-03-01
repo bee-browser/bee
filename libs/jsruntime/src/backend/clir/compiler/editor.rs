@@ -575,12 +575,6 @@ impl<'a> Editor<'a> {
             StringFragment::ALIGNMENT.ilog2() as u8,
         ));
 
-        let next = self.builder.ins().iconst(self.addr_type, 0);
-        self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
-
-        let repetitions = self.builder.ins().iconst(ir::types::I32, 1);
-        self.put_store_to_slot(repetitions, slot, StringFragment::REPETITIONS_OFFSET);
-
         let flags = self
             .builder
             .ins()
@@ -602,6 +596,14 @@ impl<'a> Editor<'a> {
             .ins()
             .store(FLAGS, ptr, target.0, StringFragment::PTR_OFFSET as i32);
 
+        let offset = self.builder.ins().iconst(ir::types::I32, 0);
+        self.builder.ins().store(
+            FLAGS,
+            offset,
+            target.0,
+            StringFragment::OFFSET_OFFSET as i32,
+        );
+
         debug_assert!(value.len() <= u32::MAX as usize);
         let len = self
             .builder
@@ -621,14 +623,14 @@ impl<'a> Editor<'a> {
             StringFragment::ALIGNMENT.ilog2() as u8,
         ));
 
-        let next = self.builder.ins().iconst(self.addr_type, 0);
-        self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
-
         let ptr = self
             .builder
             .ins()
             .iconst(self.addr_type, value.as_ptr() as i64);
         self.put_store_to_slot(ptr, slot, StringFragment::PTR_OFFSET);
+
+        let offset = self.builder.ins().iconst(ir::types::I32, 0);
+        self.put_store_to_slot(offset, slot, StringFragment::OFFSET_OFFSET);
 
         debug_assert!(value.len() <= u32::MAX as usize);
         let len = self
@@ -636,9 +638,6 @@ impl<'a> Editor<'a> {
             .ins()
             .iconst(ir::types::I32, value.len() as i64);
         self.put_store_to_slot(len, slot, StringFragment::LEN_OFFSET);
-
-        let repetitions = self.builder.ins().iconst(ir::types::I32, 1);
-        self.put_store_to_slot(repetitions, slot, StringFragment::REPETITIONS_OFFSET);
 
         let flags = self
             .builder

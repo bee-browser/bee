@@ -212,3 +212,12 @@ type TraceFn = fn(usize, &mut VisitList);
 pub trait Unknown {
     fn vtable() -> &'static UnknownVtable;
 }
+
+impl Unknown for u16 {
+    fn vtable() -> &'static UnknownVtable {
+        &UnknownVtable {
+            tidy: None,
+            trace: None,
+        }
+    }
+}
