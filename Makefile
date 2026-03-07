@@ -39,7 +39,7 @@ list-targets:
 	@grep -E '^\.PHONY: ' $(MAKEFILE_LIST) | cut -d ' ' -f 2 | grep -v '^\$$' | sort
 
 .PHONY: check
-check: check-rust check-js
+check: check-rust check-js check-github-actions
 
 .PHONY: check-rust
 check-rust:
@@ -50,6 +50,17 @@ check-rust:
 .PHONY: check-js
 # TODO
 check-js:
+
+.PHONY: check-github-actions
+check-github-actions:
+	zizmor -p .github
+
+.PHONY: pin
+pin: pin-github-actions
+
+.PHONY: pin-github-actions
+pin-github-actions:
+	pinact run
 
 .PHONY: build
 build: OPTIONS ?=

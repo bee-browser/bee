@@ -6,20 +6,24 @@ on:
     types:
       - closed
 
+permissions: {}
+
 jobs:
   archive:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: bencherdev/bencher@main
+      - uses: bencherdev/bencher@8151077aa7b1bceaac11c4b308265417cae60e2b # v0.5.10
       - name: Archive closed fork PR branch
         run: >-
           bencher archive
           --project=bee-browser
-          --token='${{ secrets.BENCHER_API_TOKEN }}'
+          --token="$BENCHER_API_TOKEN"
           --branch="$GITHUB_HEAD_REF"
+        env:
+          BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}

@@ -15,8 +15,7 @@ on:
     paths-ignore:
       - '**.md'
 
-env:
-  DENO_DIR: /tmp/deno
+permissions: {}
 
 jobs:
   coverage:
@@ -29,15 +28,16 @@ jobs:
       id-token: write
     steps:
       # Remove packages in order to avoid "No space left on device" error in `make coverage`.
-      - uses: jlumbroso/free-disk-space@v1.3.1
-      - uses: actions/checkout@v6
+      - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: rustfmt
-      # The following error occurs when using davidlattimore/wild-action@latest in this workflow.
+      # The following error occurs when using davidlattimore/wild-action in this workflow.
       #
       # ```
       # error: linker `clang` not found
@@ -46,24 +46,19 @@ jobs:
       # ```
       #
       # Probably, jlumbroso/free-disk-space uninstalls clang-* and this causes the error.
-      - uses: rui314/setup-mold@v1
-      - uses: Swatinem/rust-cache@v2
-      - uses: denoland/setup-deno@v2
+      - uses: rui314/setup-mold@725a8794d15fc7563f59595bd9556495c0564878 # staging
+      - uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version-file: .tool-versions
-      - name: Cache Deno dependencies
-        uses: actions/cache@v5
+      - uses: taiki-e/install-action@385db9cc6bf65d19775b02084a4b698eaca9a4f2 # v2.68.19
         with:
-          path: ${{ env. DENO_DIR }}
-          key: deno-dir-${{ runner.os }}-${{ hashFiles('deno.lock') }}
-      - uses: taiki-e/install-action@nextest
-      - uses: taiki-e/install-action@cargo-llvm-cov
+          tool: cargo-llvm-cov, nextest
       - name: Codegen
         run: make -j $(nproc) codegen
       - name: Generate code coverage
         run: |
           make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json'
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           files: codecov.json
           fail_ci_if_error: true

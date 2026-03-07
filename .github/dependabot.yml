@@ -4,10 +4,14 @@ updates:
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
   - package-ecosystem: cargo
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     groups:
       # cranelift* must be updated in the same pull request
       cranelift:

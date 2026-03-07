@@ -9,8 +9,7 @@ on:
     paths-ignore:
       - '**.md'
 
-env:
-  DENO_DIR: /tmp/deno
+permissions: {}
 
 jobs:
   bench:
@@ -21,32 +20,27 @@ jobs:
       checks: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: rustfmt
-      - uses: davidlattimore/wild-action@latest
-      - uses: Swatinem/rust-cache@v2
-      - uses: denoland/setup-deno@v2
+      - uses: davidlattimore/wild-action@b566cb94d30560824721753b60e67a4259a548cb # 0.8.0
+      - uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version-file: .tool-versions
-      - name: Cache Deno dependencies
-        uses: actions/cache@v5
-        with:
-          path: ${{ env. DENO_DIR }}
-          key: deno-dir-${{ runner.os }}-${{ hashFiles('deno.lock') }}
       - name: Codegen
         run: make -j $(nproc) codegen
-      - uses: bencherdev/bencher@main
+      - uses: bencherdev/bencher@8151077aa7b1bceaac11c4b308265417cae60e2b # v0.5.10
       - name: Benchmark tests (push)
         run: >-
           bencher run
           --project=bee-browser
-          --token='${{ secrets.BENCHER_API_TOKEN }}'
-          --branch='${{ github.ref_name }}'
+          --token="$TOKEN"
+          --branch="$REF_NAME"
           --testbed=ubuntu-latest
           --threshold-measure=latency
           --threshold-test=t_test
@@ -55,3 +49,6 @@ jobs:
           --thresholds-reset
           --adapter=rust_criterion
           make bench
+        env:
+          TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}

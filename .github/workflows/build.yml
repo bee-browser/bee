@@ -28,8 +28,7 @@ on:
           - stable
           - nightly
 
-env:
-  DENO_DIR: /tmp/deno
+permissions: {}
 
 jobs:
   build:
@@ -37,25 +36,21 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ inputs.rust }}
           components: clippy, rustfmt
-      - uses: davidlattimore/wild-action@latest
-      - uses: Swatinem/rust-cache@v2
-      - uses: denoland/setup-deno@v2
+      - uses: davidlattimore/wild-action@b566cb94d30560824721753b60e67a4259a548cb # 0.8.0
+      - uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
         with:
           deno-version-file: .tool-versions
-      - name: Cache Deno dependencies
-        uses: actions/cache@v5
+      - uses: taiki-e/install-action@385db9cc6bf65d19775b02084a4b698eaca9a4f2 # v2.68.19
         with:
-          path: ${{ env. DENO_DIR }}
-          key: deno-dir-${{ runner.os }}-${{ hashFiles('deno.lock') }}
-      - uses: taiki-e/install-action@nextest
+          tool: nextest, zizmor
       - name: Codegen
         run: make -j $(nproc) codegen
       - name: Check

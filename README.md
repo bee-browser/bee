@@ -22,6 +22,8 @@ Install the following software:
 * [jq]
 * [yq]
 * [Docker CLI]
+* [pinact]
+* [zizmor]
 
 Then:
 
@@ -80,6 +82,8 @@ shall be dual licensed as above, without any additional terms or conditions.
 [jq]: https://jqlang.github.io/jq/
 [yq]: https://mikefarah.gitbook.io/yq/
 [Docker CLI]: https://docs.docker.com/reference/cli/docker/
+[pinact]: https://github.com/suzuki-shunsuke/pinact
+[zizmor]: https://github.com/zizmorcore/zizmor
 [cargo-llvm-cov]: https://github.com/taiki-e/cargo-llvm-cov
 [flamegraph]: https://github.com/flamegraph-rs/flamegraph
 [hyperfine]: https://github.com/sharkdp/hyperfine

@@ -1,0 +1,11 @@
+rules:
+  anonymous-definition:
+    disable: true
+  concurrency-limits:
+    disable: true
+  dangerous-triggers:
+    ignore:
+      - bench_archive.yml:4:1
+      - bench_upload.yml:4:1
+  undocumented-permissions:
+    disable: true
