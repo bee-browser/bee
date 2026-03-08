@@ -9,6 +9,7 @@ use itertools::Itertools;
 
 use jsgc::Handle;
 use jsgc::Heap;
+use jsgc::Seq;
 use jsgc::Unknown;
 use jsgc::UnknownVtable;
 use jsgc::VisitList;
@@ -69,11 +70,11 @@ impl StringFragment {
     }
 
     // TODO(feat): support DYNAMIC
-    pub(crate) const fn new_stack(slice: &[u16], dynamic: bool) -> Self {
+    pub(crate) const fn new_stack(seq: Seq<u16>, dynamic: bool) -> Self {
         Self {
-            ptr: Handle::from_ptr(slice.as_ptr()).unwrap(),
+            ptr: seq.data,
             offset: 0,
-            len: slice.len() as u32,
+            len: seq.len as u32,
             flags: if dynamic {
                 StringFragmentFlags::STACK.union(StringFragmentFlags::DYNAMIC)
             } else {

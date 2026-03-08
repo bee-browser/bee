@@ -5,6 +5,8 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ptr::NonNull;
 
+use crate::heap::Atom;
+
 /// A data type to hold a non-null pointer to an *immutable* data type managed on the heap memory.
 ///
 /// This type treats the pointee type as an opaque type and simply copy the pointer when the value
@@ -195,6 +197,14 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "HandleMut({})", self.as_ref())
     }
+}
+
+// An *immutable* sequence.
+#[derive(Debug)]
+#[repr(C)]
+pub struct Seq<T: Atom> {
+    pub data: Handle<T>,
+    pub len: usize,
 }
 
 #[cfg(test)]

@@ -17,6 +17,7 @@ use itertools::Itertools;
 use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Heap;
+use jsgc::Seq;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -317,10 +318,10 @@ impl<X> Runtime<X> {
         }
     }
 
-    pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
+    pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> Seq<u16> {
         // TODO(perf): inefficient
         let utf16 = utf8.encode_utf16().collect::<Vec<u16>>();
-        self.heap.alloc_slice_copy(&utf16)
+        self.heap.alloc_seq(&utf16)
     }
 
     fn create_substring(
@@ -336,7 +337,7 @@ impl<X> Runtime<X> {
             .skip(start as usize)
             .take((end - start) as usize)
             .collect_vec();
-        let utf16 = self.heap.alloc_slice_copy(&utf16);
+        let utf16 = self.heap.alloc_seq(&utf16);
         StringFragment::new_stack(utf16, true).ensure_return_safe(&mut self.heap)
     }
 
