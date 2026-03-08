@@ -7,6 +7,7 @@ use rustc_hash::FxHashSet;
 
 use crate::handle::Handle;
 use crate::handle::HandleMut;
+use crate::handle::Seq;
 
 /// A heap memory managed by GC.
 pub struct Heap {
@@ -118,32 +119,28 @@ impl Heap {
 
     // TODO: return HandleMut
     // TODO: there is no way to restrict the type of `T` to an integer type.
-    pub fn alloc_slice_copy<T>(&mut self, src: &[T]) -> &mut [T]
+    pub fn alloc_seq<T>(&mut self, src: &[T]) -> Seq<T>
     where
-        T: Copy,
+        T: Atom,
     {
-        static VTABLE: UnknownVtable = UnknownVtable {
-            tidy: None,
-            trace: None,
-        };
+        const VTABLE: UnknownVtable = UnknownVtable::nop();
         let len = src.len();
         let layout = Layout::array::<T>(len).unwrap();
-        let ptr = unsafe {
+        let data = unsafe {
             // TODO(perf): use a dedicated memory pool
-            let ptr = NonNull::new(std::alloc::alloc(layout)).unwrap().cast::<T>();
-            ptr.as_ptr().copy_from(src.as_ptr(), len);
-            ptr
+            let ptr = NonNull::new(std::alloc::alloc(layout)).unwrap();
+            ptr.cast::<T>().as_ptr().copy_from(src.as_ptr(), len);
+            Handle::from_ref(ptr.cast::<T>().as_ref())
         };
-        let addr = ptr.as_ptr() as usize;
         self.holders.insert(
-            addr,
+            data.as_addr(),
             MemoryHolder {
                 vtable: &VTABLE,
                 layout,
-                addr,
+                addr: data.as_addr(),
             },
         );
-        unsafe { std::slice::from_raw_parts_mut(ptr.as_ptr(), len) }
+        Seq { data, len }
     }
 
     /// Reclaims objects that are not reachable from a specified root objects.
@@ -254,6 +251,15 @@ pub struct UnknownVtable {
     pub trace: Option<TraceFn>,
 }
 
+impl UnknownVtable {
+    const fn nop() -> Self {
+        Self {
+            tidy: None,
+            trace: None,
+        }
+    }
+}
+
 type TidyFn = fn(usize);
 type TraceFn = fn(usize, &mut VisitList);
 
@@ -269,3 +275,6 @@ impl Unknown for u16 {
         }
     }
 }
+
+pub trait Atom: Copy + Sized {}
+impl Atom for u16 {}
