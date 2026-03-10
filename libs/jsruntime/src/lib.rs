@@ -338,7 +338,7 @@ impl<X> Runtime<X> {
             .take((end - start) as usize)
             .collect_vec();
         let utf16 = self.heap.alloc_seq(&utf16);
-        StringFragment::new_stack(utf16, true).ensure_return_safe(&mut self.heap)
+        StringFragment::new_stack(utf16).ensure_return_safe(&mut self.heap)
     }
 
     fn create_closure(

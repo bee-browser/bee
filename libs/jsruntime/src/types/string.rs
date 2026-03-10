@@ -69,17 +69,12 @@ impl StringFragment {
         }
     }
 
-    // TODO(feat): support DYNAMIC
-    pub(crate) const fn new_stack(seq: Seq<u16>, dynamic: bool) -> Self {
+    pub(crate) const fn new_stack(seq: Seq<u16>) -> Self {
         Self {
             ptr: seq.data,
             offset: 0,
             len: seq.len as u32,
-            flags: if dynamic {
-                StringFragmentFlags::STACK.union(StringFragmentFlags::DYNAMIC)
-            } else {
-                StringFragmentFlags::STACK
-            },
+            flags: StringFragmentFlags::STACK,
         }
     }
 
@@ -259,7 +254,7 @@ impl StringFragment {
             ptr: handle,
             offset: 0,
             len: len as u32,
-            flags: StringFragmentFlags::HEAP | StringFragmentFlags::DYNAMIC,
+            flags: StringFragmentFlags::HEAP,
         })
     }
 
@@ -307,8 +302,7 @@ impl StringFragment {
             ptr: self.ptr,
             offset: start,
             len: end - start,
-            flags: StringFragmentFlags::STACK
-                | self.flags.intersection(StringFragmentFlags::DYNAMIC),
+            flags: StringFragmentFlags::STACK,
         }
     }
 
@@ -340,9 +334,7 @@ impl std::fmt::Debug for StringFragment {
         let prefix = bitflags_match!(self.flags, {
             StringFragmentFlags::CONST => r#"const""#,
             StringFragmentFlags::STACK => r#"stack""#,
-            StringFragmentFlags::STACK | StringFragmentFlags::DYNAMIC => r#"stack!""#,
             StringFragmentFlags::HEAP => r#"heap""#,
-            StringFragmentFlags::HEAP | StringFragmentFlags::DYNAMIC => r#"heap!""#,
             _ => unreachable!(),
         });
         write!(f, "{prefix}")?;
@@ -400,9 +392,6 @@ bitflags! {
 
         /// The object has been allocated in the heap.
         const HEAP    = 1 << 2;
-
-        /// The UTF-16 code units has allocated in the heap at runtime.
-        const DYNAMIC = 1 << 3;
     }
 }
 
