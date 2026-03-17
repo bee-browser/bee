@@ -52,11 +52,11 @@ impl StringFragment {
     pub(crate) const EMPTY: Self = Self::new_const(&[]);
     pub(crate) const SPACE: Self = Self::new_const(&[0x0020]);
 
-    pub(crate) const SIZE: usize = size_of::<Self>();
-    pub(crate) const ALIGNMENT: usize = align_of::<Self>();
-    pub(crate) const PTR_OFFSET: usize = std::mem::offset_of!(Self, ptr);
-    pub(crate) const OFFSET_OFFSET: usize = std::mem::offset_of!(Self, offset);
-    pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
+    //pub(crate) const SIZE: usize = size_of::<Self>();
+    //pub(crate) const ALIGNMENT: usize = align_of::<Self>();
+    //pub(crate) const PTR_OFFSET: usize = std::mem::offset_of!(Self, ptr);
+    //pub(crate) const OFFSET_OFFSET: usize = std::mem::offset_of!(Self, offset);
+    //pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     // TODO(refactor): should be private
@@ -69,12 +69,12 @@ impl StringFragment {
         }
     }
 
-    pub(crate) const fn new_stack(seq: Seq<u16>) -> Self {
+    pub(crate) const fn new_heap(seq: Seq<u16>) -> Self {
         Self {
             ptr: seq.data,
             offset: 0,
             len: seq.len as u32,
-            flags: StringFragmentFlags::STACK,
+            flags: StringFragmentFlags::HEAP,
         }
     }
 

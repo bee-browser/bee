@@ -728,7 +728,7 @@ where
     fn process_string(&mut self, value: &[u16]) {
         // Theoretically, the heap memory pointed by `value` can be freed after the IR built by the
         // compiler is freed.
-        let string_ir = self.editor.put_create_string(value);
+        let string_ir = self.editor.put_create_string(self.support, value);
         self.operand_stack.push(Operand::String(string_ir, None));
     }
 
@@ -1146,9 +1146,11 @@ where
         let name = if name == Symbol::NONE {
             &[]
         } else {
-            self.support.get_symbol_name(name)
+            let name = self.support.get_symbol_name(name);
+            // Ugh!: dirty hack...
+            unsafe { std::slice::from_raw_parts(name.as_ptr(), name.len()) }
         };
-        let name = self.editor.put_create_string(name);
+        let name = self.editor.put_create_string(self.support, name);
         let value = self.editor.put_alloc_any();
         self.editor.put_store_string_to_any(name, value);
         let retv = self.editor.put_alloc_any();
@@ -1404,10 +1406,18 @@ where
         use jsparser::symbol::builtin::names;
 
         match operand {
-            Operand::Undefined => self.editor.put_create_string(names::KEYWORD_UNDEFINED),
-            Operand::Null => self.editor.put_create_string(names::KEYWORD_NULL),
-            Operand::Boolean(_, Some(true)) => self.editor.put_create_string(names::KEYWORD_TRUE),
-            Operand::Boolean(_, Some(false)) => self.editor.put_create_string(names::KEYWORD_FALSE),
+            Operand::Undefined => self
+                .editor
+                .put_create_string(self.support, names::KEYWORD_UNDEFINED),
+            Operand::Null => self
+                .editor
+                .put_create_string(self.support, names::KEYWORD_NULL),
+            Operand::Boolean(_, Some(true)) => self
+                .editor
+                .put_create_string(self.support, names::KEYWORD_TRUE),
+            Operand::Boolean(_, Some(false)) => self
+                .editor
+                .put_create_string(self.support, names::KEYWORD_FALSE),
             Operand::Boolean(value, None) => self.perform_boolean_to_string(*value),
             Operand::Number(value, _) => self
                 .editor
@@ -1415,7 +1425,7 @@ where
             Operand::String(value, _) => *value,
             Operand::Object(_) => {
                 self.emit_throw_internal_error(const_string!("TODO: ToString(object)"));
-                self.editor.put_create_string(&[])
+                self.editor.put_create_string(self.support, &[])
             }
             Operand::Any(value, _) => self.editor.put_runtime_to_string(self.support, *value),
             Operand::Lambda(..)
@@ -1428,20 +1438,27 @@ where
 
     fn perform_boolean_to_string(&mut self, value: BooleanIr) -> StringIr {
         use jsparser::symbol::builtin::names;
-        let string_ir = self.editor.put_alloc_string();
         let then_block = self.editor.create_block();
         let else_block = self.editor.create_block();
-        let merge_block = self.editor.create_block();
+        let merge_block = self.editor.create_block_with_addr();
+        // if value
         self.editor
             .put_branch(value, then_block, &[], else_block, &[]);
+        // {
         self.editor.switch_to_block(then_block);
-        self.editor.put_set_string(names::KEYWORD_TRUE, string_ir);
-        self.editor.put_jump(merge_block, &[]);
+        let string_ir = self
+            .editor
+            .put_create_string(self.support, names::KEYWORD_TRUE);
+        self.editor.put_jump(merge_block, &[string_ir.0.into()]);
+        // } else {
         self.editor.switch_to_block(else_block);
-        self.editor.put_set_string(names::KEYWORD_FALSE, string_ir);
-        self.editor.put_jump(merge_block, &[]);
+        let string_ir = self
+            .editor
+            .put_create_string(self.support, names::KEYWORD_FALSE);
+        self.editor.put_jump(merge_block, &[string_ir.0.into()]);
+        // }
         self.editor.switch_to_block(merge_block);
-        string_ir
+        StringIr(self.editor.get_block_param(merge_block, 0))
     }
 
     fn process_concat_strings(&mut self, n: u16) {

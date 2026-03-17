@@ -107,6 +107,13 @@ functions:
       - name: string
         type: '&U16Chunk'
     ret: '&U16Chunk'
+  - name: create_string
+    args:
+      - name: ptr
+        type: '*const u16'
+      - name: len
+        type: 'usize'
+    ret: 'Handle<StringFragment>'
   - name: create_capture
     args:
       - name: target

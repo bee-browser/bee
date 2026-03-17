@@ -35,9 +35,7 @@ pub fn string_from_char_code<X>(
         let code_unit = crate::types::number::to_uint16(arg)?;
         utf16.push(code_unit);
     }
-    let seq = runtime.heap.alloc_seq(&utf16);
-    let fragment = StringFragment::new_stack(seq);
-    let string = fragment.ensure_return_safe(&mut runtime.heap);
+    let string = runtime.create_string(&utf16);
     Ok(Value::String(string))
 }
 
@@ -60,9 +58,7 @@ pub fn string_from_code_point<X>(
         }
         utf16.extend_from_slice(encode_code_point(cp, &mut buf));
     }
-    let seq = runtime.heap.alloc_seq(&utf16);
-    let fragment = StringFragment::new_stack(seq);
-    let string = fragment.ensure_return_safe(&mut runtime.heap);
+    let string = runtime.create_string(&utf16);
     Ok(Value::String(string))
 }
 
@@ -102,9 +98,7 @@ pub fn string_prototype_at<X>(
     }
     // TODO(perf): memory inefficient
     let code_unit = s.at(k as u32);
-    let seq = runtime.heap.alloc_seq(code_unit.as_slice());
-    let fragment = StringFragment::new_stack(seq);
-    let string = fragment.ensure_return_safe(&mut runtime.heap);
+    let string = runtime.create_string(code_unit.as_slice());
     Ok(Value::String(string))
 }
 
@@ -125,9 +119,7 @@ pub fn string_prototype_char_at<X>(
     }
     // TODO(perf): memory inefficient
     let code_unit = s.at(position as u32);
-    let seq = runtime.heap.alloc_seq(code_unit.as_slice());
-    let fragment = StringFragment::new_stack(seq);
-    let string = fragment.ensure_return_safe(&mut runtime.heap);
+    let string = runtime.create_string(code_unit.as_slice());
     Ok(Value::String(string))
 }
 

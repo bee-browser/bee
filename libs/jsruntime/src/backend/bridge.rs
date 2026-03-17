@@ -180,8 +180,7 @@ pub(crate) extern "C" fn runtime_number_to_string<X>(
 impl<X> Runtime<X> {
     pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<StringFragment> {
         // TODO(feat): implment Number::toString()
-        let utf16 = self.alloc_utf16(&format!("{value}"));
-        StringFragment::new_stack(utf16).ensure_return_safe(&mut self.heap)
+        self.create_string_from_utf8(&format!("{value}"))
     }
 }
 
@@ -360,6 +359,16 @@ pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
     string: Handle<StringFragment>,
 ) -> Handle<StringFragment> {
     string.ensure_return_safe(&mut runtime.heap)
+}
+
+pub(crate) extern "C" fn runtime_create_string<X>(
+    runtime: &mut Runtime<X>,
+    ptr: *const u16,
+    len: usize,
+) -> Handle<StringFragment> {
+    // SAFETY: `from_raw_parts()` always succeeds.
+    let utf16 = unsafe { std::slice::from_raw_parts(ptr, len) };
+    runtime.create_string(utf16)
 }
 
 pub(crate) extern "C" fn runtime_create_capture<X>(
