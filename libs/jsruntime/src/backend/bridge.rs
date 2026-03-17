@@ -12,7 +12,7 @@ use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::PropertyKey;
 use crate::types::Status;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 macro_rules! into_object {
@@ -163,7 +163,7 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
 pub(crate) extern "C" fn runtime_to_string<X>(
     runtime: &mut Runtime<X>,
     value: &Value,
-) -> Handle<StringFragment> {
+) -> Handle<String> {
     logger::debug!(event = "runtime_to_string", ?value);
     runtime.value_to_string(value).unwrap()
 }
@@ -172,13 +172,13 @@ pub(crate) extern "C" fn runtime_to_string<X>(
 pub(crate) extern "C" fn runtime_number_to_string<X>(
     runtime: &mut Runtime<X>,
     value: f64,
-) -> Handle<StringFragment> {
+) -> Handle<String> {
     logger::debug!(event = "runtime_number_to_string", ?value);
     runtime.number_to_string(value)
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<StringFragment> {
+    pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<String> {
         // TODO(feat): implment Number::toString()
         self.create_string_from_utf8(&format!("{value}"))
     }
@@ -287,8 +287,8 @@ pub(crate) extern "C" fn runtime_to_uint32<X>(_runtime: &mut Runtime<X>, value: 
 
 pub(crate) extern "C" fn runtime_is_same_string<X>(
     _runtime: &mut Runtime<X>,
-    a: Handle<StringFragment>,
-    b: Handle<StringFragment>,
+    a: Handle<String>,
+    b: Handle<String>,
 ) -> bool {
     *a == *b
 }
@@ -349,7 +349,7 @@ pub(crate) extern "C" fn runtime_is_strictly_equal<X>(
 pub(crate) extern "C" fn runtime_get_typeof<X>(
     _runtime: &mut Runtime<X>,
     value: &Value,
-) -> Handle<StringFragment> {
+) -> Handle<String> {
     debug_assert!(!matches!(value, Value::None));
     value.get_typeof()
 }
@@ -358,7 +358,7 @@ pub(crate) extern "C" fn runtime_create_string<X>(
     runtime: &mut Runtime<X>,
     ptr: *const u16,
     len: usize,
-) -> Handle<StringFragment> {
+) -> Handle<String> {
     // SAFETY: `from_raw_parts()` always succeeds.
     let utf16 = unsafe { std::slice::from_raw_parts(ptr, len) };
     runtime.create_string(utf16)
@@ -478,7 +478,7 @@ pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) 
 
 pub(crate) extern "C" fn runtime_create_internal_error<X>(
     runtime: &mut Runtime<X>,
-    message: Handle<StringFragment>,
+    message: Handle<String>,
 ) -> *mut Object {
     runtime.create_internal_error(Some(message)).as_ptr()
 }
@@ -620,9 +620,9 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
 
 pub(crate) extern "C" fn runtime_concat_strings<X>(
     runtime: &mut Runtime<X>,
-    head: Handle<StringFragment>,
-    tail: Handle<StringFragment>,
-) -> Handle<StringFragment> {
+    head: Handle<String>,
+    tail: Handle<String>,
+) -> Handle<String> {
     head.concat(tail, &mut runtime.heap)
 }
 
@@ -819,7 +819,7 @@ pub(crate) extern "C" fn runtime_print_f64<X>(
 
 pub(crate) extern "C" fn runtime_print_string<X>(
     _runtime: &mut Runtime<X>,
-    value: Handle<StringFragment>,
+    value: Handle<String>,
     msg: *const std::os::raw::c_char,
 ) {
     // SAFETY: `msg` is always non-null.

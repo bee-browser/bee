@@ -52,12 +52,12 @@ functions:
     args:
       - name: value
         type: '&Value'
-    ret: Handle<StringFragment>
+    ret: Handle<String>
   - name: number_to_string
     args:
       - name: value
         type: 'f64'
-    ret: Handle<StringFragment>
+    ret: Handle<String>
   - name: to_object
     args:
       - name: value
@@ -78,9 +78,9 @@ functions:
   - name: is_same_string
     args:
       - name: a
-        type: Handle<StringFragment>
+        type: Handle<String>
       - name: b
-        type: Handle<StringFragment>
+        type: Handle<String>
     ret: bool
   - name: is_loosely_equal
     args:
@@ -101,14 +101,14 @@ functions:
     args:
       - name: value
         type: '&Value'
-    ret: Handle<StringFragment>
+    ret: Handle<String>
   - name: create_string
     args:
       - name: ptr
         type: '*const u16'
       - name: len
         type: 'usize'
-    ret: Handle<StringFragment>
+    ret: Handle<String>
   - name: create_capture
     args:
       - name: target
@@ -163,7 +163,7 @@ functions:
   - name: create_internal_error
     args:
       - name: message
-        type: Handle<StringFragment>
+        type: Handle<String>
     ret: '&mut Object'
   - name: get_value_by_symbol
     args:
@@ -240,10 +240,10 @@ functions:
   - name: concat_strings
     args:
       - name: str1
-        type: Handle<StringFragment>
+        type: Handle<String>
       - name: str2
-        type: Handle<StringFragment>
-    ret: Handle<StringFragment>
+        type: Handle<String>
+    ret: Handle<String>
   # 7.3.5 CreateDataProperty ( O, P, V )
   - name: create_data_property_by_symbol
     args:
@@ -324,7 +324,7 @@ functions:
   - name: print_string
     args:
       - name: value
-        type: Handle<StringFragment>
+        type: Handle<String>
       - name: msg
         type: '&std::ffi::CStr'
   - name: print_value

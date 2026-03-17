@@ -13,38 +13,34 @@ use jsgc::UnknownVtable;
 use jsgc::VisitList;
 
 /// An empty string.
-pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);
+pub const EMPTY: Handle<String> = Handle::from_ref(&String::EMPTY);
 
 /// A single U+0020 character.
-pub const SPACE: Handle<StringFragment> = Handle::from_ref(&StringFragment::SPACE);
+pub const SPACE: Handle<String> = Handle::from_ref(&String::SPACE);
 
-/// A data type representing an **immutable** fragment of UTF-16 code units.
-///
-/// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
-///
-/// This type may be allocated on the stack.
+/// A data type representing an **immutable** UTF-16 code units.
 #[derive(Clone)]
 #[repr(C)]
-pub struct StringFragment {
-    /// A pointer to the UTF-16 code unit sequence if it exists.
+pub struct String {
+    /// A pointer to the UTF-16 code unit sequence.
     ///
     /// The `ptr` points to one of the following memory block:
     ///
     ///   * A constant array of UTF-16 code units
     ///   * An array of UTF-16 code units allocated in the string pool (not yet implemented)
     ///   * A memory block allocated in the GC heap
-    // TODO(issue#237): GcCellRef
     ptr: Handle<u16>,
 
+    /// The position of the first code unit in the UTF-16 code unit sequence.
     offset: u32,
 
-    /// The number of the UTF-16 code units in the string fragment.
+    /// The number of the UTF-16 code units in the string.
     len: u32,
 }
 
-base::static_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
+base::static_assert_eq!(align_of::<String>(), align_of::<usize>());
 
-impl StringFragment {
+impl String {
     pub(crate) const EMPTY: Self = Self::new_const(&[]);
     pub(crate) const SPACE: Self = Self::new_const(&[0x0020]);
 
@@ -229,7 +225,7 @@ impl StringFragment {
             );
         });
 
-        heap.alloc(StringFragment {
+        heap.alloc(String {
             ptr: handle,
             offset: 0,
             len: len as u32,
@@ -258,7 +254,7 @@ impl StringFragment {
         head
     }
 
-    pub(crate) fn sub_fragment(&self, start: u32, end: u32, heap: &mut Heap) -> Handle<Self> {
+    pub(crate) fn substring(&self, start: u32, end: u32, heap: &mut Heap) -> Handle<Self> {
         heap.alloc(Self {
             ptr: self.ptr,
             offset: start,
@@ -272,16 +268,16 @@ impl StringFragment {
 }
 
 // The UTF-16 code units never change.
-unsafe impl Send for StringFragment {}
-unsafe impl Sync for StringFragment {}
+unsafe impl Send for String {}
+unsafe impl Sync for String {}
 
-impl PartialEq for StringFragment {
+impl PartialEq for String {
     fn eq(&self, other: &Self) -> bool {
         self.code_units().eq(other.code_units())
     }
 }
 
-impl Index<u32> for StringFragment {
+impl Index<u32> for String {
     type Output = u16;
 
     fn index(&self, index: u32) -> &Self::Output {
@@ -289,7 +285,7 @@ impl Index<u32> for StringFragment {
     }
 }
 
-impl std::fmt::Debug for StringFragment {
+impl std::fmt::Debug for String {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, r#"""#)?;
         let utf16 = self.as_slice().iter().cloned();
@@ -304,7 +300,7 @@ impl std::fmt::Debug for StringFragment {
     }
 }
 
-impl std::fmt::Display for StringFragment {
+impl std::fmt::Display for String {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for c in std::char::decode_utf16(self.code_units())
             .map(|r| r.map_err(|e| e.unpaired_surrogate()))
@@ -318,12 +314,10 @@ impl std::fmt::Display for StringFragment {
     }
 }
 
-impl Unknown for StringFragment {
+impl Unknown for String {
     fn vtable() -> &'static UnknownVtable {
         fn trace(addr: usize, visit_list: &mut VisitList) {
-            Handle::<StringFragment>::from_addr(addr)
-                .unwrap()
-                .trace(visit_list);
+            Handle::<String>::from_addr(addr).unwrap().trace(visit_list);
         }
 
         static VTABLE: UnknownVtable = UnknownVtable {
@@ -335,19 +329,20 @@ impl Unknown for StringFragment {
     }
 }
 
+// TODO(refactor)
 struct CodeUnits<'a> {
-    fragment: &'a StringFragment,
+    string: &'a String,
     pos: u32,
 }
 
 impl<'a> CodeUnits<'a> {
-    fn new(fragment: &'a StringFragment) -> Self {
-        Self { fragment, pos: 0 }
+    fn new(string: &'a String) -> Self {
+        Self { string, pos: 0 }
     }
 
     #[allow(unused)]
     fn has_next(&self) -> bool {
-        self.pos < self.fragment.len
+        self.pos < self.string.len
     }
 }
 
@@ -355,10 +350,10 @@ impl<'a> Iterator for CodeUnits<'a> {
     type Item = u16;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let fragment = self.fragment;
+        let string = self.string;
 
-        if self.pos < fragment.len {
-            let code_unit = fragment[self.pos];
+        if self.pos < string.len {
+            let code_unit = string[self.pos];
             self.pos += 1;
             return Some(code_unit);
         }
@@ -367,14 +362,15 @@ impl<'a> Iterator for CodeUnits<'a> {
     }
 }
 
+// TODO(refactor)
 struct CodePoints<'a> {
     code_units: Peekable<Enumerate<CodeUnits<'a>>>,
 }
 
 impl<'a> CodePoints<'a> {
-    fn new(fragment: &'a StringFragment) -> Self {
+    fn new(string: &'a String) -> Self {
         Self {
-            code_units: CodeUnits::new(fragment).enumerate().peekable(),
+            code_units: CodeUnits::new(string).enumerate().peekable(),
         }
     }
 }
