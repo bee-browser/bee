@@ -52,13 +52,6 @@ impl StringFragment {
     pub(crate) const EMPTY: Self = Self::new_const(&[]);
     pub(crate) const SPACE: Self = Self::new_const(&[0x0020]);
 
-    //pub(crate) const SIZE: usize = size_of::<Self>();
-    //pub(crate) const ALIGNMENT: usize = align_of::<Self>();
-    //pub(crate) const PTR_OFFSET: usize = std::mem::offset_of!(Self, ptr);
-    //pub(crate) const OFFSET_OFFSET: usize = std::mem::offset_of!(Self, offset);
-    //pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
-    pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
-
     // TODO(refactor): should be private
     pub const fn new_const(slice: &'static [u16]) -> Self {
         Self {
@@ -84,10 +77,6 @@ impl StringFragment {
 
     pub(crate) const fn is_const(&self) -> bool {
         self.flags.contains(StringFragmentFlags::CONST)
-    }
-
-    pub(crate) const fn on_stack(&self) -> bool {
-        self.flags.contains(StringFragmentFlags::STACK)
     }
 
     /// Returns the number of UTF-16 code units in the string.
@@ -225,10 +214,10 @@ impl StringFragment {
 
     pub fn concat(&self, tail: Handle<Self>, heap: &mut Heap) -> Handle<Self> {
         if self.is_empty() {
-            return tail.ensure_return_safe(heap);
+            return tail;
         }
         if tail.is_empty() {
-            return self.ensure_return_safe(heap);
+            return Handle::from_ref(self);
         }
 
         let len = (self.len() + tail.len()) as usize;
@@ -258,23 +247,6 @@ impl StringFragment {
         })
     }
 
-    pub fn ensure_return_safe(&self, heap: &mut Heap) -> Handle<Self> {
-        if !self.on_stack() {
-            return Handle::from_ref(self);
-        }
-
-        if self.is_empty() {
-            return EMPTY;
-        }
-
-        self.migrate_to_heap(heap)
-    }
-
-    // Migrate a UTF-16 string from the stack to the heap.
-    fn migrate_to_heap(&self, heap: &mut Heap) -> Handle<Self> {
-        heap.alloc(self.clone())
-    }
-
     pub(crate) fn code_units(&self) -> impl Iterator<Item = u16> {
         CodeUnits::new(self)
     }
@@ -297,13 +269,13 @@ impl StringFragment {
         head
     }
 
-    pub(crate) fn sub_fragment(&self, start: u32, end: u32) -> Self {
-        Self {
+    pub(crate) fn sub_fragment(&self, start: u32, end: u32, heap: &mut Heap) -> Handle<Self> {
+        heap.alloc(Self {
             ptr: self.ptr,
             offset: start,
             len: end - start,
-            flags: StringFragmentFlags::STACK,
-        }
+            flags: self.flags,
+        })
     }
 
     fn trace(&self, visit_list: &mut VisitList) {
@@ -333,7 +305,6 @@ impl std::fmt::Debug for StringFragment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let prefix = bitflags_match!(self.flags, {
             StringFragmentFlags::CONST => r#"const""#,
-            StringFragmentFlags::STACK => r#"stack""#,
             StringFragmentFlags::HEAP => r#"heap""#,
             _ => unreachable!(),
         });
@@ -387,11 +358,8 @@ bitflags! {
         /// The object is a constant value.
         const CONST   = 1 << 0;
 
-        /// The object has been allocated on the stack.
-        const STACK   = 1 << 1;
-
         /// The object has been allocated in the heap.
-        const HEAP    = 1 << 2;
+        const HEAP    = 1 << 1;
     }
 }
 

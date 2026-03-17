@@ -22,7 +22,6 @@ pub use object::ObjectFlags;
 pub use object::Property;
 pub use object::PropertyKey;
 pub use string::StringFragment;
-pub use string::StringFragmentFlags;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
 // memory layout of a type you want to change.  It's recommended to use compile-time assertions
