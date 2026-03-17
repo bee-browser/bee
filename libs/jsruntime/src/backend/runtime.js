@@ -68,8 +68,6 @@ function makeCraneliftIRType(type) {
     case '&mut c_void':
     case '*const u16':
     case '&std::ffi::CStr':
-    case '&U16Chunk':
-    case '&mut Variable':
     case '&Capture':
     case '&mut Capture':
     case '&mut Closure':
@@ -77,11 +75,8 @@ function makeCraneliftIRType(type) {
     case '&mut Object':
     case '&Value':
     case '&mut Value':
-    case '*mut Value':
-    case '&PropertyKey':
     case 'Lambda':
     case '&mut Runtime<X>':
-    case 'StringHandle':
     case 'Handle<StringFragment>':
       return 'addr_type';
     case undefined:
