@@ -3,8 +3,6 @@ use std::iter::Enumerate;
 use std::iter::Peekable;
 use std::ops::Index;
 
-use bitflags::bitflags;
-use bitflags::bitflags_match;
 use itertools::Itertools;
 
 use jsgc::Handle;
@@ -42,8 +40,6 @@ pub struct StringFragment {
 
     /// The number of the UTF-16 code units in the string fragment.
     len: u32,
-
-    flags: StringFragmentFlags,
 }
 
 base::static_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
@@ -58,7 +54,6 @@ impl StringFragment {
             ptr: Handle::from_ptr(slice.as_ptr()).unwrap(),
             offset: 0,
             len: slice.len() as u32,
-            flags: StringFragmentFlags::CONST,
         }
     }
 
@@ -67,16 +62,11 @@ impl StringFragment {
             ptr: seq.data,
             offset: 0,
             len: seq.len as u32,
-            flags: StringFragmentFlags::HEAP,
         }
     }
 
     pub(crate) const fn is_empty(&self) -> bool {
         self.len == 0
-    }
-
-    pub(crate) const fn is_const(&self) -> bool {
-        self.flags.contains(StringFragmentFlags::CONST)
     }
 
     /// Returns the number of UTF-16 code units in the string.
@@ -243,7 +233,6 @@ impl StringFragment {
             ptr: handle,
             offset: 0,
             len: len as u32,
-            flags: StringFragmentFlags::HEAP,
         })
     }
 
@@ -274,7 +263,6 @@ impl StringFragment {
             ptr: self.ptr,
             offset: start,
             len: end - start,
-            flags: self.flags,
         })
     }
 
@@ -303,12 +291,7 @@ impl Index<u32> for StringFragment {
 
 impl std::fmt::Debug for StringFragment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let prefix = bitflags_match!(self.flags, {
-            StringFragmentFlags::CONST => r#"const""#,
-            StringFragmentFlags::HEAP => r#"heap""#,
-            _ => unreachable!(),
-        });
-        write!(f, "{prefix}")?;
+        write!(f, r#"""#)?;
         let utf16 = self.as_slice().iter().cloned();
         for c in std::char::decode_utf16(utf16).map(|r| r.map_err(|e| e.unpaired_surrogate())) {
             match c {
@@ -349,17 +332,6 @@ impl Unknown for StringFragment {
         };
 
         &VTABLE
-    }
-}
-
-bitflags! {
-    #[derive(Clone, Copy, PartialEq)]
-    pub struct StringFragmentFlags: u8 {
-        /// The object is a constant value.
-        const CONST   = 1 << 0;
-
-        /// The object has been allocated in the heap.
-        const HEAP    = 1 << 1;
     }
 }
 

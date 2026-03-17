@@ -2013,7 +2013,6 @@ impl<'a> Editor<'a> {
         message: Handle<StringFragment>,
     ) -> ObjectIr {
         logger::debug!(event = "put_runtime_create_internal_error", ?message);
-        debug_assert!(message.is_const());
         let func = self
             .runtime_func_cache
             .import_runtime_create_internal_error(support, self.builder.func);
