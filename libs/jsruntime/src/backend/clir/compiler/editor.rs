@@ -18,7 +18,7 @@ use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Object;
 use crate::types::ObjectFlags;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 use super::AnyIr;
@@ -2010,7 +2010,7 @@ impl<'a> Editor<'a> {
     pub fn put_runtime_create_internal_error(
         &mut self,
         support: &mut impl EditorSupport,
-        message: Handle<StringFragment>,
+        message: Handle<String>,
     ) -> ObjectIr {
         logger::debug!(event = "put_runtime_create_internal_error", ?message);
         let func = self

@@ -12,7 +12,7 @@ use base::macros::assert_eq;
 use jsgc::Handle;
 
 use jsruntime::Runtime;
-use jsruntime::StringFragment;
+use jsruntime::String;
 use jsruntime::Value;
 
 logging::init!();
@@ -72,7 +72,7 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
 fn {{name}}() {
     {{#each strings}}
     const CODE_UNITS{{@index}}: [u16; {{size}}] = [{{join data ", "}}];
-    const STRING{{@index}}: StringFragment = StringFragment::new_const(&CODE_UNITS{{@index}});
+    const STRING{{@index}}: String = String::new_const(&CODE_UNITS{{@index}});
     {{/each}}
     let src = include_str!("{{filename}}");
     let result = evaluate(src, {{module}}, true, false, vec![
