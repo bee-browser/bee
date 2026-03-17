@@ -354,13 +354,6 @@ pub(crate) extern "C" fn runtime_get_typeof<X>(
     value.get_typeof()
 }
 
-pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
-    runtime: &mut Runtime<X>,
-    string: Handle<StringFragment>,
-) -> Handle<StringFragment> {
-    string.ensure_return_safe(&mut runtime.heap)
-}
-
 pub(crate) extern "C" fn runtime_create_string<X>(
     runtime: &mut Runtime<X>,
     ptr: *const u16,

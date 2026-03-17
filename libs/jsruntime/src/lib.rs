@@ -310,13 +310,6 @@ impl<X> Runtime<X> {
         retv.into_result(status)
     }
 
-    pub fn ensure_value_return_safe(&mut self, value: &Value) -> Value {
-        match value {
-            Value::String(string) => Value::String(string.ensure_return_safe(&mut self.heap)),
-            _ => value.clone(),
-        }
-    }
-
     fn create_string(&mut self, value: &[u16]) -> Handle<StringFragment> {
         let seq = self.heap.alloc_seq(value);
         self.heap.alloc(StringFragment::new_heap(seq))
@@ -455,8 +448,7 @@ impl<X> Runtime<X> {
         key: &PropertyKey,
         value: &Value,
     ) -> Result<bool, Value> {
-        let value = self.ensure_value_return_safe(value);
-        object.define_own_property(key.clone(), Property::data_wec(value))
+        object.define_own_property(key.clone(), Property::data_wec(value.clone()))
     }
 
     // 7.3.25 CopyDataProperties ( target, source, excludedItems )
