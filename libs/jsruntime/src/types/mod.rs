@@ -21,7 +21,7 @@ pub use object::Object;
 pub use object::ObjectFlags;
 pub use object::Property;
 pub use object::PropertyKey;
-pub use string::StringFragment;
+pub use string::String;
 
 // CAUTION: This module contains types used in JIT-generated code.  Please carefully check the
 // memory layout of a type you want to change.  It's recommended to use compile-time assertions
@@ -39,7 +39,7 @@ pub enum Value {
     Null = Self::KIND_NULL,
     Boolean(bool) = Self::KIND_BOOLEAN,
     Number(f64) = Self::KIND_NUMBER,
-    String(Handle<StringFragment>) = Self::KIND_STRING,
+    String(Handle<String>) = Self::KIND_STRING,
     Object(HandleMut<Object>) = Self::KIND_OBJECT,
 }
 
@@ -96,7 +96,7 @@ impl Value {
     }
 
     // 13.5.3.1 Runtime Semantics: Evaluation
-    pub fn get_typeof(&self) -> Handle<StringFragment> {
+    pub fn get_typeof(&self) -> Handle<String> {
         match self {
             Self::None => unreachable!(),
             Self::Undefined => const_string!("undefined"),
@@ -159,11 +159,11 @@ impl PartialEq for Value {
             (Self::String(a), Self::String(b)) => {
                 debug_assert_eq!(
                     std::any::type_name_of_val(a.deref()),
-                    std::any::type_name::<StringFragment>()
+                    std::any::type_name::<String>()
                 );
                 debug_assert_eq!(
                     std::any::type_name_of_val(b.deref()),
-                    std::any::type_name::<StringFragment>()
+                    std::any::type_name::<String>()
                 );
                 a.deref() == b.deref()
             }

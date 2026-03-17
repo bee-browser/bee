@@ -35,7 +35,7 @@ use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::CallContextFlags;
 use crate::types::Object;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 use super::CodeRegistry;
@@ -1474,7 +1474,7 @@ where
         self.operand_stack.push(Operand::String(tail, None));
     }
 
-    fn pop_string(&mut self) -> (StringIr, Option<Handle<StringFragment>>) {
+    fn pop_string(&mut self) -> (StringIr, Option<Handle<String>>) {
         match self.operand_stack.pop().unwrap() {
             Operand::String(value_rt, value_ct) => (value_rt, value_ct),
             operand => unreachable!("{operand:?}"),
@@ -3842,7 +3842,7 @@ where
         self.process_throw();
     }
 
-    fn emit_throw_internal_error(&mut self, message: Handle<StringFragment>) {
+    fn emit_throw_internal_error(&mut self, message: Handle<String>) {
         logger::debug!(event = "emit_throw_internal_error", ?message);
         let error = self
             .editor
@@ -3939,7 +3939,7 @@ enum Operand {
 
     /// Runtime value and optional compile-time constant value of number type.
     // TODO(perf): compile-time evaluation
-    String(StringIr, #[allow(unused)] Option<Handle<StringFragment>>),
+    String(StringIr, #[allow(unused)] Option<Handle<String>>),
 
     /// Runtime value of closure type.
     Closure(ClosureIr),

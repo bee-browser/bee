@@ -15,7 +15,7 @@ use jsparser::Symbol;
 
 use crate::types::Closure;
 use crate::types::Promise;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 #[derive(Clone, Debug)]
@@ -312,12 +312,12 @@ impl Object {
         HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
     }
 
-    pub(crate) fn string(&self) -> Handle<StringFragment> {
+    pub(crate) fn string(&self) -> Handle<String> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
         Handle::from_addr(self.kernel.data).unwrap()
     }
 
-    pub(crate) fn set_string(&mut self, string: Handle<StringFragment>) {
+    pub(crate) fn set_string(&mut self, string: Handle<String>) {
         static VTABLE: KernelVtable = KernelVtable { drop: None };
         self.kernel.vtable = &VTABLE;
         self.kernel.data = string.as_addr();

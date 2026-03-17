@@ -38,7 +38,7 @@ use types::Status;
 
 pub use backend::CompileError;
 pub use lambda::LambdaId; // TODO: private
-pub use types::StringFragment; // TODO: private
+pub use types::String;
 pub use types::Value;
 
 pub type ParseError = jsparser::Error;
@@ -310,23 +310,18 @@ impl<X> Runtime<X> {
         retv.into_result(status)
     }
 
-    fn create_string(&mut self, value: &[u16]) -> Handle<StringFragment> {
+    fn create_string(&mut self, value: &[u16]) -> Handle<String> {
         let seq = self.heap.alloc_seq(value);
-        self.heap.alloc(StringFragment::new_heap(seq))
+        self.heap.alloc(String::new_heap(seq))
     }
 
-    fn create_string_from_utf8(&mut self, utf8: &str) -> Handle<StringFragment> {
+    fn create_string_from_utf8(&mut self, utf8: &str) -> Handle<String> {
         // TODO(perf): inefficient
         let utf16 = utf8.encode_utf16().collect::<Vec<u16>>();
         self.create_string(&utf16)
     }
 
-    fn create_substring(
-        &mut self,
-        string: Handle<StringFragment>,
-        start: u32,
-        end: u32,
-    ) -> Handle<StringFragment> {
+    fn create_substring(&mut self, string: Handle<String>, start: u32, end: u32) -> Handle<String> {
         debug_assert!(start < end);
         // TODO(perf): inefficient
         let utf16 = string
@@ -435,7 +430,7 @@ impl<X> Runtime<X> {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
             Value::Object(_) => {
-                const MESSAGE: Handle<StringFragment> = const_string!("TODO: make_property_key");
+                const MESSAGE: Handle<String> = const_string!("TODO: make_property_key");
                 Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
             }
         }
@@ -483,11 +478,7 @@ impl<X> Runtime<X> {
         Ok(())
     }
 
-    fn throw_internal_error(
-        &mut self,
-        message: Handle<StringFragment>,
-        retv: &mut Value,
-    ) -> Status {
+    fn throw_internal_error(&mut self, message: Handle<String>, retv: &mut Value) -> Status {
         *retv = Value::Object(self.create_internal_error(Some(message)));
         Status::Exception
     }

@@ -11,7 +11,7 @@ use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 //#sec-error-message constructor
@@ -115,4 +115,4 @@ pub fn error_prototype_to_string<X>(
     Ok(Value::String(result))
 }
 
-const NAME: Handle<StringFragment> = const_string!(jsparser::symbol::builtin::names::ERROR);
+const NAME: Handle<String> = const_string!(jsparser::symbol::builtin::names::ERROR);
