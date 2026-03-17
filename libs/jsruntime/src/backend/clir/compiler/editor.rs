@@ -566,86 +566,12 @@ impl<'a> Editor<'a> {
 
     // string
 
-    pub fn put_alloc_string(&mut self) -> StringIr {
-        logger::debug!(event = "put_alloc_string");
-
-        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
-            ir::StackSlotKind::ExplicitSlot,
-            StringFragment::SIZE as u32,
-            StringFragment::ALIGNMENT.ilog2() as u8,
-        ));
-
-        let flags = self
-            .builder
-            .ins()
-            .iconst(ir::types::I8, StringFragmentFlags::STACK.bits() as i64);
-        self.put_store_to_slot(flags, slot, StringFragment::FLAGS_OFFSET);
-
-        StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
-    }
-
-    pub fn put_set_string(&mut self, value: &[u16], target: StringIr) {
-        logger::debug!(event = "put_set_string", ?value, ?target);
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
-
-        let ptr = self
-            .builder
-            .ins()
-            .iconst(self.addr_type, value.as_ptr() as i64);
-        self.builder
-            .ins()
-            .store(FLAGS, ptr, target.0, StringFragment::PTR_OFFSET as i32);
-
-        let offset = self.builder.ins().iconst(ir::types::I32, 0);
-        self.builder.ins().store(
-            FLAGS,
-            offset,
-            target.0,
-            StringFragment::OFFSET_OFFSET as i32,
-        );
-
-        debug_assert!(value.len() <= u32::MAX as usize);
-        let len = self
-            .builder
-            .ins()
-            .iconst(ir::types::I32, value.len() as i64);
-        self.builder
-            .ins()
-            .store(FLAGS, len, target.0, StringFragment::LEN_OFFSET as i32);
-    }
-
-    pub fn put_create_string(&mut self, value: &[u16]) -> StringIr {
-        logger::debug!(event = "put_create_string", ?value);
-
-        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
-            ir::StackSlotKind::ExplicitSlot,
-            StringFragment::SIZE as u32,
-            StringFragment::ALIGNMENT.ilog2() as u8,
-        ));
-
-        let ptr = self
-            .builder
-            .ins()
-            .iconst(self.addr_type, value.as_ptr() as i64);
-        self.put_store_to_slot(ptr, slot, StringFragment::PTR_OFFSET);
-
-        let offset = self.builder.ins().iconst(ir::types::I32, 0);
-        self.put_store_to_slot(offset, slot, StringFragment::OFFSET_OFFSET);
-
-        debug_assert!(value.len() <= u32::MAX as usize);
-        let len = self
-            .builder
-            .ins()
-            .iconst(ir::types::I32, value.len() as i64);
-        self.put_store_to_slot(len, slot, StringFragment::LEN_OFFSET);
-
-        let flags = self
-            .builder
-            .ins()
-            .iconst(ir::types::I8, StringFragmentFlags::STACK.bits() as i64);
-        self.put_store_to_slot(flags, slot, StringFragment::FLAGS_OFFSET);
-
-        StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
+    pub fn put_create_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: &[u16],
+    ) -> StringIr {
+        self.put_runtime_create_string(support, value)
     }
 
     pub fn put_string_on_stack(&mut self, string: StringIr) -> BooleanIr {
@@ -1125,11 +1051,6 @@ impl<'a> Editor<'a> {
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder.ins().store(FLAGS, value, addr, offset as i32);
-    }
-
-    fn put_store_to_slot(&mut self, value: ir::Value, slot: ir::StackSlot, offset: usize) {
-        debug_assert!(offset <= i32::MAX as usize);
-        self.builder.ins().stack_store(value, slot, offset as i32);
     }
 
     pub fn put_store_none_to_any(&mut self, any: AnyIr) {
@@ -1962,6 +1883,28 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_migrate_string_to_heap(support, self.builder.func);
         let args = [self.runtime(), string.0];
+        let call = self.builder.ins().call(func, &args);
+        StringIr(self.builder.inst_results(call)[0])
+    }
+
+    pub fn put_runtime_create_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: &[u16],
+    ) -> StringIr {
+        logger::debug!(event = "put_runtime_create_string", ?value);
+        let func = self
+            .runtime_func_cache
+            .import_runtime_create_string(support, self.builder.func);
+        let ptr = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, value.as_ptr() as i64);
+        let len = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, value.len() as i64);
+        let args = [self.runtime(), ptr, len];
         let call = self.builder.ins().call(func, &args);
         StringIr(self.builder.inst_results(call)[0])
     }
