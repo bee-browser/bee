@@ -242,23 +242,21 @@ impl<X> Runtime<X> {
 
         if repetitions == 0 {
             debug_assert!(remaining > 0);
-            return fill_string
-                .sub_fragment(0, remaining)
-                .ensure_return_safe(&mut self.heap);
+            return fill_string.sub_fragment(0, remaining, &mut self.heap);
         }
 
         let frag = fill_string.repeat(repetitions, &mut self.heap);
         if remaining == 0 {
-            return frag.ensure_return_safe(&mut self.heap);
+            return frag;
         }
 
-        let last = fill_string.sub_fragment(0, remaining);
-        frag.concat(Handle::from_ref(&last), &mut self.heap)
+        let last = fill_string.sub_fragment(0, remaining, &mut self.heap);
+        frag.concat(last, &mut self.heap)
     }
 
     fn repeat_string(&mut self, s: Handle<StringFragment>, n: u32) -> Handle<StringFragment> {
         if s.is_empty() || n == 1 {
-            s.ensure_return_safe(&mut self.heap)
+            s
         } else {
             s.repeat(n, &mut self.heap)
         }

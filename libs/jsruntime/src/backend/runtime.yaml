@@ -102,11 +102,6 @@ functions:
       - name: value
         type: '&Value'
     ret: '&U16Chunk'
-  - name: migrate_string_to_heap
-    args:
-      - name: string
-        type: '&U16Chunk'
-    ret: '&U16Chunk'
   - name: create_string
     args:
       - name: ptr

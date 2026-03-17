@@ -19,7 +19,6 @@ use crate::types::Coroutine;
 use crate::types::Object;
 use crate::types::ObjectFlags;
 use crate::types::StringFragment;
-use crate::types::StringFragmentFlags;
 use crate::types::Value;
 
 use super::AnyIr;
@@ -504,14 +503,9 @@ impl<'a> Editor<'a> {
         self.builder.ins().br_table(index, jump_table);
     }
 
-    pub fn put_return(&mut self, support: &mut impl EditorSupport) {
+    pub fn put_return(&mut self) {
         logger::debug!(event = "put_return");
         debug_assert!(!self.block_terminated);
-        if self.runtime_assert_enabled {
-            let retv = self.retv();
-            let is_return_safe = self.put_is_return_safe(retv);
-            self.put_assert(support, is_return_safe, c"retv must be return-safe");
-        }
         let status = self.put_load_status();
         let masked = self.builder.ins().band_imm(status.0, Status::MASK as i64);
         self.builder.ins().return_(&[masked]);
@@ -574,19 +568,6 @@ impl<'a> Editor<'a> {
         self.put_runtime_create_string(support, value)
     }
 
-    pub fn put_string_on_stack(&mut self, string: StringIr) -> BooleanIr {
-        logger::debug!(event = "put_string_on_stack", ?string);
-        use ir::condcodes::IntCC::Equal;
-        const FLAG: i64 = StringFragmentFlags::STACK.bits() as i64;
-        let flags = self.put_load_flags_from_string(string);
-        let on_stack = self.builder.ins().band_imm(flags, FLAG);
-        BooleanIr(self.builder.ins().icmp_imm(Equal, on_stack, FLAG))
-    }
-
-    fn put_load_flags_from_string(&mut self, string: StringIr) -> ir::Value {
-        self.put_load_i8(string.0, StringFragment::FLAGS_OFFSET)
-    }
-
     // any
 
     pub fn put_alloc_any(&mut self) -> AnyIr {
@@ -612,32 +593,6 @@ impl<'a> Editor<'a> {
                 .ins()
                 .icmp_imm(NotEqual, kind, Value::KIND_NONE as i64),
         )
-    }
-
-    fn put_is_return_safe(&mut self, any: AnyIr) -> BooleanIr {
-        logger::debug!(event = "put_is_return_safe", ?any);
-        let then_block = self.create_block();
-        let merge_block = self.create_block_with_i8();
-
-        // if any.is_string()
-        let is_string = self.put_is_string(any);
-        self.put_branch(
-            is_string,
-            then_block,
-            &[],
-            merge_block,
-            &[is_string.0.into()],
-        );
-        // {
-        self.switch_to_block(then_block);
-        let string = self.put_load_string(any);
-        let on_stack = self.put_string_on_stack(string);
-        self.put_jump(merge_block, &[on_stack.0.into()]);
-        // }
-
-        self.switch_to_block(merge_block);
-        let not_return_safe = BooleanIr(self.get_block_param(merge_block, 0));
-        self.put_logical_not(not_return_safe)
     }
 
     pub fn put_load_boolean(&mut self, any: AnyIr) -> BooleanIr {
@@ -1862,27 +1817,6 @@ impl<'a> Editor<'a> {
             .runtime_func_cache
             .import_runtime_get_typeof(support, self.builder.func);
         let args = [self.runtime(), value.0];
-        let call = self.builder.ins().call(func, &args);
-        StringIr(self.builder.inst_results(call)[0])
-    }
-
-    pub fn put_runtime_migrate_string_to_heap(
-        &mut self,
-        support: &mut impl EditorSupport,
-        string: StringIr,
-    ) -> StringIr {
-        logger::debug!(event = "put_runtime_migrate_string_to_heap", ?string);
-        if self.runtime_assert_enabled {
-            self.put_assert_non_null(
-                support,
-                string.0,
-                c"string passed to runtime_migrate_string_to_heap() must be non-null",
-            );
-        }
-        let func = self
-            .runtime_func_cache
-            .import_runtime_migrate_string_to_heap(support, self.builder.func);
-        let args = [self.runtime(), string.0];
         let call = self.builder.ins().call(func, &args);
         StringIr(self.builder.inst_results(call)[0])
     }
