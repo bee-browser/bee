@@ -52,12 +52,12 @@ functions:
     args:
       - name: value
         type: '&Value'
-    ret: '&U16Chunk'
+    ret: Handle<StringFragment>
   - name: number_to_string
     args:
       - name: value
         type: 'f64'
-    ret: '&U16Chunk'
+    ret: Handle<StringFragment>
   - name: to_object
     args:
       - name: value
@@ -78,9 +78,9 @@ functions:
   - name: is_same_string
     args:
       - name: a
-        type: '&U16Chunk'
+        type: Handle<StringFragment>
       - name: b
-        type: '&U16Chunk'
+        type: Handle<StringFragment>
     ret: bool
   - name: is_loosely_equal
     args:
@@ -101,14 +101,14 @@ functions:
     args:
       - name: value
         type: '&Value'
-    ret: '&U16Chunk'
+    ret: Handle<StringFragment>
   - name: create_string
     args:
       - name: ptr
         type: '*const u16'
       - name: len
         type: 'usize'
-    ret: 'Handle<StringFragment>'
+    ret: Handle<StringFragment>
   - name: create_capture
     args:
       - name: target
@@ -163,7 +163,7 @@ functions:
   - name: create_internal_error
     args:
       - name: message
-        type: 'StringHandle'
+        type: Handle<StringFragment>
     ret: '&mut Object'
   - name: get_value_by_symbol
     args:
@@ -240,10 +240,10 @@ functions:
   - name: concat_strings
     args:
       - name: str1
-        type: '&U16Chunk'
+        type: Handle<StringFragment>
       - name: str2
-        type: '&U16Chunk'
-    ret: '&U16Chunk'
+        type: Handle<StringFragment>
+    ret: Handle<StringFragment>
   # 7.3.5 CreateDataProperty ( O, P, V )
   - name: create_data_property_by_symbol
     args:
@@ -324,7 +324,7 @@ functions:
   - name: print_string
     args:
       - name: value
-        type: '&U16Chunk'
+        type: Handle<StringFragment>
       - name: msg
         type: '&std::ffi::CStr'
   - name: print_value
