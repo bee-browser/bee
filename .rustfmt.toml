@@ -1,0 +1,9 @@
+edition = "2024"
+style_edition = "2024"
+
+# Line endings will be converted to \n.
+newline_style = "Unix"
+
+# Unstable
+#wrap_comments = true
+#ignore = ["vendor/**"]
