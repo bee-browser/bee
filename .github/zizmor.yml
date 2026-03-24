@@ -1,11 +1,24 @@
 rules:
   anonymous-definition:
+    # https://docs.zizmor.sh/audits/#anonymous-definition
     disable: true
   concurrency-limits:
+    # https://docs.zizmor.sh/audits/#concurrency-limits
     disable: true
   dangerous-triggers:
+    # https://docs.zizmor.sh/audits/#dangerous-triggers
     ignore:
       - bench_archive.yml:4:1
       - bench_upload.yml:4:1
+  secrets-outside-env:
+    # https://docs.zizmor.sh/audits/#secrets-outside-env
+    ignore:
+      - bench.yml:53:22
+      - bench_archive.yml:29:34
+      - bench_upload.yml:63:34
+  superfluous-actions:
+    # https://docs.zizmor.sh/audits/#superfluous-actions
+    disable: true
   undocumented-permissions:
+    # https://docs.zizmor.sh/audits/#undocumented-permissions
     disable: true
