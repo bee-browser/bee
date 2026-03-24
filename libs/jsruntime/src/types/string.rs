@@ -1,4 +1,3 @@
-use std::alloc::Layout;
 use std::iter::Enumerate;
 use std::iter::Peekable;
 use std::ops::Index;
@@ -207,10 +206,8 @@ impl String {
         }
 
         let len = (self.len() + tail.len()) as usize;
-        let layout = Layout::array::<u16>(len).unwrap();
 
-        let handle: Handle<u16> = heap.alloc_layout(layout, |ptr| unsafe {
-            let code_units = ptr.cast::<u16>();
+        let handle = heap.alloc_seq_with_init::<u16, _>(len, |code_units| unsafe {
             dbg!(self.offset);
             dbg!(self.len);
             dbg!(tail.offset);
@@ -226,7 +223,7 @@ impl String {
         });
 
         heap.alloc(String {
-            ptr: handle,
+            ptr: handle.data,
             offset: 0,
             len: len as u32,
         })
