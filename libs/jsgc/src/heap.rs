@@ -132,7 +132,7 @@ impl Heap {
             },
         );
 
-        HandleMut::from_ref(unsafe { ptr.cast::<T>().as_mut() })
+        HandleMut::from_mut(unsafe { ptr.cast::<T>().as_mut() })
     }
 
     // TODO: return HandleMut

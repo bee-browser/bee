@@ -66,6 +66,12 @@ impl<T> Clone for Handle<T> {
 
 impl<T> Copy for Handle<T> {}
 
+impl<T> From<HandleMut<T>> for Handle<T> {
+    fn from(value: HandleMut<T>) -> Self {
+        Self(value.0)
+    }
+}
+
 impl<T> PartialEq for Handle<T> {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
@@ -111,8 +117,8 @@ base::static_assert_eq!(size_of::<HandleMut<u8>>(), size_of::<usize>());
 base::static_assert_eq!(size_of::<Option<HandleMut<u8>>>(), size_of::<usize>());
 
 impl<T> HandleMut<T> {
-    pub const fn from_ref(r: &T) -> Self {
-        Self(NonNull::from_ref(r))
+    pub const fn from_mut(r: &mut T) -> Self {
+        Self(NonNull::from_mut(r))
     }
 
     pub fn from_ptr(p: *mut T) -> Option<Self> {
@@ -178,12 +184,6 @@ impl<T> Deref for HandleMut<T> {
 impl<T> DerefMut for HandleMut<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.as_mut()
-    }
-}
-
-impl<T> Into<Handle<T>> for HandleMut<T> {
-    fn into(self) -> Handle<T> {
-        Handle(self.0)
     }
 }
 

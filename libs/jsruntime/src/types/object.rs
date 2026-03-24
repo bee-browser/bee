@@ -333,7 +333,7 @@ impl Object {
 
     pub fn as_handle(&mut self) -> HandleMut<Self> {
         // SAFETY: `self` is a non-null pointer to an `Object`.
-        HandleMut::from_ref(self)
+        HandleMut::from_mut(self)
     }
 
     pub fn is_instance_of(&self, prototype: Option<HandleMut<Self>>) -> bool {
