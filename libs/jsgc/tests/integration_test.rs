@@ -100,3 +100,31 @@ fn test_collect_garbage() {
     gc!([]);
     assert_eq!(num_objects!(), 0);
 }
+
+#[test]
+fn test_unmanaged_tracing_targets() {
+    let mut heap = Heap::new();
+
+    let mut root = Cell::default(); // unmanaged
+    let mut root = HandleMut::from_ref(&mut root);
+
+    // TODO(feat): not ergonomic
+    heap.add_tracee(root.into());
+
+    assert_eq!(heap.stats().num_objects, 0);
+
+    root.car = Some(heap.alloc_mut(Cell::default()));
+    root.cdr = Some(heap.alloc_mut(Cell::default()));
+    assert_eq!(heap.stats().num_objects, 2);
+
+    heap.collect_garbage(&[root.as_addr()]);
+    assert_eq!(heap.stats().num_objects, 2);
+
+    // TODO(feat): not ergonomic
+    heap.remove_tracee(root.into());
+
+    heap.collect_garbage(&[]);
+    assert_eq!(heap.stats().num_objects, 0);
+
+    // TODO(feat): UAF... root.[car|cdr] are still accessible.
+}

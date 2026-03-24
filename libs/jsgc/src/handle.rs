@@ -181,6 +181,12 @@ impl<T> DerefMut for HandleMut<T> {
     }
 }
 
+impl<T> Into<Handle<T>> for HandleMut<T> {
+    fn into(self) -> Handle<T> {
+        Handle(self.0)
+    }
+}
+
 impl<T> Debug for HandleMut<T>
 where
     T: Debug,
