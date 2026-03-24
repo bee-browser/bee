@@ -11,15 +11,21 @@ use crate::handle::Seq;
 
 /// A heap memory managed by GC.
 pub struct Heap {
-    // TODO(perf): inefficient
-    holders: FxHashMap<usize, MemoryHolder>,
+    /// A set of addresses of *managed* memory blocks.
+    memories: FxHashMap<usize, Memory>,
+
+    /// A set of tracing targets.
+    ///
+    /// The set MAY contain addresses of *unmanaged* memory blocks.
+    tracees: FxHashMap<usize, Tracee>,
 }
 
 impl Heap {
     /// Creates a heap.
     pub fn new() -> Self {
         Self {
-            holders: Default::default(),
+            memories: Default::default(),
+            tracees: Default::default(),
         }
     }
 
@@ -36,12 +42,16 @@ impl Heap {
             ptr
         };
 
-        self.holders.insert(
+        self.memories.insert(
             ptr as usize,
-            MemoryHolder {
-                vtable: T::vtable(),
+            Memory {
                 layout: Layout::new::<T>(),
-                addr: ptr as usize,
+            },
+        );
+        self.tracees.insert(
+            ptr as usize,
+            Tracee {
+                vtable: T::vtable(),
             },
         );
 
@@ -61,12 +71,16 @@ impl Heap {
             ptr
         };
 
-        self.holders.insert(
+        self.memories.insert(
             ptr as usize,
-            MemoryHolder {
-                vtable: T::vtable(),
+            Memory {
                 layout: Layout::new::<T>(),
-                addr: ptr as usize,
+            },
+        );
+        self.tracees.insert(
+            ptr as usize,
+            Tracee {
+                vtable: T::vtable(),
             },
         );
 
@@ -83,15 +97,17 @@ impl Heap {
             // TODO(perf): use a dedicated memory pool
             NonNull::new(std::alloc::alloc(layout)).unwrap()
         };
+
         init(ptr);
-        self.holders.insert(
+
+        self.memories.insert(ptr.addr().get(), Memory { layout });
+        self.tracees.insert(
             ptr.addr().get(),
-            MemoryHolder {
+            Tracee {
                 vtable: T::vtable(),
-                layout,
-                addr: ptr.addr().get(),
             },
         );
+
         Handle::from_ref(unsafe { ptr.cast::<T>().as_ref() })
     }
 
@@ -105,15 +121,17 @@ impl Heap {
             // TODO(perf): use a dedicated memory pool
             NonNull::new(std::alloc::alloc(layout)).unwrap()
         };
+
         init(ptr);
-        self.holders.insert(
+
+        self.memories.insert(ptr.addr().get(), Memory { layout });
+        self.tracees.insert(
             ptr.addr().get(),
-            MemoryHolder {
+            Tracee {
                 vtable: T::vtable(),
-                layout,
-                addr: ptr.addr().get(),
             },
         );
+
         HandleMut::from_ref(unsafe { ptr.cast::<T>().as_mut() })
     }
 
@@ -123,24 +141,67 @@ impl Heap {
     where
         T: Atom,
     {
-        const VTABLE: UnknownVtable = UnknownVtable::nop();
         let len = src.len();
+
         let layout = Layout::array::<T>(len).unwrap();
+
         let data = unsafe {
             // TODO(perf): use a dedicated memory pool
             let ptr = NonNull::new(std::alloc::alloc(layout)).unwrap();
             ptr.cast::<T>().as_ptr().copy_from(src.as_ptr(), len);
             Handle::from_ref(ptr.cast::<T>().as_ref())
         };
-        self.holders.insert(
-            data.as_addr(),
-            MemoryHolder {
-                vtable: &VTABLE,
-                layout,
-                addr: data.as_addr(),
+
+        self.memories.insert(data.as_addr(), Memory { layout });
+        // No need to trace.
+
+        Seq { data, len }
+    }
+
+    pub fn alloc_seq_with_init<T, F>(&mut self, len: usize, init: F) -> Seq<T>
+    where
+        T: Atom,
+        F: FnOnce(NonNull<T>),
+    {
+        let layout = Layout::array::<T>(len).unwrap();
+
+        let (ptr, data) = unsafe {
+            // TODO(perf): use a dedicated memory pool
+            let ptr = NonNull::new(std::alloc::alloc(layout)).unwrap();
+            (ptr.cast::<T>(), Handle::from_ref(ptr.cast::<T>().as_ref()))
+        };
+
+        init(ptr);
+
+        self.memories.insert(data.as_addr(), Memory { layout });
+        // No need to trace.
+
+        Seq { data, len }
+    }
+
+    // TODO(feat): not ergonomic... need a way to prevent UAF.
+    pub fn add_tracee<T>(&mut self, target: Handle<T>)
+    where
+        T: Unknown,
+    {
+        let addr = target.as_addr();
+        debug_assert!(!self.tracees.contains_key(&addr));
+        self.tracees.insert(
+            addr,
+            Tracee {
+                vtable: T::vtable(),
             },
         );
-        Seq { data, len }
+    }
+
+    // TODO(feat): not ergonomic... need a way to prevent UAF.
+    pub fn remove_tracee<T>(&mut self, target: Handle<T>)
+    where
+        T: Unknown,
+    {
+        let addr = target.as_addr();
+        debug_assert!(self.tracees.contains_key(&addr));
+        self.tracees.remove(&addr);
     }
 
     /// Reclaims objects that are not reachable from a specified root objects.
@@ -156,23 +217,37 @@ impl Heap {
             if state.visited.contains(&addr) {
                 continue;
             }
-            let holder = self.holders.get(&addr).unwrap();
-            if let Some(trace) = holder.vtable.trace {
-                trace(addr, &mut state.visit_list);
-            }
             state.visited.insert(addr);
+            if let Some(tracee) = self.tracees.get(&addr) {
+                if let Some(trace) = tracee.vtable.trace {
+                    trace(addr, &mut state.visit_list);
+                }
+            }
         }
     }
 
     /// Performs the sweep phase.
     fn sweep(&mut self, state: &mut GcState) {
-        self.holders.retain(|addr, _| state.visited.contains(addr));
+        for (addr, memory) in self
+            .memories
+            .extract_if(|addr, _| !state.visited.contains(addr))
+        {
+            if let Some(tracee) = self.tracees.remove(&addr) {
+                if let Some(tidy) = tracee.vtable.tidy {
+                    tidy(addr);
+                }
+            }
+            // SAFETY: the memory block was allocated by using std::alloc::alloc().
+            unsafe {
+                std::alloc::dealloc(addr as *mut u8, memory.layout);
+            }
+        }
     }
 
     /// Returns statistics.
     pub fn stats(&self) -> Stats {
         Stats {
-            num_objects: self.holders.len(),
+            num_objects: self.memories.len(),
         }
     }
 }
@@ -229,21 +304,12 @@ impl VisitList {
     }
 }
 
-struct MemoryHolder {
-    vtable: &'static UnknownVtable,
+struct Memory {
     layout: Layout,
-    addr: usize,
 }
 
-impl Drop for MemoryHolder {
-    fn drop(&mut self) {
-        if let Some(tidy) = self.vtable.tidy {
-            tidy(self.addr);
-        }
-        unsafe {
-            std::alloc::dealloc(self.addr as *mut u8, self.layout);
-        }
-    }
+struct Tracee {
+    vtable: &'static UnknownVtable,
 }
 
 pub struct UnknownVtable {
@@ -251,29 +317,11 @@ pub struct UnknownVtable {
     pub trace: Option<TraceFn>,
 }
 
-impl UnknownVtable {
-    const fn nop() -> Self {
-        Self {
-            tidy: None,
-            trace: None,
-        }
-    }
-}
-
 type TidyFn = fn(usize);
 type TraceFn = fn(usize, &mut VisitList);
 
 pub trait Unknown {
     fn vtable() -> &'static UnknownVtable;
-}
-
-impl Unknown for u16 {
-    fn vtable() -> &'static UnknownVtable {
-        &UnknownVtable {
-            tidy: None,
-            trace: None,
-        }
-    }
 }
 
 pub trait Atom: Copy + Sized {}
