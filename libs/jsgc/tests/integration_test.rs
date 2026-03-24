@@ -106,7 +106,7 @@ fn test_unmanaged_tracing_targets() {
     let mut heap = Heap::new();
 
     let mut root = Cell::default(); // unmanaged
-    let mut root = HandleMut::from_ref(&mut root);
+    let mut root = HandleMut::from_mut(&mut root);
 
     // TODO(feat): not ergonomic
     heap.add_tracee(root.into());
