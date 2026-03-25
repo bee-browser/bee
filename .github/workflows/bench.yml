@@ -29,7 +29,7 @@ jobs:
           toolchain: stable
           components: rustfmt
       - uses: davidlattimore/wild-action@b566cb94d30560824721753b60e67a4259a548cb # 0.8.0
-      - uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
+      - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
         with:
           deno-version-file: .tool-versions
       - name: Codegen
