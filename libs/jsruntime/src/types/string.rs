@@ -208,10 +208,6 @@ impl String {
         let len = (self.len() + tail.len()) as usize;
 
         let handle = heap.alloc_seq_with_init::<u16, _>(len, |code_units| unsafe {
-            dbg!(self.offset);
-            dbg!(self.len);
-            dbg!(tail.offset);
-            dbg!(tail.len);
             code_units.as_ptr().copy_from(
                 self.ptr.as_ptr().add(self.offset as usize),
                 self.len as usize,
