@@ -44,11 +44,13 @@ impl Validator {
     }
 }
 
-fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expected_values: Vec<Value>) -> Result<Value, Value> {
-    let mut runtime = Runtime::with_extension(Validator {
-        expected_values,
-        actual_values: vec![],
-    });
+fn evaluate(
+    runtime: &mut Runtime<Validator>,
+    src: &str,
+    module: bool,
+    optimize: bool,
+    enable_labels: bool,
+) -> Result<Value, Value> {
     runtime.enable_scope_cleanup_checker();
     if enable_labels {
         // TODO
@@ -74,12 +76,16 @@ fn {{name}}() {
     const CODE_UNITS{{@index}}: [u16; {{size}}] = [{{join data ", "}}];
     const STRING{{@index}}: String = String::new_const(&CODE_UNITS{{@index}});
     {{/each}}
+    let mut runtime = Runtime::with_extension(Validator {
+        expected_values: vec![
+            {{#each expectedValues}}
+            {{.}},
+            {{/each}}
+        ],
+        actual_values: vec![],
+    });
     let src = include_str!("{{filename}}");
-    let result = evaluate(src, {{module}}, true, false, vec![
-        {{#each expectedValues}}
-        {{.}},
-        {{/each}}
-    ]);
+    let result = evaluate(&mut runtime, src, {{module}}, true, false);
     {{#if throws}}
     assert_matches!(result, Err(actual) => {
         // Some cases including `f64::NAN` fail in `assert_eq!()`.
@@ -90,5 +96,7 @@ fn {{name}}() {
     {{else}}
     assert_matches!(result, Ok(_));
     {{/if}}
+    runtime.collect_garbage(&[]);
+    assert_eq!(runtime.heap_stats().num_objects, 0);
 }
 {{/each}}

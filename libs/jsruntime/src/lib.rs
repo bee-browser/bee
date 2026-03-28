@@ -263,6 +263,14 @@ impl<X> Runtime<X> {
         Ok(value)
     }
 
+    pub fn collect_garbage(&mut self, roots: &[usize]) {
+        self.heap.collect_garbage(roots);
+    }
+
+    pub fn heap_stats(&self) -> jsgc::Stats {
+        self.heap.stats()
+    }
+
     fn get_index_of_coroutine_function(
         &self,
         program_id: ProgramId,

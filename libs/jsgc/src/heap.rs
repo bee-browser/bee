@@ -258,6 +258,23 @@ impl Default for Heap {
     }
 }
 
+impl Drop for Heap {
+    fn drop(&mut self) {
+        for (addr, memory) in self.memories.iter() {
+            // TODO(refactor): code clone
+            if let Some(tracee) = self.tracees.get(addr) {
+                if let Some(tidy) = tracee.vtable.tidy {
+                    tidy(*addr);
+                }
+            }
+            // SAFETY: the memory block was allocated by using std::alloc::alloc().
+            unsafe {
+                std::alloc::dealloc(*addr as *mut u8, memory.layout);
+            }
+        }
+    }
+}
+
 /// Statistics of a heap at some point.
 pub struct Stats {
     pub num_objects: usize,
