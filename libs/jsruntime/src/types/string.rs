@@ -7,8 +7,7 @@ use itertools::Itertools;
 use jsgc::Handle;
 use jsgc::Heap;
 use jsgc::Seq;
-use jsgc::Unknown;
-use jsgc::UnknownVtable;
+use jsgc::Trace;
 use jsgc::VisitList;
 
 /// An empty string.
@@ -254,10 +253,6 @@ impl String {
             len: end - start,
         })
     }
-
-    fn trace(&self, visit_list: &mut VisitList) {
-        visit_list.push(self.ptr.as_addr());
-    }
 }
 
 // The UTF-16 code units never change.
@@ -307,18 +302,9 @@ impl std::fmt::Display for String {
     }
 }
 
-impl Unknown for String {
-    fn vtable() -> &'static UnknownVtable {
-        fn trace(addr: usize, visit_list: &mut VisitList) {
-            Handle::<String>::from_addr(addr).unwrap().trace(visit_list);
-        }
-
-        static VTABLE: UnknownVtable = UnknownVtable {
-            tidy: None,
-            trace: Some(trace),
-        };
-
-        &VTABLE
+impl Trace for String {
+    fn trace(&self, visit_list: &mut VisitList) {
+        visit_list.push(self.ptr.as_addr());
     }
 }
 

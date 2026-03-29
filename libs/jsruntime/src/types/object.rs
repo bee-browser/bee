@@ -8,8 +8,7 @@ use rustc_hash::FxHashMap;
 
 use jsgc::Handle;
 use jsgc::HandleMut;
-use jsgc::Unknown;
-use jsgc::UnknownVtable;
+use jsgc::Trace;
 use jsgc::VisitList;
 use jsparser::Symbol;
 
@@ -369,13 +368,21 @@ impl Object {
     pub(crate) fn slots_mut(&mut self) -> &mut Vec<Value> {
         &mut self.slots
     }
+}
 
-    unsafe fn tidy(&mut self) {
-        unsafe {
-            std::ptr::drop_in_place(self as *mut Self);
-        }
+impl Debug for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self as *const Object)
     }
+}
 
+impl Display for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:p}", self as *const Object)
+    }
+}
+
+impl Trace for Object {
     fn trace(&self, visit_list: &mut VisitList) {
         if self.kernel.need_tracing {
             visit_list.push(self.kernel.data);
@@ -397,42 +404,6 @@ impl Object {
                 _ => (),
             }
         }
-    }
-}
-
-impl Debug for Object {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", self as *const Object)
-    }
-}
-
-impl Display for Object {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", self as *const Object)
-    }
-}
-
-impl Unknown for Object {
-    fn vtable() -> &'static UnknownVtable {
-        fn tidy(addr: usize) {
-            let mut object = HandleMut::<Object>::from_addr(addr).unwrap();
-            // SAFETY: XXX
-            unsafe {
-                object.tidy();
-            }
-        }
-
-        fn trace(addr: usize, visit_list: &mut jsgc::VisitList) {
-            let object = HandleMut::<Object>::from_addr(addr).unwrap();
-            object.trace(visit_list);
-        }
-
-        static VTABLE: UnknownVtable = UnknownVtable {
-            tidy: Some(tidy),
-            trace: Some(trace),
-        };
-
-        &VTABLE
     }
 }
 

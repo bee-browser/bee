@@ -1,7 +1,6 @@
 use jsgc::HandleMut;
 use jsgc::Heap;
-use jsgc::Unknown;
-use jsgc::UnknownVtable;
+use jsgc::Trace;
 use jsgc::VisitList;
 
 #[derive(Default)]
@@ -10,7 +9,7 @@ struct Cell {
     cdr: Option<HandleMut<Cell>>,
 }
 
-impl Cell {
+impl Trace for Cell {
     fn trace(&self, visit_list: &mut VisitList) {
         if let Some(car) = self.car {
             visit_list.push(car.as_addr());
@@ -18,23 +17,6 @@ impl Cell {
         if let Some(cdr) = self.cdr {
             visit_list.push(cdr.as_addr());
         }
-    }
-}
-
-impl Unknown for Cell {
-    fn vtable() -> &'static UnknownVtable {
-        fn trace(addr: usize, visit_list: &mut VisitList) {
-            HandleMut::<Cell>::from_addr(addr)
-                .unwrap()
-                .trace(visit_list);
-        }
-
-        static VTABLE: UnknownVtable = UnknownVtable {
-            tidy: None,
-            trace: Some(trace),
-        };
-
-        &VTABLE
     }
 }
 
@@ -109,7 +91,7 @@ fn test_unmanaged_tracing_targets() {
     let mut root = HandleMut::from_mut(&mut root);
 
     // TODO(feat): not ergonomic
-    heap.add_tracee(root.into());
+    heap.add_tracer(root.into());
 
     assert_eq!(heap.stats().num_objects, 0);
 
@@ -121,7 +103,7 @@ fn test_unmanaged_tracing_targets() {
     assert_eq!(heap.stats().num_objects, 2);
 
     // TODO(feat): not ergonomic
-    heap.remove_tracee(root.into());
+    heap.remove_tracer(root.into());
 
     heap.collect_garbage(&[]);
     assert_eq!(heap.stats().num_objects, 0);
