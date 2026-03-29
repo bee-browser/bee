@@ -6,6 +6,5 @@ pub use handle::HandleMut;
 pub use handle::Seq;
 pub use heap::Heap;
 pub use heap::Stats;
-pub use heap::Unknown;
-pub use heap::UnknownVtable;
+pub use heap::Trace;
 pub use heap::VisitList;
