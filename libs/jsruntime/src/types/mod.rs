@@ -9,8 +9,7 @@ use std::ptr::addr_eq;
 
 use jsgc::Handle;
 use jsgc::HandleMut;
-use jsgc::Unknown;
-use jsgc::UnknownVtable;
+use jsgc::Trace;
 use jsgc::VisitList;
 
 use crate::Runtime;
@@ -231,10 +230,6 @@ impl Closure {
             std::slice::from_raw_parts(data, len)
         }
     }
-
-    fn trace(&self, visit_list: &mut VisitList) {
-        visit_list.extend(self.captures().iter().map(|capture| capture.as_addr()));
-    }
 }
 
 impl std::fmt::Debug for Closure {
@@ -251,20 +246,9 @@ impl std::fmt::Debug for Closure {
     }
 }
 
-impl Unknown for Closure {
-    fn vtable() -> &'static UnknownVtable {
-        fn trace(addr: usize, visit_list: &mut VisitList) {
-            HandleMut::<Closure>::from_addr(addr)
-                .unwrap()
-                .trace(visit_list)
-        }
-
-        static VTABLE: UnknownVtable = UnknownVtable {
-            tidy: None,
-            trace: Some(trace),
-        };
-
-        &VTABLE
+impl Trace for Closure {
+    fn trace(&self, visit_list: &mut VisitList) {
+        visit_list.extend(self.captures().iter().map(|capture| capture.as_addr()));
     }
 }
 
@@ -295,18 +279,6 @@ impl Capture {
         debug_assert!(!self.target.is_null());
         addr_eq(self.target, &self.escaped)
     }
-
-    fn trace(&self, visit_list: &mut VisitList) {
-        if !self.is_escaped() {
-            return;
-        }
-
-        match self.escaped {
-            Value::String(_string) => (), // TODO
-            Value::Object(object) => visit_list.push(object.as_addr()),
-            _ => (),
-        }
-    }
 }
 
 impl std::fmt::Debug for Capture {
@@ -323,20 +295,17 @@ impl std::fmt::Debug for Capture {
     }
 }
 
-impl Unknown for Capture {
-    fn vtable() -> &'static UnknownVtable {
-        fn trace(addr: usize, visit_list: &mut VisitList) {
-            HandleMut::<Capture>::from_addr(addr)
-                .unwrap()
-                .trace(visit_list);
+impl Trace for Capture {
+    fn trace(&self, visit_list: &mut VisitList) {
+        if !self.is_escaped() {
+            return;
         }
 
-        static VTABLE: UnknownVtable = UnknownVtable {
-            tidy: None,
-            trace: Some(trace),
-        };
-
-        &VTABLE
+        match self.escaped {
+            Value::String(_string) => (), // TODO
+            Value::Object(object) => visit_list.push(object.as_addr()),
+            _ => (),
+        }
     }
 }
 
@@ -403,7 +372,9 @@ impl Coroutine {
             std::slice::from_raw_parts(data, len)
         }
     }
+}
 
+impl Trace for Coroutine {
     fn trace(&self, visit_list: &mut VisitList) {
         visit_list.push(self.closure.as_addr());
 
@@ -416,23 +387,6 @@ impl Coroutine {
         }
 
         // TODO: scan the scratch buffer and the capture buffer
-    }
-}
-
-impl Unknown for Coroutine {
-    fn vtable() -> &'static UnknownVtable {
-        fn trace(addr: usize, visit_list: &mut VisitList) {
-            HandleMut::<Coroutine>::from_addr(addr)
-                .unwrap()
-                .trace(visit_list);
-        }
-
-        static VTABLE: UnknownVtable = UnknownVtable {
-            tidy: None,
-            trace: Some(trace),
-        };
-
-        &VTABLE
     }
 }
 
