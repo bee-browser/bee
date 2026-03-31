@@ -263,6 +263,14 @@ impl<X> Runtime<X> {
         Ok(value)
     }
 
+    /// Reclaims objects that are not reachable from a specified root objects.
+    ///
+    /// # Limitations
+    ///
+    /// * DO NOT CALL this method while calling a lamba function
+    ///   * There is no way to collect addresses stored on the native stack as roots
+    ///   * This issue will be solved in the future
+    ///
     pub fn collect_garbage(&mut self, roots: &[usize]) {
         self.heap.collect_garbage(roots);
     }
