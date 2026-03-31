@@ -320,7 +320,7 @@ impl Object {
         static VTABLE: KernelVtable = KernelVtable { drop: None };
         self.kernel.vtable = &VTABLE;
         self.kernel.data = string.as_addr();
-        self.kernel.need_tracing = false; // TODO: GC
+        self.kernel.need_tracing = true;
     }
 
     pub(crate) fn set_promise(&mut self, promise: Promise) {
@@ -392,14 +392,14 @@ impl Trace for Object {
         }
         for prop in self.properties.values() {
             match prop.value() {
-                Value::String(_string) => (), // TODO
+                Value::String(string) => visit_list.push(string.as_addr()),
                 Value::Object(object) => visit_list.push(object.as_addr()),
                 _ => (),
             }
         }
         for slot in self.slots.iter() {
             match slot {
-                Value::String(_string) => (), // TODO
+                Value::String(string) => visit_list.push(string.as_addr()),
                 Value::Object(object) => visit_list.push(object.as_addr()),
                 _ => (),
             }
