@@ -1243,7 +1243,6 @@ dependencies = [
  "logging",
  "paste",
  "rustc-hash",
- "static_assertions",
  "thiserror",
 ]
 
