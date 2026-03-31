@@ -7,6 +7,7 @@ use crate::types::Coroutine;
 use crate::types::Object;
 use crate::types::Value;
 
+// TODO: collect addresses stored on the stack (gc)
 #[derive(Debug)]
 #[repr(C)]
 pub struct CallContext {

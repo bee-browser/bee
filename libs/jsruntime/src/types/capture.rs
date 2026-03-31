@@ -56,7 +56,7 @@ impl Trace for Capture {
         }
 
         match self.escaped {
-            Value::String(_string) => (), // TODO
+            Value::String(string) => visit_list.push(string.as_addr()),
             Value::Object(object) => visit_list.push(object.as_addr()),
             _ => (),
         }
