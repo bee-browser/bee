@@ -2974,6 +2974,10 @@ where
             }
         }
 
+        // sentinel
+        self.editor
+            .put_write_none_to_scratch_buffer(&mut scratch_buffer);
+
         let offset = scratch_buffer.offset;
         // TODO: Should return a compile error.
         assert!(offset <= u16::MAX as usize);
@@ -3032,6 +3036,9 @@ where
                 Operand::Lambda(..) | Operand::Coroutine(_) => unreachable!("{operand:?}"),
             }
         }
+
+        // sentinel
+        scratch_buffer.offset += Value::SIZE;
 
         scratch_buffer.offset
     }

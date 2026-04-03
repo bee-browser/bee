@@ -68,6 +68,20 @@ impl Coroutine {
             std::slice::from_raw_parts(data, len)
         }
     }
+
+    fn scratch_buffer(&self) -> &[Value] {
+        let len = self.scratch_buffer_len as usize; // in bytes
+        debug_assert_eq!(len % Value::SIZE, 0);
+        let n = len / Value::SIZE;
+        let data = self.locals.as_ptr();
+        // SAFETY: `data` is a non-null pointer to an array of pointers.
+        unsafe {
+            let data = data.add(self.num_locals as usize);
+            debug_assert!(!data.is_null());
+            debug_assert!(data.is_aligned());
+            std::slice::from_raw_parts(data, n)
+        }
+    }
 }
 
 impl Trace for Coroutine {
@@ -82,6 +96,13 @@ impl Trace for Coroutine {
             }
         }
 
-        // TODO: scan the scratch buffer and the capture buffer
+        for value in self.scratch_buffer() {
+            match value {
+                Value::None => break,
+                Value::String(string) => visit_list.push(string.as_addr()),
+                Value::Object(object) => visit_list.push(object.as_addr()),
+                _ => (),
+            }
+        }
     }
 }

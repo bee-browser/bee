@@ -197,6 +197,42 @@ impl JobRunner {
             driver.state = PromiseState::Rejected(error);
         }
     }
+
+    pub(crate) fn collect_gc_roots(&self) -> Vec<usize> {
+        let mut roots = vec![];
+
+        dbg!(self.messages.len());
+        for msg in self.messages.iter() {
+            match msg {
+                Message::PromiseResolved { promise, result } => {
+                    roots.push(promise.as_addr());
+                    match result {
+                        Value::String(string) => roots.push(string.as_addr()),
+                        Value::Object(object) => roots.push(object.as_addr()),
+                        _ => (),
+                    }
+                }
+                Message::PromiseRejected { promise, error } => {
+                    roots.push(promise.as_addr());
+                    match error {
+                        Value::String(string) => roots.push(string.as_addr()),
+                        Value::Object(object) => roots.push(object.as_addr()),
+                        _ => (),
+                    }
+                }
+            }
+        }
+
+        dbg!(self.promises.len());
+        for driver in self.promises.values() {
+            roots.push(driver.coroutine.as_addr());
+            if let Some(object) = driver.awaiting {
+                roots.push(object.as_addr());
+            }
+        }
+
+        roots
+    }
 }
 
 // messages
