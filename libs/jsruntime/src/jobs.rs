@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use rustc_hash::FxHashMap;
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 
 use crate::Runtime;
 use crate::Value;
@@ -37,12 +37,12 @@ impl<X> Runtime<X> {
 
     // promise
 
-    pub fn register_promise(&mut self, coroutine: Handle<Coroutine>) -> Promise {
+    pub fn register_promise(&mut self, coroutine: HandleMut<Coroutine>) -> Promise {
         logger::debug!(event = "register_promise", ?coroutine);
         self.job_runner.register_promise(coroutine)
     }
 
-    pub fn process_promise(&mut self, promise: Handle<Object>, result: &Value, error: &Value) {
+    pub fn process_promise(&mut self, promise: HandleMut<Object>, result: &Value, error: &Value) {
         // TODO(feat): `result` may hold a Promise object
         logger::debug!(event = "process_promise", ?promise, ?result, ?error);
         debug_assert!(self.is_promise_object(promise));
@@ -58,8 +58,8 @@ impl<X> Runtime<X> {
 
     fn resume(
         &mut self,
-        coroutine: Handle<Coroutine>,
-        promise: Handle<Object>,
+        coroutine: HandleMut<Coroutine>,
+        promise: HandleMut<Object>,
         result: &Value,
         error: &Value,
     ) -> (Status, Value) {
@@ -72,7 +72,7 @@ impl<X> Runtime<X> {
         (status, retv)
     }
 
-    pub fn emit_promise_resolved(&mut self, promise: Handle<Object>, result: Value) {
+    pub fn emit_promise_resolved(&mut self, promise: HandleMut<Object>, result: Value) {
         debug_assert!(self.is_promise_object(promise));
         match result {
             Value::Object(object) if self.is_promise_object(object) => {
@@ -82,7 +82,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    pub fn emit_promise_rejected(&mut self, promise: Handle<Object>, error: Value) {
+    pub fn emit_promise_rejected(&mut self, promise: HandleMut<Object>, error: Value) {
         debug_assert!(self.is_promise_object(promise));
         self.job_runner.emit_promise_rejected(promise, error);
     }
@@ -105,7 +105,7 @@ impl JobRunner {
 
     // promises
 
-    fn register_promise(&mut self, coroutine: Handle<Coroutine>) -> Promise {
+    fn register_promise(&mut self, coroutine: HandleMut<Coroutine>) -> Promise {
         let promise = self.new_promise();
         self.promises.insert(promise, PromiseDriver::new(coroutine));
         promise
@@ -127,7 +127,7 @@ impl JobRunner {
         // never reach here
     }
 
-    fn await_promise(&mut self, promise: Handle<Object>, awaiting: Handle<Object>) {
+    fn await_promise(&mut self, promise: HandleMut<Object>, awaiting: HandleMut<Object>) {
         logger::debug!(event = "await_promise", ?promise, ?awaiting);
         let promise_id = promise.get_promise();
         debug_assert!(promise_id.is_valid());
@@ -152,17 +152,17 @@ impl JobRunner {
         }
     }
 
-    fn get_coroutine(&self, promise: Promise) -> Handle<Coroutine> {
+    fn get_coroutine(&self, promise: Promise) -> HandleMut<Coroutine> {
         self.promises.get(&promise).unwrap().coroutine
     }
 
-    fn emit_promise_resolved(&mut self, promise: Handle<Object>, result: Value) {
+    fn emit_promise_resolved(&mut self, promise: HandleMut<Object>, result: Value) {
         logger::debug!(event = "emit_promise_resolved", ?promise, ?result);
         self.messages
             .push_back(Message::PromiseResolved { promise, result });
     }
 
-    fn emit_promise_rejected(&mut self, promise: Handle<Object>, error: Value) {
+    fn emit_promise_rejected(&mut self, promise: HandleMut<Object>, error: Value) {
         logger::debug!(event = "emit_promise_rejected", ?promise, ?error);
         self.messages
             .push_back(Message::PromiseRejected { promise, error });
@@ -204,11 +204,11 @@ impl JobRunner {
 #[derive(Debug)]
 enum Message {
     PromiseResolved {
-        promise: Handle<Object>,
+        promise: HandleMut<Object>,
         result: Value,
     },
     PromiseRejected {
-        promise: Handle<Object>,
+        promise: HandleMut<Object>,
         error: Value,
     },
 }
@@ -217,13 +217,13 @@ enum Message {
 
 // TODO: should the coroutine be separated from the promise?
 struct PromiseDriver {
-    coroutine: Handle<Coroutine>,
-    awaiting: Option<Handle<Object>>,
+    coroutine: HandleMut<Coroutine>,
+    awaiting: Option<HandleMut<Object>>,
     state: PromiseState,
 }
 
 impl PromiseDriver {
-    fn new(coroutine: Handle<Coroutine>) -> Self {
+    fn new(coroutine: HandleMut<Coroutine>) -> Self {
         Self {
             coroutine,
             awaiting: None,

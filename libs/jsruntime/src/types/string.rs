@@ -1,166 +1,82 @@
 use std::iter::Enumerate;
 use std::iter::Peekable;
-use std::ops::Deref;
 use std::ops::Index;
 
-use bitflags::bitflags;
-use bitflags::bitflags_match;
 use itertools::Itertools;
 
 use jsgc::Handle;
 use jsgc::Heap;
+use jsgc::Seq;
+use jsgc::Trace;
+use jsgc::VisitList;
 
 /// An empty string.
-pub const EMPTY: Handle<StringFragment> = Handle::from_ref(&StringFragment::EMPTY);
+pub const EMPTY: Handle<String> = Handle::from_ref(&String::EMPTY);
 
 /// A single U+0020 character.
-pub const SPACE: Handle<StringFragment> = Handle::from_ref(&StringFragment::SPACE);
+pub const SPACE: Handle<String> = Handle::from_ref(&String::SPACE);
 
-/// A data type representing an **immutable** fragment of UTF-16 code units.
-///
-/// A UTF-16 string is represented as a *chain* of **immutable** fragments of UTF-16 code units.
-///
-/// This type may be allocated on the stack.
+/// A data type representing an **immutable** UTF-16 code units.
 #[derive(Clone)]
 #[repr(C)]
-pub struct StringFragment {
-    /// A pointer to the next string fragment if it exists.
-    // TODO(issue#237): GcCellRef
-    next: *const StringFragment,
-
-    /// A pointer to the UTF-16 code unit sequence if it exists.
+pub struct String {
+    /// A pointer to the UTF-16 code unit sequence.
     ///
     /// The `ptr` points to one of the following memory block:
     ///
     ///   * A constant array of UTF-16 code units
     ///   * An array of UTF-16 code units allocated in the string pool (not yet implemented)
     ///   * A memory block allocated in the GC heap
-    // TODO(issue#237): GcCellRef
-    ptr: *const u16,
+    ptr: Handle<u16>,
 
-    /// The number of the UTF-16 code units in the string fragment.
+    /// The position of the first code unit in the UTF-16 code unit sequence.
+    offset: u32,
+
+    /// The number of the UTF-16 code units in the string.
     len: u32,
-
-    /// The number of repetitions of the UTF-16 code unit sequence.
-    repetitions: u32,
-
-    flags: StringFragmentFlags,
 }
 
-base::static_assert_eq!(align_of::<StringFragment>(), align_of::<usize>());
+base::static_assert_eq!(align_of::<String>(), align_of::<usize>());
 
-impl StringFragment {
+impl String {
     pub(crate) const EMPTY: Self = Self::new_const(&[]);
     pub(crate) const SPACE: Self = Self::new_const(&[0x0020]);
-
-    pub(crate) const SIZE: usize = size_of::<Self>();
-    pub(crate) const ALIGNMENT: usize = align_of::<Self>();
-    pub(crate) const NEXT_OFFSET: usize = std::mem::offset_of!(Self, next);
-    pub(crate) const PTR_OFFSET: usize = std::mem::offset_of!(Self, ptr);
-    pub(crate) const LEN_OFFSET: usize = std::mem::offset_of!(Self, len);
-    pub(crate) const REPETITIONS_OFFSET: usize = std::mem::offset_of!(Self, repetitions);
-    pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     // TODO(refactor): should be private
     pub const fn new_const(slice: &'static [u16]) -> Self {
         Self {
-            next: std::ptr::null(),
-            ptr: slice.as_ptr(),
+            ptr: Handle::from_ptr(slice.as_ptr()).unwrap(),
+            offset: 0,
             len: slice.len() as u32,
-            repetitions: 1,
-            flags: StringFragmentFlags::CONST,
         }
     }
 
-    // TODO(feat): support DYNAMIC
-    pub(crate) const fn new_stack(slice: &[u16], dynamic: bool) -> Self {
+    pub(crate) const fn new_heap(seq: Seq<u16>) -> Self {
         Self {
-            next: std::ptr::null(),
-            ptr: slice.as_ptr(),
-            len: slice.len() as u32,
-            repetitions: 1,
-            flags: if dynamic {
-                StringFragmentFlags::STACK.union(StringFragmentFlags::DYNAMIC)
-            } else {
-                StringFragmentFlags::STACK
-            },
+            ptr: seq.data,
+            offset: 0,
+            len: seq.len as u32,
         }
-    }
-
-    // TODO(refactor): remove
-    pub(crate) fn set_repetitions(&mut self, repetitions: u32) {
-        self.repetitions = repetitions;
-    }
-
-    pub(crate) fn new_heap(next: *const Self, frag: &StringFragment) -> Self {
-        Self {
-            next,
-            ptr: frag.ptr,
-            len: frag.len,
-            repetitions: frag.repetitions,
-            flags: StringFragmentFlags::HEAP
-                | frag.flags.intersection(StringFragmentFlags::DYNAMIC),
-        }
-    }
-
-    pub(crate) const fn is_simple(&self) -> bool {
-        self.next.is_null() && self.repetitions == 1
     }
 
     pub(crate) const fn is_empty(&self) -> bool {
-        debug_assert!(self.len > 0 || self.next.is_null());
         self.len == 0
-    }
-
-    pub(crate) const fn is_const(&self) -> bool {
-        self.flags.contains(StringFragmentFlags::CONST) && self.next.is_null()
-    }
-
-    pub(crate) const fn on_stack(&self) -> bool {
-        self.flags.contains(StringFragmentFlags::STACK)
     }
 
     /// Returns the number of UTF-16 code units in the string.
     pub(crate) fn len(&self) -> u32 {
-        // SAFETY: `self.next` is null or a valid pointer to a `StringFragment`.
-        if let Some(next) = unsafe { self.next.as_ref() } {
-            debug_assert!(self.len > 0);
-            self.fragment_len() + next.len()
-        } else {
-            self.fragment_len()
-        }
-    }
-
-    pub(crate) fn fragment_len(&self) -> u32 {
-        debug_assert!(self.repetitions > 0);
-        self.len * self.repetitions
+        self.len
     }
 
     // Returns a *raw* UTF-16 code unit sequence.
     pub(crate) fn as_slice(&self) -> &[u16] {
         debug_assert_ne!(self.len, 0);
-        debug_assert!(!self.ptr.is_null());
-        debug_assert!(self.ptr.is_aligned());
-        // SAFETY: `self.ptr` is always pointer to an array of `u16`.
-        unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) }
-    }
-
-    pub(crate) fn next(&self) -> Option<&Self> {
-        // SAFETY: `self.next` is null or convertible to a reference.
-        debug_assert!(self.next.is_null() || self.next.is_aligned());
-        unsafe { self.next.as_ref() }
+        // SAFETY: `self.ptr.as_ptr()` is always pointer to an array of `u16`.
+        unsafe { std::slice::from_raw_parts(self.ptr.as_ptr(), self.len as usize) }
     }
 
     pub fn at(&self, index: u32) -> Option<u16> {
-        let i = index as usize;
-        let slice = self.as_slice();
-        match slice.get(i) {
-            Some(code_unit) => Some(*code_unit),
-            None => {
-                let next_index = (i - slice.len()) as u32;
-                self.next().and_then(|next| next.at(next_index))
-            }
-        }
+        self.as_slice().get(index as usize).copied()
     }
 
     pub fn code_point_at(&self, index: u32) -> CodePointAt {
@@ -280,66 +196,32 @@ impl StringFragment {
         true
     }
 
-    pub fn concat(&self, tail: Handle<Self>, heap: &Heap) -> Handle<Self> {
+    pub fn concat(&self, tail: Handle<Self>, heap: &mut Heap) -> Handle<Self> {
         if self.is_empty() {
-            return tail.ensure_return_safe(heap);
+            return tail;
         }
         if tail.is_empty() {
-            return self.ensure_return_safe(heap);
-        }
-
-        let mut fragment = self;
-        let mut new_fragment = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        let handle = new_fragment;
-
-        while let Some(next) = fragment.next() {
-            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
-            new_fragment.next = new_next.as_ptr();
-            fragment = next;
-            new_fragment = new_next;
-        }
-
-        fragment = tail.deref();
-        let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        new_fragment.next = new_next.as_ptr();
-        new_fragment = new_next;
-
-        while let Some(next) = fragment.next() {
-            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
-            new_fragment.next = new_next.as_ptr();
-            fragment = next;
-            new_fragment = new_next;
-        }
-
-        handle
-    }
-
-    pub fn ensure_return_safe(&self, heap: &Heap) -> Handle<Self> {
-        if !self.on_stack() {
             return Handle::from_ref(self);
         }
 
-        if self.is_empty() {
-            return EMPTY;
-        }
+        let len = (self.len() + tail.len()) as usize;
 
-        self.migrate_to_heap(heap)
-    }
+        let handle = heap.alloc_seq_with_init::<u16, _>(len, |code_units| unsafe {
+            code_units.as_ptr().copy_from(
+                self.ptr.as_ptr().add(self.offset as usize),
+                self.len as usize,
+            );
+            code_units.offset(self.len as isize).as_ptr().copy_from(
+                tail.ptr.as_ptr().add(tail.offset as usize),
+                tail.len as usize,
+            );
+        });
 
-    // Migrate a UTF-16 string from the stack to the heap.
-    fn migrate_to_heap(&self, heap: &Heap) -> Handle<Self> {
-        let mut fragment = self;
-        let mut new_fragment = heap.alloc(StringFragment::new_heap(std::ptr::null(), fragment));
-        let handle = new_fragment;
-
-        while let Some(next) = fragment.next() {
-            let new_next = heap.alloc(StringFragment::new_heap(std::ptr::null(), next));
-            new_fragment.next = new_next.as_ptr();
-            fragment = next;
-            new_fragment = new_next;
-        }
-
-        handle
+        heap.alloc(String {
+            ptr: handle.data,
+            offset: 0,
+            len: len as u32,
+        })
     }
 
     pub(crate) fn code_units(&self) -> impl Iterator<Item = u16> {
@@ -355,66 +237,45 @@ impl StringFragment {
         self.code_units().collect_vec()
     }
 
-    pub(crate) fn repeat(&self, repetitions: u32) -> Self {
-        debug_assert!(self.is_simple());
+    pub(crate) fn repeat(&self, repetitions: u32, heap: &mut Heap) -> Handle<Self> {
         debug_assert!(repetitions > 0);
-        Self {
-            next: std::ptr::null_mut(),
-            ptr: self.ptr,
-            len: self.len,
-            flags: StringFragmentFlags::STACK
-                | self.flags.intersection(StringFragmentFlags::DYNAMIC),
-            repetitions,
+        let mut head = Handle::from_ref(self);
+        for _ in 0..repetitions {
+            head = head.concat(head, heap);
         }
+        head
     }
 
-    pub(crate) fn sub_fragment(&self, start: u32, end: u32) -> Self {
-        debug_assert!(self.is_simple());
-        let slice = self.as_slice();
-        let sub = &slice[(start as usize)..(end as usize)];
-        Self {
-            next: std::ptr::null_mut(),
-            ptr: sub.as_ptr(),
-            len: sub.len() as u32,
-            flags: StringFragmentFlags::STACK
-                | self.flags.intersection(StringFragmentFlags::DYNAMIC),
-            repetitions: 1,
-        }
+    pub(crate) fn substring(&self, start: u32, end: u32, heap: &mut Heap) -> Handle<Self> {
+        heap.alloc(Self {
+            ptr: self.ptr,
+            offset: start,
+            len: end - start,
+        })
     }
 }
 
 // The UTF-16 code units never change.
-unsafe impl Send for StringFragment {}
-unsafe impl Sync for StringFragment {}
+unsafe impl Send for String {}
+unsafe impl Sync for String {}
 
-impl PartialEq for StringFragment {
+impl PartialEq for String {
     fn eq(&self, other: &Self) -> bool {
         self.code_units().eq(other.code_units())
     }
 }
 
-impl Index<u32> for StringFragment {
+impl Index<u32> for String {
     type Output = u16;
 
     fn index(&self, index: u32) -> &Self::Output {
-        assert!(index < self.len());
-        let index = index % self.len;
-        // SAFETY: `self.ptr` points to `[u16; self.len]`.
-        unsafe { &*self.ptr.add(index as usize) }
+        self.as_slice().get(index as usize).unwrap()
     }
 }
 
-impl std::fmt::Debug for StringFragment {
+impl std::fmt::Debug for String {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let prefix = bitflags_match!(self.flags, {
-            StringFragmentFlags::CONST => r#"const""#,
-            StringFragmentFlags::STACK => r#"stack""#,
-            StringFragmentFlags::STACK | StringFragmentFlags::DYNAMIC => r#"stack!""#,
-            StringFragmentFlags::HEAP => r#"heap""#,
-            StringFragmentFlags::HEAP | StringFragmentFlags::DYNAMIC => r#"heap!""#,
-            _ => unreachable!(),
-        });
-        write!(f, "{prefix}")?;
+        write!(f, r#"""#)?;
         let utf16 = self.as_slice().iter().cloned();
         for c in std::char::decode_utf16(utf16).map(|r| r.map_err(|e| e.unpaired_surrogate())) {
             match c {
@@ -423,18 +284,11 @@ impl std::fmt::Debug for StringFragment {
             }
         }
         write!(f, r#"""#)?;
-        if self.repetitions > 1 {
-            write!(f, "*{}", self.repetitions)?;
-        }
-        if let Some(next) = self.next() {
-            write!(f, " ")?;
-            std::fmt::Debug::fmt(next, f)?;
-        }
         Ok(())
     }
 }
 
-impl std::fmt::Display for StringFragment {
+impl std::fmt::Display for String {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for c in std::char::decode_utf16(self.code_units())
             .map(|r| r.map_err(|e| e.unpaired_surrogate()))
@@ -448,65 +302,26 @@ impl std::fmt::Display for StringFragment {
     }
 }
 
-bitflags! {
-    #[derive(Clone, Copy, PartialEq)]
-    pub struct StringFragmentFlags: u8 {
-        /// The object is a constant value.
-        const CONST   = 1 << 0;
-
-        /// The object has been allocated on the stack.
-        const STACK   = 1 << 1;
-
-        /// The object has been allocated in the heap.
-        const HEAP    = 1 << 2;
-
-        /// The UTF-16 code units has allocated in the heap at runtime.
-        const DYNAMIC = 1 << 3;
+impl Trace for String {
+    fn trace(&self, visit_list: &mut VisitList) {
+        visit_list.push(self.ptr.as_addr());
     }
 }
 
+// TODO(refactor)
 struct CodeUnits<'a> {
-    fragment: Option<&'a StringFragment>,
+    string: &'a String,
     pos: u32,
-    repetitions: u32,
 }
 
 impl<'a> CodeUnits<'a> {
-    fn new(fragment: &'a StringFragment) -> Self {
-        Self {
-            fragment: Some(fragment),
-            pos: 0,
-            repetitions: 0,
-        }
+    fn new(string: &'a String) -> Self {
+        Self { string, pos: 0 }
     }
 
     #[allow(unused)]
     fn has_next(&self) -> bool {
-        let fragment = match self.fragment {
-            Some(fragment) => fragment,
-            None => return false,
-        };
-
-        // We can solve the following warning by changing like this:
-        //
-        // ```
-        // if self.pos < self.fragment.len || self.repetitions < self.fragment.repetitions {
-        //     true
-        // } else if let Some(next) = self.fragment.next() {
-        //     ...
-        // ```
-        //
-        // But we keep the code for readability.
-        #[allow(clippy::if_same_then_else)]
-        if self.pos < fragment.len {
-            true
-        } else if self.repetitions < fragment.repetitions {
-            true
-        } else if let Some(next) = fragment.next() {
-            !next.is_empty()
-        } else {
-            false
-        }
+        self.pos < self.string.len
     }
 }
 
@@ -514,38 +329,27 @@ impl<'a> Iterator for CodeUnits<'a> {
     type Item = u16;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let fragment = self.fragment?;
+        let string = self.string;
 
-        if self.pos < fragment.len {
-            let code_unit = fragment[self.pos];
+        if self.pos < string.len {
+            let code_unit = string[self.pos];
             self.pos += 1;
             return Some(code_unit);
         }
 
-        self.repetitions += 1;
-        self.pos = 0;
-
-        if self.repetitions < fragment.repetitions {
-            let code_unit = fragment[0];
-            self.pos = 1;
-            return Some(code_unit);
-        }
-
-        self.fragment = fragment.next();
-        self.repetitions = 0;
-
-        self.next()
+        None
     }
 }
 
+// TODO(refactor)
 struct CodePoints<'a> {
     code_units: Peekable<Enumerate<CodeUnits<'a>>>,
 }
 
 impl<'a> CodePoints<'a> {
-    fn new(fragment: &'a StringFragment) -> Self {
+    fn new(string: &'a String) -> Self {
         Self {
-            code_units: CodeUnits::new(fragment).enumerate().peekable(),
+            code_units: CodeUnits::new(string).enumerate().peekable(),
         }
     }
 }

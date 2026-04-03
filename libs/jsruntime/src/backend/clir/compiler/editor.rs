@@ -18,8 +18,7 @@ use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Object;
 use crate::types::ObjectFlags;
-use crate::types::StringFragment;
-use crate::types::StringFragmentFlags;
+use crate::types::String;
 use crate::types::Value;
 
 use super::AnyIr;
@@ -504,14 +503,9 @@ impl<'a> Editor<'a> {
         self.builder.ins().br_table(index, jump_table);
     }
 
-    pub fn put_return(&mut self, support: &mut impl EditorSupport) {
+    pub fn put_return(&mut self) {
         logger::debug!(event = "put_return");
         debug_assert!(!self.block_terminated);
-        if self.runtime_assert_enabled {
-            let retv = self.retv();
-            let is_return_safe = self.put_is_return_safe(retv);
-            self.put_assert(support, is_return_safe, c"retv must be return-safe");
-        }
         let status = self.put_load_status();
         let masked = self.builder.ins().band_imm(status.0, Status::MASK as i64);
         self.builder.ins().return_(&[masked]);
@@ -566,100 +560,12 @@ impl<'a> Editor<'a> {
 
     // string
 
-    pub fn put_alloc_string(&mut self) -> StringIr {
-        logger::debug!(event = "put_alloc_string");
-
-        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
-            ir::StackSlotKind::ExplicitSlot,
-            StringFragment::SIZE as u32,
-            StringFragment::ALIGNMENT.ilog2() as u8,
-        ));
-
-        let next = self.builder.ins().iconst(self.addr_type, 0);
-        self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
-
-        let repetitions = self.builder.ins().iconst(ir::types::I32, 1);
-        self.put_store_to_slot(repetitions, slot, StringFragment::REPETITIONS_OFFSET);
-
-        let flags = self
-            .builder
-            .ins()
-            .iconst(ir::types::I8, StringFragmentFlags::STACK.bits() as i64);
-        self.put_store_to_slot(flags, slot, StringFragment::FLAGS_OFFSET);
-
-        StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
-    }
-
-    pub fn put_set_string(&mut self, value: &[u16], target: StringIr) {
-        logger::debug!(event = "put_set_string", ?value, ?target);
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
-
-        let ptr = self
-            .builder
-            .ins()
-            .iconst(self.addr_type, value.as_ptr() as i64);
-        self.builder
-            .ins()
-            .store(FLAGS, ptr, target.0, StringFragment::PTR_OFFSET as i32);
-
-        debug_assert!(value.len() <= u32::MAX as usize);
-        let len = self
-            .builder
-            .ins()
-            .iconst(ir::types::I32, value.len() as i64);
-        self.builder
-            .ins()
-            .store(FLAGS, len, target.0, StringFragment::LEN_OFFSET as i32);
-    }
-
-    pub fn put_create_string(&mut self, value: &[u16]) -> StringIr {
-        logger::debug!(event = "put_create_string", ?value);
-
-        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
-            ir::StackSlotKind::ExplicitSlot,
-            StringFragment::SIZE as u32,
-            StringFragment::ALIGNMENT.ilog2() as u8,
-        ));
-
-        let next = self.builder.ins().iconst(self.addr_type, 0);
-        self.put_store_to_slot(next, slot, StringFragment::NEXT_OFFSET);
-
-        let ptr = self
-            .builder
-            .ins()
-            .iconst(self.addr_type, value.as_ptr() as i64);
-        self.put_store_to_slot(ptr, slot, StringFragment::PTR_OFFSET);
-
-        debug_assert!(value.len() <= u32::MAX as usize);
-        let len = self
-            .builder
-            .ins()
-            .iconst(ir::types::I32, value.len() as i64);
-        self.put_store_to_slot(len, slot, StringFragment::LEN_OFFSET);
-
-        let repetitions = self.builder.ins().iconst(ir::types::I32, 1);
-        self.put_store_to_slot(repetitions, slot, StringFragment::REPETITIONS_OFFSET);
-
-        let flags = self
-            .builder
-            .ins()
-            .iconst(ir::types::I8, StringFragmentFlags::STACK.bits() as i64);
-        self.put_store_to_slot(flags, slot, StringFragment::FLAGS_OFFSET);
-
-        StringIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
-    }
-
-    pub fn put_string_on_stack(&mut self, string: StringIr) -> BooleanIr {
-        logger::debug!(event = "put_string_on_stack", ?string);
-        use ir::condcodes::IntCC::Equal;
-        const FLAG: i64 = StringFragmentFlags::STACK.bits() as i64;
-        let flags = self.put_load_flags_from_string(string);
-        let on_stack = self.builder.ins().band_imm(flags, FLAG);
-        BooleanIr(self.builder.ins().icmp_imm(Equal, on_stack, FLAG))
-    }
-
-    fn put_load_flags_from_string(&mut self, string: StringIr) -> ir::Value {
-        self.put_load_i8(string.0, StringFragment::FLAGS_OFFSET)
+    pub fn put_create_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: &[u16],
+    ) -> StringIr {
+        self.put_runtime_create_string(support, value)
     }
 
     // any
@@ -687,32 +593,6 @@ impl<'a> Editor<'a> {
                 .ins()
                 .icmp_imm(NotEqual, kind, Value::KIND_NONE as i64),
         )
-    }
-
-    fn put_is_return_safe(&mut self, any: AnyIr) -> BooleanIr {
-        logger::debug!(event = "put_is_return_safe", ?any);
-        let then_block = self.create_block();
-        let merge_block = self.create_block_with_i8();
-
-        // if any.is_string()
-        let is_string = self.put_is_string(any);
-        self.put_branch(
-            is_string,
-            then_block,
-            &[],
-            merge_block,
-            &[is_string.0.into()],
-        );
-        // {
-        self.switch_to_block(then_block);
-        let string = self.put_load_string(any);
-        let on_stack = self.put_string_on_stack(string);
-        self.put_jump(merge_block, &[on_stack.0.into()]);
-        // }
-
-        self.switch_to_block(merge_block);
-        let not_return_safe = BooleanIr(self.get_block_param(merge_block, 0));
-        self.put_logical_not(not_return_safe)
     }
 
     pub fn put_load_boolean(&mut self, any: AnyIr) -> BooleanIr {
@@ -1126,11 +1006,6 @@ impl<'a> Editor<'a> {
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder.ins().store(FLAGS, value, addr, offset as i32);
-    }
-
-    fn put_store_to_slot(&mut self, value: ir::Value, slot: ir::StackSlot, offset: usize) {
-        debug_assert!(offset <= i32::MAX as usize);
-        self.builder.ins().stack_store(value, slot, offset as i32);
     }
 
     pub fn put_store_none_to_any(&mut self, any: AnyIr) {
@@ -1946,23 +1821,24 @@ impl<'a> Editor<'a> {
         StringIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_migrate_string_to_heap(
+    pub fn put_runtime_create_string(
         &mut self,
         support: &mut impl EditorSupport,
-        string: StringIr,
+        value: &[u16],
     ) -> StringIr {
-        logger::debug!(event = "put_runtime_migrate_string_to_heap", ?string);
-        if self.runtime_assert_enabled {
-            self.put_assert_non_null(
-                support,
-                string.0,
-                c"string passed to runtime_migrate_string_to_heap() must be non-null",
-            );
-        }
+        logger::debug!(event = "put_runtime_create_string", ?value);
         let func = self
             .runtime_func_cache
-            .import_runtime_migrate_string_to_heap(support, self.builder.func);
-        let args = [self.runtime(), string.0];
+            .import_runtime_create_string(support, self.builder.func);
+        let ptr = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, value.as_ptr() as i64);
+        let len = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, value.len() as i64);
+        let args = [self.runtime(), ptr, len];
         let call = self.builder.ins().call(func, &args);
         StringIr(self.builder.inst_results(call)[0])
     }
@@ -2134,10 +2010,9 @@ impl<'a> Editor<'a> {
     pub fn put_runtime_create_internal_error(
         &mut self,
         support: &mut impl EditorSupport,
-        message: Handle<StringFragment>,
+        message: Handle<String>,
     ) -> ObjectIr {
         logger::debug!(event = "put_runtime_create_internal_error", ?message);
-        debug_assert!(message.is_const());
         let func = self
             .runtime_func_cache
             .import_runtime_create_internal_error(support, self.builder.func);

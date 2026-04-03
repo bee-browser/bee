@@ -1191,8 +1191,8 @@ name = "jsgc"
 version = "0.0.0"
 dependencies = [
  "base",
- "bumpalo",
  "logging",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -1243,7 +1243,6 @@ dependencies = [
  "logging",
  "paste",
  "rustc-hash",
- "static_assertions",
  "thiserror",
 ]
 

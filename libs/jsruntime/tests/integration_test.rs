@@ -81,8 +81,7 @@ pub fn evaluate_multiple_programs(
     let mut runtime = Runtime::with_extension(Validator::new(expected_values));
     runtime.enable_scope_cleanup_checker();
     runtime.register_host_function("print", |runtime, args| {
-        let value = runtime.ensure_value_return_safe(&args[0]);
-        runtime.extension_mut().actual_values.push(value);
+        runtime.extension_mut().actual_values.push(args[0].clone());
     });
     for (source, module) in sources.iter().cloned() {
         let program_id = if module {
@@ -94,5 +93,7 @@ pub fn evaluate_multiple_programs(
     }
     runtime.process_jobs();
     runtime.extension().validate();
+    runtime.collect_garbage(&[]);
+    assert_eq!(runtime.heap_stats().num_objects, 0);
     Ok(())
 }

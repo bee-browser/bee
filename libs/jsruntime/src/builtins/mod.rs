@@ -13,6 +13,7 @@ mod type_error;
 mod uri_error;
 
 use jsgc::Handle;
+use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::Error;
@@ -22,7 +23,7 @@ use crate::logger;
 use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Property;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 impl<X> Runtime<X> {
@@ -97,7 +98,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> Handle<Object> {
+    fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> HandleMut<Object> {
         logger::debug!(
             event = "create_builtin_function",
             ?params.lambda,
@@ -125,13 +126,13 @@ impl<X> Runtime<X> {
     }
 
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
-    fn set_function_name(&mut self, func: &mut Handle<Object>, name: Handle<StringFragment>) {
+    fn set_function_name(&mut self, func: &mut HandleMut<Object>, name: Handle<String>) {
         let _ =
             func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
     }
 
     // 10.2.10 SetFunctionLength ( F, length )
-    fn set_function_length(&mut self, func: &mut Handle<Object>, length: u16) {
+    fn set_function_length(&mut self, func: &mut HandleMut<Object>, length: u16) {
         let _ = func.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxc(Value::Number(length as f64)),
@@ -180,20 +181,13 @@ impl<X> Runtime<X> {
     }
 
     // TODO(refactor): code clone, see runtime_concat_strings.
-    fn concat_strings(
-        &mut self,
-        a: Handle<StringFragment>,
-        b: Handle<StringFragment>,
-    ) -> Handle<StringFragment> {
-        a.concat(b, &self.heap)
+    fn concat_strings(&mut self, a: Handle<String>, b: Handle<String>) -> Handle<String> {
+        a.concat(b, &mut self.heap)
     }
 
     // 7.1.17 ToString ( argument )
     // TODO: code clone, see backend::bridge::runtime_to_string
-    pub(crate) fn value_to_string(
-        &mut self,
-        value: &Value,
-    ) -> Result<Handle<StringFragment>, Error> {
+    pub(crate) fn value_to_string(&mut self, value: &Value) -> Result<Handle<String>, Error> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
@@ -208,10 +202,7 @@ impl<X> Runtime<X> {
         }
     }
 
-    fn object_to_string(
-        &mut self,
-        object: Handle<Object>,
-    ) -> Result<Handle<StringFragment>, Error> {
+    fn object_to_string(&mut self, object: HandleMut<Object>) -> Result<Handle<String>, Error> {
         // TODO(feat): ToPrimitive(object, STRING)
         if self.is_string_object(object) {
             Ok(object.string())
@@ -228,12 +219,7 @@ impl<X> Runtime<X> {
         })
     }
 
-    fn make_string_filler(
-        &mut self,
-        fill_string: Handle<StringFragment>,
-        fill_len: u32,
-    ) -> Handle<StringFragment> {
-        debug_assert!(fill_string.is_simple());
+    fn make_string_filler(&mut self, fill_string: Handle<String>, fill_len: u32) -> Handle<String> {
         debug_assert!(!fill_string.is_empty());
 
         let fill_string_len = fill_string.len();
@@ -242,39 +228,24 @@ impl<X> Runtime<X> {
 
         if repetitions == 0 {
             debug_assert!(remaining > 0);
-            return fill_string
-                .sub_fragment(0, remaining)
-                .ensure_return_safe(&self.heap);
+            return fill_string.substring(0, remaining, &mut self.heap);
         }
 
-        let frag = fill_string.repeat(repetitions);
+        let string = fill_string.repeat(repetitions, &mut self.heap);
         if remaining == 0 {
-            return frag.ensure_return_safe(&self.heap);
+            return string;
         }
 
-        let last = fill_string.sub_fragment(0, remaining);
-        frag.concat(Handle::from_ref(&last), &self.heap)
+        let last = fill_string.substring(0, remaining, &mut self.heap);
+        string.concat(last, &mut self.heap)
     }
 
-    fn repeat_string(&mut self, s: Handle<StringFragment>, n: u32) -> Handle<StringFragment> {
-        if n == 1 {
-            return s;
+    fn repeat_string(&mut self, s: Handle<String>, n: u32) -> Handle<String> {
+        if s.is_empty() || n == 1 {
+            s
+        } else {
+            s.repeat(n, &mut self.heap)
         }
-
-        if s.is_empty() {
-            return s;
-        }
-
-        if s.is_simple() {
-            return s.repeat(n).ensure_return_safe(&self.heap);
-        }
-
-        // TODO(perf): inefficient
-        let utf16 = s.make_utf16();
-        let slice = self.heap.alloc_slice_copy(&utf16);
-        let mut frag = StringFragment::new_stack(slice, true);
-        frag.set_repetitions(n);
-        frag.ensure_return_safe(&self.heap)
     }
 }
 
@@ -290,8 +261,8 @@ fn require_object_coercible(value: &Value) -> Result<(), Error> {
 struct BuiltinFunctionParams<'a, X> {
     lambda: Lambda<X>,
     #[allow(unused)]
-    name: Handle<StringFragment>,
+    name: Handle<String>,
     length: u16,
     slots: &'a [Value],
-    prototype: Option<Handle<Object>>,
+    prototype: Option<HandleMut<Object>>,
 }
