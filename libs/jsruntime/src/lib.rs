@@ -272,7 +272,9 @@ impl<X> Runtime<X> {
     ///   * This issue will be solved in the future
     ///
     pub fn collect_garbage(&mut self, roots: &[usize]) {
-        self.heap.collect_garbage(roots);
+        let mut roots_ = self.job_runner.collect_gc_roots();
+        roots_.extend_from_slice(roots);
+        self.heap.collect_garbage(&roots_);
     }
 
     pub fn heap_stats(&self) -> jsgc::Stats {

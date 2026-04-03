@@ -1384,6 +1384,17 @@ impl<'a> Editor<'a> {
         }
     }
 
+    pub fn put_write_none_to_scratch_buffer(&mut self, scratch_buffer: &mut ScratchBuffer) {
+        logger::debug!(event = "put_write_none_to_scratch_buffer", ?scratch_buffer,);
+        let ScratchBuffer { addr, offset } = *scratch_buffer;
+        scratch_buffer.offset += Value::SIZE;
+        let kind = self
+            .builder
+            .ins()
+            .iconst(ir::types::I8, Value::KIND_NONE as i64);
+        self.put_store(kind, addr, offset);
+    }
+
     pub fn put_write_boolean_to_scratch_buffer(
         &mut self,
         value: BooleanIr,
@@ -1395,8 +1406,13 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        self.put_store(value.0, addr, offset);
+        scratch_buffer.offset += Value::SIZE;
+        let kind = self
+            .builder
+            .ins()
+            .iconst(ir::types::I8, Value::KIND_BOOLEAN as i64);
+        self.put_store(kind, addr, offset);
+        self.put_store(value.0, addr, offset + Value::HOLDER_OFFSET);
     }
 
     pub fn put_write_number_to_scratch_buffer(
@@ -1410,8 +1426,13 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        self.put_store(value.0, addr, offset);
+        scratch_buffer.offset += Value::SIZE;
+        let kind = self
+            .builder
+            .ins()
+            .iconst(ir::types::I8, Value::KIND_NUMBER as i64);
+        self.put_store(kind, addr, offset);
+        self.put_store(value.0, addr, offset + Value::HOLDER_OFFSET);
     }
 
     pub fn put_write_string_to_scratch_buffer(
@@ -1425,8 +1446,13 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        self.put_store(value.0, addr, offset);
+        scratch_buffer.offset += Value::SIZE;
+        let kind = self
+            .builder
+            .ins()
+            .iconst(ir::types::I8, Value::KIND_STRING as i64);
+        self.put_store(kind, addr, offset);
+        self.put_store(value.0, addr, offset + Value::HOLDER_OFFSET);
     }
 
     pub fn put_write_closure_to_scratch_buffer(
@@ -1440,8 +1466,13 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        self.put_store(value.0, addr, offset);
+        scratch_buffer.offset += Value::SIZE;
+        let kind = self
+            .builder
+            .ins()
+            .iconst(ir::types::I8, Value::KIND_OBJECT as i64);
+        self.put_store(kind, addr, offset);
+        self.put_store(value.0, addr, offset + Value::HOLDER_OFFSET);
     }
 
     pub fn put_write_object_to_scratch_buffer(
@@ -1455,8 +1486,13 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        self.put_store(value.0, addr, offset);
+        scratch_buffer.offset += Value::SIZE;
+        let kind = self
+            .builder
+            .ins()
+            .iconst(ir::types::I8, Value::KIND_OBJECT as i64);
+        self.put_store(kind, addr, offset + Value::KIND_OFFSET);
+        self.put_store(value.0, addr, offset + Value::HOLDER_OFFSET);
     }
 
     pub fn put_write_any_to_scratch_buffer(
@@ -1484,8 +1520,8 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        BooleanIr(self.put_load_i8(addr, offset))
+        scratch_buffer.offset += Value::SIZE;
+        BooleanIr(self.put_load_i8(addr, offset + Value::HOLDER_OFFSET))
     }
 
     pub fn put_read_number_from_scratch_buffer(
@@ -1497,8 +1533,8 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        NumberIr(self.put_load_f64(addr, offset))
+        scratch_buffer.offset += Value::SIZE;
+        NumberIr(self.put_load_f64(addr, offset + Value::HOLDER_OFFSET))
     }
 
     pub fn put_read_string_from_scratch_buffer(
@@ -1510,8 +1546,8 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        StringIr(self.put_load_addr(addr, offset))
+        scratch_buffer.offset += Value::SIZE;
+        StringIr(self.put_load_addr(addr, offset + Value::HOLDER_OFFSET))
     }
 
     pub fn put_read_closure_from_scratch_buffer(
@@ -1523,8 +1559,8 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        ClosureIr(self.put_load_addr(addr, offset))
+        scratch_buffer.offset += Value::SIZE;
+        ClosureIr(self.put_load_addr(addr, offset + Value::HOLDER_OFFSET))
     }
 
     pub fn put_read_object_from_scratch_buffer(
@@ -1536,8 +1572,8 @@ impl<'a> Editor<'a> {
             ?scratch_buffer,
         );
         let ScratchBuffer { addr, offset } = *scratch_buffer;
-        scratch_buffer.offset += Value::HOLDER_SIZE;
-        ObjectIr(self.put_load_addr(addr, offset))
+        scratch_buffer.offset += Value::SIZE;
+        ObjectIr(self.put_load_addr(addr, offset + Value::HOLDER_OFFSET))
     }
 
     pub fn put_read_any_from_scratch_buffer(
