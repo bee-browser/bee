@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: bencherdev/bencher@8151077aa7b1bceaac11c4b308265417cae60e2b # v0.5.10
+      - uses: bencherdev/bencher@0f8f620172ccd6225d40a7590598eb7b41718af8 # v0.6.2
       - name: Archive closed fork PR branch
         run: >-
           bencher archive
