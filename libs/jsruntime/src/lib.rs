@@ -10,13 +10,12 @@ mod lambda;
 mod semantics;
 mod types;
 
-use std::pin::Pin;
-
 use itertools::Itertools;
 
 use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Heap;
+use jsgc::Trace;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -104,8 +103,9 @@ pub struct Runtime<X> {
     programs: Vec<Program>,
     heap: Heap,
     job_runner: JobRunner,
-    global_object: Pin<Box<Object>>,
 
+    // [[GlobalObject]]
+    global_object: HandleMut<Object>,
     // %Object.prototype%
     object_prototype: Option<HandleMut<Object>>,
     // %Function.prototype%
@@ -139,10 +139,10 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let heap = Heap::new();
+        let mut heap = Heap::new();
 
         // TODO: pass [[Prototype]] of the global object.
-        let global_object = Box::pin(Object::new(Default::default()));
+        let global_object = heap.alloc_mut(Object::new(Default::default()));
 
         let mut runtime = Self {
             pref: Default::default(),
@@ -270,10 +270,13 @@ impl<X> Runtime<X> {
     ///   * There is no way to collect addresses stored on the native stack as roots
     ///   * This issue will be solved in the future
     ///
-    pub fn collect_garbage(&mut self, roots: &[usize]) {
-        let mut roots_ = self.job_runner.collect_gc_roots();
-        roots_.extend_from_slice(roots);
-        self.heap.collect_garbage(&roots_);
+    pub fn collect_garbage(&mut self, mut roots: Vec<usize>) {
+        let handle = Handle::from_ref(self);
+        self.heap.add_tracer(handle);
+        self.job_runner.collect_gc_roots(&mut roots);
+        roots.push(handle.as_addr());
+        self.heap.collect_garbage(&roots);
+        self.heap.remove_tracer(handle);
     }
 
     pub fn heap_stats(&self) -> jsgc::Stats {
@@ -511,6 +514,61 @@ where
 {
     fn default() -> Self {
         Runtime::with_extension(Default::default())
+    }
+}
+
+#[cfg(debug_assertions)]
+impl<X> Drop for Runtime<X> {
+    fn drop(&mut self) {
+        self.heap.collect_garbage(&[]);
+        assert_eq!(self.heap_stats().num_objects, 0);
+    }
+}
+
+// TODO(feat): derive(Trace)
+impl<X> Trace for Runtime<X> {
+    fn trace(&self, visits: &mut jsgc::VisitList) {
+        visits.push(self.global_object.as_addr());
+        if let Some(object) = self.object_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.function_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.string_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.promise_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.aggregate_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.eval_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.internal_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.range_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.reference_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.syntax_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.type_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.uri_error_prototype {
+            visits.push(object.as_addr());
+        }
+        // TODO: tracing X if X implements Trace.
     }
 }
 

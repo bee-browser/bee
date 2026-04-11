@@ -93,7 +93,5 @@ pub fn evaluate_multiple_programs(
     }
     runtime.process_jobs();
     runtime.extension().validate();
-    runtime.collect_garbage(&[]);
-    assert_eq!(runtime.heap_stats().num_objects, 0);
     Ok(())
 }

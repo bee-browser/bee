@@ -130,9 +130,7 @@ impl JobRunner {
         }
     }
 
-    pub(crate) fn collect_gc_roots(&self) -> Vec<usize> {
-        let mut roots = vec![];
-
+    pub(crate) fn collect_gc_roots(&self, roots: &mut Vec<usize>) {
         dbg!(self.messages.len());
         for msg in self.messages.iter() {
             match msg {
@@ -154,8 +152,6 @@ impl JobRunner {
                 }
             }
         }
-
-        roots
     }
 }
 

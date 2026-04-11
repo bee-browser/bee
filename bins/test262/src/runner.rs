@@ -84,13 +84,6 @@ impl Runner {
     fn print(_runtime: &mut Runtime<Context>, _args: &[Value]) {}
 }
 
-impl Drop for Runner {
-    fn drop(&mut self) {
-        self.runtime.collect_garbage(&[]);
-        assert_eq!(self.runtime.heap_stats().num_objects, 0);
-    }
-}
-
 struct Context;
 
 impl Default for Context {
