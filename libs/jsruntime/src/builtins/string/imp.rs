@@ -10,7 +10,7 @@ use crate::builtins::require_object_coercible;
 use crate::logger;
 use crate::types::CallContext;
 use crate::types::Property;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 use crate::types::string::EMPTY;
 use crate::types::string::SPACE;
@@ -35,9 +35,7 @@ pub fn string_from_char_code<X>(
         let code_unit = crate::types::number::to_uint16(arg)?;
         utf16.push(code_unit);
     }
-    let slice = runtime.heap.alloc_slice_copy(&utf16);
-    let fragment = StringFragment::new_stack(slice, true);
-    let string = fragment.ensure_return_safe(&runtime.heap);
+    let string = runtime.create_string(&utf16);
     Ok(Value::String(string))
 }
 
@@ -60,9 +58,7 @@ pub fn string_from_code_point<X>(
         }
         utf16.extend_from_slice(encode_code_point(cp, &mut buf));
     }
-    let slice = runtime.heap.alloc_slice_copy(&utf16);
-    let fragment = StringFragment::new_stack(slice, true);
-    let string = fragment.ensure_return_safe(&runtime.heap);
+    let string = runtime.create_string(&utf16);
     Ok(Value::String(string))
 }
 
@@ -102,9 +98,7 @@ pub fn string_prototype_at<X>(
     }
     // TODO(perf): memory inefficient
     let code_unit = s.at(k as u32);
-    let slice = runtime.heap.alloc_slice_copy(code_unit.as_slice());
-    let fragment = StringFragment::new_stack(slice, true);
-    let string = fragment.ensure_return_safe(&runtime.heap);
+    let string = runtime.create_string(code_unit.as_slice());
     Ok(Value::String(string))
 }
 
@@ -125,9 +119,7 @@ pub fn string_prototype_char_at<X>(
     }
     // TODO(perf): memory inefficient
     let code_unit = s.at(position as u32);
-    let slice = runtime.heap.alloc_slice_copy(code_unit.as_slice());
-    let fragment = StringFragment::new_stack(slice, true);
-    let string = fragment.ensure_return_safe(&runtime.heap);
+    let string = runtime.create_string(code_unit.as_slice());
     Ok(Value::String(string))
 }
 
@@ -400,9 +392,9 @@ fn string_padding_builtins_impl<X>(
 // 22.1.3.17.2 StringPad ( S, maxLength, fillString, placement )
 fn string_pad<X>(
     runtime: &mut Runtime<X>,
-    s: Handle<StringFragment>,
+    s: Handle<String>,
     max_length: u32,
-    fill_string: Handle<StringFragment>,
+    fill_string: Handle<String>,
     placement: PaddingPlacement,
 ) -> Result<Value, Error> {
     let string_length = s.len();

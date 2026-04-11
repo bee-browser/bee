@@ -7,11 +7,15 @@ use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
 use jsgc::Handle;
+use jsgc::HandleMut;
+use jsgc::Trace;
+use jsgc::VisitList;
 use jsparser::Symbol;
 
+use crate::Error;
 use crate::types::Closure;
 use crate::types::Promise;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 #[derive(Clone, Debug)]
@@ -216,12 +220,12 @@ pub struct Object {
     ///
     /// A pointer to the `Closure` if this is a function object.
     /// A string handle if this is a string object.
-    userdata: usize,
+    kernel: Kernel,
 
     flags: ObjectFlags,
 
     // [[Prototype]]
-    prototype: Option<Handle<Self>>,
+    prototype: Option<HandleMut<Self>>,
     properties: FxHashMap<PropertyKey, Property>,
 
     // TODO: rethink the memory layout.
@@ -229,12 +233,15 @@ pub struct Object {
 }
 
 impl Object {
-    pub(crate) const USERDATA_OFFSET: usize = std::mem::offset_of!(Self, userdata);
+    pub(crate) const KERNEL_DATA_OFFSET: usize =
+        std::mem::offset_of!(Self, kernel) + Kernel::DATA_OFFSET;
+    pub(crate) const KERNEL_TRACING_OFFSET: usize =
+        std::mem::offset_of!(Self, kernel) + Kernel::TRACING_OFFSET;
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
-    pub fn new(prototype: Option<Handle<Self>>) -> Self {
+    pub fn new(prototype: Option<HandleMut<Self>>) -> Self {
         Self {
-            userdata: 0,
+            kernel: Default::default(),
             flags: ObjectFlags::empty(),
             prototype,
             properties: Default::default(),
@@ -281,7 +288,7 @@ impl Object {
     }
 
     // TODO(feat): 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
-    pub fn define_own_property(&mut self, key: PropertyKey, prop: Property) -> Result<bool, Value> {
+    pub fn define_own_property(&mut self, key: PropertyKey, prop: Property) -> Result<bool, Error> {
         self.properties.insert(key, prop);
         Ok(true)
     }
@@ -290,39 +297,43 @@ impl Object {
         self.properties.iter()
     }
 
-    pub(crate) fn userdata(&self) -> usize {
-        self.userdata
-    }
-
-    pub(crate) fn set_closure(&mut self, closure: Handle<Closure>) {
-        self.userdata = closure.as_addr();
+    pub(crate) fn set_closure(&mut self, closure: HandleMut<Closure>) {
+        self.kernel.data = closure.as_addr();
+        self.kernel.tracing = true;
         self.set_callable();
     }
 
-    pub(crate) fn closure(&self) -> Handle<Closure> {
+    pub(crate) fn closure(&self) -> HandleMut<Closure> {
         debug_assert!(self.is_callable());
-        Handle::from_addr(self.userdata).expect("must be a non-null pointer to a Closure")
+        HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
     }
 
-    pub(crate) fn string(&self) -> Handle<StringFragment> {
+    pub(crate) fn string(&self) -> Handle<String> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        Handle::from_addr(self.userdata).unwrap()
+        Handle::from_addr(self.kernel.data).unwrap()
     }
 
-    pub(crate) fn set_string(&mut self, string: Handle<StringFragment>) {
-        self.userdata = string.as_addr();
+    pub(crate) fn set_string(&mut self, string: Handle<String>) {
+        self.kernel.data = string.as_addr();
+        self.kernel.tracing = true;
     }
 
-    pub(crate) fn set_promise(&mut self, promise: Promise) {
-        self.userdata = promise.as_userdata();
+    pub(crate) fn promise(&self) -> HandleMut<Promise> {
+        // TODO: check prototype
+        HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Promise")
     }
 
-    pub fn as_handle(&mut self) -> Handle<Self> {
+    pub(crate) fn set_promise(&mut self, promise: HandleMut<Promise>) {
+        self.kernel.data = promise.as_addr();
+        self.kernel.tracing = true;
+    }
+
+    pub fn as_handle(&mut self) -> HandleMut<Self> {
         // SAFETY: `self` is a non-null pointer to an `Object`.
-        Handle::from_ref(self)
+        HandleMut::from_mut(self)
     }
 
-    pub fn is_instance_of(&self, prototype: Option<Handle<Self>>) -> bool {
+    pub fn is_instance_of(&self, prototype: Option<HandleMut<Self>>) -> bool {
         debug_assert!(prototype.is_some());
         // TODO: prototype chain
         self.prototype == prototype
@@ -367,6 +378,42 @@ impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:p}", self as *const Object)
     }
+}
+
+impl Trace for Object {
+    fn trace(&self, visit_list: &mut VisitList) {
+        if self.kernel.tracing {
+            visit_list.push(self.kernel.data);
+        }
+        if let Some(prototype) = self.prototype {
+            visit_list.push(prototype.as_addr());
+        }
+        for prop in self.properties.values() {
+            match prop.value() {
+                Value::String(string) => visit_list.push(string.as_addr()),
+                Value::Object(object) => visit_list.push(object.as_addr()),
+                _ => (),
+            }
+        }
+        for slot in self.slots.iter() {
+            match slot {
+                Value::String(string) => visit_list.push(string.as_addr()),
+                Value::Object(object) => visit_list.push(object.as_addr()),
+                _ => (),
+            }
+        }
+    }
+}
+
+#[derive(Default)]
+struct Kernel {
+    data: usize,
+    tracing: bool,
+}
+
+impl Kernel {
+    const DATA_OFFSET: usize = std::mem::offset_of!(Self, data);
+    const TRACING_OFFSET: usize = std::mem::offset_of!(Self, tracing);
 }
 
 bitflags! {

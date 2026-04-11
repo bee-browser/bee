@@ -4,7 +4,6 @@
 
 ## Features
 
-* TODO: Support ECMA-262 including Annex B
 * Lazy JIT compilation
   * A JavaScript function is initially compiled into some kind of *script* that consists of
     in-memory, non-optimized naive instructions
@@ -14,5 +13,12 @@
   * The stack machine will generate [Cranelift IR] representation of the JavaScript function
   * The Cranelift IR representation will be compiled into a native function which can be called
     directly
+
+## TODO
+
+This is not an exhaustive list:
+
+* Support ECMA-262 including Annex B
+* Tracing values on the native stack
 
 [Cranelift IR]: https://github.com/bytecodealliance/wasmtime/blob/main/cranelift/docs/ir.md

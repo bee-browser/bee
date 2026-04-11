@@ -10,12 +10,12 @@ mod lambda;
 mod semantics;
 mod types;
 
-use std::pin::Pin;
-
 use itertools::Itertools;
 
 use jsgc::Handle;
+use jsgc::HandleMut;
 use jsgc::Heap;
+use jsgc::Trace;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
@@ -30,6 +30,7 @@ use types::Closure;
 use types::Coroutine;
 use types::Lambda;
 use types::Object;
+use types::Promise;
 use types::Property;
 use types::PropertyKey;
 use types::ReturnValue;
@@ -37,10 +38,8 @@ use types::Status;
 
 pub use backend::CompileError;
 pub use lambda::LambdaId; // TODO: private
-pub use types::StringFragment; // TODO: private
+pub use types::String;
 pub use types::Value;
-
-pub type ParseError = jsparser::Error;
 
 pub fn initialize() {
     backend::initialize();
@@ -104,34 +103,35 @@ pub struct Runtime<X> {
     programs: Vec<Program>,
     heap: Heap,
     job_runner: JobRunner,
-    global_object: Pin<Box<Object>>,
 
+    // [[GlobalObject]]
+    global_object: HandleMut<Object>,
     // %Object.prototype%
-    object_prototype: Option<Handle<Object>>,
+    object_prototype: Option<HandleMut<Object>>,
     // %Function.prototype%
-    function_prototype: Option<Handle<Object>>,
+    function_prototype: Option<HandleMut<Object>>,
     // %String.prototype%
-    string_prototype: Option<Handle<Object>>,
+    string_prototype: Option<HandleMut<Object>>,
     // %Promise.prototype%
-    promise_prototype: Option<Handle<Object>>,
+    promise_prototype: Option<HandleMut<Object>>,
     // %Error.prototype%
-    error_prototype: Option<Handle<Object>>,
+    error_prototype: Option<HandleMut<Object>>,
     // %AggregateError.prototype%
-    aggregate_error_prototype: Option<Handle<Object>>,
+    aggregate_error_prototype: Option<HandleMut<Object>>,
     // %EvalError.prototype%
-    eval_error_prototype: Option<Handle<Object>>,
+    eval_error_prototype: Option<HandleMut<Object>>,
     // %InternalError.prototype%
-    internal_error_prototype: Option<Handle<Object>>,
+    internal_error_prototype: Option<HandleMut<Object>>,
     // %RangeError.prototype%
-    range_error_prototype: Option<Handle<Object>>,
+    range_error_prototype: Option<HandleMut<Object>>,
     // %ReferenceError.prototype%
-    reference_error_prototype: Option<Handle<Object>>,
+    reference_error_prototype: Option<HandleMut<Object>>,
     // %SyntaxError.prototype%
-    syntax_error_prototype: Option<Handle<Object>>,
+    syntax_error_prototype: Option<HandleMut<Object>>,
     // %TypeError.prototype%
-    type_error_prototype: Option<Handle<Object>>,
+    type_error_prototype: Option<HandleMut<Object>>,
     // URIError.prototype%
-    uri_error_prototype: Option<Handle<Object>>,
+    uri_error_prototype: Option<HandleMut<Object>>,
 
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
@@ -139,10 +139,10 @@ pub struct Runtime<X> {
 
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
-        let heap = Heap::new();
+        let mut heap = Heap::new();
 
         // TODO: pass [[Prototype]] of the global object.
-        let global_object = Box::pin(Object::new(Default::default()));
+        let global_object = heap.alloc_mut(Object::new(Default::default()));
 
         let mut runtime = Self {
             pref: Default::default(),
@@ -262,6 +262,27 @@ impl<X> Runtime<X> {
         Ok(value)
     }
 
+    /// Reclaims objects that are not reachable from a specified root objects.
+    ///
+    /// # Limitations
+    ///
+    /// * DO NOT CALL this method while calling a lamba function
+    ///   * There is no way to collect addresses stored on the native stack as roots
+    ///   * This issue will be solved in the future
+    ///
+    pub fn collect_garbage(&mut self, mut roots: Vec<usize>) {
+        let handle = Handle::from_ref(self);
+        self.heap.add_tracer(handle);
+        self.job_runner.collect_gc_roots(&mut roots);
+        roots.push(handle.as_addr());
+        self.heap.collect_garbage(&roots);
+        self.heap.remove_tracer(handle);
+    }
+
+    pub fn heap_stats(&self) -> jsgc::Stats {
+        self.heap.stats()
+    }
+
     fn get_index_of_coroutine_function(
         &self,
         program_id: ProgramId,
@@ -284,7 +305,7 @@ impl<X> Runtime<X> {
     fn call(
         &mut self,
         caller: &CallContext,
-        callable: Handle<Object>,
+        callable: HandleMut<Object>,
         args: &mut [Value],
         retv: &mut Value,
     ) -> Status {
@@ -309,25 +330,18 @@ impl<X> Runtime<X> {
         retv.into_result(status)
     }
 
-    pub fn ensure_value_return_safe(&mut self, value: &Value) -> Value {
-        match value {
-            Value::String(string) => Value::String(string.ensure_return_safe(&self.heap)),
-            _ => value.clone(),
-        }
+    fn create_string(&mut self, value: &[u16]) -> Handle<String> {
+        let seq = self.heap.alloc_seq(value);
+        self.heap.alloc(String::new_heap(seq))
     }
 
-    pub(crate) fn alloc_utf16(&mut self, utf8: &str) -> &mut [u16] {
+    fn create_string_from_utf8(&mut self, utf8: &str) -> Handle<String> {
         // TODO(perf): inefficient
         let utf16 = utf8.encode_utf16().collect::<Vec<u16>>();
-        self.heap.alloc_slice_copy(&utf16)
+        self.create_string(&utf16)
     }
 
-    fn create_substring(
-        &mut self,
-        string: Handle<StringFragment>,
-        start: u32,
-        end: u32,
-    ) -> Handle<StringFragment> {
+    fn create_substring(&mut self, string: Handle<String>, start: u32, end: u32) -> Handle<String> {
         debug_assert!(start < end);
         // TODO(perf): inefficient
         let utf16 = string
@@ -335,8 +349,7 @@ impl<X> Runtime<X> {
             .skip(start as usize)
             .take((end - start) as usize)
             .collect_vec();
-        let utf16 = self.heap.alloc_slice_copy(&utf16);
-        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.heap)
+        self.create_string(&utf16)
     }
 
     fn create_closure(
@@ -344,7 +357,7 @@ impl<X> Runtime<X> {
         lambda: Lambda<X>,
         lambda_id: LambdaId,
         num_captures: u16,
-    ) -> Handle<Closure> {
+    ) -> HandleMut<Closure> {
         debug_assert!(
             std::alloc::Layout::from_size_align(
                 std::mem::offset_of!(Closure, captures),
@@ -364,7 +377,7 @@ impl<X> Runtime<X> {
             std::alloc::Layout::array::<*mut Capture>(num_captures as usize).unwrap();
         let (layout, _) = BASE_LAYOUT.extend(storage_layout).unwrap();
 
-        self.heap.alloc_layout(layout, move |ptr| {
+        self.heap.alloc_layout_mut(layout, move |ptr| {
             // SAFETY: `ptr` is a non-null pointer to a `Closure`.
             let closure = unsafe { ptr.cast::<Closure>().as_mut() };
             closure.lambda = lambda.into();
@@ -376,11 +389,11 @@ impl<X> Runtime<X> {
 
     fn create_coroutine(
         &mut self,
-        closure: Handle<Closure>,
+        closure: HandleMut<Closure>,
         num_locals: u16,
         scratch_buffer_len: u16,
         capture_buffer_len: u16,
-    ) -> Handle<Coroutine> {
+    ) -> HandleMut<Coroutine> {
         debug_assert!(
             std::alloc::Layout::from_size_align(
                 std::mem::offset_of!(Coroutine, locals),
@@ -408,7 +421,7 @@ impl<X> Runtime<X> {
         let scratch_buffer_layout = std::alloc::Layout::array::<u8>(n).unwrap();
         let (layout, _) = layout.extend(scratch_buffer_layout).unwrap();
 
-        self.heap.alloc_layout(layout, move |ptr| {
+        self.heap.alloc_layout_mut(layout, move |ptr| {
             // SAFETY: `ptr` is a non-null pointer to a `Coroutine`.
             let coroutine = unsafe { ptr.cast::<Coroutine>().as_mut() };
             coroutine.closure = closure;
@@ -421,8 +434,12 @@ impl<X> Runtime<X> {
         })
     }
 
-    fn create_object(&mut self, prototype: Option<Handle<Object>>) -> Handle<Object> {
-        self.heap.alloc(Object::new(prototype))
+    fn create_promise(&mut self, coroutine: HandleMut<Coroutine>) -> HandleMut<Promise> {
+        self.heap.alloc_mut(Promise::new(coroutine))
+    }
+
+    fn create_object(&mut self, prototype: Option<HandleMut<Object>>) -> HandleMut<Object> {
+        self.heap.alloc_mut(Object::new(prototype))
     }
 
     fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Value> {
@@ -437,7 +454,7 @@ impl<X> Runtime<X> {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
             Value::Object(_) => {
-                const MESSAGE: Handle<StringFragment> = const_string!("TODO: make_property_key");
+                const MESSAGE: Handle<String> = const_string!("TODO: make_property_key");
                 Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
             }
         }
@@ -449,13 +466,12 @@ impl<X> Runtime<X> {
         object: &mut Object,
         key: &PropertyKey,
         value: &Value,
-    ) -> Result<bool, Value> {
-        let value = self.ensure_value_return_safe(value);
-        object.define_own_property(key.clone(), Property::data_wec(value))
+    ) -> Result<bool, Error> {
+        object.define_own_property(key.clone(), Property::data_wec(value.clone()))
     }
 
     // 7.3.25 CopyDataProperties ( target, source, excludedItems )
-    fn copy_data_properties(&mut self, target: &mut Object, source: &Value) -> Result<(), Value> {
+    fn copy_data_properties(&mut self, target: &mut Object, source: &Value) -> Result<(), Error> {
         let from = source.to_object()?;
         for (key, prop) in from.iter_own_properties() {
             // TODO: excludedItems
@@ -486,11 +502,7 @@ impl<X> Runtime<X> {
         Ok(())
     }
 
-    fn throw_internal_error(
-        &mut self,
-        message: Handle<StringFragment>,
-        retv: &mut Value,
-    ) -> Status {
+    fn throw_internal_error(&mut self, message: Handle<String>, retv: &mut Value) -> Status {
         *retv = Value::Object(self.create_internal_error(Some(message)));
         Status::Exception
     }
@@ -505,13 +517,68 @@ where
     }
 }
 
+#[cfg(debug_assertions)]
+impl<X> Drop for Runtime<X> {
+    fn drop(&mut self) {
+        self.heap.collect_garbage(&[]);
+        assert_eq!(self.heap_stats().num_objects, 0);
+    }
+}
+
+// TODO(feat): derive(Trace)
+impl<X> Trace for Runtime<X> {
+    fn trace(&self, visits: &mut jsgc::VisitList) {
+        visits.push(self.global_object.as_addr());
+        if let Some(object) = self.object_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.function_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.string_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.promise_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.aggregate_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.eval_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.internal_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.range_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.reference_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.syntax_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.type_error_prototype {
+            visits.push(object.as_addr());
+        }
+        if let Some(object) = self.uri_error_prototype {
+            visits.push(object.as_addr());
+        }
+        // TODO: tracing X if X implements Trace.
+    }
+}
+
 pub trait Monitor {
     fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
-pub(crate) enum Error {
+pub enum Error {
     TypeError,
     RangeError,
     InternalError,

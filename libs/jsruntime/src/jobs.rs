@@ -1,8 +1,6 @@
 use std::collections::VecDeque;
 
-use rustc_hash::FxHashMap;
-
-use jsgc::Handle;
+use jsgc::HandleMut;
 
 use crate::Runtime;
 use crate::Value;
@@ -25,46 +23,38 @@ impl<X> Runtime<X> {
     fn handle_message(&mut self, msg: Message) {
         logger::debug!(event = "handle_message", ?msg);
         match msg {
-            Message::PromiseResolved {
-                promise,
-                ref result,
-            } => self.process_promise(promise, result, &Value::None),
-            Message::PromiseRejected { promise, ref error } => {
-                self.process_promise(promise, &Value::None, error)
+            Message::PromiseResolved { object, ref result } => {
+                self.process_promise(object, result, &Value::None)
+            }
+            Message::PromiseRejected { object, ref error } => {
+                self.process_promise(object, &Value::None, error)
             }
         }
     }
 
     // promise
 
-    pub fn register_promise(&mut self, coroutine: Handle<Coroutine>) -> Promise {
-        logger::debug!(event = "register_promise", ?coroutine);
-        self.job_runner.register_promise(coroutine)
-    }
-
-    pub fn process_promise(&mut self, promise: Handle<Object>, result: &Value, error: &Value) {
-        // TODO(feat): `result` may hold a Promise object
-        logger::debug!(event = "process_promise", ?promise, ?result, ?error);
-        debug_assert!(self.is_promise_object(promise));
-        let promise_id = promise.get_promise();
-        debug_assert!(promise_id.is_valid());
-        let coroutine = self.job_runner.get_coroutine(promise_id);
-        match self.resume(coroutine, promise, result, error) {
-            (Status::Normal, retv) => self.job_runner.resolve_promise(promise_id, retv),
-            (Status::Exception, retv) => self.job_runner.reject_promise(promise_id, retv),
+    pub fn process_promise(&mut self, object: HandleMut<Object>, result: &Value, error: &Value) {
+        logger::debug!(event = "process_promise", ?object, ?result, ?error);
+        debug_assert!(self.is_promise_object(object));
+        let promise = object.promise();
+        let coroutine = promise.coroutine();
+        match self.resume(coroutine, object, result, error) {
+            (Status::Normal, result) => self.job_runner.resolve_promise(promise, result),
+            (Status::Exception, error) => self.job_runner.reject_promise(promise, error),
             (Status::Suspend, _) => (),
         }
     }
 
     fn resume(
         &mut self,
-        coroutine: Handle<Coroutine>,
-        promise: Handle<Object>,
+        coroutine: HandleMut<Coroutine>,
+        object: HandleMut<Object>,
         result: &Value,
         error: &Value,
     ) -> (Status, Value) {
-        logger::debug!(event = "resume", ?coroutine, ?promise, ?result, ?error);
-        let mut args = [promise.into(), result.clone(), error.clone()];
+        logger::debug!(event = "resume", ?coroutine, ?object, ?result, ?error);
+        let mut args = [object.into(), result.clone(), error.clone()];
         let mut context = CallContext::new_for_promise(coroutine, &mut args);
         let mut retv = Value::None;
         let lambda = Lambda::from(coroutine.closure.lambda);
@@ -72,17 +62,17 @@ impl<X> Runtime<X> {
         (status, retv)
     }
 
-    pub fn emit_promise_resolved(&mut self, promise: Handle<Object>, result: Value) {
-        debug_assert!(self.is_promise_object(promise));
+    pub fn emit_promise_resolved(&mut self, object: HandleMut<Object>, result: Value) {
+        debug_assert!(self.is_promise_object(object));
         match result {
-            Value::Object(object) if self.is_promise_object(object) => {
-                self.job_runner.await_promise(object, promise)
+            Value::Object(object_) if self.is_promise_object(object_) => {
+                self.job_runner.await_promise(object_, object)
             }
-            _ => self.job_runner.emit_promise_resolved(promise, result),
+            _ => self.job_runner.emit_promise_resolved(object, result),
         }
     }
 
-    pub fn emit_promise_rejected(&mut self, promise: Handle<Object>, error: Value) {
+    pub fn emit_promise_rejected(&mut self, promise: HandleMut<Object>, error: Value) {
         debug_assert!(self.is_promise_object(promise));
         self.job_runner.emit_promise_rejected(promise, error);
     }
@@ -90,111 +80,77 @@ impl<X> Runtime<X> {
 
 pub struct JobRunner {
     messages: VecDeque<Message>,
-    promises: FxHashMap<Promise, PromiseDriver>,
-    next_promise: u32,
 }
 
 impl JobRunner {
     pub fn new() -> Self {
         Self {
             messages: Default::default(),
-            promises: Default::default(),
-            next_promise: 1, // 0 is invalid.
         }
     }
 
     // promises
 
-    fn register_promise(&mut self, coroutine: Handle<Coroutine>) -> Promise {
-        let promise = self.new_promise();
-        self.promises.insert(promise, PromiseDriver::new(coroutine));
-        promise
-    }
-
-    fn new_promise(&mut self) -> Promise {
-        assert!(self.promises.len() < u32::MAX as usize);
-        loop {
-            let promise = self.next_promise.into();
-            if self.next_promise == u32::MAX {
-                self.next_promise = 1;
-            } else {
-                self.next_promise += 1;
-            }
-            if !self.promises.contains_key(&promise) {
-                return promise;
-            }
-        }
-        // never reach here
-    }
-
-    fn await_promise(&mut self, promise: Handle<Object>, awaiting: Handle<Object>) {
-        logger::debug!(event = "await_promise", ?promise, ?awaiting);
-        let promise_id = promise.get_promise();
-        debug_assert!(promise_id.is_valid());
-        let awaiting_id = awaiting.get_promise();
-        debug_assert!(awaiting_id.is_valid());
-        debug_assert!(self.promises.contains_key(&promise_id));
-        debug_assert!(self.promises.contains_key(&awaiting_id));
-        let driver = self.promises.get_mut(&promise_id).unwrap();
-        debug_assert!(driver.awaiting.is_none());
-        match driver.state {
-            PromiseState::Pending => driver.awaiting = Some(awaiting),
-            PromiseState::Resolved(ref result) => {
-                let result = result.clone();
-                self.emit_promise_resolved(awaiting, result);
-                self.promises.remove(&promise_id);
-            }
-            PromiseState::Rejected(ref error) => {
-                let error = error.clone();
-                self.emit_promise_rejected(awaiting, error);
-                self.promises.remove(&promise_id);
-            }
+    fn await_promise(&mut self, object: HandleMut<Object>, awaiting: HandleMut<Object>) {
+        logger::debug!(event = "await_promise", ?object, ?awaiting);
+        match object.promise().do_await(awaiting) {
+            Some(Ok(result)) => self.emit_promise_resolved(awaiting, result),
+            Some(Err(error)) => self.emit_promise_rejected(awaiting, error),
+            None => (),
         }
     }
 
-    fn get_coroutine(&self, promise: Promise) -> Handle<Coroutine> {
-        self.promises.get(&promise).unwrap().coroutine
+    fn emit_promise_resolved(&mut self, object: HandleMut<Object>, result: Value) {
+        logger::debug!(event = "emit_promise_resolved", ?object, ?result);
+        self.messages
+            .push_back(Message::PromiseResolved { object, result });
     }
 
-    fn emit_promise_resolved(&mut self, promise: Handle<Object>, result: Value) {
-        logger::debug!(event = "emit_promise_resolved", ?promise, ?result);
+    fn emit_promise_rejected(&mut self, object: HandleMut<Object>, error: Value) {
+        logger::debug!(event = "emit_promise_rejected", ?object, ?error);
         self.messages
-            .push_back(Message::PromiseResolved { promise, result });
-    }
-
-    fn emit_promise_rejected(&mut self, promise: Handle<Object>, error: Value) {
-        logger::debug!(event = "emit_promise_rejected", ?promise, ?error);
-        self.messages
-            .push_back(Message::PromiseRejected { promise, error });
+            .push_back(Message::PromiseRejected { object, error });
     }
 
     fn next_msg(&mut self) -> Option<Message> {
         self.messages.pop_front()
     }
 
-    fn resolve_promise(&mut self, promise: Promise, result: Value) {
+    fn resolve_promise(&mut self, mut promise: HandleMut<Promise>, result: Value) {
         logger::debug!(event = "resolve_promise", ?promise, ?result);
-        let driver = self.promises.get_mut(&promise).unwrap();
-        // TODO(fix): the following assertion fails in test262.
-        debug_assert!(matches!(driver.state, PromiseState::Pending));
-        if let Some(awaiting) = driver.awaiting {
-            self.promises.remove(&promise);
+        if let Some(awaiting) = promise.resolve(&result) {
             self.emit_promise_resolved(awaiting, result);
-        } else {
-            driver.state = PromiseState::Resolved(result);
         }
     }
 
-    fn reject_promise(&mut self, promise: Promise, error: Value) {
+    fn reject_promise(&mut self, mut promise: HandleMut<Promise>, error: Value) {
         logger::debug!(event = "reject_promise", ?promise, ?error);
-        let driver = self.promises.get_mut(&promise).unwrap();
-        // TODO(fix): the following assertion fails in test262.
-        debug_assert!(matches!(driver.state, PromiseState::Pending));
-        if let Some(awaiting) = driver.awaiting {
-            self.promises.remove(&promise);
+        if let Some(awaiting) = promise.reject(&error) {
             self.emit_promise_rejected(awaiting, error);
-        } else {
-            driver.state = PromiseState::Rejected(error);
+        }
+    }
+
+    pub(crate) fn collect_gc_roots(&self, roots: &mut Vec<usize>) {
+        dbg!(self.messages.len());
+        for msg in self.messages.iter() {
+            match msg {
+                Message::PromiseResolved { object, result } => {
+                    roots.push(object.as_addr());
+                    match result {
+                        Value::String(string) => roots.push(string.as_addr()),
+                        Value::Object(object) => roots.push(object.as_addr()),
+                        _ => (),
+                    }
+                }
+                Message::PromiseRejected { object, error } => {
+                    roots.push(object.as_addr());
+                    match error {
+                        Value::String(string) => roots.push(string.as_addr()),
+                        Value::Object(object) => roots.push(object.as_addr()),
+                        _ => (),
+                    }
+                }
+            }
         }
     }
 }
@@ -204,36 +160,11 @@ impl JobRunner {
 #[derive(Debug)]
 enum Message {
     PromiseResolved {
-        promise: Handle<Object>,
+        object: HandleMut<Object>,
         result: Value,
     },
     PromiseRejected {
-        promise: Handle<Object>,
+        object: HandleMut<Object>,
         error: Value,
     },
-}
-
-// promise
-
-// TODO: should the coroutine be separated from the promise?
-struct PromiseDriver {
-    coroutine: Handle<Coroutine>,
-    awaiting: Option<Handle<Object>>,
-    state: PromiseState,
-}
-
-impl PromiseDriver {
-    fn new(coroutine: Handle<Coroutine>) -> Self {
-        Self {
-            coroutine,
-            awaiting: None,
-            state: PromiseState::Pending,
-        }
-    }
-}
-
-enum PromiseState {
-    Pending,
-    Resolved(Value),
-    Rejected(Value),
 }
