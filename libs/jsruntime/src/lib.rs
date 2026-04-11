@@ -31,6 +31,7 @@ use types::Closure;
 use types::Coroutine;
 use types::Lambda;
 use types::Object;
+use types::Promise;
 use types::Property;
 use types::PropertyKey;
 use types::ReturnValue;
@@ -430,6 +431,10 @@ impl<X> Runtime<X> {
             coroutine.capture_buffer_len = capture_buffer_len;
             // `coroutine.locals[]` will be initialized in the coroutine.
         })
+    }
+
+    fn create_promise(&mut self, coroutine: HandleMut<Coroutine>) -> HandleMut<Promise> {
+        self.heap.alloc_mut(Promise::new(coroutine))
     }
 
     fn create_object(&mut self, prototype: Option<HandleMut<Object>>) -> HandleMut<Object> {

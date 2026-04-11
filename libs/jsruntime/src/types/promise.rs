@@ -1,28 +1,81 @@
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[repr(C)]
-pub struct Promise(u32);
+use jsgc::HandleMut;
+use jsgc::Trace;
 
-base::static_assert_eq!(size_of::<Promise>(), 4);
-base::static_assert_eq!(align_of::<Promise>(), 4);
+use crate::types::Coroutine;
+use crate::types::Object;
+use crate::types::Value;
+
+pub struct Promise {
+    coroutine: HandleMut<Coroutine>,
+    awaiting: Option<HandleMut<Object>>,
+    state: PromiseState,
+}
 
 impl Promise {
-    pub const fn is_valid(&self) -> bool {
-        self.0 != 0
+    pub fn new(coroutine: HandleMut<Coroutine>) -> Self {
+        Self {
+            coroutine,
+            awaiting: None,
+            state: PromiseState::Pending,
+        }
     }
 
-    pub const fn as_userdata(&self) -> usize {
-        self.0 as usize
+    pub fn coroutine(&self) -> HandleMut<Coroutine> {
+        self.coroutine
+    }
+
+    pub fn resolve(&mut self, result: &Value) -> Option<HandleMut<Object>> {
+        // TODO(fix): the following assertion fails in test262.
+        debug_assert!(matches!(self.state, PromiseState::Pending));
+        self.state = PromiseState::Resolved(result.clone());
+        self.awaiting.take()
+    }
+
+    pub fn reject(&mut self, error: &Value) -> Option<HandleMut<Object>> {
+        // TODO(fix): the following assertion fails in test262.
+        debug_assert!(matches!(self.state, PromiseState::Pending));
+        self.state = PromiseState::Rejected(error.clone());
+        self.awaiting.take()
+    }
+
+    pub fn do_await(&mut self, awaiting: HandleMut<Object>) -> Option<Result<Value, Value>> {
+        match self.state {
+            PromiseState::Pending => {
+                self.awaiting = Some(awaiting);
+                None
+            }
+            PromiseState::Resolved(ref result) => Some(Ok(result.clone())),
+            PromiseState::Rejected(ref error) => Some(Err(error.clone())),
+        }
     }
 }
 
-impl From<u32> for Promise {
-    fn from(value: u32) -> Self {
-        Self(value)
+impl std::fmt::Debug for Promise {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Promise")?;
+        // TODO
+        Ok(())
     }
 }
 
-impl From<Promise> for u32 {
-    fn from(value: Promise) -> Self {
-        value.0
+impl Trace for Promise {
+    fn trace(&self, visits: &mut jsgc::VisitList) {
+        visits.push(self.coroutine.as_addr());
+        if let Some(awaiting) = self.awaiting {
+            visits.push(awaiting.as_addr());
+        }
+        match self.state {
+            PromiseState::Resolved(Value::String(string)) => visits.push(string.as_addr()),
+            PromiseState::Resolved(Value::Object(object)) => visits.push(object.as_addr()),
+            PromiseState::Rejected(Value::String(string)) => visits.push(string.as_addr()),
+            PromiseState::Rejected(Value::Object(object)) => visits.push(object.as_addr()),
+            _ => (),
+        }
     }
+}
+
+enum PromiseState {
+    Pending,
+    Resolved(Value),
+    Rejected(Value),
 }

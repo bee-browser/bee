@@ -78,6 +78,7 @@ function makeCraneliftIRType(type) {
     case 'Lambda':
     case '&mut Runtime<X>':
     case 'Handle<String>':
+    case 'HandleMut<Promise>':
       return 'addr_type';
     case undefined:
       return '';

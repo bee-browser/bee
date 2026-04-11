@@ -232,8 +232,10 @@ pub struct Object {
 }
 
 impl Object {
-    pub(crate) const USERDATA_OFFSET: usize =
+    pub(crate) const KERNEL_DATA_OFFSET: usize =
         std::mem::offset_of!(Self, kernel) + Kernel::DATA_OFFSET;
+    pub(crate) const KERNEL_TRACING_OFFSET: usize =
+        std::mem::offset_of!(Self, kernel) + Kernel::TRACING_OFFSET;
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
     pub fn new(prototype: Option<HandleMut<Self>>) -> Self {
@@ -294,15 +296,9 @@ impl Object {
         self.properties.iter()
     }
 
-    pub(crate) fn userdata(&self) -> usize {
-        self.kernel.data
-    }
-
     pub(crate) fn set_closure(&mut self, closure: HandleMut<Closure>) {
-        static VTABLE: KernelVtable = KernelVtable { drop: None };
-        self.kernel.vtable = &VTABLE;
         self.kernel.data = closure.as_addr();
-        self.kernel.need_tracing = true;
+        self.kernel.tracing = true;
         self.set_callable();
     }
 
@@ -317,17 +313,18 @@ impl Object {
     }
 
     pub(crate) fn set_string(&mut self, string: Handle<String>) {
-        static VTABLE: KernelVtable = KernelVtable { drop: None };
-        self.kernel.vtable = &VTABLE;
         self.kernel.data = string.as_addr();
-        self.kernel.need_tracing = true;
+        self.kernel.tracing = true;
     }
 
-    pub(crate) fn set_promise(&mut self, promise: Promise) {
-        static VTABLE: KernelVtable = KernelVtable { drop: None };
-        self.kernel.vtable = &VTABLE;
-        self.kernel.data = promise.as_userdata();
-        self.kernel.need_tracing = false; // TODO: GC
+    pub(crate) fn promise(&self) -> HandleMut<Promise> {
+        // TODO: check prototype
+        HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Promise")
+    }
+
+    pub(crate) fn set_promise(&mut self, promise: HandleMut<Promise>) {
+        self.kernel.data = promise.as_addr();
+        self.kernel.tracing = true;
     }
 
     pub fn as_handle(&mut self) -> HandleMut<Self> {
@@ -384,7 +381,7 @@ impl Display for Object {
 
 impl Trace for Object {
     fn trace(&self, visit_list: &mut VisitList) {
-        if self.kernel.need_tracing {
+        if self.kernel.tracing {
             visit_list.push(self.kernel.data);
         }
         if let Some(prototype) = self.prototype {
@@ -407,40 +404,16 @@ impl Trace for Object {
     }
 }
 
+#[derive(Default)]
 struct Kernel {
     data: usize,
-    vtable: &'static KernelVtable,
-    need_tracing: bool,
+    tracing: bool,
 }
 
 impl Kernel {
     const DATA_OFFSET: usize = std::mem::offset_of!(Self, data);
+    const TRACING_OFFSET: usize = std::mem::offset_of!(Self, tracing);
 }
-
-impl Default for Kernel {
-    fn default() -> Self {
-        static VTABLE: KernelVtable = KernelVtable::none();
-
-        Self {
-            data: 0,
-            vtable: &VTABLE,
-            need_tracing: false,
-        }
-    }
-}
-
-pub struct KernelVtable {
-    #[allow(unused)]
-    pub drop: Option<DropFn>,
-}
-
-impl KernelVtable {
-    const fn none() -> Self {
-        Self { drop: None }
-    }
-}
-
-type DropFn = fn(usize);
 
 bitflags! {
     #[derive(Clone, Copy)]

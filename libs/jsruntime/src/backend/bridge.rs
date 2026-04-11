@@ -10,6 +10,7 @@ use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Object;
+use crate::types::Promise;
 use crate::types::PropertyKey;
 use crate::types::Status;
 use crate::types::String;
@@ -434,12 +435,12 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
         .as_ptr()
 }
 
-pub(crate) extern "C" fn runtime_register_promise<X>(
+pub(crate) extern "C" fn runtime_create_promise<X>(
     runtime: &mut Runtime<X>,
     coroutine: *mut Coroutine,
-) -> u32 {
+) -> HandleMut<Promise> {
     let coroutine = HandleMut::from_ptr(coroutine).expect("coroutine must be a non-null pointer");
-    runtime.register_promise(coroutine).into()
+    runtime.create_promise(coroutine)
 }
 
 pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: *mut Object) {
