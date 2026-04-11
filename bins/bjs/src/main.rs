@@ -214,7 +214,7 @@ fn main() -> Result<()> {
     }
 
     runtime.collect_garbage(&[]);
-    // TODO: assert_eq!(runtime.heap_stats().num_objects, 0);
+    assert_eq!(runtime.heap_stats().num_objects, 0);
 
     Ok(())
 }

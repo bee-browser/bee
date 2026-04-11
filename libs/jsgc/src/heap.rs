@@ -111,8 +111,6 @@ impl Heap {
         HandleMut::from_mut(unsafe { ptr.cast::<T>().as_mut() })
     }
 
-    // TODO: return HandleMut
-    // TODO: there is no way to restrict the type of `T` to an integer type.
     pub fn alloc_seq<T>(&mut self, src: &[T]) -> Seq<T>
     where
         T: Atom,
@@ -304,7 +302,7 @@ impl MemoryBlock {
             layout,
             tidy_fn: if std::mem::needs_drop::<T>() {
                 Some(|addr| {
-                    // SAFETY: XXX
+                    // SAFETY: `addr` is always valid.
                     unsafe {
                         std::ptr::drop_in_place(addr as *mut T);
                     }
@@ -324,7 +322,7 @@ impl Tracer {
     fn new<T: Trace>() -> Self {
         Self {
             trace_fn: |addr, visits| {
-                // SAFETY: XXX
+                // SAFETY: `addr` is always valid.
                 let reciever = unsafe { &*(addr as *const T) };
                 reciever.trace(visits);
             },

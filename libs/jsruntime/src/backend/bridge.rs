@@ -646,8 +646,8 @@ pub(crate) extern "C" fn runtime_create_data_property_by_symbol<X>(
             *retv = success.into();
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
@@ -673,8 +673,8 @@ pub(crate) extern "C" fn runtime_create_data_property_by_number<X>(
             *retv = success.into();
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
@@ -704,8 +704,8 @@ pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
             *retv = success.into();
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
@@ -726,8 +726,8 @@ pub(crate) extern "C" fn runtime_copy_data_properties<X>(
             *retv = Value::None;
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }

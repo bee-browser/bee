@@ -87,7 +87,7 @@ impl Runner {
 impl Drop for Runner {
     fn drop(&mut self) {
         self.runtime.collect_garbage(&[]);
-        // TODO: assert_eq!(self.runtime.heap_stats().num_objects, 0);
+        assert_eq!(self.runtime.heap_stats().num_objects, 0);
     }
 }
 

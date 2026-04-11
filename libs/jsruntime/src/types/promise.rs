@@ -25,14 +25,12 @@ impl Promise {
     }
 
     pub fn resolve(&mut self, result: &Value) -> Option<HandleMut<Object>> {
-        // TODO(fix): the following assertion fails in test262.
         debug_assert!(matches!(self.state, PromiseState::Pending));
         self.state = PromiseState::Resolved(result.clone());
         self.awaiting.take()
     }
 
     pub fn reject(&mut self, error: &Value) -> Option<HandleMut<Object>> {
-        // TODO(fix): the following assertion fails in test262.
         debug_assert!(matches!(self.state, PromiseState::Pending));
         self.state = PromiseState::Rejected(error.clone());
         self.awaiting.take()
@@ -52,9 +50,7 @@ impl Promise {
 
 impl std::fmt::Debug for Promise {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Promise")?;
-        // TODO
-        Ok(())
+        write!(f, "Promise({:?})", self.state)
     }
 }
 
@@ -74,6 +70,7 @@ impl Trace for Promise {
     }
 }
 
+#[derive(Debug)]
 enum PromiseState {
     Pending,
     Resolved(Value),

@@ -3,6 +3,7 @@ use std::ops::Deref;
 use jsgc::Handle;
 use jsgc::HandleMut;
 
+use crate::Error;
 use crate::logger;
 use crate::types::Object;
 use crate::types::Status;
@@ -56,9 +57,9 @@ impl Value {
     }
 
     // 7.1.18 ToObject ( argument )
-    pub fn to_object(&self) -> Result<HandleMut<Object>, Value> {
+    pub fn to_object(&self) -> Result<HandleMut<Object>, Error> {
         match self {
-            Self::Undefined | Self::Null => Err(1001.into()), // TODO: TypeError
+            Self::Undefined | Self::Null => Err(Error::TypeError),
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),
