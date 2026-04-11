@@ -42,8 +42,6 @@ pub use lambda::LambdaId; // TODO: private
 pub use types::String;
 pub use types::Value;
 
-pub type ParseError = jsparser::Error;
-
 pub fn initialize() {
     backend::initialize();
 }
@@ -465,12 +463,12 @@ impl<X> Runtime<X> {
         object: &mut Object,
         key: &PropertyKey,
         value: &Value,
-    ) -> Result<bool, Value> {
+    ) -> Result<bool, Error> {
         object.define_own_property(key.clone(), Property::data_wec(value.clone()))
     }
 
     // 7.3.25 CopyDataProperties ( target, source, excludedItems )
-    fn copy_data_properties(&mut self, target: &mut Object, source: &Value) -> Result<(), Value> {
+    fn copy_data_properties(&mut self, target: &mut Object, source: &Value) -> Result<(), Error> {
         let from = source.to_object()?;
         for (key, prop) in from.iter_own_properties() {
             // TODO: excludedItems
@@ -522,7 +520,7 @@ pub trait Monitor {
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
-pub(crate) enum Error {
+pub enum Error {
     TypeError,
     RangeError,
     InternalError,

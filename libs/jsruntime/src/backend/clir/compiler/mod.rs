@@ -2951,13 +2951,11 @@ where
                         .put_write_string_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Closure(value) => {
-                    // TODO(issue#237): GcCellRef
                     self.editor
                         .put_write_closure_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
                 Operand::Object(value)
                 | Operand::PropertyReference(PropertyOwner::Object(value), _) => {
-                    // TODO(issue#237): GcCellRef
                     self.editor
                         .put_write_object_to_scratch_buffer(*value, &mut scratch_buffer);
                 }
@@ -3005,20 +3003,17 @@ where
                 }
                 Operand::String(value, _)
                 | Operand::PropertyReference(PropertyOwner::String(value), _) => {
-                    // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
                         .put_read_string_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Closure(value) => {
-                    // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
                         .put_read_closure_from_scratch_buffer(&mut scratch_buffer);
                 }
                 Operand::Object(value)
                 | Operand::PropertyReference(PropertyOwner::Object(value), _) => {
-                    // TODO(issue#237): GcCellRef
                     *value = self
                         .editor
                         .put_read_object_from_scratch_buffer(&mut scratch_buffer);

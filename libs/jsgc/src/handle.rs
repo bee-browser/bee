@@ -11,7 +11,6 @@ use crate::heap::Atom;
 ///
 /// This type treats the pointee type as an opaque type and simply copy the pointer when the value
 /// is cloned.
-// TODO(issue#237): GcCellRef
 #[derive(Eq)]
 #[repr(transparent)]
 pub struct Handle<T>(NonNull<T>);
@@ -108,7 +107,6 @@ where
 ///
 /// This type treats the pointee type as an opaque type and simply copy the pointer when the value
 /// is cloned.
-// TODO(issue#237): GcCellRef
 #[derive(Eq)]
 #[repr(transparent)]
 pub struct HandleMut<T>(NonNull<T>);

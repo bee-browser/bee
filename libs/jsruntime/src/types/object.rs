@@ -12,6 +12,7 @@ use jsgc::Trace;
 use jsgc::VisitList;
 use jsparser::Symbol;
 
+use crate::Error;
 use crate::types::Closure;
 use crate::types::Promise;
 use crate::types::String;
@@ -287,7 +288,7 @@ impl Object {
     }
 
     // TODO(feat): 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
-    pub fn define_own_property(&mut self, key: PropertyKey, prop: Property) -> Result<bool, Value> {
+    pub fn define_own_property(&mut self, key: PropertyKey, prop: Property) -> Result<bool, Error> {
         self.properties.insert(key, prop);
         Ok(true)
     }

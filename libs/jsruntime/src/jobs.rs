@@ -35,7 +35,6 @@ impl<X> Runtime<X> {
     // promise
 
     pub fn process_promise(&mut self, object: HandleMut<Object>, result: &Value, error: &Value) {
-        // TODO(feat): `result` may hold a Promise object
         logger::debug!(event = "process_promise", ?object, ?result, ?error);
         debug_assert!(self.is_promise_object(object));
         let promise = object.promise();
