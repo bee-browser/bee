@@ -831,7 +831,7 @@ where
         let coroutine = self.pop_coroutine();
         let promise = self
             .editor
-            .put_runtime_register_promise(self.support, coroutine);
+            .put_runtime_create_promise(self.support, coroutine);
         let prototype = self.promise_prototype();
         let object = self
             .editor

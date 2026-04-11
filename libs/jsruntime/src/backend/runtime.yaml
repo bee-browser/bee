@@ -134,11 +134,11 @@ functions:
       - name: capture_buffer_len
         type: u16
     ret: '&mut Coroutine'
-  - name: register_promise
+  - name: create_promise
     args:
       - name: coroutine
         type: '&mut Coroutine'
-    ret: 'u32'
+    ret: HandleMut<Promise>
   - name: resume
     args:
       - name: promise

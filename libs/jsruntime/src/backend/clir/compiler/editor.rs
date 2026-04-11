@@ -779,17 +779,14 @@ impl<'a> Editor<'a> {
 
     pub fn put_load_closure_from_object(&mut self, object: ObjectIr) -> ClosureIr {
         logger::debug!(event = "put_load_closure_from_object", ?object);
-        ClosureIr(self.put_load_addr(object.0, Object::USERDATA_OFFSET))
+        ClosureIr(self.put_load_addr(object.0, Object::KERNEL_DATA_OFFSET))
     }
 
     pub fn put_store_closure_to_object(&mut self, closure: ClosureIr, object: ObjectIr) {
         logger::debug!(event = "put_store_closure_to_object", ?object);
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
-        const OFFSET: i32 = Object::USERDATA_OFFSET as i32;
+        self.put_store_handle_to_object(closure.0, object);
         // TODO: The CONSTRUCTOR flag should be set in MakeConstructor()
         const OBJECT_FLAGS: ObjectFlags = ObjectFlags::CONSTRUCTOR.union(ObjectFlags::CALLABLE);
-        self.builder.ins().store(FLAGS, closure.0, object.0, OFFSET);
-        // Set callable flag
         let flags = self.put_load_flags_from_object(object);
         let flags = self
             .builder
@@ -800,10 +797,22 @@ impl<'a> Editor<'a> {
 
     pub fn put_store_promise_to_object(&mut self, promise: PromiseIr, object: ObjectIr) {
         logger::debug!(event = "put_store_promise_to_object", ?object);
+        self.put_store_handle_to_object(promise.0, object);
+    }
+
+    fn put_store_handle_to_object(&mut self, handle: ir::Value, object: ObjectIr) {
+        logger::debug!(event = "put_store_handle_to_object", ?handle, ?object);
         const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
-        const OFFSET: i32 = Object::USERDATA_OFFSET as i32;
-        let userdata = self.builder.ins().uextend(self.addr_type, promise.0);
-        self.builder.ins().store(FLAGS, userdata, object.0, OFFSET);
+        self.builder
+            .ins()
+            .store(FLAGS, handle, object.0, Object::KERNEL_DATA_OFFSET as i32);
+        let tracing = self.builder.ins().iconst(ir::types::I8, 1);
+        self.builder.ins().store(
+            FLAGS,
+            tracing,
+            object.0,
+            Object::KERNEL_TRACING_OFFSET as i32,
+        );
     }
 
     fn put_store_flags_to_object(&mut self, flags: ir::Value, object: ObjectIr) {
@@ -1958,15 +1967,15 @@ impl<'a> Editor<'a> {
         CoroutineIr(self.builder.inst_results(call)[0])
     }
 
-    pub fn put_runtime_register_promise(
+    pub fn put_runtime_create_promise(
         &mut self,
         support: &mut impl EditorSupport,
         coroutine: CoroutineIr,
     ) -> PromiseIr {
-        logger::debug!(event = "put_runtime_register_promise", ?coroutine);
+        logger::debug!(event = "put_runtime_create_promise", ?coroutine);
         let func = self
             .runtime_func_cache
-            .import_runtime_register_promise(support, self.builder.func);
+            .import_runtime_create_promise(support, self.builder.func);
         let args = [self.runtime(), coroutine.0];
         let call = self.builder.ins().call(func, &args);
         PromiseIr(self.builder.inst_results(call)[0])
