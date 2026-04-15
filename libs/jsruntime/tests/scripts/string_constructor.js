@@ -5,4 +5,5 @@ print(String(true)); ///="true"
 print(String(false)); ///="false"
 print(String(1)); ///="1"
 print(String('a')); ///="a"
-// TODO: print(String({})); ///="[object Object]"
+print(String({})); ///="[object Object]"
+print(new String(1)) ///=object

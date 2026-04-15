@@ -583,3 +583,16 @@ pub enum Error {
     RangeError,
     InternalError,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_collect_garbage() {
+        let mut runtime = BasicRuntime::new();
+        runtime.collect_garbage(vec![]);
+        // The runtime holds the global object.
+        assert!(runtime.heap_stats().num_objects > 0);
+    }
+}

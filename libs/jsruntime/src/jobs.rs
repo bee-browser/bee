@@ -131,7 +131,6 @@ impl JobRunner {
     }
 
     pub(crate) fn collect_gc_roots(&self, roots: &mut Vec<usize>) {
-        dbg!(self.messages.len());
         for msg in self.messages.iter() {
             match msg {
                 Message::PromiseResolved { object, result } => {

@@ -44,11 +44,6 @@ impl<T> Handle<T> {
         self.0.addr().get()
     }
 
-    pub fn dummy_for_testing() -> Self {
-        // SAFETY: it's just a dummy data for testing.
-        Self(unsafe { NonNull::new_unchecked(16 as *mut T) })
-    }
-
     fn as_ref<'a>(&self) -> &'a T {
         //debug_assert!(!self.0.as_ptr().is_null());
         debug_assert!(self.0.as_ptr().is_aligned());
@@ -223,5 +218,50 @@ mod tests {
         assert_eq!(size_of::<Option<Handle<u8>>>(), size_of::<usize>());
         assert_eq!(size_of::<HandleMut<u8>>(), size_of::<usize>());
         assert_eq!(size_of::<Option<HandleMut<u8>>>(), size_of::<usize>());
+    }
+
+    #[test]
+    fn test_handle_from_ptr() {
+        let v: u8 = 0;
+        assert!(Handle::from_ptr(&v as *const u8).is_some());
+        assert!(Handle::from_ptr(std::ptr::null::<u8>()).is_none());
+    }
+
+    #[test]
+    fn test_handle_frop_addr() {
+        let v: u8 = 0;
+        assert!(Handle::<u8>::from_addr(&v as *const u8 as usize).is_some());
+    }
+
+    #[test]
+    fn test_handle_partial_eq() {
+        let v: u8 = 0;
+        let handle = Handle::from_ref(&v);
+        assert_eq!(handle, handle);
+
+        let v: u8 = 0;
+        let handle2 = Handle::from_ref(&v);
+        assert_ne!(handle, handle2);
+    }
+
+    #[test]
+    fn test_handle_debug_fmt() {
+        let v: u8 = 12;
+        let handle = Handle::from_ref(&v);
+        assert_eq!(format!("{:?}", handle), "Handle(12)");
+    }
+
+    #[test]
+    fn test_handle_mut_debug_fmt() {
+        let mut v: u8 = 12;
+        let handle = HandleMut::from_mut(&mut v);
+        assert_eq!(format!("{:?}", handle), "HandleMut(12)");
+    }
+
+    #[test]
+    fn test_handle_mut_dissplay_fmt() {
+        let mut v: u8 = 12;
+        let handle = HandleMut::from_mut(&mut v);
+        assert_eq!(format!("{}", handle), "HandleMut(12)");
     }
 }
