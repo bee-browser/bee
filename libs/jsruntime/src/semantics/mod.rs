@@ -10,7 +10,7 @@ use jsparser::syntax::PropertyDefinitionKind;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use jsparser::Error;
+use jsparser::Error as ParserError;
 use jsparser::Parser;
 use jsparser::Processor;
 use jsparser::Symbol;
@@ -22,6 +22,7 @@ use jsparser::syntax::NodeHandler;
 use jsparser::syntax::UnaryOperator;
 use jsparser::syntax::UpdateOperator;
 
+use crate::Error as RuntimeError;
 use crate::ProgramId;
 use crate::Runtime;
 use crate::Value;
@@ -38,7 +39,7 @@ pub use scope::VariableRef;
 
 impl<X> Runtime<X> {
     /// Parses a given source text as a script.
-    pub fn parse_script(&mut self, source: &str) -> Result<ProgramId, Error> {
+    pub fn parse_script(&mut self, source: &str) -> Result<ProgramId, ParserError> {
         logger::debug!(event = "parse", source_kind = "script");
         let analyzer = Analyzer::new_for_script(self);
         let processor = Processor::new(analyzer, false);
@@ -47,7 +48,7 @@ impl<X> Runtime<X> {
     }
 
     /// Parses a given source text as a module.
-    pub fn parse_module(&mut self, source: &str) -> Result<ProgramId, Error> {
+    pub fn parse_module(&mut self, source: &str) -> Result<ProgramId, ParserError> {
         logger::debug!(event = "parse", source_kind = "module");
         let analyzer = Analyzer::new_for_module(self);
         let processor = Processor::new(analyzer, true);
@@ -266,7 +267,11 @@ struct Analyzer<'r, R> {
 trait AnalyzerSupport {
     fn make_symbol(&mut self, lexeme: &str) -> Symbol;
     fn register_lambda(&mut self, kind: LambdaKind) -> LambdaId;
-    fn define_global_property(&mut self, key: Symbol, property: Property) -> Result<bool, Value>;
+    fn define_global_property(
+        &mut self,
+        key: Symbol,
+        property: Property,
+    ) -> Result<bool, RuntimeError>;
 }
 
 impl<X> AnalyzerSupport for Runtime<X> {
@@ -279,7 +284,11 @@ impl<X> AnalyzerSupport for Runtime<X> {
     }
 
     // TODO: PropertyKey::Number
-    fn define_global_property(&mut self, name: Symbol, property: Property) -> Result<bool, Value> {
+    fn define_global_property(
+        &mut self,
+        name: Symbol,
+        property: Property,
+    ) -> Result<bool, RuntimeError> {
         self.global_object
             .define_own_property(name.into(), property)
     }
@@ -1153,7 +1162,7 @@ where
         }
     }
 
-    fn accept(&mut self) -> Result<Self::Artifact, Error> {
+    fn accept(&mut self) -> Result<Self::Artifact, ParserError> {
         logger::debug!(event = "accept");
 
         if self.module {
@@ -1222,7 +1231,7 @@ where
 
         let scope_tree = self.global_analysis.scope_tree_builder.build();
         if !scope_tree.validate() {
-            return Err(Error::SyntaxError);
+            return Err(ParserError::SyntaxError);
         }
 
         Ok(Program {
@@ -1233,7 +1242,7 @@ where
         })
     }
 
-    fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error> {
+    fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), ParserError> {
         for node in nodes {
             self.handle_node(node);
         }
@@ -2672,7 +2681,7 @@ mod tests {
             &mut self,
             _key: Symbol,
             _property: Property,
-        ) -> Result<bool, Value> {
+        ) -> Result<bool, RuntimeError> {
             Ok(true)
         }
     }

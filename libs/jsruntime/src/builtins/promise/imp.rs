@@ -1,7 +1,7 @@
 //$id promise
 //$class Promise
 
-use jsgc::Handle;
+use jsgc::HandleMut;
 
 use crate::Error;
 use crate::Runtime;
@@ -9,7 +9,6 @@ use crate::lambda::LambdaId;
 use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
-use crate::types::Promise;
 use crate::types::Status;
 use crate::types::Value;
 
@@ -33,7 +32,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
     let closure = runtime.create_closure(promise_coroutine, LambdaId::HOST, 0);
     let coroutine = runtime.create_coroutine(closure, 0, 0, 0);
-    let promise = runtime.register_promise(coroutine);
+    let promise = runtime.create_promise(coroutine);
 
     let mut object = if let Value::Object(this) = context.this() {
         *this
@@ -78,8 +77,8 @@ extern "C" fn promise_coroutine<X>(
 impl<X> Runtime<X> {
     fn create_resolving_functions(
         &mut self,
-        promise: Handle<Object>,
-    ) -> (Handle<Object>, Handle<Object>) {
+        promise: HandleMut<Object>,
+    ) -> (HandleMut<Object>, HandleMut<Object>) {
         let resolve = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: promise_resolve,
             name: crate::types::string::EMPTY,
@@ -166,12 +165,4 @@ extern "C" fn promise_reject<X>(
     runtime.emit_promise_rejected(promise, error.clone());
     *retv = Value::Undefined;
     Status::Normal
-}
-
-// helpers
-
-impl Object {
-    pub(crate) fn get_promise(&self) -> Promise {
-        Promise::from(self.userdata() as u32)
-    }
 }

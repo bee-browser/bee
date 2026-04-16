@@ -12,7 +12,7 @@ use base::macros::assert_eq;
 use jsgc::Handle;
 
 use jsruntime::Runtime;
-use jsruntime::StringFragment;
+use jsruntime::String;
 use jsruntime::Value;
 
 logging::init!();
@@ -44,18 +44,19 @@ impl Validator {
     }
 }
 
-fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expected_values: Vec<Value>) -> Result<Value, Value> {
-    let mut runtime = Runtime::with_extension(Validator {
-        expected_values,
-        actual_values: vec![],
-    });
+fn evaluate(
+    runtime: &mut Runtime<Validator>,
+    src: &str,
+    module: bool,
+    optimize: bool,
+    enable_labels: bool,
+) -> Result<Value, Value> {
     runtime.enable_scope_cleanup_checker();
     if enable_labels {
         // TODO
     }
     runtime.register_host_function("print", |runtime, args| {
-        let value = runtime.ensure_value_return_safe(&args[0]);
-        runtime.extension_mut().actual_values.push(value);
+        runtime.extension_mut().actual_values.push(args[0].clone());
     });
     let program_id = if module {
         runtime.parse_module(src).unwrap()
@@ -73,14 +74,18 @@ fn evaluate(src: &str, module: bool, optimize: bool, enable_labels: bool, expect
 fn {{name}}() {
     {{#each strings}}
     const CODE_UNITS{{@index}}: [u16; {{size}}] = [{{join data ", "}}];
-    const STRING{{@index}}: StringFragment = StringFragment::new_const(&CODE_UNITS{{@index}});
+    const STRING{{@index}}: String = String::new_const(&CODE_UNITS{{@index}});
     {{/each}}
+    let mut runtime = Runtime::with_extension(Validator {
+        expected_values: vec![
+            {{#each expectedValues}}
+            {{.}},
+            {{/each}}
+        ],
+        actual_values: vec![],
+    });
     let src = include_str!("{{filename}}");
-    let result = evaluate(src, {{module}}, true, false, vec![
-        {{#each expectedValues}}
-        {{.}},
-        {{/each}}
-    ]);
+    let result = evaluate(&mut runtime, src, {{module}}, true, false);
     {{#if throws}}
     assert_matches!(result, Err(actual) => {
         // Some cases including `f64::NAN` fail in `assert_eq!()`.

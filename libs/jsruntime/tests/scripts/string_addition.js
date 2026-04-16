@@ -10,7 +10,7 @@ print(true + ''); ///="true"
 print('' + false); ///="false"
 print(false + ''); ///="false"
 
-// TODO: print('' + 0); ///="0"
+print('' + 0); ///="0"
 // TODO: print('' + {}); ///="[object Object]"
 
 print('a' + 'b'); ///="ab"

@@ -2,6 +2,7 @@
 //$class Error
 
 use jsgc::Handle;
+use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::Error;
@@ -10,7 +11,7 @@ use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 //#sec-error-message constructor
@@ -66,7 +67,7 @@ pub fn error_is_error<X>(
 }
 
 //#sec-error.prototype.message prototype.property
-pub fn error_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
+pub fn error_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: HandleMut<Object>) {
     let _ = prototype.define_own_property(
         Symbol::MESSAGE.into(),
         Property::data_xxx(Value::String(crate::types::string::EMPTY)),
@@ -74,7 +75,7 @@ pub fn error_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: Hand
 }
 
 //#sec-error.prototype.name prototype.property
-pub fn error_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle<Object>) {
+pub fn error_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: HandleMut<Object>) {
     let _ = prototype.define_own_property(
         Symbol::NAME.into(),
         Property::data_xxx(Value::String(crate::types::string::EMPTY)),
@@ -114,4 +115,4 @@ pub fn error_prototype_to_string<X>(
     Ok(Value::String(result))
 }
 
-const NAME: Handle<StringFragment> = const_string!(jsparser::symbol::builtin::names::ERROR);
+const NAME: Handle<String> = const_string!(jsparser::symbol::builtin::names::ERROR);

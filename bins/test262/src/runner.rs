@@ -60,6 +60,7 @@ impl Runner {
         } else {
             Source::Script(&content)
         };
+        // TODO: timeout
         self.run(source)
     }
 

@@ -1,4 +1,5 @@
 use jsgc::Handle;
+use jsgc::HandleMut;
 
 use crate::Runtime;
 use crate::lambda::LambdaKind;
@@ -9,9 +10,10 @@ use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
 use crate::types::Object;
+use crate::types::Promise;
 use crate::types::PropertyKey;
 use crate::types::Status;
-use crate::types::StringFragment;
+use crate::types::String;
 use crate::types::Value;
 
 macro_rules! into_object {
@@ -162,7 +164,7 @@ pub(crate) extern "C" fn runtime_to_numeric<X>(_runtime: &mut Runtime<X>, value:
 pub(crate) extern "C" fn runtime_to_string<X>(
     runtime: &mut Runtime<X>,
     value: &Value,
-) -> Handle<StringFragment> {
+) -> Handle<String> {
     logger::debug!(event = "runtime_to_string", ?value);
     runtime.value_to_string(value).unwrap()
 }
@@ -171,16 +173,15 @@ pub(crate) extern "C" fn runtime_to_string<X>(
 pub(crate) extern "C" fn runtime_number_to_string<X>(
     runtime: &mut Runtime<X>,
     value: f64,
-) -> Handle<StringFragment> {
+) -> Handle<String> {
     logger::debug!(event = "runtime_number_to_string", ?value);
     runtime.number_to_string(value)
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<StringFragment> {
+    pub(crate) fn number_to_string(&mut self, value: f64) -> Handle<String> {
         // TODO(feat): implment Number::toString()
-        let utf16 = self.alloc_utf16(&format!("{value}"));
-        StringFragment::new_stack(utf16, true).ensure_return_safe(&self.heap)
+        self.create_string_from_utf8(&format!("{value}"))
     }
 }
 
@@ -287,8 +288,8 @@ pub(crate) extern "C" fn runtime_to_uint32<X>(_runtime: &mut Runtime<X>, value: 
 
 pub(crate) extern "C" fn runtime_is_same_string<X>(
     _runtime: &mut Runtime<X>,
-    a: Handle<StringFragment>,
-    b: Handle<StringFragment>,
+    a: Handle<String>,
+    b: Handle<String>,
 ) -> bool {
     *a == *b
 }
@@ -349,16 +350,19 @@ pub(crate) extern "C" fn runtime_is_strictly_equal<X>(
 pub(crate) extern "C" fn runtime_get_typeof<X>(
     _runtime: &mut Runtime<X>,
     value: &Value,
-) -> Handle<StringFragment> {
+) -> Handle<String> {
     debug_assert!(!matches!(value, Value::None));
     value.get_typeof()
 }
 
-pub(crate) extern "C" fn runtime_migrate_string_to_heap<X>(
+pub(crate) extern "C" fn runtime_create_string<X>(
     runtime: &mut Runtime<X>,
-    string: Handle<StringFragment>,
-) -> Handle<StringFragment> {
-    string.ensure_return_safe(&runtime.heap)
+    ptr: *const u16,
+    len: usize,
+) -> Handle<String> {
+    // SAFETY: `from_raw_parts()` always succeeds.
+    let utf16 = unsafe { std::slice::from_raw_parts(ptr, len) };
+    runtime.create_string(utf16)
 }
 
 pub(crate) extern "C" fn runtime_create_capture<X>(
@@ -382,12 +386,14 @@ pub(crate) extern "C" fn runtime_create_capture<X>(
         )
     };
 
-    let handle = runtime.heap.alloc_layout::<Capture, _>(LAYOUT, move |ptr| {
-        // SAFETY: `ptr` is a non-null pointer to a `Capture`.
-        let capture = unsafe { ptr.cast::<Capture>().as_mut() };
-        capture.target = target;
-        // `capture.escaped` will be filled with an actual value.
-    });
+    let handle = runtime
+        .heap
+        .alloc_layout_mut::<Capture, _>(LAYOUT, move |ptr| {
+            // SAFETY: `ptr` is a non-null pointer to a `Capture`.
+            let capture = unsafe { ptr.cast::<Capture>().as_mut() };
+            capture.target = target;
+            // `capture.escaped` will be filled with an actual value.
+        });
 
     handle.as_ptr()
 }
@@ -423,22 +429,22 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
         scratch_buffer_len,
         capture_buffer_len,
     );
-    let closure = Handle::from_ptr(closure).expect("closure must be a non-null pointer");
+    let closure = HandleMut::from_ptr(closure).expect("closure must be a non-null pointer");
     runtime
         .create_coroutine(closure, num_locals, scratch_buffer_len, capture_buffer_len)
         .as_ptr()
 }
 
-pub(crate) extern "C" fn runtime_register_promise<X>(
+pub(crate) extern "C" fn runtime_create_promise<X>(
     runtime: &mut Runtime<X>,
     coroutine: *mut Coroutine,
-) -> u32 {
-    let coroutine = Handle::from_ptr(coroutine).expect("coroutine must be a non-null pointer");
-    runtime.register_promise(coroutine).into()
+) -> HandleMut<Promise> {
+    let coroutine = HandleMut::from_ptr(coroutine).expect("coroutine must be a non-null pointer");
+    runtime.create_promise(coroutine)
 }
 
 pub(crate) extern "C" fn runtime_resume<X>(runtime: &mut Runtime<X>, promise: *mut Object) {
-    let promise = Handle::from_ptr(promise).unwrap();
+    let promise = HandleMut::from_ptr(promise).unwrap();
     debug_assert!(runtime.is_promise_object(promise));
     runtime.process_promise(promise, &Value::None, &Value::None);
 }
@@ -448,7 +454,7 @@ pub(crate) extern "C" fn runtime_emit_promise_resolved<X>(
     promise: *mut Object,
     result: &Value,
 ) {
-    let promise = Handle::from_ptr(promise).unwrap();
+    let promise = HandleMut::from_ptr(promise).unwrap();
     debug_assert!(runtime.is_promise_object(promise));
     runtime.emit_promise_resolved(promise, result.clone());
 }
@@ -457,7 +463,7 @@ pub(crate) extern "C" fn runtime_create_object<X>(
     runtime: &mut Runtime<X>,
     prototype: *mut Object,
 ) -> *mut Object {
-    let prototype = Handle::from_ptr(prototype);
+    let prototype = HandleMut::from_ptr(prototype);
     runtime.create_object(prototype).as_ptr()
 }
 
@@ -473,7 +479,7 @@ pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) 
 
 pub(crate) extern "C" fn runtime_create_internal_error<X>(
     runtime: &mut Runtime<X>,
-    message: Handle<StringFragment>,
+    message: Handle<String>,
 ) -> *mut Object {
     runtime.create_internal_error(Some(message)).as_ptr()
 }
@@ -615,10 +621,10 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
 
 pub(crate) extern "C" fn runtime_concat_strings<X>(
     runtime: &mut Runtime<X>,
-    head: Handle<StringFragment>,
-    tail: Handle<StringFragment>,
-) -> Handle<StringFragment> {
-    head.concat(tail, &runtime.heap)
+    head: Handle<String>,
+    tail: Handle<String>,
+) -> Handle<String> {
+    head.concat(tail, &mut runtime.heap)
 }
 
 // 7.3.5 CreateDataProperty ( O, P, V )
@@ -640,8 +646,8 @@ pub(crate) extern "C" fn runtime_create_data_property_by_symbol<X>(
             *retv = success.into();
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
@@ -667,8 +673,8 @@ pub(crate) extern "C" fn runtime_create_data_property_by_number<X>(
             *retv = success.into();
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
@@ -698,8 +704,8 @@ pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
             *retv = success.into();
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
@@ -720,8 +726,8 @@ pub(crate) extern "C" fn runtime_copy_data_properties<X>(
             *retv = Value::None;
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
@@ -814,7 +820,7 @@ pub(crate) extern "C" fn runtime_print_f64<X>(
 
 pub(crate) extern "C" fn runtime_print_string<X>(
     _runtime: &mut Runtime<X>,
-    value: Handle<StringFragment>,
+    value: Handle<String>,
     msg: *const std::os::raw::c_char,
 ) {
     // SAFETY: `msg` is always non-null.
