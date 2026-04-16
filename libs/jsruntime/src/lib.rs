@@ -151,7 +151,7 @@ impl<X> Runtime<X> {
             code_registry: CodeRegistry::new(),
             programs: vec![],
             heap,
-            job_runner: JobRunner::new(),
+            job_runner: Default::default(),
             global_object,
             object_prototype: None,
             function_prototype: None,

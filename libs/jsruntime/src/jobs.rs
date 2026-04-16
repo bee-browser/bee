@@ -3,7 +3,6 @@ use std::collections::VecDeque;
 use jsgc::HandleMut;
 
 use crate::Runtime;
-use crate::Value;
 use crate::logger;
 use crate::types::CallContext;
 use crate::types::Coroutine;
@@ -11,6 +10,7 @@ use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Promise;
 use crate::types::Status;
+use crate::types::Value;
 
 impl<X> Runtime<X> {
     /// Perform all jobs.
@@ -78,17 +78,12 @@ impl<X> Runtime<X> {
     }
 }
 
+#[derive(Default)]
 pub struct JobRunner {
     messages: VecDeque<Message>,
 }
 
 impl JobRunner {
-    pub fn new() -> Self {
-        Self {
-            messages: Default::default(),
-        }
-    }
-
     // promises
 
     fn await_promise(&mut self, object: HandleMut<Object>, awaiting: HandleMut<Object>) {
@@ -166,4 +161,57 @@ enum Message {
         object: HandleMut<Object>,
         error: Value,
     },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::BasicRuntime;
+    use crate::lambda::LambdaId;
+
+    #[test]
+    fn test_collect_gc_roots() {
+        let mut runtime = BasicRuntime::new();
+
+        extern "C" fn dummy(_: &mut BasicRuntime, _: &mut CallContext, retv: &mut Value) -> Status {
+            *retv = Value::Undefined;
+            Status::Normal
+        }
+
+        macro_rules! resolved {
+            ($value:expr) => {
+                let closure = runtime.create_closure(dummy, LambdaId::HOST, 0);
+                let coroutine = runtime.create_coroutine(closure, 0, 0, 0);
+                let promise = runtime.create_promise(coroutine);
+                let mut object = runtime.create_object(runtime.promise_prototype);
+                object.set_promise(promise);
+                runtime.emit_promise_resolved(object, $value);
+            };
+        }
+
+        macro_rules! rejected {
+            ($value:expr) => {
+                let closure = runtime.create_closure(dummy, LambdaId::HOST, 0);
+                let coroutine = runtime.create_coroutine(closure, 0, 0, 0);
+                let promise = runtime.create_promise(coroutine);
+                let mut object = runtime.create_object(runtime.promise_prototype);
+                object.set_promise(promise);
+                runtime.emit_promise_rejected(object, $value);
+            };
+        }
+
+        let object = runtime.create_object(None);
+
+        resolved!(Value::Undefined);
+        resolved!(Value::String(const_string!("resolved")));
+        resolved!(Value::Object(object));
+
+        rejected!(Value::Undefined);
+        rejected!(Value::String(const_string!("rejected")));
+        rejected!(Value::Object(object));
+
+        let mut roots = vec![];
+        runtime.job_runner.collect_gc_roots(&mut roots);
+        assert_eq!(roots.len(), 10);
+    }
 }
