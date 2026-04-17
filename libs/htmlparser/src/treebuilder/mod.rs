@@ -2645,13 +2645,11 @@ where
                     local_name: element_name,
                     attrs_hash: element_hash,
                     ..
-                } => {
-                    if *element_name == local_name && *element_hash == attrs_hash {
-                        count += 1;
-                        if count == 3 {
-                            first_pos = Some(i);
-                            break;
-                        }
+                } if *element_name == local_name && *element_hash == attrs_hash => {
+                    count += 1;
+                    if count == 3 {
+                        first_pos = Some(i);
+                        break;
                     }
                 }
                 _ => {}
