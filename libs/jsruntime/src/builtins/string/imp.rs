@@ -570,30 +570,7 @@ fn trim_string<X>(
     let o = context.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
-
-    let start_index = if start {
-        match s.position(is_non_whitespace) {
-            Some(index) => index,
-            None => return Ok(Value::String(EMPTY)),
-        }
-    } else {
-        0
-    };
-
-    let end_index = if end {
-        match s.last_position(is_non_whitespace) {
-            Some(index) => {
-                debug_assert!(index < u32::MAX);
-                index + 1
-            }
-            None => unreachable!(),
-        }
-    } else {
-        s.len()
-    };
-
-    let result = runtime.create_substring(s, start_index, end_index);
-    Ok(Value::String(result))
+    Ok(Value::String(runtime.trim_string(s, start, end)?))
 }
 
 fn is_non_whitespace(cp: u32) -> bool {
@@ -639,5 +616,36 @@ impl<X> Runtime<X> {
         } else {
             Ok(Value::String(string))
         }
+    }
+
+    pub(crate) fn trim_string(
+        &mut self,
+        string: Handle<String>,
+        start: bool,
+        end: bool,
+    ) -> Result<Handle<String>, Error> {
+        let start_index = if start {
+            match string.position(is_non_whitespace) {
+                Some(index) => index,
+                None => return Ok(EMPTY),
+            }
+        } else {
+            0
+        };
+
+        let end_index = if end {
+            match string.last_position(is_non_whitespace) {
+                Some(index) => {
+                    debug_assert!(index < u32::MAX);
+                    index + 1
+                }
+                None => unreachable!(),
+            }
+        } else {
+            string.len()
+        };
+
+        let result = self.create_substring(string, start_index, end_index);
+        Ok(result)
     }
 }

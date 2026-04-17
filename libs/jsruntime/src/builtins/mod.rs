@@ -20,9 +20,11 @@ use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
+use crate::types::CallContext;
 use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Property;
+use crate::types::Status;
 use crate::types::String;
 use crate::types::Value;
 
@@ -69,6 +71,46 @@ impl<X> Runtime<X> {
             Symbol::NAN => Value::Number(f64::NAN),
             // 19.1.4 undefined
             Symbol::KEYWORD_UNDEFINED => Value::Undefined,
+            // 19.2.1 eval ( x )
+            Symbol::EVAL => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
+                lambda: eval,
+                name: const_string!(jsparser::symbol::builtin::names::EVAL),
+                length: 1,
+                slots: &[],
+                prototype: self.function_prototype,
+            })),
+            // 19.2.2 isFinite ( number )
+            Symbol::IS_FINITE => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
+                lambda: is_finite,
+                name: const_string!(jsparser::symbol::builtin::names::IS_FINITE),
+                length: 1,
+                slots: &[],
+                prototype: self.function_prototype,
+            })),
+            // 19.2.3 isNaN ( number )
+            Symbol::IS_NAN => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
+                lambda: is_nan,
+                name: const_string!(jsparser::symbol::builtin::names::IS_NAN),
+                length: 1,
+                slots: &[],
+                prototype: self.function_prototype,
+            })),
+            // 19.2.4 parseFloat ( string )
+            Symbol::PARSE_FLOAT => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
+                lambda: parse_float,
+                name: const_string!(jsparser::symbol::builtin::names::PARSE_FLOAT),
+                length: 1,
+                slots: &[],
+                prototype: self.function_prototype,
+            })),
+            // 19.2.5 parseInt ( string, radix )
+            Symbol::PARSE_INT => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
+                lambda: parse_int,
+                name: const_string!(jsparser::symbol::builtin::names::PARSE_INT),
+                length: 2,
+                slots: &[],
+                prototype: self.function_prototype,
+            })),
             // 19.3.1 AggregateError ( . . . )
             Symbol::AGGREGATE_ERROR => Value::Object(self.create_aggregate_error_constructor()),
             // 19.3.10 Error ( . . . )
@@ -213,6 +255,7 @@ impl<X> Runtime<X> {
 
     pub(crate) fn create_exception(&mut self, err: Error) -> Value {
         Value::Object(match err {
+            Error::SyntaxError => self.create_syntax_error(None),
             Error::TypeError => self.create_type_error(None),
             Error::RangeError => self.create_range_error(None),
             Error::InternalError => self.create_internal_error(None),
@@ -249,6 +292,91 @@ impl<X> Runtime<X> {
     }
 }
 
+extern "C" fn eval<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    match imp::eval(runtime, context) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
+}
+
+extern "C" fn is_finite<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    match imp::is_finite(runtime, context) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
+}
+
+extern "C" fn is_nan<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    match imp::is_nan(runtime, context) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
+}
+
+extern "C" fn parse_float<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    match imp::parse_float(runtime, context) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
+}
+
+extern "C" fn parse_int<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    match imp::parse_int(runtime, context) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
+}
+
 // 7.2.1 RequireObjectCoercible ( argument )
 fn require_object_coercible(value: &Value) -> Result<(), Error> {
     match value {
@@ -265,4 +393,68 @@ struct BuiltinFunctionParams<'a, X> {
     length: u16,
     slots: &'a [Value],
     prototype: Option<HandleMut<Object>>,
+}
+
+mod imp {
+    use super::*;
+
+    pub fn eval<X>(_runtime: &mut Runtime<X>, _context: &mut CallContext) -> Result<Value, Error> {
+        // TODO: impl
+        Err(Error::InternalError)
+    }
+
+    pub fn is_finite<X>(
+        runtime: &mut Runtime<X>,
+        context: &mut CallContext,
+    ) -> Result<Value, Error> {
+        let number = context.args().first().unwrap_or(&Value::Undefined);
+        let num = runtime.value_to_number(number)?;
+        Ok(Value::Boolean(num.is_finite()))
+    }
+
+    pub fn is_nan<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+        let number = context.args().first().unwrap_or(&Value::Undefined);
+        let num = runtime.value_to_number(number)?;
+        Ok(Value::Boolean(num.is_nan()))
+    }
+
+    pub fn parse_float<X>(
+        runtime: &mut Runtime<X>,
+        context: &mut CallContext,
+    ) -> Result<Value, Error> {
+        let string = context.args().first().unwrap_or(&Value::Undefined);
+        let input_string = runtime.value_to_string(string)?;
+        let trimmed_string = runtime.trim_string(input_string, true, false)?;
+        // TODO: 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
+        let utf8 = char::decode_utf16(trimmed_string.code_units())
+            .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
+            .collect::<std::string::String>();
+        match utf8.parse::<f64>() {
+            Ok(n) => Ok(Value::Number(n)),
+            Err(_) => Err(Error::SyntaxError),
+        }
+    }
+
+    pub fn parse_int<X>(
+        runtime: &mut Runtime<X>,
+        context: &mut CallContext,
+    ) -> Result<Value, Error> {
+        // TODO: impl
+        let string = context.args().first().unwrap_or(&Value::Undefined);
+        let input_string = runtime.value_to_string(string)?;
+        let s = runtime.trim_string(input_string, true, false)?;
+        let radix = context.args().get(1).unwrap_or(&Value::Undefined);
+        let radix = runtime.value_to_number(radix)?;
+        let radix = if radix.is_finite() { radix as i32 } else { 10 };
+        if !(2..=36).contains(&radix) {
+            return Ok(Value::Number(f64::NAN));
+        }
+        let utf8 = char::decode_utf16(s.code_units())
+            .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
+            .collect::<std::string::String>();
+        match i64::from_str_radix(&utf8, radix as u32) {
+            Ok(n) => Ok(Value::Number(n as f64)),
+            Err(_) => Ok(Value::Number(f64::NAN)),
+        }
+    }
 }

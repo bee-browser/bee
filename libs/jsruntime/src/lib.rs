@@ -579,6 +579,7 @@ pub trait Monitor {
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
 pub enum Error {
+    SyntaxError,
     TypeError,
     RangeError,
     InternalError,

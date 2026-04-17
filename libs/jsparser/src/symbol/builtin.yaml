@@ -16,9 +16,7 @@
 
 # Reserved words defined in the ECMA-262 specification.
 - [await, KEYWORD_AWAIT]
-- [arguments, KEYWORD_ARGUMENTS]
 - [catch, KEYWORD_CATCH, CATCH]
-- [eval, KEYWORD_EVAL]
 - ['false', KEYWORD_FALSE]
 - [function, KEYWORD_FUNCTION]
 - [implements, KEYWORD_IMPLEMENTS]
@@ -57,6 +55,7 @@
 - [NaN, NAN]
 - [async, ASYNC]
 - all
+- arguments
 - at
 - cause
 - charAt
@@ -66,12 +65,15 @@
 - constructor
 - default
 - endsWith
+- eval
 - fromCharCode
 - fromCodePoint
 - globalThis
 - includes
 - indexOf
 - isError
+- isFinite
+- [isNaN, IS_NAN]
 - isWellFormed
 - lastIndexOf
 - length
@@ -79,6 +81,8 @@
 - name
 - padEnd
 - padStart
+- parseFloat
+- parseInt
 - prototype
 - repeat
 - startsWith
