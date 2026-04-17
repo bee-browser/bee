@@ -828,9 +828,7 @@ where
             _ => unreachable!(),
         };
         // 13.1.1 Static Semantics: Early Errors
-        ensure!(
-            !matches!(symbol, Symbol::KEYWORD_ARGUMENTS | Symbol::KEYWORD_EVAL if self.strict_mode)
-        );
+        ensure!(!matches!(symbol, Symbol::ARGUMENTS | Symbol::EVAL if self.strict_mode));
         self.process_binding_identifier()
     }
 
@@ -1119,7 +1117,7 @@ where
         self.top_mut().detail = Detail::Expression {
             assignment_target_type: match symbol {
                 // TODO(feat): if strict
-                Symbol::KEYWORD_ARGUMENTS | Symbol::KEYWORD_EVAL if self.strict_mode => {
+                Symbol::ARGUMENTS | Symbol::EVAL if self.strict_mode => {
                     AssignmentTargetType::Invalid
                 }
                 _ => AssignmentTargetType::Simple,
