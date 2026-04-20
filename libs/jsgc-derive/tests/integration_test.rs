@@ -1,19 +1,11 @@
 use jsgc::HandleMut;
 use jsgc::Heap;
-use jsgc::Trace;
-use jsgc::VisitList;
+use jsgc_derive::Trace;
 
-#[derive(Default)]
+#[derive(Default, Trace)]
 struct Cell {
     car: Option<HandleMut<Cell>>,
     cdr: Option<HandleMut<Cell>>,
-}
-
-impl Trace for Cell {
-    fn trace(&self, visits: &mut VisitList) {
-        self.car.trace(visits);
-        self.cdr.trace(visits);
-    }
 }
 
 #[test]

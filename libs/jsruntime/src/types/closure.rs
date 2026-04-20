@@ -67,7 +67,9 @@ impl std::fmt::Debug for Closure {
 }
 
 impl Trace for Closure {
-    fn trace(&self, visit_list: &mut VisitList) {
-        visit_list.extend(self.captures().iter().map(|capture| capture.as_addr()));
+    fn trace(&self, visits: &mut VisitList) {
+        for capture in self.captures() {
+            capture.trace(visits);
+        }
     }
 }

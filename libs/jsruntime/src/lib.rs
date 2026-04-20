@@ -528,46 +528,20 @@ impl<X> Drop for Runtime<X> {
 // TODO(feat): derive(Trace)
 impl<X> Trace for Runtime<X> {
     fn trace(&self, visits: &mut jsgc::VisitList) {
-        visits.push(self.global_object.as_addr());
-        if let Some(object) = self.object_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.function_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.string_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.promise_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.error_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.aggregate_error_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.eval_error_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.internal_error_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.range_error_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.reference_error_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.syntax_error_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.type_error_prototype {
-            visits.push(object.as_addr());
-        }
-        if let Some(object) = self.uri_error_prototype {
-            visits.push(object.as_addr());
-        }
+        self.global_object.trace(visits);
+        self.object_prototype.trace(visits);
+        self.function_prototype.trace(visits);
+        self.string_prototype.trace(visits);
+        self.promise_prototype.trace(visits);
+        self.error_prototype.trace(visits);
+        self.aggregate_error_prototype.trace(visits);
+        self.eval_error_prototype.trace(visits);
+        self.internal_error_prototype.trace(visits);
+        self.range_error_prototype.trace(visits);
+        self.reference_error_prototype.trace(visits);
+        self.syntax_error_prototype.trace(visits);
+        self.type_error_prototype.trace(visits);
+        self.uri_error_prototype.trace(visits);
         // TODO: tracing X if X implements Trace.
     }
 }

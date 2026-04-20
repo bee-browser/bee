@@ -5,7 +5,9 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ptr::NonNull;
 
-use crate::heap::Atom;
+use crate::trace::Atom;
+use crate::trace::Trace;
+use crate::trace::VisitList;
 
 /// A data type to hold a non-null pointer to an *immutable* data type managed on the heap memory.
 ///
@@ -95,6 +97,13 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Handle({})", self.as_ref())
+    }
+}
+
+impl<T> Trace for Handle<T> {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        visits.push(self.as_addr());
     }
 }
 
@@ -198,12 +207,26 @@ where
     }
 }
 
+impl<T> Trace for HandleMut<T> {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        visits.push(self.as_addr());
+    }
+}
+
 // An *immutable* sequence.
 #[derive(Debug)]
 #[repr(C)]
 pub struct Seq<T: Atom> {
     pub data: Handle<T>,
     pub len: usize,
+}
+
+impl<T: Atom> Trace for Seq<T> {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        self.data.trace(visits);
+    }
 }
 
 #[cfg(test)]

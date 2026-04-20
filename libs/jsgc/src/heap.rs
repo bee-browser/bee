@@ -1,5 +1,4 @@
 use std::alloc::Layout;
-use std::collections::VecDeque;
 use std::ptr::NonNull;
 
 use rustc_hash::FxHashMap;
@@ -8,6 +7,9 @@ use rustc_hash::FxHashSet;
 use crate::handle::Handle;
 use crate::handle::HandleMut;
 use crate::handle::Seq;
+use crate::trace::Atom;
+use crate::trace::Trace;
+use crate::trace::VisitList;
 
 /// A heap memory managed by GC.
 pub struct Heap {
@@ -263,30 +265,6 @@ impl GcState {
     }
 }
 
-/// A list to which reachable objects will be added.
-#[derive(Default)]
-pub struct VisitList(VecDeque<usize>);
-
-impl VisitList {
-    /// Appends a handle to the back of the visit list.
-    pub fn push(&mut self, addr: usize) {
-        self.0.push_back(addr);
-    }
-
-    /// Appends handles of an iterator.
-    pub fn extend<I>(&mut self, iter: I)
-    where
-        I: IntoIterator<Item = usize>,
-    {
-        self.0.extend(iter);
-    }
-
-    /// Removes the first handle and returns it, or `None` if the visit list is empty.
-    fn pop(&mut self) -> Option<usize> {
-        self.0.pop_front()
-    }
-}
-
 struct MemoryBlock {
     layout: Layout,
     tidy_fn: Option<TidyFn>,
@@ -332,10 +310,3 @@ impl Tracer {
 
 type TidyFn = fn(usize);
 type TraceFn = fn(usize, &mut VisitList);
-
-pub trait Trace {
-    fn trace(&self, visits: &mut VisitList);
-}
-
-pub trait Atom: Copy + Sized {}
-impl Atom for u16 {}

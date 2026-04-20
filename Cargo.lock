@@ -1216,6 +1216,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsgc-derive"
+version = "0.0.0"
+dependencies = [
+ "base",
+ "jsgc",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "jsoncmp"
 version = "0.0.0"
 dependencies = [
@@ -1259,6 +1270,7 @@ dependencies = [
  "indexmap",
  "itertools 0.14.0",
  "jsgc",
+ "jsgc-derive",
  "jsparser",
  "logging",
  "paste",

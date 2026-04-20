@@ -5,6 +5,7 @@ use crate::types::Coroutine;
 use crate::types::Object;
 use crate::types::Value;
 
+#[derive(jsgc_derive::Trace)]
 pub struct Promise {
     coroutine: HandleMut<Coroutine>,
     awaiting: Option<HandleMut<Object>>,
@@ -54,25 +55,20 @@ impl std::fmt::Debug for Promise {
     }
 }
 
-impl Trace for Promise {
-    fn trace(&self, visits: &mut jsgc::VisitList) {
-        visits.push(self.coroutine.as_addr());
-        if let Some(awaiting) = self.awaiting {
-            visits.push(awaiting.as_addr());
-        }
-        match self.state {
-            PromiseState::Resolved(Value::String(string)) => visits.push(string.as_addr()),
-            PromiseState::Resolved(Value::Object(object)) => visits.push(object.as_addr()),
-            PromiseState::Rejected(Value::String(string)) => visits.push(string.as_addr()),
-            PromiseState::Rejected(Value::Object(object)) => visits.push(object.as_addr()),
-            _ => (),
-        }
-    }
-}
-
 #[derive(Debug)]
 enum PromiseState {
     Pending,
     Resolved(Value),
     Rejected(Value),
+}
+
+// TODO(jsgc-derive): derive(Trace)
+impl Trace for PromiseState {
+    #[inline]
+    fn trace(&self, visits: &mut jsgc::VisitList) {
+        match self {
+            Self::Resolved(v) | Self::Rejected(v) => v.trace(visits),
+            _ => (),
+        }
+    }
 }

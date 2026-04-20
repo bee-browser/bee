@@ -85,24 +85,13 @@ impl Coroutine {
 }
 
 impl Trace for Coroutine {
-    fn trace(&self, visit_list: &mut VisitList) {
-        visit_list.push(self.closure.as_addr());
-
+    fn trace(&self, visits: &mut VisitList) {
+        self.closure.trace(visits);
         for local in self.locals() {
-            match local {
-                Value::String(string) => visit_list.push(string.as_addr()),
-                Value::Object(object) => visit_list.push(object.as_addr()),
-                _ => (),
-            }
+            local.trace(visits);
         }
-
         for value in self.scratch_buffer() {
-            match value {
-                Value::None => break,
-                Value::String(string) => visit_list.push(string.as_addr()),
-                Value::Object(object) => visit_list.push(object.as_addr()),
-                _ => (),
-            }
+            value.trace(visits);
         }
     }
 }

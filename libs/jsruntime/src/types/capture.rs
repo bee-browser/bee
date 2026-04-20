@@ -50,15 +50,9 @@ impl std::fmt::Debug for Capture {
 }
 
 impl Trace for Capture {
-    fn trace(&self, visit_list: &mut VisitList) {
-        if !self.is_escaped() {
-            return;
-        }
-
-        match self.escaped {
-            Value::String(string) => visit_list.push(string.as_addr()),
-            Value::Object(object) => visit_list.push(object.as_addr()),
-            _ => (),
+    fn trace(&self, visits: &mut VisitList) {
+        if self.is_escaped() {
+            self.escaped.trace(visits);
         }
     }
 }
