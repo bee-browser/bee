@@ -7,8 +7,7 @@ use itertools::Itertools;
 use jsgc::Handle;
 use jsgc::Heap;
 use jsgc::Seq;
-use jsgc::Trace;
-use jsgc::VisitList;
+use jsgc_derive::Trace;
 
 /// An empty string.
 pub const EMPTY: Handle<String> = Handle::from_ref(&String::EMPTY);
@@ -17,7 +16,7 @@ pub const EMPTY: Handle<String> = Handle::from_ref(&String::EMPTY);
 pub const SPACE: Handle<String> = Handle::from_ref(&String::SPACE);
 
 /// A data type representing an **immutable** UTF-16 code units.
-#[derive(Clone)]
+#[derive(Clone, Trace)]
 #[repr(C)]
 pub struct String {
     /// A pointer to the UTF-16 code unit sequence.
@@ -299,12 +298,6 @@ impl std::fmt::Display for String {
             }
         }
         Ok(())
-    }
-}
-
-impl Trace for String {
-    fn trace(&self, visit_list: &mut VisitList) {
-        visit_list.push(self.ptr.as_addr());
     }
 }
 

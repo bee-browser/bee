@@ -1,0 +1,27 @@
+[package]
+name = "jsgc-derive"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+base = { path = "../base" }
+proc-macro2 = "1.0.106"
+quote = "1.0.45"
+syn = { version = "2.0.117", features = ["extra-traits"] }
+
+[dev-dependencies]
+jsgc = { path = "../jsgc" }
+trybuild = "1.0.116"
+
+[lints]
+workspace = true
+
+[lib]
+bench = false
+proc-macro = true

@@ -2,6 +2,8 @@ use std::ops::Deref;
 
 use jsgc::Handle;
 use jsgc::HandleMut;
+use jsgc::Trace;
+use jsgc::VisitList;
 
 use crate::Error;
 use crate::logger;
@@ -165,6 +167,18 @@ impl std::fmt::Display for Value {
             Self::Number(value) => write!(f, "{value}"),
             Self::String(value) => write!(f, "{value}"),
             Self::Object(value) => write!(f, "object({value:?})"),
+        }
+    }
+}
+
+// TODO(jsgc-derive): derive(Trace)
+impl Trace for Value {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        match self {
+            Self::String(string) => string.trace(visits),
+            Self::Object(object) => object.trace(visits),
+            _ => (),
         }
     }
 }

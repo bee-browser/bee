@@ -10,13 +10,9 @@ struct Cell {
 }
 
 impl Trace for Cell {
-    fn trace(&self, visit_list: &mut VisitList) {
-        if let Some(car) = self.car {
-            visit_list.push(car.as_addr());
-        }
-        if let Some(cdr) = self.cdr {
-            visit_list.push(cdr.as_addr());
-        }
+    fn trace(&self, visits: &mut VisitList) {
+        self.car.trace(visits);
+        self.cdr.trace(visits);
     }
 }
 

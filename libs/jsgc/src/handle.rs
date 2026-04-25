@@ -5,7 +5,8 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ptr::NonNull;
 
-use crate::heap::Atom;
+use crate::trace::Trace;
+use crate::trace::VisitList;
 
 /// A data type to hold a non-null pointer to an *immutable* data type managed on the heap memory.
 ///
@@ -95,6 +96,13 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Handle({})", self.as_ref())
+    }
+}
+
+impl<T> Trace for Handle<T> {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        visits.push(self.as_addr());
     }
 }
 
@@ -198,12 +206,39 @@ where
     }
 }
 
+impl<T> Trace for HandleMut<T> {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        visits.push(self.as_addr());
+    }
+}
+
 // An *immutable* sequence.
 #[derive(Debug)]
 #[repr(C)]
-pub struct Seq<T: Atom> {
+pub struct Seq<T> {
     pub data: Handle<T>,
     pub len: usize,
+}
+
+impl<T> Seq<T> {
+    pub fn as_slice(&self) -> &[T] {
+        // SAFETY: `self.data` holds a non-null valid address of an array of `T`.
+        unsafe { std::slice::from_raw_parts(self.data.as_ptr(), self.len) }
+    }
+}
+
+impl<T> Trace for Seq<T>
+where
+    T: Trace,
+{
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        // NOTE: The function body will be empty by optimization if `T::trace()` is empty.
+        for elem in self.as_slice().iter() {
+            elem.trace(visits);
+        }
+    }
 }
 
 #[cfg(test)]

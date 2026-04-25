@@ -19,6 +19,7 @@ cranelift-native = "0.130.0"
 indexmap = "2.13.1"
 itertools = "0.14.0"
 jsgc = { path = "../jsgc" }
+jsgc-derive = { path = "../jsgc-derive" }
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
 paste = "1.0.15"

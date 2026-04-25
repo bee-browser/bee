@@ -381,26 +381,14 @@ impl Display for Object {
 }
 
 impl Trace for Object {
-    fn trace(&self, visit_list: &mut VisitList) {
-        if self.kernel.tracing {
-            visit_list.push(self.kernel.data);
-        }
-        if let Some(prototype) = self.prototype {
-            visit_list.push(prototype.as_addr());
-        }
+    fn trace(&self, visits: &mut VisitList) {
+        self.kernel.trace(visits);
+        self.prototype.trace(visits);
         for prop in self.properties.values() {
-            match prop.value() {
-                Value::String(string) => visit_list.push(string.as_addr()),
-                Value::Object(object) => visit_list.push(object.as_addr()),
-                _ => (),
-            }
+            prop.value().trace(visits);
         }
         for slot in self.slots.iter() {
-            match slot {
-                Value::String(string) => visit_list.push(string.as_addr()),
-                Value::Object(object) => visit_list.push(object.as_addr()),
-                _ => (),
-            }
+            slot.trace(visits);
         }
     }
 }
@@ -414,6 +402,15 @@ struct Kernel {
 impl Kernel {
     const DATA_OFFSET: usize = std::mem::offset_of!(Self, data);
     const TRACING_OFFSET: usize = std::mem::offset_of!(Self, tracing);
+}
+
+impl Trace for Kernel {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        if self.tracing {
+            visits.push(self.data);
+        }
+    }
 }
 
 bitflags! {

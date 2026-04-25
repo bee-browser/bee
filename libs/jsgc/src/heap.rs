@@ -1,5 +1,4 @@
 use std::alloc::Layout;
-use std::collections::VecDeque;
 use std::ptr::NonNull;
 
 use rustc_hash::FxHashMap;
@@ -8,6 +7,8 @@ use rustc_hash::FxHashSet;
 use crate::handle::Handle;
 use crate::handle::HandleMut;
 use crate::handle::Seq;
+use crate::trace::Trace;
+use crate::trace::VisitList;
 
 /// A heap memory managed by GC.
 pub struct Heap {
@@ -34,6 +35,7 @@ impl Heap {
     where
         T: Sized + Trace,
     {
+        // SAFETY: `ptr` is a valid non-null pointer to `T`.
         let ptr = unsafe {
             // TODO(perf): use a dedicated memory pool
             let ptr = std::alloc::alloc(Layout::new::<T>()) as *mut T;
@@ -54,6 +56,7 @@ impl Heap {
     where
         T: Sized + Trace,
     {
+        // SAFETY: `ptr` is a valid non-null pointer to `T`.
         let ptr = unsafe {
             // TODO(perf): use a dedicated memory pool
             let ptr = std::alloc::alloc(Layout::new::<T>()) as *mut T;
@@ -75,6 +78,7 @@ impl Heap {
         T: Sized + Trace,
         F: FnOnce(NonNull<u8>),
     {
+        // SAFETY: `ptr` is a valid non-null pointer to `T`.
         let ptr = unsafe {
             // TODO(perf): use a dedicated memory pool
             NonNull::new(std::alloc::alloc(layout)).unwrap()
@@ -87,6 +91,7 @@ impl Heap {
         self.trace_targets
             .insert(ptr.addr().get(), Tracer::new::<T>());
 
+        // SAFETY: `ptr` is a valid non-null pointer to `T`.
         Handle::from_ref(unsafe { ptr.cast::<T>().as_ref() })
     }
 
@@ -96,6 +101,7 @@ impl Heap {
         T: Sized + Trace,
         F: FnOnce(NonNull<u8>),
     {
+        // SAFETY: `ptr` is a valid non-null pointer to `T`.
         let ptr = unsafe {
             // TODO(perf): use a dedicated memory pool
             NonNull::new(std::alloc::alloc(layout)).unwrap()
@@ -108,17 +114,19 @@ impl Heap {
         self.trace_targets
             .insert(ptr.addr().get(), Tracer::new::<T>());
 
+        // SAFETY: `ptr` is a valid non-null pointer to `T`.
         HandleMut::from_mut(unsafe { ptr.cast::<T>().as_mut() })
     }
 
     pub fn alloc_seq<T>(&mut self, src: &[T]) -> Seq<T>
     where
-        T: Atom,
+        T: Copy + Sized + Trace,
     {
         let len = src.len();
 
         let layout = Layout::array::<T>(len).unwrap();
 
+        // SAFETY: `ptr` is a valid non-null pointer to an array of `T`.
         let data = unsafe {
             // TODO(perf): use a dedicated memory pool
             let ptr = NonNull::new(std::alloc::alloc(layout)).unwrap();
@@ -135,11 +143,12 @@ impl Heap {
 
     pub fn alloc_seq_with_init<T, F>(&mut self, len: usize, init: F) -> Seq<T>
     where
-        T: Atom,
+        T: Trace,
         F: FnOnce(NonNull<T>),
     {
         let layout = Layout::array::<T>(len).unwrap();
 
+        // SAFETY: `ptr` is a valid non-null pointer to an array of `T`.
         let (ptr, data) = unsafe {
             // TODO(perf): use a dedicated memory pool
             let ptr = NonNull::new(std::alloc::alloc(layout)).unwrap();
@@ -263,30 +272,6 @@ impl GcState {
     }
 }
 
-/// A list to which reachable objects will be added.
-#[derive(Default)]
-pub struct VisitList(VecDeque<usize>);
-
-impl VisitList {
-    /// Appends a handle to the back of the visit list.
-    pub fn push(&mut self, addr: usize) {
-        self.0.push_back(addr);
-    }
-
-    /// Appends handles of an iterator.
-    pub fn extend<I>(&mut self, iter: I)
-    where
-        I: IntoIterator<Item = usize>,
-    {
-        self.0.extend(iter);
-    }
-
-    /// Removes the first handle and returns it, or `None` if the visit list is empty.
-    fn pop(&mut self) -> Option<usize> {
-        self.0.pop_front()
-    }
-}
-
 struct MemoryBlock {
     layout: Layout,
     tidy_fn: Option<TidyFn>,
@@ -332,10 +317,3 @@ impl Tracer {
 
 type TidyFn = fn(usize);
 type TraceFn = fn(usize, &mut VisitList);
-
-pub trait Trace {
-    fn trace(&self, visits: &mut VisitList);
-}
-
-pub trait Atom: Copy + Sized {}
-impl Atom for u16 {}
