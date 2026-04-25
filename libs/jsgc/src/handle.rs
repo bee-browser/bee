@@ -5,7 +5,6 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ptr::NonNull;
 
-use crate::trace::Atom;
 use crate::trace::Trace;
 use crate::trace::VisitList;
 
@@ -217,15 +216,28 @@ impl<T> Trace for HandleMut<T> {
 // An *immutable* sequence.
 #[derive(Debug)]
 #[repr(C)]
-pub struct Seq<T: Atom> {
+pub struct Seq<T> {
     pub data: Handle<T>,
     pub len: usize,
 }
 
-impl<T: Atom> Trace for Seq<T> {
+impl<T> Seq<T> {
+    pub fn as_slice(&self) -> &[T] {
+        // SAFETY: `self.data` holds a non-null valid address of an array of `T`.
+        unsafe { std::slice::from_raw_parts(self.data.as_ptr(), self.len) }
+    }
+}
+
+impl<T> Trace for Seq<T>
+where
+    T: Trace,
+{
     #[inline]
     fn trace(&self, visits: &mut VisitList) {
-        self.data.trace(visits);
+        // NOTE: The function body will be empty by optimization if `T::trace()` is empty.
+        for elem in self.as_slice().iter() {
+            elem.trace(visits);
+        }
     }
 }
 

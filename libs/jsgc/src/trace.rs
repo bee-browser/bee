@@ -4,12 +4,10 @@ pub trait Trace {
     fn trace(&self, visits: &mut VisitList);
 }
 
-impl<T: Atom> Trace for T {
-    #[inline]
-    fn trace(&self, _visits: &mut VisitList) {}
-}
-
-impl<T: Trace> Trace for Option<T> {
+impl<T> Trace for Option<T>
+where
+    T: Trace,
+{
     #[inline]
     fn trace(&self, visits: &mut VisitList) {
         if let Some(v) = self {
@@ -18,12 +16,42 @@ impl<T: Trace> Trace for Option<T> {
     }
 }
 
-pub trait Atom: Copy + Sized {}
+macro_rules! impl_trace_empty {
+    ($ty:ty) => {
+        impl Trace for $ty {
+            #[inline]
+            fn trace(&self, _visits: &mut VisitList) {}
+        }
+    };
+    ($ty:ty, $($rest:ty),+) => {
+        impl_trace_empty! { $ty }
+        impl_trace_empty! { $($rest),+ }
+    };
+    ($($valiadic:ty,)+) => {
+        impl_trace_empty! { $($valiadic),+ }
+    };
+}
 
-impl Atom for () {}
-impl Atom for bool {}
-impl Atom for u16 {}
-impl Atom for u32 {}
+impl_trace_empty! {
+    (),
+    bool,
+    char,
+    f32,
+    f64,
+    i8,
+    i16,
+    i32,
+    i64,
+    i128,
+    isize,
+    str,
+    u8,
+    u16,
+    u32,
+    u64,
+    u128,
+    usize,
+}
 
 /// A list to which reachable objects will be added.
 #[derive(Default)]
