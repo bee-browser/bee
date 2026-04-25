@@ -8,8 +8,12 @@ struct A {
 
 #[derive(Trace)]
 struct B {
-    a: Box<A>,
-    b: Box<dyn jsgc::Trace>,
+    handle: Handle<u8>,
+}
+
+#[derive(Trace)]
+struct C {
+    result: Result<A, B>,
 }
 
 fn main() {}

@@ -4,14 +4,52 @@ pub trait Trace {
     fn trace(&self, visits: &mut VisitList);
 }
 
-impl<T> Trace for Option<T>
-where
-    T: Trace,
-{
+impl<T: Trace> Trace for Option<T> {
     #[inline]
     fn trace(&self, visits: &mut VisitList) {
+        // NOTE: The function body will be empty by optimization if `T::trace()` is empty.
         if let Some(v) = self {
             v.trace(visits)
+        }
+    }
+}
+
+impl<T: Trace, E: Trace> Trace for Result<T, E> {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        match self {
+            Ok(v) => v.trace(visits),
+            Err(v) => v.trace(visits),
+        }
+    }
+}
+
+impl<T: Trace, const N: usize> Trace for [T; N] {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        // NOTE: The function body will be empty by optimization if `T::trace()` is empty.
+        for elem in self.iter() {
+            elem.trace(visits);
+        }
+    }
+}
+
+impl<T: Trace> Trace for [T] {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        // NOTE: The function body will be empty by optimization if `T::trace()` is empty.
+        for elem in self.iter() {
+            elem.trace(visits);
+        }
+    }
+}
+
+impl<T: Trace> Trace for Vec<T> {
+    #[inline]
+    fn trace(&self, visits: &mut VisitList) {
+        // NOTE: The function body will be empty by optimization if `T::trace()` is empty.
+        for elem in self.iter() {
+            elem.trace(visits);
         }
     }
 }
@@ -51,6 +89,8 @@ impl_trace_empty! {
     u64,
     u128,
     usize,
+    String,
+    // TODO: Add other types here
 }
 
 /// A list to which reachable objects will be added.

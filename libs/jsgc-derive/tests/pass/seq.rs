@@ -1,4 +1,5 @@
 use jsgc::Handle;
+use jsgc::Seq;
 use jsgc_derive::Trace;
 
 #[derive(Trace)]
@@ -7,9 +8,11 @@ struct A {
 }
 
 #[derive(Trace)]
-struct B {
-    a: Box<A>,
-    b: Box<dyn jsgc::Trace>,
+struct B<'a> {
+    a: [A; 4],
+    b: &'a [A],
+    c: Vec<A>,
+    d: Seq<A>,
 }
 
 fn main() {}
