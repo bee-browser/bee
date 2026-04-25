@@ -37,7 +37,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
     let mut object = if let Value::Object(this) = context.this() {
         *this
     } else {
-        runtime.create_object(runtime.promise_prototype)
+        runtime.create_object(runtime.builtins.promise_prototype)
     };
 
     object.set_promise(promise);

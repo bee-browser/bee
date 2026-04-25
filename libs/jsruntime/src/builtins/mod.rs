@@ -14,6 +14,7 @@ mod uri_error;
 
 use jsgc::Handle;
 use jsgc::HandleMut;
+use jsgc::Heap;
 use jsparser::Symbol;
 
 use crate::Error;
@@ -28,6 +29,62 @@ use crate::types::Status;
 use crate::types::String;
 use crate::types::Value;
 
+#[derive(jsgc_derive::Trace)]
+pub(crate) struct Builtins {
+    // [[GlobalObject]]
+    pub(crate) global_object: HandleMut<Object>,
+    // %Object.prototype%
+    pub(crate) object_prototype: Option<HandleMut<Object>>,
+    // %Function.prototype%
+    pub(crate) function_prototype: Option<HandleMut<Object>>,
+    // %String.prototype%
+    pub(crate) string_prototype: Option<HandleMut<Object>>,
+    // %Promise.prototype%
+    pub(crate) promise_prototype: Option<HandleMut<Object>>,
+    // %Error.prototype%
+    pub(crate) error_prototype: Option<HandleMut<Object>>,
+    // %AggregateError.prototype%
+    pub(crate) aggregate_error_prototype: Option<HandleMut<Object>>,
+    // %EvalError.prototype%
+    pub(crate) eval_error_prototype: Option<HandleMut<Object>>,
+    // %InternalError.prototype%
+    pub(crate) internal_error_prototype: Option<HandleMut<Object>>,
+    // %RangeError.prototype%
+    pub(crate) range_error_prototype: Option<HandleMut<Object>>,
+    // %ReferenceError.prototype%
+    pub(crate) reference_error_prototype: Option<HandleMut<Object>>,
+    // %SyntaxError.prototype%
+    pub(crate) syntax_error_prototype: Option<HandleMut<Object>>,
+    // %TypeError.prototype%
+    pub(crate) type_error_prototype: Option<HandleMut<Object>>,
+    // URIError.prototype%
+    pub(crate) uri_error_prototype: Option<HandleMut<Object>>,
+}
+
+impl Builtins {
+    pub(crate) fn new(heap: &mut Heap) -> Self {
+        // TODO: pass [[Prototype]] of the global object.
+        let global_object = heap.alloc_mut(Object::new(None));
+
+        Self {
+            global_object,
+            object_prototype: None,
+            function_prototype: None,
+            string_prototype: None,
+            promise_prototype: None,
+            error_prototype: None,
+            aggregate_error_prototype: None,
+            eval_error_prototype: None,
+            internal_error_prototype: None,
+            reference_error_prototype: None,
+            range_error_prototype: None,
+            syntax_error_prototype: None,
+            type_error_prototype: None,
+            uri_error_prototype: None,
+        }
+    }
+}
+
 impl<X> Runtime<X> {
     // 19 The Global Object
     pub(crate) fn define_builtin_global_properties(&mut self) {
@@ -41,26 +98,26 @@ impl<X> Runtime<X> {
             };
             (kv: $key:expr, $value:expr) => {
                 let prop = Property::data_xxx($value);
-                let result = self.global_object.define_own_property($key.into(), prop);
+                let result = self.builtins.global_object.define_own_property($key.into(), prop);
                 debug_assert!(matches!(result, Ok(true)));
             };
         }
 
-        self.object_prototype = Some(self.create_object(None));
-        self.function_prototype = Some(self.create_function_prototype());
-        self.string_prototype = Some(self.create_string_prototype());
-        self.promise_prototype = Some(self.create_promise_prototype());
-        self.error_prototype = Some(self.create_error_prototype());
-        self.aggregate_error_prototype = Some(self.create_aggregate_error_prototype());
-        self.eval_error_prototype = Some(self.create_eval_error_prototype());
-        self.internal_error_prototype = Some(self.create_internal_error_prototype());
-        self.range_error_prototype = Some(self.create_range_error_prototype());
-        self.reference_error_prototype = Some(self.create_reference_error_prototype());
-        self.syntax_error_prototype = Some(self.create_syntax_error_prototype());
-        self.type_error_prototype = Some(self.create_type_error_prototype());
-        self.uri_error_prototype = Some(self.create_uri_error_prototype());
+        self.builtins.object_prototype = Some(self.create_object(None));
+        self.builtins.function_prototype = Some(self.create_function_prototype());
+        self.builtins.string_prototype = Some(self.create_string_prototype());
+        self.builtins.promise_prototype = Some(self.create_promise_prototype());
+        self.builtins.error_prototype = Some(self.create_error_prototype());
+        self.builtins.aggregate_error_prototype = Some(self.create_aggregate_error_prototype());
+        self.builtins.eval_error_prototype = Some(self.create_eval_error_prototype());
+        self.builtins.internal_error_prototype = Some(self.create_internal_error_prototype());
+        self.builtins.range_error_prototype = Some(self.create_range_error_prototype());
+        self.builtins.reference_error_prototype = Some(self.create_reference_error_prototype());
+        self.builtins.syntax_error_prototype = Some(self.create_syntax_error_prototype());
+        self.builtins.type_error_prototype = Some(self.create_type_error_prototype());
+        self.builtins.uri_error_prototype = Some(self.create_uri_error_prototype());
 
-        let this = self.global_object.as_handle();
+        let this = self.builtins.global_object.as_handle();
 
         define! {
             // TODO: 19.1.1 globalThis
@@ -77,7 +134,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::EVAL),
                 length: 1,
                 slots: &[],
-                prototype: self.function_prototype,
+                prototype: self.builtins.function_prototype,
             })),
             // 19.2.2 isFinite ( number )
             Symbol::IS_FINITE => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
@@ -85,7 +142,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::IS_FINITE),
                 length: 1,
                 slots: &[],
-                prototype: self.function_prototype,
+                prototype: self.builtins.function_prototype,
             })),
             // 19.2.3 isNaN ( number )
             Symbol::IS_NAN => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
@@ -93,7 +150,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::IS_NAN),
                 length: 1,
                 slots: &[],
-                prototype: self.function_prototype,
+                prototype: self.builtins.function_prototype,
             })),
             // 19.2.4 parseFloat ( string )
             Symbol::PARSE_FLOAT => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
@@ -101,7 +158,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::PARSE_FLOAT),
                 length: 1,
                 slots: &[],
-                prototype: self.function_prototype,
+                prototype: self.builtins.function_prototype,
             })),
             // 19.2.5 parseInt ( string, radix )
             Symbol::PARSE_INT => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
@@ -109,7 +166,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::PARSE_INT),
                 length: 2,
                 slots: &[],
-                prototype: self.function_prototype,
+                prototype: self.builtins.function_prototype,
             })),
             // 19.3.1 AggregateError ( . . . )
             Symbol::AGGREGATE_ERROR => Value::Object(self.create_aggregate_error_constructor()),
@@ -149,9 +206,9 @@ impl<X> Runtime<X> {
             ?params.slots,
             ?params.prototype
         );
-        debug_assert!(self.function_prototype.is_some());
+        debug_assert!(self.builtins.function_prototype.is_some());
         let closure = self.create_closure(params.lambda, LambdaId::HOST, 0);
-        let mut func = self.create_object(self.function_prototype);
+        let mut func = self.create_object(self.builtins.function_prototype);
         func.slots_mut().extend_from_slice(params.slots);
         func.set_closure(closure);
         if let Some(prototype) = params.prototype {

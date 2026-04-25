@@ -20,6 +20,7 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use backend::CodeRegistry;
+use builtins::Builtins;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
@@ -102,37 +103,8 @@ pub struct Runtime<X> {
     code_registry: CodeRegistry<X>,
     programs: Vec<Program>,
     heap: Heap,
+    builtins: Builtins,
     job_runner: JobRunner,
-
-    // [[GlobalObject]]
-    global_object: HandleMut<Object>,
-    // %Object.prototype%
-    object_prototype: Option<HandleMut<Object>>,
-    // %Function.prototype%
-    function_prototype: Option<HandleMut<Object>>,
-    // %String.prototype%
-    string_prototype: Option<HandleMut<Object>>,
-    // %Promise.prototype%
-    promise_prototype: Option<HandleMut<Object>>,
-    // %Error.prototype%
-    error_prototype: Option<HandleMut<Object>>,
-    // %AggregateError.prototype%
-    aggregate_error_prototype: Option<HandleMut<Object>>,
-    // %EvalError.prototype%
-    eval_error_prototype: Option<HandleMut<Object>>,
-    // %InternalError.prototype%
-    internal_error_prototype: Option<HandleMut<Object>>,
-    // %RangeError.prototype%
-    range_error_prototype: Option<HandleMut<Object>>,
-    // %ReferenceError.prototype%
-    reference_error_prototype: Option<HandleMut<Object>>,
-    // %SyntaxError.prototype%
-    syntax_error_prototype: Option<HandleMut<Object>>,
-    // %TypeError.prototype%
-    type_error_prototype: Option<HandleMut<Object>>,
-    // URIError.prototype%
-    uri_error_prototype: Option<HandleMut<Object>>,
-
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
 }
@@ -140,9 +112,7 @@ pub struct Runtime<X> {
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
         let mut heap = Heap::new();
-
-        // TODO: pass [[Prototype]] of the global object.
-        let global_object = heap.alloc_mut(Object::new(Default::default()));
+        let builtins = Builtins::new(&mut heap);
 
         let mut runtime = Self {
             pref: Default::default(),
@@ -151,21 +121,8 @@ impl<X> Runtime<X> {
             code_registry: CodeRegistry::new(),
             programs: vec![],
             heap,
+            builtins,
             job_runner: Default::default(),
-            global_object,
-            object_prototype: None,
-            function_prototype: None,
-            string_prototype: None,
-            promise_prototype: None,
-            error_prototype: None,
-            aggregate_error_prototype: None,
-            eval_error_prototype: None,
-            internal_error_prototype: None,
-            reference_error_prototype: None,
-            range_error_prototype: None,
-            syntax_error_prototype: None,
-            type_error_prototype: None,
-            uri_error_prototype: None,
             monitor: None,
             extension,
         };
@@ -204,12 +161,15 @@ impl<X> Runtime<X> {
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let mut object = self.create_object(self.function_prototype);
+        let mut object = self.create_object(self.builtins.function_prototype);
         object.set_closure(closure);
         let value = Value::Object(object);
         // TODO: add `flags` to the arguments.
         let prop = Property::data_xxx(value);
-        let result = self.global_object.define_own_property(symbol.into(), prop);
+        let result = self
+            .builtins
+            .global_object
+            .define_own_property(symbol.into(), prop);
         debug_assert!(matches!(result, Ok(true)));
     }
 
@@ -528,20 +488,7 @@ impl<X> Drop for Runtime<X> {
 // TODO(feat): derive(Trace)
 impl<X> Trace for Runtime<X> {
     fn trace(&self, visits: &mut jsgc::VisitList) {
-        self.global_object.trace(visits);
-        self.object_prototype.trace(visits);
-        self.function_prototype.trace(visits);
-        self.string_prototype.trace(visits);
-        self.promise_prototype.trace(visits);
-        self.error_prototype.trace(visits);
-        self.aggregate_error_prototype.trace(visits);
-        self.eval_error_prototype.trace(visits);
-        self.internal_error_prototype.trace(visits);
-        self.range_error_prototype.trace(visits);
-        self.reference_error_prototype.trace(visits);
-        self.syntax_error_prototype.trace(visits);
-        self.type_error_prototype.trace(visits);
-        self.uri_error_prototype.trace(visits);
+        self.builtins.trace(visits);
         // TODO: tracing X if X implements Trace.
     }
 }

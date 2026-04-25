@@ -183,7 +183,7 @@ mod tests {
                 let closure = runtime.create_closure(dummy, LambdaId::HOST, 0);
                 let coroutine = runtime.create_coroutine(closure, 0, 0, 0);
                 let promise = runtime.create_promise(coroutine);
-                let mut object = runtime.create_object(runtime.promise_prototype);
+                let mut object = runtime.create_object(runtime.builtins.promise_prototype);
                 object.set_promise(promise);
                 runtime.emit_promise_resolved(object, $value);
             };
@@ -194,7 +194,7 @@ mod tests {
                 let closure = runtime.create_closure(dummy, LambdaId::HOST, 0);
                 let coroutine = runtime.create_coroutine(closure, 0, 0, 0);
                 let promise = runtime.create_promise(coroutine);
-                let mut object = runtime.create_object(runtime.promise_prototype);
+                let mut object = runtime.create_object(runtime.builtins.promise_prototype);
                 object.set_promise(promise);
                 runtime.emit_promise_rejected(object, $value);
             };

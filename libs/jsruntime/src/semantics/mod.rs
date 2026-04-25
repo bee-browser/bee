@@ -289,7 +289,8 @@ impl<X> AnalyzerSupport for Runtime<X> {
         name: Symbol,
         property: Property,
     ) -> Result<bool, RuntimeError> {
-        self.global_object
+        self.builtins
+            .global_object
             .define_own_property(name.into(), property)
     }
 }

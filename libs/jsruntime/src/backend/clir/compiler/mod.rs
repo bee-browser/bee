@@ -170,7 +170,7 @@ pub fn compile<X>(
     let program = &runtime.programs[program_id.index()];
     for func in program.functions.iter() {
         let mut session = {
-            let global_object = runtime.global_object.as_handle();
+            let global_object = runtime.builtins.global_object;
             Session {
                 pref: &runtime.pref,
                 program,
@@ -178,9 +178,9 @@ pub fn compile<X>(
                 lambda_registry: &mut runtime.lambda_registry,
                 code_registry: &mut runtime.code_registry,
                 global_object,
-                object_prototype: runtime.object_prototype.unwrap(),
-                function_prototype: runtime.function_prototype.unwrap(),
-                promise_prototype: runtime.promise_prototype.unwrap(),
+                object_prototype: runtime.builtins.object_prototype.unwrap(),
+                function_prototype: runtime.builtins.function_prototype.unwrap(),
+                promise_prototype: runtime.builtins.promise_prototype.unwrap(),
             }
         };
         context.compile_function(func, &mut session, &program.scope_tree);
@@ -215,7 +215,7 @@ pub fn compile_function<X>(
     let func = &program.functions[function_index];
 
     let mut session = {
-        let global_object = runtime.global_object.as_handle();
+        let global_object = runtime.builtins.global_object;
         Session {
             pref: &runtime.pref,
             program,
@@ -223,9 +223,9 @@ pub fn compile_function<X>(
             lambda_registry: &mut runtime.lambda_registry,
             code_registry: &mut runtime.code_registry,
             global_object,
-            object_prototype: runtime.object_prototype.unwrap(),
-            function_prototype: runtime.function_prototype.unwrap(),
-            promise_prototype: runtime.promise_prototype.unwrap(),
+            object_prototype: runtime.builtins.object_prototype.unwrap(),
+            function_prototype: runtime.builtins.function_prototype.unwrap(),
+            promise_prototype: runtime.builtins.promise_prototype.unwrap(),
         }
     };
 

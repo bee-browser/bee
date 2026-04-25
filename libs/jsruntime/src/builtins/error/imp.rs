@@ -27,7 +27,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
     let mut object = if let Value::Object(this) = context.this() {
         *this
     } else {
-        runtime.create_object(runtime.error_prototype)
+        runtime.create_object(runtime.builtins.error_prototype)
     };
     object.set_error();
 
