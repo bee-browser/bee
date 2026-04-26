@@ -368,7 +368,7 @@ pub(crate) extern "C" fn runtime_create_string<X>(
 pub(crate) extern "C" fn runtime_create_capture<X>(
     runtime: &mut Runtime<X>,
     target: *mut Value,
-) -> *mut Capture {
+) -> HandleMut<Capture> {
     logger::debug!(event = "runtime_create_capture", ?target);
 
     debug_assert!(
@@ -386,16 +386,12 @@ pub(crate) extern "C" fn runtime_create_capture<X>(
         )
     };
 
-    let handle = runtime
-        .heap
-        .alloc_layout_mut::<Capture, _>(LAYOUT, move |ptr| {
-            // SAFETY: `ptr` is a non-null pointer to a `Capture`.
-            let capture = unsafe { ptr.cast::<Capture>().as_mut() };
-            capture.target = target;
-            // `capture.escaped` will be filled with an actual value.
-        });
-
-    handle.as_ptr()
+    runtime.heap.alloc_layout_mut(LAYOUT, move |ptr| {
+        // SAFETY: `ptr` is a non-null pointer to a `Capture`.
+        let capture = unsafe { ptr.cast::<Capture>().as_mut() };
+        capture.target = target;
+        // `capture.escaped` will be filled with an actual value.
+    })
 }
 
 pub(crate) extern "C" fn runtime_create_closure<X>(
@@ -403,16 +399,14 @@ pub(crate) extern "C" fn runtime_create_closure<X>(
     lambda: Lambda<X>,
     lambda_id: u32,
     num_captures: u16,
-) -> *mut Closure {
+) -> HandleMut<Closure> {
     logger::debug!(
         event = "runtime_create_closure",
         ?lambda,
         lambda_id,
         num_captures
     );
-    runtime
-        .create_closure(lambda, lambda_id.into(), num_captures)
-        .as_ptr()
+    runtime.create_closure(lambda, lambda_id.into(), num_captures)
 }
 
 pub(crate) extern "C" fn runtime_create_coroutine<X>(
@@ -421,7 +415,7 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
     num_locals: u16,
     scratch_buffer_len: u16,
     capture_buffer_len: u16,
-) -> *mut Coroutine {
+) -> HandleMut<Coroutine> {
     logger::debug!(
         event = "runtime_create_coroutine",
         ?closure,
@@ -430,9 +424,7 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
         capture_buffer_len,
     );
     let closure = HandleMut::from_ptr(closure).expect("closure must be a non-null pointer");
-    runtime
-        .create_coroutine(closure, num_locals, scratch_buffer_len, capture_buffer_len)
-        .as_ptr()
+    runtime.create_coroutine(closure, num_locals, scratch_buffer_len, capture_buffer_len)
 }
 
 pub(crate) extern "C" fn runtime_create_promise<X>(
@@ -462,28 +454,30 @@ pub(crate) extern "C" fn runtime_emit_promise_resolved<X>(
 pub(crate) extern "C" fn runtime_create_object<X>(
     runtime: &mut Runtime<X>,
     prototype: *mut Object,
-) -> *mut Object {
+) -> HandleMut<Object> {
     let prototype = HandleMut::from_ptr(prototype).unwrap();
     let mut object = runtime.create_object();
     object.set_prototype(prototype);
-    object.as_ptr()
+    object
 }
 
 pub(crate) extern "C" fn runtime_create_reference_error<X>(
     runtime: &mut Runtime<X>,
-) -> *mut Object {
-    runtime.create_reference_error(None).as_ptr()
+) -> HandleMut<Object> {
+    runtime.create_reference_error(None)
 }
 
-pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) -> *mut Object {
-    runtime.create_type_error(None).as_ptr()
+pub(crate) extern "C" fn runtime_create_type_error<X>(
+    runtime: &mut Runtime<X>,
+) -> HandleMut<Object> {
+    runtime.create_type_error(None)
 }
 
 pub(crate) extern "C" fn runtime_create_internal_error<X>(
     runtime: &mut Runtime<X>,
     message: Handle<String>,
-) -> *mut Object {
-    runtime.create_internal_error(Some(message)).as_ptr()
+) -> HandleMut<Object> {
+    runtime.create_internal_error(Some(message))
 }
 
 pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
