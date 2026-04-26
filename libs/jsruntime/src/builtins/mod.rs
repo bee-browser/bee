@@ -29,65 +29,87 @@ use crate::types::Status;
 use crate::types::String;
 use crate::types::Value;
 
+// The built-in objects are created in two-phase construction in order to avoid circular
+// references.
+//
+// 1. Create an empty object for each built-in objects.
+// 2. Initialize built-in objects.
+//
 #[derive(jsgc_derive::Trace)]
 pub(crate) struct Builtins {
     // [[GlobalObject]]
     pub(crate) global_object: HandleMut<Object>,
     // %Object.prototype%
-    pub(crate) object_prototype: Option<HandleMut<Object>>,
+    pub(crate) object_prototype: HandleMut<Object>,
     // %Function.prototype%
-    pub(crate) function_prototype: Option<HandleMut<Object>>,
+    pub(crate) function_prototype: HandleMut<Object>,
     // %String.prototype%
-    pub(crate) string_prototype: Option<HandleMut<Object>>,
+    pub(crate) string_prototype: HandleMut<Object>,
     // %Promise.prototype%
-    pub(crate) promise_prototype: Option<HandleMut<Object>>,
+    pub(crate) promise_prototype: HandleMut<Object>,
     // %Error.prototype%
-    pub(crate) error_prototype: Option<HandleMut<Object>>,
+    pub(crate) error_prototype: HandleMut<Object>,
     // %AggregateError.prototype%
-    pub(crate) aggregate_error_prototype: Option<HandleMut<Object>>,
+    pub(crate) aggregate_error_prototype: HandleMut<Object>,
     // %EvalError.prototype%
-    pub(crate) eval_error_prototype: Option<HandleMut<Object>>,
+    pub(crate) eval_error_prototype: HandleMut<Object>,
     // %InternalError.prototype%
-    pub(crate) internal_error_prototype: Option<HandleMut<Object>>,
+    pub(crate) internal_error_prototype: HandleMut<Object>,
     // %RangeError.prototype%
-    pub(crate) range_error_prototype: Option<HandleMut<Object>>,
+    pub(crate) range_error_prototype: HandleMut<Object>,
     // %ReferenceError.prototype%
-    pub(crate) reference_error_prototype: Option<HandleMut<Object>>,
+    pub(crate) reference_error_prototype: HandleMut<Object>,
     // %SyntaxError.prototype%
-    pub(crate) syntax_error_prototype: Option<HandleMut<Object>>,
+    pub(crate) syntax_error_prototype: HandleMut<Object>,
     // %TypeError.prototype%
-    pub(crate) type_error_prototype: Option<HandleMut<Object>>,
+    pub(crate) type_error_prototype: HandleMut<Object>,
     // URIError.prototype%
-    pub(crate) uri_error_prototype: Option<HandleMut<Object>>,
+    pub(crate) uri_error_prototype: HandleMut<Object>,
 }
 
 impl Builtins {
+    // The first phase of the two-phase construction.
     pub(crate) fn new(heap: &mut Heap) -> Self {
-        // TODO: pass [[Prototype]] of the global object.
-        let global_object = heap.alloc_mut(Object::new(None));
-
         Self {
-            global_object,
-            object_prototype: None,
-            function_prototype: None,
-            string_prototype: None,
-            promise_prototype: None,
-            error_prototype: None,
-            aggregate_error_prototype: None,
-            eval_error_prototype: None,
-            internal_error_prototype: None,
-            reference_error_prototype: None,
-            range_error_prototype: None,
-            syntax_error_prototype: None,
-            type_error_prototype: None,
-            uri_error_prototype: None,
+            global_object: heap.alloc_mut(Object::new()),
+            object_prototype: heap.alloc_mut(Object::new()),
+            function_prototype: heap.alloc_mut(Object::new()),
+            string_prototype: heap.alloc_mut(Object::new()),
+            promise_prototype: heap.alloc_mut(Object::new()),
+            error_prototype: heap.alloc_mut(Object::new()),
+            aggregate_error_prototype: heap.alloc_mut(Object::new()),
+            eval_error_prototype: heap.alloc_mut(Object::new()),
+            internal_error_prototype: heap.alloc_mut(Object::new()),
+            reference_error_prototype: heap.alloc_mut(Object::new()),
+            range_error_prototype: heap.alloc_mut(Object::new()),
+            syntax_error_prototype: heap.alloc_mut(Object::new()),
+            type_error_prototype: heap.alloc_mut(Object::new()),
+            uri_error_prototype: heap.alloc_mut(Object::new()),
         }
     }
 }
 
 impl<X> Runtime<X> {
-    // 19 The Global Object
-    pub(crate) fn define_builtin_global_properties(&mut self) {
+    // The second phase of the two-phase construction.
+    pub(crate) fn init_builtin_objects(&mut self) {
+        // Initialize intrinsic objects.
+        self.init_function_prototype();
+        self.init_string_prototype();
+        self.init_promise_prototype();
+        self.init_error_prototype();
+        self.init_aggregate_error_prototype();
+        self.init_eval_error_prototype();
+        self.init_internal_error_prototype();
+        self.init_range_error_prototype();
+        self.init_reference_error_prototype();
+        self.init_syntax_error_prototype();
+        self.init_type_error_prototype();
+        self.init_uri_error_prototype();
+
+        // TODO: pass [[Prototype]] of the global object.
+
+        let this = self.builtins.global_object.as_handle();
+
         macro_rules! define {
             ($key:expr => $value:expr,) => {
                 define!(kv: $key, $value);
@@ -103,22 +125,7 @@ impl<X> Runtime<X> {
             };
         }
 
-        self.builtins.object_prototype = Some(self.create_object(None));
-        self.builtins.function_prototype = Some(self.create_function_prototype());
-        self.builtins.string_prototype = Some(self.create_string_prototype());
-        self.builtins.promise_prototype = Some(self.create_promise_prototype());
-        self.builtins.error_prototype = Some(self.create_error_prototype());
-        self.builtins.aggregate_error_prototype = Some(self.create_aggregate_error_prototype());
-        self.builtins.eval_error_prototype = Some(self.create_eval_error_prototype());
-        self.builtins.internal_error_prototype = Some(self.create_internal_error_prototype());
-        self.builtins.range_error_prototype = Some(self.create_range_error_prototype());
-        self.builtins.reference_error_prototype = Some(self.create_reference_error_prototype());
-        self.builtins.syntax_error_prototype = Some(self.create_syntax_error_prototype());
-        self.builtins.type_error_prototype = Some(self.create_type_error_prototype());
-        self.builtins.uri_error_prototype = Some(self.create_uri_error_prototype());
-
-        let this = self.builtins.global_object.as_handle();
-
+        // 19 The Global Object
         define! {
             // TODO: 19.1.1 globalThis
             Symbol::GLOBAL_THIS => Value::Object(this),
@@ -134,7 +141,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::EVAL),
                 length: 1,
                 slots: &[],
-                prototype: self.builtins.function_prototype,
+                prototype: Some(self.builtins.function_prototype),
             })),
             // 19.2.2 isFinite ( number )
             Symbol::IS_FINITE => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
@@ -142,7 +149,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::IS_FINITE),
                 length: 1,
                 slots: &[],
-                prototype: self.builtins.function_prototype,
+                prototype: Some(self.builtins.function_prototype),
             })),
             // 19.2.3 isNaN ( number )
             Symbol::IS_NAN => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
@@ -150,7 +157,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::IS_NAN),
                 length: 1,
                 slots: &[],
-                prototype: self.builtins.function_prototype,
+                prototype: Some(self.builtins.function_prototype),
             })),
             // 19.2.4 parseFloat ( string )
             Symbol::PARSE_FLOAT => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
@@ -158,7 +165,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::PARSE_FLOAT),
                 length: 1,
                 slots: &[],
-                prototype: self.builtins.function_prototype,
+                prototype: Some(self.builtins.function_prototype),
             })),
             // 19.2.5 parseInt ( string, radix )
             Symbol::PARSE_INT => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
@@ -166,7 +173,7 @@ impl<X> Runtime<X> {
                 name: const_string!(jsparser::symbol::builtin::names::PARSE_INT),
                 length: 2,
                 slots: &[],
-                prototype: self.builtins.function_prototype,
+                prototype: Some(self.builtins.function_prototype),
             })),
             // 19.3.1 AggregateError ( . . . )
             Symbol::AGGREGATE_ERROR => Value::Object(self.create_aggregate_error_constructor()),
@@ -206,9 +213,9 @@ impl<X> Runtime<X> {
             ?params.slots,
             ?params.prototype
         );
-        debug_assert!(self.builtins.function_prototype.is_some());
         let closure = self.create_closure(params.lambda, LambdaId::HOST, 0);
-        let mut func = self.create_object(self.builtins.function_prototype);
+        let mut func = self.create_object();
+        func.set_prototype(self.builtins.function_prototype);
         func.slots_mut().extend_from_slice(params.slots);
         func.set_closure(closure);
         if let Some(prototype) = params.prototype {

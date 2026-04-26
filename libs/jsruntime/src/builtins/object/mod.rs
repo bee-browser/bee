@@ -17,14 +17,15 @@ impl<X> Runtime<X> {
             name: const_string!(jsparser::symbol::builtin::names::OBJECT),
             length: 0,
             slots: &[],
-            prototype: self.builtins.object_prototype,
+            prototype: Some(self.builtins.object_prototype),
         })
     }
 
     fn create_object_object(&mut self, context: &mut CallContext) -> Result<Value, Value> {
         match context.args().first() {
             None | Some(Value::Undefined) | Some(Value::Null) => {
-                let object = self.create_object(self.builtins.object_prototype);
+                let mut object = self.create_object();
+                object.set_prototype(self.builtins.object_prototype);
                 // TODO(feat): NewTarget
                 Ok(Value::Object(object))
             }

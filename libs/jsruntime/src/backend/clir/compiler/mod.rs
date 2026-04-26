@@ -178,9 +178,9 @@ pub fn compile<X>(
                 lambda_registry: &mut runtime.lambda_registry,
                 code_registry: &mut runtime.code_registry,
                 global_object,
-                object_prototype: runtime.builtins.object_prototype.unwrap(),
-                function_prototype: runtime.builtins.function_prototype.unwrap(),
-                promise_prototype: runtime.builtins.promise_prototype.unwrap(),
+                object_prototype: runtime.builtins.object_prototype,
+                function_prototype: runtime.builtins.function_prototype,
+                promise_prototype: runtime.builtins.promise_prototype,
             }
         };
         context.compile_function(func, &mut session, &program.scope_tree);
@@ -223,9 +223,9 @@ pub fn compile_function<X>(
             lambda_registry: &mut runtime.lambda_registry,
             code_registry: &mut runtime.code_registry,
             global_object,
-            object_prototype: runtime.builtins.object_prototype.unwrap(),
-            function_prototype: runtime.builtins.function_prototype.unwrap(),
-            promise_prototype: runtime.builtins.promise_prototype.unwrap(),
+            object_prototype: runtime.builtins.object_prototype,
+            function_prototype: runtime.builtins.function_prototype,
+            promise_prototype: runtime.builtins.promise_prototype,
         }
     };
 

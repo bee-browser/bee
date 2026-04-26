@@ -603,7 +603,9 @@ impl<X> Runtime<X> {
                 this
             } else {
                 // 10.4.3.4 StringCreate ( value, prototype )
-                self.create_object(self.builtins.string_prototype)
+                let mut object = self.create_object();
+                object.set_prototype(self.builtins.string_prototype);
+                object
             };
             let length = string.len();
             object.set_string(string);

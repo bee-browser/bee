@@ -463,8 +463,10 @@ pub(crate) extern "C" fn runtime_create_object<X>(
     runtime: &mut Runtime<X>,
     prototype: *mut Object,
 ) -> *mut Object {
-    let prototype = HandleMut::from_ptr(prototype);
-    runtime.create_object(prototype).as_ptr()
+    let prototype = HandleMut::from_ptr(prototype).unwrap();
+    let mut object = runtime.create_object();
+    object.set_prototype(prototype);
+    object.as_ptr()
 }
 
 pub(crate) extern "C" fn runtime_create_reference_error<X>(

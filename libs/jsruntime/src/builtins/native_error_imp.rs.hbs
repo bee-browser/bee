@@ -33,7 +33,9 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
     let mut object = if let Value::Object(this) = context.this() {
         *this
     } else {
-        runtime.create_object(runtime.builtins.{{id}}_prototype)
+        let mut object = runtime.create_object();
+        object.set_prototype(runtime.builtins.{{id}}_prototype);
+        object
     };
     object.set_error();
 
@@ -79,7 +81,8 @@ pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: Handle
 impl<X> Runtime<X> {
     #[allow(unused)]
     pub(crate) fn create_{{id}}(&mut self, msg: Option<Handle<String>>) -> HandleMut<Object> {
-        let mut object = self.create_object(self.builtins.{{id}}_prototype);
+        let mut object = self.create_object();
+        object.set_prototype(self.builtins.{{id}}_prototype);
         if let Some(msg) = msg {
             let _ = object.define_own_property(
                 Symbol::MESSAGE.into(),

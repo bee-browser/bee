@@ -127,7 +127,7 @@ impl<X> Runtime<X> {
             extension,
         };
 
-        runtime.define_builtin_global_properties();
+        runtime.init_builtin_objects();
 
         runtime
     }
@@ -161,7 +161,8 @@ impl<X> Runtime<X> {
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let mut object = self.create_object(self.builtins.function_prototype);
+        let mut object = self.create_object();
+        object.set_prototype(self.builtins.function_prototype);
         object.set_closure(closure);
         let value = Value::Object(object);
         // TODO: add `flags` to the arguments.
@@ -398,8 +399,8 @@ impl<X> Runtime<X> {
         self.heap.alloc_mut(Promise::new(coroutine))
     }
 
-    fn create_object(&mut self, prototype: Option<HandleMut<Object>>) -> HandleMut<Object> {
-        self.heap.alloc_mut(Object::new(prototype))
+    fn create_object(&mut self) -> HandleMut<Object> {
+        self.heap.alloc_mut(Object::new())
     }
 
     fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Value> {

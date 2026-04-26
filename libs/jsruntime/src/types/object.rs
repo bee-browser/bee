@@ -239,14 +239,18 @@ impl Object {
         std::mem::offset_of!(Self, kernel) + Kernel::TRACING_OFFSET;
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
 
-    pub fn new(prototype: Option<HandleMut<Self>>) -> Self {
+    pub fn new() -> Self {
         Self {
             kernel: Default::default(),
             flags: ObjectFlags::empty(),
-            prototype,
+            prototype: None,
             properties: Default::default(),
             slots: Default::default(),
         }
+    }
+
+    pub fn set_prototype(&mut self, prototype: HandleMut<Object>) {
+        self.prototype = Some(prototype);
     }
 
     // TODO(perf): Which one is better?  `Option::None` or `&Value::None`.
@@ -333,10 +337,9 @@ impl Object {
         HandleMut::from_mut(self)
     }
 
-    pub fn is_instance_of(&self, prototype: Option<HandleMut<Self>>) -> bool {
-        debug_assert!(prototype.is_some());
+    pub fn is_instance_of(&self, prototype: HandleMut<Self>) -> bool {
         // TODO: prototype chain
-        self.prototype == prototype
+        matches!(self.prototype, Some(p) if p == prototype)
     }
 
     pub(crate) fn set_constructor(&mut self) {

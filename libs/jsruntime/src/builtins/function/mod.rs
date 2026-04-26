@@ -20,15 +20,17 @@ impl<X> Runtime<X> {
             name: const_string!(jsparser::symbol::builtin::names::FUNCTION),
             length: 1,
             slots: &[],
-            prototype: self.builtins.function_prototype,
+            prototype: Some(self.builtins.function_prototype),
         })
     }
 
-    pub(super) fn create_function_prototype(&mut self) -> HandleMut<Object> {
-        logger::debug!(event = "creater_function_prototype");
+    pub(super) fn init_function_prototype(&mut self) {
+        logger::debug!(event = "init_function_prototype");
 
         // TODO(fix): Function.prototype is a built-in function object.
-        let mut prototype = self.create_object(self.builtins.object_prototype);
+        let mut prototype = self.builtins.function_prototype;
+        prototype.set_prototype(self.builtins.object_prototype);
+
         let _ = prototype.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxx(Value::Number(0.0)),
@@ -39,8 +41,6 @@ impl<X> Runtime<X> {
         );
 
         // TODO: Function.prototype.constructor
-
-        prototype
     }
 }
 
