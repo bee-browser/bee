@@ -11,7 +11,7 @@ macro_rules! const_string {
 }
 
 macro_rules! runtime_todo {
-    ($runtime:expr, $message:literal, $retv:expr) => {
-        $runtime.throw_internal_error(const_string!($message), $retv)
+    ($message:literal) => {
+        Err($crate::Error::InternalError(Some(const_string!($message))))
     };
 }

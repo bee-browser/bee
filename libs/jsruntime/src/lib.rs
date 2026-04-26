@@ -462,11 +462,6 @@ impl<X> Runtime<X> {
         target.set_value(&LENGTH, &Value::from(length + 1.0));
         Ok(())
     }
-
-    fn throw_internal_error(&mut self, message: Handle<String>, retv: &mut Value) -> Status {
-        *retv = Value::Object(self.create_internal_error(Some(message)));
-        Status::Exception
-    }
 }
 
 impl<X> Default for Runtime<X>
@@ -504,7 +499,7 @@ pub enum Error {
     SyntaxError,
     TypeError,
     RangeError,
-    InternalError,
+    InternalError(Option<Handle<String>>),
 }
 
 #[cfg(test)]

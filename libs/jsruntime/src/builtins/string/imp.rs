@@ -1,5 +1,6 @@
 //$id string
 //$class String
+//$inherits object
 
 use jsgc::Handle;
 use jsparser::Symbol;
@@ -17,7 +18,7 @@ use crate::types::string::SPACE;
 
 //#sec-string-constructor-string-value constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
-    logger::debug!(event = "promise");
+    logger::debug!(event = "string");
     let this = context.this();
     let args = context.args();
     let new = context.is_new();
@@ -377,7 +378,7 @@ fn string_padding_builtins_impl<X>(
     }
 
     if int_max_length > u32::MAX as u64 {
-        return Err(Error::InternalError);
+        return Err(Error::InternalError(None));
     }
 
     let fill_string = args.get(1).unwrap_or(&Value::Undefined);
@@ -443,7 +444,7 @@ pub fn string_prototype_repeat<X>(
     }
 
     if n > u32::MAX as f64 {
-        return Err(Error::InternalError);
+        return Err(Error::InternalError(None));
     }
 
     let result = runtime.repeat_string(s, n as u32);

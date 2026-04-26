@@ -1,6 +1,7 @@
 use jsgc::Handle;
 use jsgc::HandleMut;
 
+use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaKind;
 use crate::logger;
@@ -192,46 +193,35 @@ pub(crate) extern "C" fn runtime_to_object<X>(
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_to_object", ?value);
-    runtime.value_to_object(value, retv)
+    match runtime.value_to_object(value) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn value_to_object(&mut self, value: &Value, retv: &mut Value) -> Status {
+    pub(crate) fn value_to_object(&mut self, value: &Value) -> Result<Value, Error> {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined | Value::Null => {
-                *retv = Value::Object(self.create_type_error(None));
-                Status::Exception
+            Value::Undefined | Value::Null => Err(Error::TypeError),
+            Value::Boolean(_value) => {
+                runtime_todo!("ToObject: not yet implemented for Boolean values")
             }
-            Value::Boolean(_value) => runtime_todo!(
-                self,
-                "ToObject: not yet implemented for Boolean values",
-                retv
-            ),
-            Value::Number(_value) => runtime_todo!(
-                self,
-                "ToObject: not yet implemented for Number values",
-                retv
-            ),
+            Value::Number(_value) => {
+                runtime_todo!("ToObject: not yet implemented for Number values")
+            }
             Value::String(value) => {
                 // TODO(refactor): rewrite using `new String(value)`
-                match self.create_string_object(None, &[Value::String(*value)], true) {
-                    Ok(Value::Object(object)) => {
-                        *retv = Value::Object(object);
-                        Status::Normal
-                    }
-                    Ok(_) => unreachable!(),
-                    Err(err) => {
-                        *retv = self.create_exception(err);
-                        Status::Exception
-                    }
-                }
+                self.create_string_object(None, &[Value::String(*value)], true)
             }
-            Value::Object(_) => {
-                *retv = value.clone();
-                Status::Normal
-            }
+            Value::Object(_) => Ok(value.clone()),
         }
     }
 }

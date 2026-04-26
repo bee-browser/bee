@@ -3,8 +3,10 @@
 /error/mod.rs
 /eval_error/imp.rs
 /eval_error/mod.rs
+/function/mod.rs
 /internal_error/imp.rs
 /internal_error/mod.rs
+/object/mod.rs
 /promise/mod.rs
 /range_error/imp.rs
 /range_error/mod.rs

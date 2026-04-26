@@ -67,9 +67,11 @@ impl<X> Runtime<X> {
     pub(super) fn init_{{metadata.id}}_prototype(&mut self) {
         logger::debug!(event = "creater_{{metadata.id}}_prototype");
 
+        #[allow(unused)]
         let mut prototype = self.builtins.{{metadata.id}}_prototype;
-
+        {{#if metadata.inherits}}
         prototype.set_prototype(self.builtins.{{metadata.inherits}}_prototype);
+        {{/if}}
 
         {{#each prototypeProperties}}
         {{#if (eq kind "prototype.property")}}

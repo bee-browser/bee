@@ -42,7 +42,7 @@ async function main(args, options) {
 
   const json = {
     metadata: {
-      inherits: 'object',
+      inherits: null,
     },
     constructor: null,
     constructorProperties: [],

@@ -93,6 +93,7 @@ impl<X> Runtime<X> {
     // The second phase of the two-phase construction.
     pub(crate) fn init_builtin_objects(&mut self) {
         // Initialize intrinsic objects.
+        self.init_object_prototype();
         self.init_function_prototype();
         self.init_string_prototype();
         self.init_promise_prototype();
@@ -256,7 +257,7 @@ impl<X> Runtime<X> {
             Value::Boolean(true) => Ok(1.0),
             Value::Boolean(false) => Ok(0.0),
             Value::Number(value) => Ok(*value),
-            Value::String(_value) => Err(Error::InternalError), // TODO
+            Value::String(_value) => Err(Error::InternalError(None)), // TODO
             // TODO(feat): 7.1.1 ToPrimitive()
             Value::Object(_) => Ok(f64::NAN),
         }
@@ -322,7 +323,7 @@ impl<X> Runtime<X> {
             Error::SyntaxError => self.create_syntax_error(None),
             Error::TypeError => self.create_type_error(None),
             Error::RangeError => self.create_range_error(None),
-            Error::InternalError => self.create_internal_error(None),
+            Error::InternalError(msg) => self.create_internal_error(msg),
         })
     }
 
@@ -464,7 +465,7 @@ mod imp {
 
     pub fn eval<X>(_runtime: &mut Runtime<X>, _context: &mut CallContext) -> Result<Value, Error> {
         // TODO: impl
-        Err(Error::InternalError)
+        Err(Error::InternalError(None))
     }
 
     pub fn is_finite<X>(

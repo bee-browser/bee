@@ -15,7 +15,7 @@ NATIVE_ERROR_NAMES := \
   uri_error
 NATIVE_ERROR_IMP_RS_FILES := $(addsuffix /imp.rs,$(NATIVE_ERROR_NAMES))
 
-BUILTINS := error promise string $(NATIVE_ERROR_NAMES)
+BUILTINS := error function object promise string $(NATIVE_ERROR_NAMES)
 BUILTINS_README_MD_FILES := $(addsuffix /README.md,$(BUILTINS))
 BUILTINS_MOD_RS_FILES := $(addsuffix /mod.rs,$(BUILTINS))
 BUILTINS_IMP_JSON_FILES := $(addsuffix /imp.json,$(BUILTINS))

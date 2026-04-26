@@ -1,5 +1,6 @@
 //$id error
 //$class Error
+//$inherits object
 
 use jsgc::Handle;
 use jsgc::HandleMut;
@@ -21,7 +22,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
     // TODO(feat): NewTarget
     if !context.is_new() {
-        return Err(Error::InternalError);
+        return Err(Error::InternalError(None));
     }
 
     let mut object = if let Value::Object(this) = context.this() {

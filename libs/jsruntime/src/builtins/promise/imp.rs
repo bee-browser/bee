@@ -1,5 +1,6 @@
 //$id promise
 //$class Promise
+//$inherits object
 
 use jsgc::HandleMut;
 
@@ -20,7 +21,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
     // TODO(feat): NewTarget
     if !context.is_new() {
-        return Err(Error::InternalError);
+        return Err(Error::InternalError(None));
     }
 
     let args = context.args();
@@ -124,11 +125,11 @@ fn promise_resolve_sync<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
 ) -> Result<Value, Error> {
-    let func = context.func().ok_or(Error::InternalError)?;
+    let func = context.func().ok_or(Error::InternalError(None))?;
 
     let promise = match func.slots().first() {
         Some(Value::Object(promise)) => *promise,
-        _ => return Err(Error::InternalError),
+        _ => return Err(Error::InternalError(None)),
     };
     debug_assert!(runtime.is_promise_object(promise));
 
