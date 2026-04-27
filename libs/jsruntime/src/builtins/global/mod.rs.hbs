@@ -34,7 +34,7 @@ impl<X> Runtime<X> {
         {{else if (eq kind "global.function")}}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: {{imp}},
-            name: const_string!("{{name}}"),
+            name: const_string_handle!("{{name}}"),
             length: {{this.length}},
             slots: &[],
             prototype: None,

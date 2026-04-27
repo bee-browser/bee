@@ -111,11 +111,11 @@ pub fn error_prototype_to_string<X>(
     } else if message.is_empty() {
         name
     } else {
-        let result = runtime.concat_strings(const_string!(&[0x003A, 0x0020]), message);
+        let result = runtime.concat_strings(const_string_handle!(&[0x003A, 0x0020]), message);
         runtime.concat_strings(name, result)
     };
 
     Ok(Value::String(result))
 }
 
-const NAME: Handle<String> = const_string!(jsparser::symbol::builtin::names::ERROR);
+const NAME: Handle<String> = const_string_handle!(jsparser::symbol::builtin::names::ERROR);

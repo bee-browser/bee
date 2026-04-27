@@ -414,10 +414,9 @@ impl<X> Runtime<X> {
             Value::String(value) => {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
-            Value::Object(_) => {
-                const MESSAGE: Handle<String> = const_string!("TODO: make_property_key");
-                Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
-            }
+            Value::Object(_) => Err(Value::Object(
+                self.create_internal_error(Some(const_string_handle!("TODO: make_property_key"))),
+            )),
         }
     }
 

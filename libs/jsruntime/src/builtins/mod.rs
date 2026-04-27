@@ -204,10 +204,10 @@ impl<X> Runtime<X> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined => Ok(const_string!("undefined")),
-            Value::Null => Ok(const_string!("null")),
-            Value::Boolean(true) => Ok(const_string!("true")),
-            Value::Boolean(false) => Ok(const_string!("false")),
+            Value::Undefined => Ok(const_string_handle!("undefined")),
+            Value::Null => Ok(const_string_handle!("null")),
+            Value::Boolean(true) => Ok(const_string_handle!("true")),
+            Value::Boolean(false) => Ok(const_string_handle!("false")),
             Value::Number(value) => Ok(self.number_to_string(*value)),
             Value::String(value) => Ok(*value),
             // TODO(feat): Value::Symbol(_) => Err(Error::TypeError),
@@ -220,7 +220,7 @@ impl<X> Runtime<X> {
         if self.is_string_object(object) {
             Ok(object.string())
         } else {
-            Ok(const_string!("[object Object]"))
+            Ok(const_string_handle!("[object Object]"))
         }
     }
 

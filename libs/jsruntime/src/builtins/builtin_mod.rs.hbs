@@ -38,7 +38,7 @@ impl<X> Runtime<X> {
         #[allow(unused_mut)]
         let mut constructor = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: constructor::<X>,
-            name: const_string!("{{metadata.class}}"),
+            name: const_string_handle!("{{metadata.class}}"),
             length: 1,
             slots: &[],
             prototype: Some(self.builtins.{{metadata.id}}_prototype),
@@ -48,7 +48,7 @@ impl<X> Runtime<X> {
         {{#if (eq kind "constructor.function")}}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: {{imp}},
-            name: const_string!("{{name}}"),
+            name: const_string_handle!("{{name}}"),
             length: {{this.length}},
             slots: &[],
             prototype: None,
@@ -80,7 +80,7 @@ impl<X> Runtime<X> {
         {{else if (eq kind "prototype.function")}}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: {{imp}},
-            name: const_string!("{{name}}"),
+            name: const_string_handle!("{{name}}"),
             length: {{this.length}},
             slots: &[],
             prototype: None,

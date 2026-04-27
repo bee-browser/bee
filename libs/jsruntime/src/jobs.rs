@@ -205,11 +205,11 @@ mod tests {
         let object = runtime.create_object();
 
         resolved!(Value::Undefined);
-        resolved!(Value::String(const_string!("resolved")));
+        resolved!(Value::String(const_string_handle!("resolved")));
         resolved!(Value::Object(object));
 
         rejected!(Value::Undefined);
-        rejected!(Value::String(const_string!("rejected")));
+        rejected!(Value::String(const_string_handle!("rejected")));
         rejected!(Value::Object(object));
 
         let mut roots = vec![];

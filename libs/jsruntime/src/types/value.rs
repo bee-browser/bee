@@ -83,12 +83,12 @@ impl Value {
     pub fn get_typeof(&self) -> Handle<String> {
         match self {
             Self::None => unreachable!(),
-            Self::Undefined => const_string!("undefined"),
-            Self::Boolean(_) => const_string!("boolean"),
-            Self::Number(_) => const_string!("number"),
-            Self::String(_) => const_string!("string"),
-            Self::Object(object) if object.is_callable() => const_string!("function"),
-            Self::Null | Self::Object(_) => const_string!("object"),
+            Self::Undefined => const_string_handle!("undefined"),
+            Self::Boolean(_) => const_string_handle!("boolean"),
+            Self::Number(_) => const_string_handle!("number"),
+            Self::String(_) => const_string_handle!("string"),
+            Self::Object(object) if object.is_callable() => const_string_handle!("function"),
+            Self::Null | Self::Object(_) => const_string_handle!("object"),
         }
     }
 

@@ -440,7 +440,7 @@ where
         self.editor
             .put_branch(too_deep, then_block, &[], merge_block, &[]);
         self.editor.switch_to_block(then_block);
-        self.emit_throw_internal_error(const_string!("Call stack too deep"));
+        self.emit_throw_internal_error(const_string_handle!("Call stack too deep"));
         self.editor.put_jump(merge_block, &[]);
         self.editor.switch_to_block(merge_block);
     }
@@ -1168,7 +1168,7 @@ where
     fn process_call(&mut self, argc: u16) {
         // TODO: dynamic allocation
         if argc > 8 {
-            self.emit_throw_internal_error(const_string!("TODO: too many arguments"));
+            self.emit_throw_internal_error(const_string_handle!("TODO: too many arguments"));
             let len = self.operand_stack.len() - (argc as usize) - 1;
             self.operand_stack.truncate(len);
             self.operand_stack.push(Operand::Undefined); // TODO: dummy
@@ -1226,7 +1226,7 @@ where
     fn process_new(&mut self, argc: u16) {
         // TODO: dynamic allocation
         if argc > 8 {
-            self.emit_throw_internal_error(const_string!("TODO: too many arguments"));
+            self.emit_throw_internal_error(const_string_handle!("TODO: too many arguments"));
             let len = self.operand_stack.len() - (argc as usize) - 1;
             self.operand_stack.truncate(len);
             self.operand_stack.push(Operand::Undefined); // TODO: dummy
@@ -1424,7 +1424,7 @@ where
                 .put_runtime_number_to_string(self.support, *value),
             Operand::String(value, _) => *value,
             Operand::Object(_) => {
-                self.emit_throw_internal_error(const_string!("TODO: ToString(object)"));
+                self.emit_throw_internal_error(const_string_handle!("TODO: ToString(object)"));
                 self.editor.put_create_string(self.support, &[])
             }
             Operand::Any(value, _) => self.editor.put_runtime_to_string(self.support, *value),
@@ -1612,7 +1612,7 @@ where
     // 13.5.1.2 Runtime Semantics: Evaluation
     fn process_delete(&mut self) {
         let (_operand, ..) = self.dereference();
-        self.emit_throw_internal_error(const_string!("TODO: delete operator"));
+        self.emit_throw_internal_error(const_string_handle!("TODO: delete operator"));
         self.process_boolean(true);
     }
 
@@ -2057,7 +2057,7 @@ where
     fn process_instanceof(&mut self) {
         let (_lhs, ..) = self.dereference();
         let (_rhs, ..) = self.dereference();
-        self.emit_throw_internal_error(const_string!("TODO: instanceof operator"));
+        self.emit_throw_internal_error(const_string_handle!("TODO: instanceof operator"));
         self.process_boolean(false);
     }
 
@@ -2065,7 +2065,7 @@ where
     fn process_in(&mut self) {
         let (_lhs, ..) = self.dereference();
         let (_rhs, ..) = self.dereference();
-        self.emit_throw_internal_error(const_string!("TODO: in operator"));
+        self.emit_throw_internal_error(const_string_handle!("TODO: in operator"));
         self.process_boolean(false);
     }
 
@@ -2286,15 +2286,15 @@ where
                 None
             }
             PropertyOwner::Boolean(_) => {
-                self.emit_throw_internal_error(const_string!("TODO: ToObject(boolean)"));
+                self.emit_throw_internal_error(const_string_handle!("TODO: ToObject(boolean)"));
                 None
             }
             PropertyOwner::Number(_) => {
-                self.emit_throw_internal_error(const_string!("TODO: ToObject(number)"));
+                self.emit_throw_internal_error(const_string_handle!("TODO: ToObject(number)"));
                 None
             }
             PropertyOwner::String(_) => {
-                self.emit_throw_internal_error(const_string!("TODO: ToObject(string)"));
+                self.emit_throw_internal_error(const_string_handle!("TODO: ToObject(string)"));
                 None
             }
             PropertyOwner::Object(value) => Some(*value),
@@ -3192,7 +3192,7 @@ where
             Operand::Boolean(value, ..) => *value,
             Operand::Number(value, ..) => self.editor.put_number_to_boolean(*value),
             Operand::String(..) => {
-                self.emit_throw_internal_error(const_string!("TODO: ToBoolean(string)"));
+                self.emit_throw_internal_error(const_string_handle!("TODO: ToBoolean(string)"));
                 self.editor.put_boolean(false)
             }
             Operand::Object(_) => self.editor.put_boolean(true),
@@ -3216,11 +3216,11 @@ where
             Operand::Boolean(value, ..) => self.editor.put_boolean_to_number(*value),
             Operand::Number(value, ..) => *value,
             Operand::String(..) => {
-                self.emit_throw_internal_error(const_string!("TODO: ToNumber(string)"));
+                self.emit_throw_internal_error(const_string_handle!("TODO: ToNumber(string)"));
                 self.editor.put_number(f64::NAN)
             }
             Operand::Object(_) => {
-                self.emit_throw_internal_error(const_string!("TODO: ToNumber(object)"));
+                self.emit_throw_internal_error(const_string_handle!("TODO: ToNumber(object)"));
                 self.editor.put_number(f64::NAN)
             }
             Operand::Any(value, ..) => self.editor.put_runtime_to_numeric(self.support, *value),
