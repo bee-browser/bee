@@ -19,10 +19,50 @@ macro_rules! const_string_handle {
     };
 }
 
-macro_rules! runtime_todo {
+macro_rules! syntax_error {
+    () => {
+        Err($crate::Error::new($crate::ErrorKind::SyntaxError, None))
+    };
     ($message:literal) => {
-        Err($crate::Error::InternalError(Some(const_string_handle!(
-            $message
-        ))))
+        Err($crate::Error::new(
+            $crate::ErrorKind::SyntaxError,
+            Some(const_string!($message)),
+        ))
+    };
+}
+
+macro_rules! error {
+    ($kind:expr) => {
+        Err($crate::Error::new($kind, None))
+    };
+    ($kind:expr, $message:literal) => {
+        Err($crate::Error::new($kind, Some(const_string!($message))))
+    };
+}
+
+macro_rules! type_error {
+    () => {
+        error!($crate::ErrorKind::TypeError)
+    };
+    ($message:literal) => {
+        error!($crate::ErrorKind::TypeError, $message)
+    };
+}
+
+macro_rules! range_error {
+    () => {
+        error!($crate::ErrorKind::RangeError)
+    };
+    ($message:literal) => {
+        error!($crate::ErrorKind::RangeError, $message)
+    };
+}
+
+macro_rules! runtime_todo {
+    () => {
+        error!($crate::ErrorKind::InternalError)
+    };
+    ($message:literal) => {
+        error!($crate::ErrorKind::InternalError, $message)
     };
 }

@@ -21,14 +21,14 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
     // TODO(feat): NewTarget
     if !context.is_new() {
-        return Err(Error::InternalError(None));
+        return runtime_todo!();
     }
 
     let args = context.args();
 
     let executor = match args.first() {
         Some(Value::Object(executor)) if executor.is_callable() => *executor,
-        _ => return Err(Error::TypeError),
+        _ => return type_error!(),
     };
 
     let closure = runtime.create_closure(promise_coroutine, LambdaId::HOST, 0);
@@ -125,17 +125,20 @@ fn promise_resolve_sync<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
 ) -> Result<Value, Error> {
-    let func = context.func().ok_or(Error::InternalError(None))?;
+    let func = match context.func() {
+        Some(func) => func,
+        _ => return runtime_todo!(),
+    };
 
     let promise = match func.slots().first() {
         Some(Value::Object(promise)) => *promise,
-        _ => return Err(Error::InternalError(None)),
+        _ => return runtime_todo!(),
     };
     debug_assert!(runtime.is_promise_object(promise));
 
     let resolution = context.args().first().unwrap_or(&Value::Undefined);
     match resolution {
-        Value::Object(object) if *object == promise => Err(Error::TypeError),
+        Value::Object(object) if *object == promise => type_error!(),
         // TODO: the 'then' property
         _ => {
             // TODO: fullfill_promise

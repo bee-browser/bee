@@ -34,8 +34,7 @@ pub fn global_undefined<X>(runtime: &mut Runtime<X>) {
 
 //#sec-eval-x global.function
 pub fn eval<X>(_runtime: &mut Runtime<X>, _context: &mut CallContext) -> Result<Value, Error> {
-    // TODO: impl
-    Err(Error::InternalError(None))
+    runtime_todo!("eval: not implemented")
 }
 
 //#sec-isfinite-number global.function
@@ -63,7 +62,7 @@ pub fn parse_float<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
         .collect::<std::string::String>();
     match utf8.parse::<f64>() {
         Ok(n) => Ok(Value::Number(n)),
-        Err(_) => Err(Error::SyntaxError),
+        Err(_) => syntax_error!(),
     }
 }
 

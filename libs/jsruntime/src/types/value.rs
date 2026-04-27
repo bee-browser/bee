@@ -61,7 +61,7 @@ impl Value {
     // 7.1.18 ToObject ( argument )
     pub fn to_object(&self) -> Result<HandleMut<Object>, Error> {
         match self {
-            Self::Undefined | Self::Null => Err(Error::TypeError),
+            Self::Undefined | Self::Null => type_error!(),
             Self::Boolean(_value) => unimplemented!("new Boolean(value)"),
             Self::Number(_value) => unimplemented!("new Number(value)"),
             Self::String(_value) => unimplemented!("new String(value)"),

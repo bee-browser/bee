@@ -22,7 +22,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
     // TODO(feat): NewTarget
     if !context.is_new() {
-        return Err(Error::InternalError(None));
+        return runtime_todo!();
     }
 
     let mut object = if let Value::Object(this) = context.this() {
@@ -93,7 +93,7 @@ pub fn error_prototype_to_string<X>(
     logger::debug!(event = "error_prototype_to_string");
     let object = match context.this() {
         Value::Object(object) => object,
-        _ => return Err(Error::TypeError),
+        _ => return type_error!(),
     };
 
     let name = match object.get_value(&Symbol::NAME.into()) {

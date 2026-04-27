@@ -210,7 +210,7 @@ impl<X> Runtime<X> {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined | Value::Null => Err(Error::TypeError),
+            Value::Undefined | Value::Null => type_error!(),
             Value::Boolean(_value) => {
                 runtime_todo!("ToObject: not yet implemented for Boolean values")
             }

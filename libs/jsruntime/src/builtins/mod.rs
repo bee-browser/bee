@@ -19,6 +19,7 @@ use jsgc::Heap;
 use jsparser::Symbol;
 
 use crate::Error;
+use crate::ErrorKind;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
@@ -163,7 +164,7 @@ impl<X> Runtime<X> {
             Value::Boolean(true) => Ok(1.0),
             Value::Boolean(false) => Ok(0.0),
             Value::Number(value) => Ok(*value),
-            Value::String(_value) => Err(Error::InternalError(None)), // TODO
+            Value::String(_value) => runtime_todo!(),
             // TODO(feat): 7.1.1 ToPrimitive()
             Value::Object(_) => Ok(f64::NAN),
         }
@@ -210,7 +211,7 @@ impl<X> Runtime<X> {
             Value::Boolean(false) => Ok(const_string_handle!("false")),
             Value::Number(value) => Ok(self.number_to_string(*value)),
             Value::String(value) => Ok(*value),
-            // TODO(feat): Value::Symbol(_) => Err(Error::TypeError),
+            // TODO(feat): Value::Symbol(_) => type_error!(),
             Value::Object(value) => self.object_to_string(*value),
         }
     }
@@ -225,11 +226,12 @@ impl<X> Runtime<X> {
     }
 
     pub(crate) fn create_exception(&mut self, err: Error) -> Value {
-        Value::Object(match err {
-            Error::SyntaxError => self.create_syntax_error(None),
-            Error::TypeError => self.create_type_error(None),
-            Error::RangeError => self.create_range_error(None),
-            Error::InternalError(msg) => self.create_internal_error(msg),
+        let msg = err.message.map(Handle::from_ref);
+        Value::Object(match err.kind {
+            ErrorKind::SyntaxError => self.create_syntax_error(msg),
+            ErrorKind::TypeError => self.create_type_error(msg),
+            ErrorKind::RangeError => self.create_range_error(msg),
+            ErrorKind::InternalError => self.create_internal_error(msg),
         })
     }
 
@@ -267,7 +269,7 @@ impl<X> Runtime<X> {
 fn require_object_coercible(value: &Value) -> Result<(), Error> {
     match value {
         Value::None => unreachable!(),
-        Value::Undefined | Value::Null => Err(Error::TypeError),
+        Value::Undefined | Value::Null => type_error!(),
         _ => Ok(()),
     }
 }

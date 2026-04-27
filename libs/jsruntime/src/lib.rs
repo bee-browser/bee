@@ -492,13 +492,34 @@ pub trait Monitor {
     fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
 }
 
-#[allow(clippy::enum_variant_names)]
-#[derive(Debug)]
-pub enum Error {
+#[derive(Clone, Debug)]
+pub struct Error {
+    kind: ErrorKind,
+    message: Option<&'static String>,
+}
+
+impl Error {
+    /// Returns the corresponding `ErrorKind` of this error.
+    pub fn kind(&self) -> ErrorKind {
+        self.kind
+    }
+
+    /// Returns the optional message of this error.
+    pub fn message(&self) -> Option<&'static String> {
+        self.message
+    }
+
+    fn new(kind: ErrorKind, message: Option<&'static String>) -> Self {
+        Self { kind, message }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum ErrorKind {
     SyntaxError,
     TypeError,
     RangeError,
-    InternalError(Option<Handle<String>>),
+    InternalError,
 }
 
 #[cfg(test)]
