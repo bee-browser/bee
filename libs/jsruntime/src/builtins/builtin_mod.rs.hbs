@@ -65,7 +65,7 @@ impl<X> Runtime<X> {
 
     /// Creates the {{metadata.class}} prototype object.
     pub(super) fn init_{{metadata.id}}_prototype(&mut self) {
-        logger::debug!(event = "creater_{{metadata.id}}_prototype");
+        logger::debug!(event = "init_{{metadata.id}}_prototype");
 
         #[allow(unused)]
         let mut prototype = self.builtins.{{metadata.id}}_prototype;

@@ -4,6 +4,7 @@
 /eval_error/imp.rs
 /eval_error/mod.rs
 /function/mod.rs
+/global/mod.rs
 /internal_error/imp.rs
 /internal_error/mod.rs
 /object/mod.rs
