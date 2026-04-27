@@ -25,7 +25,10 @@ impl<X> Runtime<X> {
         // TODO: pass [[Prototype]] of the global object.
 
         {{#each globalProperties}}
-        {{#if (eq kind "global.property")}}
+        {{#if (eq kind "global.constructor")}}
+        imp::{{imp}}(self);
+
+        {{else if (eq kind "global.property")}}
         imp::{{imp}}(self);
 
         {{else if (eq kind "global.function")}}

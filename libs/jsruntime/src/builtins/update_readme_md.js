@@ -76,6 +76,23 @@ async function main(args, options) {
       }
       continue;
     }
+    prop = data.globalProperties.find((prop) => prop.id === id);
+    if (prop) {
+      switch (prop.kind) {
+        case 'global.constructor':
+          lines.push(`* [x] [${prop.name}](${ECMA262_SPEC_URL_BASE}${prop.id})`);
+          break;
+        case 'global.property':
+          lines.push(`* [x] [${prop.property}](${ECMA262_SPEC_URL_BASE}${prop.id})`);
+          break;
+        case 'global.function':
+          lines.push(`* [x] [${prop.signature.name}](${ECMA262_SPEC_URL_BASE}${prop.id})`);
+          break;
+        default:
+          unreachable();
+      }
+      continue;
+    }
     lines.push(line.replace('[x]', '[ ]'));
   }
 

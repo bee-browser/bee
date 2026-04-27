@@ -71,6 +71,10 @@ async function main(args, options) {
         collectFunctionDataFromSpec(spec, data, json.metadata);
         json.prototypeProperties.push(data);
         break;
+      case 'global.constructor':
+        collectConstructorDataFromSpec(spec, data, json.metadata);
+        json.globalProperties.push(data);
+        break;
       case 'global.property':
         collectPropertyDataFromSpec(spec, data, json.metadata);
         json.globalProperties.push(data);
@@ -173,6 +177,18 @@ function dataStream(impRs) {
         Deno.exit(1);
       }
     }));
+}
+
+function collectConstructorDataFromSpec(spec, data, metadata) {
+  if (data.options?.name) {
+    data.name = data.options.name;
+  } else {
+    const clause = spec.window.document.getElementById(data.id);
+    const signature = parseSignature(clause.firstElementChild.textContent.trim());
+    data.name = signature.name;
+  }
+  data.symbol = constantCase(data.name);
+  return data;
 }
 
 function collectPropertyDataFromSpec(spec, data, metadata) {
