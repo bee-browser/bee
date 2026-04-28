@@ -27,7 +27,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
     // TODO(feat): NewTarget
     if !context.is_new() {
-        return Err(Error::InternalError(None));
+        return runtime_todo!();
     }
 
     let mut object = if let Value::Object(this) = context.this() {
