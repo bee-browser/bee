@@ -1,10 +1,13 @@
 //$id object
 //$class Object
 
+use jsgc::HandleMut;
+
 use crate::Error;
 use crate::Runtime;
 use crate::logger;
 use crate::types::CallContext;
+use crate::types::Object;
 use crate::types::Value;
 
 //#sec-object-value constructor
@@ -48,9 +51,52 @@ pub fn object_assign<X>(
     Ok(Value::Object(to))
 }
 
+//#sec-object.create constructor.function
+pub fn object_create<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "object_create");
+    let proto = context.arg(0);
+    match proto {
+        Value::None => unreachable!(),
+        Value::Null | Value::Object(_) => (),
+        _ => return type_error!("Object prototype may only be an Object or null"),
+    }
+    let mut obj = runtime.create_object();
+    if let Value::Object(proto) = proto {
+        obj.set_prototype(*proto);
+    }
+    let properties = context.arg(1);
+    match properties {
+        Value::None => unreachable!(),
+        Value::Undefined => Ok(Value::Object(obj)),
+        _ => Ok(Value::Object(
+            runtime.object_define_properties(obj, properties)?,
+        )),
+    }
+}
+
 // helpers
 
 impl<X> Runtime<X> {
+    fn object_define_properties(
+        &mut self,
+        mut obj: HandleMut<Object>,
+        properties: &Value,
+    ) -> Result<HandleMut<Object>, Error> {
+        let props = match self.value_to_object(properties)? {
+            Value::Object(object) => object,
+            _ => unreachable!(),
+        };
+        for (key, prop) in props.iter_own_properties() {
+            if prop.is_enumerable() {
+                obj.set_value(key, prop.value());
+            }
+        }
+        Ok(obj)
+    }
+
     pub(crate) fn create_object_object(
         &mut self,
         this: Option<&Value>,

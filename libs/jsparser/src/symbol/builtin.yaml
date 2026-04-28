@@ -64,6 +64,7 @@
 - codePointAt
 - concat
 - constructor
+- create
 - default
 - endsWith
 - eval
