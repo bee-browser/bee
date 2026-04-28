@@ -16,6 +16,38 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
     runtime.create_object_object(Some(this), args, new)
 }
 
+//#sec-object.assign constructor.function
+pub fn object_assign<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "object_assign");
+    let target = context.arg(0);
+    let mut to = match runtime.value_to_object(target)? {
+        Value::Object(object) => object,
+        _ => unreachable!(),
+    };
+    // TODO(feat): `sources` is a rest parameter.
+    for arg in context.args().iter().skip(1) {
+        match arg {
+            Value::None => unreachable!(),
+            Value::Null | Value::Undefined => continue,
+            _ => {
+                let from = match runtime.value_to_object(arg)? {
+                    Value::Object(object) => object,
+                    _ => unreachable!(),
+                };
+                for (key, prop) in from.iter_own_properties() {
+                    if prop.is_enumerable() {
+                        to.set_value(key, prop.value());
+                    }
+                }
+            }
+        }
+    }
+    Ok(Value::Object(to))
+}
+
 // helpers
 
 impl<X> Runtime<X> {

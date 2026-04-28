@@ -1,7 +1,7 @@
 # Object
 
 * [x] [Object](https://tc39.es/ecma262/#sec-object-value)
-* [ ] [Object.assign](https://tc39.es/ecma262/#sec-object.assign)
+* [x] [Object.assign](https://tc39.es/ecma262/#sec-object.assign)
 * [ ] [Object.create](https://tc39.es/ecma262/#sec-object.create)
 * [ ] [Object.defineProperties](https://tc39.es/ecma262/#sec-object.defineproperties)
 * [ ] [Object.defineProperty](https://tc39.es/ecma262/#sec-object.defineproperty)
