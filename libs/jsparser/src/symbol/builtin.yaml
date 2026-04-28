@@ -63,13 +63,17 @@
 - charCodeAt
 - codePointAt
 - concat
+- configurable
 - constructor
 - create
 - default
+- defineProperties
 - endsWith
+- enumerable
 - eval
 - fromCharCode
 - fromCodePoint
+- get
 - globalThis
 - includes
 - indexOf
@@ -87,12 +91,15 @@
 - parseInt
 - prototype
 - repeat
+- set
 - startsWith
 - substring
 - toString
 - trim
 - trimEnd
 - trimStart
+- value
+- writable
 
 # Special symbols for internal use only.
 - ['-Infinity', NEG_INFINITY]

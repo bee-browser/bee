@@ -3,7 +3,7 @@
 * [x] [Object](https://tc39.es/ecma262/#sec-object-value)
 * [x] [Object.assign](https://tc39.es/ecma262/#sec-object.assign)
 * [x] [Object.create](https://tc39.es/ecma262/#sec-object.create)
-* [ ] [Object.defineProperties](https://tc39.es/ecma262/#sec-object.defineproperties)
+* [x] [Object.defineProperties](https://tc39.es/ecma262/#sec-object.defineproperties)
 * [ ] [Object.defineProperty](https://tc39.es/ecma262/#sec-object.defineproperty)
 * [ ] [Object.entries](https://tc39.es/ecma262/#sec-object.entries)
 * [ ] [Object.freeze](https://tc39.es/ecma262/#sec-object.freeze)
