@@ -403,7 +403,7 @@ impl<X> Runtime<X> {
         self.heap.alloc_mut(Object::new())
     }
 
-    fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Value> {
+    fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Error> {
         match value {
             Value::None => unreachable!(),
             Value::Undefined => Ok(Symbol::KEYWORD_UNDEFINED.into()),
@@ -414,9 +414,7 @@ impl<X> Runtime<X> {
             Value::String(value) => {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
-            Value::Object(_) => Err(Value::Object(
-                self.create_internal_error(Some(const_string_handle!("TODO: make_property_key"))),
-            )),
+            Value::Object(_) => runtime_todo!("TODO: make_property_key"),
         }
     }
 
@@ -443,7 +441,7 @@ impl<X> Runtime<X> {
         Ok(())
     }
 
-    fn push_value(&mut self, target: &mut Object, value: &Value) -> Result<(), Value> {
+    fn push_value(&mut self, target: &mut Object, value: &Value) -> Result<(), Error> {
         const LENGTH: PropertyKey = PropertyKey::Symbol(Symbol::LENGTH);
 
         let length = match target.get_value(&LENGTH) {

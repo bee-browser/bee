@@ -537,7 +537,7 @@ pub(crate) extern "C" fn runtime_get_value_by_value<X>(
     let key = match runtime.make_property_key(key) {
         Ok(key) => key,
         Err(err) => {
-            *retv = err;
+            *retv = runtime.create_exception(err);
             return Status::Exception;
         }
     };
@@ -597,7 +597,7 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
     let key = match runtime.make_property_key(key) {
         Ok(key) => key,
         Err(err) => {
-            *retv = err;
+            *retv = runtime.create_exception(err);
             return Status::Exception;
         }
     };
@@ -680,7 +680,7 @@ pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
     let key = match runtime.make_property_key(key) {
         Ok(key) => key,
         Err(err) => {
-            *retv = err;
+            *retv = runtime.create_exception(err);
             return Status::Exception;
         }
     };
@@ -734,8 +734,8 @@ pub(crate) extern "C" fn runtime_push_value<X>(
             *retv = Value::None;
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }
