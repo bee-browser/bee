@@ -20,6 +20,7 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use backend::CodeRegistry;
+use builtins::Builtins;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
@@ -102,37 +103,8 @@ pub struct Runtime<X> {
     code_registry: CodeRegistry<X>,
     programs: Vec<Program>,
     heap: Heap,
+    builtins: Builtins,
     job_runner: JobRunner,
-
-    // [[GlobalObject]]
-    global_object: HandleMut<Object>,
-    // %Object.prototype%
-    object_prototype: Option<HandleMut<Object>>,
-    // %Function.prototype%
-    function_prototype: Option<HandleMut<Object>>,
-    // %String.prototype%
-    string_prototype: Option<HandleMut<Object>>,
-    // %Promise.prototype%
-    promise_prototype: Option<HandleMut<Object>>,
-    // %Error.prototype%
-    error_prototype: Option<HandleMut<Object>>,
-    // %AggregateError.prototype%
-    aggregate_error_prototype: Option<HandleMut<Object>>,
-    // %EvalError.prototype%
-    eval_error_prototype: Option<HandleMut<Object>>,
-    // %InternalError.prototype%
-    internal_error_prototype: Option<HandleMut<Object>>,
-    // %RangeError.prototype%
-    range_error_prototype: Option<HandleMut<Object>>,
-    // %ReferenceError.prototype%
-    reference_error_prototype: Option<HandleMut<Object>>,
-    // %SyntaxError.prototype%
-    syntax_error_prototype: Option<HandleMut<Object>>,
-    // %TypeError.prototype%
-    type_error_prototype: Option<HandleMut<Object>>,
-    // URIError.prototype%
-    uri_error_prototype: Option<HandleMut<Object>>,
-
     monitor: Option<Box<dyn Monitor>>,
     extension: X,
 }
@@ -140,9 +112,7 @@ pub struct Runtime<X> {
 impl<X> Runtime<X> {
     pub fn with_extension(extension: X) -> Self {
         let mut heap = Heap::new();
-
-        // TODO: pass [[Prototype]] of the global object.
-        let global_object = heap.alloc_mut(Object::new(Default::default()));
+        let builtins = Builtins::new(&mut heap);
 
         let mut runtime = Self {
             pref: Default::default(),
@@ -151,26 +121,13 @@ impl<X> Runtime<X> {
             code_registry: CodeRegistry::new(),
             programs: vec![],
             heap,
+            builtins,
             job_runner: Default::default(),
-            global_object,
-            object_prototype: None,
-            function_prototype: None,
-            string_prototype: None,
-            promise_prototype: None,
-            error_prototype: None,
-            aggregate_error_prototype: None,
-            eval_error_prototype: None,
-            internal_error_prototype: None,
-            reference_error_prototype: None,
-            range_error_prototype: None,
-            syntax_error_prototype: None,
-            type_error_prototype: None,
-            uri_error_prototype: None,
             monitor: None,
             extension,
         };
 
-        runtime.define_builtin_global_properties();
+        runtime.init_builtin_objects();
 
         runtime
     }
@@ -204,12 +161,16 @@ impl<X> Runtime<X> {
         logger::debug!(event = "register_host_function", name, ?symbol);
         let lambda = types::into_lambda(host_fn);
         let closure = self.create_closure(lambda, LambdaId::HOST, 0);
-        let mut object = self.create_object(self.function_prototype);
+        let mut object = self.create_object();
+        object.set_prototype(self.builtins.function_prototype);
         object.set_closure(closure);
         let value = Value::Object(object);
         // TODO: add `flags` to the arguments.
         let prop = Property::data_xxx(value);
-        let result = self.global_object.define_own_property(symbol.into(), prop);
+        let result = self
+            .builtins
+            .global_object
+            .define_own_property(symbol.into(), prop);
         debug_assert!(matches!(result, Ok(true)));
     }
 
@@ -438,11 +399,11 @@ impl<X> Runtime<X> {
         self.heap.alloc_mut(Promise::new(coroutine))
     }
 
-    fn create_object(&mut self, prototype: Option<HandleMut<Object>>) -> HandleMut<Object> {
-        self.heap.alloc_mut(Object::new(prototype))
+    fn create_object(&mut self) -> HandleMut<Object> {
+        self.heap.alloc_mut(Object::new())
     }
 
-    fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Value> {
+    fn make_property_key(&mut self, value: &Value) -> Result<PropertyKey, Error> {
         match value {
             Value::None => unreachable!(),
             Value::Undefined => Ok(Symbol::KEYWORD_UNDEFINED.into()),
@@ -453,10 +414,7 @@ impl<X> Runtime<X> {
             Value::String(value) => {
                 Ok(self.symbol_registry.intern_utf16(value.make_utf16()).into())
             }
-            Value::Object(_) => {
-                const MESSAGE: Handle<String> = const_string!("TODO: make_property_key");
-                Err(Value::Object(self.create_internal_error(Some(MESSAGE))))
-            }
+            Value::Object(_) => runtime_todo!("TODO: make_property_key"),
         }
     }
 
@@ -483,7 +441,7 @@ impl<X> Runtime<X> {
         Ok(())
     }
 
-    fn push_value(&mut self, target: &mut Object, value: &Value) -> Result<(), Value> {
+    fn push_value(&mut self, target: &mut Object, value: &Value) -> Result<(), Error> {
         const LENGTH: PropertyKey = PropertyKey::Symbol(Symbol::LENGTH);
 
         let length = match target.get_value(&LENGTH) {
@@ -500,11 +458,6 @@ impl<X> Runtime<X> {
 
         target.set_value(&LENGTH, &Value::from(length + 1.0));
         Ok(())
-    }
-
-    fn throw_internal_error(&mut self, message: Handle<String>, retv: &mut Value) -> Status {
-        *retv = Value::Object(self.create_internal_error(Some(message)));
-        Status::Exception
     }
 }
 
@@ -528,20 +481,7 @@ impl<X> Drop for Runtime<X> {
 // TODO(feat): derive(Trace)
 impl<X> Trace for Runtime<X> {
     fn trace(&self, visits: &mut jsgc::VisitList) {
-        self.global_object.trace(visits);
-        self.object_prototype.trace(visits);
-        self.function_prototype.trace(visits);
-        self.string_prototype.trace(visits);
-        self.promise_prototype.trace(visits);
-        self.error_prototype.trace(visits);
-        self.aggregate_error_prototype.trace(visits);
-        self.eval_error_prototype.trace(visits);
-        self.internal_error_prototype.trace(visits);
-        self.range_error_prototype.trace(visits);
-        self.reference_error_prototype.trace(visits);
-        self.syntax_error_prototype.trace(visits);
-        self.type_error_prototype.trace(visits);
-        self.uri_error_prototype.trace(visits);
+        self.builtins.trace(visits);
         // TODO: tracing X if X implements Trace.
     }
 }
@@ -550,9 +490,30 @@ pub trait Monitor {
     fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
 }
 
-#[allow(clippy::enum_variant_names)]
-#[derive(Debug)]
-pub enum Error {
+#[derive(Clone, Debug)]
+pub struct Error {
+    kind: ErrorKind,
+    message: Option<&'static String>,
+}
+
+impl Error {
+    /// Returns the corresponding `ErrorKind` of this error.
+    pub fn kind(&self) -> ErrorKind {
+        self.kind
+    }
+
+    /// Returns the optional message of this error.
+    pub fn message(&self) -> Option<&'static String> {
+        self.message
+    }
+
+    fn new(kind: ErrorKind, message: Option<&'static String>) -> Self {
+        Self { kind, message }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum ErrorKind {
     SyntaxError,
     TypeError,
     RangeError,

@@ -42,11 +42,12 @@ async function main(args, options) {
 
   const json = {
     metadata: {
-      inherits: 'object',
+      inherits: null,
     },
     constructor: null,
     constructorProperties: [],
     prototypeProperties: [],
+    globalProperties: [],
   };
 
   for await (const data of dataStream(args.impRs)) {
@@ -69,6 +70,18 @@ async function main(args, options) {
       case 'prototype.function':
         collectFunctionDataFromSpec(spec, data, json.metadata);
         json.prototypeProperties.push(data);
+        break;
+      case 'global.constructor':
+        collectConstructorDataFromSpec(spec, data, json.metadata);
+        json.globalProperties.push(data);
+        break;
+      case 'global.property':
+        collectPropertyDataFromSpec(spec, data, json.metadata);
+        json.globalProperties.push(data);
+        break;
+      case 'global.function':
+        collectFunctionDataFromSpec(spec, data, json.metadata);
+        json.globalProperties.push(data);
         break;
       default:
         unreachable();
@@ -166,9 +179,25 @@ function dataStream(impRs) {
     }));
 }
 
+function collectConstructorDataFromSpec(spec, data, metadata) {
+  if (data.options?.name) {
+    data.name = data.options.name;
+  } else {
+    const clause = spec.window.document.getElementById(data.id);
+    const signature = parseSignature(clause.firstElementChild.textContent.trim());
+    data.name = signature.name;
+  }
+  data.symbol = constantCase(data.name);
+  return data;
+}
+
 function collectPropertyDataFromSpec(spec, data, metadata) {
-  let clause = spec.window.document.getElementById(data.id);
-  data.property = clause.firstElementChild.textContent.trim();
+  if (data.options?.property) {
+    data.property = data.options.property;
+  } else {
+    let clause = spec.window.document.getElementById(data.id);
+    data.property = clause.firstElementChild.textContent.trim();
+  }
   if (data.property.startsWith('_NativeError_.')) {
     data.property = data.property.replace('_NativeError_', metadata['class']);
   }
@@ -207,6 +236,14 @@ function collectFunctionDataFromSpec(spec, data, metadata) {
     case 'prototype.function':
       data.name = data.signature.name.split('.')[2];
       data.symbol = constantCase(data.name);
+      break;
+    case 'global.function':
+      data.name = data.signature.name;
+      if (data.name === 'isNaN') {
+        data.symbol = 'IS_NAN';
+      } else {
+        data.symbol = constantCase(data.name);
+      }
       break;
     default:
       unreachable();

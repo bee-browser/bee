@@ -1,6 +1,7 @@
 use jsgc::Handle;
 use jsgc::HandleMut;
 
+use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaKind;
 use crate::logger;
@@ -192,46 +193,35 @@ pub(crate) extern "C" fn runtime_to_object<X>(
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_to_object", ?value);
-    runtime.value_to_object(value, retv)
+    match runtime.value_to_object(value) {
+        Ok(value) => {
+            *retv = value;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn value_to_object(&mut self, value: &Value, retv: &mut Value) -> Status {
+    pub(crate) fn value_to_object(&mut self, value: &Value) -> Result<Value, Error> {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined | Value::Null => {
-                *retv = Value::Object(self.create_type_error(None));
-                Status::Exception
+            Value::Undefined | Value::Null => type_error!(),
+            Value::Boolean(_value) => {
+                runtime_todo!("ToObject: not yet implemented for Boolean values")
             }
-            Value::Boolean(_value) => runtime_todo!(
-                self,
-                "ToObject: not yet implemented for Boolean values",
-                retv
-            ),
-            Value::Number(_value) => runtime_todo!(
-                self,
-                "ToObject: not yet implemented for Number values",
-                retv
-            ),
+            Value::Number(_value) => {
+                runtime_todo!("ToObject: not yet implemented for Number values")
+            }
             Value::String(value) => {
                 // TODO(refactor): rewrite using `new String(value)`
-                match self.create_string_object(None, &[Value::String(*value)], true) {
-                    Ok(Value::Object(object)) => {
-                        *retv = Value::Object(object);
-                        Status::Normal
-                    }
-                    Ok(_) => unreachable!(),
-                    Err(err) => {
-                        *retv = self.create_exception(err);
-                        Status::Exception
-                    }
-                }
+                self.create_string_object(None, &[Value::String(*value)], true)
             }
-            Value::Object(_) => {
-                *retv = value.clone();
-                Status::Normal
-            }
+            Value::Object(_) => Ok(value.clone()),
         }
     }
 }
@@ -368,7 +358,7 @@ pub(crate) extern "C" fn runtime_create_string<X>(
 pub(crate) extern "C" fn runtime_create_capture<X>(
     runtime: &mut Runtime<X>,
     target: *mut Value,
-) -> *mut Capture {
+) -> HandleMut<Capture> {
     logger::debug!(event = "runtime_create_capture", ?target);
 
     debug_assert!(
@@ -386,16 +376,12 @@ pub(crate) extern "C" fn runtime_create_capture<X>(
         )
     };
 
-    let handle = runtime
-        .heap
-        .alloc_layout_mut::<Capture, _>(LAYOUT, move |ptr| {
-            // SAFETY: `ptr` is a non-null pointer to a `Capture`.
-            let capture = unsafe { ptr.cast::<Capture>().as_mut() };
-            capture.target = target;
-            // `capture.escaped` will be filled with an actual value.
-        });
-
-    handle.as_ptr()
+    runtime.heap.alloc_layout_mut(LAYOUT, move |ptr| {
+        // SAFETY: `ptr` is a non-null pointer to a `Capture`.
+        let capture = unsafe { ptr.cast::<Capture>().as_mut() };
+        capture.target = target;
+        // `capture.escaped` will be filled with an actual value.
+    })
 }
 
 pub(crate) extern "C" fn runtime_create_closure<X>(
@@ -403,16 +389,14 @@ pub(crate) extern "C" fn runtime_create_closure<X>(
     lambda: Lambda<X>,
     lambda_id: u32,
     num_captures: u16,
-) -> *mut Closure {
+) -> HandleMut<Closure> {
     logger::debug!(
         event = "runtime_create_closure",
         ?lambda,
         lambda_id,
         num_captures
     );
-    runtime
-        .create_closure(lambda, lambda_id.into(), num_captures)
-        .as_ptr()
+    runtime.create_closure(lambda, lambda_id.into(), num_captures)
 }
 
 pub(crate) extern "C" fn runtime_create_coroutine<X>(
@@ -421,7 +405,7 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
     num_locals: u16,
     scratch_buffer_len: u16,
     capture_buffer_len: u16,
-) -> *mut Coroutine {
+) -> HandleMut<Coroutine> {
     logger::debug!(
         event = "runtime_create_coroutine",
         ?closure,
@@ -430,9 +414,7 @@ pub(crate) extern "C" fn runtime_create_coroutine<X>(
         capture_buffer_len,
     );
     let closure = HandleMut::from_ptr(closure).expect("closure must be a non-null pointer");
-    runtime
-        .create_coroutine(closure, num_locals, scratch_buffer_len, capture_buffer_len)
-        .as_ptr()
+    runtime.create_coroutine(closure, num_locals, scratch_buffer_len, capture_buffer_len)
 }
 
 pub(crate) extern "C" fn runtime_create_promise<X>(
@@ -462,26 +444,30 @@ pub(crate) extern "C" fn runtime_emit_promise_resolved<X>(
 pub(crate) extern "C" fn runtime_create_object<X>(
     runtime: &mut Runtime<X>,
     prototype: *mut Object,
-) -> *mut Object {
-    let prototype = HandleMut::from_ptr(prototype);
-    runtime.create_object(prototype).as_ptr()
+) -> HandleMut<Object> {
+    let prototype = HandleMut::from_ptr(prototype).unwrap();
+    let mut object = runtime.create_object();
+    object.set_prototype(prototype);
+    object
 }
 
 pub(crate) extern "C" fn runtime_create_reference_error<X>(
     runtime: &mut Runtime<X>,
-) -> *mut Object {
-    runtime.create_reference_error(None).as_ptr()
+) -> HandleMut<Object> {
+    runtime.create_reference_error(None)
 }
 
-pub(crate) extern "C" fn runtime_create_type_error<X>(runtime: &mut Runtime<X>) -> *mut Object {
-    runtime.create_type_error(None).as_ptr()
+pub(crate) extern "C" fn runtime_create_type_error<X>(
+    runtime: &mut Runtime<X>,
+) -> HandleMut<Object> {
+    runtime.create_type_error(None)
 }
 
 pub(crate) extern "C" fn runtime_create_internal_error<X>(
     runtime: &mut Runtime<X>,
     message: Handle<String>,
-) -> *mut Object {
-    runtime.create_internal_error(Some(message)).as_ptr()
+) -> HandleMut<Object> {
+    runtime.create_internal_error(Some(message))
 }
 
 pub(crate) extern "C" fn runtime_get_value_by_symbol<X>(
@@ -551,7 +537,7 @@ pub(crate) extern "C" fn runtime_get_value_by_value<X>(
     let key = match runtime.make_property_key(key) {
         Ok(key) => key,
         Err(err) => {
-            *retv = err;
+            *retv = runtime.create_exception(err);
             return Status::Exception;
         }
     };
@@ -611,7 +597,7 @@ pub(crate) extern "C" fn runtime_set_value_by_value<X>(
     let key = match runtime.make_property_key(key) {
         Ok(key) => key,
         Err(err) => {
-            *retv = err;
+            *retv = runtime.create_exception(err);
             return Status::Exception;
         }
     };
@@ -694,7 +680,7 @@ pub(crate) extern "C" fn runtime_create_data_property_by_value<X>(
     let key = match runtime.make_property_key(key) {
         Ok(key) => key,
         Err(err) => {
-            *retv = err;
+            *retv = runtime.create_exception(err);
             return Status::Exception;
         }
     };
@@ -748,8 +734,8 @@ pub(crate) extern "C" fn runtime_push_value<X>(
             *retv = Value::None;
             Status::Normal
         }
-        Err(exception) => {
-            *retv = exception;
+        Err(err) => {
+            *retv = runtime.create_exception(err);
             Status::Exception
         }
     }

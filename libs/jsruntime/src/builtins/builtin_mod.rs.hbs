@@ -22,7 +22,7 @@ impl<X> Runtime<X> {
     /// Returns `true` if `object` is a {{metadata.class}} object.
     #[allow(unused)]
     pub(crate) fn is_{{metadata.id}}_object(&self, object: HandleMut<Object>) -> bool {
-        object.is_instance_of(self.{{metadata.id}}_prototype)
+        object.is_instance_of(self.builtins.{{metadata.id}}_prototype)
     }
 
     /// Returns `true` if `value` holds a {{metadata.class}} object.
@@ -34,22 +34,21 @@ impl<X> Runtime<X> {
     /// Creates the {{metadata.class}} constructor.
     pub(super) fn create_{{metadata.id}}_constructor(&mut self) -> HandleMut<Object> {
         logger::debug!(event = "create_{{metadata.id}}_constructor");
-        debug_assert!(self.{{metadata.id}}_prototype.is_some());
 
         #[allow(unused_mut)]
         let mut constructor = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: constructor::<X>,
-            name: const_string!("{{metadata.class}}"),
+            name: const_string_handle!("{{metadata.class}}"),
             length: 1,
             slots: &[],
-            prototype: self.{{metadata.id}}_prototype,
+            prototype: Some(self.builtins.{{metadata.id}}_prototype),
         });
 
         {{#each constructorProperties}}
         {{#if (eq kind "constructor.function")}}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: {{imp}},
-            name: const_string!("{{name}}"),
+            name: const_string_handle!("{{name}}"),
             length: {{this.length}},
             slots: &[],
             prototype: None,
@@ -59,21 +58,20 @@ impl<X> Runtime<X> {
         {{/if}}
         {{/each}}
         // TODO(refactor): bind outside this function
-        if let Some(mut prototype) = self.{{metadata.id}}_prototype {
-            let _ = prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(constructor)));
-        }
+        let _ = self.builtins.{{metadata.id}}_prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(constructor)));
 
         constructor
     }
 
     /// Creates the {{metadata.class}} prototype object.
-    pub(super) fn create_{{metadata.id}}_prototype(&mut self) -> HandleMut<Object> {
-        logger::debug!(event = "creater_{{metadata.id}}_prototype");
-        debug_assert!(self.{{metadata.inherits}}_prototype.is_some());
-        debug_assert!(self.function_prototype.is_some());
+    pub(super) fn init_{{metadata.id}}_prototype(&mut self) {
+        logger::debug!(event = "init_{{metadata.id}}_prototype");
 
-        #[allow(unused_mut)]
-        let mut prototype = self.create_object(self.{{metadata.inherits}}_prototype);
+        #[allow(unused)]
+        let mut prototype = self.builtins.{{metadata.id}}_prototype;
+        {{#if metadata.inherits}}
+        prototype.set_prototype(self.builtins.{{metadata.inherits}}_prototype);
+        {{/if}}
 
         {{#each prototypeProperties}}
         {{#if (eq kind "prototype.property")}}
@@ -82,7 +80,7 @@ impl<X> Runtime<X> {
         {{else if (eq kind "prototype.function")}}
         let func = self.create_builtin_function(&BuiltinFunctionParams {
             lambda: {{imp}},
-            name: const_string!("{{name}}"),
+            name: const_string_handle!("{{name}}"),
             length: {{this.length}},
             slots: &[],
             prototype: None,
@@ -91,7 +89,6 @@ impl<X> Runtime<X> {
 
         {{/if}}
         {{/each}}
-        prototype
     }
 }
 

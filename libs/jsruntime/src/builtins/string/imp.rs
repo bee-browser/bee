@@ -1,5 +1,6 @@
 //$id string
 //$class String
+//$inherits object
 
 use jsgc::Handle;
 use jsparser::Symbol;
@@ -17,7 +18,7 @@ use crate::types::string::SPACE;
 
 //#sec-string-constructor-string-value constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
-    logger::debug!(event = "promise");
+    logger::debug!(event = "string");
     let this = context.this();
     let args = context.args();
     let new = context.is_new();
@@ -50,11 +51,11 @@ pub fn string_from_code_point<X>(
     for arg in context.args().iter() {
         let num = crate::types::number::to_number(arg)?;
         if num.is_infinite() || num.is_nan() || num.fract() != 0.0 {
-            return Err(Error::RangeError);
+            return range_error!();
         }
         let cp = num as i64;
         if !(0..=0x10FFFF).contains(&cp) {
-            return Err(Error::RangeError);
+            return range_error!();
         }
         utf16.extend_from_slice(encode_code_point(cp, &mut buf));
     }
@@ -377,7 +378,7 @@ fn string_padding_builtins_impl<X>(
     }
 
     if int_max_length > u32::MAX as u64 {
-        return Err(Error::InternalError);
+        return runtime_todo!();
     }
 
     let fill_string = args.get(1).unwrap_or(&Value::Undefined);
@@ -435,7 +436,7 @@ pub fn string_prototype_repeat<X>(
     let n = runtime.value_to_integer_or_infinity(count)?;
 
     if n < 0.0 || n.is_infinite() {
-        return Err(Error::RangeError);
+        return range_error!();
     }
 
     if n == 0.0 {
@@ -443,7 +444,7 @@ pub fn string_prototype_repeat<X>(
     }
 
     if n > u32::MAX as f64 {
-        return Err(Error::InternalError);
+        return runtime_todo!();
     }
 
     let result = runtime.repeat_string(s, n as u32);
@@ -603,7 +604,9 @@ impl<X> Runtime<X> {
                 this
             } else {
                 // 10.4.3.4 StringCreate ( value, prototype )
-                self.create_object(self.string_prototype)
+                let mut object = self.create_object();
+                object.set_prototype(self.builtins.string_prototype);
+                object
             };
             let length = string.len();
             object.set_string(string);

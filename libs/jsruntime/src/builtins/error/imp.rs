@@ -1,5 +1,6 @@
 //$id error
 //$class Error
+//$inherits object
 
 use jsgc::Handle;
 use jsgc::HandleMut;
@@ -21,13 +22,15 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
     // TODO(feat): NewTarget
     if !context.is_new() {
-        return Err(Error::InternalError);
+        return runtime_todo!();
     }
 
     let mut object = if let Value::Object(this) = context.this() {
         *this
     } else {
-        runtime.create_object(runtime.error_prototype)
+        let mut object = runtime.create_object();
+        object.set_prototype(runtime.builtins.error_prototype);
+        object
     };
     object.set_error();
 
@@ -90,7 +93,7 @@ pub fn error_prototype_to_string<X>(
     logger::debug!(event = "error_prototype_to_string");
     let object = match context.this() {
         Value::Object(object) => object,
-        _ => return Err(Error::TypeError),
+        _ => return type_error!(),
     };
 
     let name = match object.get_value(&Symbol::NAME.into()) {
@@ -108,11 +111,11 @@ pub fn error_prototype_to_string<X>(
     } else if message.is_empty() {
         name
     } else {
-        let result = runtime.concat_strings(const_string!(&[0x003A, 0x0020]), message);
+        let result = runtime.concat_strings(const_string_handle!(&[0x003A, 0x0020]), message);
         runtime.concat_strings(name, result)
     };
 
     Ok(Value::String(result))
 }
 
-const NAME: Handle<String> = const_string!(jsparser::symbol::builtin::names::ERROR);
+const NAME: Handle<String> = const_string_handle!(jsparser::symbol::builtin::names::ERROR);

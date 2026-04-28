@@ -2,6 +2,7 @@ mod aggregate_error;
 mod error;
 mod eval_error;
 mod function;
+mod global;
 mod internal_error;
 mod object;
 mod promise;
@@ -14,130 +15,101 @@ mod uri_error;
 
 use jsgc::Handle;
 use jsgc::HandleMut;
+use jsgc::Heap;
 use jsparser::Symbol;
 
 use crate::Error;
+use crate::ErrorKind;
 use crate::Runtime;
 use crate::lambda::LambdaId;
 use crate::logger;
-use crate::types::CallContext;
 use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Property;
-use crate::types::Status;
 use crate::types::String;
 use crate::types::Value;
 
+// The built-in objects are created in two-phase construction in order to avoid circular
+// references.
+//
+// 1. Create an empty object for each built-in objects.
+// 2. Initialize built-in objects.
+//
+#[derive(jsgc_derive::Trace)]
+pub(crate) struct Builtins {
+    // [[GlobalObject]]
+    pub(crate) global_object: HandleMut<Object>,
+    // %Object.prototype%
+    pub(crate) object_prototype: HandleMut<Object>,
+    // %Function.prototype%
+    pub(crate) function_prototype: HandleMut<Object>,
+    // %String.prototype%
+    pub(crate) string_prototype: HandleMut<Object>,
+    // %Promise.prototype%
+    pub(crate) promise_prototype: HandleMut<Object>,
+    // %Error.prototype%
+    pub(crate) error_prototype: HandleMut<Object>,
+    // %AggregateError.prototype%
+    pub(crate) aggregate_error_prototype: HandleMut<Object>,
+    // %EvalError.prototype%
+    pub(crate) eval_error_prototype: HandleMut<Object>,
+    // %InternalError.prototype%
+    pub(crate) internal_error_prototype: HandleMut<Object>,
+    // %RangeError.prototype%
+    pub(crate) range_error_prototype: HandleMut<Object>,
+    // %ReferenceError.prototype%
+    pub(crate) reference_error_prototype: HandleMut<Object>,
+    // %SyntaxError.prototype%
+    pub(crate) syntax_error_prototype: HandleMut<Object>,
+    // %TypeError.prototype%
+    pub(crate) type_error_prototype: HandleMut<Object>,
+    // URIError.prototype%
+    pub(crate) uri_error_prototype: HandleMut<Object>,
+}
+
+impl Builtins {
+    // The first phase of the two-phase construction.
+    pub(crate) fn new(heap: &mut Heap) -> Self {
+        Self {
+            global_object: heap.alloc_mut(Object::new()),
+            object_prototype: heap.alloc_mut(Object::new()),
+            function_prototype: heap.alloc_mut(Object::new()),
+            string_prototype: heap.alloc_mut(Object::new()),
+            promise_prototype: heap.alloc_mut(Object::new()),
+            error_prototype: heap.alloc_mut(Object::new()),
+            aggregate_error_prototype: heap.alloc_mut(Object::new()),
+            eval_error_prototype: heap.alloc_mut(Object::new()),
+            internal_error_prototype: heap.alloc_mut(Object::new()),
+            reference_error_prototype: heap.alloc_mut(Object::new()),
+            range_error_prototype: heap.alloc_mut(Object::new()),
+            syntax_error_prototype: heap.alloc_mut(Object::new()),
+            type_error_prototype: heap.alloc_mut(Object::new()),
+            uri_error_prototype: heap.alloc_mut(Object::new()),
+        }
+    }
+}
+
 impl<X> Runtime<X> {
-    // 19 The Global Object
-    pub(crate) fn define_builtin_global_properties(&mut self) {
-        macro_rules! define {
-            ($key:expr => $value:expr,) => {
-                define!(kv: $key, $value);
-            };
-            ($key:expr => $value:expr, $($keys:expr => $values:expr,)+) => {
-                define!(kv: $key, $value);
-                define!($($keys => $values,)+);
-            };
-            (kv: $key:expr, $value:expr) => {
-                let prop = Property::data_xxx($value);
-                let result = self.global_object.define_own_property($key.into(), prop);
-                debug_assert!(matches!(result, Ok(true)));
-            };
-        }
+    // The second phase of the two-phase construction.
+    pub(crate) fn init_builtin_objects(&mut self) {
+        self.init_intrinsic_objects();
+        self.init_global_object();
+    }
 
-        self.object_prototype = Some(self.create_object(None));
-        self.function_prototype = Some(self.create_function_prototype());
-        self.string_prototype = Some(self.create_string_prototype());
-        self.promise_prototype = Some(self.create_promise_prototype());
-        self.error_prototype = Some(self.create_error_prototype());
-        self.aggregate_error_prototype = Some(self.create_aggregate_error_prototype());
-        self.eval_error_prototype = Some(self.create_eval_error_prototype());
-        self.internal_error_prototype = Some(self.create_internal_error_prototype());
-        self.range_error_prototype = Some(self.create_range_error_prototype());
-        self.reference_error_prototype = Some(self.create_reference_error_prototype());
-        self.syntax_error_prototype = Some(self.create_syntax_error_prototype());
-        self.type_error_prototype = Some(self.create_type_error_prototype());
-        self.uri_error_prototype = Some(self.create_uri_error_prototype());
-
-        let this = self.global_object.as_handle();
-
-        define! {
-            // TODO: 19.1.1 globalThis
-            Symbol::GLOBAL_THIS => Value::Object(this),
-            // 19.1.2 Infinity
-            Symbol::INFINITY => Value::Number(f64::INFINITY),
-            // 19.1.3 NaN
-            Symbol::NAN => Value::Number(f64::NAN),
-            // 19.1.4 undefined
-            Symbol::KEYWORD_UNDEFINED => Value::Undefined,
-            // 19.2.1 eval ( x )
-            Symbol::EVAL => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
-                lambda: eval,
-                name: const_string!(jsparser::symbol::builtin::names::EVAL),
-                length: 1,
-                slots: &[],
-                prototype: self.function_prototype,
-            })),
-            // 19.2.2 isFinite ( number )
-            Symbol::IS_FINITE => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
-                lambda: is_finite,
-                name: const_string!(jsparser::symbol::builtin::names::IS_FINITE),
-                length: 1,
-                slots: &[],
-                prototype: self.function_prototype,
-            })),
-            // 19.2.3 isNaN ( number )
-            Symbol::IS_NAN => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
-                lambda: is_nan,
-                name: const_string!(jsparser::symbol::builtin::names::IS_NAN),
-                length: 1,
-                slots: &[],
-                prototype: self.function_prototype,
-            })),
-            // 19.2.4 parseFloat ( string )
-            Symbol::PARSE_FLOAT => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
-                lambda: parse_float,
-                name: const_string!(jsparser::symbol::builtin::names::PARSE_FLOAT),
-                length: 1,
-                slots: &[],
-                prototype: self.function_prototype,
-            })),
-            // 19.2.5 parseInt ( string, radix )
-            Symbol::PARSE_INT => Value::Object(self.create_builtin_function(&BuiltinFunctionParams {
-                lambda: parse_int,
-                name: const_string!(jsparser::symbol::builtin::names::PARSE_INT),
-                length: 2,
-                slots: &[],
-                prototype: self.function_prototype,
-            })),
-            // 19.3.1 AggregateError ( . . . )
-            Symbol::AGGREGATE_ERROR => Value::Object(self.create_aggregate_error_constructor()),
-            // 19.3.10 Error ( . . . )
-            Symbol::ERROR => Value::Object(self.create_error_constructor()),
-            // 19.3.11 EvalError ( . . . )
-            Symbol::EVAL_ERROR => Value::Object(self.create_eval_error_constructor()),
-            // 19.3.16 Function ( . . . )
-            Symbol::FUNCTION => Value::Object(self.create_function_constructor()),
-            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError
-            Symbol::INTERNAL_ERROR => Value::Object(self.create_internal_error_constructor()),
-            // 19.3.23 Object ( . . . )
-            Symbol::OBJECT => Value::Object(self.create_object_constructor()),
-            // 19.3.24 Promise ( . . . )
-            Symbol::PROMISE => Value::Object(self.create_promise_constructor()),
-            // 19.3.26 RangeError ( . . . )
-            Symbol::RANGE_ERROR => Value::Object(self.create_range_error_constructor()),
-            // 19.3.27 ReferenceError ( . . . )
-            Symbol::REFERENCE_ERROR => Value::Object(self.create_reference_error_constructor()),
-            // 19.3.31 String()
-            Symbol::STRING => Value::Object(self.create_string_constructor()),
-            // 19.3.33 SyntaxError ( . . . )
-            Symbol::SYNTAX_ERROR => Value::Object(self.create_syntax_error_constructor()),
-            // 19.3.34 TypeError ( . . . )
-            Symbol::TYPE_ERROR => Value::Object(self.create_type_error_constructor()),
-            // 19.3.39 URIError ( . . . )
-            Symbol::URI_ERROR => Value::Object(self.create_uri_error_constructor()),
-        }
+    fn init_intrinsic_objects(&mut self) {
+        self.init_object_prototype();
+        self.init_function_prototype();
+        self.init_string_prototype();
+        self.init_promise_prototype();
+        self.init_error_prototype();
+        self.init_aggregate_error_prototype();
+        self.init_eval_error_prototype();
+        self.init_internal_error_prototype();
+        self.init_range_error_prototype();
+        self.init_reference_error_prototype();
+        self.init_syntax_error_prototype();
+        self.init_type_error_prototype();
+        self.init_uri_error_prototype();
     }
 
     fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> HandleMut<Object> {
@@ -149,9 +121,9 @@ impl<X> Runtime<X> {
             ?params.slots,
             ?params.prototype
         );
-        debug_assert!(self.function_prototype.is_some());
         let closure = self.create_closure(params.lambda, LambdaId::HOST, 0);
-        let mut func = self.create_object(self.function_prototype);
+        let mut func = self.create_object();
+        func.set_prototype(self.builtins.function_prototype);
         func.slots_mut().extend_from_slice(params.slots);
         func.set_closure(closure);
         if let Some(prototype) = params.prototype {
@@ -192,7 +164,7 @@ impl<X> Runtime<X> {
             Value::Boolean(true) => Ok(1.0),
             Value::Boolean(false) => Ok(0.0),
             Value::Number(value) => Ok(*value),
-            Value::String(_value) => Err(Error::InternalError), // TODO
+            Value::String(_value) => runtime_todo!(),
             // TODO(feat): 7.1.1 ToPrimitive()
             Value::Object(_) => Ok(f64::NAN),
         }
@@ -233,13 +205,13 @@ impl<X> Runtime<X> {
         logger::debug!(event = "runtime.value_to_string", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
-            Value::Undefined => Ok(const_string!("undefined")),
-            Value::Null => Ok(const_string!("null")),
-            Value::Boolean(true) => Ok(const_string!("true")),
-            Value::Boolean(false) => Ok(const_string!("false")),
+            Value::Undefined => Ok(const_string_handle!("undefined")),
+            Value::Null => Ok(const_string_handle!("null")),
+            Value::Boolean(true) => Ok(const_string_handle!("true")),
+            Value::Boolean(false) => Ok(const_string_handle!("false")),
             Value::Number(value) => Ok(self.number_to_string(*value)),
             Value::String(value) => Ok(*value),
-            // TODO(feat): Value::Symbol(_) => Err(Error::TypeError),
+            // TODO(feat): Value::Symbol(_) => type_error!(),
             Value::Object(value) => self.object_to_string(*value),
         }
     }
@@ -249,16 +221,17 @@ impl<X> Runtime<X> {
         if self.is_string_object(object) {
             Ok(object.string())
         } else {
-            Ok(const_string!("[object Object]"))
+            Ok(const_string_handle!("[object Object]"))
         }
     }
 
     pub(crate) fn create_exception(&mut self, err: Error) -> Value {
-        Value::Object(match err {
-            Error::SyntaxError => self.create_syntax_error(None),
-            Error::TypeError => self.create_type_error(None),
-            Error::RangeError => self.create_range_error(None),
-            Error::InternalError => self.create_internal_error(None),
+        let msg = err.message.map(Handle::from_ref);
+        Value::Object(match err.kind {
+            ErrorKind::SyntaxError => self.create_syntax_error(msg),
+            ErrorKind::TypeError => self.create_type_error(msg),
+            ErrorKind::RangeError => self.create_range_error(msg),
+            ErrorKind::InternalError => self.create_internal_error(msg),
         })
     }
 
@@ -292,96 +265,11 @@ impl<X> Runtime<X> {
     }
 }
 
-extern "C" fn eval<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-    retv: &mut Value,
-) -> Status {
-    match imp::eval(runtime, context) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
-        }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
-        }
-    }
-}
-
-extern "C" fn is_finite<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-    retv: &mut Value,
-) -> Status {
-    match imp::is_finite(runtime, context) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
-        }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
-        }
-    }
-}
-
-extern "C" fn is_nan<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-    retv: &mut Value,
-) -> Status {
-    match imp::is_nan(runtime, context) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
-        }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
-        }
-    }
-}
-
-extern "C" fn parse_float<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-    retv: &mut Value,
-) -> Status {
-    match imp::parse_float(runtime, context) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
-        }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
-        }
-    }
-}
-
-extern "C" fn parse_int<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-    retv: &mut Value,
-) -> Status {
-    match imp::parse_int(runtime, context) {
-        Ok(value) => {
-            *retv = value;
-            Status::Normal
-        }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
-        }
-    }
-}
-
 // 7.2.1 RequireObjectCoercible ( argument )
 fn require_object_coercible(value: &Value) -> Result<(), Error> {
     match value {
         Value::None => unreachable!(),
-        Value::Undefined | Value::Null => Err(Error::TypeError),
+        Value::Undefined | Value::Null => type_error!(),
         _ => Ok(()),
     }
 }
@@ -393,68 +281,4 @@ struct BuiltinFunctionParams<'a, X> {
     length: u16,
     slots: &'a [Value],
     prototype: Option<HandleMut<Object>>,
-}
-
-mod imp {
-    use super::*;
-
-    pub fn eval<X>(_runtime: &mut Runtime<X>, _context: &mut CallContext) -> Result<Value, Error> {
-        // TODO: impl
-        Err(Error::InternalError)
-    }
-
-    pub fn is_finite<X>(
-        runtime: &mut Runtime<X>,
-        context: &mut CallContext,
-    ) -> Result<Value, Error> {
-        let number = context.args().first().unwrap_or(&Value::Undefined);
-        let num = runtime.value_to_number(number)?;
-        Ok(Value::Boolean(num.is_finite()))
-    }
-
-    pub fn is_nan<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
-        let number = context.args().first().unwrap_or(&Value::Undefined);
-        let num = runtime.value_to_number(number)?;
-        Ok(Value::Boolean(num.is_nan()))
-    }
-
-    pub fn parse_float<X>(
-        runtime: &mut Runtime<X>,
-        context: &mut CallContext,
-    ) -> Result<Value, Error> {
-        let string = context.args().first().unwrap_or(&Value::Undefined);
-        let input_string = runtime.value_to_string(string)?;
-        let trimmed_string = runtime.trim_string(input_string, true, false)?;
-        // TODO: 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
-        let utf8 = char::decode_utf16(trimmed_string.code_units())
-            .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
-            .collect::<std::string::String>();
-        match utf8.parse::<f64>() {
-            Ok(n) => Ok(Value::Number(n)),
-            Err(_) => Err(Error::SyntaxError),
-        }
-    }
-
-    pub fn parse_int<X>(
-        runtime: &mut Runtime<X>,
-        context: &mut CallContext,
-    ) -> Result<Value, Error> {
-        // TODO: impl
-        let string = context.args().first().unwrap_or(&Value::Undefined);
-        let input_string = runtime.value_to_string(string)?;
-        let s = runtime.trim_string(input_string, true, false)?;
-        let radix = context.args().get(1).unwrap_or(&Value::Undefined);
-        let radix = runtime.value_to_number(radix)?;
-        let radix = if radix.is_finite() { radix as i32 } else { 10 };
-        if !(2..=36).contains(&radix) {
-            return Ok(Value::Number(f64::NAN));
-        }
-        let utf8 = char::decode_utf16(s.code_units())
-            .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
-            .collect::<std::string::String>();
-        match i64::from_str_radix(&utf8, radix as u32) {
-            Ok(n) => Ok(Value::Number(n as f64)),
-            Err(_) => Ok(Value::Number(f64::NAN)),
-        }
-    }
 }
