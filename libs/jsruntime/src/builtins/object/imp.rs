@@ -155,7 +155,7 @@ impl<X> Runtime<X> {
         };
 
         let mut flags = PropertyFlags::empty();
-        let mut value = Value::Undefined;
+        let mut value = Value::None;
 
         if let Some(v) = obj.get_value(&Symbol::ENUMERABLE.into()) {
             if self.value_to_boolean(v) {
@@ -179,12 +179,37 @@ impl<X> Runtime<X> {
             }
         }
 
-        if let Some(_v) = obj.get_value(&Symbol::GET.into()) {
-            return runtime_todo!("TODO: get");
+        let getter = if let Some(v) = obj.get_value(&Symbol::GET.into()) {
+            match v {
+                Value::None => unreachable!(),
+                Value::Undefined => None,
+                Value::Object(getter) if getter.is_callable() => Some(*getter),
+                _ => return type_error!("Getter must be callable"),
+            }
+        } else {
+            None
+        };
+
+        let setter = if let Some(v) = obj.get_value(&Symbol::SET.into()) {
+            match v {
+                Value::None => unreachable!(),
+                Value::Undefined => None,
+                Value::Object(setter) if setter.is_callable() => Some(*setter),
+                _ => return type_error!("Setter must be callable"),
+            }
+        } else {
+            None
+        };
+
+        if getter.is_some() || setter.is_some() {
+            if value.is_valid() || flags.contains(PropertyFlags::WRITABLE) {
+                return type_error!();
+            }
+            return runtime_todo!("TODO: accessor");
         }
 
-        if let Some(_v) = obj.get_value(&Symbol::SET.into()) {
-            return runtime_todo!("TODO: get");
+        if !value.is_valid() {
+            value = Value::Undefined;
         }
 
         Ok(Property::data(value, flags))
