@@ -123,7 +123,7 @@ impl Property {
     }
 
     /// Creates a data property.
-    const fn data(value: Value, flags: PropertyFlags) -> Self {
+    pub const fn data(value: Value, flags: PropertyFlags) -> Self {
         Self {
             value,
             flags: PropertyFlags::DATA.union(flags),
@@ -150,7 +150,7 @@ impl Property {
 
 bitflags! {
     #[derive(Clone, Copy)]
-    struct PropertyFlags: u8 {
+    pub struct PropertyFlags: u8 {
         /// The data property (true) or the accessor property (false).
         const DATA         = 1 << 0;
 
@@ -247,6 +247,10 @@ impl Object {
             properties: Default::default(),
             slots: Default::default(),
         }
+    }
+
+    pub fn prototype(&self) -> Option<HandleMut<Object>> {
+        self.prototype
     }
 
     pub fn set_prototype(&mut self, prototype: HandleMut<Object>) {

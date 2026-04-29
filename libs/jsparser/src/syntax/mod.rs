@@ -139,6 +139,8 @@ enum Detail {
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
     ConciseBody,
+    MethodDefinition(Symbol, bool),
+    ClassElementName(Symbol, bool),
     AsyncConciseBody,
     StatementList,
     CoverCallExpressionAndAsyncArrowHead,
@@ -256,6 +258,7 @@ pub enum Node<'s> {
     AsyncFunctionExpression(bool),
     ArrowFunction,
     AsyncArrowFunction,
+    Method,
     AwaitExpression,
     Then(bool),
     Else(bool),
@@ -285,6 +288,7 @@ pub enum PropertyDefinitionKind {
     ArraySpread,
     Reference,
     KeyValue,
+    Method,
     Spread,
 }
 
@@ -575,8 +579,26 @@ where
     }
 
     fn make_symbol(&mut self, token_index: usize) -> Symbol {
-        let lexeme = self.tokens[token_index].lexeme;
+        let lexeme = self.lexeme(token_index);
         self.handler.make_symbol(lexeme)
+    }
+
+    fn index_of_last_token(&self) -> usize {
+        debug_assert!(!self.tokens.is_empty());
+        self.tokens.len() - 1
+    }
+
+    fn lexeme(&self, index: usize) -> &'s str {
+        self.token(index).lexeme
+    }
+
+    fn last_token(&self) -> &Token<'s> {
+        self.token(self.index_of_last_token())
+    }
+
+    fn token(&self, index: usize) -> &Token<'s> {
+        debug_assert!(index < self.tokens.len());
+        &self.tokens[index]
     }
 
     fn src(&self, range: Range<usize>) -> &'s str {
@@ -664,8 +686,9 @@ where
     fn process_function_context(&mut self) -> Result<(), Error> {
         let name = match self.stack.last().unwrap().detail {
             Detail::BindingIdentifier(symbol) => symbol,
+            Detail::ClassElementName(symbol, _) => symbol,
             Detail::Token(index) => {
-                debug_assert!(matches!(self.tokens[index].kind, TokenKind::Function));
+                debug_assert!(matches!(self.token(index).kind, TokenKind::Function));
                 Symbol::NONE // anonymous function
             }
             ref detail => unreachable!("{detail:?}"),
@@ -679,7 +702,7 @@ where
         let name = match self.stack.last().unwrap().detail {
             Detail::BindingIdentifier(symbol) => symbol,
             Detail::Token(index) => {
-                debug_assert!(matches!(self.tokens[index].kind, TokenKind::Function));
+                debug_assert!(matches!(self.token(index).kind, TokenKind::Function));
                 Symbol::NONE // anonymous function
             }
             ref detail => unreachable!("{detail:?}"),
@@ -738,7 +761,7 @@ where
     fn process_identifier_reference(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::Identifier(symbol) => symbol,
-            Detail::Token(index) => match self.tokens[index].kind {
+            Detail::Token(index) => match self.token(index).kind {
                 TokenKind::Await => Symbol::KEYWORD_AWAIT,
                 TokenKind::Yield => Symbol::KEYWORD_YIELD,
                 kind => unreachable!("{kind:?}"),
@@ -807,7 +830,7 @@ where
     fn process_binding_identifier(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::Identifier(symbol) => symbol,
-            Detail::Token(index) => match self.tokens[index].kind {
+            Detail::Token(index) => match self.token(index).kind {
                 TokenKind::Await => Symbol::KEYWORD_AWAIT,
                 TokenKind::Yield => Symbol::KEYWORD_YIELD,
                 kind => unreachable!("{kind:?}"),
@@ -888,7 +911,7 @@ where
     fn process_label_identifier(&mut self) -> Result<(), Error> {
         let symbol = match self.top().detail {
             Detail::Identifier(symbol) => symbol,
-            Detail::Token(index) => match self.tokens[index].kind {
+            Detail::Token(index) => match self.token(index).kind {
                 TokenKind::Await => Symbol::KEYWORD_AWAIT,
                 TokenKind::Yield => Symbol::KEYWORD_YIELD,
                 kind => unreachable!("{kind:?}"),
@@ -952,8 +975,8 @@ where
     // Identifier :
     //   IdentifierName but not ReservedWord
     fn process_identifier(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
-        match self.tokens[token_index].kind {
+        let token_index = self.index_of_last_token();
+        match self.token(token_index).kind {
             TokenKind::Implements
             | TokenKind::Let
             | TokenKind::Package
@@ -1143,8 +1166,7 @@ where
     //   NumericLiteral
     //   StringLiteral
     fn process_literal(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
-        let token = &self.tokens[token_index];
+        let token = self.last_token();
         let node_index = match token.kind {
             TokenKind::Null => self.enqueue(Node::Null),
             TokenKind::True => self.enqueue(Node::Boolean(true)),
@@ -1484,6 +1506,19 @@ where
     }
 
     // PropertyDefinition[Yield, Await] :
+    //   MethodDefinition[?Yield, ?Await]
+    fn process_property_definition_method(&mut self) -> Result<(), Error> {
+        let name = match self.top().detail {
+            Detail::MethodDefinition(_, true) => return Err(Error::SyntaxError),
+            Detail::MethodDefinition(name, _) => name,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::Method));
+        self.replace(1, Detail::PropertyDefinition(name));
+        Ok(())
+    }
+
+    // PropertyDefinition[Yield, Await] :
     //   ... AssignmentExpression[+In, ?Yield, ?Await]
     fn process_property_definition_spread(&mut self) -> Result<(), Error> {
         self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::Spread));
@@ -1494,7 +1529,7 @@ where
     // LiteralPropertyName :
     //   IdentifierName
     fn process_literal_property_name_identifier_name(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
+        let token_index = self.index_of_last_token();
         let symbol = self.make_symbol(token_index);
         self.enqueue(Node::LiteralPropertyName(
             LiteralPropertyName::IdentifierName(symbol),
@@ -1506,7 +1541,7 @@ where
     // LiteralPropertyName :
     //   NumericLiteral
     fn process_literal_property_name_numeric_literal(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
+        let token_index = self.index_of_last_token();
         // TODO: RS
         // 1. Let nbr be the NumericValue of NumericLiteral.
         // 2. Return ! ToString(nbr).
@@ -1541,8 +1576,7 @@ where
         // TODO(feat): 13.2.8.1 Static Semantics: Early Errors
         // It is a Syntax Error if the [Tagged] parameter was not set and NoSubstitutionTemplate
         // Contains NotEscapeSequence.
-        let token_index = self.tokens.len() - 1;
-        let token = &self.tokens[token_index];
+        let token = self.last_token();
         debug_assert!(matches!(token.kind, TokenKind::NoSubstitutionTemplate));
         // TODO: perform `TV`
         let content = &token.lexeme[1..(token.lexeme.len() - 1)];
@@ -1617,8 +1651,7 @@ where
     }
 
     fn process_template_head(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
-        let token = &self.tokens[token_index];
+        let token = self.last_token();
         debug_assert!(matches!(token.kind, TokenKind::TemplateHead));
         // TODO: perform `TV`
         let content = &token.lexeme[1..(token.lexeme.len() - 2)];
@@ -1632,8 +1665,7 @@ where
     }
 
     fn process_template_middle(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
-        let token = &self.tokens[token_index];
+        let token = self.last_token();
         debug_assert!(matches!(token.kind, TokenKind::TemplateMiddle));
         // TODO: perform `TV`
         let content = &token.lexeme[1..(token.lexeme.len() - 2)];
@@ -1647,8 +1679,7 @@ where
     }
 
     fn process_template_tail(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
-        let token = &self.tokens[token_index];
+        let token = self.last_token();
         debug_assert!(matches!(token.kind, TokenKind::TemplateTail));
         // TODO: perform `TV`
         let content = &token.lexeme[1..(token.lexeme.len() - 1)];
@@ -1683,7 +1714,7 @@ where
     // MemberExpression[Yield, Await] :
     //   MemberExpression[?Yield, ?Await] . IdentifierName
     fn process_member_expression_dot_notation(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
+        let token_index = self.index_of_last_token();
         let symbol = self.make_symbol(token_index);
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithIdentifierKey(symbol),
@@ -1715,7 +1746,7 @@ where
     // CallExpression[Yield, Await] :
     //   CallExpression[?Yield, ?Await] . IdentifierName
     fn process_call_expression_dot_notation(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
+        let token_index = self.index_of_last_token();
         let symbol = self.make_symbol(token_index);
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithIdentifierKey(symbol),
@@ -1887,7 +1918,7 @@ where
     // OptionalChain[Yield, Await] :
     //   ?. IdentifierName
     fn process_optional_chain_identifier_name(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
+        let token_index = self.index_of_last_token();
         let key = self.make_symbol(token_index);
         self.enqueue(Node::OptionalChain(PropertyAccessKind::IdentifierKey(key)));
         self.replace(2, Detail::OptionalChain);
@@ -1905,7 +1936,7 @@ where
     // OptionalChain[Yield, Await] :
     //   OptionalChain[?Yield, ?Await] . IdentifierName
     fn process_optional_chain_identifier_name_chain(&mut self) -> Result<(), Error> {
-        let token_index = self.tokens.len() - 1;
+        let token_index = self.index_of_last_token();
         let key = self.make_symbol(token_index);
         self.enqueue(Node::MemberExpression(
             MemberExpressionKind::PropertyAccessWithIdentifierKey(key),
@@ -3608,6 +3639,50 @@ where
     //   { FunctionBody[~Yield, ~Await] }
     fn process_concise_body_function_body(&mut self) -> Result<(), Error> {
         self.replace(3, Detail::ConciseBody); // function body
+        Ok(())
+    }
+
+    // 15.4 Method Definitions
+
+    // MethodDefinition[Yield, Await] :
+    //   ClassElementName[?Yield, ?Await] ( UniqueFormalParameters[~Yield, ~Await] )
+    //   { FunctionBody[~Yield, ~Await] }
+    fn process_method_definition(&mut self) -> Result<(), Error> {
+        let (name, private) = match self.nth(6).detail {
+            Detail::ClassElementName(name, private) => (name, private),
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::Method);
+        self.replace(7, Detail::MethodDefinition(name, private));
+        Ok(())
+    }
+
+    // 15.7 Class Definitions
+
+    // ClassElementName[Yield, Await] :
+    //   PropertyName[?Yield, ?Await]
+    fn process_class_element_name_property_name(&mut self) -> Result<(), Error> {
+        let name = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.replace(1, Detail::ClassElementName(name, false));
+        Ok(())
+    }
+
+    // ClassElementName[Yield, Await] :
+    //   PrivateIdentifier
+    fn process_class_element_name_private_identifier(&mut self) -> Result<(), Error> {
+        let name = match self.top().detail {
+            Detail::Token(index) => {
+                if self.lexeme(index) == "#constructor" {
+                    return Err(Error::SyntaxError);
+                }
+                self.make_symbol(index)
+            }
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.replace(1, Detail::ClassElementName(name, true));
         Ok(())
     }
 

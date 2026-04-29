@@ -129,19 +129,25 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
 }
 
 // 7.1.2 ToBoolean ( argument )
-pub(crate) extern "C" fn runtime_to_boolean<X>(_runtime: &mut Runtime<X>, value: &Value) -> bool {
+pub(crate) extern "C" fn runtime_to_boolean<X>(runtime: &mut Runtime<X>, value: &Value) -> bool {
     logger::debug!(event = "runtime_to_boolean", ?value);
-    match value {
-        Value::None => unreachable!("Value::None"),
-        Value::Undefined => false,
-        Value::Null => false,
-        Value::Boolean(value) => *value,
-        Value::Number(0.0) => false,
-        Value::Number(value) if value.is_nan() => false,
-        Value::Number(_) => true,
-        Value::String(value) if value.is_empty() => false,
-        Value::String(_) => true,
-        Value::Object(_) => true,
+    runtime.value_to_boolean(value)
+}
+
+impl<X> Runtime<X> {
+    pub(crate) fn value_to_boolean(&mut self, value: &Value) -> bool {
+        match value {
+            Value::None => unreachable!("Value::None"),
+            Value::Undefined => false,
+            Value::Null => false,
+            Value::Boolean(value) => *value,
+            Value::Number(0.0) => false,
+            Value::Number(value) if value.is_nan() => false,
+            Value::Number(_) => true,
+            Value::String(value) if value.is_empty() => false,
+            Value::String(_) => true,
+            Value::Object(_) => true,
+        }
     }
 }
 
@@ -194,8 +200,8 @@ pub(crate) extern "C" fn runtime_to_object<X>(
 ) -> Status {
     logger::debug!(event = "runtime_to_object", ?value);
     match runtime.value_to_object(value) {
-        Ok(value) => {
-            *retv = value;
+        Ok(object) => {
+            *retv = Value::Object(object);
             Status::Normal
         }
         Err(err) => {
@@ -206,7 +212,8 @@ pub(crate) extern "C" fn runtime_to_object<X>(
 }
 
 impl<X> Runtime<X> {
-    pub(crate) fn value_to_object(&mut self, value: &Value) -> Result<Value, Error> {
+    // 7.1.18 ToObject ( argument )
+    pub(crate) fn value_to_object(&mut self, value: &Value) -> Result<HandleMut<Object>, Error> {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
@@ -219,9 +226,12 @@ impl<X> Runtime<X> {
             }
             Value::String(value) => {
                 // TODO(refactor): rewrite using `new String(value)`
-                self.create_string_object(None, &[Value::String(*value)], true)
+                match self.create_string_object(None, &[Value::String(*value)], true)? {
+                    Value::Object(object) => Ok(object),
+                    _ => unreachable!(),
+                }
             }
-            Value::Object(_) => Ok(value.clone()),
+            Value::Object(object) => Ok(*object),
         }
     }
 }

@@ -145,6 +145,10 @@ impl CallContext {
         }
     }
 
+    pub(crate) fn arg(&self, nth: usize) -> &Value {
+        self.args().get(nth).unwrap_or(&Value::Undefined)
+    }
+
     pub(crate) fn args(&self) -> &[Value] {
         // SAFETY: `argv` is always non-null and a valid pointer to an array of `Value`s.
         unsafe {

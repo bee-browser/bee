@@ -26,6 +26,7 @@ pub use lambda::into_lambda;
 pub use object::Object;
 pub use object::ObjectFlags;
 pub use object::Property;
+pub use object::PropertyFlags;
 pub use object::PropertyKey;
 pub use promise::Promise;
 pub use string::String;

@@ -262,6 +262,7 @@ function parseArgs(text) {
   let args = [];
   let optional = false;
   let rest = false;
+  let name;
   for (const part of text.split(' ')) {
     switch (part) {
       case '[':
@@ -276,11 +277,10 @@ function parseArgs(text) {
         rest = true;
         break;
       default:
-        args.push({
-          name: part.substring(1, part.length - 1), // remove '_'
-          optional,
-          rest,
-        });
+        name = part.substring(1, part.length - 1); // remove '_'
+        if (name.length > 0) {
+          args.push({ name, optional, rest });
+        }
         rest = false;
         break;
     }

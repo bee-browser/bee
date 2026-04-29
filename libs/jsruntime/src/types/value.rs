@@ -31,6 +31,9 @@ base::static_assert_eq!(size_of::<Value>(), 16);
 base::static_assert_eq!(align_of::<Value>(), 8);
 
 impl Value {
+    pub const FALSE: Self = Value::Boolean(false);
+    pub const TRUE: Self = Value::Boolean(true);
+
     // There is no way to define const function to extract the discriminant of each variant.
     pub(crate) const KIND_NONE: u8 = 0;
     pub(crate) const KIND_UNDEFINED: u8 = 1;

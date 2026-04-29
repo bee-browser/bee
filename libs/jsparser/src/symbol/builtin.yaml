@@ -56,24 +56,33 @@
 - [async, ASYNC]
 - all
 - arguments
+- assign
 - at
 - cause
 - charAt
 - charCodeAt
 - codePointAt
 - concat
+- configurable
 - constructor
+- create
 - default
+- defineProperties
+- defineProperty
 - endsWith
+- enumerable
 - eval
 - fromCharCode
 - fromCodePoint
+- get
 - globalThis
+- hasOwnProperty
 - includes
 - indexOf
 - isError
 - isFinite
 - [isNaN, IS_NAN]
+- isPrototypeOf
 - isWellFormed
 - lastIndexOf
 - length
@@ -83,14 +92,19 @@
 - padStart
 - parseFloat
 - parseInt
+- propertyIsEnumerable
 - prototype
 - repeat
+- set
 - startsWith
 - substring
 - toString
 - trim
 - trimEnd
 - trimStart
+- value
+- valueOf
+- writable
 
 # Special symbols for internal use only.
 - ['-Infinity', NEG_INFINITY]

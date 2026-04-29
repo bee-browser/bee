@@ -37,6 +37,11 @@ fn test_13_2_5_1_duplicate_proto() {
 }
 
 #[test]
+fn test_15_2_5_1_private_method() {
+    parse_fail!(script: "static_semantics_13_2_5_1_private_method.js");
+}
+
+#[test]
 fn test_13_4_1_postfix_increment() {
     parse_fail!(script: "static_semantics_13_4_1_postfix_increment.js");
 }
@@ -124,6 +129,11 @@ fn test_14_9_1_label() {
 #[test]
 fn test_15_1_1() {
     parse_fail!(script: "static_semantics_15_1_1.js");
+}
+
+#[test]
+fn test_15_7_1_class_element_name() {
+    parse_fail!(script: "static_semantics_15_7_1_class_element_name.js");
 }
 
 #[test]

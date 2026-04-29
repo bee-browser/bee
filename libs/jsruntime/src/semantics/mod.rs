@@ -1,3 +1,5 @@
+logging::define_logger! {"bee::jsruntime::semantics"}
+
 mod scope;
 
 use bitflags::bitflags;
@@ -28,7 +30,6 @@ use crate::Runtime;
 use crate::Value;
 use crate::lambda::LambdaId;
 use crate::lambda::LambdaKind;
-use crate::logger;
 use crate::types::Property;
 
 use scope::ScopeTreeBuilder;
@@ -438,6 +439,7 @@ where
             Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
             Node::ArrowFunction => self.handle_arrow_function(),
             Node::AsyncArrowFunction => self.handle_async_arrow_function(),
+            Node::Method => self.handle_method(),
             Node::AwaitExpression => self.handle_await_expression(),
             Node::Then(expr) => self.handle_then(expr),
             Node::Else(expr) => self.handle_else(expr),
@@ -841,6 +843,13 @@ where
 
         // Node::ArrowFunction for the outer ramp function.
         self.do_handle_arrow_function(false);
+    }
+
+    fn handle_method(&mut self) {
+        self.end_function_scope();
+
+        let func = self.functions.last().unwrap();
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, true, false);
     }
 
     fn do_handle_arrow_function(&mut self, coroutine: bool) {
@@ -1578,6 +1587,9 @@ impl FunctionAnalysis {
                     // 8.4.5 Runtime Semantics: NamedEvaluation
                     *self.commands.last_mut().unwrap() = CompileCommand::Function(symbol);
                 }
+                self.commands.push(CompileCommand::CreateDataProperty);
+            }
+            PropertyDefinitionKind::Method => {
                 self.commands.push(CompileCommand::CreateDataProperty);
             }
             PropertyDefinitionKind::Spread => {
