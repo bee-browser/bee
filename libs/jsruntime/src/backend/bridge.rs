@@ -200,8 +200,8 @@ pub(crate) extern "C" fn runtime_to_object<X>(
 ) -> Status {
     logger::debug!(event = "runtime_to_object", ?value);
     match runtime.value_to_object(value) {
-        Ok(value) => {
-            *retv = value;
+        Ok(object) => {
+            *retv = Value::Object(object);
             Status::Normal
         }
         Err(err) => {
@@ -213,7 +213,7 @@ pub(crate) extern "C" fn runtime_to_object<X>(
 
 impl<X> Runtime<X> {
     // 7.1.18 ToObject ( argument )
-    pub(crate) fn value_to_object(&mut self, value: &Value) -> Result<Value, Error> {
+    pub(crate) fn value_to_object(&mut self, value: &Value) -> Result<HandleMut<Object>, Error> {
         logger::debug!(event = "to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
@@ -226,9 +226,12 @@ impl<X> Runtime<X> {
             }
             Value::String(value) => {
                 // TODO(refactor): rewrite using `new String(value)`
-                self.create_string_object(None, &[Value::String(*value)], true)
+                match self.create_string_object(None, &[Value::String(*value)], true)? {
+                    Value::Object(object) => Ok(object),
+                    _ => unreachable!(),
+                }
             }
-            Value::Object(_) => Ok(value.clone()),
+            Value::Object(object) => Ok(*object),
         }
     }
 }

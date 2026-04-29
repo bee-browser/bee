@@ -30,20 +30,14 @@ pub fn object_assign<X>(
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_assign");
     let target = context.arg(0);
-    let mut to = match runtime.value_to_object(target)? {
-        Value::Object(object) => object,
-        _ => unreachable!(),
-    };
+    let mut to = runtime.value_to_object(target)?;
     // TODO(feat): `sources` is a rest parameter.
     for arg in context.args().iter().skip(1) {
         match arg {
             Value::None => unreachable!(),
             Value::Null | Value::Undefined => continue,
             _ => {
-                let from = match runtime.value_to_object(arg)? {
-                    Value::Object(object) => object,
-                    _ => unreachable!(),
-                };
+                let from = runtime.value_to_object(arg)?;
                 for (key, prop) in from.iter_own_properties() {
                     if prop.is_enumerable() {
                         to.set_value(key, prop.value());
@@ -114,6 +108,20 @@ pub fn object_define_property<X>(
     Ok(Value::Object(obj))
 }
 
+//#sec-object.prototype.hasownproperty prototype.function
+pub fn object_prototype_has_own_property<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "object_prototype_has_own_property");
+    let key = runtime.value_to_property_key(context.arg(0))?;
+    let obj = runtime.value_to_object(context.this())?;
+    match obj.get_own_property(&key) {
+        Some(_) => Ok(Value::Boolean(true)),
+        None => Ok(Value::Boolean(false)),
+    }
+}
+
 // helpers
 
 impl<X> Runtime<X> {
@@ -123,10 +131,7 @@ impl<X> Runtime<X> {
         mut obj: HandleMut<Object>,
         properties: &Value,
     ) -> Result<HandleMut<Object>, Error> {
-        let props = match self.value_to_object(properties)? {
-            Value::Object(object) => object,
-            _ => unreachable!(),
-        };
+        let props = self.value_to_object(properties)?;
         for (key, prop) in props.iter_own_properties() {
             let desc_obj = prop.value();
             if !matches!(desc_obj, Value::Undefined) && prop.is_enumerable() {
@@ -240,7 +245,7 @@ impl<X> Runtime<X> {
                     // TODO(feat): NewTarget
                     Ok(Value::Object(object))
                 }
-                Some(value) => self.value_to_object(value),
+                Some(value) => Ok(Value::Object(self.value_to_object(value)?)),
             }
         }
     }
