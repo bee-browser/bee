@@ -82,6 +82,7 @@
 - isError
 - isFinite
 - [isNaN, IS_NAN]
+- isPrototypeOf
 - isWellFormed
 - lastIndexOf
 - length

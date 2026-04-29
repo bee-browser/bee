@@ -122,6 +122,28 @@ pub fn object_prototype_has_own_property<X>(
     }
 }
 
+//#sec-object.prototype.isprototypeof prototype.function
+pub fn object_prototype_is_prototype_of<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "object_prototype_is_prototype_of");
+    let mut value = match context.arg(0) {
+        Value::Object(v) => *v,
+        _ => return Ok(Value::FALSE),
+    };
+    let obj = runtime.value_to_object(context.this())?;
+    loop {
+        value = match value.prototype() {
+            Some(v) => v,
+            None => return Ok(Value::FALSE),
+        };
+        if obj == value {
+            return Ok(Value::TRUE);
+        }
+    }
+}
+
 // helpers
 
 impl<X> Runtime<X> {

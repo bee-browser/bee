@@ -249,6 +249,10 @@ impl Object {
         }
     }
 
+    pub fn prototype(&self) -> Option<HandleMut<Object>> {
+        self.prototype
+    }
+
     pub fn set_prototype(&mut self, prototype: HandleMut<Object>) {
         self.prototype = Some(prototype);
     }
