@@ -158,6 +158,37 @@ pub fn object_prototype_property_is_enumerable<X>(
     }
 }
 
+//#sec-object.prototype.tostring prototype.function
+pub fn object_prototype_to_string<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "object_prototype_to_string");
+    match context.this() {
+        Value::None => unreachable!(),
+        Value::Undefined => Ok(Value::String(const_string_handle!("[object Undefined]"))),
+        Value::Null => Ok(Value::String(const_string_handle!("[object Null]"))),
+        this => {
+            let obj = runtime.value_to_object(this)?;
+            // TODO(feat): IsArray(obj), "[object Array]"
+            // TODO(feat): "[object Arguments]"
+            if obj.is_callable() {
+                Ok(Value::String(const_string_handle!("[object Function]")))
+            } else if obj.is_error() {
+                Ok(Value::String(const_string_handle!("[object Error]")))
+            } else {
+                // TODO(feat): "[object Boolean]"
+                // TODO(feat): "[object Number]"
+                // TODO(feat): "[object String]"
+                // TODO(feat): "[object Date]"
+                // TODO(feat): "[object RegExp]"
+                // TODO(feat): Get(obj, %Symbol.toStringTag%)
+                Ok(Value::String(const_string_handle!("[object Object]")))
+            }
+        }
+    }
+}
+
 // helpers
 
 impl<X> Runtime<X> {
