@@ -11,6 +11,7 @@ use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::PropertyFlags;
+use crate::types::PropertyKey;
 use crate::types::Value;
 
 //#sec-object-value constructor
@@ -96,6 +97,23 @@ pub fn object_define_properties<X>(
     ))
 }
 
+//#sec-object.defineproperty constructor.function
+pub fn object_define_property<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "object_define_property");
+    let mut obj = match context.arg(0) {
+        Value::None => unreachable!(),
+        Value::Object(object) => *object,
+        _ => return type_error!("Object.defineProperty called on non-object"),
+    };
+    let key = runtime.value_to_property_key(context.arg(1))?;
+    let prop = runtime.value_to_property(context.arg(2))?;
+    obj.define_own_property(key, prop)?;
+    Ok(Value::Object(obj))
+}
+
 // helpers
 
 impl<X> Runtime<X> {
@@ -112,15 +130,24 @@ impl<X> Runtime<X> {
         for (key, prop) in props.iter_own_properties() {
             let desc_obj = prop.value();
             if !matches!(desc_obj, Value::Undefined) && prop.is_enumerable() {
-                let new_prop = self.property_descriptor_to_property(desc_obj)?;
+                let new_prop = self.value_to_property(desc_obj)?;
                 obj.define_own_property(key.clone(), new_prop)?;
             }
         }
         Ok(obj)
     }
 
+    // 7.1.19 ToPropertyKey ( argument )
+    fn value_to_property_key(&mut self, value: &Value) -> Result<PropertyKey, Error> {
+        // TODO: ToPrimitive(value, STRING)
+        let string = self.value_to_string(value)?;
+        // TODO(perf): inefficient
+        let symbol = self.symbol_registry.intern_utf16(string.make_utf16());
+        Ok(symbol.into())
+    }
+
     // 6.2.6.5 ToPropertyDescriptor ( obj )
-    fn property_descriptor_to_property(&mut self, desc: &Value) -> Result<Property, Error> {
+    fn value_to_property(&mut self, desc: &Value) -> Result<Property, Error> {
         let obj = match desc {
             Value::None => unreachable!(),
             Value::Object(obj) => *obj,

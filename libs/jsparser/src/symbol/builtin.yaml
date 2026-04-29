@@ -68,6 +68,7 @@
 - create
 - default
 - defineProperties
+- defineProperty
 - endsWith
 - enumerable
 - eval
