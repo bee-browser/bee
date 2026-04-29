@@ -117,8 +117,8 @@ pub fn object_prototype_has_own_property<X>(
     let key = runtime.value_to_property_key(context.arg(0))?;
     let obj = runtime.value_to_object(context.this())?;
     match obj.get_own_property(&key) {
-        Some(_) => Ok(Value::Boolean(true)),
-        None => Ok(Value::Boolean(false)),
+        Some(_) => Ok(Value::TRUE),
+        None => Ok(Value::FALSE),
     }
 }
 
@@ -141,6 +141,20 @@ pub fn object_prototype_is_prototype_of<X>(
         if obj == value {
             return Ok(Value::TRUE);
         }
+    }
+}
+
+//#sec-object.prototype.propertyisenumerable prototype.function
+pub fn object_prototype_property_is_enumerable<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "object_prototype_property_is_enumerable");
+    let key = runtime.value_to_property_key(context.arg(0))?;
+    let obj = runtime.value_to_object(context.this())?;
+    match obj.get_own_property(&key) {
+        Some(prop) => Ok(Value::Boolean(prop.is_enumerable())),
+        None => Ok(Value::FALSE),
     }
 }
 

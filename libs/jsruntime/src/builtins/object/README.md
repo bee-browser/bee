@@ -28,7 +28,7 @@
 * [ ] [Object.prototype.constructor](https://tc39.es/ecma262/#sec-object.prototype.constructor)
 * [x] [Object.prototype.hasOwnProperty](https://tc39.es/ecma262/#sec-object.prototype.hasownproperty)
 * [x] [Object.prototype.isPrototypeOf](https://tc39.es/ecma262/#sec-object.prototype.isprototypeof)
-* [ ] [Object.prototype.propertyIsEnumerable](https://tc39.es/ecma262/#sec-object.prototype.propertyisenumerable)
+* [x] [Object.prototype.propertyIsEnumerable](https://tc39.es/ecma262/#sec-object.prototype.propertyisenumerable)
 * [ ] [Object.prototype.toLocaleString](https://tc39.es/ecma262/#sec-object.prototype.tolocalestring)
 * [ ] [Object.prototype.toString](https://tc39.es/ecma262/#sec-object.prototype.tostring)
 * [ ] [Object.prototype.valueOf](https://tc39.es/ecma262/#sec-object.prototype.valueof)

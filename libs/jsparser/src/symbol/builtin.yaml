@@ -92,6 +92,7 @@
 - padStart
 - parseFloat
 - parseInt
+- propertyIsEnumerable
 - prototype
 - repeat
 - set
