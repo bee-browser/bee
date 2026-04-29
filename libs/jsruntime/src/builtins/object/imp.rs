@@ -189,6 +189,15 @@ pub fn object_prototype_to_string<X>(
     }
 }
 
+//#sec-object.prototype.valueof prototype.function
+pub fn object_prototype_value_of<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "object_prototype_value_of");
+    Ok(Value::Object(runtime.value_to_object(context.this())?))
+}
+
 // helpers
 
 impl<X> Runtime<X> {

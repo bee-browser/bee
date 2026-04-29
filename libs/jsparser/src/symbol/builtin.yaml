@@ -103,6 +103,7 @@
 - trimEnd
 - trimStart
 - value
+- valueOf
 - writable
 
 # Special symbols for internal use only.
