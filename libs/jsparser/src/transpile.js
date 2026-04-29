@@ -170,6 +170,7 @@ class Transpiler {
           modifyOptionalChain,
           modifyFunctionDeclaration,
           modifyAsyncFunctionDeclaration,
+          modifyMethodDefinition,
           modifyIfStatement,
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
@@ -865,6 +866,26 @@ function modifyAsyncFunctionDeclaration(rules) {
   const rule = rules.find((rule) =>
     rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]'
   );
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyMethodDefinition(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying MethodDefinition...');
+  const rule = rules.find((rule) => rule.name === 'MethodDefinition[Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;

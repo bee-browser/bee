@@ -2245,8 +2245,8 @@
     StatementListItem_Yield_Await_Return
   action: append_to_list
 - rule: >-
-    MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody
-    RBRACE
+    MethodDefinition -> ClassElementName _FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition
 - rule: MethodDefinition -> GeneratorMethod
   action: nop
@@ -2254,11 +2254,13 @@
   action: nop
 - rule: MethodDefinition -> AsyncGeneratorMethod
   action: nop
-- rule: MethodDefinition -> GET ClassElementName LPAREN RPAREN LBRACE FunctionBody RBRACE
+- rule: >-
+    MethodDefinition -> GET ClassElementName _FUNCTION_CONTEXT_ LPAREN RPAREN _FUNCTION_SIGNATURE_
+    LBRACE FunctionBody RBRACE
   action: method_definition_get
 - rule: >-
-    MethodDefinition -> SET ClassElementName LPAREN PropertySetParameterList RPAREN LBRACE
-    FunctionBody RBRACE
+    MethodDefinition -> SET ClassElementName _FUNCTION_CONTEXT_ LPAREN PropertySetParameterList
+    RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_set
 - rule: FieldDefinition -> ClassElementName
   action: property_definition
@@ -2267,8 +2269,8 @@
 - rule: ClassStaticBlock -> STATIC LBRACE ClassStaticBlockBody RBRACE
   action: static_block
 - rule: >-
-    MethodDefinition_Await -> ClassElementName_Await LPAREN UniqueFormalParameters RPAREN LBRACE
-    FunctionBody RBRACE
+    MethodDefinition_Await -> ClassElementName_Await _FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition
 - rule: MethodDefinition_Await -> GeneratorMethod_Await
   action: nop
@@ -2276,11 +2278,13 @@
   action: nop
 - rule: MethodDefinition_Await -> AsyncGeneratorMethod_Await
   action: nop
-- rule: MethodDefinition_Await -> GET ClassElementName_Await LPAREN RPAREN LBRACE FunctionBody RBRACE
+- rule: >-
+    MethodDefinition_Await -> GET ClassElementName_Await _FUNCTION_CONTEXT_ LPAREN RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_get
 - rule: >-
-    MethodDefinition_Await -> SET ClassElementName_Await LPAREN PropertySetParameterList RPAREN
-    LBRACE FunctionBody RBRACE
+    MethodDefinition_Await -> SET ClassElementName_Await _FUNCTION_CONTEXT_ LPAREN
+    PropertySetParameterList RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_set
 - rule: FieldDefinition_Await -> ClassElementName_Await
   action: property_definition
@@ -4525,8 +4529,8 @@
 - rule: CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
   action: cover_initialized_name
 - rule: >-
-    MethodDefinition_Yield -> ClassElementName_Yield LPAREN UniqueFormalParameters RPAREN LBRACE
-    FunctionBody RBRACE
+    MethodDefinition_Yield -> ClassElementName_Yield _FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition
 - rule: MethodDefinition_Yield -> GeneratorMethod_Yield
   action: nop
@@ -4534,11 +4538,13 @@
   action: nop
 - rule: MethodDefinition_Yield -> AsyncGeneratorMethod_Yield
   action: nop
-- rule: MethodDefinition_Yield -> GET ClassElementName_Yield LPAREN RPAREN LBRACE FunctionBody RBRACE
+- rule: >-
+    MethodDefinition_Yield -> GET ClassElementName_Yield _FUNCTION_CONTEXT_ LPAREN RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_get
 - rule: >-
-    MethodDefinition_Yield -> SET ClassElementName_Yield LPAREN PropertySetParameterList RPAREN
-    LBRACE FunctionBody RBRACE
+    MethodDefinition_Yield -> SET ClassElementName_Yield _FUNCTION_CONTEXT_ LPAREN
+    PropertySetParameterList RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_set
 - rule: ClassElementList_Yield -> ClassElement_Yield
   action: class_element_list
@@ -4581,8 +4587,8 @@
 - rule: CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await Initializer_In_Yield_Await
   action: cover_initialized_name
 - rule: >-
-    MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN UniqueFormalParameters
-    RPAREN LBRACE FunctionBody RBRACE
+    MethodDefinition_Yield_Await -> ClassElementName_Yield_Await _FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition
 - rule: MethodDefinition_Yield_Await -> GeneratorMethod_Yield_Await
   action: nop
@@ -4591,12 +4597,12 @@
 - rule: MethodDefinition_Yield_Await -> AsyncGeneratorMethod_Yield_Await
   action: nop
 - rule: >-
-    MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await LPAREN RPAREN LBRACE
-    FunctionBody RBRACE
+    MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await _FUNCTION_CONTEXT_ LPAREN
+    RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_get
 - rule: >-
-    MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await LPAREN
-    PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE
+    MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await _FUNCTION_CONTEXT_ LPAREN
+    PropertySetParameterList RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_set
 - rule: ClassElementList_Yield_Await -> ClassElement_Yield_Await
   action: class_element_list

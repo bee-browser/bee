@@ -2468,9 +2468,10 @@
     StatementListItem_Yield_Await_Return
   action: process_statement_list_item
 - rule: >-
-    MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN
-    LBRACE FunctionBody RBRACE
-  action: undefined
+    MethodDefinition -> ClassElementName _FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody
+    RBRACE
+  action: process_method_definition
 - rule: MethodDefinition -> GeneratorMethod
   action: undefined
 - rule: MethodDefinition -> AsyncMethod
@@ -2478,12 +2479,13 @@
 - rule: MethodDefinition -> AsyncGeneratorMethod
   action: undefined
 - rule: >-
-    MethodDefinition -> GET ClassElementName LPAREN RPAREN LBRACE FunctionBody
-    RBRACE
+    MethodDefinition -> GET ClassElementName _FUNCTION_CONTEXT_ LPAREN RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: undefined
 - rule: >-
-    MethodDefinition -> SET ClassElementName LPAREN PropertySetParameterList
-    RPAREN LBRACE FunctionBody RBRACE
+    MethodDefinition -> SET ClassElementName _FUNCTION_CONTEXT_ LPAREN
+    PropertySetParameterList RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody
+    RBRACE
   action: undefined
 - rule: FieldDefinition -> ClassElementName
   action: undefined
@@ -2492,9 +2494,10 @@
 - rule: ClassStaticBlock -> STATIC LBRACE ClassStaticBlockBody RBRACE
   action: undefined
 - rule: >-
-    MethodDefinition_Await -> ClassElementName_Await LPAREN
-    UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    MethodDefinition_Await -> ClassElementName_Await _FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody
+    RBRACE
+  action: process_method_definition
 - rule: MethodDefinition_Await -> GeneratorMethod_Await
   action: undefined
 - rule: MethodDefinition_Await -> AsyncMethod_Await
@@ -2502,12 +2505,13 @@
 - rule: MethodDefinition_Await -> AsyncGeneratorMethod_Await
   action: undefined
 - rule: >-
-    MethodDefinition_Await -> GET ClassElementName_Await LPAREN RPAREN LBRACE
-    FunctionBody RBRACE
+    MethodDefinition_Await -> GET ClassElementName_Await _FUNCTION_CONTEXT_
+    LPAREN RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: undefined
 - rule: >-
-    MethodDefinition_Await -> SET ClassElementName_Await LPAREN
-    PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE
+    MethodDefinition_Await -> SET ClassElementName_Await _FUNCTION_CONTEXT_
+    LPAREN PropertySetParameterList RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    FunctionBody RBRACE
   action: undefined
 - rule: FieldDefinition_Await -> ClassElementName_Await
   action: undefined
@@ -3046,9 +3050,9 @@
 - rule: StatementListItem_Yield_Await_Return -> Declaration_Yield_Await
   action: nop
 - rule: ClassElementName -> PropertyName
-  action: undefined
+  action: process_class_element_name_property_name
 - rule: ClassElementName -> PRIVATE_IDENTIFIER
-  action: undefined
+  action: process_class_element_name_private_identifier
 - rule: >-
     GeneratorMethod -> MUL ClassElementName LPAREN UniqueFormalParameters_Yield
     RPAREN LBRACE GeneratorBody RBRACE
@@ -3067,9 +3071,9 @@
 - rule: ClassStaticBlockBody -> ClassStaticBlockStatementList
   action: undefined
 - rule: ClassElementName_Await -> PropertyName_Await
-  action: undefined
+  action: process_class_element_name_property_name
 - rule: ClassElementName_Await -> PRIVATE_IDENTIFIER
-  action: undefined
+  action: process_class_element_name_private_identifier
 - rule: >-
     GeneratorMethod_Await -> MUL ClassElementName_Await LPAREN
     UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
@@ -3519,7 +3523,7 @@
     AssignmentExpression_In_Await
   action: process_property_definition_key_value
 - rule: PropertyDefinition_Await -> MethodDefinition_Await
-  action: undefined
+  action: process_property_definition_method
 - rule: PropertyDefinition_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: process_property_definition_spread
 - rule: _TO_STRING_ -> (empty)
@@ -4097,7 +4101,7 @@
 - rule: PropertyDefinition -> PropertyName COLON AssignmentExpression_In
   action: process_property_definition_key_value
 - rule: PropertyDefinition -> MethodDefinition
-  action: undefined
+  action: process_property_definition_method
 - rule: PropertyDefinition -> ELLIPSIS AssignmentExpression_In
   action: process_property_definition_spread
 - rule: TemplateSpans -> _TEMPLATE_TAIL_
@@ -4440,7 +4444,7 @@
     AssignmentExpression_In_Yield
   action: process_property_definition_key_value
 - rule: PropertyDefinition_Yield -> MethodDefinition_Yield
-  action: undefined
+  action: process_property_definition_method
 - rule: PropertyDefinition_Yield -> ELLIPSIS AssignmentExpression_In_Yield
   action: process_property_definition_spread
 - rule: ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield
@@ -4480,7 +4484,7 @@
     AssignmentExpression_In_Yield_Await
   action: process_property_definition_key_value
 - rule: PropertyDefinition_Yield_Await -> MethodDefinition_Yield_Await
-  action: undefined
+  action: process_property_definition_method
 - rule: >-
     PropertyDefinition_Yield_Await -> ELLIPSIS
     AssignmentExpression_In_Yield_Await
@@ -5067,9 +5071,10 @@
 - rule: CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
   action: process_cover_initialized_name
 - rule: >-
-    MethodDefinition_Yield -> ClassElementName_Yield LPAREN
-    UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    MethodDefinition_Yield -> ClassElementName_Yield _FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody
+    RBRACE
+  action: process_method_definition
 - rule: MethodDefinition_Yield -> GeneratorMethod_Yield
   action: undefined
 - rule: MethodDefinition_Yield -> AsyncMethod_Yield
@@ -5077,12 +5082,13 @@
 - rule: MethodDefinition_Yield -> AsyncGeneratorMethod_Yield
   action: undefined
 - rule: >-
-    MethodDefinition_Yield -> GET ClassElementName_Yield LPAREN RPAREN LBRACE
-    FunctionBody RBRACE
+    MethodDefinition_Yield -> GET ClassElementName_Yield _FUNCTION_CONTEXT_
+    LPAREN RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: undefined
 - rule: >-
-    MethodDefinition_Yield -> SET ClassElementName_Yield LPAREN
-    PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE
+    MethodDefinition_Yield -> SET ClassElementName_Yield _FUNCTION_CONTEXT_
+    LPAREN PropertySetParameterList RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    FunctionBody RBRACE
   action: undefined
 - rule: ClassElementList_Yield -> ClassElement_Yield
   action: undefined
@@ -5131,9 +5137,10 @@
     Initializer_In_Yield_Await
   action: process_cover_initialized_name
 - rule: >-
-    MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN
-    UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    MethodDefinition_Yield_Await -> ClassElementName_Yield_Await
+    _FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters RPAREN _FUNCTION_SIGNATURE_
+    LBRACE FunctionBody RBRACE
+  action: process_method_definition
 - rule: MethodDefinition_Yield_Await -> GeneratorMethod_Yield_Await
   action: undefined
 - rule: MethodDefinition_Yield_Await -> AsyncMethod_Yield_Await
@@ -5141,12 +5148,14 @@
 - rule: MethodDefinition_Yield_Await -> AsyncGeneratorMethod_Yield_Await
   action: undefined
 - rule: >-
-    MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await LPAREN
-    RPAREN LBRACE FunctionBody RBRACE
+    MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await
+    _FUNCTION_CONTEXT_ LPAREN RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody
+    RBRACE
   action: undefined
 - rule: >-
-    MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await LPAREN
-    PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE
+    MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await
+    _FUNCTION_CONTEXT_ LPAREN PropertySetParameterList RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: undefined
 - rule: ClassElementList_Yield_Await -> ClassElement_Yield_Await
   action: undefined
@@ -5293,9 +5302,9 @@
 - rule: ShiftExpression_Yield -> ShiftExpression_Yield SHR AdditiveExpression_Yield
   action: process_unsigned_right_shift
 - rule: ClassElementName_Yield -> PropertyName_Yield
-  action: undefined
+  action: process_class_element_name_property_name
 - rule: ClassElementName_Yield -> PRIVATE_IDENTIFIER
-  action: undefined
+  action: process_class_element_name_private_identifier
 - rule: >-
     GeneratorMethod_Yield -> MUL ClassElementName_Yield LPAREN
     UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
@@ -5337,9 +5346,9 @@
     AdditiveExpression_Yield_Await
   action: process_unsigned_right_shift
 - rule: ClassElementName_Yield_Await -> PropertyName_Yield_Await
-  action: undefined
+  action: process_class_element_name_property_name
 - rule: ClassElementName_Yield_Await -> PRIVATE_IDENTIFIER
-  action: undefined
+  action: process_class_element_name_private_identifier
 - rule: >-
     GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await LPAREN
     UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
