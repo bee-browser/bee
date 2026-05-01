@@ -55,7 +55,7 @@
     "npm:change-case@5.4.4": "5.4.4",
     "npm:deep-diff@1.0.2": "1.0.2",
     "npm:handlebars@4.7.9": "4.7.9",
-    "npm:jsdom@29.1.0": "29.1.0",
+    "npm:jsdom@29.1.1": "29.1.1",
     "npm:mustache@4.2.0": "4.2.0",
     "npm:ora@9.4.0": "9.4.0",
     "npm:path-to-regexp@^6.3.0": "6.3.0",
@@ -470,8 +470,8 @@
       ],
       "bin": true
     },
-    "jsdom@29.1.0": {
-      "integrity": "sha512-YNUc7fB9QuvSSQWfrH0xF+TyABkxUwx8sswgIDaCrw4Hol8BghdZDkITtZheRJeMtzWlnTfsM3bBBusRvpO1wg==",
+    "jsdom@29.1.1": {
+      "integrity": "sha512-ECi4Fi2f7BdJtUKTflYRTiaMxIB0O6zfR1fX0GXpUrf6flp8QIYn1UT20YQqdSOfk2dfkCwS8LAFoJDEppNK5Q==",
       "dependencies": [
         "@asamuzakjp/css-color",
         "@asamuzakjp/dom-selector",
@@ -815,7 +815,7 @@
       "npm:change-case@5.4.4",
       "npm:deep-diff@1.0.2",
       "npm:handlebars@4.7.9",
-      "npm:jsdom@29.1.0",
+      "npm:jsdom@29.1.1",
       "npm:mustache@4.2.0",
       "npm:ora@9.4.0",
       "npm:test262-stream@1.4.0"
