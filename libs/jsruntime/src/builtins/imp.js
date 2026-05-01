@@ -112,7 +112,7 @@ function dataStream(impRs) {
       log.error(`Incorrect ID line: ${line}`);
       Deno.exit(1);
     }
-    let options = undefined;
+    let options = {};
     if (parts.length > 2) {
       options = JSON.parse(parts.slice(2).join(' '));
     }

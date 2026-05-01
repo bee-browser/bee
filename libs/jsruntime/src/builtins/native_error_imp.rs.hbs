@@ -13,12 +13,13 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::String;
 use crate::types::Value;
+
+use crate::logger;
 
 //#sec-nativeerror constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
@@ -44,10 +45,11 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
         message => {
             let msg = runtime.value_to_string(message)?;
             // TODO: error handling
-            let _ = object.define_own_property(
+            let result = object.define_own_property(
                 Symbol::MESSAGE.into(),
                 Property::data_wxc(Value::String(msg)),
             );
+            debug_assert!(matches!(result, Ok(true)));
         }
     }
 
@@ -55,7 +57,8 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
         let key = Symbol::CAUSE.into();
         if let Some(value) = value.get_value(&key) {
             // TODO: error handling
-            let _ = object.define_own_property(key, Property::data_wxc(value.clone()));
+            let result = object.define_own_property(key, Property::data_wxc(value.clone()));
+            debug_assert!(matches!(result, Ok(true)));
         }
     }
 
@@ -64,18 +67,20 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
 //#sec-nativeerror.prototype.message prototype.property
 pub fn {{id}}_prototype_message<X>(_runtime: &mut Runtime<X>, mut prototype: HandleMut<Object>) {
-    let _ = prototype.define_own_property(
+    let result = prototype.define_own_property(
         Symbol::MESSAGE.into(),
         Property::data_xxx(Value::String(crate::types::string::EMPTY)),
     );
+    debug_assert!(matches!(result, Ok(true)));
 }
 
 //#sec-nativeerror.prototype.name prototype.property
 pub fn {{id}}_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: HandleMut<Object>) {
-    let _ = prototype.define_own_property(
+    let result = prototype.define_own_property(
         Symbol::NAME.into(),
         Property::data_xxx(Value::String(const_string_handle!("{{class}}"))),
     );
+    debug_assert!(matches!(result, Ok(true)));
 }
 
 impl<X> Runtime<X> {
@@ -84,10 +89,11 @@ impl<X> Runtime<X> {
         let mut object = self.create_object();
         object.set_prototype(self.builtins.{{id}}_prototype);
         if let Some(msg) = msg {
-            let _ = object.define_own_property(
+            let result = object.define_own_property(
                 Symbol::MESSAGE.into(),
                 Property::data_wxc(Value::String(msg)),
             );
+            debug_assert!(matches!(result, Ok(true)));
         }
         object
     }

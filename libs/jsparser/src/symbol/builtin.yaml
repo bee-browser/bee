@@ -55,6 +55,7 @@
 - [NaN, NAN]
 - [async, ASYNC]
 - all
+- apply
 - arguments
 - assign
 - at

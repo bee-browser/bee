@@ -59,8 +59,14 @@ impl From<f64> for PropertyKey {
 impl Hash for PropertyKey {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
-            Self::Symbol(v) => state.write_u32(v.id()),
-            Self::Number(v) => state.write_u64(v.to_bits()),
+            Self::Symbol(v) => {
+                state.write_u8(1);
+                state.write_u64(v.id() as u64);
+            }
+            Self::Number(v) => {
+                state.write_u8(2);
+                state.write_u64(v.to_bits());
+            }
         }
     }
 }

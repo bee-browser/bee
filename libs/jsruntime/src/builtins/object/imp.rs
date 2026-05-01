@@ -6,13 +6,14 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::PropertyFlags;
 use crate::types::PropertyKey;
 use crate::types::Value;
+
+use super::logger;
 
 //#sec-object-value constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {

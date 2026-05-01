@@ -1,3 +1,5 @@
+logging::define_logger! {"bee::jsruntime::builtins"}
+
 mod aggregate_error;
 mod error;
 mod eval_error;
@@ -22,7 +24,6 @@ use crate::Error;
 use crate::ErrorKind;
 use crate::Runtime;
 use crate::lambda::LambdaId;
-use crate::logger;
 use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Property;
@@ -128,10 +129,11 @@ impl<X> Runtime<X> {
         func.set_closure(closure);
         if let Some(prototype) = params.prototype {
             func.set_constructor();
-            let _ = func.define_own_property(
+            let result = func.define_own_property(
                 Symbol::PROTOTYPE.into(),
                 Property::data_xxx(Value::Object(prototype)),
             );
+            debug_assert!(matches!(result, Ok(true)));
         }
         self.set_function_length(&mut func, params.length);
         // TODO: prefix
@@ -141,16 +143,18 @@ impl<X> Runtime<X> {
 
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
     fn set_function_name(&mut self, func: &mut HandleMut<Object>, name: Handle<String>) {
-        let _ =
+        let result =
             func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
+        debug_assert!(matches!(result, Ok(true)));
     }
 
     // 10.2.10 SetFunctionLength ( F, length )
     fn set_function_length(&mut self, func: &mut HandleMut<Object>, length: u16) {
-        let _ = func.define_own_property(
+        let result = func.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxc(Value::Number(length as f64)),
         );
+        debug_assert!(matches!(result, Ok(true)));
     }
 
     // 7.1.4 ToNumber ( argument )
@@ -190,7 +194,7 @@ impl<X> Runtime<X> {
         if len < 0.0 {
             Ok(0)
         } else {
-            Ok(len.min(0x1F_FFFF_FFFF_FFFFu64 as f64) as u64)
+            Ok(len.min(crate::types::number::MAX_SAFE_INTEGER) as u64)
         }
     }
 
@@ -262,6 +266,36 @@ impl<X> Runtime<X> {
         } else {
             s.repeat(n, &mut self.heap)
         }
+    }
+
+    //#sec-lengthofarraylike
+    fn length_of_array_like(&mut self, obj: HandleMut<Object>) -> Result<f64, Error> {
+        logger::debug!(event = "runtime.length_of_array_like", ?obj);
+        let value = obj
+            .get_value(&Symbol::LENGTH.into())
+            .unwrap_or(&Value::Undefined);
+        Ok(self.value_to_length(value)? as f64)
+    }
+
+    //#sec-createlistfromarraylike
+    fn create_vec_from_array_like(&mut self, obj: &Value) -> Result<Vec<Value>, Error> {
+        logger::debug!(event = "runtime.create_vec_from_array_like", ?obj);
+        // TODO(feat): validElementTypes
+        let obj = match obj {
+            Value::None => unreachable!(),
+            Value::Object(v) => *v,
+            _ => return type_error!(),
+        };
+        let len = self.length_of_array_like(obj)?;
+        let mut values = Vec::with_capacity(len as usize);
+        let mut index = 0.0;
+        while index < len {
+            let next = obj.get_value(&index.into()).unwrap_or(&Value::Undefined);
+            // TODO(feat): validElementTypes
+            values.push(next.clone());
+            index += 1.0;
+        }
+        Ok(values)
     }
 }
 

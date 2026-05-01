@@ -267,11 +267,12 @@ impl<X> Runtime<X> {
         &mut self,
         caller: &CallContext,
         callable: HandleMut<Object>,
+        this: &Value,
         args: &mut [Value],
         retv: &mut Value,
     ) -> Status {
         let closure = callable.closure();
-        let mut context = caller.new_child(callable, closure, args);
+        let mut context = caller.new_child(callable, closure, this, args);
         let lambda = Lambda::from(closure.lambda);
         lambda(self, &mut context, retv)
     }

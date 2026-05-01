@@ -93,11 +93,12 @@ impl CallContext {
         &self,
         func: HandleMut<Object>,
         closure: HandleMut<Closure>,
+        this: &Value,
         args: &mut [Value],
     ) -> Self {
         Self {
             envp: closure.as_ptr() as *mut std::ffi::c_void,
-            this: Value::Undefined,
+            this: this.clone(),
             func: Some(func),
             caller: self,
             flags: CallContextFlags::empty(),

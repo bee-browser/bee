@@ -7,13 +7,13 @@ use jsgc::HandleMut;
 use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
-use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Status;
 use crate::types::Value;
 
 use super::BuiltinFunctionParams;
+use super::logger;
 
 //#sec-promise-executor constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
@@ -50,6 +50,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
     if let Status::Exception = runtime.call(
         context,
         executor,
+        &Value::Undefined,
         &mut [Value::Object(resolve), Value::Object(reject)],
         &mut retv,
     ) {
