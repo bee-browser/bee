@@ -38,10 +38,10 @@ pub fn function_prototype_apply<X>(
         Value::None => unreachable!(),
         Value::Undefined | Value::Null => {
             // TODO: PrepareForTailCall()
-            runtime.call(context, func, this, &mut [], retv)
+            runtime.call(context, func, this, &[], retv)
         }
         args => {
-            let mut args = match runtime.create_vec_from_array_like(args) {
+            let args = match runtime.create_vec_from_array_like(args) {
                 Ok(args) => args,
                 Err(err) => {
                     *retv = runtime.create_exception(err);
@@ -49,7 +49,27 @@ pub fn function_prototype_apply<X>(
                 }
             };
             // TODO: PrepareForTailCall()
-            runtime.call(context, func, this, &mut args, retv)
+            runtime.call(context, func, this, &args, retv)
         }
     }
+}
+
+//#sec-function.prototype.call prototype.function { "no_adapter": true }
+pub fn function_prototype_call<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "function_prototype_call");
+    let func = match context.this() {
+        Value::Object(v) if v.is_callable() => *v,
+        _ => {
+            *retv = Value::Object(runtime.create_type_error(None));
+            return Status::Exception;
+        }
+    };
+    let this = context.arg(0);
+    let args = &context.args()[1..];
+    // TODO: PrepareForTailCall()
+    runtime.call(context, func, this, args, retv)
 }

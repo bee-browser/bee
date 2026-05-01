@@ -51,7 +51,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
         context,
         executor,
         &Value::Undefined,
-        &mut [Value::Object(resolve), Value::Object(reject)],
+        &[Value::Object(resolve), Value::Object(reject)],
         &mut retv,
     ) {
         runtime.emit_promise_rejected(object, retv);

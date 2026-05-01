@@ -59,6 +59,7 @@
 - arguments
 - assign
 - at
+- call
 - cause
 - charAt
 - charCodeAt

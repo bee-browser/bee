@@ -268,7 +268,7 @@ impl<X> Runtime<X> {
         caller: &CallContext,
         callable: HandleMut<Object>,
         this: &Value,
-        args: &mut [Value],
+        args: &[Value],
         retv: &mut Value,
     ) -> Status {
         let closure = callable.closure();
@@ -285,8 +285,8 @@ impl<X> Runtime<X> {
         module: bool,
     ) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda_id, ?lambda, module);
-        let mut args: [_; 0] = [];
-        let mut context = CallContext::new_for_entry(&mut args);
+        let args: [_; 0] = [];
+        let mut context = CallContext::new_for_entry(&args);
         let mut retv = Value::Undefined;
         let status = lambda(self, &mut context, &mut retv);
         retv.into_result(status)
