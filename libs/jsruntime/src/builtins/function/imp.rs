@@ -68,7 +68,11 @@ pub fn function_prototype_bind<X>(
     logger::debug!(event = "function_prototype_bind");
     let target = runtime.this_func(context.this())?;
     let this = context.arg(0);
-    let args = &context.args()[1..];
+    let args = if context.args().len() > 1 {
+        &context.args()[1..]
+    } else {
+        &[]
+    };
     let bound_func = runtime.bound_function_create(target, this, args)?;
     let length = match target.get_own_property(&Symbol::LENGTH.into()) {
         Some(prop) => {
@@ -101,7 +105,11 @@ pub fn function_prototype_call<X>(
     logger::debug!(event = "function_prototype_call");
     let func = catch!(runtime.this_func(context.this()); runtime, retv);
     let this = context.arg(0);
-    let args = &context.args()[1..];
+    let args = if context.args().len() > 1 {
+        &context.args()[1..]
+    } else {
+        &[]
+    };
     // TODO: PrepareForTailCall()
     runtime.call(context, func, this, args, retv)
 }
