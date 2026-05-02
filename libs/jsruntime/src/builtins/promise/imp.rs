@@ -88,7 +88,6 @@ impl<X> Runtime<X> {
             name: crate::types::string::EMPTY,
             length: 1,
             slots: &[Value::Object(promise)],
-            prototype: None,
         });
 
         let reject = self.create_builtin_function(&BuiltinFunctionParams {
@@ -96,7 +95,6 @@ impl<X> Runtime<X> {
             name: crate::types::string::EMPTY,
             length: 1,
             slots: &[Value::Object(promise)],
-            prototype: None,
         });
 
         (resolve, reject)

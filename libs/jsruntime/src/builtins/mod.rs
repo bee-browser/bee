@@ -172,7 +172,6 @@ impl<X> Runtime<X> {
             ?params.name,
             params.length,
             ?params.slots,
-            ?params.prototype
         );
         let func = self.create_object();
         self.init_builtin_function(func, params);
@@ -188,14 +187,6 @@ impl<X> Runtime<X> {
         func.set_prototype(self.builtins.function_prototype);
         func.slots_mut().extend_from_slice(params.slots);
         func.set_closure(closure);
-        if let Some(prototype) = params.prototype {
-            func.set_constructor();
-            let result = func.define_own_property(
-                Symbol::PROTOTYPE.into(),
-                Property::data_xxx(Value::Object(prototype)),
-            );
-            debug_assert!(matches!(result, Ok(true)));
-        }
         self.set_function_length(func, params.length);
         // TODO: prefix
         self.set_function_name(func, params.name);
@@ -374,5 +365,4 @@ struct BuiltinFunctionParams<'a, X> {
     name: Handle<String>,
     length: u16,
     slots: &'a [Value],
-    prototype: Option<HandleMut<Object>>,
 }
