@@ -106,6 +106,15 @@ pub fn function_prototype_call<X>(
     runtime.call(context, func, this, args, retv)
 }
 
+//#sec-function.prototype.tostring prototype.function
+pub fn function_prototype_to_string<X>(
+    _runtime: &mut Runtime<X>,
+    _context: &mut CallContext,
+) -> Result<Value, Error> {
+    logger::debug!(event = "function_prototype_to_string");
+    runtime_todo!("TODO: Function.prototype.toString()")
+}
+
 impl<X> Runtime<X> {
     fn this_func(&mut self, this: &Value) -> Result<HandleMut<Object>, Error> {
         match this {
