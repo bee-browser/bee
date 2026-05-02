@@ -114,7 +114,7 @@ pub fn define_function_constructor<X>(runtime: &mut Runtime<X>) {
 //#_internalerror global.constructor { "name": "InternalError" }
 pub fn define_internal_error_constructor<X>(runtime: &mut Runtime<X>) {
     let constructor = runtime.create_internal_error_constructor();
-    runtime.define_constructor(Symbol::FUNCTION, constructor);
+    runtime.define_constructor(Symbol::INTERNAL_ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-object global.constructor

@@ -45,7 +45,8 @@ pub struct CallContext {
     argc_max: u16,
 
     /// A pointer to the arguments.
-    argv: *mut Value,
+    // TODO(feat): arguments object
+    argv: *const Value,
 }
 
 impl CallContext {
@@ -61,7 +62,7 @@ impl CallContext {
     pub const ARGC_MAX_OFFSET: usize = std::mem::offset_of!(Self, argc_max);
     pub const ARGV_OFFSET: usize = std::mem::offset_of!(Self, argv);
 
-    pub(crate) fn new_for_entry(args: &mut [Value]) -> Self {
+    pub(crate) fn new_for_entry(args: &[Value]) -> Self {
         Self {
             envp: std::ptr::null_mut(),
             this: Value::Undefined,
@@ -71,11 +72,11 @@ impl CallContext {
             depth: 0,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
-            argv: args.as_mut_ptr(),
+            argv: args.as_ptr(),
         }
     }
 
-    pub(crate) fn new_for_promise(coroutine: HandleMut<Coroutine>, args: &mut [Value]) -> Self {
+    pub(crate) fn new_for_promise(coroutine: HandleMut<Coroutine>, args: &[Value]) -> Self {
         Self {
             envp: coroutine.as_ptr() as *mut std::ffi::c_void,
             this: Value::Undefined,
@@ -85,7 +86,7 @@ impl CallContext {
             depth: 0,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
-            argv: args.as_mut_ptr(),
+            argv: args.as_ptr(),
         }
     }
 
@@ -93,18 +94,19 @@ impl CallContext {
         &self,
         func: HandleMut<Object>,
         closure: HandleMut<Closure>,
-        args: &mut [Value],
+        this: &Value,
+        args: &[Value],
     ) -> Self {
         Self {
             envp: closure.as_ptr() as *mut std::ffi::c_void,
-            this: Value::Undefined,
+            this: this.clone(),
             func: Some(func),
             caller: self,
             flags: CallContextFlags::empty(),
             depth: self.depth + 1,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
-            argv: args.as_mut_ptr(),
+            argv: args.as_ptr(),
         }
     }
 
@@ -154,7 +156,7 @@ impl CallContext {
         unsafe {
             debug_assert!(!self.argv.is_null());
             debug_assert!(self.argv.is_aligned());
-            std::slice::from_raw_parts(self.argv as *const Value, self.argc as usize)
+            std::slice::from_raw_parts(self.argv, self.argc as usize)
         }
     }
 }

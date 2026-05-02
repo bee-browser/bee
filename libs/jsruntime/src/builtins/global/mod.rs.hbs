@@ -3,13 +3,14 @@
 // This file was automagically generated with:
 // template: {{@template}}
 
+logging::define_logger! {"bee::jsruntime::builtins::global"}
+
 mod imp;
 
 use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::Runtime;
-use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;

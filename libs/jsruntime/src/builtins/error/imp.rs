@@ -8,12 +8,13 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::String;
 use crate::types::Value;
+
+use super::logger;
 
 //#sec-error-message constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {

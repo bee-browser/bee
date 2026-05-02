@@ -1,6 +1,9 @@
 use super::Value;
 use crate::Error;
 
+// TODO: pub const MIN_SAFE_INTEGER: f64 = -((1i64 << 53) - 1) as f64;
+pub const MAX_SAFE_INTEGER: f64 = ((1i64 << 53) - 1) as f64;
+
 // 7.1.4 ToNumber ( argument )
 pub fn to_number(value: &Value) -> Result<f64, Error> {
     match value {

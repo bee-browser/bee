@@ -29,6 +29,26 @@ impl Capture {
     pub(crate) const TARGET_OFFSET: usize = std::mem::offset_of!(Self, target);
     pub(crate) const ESCAPED_OFFSET: usize = std::mem::offset_of!(Self, escaped);
 
+    pub(crate) fn value(&self) -> &Value {
+        if self.is_escaped() {
+            &self.escaped
+        } else {
+            debug_assert!(!self.target.is_null());
+            // SAFETY: `self.target` is a non-null pointer to a `Value`.
+            unsafe { &*self.target }
+        }
+    }
+
+    pub(crate) fn escape(&mut self) {
+        debug_assert!(!self.is_escaped());
+        debug_assert!(!self.target.is_null());
+        // SAFETY: `self.target` is a non-null pointer to a `Value`.
+        unsafe {
+            self.escaped = (*self.target).clone();
+        }
+        self.target = &mut self.escaped as *mut Value;
+    }
+
     fn is_escaped(&self) -> bool {
         debug_assert!(!self.target.is_null());
         addr_eq(self.target, &self.escaped)
@@ -51,8 +71,6 @@ impl std::fmt::Debug for Capture {
 
 impl Trace for Capture {
     fn trace(&self, visits: &mut VisitList) {
-        if self.is_escaped() {
-            self.escaped.trace(visits);
-        }
+        self.value().trace(visits);
     }
 }

@@ -55,9 +55,12 @@
 - [NaN, NAN]
 - [async, ASYNC]
 - all
+- apply
 - arguments
 - assign
 - at
+- bind
+- call
 - cause
 - charAt
 - charCodeAt

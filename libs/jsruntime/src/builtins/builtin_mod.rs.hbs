@@ -3,13 +3,14 @@
 // This file was automagically generated with:
 // template: {{@template}}
 
+logging::define_logger! {"bee::jsruntime::builtins::{{metadata.id}}"}
+
 mod imp;
 
 use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::Runtime;
-use crate::logger;
 use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
@@ -53,12 +54,14 @@ impl<X> Runtime<X> {
             slots: &[],
             prototype: None,
         });
-        let _ = constructor.define_own_property(Symbol::{{symbol}}.into(), Property::data_wxc(Value::Object(func)));
+        let result = constructor.define_own_property(Symbol::{{symbol}}.into(), Property::data_wxc(Value::Object(func)));
+        debug_assert!(matches!(result, Ok(true)));
 
         {{/if}}
         {{/each}}
         // TODO(refactor): bind outside this function
-        let _ = self.builtins.{{metadata.id}}_prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(constructor)));
+        let result = self.builtins.{{metadata.id}}_prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(constructor)));
+        debug_assert!(matches!(result, Ok(true)));
 
         constructor
     }
@@ -85,7 +88,8 @@ impl<X> Runtime<X> {
             slots: &[],
             prototype: None,
         });
-        let _ = prototype.define_own_property(Symbol::{{symbol}}.into(), Property::data_wxc(Value::Object(func)));
+        let result = prototype.define_own_property(Symbol::{{symbol}}.into(), Property::data_wxc(Value::Object(func)));
+        debug_assert!(matches!(result, Ok(true)));
 
         {{/if}}
         {{/each}}
@@ -140,6 +144,9 @@ extern "C" fn {{imp}}<X>(
     context: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
+    {{#if options.no_adapter}}
+    imp::{{imp}}(runtime, context, retv)
+    {{else}}
     match imp::{{imp}}(runtime, context) {
         Ok(value) => {
             *retv = value;
@@ -150,6 +157,7 @@ extern "C" fn {{imp}}<X>(
             Status::Exception
         }
     }
+    {{/if}}
 }
 {{/if}}
 {{/each}}

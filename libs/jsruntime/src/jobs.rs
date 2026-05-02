@@ -54,8 +54,8 @@ impl<X> Runtime<X> {
         error: &Value,
     ) -> (Status, Value) {
         logger::debug!(event = "resume", ?coroutine, ?object, ?result, ?error);
-        let mut args = [object.into(), result.clone(), error.clone()];
-        let mut context = CallContext::new_for_promise(coroutine, &mut args);
+        let args = [object.into(), result.clone(), error.clone()];
+        let mut context = CallContext::new_for_promise(coroutine, &args);
         let mut retv = Value::None;
         let lambda = Lambda::from(coroutine.closure.lambda);
         let status = lambda(self, &mut context, &mut retv);

@@ -40,7 +40,15 @@ impl Closure {
     pub(crate) const LAMBDA_OFFSET: usize = std::mem::offset_of!(Self, lambda);
     pub(crate) const CAPTURES_OFFSET: usize = std::mem::offset_of!(Self, captures);
 
-    fn captures(&self) -> &[HandleMut<Capture>] {
+    pub(crate) fn put_capture(&mut self, index: usize, capture: HandleMut<Capture>) {
+        debug_assert!(index < self.num_captures as usize);
+        // SAFETY: self.captures[index] = capture
+        unsafe {
+            self.captures.as_mut_ptr().add(index).write(capture);
+        }
+    }
+
+    pub(crate) fn captures(&self) -> &[HandleMut<Capture>] {
         let len = self.num_captures as usize;
         let data = self.captures.as_ptr();
         // SAFETY: `data` is a non-null pointer to an array of pointers.
