@@ -32,18 +32,26 @@ impl<X> Runtime<X> {
         matches!(value, Value::Object(object) if self.is_{{metadata.id}}_object(*object))
     }
 
-    /// Creates the {{metadata.class}} constructor.
-    pub(super) fn create_{{metadata.id}}_constructor(&mut self) -> HandleMut<Object> {
-        logger::debug!(event = "create_{{metadata.id}}_constructor");
+    /// Initialize the {{metadata.class}} constructor.
+    pub(super) fn init_{{metadata.id}}_constructor(&mut self) {
+        logger::debug!(event = "init_{{metadata.id}}_constructor");
 
-        #[allow(unused_mut)]
-        let mut constructor = self.create_builtin_function(&BuiltinFunctionParams {
-            lambda: constructor::<X>,
+        let mut constructor = self.builtins.{{metadata.id}}_constructor;
+
+        self.init_builtin_function(constructor, &BuiltinFunctionParams {
+            lambda: {{metadata.id}}_constructor::<X>,
             name: const_string_handle!("{{metadata.class}}"),
             length: 1,
             slots: &[],
-            prototype: Some(self.builtins.{{metadata.id}}_prototype),
         });
+
+        constructor.set_constructor();
+
+        let result = constructor.define_own_property(
+            Symbol::PROTOTYPE.into(),
+            Property::data_xxx(Value::Object(self.builtins.{{metadata.id}}_prototype)),
+        );
+        debug_assert!(matches!(result, Ok(true)));
 
         {{#each constructorProperties}}
         {{#if (eq kind "constructor.function")}}
@@ -52,29 +60,26 @@ impl<X> Runtime<X> {
             name: const_string_handle!("{{name}}"),
             length: {{this.length}},
             slots: &[],
-            prototype: None,
         });
-        let result = constructor.define_own_property(Symbol::{{symbol}}.into(), Property::data_wxc(Value::Object(func)));
+        let result = constructor.define_own_property(
+            Symbol::{{symbol}}.into(), Property::data_wxc(Value::Object(func)));
         debug_assert!(matches!(result, Ok(true)));
 
         {{/if}}
         {{/each}}
-        // TODO(refactor): bind outside this function
-        let result = self.builtins.{{metadata.id}}_prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(constructor)));
-        debug_assert!(matches!(result, Ok(true)));
-
-        constructor
     }
 
-    /// Creates the {{metadata.class}} prototype object.
+    /// Initializes the {{metadata.class}} prototype object.
     pub(super) fn init_{{metadata.id}}_prototype(&mut self) {
         logger::debug!(event = "init_{{metadata.id}}_prototype");
 
-        #[allow(unused)]
         let mut prototype = self.builtins.{{metadata.id}}_prototype;
         {{#if metadata.inherits}}
         prototype.set_prototype(self.builtins.{{metadata.inherits}}_prototype);
         {{/if}}
+
+        let result = prototype.define_own_property(Symbol::CONSTRUCTOR.into(), Property::data_wxc(Value::Object(self.builtins.{{metadata.id}}_constructor)));
+        debug_assert!(matches!(result, Ok(true)));
 
         {{#each prototypeProperties}}
         {{#if (eq kind "prototype.property")}}
@@ -86,7 +91,6 @@ impl<X> Runtime<X> {
             name: const_string_handle!("{{name}}"),
             length: {{this.length}},
             slots: &[],
-            prototype: None,
         });
         let result = prototype.define_own_property(Symbol::{{symbol}}.into(), Property::data_wxc(Value::Object(func)));
         debug_assert!(matches!(result, Ok(true)));
@@ -97,9 +101,8 @@ impl<X> Runtime<X> {
 }
 
 // lambda functions
-// TODO: use proc-macro
 
-extern "C" fn constructor<X>(
+extern "C" fn {{metadata.id}}_constructor<X>(
     runtime: &mut Runtime<X>,
     context: &mut CallContext,
     retv: &mut Value,

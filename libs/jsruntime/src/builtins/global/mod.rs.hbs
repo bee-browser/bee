@@ -38,7 +38,6 @@ impl<X> Runtime<X> {
             name: const_string_handle!("{{name}}"),
             length: {{this.length}},
             slots: &[],
-            prototype: None,
         });
         self.define_global_property(Symbol::{{symbol}}, Property::data_wxc(Value::Object(func)));
 
@@ -57,7 +56,6 @@ impl<X> Runtime<X> {
 }
 
 // lambda functions
-// TODO: use proc-macro
 
 {{#each globalProperties}}
 {{#if (eq kind "global.function")}}

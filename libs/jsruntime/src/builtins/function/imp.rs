@@ -69,7 +69,7 @@ pub fn function_prototype_bind<X>(
     let target = runtime.this_func(context.this())?;
     let this = context.arg(0);
     let args = &context.args()[1..];
-    let mut bound_func = runtime.bound_function_create(target, this, args)?;
+    let bound_func = runtime.bound_function_create(target, this, args)?;
     let length = match target.get_own_property(&Symbol::LENGTH.into()) {
         Some(prop) => {
             let target_length = runtime.value_to_length(prop.value())?;
@@ -82,12 +82,12 @@ pub fn function_prototype_bind<X>(
         None => 0,
     };
     debug_assert!(length <= u16::MAX as u64);
-    runtime.set_function_length(&mut bound_func, length as u16);
+    runtime.set_function_length(bound_func, length as u16);
     let target_name = target
         .get_value(&Symbol::NAME.into())
         .unwrap_or(&Value::Undefined);
     if let Value::String(name) = target_name {
-        runtime.set_function_name(&mut bound_func, *name);
+        runtime.set_function_name(bound_func, *name);
     }
     Ok(Value::Object(bound_func))
 }
