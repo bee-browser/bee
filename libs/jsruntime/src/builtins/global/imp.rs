@@ -89,78 +89,78 @@ pub fn parse_int<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Resu
 
 //#sec-constructor-properties-of-the-global-object-aggregate-error global.constructor
 pub fn define_aggregate_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_aggregate_error_constructor();
+    let constructor = runtime.builtins.aggregate_error_constructor;
     runtime.define_constructor(Symbol::AGGREGATE_ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-error global.constructor
 pub fn define_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_error_constructor();
+    let constructor = runtime.builtins.error_constructor;
     runtime.define_constructor(Symbol::ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-evalerror global.constructor
 pub fn define_eval_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_eval_error_constructor();
+    let constructor = runtime.builtins.eval_error_constructor;
     runtime.define_constructor(Symbol::EVAL_ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-function global.constructor
 pub fn define_function_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_function_constructor();
+    let constructor = runtime.builtins.function_constructor;
     runtime.define_constructor(Symbol::FUNCTION, constructor);
 }
 
 //#_internalerror global.constructor { "name": "InternalError" }
 pub fn define_internal_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_internal_error_constructor();
+    let constructor = runtime.builtins.internal_error_constructor;
     runtime.define_constructor(Symbol::INTERNAL_ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-object global.constructor
 pub fn define_object_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_object_constructor();
+    let constructor = runtime.builtins.object_constructor;
     runtime.define_constructor(Symbol::OBJECT, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-promise global.constructor
 pub fn define_promise_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_promise_constructor();
+    let constructor = runtime.builtins.promise_constructor;
     runtime.define_constructor(Symbol::PROMISE, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-rangeerror global.constructor
 pub fn define_range_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_range_error_constructor();
+    let constructor = runtime.builtins.range_error_constructor;
     runtime.define_constructor(Symbol::RANGE_ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-referenceerror global.constructor
 pub fn define_reference_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_reference_error_constructor();
+    let constructor = runtime.builtins.reference_error_constructor;
     runtime.define_constructor(Symbol::REFERENCE_ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-string global.constructor
 pub fn define_string_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_string_constructor();
+    let constructor = runtime.builtins.string_constructor;
     runtime.define_constructor(Symbol::STRING, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-syntaxerror global.constructor
 pub fn define_syntax_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_syntax_error_constructor();
+    let constructor = runtime.builtins.syntax_error_constructor;
     runtime.define_constructor(Symbol::SYNTAX_ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-typeerror global.constructor
 pub fn define_type_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_type_error_constructor();
+    let constructor = runtime.builtins.type_error_constructor;
     runtime.define_constructor(Symbol::TYPE_ERROR, constructor);
 }
 
 //#sec-constructor-properties-of-the-global-object-urierror global.constructor
 pub fn define_uri_error_constructor<X>(runtime: &mut Runtime<X>) {
-    let constructor = runtime.create_uri_error_constructor();
+    let constructor = runtime.builtins.uri_error_constructor;
     runtime.define_constructor(Symbol::URI_ERROR, constructor);
 }

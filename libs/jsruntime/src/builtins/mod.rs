@@ -40,31 +40,57 @@ use crate::types::Value;
 pub(crate) struct Builtins {
     // [[GlobalObject]]
     pub(crate) global_object: HandleMut<Object>,
+    // %Object%
+    pub(crate) object_constructor: HandleMut<Object>,
     // %Object.prototype%
     pub(crate) object_prototype: HandleMut<Object>,
+    // %Function%
+    pub(crate) function_constructor: HandleMut<Object>,
     // %Function.prototype%
     pub(crate) function_prototype: HandleMut<Object>,
+    // %String%
+    pub(crate) string_constructor: HandleMut<Object>,
     // %String.prototype%
     pub(crate) string_prototype: HandleMut<Object>,
+    // %Promise%
+    pub(crate) promise_constructor: HandleMut<Object>,
     // %Promise.prototype%
     pub(crate) promise_prototype: HandleMut<Object>,
+    // %Error%
+    pub(crate) error_constructor: HandleMut<Object>,
     // %Error.prototype%
     pub(crate) error_prototype: HandleMut<Object>,
+    // %AggregateError%
+    pub(crate) aggregate_error_constructor: HandleMut<Object>,
     // %AggregateError.prototype%
     pub(crate) aggregate_error_prototype: HandleMut<Object>,
+    // %EvalError%
+    pub(crate) eval_error_constructor: HandleMut<Object>,
     // %EvalError.prototype%
     pub(crate) eval_error_prototype: HandleMut<Object>,
+    // %InternalError%
+    pub(crate) internal_error_constructor: HandleMut<Object>,
     // %InternalError.prototype%
     pub(crate) internal_error_prototype: HandleMut<Object>,
+    // %RangeError%
+    pub(crate) range_error_constructor: HandleMut<Object>,
     // %RangeError.prototype%
     pub(crate) range_error_prototype: HandleMut<Object>,
+    // %ReferenceError%
+    pub(crate) reference_error_constructor: HandleMut<Object>,
     // %ReferenceError.prototype%
     pub(crate) reference_error_prototype: HandleMut<Object>,
+    // %SyntaxError%
+    pub(crate) syntax_error_constructor: HandleMut<Object>,
     // %SyntaxError.prototype%
     pub(crate) syntax_error_prototype: HandleMut<Object>,
+    // %TypeError%
+    pub(crate) type_error_constructor: HandleMut<Object>,
     // %TypeError.prototype%
     pub(crate) type_error_prototype: HandleMut<Object>,
-    // URIError.prototype%
+    // %URIError%
+    pub(crate) uri_error_constructor: HandleMut<Object>,
+    // %URIError.prototype%
     pub(crate) uri_error_prototype: HandleMut<Object>,
 }
 
@@ -73,18 +99,31 @@ impl Builtins {
     pub(crate) fn new(heap: &mut Heap) -> Self {
         Self {
             global_object: heap.alloc_mut(Object::new()),
+            object_constructor: heap.alloc_mut(Object::new()),
             object_prototype: heap.alloc_mut(Object::new()),
+            function_constructor: heap.alloc_mut(Object::new()),
             function_prototype: heap.alloc_mut(Object::new()),
+            string_constructor: heap.alloc_mut(Object::new()),
             string_prototype: heap.alloc_mut(Object::new()),
+            promise_constructor: heap.alloc_mut(Object::new()),
             promise_prototype: heap.alloc_mut(Object::new()),
+            error_constructor: heap.alloc_mut(Object::new()),
             error_prototype: heap.alloc_mut(Object::new()),
+            aggregate_error_constructor: heap.alloc_mut(Object::new()),
             aggregate_error_prototype: heap.alloc_mut(Object::new()),
+            eval_error_constructor: heap.alloc_mut(Object::new()),
             eval_error_prototype: heap.alloc_mut(Object::new()),
+            internal_error_constructor: heap.alloc_mut(Object::new()),
             internal_error_prototype: heap.alloc_mut(Object::new()),
+            reference_error_constructor: heap.alloc_mut(Object::new()),
             reference_error_prototype: heap.alloc_mut(Object::new()),
+            range_error_constructor: heap.alloc_mut(Object::new()),
             range_error_prototype: heap.alloc_mut(Object::new()),
+            syntax_error_constructor: heap.alloc_mut(Object::new()),
             syntax_error_prototype: heap.alloc_mut(Object::new()),
+            type_error_constructor: heap.alloc_mut(Object::new()),
             type_error_prototype: heap.alloc_mut(Object::new()),
+            uri_error_constructor: heap.alloc_mut(Object::new()),
             uri_error_prototype: heap.alloc_mut(Object::new()),
         }
     }
@@ -98,18 +137,31 @@ impl<X> Runtime<X> {
     }
 
     fn init_intrinsic_objects(&mut self) {
+        self.init_object_constructor();
         self.init_object_prototype();
+        self.init_function_constructor();
         self.init_function_prototype();
+        self.init_string_constructor();
         self.init_string_prototype();
+        self.init_promise_constructor();
         self.init_promise_prototype();
+        self.init_error_constructor();
         self.init_error_prototype();
+        self.init_aggregate_error_constructor();
         self.init_aggregate_error_prototype();
+        self.init_eval_error_constructor();
         self.init_eval_error_prototype();
+        self.init_internal_error_constructor();
         self.init_internal_error_prototype();
+        self.init_range_error_constructor();
         self.init_range_error_prototype();
+        self.init_reference_error_constructor();
         self.init_reference_error_prototype();
+        self.init_syntax_error_constructor();
         self.init_syntax_error_prototype();
+        self.init_type_error_constructor();
         self.init_type_error_prototype();
+        self.init_uri_error_constructor();
         self.init_uri_error_prototype();
     }
 
@@ -122,8 +174,17 @@ impl<X> Runtime<X> {
             ?params.slots,
             ?params.prototype
         );
+        let func = self.create_object();
+        self.init_builtin_function(func, params);
+        func
+    }
+
+    fn init_builtin_function(
+        &mut self,
+        mut func: HandleMut<Object>,
+        params: &BuiltinFunctionParams<X>,
+    ) {
         let closure = self.create_closure(params.lambda, LambdaId::HOST, 0);
-        let mut func = self.create_object();
         func.set_prototype(self.builtins.function_prototype);
         func.slots_mut().extend_from_slice(params.slots);
         func.set_closure(closure);
@@ -135,21 +196,20 @@ impl<X> Runtime<X> {
             );
             debug_assert!(matches!(result, Ok(true)));
         }
-        self.set_function_length(&mut func, params.length);
+        self.set_function_length(func, params.length);
         // TODO: prefix
-        self.set_function_name(&mut func, params.name);
-        func
+        self.set_function_name(func, params.name);
     }
 
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
-    fn set_function_name(&mut self, func: &mut HandleMut<Object>, name: Handle<String>) {
+    fn set_function_name(&mut self, mut func: HandleMut<Object>, name: Handle<String>) {
         let result =
             func.define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
         debug_assert!(matches!(result, Ok(true)));
     }
 
     // 10.2.10 SetFunctionLength ( F, length )
-    fn set_function_length(&mut self, func: &mut HandleMut<Object>, length: u16) {
+    fn set_function_length(&mut self, mut func: HandleMut<Object>, length: u16) {
         let result = func.define_own_property(
             Symbol::LENGTH.into(),
             Property::data_xxc(Value::Number(length as f64)),
