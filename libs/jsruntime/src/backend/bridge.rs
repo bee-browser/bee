@@ -370,28 +370,7 @@ pub(crate) extern "C" fn runtime_create_capture<X>(
     target: *mut Value,
 ) -> HandleMut<Capture> {
     logger::debug!(event = "runtime_create_capture", ?target);
-
-    debug_assert!(
-        std::alloc::Layout::from_size_align(
-            std::mem::size_of::<Capture>(),
-            std::mem::align_of::<Capture>()
-        )
-        .is_ok()
-    );
-    // SAFETY: `from_size_align()` always succeeds.
-    const LAYOUT: std::alloc::Layout = unsafe {
-        std::alloc::Layout::from_size_align_unchecked(
-            std::mem::size_of::<Capture>(),
-            std::mem::align_of::<Capture>(),
-        )
-    };
-
-    runtime.heap.alloc_layout_mut(LAYOUT, move |ptr| {
-        // SAFETY: `ptr` is a non-null pointer to a `Capture`.
-        let capture = unsafe { ptr.cast::<Capture>().as_mut() };
-        capture.target = target;
-        // `capture.escaped` will be filled with an actual value.
-    })
+    runtime.create_capture(target)
 }
 
 pub(crate) extern "C" fn runtime_create_closure<X>(

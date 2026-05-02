@@ -314,6 +314,34 @@ impl<X> Runtime<X> {
         self.create_string(&utf16)
     }
 
+    fn create_capture(&mut self, target: *mut Value) -> HandleMut<Capture> {
+        debug_assert!(
+            std::alloc::Layout::from_size_align(
+                std::mem::size_of::<Capture>(),
+                std::mem::align_of::<Capture>()
+            )
+            .is_ok()
+        );
+
+        // SAFETY: `from_size_align()` always succeeds.
+        const LAYOUT: std::alloc::Layout = unsafe {
+            std::alloc::Layout::from_size_align_unchecked(
+                std::mem::size_of::<Capture>(),
+                std::mem::align_of::<Capture>(),
+            )
+        };
+
+        self.heap.alloc_layout_mut(LAYOUT, move |ptr| {
+            // SAFETY: `ptr` is a non-null pointer to a `Capture`.
+            unsafe {
+                ptr.cast::<Capture>().write(Capture {
+                    target,
+                    escaped: Value::None,
+                });
+            }
+        })
+    }
+
     fn create_closure(
         &mut self,
         lambda: Lambda<X>,
@@ -327,6 +355,7 @@ impl<X> Runtime<X> {
             )
             .is_ok(),
         );
+
         // SAFETY: `from_size_align()` always succeeds.
         const BASE_LAYOUT: std::alloc::Layout = unsafe {
             std::alloc::Layout::from_size_align_unchecked(
@@ -341,10 +370,14 @@ impl<X> Runtime<X> {
 
         self.heap.alloc_layout_mut(layout, move |ptr| {
             // SAFETY: `ptr` is a non-null pointer to a `Closure`.
-            let closure = unsafe { ptr.cast::<Closure>().as_mut() };
-            closure.lambda = lambda.into();
-            closure.lambda_id = lambda_id;
-            closure.num_captures = num_captures;
+            unsafe {
+                ptr.cast::<Closure>().write(Closure {
+                    lambda: lambda.into(),
+                    lambda_id,
+                    num_captures,
+                    captures: [],
+                })
+            };
             // `closure.captures[]` will be filled with actual pointers to `Captures`.
         })
     }

@@ -312,8 +312,7 @@ impl Object {
     }
 
     pub(crate) fn set_closure(&mut self, closure: HandleMut<Closure>) {
-        self.kernel.data = closure.as_addr();
-        self.kernel.tracing = true;
+        self.set_handle_mut(closure);
         self.set_callable();
     }
 
@@ -328,8 +327,7 @@ impl Object {
     }
 
     pub(crate) fn set_string(&mut self, string: Handle<String>) {
-        self.kernel.data = string.as_addr();
-        self.kernel.tracing = true;
+        self.set_handle(string);
     }
 
     pub(crate) fn promise(&self) -> HandleMut<Promise> {
@@ -338,7 +336,16 @@ impl Object {
     }
 
     pub(crate) fn set_promise(&mut self, promise: HandleMut<Promise>) {
-        self.kernel.data = promise.as_addr();
+        self.set_handle_mut(promise);
+    }
+
+    fn set_handle<T>(&mut self, handle: Handle<T>) {
+        self.kernel.data = handle.as_addr();
+        self.kernel.tracing = true;
+    }
+
+    fn set_handle_mut<T>(&mut self, handle: HandleMut<T>) {
+        self.kernel.data = handle.as_addr();
         self.kernel.tracing = true;
     }
 

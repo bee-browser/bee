@@ -59,6 +59,7 @@
 - arguments
 - assign
 - at
+- bind
 - call
 - cause
 - charAt
