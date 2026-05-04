@@ -273,6 +273,7 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ClassContext,
     ClassDeclaration(bool),
+    ClassElement(ClassElementKind),
     AsyncFunctionDeclaration,
     FunctionExpression(bool),
     AsyncFunctionExpression(bool),
@@ -486,6 +487,11 @@ impl std::fmt::Debug for AssignmentOperator {
             Self::NullishCoalescingAssignment => "??=",
         })
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum ClassElementKind {
+    Method,
 }
 
 bitflags! {
@@ -3778,7 +3784,8 @@ where
     // ClassElement[Yield, Await] :
     //  MethodDefinition[?Yield, ?Await]
     fn process_class_element_method(&mut self) -> Result<(), Error> {
-        todo!()
+        self.enqueue(Node::ClassElement(ClassElementKind::Method));
+        Ok(())
     }
 
     // ClassElement[Yield, Await] :
