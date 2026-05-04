@@ -297,6 +297,15 @@ functions:
       - name: retv
         type: '&mut Value'
     ret: Status
+  - name: build_class
+    args:
+      - name: name
+        type: u32
+      - name: constructor
+        type: HandleMut<Object>
+      - name: prototype
+        type: HandleMut<Object>
+    ret: HandleMut<Object>
   # panic
   - name: panic
     args:

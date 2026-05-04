@@ -157,7 +157,7 @@
 - rule: Declaration -> HoistableDeclaration
   action: process_declaration
 - rule: Declaration -> ClassDeclaration
-  action: undefined
+  action: process_declaration
 - rule: Declaration -> LexicalDeclaration_In
   action: process_declaration
 - rule: ImportDeclaration -> IMPORT ImportClause FromClause SEMICOLON
@@ -270,8 +270,8 @@
   action: process_hoistable_declaration
 - rule: HoistableDeclaration -> AsyncGeneratorDeclaration
   action: undefined
-- rule: ClassDeclaration -> CLASS BindingIdentifier ClassTail
-  action: undefined
+- rule: ClassDeclaration -> CLASS _CLASS_CONTEXT_ BindingIdentifier ClassTail
+  action: process_class_declaration
 - rule: LexicalDeclaration_In -> LET BindingList_In SEMICOLON
   action: process_let_declaration
 - rule: LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
@@ -311,7 +311,7 @@
 - rule: Declaration_Await -> HoistableDeclaration_Await
   action: process_declaration
 - rule: Declaration_Await -> ClassDeclaration_Await
-  action: undefined
+  action: process_declaration
 - rule: Declaration_Await -> LexicalDeclaration_In_Await
   action: process_declaration
 - rule: HoistableDeclaration_Await_Default -> FunctionDeclaration_Await_Default
@@ -325,11 +325,11 @@
     AsyncGeneratorDeclaration_Await_Default
   action: undefined
 - rule: >-
-    ClassDeclaration_Await_Default -> CLASS BindingIdentifier_Await
-    ClassTail_Await
-  action: undefined
-- rule: ClassDeclaration_Await_Default -> CLASS ClassTail_Await
-  action: undefined
+    ClassDeclaration_Await_Default -> CLASS _CLASS_CONTEXT_
+    BindingIdentifier_Await ClassTail_Await
+  action: process_class_declaration
+- rule: ClassDeclaration_Await_Default -> CLASS _CLASS_CONTEXT_ ClassTail_Await
+  action: process_class_declaration_anonymous
 - rule: AssignmentExpression_In_Await -> ConditionalExpression_In_Await
   action: nop
 - rule: AssignmentExpression_In_Await -> ArrowFunction_In_Await
@@ -521,14 +521,16 @@
     BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE
     AsyncGeneratorBody RBRACE
   action: undefined
+- rule: _CLASS_CONTEXT_ -> (empty)
+  action: process_class_context
 - rule: ClassTail -> LBRACE RBRACE
-  action: undefined
+  action: process_class_tail_empty
 - rule: ClassTail -> ClassHeritage LBRACE RBRACE
-  action: undefined
+  action: process_class_tail_with_heritage
 - rule: ClassTail -> LBRACE ClassBody RBRACE
-  action: undefined
+  action: process_class_tail_with_body
 - rule: ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
-  action: undefined
+  action: process_class_tail
 - rule: BindingList_In -> LexicalBinding_In
   action: process_binding_list_head
 - rule: BindingList_In -> BindingList_In COMMA LexicalBinding_In
@@ -571,8 +573,10 @@
   action: process_hoistable_declaration
 - rule: HoistableDeclaration_Await -> AsyncGeneratorDeclaration_Await
   action: undefined
-- rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
-  action: undefined
+- rule: >-
+    ClassDeclaration_Await -> CLASS _CLASS_CONTEXT_ BindingIdentifier_Await
+    ClassTail_Await
+  action: process_class_declaration
 - rule: LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
   action: process_let_declaration
 - rule: LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
@@ -616,13 +620,13 @@
     AsyncGeneratorBody RBRACE
   action: undefined
 - rule: ClassTail_Await -> LBRACE RBRACE
-  action: undefined
+  action: process_class_tail_empty
 - rule: ClassTail_Await -> ClassHeritage_Await LBRACE RBRACE
-  action: undefined
+  action: process_class_tail_with_heritage
 - rule: ClassTail_Await -> LBRACE ClassBody_Await RBRACE
-  action: undefined
+  action: process_class_tail_with_body
 - rule: ClassTail_Await -> ClassHeritage_Await LBRACE ClassBody_Await RBRACE
-  action: undefined
+  action: process_class_tail
 - rule: ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
   action: nop
 - rule: >-
@@ -1098,9 +1102,9 @@
 - rule: AsyncGeneratorBody -> FunctionBody_Yield_Await
   action: undefined
 - rule: ClassHeritage -> EXTENDS LeftHandSideExpression
-  action: undefined
+  action: process_class_heritage
 - rule: ClassBody -> ClassElementList
-  action: undefined
+  action: nop
 - rule: LexicalBinding_In -> BindingIdentifier
   action: process_lexical_binding_identifier
 - rule: LexicalBinding_In -> BindingIdentifier Initializer_In
@@ -1262,9 +1266,9 @@
 - rule: BindingList_In_Await -> BindingList_In_Await COMMA LexicalBinding_In_Await
   action: process_binding_list_item
 - rule: ClassHeritage_Await -> EXTENDS LeftHandSideExpression_Await
-  action: undefined
+  action: process_class_heritage
 - rule: ClassBody_Await -> ClassElementList_Await
-  action: undefined
+  action: nop
 - rule: ShortCircuitExpression_In_Await -> LogicalORExpression_In_Await
   action: nop
 - rule: ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
@@ -1586,9 +1590,9 @@
 - rule: FunctionBody_Yield_Await -> FunctionStatementList_Yield_Await
   action: nop
 - rule: ClassElementList -> ClassElement
-  action: undefined
+  action: process_class_element_list_head
 - rule: ClassElementList -> ClassElementList ClassElement
-  action: undefined
+  action: process_class_element_list_item
 - rule: ImportSpecifier -> ImportedBinding
   action: undefined
 - rule: ImportSpecifier -> ModuleExportName AS ImportedBinding
@@ -1600,9 +1604,9 @@
 - rule: LexicalBinding_In_Await -> BindingPattern_Await Initializer_In_Await
   action: undefined
 - rule: ClassElementList_Await -> ClassElement_Await
-  action: undefined
+  action: process_class_element_list_head
 - rule: ClassElementList_Await -> ClassElementList_Await ClassElement_Await
-  action: undefined
+  action: process_class_element_list_item
 - rule: LogicalORExpression_In_Await -> LogicalANDExpression_In_Await
   action: nop
 - rule: >-
@@ -2072,29 +2076,29 @@
 - rule: FunctionStatementList_Yield_Await -> StatementList_Yield_Await_Return
   action: nop
 - rule: ClassElement -> MethodDefinition
-  action: undefined
+  action: process_class_element_method
 - rule: ClassElement -> STATIC MethodDefinition
-  action: undefined
+  action: process_class_element_static_method
 - rule: ClassElement -> FieldDefinition SEMICOLON
-  action: undefined
+  action: process_class_element_field
 - rule: ClassElement -> STATIC FieldDefinition SEMICOLON
-  action: undefined
+  action: process_class_element_static_field
 - rule: ClassElement -> ClassStaticBlock
-  action: undefined
+  action: process_class_element_static_block
 - rule: ClassElement -> SEMICOLON
-  action: undefined
+  action: nop
 - rule: ClassElement_Await -> MethodDefinition_Await
-  action: undefined
+  action: process_class_element_method
 - rule: ClassElement_Await -> STATIC MethodDefinition_Await
-  action: undefined
+  action: process_class_element_static_method
 - rule: ClassElement_Await -> FieldDefinition_Await SEMICOLON
-  action: undefined
+  action: process_class_element_field
 - rule: ClassElement_Await -> STATIC FieldDefinition_Await SEMICOLON
-  action: undefined
+  action: process_class_element_static_field
 - rule: ClassElement_Await -> ClassStaticBlock
-  action: undefined
+  action: process_class_element_static_block
 - rule: ClassElement_Await -> SEMICOLON
-  action: undefined
+  action: nop
 - rule: LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
   action: nop
 - rule: >-
@@ -2128,7 +2132,7 @@
 - rule: PrimaryExpression_Await -> FunctionExpression
   action: process_primary_expression_function_expression
 - rule: PrimaryExpression_Await -> ClassExpression_Await
-  action: undefined
+  action: process_primary_expression_class_expression
 - rule: PrimaryExpression_Await -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Await -> AsyncFunctionExpression
@@ -2568,9 +2572,9 @@
     FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: process_function_expression
 - rule: ClassExpression_Await -> CLASS ClassTail_Await
-  action: undefined
+  action: process_class_expression_anonymous
 - rule: ClassExpression_Await -> CLASS BindingIdentifier_Await ClassTail_Await
-  action: undefined
+  action: process_class_expression
 - rule: >-
     GeneratorExpression -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN
     LBRACE GeneratorBody RBRACE
@@ -2968,7 +2972,7 @@
 - rule: PrimaryExpression -> FunctionExpression
   action: process_primary_expression_function_expression
 - rule: PrimaryExpression -> ClassExpression
-  action: undefined
+  action: process_primary_expression_class_expression
 - rule: PrimaryExpression -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression -> AsyncFunctionExpression
@@ -3203,7 +3207,7 @@
 - rule: PrimaryExpression_Yield -> FunctionExpression
   action: process_primary_expression_function_expression
 - rule: PrimaryExpression_Yield -> ClassExpression_Yield
-  action: undefined
+  action: process_primary_expression_class_expression
 - rule: PrimaryExpression_Yield -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield -> AsyncFunctionExpression
@@ -3265,7 +3269,7 @@
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
   action: process_primary_expression_function_expression
 - rule: PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await
-  action: undefined
+  action: process_primary_expression_class_expression
 - rule: PrimaryExpression_Yield_Await -> GeneratorExpression
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> AsyncFunctionExpression
@@ -3331,9 +3335,9 @@
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList COMMA RBRACE
   action: process_object_literal_comma
 - rule: ClassExpression -> CLASS ClassTail
-  action: undefined
+  action: process_class_expression_anonymous
 - rule: ClassExpression -> CLASS BindingIdentifier ClassTail
-  action: undefined
+  action: process_class_expression
 - rule: TemplateLiteral -> NO_SUBSTITUTION_TEMPLATE
   action: process_template_literal_no_substitution
 - rule: TemplateLiteral -> SubstitutionTemplate
@@ -3425,7 +3429,7 @@
 - rule: Declaration_Yield -> HoistableDeclaration_Yield
   action: process_declaration
 - rule: Declaration_Yield -> ClassDeclaration_Yield
-  action: undefined
+  action: process_declaration
 - rule: Declaration_Yield -> LexicalDeclaration_In_Yield
   action: process_declaration
 - rule: Statement_Await_Return -> BlockStatement_Await_Return
@@ -3487,7 +3491,7 @@
 - rule: Declaration_Yield_Await -> HoistableDeclaration_Yield_Await
   action: process_declaration
 - rule: Declaration_Yield_Await -> ClassDeclaration_Yield_Await
-  action: undefined
+  action: process_declaration
 - rule: Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await
   action: process_declaration
 - rule: ClassStaticBlockStatementList -> (empty)
@@ -3571,9 +3575,9 @@
     COMMA RBRACE
   action: undefined
 - rule: ClassExpression_Yield -> CLASS ClassTail_Yield
-  action: undefined
+  action: process_class_expression_anonymous
 - rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
-  action: undefined
+  action: process_class_expression
 - rule: TemplateLiteral_Yield -> NO_SUBSTITUTION_TEMPLATE
   action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Yield -> SubstitutionTemplate_Yield
@@ -3621,11 +3625,11 @@
     PropertyDefinitionList_Yield_Await COMMA RBRACE
   action: undefined
 - rule: ClassExpression_Yield_Await -> CLASS ClassTail_Yield_Await
-  action: undefined
+  action: process_class_expression_anonymous
 - rule: >-
     ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await
     ClassTail_Yield_Await
-  action: undefined
+  action: process_class_expression
 - rule: TemplateLiteral_Yield_Await -> NO_SUBSTITUTION_TEMPLATE
   action: process_template_literal_no_substitution
 - rule: TemplateLiteral_Yield_Await -> SubstitutionTemplate_Yield_Await
@@ -3785,8 +3789,10 @@
   action: process_hoistable_declaration
 - rule: HoistableDeclaration_Yield -> AsyncGeneratorDeclaration_Yield
   action: undefined
-- rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
-  action: undefined
+- rule: >-
+    ClassDeclaration_Yield -> CLASS _CLASS_CONTEXT_ BindingIdentifier_Yield
+    ClassTail_Yield
+  action: process_class_declaration
 - rule: LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
   action: process_let_declaration
 - rule: LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
@@ -3908,9 +3914,9 @@
 - rule: HoistableDeclaration_Yield_Await -> AsyncGeneratorDeclaration_Yield_Await
   action: undefined
 - rule: >-
-    ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await
-    ClassTail_Yield_Await
-  action: undefined
+    ClassDeclaration_Yield_Await -> CLASS _CLASS_CONTEXT_
+    BindingIdentifier_Yield_Await ClassTail_Yield_Await
+  action: process_class_declaration
 - rule: >-
     LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await
     SEMICOLON
@@ -4000,13 +4006,13 @@
     PropertyDefinition_Yield
   action: process_property_definition_list_item
 - rule: ClassTail_Yield -> LBRACE RBRACE
-  action: undefined
+  action: process_class_tail_empty
 - rule: ClassTail_Yield -> ClassHeritage_Yield LBRACE RBRACE
-  action: undefined
+  action: process_class_tail_with_heritage
 - rule: ClassTail_Yield -> LBRACE ClassBody_Yield RBRACE
-  action: undefined
+  action: process_class_tail_with_body
 - rule: ClassTail_Yield -> ClassHeritage_Yield LBRACE ClassBody_Yield RBRACE
-  action: undefined
+  action: process_class_tail
 - rule: >-
     SubstitutionTemplate_Yield -> _TEMPLATE_HEAD_ Expression_In_Yield
     _TO_STRING_ TemplateSpans_Yield
@@ -4056,15 +4062,15 @@
     COMMA PropertyDefinition_Yield_Await
   action: process_property_definition_list_item
 - rule: ClassTail_Yield_Await -> LBRACE RBRACE
-  action: undefined
+  action: process_class_tail_empty
 - rule: ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE RBRACE
-  action: undefined
+  action: process_class_tail_with_heritage
 - rule: ClassTail_Yield_Await -> LBRACE ClassBody_Yield_Await RBRACE
-  action: undefined
+  action: process_class_tail_with_body
 - rule: >-
     ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE
     ClassBody_Yield_Await RBRACE
-  action: undefined
+  action: process_class_tail
 - rule: >-
     SubstitutionTemplate_Yield_Await -> _TEMPLATE_HEAD_
     Expression_In_Yield_Await _TO_STRING_ TemplateSpans_Yield_Await
@@ -4448,9 +4454,9 @@
 - rule: PropertyDefinition_Yield -> ELLIPSIS AssignmentExpression_In_Yield
   action: process_property_definition_spread
 - rule: ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield
-  action: undefined
+  action: process_class_heritage
 - rule: ClassBody_Yield -> ClassElementList_Yield
-  action: undefined
+  action: nop
 - rule: TemplateSpans_Yield -> _TEMPLATE_TAIL_
   action: process_template_spans_tail
 - rule: TemplateSpans_Yield -> TemplateMiddleList_Yield _TEMPLATE_TAIL_
@@ -4490,9 +4496,9 @@
     AssignmentExpression_In_Yield_Await
   action: process_property_definition_spread
 - rule: ClassHeritage_Yield_Await -> EXTENDS LeftHandSideExpression_Yield_Await
-  action: undefined
+  action: process_class_heritage
 - rule: ClassBody_Yield_Await -> ClassElementList_Yield_Await
-  action: undefined
+  action: nop
 - rule: TemplateSpans_Yield_Await -> _TEMPLATE_TAIL_
   action: process_template_spans_tail
 - rule: TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await _TEMPLATE_TAIL_
@@ -5091,9 +5097,9 @@
     FunctionBody RBRACE
   action: undefined
 - rule: ClassElementList_Yield -> ClassElement_Yield
-  action: undefined
+  action: process_class_element_list_head
 - rule: ClassElementList_Yield -> ClassElementList_Yield ClassElement_Yield
-  action: undefined
+  action: process_class_element_list_item
 - rule: >-
     TemplateMiddleList_Yield -> _TEMPLATE_MIDDLE_ Expression_In_Yield
     _TO_STRING_
@@ -5158,11 +5164,11 @@
     _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: undefined
 - rule: ClassElementList_Yield_Await -> ClassElement_Yield_Await
-  action: undefined
+  action: process_class_element_list_head
 - rule: >-
     ClassElementList_Yield_Await -> ClassElementList_Yield_Await
     ClassElement_Yield_Await
-  action: undefined
+  action: process_class_element_list_item
 - rule: >-
     TemplateMiddleList_Yield_Await -> _TEMPLATE_MIDDLE_
     Expression_In_Yield_Await _TO_STRING_
@@ -5320,17 +5326,17 @@
     LBRACE AsyncGeneratorBody RBRACE
   action: undefined
 - rule: ClassElement_Yield -> MethodDefinition_Yield
-  action: undefined
+  action: process_class_element_method
 - rule: ClassElement_Yield -> STATIC MethodDefinition_Yield
-  action: undefined
+  action: process_class_element_static_method
 - rule: ClassElement_Yield -> FieldDefinition_Yield SEMICOLON
-  action: undefined
+  action: process_class_element_field
 - rule: ClassElement_Yield -> STATIC FieldDefinition_Yield SEMICOLON
-  action: undefined
+  action: process_class_element_static_field
 - rule: ClassElement_Yield -> ClassStaticBlock
-  action: undefined
+  action: process_class_element_static_block
 - rule: ClassElement_Yield -> SEMICOLON
-  action: undefined
+  action: nop
 - rule: ShiftExpression_Yield_Await -> AdditiveExpression_Yield_Await
   action: nop
 - rule: >-
@@ -5364,17 +5370,17 @@
     RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: undefined
 - rule: ClassElement_Yield_Await -> MethodDefinition_Yield_Await
-  action: undefined
+  action: process_class_element_method
 - rule: ClassElement_Yield_Await -> STATIC MethodDefinition_Yield_Await
-  action: undefined
+  action: process_class_element_static_method
 - rule: ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMICOLON
-  action: undefined
+  action: process_class_element_field
 - rule: ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMICOLON
-  action: undefined
+  action: process_class_element_static_field
 - rule: ClassElement_Yield_Await -> ClassStaticBlock
-  action: undefined
+  action: process_class_element_static_block
 - rule: ClassElement_Yield_Await -> SEMICOLON
-  action: undefined
+  action: nop
 - rule: AdditiveExpression -> MultiplicativeExpression
   action: nop
 - rule: AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression
