@@ -274,21 +274,13 @@ impl Index<u32> for String {
 
 impl std::fmt::Debug for String {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, r#"""#)?;
-        let utf16 = self.as_slice().iter().cloned();
-        for c in std::char::decode_utf16(utf16).map(|r| r.map_err(|e| e.unpaired_surrogate())) {
-            match c {
-                Ok(c) => write!(f, "{}", c.escape_debug())?,
-                Err(code_unit) => write!(f, "\\u{code_unit:04X}")?,
-            }
-        }
-        write!(f, r#"""#)?;
-        Ok(())
+        std::fmt::Display::fmt(self, f)
     }
 }
 
 impl std::fmt::Display for String {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, r#"""#)?;
         for c in std::char::decode_utf16(self.code_units())
             .map(|r| r.map_err(|e| e.unpaired_surrogate()))
         {
@@ -297,6 +289,7 @@ impl std::fmt::Display for String {
                 Err(code_unit) => write!(f, "\\u{code_unit:04X}")?,
             }
         }
+        write!(f, r#"""#)?;
         Ok(())
     }
 }
