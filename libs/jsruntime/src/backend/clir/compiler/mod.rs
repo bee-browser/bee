@@ -2313,9 +2313,7 @@ where
 
     fn perform_any_to_object(&mut self, value: AnyIr) -> ObjectIr {
         let retv = self.emit_create_any();
-        let status = self
-            .editor
-            .put_runtime_to_object(self.support, value, retv);
+        let status = self.editor.put_runtime_to_object(self.support, value, retv);
         self.emit_check_status_for_exception(status, retv);
         if self.support.is_runtime_assert_enabled() {
             let is_object = self.editor.put_is_object(retv);
