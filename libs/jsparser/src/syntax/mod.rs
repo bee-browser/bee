@@ -24,12 +24,27 @@ logging::define_logger! {}
 const MAX_ITERATION_STATEMENT_DEPTH: usize = u16::MAX as usize;
 const MAX_SWITCH_STATEMENT_DEPTH: usize = u16::MAX as usize;
 
+macro_rules! nop {
+    () => {};
+}
+
 macro_rules! ensure {
     ($cond:expr) => {
         if !$cond {
             return Err(Error::SyntaxError);
         }
     };
+}
+
+macro_rules! todo {
+    () => {{
+        logger::warn!(event = "todo", action = base::func_name!());
+        return Err(Error::SyntaxError);
+    }};
+    ($msg:literal) => {{
+        logger::warn!(event = "todo", action = base::func_name!(), msg = $msg);
+        return Err(Error::SyntaxError);
+    }};
 }
 
 pub trait NodeHandler<'s> {
@@ -140,6 +155,9 @@ enum Detail {
     FormalParameters(SmallVec<[Symbol; 4]>),
     ConciseBody,
     MethodDefinition(Symbol, bool),
+    ClassDeclaration,
+    ClassTail,
+    ClassElementList,
     ClassElementName(Symbol, bool),
     AsyncConciseBody,
     StatementList,
@@ -253,6 +271,8 @@ pub enum Node<'s> {
     AsyncArrowFunctionContext,
     FunctionSignature,
     FunctionDeclaration,
+    ClassContext,
+    ClassDeclaration(bool),
     AsyncFunctionDeclaration,
     FunctionExpression(bool),
     AsyncFunctionExpression(bool),
@@ -717,6 +737,12 @@ where
         Ok(())
     }
 
+    // _CLASS_CONTEXT_
+    fn process_class_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ClassContext);
+        Ok(())
+    }
+
     // _FALSY_SHORT_CIRCUIT_
     fn process_falsy_short_circuit(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FalsyShortCircuit);
@@ -1002,6 +1028,15 @@ where
     // PrimaryExpression[Yield, Await] :
     //   FunctionExpression
     fn process_primary_expression_function_expression(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::Expression {
+            assignment_target_type: AssignmentTargetType::Invalid,
+        };
+        Ok(())
+    }
+
+    // PrimaryExpression[Yield, Await] :
+    //   ClassExpression[?Yield, ?Await]
+    fn process_primary_expression_class_expression(&mut self) -> Result<(), Error> {
         self.top_mut().detail = Detail::Expression {
             assignment_target_type: AssignmentTargetType::Invalid,
         };
@@ -3658,6 +3693,121 @@ where
     }
 
     // 15.7 Class Definitions
+
+    // ClassDeclaration[Yield, Await, Default] :
+    //   class BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
+    fn process_class_declaration(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ClassDeclaration(true));
+        self.replace(3, Detail::ClassDeclaration);
+        Ok(())
+    }
+
+    // ClassDeclaration[Yield, Await, Default] :
+    //   [+Default] class ClassTail[?Yield, ?Await]
+    fn process_class_declaration_anonymous(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ClassDeclaration(false));
+        self.replace(3, Detail::ClassDeclaration);
+        Ok(())
+    }
+
+    // ClassExpression[Yield, Await] :
+    //   class BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
+    fn process_class_expression(&mut self) -> Result<(), Error> {
+        todo!()
+    }
+
+    // ClassExpression[Yield, Await] :
+    //   class ClassTail[?Yield, ?Await]
+    fn process_class_expression_anonymous(&mut self) -> Result<(), Error> {
+        todo!()
+    }
+
+    // ClassTail[Yield, Await] :
+    //   { }
+    fn process_class_tail_empty(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::ClassTail);
+        Ok(())
+    }
+
+    // ClassTail[Yield, Await] :
+    //   ClassHeritage[?Yield, ?Await] { }
+    fn process_class_tail_with_heritage(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::ClassTail);
+        Ok(())
+    }
+
+    // ClassTail[Yield, Await] :
+    //   { ClassBody[?Yield, ?Await] }
+    fn process_class_tail_with_body(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::ClassTail);
+        Ok(())
+    }
+
+    // ClassTail[Yield, Await] :
+    //   ClassHeritage[?Yield, ?Await] { ClassBody[?Yield, ?Await] }
+    fn process_class_tail(&mut self) -> Result<(), Error> {
+        self.replace(4, Detail::ClassTail);
+        Ok(())
+    }
+
+    // ClassHeritage[Yield, Await] :
+    //   extends LeftHandSideExpression[?Yield, ?Await]
+    fn process_class_heritage(&mut self) -> Result<(), Error> {
+        todo!()
+    }
+
+    // ClassBody[Yield, Await] :
+    //   ClassElementList[?Yield, ?Await]
+    nop! {}
+
+    // ClassElementList[Yield, Await] :
+    //   ClassElement[?Yield, ?Await]
+    fn process_class_element_list_head(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::ClassElementList;
+        Ok(())
+    }
+
+    // ClassElementList[Yield, Await] :
+    //   ClassElementList[?Yield, ?Await] ClassElement[?Yield, ?Await]
+    fn process_class_element_list_item(&mut self) -> Result<(), Error> {
+        self.pop();
+        self.update_ends();
+        Ok(())
+    }
+
+    // ClassElement[Yield, Await] :
+    //  MethodDefinition[?Yield, ?Await]
+    fn process_class_element_method(&mut self) -> Result<(), Error> {
+        todo!()
+    }
+
+    // ClassElement[Yield, Await] :
+    //   static MethodDefinition[?Yield, ?Await]
+    fn process_class_element_static_method(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    // ClassElement[Yield, Await] :
+    //   FieldDefinition[?Yield, ?Await] ;
+    fn process_class_element_field(&mut self) -> Result<(), Error> {
+        todo!()
+    }
+
+    // ClassElement[Yield, Await] :
+    //   static FieldDefinition[?Yield, ?Await] ;
+    fn process_class_element_static_field(&mut self) -> Result<(), Error> {
+        todo!()
+    }
+
+    // ClassElement[Yield, Await] :
+    //   ClassStaticBlock
+    fn process_class_element_static_block(&mut self) -> Result<(), Error> {
+        todo!()
+    }
+
+    // ClassElement[Yield, Await] :
+    //   ;
+    nop! {}
 
     // ClassElementName[Yield, Await] :
     //   PropertyName[?Yield, ?Await]
