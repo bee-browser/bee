@@ -297,6 +297,13 @@ impl<X> Runtime<X> {
         self.heap.alloc(String::new_heap(seq))
     }
 
+    fn create_string_from_symbol(&mut self, symbol: Symbol) -> Handle<String> {
+        let utf16 = self.symbol_registry.resolve(symbol).unwrap();
+        // TODO(perf): inefficient
+        let seq = self.heap.alloc_seq(utf16);
+        self.heap.alloc(String::new_heap(seq))
+    }
+
     fn create_string_from_utf8(&mut self, utf8: &str) -> Handle<String> {
         // TODO(perf): inefficient
         let utf16 = utf8.encode_utf16().collect::<Vec<u16>>();
@@ -492,6 +499,32 @@ impl<X> Runtime<X> {
 
         target.set_value(&LENGTH, &Value::from(length + 1.0));
         Ok(())
+    }
+
+    fn build_class(
+        &mut self,
+        name: Symbol,
+        mut constructor: HandleMut<Object>,
+        mut prototype: HandleMut<Object>,
+    ) -> HandleMut<Object> {
+        let name = self.create_string_from_symbol(name);
+        let result = constructor
+            .define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
+        debug_assert!(matches!(result, Ok(true)));
+
+        let result = constructor.define_own_property(
+            Symbol::PROTOTYPE.into(),
+            Property::data_wxx(Value::Object(prototype)),
+        );
+        debug_assert!(matches!(result, Ok(true)));
+
+        let result = prototype.define_own_property(
+            Symbol::CONSTRUCTOR.into(),
+            Property::data_wxx(Value::Object(constructor)),
+        );
+        debug_assert!(matches!(result, Ok(true)));
+
+        constructor
     }
 }
 
