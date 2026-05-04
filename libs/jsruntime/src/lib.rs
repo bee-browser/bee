@@ -508,9 +508,30 @@ impl<X> Runtime<X> {
         mut prototype: HandleMut<Object>,
     ) -> HandleMut<Object> {
         let name = self.create_string_from_symbol(name);
-        let result = constructor
-            .define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
-        debug_assert!(matches!(result, Ok(true)));
+        let mut constructor = if let Some(prop) = prototype.get_own_property(&Symbol::CONSTRUCTOR.into()) {
+            let mut constructor = match prop.value() {
+                Value::Object(v) => *v,
+                _ => unreachable!(),
+            };
+            debug_assert!(constructor.get_own_property(&Symbol::NAME.into()).is_some());
+            constructor.set_value(&Symbol::NAME.into(), &Value::String(name));
+
+            // TODO(feat): static class elements
+
+            constructor
+        } else {
+            let result = constructor
+                .define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
+            debug_assert!(matches!(result, Ok(true)));
+
+            let result = prototype.define_own_property(
+                Symbol::CONSTRUCTOR.into(),
+                Property::data_wxx(Value::Object(constructor)),
+            );
+            debug_assert!(matches!(result, Ok(true)));
+
+            constructor
+        };
 
         let result = constructor.define_own_property(
             Symbol::PROTOTYPE.into(),
@@ -518,12 +539,7 @@ impl<X> Runtime<X> {
         );
         debug_assert!(matches!(result, Ok(true)));
 
-        let result = prototype.define_own_property(
-            Symbol::CONSTRUCTOR.into(),
-            Property::data_wxx(Value::Object(constructor)),
-        );
-        debug_assert!(matches!(result, Ok(true)));
-
+        debug_assert!(constructor.is_callable());
         constructor
     }
 }
