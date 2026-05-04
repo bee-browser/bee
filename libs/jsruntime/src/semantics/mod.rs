@@ -437,7 +437,11 @@ where
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ClassContext => self.handle_class_context(),
             Node::ClassDeclaration(named) => self.handle_class_declaration(named),
-            Node::ClassElement(ClassElementKind::Method) => self.handle_class_prototype_method(),
+            Node::StaticContext => self.handle_static_context(),
+            Node::ClassElement(ClassElementKind::Method) => self.handle_class_element_method(),
+            Node::ClassElement(ClassElementKind::StaticMethod) => {
+                self.handle_class_element_static_method()
+            }
             Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
             Node::FunctionExpression(named) => self.handle_function_expression(named),
             Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
@@ -842,8 +846,26 @@ where
         analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
     }
 
-    fn handle_class_prototype_method(&mut self) {
-        analysis_mut!(self).process_class_prototype_method();
+    fn handle_static_context(&mut self) {
+        push_commands! {
+            self;
+            CompileCommand::Swap,
+        }
+    }
+
+    fn handle_class_element_method(&mut self) {
+        push_commands! {
+            self;
+            CompileCommand::CreateDataProperty,
+        }
+    }
+
+    fn handle_class_element_static_method(&mut self) {
+        push_commands! {
+            self;
+            CompileCommand::CreateDataProperty,
+            CompileCommand::Swap,
+        }
     }
 
     fn handle_async_function_declaration(&mut self) {
@@ -1887,10 +1909,6 @@ impl FunctionAnalysis {
         } else {
             // TODO(feat): default class
         }
-    }
-
-    fn process_class_prototype_method(&mut self) {
-        self.commands.push(CompileCommand::CreateDataProperty);
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
