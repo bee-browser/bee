@@ -508,7 +508,9 @@ impl<X> Runtime<X> {
         mut prototype: HandleMut<Object>,
     ) -> HandleMut<Object> {
         let name = self.create_string_from_symbol(name);
-        let mut constructor = if let Some(prop) = prototype.get_own_property(&Symbol::CONSTRUCTOR.into()) {
+        let mut constructor = if let Some(prop) =
+            prototype.get_own_property(&Symbol::CONSTRUCTOR.into())
+        {
             let mut constructor = match prop.value() {
                 Value::Object(v) => *v,
                 _ => unreachable!(),
