@@ -10,6 +10,5 @@ function sum(a, b, c) {
 };
 
 print(sum()); ///=NaN
-
-const bound = sum.bind(o, 2, 3, 4);
-print(bound()); ///=10
+print(sum.bind(o)()); ///=NaN
+print(sum.bind(o, 2, 3, 4)()); ///=10
