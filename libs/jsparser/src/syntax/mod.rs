@@ -273,6 +273,7 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ClassContext,
     ClassDeclaration(bool),
+    StaticContext,
     ClassElement(ClassElementKind),
     AsyncFunctionDeclaration,
     FunctionExpression(bool),
@@ -492,6 +493,7 @@ impl std::fmt::Debug for AssignmentOperator {
 #[derive(Clone, Debug)]
 pub enum ClassElementKind {
     Method,
+    StaticMethod,
 }
 
 bitflags! {
@@ -746,6 +748,12 @@ where
     // _CLASS_CONTEXT_
     fn process_class_context(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ClassContext);
+        Ok(())
+    }
+
+    // _STATIC_CONTEXT_
+    fn process_static_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::StaticContext);
         Ok(())
     }
 
@@ -3791,6 +3799,7 @@ where
     // ClassElement[Yield, Await] :
     //   static MethodDefinition[?Yield, ?Await]
     fn process_class_element_static_method(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ClassElement(ClassElementKind::StaticMethod));
         Ok(())
     }
 
