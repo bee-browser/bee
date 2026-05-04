@@ -110,6 +110,12 @@ impl Property {
         Self::data(value, PropertyFlags::XXX)
     }
 
+    /// Creates a data property with `[[Writable]]=true`, `[[Enumerable]]=false` and
+    /// `[[Configurable]]=false`.
+    pub const fn data_wxx(value: Value) -> Self {
+        Self::data(value, PropertyFlags::WXX)
+    }
+
     /// Creates a data property with `[[Writable]]=false`, `[[Enumerable]]=false` and
     /// `[[Configurable]]=true`.
     pub const fn data_xxc(value: Value) -> Self {
@@ -176,6 +182,9 @@ bitflags! {
 impl PropertyFlags {
     /// `[[Writable]]: false`, `[[Enumerable]]: false`, `[[Configurable]]: false`
     const XXX: Self = Self::empty();
+
+    /// `[[Writable]]: true`, `[[Enumerable]]: false`, `[[Configurable]]: true`
+    const WXX: Self = Self::WRITABLE;
 
     /// `[[Writable]]: false`, `[[Enumerable]]: false`, `[[Configurable]]: true`
     const XXC: Self = Self::CONFIGURABLE;
