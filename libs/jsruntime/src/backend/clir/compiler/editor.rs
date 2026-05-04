@@ -2512,6 +2512,41 @@ impl<'a> Editor<'a> {
         StatusIr(self.builder.inst_results(call)[0])
     }
 
+    pub fn put_runtime_build_class(
+        &mut self,
+        support: &mut impl EditorSupport,
+        name: Symbol,
+        constructor: ObjectIr,
+        prototype: ObjectIr,
+    ) -> ObjectIr {
+        logger::debug!(
+            event = "put_runtime_build_class",
+            ?name,
+            ?constructor,
+            ?prototype,
+        );
+        debug_assert!(name != Symbol::NONE);
+        if self.runtime_assert_enabled {
+            self.put_assert_non_null(
+                support,
+                constructor.0,
+                c"runtime_build_class: constructor must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                prototype.0,
+                c"runtime_build_class: prototype must be non-null",
+            );
+        }
+        let func = self
+            .runtime_func_cache
+            .import_runtime_build_class(support, self.builder.func);
+        let name = self.builder.ins().iconst(ir::types::I32, name.id() as i64);
+        let args = [self.runtime(), name, constructor.0, prototype.0];
+        let call = self.builder.ins().call(func, &args);
+        ObjectIr(self.builder.inst_results(call)[0])
+    }
+
     pub fn put_runtime_panic(&mut self, support: &mut impl EditorSupport, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_panic", ?msg);
         let func = self
