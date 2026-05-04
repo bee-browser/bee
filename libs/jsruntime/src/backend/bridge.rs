@@ -1,5 +1,6 @@
 use jsgc::Handle;
 use jsgc::HandleMut;
+use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
@@ -728,6 +729,16 @@ pub(crate) extern "C" fn runtime_push_value<X>(
             Status::Exception
         }
     }
+}
+
+pub(crate) extern "C" fn runtime_build_class<X>(
+    runtime: &mut Runtime<X>,
+    name: u32,
+    constructor: HandleMut<Object>,
+    prototype: HandleMut<Object>,
+) -> HandleMut<Object> {
+    let name = Symbol::from(name);
+    runtime.build_class(name, constructor, prototype)
 }
 
 pub(crate) extern "C" fn runtime_panic<X>(

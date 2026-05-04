@@ -434,6 +434,8 @@ where
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
+            Node::ClassContext => self.handle_class_context(),
+            Node::ClassDeclaration(named) => self.handle_class_declaration(named),
             Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
             Node::FunctionExpression(named) => self.handle_function_expression(named),
             Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
@@ -807,6 +809,35 @@ where
         self.global_analysis
             .scope_tree_builder
             .add_function_declaration(scope_ref, batch_index);
+    }
+
+    fn handle_class_context(&mut self) {
+        // Create a *dummy* empty function.
+        //
+        // The dummy function is used for creating an empty closure that is required for creating
+        // a function object.  The function object works as a temporal folder for static elements
+        // if the class has its own constructor.  In this case, static elements will be merged into
+        // the constructor.
+        self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
+        self.end_function_scope();
+        let func = self.functions.last().unwrap();
+
+        push_commands! {
+            self;
+            // constructor function object
+            CompileCommand::Lambda(func.id),
+            CompileCommand::Closure(false, func.scope_ref),
+            CompileCommand::Function(Symbol::NONE),
+            // prototype object
+            CompileCommand::Duplicate(0),
+            CompileCommand::PropertyReference(Symbol::PROTOTYPE),
+            CompileCommand::Dereference,
+            CompileCommand::ToObject,
+        }
+    }
+
+    fn handle_class_declaration(&mut self, named: bool) {
+        analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
     }
 
     fn handle_async_function_declaration(&mut self) {
@@ -1835,6 +1866,23 @@ impl FunctionAnalysis {
         }
     }
 
+    fn process_class_declaration(&mut self, named: bool, global_analysis: &mut GlobalAnalysis) {
+        if named {
+            debug_assert!(!self.symbol_stack.is_empty());
+            let symbol = self.symbol_stack.pop().unwrap().0;
+            self.commands.push(CompileCommand::Class(symbol));
+            self.commands
+                .push(CompileCommand::VariableReference(symbol));
+            self.commands.push(CompileCommand::MutableVariable);
+            global_analysis
+                .scope_tree_builder
+                .add_local(symbol, self.num_locals, true);
+            self.num_locals += 1;
+        } else {
+            // TODO(feat): default class
+        }
+    }
+
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
         self.start_scope(scope_ref, false);
 
@@ -2197,6 +2245,7 @@ pub enum CompileCommand {
     Coroutine(LambdaId, u16),
     Promise,
     Exception,
+    Class(Symbol),
 
     // references
     This,
@@ -2345,6 +2394,7 @@ pub enum CompileCommand {
     Swap,
     Duplicate(u8), // 0 or 1
     Dereference,
+    ToObject,
 
     // debugger
     Debugger,

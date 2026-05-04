@@ -573,6 +573,7 @@ where
             }
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Exception => self.process_exception(),
+            CompileCommand::Class(name) => self.process_class(*name),
             CompileCommand::This => self.process_this(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
@@ -675,6 +676,7 @@ where
             CompileCommand::Swap => self.process_swap(),
             CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
             CompileCommand::Dereference => self.process_dereference(),
+            CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::Debugger => self.process_debugger(),
             CompileCommand::PlaceHolder => unreachable!(),
         }
@@ -845,6 +847,15 @@ where
         let exception = self.editor.exception();
         // TODO(perf): compile-time evaluation
         self.operand_stack.push(Operand::Any(exception, None));
+    }
+
+    fn process_class(&mut self, name: Symbol) {
+        let prototype = self.pop_object();
+        let constructor = self.pop_object();
+        let class = self
+            .editor
+            .put_runtime_build_class(self.support, name, constructor, prototype);
+        self.operand_stack.push(Operand::Object(class));
     }
 
     fn process_this(&mut self) {
@@ -2263,10 +2274,8 @@ where
             Operand::Object(_) => self.operand_stack.push(operand),
             // Variables and properties.
             Operand::Any(value, ..) => {
-                let retv = self.emit_create_any();
-                let status = self.editor.put_runtime_to_object(self.support, value, retv);
-                self.emit_check_status_for_exception(status, retv);
-                self.operand_stack.push(Operand::Any(retv, None));
+                let object = self.perform_any_to_object(value);
+                self.operand_stack.push(Operand::Object(object));
             }
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -2298,24 +2307,25 @@ where
                 None
             }
             PropertyOwner::Object(value) => Some(*value),
-            PropertyOwner::Any(value) => {
-                let retv = self.emit_create_any();
-                let status = self
-                    .editor
-                    .put_runtime_to_object(self.support, *value, retv);
-                self.emit_check_status_for_exception(status, retv);
-                if self.support.is_runtime_assert_enabled() {
-                    let is_object = self.editor.put_is_object(retv);
-                    self.editor.put_assert(
-                        self.support,
-                        is_object,
-                        c"ToObject() should return an Object",
-                    );
-                }
-                let object = self.editor.put_load_object(retv);
-                Some(object)
-            }
+            PropertyOwner::Any(value) => Some(self.perform_any_to_object(*value)),
         }
+    }
+
+    fn perform_any_to_object(&mut self, value: AnyIr) -> ObjectIr {
+        let retv = self.emit_create_any();
+        let status = self
+            .editor
+            .put_runtime_to_object(self.support, value, retv);
+        self.emit_check_status_for_exception(status, retv);
+        if self.support.is_runtime_assert_enabled() {
+            let is_object = self.editor.put_is_object(retv);
+            self.editor.put_assert(
+                self.support,
+                is_object,
+                c"ToObject() should return an Object",
+            );
+        }
+        self.editor.put_load_object(retv)
     }
 
     fn process_falsy_short_circuit(&mut self) {
@@ -3127,6 +3137,10 @@ where
     fn process_dereference(&mut self) {
         let (operand, ..) = self.dereference();
         self.operand_stack.push(operand);
+    }
+
+    fn process_to_object(&mut self) {
+        self.perform_to_object();
     }
 
     fn process_debugger(&mut self) {
