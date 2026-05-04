@@ -170,6 +170,7 @@ class Transpiler {
           modifyOptionalChain,
           modifyFunctionDeclaration,
           modifyAsyncFunctionDeclaration,
+          modifyClassDeclaration,
           modifyMethodDefinition,
           modifyIfStatement,
           modifyConditionalExpression,
@@ -613,6 +614,7 @@ function addActions(rules) {
     '_FUNCTION_CONTEXT_',
     '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
+    '_CLASS_CONTEXT_',
     '_ELSE_',
     '_THEN_',
     '_ELSE_EXPR_',
@@ -866,6 +868,21 @@ function modifyAsyncFunctionDeclaration(rules) {
   const rule = rules.find((rule) =>
     rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]'
   );
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyClassDeclaration(rules) {
+  const TARGETS = [
+    {
+      term: '`class`',
+      action: '_CLASS_CONTEXT_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying ClassDeclaration...');
+  const rule = rules.find((rule) => rule.name === 'ClassDeclaration[Yield, Await, Default]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;
