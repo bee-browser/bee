@@ -1,3 +1,18 @@
+/// The current function path **evaluated at runtime**.
+#[macro_export]
+macro_rules! func_path {
+    () => {{
+        fn f() {}
+        std::any::type_name_of_val(&f).strip_suffix("::f").unwrap()
+    }};
+}
+
+/// The current function name **evaluated at runtime**.
+#[macro_export]
+macro_rules! func_name {
+    () => {{ $crate::func_path!().split("::").last().unwrap() }};
+}
+
 #[macro_export]
 macro_rules! delegate_all {
     ($type:ty => $target:ty) => {
@@ -157,6 +172,8 @@ pub use const_utf16;
 pub use debug_assert_eq;
 pub use debug_assert_ne;
 pub use delegate_all;
+pub use func_name;
+pub use func_path;
 pub use static_assert;
 pub use static_assert_eq;
 pub use static_assert_ne;

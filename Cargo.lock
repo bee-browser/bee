@@ -1228,6 +1228,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "assert_matches",
+ "base",
  "bitflags 2.11.1",
  "clap",
  "ctor",
