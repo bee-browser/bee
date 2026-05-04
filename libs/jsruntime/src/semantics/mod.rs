@@ -3,6 +3,7 @@ mod scope;
 use bitflags::bitflags;
 use itertools::Itertools;
 use jsparser::SymbolRegistry;
+use jsparser::syntax::ClassElementKind;
 use jsparser::syntax::LiteralPropertyName;
 use jsparser::syntax::MemberExpressionKind;
 use jsparser::syntax::PropertyAccessKind;
@@ -436,6 +437,7 @@ where
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ClassContext => self.handle_class_context(),
             Node::ClassDeclaration(named) => self.handle_class_declaration(named),
+            Node::ClassElement(ClassElementKind::Method) => self.handle_class_prototype_method(),
             Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
             Node::FunctionExpression(named) => self.handle_function_expression(named),
             Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
@@ -838,6 +840,10 @@ where
 
     fn handle_class_declaration(&mut self, named: bool) {
         analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
+    }
+
+    fn handle_class_prototype_method(&mut self) {
+        analysis_mut!(self).process_class_prototype_method();
     }
 
     fn handle_async_function_declaration(&mut self) {
@@ -1881,6 +1887,10 @@ impl FunctionAnalysis {
         } else {
             // TODO(feat): default class
         }
+    }
+
+    fn process_class_prototype_method(&mut self) {
+        self.commands.push(CompileCommand::CreateDataProperty);
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
