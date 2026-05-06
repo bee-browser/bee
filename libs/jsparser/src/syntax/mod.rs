@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::jsparser::syntax"}
-
 mod actions;
 
 #[cfg(test)]
@@ -20,6 +18,8 @@ use crate::SyntaxHandler;
 use crate::Token;
 use crate::TokenKind;
 use crate::parser::GoalSymbol;
+
+logging::define_logger! {}
 
 const MAX_ITERATION_STATEMENT_DEPTH: usize = u16::MAX as usize;
 const MAX_SWITCH_STATEMENT_DEPTH: usize = u16::MAX as usize;

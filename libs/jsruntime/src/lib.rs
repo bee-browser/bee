@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::jsruntime"}
-
 #[macro_use]
 mod macros;
 
@@ -41,6 +39,8 @@ pub use backend::CompileError;
 pub use lambda::LambdaId; // TODO: private
 pub use types::String;
 pub use types::Value;
+
+logging::define_logger! {}
 
 pub fn initialize() {
     backend::initialize();

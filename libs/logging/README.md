@@ -41,15 +41,19 @@ BEE_LOG_TIMESTAMP=off
 Use `logging::define_logger` macro like this:
 
 ```rs
-// Repalce "bee::name" with actual module path.
-logging::define_logger {"bee::name"}
+// Define a logger whose logging target is `std::module_path!()`.
+logging::define_logger {}
+
+// Or explicitly specify the logging target in the `TypePath` form.
+logging::define_logger { bee::target_name }
 
 fn do_something() {
   logger::info!("hi there");
 }
 
 mod sub_module {
-  // It's necessary to import the logger inside the module.
+  // Before using logging macros, it's necessary to define a new logger inside the module,
+  // or import an existing logger from outside the module.
   use super::logger;
 
   fn do_something() {

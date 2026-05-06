@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::layout"}
-
 mod canvas;
 mod flex;
 mod flow;
@@ -23,6 +21,8 @@ use crate::flex::FlexContainer;
 use crate::flow::FlowContainer;
 use crate::spec::*;
 pub use crate::style::*;
+
+logging::define_logger! {}
 
 pub type Decimal = f32;
 pub type Integer = i32;

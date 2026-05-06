@@ -1,7 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-logging::define_logger! {"bee::dfagen"}
-
 mod automaton;
 mod grammar;
 mod unicode;
@@ -17,6 +15,8 @@ use automaton::Dfa;
 use grammar::Grammar;
 use grammar::Rule;
 use unicode::UnicodeSet;
+
+logging::define_logger! {}
 
 #[derive(Parser)]
 #[command(author, version, about)]

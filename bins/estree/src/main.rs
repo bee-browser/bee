@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::estree"}
-
 mod builder;
 mod nodes;
 
@@ -21,6 +19,8 @@ use jsparser::Parser;
 
 use crate::builder::Builder;
 use crate::nodes::NodeRef;
+
+logging::define_logger! {}
 
 // An ESTree cannot represent in JSON.  Because an ESTree may contain values such as `Infinity`
 // that cannot be used in JSON.  At this point, JSON5 can handle those values.

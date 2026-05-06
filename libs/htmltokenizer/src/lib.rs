@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::htmltokenizer"}
-
 mod charref;
 mod error;
 mod inputstream;
@@ -12,6 +10,8 @@ pub use crate::error::Error;
 pub use crate::error::ErrorCode;
 pub use crate::tokenizer::InitialState;
 pub use crate::tokenizer::Tokenizer;
+
+logging::define_logger! {}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Location {

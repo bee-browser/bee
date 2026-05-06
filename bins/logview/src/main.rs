@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::logview"}
-
 use std::convert::Infallible;
 use std::error::Error;
 use std::net::SocketAddr;
@@ -21,6 +19,8 @@ use tower_http::services::ServeDir;
 use tower_http::services::ServeFile;
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
+
+logging::define_logger! {}
 
 #[derive(Parser)]
 #[command(author, version, about)]

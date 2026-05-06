@@ -8,10 +8,16 @@ macro_rules! init {
     };
 }
 
+/// Defines the `logger` module inside the current module.
+///
+/// The current module path is used as the logging target if no logging target is specified.
 #[macro_export]
 macro_rules! define_logger {
-    ($target:literal) => {
-        logging::define_logger_inner! {$target, $}
+    () => {
+        $crate::define_logger_inner! {::std::module_path!(), $}
+    };
+    ($target:path) => {
+        $crate::define_logger_inner! {::std::stringify!($target), $}
     };
 }
 
@@ -25,9 +31,9 @@ macro_rules! define_logger {
 #[macro_export]
 #[rustfmt::skip]
 macro_rules! define_logger_inner {
-    ($target:literal, $d:tt) => {
+    ($target:expr, $d:tt) => {
         mod logger {
-            use std::sync::LazyLock;
+            use ::std::sync::LazyLock;
 
             use $crate::imp::Level;
             use $crate::imp::LevelFilter;
@@ -125,35 +131,35 @@ macro_rules! define_logger_inner {
 
 #[macro_export]
 macro_rules! error {
-    (target: $target:literal, $($tokens:tt)+) => {
+    (target: $target:expr, $($tokens:tt)+) => {
         $crate::imp::event!(target: $target, $crate::imp::Level::ERROR, $($tokens)+)
     };
 }
 
 #[macro_export]
 macro_rules! warn {
-    (target: $target:literal, $($tokens:tt)+) => {
+    (target: $target:expr, $($tokens:tt)+) => {
         $crate::imp::event!(target: $target, $crate::imp::Level::WARN, $($tokens)+)
     };
 }
 
 #[macro_export]
 macro_rules! info {
-    (target: $target:literal, $($tokens:tt)+) => {
+    (target: $target:expr, $($tokens:tt)+) => {
         $crate::imp::event!(target: $target, $crate::imp::Level::INFO, $($tokens)+)
     };
 }
 
 #[macro_export]
 macro_rules! debug {
-    (target: $target:literal, $($tokens:tt)+) => {
+    (target: $target:expr, $($tokens:tt)+) => {
         $crate::imp::event!(target: $target, $crate::imp::Level::DEBUG, $($tokens)+)
     };
 }
 
 #[macro_export]
 macro_rules! trace {
-    (target: $target:literal, $($tokens:tt)+) => {
+    (target: $target:expr, $($tokens:tt)+) => {
         $crate::imp::event!(target: $target, $crate::imp::Level::TRACE, $($tokens)+)
     };
 }

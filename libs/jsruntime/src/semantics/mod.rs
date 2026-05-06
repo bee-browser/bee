@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::jsruntime::semantics"}
-
 mod scope;
 
 use bitflags::bitflags;
@@ -37,6 +35,8 @@ use scope::ScopeTreeBuilder;
 pub use scope::ScopeRef;
 pub use scope::ScopeTree;
 pub use scope::VariableRef;
+
+logging::define_logger! {}
 
 impl<X> Runtime<X> {
     /// Parses a given source text as a script.

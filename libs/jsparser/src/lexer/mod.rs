@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::jsparser::lexer"}
-
 mod cursor;
 mod dfa;
 mod goals;
@@ -12,6 +10,8 @@ use cursor::SourceCursor;
 use dfa::recognize;
 pub use goals::Goal;
 pub use tokens::TokenKind;
+
+logging::define_logger! {}
 
 type LexerResult<'s> = Result<Token<'s>, Error>;
 

@@ -1,6 +1,6 @@
 use paste::paste;
 
-logging::define_logger! {"bee::tests"}
+logging::define_logger! { bee::tests }
 
 macro_rules! impl_test_log {
     ($flag:ident) => {

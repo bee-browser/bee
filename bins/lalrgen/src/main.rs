@@ -1,7 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-logging::define_logger! {"bee::lalrgen"}
-
 mod closure;
 mod firstset;
 mod grammar;
@@ -29,6 +27,8 @@ use grammar::Grammar;
 use lalr::LalrProblem;
 use lalr::LookaheadTable;
 use state::Automaton;
+
+logging::define_logger! {}
 
 #[derive(Parser)]
 #[command(author, version, about)]

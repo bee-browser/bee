@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::jsruntime::builtins"}
-
 mod aggregate_error;
 mod error;
 mod eval_error;
@@ -29,6 +27,8 @@ use crate::types::Object;
 use crate::types::Property;
 use crate::types::String;
 use crate::types::Value;
+
+logging::define_logger! {}
 
 // The built-in objects are created in two-phase construction in order to avoid circular
 // references.

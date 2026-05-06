@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::jsparser::parser"}
-
 mod lalr;
 
 pub use lalr::GoalSymbol;
@@ -14,6 +12,8 @@ use crate::lexer::TokenKind;
 
 use lalr::Action;
 use lalr::State;
+
+logging::define_logger! {}
 
 const INITIAL_STATE_STACK_SIZE: usize = 512;
 const INITIAL_BLOCK_STACK_SIZE: usize = 32;

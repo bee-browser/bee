@@ -1,11 +1,11 @@
-logging::define_logger! {"bee::toydom"}
-
 mod null;
 mod toy;
 
 pub use null::NullBuilder;
 pub use toy::Builder as ToyBuilder;
 pub use toy::Node as ToyNode;
+
+logging::define_logger! {}
 
 #[macro_export]
 macro_rules! delegate {

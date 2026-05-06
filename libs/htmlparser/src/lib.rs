@@ -1,5 +1,3 @@
-logging::define_logger! {"bee::htmlparser"}
-
 #[macro_use]
 mod macros;
 
@@ -16,3 +14,5 @@ pub use htmltokenizer::token::Comment;
 pub use htmltokenizer::token::Doctype;
 pub use htmltokenizer::token::Tag;
 pub use htmltokenizer::token::Text;
+
+logging::define_logger! {}
