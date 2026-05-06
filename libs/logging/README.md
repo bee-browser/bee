@@ -45,6 +45,7 @@ Use `logging::define_logger` macro like this:
 logging::define_logger {}
 
 // Or explicitly specify the logging target in the `TypePath` form.
+// The logging target MUST start with `bee::`.
 logging::define_logger { bee::target_name }
 
 fn do_something() {

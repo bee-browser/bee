@@ -17,8 +17,7 @@ tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 
 [dev-dependencies]
-paste = "1.0.15"
-static_assertions = "1.1.0"
+trybuild = "1.0.116"
 
 [lints]
 workspace = true

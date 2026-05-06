@@ -14,10 +14,29 @@ macro_rules! init {
 #[macro_export]
 macro_rules! define_logger {
     () => {
-        $crate::define_logger_inner! {::std::module_path!(), $}
+        $crate::define_logger_inner! {::std::concat!("bee::", ::std::module_path!()), $}
     };
     ($target:path) => {
         $crate::define_logger_inner! {::std::stringify!($target), $}
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! assert_prefix {
+    ($target:expr) => {
+        const _: () = {
+            let s = $target.as_bytes();
+            if s.len() < 5
+                || s[0] != b'b'
+                || s[1] != b'e'
+                || s[2] != b'e'
+                || s[3] != b':'
+                || s[4] != b':'
+            {
+                panic!(r#"the loggin target must starts with "bee::""#);
+            }
+        };
     };
 }
 
@@ -32,6 +51,8 @@ macro_rules! define_logger {
 #[rustfmt::skip]
 macro_rules! define_logger_inner {
     ($target:expr, $d:tt) => {
+        $crate::assert_prefix!($target);
+
         mod logger {
             use ::std::sync::LazyLock;
 
