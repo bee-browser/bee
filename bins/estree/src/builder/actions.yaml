@@ -248,7 +248,7 @@
   action: nop
 - rule: HoistableDeclaration -> AsyncGeneratorDeclaration
   action: nop
-- rule: ClassDeclaration -> CLASS _CLASS_CONTEXT_ BindingIdentifier ClassTail
+- rule: ClassDeclaration -> CLASS BindingIdentifier _CLASS_CONTEXT_ ClassTail
   action: class_declaration
 - rule: LexicalDeclaration_In -> LET BindingList_In SEMICOLON
   action: variable_declaration
@@ -300,7 +300,7 @@
   action: nop
 - rule: HoistableDeclaration_Await_Default -> AsyncGeneratorDeclaration_Await_Default
   action: nop
-- rule: ClassDeclaration_Await_Default -> CLASS _CLASS_CONTEXT_ BindingIdentifier_Await ClassTail_Await
+- rule: ClassDeclaration_Await_Default -> CLASS BindingIdentifier_Await _CLASS_CONTEXT_ ClassTail_Await
   action: class_declaration
 - rule: ClassDeclaration_Await_Default -> CLASS _CLASS_CONTEXT_ ClassTail_Await
   action: anonymous_class_declaration
@@ -539,7 +539,7 @@
   action: nop
 - rule: HoistableDeclaration_Await -> AsyncGeneratorDeclaration_Await
   action: nop
-- rule: ClassDeclaration_Await -> CLASS _CLASS_CONTEXT_ BindingIdentifier_Await ClassTail_Await
+- rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await _CLASS_CONTEXT_ ClassTail_Await
   action: class_declaration
 - rule: LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
   action: variable_declaration
@@ -3419,7 +3419,7 @@
   action: nop
 - rule: HoistableDeclaration_Yield -> AsyncGeneratorDeclaration_Yield
   action: nop
-- rule: ClassDeclaration_Yield -> CLASS _CLASS_CONTEXT_ BindingIdentifier_Yield ClassTail_Yield
+- rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield _CLASS_CONTEXT_ ClassTail_Yield
   action: class_declaration
 - rule: LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
   action: variable_declaration
@@ -3530,7 +3530,7 @@
 - rule: HoistableDeclaration_Yield_Await -> AsyncGeneratorDeclaration_Yield_Await
   action: nop
 - rule: >-
-    ClassDeclaration_Yield_Await -> CLASS _CLASS_CONTEXT_ BindingIdentifier_Yield_Await
+    ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await _CLASS_CONTEXT_
     ClassTail_Yield_Await
   action: class_declaration
 - rule: LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON

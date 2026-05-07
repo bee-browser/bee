@@ -878,9 +878,9 @@ function modifyAsyncFunctionDeclaration(rules) {
 function modifyClassDeclaration(rules) {
   const TARGETS = [
     {
-      term: '`class`',
+      term: 'ClassTail[?Yield, ?Await]',
       action: '_CLASS_CONTEXT_',
-      insertBefore: false,
+      insertBefore: true,
     },
   ];
   log.debug('Modifying ClassDeclaration...');
