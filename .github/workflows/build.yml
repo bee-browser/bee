@@ -48,7 +48,7 @@ jobs:
       - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
         with:
           deno-version-file: .tool-versions
-      - uses: taiki-e/install-action@b651345a718c8f44efa2460560b3dbf29cbd7ee1 # v2.75.26
+      - uses: taiki-e/install-action@7769b73c2ec98c38dfcf2e18c83cfd4880c038c1 # v2.75.27
         with:
           tool: nextest, zizmor
       - name: Codegen
