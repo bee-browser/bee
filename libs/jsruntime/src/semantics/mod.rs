@@ -818,6 +818,9 @@ where
     }
 
     fn handle_class_context(&mut self) {
+        // Create a block scope for the class definition.
+        let _scope_ref = self.global_analysis.scope_tree_builder.push_block();
+
         // Create a *dummy* empty function.
         //
         // The dummy function is used for creating an empty closure that is required for creating
@@ -825,6 +828,7 @@ where
         // if the class has its own constructor.  In this case, static elements will be merged into
         // the constructor.
         self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
+        // TODO: call a function to initialize fields.
         self.end_function_scope();
         let func = self.functions.last().unwrap();
 
@@ -843,6 +847,8 @@ where
     }
 
     fn handle_class_declaration(&mut self, named: bool) {
+        self.global_analysis.scope_tree_builder.pop();
+
         analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
     }
 
