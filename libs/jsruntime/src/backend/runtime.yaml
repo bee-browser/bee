@@ -306,6 +306,17 @@ functions:
       - name: prototype
         type: HandleMut<Object>
     ret: HandleMut<Object>
+  - name: build_prototype_chain
+    args:
+      - name: parent
+        type: '&Value'
+      - name: constructor
+        type: HandleMut<Object>
+      - name: prototype
+        type: HandleMut<Object>
+      - name: retv
+        type: '&mut Value'
+    ret: Status
   # panic
   - name: panic
     args:

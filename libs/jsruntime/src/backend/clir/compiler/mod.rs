@@ -574,6 +574,7 @@ where
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Exception => self.process_exception(),
             CompileCommand::Class(name) => self.process_class(*name),
+            CompileCommand::Prototype => self.process_prototype(),
             CompileCommand::This => self.process_this(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
@@ -674,7 +675,7 @@ where
             CompileCommand::Resume => self.process_resume(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
-            CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
+            CompileCommand::Duplicate(index) => self.process_duplicate(*index),
             CompileCommand::Dereference => self.process_dereference(),
             CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::Debugger => self.process_debugger(),
@@ -856,6 +857,23 @@ where
             .editor
             .put_runtime_build_class(self.support, name, constructor, prototype);
         self.operand_stack.push(Operand::Object(class));
+    }
+
+    fn process_prototype(&mut self) {
+        let (operand, _) = self.dereference();
+        let parent = self.editor.put_alloc_any();
+        self.emit_store_operand_to_any(&operand, parent);
+        let prototype = self.peek_object(0);
+        let constructor = self.peek_object(1);
+        let retv = self.emit_create_any();
+        let status = self.editor.put_runtime_build_prototype_chain(
+            self.support,
+            parent,
+            constructor,
+            prototype,
+            retv,
+        );
+        self.emit_check_status_for_exception(status, retv);
     }
 
     fn process_this(&mut self) {
@@ -1573,8 +1591,8 @@ where
         }
     }
 
-    fn peek_object(&mut self) -> ObjectIr {
-        match self.operand_stack.last().unwrap() {
+    fn peek_object(&mut self, nth: usize) -> ObjectIr {
+        match self.operand_stack.peek(nth) {
             Operand::Object(value) => *value,
             _ => unreachable!(),
         }
@@ -1594,7 +1612,7 @@ where
 
         // 4. Perform ? CopyDataProperties(object, fromValue, excludedNames).
 
-        let object = self.peek_object();
+        let object = self.peek_object(0);
         let retv = self.emit_create_any();
 
         let status =
@@ -1611,7 +1629,7 @@ where
         let from_value = self.editor.put_alloc_any();
         self.emit_store_operand_to_any(&operand, from_value);
 
-        let object = self.peek_object();
+        let object = self.peek_object(0);
         let retv = self.emit_create_any();
 
         let status =
@@ -3128,8 +3146,8 @@ where
         self.swap();
     }
 
-    fn process_duplicate(&mut self, offset: u8) {
-        self.duplicate(offset);
+    fn process_duplicate(&mut self, index: u8) {
+        self.duplicate(index);
     }
 
     fn process_dereference(&mut self) {
@@ -3575,11 +3593,9 @@ where
         self.operand_stack.swap(last_index - 1, last_index);
     }
 
-    fn duplicate(&mut self, offset: u8) {
-        logger::debug!(event = "duplicate", offset);
-        debug_assert!(self.operand_stack.len() > offset as usize);
-        let index = self.operand_stack.len() - 1 - offset as usize;
-        self.operand_stack.duplicate(index);
+    fn duplicate(&mut self, index: u8) {
+        logger::debug!(event = "duplicate", index);
+        self.operand_stack.duplicate(index as usize);
     }
 
     // retv
@@ -3899,9 +3915,13 @@ impl OperandStack {
         Self(vec![])
     }
 
-    fn duplicate(&mut self, index: usize) {
+    fn peek(&self, index: usize) -> &Operand {
         debug_assert!(index < self.0.len());
-        let dup = self.0[index].clone();
+        self.0.iter().rev().nth(index).unwrap()
+    }
+
+    fn duplicate(&mut self, index: usize) {
+        let dup = self.peek(index).clone();
         self.push(dup);
     }
 
