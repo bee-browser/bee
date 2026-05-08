@@ -507,6 +507,7 @@ impl<X> Runtime<X> {
         mut constructor: HandleMut<Object>,
         mut prototype: HandleMut<Object>,
     ) -> HandleMut<Object> {
+        logger::debug!(event = "build_class");
         let name = self.create_string_from_symbol(name);
         let mut constructor = if let Some(prop) =
             prototype.get_own_property(&Symbol::CONSTRUCTOR.into())
@@ -543,6 +544,42 @@ impl<X> Runtime<X> {
 
         debug_assert!(constructor.is_callable());
         constructor
+    }
+
+    fn build_prototype_chain(
+        &mut self,
+        parent: &Value,
+        mut constructor: HandleMut<Object>,
+        mut prototype: HandleMut<Object>,
+    ) -> Result<(), Error> {
+        logger::debug!(
+            event = "build_prototype_chain",
+            ?parent,
+            ?constructor,
+            ?prototype
+        );
+        match parent {
+            Value::None => unreachable!(),
+            Value::Null => {
+                prototype.set_no_prototype();
+                Ok(())
+            }
+            Value::Object(parent) if parent.is_constructor() => {
+                constructor.set_prototype(*parent);
+                match parent.get_value(&Symbol::PROTOTYPE.into()) {
+                    Some(Value::Null) => {
+                        prototype.set_no_prototype();
+                        Ok(())
+                    }
+                    Some(Value::Object(parent_prototype)) => {
+                        prototype.set_prototype(*parent_prototype);
+                        Ok(())
+                    }
+                    _ => type_error!(),
+                }
+            }
+            _ => type_error!(),
+        }
     }
 }
 
