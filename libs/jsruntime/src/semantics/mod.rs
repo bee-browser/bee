@@ -437,6 +437,7 @@ where
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ClassContext => self.handle_class_context(),
             Node::ClassDeclaration(named) => self.handle_class_declaration(named),
+            Node::ClassHeritage => self.handle_class_heritage(),
             Node::StaticContext => self.handle_static_context(),
             Node::ClassElement(ClassElementKind::Method) => self.handle_class_element_method(),
             Node::ClassElement(ClassElementKind::StaticMethod) => {
@@ -850,6 +851,13 @@ where
         self.global_analysis.scope_tree_builder.pop();
 
         analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
+    }
+
+    fn handle_class_heritage(&mut self) {
+        push_commands! {
+            self;
+            CompileCommand::Prototype,
+        }
     }
 
     fn handle_static_context(&mut self) {
@@ -2279,7 +2287,10 @@ pub enum CompileCommand {
     Coroutine(LambdaId, u16),
     Promise,
     Exception,
+
+    // class definition
     Class(Symbol),
+    Prototype,
 
     // references
     This,
