@@ -157,6 +157,7 @@ enum Detail {
     MethodDefinition(Symbol, bool),
     ClassDeclaration,
     ClassTail,
+    ClassHeritage,
     ClassElementList,
     ClassElementName(Symbol, bool),
     AsyncConciseBody,
@@ -273,6 +274,7 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ClassContext,
     ClassDeclaration(bool),
+    ClassHeritage,
     StaticContext,
     ClassElement(ClassElementKind),
     AsyncFunctionDeclaration,
@@ -3767,7 +3769,9 @@ where
     // ClassHeritage[Yield, Await] :
     //   extends LeftHandSideExpression[?Yield, ?Await]
     fn process_class_heritage(&mut self) -> Result<(), Error> {
-        todo!()
+        self.enqueue(Node::ClassHeritage);
+        self.replace(2, Detail::ClassHeritage);
+        Ok(())
     }
 
     // ClassBody[Yield, Await] :
