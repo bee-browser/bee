@@ -741,6 +741,25 @@ pub(crate) extern "C" fn runtime_build_class<X>(
     runtime.build_class(name, constructor, prototype)
 }
 
+pub(crate) extern "C" fn runtime_build_prototype_chain<X>(
+    runtime: &mut Runtime<X>,
+    parent: &Value,
+    constructor: HandleMut<Object>,
+    prototype: HandleMut<Object>,
+    retv: &mut Value,
+) -> Status {
+    match runtime.build_prototype_chain(parent, constructor, prototype) {
+        Ok(()) => {
+            *retv = Value::None;
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
+}
+
 pub(crate) extern "C" fn runtime_panic<X>(
     _runtime: &mut Runtime<X>,
     msg: *const std::os::raw::c_char,
