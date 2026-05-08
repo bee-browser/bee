@@ -18,7 +18,7 @@ use crate::types::Promise;
 use crate::types::String;
 use crate::types::Value;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum PropertyKey {
     Symbol(Symbol),
     Number(f64),
@@ -77,6 +77,15 @@ impl PartialEq for PropertyKey {
             (Self::Symbol(a), Self::Symbol(b)) => a == b,
             (Self::Number(a), Self::Number(b)) => a == b,
             _ => false,
+        }
+    }
+}
+
+impl std::fmt::Debug for PropertyKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Symbol(symbol) => write!(f, "Symbol({symbol})"),
+            Self::Number(number) => write!(f, "Number({number})"),
         }
     }
 }
@@ -272,6 +281,10 @@ impl Object {
         self.prototype = Some(prototype);
     }
 
+    pub fn set_no_prototype(&mut self) {
+        self.prototype = None;
+    }
+
     // TODO(perf): Which one is better?  `Option::None` or `&Value::None`.
     // In JIT-compiled code, we need a `nullptr` check if we choose `Option::None`.
     // If we choose `&Value::None`, we always need a memory access for the discriminant check of
@@ -366,6 +379,10 @@ impl Object {
     pub fn is_instance_of(&self, prototype: HandleMut<Self>) -> bool {
         // TODO: prototype chain
         matches!(self.prototype, Some(p) if p == prototype)
+    }
+
+    pub(crate) fn is_constructor(&self) -> bool {
+        self.flags.contains(ObjectFlags::CONSTRUCTOR)
     }
 
     pub(crate) fn set_constructor(&mut self) {
