@@ -5,7 +5,7 @@ use jsruntime::Value;
 
 logging::init!();
 
-#[ctor::ctor]
+#[ctor::ctor(unsafe)]
 fn init_jsruntime() {
     jsruntime::initialize();
 }

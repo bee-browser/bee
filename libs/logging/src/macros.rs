@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! init {
     () => {
-        #[ctor::ctor]
+        #[ctor::ctor(unsafe)]
         fn logging_init() {
             $crate::init();
         }
