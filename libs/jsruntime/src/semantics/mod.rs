@@ -822,32 +822,22 @@ where
         // Create a block scope for the class definition.
         let _scope_ref = self.global_analysis.scope_tree_builder.push_block();
 
-        // Create a *dummy* empty function.
-        //
-        // The dummy function is used for creating an empty closure that is required for creating
-        // a function object.  The function object works as a temporal folder for static elements
-        // if the class has its own constructor.  In this case, static elements will be merged into
-        // the constructor.
-        self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
-        // TODO: call a function to initialize fields.
-        self.end_function_scope();
-        let func = self.functions.last().unwrap();
-
-        push_commands! {
-            self;
-            // constructor function object
-            CompileCommand::Lambda(func.id),
-            CompileCommand::Closure(false, func.scope_ref),
-            CompileCommand::Function(Symbol::NONE),
-            // prototype object
-            CompileCommand::Duplicate(0),
-            CompileCommand::PropertyReference(Symbol::PROTOTYPE),
-            CompileCommand::Dereference,
-            CompileCommand::ToObject,
-        }
+        analysis_mut!(self).process_class_context();
     }
 
     fn handle_class_declaration(&mut self, named: bool) {
+        if !self.analysis().has_class_constructor() {
+            // TODO(feat): create a default constructor.
+            self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
+            // TODO(feat): call the field initializer if it exists.
+            self.end_function_scope();
+            let func = self.functions.last().unwrap();
+            let func_id = func.id;
+            let func_scope_ref = func.scope_ref;
+            analysis_mut!(self).set_class_default_constructor(func_id, func_scope_ref);
+        }
+
+        // Pop the block scope created in handle_class_context().
         self.global_analysis.scope_tree_builder.pop();
 
         analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
@@ -922,7 +912,7 @@ where
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, true, false);
+        analysis_mut!(self).process_method(func.scope_ref, func.id);
     }
 
     fn do_handle_arrow_function(&mut self, coroutine: bool) {
@@ -1392,6 +1382,8 @@ struct FunctionAnalysis {
 
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<u16>,
+
+    class_stack: Vec<usize>,
 
     /// The name of the function.
     ///
@@ -1908,10 +1900,65 @@ impl FunctionAnalysis {
         }
     }
 
+    fn process_method(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
+        let symbol = self.symbol_stack.last().unwrap().0;
+        if symbol == Symbol::CONSTRUCTOR {
+            self.symbol_stack.pop();
+            let index = self.class_stack.last().cloned().unwrap();
+            debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+            debug_assert!(matches!(self.commands[index + 1], CompileCommand::PlaceHolder));
+            debug_assert!(matches!(self.commands[index + 2], CompileCommand::PlaceHolder));
+            self.commands[index] = CompileCommand::Lambda(lambda_id);
+            self.commands[index + 1] = CompileCommand::Closure(false, scope_ref);
+            // The function name will be set in process_class_declaration().
+            self.commands[index + 2] = CompileCommand::Function(Symbol::NONE);
+            // Duplicate the constructor function object.
+            self.commands.push(CompileCommand::Duplicate(1));
+        } else {
+            self.process_closure_expression(scope_ref, lambda_id, true, false);
+        }
+    }
+
+    fn process_class_context(&mut self) {
+        let index = self.commands.len();
+        debug_assert!(index <= usize::MAX - 7);
+        self.class_stack.push(index);
+
+        self.commands.push(CompileCommand::PlaceHolder);  // will be replaced w/ Lambda
+        self.commands.push(CompileCommand::PlaceHolder);  // will be replaced w/ Closure
+        // The constructor function object is created at this time so that static elements will be
+        // able to be added to it.
+        self.commands.push(CompileCommand::PlaceHolder);  // will be replaced w/ Function
+        // prototype object
+        self.commands.push(CompileCommand::Duplicate(0));
+        self.commands.push(CompileCommand::PropertyReference(Symbol::PROTOTYPE));
+        self.commands.push(CompileCommand::Dereference);
+        self.commands.push(CompileCommand::ToObject);
+    }
+
+    fn has_class_constructor(&self) -> bool {
+        let index = self.class_stack.last().cloned().unwrap();
+        matches!(self.commands[index], CompileCommand::Lambda(_))
+    }
+
+    fn set_class_default_constructor(&mut self, lambda_id: LambdaId, scope_ref: ScopeRef) {
+        let index = self.class_stack.last().cloned().unwrap();
+        debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+        debug_assert!(matches!(self.commands[index + 1], CompileCommand::PlaceHolder));
+        debug_assert!(matches!(self.commands[index + 2], CompileCommand::PlaceHolder));
+        self.commands[index] = CompileCommand::Lambda(lambda_id);
+        self.commands[index + 1] = CompileCommand::Closure(false, scope_ref);
+        self.commands[index + 2] = CompileCommand::Function(Symbol::NONE);
+    }
+
     fn process_class_declaration(&mut self, named: bool, global_analysis: &mut GlobalAnalysis) {
+        let index = self.class_stack.pop().unwrap();
+        debug_assert!(matches!(self.commands[index + 2], CompileCommand::Function(_)));
+
         if named {
             debug_assert!(!self.symbol_stack.is_empty());
             let symbol = self.symbol_stack.pop().unwrap().0;
+            self.commands[index + 2] = CompileCommand::Function(symbol);
             self.commands.push(CompileCommand::Class(symbol));
             self.commands
                 .push(CompileCommand::VariableReference(symbol));
