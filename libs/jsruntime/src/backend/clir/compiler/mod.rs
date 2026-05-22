@@ -576,6 +576,7 @@ where
             CompileCommand::Class(name) => self.process_class(*name),
             CompileCommand::Prototype => self.process_prototype(),
             CompileCommand::This => self.process_this(),
+            CompileCommand::Super => self.process_super(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
             CompileCommand::ToPropertyKey => self.process_to_property_key(),
@@ -591,7 +592,9 @@ where
             }
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
-            CompileCommand::New(nargs) => self.process_new(*nargs),
+            CompileCommand::Construct(nargs, super_call) => {
+                self.process_construct(*nargs, *super_call)
+            }
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::ToNumeric => self.process_to_numeric(),
@@ -879,6 +882,14 @@ where
     fn process_this(&mut self) {
         let this = self.this.unwrap();
         self.operand_stack.push(Operand::Any(this, None));
+    }
+
+    fn process_super(&mut self) {
+        let func = self.editor.put_load_func();
+        // TODO(feat): func may be null.
+        let super_constructor = self.editor.put_load_prototype_from_object(func);
+        // TODO(feat): super_constructor may be null.
+        self.operand_stack.push(Operand::Object(super_constructor));
     }
 
     fn process_variable_reference(&mut self, symbol: Symbol) {
@@ -1252,7 +1263,7 @@ where
         }
     }
 
-    fn process_new(&mut self, argc: u16) {
+    fn process_construct(&mut self, argc: u16, super_call: bool) {
         // TODO: dynamic allocation
         if argc > 8 {
             self.emit_throw_internal_error(const_string_handle!("TODO: too many arguments"));
@@ -1276,39 +1287,27 @@ where
             }
         };
 
-        let is_constructor = self.editor.put_is_constructor(constructor);
-        let then_block = self.editor.create_block();
-        let else_block = self.editor.create_block();
-        let merge_block = self.editor.create_block();
-        self.editor
-            .put_branch(is_constructor, then_block, &[], else_block, &[]);
-        self.editor.switch_to_block(then_block);
-        self.editor.put_jump(merge_block, &[]);
-        self.editor.switch_to_block(else_block);
-        self.emit_throw_type_error();
-        self.editor.put_jump(merge_block, &[]);
-        self.editor.switch_to_block(merge_block);
-
-        let closure = self.emit_load_closure_or_throw_type_error(constructor);
-        let prototype = self.emit_get_prototype_from_constructor(constructor);
-
-        let this = {
-            let object = self
-                .editor
-                .put_runtime_create_object(self.support, prototype);
-            let dst = self.editor.put_get_this_from_call_context();
-            self.editor.put_store_object_to_any(object, dst);
-            object
+        let new_target = if super_call {
+            self.editor.put_load_new_target()
+        } else {
+            constructor
         };
 
         let retv = self.emit_create_any();
         let status = self
             .editor
-            .put_call(constructor, closure, CallContextFlags::NEW, retv);
+            .put_runtime_construct(self.support, constructor, new_target, retv);
         self.emit_check_status_for_exception(status, retv);
 
-        // TODO(pref): compile-time evaluation
-        self.operand_stack.push(Operand::Object(this));
+        if super_call {
+            // TODO: BindThisValue
+            self.editor.put_store_this_argument(retv);
+            self.this = Some(self.editor.this_argument());
+        }
+
+        // TODO: assert retv.is_object()
+        let object = self.editor.put_load_object(retv);
+        self.operand_stack.push(Operand::Object(object));
     }
 
     fn process_push_scope(&mut self, func: &Function, scope_ref: ScopeRef) {
@@ -3772,6 +3771,7 @@ where
     }
 
     // 10.1.14 GetPrototypeFromConstructor
+    #[allow(unused)]
     fn emit_get_prototype_from_constructor(&mut self, constructor: ObjectIr) -> ObjectIr {
         let prototype = self.emit_create_any();
         let status = self.editor.put_runtime_get_value_by_symbol(

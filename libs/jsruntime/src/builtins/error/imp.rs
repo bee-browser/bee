@@ -19,23 +19,19 @@ use super::logger;
 //#sec-error-message constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "error_constructor");
-    let args = context.args();
 
-    // TODO(feat): NewTarget
-    if !context.is_new() {
-        return runtime_todo!();
-    }
-
-    let mut object = if let Value::Object(this) = context.this() {
-        *this
-    } else {
-        let mut object = runtime.create_object();
-        object.set_prototype(runtime.builtins.error_prototype);
-        object
+    let _new_target = match context.new_target() {
+        Some(new_target) => new_target,
+        None => context.func().unwrap(),
     };
+
+    // TODO(feat): 10.1.13 OrdinaryCreateFromConstructor
+    let mut object = runtime.create_object();
+    object.set_prototype(runtime.builtins.error_prototype);
+
     object.set_error();
 
-    match args.first().unwrap_or(&Value::Undefined) {
+    match context.args().first().unwrap_or(&Value::Undefined) {
         Value::Undefined => (),
         message => {
             let msg = runtime.value_to_string(message)?;
@@ -47,7 +43,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
         }
     }
 
-    if let Value::Object(value) = args.get(1).unwrap_or(&Value::Undefined) {
+    if let Value::Object(value) = context.args().get(1).unwrap_or(&Value::Undefined) {
         let key = Symbol::CAUSE.into();
         if let Some(value) = value.get_value(&key) {
             // TODO: error handling
