@@ -156,7 +156,7 @@ enum Detail {
     ConciseBody,
     MethodDefinition(Symbol, bool),
     ClassDeclaration,
-    ClassTail,
+    ClassTail(bool),
     ClassHeritage,
     ClassElementList,
     ClassElementName(Symbol, bool),
@@ -214,12 +214,13 @@ pub enum Node<'s> {
     PropertyDefinition(PropertyDefinitionKind),
     MemberExpression(MemberExpressionKind),
     This,
+    Super,
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
     ArgumentListItem(bool),
     Arguments,
-    CallExpression,
+    CallExpression(bool),
     NewExpression(bool),
     NonNullish,
     OptionalChain(PropertyAccessKind),
@@ -273,7 +274,7 @@ pub enum Node<'s> {
     FunctionSignature,
     FunctionDeclaration,
     ClassContext,
-    ClassDeclaration(bool),
+    ClassDeclaration(bool, bool),
     ClassHeritage,
     StaticContext,
     ClassElement(ClassElementKind),
@@ -650,6 +651,12 @@ where
     // BindingIdentifier_Yield_Await : await
     fn syntax_error(&mut self) -> Result<(), Error> {
         Err(Error::SyntaxError)
+    }
+
+    // _SUPER_
+    fn process_super(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Super);
+        Ok(())
     }
 
     // _TO_STRING_
@@ -1816,7 +1823,7 @@ where
     // CallExpression[Yield, Await] :
     //   CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
     fn process_call_expression(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::CallExpression);
+        self.enqueue(Node::CallExpression(false));
         self.replace(
             1,
             Detail::Expression {
@@ -1833,9 +1840,32 @@ where
     }
 
     // CallExpression[Yield, Await] :
+    //   SuperCall[?Yield, ?Await]
+    nop! {}
+
+    // CallExpression[Yield, Await] :
     //   CallExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
     fn process_call_expression_call(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::CallExpression);
+        self.enqueue(Node::CallExpression(false));
+        self.replace(
+            2,
+            Detail::Expression {
+                // TODO(feat): supports Runtime Errors for Function Call Assignment Targets and
+                // IsStrict(this CallExpression) is false
+                assignment_target_type: if self.web_compat_mode {
+                    AssignmentTargetType::WebCompat
+                } else {
+                    AssignmentTargetType::Invalid
+                },
+            },
+        );
+        Ok(())
+    }
+
+    // SuperCall[Yield, Await] :
+    //   super Arguments[?Yield, ?Await]
+    fn process_super_call(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CallExpression(true));
         self.replace(
             2,
             Detail::Expression {
@@ -1979,7 +2009,7 @@ where
     // OptionalChain[Yield, Await] :
     //   OptionalChain[?Yield, ?Await] Arguments[?Yield, ?Await]
     fn process_optional_chain_call_chain(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::CallExpression);
+        self.enqueue(Node::CallExpression(false));
         self.replace(2, Detail::OptionalChain);
         Ok(())
     }
@@ -3713,7 +3743,11 @@ where
     // ClassDeclaration[Yield, Await, Default] :
     //   class BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
     fn process_class_declaration(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ClassDeclaration(true));
+        let derived = match self.top().detail {
+            Detail::ClassTail(derived) => derived,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::ClassDeclaration(true, derived));
         self.replace(3, Detail::ClassDeclaration);
         Ok(())
     }
@@ -3721,7 +3755,11 @@ where
     // ClassDeclaration[Yield, Await, Default] :
     //   [+Default] class ClassTail[?Yield, ?Await]
     fn process_class_declaration_anonymous(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ClassDeclaration(false));
+        let derived = match self.top().detail {
+            Detail::ClassTail(derived) => derived,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::ClassDeclaration(false, derived));
         self.replace(3, Detail::ClassDeclaration);
         Ok(())
     }
@@ -3741,28 +3779,28 @@ where
     // ClassTail[Yield, Await] :
     //   { }
     fn process_class_tail_empty(&mut self) -> Result<(), Error> {
-        self.replace(2, Detail::ClassTail);
+        self.replace(2, Detail::ClassTail(false));
         Ok(())
     }
 
     // ClassTail[Yield, Await] :
     //   ClassHeritage[?Yield, ?Await] { }
     fn process_class_tail_with_heritage(&mut self) -> Result<(), Error> {
-        self.replace(3, Detail::ClassTail);
+        self.replace(3, Detail::ClassTail(true));
         Ok(())
     }
 
     // ClassTail[Yield, Await] :
     //   { ClassBody[?Yield, ?Await] }
     fn process_class_tail_with_body(&mut self) -> Result<(), Error> {
-        self.replace(3, Detail::ClassTail);
+        self.replace(3, Detail::ClassTail(false));
         Ok(())
     }
 
     // ClassTail[Yield, Await] :
     //   ClassHeritage[?Yield, ?Await] { ClassBody[?Yield, ?Await] }
     fn process_class_tail(&mut self) -> Result<(), Error> {
-        self.replace(4, Detail::ClassTail);
+        self.replace(4, Detail::ClassTail(true));
         Ok(())
     }
 

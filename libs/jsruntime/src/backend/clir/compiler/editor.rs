@@ -182,6 +182,11 @@ impl<'a> Editor<'a> {
         self.lambda_params(1)
     }
 
+    pub fn put_load_new_target(&mut self) -> ObjectIr {
+        let context = self.context();
+        ObjectIr(self.put_load_addr(context, CallContext::NEW_TARGET_OFFSET))
+    }
+
     /// Returns the `this` argument of the lambda function.
     ///
     /// Don't be confused.  The value is **NOT** equal to the return value of
@@ -190,6 +195,16 @@ impl<'a> Editor<'a> {
         const OFFSET: i64 = CallContext::THIS_OFFSET as i64;
         let context = self.context();
         AnyIr(self.builder.ins().iadd_imm(context, OFFSET))
+    }
+
+    pub fn put_store_this_argument(&mut self, this: AnyIr) {
+        let context = self.context();
+        self.put_safe_copy_i128(this.0, context, CallContext::THIS_OFFSET);
+    }
+
+    pub fn put_load_func(&mut self) -> ObjectIr {
+        let context = self.context();
+        ObjectIr(self.put_load_addr(context, CallContext::FUNC_OFFSET))
     }
 
     fn envp(&mut self) -> ir::Value {
@@ -680,6 +695,7 @@ impl<'a> Editor<'a> {
         retv: AnyIr,
     ) -> StatusIr {
         logger::debug!(event = "put_call", ?function, ?closure, ?flags, ?retv);
+        self.put_clear_new_target_of_call_context();
         self.put_store_closure_to_call_context(closure);
         self.put_store_function_to_call_context(function);
         self.put_store_flags_to_call_context(flags);
@@ -746,6 +762,7 @@ impl<'a> Editor<'a> {
 
     // object
 
+    #[allow(unused)]
     pub fn put_is_constructor(&mut self, object: ObjectIr) -> BooleanIr {
         logger::debug!(event = "put_is_constructor", ?object);
         use ir::condcodes::IntCC::NotEqual;
@@ -770,6 +787,10 @@ impl<'a> Editor<'a> {
 
     fn put_load_flags_from_object(&mut self, object: ObjectIr) -> ir::Value {
         self.put_load_i8(object.0, Object::FLAGS_OFFSET)
+    }
+
+    pub fn put_load_prototype_from_object(&mut self, object: ObjectIr) -> ObjectIr {
+        ObjectIr(self.put_load_addr(object.0, Object::PROTOTYPE_OFFSET))
     }
 
     pub fn put_object(&mut self, addr: usize) -> ObjectIr {
@@ -823,6 +844,14 @@ impl<'a> Editor<'a> {
     }
 
     // call context
+
+    pub fn put_clear_new_target_of_call_context(&mut self) {
+        const OFFSET: i32 = CallContext::NEW_TARGET_OFFSET as i32;
+        let none = self.builder.ins().iconst(self.addr_type, 0);
+        self.builder
+            .ins()
+            .stack_store(none, self.call_context, OFFSET);
+    }
 
     pub fn put_store_caller_to_call_context(&mut self) {
         const OFFSET: i32 = CallContext::CALLER_OFFSET as i32;
@@ -2581,6 +2610,44 @@ impl<'a> Editor<'a> {
         StatusIr(self.builder.inst_results(call)[0])
     }
 
+    pub fn put_runtime_construct(
+        &mut self,
+        support: &mut impl EditorSupport,
+        constructor: ObjectIr,
+        new_target: ObjectIr,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(event = "put_runtime_construct", ?constructor, ?new_target);
+        if self.runtime_assert_enabled {
+            self.put_assert_non_null(
+                support,
+                constructor.0,
+                c"runtime_construct: constructor must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                new_target.0,
+                c"runtime_construct: new_target must be non-null",
+            );
+        }
+        let func = self
+            .runtime_func_cache
+            .import_runtime_construct(support, self.builder.func);
+        let call_context = self
+            .builder
+            .ins()
+            .stack_addr(self.addr_type, self.call_context, 0);
+        let args = [
+            self.runtime(),
+            constructor.0,
+            new_target.0,
+            call_context,
+            retv.0,
+        ];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
+    }
+
     pub fn put_runtime_panic(&mut self, support: &mut impl EditorSupport, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_panic", ?msg);
         let func = self
@@ -2624,6 +2691,44 @@ impl<'a> Editor<'a> {
         let func = self
             .runtime_func_cache
             .import_runtime_print_f64(support, self.builder.func);
+        let msg = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, msg.as_ptr() as i64);
+        let args = [self.runtime(), value.0, msg];
+        self.builder.ins().call(func, &args);
+    }
+
+    #[allow(unused)]
+    pub fn put_runtime_print_string(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: StringIr,
+        msg: &'static CStr,
+    ) {
+        logger::debug!(event = "put_runtime_print_string", ?value);
+        let func = self
+            .runtime_func_cache
+            .import_runtime_print_string(support, self.builder.func);
+        let msg = self
+            .builder
+            .ins()
+            .iconst(self.addr_type, msg.as_ptr() as i64);
+        let args = [self.runtime(), value.0, msg];
+        self.builder.ins().call(func, &args);
+    }
+
+    #[allow(unused)]
+    pub fn put_runtime_print_object(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: ObjectIr,
+        msg: &'static CStr,
+    ) {
+        logger::debug!(event = "put_runtime_print_object", ?value);
+        let func = self
+            .runtime_func_cache
+            .import_runtime_print_object(support, self.builder.func);
         let msg = self
             .builder
             .ins()
