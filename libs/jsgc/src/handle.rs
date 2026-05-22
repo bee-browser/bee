@@ -95,7 +95,7 @@ where
     T: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Handle({})", self.as_ref())
+        write!(f, "{}", self.as_ref())
     }
 }
 
@@ -202,7 +202,7 @@ where
     T: Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "HandleMut({})", self.as_ref())
+        write!(f, "{}", self.as_ref())
     }
 }
 
@@ -283,20 +283,27 @@ mod tests {
     fn test_handle_debug_fmt() {
         let v: u8 = 12;
         let handle = Handle::from_ref(&v);
-        assert_eq!(format!("{:?}", handle), "Handle(12)");
+        assert_eq!(format!("{handle:?}"), "Handle(12)");
+    }
+
+    #[test]
+    fn test_handle_display_fmt() {
+        let v: u8 = 12;
+        let handle = Handle::from_ref(&v);
+        assert_eq!(format!("{handle}"), "12");
     }
 
     #[test]
     fn test_handle_mut_debug_fmt() {
         let mut v: u8 = 12;
         let handle = HandleMut::from_mut(&mut v);
-        assert_eq!(format!("{:?}", handle), "HandleMut(12)");
+        assert_eq!(format!("{handle:?}"), "HandleMut(12)");
     }
 
     #[test]
     fn test_handle_mut_dissplay_fmt() {
         let mut v: u8 = 12;
         let handle = HandleMut::from_mut(&mut v);
-        assert_eq!(format!("{}", handle), "HandleMut(12)");
+        assert_eq!(format!("{handle}"), "12");
     }
 }

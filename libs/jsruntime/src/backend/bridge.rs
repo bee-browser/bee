@@ -5,7 +5,6 @@ use jsparser::Symbol;
 use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaKind;
-use crate::logger;
 use crate::types::CallContext;
 use crate::types::Capture;
 use crate::types::Closure;
@@ -17,6 +16,8 @@ use crate::types::PropertyKey;
 use crate::types::Status;
 use crate::types::String;
 use crate::types::Value;
+
+logging::define_logger! {}
 
 macro_rules! into_object {
     ($value:expr) => {
@@ -760,6 +761,16 @@ pub(crate) extern "C" fn runtime_build_prototype_chain<X>(
     }
 }
 
+pub(crate) extern "C" fn runtime_construct<X>(
+    runtime: &mut Runtime<X>,
+    constructor: HandleMut<Object>,
+    new_target: HandleMut<Object>,
+    context: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    runtime.construct(constructor, new_target, context, retv)
+}
+
 pub(crate) extern "C" fn runtime_panic<X>(
     _runtime: &mut Runtime<X>,
     msg: *const std::os::raw::c_char,
@@ -834,9 +845,26 @@ pub(crate) extern "C" fn runtime_print_string<X>(
         std::ffi::CStr::from_ptr(msg)
     };
     if msg.is_empty() {
-        logger::debug!("runtime_print_f64: {value:?}");
+        logger::debug!("runtime_print_string: {value:?}");
     } else {
-        logger::debug!("runtime_print_f64: {value:?}: {msg:?}");
+        logger::debug!("runtime_print_string: {value:?}: {msg:?}");
+    }
+}
+
+pub(crate) extern "C" fn runtime_print_object<X>(
+    _runtime: &mut Runtime<X>,
+    value: HandleMut<Object>,
+    msg: *const std::os::raw::c_char,
+) {
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
+    if msg.is_empty() {
+        logger::debug!("runtime_print_object: {value:?}");
+    } else {
+        logger::debug!("runtime_print_object: {value:?}: {msg:?}");
     }
 }
 

@@ -37,7 +37,7 @@ pub fn run(test_case: &TestCase, launch: &Launch) -> (Result<(), Error>, Duratio
         Some(1) => Err(Error::Runtime),
         Some(2) => Err(Error::Parse),
         Some(124) => Err(Error::TimedOut),
-        None | Some(101) | Some(134) => Err(Error::Panic),
+        None | Some(101) | Some(132) /*KILL*/ | Some(134) /*ABRT*/ | Some(139) /*SEVG*/ => Err(Error::Panic),
         code => unreachable!("{:?}", code),
     };
     (result, duration)

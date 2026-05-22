@@ -19,11 +19,33 @@ use super::logger;
 
 //#sec-string-constructor-string-value constructor
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
-    logger::debug!(event = "string");
-    let this = context.this();
-    let args = context.args();
-    let new = context.is_new();
-    runtime.create_string_object(Some(this), args, new)
+    logger::debug!(event = "string_constructor");
+
+    let string = if context.args().is_empty() {
+        const_string_handle!()
+    } else {
+        // TODO(feat): context.new_target().is_some() &&
+        // context.args().first().unwrap().is_symbol()
+        runtime.value_to_string(context.args().first().unwrap())?
+    };
+    match context.new_target() {
+        Some(_new_target) => {
+            // TODO(feat): 10.1.14 GetPrototypeFromConstructor
+            // TODO(feat): 10.4.3.4 StringCreate
+            let mut object = runtime.create_object();
+            object.set_prototype(runtime.builtins.string_prototype);
+            let length = string.len();
+            object.set_string(string);
+            // TODO: check the result
+            let result = object.define_own_property(
+                Symbol::LENGTH.into(),
+                Property::data_xxc(Value::Number(length as f64)),
+            );
+            debug_assert!(matches!(result, Ok(true)));
+            Ok(Value::Object(object))
+        }
+        None => Ok(Value::String(string)),
+    }
 }
 
 //#sec-string.fromcharcode constructor.function

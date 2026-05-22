@@ -507,8 +507,8 @@ impl<X> Runtime<X> {
         mut constructor: HandleMut<Object>,
         mut prototype: HandleMut<Object>,
     ) -> HandleMut<Object> {
-        logger::debug!(event = "build_class");
         let name = self.create_string_from_symbol(name);
+        logger::debug!(event = "build_class", ?name, ?constructor, ?prototype);
         let mut constructor = if let Some(prop) =
             prototype.get_own_property(&Symbol::CONSTRUCTOR.into())
         {
@@ -543,6 +543,7 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
 
         debug_assert!(constructor.is_callable());
+        constructor.set_constructor();
         constructor
     }
 
@@ -579,6 +580,74 @@ impl<X> Runtime<X> {
                 }
             }
             _ => type_error!(),
+        }
+    }
+
+    fn construct(
+        &mut self,
+        constructor: HandleMut<Object>,
+        new_target: HandleMut<Object>,
+        context: &mut CallContext,
+        retv: &mut Value,
+    ) -> Status {
+        logger::debug!(event = "construct", ?constructor, ?new_target);
+        if !constructor.is_constructor() {
+            return type_error!(self, retv);
+        }
+
+        // TODO(feat): OrdinaryCallBindThis
+        let this = if self.is_base_class(constructor) {
+            let mut object = self.create_object();
+            let prototype = new_target
+                .get_own_property(&Symbol::PROTOTYPE.into())
+                .map(|prop| prop.value())
+                .and_then(|value| match value {
+                    Value::Object(prototype) => Some(*prototype),
+                    _ => None,
+                })
+                .unwrap_or(self.builtins.object_prototype);
+            object.set_prototype(prototype);
+            context.set_this(Value::Object(object));
+            Some(object)
+        } else {
+            None
+        };
+
+        debug_assert!(constructor.is_callable());
+        let closure = constructor.closure();
+
+        context.set_func(constructor);
+        context.set_closure(closure);
+        context.set_new_target(new_target);
+
+        let lambda = Lambda::from(closure.lambda);
+        let status = lambda(self, context, retv);
+        if matches!(status, Status::Exception) {
+            return status;
+        }
+
+        debug_assert!(matches!(status, Status::Normal));
+        if matches!(retv, Value::Object(_)) {
+            return Status::Normal;
+        }
+
+        if let Some(this) = this {
+            *retv = Value::Object(this);
+            return Status::Normal;
+        }
+
+        if !matches!(retv, Value::Undefined) {
+            return type_error!(self, retv);
+        }
+
+        *retv = context.this().clone();
+        Status::Normal
+    }
+
+    fn is_base_class(&self, constructor: HandleMut<Object>) -> bool {
+        match constructor.prototype() {
+            Some(prototype) => prototype == self.builtins.function_prototype,
+            None => true,
         }
     }
 }

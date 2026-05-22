@@ -1302,7 +1302,7 @@
 - rule: CallExpression_Await -> CoverCallExpressionAndAsyncArrowHead_Await
   action: process_call_expression
 - rule: CallExpression_Await -> SuperCall_Await
-  action: undefined
+  action: nop
 - rule: CallExpression_Await -> ImportCall_Await
   action: undefined
 - rule: CallExpression_Await -> CallExpression_Await Arguments_Await
@@ -1677,8 +1677,8 @@
     MemberExpression_Await -> MemberExpression_Await _DEREFERENCE_ DOT
     PRIVATE_IDENTIFIER
   action: undefined
-- rule: SuperCall_Await -> SUPER Arguments_Await
-  action: undefined
+- rule: SuperCall_Await -> SUPER _SUPER_ Arguments_Await
+  action: process_super_call
 - rule: ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await RPAREN
   action: undefined
 - rule: ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await COMMA RPAREN
@@ -2000,7 +2000,7 @@
 - rule: CallExpression -> CoverCallExpressionAndAsyncArrowHead
   action: process_call_expression
 - rule: CallExpression -> SuperCall
-  action: undefined
+  action: nop
 - rule: CallExpression -> ImportCall
   action: undefined
 - rule: CallExpression -> CallExpression Arguments
@@ -2149,14 +2149,16 @@
     PrimaryExpression_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Await
   action: process_primary_expression_cpeaapl
-- rule: SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
+- rule: SuperProperty_Await -> SUPER _SUPER_ LBRACK Expression_In_Await RBRACK
   action: undefined
-- rule: SuperProperty_Await -> SUPER DOT KeywordOrIdentifierName
+- rule: SuperProperty_Await -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: undefined
 - rule: MetaProperty -> NewTarget
   action: undefined
 - rule: MetaProperty -> ImportMeta
   action: undefined
+- rule: _SUPER_ -> (empty)
+  action: process_super
 - rule: ArgumentList_Await -> AssignmentExpression_In_Await
   action: process_argument_list_head
 - rule: ArgumentList_Await -> ELLIPSIS AssignmentExpression_In_Await
@@ -2232,7 +2234,7 @@
 - rule: CallExpression_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
   action: process_call_expression
 - rule: CallExpression_Yield -> SuperCall_Yield
-  action: undefined
+  action: nop
 - rule: CallExpression_Yield -> ImportCall_Yield
   action: undefined
 - rule: CallExpression_Yield -> CallExpression_Yield Arguments_Yield
@@ -2284,7 +2286,7 @@
     CoverCallExpressionAndAsyncArrowHead_Yield_Await
   action: process_call_expression
 - rule: CallExpression_Yield_Await -> SuperCall_Yield_Await
-  action: undefined
+  action: nop
 - rule: CallExpression_Yield_Await -> ImportCall_Yield_Await
   action: undefined
 - rule: >-
@@ -2377,8 +2379,8 @@
   action: process_member_expression_new
 - rule: MemberExpression -> MemberExpression _DEREFERENCE_ DOT PRIVATE_IDENTIFIER
   action: undefined
-- rule: SuperCall -> SUPER Arguments
-  action: undefined
+- rule: SuperCall -> SUPER _SUPER_ Arguments
+  action: process_super_call
 - rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
   action: undefined
 - rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In COMMA RPAREN
@@ -2741,8 +2743,8 @@
     MemberExpression_Yield -> MemberExpression_Yield _DEREFERENCE_ DOT
     PRIVATE_IDENTIFIER
   action: undefined
-- rule: SuperCall_Yield -> SUPER Arguments_Yield
-  action: undefined
+- rule: SuperCall_Yield -> SUPER _SUPER_ Arguments_Yield
+  action: process_super_call
 - rule: ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN
   action: undefined
 - rule: ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield COMMA RPAREN
@@ -2873,8 +2875,8 @@
     MemberExpression_Yield_Await -> MemberExpression_Yield_Await _DEREFERENCE_
     DOT PRIVATE_IDENTIFIER
   action: undefined
-- rule: SuperCall_Yield_Await -> SUPER Arguments_Yield_Await
-  action: undefined
+- rule: SuperCall_Yield_Await -> SUPER _SUPER_ Arguments_Yield_Await
+  action: process_super_call
 - rule: >-
     ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await
     RPAREN
@@ -2989,9 +2991,9 @@
   action: process_primary_expression_template_literal
 - rule: PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
   action: process_primary_expression_cpeaapl
-- rule: SuperProperty -> SUPER LBRACK Expression_In RBRACK
+- rule: SuperProperty -> SUPER _SUPER_ LBRACK Expression_In RBRACK
   action: undefined
-- rule: SuperProperty -> SUPER DOT KeywordOrIdentifierName
+- rule: SuperProperty -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: undefined
 - rule: ArgumentList -> AssignmentExpression_In
   action: process_argument_list_head
@@ -3226,9 +3228,9 @@
     PrimaryExpression_Yield ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield
   action: process_primary_expression_cpeaapl
-- rule: SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
+- rule: SuperProperty_Yield -> SUPER _SUPER_ LBRACK Expression_In_Yield RBRACK
   action: undefined
-- rule: SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
+- rule: SuperProperty_Yield -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: undefined
 - rule: ArgumentList_Yield -> AssignmentExpression_In_Yield
   action: process_argument_list_head
@@ -3288,9 +3290,11 @@
     PrimaryExpression_Yield_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
   action: process_primary_expression_cpeaapl
-- rule: SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
+- rule: >-
+    SuperProperty_Yield_Await -> SUPER _SUPER_ LBRACK Expression_In_Yield_Await
+    RBRACK
   action: undefined
-- rule: SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName
+- rule: SuperProperty_Yield_Await -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: undefined
 - rule: ArgumentList_Yield_Await -> AssignmentExpression_In_Yield_Await
   action: process_argument_list_head
