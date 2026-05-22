@@ -368,12 +368,13 @@ where
             Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
             Node::MemberExpression(kind) => self.handle_member_expression(kind),
             Node::This => self.handle_this(),
+            Node::Super => self.handle_super(),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
             Node::Arguments => self.handle_arguments(),
-            Node::CallExpression => self.handle_call_expression(),
+            Node::CallExpression(super_call) => self.handle_call_expression(super_call),
             Node::NewExpression(has_args) => self.handle_new_expression(has_args),
             Node::NonNullish => self.handle_non_nullish(),
             Node::OptionalChain(kind) => self.handle_optional_chain(kind),
@@ -436,7 +437,7 @@ where
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ClassContext => self.handle_class_context(),
-            Node::ClassDeclaration(named) => self.handle_class_declaration(named),
+            Node::ClassDeclaration(named, derived) => self.handle_class_declaration(named, derived),
             Node::ClassHeritage => self.handle_class_heritage(),
             Node::StaticContext => self.handle_static_context(),
             Node::ClassElement(ClassElementKind::Method) => self.handle_class_element_method(),
@@ -532,6 +533,10 @@ where
         analysis_mut!(self).process_this();
     }
 
+    fn handle_super(&mut self) {
+        analysis_mut!(self).process_super();
+    }
+
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
         analysis_mut!(self).process_identifier_reference(symbol);
     }
@@ -552,8 +557,8 @@ where
         // nop
     }
 
-    fn handle_call_expression(&mut self) {
-        analysis_mut!(self).process_call_expression();
+    fn handle_call_expression(&mut self, super_call: bool) {
+        analysis_mut!(self).process_call_expression(super_call);
     }
 
     fn handle_new_expression(&mut self, has_args: bool) {
@@ -825,11 +830,20 @@ where
         analysis_mut!(self).process_class_context();
     }
 
-    fn handle_class_declaration(&mut self, named: bool) {
+    fn handle_class_declaration(&mut self, named: bool, derived: bool) {
         if !self.analysis().has_class_constructor() {
-            // TODO(feat): create a default constructor.
             self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
             // TODO(feat): call the field initializer if it exists.
+            if derived {
+                // constructor(...args) { super(...args); }
+                push_commands! {
+                    self;
+                    CompileCommand::Super,
+                    // TODO(feat): ...args
+                    CompileCommand::Construct(0, true),
+                    CompileCommand::Discard,
+                }
+            }
             self.end_function_scope();
             let func = self.functions.last().unwrap();
             let func_id = func.id;
@@ -1551,13 +1565,18 @@ impl FunctionAnalysis {
         self.process_identifier_reference(Symbol::INTERNAL_ERROR);
         let utf16 = message.encode_utf16().collect_vec();
         self.commands.push(CompileCommand::String(utf16));
-        self.commands.push(CompileCommand::New(1));
+        self.commands.push(CompileCommand::Construct(1, false));
         self.commands.push(CompileCommand::Throw);
     }
 
-    fn process_call_expression(&mut self) {
+    fn process_call_expression(&mut self, super_call: bool) {
         let nargs = self.nargs_stack.pop().unwrap();
-        self.commands.push(CompileCommand::Call(nargs));
+        if super_call {
+            self.commands
+                .push(CompileCommand::Construct(nargs, super_call))
+        } else {
+            self.commands.push(CompileCommand::Call(nargs));
+        }
     }
 
     fn process_new_expression(&mut self, has_args: bool) {
@@ -1566,7 +1585,7 @@ impl FunctionAnalysis {
         } else {
             0
         };
-        self.commands.push(CompileCommand::New(nargs));
+        self.commands.push(CompileCommand::Construct(nargs, false));
     }
 
     fn process_lexical_binding(&mut self, init: bool) {
@@ -1679,6 +1698,10 @@ impl FunctionAnalysis {
         // in the function scope.  See the implementation of [`accept()`] for details.
         self.commands.push(CompileCommand::This);
         self.flags.insert(FunctionAnalysisFlags::THIS_BINDING_USED);
+    }
+
+    fn process_super(&mut self) {
+        self.commands.push(CompileCommand::Super);
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {
@@ -1906,8 +1929,14 @@ impl FunctionAnalysis {
             self.symbol_stack.pop();
             let index = self.class_stack.last().cloned().unwrap();
             debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
-            debug_assert!(matches!(self.commands[index + 1], CompileCommand::PlaceHolder));
-            debug_assert!(matches!(self.commands[index + 2], CompileCommand::PlaceHolder));
+            debug_assert!(matches!(
+                self.commands[index + 1],
+                CompileCommand::PlaceHolder
+            ));
+            debug_assert!(matches!(
+                self.commands[index + 2],
+                CompileCommand::PlaceHolder
+            ));
             self.commands[index] = CompileCommand::Lambda(lambda_id);
             self.commands[index + 1] = CompileCommand::Closure(false, scope_ref);
             // The function name will be set in process_class_declaration().
@@ -1924,16 +1953,17 @@ impl FunctionAnalysis {
         debug_assert!(index <= usize::MAX - 7);
         self.class_stack.push(index);
 
-        self.commands.push(CompileCommand::PlaceHolder);  // will be replaced w/ Lambda
-        self.commands.push(CompileCommand::PlaceHolder);  // will be replaced w/ Closure
+        self.commands.push(CompileCommand::PlaceHolder); // will be replaced w/ Lambda
+        self.commands.push(CompileCommand::PlaceHolder); // will be replaced w/ Closure
         // The constructor function object is created at this time so that static elements will be
         // able to be added to it.
-        self.commands.push(CompileCommand::PlaceHolder);  // will be replaced w/ Function
-        // prototype object
+        self.commands.push(CompileCommand::PlaceHolder); // will be replaced w/ Function
+        // `Constructor.prototype = new Object()`
         self.commands.push(CompileCommand::Duplicate(0));
-        self.commands.push(CompileCommand::PropertyReference(Symbol::PROTOTYPE));
-        self.commands.push(CompileCommand::Dereference);
-        self.commands.push(CompileCommand::ToObject);
+        self.commands
+            .push(CompileCommand::PropertyReference(Symbol::PROTOTYPE));
+        self.commands.push(CompileCommand::Object);
+        self.commands.push(CompileCommand::Assignment);
     }
 
     fn has_class_constructor(&self) -> bool {
@@ -1944,8 +1974,14 @@ impl FunctionAnalysis {
     fn set_class_default_constructor(&mut self, lambda_id: LambdaId, scope_ref: ScopeRef) {
         let index = self.class_stack.last().cloned().unwrap();
         debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
-        debug_assert!(matches!(self.commands[index + 1], CompileCommand::PlaceHolder));
-        debug_assert!(matches!(self.commands[index + 2], CompileCommand::PlaceHolder));
+        debug_assert!(matches!(
+            self.commands[index + 1],
+            CompileCommand::PlaceHolder
+        ));
+        debug_assert!(matches!(
+            self.commands[index + 2],
+            CompileCommand::PlaceHolder
+        ));
         self.commands[index] = CompileCommand::Lambda(lambda_id);
         self.commands[index + 1] = CompileCommand::Closure(false, scope_ref);
         self.commands[index + 2] = CompileCommand::Function(Symbol::NONE);
@@ -1953,7 +1989,10 @@ impl FunctionAnalysis {
 
     fn process_class_declaration(&mut self, named: bool, global_analysis: &mut GlobalAnalysis) {
         let index = self.class_stack.pop().unwrap();
-        debug_assert!(matches!(self.commands[index + 2], CompileCommand::Function(_)));
+        debug_assert!(matches!(
+            self.commands[index + 2],
+            CompileCommand::Function(_)
+        ));
 
         if named {
             debug_assert!(!self.symbol_stack.is_empty());
@@ -2341,6 +2380,7 @@ pub enum CompileCommand {
 
     // references
     This,
+    Super,
     VariableReference(Symbol),
     PropertyReference(Symbol),
     ToPropertyKey,
@@ -2353,7 +2393,7 @@ pub enum CompileCommand {
     DeclareFunctions(ScopeRef),
     DeclareFunction,
     Call(u16),
-    New(u16),
+    Construct(u16, bool),
     PushScope(ScopeRef),
     PopScope(ScopeRef),
 
@@ -2486,6 +2526,7 @@ pub enum CompileCommand {
     Swap,
     Duplicate(u8), // 0 or 1
     Dereference,
+    #[allow(unused)]
     ToObject,
 
     // debugger

@@ -317,6 +317,17 @@ functions:
       - name: retv
         type: '&mut Value'
     ret: Status
+  - name: construct
+    args:
+      - name: constructor
+        type: HandleMut<Object>
+      - name: new_target
+        type: HandleMut<Object>
+      - name: call_context
+        type: '&mut CallContext'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
   # panic
   - name: panic
     args:
@@ -345,6 +356,12 @@ functions:
     args:
       - name: value
         type: Handle<String>
+      - name: msg
+        type: '&std::ffi::CStr'
+  - name: print_object
+    args:
+      - name: value
+        type: HandleMut<Object>
       - name: msg
         type: '&std::ffi::CStr'
   - name: print_value
