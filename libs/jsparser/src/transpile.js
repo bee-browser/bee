@@ -162,6 +162,7 @@ class Transpiler {
           // conflicts in the LALR(1) parsing table generation when you actually try this.
           //rewriteCPEAAPL,
           addActions,
+          modifySuper,
           modifyElision,
           modifyArrayLiteral,
           modifyObjectLiteral,
@@ -608,6 +609,7 @@ function addActions(rules) {
   log.debug('Adding production rules for semantic actions...');
 
   const ACTIONS = [
+    '_SUPER_',
     '_TO_STRING_',
     '_NEW_ARRAY_',
     '_NEW_OBJECT_',
@@ -652,6 +654,27 @@ function addActions(rules) {
     });
   }
 
+  return rules;
+}
+
+function modifySuper(rules) {
+  const TARGETS = [
+    {
+      term: '`super`',
+      action: '_SUPER_',
+      insertBefore: false,
+    },
+  ];
+  for (const rule of rules) {
+    if (!rule.values.some((value) => value.includes('`super`'))) {
+      continue;
+    }
+    if (rule.name === 'KeywordOrIdentifierName') {
+      continue;
+    }
+    log.debug(`Inserting _SUPER_ into ${rule.name}...`);
+    modifyTargetsInRule(rule, TARGETS);
+  }
   return rules;
 }
 

@@ -124,6 +124,7 @@ fn main() -> Result<()> {
         runtime.enable_runtime_assert();
     }
     runtime.register_host_function("print", print);
+    runtime.register_host_function("printPrototypeChain", print_prototype_chain);
 
     // This is not a good practice, but we define a macro instead of a function in order to avoid
     // code clones.  By using the macro, we can avoid additional `use` directives needed for the
@@ -224,6 +225,25 @@ fn read_from_stdin() -> Result<String> {
 
 fn print(_runtime: &mut Runtime<Context>, args: &[Value]) {
     println!("{}", args.iter().format(" "));
+}
+
+fn print_prototype_chain(_runtime: &mut Runtime<Context>, args: &[Value]) {
+    debug_assert_eq!(args.len(), 2);
+    let label = match args[0] {
+        Value::String(s) => s,
+        _ => panic!(),
+    };
+    let object = match args[1] {
+        Value::Object(o) => o,
+        _ => panic!(),
+    };
+    print!("{label}: {object}");
+    let mut prototype = object.prototype();
+    while let Some(object) = prototype {
+        print!(" -> {object}");
+        prototype = object.prototype();
+    }
+    println!();
 }
 
 struct IrPrinter;
