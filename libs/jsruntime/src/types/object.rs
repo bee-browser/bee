@@ -262,6 +262,7 @@ impl Object {
     pub(crate) const KERNEL_TRACING_OFFSET: usize =
         std::mem::offset_of!(Self, kernel) + Kernel::TRACING_OFFSET;
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
+    pub(crate) const PROTOTYPE_OFFSET: usize = std::mem::offset_of!(Self, prototype);
 
     pub fn new() -> Self {
         Self {
@@ -416,13 +417,13 @@ impl Object {
 
 impl Debug for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", self as *const Object)
+        write!(f, "{self:p}")
     }
 }
 
 impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", self as *const Object)
+        write!(f, "{self:p}")
     }
 }
 
