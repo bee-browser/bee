@@ -19,10 +19,10 @@ use super::logger;
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "promise");
 
-    // TODO(feat): NewTarget
-    if !context.is_new() {
-        return runtime_todo!();
-    }
+    let _new_target = match context.new_target() {
+        Some(new_target) => new_target,
+        None => return runtime_todo!(),
+    };
 
     let args = context.args();
 
@@ -35,13 +35,9 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
     let coroutine = runtime.create_coroutine(closure, 0, 0, 0);
     let promise = runtime.create_promise(coroutine);
 
-    let mut object = if let Value::Object(this) = context.this() {
-        *this
-    } else {
-        let mut object = runtime.create_object();
-        object.set_prototype(runtime.builtins.promise_prototype);
-        object
-    };
+    // TODO(feat): 10.1.13 OrdinaryCreateFromConstructor
+    let mut object = runtime.create_object();
+    object.set_prototype(runtime.builtins.promise_prototype);
 
     object.set_promise(promise);
 
