@@ -20,14 +20,13 @@ use super::logger;
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "error_constructor");
 
-    let _new_target = match context.new_target() {
+    let new_target = match context.new_target() {
         Some(new_target) => new_target,
         None => context.func().unwrap(),
     };
 
-    // TODO(feat): 10.1.13 OrdinaryCreateFromConstructor
-    let mut object = runtime.create_object();
-    object.set_prototype(runtime.builtins.error_prototype);
+    let mut object =
+        runtime.ordinary_create_from_constructor(new_target, runtime.builtins.error_constructor)?;
 
     object.set_error();
 

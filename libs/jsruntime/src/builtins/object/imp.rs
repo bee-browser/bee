@@ -20,18 +20,14 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
     logger::debug!(event = "object_constructor");
 
     match context.new_target() {
-        Some(new_target) if new_target != context.func().unwrap() => {
-            // TODO(feat): 10.1.13 OrdinaryCreateFromConstructor
-            let mut object = runtime.create_object();
-            object.set_prototype(runtime.builtins.object_prototype);
-            Ok(Value::Object(object))
-        }
+        Some(new_target) if new_target != context.func().unwrap() => Ok(Value::Object(
+            runtime
+                .ordinary_create_from_constructor(new_target, runtime.builtins.object_prototype)?,
+        )),
         _ => match context.args().first() {
-            None | Some(Value::Undefined) | Some(Value::Null) => {
-                let mut object = runtime.create_object();
-                object.set_prototype(runtime.builtins.object_prototype);
-                Ok(Value::Object(object))
-            }
+            None | Some(Value::Undefined) | Some(Value::Null) => Ok(Value::Object(
+                runtime.ordinary_object_create(runtime.builtins.object_prototype),
+            )),
             Some(value) => Ok(Value::Object(runtime.value_to_object(value)?)),
         },
     }

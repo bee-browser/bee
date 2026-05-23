@@ -19,26 +19,22 @@ use super::logger;
 pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "promise");
 
-    let _new_target = match context.new_target() {
+    let new_target = match context.new_target() {
         Some(new_target) => new_target,
         None => return runtime_todo!(),
     };
 
-    let args = context.args();
-
-    let executor = match args.first() {
+    let executor = match context.args().first() {
         Some(Value::Object(executor)) if executor.is_callable() => *executor,
         _ => return type_error!(),
     };
 
+    let mut object =
+        runtime.ordinary_create_from_constructor(new_target, runtime.builtins.promise_prototype)?;
+
     let closure = runtime.create_closure(promise_coroutine, LambdaId::HOST, 0);
     let coroutine = runtime.create_coroutine(closure, 0, 0, 0);
     let promise = runtime.create_promise(coroutine);
-
-    // TODO(feat): 10.1.13 OrdinaryCreateFromConstructor
-    let mut object = runtime.create_object();
-    object.set_prototype(runtime.builtins.promise_prototype);
-
     object.set_promise(promise);
 
     let (resolve, reject) = runtime.create_resolving_functions(object);
