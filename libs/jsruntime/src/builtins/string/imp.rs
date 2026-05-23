@@ -29,11 +29,12 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
         runtime.value_to_string(context.args().first().unwrap())?
     };
     match context.new_target() {
-        Some(_new_target) => {
-            // TODO(feat): 10.1.14 GetPrototypeFromConstructor
+        Some(new_target) => {
+            let proto = runtime
+                .get_prototype_from_constructor(new_target, runtime.builtins.string_prototype)?;
             // TODO(feat): 10.4.3.4 StringCreate
             let mut object = runtime.create_object();
-            object.set_prototype(runtime.builtins.string_prototype);
+            object.set_prototype(proto);
             let length = string.len();
             object.set_string(string);
             // TODO: check the result
