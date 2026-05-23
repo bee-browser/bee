@@ -192,6 +192,45 @@ impl<X> Runtime<X> {
         self.set_function_name(func, params.name);
     }
 
+    //#sec-ordinaryobjectcreate
+    fn ordinary_object_create(
+        &mut self,
+        proto: HandleMut<Object>,
+        // additionalInternalSlotList
+    ) -> HandleMut<Object> {
+        let mut object = self.create_object();
+        object.set_prototype(proto);
+        object
+    }
+
+    //#sec-ordinarycreatefromconstructor
+    fn ordinary_create_from_constructor(
+        &mut self,
+        constructor: HandleMut<Object>,
+        intrinsic_default_proto: HandleMut<Object>,
+        // internal_slot_list
+    ) -> Result<HandleMut<Object>, Error> {
+        let proto = self.get_prototype_from_constructor(constructor, intrinsic_default_proto)?;
+        Ok(self.ordinary_object_create(proto))
+    }
+
+    //#sec-getprototypefromconstructor
+    fn get_prototype_from_constructor(
+        &self,
+        constructor: HandleMut<Object>,
+        intrinsic_default_proto: HandleMut<Object>,
+    ) -> Result<HandleMut<Object>, Error> {
+        match constructor.get_value(&Symbol::PROTOTYPE.into()) {
+            Some(Value::Object(proto)) => Ok(*proto),
+            _ => {
+                // TODO(feat)
+                // a. Let realm be ? GetFunctionRealm(constructor).
+                // b. Set proto to realm's intrinsic object named intrinsicDefaultProto.
+                Ok(intrinsic_default_proto)
+            }
+        }
+    }
+
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
     fn set_function_name(&mut self, mut func: HandleMut<Object>, name: Handle<String>) {
         let result =
