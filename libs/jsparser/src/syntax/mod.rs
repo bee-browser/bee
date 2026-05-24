@@ -159,6 +159,8 @@ enum Detail {
     ClassTail(bool),
     ClassHeritage,
     ClassElementList,
+    ClassElement,
+    FieldDefinition(bool),
     ClassElementName(Symbol, bool),
     AsyncConciseBody,
     StatementList,
@@ -495,6 +497,8 @@ impl std::fmt::Debug for AssignmentOperator {
 
 #[derive(Clone, Debug)]
 pub enum ClassElementKind {
+    StaticField,
+    StaticFieldWithInitializer,
     Method,
     StaticMethod,
 }
@@ -3819,6 +3823,7 @@ where
     // ClassElementList[Yield, Await] :
     //   ClassElement[?Yield, ?Await]
     fn process_class_element_list_head(&mut self) -> Result<(), Error> {
+        debug_assert!(matches!(self.top_mut().detail, Detail::ClassElement));
         self.top_mut().detail = Detail::ClassElementList;
         Ok(())
     }
@@ -3826,6 +3831,7 @@ where
     // ClassElementList[Yield, Await] :
     //   ClassElementList[?Yield, ?Await] ClassElement[?Yield, ?Await]
     fn process_class_element_list_item(&mut self) -> Result<(), Error> {
+        debug_assert!(matches!(self.top_mut().detail, Detail::ClassElement));
         self.pop();
         self.update_ends();
         Ok(())
@@ -3835,6 +3841,7 @@ where
     //  MethodDefinition[?Yield, ?Await]
     fn process_class_element_method(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ClassElement(ClassElementKind::Method));
+        self.replace(1, Detail::ClassElement);
         Ok(())
     }
 
@@ -3842,6 +3849,7 @@ where
     //   static MethodDefinition[?Yield, ?Await]
     fn process_class_element_static_method(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ClassElement(ClassElementKind::StaticMethod));
+        self.replace(2, Detail::ClassElement);
         Ok(())
     }
 
@@ -3854,7 +3862,17 @@ where
     // ClassElement[Yield, Await] :
     //   static FieldDefinition[?Yield, ?Await] ;
     fn process_class_element_static_field(&mut self) -> Result<(), Error> {
-        todo!()
+        let with_initializer = match self.nth(1).detail {
+            Detail::FieldDefinition(with_initializer) => with_initializer,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::ClassElement(if with_initializer {
+            ClassElementKind::StaticFieldWithInitializer
+        } else {
+            ClassElementKind::StaticField
+        }));
+        self.replace(3, Detail::ClassElement);
+        Ok(())
     }
 
     // ClassElement[Yield, Await] :
@@ -3865,7 +3883,26 @@ where
 
     // ClassElement[Yield, Await] :
     //   ;
-    nop! {}
+    fn process_class_element_empty(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::ClassElement);
+        Ok(())
+    }
+
+    // FieldDefinition[Yield, Await] :
+    //   ClassElementName[?Yield, ?Await]
+    fn process_field_definition(&mut self) -> Result<(), Error> {
+        debug_assert!(matches!(self.top().detail, Detail::ClassElementName(..)));
+        self.replace(1, Detail::FieldDefinition(false));
+        Ok(())
+    }
+
+    // FieldDefinition[Yield, Await] :
+    //   ClassElementName[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]
+    fn process_field_definition_with_initializer(&mut self) -> Result<(), Error> {
+        debug_assert!(matches!(self.nth(1).detail, Detail::ClassElementName(..)));
+        self.replace(2, Detail::FieldDefinition(true));
+        Ok(())
+    }
 
     // ClassElementName[Yield, Await] :
     //   PropertyName[?Yield, ?Await]
