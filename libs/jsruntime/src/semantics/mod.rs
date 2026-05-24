@@ -440,6 +440,12 @@ where
             Node::ClassDeclaration(named, derived) => self.handle_class_declaration(named, derived),
             Node::ClassHeritage => self.handle_class_heritage(),
             Node::StaticContext => self.handle_static_context(),
+            Node::ClassElement(ClassElementKind::StaticField) => {
+                self.handle_class_element_static_field()
+            }
+            Node::ClassElement(ClassElementKind::StaticFieldWithInitializer) => {
+                self.handle_class_element_static_field_with_initializer()
+            }
             Node::ClassElement(ClassElementKind::Method) => self.handle_class_element_method(),
             Node::ClassElement(ClassElementKind::StaticMethod) => {
                 self.handle_class_element_static_method()
@@ -869,6 +875,14 @@ where
             self;
             CompileCommand::Swap,
         }
+    }
+
+    fn handle_class_element_static_field(&mut self) {
+        analysis_mut!(self).process_class_element_static_field(false);
+    }
+
+    fn handle_class_element_static_field_with_initializer(&mut self) {
+        analysis_mut!(self).process_class_element_static_field(true);
     }
 
     fn handle_class_element_method(&mut self) {
@@ -2009,6 +2023,22 @@ impl FunctionAnalysis {
         } else {
             // TODO(feat): default class
         }
+    }
+
+    fn process_class_element_static_field(&mut self, init: bool) {
+        // In the specification, a static filed that has an initializer generates a function.
+        // However, we don't do like that at this time.
+        //
+        // * #sec-runtime-semantics-classfielddefinitionevaluation
+        // * #sec-runtime-semantics-classstaticblockdefinitionevaluation
+        //
+        // We will change the implementation in the future in order to support `this`.
+        let (_symbol, _) = self.symbol_stack.pop().unwrap();
+        if !init {
+            self.commands.push(CompileCommand::Undefined);
+        }
+        self.commands.push(CompileCommand::CreateDataProperty);
+        self.commands.push(CompileCommand::Swap);
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
