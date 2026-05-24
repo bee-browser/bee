@@ -2086,7 +2086,7 @@
 - rule: ClassElement -> ClassStaticBlock
   action: process_class_element_static_block
 - rule: ClassElement -> SEMICOLON
-  action: nop
+  action: process_class_element_empty
 - rule: ClassElement_Await -> MethodDefinition_Await
   action: process_class_element_method
 - rule: ClassElement_Await -> STATIC _STATIC_CONTEXT_ MethodDefinition_Await
@@ -2100,7 +2100,7 @@
 - rule: ClassElement_Await -> ClassStaticBlock
   action: process_class_element_static_block
 - rule: ClassElement_Await -> SEMICOLON
-  action: nop
+  action: process_class_element_empty
 - rule: LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
   action: nop
 - rule: >-
@@ -2498,9 +2498,9 @@
 - rule: _STATIC_CONTEXT_ -> (empty)
   action: process_static_context
 - rule: FieldDefinition -> ClassElementName
-  action: undefined
+  action: process_field_definition
 - rule: FieldDefinition -> ClassElementName Initializer_In
-  action: undefined
+  action: process_field_definition_with_initializer
 - rule: ClassStaticBlock -> STATIC LBRACE ClassStaticBlockBody RBRACE
   action: undefined
 - rule: >-
@@ -2524,9 +2524,9 @@
     FunctionBody RBRACE
   action: undefined
 - rule: FieldDefinition_Await -> ClassElementName_Await
-  action: undefined
+  action: process_field_definition
 - rule: FieldDefinition_Await -> ClassElementName_Await Initializer_In_Await
-  action: undefined
+  action: process_field_definition_with_initializer
 - rule: _FALSY_SHORT_CIRCUIT_ -> (empty)
   action: process_falsy_short_circuit
 - rule: BitwiseXORExpression_In_Await -> BitwiseANDExpression_In_Await
@@ -5346,7 +5346,7 @@
 - rule: ClassElement_Yield -> ClassStaticBlock
   action: process_class_element_static_block
 - rule: ClassElement_Yield -> SEMICOLON
-  action: nop
+  action: process_class_element_empty
 - rule: ShiftExpression_Yield_Await -> AdditiveExpression_Yield_Await
   action: nop
 - rule: >-
@@ -5394,7 +5394,7 @@
 - rule: ClassElement_Yield_Await -> ClassStaticBlock
   action: process_class_element_static_block
 - rule: ClassElement_Yield_Await -> SEMICOLON
-  action: nop
+  action: process_class_element_empty
 - rule: AdditiveExpression -> MultiplicativeExpression
   action: nop
 - rule: AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression
@@ -5553,9 +5553,9 @@
     MultiplicativeExpression_Yield
   action: process_subtraction
 - rule: FieldDefinition_Yield -> ClassElementName_Yield
-  action: undefined
+  action: process_field_definition
 - rule: FieldDefinition_Yield -> ClassElementName_Yield Initializer_In_Yield
-  action: undefined
+  action: process_field_definition_with_initializer
 - rule: AdditiveExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
   action: nop
 - rule: >-
@@ -5567,11 +5567,11 @@
     MultiplicativeExpression_Yield_Await
   action: process_subtraction
 - rule: FieldDefinition_Yield_Await -> ClassElementName_Yield_Await
-  action: undefined
+  action: process_field_definition
 - rule: >-
     FieldDefinition_Yield_Await -> ClassElementName_Yield_Await
     Initializer_In_Yield_Await
-  action: undefined
+  action: process_field_definition_with_initializer
 - rule: MultiplicativeExpression -> ExponentiationExpression
   action: nop
 - rule: >-
