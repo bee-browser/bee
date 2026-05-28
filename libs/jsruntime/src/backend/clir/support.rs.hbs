@@ -55,7 +55,7 @@ pub fn make_lambda_signature(module: &mut impl Module) -> ir::Signature {
 
     // runtime: &mut Runtime<X>
     sig.params.push(ir::AbiParam::new(addr_type));
-    // context: &mut CallContext
+    // context: &mut ExecContext
     sig.params.push(ir::AbiParam::new(addr_type));
     // retv: &mut Value
     sig.params.push(ir::AbiParam::new(addr_type));

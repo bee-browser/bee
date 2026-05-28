@@ -7,7 +7,7 @@ use jsgc::HandleMut;
 use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
-use crate::types::CallContext;
+use crate::types::ExecContext;
 use crate::types::Object;
 use crate::types::Status;
 use crate::types::Value;
@@ -16,8 +16,8 @@ use super::BuiltinFunctionParams;
 use super::logger;
 
 //#sec-promise-executor constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
-    logger::debug!(event = "promise");
+pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
+    logger::debug!(event = "promise_constructor");
 
     let new_target = match context.new_target() {
         Some(new_target) => new_target,
@@ -54,7 +54,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 
 extern "C" fn promise_coroutine<X>(
     _runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     let value = context.args().get(1).unwrap();
@@ -96,7 +96,7 @@ impl<X> Runtime<X> {
 // 27.2.1.3.2 Promise Resolve Functions
 extern "C" fn promise_resolve<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "promise_resolve");
@@ -114,7 +114,7 @@ extern "C" fn promise_resolve<X>(
 
 fn promise_resolve_sync<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     let func = match context.func() {
         Some(func) => func,
@@ -142,7 +142,7 @@ fn promise_resolve_sync<X>(
 // 27.2.1.3.1 Promise Reject Functions
 extern "C" fn promise_reject<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "promise_reject");
