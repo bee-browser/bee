@@ -371,12 +371,12 @@ where
         self.editor
             .put_assert_lambda_params(self.support, func.is_entry_function());
 
-        self.editor.put_store_outer_to_exec_context();
-        self.editor.put_store_depth_to_exec_context();
+        self.editor.put_store_outer_to_callee_context();
+        self.editor.put_store_depth_to_callee_context();
 
         let argv = self.editor.put_alloc_argv(8);
-        self.editor.put_store_argc_max_to_exec_context(8);
-        self.editor.put_store_argv_to_exec_context(argv);
+        self.editor.put_store_argc_max_to_callee_context(8);
+        self.editor.put_store_argv_to_callee_context(argv);
 
         if self.is_coroutine(func) {
             self.editor.put_set_coroutine_mode();
@@ -440,7 +440,7 @@ where
         self.editor
             .put_branch(too_deep, then_block, &[], merge_block, &[]);
         self.editor.switch_to_block(then_block);
-        self.emit_throw_internal_error(const_string_handle!("Call stack too deep"));
+        self.emit_throw_internal_error(const_string_handle!("Stack too deep"));
         self.editor.put_jump(merge_block, &[]);
         self.editor.switch_to_block(merge_block);
     }
@@ -1233,11 +1233,11 @@ where
         let closure = self.emit_load_closure_or_throw_type_error(object);
 
         if let Some(owner) = owner {
-            let dst = self.editor.put_get_this_from_exec_context();
+            let dst = self.editor.put_get_this_from_callee_context();
             self.emit_store_property_owner_to_any(owner, dst);
         } else {
             let this = self.editor.this_argument();
-            let dst = self.editor.put_get_this_from_exec_context();
+            let dst = self.editor.put_get_this_from_callee_context();
             self.editor.put_store_any_to_any(this, dst);
         }
 
@@ -3625,7 +3625,7 @@ where
 
     fn emit_fill_args(&mut self, argc: u16) {
         logger::debug!(event = "emit_fill_args", argc);
-        let argv = self.editor.put_get_argv_from_exec_context();
+        let argv = self.editor.put_get_argv_from_callee_context();
         // TODO: evaluation order
         for i in (0..argc).rev() {
             let (operand, ..) = self.dereference();
@@ -3633,7 +3633,7 @@ where
             let arg = self.editor.put_get_arg(argv, i);
             self.emit_store_operand_to_any(&operand, arg);
         }
-        self.editor.put_store_argc_to_exec_context(argc);
+        self.editor.put_store_argc_to_callee_context(argc);
     }
 
     fn emit_store_operand_to_any(&mut self, operand: &Operand, any: AnyIr) {
