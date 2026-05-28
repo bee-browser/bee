@@ -323,8 +323,8 @@ functions:
         type: HandleMut<Object>
       - name: new_target
         type: HandleMut<Object>
-      - name: call_context
-        type: '&mut CallContext'
+      - name: context
+        type: '&mut ExecContext'
       - name: retv
         type: '&mut Value'
     ret: Status

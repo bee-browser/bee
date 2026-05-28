@@ -8,7 +8,7 @@ use jsparser::Symbol;
 use crate::Error;
 use crate::Runtime;
 use crate::builtins::require_object_coercible;
-use crate::types::CallContext;
+use crate::types::ExecContext;
 use crate::types::Property;
 use crate::types::String;
 use crate::types::Value;
@@ -18,7 +18,7 @@ use crate::types::string::SPACE;
 use super::logger;
 
 //#sec-string-constructor-string-value constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
     logger::debug!(event = "string_constructor");
 
     let string = if context.args().is_empty() {
@@ -52,7 +52,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 //#sec-string.fromcharcode constructor.function
 pub fn string_from_char_code<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_from_char_code");
     let mut utf16 = vec![];
@@ -67,7 +67,7 @@ pub fn string_from_char_code<X>(
 //#sec-string.fromcodepoint constructor.function
 pub fn string_from_code_point<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_from_code_point");
     let mut buf = [0; 2];
@@ -104,7 +104,7 @@ fn encode_code_point(cp: i64, buf: &mut [u16; 2]) -> &[u16] {
 //#sec-string.prototype.at prototype.function
 pub fn string_prototype_at<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_at");
     let o = context.this();
@@ -130,7 +130,7 @@ pub fn string_prototype_at<X>(
 //#sec-string.prototype.charat prototype.function
 pub fn string_prototype_char_at<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_char_at");
     let o = context.this();
@@ -151,7 +151,7 @@ pub fn string_prototype_char_at<X>(
 //#sec-string.prototype.charcodeat prototype.function
 pub fn string_prototype_char_code_at<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_char_code_at");
     let o = context.this();
@@ -170,7 +170,7 @@ pub fn string_prototype_char_code_at<X>(
 //#sec-string.prototype.codepointat prototype.function
 pub fn string_prototype_code_point_at<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_code_point_at");
     let o = context.this();
@@ -189,7 +189,7 @@ pub fn string_prototype_code_point_at<X>(
 //#sec-string.prototype.concat prototype.function
 pub fn string_prototype_concat<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_concat");
     let mut s = None;
@@ -216,7 +216,7 @@ pub fn string_prototype_concat<X>(
 //#sec-string.prototype.endswith prototype.function
 pub fn string_prototype_ends_with<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_ends_with");
 
@@ -261,7 +261,7 @@ pub fn string_prototype_ends_with<X>(
 //#sec-string.prototype.includes prototype.function
 pub fn string_prototype_includes<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_includes");
 
@@ -288,7 +288,7 @@ pub fn string_prototype_includes<X>(
 //#sec-string.prototype.indexof prototype.function
 pub fn string_prototype_index_of<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_index_of");
 
@@ -314,7 +314,7 @@ pub fn string_prototype_index_of<X>(
 //#sec-string.prototype.iswellformed prototype.function
 pub fn string_prototype_is_well_formed<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_is_well_formed");
 
@@ -328,7 +328,7 @@ pub fn string_prototype_is_well_formed<X>(
 //#sec-string.prototype.lastindexof prototype.function
 pub fn string_prototype_last_index_of<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_last_index_of");
 
@@ -366,7 +366,7 @@ pub fn string_prototype_last_index_of<X>(
 //#sec-string.prototype.padend prototype.function
 pub fn string_prototype_pad_end<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_pad_end");
     string_padding_builtins_impl(runtime, context, PaddingPlacement::End)
@@ -375,7 +375,7 @@ pub fn string_prototype_pad_end<X>(
 //#sec-string.prototype.padstart prototype.function
 pub fn string_prototype_pad_start<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_pad_start");
     string_padding_builtins_impl(runtime, context, PaddingPlacement::Start)
@@ -384,7 +384,7 @@ pub fn string_prototype_pad_start<X>(
 // 22.1.3.17.1 StringPaddingBuiltinsImpl ( O, maxLength, fillString, placement )
 fn string_padding_builtins_impl<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     placement: PaddingPlacement,
 ) -> Result<Value, Error> {
     let o = context.this();
@@ -446,7 +446,7 @@ enum PaddingPlacement {
 //#sec-string.prototype.repeat prototype.function
 pub fn string_prototype_repeat<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_repeat");
 
@@ -478,7 +478,7 @@ pub fn string_prototype_repeat<X>(
 //#sec-string.prototype.startswith prototype.function
 pub fn string_prototype_starts_with<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_starts_with");
 
@@ -523,7 +523,7 @@ pub fn string_prototype_starts_with<X>(
 //#sec-string.prototype.substring prototype.function
 pub fn string_prototype_substring<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_substring");
 
@@ -561,7 +561,7 @@ pub fn string_prototype_substring<X>(
 //#sec-string.prototype.trim prototype.function
 pub fn string_prototype_trim<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_trim");
     trim_string(runtime, context, true, true)
@@ -570,7 +570,7 @@ pub fn string_prototype_trim<X>(
 //#sec-string.prototype.trimend prototype.function
 pub fn string_prototype_trim_end<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_trim_end");
     trim_string(runtime, context, false, true)
@@ -579,7 +579,7 @@ pub fn string_prototype_trim_end<X>(
 //#sec-string.prototype.trimstart prototype.function
 pub fn string_prototype_trim_start<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_trim_start");
     trim_string(runtime, context, true, false)
@@ -588,7 +588,7 @@ pub fn string_prototype_trim_start<X>(
 // 22.1.3.32.1 TrimString ( string, where )
 fn trim_string<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     start: bool,
     end: bool,
 ) -> Result<Value, Error> {
