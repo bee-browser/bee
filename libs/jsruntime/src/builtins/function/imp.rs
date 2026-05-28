@@ -8,8 +8,8 @@ use jsparser::Symbol;
 use crate::Error;
 use crate::LambdaId;
 use crate::Runtime;
-use crate::types::CallContext;
 use crate::types::Closure;
+use crate::types::ExecContext;
 use crate::types::Object;
 use crate::types::Status;
 use crate::types::Value;
@@ -31,7 +31,7 @@ macro_rules! catch {
 //#sec-function-p1-p2-pn-body constructor
 pub fn constructor<X>(
     _runtime: &mut Runtime<X>,
-    _context: &mut CallContext,
+    _context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "function");
     runtime_todo!("TODO: Function constructor")
@@ -40,7 +40,7 @@ pub fn constructor<X>(
 //#sec-function.prototype.apply prototype.function { "no_adapter": true }
 pub fn function_prototype_apply<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "function_prototype_apply");
@@ -63,7 +63,7 @@ pub fn function_prototype_apply<X>(
 //#sec-function.prototype.bind prototype.function
 pub fn function_prototype_bind<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "function_prototype_bind");
     let target = runtime.this_func(context.this())?;
@@ -99,7 +99,7 @@ pub fn function_prototype_bind<X>(
 //#sec-function.prototype.call prototype.function { "no_adapter": true }
 pub fn function_prototype_call<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "function_prototype_call");
@@ -117,7 +117,7 @@ pub fn function_prototype_call<X>(
 //#sec-function.prototype.tostring prototype.function
 pub fn function_prototype_to_string<X>(
     _runtime: &mut Runtime<X>,
-    _context: &mut CallContext,
+    _context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "function_prototype_to_string");
     runtime_todo!("TODO: Function.prototype.toString()")
@@ -141,7 +141,7 @@ impl<X> Runtime<X> {
     ) -> Result<HandleMut<Object>, Error> {
         extern "C" fn bound_function<X>(
             runtime: &mut Runtime<X>,
-            context: &mut CallContext,
+            context: &mut ExecContext,
             retv: &mut Value,
         ) -> Status {
             let closure = context.closure();
