@@ -13,7 +13,7 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::types::CallContext;
+use crate::types::ExecContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::String;
@@ -22,7 +22,7 @@ use crate::types::Value;
 use crate::logger;
 
 //#sec-nativeerror constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
     logger::debug!(event = "{{id}}_constructor");
     let args = context.args();
 

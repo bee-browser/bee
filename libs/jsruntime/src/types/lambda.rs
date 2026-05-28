@@ -1,10 +1,10 @@
 use crate::Runtime;
-use crate::types::CallContext;
+use crate::types::ExecContext;
 use crate::types::Value;
 
 /// Lambda function.
 pub type Lambda<X> =
-    extern "C" fn(runtime: &mut Runtime<X>, context: &mut CallContext, retv: &mut Value) -> Status;
+    extern "C" fn(runtime: &mut Runtime<X>, context: &mut ExecContext, retv: &mut Value) -> Status;
 
 impl<X> From<LambdaAddr> for Lambda<X> {
     fn from(value: LambdaAddr) -> Self {
@@ -30,7 +30,7 @@ where
 
 extern "C" fn host_fn_wrapper<F, R, X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status
 where
