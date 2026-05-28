@@ -10,8 +10,8 @@ use crate::types::Value;
 // TODO: collect addresses stored on the stack (gc)
 #[derive(Debug)]
 #[repr(C)]
-pub struct CallContext {
-    /// A pointer to the call environment.
+pub struct ExecContext {
+    /// A pointer to the environment.
     ///
     /// The actual type of the value varies depending on the type of the lambda function:
     ///
@@ -31,13 +31,13 @@ pub struct CallContext {
     #[allow(unused)]
     func: Option<HandleMut<Object>>,
 
-    /// A pointer to the call context of the caller.
-    caller: *const CallContext,
+    /// A pointer to the outer execution context.
+    outer: *const ExecContext,
 
     /// Flags.
-    flags: CallContextFlags,
+    flags: ExecContextFlags,
 
-    /// The depth of the call.
+    /// The depth of the execution context stack.
     depth: u16,
 
     /// The number of the arguments.
@@ -51,14 +51,14 @@ pub struct CallContext {
     argv: *const Value,
 }
 
-impl CallContext {
+impl ExecContext {
     pub const SIZE: usize = std::mem::size_of::<Self>();
     pub const ALIGNMENT: usize = std::mem::align_of::<Self>();
     pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
     pub const NEW_TARGET_OFFSET: usize = std::mem::offset_of!(Self, new_target);
     pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
     pub const FUNC_OFFSET: usize = std::mem::offset_of!(Self, func);
-    pub const CALLER_OFFSET: usize = std::mem::offset_of!(Self, caller);
+    pub const OUTER_OFFSET: usize = std::mem::offset_of!(Self, outer);
     pub const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
     pub const DEPTH_OFFSET: usize = std::mem::offset_of!(Self, depth);
     pub const ARGC_OFFSET: usize = std::mem::offset_of!(Self, argc);
@@ -71,8 +71,8 @@ impl CallContext {
             new_target: None,
             this: Value::Undefined,
             func: None,
-            caller: std::ptr::null(),
-            flags: CallContextFlags::empty(),
+            outer: std::ptr::null(),
+            flags: ExecContextFlags::empty(),
             depth: 0,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
@@ -86,8 +86,8 @@ impl CallContext {
             new_target: None,
             this: Value::Undefined,
             func: None,
-            caller: std::ptr::null(),
-            flags: CallContextFlags::empty(),
+            outer: std::ptr::null(),
+            flags: ExecContextFlags::empty(),
             depth: 0,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
@@ -107,8 +107,8 @@ impl CallContext {
             new_target: None,
             this: this.clone(),
             func: Some(func),
-            caller: self,
-            flags: CallContextFlags::empty(),
+            outer: self,
+            flags: ExecContextFlags::empty(),
             depth: self.depth + 1,
             argc: args.len() as u16,
             argc_max: args.len() as u16,
@@ -186,6 +186,6 @@ impl CallContext {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug)]
     #[repr(C)]
-    pub struct CallContextFlags: u16  {
+    pub struct ExecContextFlags: u16  {
     }
 }
