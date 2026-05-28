@@ -5,10 +5,10 @@ use jsparser::Symbol;
 use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaKind;
-use crate::types::CallContext;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
+use crate::types::ExecContext;
 use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Promise;
@@ -44,7 +44,7 @@ macro_rules! into_capture {
 
 pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_normal");
@@ -72,7 +72,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
 
 pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_ramp");
@@ -110,7 +110,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
 
 pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine");
@@ -765,7 +765,7 @@ pub(crate) extern "C" fn runtime_construct<X>(
     runtime: &mut Runtime<X>,
     constructor: HandleMut<Object>,
     new_target: HandleMut<Object>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
     retv: &mut Value,
 ) -> Status {
     runtime.construct(constructor, new_target, context, retv)

@@ -8,7 +8,7 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::types::CallContext;
+use crate::types::ExecContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::String;
@@ -17,7 +17,7 @@ use crate::types::Value;
 use super::logger;
 
 //#sec-error-message constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
     logger::debug!(event = "error_constructor");
 
     let new_target = match context.new_target() {
@@ -56,7 +56,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 //#sec-error.iserror constructor.function {"signature": "Error.isError ( arg )"}
 pub fn error_is_error<X>(
     _runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "error_is_error");
     match context.args().first() {
@@ -84,7 +84,7 @@ pub fn error_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: HandleM
 //#sec-error.prototype.tostring prototype.function
 pub fn error_prototype_to_string<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "error_prototype_to_string");
     let object = match context.this() {
