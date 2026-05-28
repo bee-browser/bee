@@ -50,7 +50,7 @@ pub struct Editor<'a> {
     lambda_sig: ir::SigRef,
     entry_block: ir::Block,
     closure: ir::Value,
-    exec_context: ir::StackSlot,
+    callee_context: ir::StackSlot,
     fcs: ir::StackSlot,
 
     // FunctionBuilder::is_filled() is a private method.
@@ -80,7 +80,7 @@ impl<'a> Editor<'a> {
         // predecessor of the entry block.
         builder.seal_block(entry_block);
 
-        let exec_context = builder.create_sized_stack_slot(ir::StackSlotData::new(
+        let callee_context = builder.create_sized_stack_slot(ir::StackSlotData::new(
             ir::StackSlotKind::ExplicitSlot,
             ExecContext::SIZE as u32,
             ExecContext::ALIGNMENT.ilog2() as u8,
@@ -98,7 +98,7 @@ impl<'a> Editor<'a> {
             addr_type: target_config.pointer_type(),
             lambda_sig,
             entry_block,
-            exec_context,
+            callee_context,
             closure: ir::Value::from_u32(0), // dummy
             fcs,
             block_terminated: false,
@@ -695,18 +695,16 @@ impl<'a> Editor<'a> {
         retv: AnyIr,
     ) -> StatusIr {
         logger::debug!(event = "put_call", ?function, ?closure, ?flags, ?retv);
-        self.put_clear_new_target_of_exec_context();
-        self.put_store_closure_to_exec_context(closure);
-        self.put_store_function_to_exec_context(function);
-        self.put_store_flags_to_exec_context(flags);
+        self.put_clear_new_target_of_callee_context();
+        self.put_store_closure_to_callee_context(closure);
+        self.put_store_function_to_callee_context(function);
+        self.put_store_flags_to_callee_context(flags);
         let lambda = self.put_load_lambda_from_closure(closure);
-        let args = &[
-            self.runtime(),
-            self.builder
-                .ins()
-                .stack_addr(self.addr_type, self.exec_context, 0),
-            retv.0,
-        ];
+        let context = self
+            .builder
+            .ins()
+            .stack_addr(self.addr_type, self.callee_context, 0);
+        let args = &[self.runtime(), context, retv.0];
         let call = self
             .builder
             .ins()
@@ -845,23 +843,23 @@ impl<'a> Editor<'a> {
 
     // execution context
 
-    pub fn put_clear_new_target_of_exec_context(&mut self) {
+    pub fn put_clear_new_target_of_callee_context(&mut self) {
         const OFFSET: i32 = ExecContext::NEW_TARGET_OFFSET as i32;
         let none = self.builder.ins().iconst(self.addr_type, 0);
         self.builder
             .ins()
-            .stack_store(none, self.exec_context, OFFSET);
+            .stack_store(none, self.callee_context, OFFSET);
     }
 
-    pub fn put_store_outer_to_exec_context(&mut self) {
+    pub fn put_store_outer_to_callee_context(&mut self) {
         const OFFSET: i32 = ExecContext::OUTER_OFFSET as i32;
         let caller = self.context();
         self.builder
             .ins()
-            .stack_store(caller, self.exec_context, OFFSET);
+            .stack_store(caller, self.callee_context, OFFSET);
     }
 
-    pub fn put_store_flags_to_exec_context(&mut self, flags: ExecContextFlags) {
+    pub fn put_store_flags_to_callee_context(&mut self, flags: ExecContextFlags) {
         const OFFSET: i32 = ExecContext::FLAGS_OFFSET as i32;
         let flags = self
             .builder
@@ -869,57 +867,57 @@ impl<'a> Editor<'a> {
             .iconst(ir::types::I16, flags.bits() as i64);
         self.builder
             .ins()
-            .stack_store(flags, self.exec_context, OFFSET);
+            .stack_store(flags, self.callee_context, OFFSET);
     }
 
-    pub fn put_store_depth_to_exec_context(&mut self) {
+    pub fn put_store_depth_to_callee_context(&mut self) {
         const OFFSET: i32 = ExecContext::DEPTH_OFFSET as i32;
         let caller = self.context();
         let depth = self.put_load_i16(caller, ExecContext::DEPTH_OFFSET);
         let depth = self.builder.ins().iadd_imm(depth, 1);
         self.builder
             .ins()
-            .stack_store(depth, self.exec_context, OFFSET);
+            .stack_store(depth, self.callee_context, OFFSET);
     }
 
-    pub fn put_store_argc_to_exec_context(&mut self, argc: u16) {
+    pub fn put_store_argc_to_callee_context(&mut self, argc: u16) {
         const OFFSET: i32 = ExecContext::ARGC_OFFSET as i32;
         let argc = self.builder.ins().iconst(ir::types::I16, argc as i64);
         self.builder
             .ins()
-            .stack_store(argc, self.exec_context, OFFSET);
+            .stack_store(argc, self.callee_context, OFFSET);
     }
 
-    pub fn put_store_argc_max_to_exec_context(&mut self, argc_max: u16) {
+    pub fn put_store_argc_max_to_callee_context(&mut self, argc_max: u16) {
         const OFFSET: i32 = ExecContext::ARGC_MAX_OFFSET as i32;
         let argc_max = self.builder.ins().iconst(ir::types::I16, argc_max as i64);
         self.builder
             .ins()
-            .stack_store(argc_max, self.exec_context, OFFSET);
+            .stack_store(argc_max, self.callee_context, OFFSET);
     }
 
-    pub fn put_store_argv_to_exec_context(&mut self, argv: ArgvIr) {
+    pub fn put_store_argv_to_callee_context(&mut self, argv: ArgvIr) {
         const OFFSET: i32 = ExecContext::ARGV_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(argv.0, self.exec_context, OFFSET);
+            .stack_store(argv.0, self.callee_context, OFFSET);
     }
 
-    pub fn put_get_this_from_exec_context(&mut self) -> AnyIr {
+    pub fn put_get_this_from_callee_context(&mut self) -> AnyIr {
         const OFFSET: i32 = ExecContext::THIS_OFFSET as i32;
         AnyIr(
             self.builder
                 .ins()
-                .stack_addr(self.addr_type, self.exec_context, OFFSET),
+                .stack_addr(self.addr_type, self.callee_context, OFFSET),
         )
     }
 
-    pub fn put_get_argv_from_exec_context(&mut self) -> ArgvIr {
+    pub fn put_get_argv_from_callee_context(&mut self) -> ArgvIr {
         const OFFSET: i32 = ExecContext::ARGV_OFFSET as i32;
         ArgvIr(
             self.builder
                 .ins()
-                .stack_load(self.addr_type, self.exec_context, OFFSET),
+                .stack_load(self.addr_type, self.callee_context, OFFSET),
         )
     }
 
@@ -927,18 +925,18 @@ impl<'a> Editor<'a> {
         self.closure = self.envp();
     }
 
-    pub fn put_store_closure_to_exec_context(&mut self, closure: ClosureIr) {
+    pub fn put_store_closure_to_callee_context(&mut self, closure: ClosureIr) {
         const OFFSET: i32 = ExecContext::ENVP_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(closure.0, self.exec_context, OFFSET);
+            .stack_store(closure.0, self.callee_context, OFFSET);
     }
 
-    pub fn put_store_function_to_exec_context(&mut self, function: ObjectIr) {
+    pub fn put_store_function_to_callee_context(&mut self, function: ObjectIr) {
         const OFFSET: i32 = ExecContext::FUNC_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(function.0, self.exec_context, OFFSET);
+            .stack_store(function.0, self.callee_context, OFFSET);
     }
 
     pub fn put_stack_too_deep(&mut self, max: u16) -> BooleanIr {
@@ -947,7 +945,7 @@ impl<'a> Editor<'a> {
         let depth = self
             .builder
             .ins()
-            .stack_load(ir::types::I16, self.exec_context, OFFSET);
+            .stack_load(ir::types::I16, self.callee_context, OFFSET);
         BooleanIr(
             self.builder
                 .ins()
@@ -2633,15 +2631,15 @@ impl<'a> Editor<'a> {
         let func = self
             .runtime_func_cache
             .import_runtime_construct(support, self.builder.func);
-        let exec_context = self
+        let callee_context = self
             .builder
             .ins()
-            .stack_addr(self.addr_type, self.exec_context, 0);
+            .stack_addr(self.addr_type, self.callee_context, 0);
         let args = [
             self.runtime(),
             constructor.0,
             new_target.0,
-            exec_context,
+            callee_context,
             retv.0,
         ];
         let call = self.builder.ins().call(func, &args);
