@@ -6,7 +6,7 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::types::CallContext;
+use crate::types::ExecContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::PropertyFlags;
@@ -16,7 +16,7 @@ use crate::types::Value;
 use super::logger;
 
 //#sec-object-value constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
     logger::debug!(event = "object_constructor");
 
     match context.new_target() {
@@ -36,7 +36,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
 //#sec-object.assign constructor.function
 pub fn object_assign<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_assign");
     let target = context.arg(0);
@@ -62,7 +62,7 @@ pub fn object_assign<X>(
 //#sec-object.create constructor.function
 pub fn object_create<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_create");
     let proto = context.arg(0);
@@ -88,7 +88,7 @@ pub fn object_create<X>(
 //#sec-object.defineproperties constructor.function
 pub fn object_define_properties<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_define_properties");
     let obj = match context.arg(0) {
@@ -104,7 +104,7 @@ pub fn object_define_properties<X>(
 //#sec-object.defineproperty constructor.function
 pub fn object_define_property<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_define_property");
     let mut obj = match context.arg(0) {
@@ -121,7 +121,7 @@ pub fn object_define_property<X>(
 //#sec-object.prototype.hasownproperty prototype.function
 pub fn object_prototype_has_own_property<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_has_own_property");
     let key = runtime.value_to_property_key(context.arg(0))?;
@@ -135,7 +135,7 @@ pub fn object_prototype_has_own_property<X>(
 //#sec-object.prototype.isprototypeof prototype.function
 pub fn object_prototype_is_prototype_of<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_is_prototype_of");
     let mut value = match context.arg(0) {
@@ -157,7 +157,7 @@ pub fn object_prototype_is_prototype_of<X>(
 //#sec-object.prototype.propertyisenumerable prototype.function
 pub fn object_prototype_property_is_enumerable<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_property_is_enumerable");
     let key = runtime.value_to_property_key(context.arg(0))?;
@@ -171,7 +171,7 @@ pub fn object_prototype_property_is_enumerable<X>(
 //#sec-object.prototype.tostring prototype.function
 pub fn object_prototype_to_string<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_to_string");
     match context.this() {
@@ -202,7 +202,7 @@ pub fn object_prototype_to_string<X>(
 //#sec-object.prototype.valueof prototype.function
 pub fn object_prototype_value_of<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    context: &mut ExecContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_value_of");
     Ok(Value::Object(runtime.value_to_object(context.this())?))

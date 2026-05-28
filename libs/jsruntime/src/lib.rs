@@ -23,10 +23,10 @@ use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
 use semantics::Program;
-use types::CallContext;
 use types::Capture;
 use types::Closure;
 use types::Coroutine;
+use types::ExecContext;
 use types::Lambda;
 use types::Object;
 use types::Promise;
@@ -48,8 +48,8 @@ pub fn initialize() {
 
 /// Runtime preferences.
 struct RuntimePref {
-    /// The maximum call stack depth.
-    max_call_stack_depth: u16,
+    /// The maximum depth of the execution context stack.
+    max_stack_depth: u16,
 
     /// Enables the scope cleanup checker.
     ///
@@ -64,7 +64,7 @@ struct RuntimePref {
 impl Default for RuntimePref {
     fn default() -> Self {
         Self {
-            max_call_stack_depth: 4096,
+            max_stack_depth: 4096,
             enable_scope_cleanup_checker: false,
             enable_runtime_assert: false,
         }
@@ -265,7 +265,7 @@ impl<X> Runtime<X> {
 
     fn call(
         &mut self,
-        caller: &CallContext,
+        caller: &ExecContext,
         callable: HandleMut<Object>,
         this: &Value,
         args: &[Value],
@@ -286,7 +286,7 @@ impl<X> Runtime<X> {
     ) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda_id, ?lambda, module);
         let args: [_; 0] = [];
-        let mut context = CallContext::new_for_entry(&args);
+        let mut context = ExecContext::new_for_entry(&args);
         let mut retv = Value::Undefined;
         let status = lambda(self, &mut context, &mut retv);
         retv.into_result(status)
@@ -587,7 +587,7 @@ impl<X> Runtime<X> {
         &mut self,
         constructor: HandleMut<Object>,
         new_target: HandleMut<Object>,
-        context: &mut CallContext,
+        context: &mut ExecContext,
         retv: &mut Value,
     ) -> Status {
         logger::debug!(event = "construct", ?constructor, ?new_target);
