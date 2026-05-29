@@ -1215,6 +1215,7 @@ dependencies = [
  "indexmap",
  "logging",
  "phf",
+ "rustc-hash",
  "smallvec",
  "thiserror",
  "unicode-id-start",
