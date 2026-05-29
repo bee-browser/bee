@@ -132,6 +132,46 @@ fn test_15_1_1() {
 }
 
 #[test]
+fn test_15_7_1_need_heritage() {
+    parse_fail!(script: "static_semantics_15_7_1_need_heritage.js");
+}
+
+#[test]
+fn test_15_7_1_multiple_constructors() {
+    parse_fail!(script: "static_semantics_15_7_1_multiple_constructors.js");
+}
+
+#[test]
+fn test_15_7_1_multiple_private_ids() {
+    parse_fail!(script: "static_semantics_15_7_1_multiple_private_ids.js");
+}
+
+#[test]
+fn test_15_7_1_method_super_call() {
+    parse_fail!(script: "static_semantics_15_7_1_method_super_call.js");
+}
+
+#[test]
+fn test_15_7_1_static_method_prototype() {
+    parse_fail!(script: "static_semantics_15_7_1_static_method_prototype.js");
+}
+
+#[test]
+fn test_15_7_1_static_method_super_call() {
+    parse_fail!(script: "static_semantics_15_7_1_static_method_super_call.js");
+}
+
+#[test]
+fn test_15_7_1_static_field_constructor() {
+    parse_fail!(script: "static_semantics_15_7_1_static_field_constructor.js");
+}
+
+#[test]
+fn test_15_7_1_static_field_prototype() {
+    parse_fail!(script: "static_semantics_15_7_1_static_field_prototype.js");
+}
+
+#[test]
 fn test_15_7_1_class_element_name() {
     parse_fail!(script: "static_semantics_15_7_1_class_element_name.js");
 }
