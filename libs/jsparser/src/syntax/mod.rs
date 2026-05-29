@@ -6,6 +6,7 @@ mod tests;
 use std::ops::Range;
 
 use bitflags::bitflags;
+use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 use smallvec::smallvec;
 
@@ -64,6 +65,7 @@ pub struct Processor<'s, H> {
     nodes: Vec<Node<'s>>,
     tokens: Vec<Token<'s>>,
 
+    function_stack: Vec<Function>,
     label_stack: Vec<Label>,
 
     // It's enough to track an *outermost* iteration/switch statement for conformance with the
@@ -154,13 +156,13 @@ enum Detail {
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
     ConciseBody,
-    MethodDefinition(Symbol, bool),
+    MethodDefinition(Symbol, bool, bool),
     ClassDeclaration,
     ClassTail(bool),
     ClassHeritage,
-    ClassElementList,
-    ClassElement,
-    FieldDefinition(bool),
+    ClassElementList(ClassElementListInfo),
+    ClassElement(ClassElementInfo),
+    FieldDefinition(Symbol, bool, bool),
     ClassElementName(Symbol, bool),
     AsyncConciseBody,
     StatementList,
@@ -197,6 +199,52 @@ struct BindingElement {
 #[derive(Debug)]
 enum BindingElementKind {
     SingleNameBinding(Symbol),
+}
+
+#[derive(Debug)]
+enum ClassElementInfo {
+    None,
+    Constructor(bool),
+    PrivateId(Symbol, ClassElementPrivateIdFlags),
+}
+
+bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    struct ClassElementPrivateIdFlags : u8 {
+        const GETTER = 0b01;
+        const SETTER = 0b10;
+        const OTHER  = 0b11;
+    }
+}
+
+#[derive(Default, Debug)]
+struct ClassElementListInfo {
+    private_ids: FxHashMap<Symbol, ClassElementPrivateIdFlags>,
+    constructor: Option<bool>,
+}
+
+impl ClassElementListInfo {
+    fn set_constructor(&mut self, has_direct_super: bool) {
+        debug_assert!(!self.has_constructor());
+        self.constructor = Some(has_direct_super);
+    }
+
+    fn has_constructor(&self) -> bool {
+        self.constructor.is_some()
+    }
+
+    fn need_heritage(&self) -> bool {
+        matches!(self.constructor, Some(true))
+    }
+
+    fn set_private_id(&mut self, name: Symbol, flags: ClassElementPrivateIdFlags) {
+        debug_assert!(!self.private_ids.contains_key(&name));
+        self.private_ids.insert(name, flags);
+    }
+
+    fn private_id_flags_mut(&mut self, name: &Symbol) -> Option<&mut ClassElementPrivateIdFlags> {
+        self.private_ids.get_mut(name)
+    }
 }
 
 /// Represents a node in a stream of ordered nodes visited in a depth-first tree traversal on an
@@ -519,9 +567,13 @@ where
     const INITIAL_STACK_CAPACITY: usize = 64;
     const INITIAL_QUEUE_CAPACITY: usize = 128;
     const INITIAL_TOKENS_CAPACITY: usize = 1024;
+    const INITIAL_FUNCTION_STACK_CAPACITY: usize = 8;
     const INITIAL_LABEL_STACK_CAPACITY: usize = 8;
 
     pub fn new(handler: H, module: bool) -> Self {
+        let mut function_stack = Vec::with_capacity(Self::INITIAL_FUNCTION_STACK_CAPACITY);
+        function_stack.push(Default::default());
+
         Self {
             handler,
             source: "",
@@ -529,6 +581,7 @@ where
             stack: Vec::with_capacity(Self::INITIAL_STACK_CAPACITY),
             nodes: Vec::with_capacity(Self::INITIAL_QUEUE_CAPACITY),
             tokens: Vec::with_capacity(Self::INITIAL_TOKENS_CAPACITY),
+            function_stack,
             label_stack: Vec::with_capacity(Self::INITIAL_LABEL_STACK_CAPACITY),
             iteration_statement_depth: 0,
             switch_statement_depth: 0,
@@ -735,6 +788,7 @@ where
             ref detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::FunctionContext(name));
+        self.function_stack.push(Default::default());
         Ok(())
     }
 
@@ -1571,8 +1625,8 @@ where
     //   MethodDefinition[?Yield, ?Await]
     fn process_property_definition_method(&mut self) -> Result<(), Error> {
         let name = match self.top().detail {
-            Detail::MethodDefinition(_, true) => return Err(Error::SyntaxError),
-            Detail::MethodDefinition(name, _) => name,
+            Detail::MethodDefinition(_, true, _) => return Err(Error::SyntaxError),
+            Detail::MethodDefinition(name, ..) => name,
             ref detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::Method));
@@ -1869,6 +1923,7 @@ where
     // SuperCall[Yield, Await] :
     //   super Arguments[?Yield, ?Await]
     fn process_super_call(&mut self) -> Result<(), Error> {
+        self.function_stack.last_mut().unwrap().has_super_call = true;
         self.enqueue(Node::CallExpression(true));
         self.replace(
             2,
@@ -3587,6 +3642,7 @@ where
     //   function BindingIdentifier[?Yield, ?Await] ( FormalParameters[~Yield, ~Await] )
     //   { FunctionBody[~Yield, ~Await] }
     fn process_function_declaration(&mut self) -> Result<(), Error> {
+        let _ = self.function_stack.pop().unwrap();
         self.enqueue(Node::FunctionDeclaration);
         self.replace(8, Detail::Declaration);
         Ok(())
@@ -3595,6 +3651,7 @@ where
     // FunctionExpression :
     //   function ( FormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] }
     fn process_anonymous_function_expression(&mut self) -> Result<(), Error> {
+        let _ = self.function_stack.pop().unwrap();
         self.enqueue(Node::FunctionExpression(false));
         self.replace(
             7,
@@ -3609,6 +3666,7 @@ where
     //   function BindingIdentifier[~Yield, ~Await] ( FormalParameters[~Yield, ~Await] )
     //   { FunctionBody[~Yield, ~Await] }
     fn process_function_expression(&mut self) -> Result<(), Error> {
+        let _ = self.function_stack.pop().unwrap();
         self.enqueue(Node::FunctionExpression(true));
         self.replace(
             8,
@@ -3733,12 +3791,16 @@ where
     //   ClassElementName[?Yield, ?Await] ( UniqueFormalParameters[~Yield, ~Await] )
     //   { FunctionBody[~Yield, ~Await] }
     fn process_method_definition(&mut self) -> Result<(), Error> {
+        let function = self.function_stack.pop().unwrap();
         let (name, private) = match self.nth(6).detail {
             Detail::ClassElementName(name, private) => (name, private),
             ref detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::Method);
-        self.replace(7, Detail::MethodDefinition(name, private));
+        self.replace(
+            7,
+            Detail::MethodDefinition(name, private, function.has_super_call),
+        );
         Ok(())
     }
 
@@ -3797,8 +3859,17 @@ where
     // ClassTail[Yield, Await] :
     //   { ClassBody[?Yield, ?Await] }
     fn process_class_tail_with_body(&mut self) -> Result<(), Error> {
-        self.replace(3, Detail::ClassTail(false));
-        Ok(())
+        match self.nth(1).detail {
+            Detail::ClassElementList(ref info) => {
+                if info.need_heritage() {
+                    Err(Error::SyntaxError)
+                } else {
+                    self.replace(3, Detail::ClassTail(false));
+                    Ok(())
+                }
+            }
+            _ => unreachable!(),
+        }
     }
 
     // ClassTail[Yield, Await] :
@@ -3823,16 +3894,56 @@ where
     // ClassElementList[Yield, Await] :
     //   ClassElement[?Yield, ?Await]
     fn process_class_element_list_head(&mut self) -> Result<(), Error> {
-        debug_assert!(matches!(self.top_mut().detail, Detail::ClassElement));
-        self.top_mut().detail = Detail::ClassElementList;
+        let mut info = ClassElementListInfo::default();
+        match self.top().detail {
+            Detail::ClassElement(ClassElementInfo::None) => (),
+            Detail::ClassElement(ClassElementInfo::Constructor(has_direct_super)) => {
+                info.set_constructor(has_direct_super);
+            }
+            Detail::ClassElement(ClassElementInfo::PrivateId(name, flags)) => {
+                info.set_private_id(name, flags);
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
+        self.replace(1, Detail::ClassElementList(info));
         Ok(())
     }
 
     // ClassElementList[Yield, Await] :
     //   ClassElementList[?Yield, ?Await] ClassElement[?Yield, ?Await]
     fn process_class_element_list_item(&mut self) -> Result<(), Error> {
-        debug_assert!(matches!(self.top_mut().detail, Detail::ClassElement));
-        self.pop();
+        match self.pop().detail {
+            Detail::ClassElement(ClassElementInfo::None) => (),
+            Detail::ClassElement(ClassElementInfo::Constructor(has_direct_super)) => {
+                let info = match self.top_mut().detail {
+                    Detail::ClassElementList(ref mut info) => info,
+                    _ => unreachable!(),
+                };
+                if info.has_constructor() {
+                    // #sec-class-definitions-static-semantics-early-errors
+                    // Multiple constructors are not allowed.
+                    return Err(Error::SyntaxError);
+                }
+                info.set_constructor(has_direct_super);
+            }
+            Detail::ClassElement(ClassElementInfo::PrivateId(name, flags)) => {
+                let info = match self.top_mut().detail {
+                    Detail::ClassElementList(ref mut info) => info,
+                    _ => unreachable!(),
+                };
+                if let Some(f) = info.private_id_flags_mut(&name) {
+                    if f.intersects(flags) {
+                        // #sec-class-definitions-static-semantics-early-errors
+                        // Duplicate entries are not allowed.
+                        return Err(Error::SyntaxError);
+                    }
+                    *f |= flags;
+                } else {
+                    info.set_private_id(name, flags);
+                }
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
         self.update_ends();
         Ok(())
     }
@@ -3840,17 +3951,65 @@ where
     // ClassElement[Yield, Await] :
     //  MethodDefinition[?Yield, ?Await]
     fn process_class_element_method(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ClassElement(ClassElementKind::Method));
-        self.replace(1, Detail::ClassElement);
-        Ok(())
+        match self.top().detail {
+            Detail::MethodDefinition(Symbol::CONSTRUCTOR, _, has_direct_super) => {
+                // TODO: "constructor" and SpecialMethod
+                self.enqueue(Node::ClassElement(ClassElementKind::Method));
+                self.replace(
+                    1,
+                    Detail::ClassElement(ClassElementInfo::Constructor(has_direct_super)),
+                );
+                Ok(())
+            }
+            // #sec-class-definitions-static-semantics-early-errors
+            // 'super()' is not allowed.
+            Detail::MethodDefinition(.., true) => Err(Error::SyntaxError),
+            Detail::MethodDefinition(name, private, _) => {
+                self.enqueue(Node::ClassElement(ClassElementKind::Method));
+                self.replace(
+                    1,
+                    if private {
+                        Detail::ClassElement(ClassElementInfo::PrivateId(
+                            name,
+                            ClassElementPrivateIdFlags::OTHER,
+                        ))
+                    } else {
+                        Detail::ClassElement(ClassElementInfo::None)
+                    },
+                );
+                Ok(())
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
     }
 
     // ClassElement[Yield, Await] :
     //   static MethodDefinition[?Yield, ?Await]
     fn process_class_element_static_method(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ClassElement(ClassElementKind::StaticMethod));
-        self.replace(2, Detail::ClassElement);
-        Ok(())
+        match self.top().detail {
+            // #sec-class-definitions-static-semantics-early-errors
+            // 'super()' is not allowed.
+            Detail::MethodDefinition(.., true) => Err(Error::SyntaxError),
+            // #sec-class-definitions-static-semantics-early-errors
+            // 'prototype' is not allowed.
+            Detail::MethodDefinition(Symbol::PROTOTYPE, ..) => Err(Error::SyntaxError),
+            Detail::MethodDefinition(name, private, _) => {
+                self.enqueue(Node::ClassElement(ClassElementKind::StaticMethod));
+                self.replace(
+                    2,
+                    if private {
+                        Detail::ClassElement(ClassElementInfo::PrivateId(
+                            name,
+                            ClassElementPrivateIdFlags::OTHER,
+                        ))
+                    } else {
+                        Detail::ClassElement(ClassElementInfo::None)
+                    },
+                );
+                Ok(())
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
     }
 
     // ClassElement[Yield, Await] :
@@ -3862,17 +4021,32 @@ where
     // ClassElement[Yield, Await] :
     //   static FieldDefinition[?Yield, ?Await] ;
     fn process_class_element_static_field(&mut self) -> Result<(), Error> {
-        let with_initializer = match self.nth(1).detail {
-            Detail::FieldDefinition(with_initializer) => with_initializer,
+        match self.nth(1).detail {
+            // #sec-class-definitions-static-semantics-early-errors
+            // 'constructor' and 'prototype' are not allowed.
+            Detail::FieldDefinition(Symbol::CONSTRUCTOR, ..) => Err(Error::SyntaxError),
+            Detail::FieldDefinition(Symbol::PROTOTYPE, ..) => Err(Error::SyntaxError),
+            Detail::FieldDefinition(name, private, with_initializer) => {
+                self.enqueue(Node::ClassElement(if with_initializer {
+                    ClassElementKind::StaticFieldWithInitializer
+                } else {
+                    ClassElementKind::StaticField
+                }));
+                self.replace(
+                    3,
+                    if private {
+                        Detail::ClassElement(ClassElementInfo::PrivateId(
+                            name,
+                            ClassElementPrivateIdFlags::OTHER,
+                        ))
+                    } else {
+                        Detail::ClassElement(ClassElementInfo::None)
+                    },
+                );
+                Ok(())
+            }
             ref detail => unreachable!("{detail:?}"),
-        };
-        self.enqueue(Node::ClassElement(if with_initializer {
-            ClassElementKind::StaticFieldWithInitializer
-        } else {
-            ClassElementKind::StaticField
-        }));
-        self.replace(3, Detail::ClassElement);
-        Ok(())
+        }
     }
 
     // ClassElement[Yield, Await] :
@@ -3884,24 +4058,32 @@ where
     // ClassElement[Yield, Await] :
     //   ;
     fn process_class_element_empty(&mut self) -> Result<(), Error> {
-        self.replace(1, Detail::ClassElement);
+        self.replace(1, Detail::ClassElement(ClassElementInfo::None));
         Ok(())
     }
 
     // FieldDefinition[Yield, Await] :
     //   ClassElementName[?Yield, ?Await]
     fn process_field_definition(&mut self) -> Result<(), Error> {
-        debug_assert!(matches!(self.top().detail, Detail::ClassElementName(..)));
-        self.replace(1, Detail::FieldDefinition(false));
-        Ok(())
+        match self.top().detail {
+            Detail::ClassElementName(name, private) => {
+                self.replace(1, Detail::FieldDefinition(name, private, false));
+                Ok(())
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
     }
 
     // FieldDefinition[Yield, Await] :
     //   ClassElementName[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]
     fn process_field_definition_with_initializer(&mut self) -> Result<(), Error> {
-        debug_assert!(matches!(self.nth(1).detail, Detail::ClassElementName(..)));
-        self.replace(2, Detail::FieldDefinition(true));
-        Ok(())
+        match self.nth(1).detail {
+            Detail::ClassElementName(name, private) => {
+                self.replace(2, Detail::FieldDefinition(name, private, true));
+                Ok(())
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
     }
 
     // ClassElementName[Yield, Await] :
@@ -3920,6 +4102,8 @@ where
     fn process_class_element_name_private_identifier(&mut self) -> Result<(), Error> {
         let name = match self.top().detail {
             Detail::Token(index) => {
+                // #sec-class-definitions-static-semantics-early-errors
+                // '#constructor' is not allowed.
                 if self.lexeme(index) == "#constructor" {
                     return Err(Error::SyntaxError);
                 }
@@ -4133,6 +4317,7 @@ where
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
+        debug_assert_eq!(self.function_stack.len(), 1);
         let nodes = std::mem::take(&mut self.nodes);
         self.handler.handle_nodes(nodes.into_iter())?;
         self.handler.accept()
@@ -4188,6 +4373,11 @@ enum Action<'s, H> {
     Undefined,
     Nop,
     Invoke(fn(&mut Processor<'s, H>) -> Result<(), Error>, &'static str),
+}
+
+#[derive(Default)]
+struct Function {
+    has_super_call: bool,
 }
 
 #[derive(Default)]
