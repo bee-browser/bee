@@ -4111,6 +4111,10 @@ where
             }
             ref detail => unreachable!("{detail:?}"),
         };
+        // TODO(feat): private identifiers
+        self.enqueue(Node::LiteralPropertyName(
+            LiteralPropertyName::IdentifierName(name),
+        ));
         self.replace(1, Detail::ClassElementName(name, true));
         Ok(())
     }
