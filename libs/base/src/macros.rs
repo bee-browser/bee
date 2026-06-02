@@ -166,8 +166,59 @@ const $name: [u16; $crate::utf16!(# $utf8)] = $crate::utf16!($utf8);
     };
 }
 
+#[macro_export]
+macro_rules! auto_bitflags {
+    (
+        $(#[$attr:meta])*
+        $vis:vis struct $name:ident: $ty:ty {
+            $($flags:ident),+ $(,)?
+        }
+    ) => {
+        auto_bitflags! {
+            $(#[$attr])*
+            $vis struct $name: $ty {}
+            0,
+            $($flags,)+
+        }
+    };
+    (
+        $(#[$attr:meta])*
+        $vis:vis struct $name:ident: $ty:ty {
+            $($body:tt)*
+        }
+        $bit:expr,
+        $flag:ident,
+        $($rest:ident,)*
+    ) => {
+        auto_bitflags! {
+            $(#[$attr])*
+            $vis struct $name: $ty {
+                $($body)*
+                const $flag = 1 << $bit;
+            }
+            $bit + 1,
+            $($rest,)*
+        }
+    };
+    (
+        $(#[$attr:meta])*
+        $vis:vis struct $name:ident: $ty:ty {
+            $($body:tt)*
+        }
+        $bit:expr,
+    ) => {
+        bitflags::bitflags! {
+            $(#[$attr])*
+            $vis struct $name: $ty {
+                $($body)*
+            }
+        }
+    };
+}
+
 pub use assert_eq;
 pub use assert_ne;
+pub use auto_bitflags;
 pub use const_utf16;
 pub use debug_assert_eq;
 pub use debug_assert_ne;
@@ -266,5 +317,29 @@ mod tests {
         // TODO(test): actual should be &[u16].
         let expected = "test".encode_utf16().collect::<Vec<_>>();
         assert_eq!(ACTUAL, expected);
+    }
+
+    #[test]
+    fn test_auto_bitflags() {
+        auto_bitflags! {
+            #[derive(Clone, Copy, Debug)]
+            struct Flags: u8 {
+                A,
+                B,
+                C,
+            }
+        }
+
+        assert_eq!(Flags::A.bits(), 1);
+        assert_eq!(Flags::B.bits(), 2);
+        assert_eq!(Flags::C.bits(), 4);
+
+        fn assert_impl_clone<T: Clone>() {}
+        fn assert_impl_copy<T: Copy>() {}
+        fn assert_impl_debug<T: std::fmt::Debug>() {}
+
+        assert_impl_clone::<Flags>();
+        assert_impl_copy::<Flags>();
+        assert_impl_debug::<Flags>();
     }
 }
