@@ -6,6 +6,7 @@ use std::hash::Hasher;
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
+use base::auto_bitflags;
 use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Trace;
@@ -460,11 +461,11 @@ impl Trace for Kernel {
     }
 }
 
-bitflags! {
+auto_bitflags! {
     #[derive(Clone, Copy)]
     pub struct ObjectFlags: u8 {
-        const CONSTRUCTOR = 1 << 0;
-        const CALLABLE    = 1 << 1;
-        const ERROR       = 1 << 2;
+        CONSTRUCTOR,
+        CALLABLE,
+        ERROR,
     }
 }
