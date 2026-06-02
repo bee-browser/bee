@@ -760,15 +760,14 @@ impl<'a> Editor<'a> {
 
     // object
 
-    #[allow(unused)]
-    pub fn put_is_constructor(&mut self, object: ObjectIr) -> BooleanIr {
-        logger::debug!(event = "put_is_constructor", ?object);
+    pub fn put_is_class_constructor(&mut self, object: ObjectIr) -> BooleanIr {
+        logger::debug!(event = "put_is_class_constructor", ?object);
         use ir::condcodes::IntCC::NotEqual;
         let flags = self.put_load_flags_from_object(object);
         let masked = self
             .builder
             .ins()
-            .band_imm(flags, ObjectFlags::CONSTRUCTOR.bits() as i64);
+            .band_imm(flags, ObjectFlags::CLASS_CONSTRUCTOR.bits() as i64);
         BooleanIr(self.builder.ins().icmp_imm(NotEqual, masked, 0))
     }
 
