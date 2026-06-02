@@ -1230,6 +1230,8 @@ where
             }
         };
 
+        self.emit_throw_type_error_if_class_constructor(object);
+
         let closure = self.emit_load_closure_or_throw_type_error(object);
 
         if let Some(owner) = owner {
@@ -3718,6 +3720,24 @@ where
         self.editor.switch_to_block(end_block);
 
         value
+    }
+
+    fn emit_throw_type_error_if_class_constructor(&mut self, object: ObjectIr) {
+        logger::debug!(event = "emit_throw_type_error_if_class_constructor", ?object);
+        let then_block = self.editor.create_block();
+        let end_block = self.editor.create_block();
+
+        // if object.is_class_constructor()
+        let is_class_constructor = self.editor.put_is_class_constructor(object);
+        self.editor
+            .put_branch(is_class_constructor, then_block, &[], end_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_type_error();
+        self.editor.put_jump(end_block, &[]);
+        // }
+
+        self.editor.switch_to_block(end_block);
     }
 
     fn emit_load_object_or_throw_type_error(&mut self, value: AnyIr) -> ObjectIr {
