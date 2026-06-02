@@ -391,6 +391,10 @@ impl Object {
         self.flags.insert(ObjectFlags::CONSTRUCTOR)
     }
 
+    pub(crate) fn is_class_constructor(&self) -> bool {
+        self.flags.contains(ObjectFlags::CLASS_CONSTRUCTOR)
+    }
+
     pub(crate) fn set_class_constructor(&mut self) {
         self.flags.insert(ObjectFlags::CLASS_CONSTRUCTOR)
     }
