@@ -147,8 +147,11 @@ impl<X> Runtime<X> {
             let closure = context.closure();
             let (func, this, mut args) = closure.get_bound_function_params();
             args.extend_from_slice(context.args());
-            // TODO(feat): [[Construct]], newTarget
-            runtime.call(context, func, this, &args, retv)
+            if let Some(new_target) = context.new_target() {
+                runtime.construct(func, new_target, context, retv)
+            } else {
+                runtime.call(context, func, this, &args, retv)
+            }
         }
 
         let prototype = func.prototype();
@@ -160,8 +163,7 @@ impl<X> Runtime<X> {
         let num_captures = 2 + args.len() as u16;
         let mut closure = self.create_closure(bound_function::<X>, LambdaId::HOST, num_captures);
 
-        let mut func = Value::Object(func);
-        let mut capture = self.create_capture(&mut func as *mut Value);
+        let mut capture = self.create_capture(&mut Value::Object(func) as *mut Value);
         capture.escape();
         closure.put_capture(0, capture);
 
@@ -178,6 +180,13 @@ impl<X> Runtime<X> {
         }
 
         obj.set_closure(closure);
+
+        if func.is_constructor() {
+            obj.set_constructor();
+        }
+        if func.is_class_constructor() {
+            obj.set_class_constructor();
+        }
 
         Ok(obj)
     }
