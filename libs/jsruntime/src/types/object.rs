@@ -391,6 +391,10 @@ impl Object {
         self.flags.insert(ObjectFlags::CONSTRUCTOR)
     }
 
+    pub(crate) fn set_class_constructor(&mut self) {
+        self.flags.insert(ObjectFlags::CLASS_CONSTRUCTOR)
+    }
+
     pub fn is_callable(&self) -> bool {
         self.flags.contains(ObjectFlags::CALLABLE)
     }
@@ -465,6 +469,7 @@ auto_bitflags! {
     #[derive(Clone, Copy)]
     pub struct ObjectFlags: u8 {
         CONSTRUCTOR,
+        CLASS_CONSTRUCTOR,
         CALLABLE,
         ERROR,
     }
