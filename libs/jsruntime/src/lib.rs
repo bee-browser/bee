@@ -543,6 +543,7 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
 
         debug_assert!(constructor.is_callable());
+        constructor.set_class_constructor();
         constructor.set_constructor();
         constructor
     }
