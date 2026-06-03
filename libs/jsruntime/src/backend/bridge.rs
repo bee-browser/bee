@@ -216,7 +216,7 @@ pub(crate) extern "C" fn runtime_to_object<X>(
 impl<X> Runtime<X> {
     // 7.1.18 ToObject ( argument )
     pub(crate) fn value_to_object(&mut self, value: &Value) -> Result<HandleMut<Object>, Error> {
-        logger::debug!(event = "to_object", ?value);
+        logger::debug!(event = "value_to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined | Value::Null => type_error!(),
