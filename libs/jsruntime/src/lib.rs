@@ -642,6 +642,7 @@ impl<X> Runtime<X> {
         }
 
         *retv = context.this().clone();
+        debug_assert!(matches!(retv, Value::Object(_)));
         Status::Normal
     }
 
