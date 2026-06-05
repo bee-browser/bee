@@ -3,8 +3,6 @@ mod dfa;
 mod goals;
 mod tokens;
 
-use bitflags::bitflags;
-
 use super::Error;
 use cursor::SourceCursor;
 use dfa::recognize;
@@ -169,11 +167,11 @@ impl Default for Token<'_> {
     }
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Clone, Debug, PartialEq)]
     struct TokenFlags: u8 {
-        const AUTO_INSERTION       = 0b00000001;
-        const HAS_LINE_TERMINATORS = 0b00000010;
+        AUTO_INSERTION,
+        HAS_LINE_TERMINATORS,
     }
 }
 
