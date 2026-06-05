@@ -1,13 +1,6 @@
 mod scope;
 
-use bitflags::bitflags;
 use itertools::Itertools;
-use jsparser::SymbolRegistry;
-use jsparser::syntax::ClassElementKind;
-use jsparser::syntax::LiteralPropertyName;
-use jsparser::syntax::MemberExpressionKind;
-use jsparser::syntax::PropertyAccessKind;
-use jsparser::syntax::PropertyDefinitionKind;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -15,11 +8,17 @@ use jsparser::Error as ParserError;
 use jsparser::Parser;
 use jsparser::Processor;
 use jsparser::Symbol;
+use jsparser::SymbolRegistry;
 use jsparser::syntax::AssignmentOperator;
 use jsparser::syntax::BinaryOperator;
+use jsparser::syntax::ClassElementKind;
+use jsparser::syntax::LiteralPropertyName;
 use jsparser::syntax::LoopFlags;
+use jsparser::syntax::MemberExpressionKind;
 use jsparser::syntax::Node;
 use jsparser::syntax::NodeHandler;
+use jsparser::syntax::PropertyAccessKind;
+use jsparser::syntax::PropertyDefinitionKind;
 use jsparser::syntax::UnaryOperator;
 use jsparser::syntax::UpdateOperator;
 
@@ -202,14 +201,14 @@ pub enum ThisBinding {
     Quirk,
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Debug)]
     struct FunctionFlags: u8 {
         /// The entry function of the JavaScript program.
-        const ENTRY_FUNCTION = 1 << 0;
+        ENTRY_FUNCTION,
 
         /// The `this` binding is captured by descendant closures.
-        const THIS_BINDING_CAPTURED = 1 << 1;
+        THIS_BINDING_CAPTURED,
     }
 }
 
@@ -1468,27 +1467,27 @@ enum ThisMode {
     Global,
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Debug, Default)]
     struct FunctionAnalysisFlags: u8 {
         /// Enabled if the context is the ramp function for an async function.
-        const RAMP = 1 << 0;
+        RAMP,
 
         /// Enabled if the context is the coroutine function for an async function.
-        const COROUTINE = 1 << 1;
+        COROUTINE,
 
         /// The `this` binding is used in the function body.
         ///
         /// The `this` binding must be resolved to an actual value in
         /// [`CompileCommand::DeclareVariables`] according to the [`ThisBinding`].
-        const THIS_BINDING_USED = 1 << 2;
+        THIS_BINDING_USED,
 
         /// The `this` binding is captured by descendant closures.
-        const THIS_BINDING_CAPTURED = 1 << 3;
+        THIS_BINDING_CAPTURED,
 
         /// The `this` binding will be always resolved to the global object if this flag is not
         /// set.
-        const THIS_BINDING_LOCAL = 1 << 4;
+        THIS_BINDING_LOCAL,
     }
 }
 
