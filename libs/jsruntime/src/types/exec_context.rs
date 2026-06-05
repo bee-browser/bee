@@ -183,7 +183,7 @@ impl ExecContext {
     }
 }
 
-bitflags::bitflags! {
+base::auto_bitflags! {
     #[derive(Clone, Copy, Debug)]
     #[repr(C)]
     pub struct ExecContextFlags: u16  {
