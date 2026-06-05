@@ -3,10 +3,8 @@ use std::fmt::Display;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
-use base::auto_bitflags;
 use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Trace;
@@ -170,22 +168,22 @@ impl Property {
     }
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Clone, Copy)]
     pub struct PropertyFlags: u8 {
         /// The data property (true) or the accessor property (false).
-        const DATA         = 1 << 0;
+        DATA,
 
         /// The `[[Writable]]` attribute.
         ///
         /// Available only for the data property.
-        const WRITABLE     = 1 << 1;
+        WRITABLE,
 
         /// The `[[Enumerable]]` attribute.
-        const ENUMERABLE   = 1 << 2;
+        ENUMERABLE,
 
         /// The `[[Configurable]]` attribute.
-        const CONFIGURABLE = 1 << 3;
+        CONFIGURABLE,
     }
 }
 
@@ -469,7 +467,7 @@ impl Trace for Kernel {
     }
 }
 
-auto_bitflags! {
+base::auto_bitflags! {
     #[derive(Clone, Copy)]
     pub struct ObjectFlags: u8 {
         CONSTRUCTOR,
