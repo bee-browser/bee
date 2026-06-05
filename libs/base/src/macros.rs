@@ -171,40 +171,47 @@ macro_rules! auto_bitflags {
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident: $ty:ty {
-            $($flags:ident),+ $(,)?
+            $($body:tt)*
         }
     ) => {
-        auto_bitflags! {
+        $crate::auto_bitflags! {
             $(#[$attr])*
             $vis struct $name: $ty {}
+            =====
             0,
-            $($flags,)+
+            $($body)*
         }
     };
+
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident: $ty:ty {
             $($body:tt)*
         }
+        =====
         $bit:expr,
-        $flag:ident,
-        $($rest:ident,)*
+        $(#[$($flag_attr:tt)*])* $flag:ident,
+        $($rest:tt)*
     ) => {
-        auto_bitflags! {
+        $crate::auto_bitflags! {
             $(#[$attr])*
             $vis struct $name: $ty {
                 $($body)*
+                $(#[$($flag_attr)*])*
                 const $flag = 1 << $bit;
             }
+            =====
             $bit + 1,
-            $($rest,)*
+            $($rest)*
         }
     };
+
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident: $ty:ty {
             $($body:tt)*
         }
+        =====
         $bit:expr,
     ) => {
         bitflags::bitflags! {
@@ -322,10 +329,17 @@ mod tests {
     #[test]
     fn test_auto_bitflags() {
         auto_bitflags! {
+            /// Flags
             #[derive(Clone, Copy, Debug)]
             struct Flags: u8 {
+                /// A
+                /// A
                 A,
+                /// B
+                /// B
                 B,
+                /// C
+                /// C
                 C,
             }
         }
