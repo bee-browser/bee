@@ -3723,7 +3723,10 @@ where
     }
 
     fn emit_throw_type_error_if_class_constructor(&mut self, object: ObjectIr) {
-        logger::debug!(event = "emit_throw_type_error_if_class_constructor", ?object);
+        logger::debug!(
+            event = "emit_throw_type_error_if_class_constructor",
+            ?object
+        );
         let then_block = self.editor.create_block();
         let end_block = self.editor.create_block();
 
