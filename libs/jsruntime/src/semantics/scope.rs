@@ -2,7 +2,6 @@
 //   10.2.11 FunctionDeclarationInstantiation ( func, argumentsList )
 //   16.1.7 GlobalDeclarationInstantiation ( script, env )
 
-use bitflags::bitflags;
 use itertools::Itertools;
 use jsparser::SymbolRegistry;
 
@@ -519,11 +518,11 @@ pub enum VariableKind {
     Global,
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Debug)]
     struct VariableFlags: u8 {
-        const MUTABLE         = 1 << 0;
-        const CAPTURED        = 1 << 1;
-        const FUNCTION_SCOPED = 1 << 2;
+        MUTABLE,
+        CAPTURED,
+        FUNCTION_SCOPED,
     }
 }
