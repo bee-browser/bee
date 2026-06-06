@@ -207,6 +207,15 @@ base::auto_bitflags! {
         /// The entry function of the JavaScript program.
         ENTRY_FUNCTION,
 
+        /// Indicates that this function can be called as the constructor.
+        CONSTRUCTOR,
+
+        /// Indicates that `[[ConstructorKind]]` is `DERIVED`.
+        DERIVED,
+
+        /// Indicates that `[[IsClassConstructor]]` is `true`.
+        CLASS_CONSTRUCTOR,
+
         /// The `this` binding is captured by descendant closures.
         THIS_BINDING_CAPTURED,
     }
@@ -436,7 +445,7 @@ where
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ClassContext => self.handle_class_context(),
-            Node::ClassDeclaration(named, derived) => self.handle_class_declaration(named, derived),
+            Node::ClassDeclaration(named) => self.handle_class_declaration(named),
             Node::ClassHeritage => self.handle_class_heritage(),
             Node::StaticContext => self.handle_static_context(),
             Node::ClassElement(ClassElementKind::StaticField) => {
@@ -820,7 +829,8 @@ where
     fn handle_function_declaration(&mut self) {
         self.end_function_scope();
 
-        let func = self.functions.last().unwrap();
+        let func = self.functions.last_mut().unwrap();
+        func.flags.insert(FunctionFlags::CONSTRUCTOR);
         let batch_index = analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
         let scope_ref = self.analysis().scope_ref();
         self.global_analysis
@@ -835,7 +845,11 @@ where
         analysis_mut!(self).process_class_context();
     }
 
-    fn handle_class_declaration(&mut self, named: bool, derived: bool) {
+    fn handle_class_declaration(&mut self, named: bool) {
+        let derived = self
+            .analysis()
+            .flags
+            .contains(FunctionAnalysisFlags::DERIVED);
         if !self.analysis().has_class_constructor() {
             self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
             // TODO(feat): call the field initializer if it exists.
@@ -850,10 +864,13 @@ where
                 }
             }
             self.end_function_scope();
-            let func = self.functions.last().unwrap();
-            let func_id = func.id;
-            let func_scope_ref = func.scope_ref;
-            analysis_mut!(self).set_class_default_constructor(func_id, func_scope_ref);
+            let func = self.functions.last_mut().unwrap();
+            func.flags
+                .insert(FunctionFlags::CONSTRUCTOR | FunctionFlags::CLASS_CONSTRUCTOR);
+            if derived {
+                func.flags.insert(FunctionFlags::DERIVED);
+            }
+            analysis_mut!(self).set_class_default_constructor(func.id, func.scope_ref);
         }
 
         // Pop the block scope created in handle_class_context().
@@ -863,10 +880,7 @@ where
     }
 
     fn handle_class_heritage(&mut self) {
-        push_commands! {
-            self;
-            CompileCommand::Prototype,
-        }
+        analysis_mut!(self).process_class_heritage();
     }
 
     fn handle_static_context(&mut self) {
@@ -908,6 +922,11 @@ where
 
     fn handle_function_expression(&mut self, named: bool) {
         self.do_handle_function_expression(named, false);
+        self.functions
+            .last_mut()
+            .unwrap()
+            .flags
+            .insert(FunctionFlags::CONSTRUCTOR);
     }
 
     fn handle_async_function_expression(&mut self, named: bool) {
@@ -938,8 +957,8 @@ where
     fn handle_method(&mut self) {
         self.end_function_scope();
 
-        let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_method(func.scope_ref, func.id);
+        let func = self.functions.last_mut().unwrap();
+        analysis_mut!(self).process_method(func);
     }
 
     fn do_handle_arrow_function(&mut self, coroutine: bool) {
@@ -1470,11 +1489,14 @@ enum ThisMode {
 base::auto_bitflags! {
     #[derive(Debug, Default)]
     struct FunctionAnalysisFlags: u8 {
-        /// Enabled if the context is the ramp function for an async function.
+        /// Indicates that the analysis context is the ramp function for an async function.
         RAMP,
 
-        /// Enabled if the context is the coroutine function for an async function.
+        /// Indicates that the analysis context is the coroutine function for an async function.
         COROUTINE,
+
+        /// Indicates that `[[ConstructorKind]]` is `DERIVED`.
+        DERIVED,
 
         /// The `this` binding is used in the function body.
         ///
@@ -1936,10 +1958,17 @@ impl FunctionAnalysis {
         }
     }
 
-    fn process_method(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
+    fn process_method(&mut self, func: &mut Function) {
+        let scope_ref = func.scope_ref;
+        let lambda_id = func.id;
         let symbol = self.symbol_stack.last().unwrap().0;
         if symbol == Symbol::CONSTRUCTOR {
             self.symbol_stack.pop();
+            func.flags
+                .insert(FunctionFlags::CONSTRUCTOR | FunctionFlags::CLASS_CONSTRUCTOR);
+            if self.flags.contains(FunctionAnalysisFlags::DERIVED) {
+                func.flags.insert(FunctionFlags::DERIVED);
+            }
             let index = self.class_stack.last().cloned().unwrap();
             debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
             debug_assert!(matches!(
@@ -2022,6 +2051,11 @@ impl FunctionAnalysis {
         } else {
             // TODO(feat): default class
         }
+    }
+
+    fn process_class_heritage(&mut self) {
+        self.commands.push(CompileCommand::Prototype);
+        self.flags.insert(FunctionAnalysisFlags::DERIVED);
     }
 
     fn process_class_element_static_field(&mut self, init: bool) {
