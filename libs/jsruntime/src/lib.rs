@@ -529,7 +529,7 @@ impl<X> Runtime<X> {
 
             let result = prototype.define_own_property(
                 Symbol::CONSTRUCTOR.into(),
-                Property::data_wxx(Value::Object(constructor)),
+                Property::data_xxx(Value::Object(constructor)),
             );
             debug_assert!(matches!(result, Ok(true)));
 
@@ -538,7 +538,7 @@ impl<X> Runtime<X> {
 
         let result = constructor.define_own_property(
             Symbol::PROTOTYPE.into(),
-            Property::data_wxx(Value::Object(prototype)),
+            Property::data_xxx(Value::Object(prototype)),
         );
         debug_assert!(matches!(result, Ok(true)));
 
