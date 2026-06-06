@@ -158,7 +158,7 @@ enum Detail {
     ConciseBody,
     MethodDefinition(Symbol, bool, bool),
     ClassDeclaration,
-    ClassTail(bool),
+    ClassTail,
     ClassHeritage,
     ClassElementList(ClassElementListInfo),
     ClassElement(ClassElementInfo),
@@ -324,7 +324,7 @@ pub enum Node<'s> {
     FunctionSignature,
     FunctionDeclaration,
     ClassContext,
-    ClassDeclaration(bool, bool),
+    ClassDeclaration(bool),
     ClassHeritage,
     StaticContext,
     ClassElement(ClassElementKind),
@@ -3809,11 +3809,7 @@ where
     // ClassDeclaration[Yield, Await, Default] :
     //   class BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
     fn process_class_declaration(&mut self) -> Result<(), Error> {
-        let derived = match self.top().detail {
-            Detail::ClassTail(derived) => derived,
-            ref detail => unreachable!("{detail:?}"),
-        };
-        self.enqueue(Node::ClassDeclaration(true, derived));
+        self.enqueue(Node::ClassDeclaration(true));
         self.replace(3, Detail::ClassDeclaration);
         Ok(())
     }
@@ -3821,11 +3817,7 @@ where
     // ClassDeclaration[Yield, Await, Default] :
     //   [+Default] class ClassTail[?Yield, ?Await]
     fn process_class_declaration_anonymous(&mut self) -> Result<(), Error> {
-        let derived = match self.top().detail {
-            Detail::ClassTail(derived) => derived,
-            ref detail => unreachable!("{detail:?}"),
-        };
-        self.enqueue(Node::ClassDeclaration(false, derived));
+        self.enqueue(Node::ClassDeclaration(false));
         self.replace(3, Detail::ClassDeclaration);
         Ok(())
     }
@@ -3845,14 +3837,14 @@ where
     // ClassTail[Yield, Await] :
     //   { }
     fn process_class_tail_empty(&mut self) -> Result<(), Error> {
-        self.replace(2, Detail::ClassTail(false));
+        self.replace(2, Detail::ClassTail);
         Ok(())
     }
 
     // ClassTail[Yield, Await] :
     //   ClassHeritage[?Yield, ?Await] { }
     fn process_class_tail_with_heritage(&mut self) -> Result<(), Error> {
-        self.replace(3, Detail::ClassTail(true));
+        self.replace(3, Detail::ClassTail);
         Ok(())
     }
 
@@ -3864,7 +3856,7 @@ where
                 if info.need_heritage() {
                     Err(Error::SyntaxError)
                 } else {
-                    self.replace(3, Detail::ClassTail(false));
+                    self.replace(3, Detail::ClassTail);
                     Ok(())
                 }
             }
@@ -3875,7 +3867,7 @@ where
     // ClassTail[Yield, Await] :
     //   ClassHeritage[?Yield, ?Await] { ClassBody[?Yield, ?Await] }
     fn process_class_tail(&mut self) -> Result<(), Error> {
-        self.replace(4, Detail::ClassTail(true));
+        self.replace(4, Detail::ClassTail);
         Ok(())
     }
 
