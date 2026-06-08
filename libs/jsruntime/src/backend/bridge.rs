@@ -5,6 +5,8 @@ use jsparser::Symbol;
 use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaKind;
+use crate::semantics::Function;
+use crate::semantics::ThisBinding;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
@@ -61,13 +63,23 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
         runtime.code_registry.get_lambda(lambda_id).unwrap()
     };
 
+    let func = runtime.get_function_by_lambda_id(lambda_id);
+    let call_stub = get_call_stub(func).unwrap_or(lambda);
+    let construct_stub = get_construct_stub(func).unwrap_or(lambda);
+
     debug_assert_eq!(
         context.closure().lambda,
         (runtime_lazy_compile_normal::<X> as *const () as usize).into()
     );
     context.closure().lambda = lambda.into();
+    context.closure().call_stub = call_stub.into();
+    context.closure().construct_stub = construct_stub.into();
 
-    lambda(runtime, context, retv)
+    if context.new_target().is_none() {
+        call_stub(runtime, context, retv)
+    } else {
+        construct_stub(runtime, context, retv)
+    }
 }
 
 pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
@@ -99,13 +111,23 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
         runtime.code_registry.get_lambda(lambda_id).unwrap()
     };
 
+    let func = runtime.get_function_by_lambda_id(lambda_id);
+    let call_stub = get_call_stub(func).unwrap_or(lambda);
+    let construct_stub = get_construct_stub(func).unwrap_or(lambda);
+
     debug_assert_eq!(
         context.closure().lambda,
         (runtime_lazy_compile_ramp::<X> as *const () as usize).into()
     );
     context.closure().lambda = lambda.into();
+    context.closure().call_stub = call_stub.into();
+    context.closure().construct_stub = construct_stub.into();
 
-    lambda(runtime, context, retv)
+    if context.new_target().is_none() {
+        call_stub(runtime, context, retv)
+    } else {
+        construct_stub(runtime, context, retv)
+    }
 }
 
 pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
@@ -126,7 +148,187 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
         (runtime_lazy_compile_coroutine::<X> as *const () as usize).into()
     );
     coroutine.closure.lambda = lambda.into();
+    coroutine.closure.call_stub = lambda.into();
+    coroutine.closure.construct_stub = lambda.into();
 
+    lambda(runtime, context, retv)
+}
+
+// Stub functions for [[Call]]
+
+fn get_call_stub<X>(func: &Function) -> Option<Lambda<X>> {
+    if func.is_class_constructor() {
+        Some(call_stub_for_class_constructor)
+    } else {
+        match func.this_binding {
+            ThisBinding::Capture => Some(call_stub_this_binding_capture),
+            ThisBinding::GlobalObject => Some(call_stub_this_binding_global_object),
+            ThisBinding::Quirk => Some(call_stub_this_binding_quirk),
+            _ => None,
+        }
+    }
+}
+
+// For [[IsClassConstructor]]
+extern "C" fn call_stub_for_class_constructor<X>(
+    runtime: &mut Runtime<X>,
+    _context: &mut ExecContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "call_stub_for_class_constructor");
+
+    // Always throw a TypeError.
+    type_error!(runtime, retv)
+}
+
+// #sec-ordinarycallbindthis
+extern "C" fn call_stub_this_binding_capture<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut ExecContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "call_stub_this_binding_capture");
+
+    // SAFETY: The capture of the outer `this` binding is always the first element in the capture
+    // list.
+    context.set_this(unsafe {
+        context
+            .closure()
+            .captures()
+            .get_unchecked(0)
+            .value()
+            .clone()
+    });
+
+    let lambda = Lambda::from(context.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, context, retv)
+}
+
+// #sec-ordinarycallbindthis
+// const this = globalObject;
+// DO NOT USE `globalThis` HERE.
+extern "C" fn call_stub_this_binding_global_object<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut ExecContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "call_stub_this_binding_global_object");
+
+    context.set_this(Value::Object(runtime.builtins.global_object));
+
+    let lambda = Lambda::from(context.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, context, retv)
+}
+
+// #sec-ordinarycallbindthis
+// const this =
+//   thisArgument !== null && thisArgument !== undefined ?
+//   ToObject(thisArgument) : globalObject;
+extern "C" fn call_stub_this_binding_quirk<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut ExecContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "call_stub_this_binding_quirk");
+
+    context.set_this(Value::Object(match context.this() {
+        Value::Undefined | Value::Null => runtime.builtins.global_object,
+        this => runtime.value_to_object(this).unwrap(),
+    }));
+
+    let lambda = Lambda::from(context.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, context, retv)
+}
+
+// Stub functions for [[Construct]]
+
+fn get_construct_stub<X>(func: &Function) -> Option<Lambda<X>> {
+    if func.is_derived_constructor() {
+        None
+    } else {
+        match func.this_binding {
+            ThisBinding::Capture => Some(construct_stub_this_binding_capture),
+            ThisBinding::GlobalObject => Some(construct_stub_this_binding_global_object),
+            ThisBinding::Quirk => Some(construct_stub_this_binding_quirk),
+            _ => None,
+        }
+    }
+}
+
+// #sec-ecmascript-function-objects-construct-argumentslist-newtarget
+extern "C" fn construct_stub_this_binding_capture<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut ExecContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "construct_stub_this_binding_capture");
+
+    // SAFETY: The capture of the outer `this` binding is always the first element in the capture
+    // list.
+    context.set_this(unsafe {
+        context
+            .closure()
+            .captures()
+            .get_unchecked(0)
+            .value()
+            .clone()
+    });
+
+    // TODO: initializers
+
+    let lambda = Lambda::from(context.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, context, retv)
+}
+
+// #sec-ecmascript-function-objects-construct-argumentslist-newtarget
+// const this = globalObject;
+// DO NOT USE `globalThis` HERE.
+extern "C" fn construct_stub_this_binding_global_object<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut ExecContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "construct_stub_this_binding_global_object");
+
+    context.set_this(Value::Object(runtime.builtins.global_object));
+
+    // TODO: initializers
+
+    let lambda = Lambda::from(context.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, context, retv)
+}
+
+// #sec-ecmascript-function-objects-construct-argumentslist-newtarget
+// const this =
+//   thisArgument !== null && thisArgument !== undefined ?
+//   ToObject(thisArgument) : globalObject;
+extern "C" fn construct_stub_this_binding_quirk<X>(
+    runtime: &mut Runtime<X>,
+    context: &mut ExecContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "construct_stub_this_binding_quirk");
+
+    context.set_this(Value::Object(match context.this() {
+        Value::Undefined | Value::None => runtime.builtins.global_object,
+        this => runtime.value_to_object(this).unwrap(),
+    }));
+
+    // TODO: initializers
+
+    let lambda = Lambda::from(context.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
     lambda(runtime, context, retv)
 }
 

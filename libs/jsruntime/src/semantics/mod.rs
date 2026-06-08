@@ -227,6 +227,14 @@ impl Function {
         self.flags.contains(FunctionFlags::ENTRY_FUNCTION)
     }
 
+    pub fn is_derived_constructor(&self) -> bool {
+        self.flags.contains(FunctionFlags::DERIVED)
+    }
+
+    pub fn is_class_constructor(&self) -> bool {
+        self.flags.contains(FunctionFlags::CLASS_CONSTRUCTOR)
+    }
+
     /// Returns `true` if the `this` binding is captured.
     pub fn is_this_binding_captured(&self) -> bool {
         self.flags.contains(FunctionFlags::THIS_BINDING_CAPTURED)
