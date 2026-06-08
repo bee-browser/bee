@@ -20,6 +20,9 @@ pub struct Closure {
     // usize regardless of the actual type of X.
     pub lambda: LambdaAddr,
 
+    pub call_stub: LambdaAddr,
+    pub construct_stub: LambdaAddr,
+
     /// The ID of `lambda`.
     pub lambda_id: LambdaId,
 
@@ -37,7 +40,7 @@ pub struct Closure {
 base::static_assert_eq!(align_of::<Closure>(), 8);
 
 impl Closure {
-    pub(crate) const LAMBDA_OFFSET: usize = std::mem::offset_of!(Self, lambda);
+    pub(crate) const CALL_STUB_OFFSET: usize = std::mem::offset_of!(Self, call_stub);
     pub(crate) const CAPTURES_OFFSET: usize = std::mem::offset_of!(Self, captures);
 
     pub(crate) fn put_capture(&mut self, index: usize, capture: HandleMut<Capture>) {
