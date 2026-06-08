@@ -65,11 +65,11 @@ impl ExecContext {
     pub const ARGC_MAX_OFFSET: usize = std::mem::offset_of!(Self, argc_max);
     pub const ARGV_OFFSET: usize = std::mem::offset_of!(Self, argv);
 
-    pub(crate) fn new_for_entry(args: &[Value]) -> Self {
+    pub(crate) fn new_for_entry(args: &[Value], this: Value) -> Self {
         Self {
             envp: std::ptr::null_mut(),
             new_target: None,
-            this: Value::Undefined,
+            this,
             func: None,
             outer: std::ptr::null(),
             flags: ExecContextFlags::empty(),

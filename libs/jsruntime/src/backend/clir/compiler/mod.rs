@@ -31,7 +31,6 @@ use crate::semantics::Locator;
 use crate::semantics::Program;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
-use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::ExecContextFlags;
 use crate::types::Object;
@@ -287,7 +286,6 @@ struct Compiler<'a, R> {
     operand_stack: OperandStack,
 
     // The following values must be reset in the end of compilation for each function.
-    this: Option<AnyIr>,
     this_capture: Option<CaptureAddr>,
     params: Vec<AnyIr>,
     locals: Vec<AnyIr>,
@@ -345,7 +343,6 @@ where
             pending_labels: Default::default(),
             editor: Editor::new(runtime_assert_enabled, builder, target_config),
             operand_stack: Default::default(),
-            this: None,
             this_capture: None,
             params: Default::default(),
             locals: Default::default(),
@@ -427,7 +424,13 @@ where
 
         self.check_stack_depth();
 
-        self.resolve_this_binding(func);
+        debug_assert_eq!(self.max_capture_buffer_len, 0);
+        if func.is_this_binding_captured() {
+            let this = self.editor.this_argument();
+            let capture_addr = self.perform_create_capture(func, this);
+            self.this_capture = Some(capture_addr);
+            self.max_capture_buffer_len = size_of::<usize>() as u16;
+        }
     }
 
     fn check_stack_depth(&mut self) {
@@ -443,73 +446,6 @@ where
         self.emit_throw_internal_error(const_string_handle!("Stack too deep"));
         self.editor.put_jump(merge_block, &[]);
         self.editor.switch_to_block(merge_block);
-    }
-
-    // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
-    //
-    // See Also:
-    // 9.1.2.4 NewFunctionEnvironment()
-    // 10.2 ECMAScript Function Objects
-    // 10.2.3 OrdinaryFunctionCreate()
-    // 10.2.11 FunctionDeclarationInstantiation()
-    fn resolve_this_binding(&mut self, func: &Function) {
-        logger::debug!(event = "resolve_this_binding", ?func.this_binding);
-        debug_assert!(self.this.is_none());
-        debug_assert!(self.this_capture.is_none());
-
-        match func.this_binding {
-            ThisBinding::None => {
-                // No code is generated for the `this` binding resolution, which improves the
-                // execution time in some situations.
-            }
-            ThisBinding::ThisArgument => {
-                // const this = thisArgument;
-                let this = self.editor.this_argument();
-                self.this = Some(this);
-            }
-            ThisBinding::Capture => {
-                // The capture of the outer `this` binding is always the first element in the
-                // capture list.
-                let this = self.editor.put_load_captured_value(0);
-                self.this = Some(this);
-            }
-            ThisBinding::GlobalObject => {
-                // const this = globalObject;
-                // DO NOT USE `globalThis` HERE.
-                let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object.as_addr());
-                let this = self.perform_to_any(&Operand::Object(value));
-                self.this = Some(this);
-            }
-            ThisBinding::Quirk => {
-                // const this =
-                //   thisArgument !== null && thisArgument !== undefined ?
-                //   ToObject(thisArgument) : globalObject;
-                self.operand_stack
-                    .push(Operand::Any(self.editor.this_argument(), None));
-                self.process_non_nullish();
-                self.process_if_then(true);
-                self.operand_stack
-                    .push(Operand::Any(self.editor.this_argument(), None));
-                self.perform_to_object();
-                self.process_else(true);
-                // DO NOT USE `globalThis` HERE.
-                let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object.as_addr());
-                self.operand_stack.push(Operand::Object(value));
-                self.process_ternary();
-                let this = self.pop_any();
-                self.this = Some(this);
-            }
-        }
-
-        debug_assert_eq!(self.max_capture_buffer_len, 0);
-        if func.is_this_binding_captured() {
-            let this = self.this.unwrap();
-            let capture_addr = self.perform_create_capture(func, this);
-            self.this_capture = Some(capture_addr);
-            self.max_capture_buffer_len = size_of::<usize>() as u16;
-        }
     }
 
     fn process_commands(&mut self, func: &Function, commands: &[CompileCommand]) {
@@ -880,7 +816,7 @@ where
     }
 
     fn process_this(&mut self) {
-        let this = self.this.unwrap();
+        let this = self.editor.this_argument();
         self.operand_stack.push(Operand::Any(this, None));
     }
 
@@ -1304,7 +1240,6 @@ where
         if super_call {
             // TODO: BindThisValue
             self.editor.put_store_this_argument(retv);
-            self.this = Some(self.editor.this_argument());
         }
 
         // TODO: assert retv.is_object()
@@ -1388,7 +1323,7 @@ where
         if scope.is_function() {
             if let Some(this_capture) = self.this_capture.take() {
                 let capture = self.perform_load_capture(this_capture);
-                let this = self.this.unwrap();
+                let this = self.editor.this_argument();
                 self.editor.put_escape_value(capture, this);
             }
             // tidy this value if it exists
@@ -3193,13 +3128,6 @@ where
         match self.operand_stack.pop().unwrap() {
             Operand::Closure(value) => value,
             _ => unreachable!(),
-        }
-    }
-
-    fn pop_any(&mut self) -> AnyIr {
-        match self.operand_stack.pop().unwrap() {
-            Operand::Any(value, _) => value,
-            operand => unreachable!("{operand:?}"),
         }
     }
 
