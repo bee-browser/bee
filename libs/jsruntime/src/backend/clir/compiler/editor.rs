@@ -665,9 +665,9 @@ impl<'a> Editor<'a> {
             .iadd_imm(self.closure, Closure::CAPTURES_OFFSET as i64)
     }
 
-    pub fn put_load_lambda_from_closure(&mut self, closure: ClosureIr) -> LambdaIr {
-        logger::debug!(event = "put_load_lambda_from_closure", ?closure);
-        LambdaIr(self.put_load_addr(closure.0, Closure::LAMBDA_OFFSET))
+    pub fn put_load_call_stub_from_closure(&mut self, closure: ClosureIr) -> LambdaIr {
+        logger::debug!(event = "put_load_call_stub_from_closure", ?closure);
+        LambdaIr(self.put_load_addr(closure.0, Closure::CALL_STUB_OFFSET))
     }
 
     pub fn put_store_capture_to_closure(
@@ -699,7 +699,7 @@ impl<'a> Editor<'a> {
         self.put_store_closure_to_callee_context(closure);
         self.put_store_function_to_callee_context(function);
         self.put_store_flags_to_callee_context(flags);
-        let lambda = self.put_load_lambda_from_closure(closure);
+        let call_stub = self.put_load_call_stub_from_closure(closure);
         let context = self
             .builder
             .ins()
@@ -708,7 +708,7 @@ impl<'a> Editor<'a> {
         let call = self
             .builder
             .ins()
-            .call_indirect(self.lambda_sig, lambda.0, args);
+            .call_indirect(self.lambda_sig, call_stub.0, args);
         StatusIr(self.builder.inst_results(call)[0])
     }
 
