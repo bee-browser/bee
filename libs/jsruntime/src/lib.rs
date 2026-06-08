@@ -22,6 +22,7 @@ use builtins::Builtins;
 use jobs::JobRunner;
 use lambda::LambdaKind;
 use lambda::LambdaRegistry;
+use semantics::Function;
 use semantics::Program;
 use types::Capture;
 use types::Closure;
@@ -244,6 +245,12 @@ impl<X> Runtime<X> {
         self.heap.stats()
     }
 
+    fn get_function_by_lambda_id(&self, lambda_id: LambdaId) -> &Function {
+        let lambda_info = self.lambda_registry.get(lambda_id);
+        &self.programs[lambda_info.program_id.index()].functions
+            [lambda_info.function_index as usize]
+    }
+
     fn get_index_of_coroutine_function(
         &self,
         program_id: ProgramId,
@@ -286,7 +293,8 @@ impl<X> Runtime<X> {
     ) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda_id, ?lambda, module);
         let args: [_; 0] = [];
-        let mut context = ExecContext::new_for_entry(&args);
+        let mut context =
+            ExecContext::new_for_entry(&args, Value::Object(self.builtins.global_object));
         let mut retv = Value::Undefined;
         let status = lambda(self, &mut context, &mut retv);
         retv.into_result(status)
@@ -380,6 +388,8 @@ impl<X> Runtime<X> {
             unsafe {
                 ptr.cast::<Closure>().write(Closure {
                     lambda: lambda.into(),
+                    call_stub: lambda.into(),
+                    construct_stub: lambda.into(),
                     lambda_id,
                     num_captures,
                     captures: [],
@@ -611,6 +621,7 @@ impl<X> Runtime<X> {
             context.set_this(Value::Object(object));
             Some(object)
         } else {
+            context.set_this(Value::Undefined);
             None
         };
 
@@ -621,8 +632,8 @@ impl<X> Runtime<X> {
         context.set_closure(closure);
         context.set_new_target(new_target);
 
-        let lambda = Lambda::from(closure.lambda);
-        let status = lambda(self, context, retv);
+        let stub = Lambda::from(closure.construct_stub);
+        let status = stub(self, context, retv);
         if matches!(status, Status::Exception) {
             return status;
         }
