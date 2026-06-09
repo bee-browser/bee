@@ -471,7 +471,7 @@ where
             Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
             Node::ArrowFunction => self.handle_arrow_function(),
             Node::AsyncArrowFunction => self.handle_async_arrow_function(),
-            Node::Method => self.handle_method(),
+            Node::Method(in_class) => self.handle_method(in_class),
             Node::AwaitExpression => self.handle_await_expression(),
             Node::Then(expr) => self.handle_then(expr),
             Node::Else(expr) => self.handle_else(expr),
@@ -962,11 +962,15 @@ where
         self.do_handle_arrow_function(false);
     }
 
-    fn handle_method(&mut self) {
+    fn handle_method(&mut self, in_class: bool) {
         self.end_function_scope();
 
         let func = self.functions.last_mut().unwrap();
-        analysis_mut!(self).process_method(func);
+        if in_class {
+            analysis_mut!(self).process_method_in_class(func);
+        } else {
+            analysis_mut!(self).process_method_in_object(func);
+        }
     }
 
     fn do_handle_arrow_function(&mut self, coroutine: bool) {
@@ -1966,7 +1970,7 @@ impl FunctionAnalysis {
         }
     }
 
-    fn process_method(&mut self, func: &mut Function) {
+    fn process_method_in_class(&mut self, func: &mut Function) {
         let scope_ref = func.scope_ref;
         let lambda_id = func.id;
         let symbol = self.symbol_stack.last().unwrap().0;
@@ -1996,6 +2000,12 @@ impl FunctionAnalysis {
         } else {
             self.process_closure_expression(scope_ref, lambda_id, true, false);
         }
+    }
+
+    fn process_method_in_object(&mut self, func: &mut Function) {
+        let scope_ref = func.scope_ref;
+        let lambda_id = func.id;
+        self.process_closure_expression(scope_ref, lambda_id, true, false);
     }
 
     fn process_class_context(&mut self) {
