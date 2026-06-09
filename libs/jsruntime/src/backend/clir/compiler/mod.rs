@@ -32,7 +32,7 @@ use crate::semantics::Program;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
-use crate::types::ExecContextFlags;
+use crate::types::CallContextFlags;
 use crate::types::Object;
 use crate::types::String;
 use crate::types::Value;
@@ -323,7 +323,7 @@ where
         let params = &mut func_ir.signature.params;
         // runtime: &mut Runtime<X>
         params.push(ir::AbiParam::new(addr_type));
-        // context: &mut ExecContext
+        // cc: &mut CallContext
         params.push(ir::AbiParam::new(addr_type));
         // retv: &mut Value
         params.push(ir::AbiParam::new(addr_type));
@@ -368,12 +368,12 @@ where
         self.editor
             .put_assert_lambda_params(self.support, func.is_entry_function());
 
-        self.editor.put_store_outer_to_callee_context();
-        self.editor.put_store_depth_to_callee_context();
+        self.editor.put_store_caller_to_callee_cc();
+        self.editor.put_store_depth_to_callee_cc();
 
         let argv = self.editor.put_alloc_argv(8);
-        self.editor.put_store_argc_max_to_callee_context(8);
-        self.editor.put_store_argv_to_callee_context(argv);
+        self.editor.put_store_argc_max_to_callee_cc(8);
+        self.editor.put_store_argv_to_callee_cc(argv);
 
         if self.is_coroutine(func) {
             self.editor.put_set_coroutine_mode();
@@ -1171,18 +1171,18 @@ where
         let closure = self.emit_load_closure_or_throw_type_error(object);
 
         if let Some(owner) = owner {
-            let dst = self.editor.put_get_this_from_callee_context();
+            let dst = self.editor.put_get_this_from_callee_cc();
             self.emit_store_property_owner_to_any(owner, dst);
         } else {
             let this = self.editor.this_argument();
-            let dst = self.editor.put_get_this_from_callee_context();
+            let dst = self.editor.put_get_this_from_callee_cc();
             self.editor.put_store_any_to_any(this, dst);
         }
 
         let retv = self.emit_create_any();
         let status = self
             .editor
-            .put_call(object, closure, ExecContextFlags::empty(), retv);
+            .put_call(object, closure, CallContextFlags::empty(), retv);
         self.emit_check_status_for_exception(status, retv);
 
         // TODO(pref): compile-time evaluation
@@ -3555,7 +3555,7 @@ where
 
     fn emit_fill_args(&mut self, argc: u16) {
         logger::debug!(event = "emit_fill_args", argc);
-        let argv = self.editor.put_get_argv_from_callee_context();
+        let argv = self.editor.put_get_argv_from_callee_cc();
         // TODO: evaluation order
         for i in (0..argc).rev() {
             let (operand, ..) = self.dereference();
@@ -3563,7 +3563,7 @@ where
             let arg = self.editor.put_get_arg(argv, i);
             self.emit_store_operand_to_any(&operand, arg);
         }
-        self.editor.put_store_argc_to_callee_context(argc);
+        self.editor.put_store_argc_to_callee_cc(argc);
     }
 
     fn emit_store_operand_to_any(&mut self, operand: &Operand, any: AnyIr) {

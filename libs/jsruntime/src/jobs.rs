@@ -4,8 +4,8 @@ use jsgc::HandleMut;
 
 use crate::Runtime;
 use crate::logger;
+use crate::types::CallContext;
 use crate::types::Coroutine;
-use crate::types::ExecContext;
 use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Promise;
@@ -55,10 +55,10 @@ impl<X> Runtime<X> {
     ) -> (Status, Value) {
         logger::debug!(event = "resume", ?coroutine, ?object, ?result, ?error);
         let args = [object.into(), result.clone(), error.clone()];
-        let mut context = ExecContext::new_for_promise(coroutine, &args);
+        let mut cc = CallContext::new_for_promise(coroutine, &args);
         let mut retv = Value::None;
         let lambda = Lambda::from(coroutine.closure.lambda);
-        let status = lambda(self, &mut context, &mut retv);
+        let status = lambda(self, &mut cc, &mut retv);
         (status, retv)
     }
 
@@ -173,7 +173,7 @@ mod tests {
     fn test_collect_gc_roots() {
         let mut runtime = BasicRuntime::new();
 
-        extern "C" fn dummy(_: &mut BasicRuntime, _: &mut ExecContext, retv: &mut Value) -> Status {
+        extern "C" fn dummy(_: &mut BasicRuntime, _: &mut CallContext, retv: &mut Value) -> Status {
             *retv = Value::Undefined;
             Status::Normal
         }
