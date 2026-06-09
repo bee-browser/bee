@@ -4,7 +4,7 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::types::ExecContext;
+use crate::types::CallContext;
 use crate::types::Value;
 use crate::types::object::Property;
 
@@ -33,27 +33,27 @@ pub fn global_undefined<X>(runtime: &mut Runtime<X>) {
 }
 
 //#sec-eval-x global.function
-pub fn eval<X>(_runtime: &mut Runtime<X>, _context: &mut ExecContext) -> Result<Value, Error> {
+pub fn eval<X>(_runtime: &mut Runtime<X>, _cc: &mut CallContext) -> Result<Value, Error> {
     runtime_todo!("eval: not implemented")
 }
 
 //#sec-isfinite-number global.function
-pub fn is_finite<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
-    let number = context.args().first().unwrap_or(&Value::Undefined);
+pub fn is_finite<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
+    let number = cc.args().first().unwrap_or(&Value::Undefined);
     let num = runtime.value_to_number(number)?;
     Ok(Value::Boolean(num.is_finite()))
 }
 
 //#sec-isnan-number global.function
-pub fn is_nan<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
-    let number = context.args().first().unwrap_or(&Value::Undefined);
+pub fn is_nan<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
+    let number = cc.args().first().unwrap_or(&Value::Undefined);
     let num = runtime.value_to_number(number)?;
     Ok(Value::Boolean(num.is_nan()))
 }
 
 //#sec-parsefloat-string global.function
-pub fn parse_float<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
-    let string = context.args().first().unwrap_or(&Value::Undefined);
+pub fn parse_float<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
+    let string = cc.args().first().unwrap_or(&Value::Undefined);
     let input_string = runtime.value_to_string(string)?;
     let trimmed_string = runtime.trim_string(input_string, true, false)?;
     // TODO: 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
@@ -67,12 +67,12 @@ pub fn parse_float<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Re
 }
 
 //#sec-parseint-string-radix global.function
-pub fn parse_int<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
+pub fn parse_int<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     // TODO: impl
-    let string = context.args().first().unwrap_or(&Value::Undefined);
+    let string = cc.args().first().unwrap_or(&Value::Undefined);
     let input_string = runtime.value_to_string(string)?;
     let s = runtime.trim_string(input_string, true, false)?;
-    let radix = context.args().get(1).unwrap_or(&Value::Undefined);
+    let radix = cc.args().get(1).unwrap_or(&Value::Undefined);
     let radix = runtime.value_to_number(radix)?;
     let radix = if radix.is_finite() { radix as i32 } else { 10 };
     if !(2..=36).contains(&radix) {
