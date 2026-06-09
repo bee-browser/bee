@@ -9,7 +9,7 @@ use jsgc::HandleMut;
 use jsparser::Symbol;
 
 use crate::Runtime;
-use crate::types::ExecContext;
+use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::Status;
@@ -104,10 +104,10 @@ impl<X> Runtime<X> {
 
 extern "C" fn {{metadata.id}}_constructor<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
-    match imp::constructor(runtime, context) {
+    match imp::constructor(runtime, cc) {
         Ok(value) => {
             *retv = value;
             Status::Normal
@@ -123,10 +123,10 @@ extern "C" fn {{metadata.id}}_constructor<X>(
 
 extern "C" fn {{imp}}<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
-    match imp::{{imp}}(runtime, context) {
+    match imp::{{imp}}(runtime, cc) {
         Ok(value) => {
             *retv = value;
             Status::Normal
@@ -144,13 +144,13 @@ extern "C" fn {{imp}}<X>(
 
 extern "C" fn {{imp}}<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     {{#if options.no_adapter}}
-    imp::{{imp}}(runtime, context, retv)
+    imp::{{imp}}(runtime, cc, retv)
     {{else}}
-    match imp::{{imp}}(runtime, context) {
+    match imp::{{imp}}(runtime, cc) {
         Ok(value) => {
             *retv = value;
             Status::Normal

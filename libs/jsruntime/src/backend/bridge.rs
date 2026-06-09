@@ -7,10 +7,10 @@ use crate::Runtime;
 use crate::lambda::LambdaKind;
 use crate::semantics::Function;
 use crate::semantics::ThisBinding;
+use crate::types::CallContext;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
-use crate::types::ExecContext;
 use crate::types::Lambda;
 use crate::types::Object;
 use crate::types::Promise;
@@ -46,12 +46,12 @@ macro_rules! into_capture {
 
 pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_normal");
 
-    let lambda_id = context.closure().lambda_id;
+    let lambda_id = cc.closure().lambda_id;
     let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
         lambda
     } else {
@@ -68,28 +68,28 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     let construct_stub = get_construct_stub(func).unwrap_or(lambda);
 
     debug_assert_eq!(
-        context.closure().lambda,
+        cc.closure().lambda,
         (runtime_lazy_compile_normal::<X> as *const () as usize).into()
     );
-    context.closure().lambda = lambda.into();
-    context.closure().call_stub = call_stub.into();
-    context.closure().construct_stub = construct_stub.into();
+    cc.closure().lambda = lambda.into();
+    cc.closure().call_stub = call_stub.into();
+    cc.closure().construct_stub = construct_stub.into();
 
-    if context.new_target().is_none() {
-        call_stub(runtime, context, retv)
+    if cc.new_target().is_none() {
+        call_stub(runtime, cc, retv)
     } else {
-        construct_stub(runtime, context, retv)
+        construct_stub(runtime, cc, retv)
     }
 }
 
 pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_ramp");
 
-    let lambda_id = context.closure().lambda_id;
+    let lambda_id = cc.closure().lambda_id;
     let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
         lambda
     } else {
@@ -116,28 +116,28 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     let construct_stub = get_construct_stub(func).unwrap_or(lambda);
 
     debug_assert_eq!(
-        context.closure().lambda,
+        cc.closure().lambda,
         (runtime_lazy_compile_ramp::<X> as *const () as usize).into()
     );
-    context.closure().lambda = lambda.into();
-    context.closure().call_stub = call_stub.into();
-    context.closure().construct_stub = construct_stub.into();
+    cc.closure().lambda = lambda.into();
+    cc.closure().call_stub = call_stub.into();
+    cc.closure().construct_stub = construct_stub.into();
 
-    if context.new_target().is_none() {
-        call_stub(runtime, context, retv)
+    if cc.new_target().is_none() {
+        call_stub(runtime, cc, retv)
     } else {
-        construct_stub(runtime, context, retv)
+        construct_stub(runtime, cc, retv)
     }
 }
 
 pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine");
 
-    let coroutine = context.coroutine_mut();
+    let coroutine = cc.coroutine_mut();
 
     let lambda_id = coroutine.closure.lambda_id;
     // The coroutine lambda has already been compiled in `runtime_lazy_compile_ramp()`.
@@ -151,7 +151,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
     coroutine.closure.call_stub = lambda.into();
     coroutine.closure.construct_stub = lambda.into();
 
-    lambda(runtime, context, retv)
+    lambda(runtime, cc, retv)
 }
 
 // Stub functions for [[Call]]
@@ -172,7 +172,7 @@ fn get_call_stub<X>(func: &Function) -> Option<Lambda<X>> {
 // For [[IsClassConstructor]]
 extern "C" fn call_stub_for_class_constructor<X>(
     runtime: &mut Runtime<X>,
-    _context: &mut ExecContext,
+    _cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "call_stub_for_class_constructor");
@@ -184,26 +184,19 @@ extern "C" fn call_stub_for_class_constructor<X>(
 // #sec-ordinarycallbindthis
 extern "C" fn call_stub_this_binding_capture<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "call_stub_this_binding_capture");
 
     // SAFETY: The capture of the outer `this` binding is always the first element in the capture
     // list.
-    context.set_this(unsafe {
-        context
-            .closure()
-            .captures()
-            .get_unchecked(0)
-            .value()
-            .clone()
-    });
+    cc.set_this(unsafe { cc.closure().captures().get_unchecked(0).value().clone() });
 
-    let lambda = Lambda::from(context.closure().lambda);
+    let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
     // DO NOT USE local variables that implement `Drop`.
-    lambda(runtime, context, retv)
+    lambda(runtime, cc, retv)
 }
 
 // #sec-ordinarycallbindthis
@@ -211,17 +204,17 @@ extern "C" fn call_stub_this_binding_capture<X>(
 // DO NOT USE `globalThis` HERE.
 extern "C" fn call_stub_this_binding_global_object<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "call_stub_this_binding_global_object");
 
-    context.set_this(Value::Object(runtime.builtins.global_object));
+    cc.set_this(Value::Object(runtime.builtins.global_object));
 
-    let lambda = Lambda::from(context.closure().lambda);
+    let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
     // DO NOT USE local variables that implement `Drop`.
-    lambda(runtime, context, retv)
+    lambda(runtime, cc, retv)
 }
 
 // #sec-ordinarycallbindthis
@@ -230,20 +223,20 @@ extern "C" fn call_stub_this_binding_global_object<X>(
 //   ToObject(thisArgument) : globalObject;
 extern "C" fn call_stub_this_binding_quirk<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "call_stub_this_binding_quirk");
 
-    context.set_this(Value::Object(match context.this() {
+    cc.set_this(Value::Object(match cc.this() {
         Value::Undefined | Value::Null => runtime.builtins.global_object,
         this => runtime.value_to_object(this).unwrap(),
     }));
 
-    let lambda = Lambda::from(context.closure().lambda);
+    let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
     // DO NOT USE local variables that implement `Drop`.
-    lambda(runtime, context, retv)
+    lambda(runtime, cc, retv)
 }
 
 // Stub functions for [[Construct]]
@@ -264,28 +257,21 @@ fn get_construct_stub<X>(func: &Function) -> Option<Lambda<X>> {
 // #sec-ecmascript-function-objects-construct-argumentslist-newtarget
 extern "C" fn construct_stub_this_binding_capture<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "construct_stub_this_binding_capture");
 
     // SAFETY: The capture of the outer `this` binding is always the first element in the capture
     // list.
-    context.set_this(unsafe {
-        context
-            .closure()
-            .captures()
-            .get_unchecked(0)
-            .value()
-            .clone()
-    });
+    cc.set_this(unsafe { cc.closure().captures().get_unchecked(0).value().clone() });
 
     // TODO: initializers
 
-    let lambda = Lambda::from(context.closure().lambda);
+    let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
     // DO NOT USE local variables that implement `Drop`.
-    lambda(runtime, context, retv)
+    lambda(runtime, cc, retv)
 }
 
 // #sec-ecmascript-function-objects-construct-argumentslist-newtarget
@@ -293,19 +279,19 @@ extern "C" fn construct_stub_this_binding_capture<X>(
 // DO NOT USE `globalThis` HERE.
 extern "C" fn construct_stub_this_binding_global_object<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "construct_stub_this_binding_global_object");
 
-    context.set_this(Value::Object(runtime.builtins.global_object));
+    cc.set_this(Value::Object(runtime.builtins.global_object));
 
     // TODO: initializers
 
-    let lambda = Lambda::from(context.closure().lambda);
+    let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
     // DO NOT USE local variables that implement `Drop`.
-    lambda(runtime, context, retv)
+    lambda(runtime, cc, retv)
 }
 
 // #sec-ecmascript-function-objects-construct-argumentslist-newtarget
@@ -314,22 +300,22 @@ extern "C" fn construct_stub_this_binding_global_object<X>(
 //   ToObject(thisArgument) : globalObject;
 extern "C" fn construct_stub_this_binding_quirk<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "construct_stub_this_binding_quirk");
 
-    context.set_this(Value::Object(match context.this() {
+    cc.set_this(Value::Object(match cc.this() {
         Value::Undefined | Value::None => runtime.builtins.global_object,
         this => runtime.value_to_object(this).unwrap(),
     }));
 
     // TODO: initializers
 
-    let lambda = Lambda::from(context.closure().lambda);
+    let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
     // DO NOT USE local variables that implement `Drop`.
-    lambda(runtime, context, retv)
+    lambda(runtime, cc, retv)
 }
 
 // 7.1.2 ToBoolean ( argument )
@@ -967,10 +953,10 @@ pub(crate) extern "C" fn runtime_construct<X>(
     runtime: &mut Runtime<X>,
     constructor: HandleMut<Object>,
     new_target: HandleMut<Object>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
-    runtime.construct(constructor, new_target, context, retv)
+    runtime.construct(constructor, new_target, cc, retv)
 }
 
 pub(crate) extern "C" fn runtime_panic<X>(

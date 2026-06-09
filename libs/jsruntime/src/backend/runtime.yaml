@@ -1,8 +1,8 @@
 functions:
   - name: lazy_compile_normal
     args:
-      - name: context
-        type: '&mut c_void'
+      - name: cc
+        type: '&mut CallContext'
       - name: this
         type: '&mut Value'
       - name: argc
@@ -14,8 +14,8 @@ functions:
     ret: Status
   - name: lazy_compile_ramp
     args:
-      - name: context
-        type: '&mut c_void'
+      - name: cc
+        type: '&mut CallContext'
       - name: this
         type: '&mut Value'
       - name: argc
@@ -27,8 +27,8 @@ functions:
     ret: Status
   - name: lazy_compile_coroutine
     args:
-      - name: context
-        type: '&mut c_void'
+      - name: cc
+        type: '&mut CallContext'
       - name: this
         type: '&mut Value'
       - name: argc
@@ -323,8 +323,8 @@ functions:
         type: HandleMut<Object>
       - name: new_target
         type: HandleMut<Object>
-      - name: context
-        type: '&mut ExecContext'
+      - name: cc
+        type: '&mut CallContext'
       - name: retv
         type: '&mut Value'
     ret: Status
