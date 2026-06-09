@@ -333,7 +333,7 @@ pub enum Node<'s> {
     AsyncFunctionExpression(bool),
     ArrowFunction,
     AsyncArrowFunction,
-    Method,
+    Method(bool),
     AwaitExpression,
     Then(bool),
     Else(bool),
@@ -1624,6 +1624,7 @@ where
     // PropertyDefinition[Yield, Await] :
     //   MethodDefinition[?Yield, ?Await]
     fn process_property_definition_method(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Method(false));
         let name = match self.top().detail {
             Detail::MethodDefinition(_, true, _) => return Err(Error::SyntaxError),
             Detail::MethodDefinition(name, ..) => name,
@@ -3796,7 +3797,6 @@ where
             Detail::ClassElementName(name, private) => (name, private),
             ref detail => unreachable!("{detail:?}"),
         };
-        self.enqueue(Node::Method);
         self.replace(
             7,
             Detail::MethodDefinition(name, private, function.has_super_call),
@@ -3943,6 +3943,7 @@ where
     // ClassElement[Yield, Await] :
     //  MethodDefinition[?Yield, ?Await]
     fn process_class_element_method(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Method(true));
         match self.top().detail {
             Detail::MethodDefinition(Symbol::CONSTRUCTOR, _, has_direct_super) => {
                 // TODO: "constructor" and SpecialMethod
@@ -3978,6 +3979,7 @@ where
     // ClassElement[Yield, Await] :
     //   static MethodDefinition[?Yield, ?Await]
     fn process_class_element_static_method(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Method(true));
         match self.top().detail {
             // #sec-class-definitions-static-semantics-early-errors
             // 'super()' is not allowed.
