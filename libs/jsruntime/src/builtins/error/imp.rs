@@ -8,7 +8,7 @@ use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
-use crate::types::ExecContext;
+use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Property;
 use crate::types::String;
@@ -17,12 +17,12 @@ use crate::types::Value;
 use super::logger;
 
 //#sec-error-message constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
+pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "error_constructor");
 
-    let new_target = match context.new_target() {
+    let new_target = match cc.new_target() {
         Some(new_target) => new_target,
-        None => context.func().unwrap(),
+        None => cc.func().unwrap(),
     };
 
     let mut object =
@@ -30,7 +30,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Re
 
     object.set_error();
 
-    match context.args().first().unwrap_or(&Value::Undefined) {
+    match cc.args().first().unwrap_or(&Value::Undefined) {
         Value::Undefined => (),
         message => {
             let msg = runtime.value_to_string(message)?;
@@ -42,7 +42,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Re
         }
     }
 
-    if let Value::Object(value) = context.args().get(1).unwrap_or(&Value::Undefined) {
+    if let Value::Object(value) = cc.args().get(1).unwrap_or(&Value::Undefined) {
         let key = Symbol::CAUSE.into();
         if let Some(value) = value.get_value(&key) {
             // TODO: error handling
@@ -54,12 +54,9 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Re
 }
 
 //#sec-error.iserror constructor.function {"signature": "Error.isError ( arg )"}
-pub fn error_is_error<X>(
-    _runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
-) -> Result<Value, Error> {
+pub fn error_is_error<X>(_runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "error_is_error");
-    match context.args().first() {
+    match cc.args().first() {
         Some(Value::Object(value)) => Ok(Value::Boolean(value.is_error())),
         _ => Ok(Value::Boolean(false)),
     }
@@ -84,10 +81,10 @@ pub fn error_prototype_name<X>(_runtime: &mut Runtime<X>, mut prototype: HandleM
 //#sec-error.prototype.tostring prototype.function
 pub fn error_prototype_to_string<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "error_prototype_to_string");
-    let object = match context.this() {
+    let object = match cc.this() {
         Value::Object(object) => object,
         _ => return type_error!(),
     };
