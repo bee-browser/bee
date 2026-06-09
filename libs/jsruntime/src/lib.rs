@@ -24,10 +24,10 @@ use lambda::LambdaKind;
 use lambda::LambdaRegistry;
 use semantics::Function;
 use semantics::Program;
+use types::CallContext;
 use types::Capture;
 use types::Closure;
 use types::Coroutine;
-use types::ExecContext;
 use types::Lambda;
 use types::Object;
 use types::Promise;
@@ -49,7 +49,7 @@ pub fn initialize() {
 
 /// Runtime preferences.
 struct RuntimePref {
-    /// The maximum depth of the execution context stack.
+    /// The maximum depth of the CC stack.
     max_stack_depth: u16,
 
     /// Enables the scope cleanup checker.
@@ -272,16 +272,16 @@ impl<X> Runtime<X> {
 
     fn call(
         &mut self,
-        caller: &ExecContext,
+        caller: &CallContext,
         callable: HandleMut<Object>,
         this: &Value,
         args: &[Value],
         retv: &mut Value,
     ) -> Status {
         let closure = callable.closure();
-        let mut context = caller.new_child(callable, closure, this, args);
+        let mut callee = caller.new_child(callable, closure, this, args);
         let lambda = Lambda::from(closure.lambda);
-        lambda(self, &mut context, retv)
+        lambda(self, &mut callee, retv)
     }
 
     /// Calls an entry lambda function.
@@ -293,10 +293,9 @@ impl<X> Runtime<X> {
     ) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda_id, ?lambda, module);
         let args: [_; 0] = [];
-        let mut context =
-            ExecContext::new_for_entry(&args, Value::Object(self.builtins.global_object));
+        let mut cc = CallContext::new_for_entry(&args, Value::Object(self.builtins.global_object));
         let mut retv = Value::Undefined;
-        let status = lambda(self, &mut context, &mut retv);
+        let status = lambda(self, &mut cc, &mut retv);
         retv.into_result(status)
     }
 
@@ -598,7 +597,7 @@ impl<X> Runtime<X> {
         &mut self,
         constructor: HandleMut<Object>,
         new_target: HandleMut<Object>,
-        context: &mut ExecContext,
+        cc: &mut CallContext,
         retv: &mut Value,
     ) -> Status {
         logger::debug!(event = "construct", ?constructor, ?new_target);
@@ -618,22 +617,22 @@ impl<X> Runtime<X> {
                 })
                 .unwrap_or(self.builtins.object_prototype);
             object.set_prototype(prototype);
-            context.set_this(Value::Object(object));
+            cc.set_this(Value::Object(object));
             Some(object)
         } else {
-            context.set_this(Value::Undefined);
+            cc.set_this(Value::Undefined);
             None
         };
 
         debug_assert!(constructor.is_callable());
         let closure = constructor.closure();
 
-        context.set_func(constructor);
-        context.set_closure(closure);
-        context.set_new_target(new_target);
+        cc.set_func(constructor);
+        cc.set_closure(closure);
+        cc.set_new_target(new_target);
 
         let stub = Lambda::from(closure.construct_stub);
-        let status = stub(self, context, retv);
+        let status = stub(self, cc, retv);
         if matches!(status, Status::Exception) {
             return status;
         }
@@ -652,7 +651,7 @@ impl<X> Runtime<X> {
             return type_error!(self, retv);
         }
 
-        *retv = context.this().clone();
+        *retv = cc.this().clone();
         debug_assert!(matches!(retv, Value::Object(_)));
         Status::Normal
     }
