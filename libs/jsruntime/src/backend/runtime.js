@@ -75,7 +75,7 @@ function makeCraneliftIRType(type) {
     case '&mut Object':
     case '&Value':
     case '&mut Value':
-    case '&mut ExecContext':
+    case '&mut CallContext':
     case 'Lambda':
     case '&mut Runtime<X>':
     case 'Handle<String>':

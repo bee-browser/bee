@@ -7,7 +7,7 @@ use jsgc::HandleMut;
 use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaId;
-use crate::types::ExecContext;
+use crate::types::CallContext;
 use crate::types::Object;
 use crate::types::Status;
 use crate::types::Value;
@@ -16,16 +16,16 @@ use super::BuiltinFunctionParams;
 use super::logger;
 
 //#sec-promise-executor constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Result<Value, Error> {
+pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "promise_constructor");
 
-    let new_target = match context.new_target() {
+    let new_target = match cc.new_target() {
         Some(new_target) => new_target,
         None => return runtime_todo!(),
     };
 
-    let executor = match context.args().first() {
-        Some(Value::Object(executor)) if executor.is_callable() => *executor,
+    let executor = match cc.arg(0) {
+        Value::Object(executor) if executor.is_callable() => *executor,
         _ => return type_error!(),
     };
 
@@ -40,7 +40,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Re
     let (resolve, reject) = runtime.create_resolving_functions(object);
     let mut retv = Value::None;
     if let Status::Exception = runtime.call(
-        context,
+        cc,
         executor,
         &Value::Undefined,
         &[Value::Object(resolve), Value::Object(reject)],
@@ -54,15 +54,15 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut ExecContext) -> Re
 
 extern "C" fn promise_coroutine<X>(
     _runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
-    let value = context.args().get(1).unwrap();
+    let value = cc.args().get(1).unwrap();
     if value.is_valid() {
         *retv = value.clone();
         Status::Normal
     } else {
-        let error = context.args().get(2).unwrap();
+        let error = cc.args().get(2).unwrap();
         debug_assert!(error.is_valid());
         *retv = error.clone();
         Status::Exception
@@ -96,11 +96,11 @@ impl<X> Runtime<X> {
 // 27.2.1.3.2 Promise Resolve Functions
 extern "C" fn promise_resolve<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "promise_resolve");
-    match promise_resolve_sync(runtime, context) {
+    match promise_resolve_sync(runtime, cc) {
         Ok(value) => {
             *retv = value;
             Status::Normal
@@ -112,11 +112,8 @@ extern "C" fn promise_resolve<X>(
     }
 }
 
-fn promise_resolve_sync<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
-) -> Result<Value, Error> {
-    let func = match context.func() {
+fn promise_resolve_sync<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
+    let func = match cc.func() {
         Some(func) => func,
         _ => return runtime_todo!(),
     };
@@ -127,11 +124,10 @@ fn promise_resolve_sync<X>(
     };
     debug_assert!(runtime.is_promise_object(promise));
 
-    let resolution = context.args().first().unwrap_or(&Value::Undefined);
-    match resolution {
+    match cc.arg(0) {
         Value::Object(object) if *object == promise => type_error!(),
         // TODO: the 'then' property
-        _ => {
+        resolution => {
             // TODO: fullfill_promise
             runtime.emit_promise_resolved(promise, resolution.clone());
             Ok(Value::Undefined)
@@ -142,12 +138,12 @@ fn promise_resolve_sync<X>(
 // 27.2.1.3.1 Promise Reject Functions
 extern "C" fn promise_reject<X>(
     runtime: &mut Runtime<X>,
-    context: &mut ExecContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "promise_reject");
 
-    let func = match context.func() {
+    let func = match cc.func() {
         Some(func) => func,
         _ => unreachable!(),
     };
@@ -158,7 +154,7 @@ extern "C" fn promise_reject<X>(
     };
     debug_assert!(runtime.is_promise_object(promise));
 
-    let error = context.args().first().unwrap_or(&Value::Undefined);
+    let error = cc.arg(0);
     runtime.emit_promise_rejected(promise, error.clone());
     *retv = Value::Undefined;
     Status::Normal

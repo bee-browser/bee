@@ -11,11 +11,11 @@ use jsgc::Handle;
 
 use crate::lambda::LambdaKind;
 use crate::logger;
+use crate::types::CallContext;
+use crate::types::CallContextFlags;
 use crate::types::Capture;
 use crate::types::Closure;
 use crate::types::Coroutine;
-use crate::types::ExecContext;
-use crate::types::ExecContextFlags;
 use crate::types::Object;
 use crate::types::ObjectFlags;
 use crate::types::String;
@@ -50,7 +50,7 @@ pub struct Editor<'a> {
     lambda_sig: ir::SigRef,
     entry_block: ir::Block,
     closure: ir::Value,
-    callee_context: ir::StackSlot,
+    callee_cc: ir::StackSlot,
     fcs: ir::StackSlot,
 
     // FunctionBuilder::is_filled() is a private method.
@@ -80,10 +80,10 @@ impl<'a> Editor<'a> {
         // predecessor of the entry block.
         builder.seal_block(entry_block);
 
-        let callee_context = builder.create_sized_stack_slot(ir::StackSlotData::new(
+        let callee_cc = builder.create_sized_stack_slot(ir::StackSlotData::new(
             ir::StackSlotKind::ExplicitSlot,
-            ExecContext::SIZE as u32,
-            ExecContext::ALIGNMENT.ilog2() as u8,
+            CallContext::SIZE as u32,
+            CallContext::ALIGNMENT.ilog2() as u8,
         ));
 
         let fcs = builder.create_sized_stack_slot(ir::StackSlotData::new(
@@ -98,7 +98,7 @@ impl<'a> Editor<'a> {
             addr_type: target_config.pointer_type(),
             lambda_sig,
             entry_block,
-            callee_context,
+            callee_cc,
             closure: ir::Value::from_u32(0), // dummy
             fcs,
             block_terminated: false,
@@ -178,13 +178,13 @@ impl<'a> Editor<'a> {
         self.lambda_params(0)
     }
 
-    fn context(&self) -> ir::Value {
+    fn call_context(&self) -> ir::Value {
         self.lambda_params(1)
     }
 
     pub fn put_load_new_target(&mut self) -> ObjectIr {
-        let context = self.context();
-        ObjectIr(self.put_load_addr(context, ExecContext::NEW_TARGET_OFFSET))
+        let cc = self.call_context();
+        ObjectIr(self.put_load_addr(cc, CallContext::NEW_TARGET_OFFSET))
     }
 
     /// Returns the `this` argument of the lambda function.
@@ -192,24 +192,24 @@ impl<'a> Editor<'a> {
     /// Don't be confused.  The value is **NOT** equal to the return value of
     /// `ResolveThisBinding()` defined in the ECMA-262 specification.
     pub fn this_argument(&mut self) -> AnyIr {
-        const OFFSET: i64 = ExecContext::THIS_OFFSET as i64;
-        let context = self.context();
-        AnyIr(self.builder.ins().iadd_imm(context, OFFSET))
+        const OFFSET: i64 = CallContext::THIS_OFFSET as i64;
+        let cc = self.call_context();
+        AnyIr(self.builder.ins().iadd_imm(cc, OFFSET))
     }
 
     pub fn put_store_this_argument(&mut self, this: AnyIr) {
-        let context = self.context();
-        self.put_safe_copy_i128(this.0, context, ExecContext::THIS_OFFSET);
+        let cc = self.call_context();
+        self.put_safe_copy_i128(this.0, cc, CallContext::THIS_OFFSET);
     }
 
     pub fn put_load_func(&mut self) -> ObjectIr {
-        let context = self.context();
-        ObjectIr(self.put_load_addr(context, ExecContext::FUNC_OFFSET))
+        let cc = self.call_context();
+        ObjectIr(self.put_load_addr(cc, CallContext::FUNC_OFFSET))
     }
 
     fn envp(&mut self) -> ir::Value {
-        let context = self.context();
-        self.put_load_addr(context, ExecContext::ENVP_OFFSET)
+        let cc = self.call_context();
+        self.put_load_addr(cc, CallContext::ENVP_OFFSET)
     }
 
     fn coroutine(&mut self) -> CoroutineIr {
@@ -217,8 +217,8 @@ impl<'a> Editor<'a> {
     }
 
     fn argc(&mut self) -> ir::Value {
-        let context = self.context();
-        self.put_load_i16(context, ExecContext::ARGC_OFFSET)
+        let cc = self.call_context();
+        self.put_load_i16(cc, CallContext::ARGC_OFFSET)
     }
 
     pub fn argc_as_jump_table_index(&mut self) -> ir::Value {
@@ -227,8 +227,8 @@ impl<'a> Editor<'a> {
     }
 
     fn argv(&mut self) -> ArgvIr {
-        let context = self.context();
-        ArgvIr(self.put_load_addr(context, ExecContext::ARGV_OFFSET))
+        let cc = self.call_context();
+        ArgvIr(self.put_load_addr(cc, CallContext::ARGV_OFFSET))
     }
 
     pub fn retv(&self) -> AnyIr {
@@ -246,7 +246,7 @@ impl<'a> Editor<'a> {
     pub fn put_assert_lambda_params(&mut self, support: &mut impl EditorSupport, is_entry: bool) {
         if self.runtime_assert_enabled {
             self.put_assert_runtime_is_non_null(support);
-            self.put_assert_context_is_non_null(support);
+            self.put_assert_cc_is_non_null(support);
             self.put_assert_this_is_non_null(support);
             if is_entry {
                 self.put_assert_envp_is_null(support);
@@ -263,9 +263,9 @@ impl<'a> Editor<'a> {
         self.put_assert_non_null(support, runtime, c"runtime must be non-null");
     }
 
-    fn put_assert_context_is_non_null(&mut self, support: &mut impl EditorSupport) {
-        let context = self.context();
-        self.put_assert_non_null(support, context, c"context must be non-null");
+    fn put_assert_cc_is_non_null(&mut self, support: &mut impl EditorSupport) {
+        let cc = self.call_context();
+        self.put_assert_non_null(support, cc, c"cc must be non-null");
     }
 
     fn put_assert_this_is_non_null(&mut self, support: &mut impl EditorSupport) {
@@ -275,12 +275,12 @@ impl<'a> Editor<'a> {
 
     fn put_assert_envp_is_null(&mut self, support: &mut impl EditorSupport) {
         let envp = self.envp();
-        self.put_assert_null(support, envp, c"context.envp must be null");
+        self.put_assert_null(support, envp, c"cc.envp must be null");
     }
 
     fn put_assert_envp_is_non_null(&mut self, support: &mut impl EditorSupport) {
         let envp = self.envp();
-        self.put_assert_non_null(support, envp, c"context.envp must be non-null");
+        self.put_assert_non_null(support, envp, c"cc.envp must be non-null");
     }
 
     fn put_assert_argv_is_non_null(&mut self, support: &mut impl EditorSupport) {
@@ -691,20 +691,20 @@ impl<'a> Editor<'a> {
         &mut self,
         function: ObjectIr,
         closure: ClosureIr,
-        flags: ExecContextFlags,
+        flags: CallContextFlags,
         retv: AnyIr,
     ) -> StatusIr {
         logger::debug!(event = "put_call", ?function, ?closure, ?flags, ?retv);
-        self.put_clear_new_target_of_callee_context();
-        self.put_store_closure_to_callee_context(closure);
-        self.put_store_function_to_callee_context(function);
-        self.put_store_flags_to_callee_context(flags);
+        self.put_clear_new_target_of_callee_cc();
+        self.put_store_closure_to_callee_cc(closure);
+        self.put_store_function_to_callee_cc(function);
+        self.put_store_flags_to_callee_cc(flags);
         let call_stub = self.put_load_call_stub_from_closure(closure);
-        let context = self
+        let callee_cc = self
             .builder
             .ins()
-            .stack_addr(self.addr_type, self.callee_context, 0);
-        let args = &[self.runtime(), context, retv.0];
+            .stack_addr(self.addr_type, self.callee_cc, 0);
+        let args = &[self.runtime(), callee_cc, retv.0];
         let call = self
             .builder
             .ins()
@@ -840,83 +840,79 @@ impl<'a> Editor<'a> {
         self.builder.ins().store(FLAGS, flags, object.0, OFFSET);
     }
 
-    // execution context
+    // call context
 
-    pub fn put_clear_new_target_of_callee_context(&mut self) {
-        const OFFSET: i32 = ExecContext::NEW_TARGET_OFFSET as i32;
+    pub fn put_clear_new_target_of_callee_cc(&mut self) {
+        const OFFSET: i32 = CallContext::NEW_TARGET_OFFSET as i32;
         let none = self.builder.ins().iconst(self.addr_type, 0);
-        self.builder
-            .ins()
-            .stack_store(none, self.callee_context, OFFSET);
+        self.builder.ins().stack_store(none, self.callee_cc, OFFSET);
     }
 
-    pub fn put_store_outer_to_callee_context(&mut self) {
-        const OFFSET: i32 = ExecContext::OUTER_OFFSET as i32;
-        let caller = self.context();
+    pub fn put_store_caller_to_callee_cc(&mut self) {
+        const OFFSET: i32 = CallContext::CALLER_OFFSET as i32;
+        let caller_cc = self.call_context();
         self.builder
             .ins()
-            .stack_store(caller, self.callee_context, OFFSET);
+            .stack_store(caller_cc, self.callee_cc, OFFSET);
     }
 
-    pub fn put_store_flags_to_callee_context(&mut self, flags: ExecContextFlags) {
-        const OFFSET: i32 = ExecContext::FLAGS_OFFSET as i32;
+    pub fn put_store_flags_to_callee_cc(&mut self, flags: CallContextFlags) {
+        const OFFSET: i32 = CallContext::FLAGS_OFFSET as i32;
         let flags = self
             .builder
             .ins()
             .iconst(ir::types::I16, flags.bits() as i64);
         self.builder
             .ins()
-            .stack_store(flags, self.callee_context, OFFSET);
+            .stack_store(flags, self.callee_cc, OFFSET);
     }
 
-    pub fn put_store_depth_to_callee_context(&mut self) {
-        const OFFSET: i32 = ExecContext::DEPTH_OFFSET as i32;
-        let caller = self.context();
-        let depth = self.put_load_i16(caller, ExecContext::DEPTH_OFFSET);
+    pub fn put_store_depth_to_callee_cc(&mut self) {
+        const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
+        let caller_cc = self.call_context();
+        let depth = self.put_load_i16(caller_cc, CallContext::DEPTH_OFFSET);
         let depth = self.builder.ins().iadd_imm(depth, 1);
         self.builder
             .ins()
-            .stack_store(depth, self.callee_context, OFFSET);
+            .stack_store(depth, self.callee_cc, OFFSET);
     }
 
-    pub fn put_store_argc_to_callee_context(&mut self, argc: u16) {
-        const OFFSET: i32 = ExecContext::ARGC_OFFSET as i32;
+    pub fn put_store_argc_to_callee_cc(&mut self, argc: u16) {
+        const OFFSET: i32 = CallContext::ARGC_OFFSET as i32;
         let argc = self.builder.ins().iconst(ir::types::I16, argc as i64);
-        self.builder
-            .ins()
-            .stack_store(argc, self.callee_context, OFFSET);
+        self.builder.ins().stack_store(argc, self.callee_cc, OFFSET);
     }
 
-    pub fn put_store_argc_max_to_callee_context(&mut self, argc_max: u16) {
-        const OFFSET: i32 = ExecContext::ARGC_MAX_OFFSET as i32;
+    pub fn put_store_argc_max_to_callee_cc(&mut self, argc_max: u16) {
+        const OFFSET: i32 = CallContext::ARGC_MAX_OFFSET as i32;
         let argc_max = self.builder.ins().iconst(ir::types::I16, argc_max as i64);
         self.builder
             .ins()
-            .stack_store(argc_max, self.callee_context, OFFSET);
+            .stack_store(argc_max, self.callee_cc, OFFSET);
     }
 
-    pub fn put_store_argv_to_callee_context(&mut self, argv: ArgvIr) {
-        const OFFSET: i32 = ExecContext::ARGV_OFFSET as i32;
+    pub fn put_store_argv_to_callee_cc(&mut self, argv: ArgvIr) {
+        const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(argv.0, self.callee_context, OFFSET);
+            .stack_store(argv.0, self.callee_cc, OFFSET);
     }
 
-    pub fn put_get_this_from_callee_context(&mut self) -> AnyIr {
-        const OFFSET: i32 = ExecContext::THIS_OFFSET as i32;
+    pub fn put_get_this_from_callee_cc(&mut self) -> AnyIr {
+        const OFFSET: i32 = CallContext::THIS_OFFSET as i32;
         AnyIr(
             self.builder
                 .ins()
-                .stack_addr(self.addr_type, self.callee_context, OFFSET),
+                .stack_addr(self.addr_type, self.callee_cc, OFFSET),
         )
     }
 
-    pub fn put_get_argv_from_callee_context(&mut self) -> ArgvIr {
-        const OFFSET: i32 = ExecContext::ARGV_OFFSET as i32;
+    pub fn put_get_argv_from_callee_cc(&mut self) -> ArgvIr {
+        const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
         ArgvIr(
             self.builder
                 .ins()
-                .stack_load(self.addr_type, self.callee_context, OFFSET),
+                .stack_load(self.addr_type, self.callee_cc, OFFSET),
         )
     }
 
@@ -924,27 +920,27 @@ impl<'a> Editor<'a> {
         self.closure = self.envp();
     }
 
-    pub fn put_store_closure_to_callee_context(&mut self, closure: ClosureIr) {
-        const OFFSET: i32 = ExecContext::ENVP_OFFSET as i32;
+    pub fn put_store_closure_to_callee_cc(&mut self, closure: ClosureIr) {
+        const OFFSET: i32 = CallContext::ENVP_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(closure.0, self.callee_context, OFFSET);
+            .stack_store(closure.0, self.callee_cc, OFFSET);
     }
 
-    pub fn put_store_function_to_callee_context(&mut self, function: ObjectIr) {
-        const OFFSET: i32 = ExecContext::FUNC_OFFSET as i32;
+    pub fn put_store_function_to_callee_cc(&mut self, function: ObjectIr) {
+        const OFFSET: i32 = CallContext::FUNC_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(function.0, self.callee_context, OFFSET);
+            .stack_store(function.0, self.callee_cc, OFFSET);
     }
 
     pub fn put_stack_too_deep(&mut self, max: u16) -> BooleanIr {
         use ir::condcodes::IntCC::UnsignedGreaterThan;
-        const OFFSET: i32 = ExecContext::DEPTH_OFFSET as i32;
+        const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
         let depth = self
             .builder
             .ins()
-            .stack_load(ir::types::I16, self.callee_context, OFFSET);
+            .stack_load(ir::types::I16, self.callee_cc, OFFSET);
         BooleanIr(
             self.builder
                 .ins()
@@ -2630,15 +2626,15 @@ impl<'a> Editor<'a> {
         let func = self
             .runtime_func_cache
             .import_runtime_construct(support, self.builder.func);
-        let callee_context = self
+        let callee_cc = self
             .builder
             .ins()
-            .stack_addr(self.addr_type, self.callee_context, 0);
+            .stack_addr(self.addr_type, self.callee_cc, 0);
         let args = [
             self.runtime(),
             constructor.0,
             new_target.0,
-            callee_context,
+            callee_cc,
             retv.0,
         ];
         let call = self.builder.ins().call(func, &args);
