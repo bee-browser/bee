@@ -16,6 +16,8 @@ rules:
       - bench.yml:53:22
       - bench_archive.yml:29:34
       - bench_upload.yml:63:34
+      - coverage.yml:62:17
+      - coverage.yml:67:30
   superfluous-actions:
     # https://docs.zizmor.sh/audits/#superfluous-actions
     disable: true

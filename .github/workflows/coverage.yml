@@ -59,7 +59,9 @@ jobs:
         run: |
           make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json'
       - uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        if: env.CODECOV_TOKEN != ''
         with:
           files: codecov.json
           fail_ci_if_error: true
-          use_oidc: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
