@@ -17,7 +17,7 @@ cranelift-module = "0.131.0"
 cranelift-jit = "0.131.1"
 cranelift-native = "0.131.0"
 indexmap = "2.13.1"
-itertools = "0.14.0"
+itertools = "0.15.0"
 jsgc = { path = "../jsgc" }
 jsgc-derive = { path = "../jsgc-derive" }
 jsparser = { path = "../jsparser", features = ["location"] }
