@@ -16,7 +16,7 @@ location = []
 bitflags = "2.12.1"
 indexmap = "2.13.1"
 logging = { path = "../../libs/logging" }
-phf = { version = "0.13.1", features = ["macros"] }
+phf = { version = "0.14.0", features = ["macros"] }
 smallvec = "1.15.1"
 thiserror = "2.0.18"
 unicode-id-start = "1.4.0"
