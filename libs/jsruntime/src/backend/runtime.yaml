@@ -102,6 +102,15 @@ functions:
       - name: value
         type: '&Value'
     ret: Handle<String>
+  - name: instanceof
+    args:
+      - name: value
+        type: '&Value'
+      - name: target
+        type: '&Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
   - name: create_string
     args:
       - name: ptr
