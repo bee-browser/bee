@@ -2020,10 +2020,30 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_instanceof(&mut self) {
-        let (_lhs, ..) = self.dereference();
-        let (_rhs, ..) = self.dereference();
-        self.emit_throw_internal_error(const_string_handle!("TODO: instanceof operator"));
-        self.process_boolean(false);
+        let (lhs, ..) = self.dereference();
+        let value = self.editor.put_alloc_any();
+        self.emit_store_operand_to_any(&lhs, value);
+
+        let (rhs, ..) = self.dereference();
+        let target = self.editor.put_alloc_any();
+        self.emit_store_operand_to_any(&rhs, target);
+
+        let retv = self.editor.put_alloc_any();
+        let status = self
+            .editor
+            .put_runtime_instanceof(self.support, value, target, retv);
+        self.emit_check_status_for_exception(status, retv);
+
+        if self.support.is_runtime_assert_enabled() {
+            let is_boolean = self.editor.put_is_boolean(retv);
+            self.editor.put_assert(
+                self.support,
+                is_boolean,
+                c"instanceof is an boolean operator",
+            );
+        }
+        let result = self.editor.put_load_boolean(retv);
+        self.operand_stack.push(Operand::Boolean(result, None));
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
