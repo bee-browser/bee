@@ -391,9 +391,7 @@ impl<X> Runtime<X> {
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined | Value::Null => type_error!(),
-            Value::Boolean(_value) => {
-                runtime_todo!("ToObject: not yet implemented for Boolean values")
-            }
+            Value::Boolean(value) => Ok(self.create_boolean_object(*value)),
             Value::Number(_value) => {
                 runtime_todo!("ToObject: not yet implemented for Number values")
             }
@@ -526,6 +524,26 @@ pub(crate) extern "C" fn runtime_get_typeof<X>(
 ) -> Handle<String> {
     debug_assert!(!matches!(value, Value::None));
     value.get_typeof()
+}
+
+pub(crate) extern "C" fn runtime_instanceof<X>(
+    runtime: &mut Runtime<X>,
+    value: &Value,
+    target: &Value,
+    retv: &mut Value,
+) -> Status {
+    debug_assert!(!matches!(value, Value::None));
+    debug_assert!(!matches!(target, Value::None));
+    match runtime.instanceof(value, target) {
+        Ok(result) => {
+            *retv = Value::Boolean(result);
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
 }
 
 pub(crate) extern "C" fn runtime_create_string<X>(
