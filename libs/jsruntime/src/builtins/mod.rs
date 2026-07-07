@@ -1,4 +1,5 @@
 mod aggregate_error;
+mod boolean;
 mod error;
 mod eval_error;
 mod function;
@@ -48,6 +49,10 @@ pub(crate) struct Builtins {
     pub(crate) function_constructor: HandleMut<Object>,
     // %Function.prototype%
     pub(crate) function_prototype: HandleMut<Object>,
+    // %Boolean%
+    pub(crate) boolean_constructor: HandleMut<Object>,
+    // %Boolean.prototype%
+    pub(crate) boolean_prototype: HandleMut<Object>,
     // %String%
     pub(crate) string_constructor: HandleMut<Object>,
     // %String.prototype%
@@ -103,6 +108,8 @@ impl Builtins {
             object_prototype: heap.alloc_mut(Object::new()),
             function_constructor: heap.alloc_mut(Object::new()),
             function_prototype: heap.alloc_mut(Object::new()),
+            boolean_constructor: heap.alloc_mut(Object::new()),
+            boolean_prototype: heap.alloc_mut(Object::new()),
             string_constructor: heap.alloc_mut(Object::new()),
             string_prototype: heap.alloc_mut(Object::new()),
             promise_constructor: heap.alloc_mut(Object::new()),
@@ -141,6 +148,8 @@ impl<X> Runtime<X> {
         self.init_object_prototype();
         self.init_function_constructor();
         self.init_function_prototype();
+        self.init_boolean_constructor();
+        self.init_boolean_prototype();
         self.init_string_constructor();
         self.init_string_prototype();
         self.init_promise_constructor();

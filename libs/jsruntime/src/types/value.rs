@@ -61,6 +61,22 @@ impl Value {
         }
     }
 
+    // 7.1.2 ToBoolean ( argument )
+    pub fn to_boolean(&self) -> bool {
+        match self {
+            Value::None => unreachable!("Value::None"),
+            Value::Undefined => false,
+            Value::Null => false,
+            Value::Boolean(value) => *value,
+            Value::Number(0.0) => false,
+            Value::Number(value) if value.is_nan() => false,
+            Value::Number(_) => true,
+            Value::String(value) if value.is_empty() => false,
+            Value::String(_) => true,
+            Value::Object(_) => true,
+        }
+    }
+
     // 7.1.18 ToObject ( argument )
     pub fn to_object(&self) -> Result<HandleMut<Object>, Error> {
         match self {
