@@ -2,9 +2,12 @@
 //$class Boolean
 //$inherits object
 
+use jsgc::HandleMut;
+
 use crate::Error;
 use crate::Runtime;
 use crate::types::CallContext;
+use crate::types::Object;
 use crate::types::Value;
 
 use super::logger;
@@ -46,5 +49,16 @@ fn this_boolean_value(value: &Value) -> Result<bool, Error> {
         Value::Boolean(value) => Ok(*value),
         Value::Object(value) if value.is_boolean() => Ok(value.boolean()),
         _ => type_error!(),
+    }
+}
+
+// helpers
+
+impl<X> Runtime<X> {
+    pub(crate) fn create_boolean_object(&mut self, value: bool) -> HandleMut<Object> {
+        let mut obj = self.create_object();
+        obj.set_prototype(self.builtins.boolean_prototype);
+        obj.set_boolean(value);
+        obj
     }
 }

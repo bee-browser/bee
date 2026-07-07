@@ -662,6 +662,49 @@ impl<X> Runtime<X> {
             None => true,
         }
     }
+
+    //#sec-instanceofoperator
+    fn instanceof(&self, value: &Value, target: &Value) -> Result<bool, Error> {
+        let target = match target {
+            Value::Object(target) => *target,
+            _ => return type_error!(),
+        };
+        // TODO(feat): target.hasInstance(value)
+        if !target.is_callable() {
+            return type_error!();
+        }
+
+        self.ordinary_has_instance(target, value)
+    }
+
+    //#sec-ordinaryhasinstance
+    fn ordinary_has_instance(
+        &self,
+        ctor: HandleMut<Object>,
+        instance: &Value,
+    ) -> Result<bool, Error> {
+        if !ctor.is_callable() {
+            return Ok(false);
+        }
+        // TODO(feat): [[BoundTargetFunction]]
+        let mut instance = match instance {
+            Value::Object(instance) => *instance,
+            _ => return Ok(false),
+        };
+        let proto = match ctor.get_value(&Symbol::PROTOTYPE.into()) {
+            Some(Value::Object(proto)) => *proto,
+            _ => return type_error!(),
+        };
+        loop {
+            instance = match instance.prototype() {
+                Some(v) => v,
+                _ => return Ok(false),
+            };
+            if proto == instance {
+                return Ok(true);
+            }
+        }
+    }
 }
 
 impl<X> Default for Runtime<X>
