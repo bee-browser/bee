@@ -319,26 +319,9 @@ extern "C" fn construct_stub_this_binding_quirk<X>(
 }
 
 // 7.1.2 ToBoolean ( argument )
-pub(crate) extern "C" fn runtime_to_boolean<X>(runtime: &mut Runtime<X>, value: &Value) -> bool {
+pub(crate) extern "C" fn runtime_to_boolean<X>(_runtime: &mut Runtime<X>, value: &Value) -> bool {
     logger::debug!(event = "runtime_to_boolean", ?value);
-    runtime.value_to_boolean(value)
-}
-
-impl<X> Runtime<X> {
-    pub(crate) fn value_to_boolean(&mut self, value: &Value) -> bool {
-        match value {
-            Value::None => unreachable!("Value::None"),
-            Value::Undefined => false,
-            Value::Null => false,
-            Value::Boolean(value) => *value,
-            Value::Number(0.0) => false,
-            Value::Number(value) if value.is_nan() => false,
-            Value::Number(_) => true,
-            Value::String(value) if value.is_empty() => false,
-            Value::String(_) => true,
-            Value::Object(_) => true,
-        }
-    }
+    value.to_boolean()
 }
 
 // 7.1.3 ToNumeric ( value )
