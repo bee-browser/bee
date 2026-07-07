@@ -35,6 +35,7 @@
 
 # Non-reserved symbols for well-known intrinsic objects.
 - AggregateError
+- Boolean
 - Error
 - EvalError
 - Function

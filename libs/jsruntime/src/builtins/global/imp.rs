@@ -93,6 +93,12 @@ pub fn define_aggregate_error_constructor<X>(runtime: &mut Runtime<X>) {
     runtime.define_constructor(Symbol::AGGREGATE_ERROR, constructor);
 }
 
+//#sec-constructor-properties-of-the-global-object-boolean global.constructor
+pub fn define_boolean_constructor<X>(runtime: &mut Runtime<X>) {
+    let constructor = runtime.builtins.boolean_constructor;
+    runtime.define_constructor(Symbol::BOOLEAN, constructor);
+}
+
 //#sec-constructor-properties-of-the-global-object-error global.constructor
 pub fn define_error_constructor<X>(runtime: &mut Runtime<X>) {
     let constructor = runtime.builtins.error_constructor;
