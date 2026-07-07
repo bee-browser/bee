@@ -343,6 +343,21 @@ impl Object {
         HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
     }
 
+    pub(crate) fn set_boolean(&mut self, value: bool) {
+        self.kernel.data = value as usize;
+        self.kernel.tracing = false;
+        self.flags.insert(ObjectFlags::BOOLEAN);
+    }
+
+    pub(crate) fn boolean(&self) -> bool {
+        debug_assert!(self.flags.contains(ObjectFlags::BOOLEAN));
+        self.kernel.data != 0
+    }
+
+    pub(crate) fn is_boolean(&self) -> bool {
+        self.flags.contains(ObjectFlags::BOOLEAN)
+    }
+
     pub(crate) fn string(&self) -> Handle<String> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
         Handle::from_addr(self.kernel.data).unwrap()
@@ -473,6 +488,7 @@ base::auto_bitflags! {
         CONSTRUCTOR,
         CLASS_CONSTRUCTOR,
         CALLABLE,
+        BOOLEAN,
         ERROR,
     }
 }
