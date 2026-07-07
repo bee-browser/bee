@@ -243,13 +243,13 @@ impl<X> Runtime<X> {
         let mut value = Value::None;
 
         if let Some(v) = obj.get_value(&Symbol::ENUMERABLE.into()) {
-            if self.value_to_boolean(v) {
+            if v.to_boolean() {
                 flags |= PropertyFlags::ENUMERABLE;
             }
         }
 
         if let Some(v) = obj.get_value(&Symbol::CONFIGURABLE.into()) {
-            if self.value_to_boolean(v) {
+            if v.to_boolean() {
                 flags |= PropertyFlags::CONFIGURABLE;
             }
         }
@@ -259,7 +259,7 @@ impl<X> Runtime<X> {
         }
 
         if let Some(v) = obj.get_value(&Symbol::WRITABLE.into()) {
-            if self.value_to_boolean(v) {
+            if v.to_boolean() {
                 flags |= PropertyFlags::WRITABLE;
             }
         }

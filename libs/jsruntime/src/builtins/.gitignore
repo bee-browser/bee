@@ -1,5 +1,6 @@
 /aggregate_error/imp.rs
 /aggregate_error/mod.rs
+/boolan/mod.rs
 /error/mod.rs
 /eval_error/imp.rs
 /eval_error/mod.rs
