@@ -1888,6 +1888,34 @@ impl<'a> Editor<'a> {
         StringIr(self.builder.inst_results(call)[0])
     }
 
+    pub fn put_runtime_instanceof(
+        &mut self,
+        support: &mut impl EditorSupport,
+        value: AnyIr,
+        target: AnyIr,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(event = "put_runtime_instanceof", ?value, ?target, ?retv);
+        if self.runtime_assert_enabled {
+            self.put_assert_non_null(
+                support,
+                value.0,
+                c"value passed to runtime_instanceof() must be non-null",
+            );
+            self.put_assert_non_null(
+                support,
+                target.0,
+                c"target passed to runtime_instanceof() must be non-null",
+            );
+        }
+        let func = self
+            .runtime_func_cache
+            .import_runtime_instanceof(support, self.builder.func);
+        let args = [self.runtime(), value.0, target.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
+    }
+
     pub fn put_runtime_create_string(
         &mut self,
         support: &mut impl EditorSupport,
