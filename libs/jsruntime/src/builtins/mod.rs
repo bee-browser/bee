@@ -5,6 +5,7 @@ mod eval_error;
 mod function;
 mod global;
 mod internal_error;
+mod number;
 mod object;
 mod promise;
 mod range_error;
@@ -97,6 +98,10 @@ pub(crate) struct Builtins {
     pub(crate) uri_error_constructor: HandleMut<Object>,
     // %URIError.prototype%
     pub(crate) uri_error_prototype: HandleMut<Object>,
+    // %Number%
+    pub(crate) number_constructor: HandleMut<Object>,
+    // %Number.prototype%
+    pub(crate) number_prototype: HandleMut<Object>,
 }
 
 impl Builtins {
@@ -132,6 +137,8 @@ impl Builtins {
             type_error_prototype: heap.alloc_mut(Object::new()),
             uri_error_constructor: heap.alloc_mut(Object::new()),
             uri_error_prototype: heap.alloc_mut(Object::new()),
+            number_constructor: heap.alloc_mut(Object::new()),
+            number_prototype: heap.alloc_mut(Object::new()),
         }
     }
 }
@@ -172,6 +179,8 @@ impl<X> Runtime<X> {
         self.init_type_error_prototype();
         self.init_uri_error_constructor();
         self.init_uri_error_prototype();
+        self.init_number_constructor();
+        self.init_number_prototype();
     }
 
     fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> HandleMut<Object> {
@@ -256,10 +265,18 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
     }
 
-    // 7.1.4 ToNumber ( argument )
+    // #sec-tonumeric
+    fn value_to_numeric(&mut self, value: &Value) -> Result<f64, Error> {
+        logger::debug!(event = "runtime.value_to_numeric", ?value);
+        // TODO(feat): ToPrimitive(value, NUMBER)
+        // TODO(feat): BigInt
+        self.value_to_number(value)
+    }
+
+    // #sec-tonumber
     // TODO: code clone, see backend::bridge::runtime_to_numeric
     fn value_to_number(&mut self, value: &Value) -> Result<f64, Error> {
-        logger::debug!(event = "runtime.value_to_numeric", ?value);
+        logger::debug!(event = "runtime.value_to_number", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined => Ok(f64::NAN),
