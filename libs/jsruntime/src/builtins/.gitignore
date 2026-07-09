@@ -8,6 +8,7 @@
 /global/mod.rs
 /internal_error/imp.rs
 /internal_error/mod.rs
+/number/mod.rs
 /object/mod.rs
 /promise/mod.rs
 /range_error/imp.rs

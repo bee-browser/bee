@@ -123,6 +123,12 @@ pub fn define_internal_error_constructor<X>(runtime: &mut Runtime<X>) {
     runtime.define_constructor(Symbol::INTERNAL_ERROR, constructor);
 }
 
+//#sec-constructor-properties-of-the-global-object-number global.constructor
+pub fn define_number_constructor<X>(runtime: &mut Runtime<X>) {
+    let constructor = runtime.builtins.number_constructor;
+    runtime.define_constructor(Symbol::NUMBER, constructor);
+}
+
 //#sec-constructor-properties-of-the-global-object-object global.constructor
 pub fn define_object_constructor<X>(runtime: &mut Runtime<X>) {
     let constructor = runtime.builtins.object_constructor;
