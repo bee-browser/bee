@@ -340,11 +340,12 @@ impl Object {
 
     pub(crate) fn closure(&self) -> HandleMut<Closure> {
         debug_assert!(self.is_callable());
-        HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
+        HandleMut::from_addr(self.kernel.data as usize)
+            .expect("must be a non-null pointer to a Closure")
     }
 
     pub(crate) fn set_boolean(&mut self, value: bool) {
-        self.kernel.data = value as usize;
+        self.kernel.data = value as u64;
         self.kernel.tracing = false;
         self.flags.insert(ObjectFlags::BOOLEAN);
     }
@@ -358,9 +359,24 @@ impl Object {
         self.flags.contains(ObjectFlags::BOOLEAN)
     }
 
+    pub(crate) fn set_number(&mut self, value: f64) {
+        self.kernel.data = value.to_bits();
+        self.kernel.tracing = false;
+        self.flags.insert(ObjectFlags::NUMBER);
+    }
+
+    pub(crate) fn number(&self) -> f64 {
+        debug_assert!(self.flags.contains(ObjectFlags::NUMBER));
+        f64::from_bits(self.kernel.data)
+    }
+
+    pub(crate) fn is_number(&self) -> bool {
+        self.flags.contains(ObjectFlags::NUMBER)
+    }
+
     pub(crate) fn string(&self) -> Handle<String> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        Handle::from_addr(self.kernel.data).unwrap()
+        Handle::from_addr(self.kernel.data as usize).unwrap()
     }
 
     pub(crate) fn set_string(&mut self, string: Handle<String>) {
@@ -369,7 +385,8 @@ impl Object {
 
     pub(crate) fn promise(&self) -> HandleMut<Promise> {
         // TODO: check prototype
-        HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Promise")
+        HandleMut::from_addr(self.kernel.data as usize)
+            .expect("must be a non-null pointer to a Promise")
     }
 
     pub(crate) fn set_promise(&mut self, promise: HandleMut<Promise>) {
@@ -377,12 +394,12 @@ impl Object {
     }
 
     fn set_handle<T>(&mut self, handle: Handle<T>) {
-        self.kernel.data = handle.as_addr();
+        self.kernel.data = handle.as_addr() as u64;
         self.kernel.tracing = true;
     }
 
     fn set_handle_mut<T>(&mut self, handle: HandleMut<T>) {
-        self.kernel.data = handle.as_addr();
+        self.kernel.data = handle.as_addr() as u64;
         self.kernel.tracing = true;
     }
 
@@ -464,7 +481,7 @@ impl Trace for Object {
 
 #[derive(Default)]
 struct Kernel {
-    data: usize,
+    data: u64,
     tracing: bool,
 }
 
@@ -477,7 +494,7 @@ impl Trace for Kernel {
     #[inline]
     fn trace(&self, visits: &mut VisitList) {
         if self.tracing {
-            visits.push(self.data);
+            visits.push(self.data as usize);
         }
     }
 }
@@ -489,6 +506,7 @@ base::auto_bitflags! {
         CLASS_CONSTRUCTOR,
         CALLABLE,
         BOOLEAN,
+        NUMBER,
         ERROR,
     }
 }
