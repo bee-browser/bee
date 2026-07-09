@@ -392,9 +392,7 @@ impl<X> Runtime<X> {
             Value::None => unreachable!("Value::None"),
             Value::Undefined | Value::Null => type_error!(),
             Value::Boolean(value) => Ok(self.create_boolean_object(*value)),
-            Value::Number(_value) => {
-                runtime_todo!("ToObject: not yet implemented for Number values")
-            }
+            Value::Number(value) => Ok(self.create_number_object(*value)),
             Value::String(value) => {
                 // TODO(refactor): rewrite using `new String(value)`
                 match self.create_string_object(None, &[Value::String(*value)], true)? {
