@@ -18,9 +18,9 @@
     "jsr:@std/collections@^1.1.3": "1.2.0",
     "jsr:@std/crypto@1": "1.1.0",
     "jsr:@std/csv@1.0.6": "1.0.6",
-    "jsr:@std/encoding@1": "1.0.10",
-    "jsr:@std/encoding@1.0.10": "1.0.10",
-    "jsr:@std/encoding@^1.0.10": "1.0.10",
+    "jsr:@std/encoding@1": "1.0.11",
+    "jsr:@std/encoding@1.0.11": "1.0.11",
+    "jsr:@std/encoding@^1.0.10": "1.0.11",
     "jsr:@std/fmt@0.223": "0.223.0",
     "jsr:@std/fmt@^1.0.10": "1.0.10",
     "jsr:@std/fmt@^1.0.5": "1.0.10",
@@ -38,18 +38,18 @@
     "jsr:@std/log@0.224.14": "0.224.14",
     "jsr:@std/media-types@1": "1.1.0",
     "jsr:@std/path@0.223": "0.223.0",
-    "jsr:@std/path@1": "1.1.5",
+    "jsr:@std/path@1": "1.1.6",
     "jsr:@std/path@1.0.9": "1.0.9",
-    "jsr:@std/path@1.1.5": "1.1.5",
+    "jsr:@std/path@1.1.6": "1.1.6",
     "jsr:@std/path@^1.0.9": "1.0.9",
-    "jsr:@std/path@^1.1.5": "1.1.5",
+    "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@std/semver@^1.0.8": "1.0.8",
     "jsr:@std/streams@1.1.1": "1.1.1",
     "jsr:@std/streams@^1.0.9": "1.1.1",
     "jsr:@std/streams@^1.1.0": "1.1.1",
     "jsr:@std/text@^1.0.19": "1.0.19",
     "jsr:@std/toml@1.0.11": "1.0.11",
-    "jsr:@std/yaml@1.1.1": "1.1.1",
+    "jsr:@std/yaml@1.1.2": "1.1.2",
     "jsr:@zip-js/zip-js@2.8.26": "2.8.26",
     "npm:@eyalsh/docopt@1.0.7": "1.0.7",
     "npm:acorn@8.17.0": "8.17.0",
@@ -58,7 +58,7 @@
     "npm:handlebars@4.7.9": "4.7.9",
     "npm:jsdom@29.1.1": "29.1.1",
     "npm:mustache@4.2.0": "4.2.0",
-    "npm:ora@9.4.0": "9.4.0",
+    "npm:ora@9.4.1": "9.4.1",
     "npm:path-to-regexp@^6.3.0": "6.3.0",
     "npm:test262-stream@1.4.0": "1.4.0"
   },
@@ -174,8 +174,8 @@
         "jsr:@std/streams@^1.0.9"
       ]
     },
-    "@std/encoding@1.0.10": {
-      "integrity": "8783c6384a2d13abd5e9e87a7ae0520a30e9f56aeeaa3bdf910a3eaaf5c811a1"
+    "@std/encoding@1.0.11": {
+      "integrity": "e7cef2f0b3153bccc17431e7c864a1de03a4b6d9647389c43e08aaa775d37385"
     },
     "@std/fmt@0.223.0": {
       "integrity": "6deb37794127dfc7d7bded2586b9fc6f5d50e62a8134846608baf71ffc1a5208"
@@ -256,8 +256,8 @@
     "@std/path@1.0.9": {
       "integrity": "260a49f11edd3db93dd38350bf9cd1b4d1366afa98e81b86167b4e3dd750129e"
     },
-    "@std/path@1.1.5": {
-      "integrity": "ccea00982ea28c36becaf6e62f855406c76a8c32d462f66f415bbb7d83a271bc",
+    "@std/path@1.1.6": {
+      "integrity": "c68485c2a4dfbb5ae3cc74fae4e8c4e5d874cf8a8ed12927917235c758b46cbe",
       "dependencies": [
         "jsr:@std/internal@^1.0.14"
       ]
@@ -286,8 +286,8 @@
         "jsr:@std/collections"
       ]
     },
-    "@std/yaml@1.1.1": {
-      "integrity": "a57665ecf3d17b926380593a56625d8a10cc7281802f1e993b5ebc94a48e71f8"
+    "@std/yaml@1.1.2": {
+      "integrity": "de612653c036749ba2044165e316f52412b0f0698afffb7ee80b5331d6d2abae"
     },
     "@zip-js/zip-js@2.8.26": {
       "integrity": "2b78bfa2c5d43766c9a487fc0274981d45732de41bb5b82433d29d235be67191"
@@ -432,8 +432,8 @@
       "integrity": "sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==",
       "bin": true
     },
-    "get-east-asian-width@1.5.0": {
-      "integrity": "sha512-CQ+bEO+Tva/qlmw24dCejulK5pMzVnUOFOijVogd3KQs07HnRIgp8TGipvCCRT06xeYEbpbgwaCxglFyiuIcmA=="
+    "get-east-asian-width@1.6.0": {
+      "integrity": "sha512-QRbvDIbx6YklUe6RxeTeleMR0yv3cYH6PsPZHcnVn7xv7zO1BHN8r0XETu8n6Ye3Q+ahtSarc3WgtNWmehIBfA=="
     },
     "graceful-fs@4.2.11": {
       "integrity": "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="
@@ -538,8 +538,8 @@
         "mimic-function"
       ]
     },
-    "ora@9.4.0": {
-      "integrity": "sha512-84cglkRILFxdtA8hAvLNdMrtBpPNBTrQ9/ulg0FA7xLMnD6mifv+enAIeRmvtv+WgdCE+LPGOfQmtJRrVaIVhQ==",
+    "ora@9.4.1": {
+      "integrity": "sha512-6VlU9MLXbjVQD04AZCMX28hVtA5bUoadvUqO76MUCVA0ilwJbMiHsITRPfyVm6p/BC0Av/BXMujx39WCe1LEqw==",
       "dependencies": [
         "chalk",
         "cli-cursor",
@@ -594,8 +594,8 @@
     "stdin-discarder@0.3.2": {
       "integrity": "sha512-eCPu1qRxPVkl5605OTWF8Wz40b4Mf45NY5LQmVPQ599knfs5QhASUm9GbJ5BDMDOXgrnh0wyEdvzmL//YMlw0A=="
     },
-    "string-width@8.2.1": {
-      "integrity": "sha512-IIaP0g3iy9Cyy18w3M9YcaDudujEAVHKt3a3QJg1+sr/oX96TbaGUubG0hJyCjCBThFH+tFpcIyoUHUn1ogaLA==",
+    "string-width@8.2.2": {
+      "integrity": "sha512-GaPUh5gfdrYzqeVNZvUfT23vYYxXzKYidUcnMtJg/3rxRV63EFZy3k6xfKlmfeJD0176lnUV/Usr3XcwSvFzpg==",
       "dependencies": [
         "get-east-asian-width",
         "strip-ansi"
@@ -804,15 +804,15 @@
       "jsr:@oak/oak@17.2.0",
       "jsr:@std/assert@1.0.19",
       "jsr:@std/csv@1.0.6",
-      "jsr:@std/encoding@1.0.10",
+      "jsr:@std/encoding@1.0.11",
       "jsr:@std/fs@1.0.24",
       "jsr:@std/io@0.225.3",
       "jsr:@std/json@1.1.0",
       "jsr:@std/log@0.224.14",
-      "jsr:@std/path@1.1.5",
+      "jsr:@std/path@1.1.6",
       "jsr:@std/streams@1.1.1",
       "jsr:@std/toml@1.0.11",
-      "jsr:@std/yaml@1.1.1",
+      "jsr:@std/yaml@1.1.2",
       "jsr:@zip-js/zip-js@2.8.26",
       "npm:@eyalsh/docopt@1.0.7",
       "npm:acorn@8.17.0",
@@ -821,7 +821,7 @@
       "npm:handlebars@4.7.9",
       "npm:jsdom@29.1.1",
       "npm:mustache@4.2.0",
-      "npm:ora@9.4.0",
+      "npm:ora@9.4.1",
       "npm:test262-stream@1.4.0"
     ]
   }
