@@ -63,6 +63,6 @@ jobs:
         run: make test
       - name: Run tc39/test262
         run: |
-          make test262 ARGS='' OOP=1
+          make test262 ARGS=''
           echo 'panics:'
           jq -r '.results[] | select(.status == "panic") | "  " + .file' test262.json
