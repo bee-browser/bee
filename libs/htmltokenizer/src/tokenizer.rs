@@ -3508,7 +3508,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn reset_temp(&mut self) {
-        self.temp_buffer.truncate(0);
+        self.temp_buffer.clear();
     }
 
     fn append_char_to_temp(&mut self, c: char) {

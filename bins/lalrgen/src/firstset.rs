@@ -57,10 +57,8 @@ fn collect_first_set_of_rule(
     let mut set = phrase_set![phrase!()]; // epsilon
 
     for term in rule.production.iter() {
-        set = match collect_first_set_of_term(term, table) {
-            Some(follower_set) => set.concat(&follower_set),
-            None => return None,
-        };
+        let follower_set = collect_first_set_of_term(term, table)?;
+        set = set.concat(&follower_set);
         if let Some(min_tokens) = set.min_tokens() {
             if min_tokens >= max_tokens {
                 return Some(set);

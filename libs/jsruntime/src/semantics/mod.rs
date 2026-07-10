@@ -1220,7 +1220,7 @@ where
         //
         // TODO(test): probably, the order of error handling may be different fro the
         // specification.
-        for (&symbol, _entry) in analysis.function_scoped_variables.iter() {
+        for &symbol in analysis.function_scoped_variables.keys() {
             // TODO(feat): "[[DefineOwnProperty]]()" may throw an "Error".  In this case, the
             // `function.commands` must be rewritten to throw the "Error".
             let result = self
