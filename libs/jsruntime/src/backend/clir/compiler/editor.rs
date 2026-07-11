@@ -736,7 +736,7 @@ impl<'a> Editor<'a> {
 
     pub fn put_store_state_to_coroutine(&mut self, state: u32) {
         logger::debug!(event = "put_store_state_to_coroutine", state);
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         let coroutine = self.coroutine();
         let state = self.builder.ins().iconst(ir::types::I32, state as i64);
         self.builder
@@ -802,7 +802,7 @@ impl<'a> Editor<'a> {
 
     fn put_store_handle_to_object(&mut self, handle: ir::Value, object: ObjectIr) {
         logger::debug!(event = "put_store_handle_to_object", ?handle, ?object);
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         self.builder
             .ins()
             .store(FLAGS, handle, object.0, Object::KERNEL_DATA_OFFSET as i32);
@@ -817,7 +817,7 @@ impl<'a> Editor<'a> {
 
     fn put_store_flags_to_object(&mut self, flags: ir::Value, object: ObjectIr) {
         logger::debug!(event = "put_store_flags_to_object", ?flags, ?object);
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         const OFFSET: i32 = Object::FLAGS_OFFSET as i32;
         self.builder.ins().store(FLAGS, flags, object.0, OFFSET);
     }
@@ -952,7 +952,7 @@ impl<'a> Editor<'a> {
     // load
 
     fn put_load_i8(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
@@ -960,7 +960,7 @@ impl<'a> Editor<'a> {
     }
 
     fn put_load_i16(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
@@ -968,7 +968,7 @@ impl<'a> Editor<'a> {
     }
 
     fn put_load_i32(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
@@ -976,7 +976,7 @@ impl<'a> Editor<'a> {
     }
 
     fn put_load_i64(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
@@ -986,7 +986,7 @@ impl<'a> Editor<'a> {
     // TODO(perf): using this method is faster than put_load_i64() * 2 for loading a `Value`.
     #[allow(unused)]
     fn put_load_i128(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
@@ -994,7 +994,7 @@ impl<'a> Editor<'a> {
     }
 
     fn put_load_f64(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
@@ -1002,7 +1002,7 @@ impl<'a> Editor<'a> {
     }
 
     fn put_load_addr(&mut self, addr: ir::Value, offset: usize) -> ir::Value {
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder
             .ins()
@@ -1012,7 +1012,7 @@ impl<'a> Editor<'a> {
     // store
 
     fn put_store(&mut self, value: ir::Value, addr: ir::Value, offset: usize) {
-        const FLAGS: ir::MemFlags = ir::MemFlags::new().with_aligned().with_notrap();
+        const FLAGS: ir::MemFlagsData = ir::MemFlagsData::new().with_aligned().with_notrap();
         debug_assert!(offset <= i32::MAX as usize);
         self.builder.ins().store(FLAGS, value, addr, offset as i32);
     }

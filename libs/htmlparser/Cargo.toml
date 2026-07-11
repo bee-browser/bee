@@ -18,9 +18,9 @@ thiserror = "2.0.18"
 unicase = "2.9.0"
 
 [dev-dependencies]
-anyhow = "1.0.102"
+anyhow = "1.0.103"
 criterion = "0.8.2"
-ctor = "1.0.7"
+ctor = "1.0.8"
 itertools = "0.15.0"
 toydom = { path = "../toydom" }
 

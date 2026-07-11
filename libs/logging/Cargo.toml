@@ -10,14 +10,14 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-chrono = { version = "0.4.44", default-features = false, features = ["clock"] }
-ctor = "1.0.7"
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+ctor = "1.0.8"
 is-terminal = "0.4.17"
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 
 [dev-dependencies]
-trybuild = "1.0.116"
+trybuild = "1.0.117"
 
 [lints]
 workspace = true
