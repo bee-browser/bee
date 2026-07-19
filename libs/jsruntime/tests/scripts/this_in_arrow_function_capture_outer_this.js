@@ -6,3 +6,7 @@ let a = {
 };
 
 print(a.b()() === a); ///=true
+
+const o = {};
+print(a.b.call(o)() === o); ///=true
+print(a.b().call(o) === a); ///=true

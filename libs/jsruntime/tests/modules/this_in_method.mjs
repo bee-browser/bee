@@ -3,5 +3,4 @@ let a = {
 };
 
 print(a.b() === a); ///=true
-// TODO(feat): Function.prototype.call
-// print(a.b.call(null) === null); ///=true
+print(a.b.call(null) === null); ///=true

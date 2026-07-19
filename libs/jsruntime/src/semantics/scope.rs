@@ -25,6 +25,10 @@ impl ScopeRef {
         self.0
     }
 
+    pub const fn is_root(&self) -> bool {
+        self.0 == 1
+    }
+
     fn checked_new(index: usize) -> Option<Self> {
         if index > u16::MAX as usize {
             logger::error!(err = "too large", index);
