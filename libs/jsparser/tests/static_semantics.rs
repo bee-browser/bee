@@ -147,6 +147,11 @@ fn test_15_7_1_multiple_private_ids() {
 }
 
 #[test]
+fn test_15_7_1_async_constructor() {
+    parse_fail!(script: "static_semantics_15_7_1_async_constructor.js");
+}
+
+#[test]
 fn test_15_7_1_method_super_call() {
     parse_fail!(script: "static_semantics_15_7_1_method_super_call.js");
 }

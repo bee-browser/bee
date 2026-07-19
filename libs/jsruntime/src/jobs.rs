@@ -2,8 +2,10 @@ use std::collections::VecDeque;
 
 use jsgc::HandleMut;
 
+use crate::LambdaId;
 use crate::Runtime;
 use crate::logger;
+use crate::semantics::ThisBinding;
 use crate::types::CallContext;
 use crate::types::Coroutine;
 use crate::types::Lambda;
@@ -54,8 +56,30 @@ impl<X> Runtime<X> {
         error: &Value,
     ) -> (Status, Value) {
         logger::debug!(event = "resume", ?coroutine, ?object, ?result, ?error);
+        let lambda_id = coroutine.closure.lambda_id;
+        let this = if lambda_id == LambdaId::HOST {
+            Value::Undefined
+        } else {
+            let func = self.get_function_by_lambda_id(lambda_id);
+            // `this` in the ramp function may has been captured if it is used in the async
+            // function body.  See semantics::Analyzer::start_coroutine_body().
+            if matches!(func.this_binding, ThisBinding::Capture) {
+                // The capture of `this` has always been stored at the first element of
+                // `coroutine.closure.captures()`.
+                debug_assert!(!coroutine.closure.captures().is_empty());
+                coroutine
+                    .closure
+                    .captures()
+                    .first()
+                    .unwrap()
+                    .value()
+                    .clone()
+            } else {
+                Value::Undefined
+            }
+        };
         let args = [object.into(), result.clone(), error.clone()];
-        let mut cc = CallContext::new_for_promise(coroutine, &args);
+        let mut cc = CallContext::new_for_promise(coroutine, this, &args);
         let mut retv = Value::None;
         let lambda = Lambda::from(coroutine.closure.lambda);
         let status = lambda(self, &mut cc, &mut retv);
