@@ -280,7 +280,7 @@ impl<X> Runtime<X> {
     ) -> Status {
         let closure = callable.closure();
         let mut callee = caller.new_child(callable, closure, this, args);
-        let lambda = Lambda::from(closure.lambda);
+        let lambda = Lambda::from(closure.call_stub);
         lambda(self, &mut callee, retv)
     }
 
@@ -293,7 +293,14 @@ impl<X> Runtime<X> {
     ) -> Result<Value, Value> {
         logger::debug!(event = "call_entry_lambda", ?lambda_id, ?lambda, module);
         let args: [_; 0] = [];
-        let mut cc = CallContext::new_for_entry(&args, Value::Object(self.builtins.global_object));
+        let mut cc = CallContext::new_for_entry(
+            &args,
+            if module {
+                Value::Undefined
+            } else {
+                Value::Object(self.builtins.global_object)
+            },
+        );
         let mut retv = Value::Undefined;
         let status = lambda(self, &mut cc, &mut retv);
         retv.into_result(status)

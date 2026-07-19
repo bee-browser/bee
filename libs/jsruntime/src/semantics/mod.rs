@@ -472,6 +472,7 @@ where
             Node::ArrowFunction => self.handle_arrow_function(),
             Node::AsyncArrowFunction => self.handle_async_arrow_function(),
             Node::Method(in_class) => self.handle_method(in_class),
+            Node::AsyncMethod(in_class) => self.handle_async_method(in_class),
             Node::AwaitExpression => self.handle_await_expression(),
             Node::Then(expr) => self.handle_then(expr),
             Node::Else(expr) => self.handle_else(expr),
@@ -811,9 +812,6 @@ where
             analysis.set_command(1, CompileCommand::AllocateLocals(analysis.num_locals));
         }
 
-        let this_local = analysis
-            .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
         let this_used = analysis
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_USED);
@@ -821,7 +819,7 @@ where
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
         let this_mode_lexical = matches!(analysis.this_mode, ThisMode::Lexical);
-        let outer_this_captured = this_local && (this_used || this_captured) && this_mode_lexical;
+        let outer_this_captured = (this_used || this_captured) && this_mode_lexical;
 
         self.apply_analysis(analysis, func_scope_ref);
 
@@ -973,6 +971,11 @@ where
         }
     }
 
+    fn handle_async_method(&mut self, in_class: bool) {
+        self.end_coroutine_body();
+        self.handle_method(in_class);
+    }
+
     fn do_handle_arrow_function(&mut self, coroutine: bool) {
         // TODO: An ArrowFunction does not define local variables for arguments, super, this, or
         // new.target.  Any reference to arguments, super, this, or new.target within an
@@ -1070,7 +1073,6 @@ where
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
 
-        let is_entry_function = self.analysis_stack.is_empty();
         let lambda_id = self.support.register_lambda(kind);
 
         let mut analysis = FunctionAnalysis::new(name, lambda_id, this_mode);
@@ -1084,26 +1086,8 @@ where
         let scope_ref = self.global_analysis.scope_tree_builder.push_function();
         analysis.start_scope(scope_ref, true);
 
-        // The `this` binding will be always resolved to the global object in the entry function.
-        if !is_entry_function && matches!(this_mode, ThisMode::Strict | ThisMode::Global) {
-            analysis
-                .flags
-                .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
-        }
-
         if matches!(kind, LambdaKind::Ramp) {
             analysis.set_ramp();
-        }
-
-        if let Some(parent) = self.analysis_stack.last_mut() {
-            if parent
-                .flags
-                .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL)
-            {
-                analysis
-                    .flags
-                    .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
-            }
         }
 
         self.analysis_stack.push(analysis);
@@ -1153,8 +1137,13 @@ where
     // Such an async function don't need to be rewritten into a state machine.
     fn start_coroutine_body(&mut self) {
         debug_assert!(self.analysis().is_ramp());
-        let this_mode = self.analysis().this_mode;
-        self.start_function_scope(Symbol::HIDDEN_COROUTINE, LambdaKind::Coroutine, this_mode);
+        // `this` in the ramp function is captured if it is used in the async function body.
+        // See also: Runtime::resume().
+        self.start_function_scope(
+            Symbol::HIDDEN_COROUTINE,
+            LambdaKind::Coroutine,
+            ThisMode::Lexical,
+        );
         self.handle_binding_identifier(Symbol::HIDDEN_PROMISE);
         self.handle_formal_parameter();
         self.handle_binding_identifier(Symbol::HIDDEN_RESULT);
@@ -1197,11 +1186,6 @@ where
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED)
         {
-            debug_assert!(
-                analysis
-                    .flags
-                    .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL)
-            );
             self.functions.last_mut().unwrap().num_captures += 1;
         }
 
@@ -1234,31 +1218,37 @@ where
     }
 
     fn apply_analysis(&mut self, analysis: FunctionAnalysis, scope_ref: ScopeRef) {
-        let this_used = analysis
-            .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_USED);
         let this_captured = analysis
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
-        let this_local = analysis
-            .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
-        let this_binding = match (this_used || this_captured, this_local, analysis.this_mode) {
-            (false, _, _) => ThisBinding::None,
-            (_, _, ThisMode::Strict) => ThisBinding::ThisArgument,
-            (_, true, ThisMode::Lexical) => ThisBinding::Capture,
-            (_, false, ThisMode::Lexical) => ThisBinding::GlobalObject,
-            (_, true, ThisMode::Global) => ThisBinding::Quirk,
-            (_, false, ThisMode::Global) => ThisBinding::GlobalObject,
+
+        let this_binding = if scope_ref.is_root() {
+            if self.module {
+                ThisBinding::ThisArgument
+            } else {
+                ThisBinding::GlobalObject
+            }
+        } else {
+            let this_used = analysis
+                .flags
+                .contains(FunctionAnalysisFlags::THIS_BINDING_USED);
+            match (this_used || this_captured, analysis.this_mode) {
+                (false, _) => ThisBinding::None,
+                (_, ThisMode::Strict) => ThisBinding::ThisArgument,
+                (_, ThisMode::Lexical) => ThisBinding::Capture,
+                (_, ThisMode::Global) => ThisBinding::Quirk,
+            }
         };
+
         let mut flags = FunctionFlags::empty();
         if self.analysis_stack.is_empty() {
             flags.insert(FunctionFlags::ENTRY_FUNCTION);
         }
         // The global object is never captured.  It can be directly accessible in any scope.
-        if this_captured && this_local {
+        if this_captured {
             flags.insert(FunctionFlags::THIS_BINDING_CAPTURED);
         }
+
         self.functions.push(Function {
             name: analysis.name,
             id: analysis.id,
@@ -1490,7 +1480,7 @@ impl FunctionScopedVariableEntry {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 enum ThisMode {
     #[default]
     Strict,
@@ -1510,18 +1500,15 @@ base::auto_bitflags! {
         /// Indicates that `[[ConstructorKind]]` is `DERIVED`.
         DERIVED,
 
-        /// The `this` binding is used in the function body.
+        /// Indicates whether the `this` binding is used within the function body
+        /// (excluding those of nested functions).
         ///
         /// The `this` binding must be resolved to an actual value in
         /// [`CompileCommand::DeclareVariables`] according to the [`ThisBinding`].
         THIS_BINDING_USED,
 
-        /// The `this` binding is captured by descendant closures.
+        /// Indicates whether any descendant closure captures the `this` binding.
         THIS_BINDING_CAPTURED,
-
-        /// The `this` binding will be always resolved to the global object if this flag is not
-        /// set.
-        THIS_BINDING_LOCAL,
     }
 }
 

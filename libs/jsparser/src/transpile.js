@@ -170,7 +170,6 @@ class Transpiler {
           modifyMemberExpression,
           modifyOptionalChain,
           modifyFunctionDeclaration,
-          modifyAsyncFunctionDeclaration,
           modifyClassDeclaration,
           modifyClassElement,
           modifyMethodDefinition,
@@ -178,7 +177,9 @@ class Transpiler {
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
           modifyFunctionExpression,
+          modifyAsyncFunctionDeclaration,
           modifyAsyncFunctionExpression,
+          modifyAsyncMethod,
           modifyArrowFunction,
           modifyAsyncArrowFunction,
           modifyDoWhileStatement,
@@ -876,28 +877,6 @@ function modifyFunctionDeclaration(rules) {
   return rules;
 }
 
-function modifyAsyncFunctionDeclaration(rules) {
-  const TARGETS = [
-    {
-      term: '`(`',
-      action: '_ASYNC_FUNCTION_CONTEXT_',
-      insertBefore: true,
-    },
-    {
-      term: '`{`',
-      action: '_FUNCTION_SIGNATURE_',
-      insertBefore: true,
-    },
-  ];
-  log.debug('Modifying AsyncFunctionDeclaration...');
-  const rule = rules.find((rule) =>
-    rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]'
-  );
-  assert(rule !== undefined);
-  modifyTargetsInRule(rule, TARGETS);
-  return rules;
-}
-
 function modifyClassDeclaration(rules) {
   const TARGETS = [
     {
@@ -1128,6 +1107,28 @@ function modifyFunctionExpression(rules) {
   return rules;
 }
 
+function modifyAsyncFunctionDeclaration(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_ASYNC_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying AsyncFunctionDeclaration...');
+  const rule = rules.find((rule) =>
+    rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]'
+  );
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
 function modifyAsyncFunctionExpression(rules) {
   const TARGETS = [
     {
@@ -1143,6 +1144,26 @@ function modifyAsyncFunctionExpression(rules) {
   ];
   log.debug('Modifying AsyncFunctionExpression...');
   const rule = rules.find((rule) => rule.name === 'AsyncFunctionExpression');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyAsyncMethod(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_ASYNC_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying AsyncMethod...');
+  const rule = rules.find((rule) => rule.name === 'AsyncMethod[Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;
