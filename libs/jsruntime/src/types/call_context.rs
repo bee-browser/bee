@@ -80,11 +80,15 @@ impl CallContext {
         }
     }
 
-    pub(crate) fn new_for_promise(coroutine: HandleMut<Coroutine>, args: &[Value]) -> Self {
+    pub(crate) fn new_for_promise(
+        coroutine: HandleMut<Coroutine>,
+        this: Value,
+        args: &[Value],
+    ) -> Self {
         Self {
             envp: coroutine.as_ptr() as *mut std::ffi::c_void,
             new_target: None,
-            this: Value::Undefined,
+            this,
             func: None,
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
