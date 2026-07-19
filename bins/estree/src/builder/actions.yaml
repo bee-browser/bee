@@ -2771,8 +2771,8 @@
     GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN
-    UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName _ASYNC_FUNCTION_CONTEXT_
+    LPAREN UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
     AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName LPAREN
@@ -2791,8 +2791,9 @@
     LBRACE GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await LPAREN
-    UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
     AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await
@@ -4747,8 +4748,9 @@
     LBRACE GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN
-    UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
     AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield
@@ -4784,7 +4786,8 @@
   action: method_definition_generator
 - rule: >-
     AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await
-    LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
     AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL

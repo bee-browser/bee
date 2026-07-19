@@ -5,7 +5,6 @@ mod tests;
 
 use std::ops::Range;
 
-use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 use smallvec::smallvec;
@@ -156,7 +155,7 @@ enum Detail {
     Declaration,
     FormalParameters(SmallVec<[Symbol; 4]>),
     ConciseBody,
-    MethodDefinition(Symbol, bool, bool),
+    MethodDefinition(Symbol, MethodFlags),
     ClassDeclaration,
     ClassTail,
     ClassHeritage,
@@ -208,12 +207,12 @@ enum ClassElementInfo {
     PrivateId(Symbol, ClassElementPrivateIdFlags),
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq)]
-    struct ClassElementPrivateIdFlags : u8 {
-        const GETTER = 0b01;
-        const SETTER = 0b10;
-        const OTHER  = 0b11;
+    struct ClassElementPrivateIdFlags: u8 {
+        GETTER,
+        SETTER,
+        OTHER,
     }
 }
 
@@ -244,6 +243,21 @@ impl ClassElementListInfo {
 
     fn private_id_flags_mut(&mut self, name: &Symbol) -> Option<&mut ClassElementPrivateIdFlags> {
         self.private_ids.get_mut(name)
+    }
+}
+
+base::auto_bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    struct MethodFlags: u8 {
+        PRIVATE,
+        HAS_DIRECT_SUPER,
+        ASYNC,
+    }
+}
+
+impl MethodFlags {
+    fn is_special_method(&self) -> bool {
+        self.intersects(Self::ASYNC)
     }
 }
 
@@ -334,6 +348,7 @@ pub enum Node<'s> {
     ArrowFunction,
     AsyncArrowFunction,
     Method(bool),
+    AsyncMethod(bool),
     AwaitExpression,
     Then(bool),
     Else(bool),
@@ -796,6 +811,7 @@ where
     fn process_async_function_context(&mut self) -> Result<(), Error> {
         let name = match self.stack.last().unwrap().detail {
             Detail::BindingIdentifier(symbol) => symbol,
+            Detail::ClassElementName(symbol, _) => symbol,
             Detail::Token(index) => {
                 debug_assert!(matches!(self.token(index).kind, TokenKind::Function));
                 Symbol::NONE // anonymous function
@@ -803,6 +819,7 @@ where
             ref detail => unreachable!("{detail:?}"),
         };
         self.enqueue(Node::AsyncFunctionContext(name));
+        self.function_stack.push(Default::default());
         Ok(())
     }
 
@@ -1624,12 +1641,18 @@ where
     // PropertyDefinition[Yield, Await] :
     //   MethodDefinition[?Yield, ?Await]
     fn process_property_definition_method(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::Method(false));
-        let name = match self.top().detail {
-            Detail::MethodDefinition(_, true, _) => return Err(Error::SyntaxError),
-            Detail::MethodDefinition(name, ..) => name,
+        let (name, flags) = match self.top().detail {
+            Detail::MethodDefinition(name, flags) => (name, flags),
             ref detail => unreachable!("{detail:?}"),
         };
+        if flags.contains(MethodFlags::PRIVATE) {
+            return Err(Error::SyntaxError);
+        }
+        if flags.contains(MethodFlags::ASYNC) {
+            self.enqueue(Node::AsyncMethod(false));
+        } else {
+            self.enqueue(Node::Method(false));
+        }
         self.enqueue(Node::PropertyDefinition(PropertyDefinitionKind::Method));
         self.replace(1, Detail::PropertyDefinition(name));
         Ok(())
@@ -3797,12 +3820,16 @@ where
             Detail::ClassElementName(name, private) => (name, private),
             ref detail => unreachable!("{detail:?}"),
         };
-        self.replace(
-            7,
-            Detail::MethodDefinition(name, private, function.has_super_call),
-        );
+        let mut flags = MethodFlags::empty();
+        flags.set(MethodFlags::PRIVATE, private);
+        flags.set(MethodFlags::HAS_DIRECT_SUPER, function.has_super_call);
+        self.replace(7, Detail::MethodDefinition(name, flags));
         Ok(())
     }
+
+    // MethodDefinition[Yield, Await] :
+    //   AsyncMethod[?Yield, ?Await]
+    nop! {}
 
     // 15.7 Class Definitions
 
@@ -3943,11 +3970,16 @@ where
     // ClassElement[Yield, Await] :
     //  MethodDefinition[?Yield, ?Await]
     fn process_class_element_method(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::Method(true));
         match self.top().detail {
-            Detail::MethodDefinition(Symbol::CONSTRUCTOR, _, has_direct_super) => {
-                // TODO: "constructor" and SpecialMethod
+            // #sec-class-definitions-static-semantics-early-errors
+            // 'constructor()' must be a normal method.
+            Detail::MethodDefinition(Symbol::CONSTRUCTOR, flags) if flags.is_special_method() => {
+                Err(Error::SyntaxError)
+            }
+            Detail::MethodDefinition(Symbol::CONSTRUCTOR, flags) => {
+                self.enqueue(Node::Method(true));
                 self.enqueue(Node::ClassElement(ClassElementKind::Method));
+                let has_direct_super = flags.contains(MethodFlags::HAS_DIRECT_SUPER);
                 self.replace(
                     1,
                     Detail::ClassElement(ClassElementInfo::Constructor(has_direct_super)),
@@ -3956,12 +3988,19 @@ where
             }
             // #sec-class-definitions-static-semantics-early-errors
             // 'super()' is not allowed.
-            Detail::MethodDefinition(.., true) => Err(Error::SyntaxError),
-            Detail::MethodDefinition(name, private, _) => {
+            Detail::MethodDefinition(_, flags) if flags.contains(MethodFlags::HAS_DIRECT_SUPER) => {
+                Err(Error::SyntaxError)
+            }
+            Detail::MethodDefinition(name, flags) => {
+                if flags.contains(MethodFlags::ASYNC) {
+                    self.enqueue(Node::AsyncMethod(true));
+                } else {
+                    self.enqueue(Node::Method(true));
+                }
                 self.enqueue(Node::ClassElement(ClassElementKind::Method));
                 self.replace(
                     1,
-                    if private {
+                    if flags.contains(MethodFlags::PRIVATE) {
                         Detail::ClassElement(ClassElementInfo::PrivateId(
                             name,
                             ClassElementPrivateIdFlags::OTHER,
@@ -3979,19 +4018,25 @@ where
     // ClassElement[Yield, Await] :
     //   static MethodDefinition[?Yield, ?Await]
     fn process_class_element_static_method(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::Method(true));
         match self.top().detail {
             // #sec-class-definitions-static-semantics-early-errors
             // 'super()' is not allowed.
-            Detail::MethodDefinition(.., true) => Err(Error::SyntaxError),
+            Detail::MethodDefinition(_, flags) if flags.contains(MethodFlags::HAS_DIRECT_SUPER) => {
+                Err(Error::SyntaxError)
+            }
             // #sec-class-definitions-static-semantics-early-errors
             // 'prototype' is not allowed.
-            Detail::MethodDefinition(Symbol::PROTOTYPE, ..) => Err(Error::SyntaxError),
-            Detail::MethodDefinition(name, private, _) => {
+            Detail::MethodDefinition(Symbol::PROTOTYPE, _) => Err(Error::SyntaxError),
+            Detail::MethodDefinition(name, flags) => {
+                if flags.contains(MethodFlags::ASYNC) {
+                    self.enqueue(Node::AsyncMethod(true));
+                } else {
+                    self.enqueue(Node::Method(true));
+                }
                 self.enqueue(Node::ClassElement(ClassElementKind::StaticMethod));
                 self.replace(
                     2,
-                    if private {
+                    if flags.contains(MethodFlags::PRIVATE) {
                         Detail::ClassElement(ClassElementInfo::PrivateId(
                             name,
                             ClassElementPrivateIdFlags::OTHER,
@@ -4119,6 +4164,7 @@ where
     //   async [no LineTerminator here] function BindingIdentifier[?Yield, ?Await]
     //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
     fn process_async_function_declaration(&mut self) -> Result<(), Error> {
+        let _ = self.function_stack.pop().unwrap();
         self.enqueue(Node::AsyncFunctionDeclaration);
         self.replace(9, Detail::Declaration);
         Ok(())
@@ -4128,6 +4174,7 @@ where
     //   async [no LineTerminator here] function BindingIdentifier[~Yield, +Await]
     //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
     fn process_async_function_expression(&mut self) -> Result<(), Error> {
+        let _ = self.function_stack.pop().unwrap();
         self.enqueue(Node::AsyncFunctionExpression(true));
         self.replace(
             9,
@@ -4142,6 +4189,7 @@ where
     //   async [no LineTerminator here] function
     //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
     fn process_anonymous_async_function_expression(&mut self) -> Result<(), Error> {
+        let _ = self.function_stack.pop().unwrap();
         self.enqueue(Node::AsyncFunctionExpression(false));
         self.replace(
             8,
@@ -4151,6 +4199,36 @@ where
         );
         Ok(())
     }
+
+    // AsyncMethod[Yield, Await] :
+    //   async [no LineTerminator here] ClassElementName[?Yield, ?Await] (
+    //   UniqueFormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
+    fn process_async_method(&mut self) -> Result<(), Error> {
+        let function = self.function_stack.pop().unwrap();
+        // #sec-async-function-definitions-static-semantics-early-errors
+        // TODO(feat): It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody
+        // is true and IsSimpleParameterList of UniqueFormalParameters is false.
+        // TODO(feat): If UniqueFormalParameters Contains SuperCall is true, return true.
+        if function.has_super_call {
+            return Err(Error::SyntaxError);
+        }
+        // TODO(feat): It is a Syntax Error if UniqueFormalParameters Contains AwaitExpression is
+        // true.
+        // TODO(feat): It is a Syntax Error if any element of the BoundNames of
+        // UniqueFormalParameters also occurs in the LexicallyDeclaredNames of AsyncFunctionBody.
+        let (name, private) = match self.nth(6).detail {
+            Detail::ClassElementName(name, private) => (name, private),
+            ref detail => unreachable!("{detail:?}"),
+        };
+        let mut flags = MethodFlags::ASYNC;
+        flags.set(MethodFlags::PRIVATE, private);
+        self.replace(8, Detail::MethodDefinition(name, flags));
+        Ok(())
+    }
+
+    // AsyncFunctionBody :
+    //   FunctionBody[~Yield, +Await]
+    nop! {}
 
     // AwaitExpression[Yield] :
     //   await UnaryExpression[?Yield, +Await]

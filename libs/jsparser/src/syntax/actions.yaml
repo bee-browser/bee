@@ -2483,7 +2483,7 @@
 - rule: MethodDefinition -> GeneratorMethod
   action: undefined
 - rule: MethodDefinition -> AsyncMethod
-  action: undefined
+  action: nop
 - rule: MethodDefinition -> AsyncGeneratorMethod
   action: undefined
 - rule: >-
@@ -2511,7 +2511,7 @@
 - rule: MethodDefinition_Await -> GeneratorMethod_Await
   action: undefined
 - rule: MethodDefinition_Await -> AsyncMethod_Await
-  action: undefined
+  action: nop
 - rule: MethodDefinition_Await -> AsyncGeneratorMethod_Await
   action: undefined
 - rule: >-
@@ -3068,9 +3068,10 @@
     RPAREN LBRACE GeneratorBody RBRACE
   action: undefined
 - rule: >-
-    AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN
-    UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
-  action: undefined
+    AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters_Await RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
+  action: process_async_method
 - rule: >-
     AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL
     ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE
@@ -3090,9 +3091,10 @@
   action: undefined
 - rule: >-
     AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    ClassElementName_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE
+    ClassElementName_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
     AsyncFunctionBody RBRACE
-  action: undefined
+  action: process_async_method
 - rule: >-
     AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL
     ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN
@@ -5092,7 +5094,7 @@
 - rule: MethodDefinition_Yield -> GeneratorMethod_Yield
   action: undefined
 - rule: MethodDefinition_Yield -> AsyncMethod_Yield
-  action: undefined
+  action: nop
 - rule: MethodDefinition_Yield -> AsyncGeneratorMethod_Yield
   action: undefined
 - rule: >-
@@ -5158,7 +5160,7 @@
 - rule: MethodDefinition_Yield_Await -> GeneratorMethod_Yield_Await
   action: undefined
 - rule: MethodDefinition_Yield_Await -> AsyncMethod_Yield_Await
-  action: undefined
+  action: nop
 - rule: MethodDefinition_Yield_Await -> AsyncGeneratorMethod_Yield_Await
   action: undefined
 - rule: >-
@@ -5325,9 +5327,10 @@
   action: undefined
 - rule: >-
     AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN LBRACE
+    ClassElementName_Yield _ASYNC_FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
     AsyncFunctionBody RBRACE
-  action: undefined
+  action: process_async_method
 - rule: >-
     AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL
     ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN
@@ -5371,9 +5374,10 @@
   action: undefined
 - rule: >-
     AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
-    ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN
-    LBRACE AsyncFunctionBody RBRACE
-  action: undefined
+    ClassElementName_Yield_Await _ASYNC_FUNCTION_CONTEXT_ LPAREN
+    UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
+  action: process_async_method
 - rule: >-
     AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL
     ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await
