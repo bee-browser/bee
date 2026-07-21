@@ -453,9 +453,9 @@ where
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ClassContext => self.handle_class_context(),
+            Node::ClassElementContext => self.handle_class_element_context(),
             Node::ClassDeclaration(named) => self.handle_class_declaration(named),
             Node::ClassHeritage => self.handle_class_heritage(),
-            Node::StaticContext => self.handle_static_context(),
             Node::ClassElement(ClassElementKind::StaticField) => {
                 self.handle_class_element_static_field()
             }
@@ -792,8 +792,6 @@ where
         // Add Function-scoped variables defined by "VariableStatement"s to the function scope.
         analysis.process_function_scoped_variables(&mut self.global_analysis);
 
-        // TODO: this binding resolution
-
         self.global_analysis.scope_tree_builder.pop();
 
         // The reference resolution must be performed after the function-scoped variables are added
@@ -851,32 +849,20 @@ where
         analysis_mut!(self).process_class_context();
     }
 
+    fn handle_class_element_context(&mut self) {
+        analysis_mut!(self).process_class_element_context();
+    }
+
     fn handle_class_declaration(&mut self, named: bool) {
-        let derived = self
-            .analysis()
-            .flags
-            .contains(FunctionAnalysisFlags::DERIVED);
         if !self.analysis().has_class_constructor() {
-            self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
-            // TODO(feat): call the field initializer if it exists.
-            if derived {
-                // constructor(...args) { super(...args); }
-                push_commands! {
-                    self;
-                    CompileCommand::Super,
-                    // TODO(feat): ...args
-                    CompileCommand::Construct(0, true),
-                    CompileCommand::Discard,
-                }
-            }
-            self.end_function_scope();
-            let func = self.functions.last_mut().unwrap();
-            func.flags
-                .insert(FunctionFlags::CONSTRUCTOR | FunctionFlags::CLASS_CONSTRUCTOR);
-            if derived {
-                func.flags.insert(FunctionFlags::DERIVED);
-            }
-            analysis_mut!(self).set_class_default_constructor(func.id, func.scope_ref);
+            self.define_default_constructor();
+        }
+
+        let mut analysis =
+            analysis_mut!(self).process_class_definition(named, &mut self.global_analysis);
+
+        if !analysis.static_field_initializer.is_empty() {
+            self.call_static_field_initializer(&mut analysis.static_field_initializer);
         }
 
         // Pop the block scope created in handle_class_context().
@@ -885,15 +871,71 @@ where
         analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
     }
 
-    fn handle_class_heritage(&mut self) {
-        analysis_mut!(self).process_class_heritage();
+    fn define_default_constructor(&mut self) {
+        let derived = self
+            .analysis()
+            .flags
+            .contains(FunctionAnalysisFlags::DERIVED);
+
+        self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Global);
+        // TODO(feat): call the field initializer if it exists.
+        if derived {
+            // constructor(...args) { super(...args); }
+            push_commands! {
+                self;
+                CompileCommand::Super,
+                // TODO(feat): ...args
+                CompileCommand::Construct(0, true),
+                CompileCommand::Discard,
+            }
+        }
+        self.end_function_scope();
+
+        let func = self.functions.last_mut().unwrap();
+        func.flags
+            .insert(FunctionFlags::CONSTRUCTOR | FunctionFlags::CLASS_CONSTRUCTOR);
+        if derived {
+            func.flags.insert(FunctionFlags::DERIVED);
+        }
+        analysis_mut!(self).set_class_default_constructor(func.id, func.scope_ref);
     }
 
-    fn handle_static_context(&mut self) {
+    // Conceptually, the following code:
+    //
+    // ```js
+    // class A {
+    //   static x = 1;
+    //   static y = 2;
+    // }
+    // ```
+    //
+    // is converted into:
+    //
+    // ```js
+    // class A {};
+    // (function() {
+    //   this.x = 1;
+    //   this.y = 2;
+    // }).call(A);
+    // ```
+    fn call_static_field_initializer(&mut self, initializer_commands: &mut Vec<CompileCommand>) {
+        self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Strict);
+        analysis_mut!(self).commands.append(initializer_commands);
+        self.end_function_scope();
+
+        let func = self.functions.last().unwrap();
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false, false);
         push_commands! {
             self;
-            CompileCommand::Swap,
+            CompileCommand::PropertyReference(Symbol::CALL),
+            CompileCommand::Duplicate(1),
+            CompileCommand::Call(1),
+            CompileCommand::Discard, // ignores the return value.
         }
+    }
+
+    fn handle_class_heritage(&mut self) {
+        analysis_mut!(self).process_class_heritage();
     }
 
     fn handle_class_element_static_field(&mut self) {
@@ -905,18 +947,11 @@ where
     }
 
     fn handle_class_element_method(&mut self) {
-        push_commands! {
-            self;
-            CompileCommand::CreateDataProperty,
-        }
+        analysis_mut!(self).process_class_element_method();
     }
 
     fn handle_class_element_static_method(&mut self) {
-        push_commands! {
-            self;
-            CompileCommand::CreateDataProperty,
-            CompileCommand::Swap,
-        }
+        analysis_mut!(self).process_class_element_static_method();
     }
 
     fn handle_async_function_declaration(&mut self) {
@@ -1431,7 +1466,7 @@ struct FunctionAnalysis {
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<u16>,
 
-    class_stack: Vec<usize>,
+    class_stack: Vec<ClassAnalysis>,
 
     /// The name of the function.
     ///
@@ -1968,7 +2003,7 @@ impl FunctionAnalysis {
             if self.flags.contains(FunctionAnalysisFlags::DERIVED) {
                 func.flags.insert(FunctionFlags::DERIVED);
             }
-            let index = self.class_stack.last().cloned().unwrap();
+            let index = self.class_stack.last().unwrap().class_index;
             debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
             debug_assert!(matches!(
                 self.commands[index + 1],
@@ -1996,9 +2031,12 @@ impl FunctionAnalysis {
     }
 
     fn process_class_context(&mut self) {
-        let index = self.commands.len();
-        debug_assert!(index <= usize::MAX - 7);
-        self.class_stack.push(index);
+        let class_index = self.commands.len();
+        debug_assert!(class_index <= usize::MAX - 7);
+        self.class_stack.push(ClassAnalysis {
+            class_index,
+            ..Default::default()
+        });
 
         self.commands.push(CompileCommand::PlaceHolder); // will be replaced w/ Lambda
         self.commands.push(CompileCommand::PlaceHolder); // will be replaced w/ Closure
@@ -2013,13 +2051,21 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Assignment);
     }
 
+    fn process_class_element_context(&mut self) {
+        debug_assert_eq!(self.class_stack.last().unwrap().element_index, 0);
+        self.class_stack.last_mut().unwrap().element_index = self.commands.len();
+        // The placeholder command will be replaced w/ an appropriate command in
+        // `process_class_element_*()`.
+        self.commands.push(CompileCommand::PlaceHolder);
+    }
+
     fn has_class_constructor(&self) -> bool {
-        let index = self.class_stack.last().cloned().unwrap();
+        let index = self.class_stack.last().unwrap().class_index;
         matches!(self.commands[index], CompileCommand::Lambda(_))
     }
 
     fn set_class_default_constructor(&mut self, lambda_id: LambdaId, scope_ref: ScopeRef) {
-        let index = self.class_stack.last().cloned().unwrap();
+        let index = self.class_stack.last().unwrap().class_index;
         debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
         debug_assert!(matches!(
             self.commands[index + 1],
@@ -2035,17 +2081,9 @@ impl FunctionAnalysis {
     }
 
     fn process_class_declaration(&mut self, named: bool, global_analysis: &mut GlobalAnalysis) {
-        let index = self.class_stack.pop().unwrap();
-        debug_assert!(matches!(
-            self.commands[index + 2],
-            CompileCommand::Function(_)
-        ));
-
         if named {
             debug_assert!(!self.symbol_stack.is_empty());
             let symbol = self.symbol_stack.pop().unwrap().0;
-            self.commands[index + 2] = CompileCommand::Function(symbol);
-            self.commands.push(CompileCommand::Class(symbol));
             self.commands
                 .push(CompileCommand::VariableReference(symbol));
             self.commands.push(CompileCommand::MutableVariable);
@@ -2056,6 +2094,38 @@ impl FunctionAnalysis {
         } else {
             // TODO(feat): default class
         }
+    }
+
+    fn process_class_definition(
+        &mut self,
+        named: bool,
+        global_analysis: &mut GlobalAnalysis,
+    ) -> ClassAnalysis {
+        let analysis = self.class_stack.pop().unwrap();
+        let index = analysis.class_index;
+        debug_assert!(matches!(
+            self.commands[index + 2],
+            CompileCommand::Function(_)
+        ));
+
+        if named {
+            debug_assert!(!self.symbol_stack.is_empty());
+            let symbol = self.symbol_stack.last().unwrap().0;
+            self.commands[index + 2] = CompileCommand::Function(symbol);
+            self.commands.push(CompileCommand::Class(symbol));
+            self.commands.push(CompileCommand::Duplicate(0));
+            self.commands
+                .push(CompileCommand::VariableReference(symbol));
+            self.commands.push(CompileCommand::ImmutableVariable);
+            global_analysis
+                .scope_tree_builder
+                .add_local(symbol, self.num_locals, true);
+            self.num_locals += 1;
+        } else {
+            // TODO(feat): default class
+        }
+
+        analysis
     }
 
     fn process_class_heritage(&mut self) {
@@ -2072,11 +2142,43 @@ impl FunctionAnalysis {
         //
         // We will change the implementation in the future in order to support `this`.
         let (_symbol, _) = self.symbol_stack.pop().unwrap();
+
+        let analysis = self.class_stack.last_mut().unwrap();
+
+        let index = analysis.element_index;
+        debug_assert_ne!(index, 0);
+
+        // this.<symbol> = <value>;
+        self.commands[index] = CompileCommand::This;
         if !init {
             self.commands.push(CompileCommand::Undefined);
         }
         self.commands.push(CompileCommand::CreateDataProperty);
+        self.commands.push(CompileCommand::Discard); // ignores the target object.
+
+        // Move the compile commands for the initializer to the `static_field_initializer`.
+        // Assumed that commands to be moved do NOT contain CompileCommand::Batch.
+        analysis
+            .static_field_initializer
+            .extend(self.commands.drain(index..));
+        analysis.element_index = 0;
+    }
+
+    fn process_class_element_method(&mut self) {
+        self.commands.push(CompileCommand::CreateDataProperty);
+
+        let index = std::mem::replace(&mut self.class_stack.last_mut().unwrap().element_index, 0);
+        debug_assert_ne!(index, 0);
+        self.commands[index] = CompileCommand::Nop;
+    }
+
+    fn process_class_element_static_method(&mut self) {
+        self.commands.push(CompileCommand::CreateDataProperty);
         self.commands.push(CompileCommand::Swap);
+
+        let index = std::mem::replace(&mut self.class_stack.last_mut().unwrap().element_index, 0);
+        debug_assert_ne!(index, 0);
+        self.commands[index] = CompileCommand::Swap;
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
@@ -2409,6 +2511,13 @@ struct TryAnalysis {
 #[derive(Default)]
 struct CoroutineAnalysis {
     state: u32,
+}
+
+#[derive(Default)]
+struct ClassAnalysis {
+    class_index: usize,
+    element_index: usize,
+    static_field_initializer: Vec<CompileCommand>,
 }
 
 /// A compile command.
