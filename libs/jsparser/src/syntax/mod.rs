@@ -338,9 +338,9 @@ pub enum Node<'s> {
     FunctionSignature,
     FunctionDeclaration,
     ClassContext,
+    ClassElementContext,
     ClassDeclaration(bool),
     ClassHeritage,
-    StaticContext,
     ClassElement(ClassElementKind),
     AsyncFunctionDeclaration,
     FunctionExpression(bool),
@@ -835,9 +835,9 @@ where
         Ok(())
     }
 
-    // _STATIC_CONTEXT_
-    fn process_static_context(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::StaticContext);
+    // _CLASS_ELEMENT_CONTEXT_
+    fn process_class_element_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ClassElementContext);
         Ok(())
     }
 
