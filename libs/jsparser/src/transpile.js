@@ -619,7 +619,7 @@ function addActions(rules) {
     '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
     '_CLASS_CONTEXT_',
-    '_STATIC_CONTEXT_',
+    '_CLASS_ELEMENT_CONTEXT_',
     '_ELSE_',
     '_THEN_',
     '_ELSE_EXPR_',
@@ -893,17 +893,15 @@ function modifyClassDeclaration(rules) {
 }
 
 function modifyClassElement(rules) {
-  const TARGETS = [
-    {
-      term: '`static`',
-      action: '_STATIC_CONTEXT_',
-      insertBefore: false,
-    },
-  ];
   log.debug('Modifying ClassElement...');
   const rule = rules.find((rule) => rule.name === 'ClassElement[Yield, Await]');
   assert(rule !== undefined);
-  modifyTargetsInRule(rule, TARGETS);
+  rule.values = rule.values.map((value) => {
+    if (value === '`;`') {
+      return value;
+    }
+    return `_CLASS_ELEMENT_CONTEXT_ ${value}`;
+  });
   return rules;
 }
 
