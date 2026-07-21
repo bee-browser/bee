@@ -1902,27 +1902,27 @@
   action: empty_list
 - rule: FunctionStatementList_Yield_Await -> StatementList_Yield_Await_Return
   action: nop
-- rule: ClassElement -> MethodDefinition
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition
   action: create_nullable
-- rule: ClassElement -> STATIC _STATIC_CONTEXT_ MethodDefinition
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition
   action: class_element_static_method_definition
-- rule: ClassElement -> FieldDefinition SEMICOLON
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement -> STATIC _STATIC_CONTEXT_ FieldDefinition SEMICOLON
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition SEMICOLON
   action: class_element_static_property_definition
-- rule: ClassElement -> ClassStaticBlock
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
 - rule: ClassElement -> SEMICOLON
   action: class_element_semicolon
-- rule: ClassElement_Await -> MethodDefinition_Await
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Await
   action: create_nullable
-- rule: ClassElement_Await -> STATIC _STATIC_CONTEXT_ MethodDefinition_Await
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Await
   action: class_element_static_method_definition
-- rule: ClassElement_Await -> FieldDefinition_Await SEMICOLON
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Await SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Await -> STATIC _STATIC_CONTEXT_ FieldDefinition_Await SEMICOLON
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Await SEMICOLON
   action: class_element_static_property_definition
-- rule: ClassElement_Await -> ClassStaticBlock
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
 - rule: ClassElement_Await -> SEMICOLON
   action: class_element_semicolon
@@ -2248,6 +2248,8 @@
     StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return
     StatementListItem_Yield_Await_Return
   action: append_to_list
+- rule: _CLASS_ELEMENT_CONTEXT_ -> (empty)
+  action: nop
 - rule: >-
     MethodDefinition -> ClassElementName _FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters RPAREN
     _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
@@ -2266,8 +2268,6 @@
     MethodDefinition -> SET ClassElementName _FUNCTION_CONTEXT_ LPAREN PropertySetParameterList
     RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_set
-- rule: _STATIC_CONTEXT_ -> (empty)
-  action: nop
 - rule: FieldDefinition -> ClassElementName
   action: property_definition
 - rule: FieldDefinition -> ClassElementName Initializer_In
@@ -4756,15 +4756,15 @@
     AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield
     LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: method_definition_async_generator
-- rule: ClassElement_Yield -> MethodDefinition_Yield
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Yield
   action: create_nullable
-- rule: ClassElement_Yield -> STATIC _STATIC_CONTEXT_ MethodDefinition_Yield
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Yield
   action: class_element_static_method_definition
-- rule: ClassElement_Yield -> FieldDefinition_Yield SEMICOLON
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Yield SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Yield -> STATIC _STATIC_CONTEXT_ FieldDefinition_Yield SEMICOLON
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Yield SEMICOLON
   action: class_element_static_property_definition
-- rule: ClassElement_Yield -> ClassStaticBlock
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
 - rule: ClassElement_Yield -> SEMICOLON
   action: class_element_semicolon
@@ -4794,15 +4794,17 @@
     ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE
     AsyncGeneratorBody RBRACE
   action: method_definition_async_generator
-- rule: ClassElement_Yield_Await -> MethodDefinition_Yield_Await
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Yield_Await
   action: create_nullable
-- rule: ClassElement_Yield_Await -> STATIC _STATIC_CONTEXT_ MethodDefinition_Yield_Await
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Yield_Await
   action: class_element_static_method_definition
-- rule: ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMICOLON
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Yield_Await SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Yield_Await -> STATIC _STATIC_CONTEXT_ FieldDefinition_Yield_Await SEMICOLON
+- rule: >-
+    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Yield_Await
+    SEMICOLON
   action: class_element_static_property_definition
-- rule: ClassElement_Yield_Await -> ClassStaticBlock
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
 - rule: ClassElement_Yield_Await -> SEMICOLON
   action: class_element_semicolon
