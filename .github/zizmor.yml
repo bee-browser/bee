@@ -13,6 +13,11 @@ rules:
     ignore:
       - bench_archive.yml:4:1
       - bench_upload.yml:4:1
+  dependabot-cooldown:
+    # https://docs.zizmor.sh/audits/#dependabot-cooldown
+    # The default cooldown period is 3 days.
+    # See https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown-
+    disable: true
   secrets-outside-env:
     # https://docs.zizmor.sh/audits/#secrets-outside-env
     ignore:
