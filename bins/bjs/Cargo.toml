@@ -10,15 +10,15 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = "1.0.103"
-clap = { version = "4.6.1", features = ["env", "derive", "wrap_help"] }
-cranelift-codegen = "0.133.1"
-cranelift-reader = "0.133.1"
+anyhow = "1.0.104"
+clap = { version = "4.6.4", features = ["env", "derive", "wrap_help"] }
+cranelift-codegen = "0.134.2"
+cranelift-reader = "0.134.2"
 itertools = "0.15.0"
 jsruntime = { path = "../../libs/jsruntime" }
 logging = { path = "../../libs/logging" }
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 
 [lints]
 workspace = true

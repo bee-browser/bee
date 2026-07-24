@@ -46,6 +46,8 @@ pub struct Editor<'a> {
 
     runtime_func_cache: RuntimeFunctionCache,
 
+    target_config: isa::TargetFrontendConfig,
+
     addr_type: ir::Type,
     lambda_sig: ir::SigRef,
     entry_block: ir::Block,
@@ -95,6 +97,7 @@ impl<'a> Editor<'a> {
         Self {
             builder,
             runtime_func_cache: Default::default(),
+            target_config,
             addr_type: target_config.pointer_type(),
             lambda_sig,
             entry_block,
@@ -129,7 +132,7 @@ impl<'a> Editor<'a> {
 
     pub fn end(mut self) {
         self.builder.seal_all_blocks();
-        self.builder.finalize();
+        self.builder.finalize(self.target_config);
     }
 
     // assertions
@@ -141,7 +144,7 @@ impl<'a> Editor<'a> {
         msg: &'static CStr,
     ) {
         use ir::condcodes::IntCC::Equal;
-        let is_null = BooleanIr(self.builder.ins().icmp_imm(Equal, ptr, 0));
+        let is_null = BooleanIr(self.builder.ins().icmp_imm_u(Equal, ptr, 0));
         self.put_assert(support, is_null, msg);
     }
 
@@ -152,7 +155,7 @@ impl<'a> Editor<'a> {
         msg: &'static CStr,
     ) {
         use ir::condcodes::IntCC::NotEqual;
-        let is_non_null = BooleanIr(self.builder.ins().icmp_imm(NotEqual, ptr, 0));
+        let is_non_null = BooleanIr(self.builder.ins().icmp_imm_u(NotEqual, ptr, 0));
         self.put_assert(support, is_non_null, msg);
     }
 
@@ -189,7 +192,7 @@ impl<'a> Editor<'a> {
     pub fn this_argument(&mut self) -> AnyIr {
         const OFFSET: i64 = CallContext::THIS_OFFSET as i64;
         let context = self.context();
-        AnyIr(self.builder.ins().iadd_imm(context, OFFSET))
+        AnyIr(self.builder.ins().iadd_imm_u(context, OFFSET))
     }
 
     fn envp(&mut self) -> ir::Value {
@@ -291,7 +294,7 @@ impl<'a> Editor<'a> {
         }
         let argv = self.argv();
         let offset = Value::SIZE * index as usize;
-        AnyIr(self.builder.ins().iadd_imm(argv.0, offset as i64))
+        AnyIr(self.builder.ins().iadd_imm_u(argv.0, offset as i64))
     }
 
     // basic block
@@ -352,7 +355,11 @@ impl<'a> Editor<'a> {
     // function control set | status
 
     fn put_load_status(&mut self) -> StatusIr {
-        StatusIr(self.builder.ins().stack_load(ir::types::I32, self.fcs, 0))
+        StatusIr(
+            self.builder
+                .ins()
+                .stack_load(self.addr_type, ir::types::I32, self.fcs, 0),
+        )
     }
 
     pub fn put_store_status(&mut self, status: Status) {
@@ -361,7 +368,9 @@ impl<'a> Editor<'a> {
             .builder
             .ins()
             .iconst(ir::types::I32, status.imm() as i64);
-        self.builder.ins().stack_store(status, self.fcs, 0);
+        self.builder
+            .ins()
+            .stack_store(self.addr_type, status, self.fcs, 0);
     }
 
     pub fn put_is_exception_status(&mut self, status: StatusIr) -> BooleanIr {
@@ -370,7 +379,7 @@ impl<'a> Editor<'a> {
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(Equal, status.0, Status::EXCEPTION.imm() as i64),
+                .icmp_imm_u(Equal, status.0, Status::EXCEPTION.imm() as i64),
         )
     }
 
@@ -379,36 +388,47 @@ impl<'a> Editor<'a> {
     pub fn put_store_flow_selector(&mut self, fs: FlowSelector) {
         logger::debug!(event = "put_store_flow_selector", ?fs);
         let value = self.builder.ins().iconst(ir::types::I32, fs.imm() as i64);
-        self.builder.ins().stack_store(value, self.fcs, 4);
+        self.builder
+            .ins()
+            .stack_store(self.addr_type, value, self.fcs, 4);
     }
 
     pub fn put_is_flow_selector_normal(&mut self) -> BooleanIr {
         logger::debug!(event = "put_is_flow_selector_normal");
         use ir::condcodes::IntCC::Equal;
-        let fs = self.builder.ins().stack_load(ir::types::I32, self.fcs, 4);
+        let fs = self
+            .builder
+            .ins()
+            .stack_load(self.addr_type, ir::types::I32, self.fcs, 4);
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(Equal, fs, FlowSelector::NORMAL.imm() as i64),
+                .icmp_imm_u(Equal, fs, FlowSelector::NORMAL.imm() as i64),
         )
     }
 
     pub fn put_is_flow_selector_throw(&mut self) -> BooleanIr {
         logger::debug!(event = "put_is_flow_selector_normal");
         use ir::condcodes::IntCC::Equal;
-        let fs = self.builder.ins().stack_load(ir::types::I32, self.fcs, 4);
+        let fs = self
+            .builder
+            .ins()
+            .stack_load(self.addr_type, ir::types::I32, self.fcs, 4);
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(Equal, fs, FlowSelector::THROW.imm() as i64),
+                .icmp_imm_u(Equal, fs, FlowSelector::THROW.imm() as i64),
         )
     }
 
     pub fn put_is_flow_selector_normal_or_continue(&mut self, depth: u32) -> BooleanIr {
         logger::debug!(event = "put_is_flow_selector_normal_or_continue");
-        let fs = self.builder.ins().stack_load(ir::types::I32, self.fcs, 4);
+        let fs = self
+            .builder
+            .ins()
+            .stack_load(self.addr_type, ir::types::I32, self.fcs, 4);
         use ir::condcodes::IntCC::UnsignedGreaterThan;
-        BooleanIr(self.builder.ins().icmp_imm(
+        BooleanIr(self.builder.ins().icmp_imm_u(
             UnsignedGreaterThan,
             fs,
             FlowSelector::break_at(depth).imm() as i64,
@@ -418,17 +438,23 @@ impl<'a> Editor<'a> {
     pub fn put_is_flow_selector_break_or_continue(&mut self, depth: u32) -> BooleanIr {
         logger::debug!(event = "put_is_flow_selector_break_or_continue");
         use ir::condcodes::IntCC::Equal;
-        let fs = self.builder.ins().stack_load(ir::types::I32, self.fcs, 4);
-        let fs_depth = self.builder.ins().band_imm(fs, 0x0000FF00);
-        BooleanIr(self.builder.ins().icmp_imm(Equal, fs_depth, depth as i64))
+        let fs = self
+            .builder
+            .ins()
+            .stack_load(self.addr_type, ir::types::I32, self.fcs, 4);
+        let fs_depth = self.builder.ins().band_imm_u(fs, 0x0000FF00);
+        BooleanIr(self.builder.ins().icmp_imm_u(Equal, fs_depth, depth as i64))
     }
 
     pub fn put_is_flow_selector_break(&mut self, depth: u32) -> BooleanIr {
         logger::debug!(event = "put_is_flow_selector_break");
         use ir::condcodes::IntCC::Equal;
-        let fs = self.builder.ins().stack_load(ir::types::I32, self.fcs, 4);
-        let fs_depth = self.builder.ins().band_imm(fs, 0x0000FF00);
-        BooleanIr(self.builder.ins().icmp_imm(Equal, fs_depth, depth as i64))
+        let fs = self
+            .builder
+            .ins()
+            .stack_load(self.addr_type, ir::types::I32, self.fcs, 4);
+        let fs_depth = self.builder.ins().band_imm_u(fs, 0x0000FF00);
+        BooleanIr(self.builder.ins().icmp_imm_u(Equal, fs_depth, depth as i64))
     }
 
     // control flow
@@ -507,7 +533,7 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_return");
         debug_assert!(!self.block_terminated);
         let status = self.put_load_status();
-        let masked = self.builder.ins().band_imm(status.0, Status::MASK as i64);
+        let masked = self.builder.ins().band_imm_u(status.0, Status::MASK as i64);
         self.builder.ins().return_(&[masked]);
         self.block_terminated = true;
     }
@@ -591,7 +617,7 @@ impl<'a> Editor<'a> {
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(NotEqual, kind, Value::KIND_NONE as i64),
+                .icmp_imm_u(NotEqual, kind, Value::KIND_NONE as i64),
         )
     }
 
@@ -637,7 +663,7 @@ impl<'a> Editor<'a> {
         let escaped = self
             .builder
             .ins()
-            .iadd_imm(capture.0, Capture::ESCAPED_OFFSET as i64);
+            .iadd_imm_u(capture.0, Capture::ESCAPED_OFFSET as i64);
         self.put_store(escaped, capture.0, Capture::TARGET_OFFSET);
         self.put_safe_copy_i128(value.0, escaped, 0);
     }
@@ -647,7 +673,7 @@ impl<'a> Editor<'a> {
     fn put_get_captures_from_closure(&mut self) -> ir::Value {
         self.builder
             .ins()
-            .iadd_imm(self.closure, Closure::CAPTURES_OFFSET as i64)
+            .iadd_imm_u(self.closure, Closure::CAPTURES_OFFSET as i64)
     }
 
     pub fn put_load_lambda_from_closure(&mut self, closure: ClosureIr) -> LambdaIr {
@@ -731,7 +757,7 @@ impl<'a> Editor<'a> {
         // TODO: emit assert(index < coroutine.num_locals)
         let coroutine = self.coroutine();
         let offset = Coroutine::LOCALS_OFFSET + Value::SIZE * (index as usize);
-        AnyIr(self.builder.ins().iadd_imm(coroutine.0, offset as i64))
+        AnyIr(self.builder.ins().iadd_imm_u(coroutine.0, offset as i64))
     }
 
     pub fn put_store_state_to_coroutine(&mut self, state: u32) {
@@ -753,8 +779,8 @@ impl<'a> Editor<'a> {
         let masked = self
             .builder
             .ins()
-            .band_imm(flags, ObjectFlags::CONSTRUCTOR.bits() as i64);
-        BooleanIr(self.builder.ins().icmp_imm(NotEqual, masked, 0))
+            .band_imm_u(flags, ObjectFlags::CONSTRUCTOR.bits() as i64);
+        BooleanIr(self.builder.ins().icmp_imm_u(NotEqual, masked, 0))
     }
 
     pub fn put_is_callable(&mut self, object: ObjectIr) -> BooleanIr {
@@ -764,8 +790,8 @@ impl<'a> Editor<'a> {
         let masked = self
             .builder
             .ins()
-            .band_imm(flags, ObjectFlags::CALLABLE.bits() as i64);
-        BooleanIr(self.builder.ins().icmp_imm(NotEqual, masked, 0))
+            .band_imm_u(flags, ObjectFlags::CALLABLE.bits() as i64);
+        BooleanIr(self.builder.ins().icmp_imm_u(NotEqual, masked, 0))
     }
 
     fn put_load_flags_from_object(&mut self, object: ObjectIr) -> ir::Value {
@@ -791,7 +817,7 @@ impl<'a> Editor<'a> {
         let flags = self
             .builder
             .ins()
-            .bor_imm(flags, OBJECT_FLAGS.bits() as i64);
+            .bor_imm_u(flags, OBJECT_FLAGS.bits() as i64);
         self.put_store_flags_to_object(flags, object);
     }
 
@@ -829,7 +855,7 @@ impl<'a> Editor<'a> {
         let caller = self.context();
         self.builder
             .ins()
-            .stack_store(caller, self.call_context, OFFSET);
+            .stack_store(self.addr_type, caller, self.call_context, OFFSET);
     }
 
     pub fn put_store_flags_to_call_context(&mut self, flags: CallContextFlags) {
@@ -840,17 +866,17 @@ impl<'a> Editor<'a> {
             .iconst(ir::types::I16, flags.bits() as i64);
         self.builder
             .ins()
-            .stack_store(flags, self.call_context, OFFSET);
+            .stack_store(self.addr_type, flags, self.call_context, OFFSET);
     }
 
     pub fn put_store_depth_to_call_context(&mut self) {
         const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
         let caller = self.context();
         let depth = self.put_load_i16(caller, CallContext::DEPTH_OFFSET);
-        let depth = self.builder.ins().iadd_imm(depth, 1);
+        let depth = self.builder.ins().iadd_imm_u(depth, 1);
         self.builder
             .ins()
-            .stack_store(depth, self.call_context, OFFSET);
+            .stack_store(self.addr_type, depth, self.call_context, OFFSET);
     }
 
     pub fn put_store_argc_to_call_context(&mut self, argc: u16) {
@@ -858,7 +884,7 @@ impl<'a> Editor<'a> {
         let argc = self.builder.ins().iconst(ir::types::I16, argc as i64);
         self.builder
             .ins()
-            .stack_store(argc, self.call_context, OFFSET);
+            .stack_store(self.addr_type, argc, self.call_context, OFFSET);
     }
 
     pub fn put_store_argc_max_to_call_context(&mut self, argc_max: u16) {
@@ -866,14 +892,14 @@ impl<'a> Editor<'a> {
         let argc_max = self.builder.ins().iconst(ir::types::I16, argc_max as i64);
         self.builder
             .ins()
-            .stack_store(argc_max, self.call_context, OFFSET);
+            .stack_store(self.addr_type, argc_max, self.call_context, OFFSET);
     }
 
     pub fn put_store_argv_to_call_context(&mut self, argv: ArgvIr) {
         const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(argv.0, self.call_context, OFFSET);
+            .stack_store(self.addr_type, argv.0, self.call_context, OFFSET);
     }
 
     pub fn put_get_this_from_call_context(&mut self) -> AnyIr {
@@ -887,11 +913,12 @@ impl<'a> Editor<'a> {
 
     pub fn put_get_argv_from_call_context(&mut self) -> ArgvIr {
         const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
-        ArgvIr(
-            self.builder
-                .ins()
-                .stack_load(self.addr_type, self.call_context, OFFSET),
-        )
+        ArgvIr(self.builder.ins().stack_load(
+            self.addr_type,
+            self.addr_type,
+            self.call_context,
+            OFFSET,
+        ))
     }
 
     pub fn put_set_closure_mode(&mut self) {
@@ -902,27 +929,29 @@ impl<'a> Editor<'a> {
         const OFFSET: i32 = CallContext::ENVP_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(closure.0, self.call_context, OFFSET);
+            .stack_store(self.addr_type, closure.0, self.call_context, OFFSET);
     }
 
     pub fn put_store_function_to_call_context(&mut self, function: ObjectIr) {
         const OFFSET: i32 = CallContext::FUNC_OFFSET as i32;
         self.builder
             .ins()
-            .stack_store(function.0, self.call_context, OFFSET);
+            .stack_store(self.addr_type, function.0, self.call_context, OFFSET);
     }
 
     pub fn put_call_stack_too_deep(&mut self, max: u16) -> BooleanIr {
         use ir::condcodes::IntCC::UnsignedGreaterThan;
         const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
-        let depth = self
-            .builder
-            .ins()
-            .stack_load(ir::types::I16, self.call_context, OFFSET);
+        let depth = self.builder.ins().stack_load(
+            self.addr_type,
+            ir::types::I16,
+            self.call_context,
+            OFFSET,
+        );
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(UnsignedGreaterThan, depth, max as i64),
+                .icmp_imm_u(UnsignedGreaterThan, depth, max as i64),
         )
     }
 
@@ -945,7 +974,7 @@ impl<'a> Editor<'a> {
     pub fn put_get_arg(&mut self, argv: ArgvIr, index: u16) -> AnyIr {
         logger::debug!(event = "put_get_arg", ?argv, index);
         let offset = (Value::SIZE as i64) * (index as i64);
-        let addr = self.builder.ins().iadd_imm(argv.0, offset);
+        let addr = self.builder.ins().iadd_imm_u(argv.0, offset);
         AnyIr(addr)
     }
 
@@ -1100,7 +1129,7 @@ impl<'a> Editor<'a> {
 
     pub fn put_logical_not(&mut self, value: BooleanIr) -> BooleanIr {
         logger::debug!(event = "put_logical_not", ?value);
-        BooleanIr(self.builder.ins().bxor_imm(value.0, 1))
+        BooleanIr(self.builder.ins().bxor_imm_u(value.0, 1))
     }
 
     pub fn put_logical_or(&mut self, lhs: BooleanIr, rhs: BooleanIr) -> BooleanIr {
@@ -1170,7 +1199,7 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_left_shift", ?x, ?y);
         let lnum = self.put_runtime_to_int32(support, x);
         let rnum = self.put_runtime_to_uint32(support, y);
-        let shift_count = self.builder.ins().urem_imm(rnum, 32);
+        let shift_count = self.builder.ins().urem_imm_u(rnum, 32);
         let shifted = self.builder.ins().ishl(lnum, shift_count);
         self.put_i32_to_f64(shifted)
     }
@@ -1185,7 +1214,7 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_signed_right_shift", ?x, ?y);
         let lnum = self.put_runtime_to_int32(support, x);
         let rnum = self.put_runtime_to_uint32(support, y);
-        let shift_count = self.builder.ins().urem_imm(rnum, 32);
+        let shift_count = self.builder.ins().urem_imm_s(rnum, 32);
         let shifted = self.builder.ins().sshr(lnum, shift_count);
         self.put_i32_to_f64(shifted)
     }
@@ -1200,7 +1229,7 @@ impl<'a> Editor<'a> {
         logger::debug!(event = "put_unsigned_right_shift", ?x, ?y);
         let lnum = self.put_runtime_to_uint32(support, x);
         let rnum = self.put_runtime_to_uint32(support, y);
-        let shift_count = self.builder.ins().urem_imm(rnum, 32);
+        let shift_count = self.builder.ins().urem_imm_u(rnum, 32);
         let shifted = self.builder.ins().ushr(lnum, shift_count);
         self.put_i32_to_f64(shifted)
     }
@@ -1279,14 +1308,14 @@ impl<'a> Editor<'a> {
         BooleanIr(
             self.builder
                 .ins()
-                .icmp_imm(UnsignedGreaterThan, kind, Value::KIND_NULL as i64),
+                .icmp_imm_u(UnsignedGreaterThan, kind, Value::KIND_NULL as i64),
         )
     }
 
     pub fn put_is_nullptr(&mut self, value: ir::Value) -> BooleanIr {
         logger::debug!(event = "put_is_nullptr", ?value);
         use ir::condcodes::IntCC::Equal;
-        BooleanIr(self.builder.ins().icmp_imm(Equal, value, 0))
+        BooleanIr(self.builder.ins().icmp_imm_u(Equal, value, 0))
     }
 
     pub fn put_is_same_boolean(&mut self, lhs: BooleanIr, rhs: BooleanIr) -> BooleanIr {
@@ -1317,7 +1346,7 @@ impl<'a> Editor<'a> {
     pub fn put_is_kind_of(&mut self, kind_imm: u8, any: AnyIr) -> BooleanIr {
         use ir::condcodes::IntCC::Equal;
         let kind = self.put_load_kind(any);
-        BooleanIr(self.builder.ins().icmp_imm(Equal, kind, kind_imm as i64))
+        BooleanIr(self.builder.ins().icmp_imm_u(Equal, kind, kind_imm as i64))
     }
 
     fn put_is_same_int_value(&mut self, lhs: ir::Value, rhs: ir::Value) -> BooleanIr {
@@ -1382,11 +1411,14 @@ impl<'a> Editor<'a> {
         // TODO(perf): compile-time evaluation
         let num_locals = self.put_load_num_locals_from_coroutine();
         let num_locals = self.builder.ins().uextend(self.addr_type, num_locals);
-        let offset = self.builder.ins().imul_imm(num_locals, Value::SIZE as i64);
         let offset = self
             .builder
             .ins()
-            .iadd_imm(offset, Coroutine::LOCALS_OFFSET as i64);
+            .imul_imm_u(num_locals, Value::SIZE as i64);
+        let offset = self
+            .builder
+            .ins()
+            .iadd_imm_u(offset, Coroutine::LOCALS_OFFSET as i64);
         ScratchBuffer {
             addr: self.builder.ins().iadd(coroutine.0, offset),
             offset: 0,
@@ -1598,7 +1630,7 @@ impl<'a> Editor<'a> {
         scratch_buffer.offset += Value::SIZE;
         // Just return the address on the scratch buffer where the value has been stored.
         static_assert_eq!(Value::ALIGNMENT, Value::HOLDER_SIZE);
-        AnyIr(self.builder.ins().iadd_imm(addr, offset as i64))
+        AnyIr(self.builder.ins().iadd_imm_u(addr, offset as i64))
     }
 
     // operations on the capture buffer of the coroutine
@@ -1608,11 +1640,14 @@ impl<'a> Editor<'a> {
         // TODO(perf): compile-time evaluation
         let num_locals = self.put_load_num_locals_from_coroutine();
         let num_locals = self.builder.ins().uextend(self.addr_type, num_locals);
-        let offset = self.builder.ins().imul_imm(num_locals, Value::SIZE as i64);
         let offset = self
             .builder
             .ins()
-            .iadd_imm(offset, Coroutine::LOCALS_OFFSET as i64);
+            .imul_imm_u(num_locals, Value::SIZE as i64);
+        let offset = self
+            .builder
+            .ins()
+            .iadd_imm_u(offset, Coroutine::LOCALS_OFFSET as i64);
         let scratch_buffer_len = self.put_load_scratch_buffer_len_from_coroutine();
         let scratch_buffer_len = self
             .builder
@@ -2645,10 +2680,12 @@ impl<'a> Editor<'a> {
     // scope cleanup checker
 
     pub fn put_init_scope_cleanup_checker(&mut self) {
-        logger::debug!(event = "put_init_scope_cleanup_cheker");
+        logger::debug!(event = "put_init_scope_cleanup_checker");
         if !self.coroutine_mode {
             let zero = self.builder.ins().iconst(ir::types::I16, 0);
-            self.builder.ins().stack_store(zero, self.fcs, 8);
+            self.builder
+                .ins()
+                .stack_store(self.addr_type, zero, self.fcs, 8);
         }
     }
 
@@ -2662,7 +2699,9 @@ impl<'a> Editor<'a> {
             let coroutine = self.coroutine();
             self.put_store(scope_id, coroutine.0, Coroutine::SCOPE_ID_OFFSET);
         } else {
-            self.builder.ins().stack_store(scope_id, self.fcs, 8);
+            self.builder
+                .ins()
+                .stack_store(self.addr_type, scope_id, self.fcs, 8);
         }
     }
 
@@ -2673,12 +2712,14 @@ impl<'a> Editor<'a> {
             let coroutine = self.coroutine();
             self.put_load_i16(coroutine.0, Coroutine::SCOPE_ID_OFFSET)
         } else {
-            self.builder.ins().stack_load(ir::types::I16, self.fcs, 8)
+            self.builder
+                .ins()
+                .stack_load(self.addr_type, ir::types::I16, self.fcs, 8)
         };
         let assertion = self
             .builder
             .ins()
-            .icmp_imm(Equal, scope_id, expected.id() as i64);
+            .icmp_imm_u(Equal, scope_id, expected.id() as i64);
         self.put_assert(support, BooleanIr(assertion), c"invalid scope");
     }
 }
