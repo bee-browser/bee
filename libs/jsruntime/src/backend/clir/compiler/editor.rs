@@ -871,7 +871,9 @@ impl<'a> Editor<'a> {
     pub fn put_clear_new_target_of_callee_cc(&mut self) {
         const OFFSET: i32 = CallContext::NEW_TARGET_OFFSET as i32;
         let none = self.builder.ins().iconst(self.addr_type, 0);
-        self.builder.ins().stack_store(none, self.callee_cc, OFFSET);
+        self.builder
+            .ins()
+            .stack_store(self.addr_type, none, self.callee_cc, OFFSET);
     }
 
     pub fn put_store_caller_to_callee_cc(&mut self) {
@@ -936,7 +938,7 @@ impl<'a> Editor<'a> {
     }
 
     pub fn put_get_argv_from_callee_cc(&mut self) -> ArgvIr {
-        const OFFSET: i32 = ExecContext::ARGV_OFFSET as i32;
+        const OFFSET: i32 = CallContext::ARGV_OFFSET as i32;
         ArgvIr(self.builder.ins().stack_load(
             self.addr_type,
             self.addr_type,
@@ -965,13 +967,11 @@ impl<'a> Editor<'a> {
 
     pub fn put_stack_too_deep(&mut self, max: u16) -> BooleanIr {
         use ir::condcodes::IntCC::UnsignedGreaterThan;
-        const OFFSET: i32 = ExecContext::DEPTH_OFFSET as i32;
-        let depth = self.builder.ins().stack_load(
-            self.addr_type,
-            ir::types::I16,
-            self.callee_cc,
-            OFFSET,
-        );
+        const OFFSET: i32 = CallContext::DEPTH_OFFSET as i32;
+        let depth =
+            self.builder
+                .ins()
+                .stack_load(self.addr_type, ir::types::I16, self.callee_cc, OFFSET);
         BooleanIr(
             self.builder
                 .ins()
