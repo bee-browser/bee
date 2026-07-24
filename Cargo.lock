@@ -209,7 +209,7 @@ dependencies = [
 name = "base"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.13.0",
+ "bitflags 2.13.1",
  "criterion",
  "procmacros",
 ]
