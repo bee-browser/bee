@@ -37,7 +37,7 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt
-      - uses: davidlattimore/wild-action@0bbbfa5df4380cab8e63cb8505a1ce65e1d10203 # 0.9.0
+      - uses: davidlattimore/wild-action@dc926c45399e1842cf81e604f52bdf0ad86a0c09 # 0.10.0
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version-file: .tool-versions
