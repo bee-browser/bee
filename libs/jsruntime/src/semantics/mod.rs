@@ -844,9 +844,9 @@ where
 
     fn handle_class_context(&mut self) {
         // Create a block scope for the class definition.
-        let _scope_ref = self.global_analysis.scope_tree_builder.push_block();
+        let scope_ref = self.global_analysis.scope_tree_builder.push_class();
 
-        analysis_mut!(self).process_class_context();
+        analysis_mut!(self).process_class_context(scope_ref);
     }
 
     fn handle_class_element_context(&mut self) {
@@ -866,6 +866,7 @@ where
         }
 
         // Pop the block scope created in handle_class_context().
+        analysis_mut!(self).end_scope();
         self.global_analysis.scope_tree_builder.pop();
 
         analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
@@ -2030,7 +2031,9 @@ impl FunctionAnalysis {
         self.process_closure_expression(scope_ref, lambda_id, true, false);
     }
 
-    fn process_class_context(&mut self) {
+    fn process_class_context(&mut self, scope_ref: ScopeRef) {
+        self.start_scope(scope_ref, false);
+
         let class_index = self.commands.len();
         debug_assert!(class_index <= usize::MAX - 7);
         self.class_stack.push(ClassAnalysis {
@@ -2113,10 +2116,12 @@ impl FunctionAnalysis {
             let symbol = self.symbol_stack.last().unwrap().0;
             self.commands[index + 2] = CompileCommand::Function(symbol);
             self.commands.push(CompileCommand::Class(symbol));
-            self.commands.push(CompileCommand::Duplicate(0));
             self.commands
                 .push(CompileCommand::VariableReference(symbol));
             self.commands.push(CompileCommand::ImmutableVariable);
+            self.commands
+                .push(CompileCommand::VariableReference(symbol));
+            self.commands.push(CompileCommand::Dereference);
             global_analysis
                 .scope_tree_builder
                 .add_local(symbol, self.num_locals, true);
