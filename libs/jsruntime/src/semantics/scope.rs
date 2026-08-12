@@ -165,6 +165,10 @@ impl ScopeTreeBuilder {
         self.push(ScopeKind::Block)
     }
 
+    pub fn push_class(&mut self) -> ScopeRef {
+        self.push(ScopeKind::Class)
+    }
+
     fn push(&mut self, kind: ScopeKind) -> ScopeRef {
         let index = self.scopes.len();
         self.scopes.push(Scope {
@@ -400,6 +404,7 @@ impl std::fmt::Display for ScopeDisplay<'_> {
         write!(f, "{:indent$}", "", indent = self.scope.depth as usize)?;
         match self.scope.kind {
             ScopeKind::Block => write!(f, "B")?,
+            ScopeKind::Class => write!(f, "C")?,
             ScopeKind::Function => write!(f, "F")?,
         }
         write!(f, "@{}:", self.index)?;
@@ -415,6 +420,7 @@ impl std::fmt::Display for ScopeDisplay<'_> {
 
 enum ScopeKind {
     Block,
+    Class,
     Function,
 }
 
