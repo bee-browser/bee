@@ -13,11 +13,11 @@ version.workspace = true
 base = { path = "../base" }
 proc-macro2 = "1.0.107"
 quote = "1.0.47"
-syn = { version = "3.0.3", features = ["extra-traits"] }
+syn = { version = "3.0.4", features = ["extra-traits"] }
 
 [dev-dependencies]
 jsgc = { path = "../jsgc" }
-trybuild = "1.0.118"
+trybuild = "1.0.120"
 
 [lints]
 workspace = true

@@ -12,7 +12,7 @@ version.workspace = true
 [dependencies]
 anyhow = "1.0.104"
 base = { path = "../../libs/base" }
-clap = { version = "4.6.4", features = ["derive", "env"] }
+clap = { version = "4.6.6", features = ["derive", "env"] }
 indexmap = { version = "2.14.0", features = ["serde"] }
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
@@ -22,7 +22,7 @@ serde_yaml = "0.9.34"
 smallvec = "1.15.2"
 
 [dev-dependencies]
-ctor = "1.0.10"
+ctor = "1.0.13"
 
 [lints]
 workspace = true

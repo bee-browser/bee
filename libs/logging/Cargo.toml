@@ -11,13 +11,13 @@ version.workspace = true
 
 [dependencies]
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
-ctor = "1.0.10"
+ctor = "1.0.13"
 is-terminal = "0.4.17"
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 
 [dev-dependencies]
-trybuild = "1.0.118"
+trybuild = "1.0.120"
 
 [lints]
 workspace = true
