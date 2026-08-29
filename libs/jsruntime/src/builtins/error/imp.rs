@@ -58,7 +58,7 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Re
     Ok(Value::Object(object))
 }
 
-//#sec-error.iserror constructor.function {"signature": "Error.isError ( arg )"}
+//#sec-error.iserror constructor.function
 pub fn error_is_error<X>(
     _runtime: &mut Runtime<X>,
     context: &mut CallContext,

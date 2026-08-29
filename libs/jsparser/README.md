@@ -6,7 +6,7 @@
 
 ## Current supported version
 
-* [ECMA-262 15th edition (ES2024)](https://262.ecma-international.org/15.0/)
+* [ECMA-262 17th edition (ES2026)](https://262.ecma-international.org/17.0/)
 
 ## How is jsparser implemented?
 
