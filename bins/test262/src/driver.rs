@@ -72,8 +72,16 @@ impl<'a> Driver<'a> {
                     included.insert("doneprintHandle.js");
                 }
 
-                assert!(metadata.includes.iter().all_unique());
-                for include in metadata.includes.iter() {
+                let unique_includes: Vec<_> = metadata.includes.iter().unique().cloned().collect();
+                if metadata.includes.len() != unique_includes.len() {
+                    eprintln!(
+                        "warning: duplicate includes in {}: {:?}",
+                        entry.path().display(),
+                        metadata.includes
+                    );
+                }
+
+                for include in unique_includes.iter() {
                     if included.contains(include.as_str()) {
                         continue;
                     }
