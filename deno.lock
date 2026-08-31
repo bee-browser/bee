@@ -51,7 +51,7 @@
     "jsr:@std/text@^1.0.19": "1.0.19",
     "jsr:@std/toml@1.0.11": "1.0.11",
     "jsr:@std/yaml@1.2.0": "1.2.0",
-    "jsr:@zip-js/zip-js@2.8.59": "2.8.59",
+    "jsr:@zip-js/zip-js@2.8.61": "2.8.61",
     "npm:@eyalsh/docopt@1.0.7": "1.0.7",
     "npm:acorn@8.18.0": "8.18.0",
     "npm:change-case@5.4.4": "5.4.4",
@@ -294,8 +294,8 @@
     "@std/yaml@1.2.0": {
       "integrity": "20beb41e4983ba3437dbefac62b14061ab058e8a187596f19d28ff9035f6e6cf"
     },
-    "@zip-js/zip-js@2.8.59": {
-      "integrity": "318ccde6171ebbaec007ace4794a660a35cc215063e8863d2072f857197f42e2"
+    "@zip-js/zip-js@2.8.61": {
+      "integrity": "8da37318aeefa76faa915058722ab8d1ee51e068edc8be69ea0810e01d724955"
     }
   },
   "npm": {
@@ -328,14 +328,14 @@
     "@csstools/color-helpers@6.1.1": {
       "integrity": "sha512-gLNsunvwf3mCi5u5o46/Z/JcJMnhbHSaZ69rkgPzNM3J4s8hWwpPUQB6/tt0EDFyCiWzxANlx+2LJwpYj4zS1w=="
     },
-    "@csstools/css-calc@3.3.0_@csstools+css-parser-algorithms@4.0.0__@csstools+css-tokenizer@4.0.0_@csstools+css-tokenizer@4.0.0": {
+    "@csstools/css-calc@3.3.0_@csstools+css-parser-algorithms@4.0.0_@csstools+css-tokenizer@4.0.0": {
       "integrity": "sha512-c5ihYsPkdG6JCkU2zTMm4+k6r7RXuGxtWYhu5DHMIiF1FHzrfmHL5so11AoFpUv/tu61xfcmT4AmKoFfMPoqdQ==",
       "dependencies": [
         "@csstools/css-parser-algorithms",
         "@csstools/css-tokenizer"
       ]
     },
-    "@csstools/css-color-parser@4.2.0_@csstools+css-parser-algorithms@4.0.0__@csstools+css-tokenizer@4.0.0_@csstools+css-tokenizer@4.0.0": {
+    "@csstools/css-color-parser@4.2.0_@csstools+css-parser-algorithms@4.0.0_@csstools+css-tokenizer@4.0.0": {
       "integrity": "sha512-5+5LEmFuY1AjXdYhmgjTJogtQnP1evJ1zrBZGUNZ0thkpwnnmKxcHdAMn/OtFjAb25zA+jKDVYVRl+5G7rjv1A==",
       "dependencies": [
         "@csstools/color-helpers",
@@ -819,7 +819,7 @@
       "jsr:@std/streams@1.1.2",
       "jsr:@std/toml@1.0.11",
       "jsr:@std/yaml@1.2.0",
-      "jsr:@zip-js/zip-js@2.8.59",
+      "jsr:@zip-js/zip-js@2.8.61",
       "npm:@eyalsh/docopt@1.0.7",
       "npm:acorn@8.18.0",
       "npm:change-case@5.4.4",

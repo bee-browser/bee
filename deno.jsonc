@@ -31,7 +31,7 @@
     "@std/streams": "jsr:@std/streams@1.1.2",
     "@std/toml": "jsr:@std/toml@1.0.11",
     "@std/yaml": "jsr:@std/yaml@1.2.0",
-    "@zip-js/zip-js": "jsr:@zip-js/zip-js@2.8.59",
+    "@zip-js/zip-js": "jsr:@zip-js/zip-js@2.8.61",
     "acorn": "npm:acorn@8.18.0",
     "change-case": "npm:change-case@5.4.4",
     "deep-diff": "npm:deep-diff@1.0.2",
