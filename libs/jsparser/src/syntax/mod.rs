@@ -52,7 +52,7 @@ pub trait NodeHandler<'s> {
 
     fn start(&mut self);
     fn accept(&mut self) -> Result<Self::Artifact, Error>;
-    fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error>;
+    fn handle_node(&mut self, node: Node<'s>) -> Result<(), Error>;
     fn make_symbol(&mut self, lexeme: &str) -> Symbol;
 }
 
@@ -4395,7 +4395,9 @@ where
         logger::debug!(event = "accept");
         debug_assert_eq!(self.function_stack.len(), 1);
         let nodes = std::mem::take(&mut self.nodes);
-        self.handler.handle_nodes(nodes.into_iter())?;
+        for node in nodes.into_iter() {
+            self.handler.handle_node(node)?;
+        }
         self.handler.accept()
     }
 

@@ -208,7 +208,7 @@ impl<'s> NodeHandler<'s> for NullHandler {
         Ok(())
     }
 
-    fn handle_nodes(&mut self, _nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error> {
+    fn handle_node(&mut self, _node: Node<'s>) -> Result<(), Error> {
         Ok(())
     }
 
