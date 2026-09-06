@@ -369,138 +369,6 @@ where
         self.analysis_stack.last_mut().unwrap()
     }
 
-    /// Handles an AST node coming from the parser.
-    fn handle_node(&mut self, node: Node<'_>) {
-        logger::debug!(event = "handle_node", ?node);
-        match node {
-            Node::Null => self.handle_null(),
-            Node::Boolean(value) => self.handle_boolean(value),
-            Node::Number(value, ..) => self.handle_number(value),
-            Node::String(value, ..) => self.handle_string(value),
-            Node::TemplateLiteral(n) => self.handle_template_literal(n),
-            Node::Array => self.handle_array(),
-            Node::Object => self.handle_object(),
-            Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
-            Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
-            Node::MemberExpression(kind) => self.handle_member_expression(kind),
-            Node::This => self.handle_this(),
-            Node::Super => self.handle_super(),
-            Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
-            Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
-            Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
-            Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
-            Node::Arguments => self.handle_arguments(),
-            Node::CallExpression(super_call) => self.handle_call_expression(super_call),
-            Node::NewExpression(has_args) => self.handle_new_expression(has_args),
-            Node::NonNullish => self.handle_non_nullish(),
-            Node::OptionalChain(kind) => self.handle_optional_chain(kind),
-            Node::UpdateExpression(op) => self.handle_update_expression(op),
-            Node::UnaryExpression(op) => self.handle_operator(op.into()),
-            Node::BinaryExpression(op) => self.handle_binary_expression(op),
-            Node::LogicalExpression(_op) => self.handle_conditional_expression(),
-            Node::ConditionalExpression => self.handle_conditional_expression(),
-            Node::AssignmentExpression(AssignmentOperator::Assignment) => {
-                self.handle_operator(CompileCommand::Assignment)
-            }
-            Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => {
-                self.handle_conditional_assignment()
-            }
-            Node::AssignmentExpression(AssignmentOperator::LogicalOrAssignment) => {
-                self.handle_conditional_assignment()
-            }
-            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => {
-                self.handle_conditional_assignment()
-            }
-            Node::AssignmentExpression(op) => self.handle_shorthand_assignment_expression(op),
-            Node::SequenceExpression => self.handle_sequence_expression(),
-            Node::BlockStatement => self.handle_block_statement(),
-            Node::LexicalBinding(init) => self.handle_lexical_binding(init),
-            Node::LetDeclaration(n) => self.handle_let_declaration(n),
-            Node::ConstDeclaration(n) => self.handle_const_declaration(n),
-            Node::VariableDeclaration(init) => self.handle_variable_declaration(init),
-            Node::VariableStatement(n) => self.handle_variable_statement(n),
-            Node::BindingElement(init) => self.handle_binding_element(init),
-            Node::EmptyStatement => self.handle_empty_statement(),
-            Node::ExpressionStatement => self.handle_expression_statement(),
-            Node::IfElseStatement => self.handle_if_else_statement(),
-            Node::IfStatement => self.handle_if_statement(),
-            Node::DoWhileStatement => self.handle_do_while_statement(),
-            Node::WhileStatement => self.handle_while_statement(),
-            Node::ForStatement(flags) => self.handle_for_statement(flags),
-            Node::ContinueStatement(symbol) => self.handle_continue_statement(symbol),
-            Node::BreakStatement(symbol) => self.handle_break_statement(symbol),
-            Node::ReturnStatement(n) => self.handle_return_statement(n),
-            Node::SwitchStatement => self.handle_switch_statement(),
-            Node::CaseBlock => self.handle_case_block(),
-            Node::CaseSelector => self.handle_case_selector(),
-            Node::CaseClause(has_statement) => self.handle_case_clause(has_statement),
-            Node::DefaultSelector => self.handle_default_selector(),
-            Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
-            Node::LabelledStatement(symbol, is_iteration_statement) => {
-                self.handle_labelled_statement(symbol, is_iteration_statement)
-            }
-            Node::Label(symbol) => self.handle_label(symbol),
-            Node::ThrowStatement => self.handle_throw_statement(),
-            Node::TryStatement => self.handle_try_statement(),
-            Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
-            Node::FinallyClause => self.handle_finally_clause(),
-            Node::CatchParameter => self.handle_catch_parameter(),
-            Node::TryBlock => self.handle_try_block(),
-            Node::CatchBlock => self.handle_catch_block(),
-            Node::FinallyBlock => self.handle_finally_block(),
-            Node::DebuggerStatement => self.handle_debugger_statement(),
-            Node::FormalParameter => self.handle_formal_parameter(),
-            Node::FormalParameters(n) => self.handle_formal_parameters(n),
-            Node::FunctionDeclaration => self.handle_function_declaration(),
-            Node::ClassContext => self.handle_class_context(),
-            Node::ClassElementContext => self.handle_class_element_context(),
-            Node::ClassDeclaration(named) => self.handle_class_declaration(named),
-            Node::ClassHeritage => self.handle_class_heritage(),
-            Node::ClassElement(ClassElementKind::StaticField) => {
-                self.handle_class_element_static_field()
-            }
-            Node::ClassElement(ClassElementKind::StaticFieldWithInitializer) => {
-                self.handle_class_element_static_field_with_initializer()
-            }
-            Node::ClassElement(ClassElementKind::Method) => self.handle_class_element_method(),
-            Node::ClassElement(ClassElementKind::StaticMethod) => {
-                self.handle_class_element_static_method()
-            }
-            Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
-            Node::FunctionExpression(named) => self.handle_function_expression(named),
-            Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
-            Node::ArrowFunction => self.handle_arrow_function(),
-            Node::AsyncArrowFunction => self.handle_async_arrow_function(),
-            Node::Method(in_class) => self.handle_method(in_class),
-            Node::AsyncMethod(in_class) => self.handle_async_method(in_class),
-            Node::AwaitExpression => self.handle_await_expression(),
-            Node::Then(expr) => self.handle_then(expr),
-            Node::Else(expr) => self.handle_else(expr),
-            Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
-            Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
-            Node::NullishShortCircuit => self.handle_nullish_short_circuit(),
-            Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
-            Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
-            Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
-            Node::LoopStart => self.handle_loop_start(),
-            Node::LoopInitExpression => self.handle_loop_init_expression(),
-            Node::LoopInitVarDeclaration => self.handle_loop_init_var_declaration(),
-            Node::LoopInitLexicalDeclaration => self.handle_loop_init_lexical_declaration(),
-            Node::LoopTest => self.handle_loop_test(),
-            Node::LoopNext => self.handle_loop_next(),
-            Node::LoopBody => self.handle_loop_body(),
-            Node::StartBlockScope => self.handle_start_block_scope(),
-            Node::EndBlockScope => self.handle_end_block_scope(),
-            Node::FunctionContext(name) => self.handle_function_context(name),
-            Node::AsyncFunctionContext(name) => self.handle_async_function_context(name),
-            Node::ArrowFunctionContext => self.handle_arrow_function_context(),
-            Node::AsyncArrowFunctionContext => self.handle_async_arrow_function_context(),
-            Node::FunctionSignature => self.handle_function_signature(),
-            Node::Dereference => self.handle_dereference(),
-            Node::ToString => self.handle_to_string(),
-        }
-    }
-
     fn handle_null(&mut self) {
         analysis_mut!(self).put_null();
     }
@@ -1399,9 +1267,134 @@ where
         })
     }
 
-    fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), ParserError> {
-        for node in nodes {
-            self.handle_node(node);
+    fn handle_node(&mut self, node: Node<'s>) -> Result<(), ParserError> {
+        logger::debug!(event = "handle_node", ?node);
+        match node {
+            Node::Null => self.handle_null(),
+            Node::Boolean(value) => self.handle_boolean(value),
+            Node::Number(value, ..) => self.handle_number(value),
+            Node::String(value, ..) => self.handle_string(value),
+            Node::TemplateLiteral(n) => self.handle_template_literal(n),
+            Node::Array => self.handle_array(),
+            Node::Object => self.handle_object(),
+            Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
+            Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
+            Node::MemberExpression(kind) => self.handle_member_expression(kind),
+            Node::This => self.handle_this(),
+            Node::Super => self.handle_super(),
+            Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
+            Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
+            Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
+            Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
+            Node::Arguments => self.handle_arguments(),
+            Node::CallExpression(super_call) => self.handle_call_expression(super_call),
+            Node::NewExpression(has_args) => self.handle_new_expression(has_args),
+            Node::NonNullish => self.handle_non_nullish(),
+            Node::OptionalChain(kind) => self.handle_optional_chain(kind),
+            Node::UpdateExpression(op) => self.handle_update_expression(op),
+            Node::UnaryExpression(op) => self.handle_operator(op.into()),
+            Node::BinaryExpression(op) => self.handle_binary_expression(op),
+            Node::LogicalExpression(_op) => self.handle_conditional_expression(),
+            Node::ConditionalExpression => self.handle_conditional_expression(),
+            Node::AssignmentExpression(AssignmentOperator::Assignment) => {
+                self.handle_operator(CompileCommand::Assignment)
+            }
+            Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => {
+                self.handle_conditional_assignment()
+            }
+            Node::AssignmentExpression(AssignmentOperator::LogicalOrAssignment) => {
+                self.handle_conditional_assignment()
+            }
+            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => {
+                self.handle_conditional_assignment()
+            }
+            Node::AssignmentExpression(op) => self.handle_shorthand_assignment_expression(op),
+            Node::SequenceExpression => self.handle_sequence_expression(),
+            Node::BlockStatement => self.handle_block_statement(),
+            Node::LexicalBinding(init) => self.handle_lexical_binding(init),
+            Node::LetDeclaration(n) => self.handle_let_declaration(n),
+            Node::ConstDeclaration(n) => self.handle_const_declaration(n),
+            Node::VariableDeclaration(init) => self.handle_variable_declaration(init),
+            Node::VariableStatement(n) => self.handle_variable_statement(n),
+            Node::BindingElement(init) => self.handle_binding_element(init),
+            Node::EmptyStatement => self.handle_empty_statement(),
+            Node::ExpressionStatement => self.handle_expression_statement(),
+            Node::IfElseStatement => self.handle_if_else_statement(),
+            Node::IfStatement => self.handle_if_statement(),
+            Node::DoWhileStatement => self.handle_do_while_statement(),
+            Node::WhileStatement => self.handle_while_statement(),
+            Node::ForStatement(flags) => self.handle_for_statement(flags),
+            Node::ContinueStatement(symbol) => self.handle_continue_statement(symbol),
+            Node::BreakStatement(symbol) => self.handle_break_statement(symbol),
+            Node::ReturnStatement(n) => self.handle_return_statement(n),
+            Node::SwitchStatement => self.handle_switch_statement(),
+            Node::CaseBlock => self.handle_case_block(),
+            Node::CaseSelector => self.handle_case_selector(),
+            Node::CaseClause(has_statement) => self.handle_case_clause(has_statement),
+            Node::DefaultSelector => self.handle_default_selector(),
+            Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
+            Node::LabelledStatement(symbol, is_iteration_statement) => {
+                self.handle_labelled_statement(symbol, is_iteration_statement)
+            }
+            Node::Label(symbol) => self.handle_label(symbol),
+            Node::ThrowStatement => self.handle_throw_statement(),
+            Node::TryStatement => self.handle_try_statement(),
+            Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
+            Node::FinallyClause => self.handle_finally_clause(),
+            Node::CatchParameter => self.handle_catch_parameter(),
+            Node::TryBlock => self.handle_try_block(),
+            Node::CatchBlock => self.handle_catch_block(),
+            Node::FinallyBlock => self.handle_finally_block(),
+            Node::DebuggerStatement => self.handle_debugger_statement(),
+            Node::FormalParameter => self.handle_formal_parameter(),
+            Node::FormalParameters(n) => self.handle_formal_parameters(n),
+            Node::FunctionDeclaration => self.handle_function_declaration(),
+            Node::ClassContext => self.handle_class_context(),
+            Node::ClassElementContext => self.handle_class_element_context(),
+            Node::ClassDeclaration(named) => self.handle_class_declaration(named),
+            Node::ClassHeritage => self.handle_class_heritage(),
+            Node::ClassElement(ClassElementKind::StaticField) => {
+                self.handle_class_element_static_field()
+            }
+            Node::ClassElement(ClassElementKind::StaticFieldWithInitializer) => {
+                self.handle_class_element_static_field_with_initializer()
+            }
+            Node::ClassElement(ClassElementKind::Method) => self.handle_class_element_method(),
+            Node::ClassElement(ClassElementKind::StaticMethod) => {
+                self.handle_class_element_static_method()
+            }
+            Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
+            Node::FunctionExpression(named) => self.handle_function_expression(named),
+            Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
+            Node::ArrowFunction => self.handle_arrow_function(),
+            Node::AsyncArrowFunction => self.handle_async_arrow_function(),
+            Node::Method(in_class) => self.handle_method(in_class),
+            Node::AsyncMethod(in_class) => self.handle_async_method(in_class),
+            Node::AwaitExpression => self.handle_await_expression(),
+            Node::Then(expr) => self.handle_then(expr),
+            Node::Else(expr) => self.handle_else(expr),
+            Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
+            Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
+            Node::NullishShortCircuit => self.handle_nullish_short_circuit(),
+            Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
+            Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
+            Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
+            Node::LoopStart => self.handle_loop_start(),
+            Node::LoopInitExpression => self.handle_loop_init_expression(),
+            Node::LoopInitVarDeclaration => self.handle_loop_init_var_declaration(),
+            Node::LoopInitLexicalDeclaration => self.handle_loop_init_lexical_declaration(),
+            Node::LoopTest => self.handle_loop_test(),
+            Node::LoopNext => self.handle_loop_next(),
+            Node::LoopBody => self.handle_loop_body(),
+            Node::StartBlockScope => self.handle_start_block_scope(),
+            Node::EndBlockScope => self.handle_end_block_scope(),
+            Node::FunctionContext(name) => self.handle_function_context(name),
+            Node::AsyncFunctionContext(name) => self.handle_async_function_context(name),
+            Node::ArrowFunctionContext => self.handle_arrow_function_context(),
+            Node::AsyncArrowFunctionContext => self.handle_async_arrow_function_context(),
+            Node::FunctionSignature => self.handle_function_signature(),
+            Node::Dereference => self.handle_dereference(),
+            Node::ToString => self.handle_to_string(),
         }
         Ok(())
     }
