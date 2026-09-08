@@ -2,7 +2,6 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use anyhow::anyhow;
 use clap::Parser as _;
 
 use jsparser::Error;
@@ -19,6 +18,10 @@ struct CommandLine {
     /// Parse as an ES module.
     #[arg(short, long)]
     module: bool,
+
+    /// Print nodes.
+    #[arg(short, long)]
+    print: bool,
 
     /// A path to a JavaScript file.
     #[arg()]
@@ -43,33 +46,41 @@ fn main() -> Result<()> {
 
     // And then convert it into a UTF-8 string loosely.
     let script = String::from_utf8_lossy(&raw);
+    let printer = NodePrinter::new(cl.print);
 
     let now = std::time::Instant::now();
     let mut parser = if cl.module {
-        Parser::for_module(&script, Processor::new(NullHandler::default(), true))
+        Parser::for_module(&script, Processor::new(printer, true))
     } else {
-        Parser::for_script(&script, Processor::new(NullHandler::default(), false))
+        Parser::for_script(&script, Processor::new(printer, false))
     };
-    match parser.parse() {
-        Ok(_) => {
-            let elapsed = now.elapsed().as_micros();
-            let bytes = script.len();
-            let stack_depth = parser.max_stack_depth();
-            let template_literal_depth = parser.max_template_literal_depth();
-            println!(
-                "time={elapsed} size={bytes} max-stack-depth={stack_depth} \
-                 max-template-literal-depth={template_literal_depth}"
-            );
-            Ok(())
+    parser.parse()?;
+
+    let elapsed = now.elapsed().as_micros();
+    let bytes = script.len();
+    let stack_depth = parser.max_stack_depth();
+    let template_literal_depth = parser.max_template_literal_depth();
+    println!(
+        "time={elapsed} size={bytes} max-stack-depth={stack_depth} \
+         max-template-literal-depth={template_literal_depth}");
+    Ok(())
+}
+
+struct NodePrinter {
+    symbol_registry: SymbolRegistry,
+    print: bool,
+}
+
+impl NodePrinter {
+    fn new(print: bool) -> Self {
+        Self {
+            symbol_registry: Default::default(),
+            print,
         }
-        Err(_) => Err(anyhow!("Parse error")),
     }
 }
 
-#[derive(Default)]
-struct NullHandler(SymbolRegistry);
-
-impl<'s> NodeHandler<'s> for NullHandler {
+impl<'s> NodeHandler<'s> for NodePrinter {
     type Artifact = ();
 
     fn start(&mut self) {}
@@ -78,11 +89,14 @@ impl<'s> NodeHandler<'s> for NullHandler {
         Ok(())
     }
 
-    fn handle_node(&mut self, _node: Node<'s>) -> Result<(), Error> {
+    fn handle_node(&mut self, node: Node<'s>) -> Result<(), Error> {
+        if self.print {
+            println!("{node:?}");
+        }
         Ok(())
     }
 
     fn make_symbol(&mut self, lexeme: &str) -> jsparser::Symbol {
-        self.0.intern_str(lexeme)
+        self.symbol_registry.intern_str(lexeme)
     }
 }
