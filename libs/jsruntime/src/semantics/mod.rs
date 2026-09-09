@@ -710,7 +710,7 @@ where
             .add_function_declaration(scope_ref, batch_index);
     }
 
-    fn handle_class_context(&mut self) {
+    fn handle_class_context(&mut self, _name: Symbol) {
         // Create a block scope for the class definition.
         let scope_ref = self.global_analysis.scope_tree_builder.push_class();
 
@@ -1349,7 +1349,7 @@ where
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
-            Node::ClassContext => self.handle_class_context(),
+            Node::ClassContext(name) => self.handle_class_context(name),
             Node::ClassElementContext => self.handle_class_element_context(),
             Node::ClassDeclaration(named) => self.handle_class_declaration(named),
             Node::ClassHeritage => self.handle_class_heritage(),

@@ -337,7 +337,7 @@ pub enum Node<'s> {
     AsyncArrowFunctionContext,
     FunctionSignature,
     FunctionDeclaration,
-    ClassContext,
+    ClassContext(Symbol),
     ClassElementContext,
     ClassDeclaration(bool),
     ClassHeritage,
@@ -831,7 +831,15 @@ where
 
     // _CLASS_CONTEXT_
     fn process_class_context(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ClassContext);
+        let name = match self.stack.last().unwrap().detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            Detail::Token(index) => {
+                debug_assert!(matches!(self.token(index).kind, TokenKind::Class));
+                Symbol::NONE // anonymous function
+            }
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::ClassContext(name));
         Ok(())
     }
 
