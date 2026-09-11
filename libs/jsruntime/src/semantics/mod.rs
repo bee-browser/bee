@@ -710,24 +710,24 @@ where
             .add_function_declaration(scope_ref, batch_index);
     }
 
-    fn handle_class_context(&mut self, _name: Symbol) {
+    fn handle_class_context(&mut self, name: Symbol) {
         // Create a block scope for the class definition.
         let scope_ref = self.global_analysis.scope_tree_builder.push_class();
 
-        analysis_mut!(self).process_class_context(scope_ref);
+        analysis_mut!(self).process_class_context(name, scope_ref);
     }
 
     fn handle_class_element_context(&mut self) {
         analysis_mut!(self).process_class_element_context();
     }
 
-    fn handle_class_declaration(&mut self, named: bool) {
+    fn handle_class_declaration(&mut self, name: Symbol) {
         if !self.analysis().has_class_constructor() {
             self.define_default_constructor();
         }
 
-        let mut analysis =
-            analysis_mut!(self).process_class_definition(named, &mut self.global_analysis);
+        let mut analysis = analysis_mut!(self).process_class_definition(&mut self.global_analysis);
+        debug_assert_eq!(analysis.name, name);
 
         if !analysis.static_field_initializer.is_empty() {
             self.call_static_field_initializer(&mut analysis.static_field_initializer);
@@ -737,7 +737,7 @@ where
         analysis_mut!(self).end_scope();
         self.global_analysis.scope_tree_builder.pop();
 
-        analysis_mut!(self).process_class_declaration(named, &mut self.global_analysis);
+        analysis_mut!(self).process_class_declaration(name, &mut self.global_analysis);
     }
 
     fn define_default_constructor(&mut self) {
@@ -793,7 +793,12 @@ where
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false, false);
+        analysis_mut!(self).process_closure_expression(
+            func.scope_ref,
+            func.id,
+            Symbol::NONE,
+            false,
+        );
         push_commands! {
             self;
             CompileCommand::PropertyReference(Symbol::CALL),
@@ -830,8 +835,8 @@ where
         self.handle_function_declaration();
     }
 
-    fn handle_function_expression(&mut self, named: bool) {
-        self.do_handle_function_expression(named, false);
+    fn handle_function_expression(&mut self, name: Symbol) {
+        self.do_handle_function_expression(name, false);
         self.functions
             .last_mut()
             .unwrap()
@@ -839,18 +844,18 @@ where
             .insert(FunctionFlags::CONSTRUCTOR);
     }
 
-    fn handle_async_function_expression(&mut self, named: bool) {
+    fn handle_async_function_expression(&mut self, name: Symbol) {
         self.end_coroutine_body();
 
         // Node::FunctionExpression for the outer ramp function.
-        self.do_handle_function_expression(named, false);
+        self.do_handle_function_expression(name, false);
     }
 
-    fn do_handle_function_expression(&mut self, named: bool, coroutine: bool) {
+    fn do_handle_function_expression(&mut self, name: Symbol, coroutine: bool) {
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, named, coroutine);
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, name, coroutine);
     }
 
     fn handle_arrow_function(&mut self) {
@@ -888,7 +893,12 @@ where
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false, coroutine);
+        analysis_mut!(self).process_closure_expression(
+            func.scope_ref,
+            func.id,
+            Symbol::NONE,
+            coroutine,
+        );
     }
 
     fn handle_await_expression(&mut self) {
@@ -1064,7 +1074,7 @@ where
     // See //libs/jsruntime/docs/internals.md.
     fn end_coroutine_body(&mut self) {
         // TODO(perf): Some of the local variables can be placed on the stack.
-        self.do_handle_function_expression(false, true);
+        self.do_handle_function_expression(Symbol::NONE, true);
 
         let func = self.functions.last().unwrap();
         push_commands!(
@@ -1351,7 +1361,7 @@ where
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ClassContext(name) => self.handle_class_context(name),
             Node::ClassElementContext => self.handle_class_element_context(),
-            Node::ClassDeclaration(named) => self.handle_class_declaration(named),
+            Node::ClassDeclaration(name) => self.handle_class_declaration(name),
             Node::ClassHeritage => self.handle_class_heritage(),
             Node::ClassElement(ClassElementKind::StaticField) => {
                 self.handle_class_element_static_field()
@@ -1364,8 +1374,8 @@ where
                 self.handle_class_element_static_method()
             }
             Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
-            Node::FunctionExpression(named) => self.handle_function_expression(named),
-            Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
+            Node::FunctionExpression(name) => self.handle_function_expression(name),
+            Node::AsyncFunctionExpression(name) => self.handle_async_function_expression(name),
             Node::ArrowFunction => self.handle_arrow_function(),
             Node::AsyncArrowFunction => self.handle_async_arrow_function(),
             Node::Method(in_class) => self.handle_method(in_class),
@@ -1969,15 +1979,14 @@ impl FunctionAnalysis {
         &mut self,
         scope_ref: ScopeRef,
         lambda_id: LambdaId,
-        named: bool,
+        name: Symbol,
         coroutine: bool,
     ) {
-        let name = if named {
+        if name != Symbol::NONE {
             debug_assert!(!self.symbol_stack.is_empty());
-            self.symbol_stack.pop().unwrap().0
-        } else {
-            Symbol::NONE
-        };
+            let symbol = self.symbol_stack.pop().unwrap().0;
+            debug_assert_eq!(name, symbol);
+        }
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands
             .push(CompileCommand::Closure(false, scope_ref));
@@ -2014,22 +2023,23 @@ impl FunctionAnalysis {
             // Duplicate the constructor function object.
             self.commands.push(CompileCommand::Duplicate(1));
         } else {
-            self.process_closure_expression(scope_ref, lambda_id, true, false);
+            self.process_closure_expression(scope_ref, lambda_id, symbol, false);
         }
     }
 
     fn process_method_in_object(&mut self, func: &mut Function) {
         let scope_ref = func.scope_ref;
         let lambda_id = func.id;
-        self.process_closure_expression(scope_ref, lambda_id, true, false);
+        self.process_closure_expression(scope_ref, lambda_id, func.name, false);
     }
 
-    fn process_class_context(&mut self, scope_ref: ScopeRef) {
+    fn process_class_context(&mut self, name: Symbol, scope_ref: ScopeRef) {
         self.start_scope(scope_ref, false);
 
         let class_index = self.commands.len();
         debug_assert!(class_index <= usize::MAX - 7);
         self.class_stack.push(ClassAnalysis {
+            name,
             class_index,
             ..Default::default()
         });
@@ -2076,27 +2086,23 @@ impl FunctionAnalysis {
         self.commands[index + 2] = CompileCommand::Function(Symbol::NONE);
     }
 
-    fn process_class_declaration(&mut self, named: bool, global_analysis: &mut GlobalAnalysis) {
-        if named {
+    fn process_class_declaration(&mut self, name: Symbol, global_analysis: &mut GlobalAnalysis) {
+        if name != Symbol::NONE {
             debug_assert!(!self.symbol_stack.is_empty());
             let symbol = self.symbol_stack.pop().unwrap().0;
-            self.commands
-                .push(CompileCommand::VariableReference(symbol));
+            debug_assert_eq!(name, symbol);
+            self.commands.push(CompileCommand::VariableReference(name));
             self.commands.push(CompileCommand::MutableVariable);
             global_analysis
                 .scope_tree_builder
-                .add_local(symbol, self.num_locals, true);
+                .add_local(name, self.num_locals, true);
             self.num_locals += 1;
         } else {
             // TODO(feat): default class
         }
     }
 
-    fn process_class_definition(
-        &mut self,
-        named: bool,
-        global_analysis: &mut GlobalAnalysis,
-    ) -> ClassAnalysis {
+    fn process_class_definition(&mut self, global_analysis: &mut GlobalAnalysis) -> ClassAnalysis {
         let analysis = self.class_stack.pop().unwrap();
         let index = analysis.class_index;
         debug_assert!(matches!(
@@ -2104,7 +2110,7 @@ impl FunctionAnalysis {
             CompileCommand::Function(_)
         ));
 
-        if named {
+        if analysis.name != Symbol::NONE {
             debug_assert!(!self.symbol_stack.is_empty());
             let symbol = self.symbol_stack.last().unwrap().0;
             self.commands[index + 2] = CompileCommand::Function(symbol);
@@ -2513,6 +2519,7 @@ struct CoroutineAnalysis {
 
 #[derive(Default)]
 struct ClassAnalysis {
+    name: Symbol,
     class_index: usize,
     element_index: usize,
     static_field_initializer: Vec<CompileCommand>,
