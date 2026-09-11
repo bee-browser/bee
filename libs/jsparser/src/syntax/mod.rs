@@ -339,12 +339,12 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ClassContext(Symbol),
     ClassElementContext,
-    ClassDeclaration(bool),
+    ClassDeclaration(Symbol),
     ClassHeritage,
     ClassElement(ClassElementKind),
     AsyncFunctionDeclaration,
-    FunctionExpression(bool),
-    AsyncFunctionExpression(bool),
+    FunctionExpression(Symbol),
+    AsyncFunctionExpression(Symbol),
     ArrowFunction,
     AsyncArrowFunction,
     Method(bool),
@@ -3684,7 +3684,7 @@ where
     //   function ( FormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] }
     fn process_anonymous_function_expression(&mut self) -> Result<(), Error> {
         let _ = self.function_stack.pop().unwrap();
-        self.enqueue(Node::FunctionExpression(false));
+        self.enqueue(Node::FunctionExpression(Symbol::NONE));
         self.replace(
             7,
             Detail::Expression {
@@ -3699,7 +3699,11 @@ where
     //   { FunctionBody[~Yield, ~Await] }
     fn process_function_expression(&mut self) -> Result<(), Error> {
         let _ = self.function_stack.pop().unwrap();
-        self.enqueue(Node::FunctionExpression(true));
+        let name = match self.nth(6).detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::FunctionExpression(name));
         self.replace(
             8,
             Detail::Expression {
@@ -3844,7 +3848,11 @@ where
     // ClassDeclaration[Yield, Await, Default] :
     //   class BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
     fn process_class_declaration(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ClassDeclaration(true));
+        let name = match self.nth(1).detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::ClassDeclaration(name));
         self.replace(3, Detail::ClassDeclaration);
         Ok(())
     }
@@ -3852,7 +3860,7 @@ where
     // ClassDeclaration[Yield, Await, Default] :
     //   [+Default] class ClassTail[?Yield, ?Await]
     fn process_class_declaration_anonymous(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::ClassDeclaration(false));
+        self.enqueue(Node::ClassDeclaration(Symbol::NONE));
         self.replace(3, Detail::ClassDeclaration);
         Ok(())
     }
@@ -4183,7 +4191,11 @@ where
     //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
     fn process_async_function_expression(&mut self) -> Result<(), Error> {
         let _ = self.function_stack.pop().unwrap();
-        self.enqueue(Node::AsyncFunctionExpression(true));
+        let name = match self.nth(6).detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::AsyncFunctionExpression(name));
         self.replace(
             9,
             Detail::Expression {
@@ -4198,7 +4210,7 @@ where
     //   ( FormalParameters[~Yield, +Await] ) { AsyncFunctionBody }
     fn process_anonymous_async_function_expression(&mut self) -> Result<(), Error> {
         let _ = self.function_stack.pop().unwrap();
-        self.enqueue(Node::AsyncFunctionExpression(false));
+        self.enqueue(Node::AsyncFunctionExpression(Symbol::NONE));
         self.replace(
             8,
             Detail::Expression {
