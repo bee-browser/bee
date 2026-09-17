@@ -1955,10 +1955,10 @@ impl FunctionAnalysis {
         debug_assert!(!self.symbol_stack.is_empty());
         let (symbol, _) = self.symbol_stack.pop().unwrap();
 
-        // This is a hoistable declaration.  Commands following the `Batch` command will perform
-        // by a command handler for the `DeclareVariables` command generated for the current scope.
+        // This is a hoistable declaration.  Commands following the `Skip` command will perform by a
+        // command handler for the `DeclareVariables` command generated for the current scope.
         let index = self.commands.len();
-        self.commands.push(CompileCommand::Batch(5));
+        self.commands.push(CompileCommand::Skip(5));
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands.push(CompileCommand::Function(symbol));
@@ -2161,7 +2161,7 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::Discard); // ignores the target object.
 
         // Move the compile commands for the initializer to the `static_field_initializer`.
-        // Assumed that commands to be moved do NOT contain CompileCommand::Batch.
+        // Assumed that commands to be moved do NOT contain CompileCommand::Skip.
         analysis
             .static_field_initializer
             .extend(self.commands.drain(index..));
@@ -2285,7 +2285,7 @@ impl FunctionAnalysis {
             debug_assert!(end_index - index - 1 < u16::MAX as usize);
             let n = end_index - index - 1;
             if n > 0 {
-                self.commands[index] = CompileCommand::Batch((end_index - index - 1) as u16);
+                self.commands[index] = CompileCommand::Skip((end_index - index - 1) as u16);
                 return Some(index);
             }
         }
@@ -2535,13 +2535,13 @@ pub enum CompileCommand {
     // determined that command substitution is not needed.
     Nop,
 
-    // A `Batch(n)` is inserted before `n` commands that are compile commands of a *batch*.
+    // A `Skip(n)` is inserted before `n` commands that are compile commands of a *batch*.
     // Compile commands in a batch will be skipped in an evaluation starting at the first compile
     // command.  A batch is performed at some point in the evaluation.  For example, compile
     // commands generated for a *hoistable* declaration are inserted as a batch and the compile
     // commands of the batch are performed at the `DeclareVariables` in the scope on which the
     // declaration is performed.
-    Batch(u16),
+    Skip(u16),
 
     Undefined,
     Null,
