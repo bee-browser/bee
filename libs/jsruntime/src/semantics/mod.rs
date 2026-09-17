@@ -1612,7 +1612,7 @@ impl FunctionAnalysis {
     fn reserve_commands(&mut self, n: usize) -> usize {
         let index = self.commands.len();
         for _ in 0..n {
-            self.commands.push(CompileCommand::PlaceHolder);
+            self.commands.push(CompileCommand::Placeholder);
         }
         index
     }
@@ -1940,11 +1940,11 @@ impl FunctionAnalysis {
                 // 8.4.5 Runtime Semantics: NamedEvaluation
                 self.commands[index - 1] = CompileCommand::Function(symbol);
             }
-            debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+            debug_assert!(matches!(self.commands[index], CompileCommand::Placeholder));
             self.commands[index] = CompileCommand::VariableReference(symbol);
             debug_assert!(matches!(
                 self.commands[index + 1],
-                CompileCommand::PlaceHolder
+                CompileCommand::Placeholder
             ));
             self.commands[index + 1] = CompileCommand::MutableVariable;
             global_analysis
@@ -1964,11 +1964,11 @@ impl FunctionAnalysis {
                 // 8.4.5 Runtime Semantics: NamedEvaluation
                 self.commands[index - 1] = CompileCommand::Function(symbol);
             }
-            debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+            debug_assert!(matches!(self.commands[index], CompileCommand::Placeholder));
             self.commands[index] = CompileCommand::VariableReference(symbol);
             debug_assert!(matches!(
                 self.commands[index + 1],
-                CompileCommand::PlaceHolder
+                CompileCommand::Placeholder
             ));
             self.commands[index + 1] = CompileCommand::ImmutableVariable;
             global_analysis
@@ -1990,6 +1990,10 @@ impl FunctionAnalysis {
         // command handler for the `DeclareVariables` command generated for the current scope.
         self.commands.push(CompileCommand::Skip(6));
 
+        debug_assert!(matches!(
+            self.commands[scope.function_declaration_chain.pending_jump_index],
+            CompileCommand::Placeholder
+        ));
         self.commands[scope.function_declaration_chain.pending_jump_index] =
             CompileCommand::Jump(self.commands.len());
 
@@ -2001,9 +2005,7 @@ impl FunctionAnalysis {
         self.commands.push(CompileCommand::DeclareFunction);
 
         scope.function_declaration_chain.pending_jump_index = self.commands.len();
-        self.commands.push(CompileCommand::Jump(
-            scope.function_declaration_chain.exit_index,
-        ));
+        self.commands.push(CompileCommand::Placeholder);
 
         // "VariableStatement"s have already declared variables with the same symbol.
         // Such "VariableStatement"s can overwrite the variable.
@@ -2044,14 +2046,14 @@ impl FunctionAnalysis {
                 func.flags.insert(FunctionFlags::DERIVED);
             }
             let index = self.class_stack.last().unwrap().class_index;
-            debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+            debug_assert!(matches!(self.commands[index], CompileCommand::Placeholder));
             debug_assert!(matches!(
                 self.commands[index + 1],
-                CompileCommand::PlaceHolder
+                CompileCommand::Placeholder
             ));
             debug_assert!(matches!(
                 self.commands[index + 2],
-                CompileCommand::PlaceHolder
+                CompileCommand::Placeholder
             ));
             self.commands[index] = CompileCommand::Lambda(lambda_id);
             self.commands[index + 1] = CompileCommand::Closure(false, scope_ref);
@@ -2081,11 +2083,11 @@ impl FunctionAnalysis {
             ..Default::default()
         });
 
-        self.commands.push(CompileCommand::PlaceHolder); // will be replaced w/ Lambda
-        self.commands.push(CompileCommand::PlaceHolder); // will be replaced w/ Closure
+        self.commands.push(CompileCommand::Placeholder); // will be replaced w/ Lambda
+        self.commands.push(CompileCommand::Placeholder); // will be replaced w/ Closure
         // The constructor function object is created at this time so that static elements will be
         // able to be added to it.
-        self.commands.push(CompileCommand::PlaceHolder); // will be replaced w/ Function
+        self.commands.push(CompileCommand::Placeholder); // will be replaced w/ Function
         // `Constructor.prototype = new Object()`
         self.commands.push(CompileCommand::Duplicate(0));
         self.commands
@@ -2099,7 +2101,7 @@ impl FunctionAnalysis {
         self.class_stack.last_mut().unwrap().element_index = self.commands.len();
         // The placeholder command will be replaced w/ an appropriate command in
         // `process_class_element_*()`.
-        self.commands.push(CompileCommand::PlaceHolder);
+        self.commands.push(CompileCommand::Placeholder);
     }
 
     fn has_class_constructor(&self) -> bool {
@@ -2109,14 +2111,14 @@ impl FunctionAnalysis {
 
     fn set_class_default_constructor(&mut self, lambda_id: LambdaId, scope_ref: ScopeRef) {
         let index = self.class_stack.last().unwrap().class_index;
-        debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+        debug_assert!(matches!(self.commands[index], CompileCommand::Placeholder));
         debug_assert!(matches!(
             self.commands[index + 1],
-            CompileCommand::PlaceHolder
+            CompileCommand::Placeholder
         ));
         debug_assert!(matches!(
             self.commands[index + 2],
-            CompileCommand::PlaceHolder
+            CompileCommand::Placeholder
         ));
         self.commands[index] = CompileCommand::Lambda(lambda_id);
         self.commands[index + 1] = CompileCommand::Closure(false, scope_ref);
@@ -2258,7 +2260,7 @@ impl FunctionAnalysis {
         let LoopAnalysis { start_index } = self.loop_stack.pop().unwrap();
         debug_assert!(matches!(
             self.commands[start_index],
-            CompileCommand::PlaceHolder
+            CompileCommand::Placeholder
         ));
         self.commands[start_index] = command;
 
@@ -2316,7 +2318,7 @@ impl FunctionAnalysis {
 
     fn update_command_for_case_statements(&mut self, has_statement: bool) -> Option<usize> {
         let index = self.switch_stack.last().unwrap().case_statements_index;
-        debug_assert_eq!(self.commands[index], CompileCommand::PlaceHolder);
+        debug_assert_eq!(self.commands[index], CompileCommand::Placeholder);
         if has_statement {
             let end_index = self.commands.len();
             debug_assert!(end_index - index - 1 < u16::MAX as usize);
@@ -2355,7 +2357,7 @@ impl FunctionAnalysis {
 
         debug_assert!(matches!(
             self.commands[case_block_index],
-            CompileCommand::PlaceHolder
+            CompileCommand::Placeholder
         ));
         if num_cases == 0 {
             // An empty case block.  Just discard the `switchValue`.
@@ -2388,7 +2390,7 @@ impl FunctionAnalysis {
         debug_assert_eq!(label.symbol, symbol);
         debug_assert!(matches!(
             self.commands[label.start_index],
-            CompileCommand::PlaceHolder
+            CompileCommand::Placeholder
         ));
         self.commands[label.start_index] =
             CompileCommand::LabelStart(symbol, is_iteration_statement);
@@ -2469,9 +2471,16 @@ impl FunctionAnalysis {
     fn end_scope(&mut self) -> ScopeRef {
         let scope = self.scope_stack.pop().unwrap();
 
+        debug_assert!(matches!(
+            self.commands[scope.function_declaration_chain.pending_jump_index],
+            CompileCommand::Placeholder
+        ));
         if scope.function_declaration_chain.is_empty() {
             self.commands[scope.function_declaration_chain.pending_jump_index] =
                 CompileCommand::Nop;
+        } else {
+            self.commands[scope.function_declaration_chain.pending_jump_index] =
+                CompileCommand::Jump(scope.function_declaration_chain.exit_index);
         }
 
         // NOTE(perf): The scope may has no variable.  In this case, we can remove the
@@ -2770,9 +2779,9 @@ pub enum CompileCommand {
     // debugger
     Debugger,
 
-    // A special command used as a placeholder in a command list, which will be replaced actual
-    // command later.  The final command list must not contain placeholder commands.
-    PlaceHolder,
+    /// A special command used as a placeholder in a command list, which will be replaced with an
+    /// actual command later.  The final command list must not contain placeholder commands.
+    Placeholder,
 }
 
 impl From<UnaryOperator> for CompileCommand {
