@@ -293,8 +293,6 @@ struct Compiler<'a, R> {
 
     max_scratch_buffer_len: u16,
     max_capture_buffer_len: u16,
-
-    skip_count: u16,
 }
 
 impl<'a, R> Compiler<'a, R>
@@ -349,7 +347,6 @@ where
             captures: Default::default(),
             max_scratch_buffer_len: 0,
             max_capture_buffer_len: 0,
-            skip_count: 0,
         }
     }
 
@@ -449,12 +446,22 @@ where
     }
 
     fn process_commands(&mut self, func: &Function, commands: &[CompileCommand]) {
-        for command in commands {
-            if self.skip_count > 0 {
-                self.skip_count -= 1;
-                continue;
+        let mut i = 0;
+        loop {
+            match commands.get(i) {
+                Some(CompileCommand::Nop) => {
+                    i += 1;
+                }
+                Some(CompileCommand::Skip(n)) => {
+                    debug_assert!((i + *n as usize) < commands.len());
+                    i += *n as usize + 1;
+                }
+                Some(command) => {
+                    self.process_command(func, command);
+                    i += 1;
+                }
+                None => return,
             }
-            self.process_command(func, command);
         }
     }
 
@@ -491,8 +498,7 @@ where
     fn process_command(&mut self, func: &Function, command: &CompileCommand) {
         logger::debug!(event = "process_command", ?command);
         match command {
-            CompileCommand::Nop => (),
-            CompileCommand::Batch(n) => self.process_batch(*n),
+            CompileCommand::Nop | CompileCommand::Skip(_) => unreachable!(),
             CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
@@ -640,12 +646,6 @@ where
     }
 
     // commands
-
-    fn process_batch(&mut self, n: u16) {
-        debug_assert_eq!(self.skip_count, 0);
-        debug_assert_ne!(n, 0);
-        self.skip_count = n;
-    }
 
     fn process_undefined(&mut self) {
         self.operand_stack.push(Operand::Undefined);
@@ -1028,7 +1028,7 @@ where
             let start = batch_index + 1;
             let end = start
                 + match func.commands[batch_index] {
-                    CompileCommand::Batch(n) => n as usize,
+                    CompileCommand::Skip(n) => n as usize,
                     _ => unreachable!(),
                 };
             for command in func.commands[start..end].iter() {
@@ -2635,7 +2635,7 @@ where
                 let start = batch_index + 1;
                 let end = start
                     + match func.commands[batch_index] {
-                        CompileCommand::Batch(n) => n as usize,
+                        CompileCommand::Skip(n) => n as usize,
                         _ => unreachable!(),
                     };
                 self.process_commands(func, &func.commands[start..end]);
