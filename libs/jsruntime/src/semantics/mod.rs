@@ -703,11 +703,7 @@ where
 
         let func = self.functions.last_mut().unwrap();
         func.flags.insert(FunctionFlags::CONSTRUCTOR);
-        let batch_index = analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
-        let scope_ref = self.analysis().scope_ref();
-        self.global_analysis
-            .scope_tree_builder
-            .add_function_declaration(scope_ref, batch_index);
+        analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
     }
 
     fn handle_class_context(&mut self, name: Symbol) {
@@ -1519,6 +1515,38 @@ impl FunctionScopedVariableEntry {
     }
 }
 
+/// Manages a backpatching chain for hoisted function declaration batches.
+///
+/// Tracks the most recent jump instruction awaiting target resolution, as well as the fixed exit
+/// index where execution resumes after all batched function declarations have completed.
+struct FunctionDeclarationChain {
+    /// The target instruction index where execution resumes after all function declaration batches
+    /// have finished executing.
+    ///
+    /// This value is immutable and is always set to the initial `pending_jump_index + 1`.
+    exit_index: usize,
+
+    /// The index of the jump instruction currently awaiting backpatching.
+    ///
+    /// When a new batch is appended, the jump instruction at this index is updated to point to the
+    /// start of that new batch.
+    pending_jump_index: usize,
+}
+
+impl FunctionDeclarationChain {
+    fn new(pending_jump_index: usize) -> Self {
+        debug_assert!(pending_jump_index < usize::MAX);
+        Self {
+            exit_index: pending_jump_index + 1,
+            pending_jump_index,
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.exit_index == self.pending_jump_index + 1
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 enum ThisMode {
     #[default]
@@ -1951,14 +1979,20 @@ impl FunctionAnalysis {
         self.symbol_stack.truncate(i);
     }
 
-    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) -> usize {
+    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
         debug_assert!(!self.symbol_stack.is_empty());
         let (symbol, _) = self.symbol_stack.pop().unwrap();
 
+        debug_assert!(!self.scope_stack.is_empty());
+        let scope = self.scope_stack.last_mut().unwrap();
+
         // This is a hoistable declaration.  Commands following the `Skip` command will perform by a
         // command handler for the `DeclareVariables` command generated for the current scope.
-        let index = self.commands.len();
-        self.commands.push(CompileCommand::Skip(5));
+        self.commands.push(CompileCommand::Skip(6));
+
+        self.commands[scope.function_declaration_chain.pending_jump_index] =
+            CompileCommand::Jump(self.commands.len());
+
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands.push(CompileCommand::Function(symbol));
@@ -1966,13 +2000,16 @@ impl FunctionAnalysis {
             .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareFunction);
 
+        scope.function_declaration_chain.pending_jump_index = self.commands.len();
+        self.commands.push(CompileCommand::Jump(
+            scope.function_declaration_chain.exit_index,
+        ));
+
         // "VariableStatement"s have already declared variables with the same symbol.
         // Such "VariableStatement"s can overwrite the variable.
         self.function_scoped_variables
             .entry(symbol)
             .or_insert(FunctionScopedVariableEntry::function());
-
-        index
     }
 
     fn process_closure_expression(
@@ -2423,14 +2460,19 @@ impl FunctionAnalysis {
             self.commands
                 .push(CompileCommand::DeclareVariables(scope_ref));
         }
-        // TODO(perf): can skip if there are no function declarations in the scope.
-        self.commands
-            .push(CompileCommand::DeclareFunctions(scope_ref));
-        self.scope_stack.push(Scope { scope_ref });
+        // The reserved command will be replaced with `CompileCommand::Nop` in `end_scope()`
+        // if there is no function declaration in the scope.
+        let index = self.reserve_commands(1);
+        self.scope_stack.push(Scope::new(scope_ref, index));
     }
 
     fn end_scope(&mut self) -> ScopeRef {
         let scope = self.scope_stack.pop().unwrap();
+
+        if scope.function_declaration_chain.is_empty() {
+            self.commands[scope.function_declaration_chain.pending_jump_index] =
+                CompileCommand::Nop;
+        }
 
         // NOTE(perf): The scope may has no variable.  In this case, we can remove the
         // PopScope command safely and reduce the number of the commands.  We can add a
@@ -2486,6 +2528,16 @@ impl FunctionAnalysis {
 
 struct Scope {
     scope_ref: ScopeRef,
+    function_declaration_chain: FunctionDeclarationChain,
+}
+
+impl Scope {
+    fn new(scope_ref: ScopeRef, pending_jump_index: usize) -> Self {
+        Self {
+            scope_ref,
+            function_declaration_chain: FunctionDeclarationChain::new(pending_jump_index),
+        }
+    }
 }
 
 struct LoopAnalysis {
@@ -2535,13 +2587,18 @@ pub enum CompileCommand {
     // determined that command substitution is not needed.
     Nop,
 
-    // A `Skip(n)` is inserted before `n` commands that are compile commands of a *batch*.
-    // Compile commands in a batch will be skipped in an evaluation starting at the first compile
-    // command.  A batch is performed at some point in the evaluation.  For example, compile
-    // commands generated for a *hoistable* declaration are inserted as a batch and the compile
-    // commands of the batch are performed at the `DeclareVariables` in the scope on which the
-    // declaration is performed.
+    /// Skips the execution of the next `n` compile commands in the standard evaluation flow.
+    ///
+    /// Used to bypass batched commands (such as hoisted declarations) during normal sequence
+    /// evaluation.  The skipped commands are typically executed out-of-order via explicit `Jump`
+    /// commands.
     Skip(u16),
+
+    /// An unconditional jump to a specific instruction index.
+    ///
+    /// Typically used to enter a skipped batch or to return to the main execution path
+    /// (e.g., via a `FunctionDeclarationChain`).
+    Jump(usize),
 
     Undefined,
     Null,
@@ -2572,7 +2629,6 @@ pub enum CompileCommand {
     MutableVariable,
     ImmutableVariable,
     DeclareVariables(ScopeRef),
-    DeclareFunctions(ScopeRef),
     DeclareFunction,
     Call(u16),
     Construct(u16, bool),
@@ -2876,7 +2932,7 @@ mod tests {
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVariables(scope_ref!(1)),
-                        CompileCommand::DeclareFunctions(scope_ref!(1)),
+                        CompileCommand::Nop,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2908,18 +2964,18 @@ mod tests {
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVariables(scope_ref!(1)),
-                        CompileCommand::DeclareFunctions(scope_ref!(1)),
+                        CompileCommand::Nop,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PushScope(scope_ref!(2)),
-                        CompileCommand::DeclareFunctions(scope_ref!(2)),
+                        CompileCommand::Nop,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(2)),
                         CompileCommand::PushScope(scope_ref!(3)),
-                        CompileCommand::DeclareFunctions(scope_ref!(3)),
+                        CompileCommand::Nop,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2944,7 +3000,7 @@ mod tests {
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
-                    CompileCommand::DeclareFunctions(scope_ref!(1)),
+                    CompileCommand::Nop,
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
                     CompileCommand::Swap,
@@ -2966,7 +3022,7 @@ mod tests {
                     CompileCommand::AllocateLocals(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
-                    CompileCommand::DeclareFunctions(scope_ref!(1)),
+                    CompileCommand::Nop,
                     CompileCommand::Number(1.0),
                     CompileCommand::VariableReference(symbol!(stub, "a")),
                     CompileCommand::MutableVariable,
@@ -2993,7 +3049,7 @@ mod tests {
                     CompileCommand::JumpTable(3),
                     CompileCommand::PushScope(scope_ref!(2)),
                     CompileCommand::DeclareVariables(scope_ref!(2)),
-                    CompileCommand::DeclareFunctions(scope_ref!(2)),
+                    CompileCommand::Nop,
                     CompileCommand::Number(0.0),
                     CompileCommand::Await(1),
                     CompileCommand::Discard,
@@ -3007,7 +3063,7 @@ mod tests {
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
-                    CompileCommand::DeclareFunctions(scope_ref!(1)),
+                    CompileCommand::Nop,
                     CompileCommand::Lambda(program.functions[0].id),
                     CompileCommand::Closure(false, scope_ref!(2)),
                     CompileCommand::Coroutine(program.functions[0].id, 0),

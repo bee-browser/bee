@@ -456,6 +456,10 @@ where
                     debug_assert!((i + *n as usize) < commands.len());
                     i += *n as usize + 1;
                 }
+                Some(CompileCommand::Jump(n)) => {
+                    debug_assert!(*n < commands.len());
+                    i = *n;
+                }
                 Some(command) => {
                     self.process_command(func, command);
                     i += 1;
@@ -498,7 +502,9 @@ where
     fn process_command(&mut self, func: &Function, command: &CompileCommand) {
         logger::debug!(event = "process_command", ?command);
         match command {
-            CompileCommand::Nop | CompileCommand::Skip(_) => unreachable!(),
+            CompileCommand::Nop | CompileCommand::Skip(_) | CompileCommand::Jump(_) => {
+                unreachable!()
+            }
             CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
@@ -528,9 +534,6 @@ where
             CompileCommand::ImmutableVariable => self.process_immutable_variable(),
             CompileCommand::DeclareVariables(scope_ref) => {
                 self.process_declare_variables(*scope_ref)
-            }
-            CompileCommand::DeclareFunctions(scope_ref) => {
-                self.process_declare_functions(func, *scope_ref)
             }
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
@@ -1013,27 +1016,6 @@ where
                 locator => unreachable!("{locator:?}"),
             };
             self.editor.put_store_undefined_to_any(local);
-        }
-    }
-
-    // NOTE: This function may call `process_command()`.
-    fn process_declare_functions(&mut self, func: &Function, scope_ref: ScopeRef) {
-        for batch_index in self
-            .scope_tree
-            .scope(scope_ref)
-            .function_declarations
-            .iter()
-            .cloned()
-        {
-            let start = batch_index + 1;
-            let end = start
-                + match func.commands[batch_index] {
-                    CompileCommand::Skip(n) => n as usize,
-                    _ => unreachable!(),
-                };
-            for command in func.commands[start..end].iter() {
-                self.process_command(func, command);
-            }
         }
     }
 
