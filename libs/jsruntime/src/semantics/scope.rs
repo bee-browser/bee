@@ -176,7 +176,6 @@ impl ScopeTreeBuilder {
             function_declarations: vec![],
             outer: self.current,
             depth: self.depth,
-            max_child_block_depth: self.depth,
             kind,
         });
         // TODO: should return an error
@@ -191,13 +190,6 @@ impl ScopeTreeBuilder {
             .variables
             .sort_unstable_by_key(|variable| variable.symbol);
         self.current = scope.outer;
-        if !scope.is_function() {
-            let max_child_scope_depth = scope.max_child_block_depth;
-            let scope = &mut self.scopes[self.current.index()];
-            if scope.max_child_block_depth < max_child_scope_depth {
-                scope.max_child_block_depth = max_child_scope_depth;
-            }
-        }
         self.depth -= 1;
     }
 
@@ -278,13 +270,6 @@ impl ScopeTreeBuilder {
         scope.variables[variable_ref.variable_index()].set_captured();
     }
 
-    #[allow(unused)]
-    pub fn max_scope_depth(&self, scope_ref: ScopeRef) -> u16 {
-        let scope = &self.scopes[scope_ref.index()];
-        debug_assert!(scope.max_child_block_depth >= scope.depth);
-        scope.max_child_block_depth - scope.depth + 1
-    }
-
     pub fn resolve_reference(&self, reference: &Reference) -> VariableRef {
         let symbol = reference.symbol;
         let mut scope_ref = reference.scope_ref;
@@ -349,7 +334,6 @@ pub struct Scope {
     pub function_declarations: Vec<usize>,
     outer: ScopeRef,
     depth: u16,
-    max_child_block_depth: u16,
     kind: ScopeKind,
 }
 
@@ -359,7 +343,6 @@ impl Scope {
         function_declarations: vec![],
         outer: ScopeRef::NONE,
         depth: 0,
-        max_child_block_depth: 0,
         kind: ScopeKind::Block,
     };
 
