@@ -627,7 +627,7 @@ where
             CompileCommand::Dereference => self.process_dereference(),
             CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::Debugger => self.process_debugger(),
-            CompileCommand::PlaceHolder => unreachable!(),
+            CompileCommand::Placeholder => unreachable!(),
         }
 
         macro_rules! dump_enabled {
