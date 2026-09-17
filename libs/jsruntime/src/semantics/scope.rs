@@ -173,7 +173,6 @@ impl ScopeTreeBuilder {
         let index = self.scopes.len();
         self.scopes.push(Scope {
             variables: vec![],
-            function_declarations: vec![],
             outer: self.current,
             depth: self.depth,
             kind,
@@ -260,11 +259,6 @@ impl ScopeTreeBuilder {
             .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
-    pub fn add_function_declaration(&mut self, scope_ref: ScopeRef, batch_index: usize) {
-        let scope = &mut self.scopes[scope_ref.index()];
-        scope.function_declarations.push(batch_index);
-    }
-
     pub fn set_captured(&mut self, variable_ref: VariableRef) {
         let scope = &mut self.scopes[variable_ref.scope_index()];
         scope.variables[variable_ref.variable_index()].set_captured();
@@ -331,7 +325,6 @@ impl Default for ScopeTreeBuilder {
 // Block scopes hold only lexically-scoped variables.
 pub struct Scope {
     pub variables: Vec<Variable>,
-    pub function_declarations: Vec<usize>,
     outer: ScopeRef,
     depth: u16,
     kind: ScopeKind,
@@ -340,7 +333,6 @@ pub struct Scope {
 impl Scope {
     const NONE: Self = Self {
         variables: vec![],
-        function_declarations: vec![],
         outer: ScopeRef::NONE,
         depth: 0,
         kind: ScopeKind::Block,
@@ -393,9 +385,6 @@ impl std::fmt::Display for ScopeDisplay<'_> {
         write!(f, "@{}:", self.index)?;
         for variable in self.scope.variables.iter() {
             write!(f, " {}", variable.display(self.symbol_registry))?;
-        }
-        for index in self.scope.function_declarations.iter() {
-            write!(f, " FD@{index}")?;
         }
         Ok(())
     }
