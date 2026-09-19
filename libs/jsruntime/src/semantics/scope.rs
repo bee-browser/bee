@@ -185,9 +185,6 @@ impl ScopeTreeBuilder {
 
     pub fn pop(&mut self) {
         let scope = &mut self.scopes[self.current.index()];
-        scope
-            .variables
-            .sort_unstable_by_key(|variable| variable.symbol);
         self.current = scope.outer;
         self.depth -= 1;
     }
@@ -240,9 +237,6 @@ impl ScopeTreeBuilder {
             kind: VariableKind::Capture,
             flags: VariableFlags::empty(),
         });
-        scope
-            .variables
-            .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
     pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
@@ -254,9 +248,6 @@ impl ScopeTreeBuilder {
             kind: VariableKind::Global,
             flags: VariableFlags::empty(),
         });
-        scope
-            .variables
-            .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
     pub fn set_captured(&mut self, variable_ref: VariableRef) {
@@ -269,15 +260,17 @@ impl ScopeTreeBuilder {
         let mut scope_ref = reference.scope_ref;
         loop {
             let scope = &self.scopes[scope_ref.index()];
+            //TODO(perf): slow
             match scope
                 .variables
-                .binary_search_by_key(&symbol, |variable| variable.symbol)
+                .iter()
+                .position(|variable| variable.symbol == symbol)
             {
-                Ok(index) => {
+                Some(index) => {
                     // TODO: should return an error
                     return VariableRef::checked_new(scope_ref, index).unwrap();
                 }
-                Err(_) => {
+                None => {
                     if scope.is_function() {
                         // Reference to a free variable.
                         return VariableRef::NONE;
@@ -293,9 +286,13 @@ impl ScopeTreeBuilder {
     }
 
     pub fn build(&mut self) -> ScopeTree {
-        ScopeTree {
-            scopes: std::mem::take(&mut self.scopes),
+        let mut scopes = std::mem::take(&mut self.scopes);
+        for scope in scopes.iter_mut() {
+            scope
+                .variables
+                .sort_unstable_by_key(|variable| variable.symbol);
         }
+        ScopeTree { scopes }
     }
 }
 
