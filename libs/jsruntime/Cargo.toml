@@ -12,10 +12,10 @@ version.workspace = true
 [dependencies]
 base = { path = "../base" }
 bitflags = "2.13.1"
-cranelift = "0.135.1"
-cranelift-module = "0.135.1"
-cranelift-jit = "0.135.1"
-cranelift-native = "0.135.1"
+cranelift = "0.136.0"
+cranelift-module = "0.136.0"
+cranelift-jit = "0.136.0"
+cranelift-native = "0.136.0"
 indexmap = "2.14.0"
 itertools = "0.15.0"
 jsgc = { path = "../jsgc" }
