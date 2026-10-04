@@ -172,6 +172,7 @@ class Transpiler {
           modifyFunctionDeclaration,
           modifyClassDeclaration,
           modifyClassElement,
+          modifyClassStaticBlock,
           modifyMethodDefinition,
           modifyIfStatement,
           modifyConditionalExpression,
@@ -194,6 +195,7 @@ class Transpiler {
           rewriteWithClause,
           rewriteWithEntries,
           expandOptionals,
+          modifyFieldDefinition,
           modifyForStatement,
           modifyForInOfStatement,
           expandParameterizedRules,
@@ -620,6 +622,8 @@ function addActions(rules) {
     '_FUNCTION_SIGNATURE_',
     '_CLASS_CONTEXT_',
     '_CLASS_ELEMENT_CONTEXT_',
+    '_STATIC_CONTEXT_',
+    '_INITIALIZER_CONTEXT_',
     '_ELSE_',
     '_THEN_',
     '_ELSE_EXPR_',
@@ -900,8 +904,29 @@ function modifyClassElement(rules) {
     if (value === '`;`') {
       return value;
     }
+    value = value.replace('`static`', '`static` _STATIC_CONTEXT_');
     return `_CLASS_ELEMENT_CONTEXT_ ${value}`;
   });
+  return rules;
+}
+
+function modifyClassStaticBlock(rules) {
+  const TARGETS = [
+    {
+      term: '`static`',
+      action: '_STATIC_CONTEXT_',
+      insertBefore: false,
+    },
+    {
+      term: '`{`',
+      action: '_INITIALIZER_CONTEXT_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying ClassStaticBlock...');
+  const rule = rules.find((rule) => rule.name === 'ClassStaticBlock');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
   return rules;
 }
 
@@ -1439,6 +1464,21 @@ function expandOptionals(rules) {
     });
   }
   return expanded;
+}
+
+function modifyFieldDefinition(rules) {
+  const TARGETS = [
+    {
+      term: 'Initializer[+In, ?Yield, ?Await]',
+      action: '_INITIALIZER_CONTEXT_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying FieldDefinition...');
+  const rule = rules.find((rule) => rule.name === 'FieldDefinition[Yield, Await]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
 }
 
 function modifyForStatement(rules) {

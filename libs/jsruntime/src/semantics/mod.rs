@@ -717,6 +717,14 @@ where
         analysis_mut!(self).process_class_element_context();
     }
 
+    fn handle_static_context(&mut self) {
+        analysis_mut!(self).process_static_context();
+    }
+
+    fn handle_initializer_context(&mut self) {
+        analysis_mut!(self).process_initializer_context();
+    }
+
     fn handle_class_declaration(&mut self, name: Symbol) {
         if !self.analysis().has_class_constructor() {
             self.define_default_constructor();
@@ -1357,6 +1365,8 @@ where
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ClassContext(name) => self.handle_class_context(name),
             Node::ClassElementContext => self.handle_class_element_context(),
+            Node::StaticContext => self.handle_static_context(),
+            Node::InitializerContext => self.handle_initializer_context(),
             Node::ClassDeclaration(name) => self.handle_class_declaration(name),
             Node::ClassHeritage => self.handle_class_heritage(),
             Node::ClassElement(ClassElementKind::StaticField) => {
@@ -1611,6 +1621,7 @@ impl FunctionAnalysis {
 
     fn reserve_commands(&mut self, n: usize) -> usize {
         let index = self.commands.len();
+        debug_assert!(index <= usize::MAX - n);
         for _ in 0..n {
             self.commands.push(CompileCommand::Placeholder);
         }
@@ -2098,10 +2109,27 @@ impl FunctionAnalysis {
 
     fn process_class_element_context(&mut self) {
         debug_assert_eq!(self.class_stack.last().unwrap().element_index, 0);
+        let analysis = self.class_stack.last_mut().unwrap();
+        analysis.element_index = self.commands.len();
+        analysis.static_context = false;
         self.class_stack.last_mut().unwrap().element_index = self.commands.len();
         // The placeholder command will be replaced w/ an appropriate command in
         // `process_class_element_*()`.
         self.commands.push(CompileCommand::Placeholder);
+    }
+
+    fn process_static_context(&mut self) {
+        debug_assert_ne!(self.class_stack.last().unwrap().element_index, 0);
+        self.class_stack.last_mut().unwrap().static_context = true;
+    }
+
+    fn process_initializer_context(&mut self) {
+        debug_assert_ne!(self.class_stack.last().unwrap().element_index, 0);
+        if self.class_stack.last().unwrap().static_context {
+            // TODO: switch to the static_initializer function scope
+        } else {
+            // TODO: switch to the field_initializer function scope
+        }
     }
 
     fn has_class_constructor(&self) -> bool {
@@ -2583,6 +2611,7 @@ struct ClassAnalysis {
     name: Symbol,
     class_index: usize,
     element_index: usize,
+    static_context: bool,
     static_field_initializer: Vec<CompileCommand>,
 }
 

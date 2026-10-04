@@ -339,6 +339,8 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ClassContext(Symbol),
     ClassElementContext,
+    StaticContext,
+    InitializerContext,
     ClassDeclaration(Symbol),
     ClassHeritage,
     ClassElement(ClassElementKind),
@@ -846,6 +848,18 @@ where
     // _CLASS_ELEMENT_CONTEXT_
     fn process_class_element_context(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ClassElementContext);
+        Ok(())
+    }
+
+    // _STATIC_CONTEXT_
+    fn process_static_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::StaticContext);
+        Ok(())
+    }
+
+    // _INITIALIZER_CONTEXT_
+    fn process_initializer_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::InitializerContext);
         Ok(())
     }
 
