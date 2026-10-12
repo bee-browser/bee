@@ -1,3 +1,4 @@
+use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Trace;
 use jsgc::VisitList;
@@ -5,6 +6,8 @@ use jsgc::VisitList;
 use crate::lambda::LambdaId;
 use crate::types::Capture;
 use crate::types::LambdaAddr;
+
+use super::ClassInitializer;
 
 /// A data type to represent a closure.
 #[repr(C)]
@@ -22,6 +25,9 @@ pub struct Closure {
 
     pub call_stub: LambdaAddr,
     pub construct_stub: LambdaAddr,
+
+    // TODO: move to an appropriate type...
+    pub class_initializer: Option<Handle<ClassInitializer>>,
 
     /// The ID of `lambda`.
     pub lambda_id: LambdaId,
@@ -79,6 +85,9 @@ impl std::fmt::Debug for Closure {
 
 impl Trace for Closure {
     fn trace(&self, visits: &mut VisitList) {
+        if let Some(class_initializer) = self.class_initializer {
+            class_initializer.trace(visits);
+        }
         for capture in self.captures() {
             capture.trace(visits);
         }

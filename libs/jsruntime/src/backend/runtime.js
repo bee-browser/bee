@@ -81,6 +81,8 @@ function makeCraneliftIRType(type) {
     case 'Handle<String>':
     case 'HandleMut<Promise>':
     case 'HandleMut<Object>':
+    case '*const Value':
+    case '*const ClassElement':
       return 'addr_type';
     case undefined:
       return '';

@@ -14,6 +14,8 @@ use crate::logger;
 use crate::types::CallContext;
 use crate::types::CallContextFlags;
 use crate::types::Capture;
+use crate::types::ClassElement;
+use crate::types::ClassElementKind;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Object;
@@ -25,6 +27,8 @@ use super::AnyIr;
 use super::ArgvIr;
 use super::BooleanIr;
 use super::CaptureIr;
+use super::ClassContext;
+use super::ClassElementArrayIr;
 use super::ClosureIr;
 use super::CoroutineIr;
 use super::EditorSupport;
@@ -1000,6 +1004,58 @@ impl<'a> Editor<'a> {
         let offset = (Value::SIZE as i64) * (index as i64);
         let addr = self.builder.ins().iadd_imm_u(argv.0, offset);
         AnyIr(addr)
+    }
+
+    // class element array
+
+    pub fn put_alloc_class_element_array(&mut self, num_elements: u16) -> ClassElementArrayIr {
+        logger::debug!(event = "put_alloc_class_element_array", num_elements);
+        debug_assert!(num_elements > 0);
+
+        let slot = self.builder.create_sized_stack_slot(ir::StackSlotData::new(
+            ir::StackSlotKind::ExplicitSlot,
+            (ClassElement::SIZE as u32) * (num_elements as u32),
+            ClassElement::ALIGNMENT.ilog2() as u8,
+        ));
+
+        ClassElementArrayIr(self.builder.ins().stack_addr(self.addr_type, slot, 0))
+    }
+
+    pub fn put_store_class_element(
+        &mut self,
+        index: u16,
+        kind: ClassElementKind,
+        key: Symbol,
+        value: Option<ObjectIr>,
+        elements: ClassElementArrayIr,
+    ) {
+        logger::debug!(
+            event = "put_store_class_element",
+            index,
+            ?kind,
+            ?key,
+            ?value,
+            ?elements
+        );
+
+        let element_offset = ClassElement::SIZE * index as usize;
+
+        let kind = self.builder.ins().iconst(ir::types::I8, kind as i64);
+        self.put_store(kind, elements.0, element_offset + ClassElement::KIND_OFFSET);
+
+        let key = self.builder.ins().iconst(ir::types::I32, key.id() as i64);
+        self.put_store(key, elements.0, element_offset + ClassElement::KEY_OFFSET);
+
+        let value = if let Some(value) = value {
+            value.0
+        } else {
+            self.builder.ins().iconst(self.addr_type, 0)
+        };
+        self.put_store(
+            value,
+            elements.0,
+            element_offset + ClassElement::VALUE_OFFSET,
+        );
     }
 
     // load
@@ -2602,68 +2658,52 @@ impl<'a> Editor<'a> {
     pub fn put_runtime_build_class(
         &mut self,
         support: &mut impl EditorSupport,
-        name: Symbol,
-        constructor: ObjectIr,
-        prototype: ObjectIr,
-    ) -> ObjectIr {
+        class: &ClassContext,
+        retv: AnyIr,
+    ) -> StatusIr {
         logger::debug!(
             event = "put_runtime_build_class",
-            ?name,
-            ?constructor,
-            ?prototype,
+            ?class.name,
+            ?class.parent,
+            ?class.elements,
+            class.num_elements,
         );
-        debug_assert!(name != Symbol::NONE);
+        debug_assert!(class.name != Symbol::NONE);
         if self.runtime_assert_enabled {
             self.put_assert_non_null(
                 support,
-                constructor.0,
-                c"runtime_build_class: constructor must be non-null",
-            );
-            self.put_assert_non_null(
-                support,
-                prototype.0,
-                c"runtime_build_class: prototype must be non-null",
+                class.elements.0,
+                c"runtime_build_class: elements must be non-null",
             );
         }
         let func = self
             .runtime_func_cache
             .import_runtime_build_class(support, self.builder.func);
-        let name = self.builder.ins().iconst(ir::types::I32, name.id() as i64);
-        let args = [self.runtime(), name, constructor.0, prototype.0];
-        let call = self.builder.ins().call(func, &args);
-        ObjectIr(self.builder.inst_results(call)[0])
-    }
-
-    pub fn put_runtime_build_prototype_chain(
-        &mut self,
-        support: &mut impl EditorSupport,
-        parent: AnyIr,
-        constructor: ObjectIr,
-        prototype: ObjectIr,
-        retv: AnyIr,
-    ) -> StatusIr {
-        logger::debug!(
-            event = "put_runtime_build_prototype_chain",
-            ?parent,
-            ?constructor,
-            ?prototype,
-        );
-        if self.runtime_assert_enabled {
-            self.put_assert_non_null(
-                support,
-                constructor.0,
-                c"runtime_build_class: constructor must be non-null",
-            );
-            self.put_assert_non_null(
-                support,
-                prototype.0,
-                c"runtime_build_class: prototype must be non-null",
-            );
-        }
-        let func = self
-            .runtime_func_cache
-            .import_runtime_build_prototype_chain(support, self.builder.func);
-        let args = [self.runtime(), parent.0, constructor.0, prototype.0, retv.0];
+        let name = self
+            .builder
+            .ins()
+            .iconst(ir::types::I32, class.name.id() as i64);
+        let parent = match class.parent {
+            Some(parent) => parent.0,
+            None => self.put_nullptr(),
+        };
+        let num_elements = self
+            .builder
+            .ins()
+            .iconst(ir::types::I16, class.num_elements as i64);
+        let callee_cc = self
+            .builder
+            .ins()
+            .stack_addr(self.addr_type, self.callee_cc, 0);
+        let args = [
+            self.runtime(),
+            name,
+            parent,
+            class.elements.0,
+            num_elements,
+            callee_cc,
+            retv.0,
+        ];
         let call = self.builder.ins().call(func, &args);
         StatusIr(self.builder.inst_results(call)[0])
     }
