@@ -2077,15 +2077,11 @@
   action: nop
 - rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition
   action: process_class_element_method
-- rule: >-
-    ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
-    MethodDefinition
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition
   action: process_class_element_static_method
 - rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition SEMICOLON
   action: process_class_element_field
-- rule: >-
-    ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
-    FieldDefinition SEMICOLON
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition SEMICOLON
   action: process_class_element_static_field
 - rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: process_class_element_static_block
@@ -2093,17 +2089,15 @@
   action: process_class_element_empty
 - rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Await
   action: process_class_element_method
-- rule: >-
-    ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
-    MethodDefinition_Await
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Await
   action: process_class_element_static_method
 - rule: >-
     ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Await
     SEMICOLON
   action: process_class_element_field
 - rule: >-
-    ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
-    FieldDefinition_Await SEMICOLON
+    ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Await
+    SEMICOLON
   action: process_class_element_static_field
 - rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: process_class_element_static_block
@@ -2505,16 +2499,16 @@
     PropertySetParameterList RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody
     RBRACE
   action: undefined
-- rule: _STATIC_CONTEXT_ -> (empty)
-  action: process_static_context
 - rule: FieldDefinition -> ClassElementName
   action: process_field_definition
-- rule: FieldDefinition -> ClassElementName _INITIALIZER_CONTEXT_ Initializer_In
+- rule: >-
+    FieldDefinition -> ClassElementName _FIELD_INITIALIZER_START_ Initializer_In
+    _FIELD_INITIALIZER_END_
   action: process_field_definition_with_initializer
 - rule: >-
-    ClassStaticBlock -> STATIC _STATIC_CONTEXT_ _INITIALIZER_CONTEXT_ LBRACE
+    ClassStaticBlock -> STATIC _STATIC_BLOCK_CONTEXT_ LBRACE
     ClassStaticBlockBody RBRACE
-  action: undefined
+  action: process_class_static_block
 - rule: >-
     MethodDefinition_Await -> ClassElementName_Await _FUNCTION_CONTEXT_ LPAREN
     UniqueFormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody
@@ -2538,8 +2532,8 @@
 - rule: FieldDefinition_Await -> ClassElementName_Await
   action: process_field_definition
 - rule: >-
-    FieldDefinition_Await -> ClassElementName_Await _INITIALIZER_CONTEXT_
-    Initializer_In_Await
+    FieldDefinition_Await -> ClassElementName_Await _FIELD_INITIALIZER_START_
+    Initializer_In_Await _FIELD_INITIALIZER_END_
   action: process_field_definition_with_initializer
 - rule: _FALSY_SHORT_CIRCUIT_ -> (empty)
   action: process_falsy_short_circuit
@@ -3093,10 +3087,14 @@
   action: undefined
 - rule: PropertySetParameterList -> FormalParameter
   action: undefined
-- rule: _INITIALIZER_CONTEXT_ -> (empty)
-  action: process_initializer_context
+- rule: _FIELD_INITIALIZER_START_ -> (empty)
+  action: process_field_initializer_start
+- rule: _FIELD_INITIALIZER_END_ -> (empty)
+  action: process_field_initializer_end
+- rule: _STATIC_BLOCK_CONTEXT_ -> (empty)
+  action: process_static_block_context
 - rule: ClassStaticBlockBody -> ClassStaticBlockStatementList
-  action: undefined
+  action: nop
 - rule: ClassElementName_Await -> PropertyName_Await
   action: process_class_element_name_property_name
 - rule: ClassElementName_Await -> PRIVATE_IDENTIFIER
@@ -3521,9 +3519,9 @@
 - rule: Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await
   action: process_declaration
 - rule: ClassStaticBlockStatementList -> (empty)
-  action: undefined
+  action: nop
 - rule: ClassStaticBlockStatementList -> StatementList_Await
-  action: undefined
+  action: nop
 - rule: EqualityExpression_In_Await -> RelationalExpression_In_Await
   action: nop
 - rule: >-
@@ -5354,17 +5352,15 @@
   action: undefined
 - rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Yield
   action: process_class_element_method
-- rule: >-
-    ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
-    MethodDefinition_Yield
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Yield
   action: process_class_element_static_method
 - rule: >-
     ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Yield
     SEMICOLON
   action: process_class_element_field
 - rule: >-
-    ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
-    FieldDefinition_Yield SEMICOLON
+    ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Yield
+    SEMICOLON
   action: process_class_element_static_field
 - rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: process_class_element_static_block
@@ -5408,7 +5404,7 @@
     MethodDefinition_Yield_Await
   action: process_class_element_method
 - rule: >-
-    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
+    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC
     MethodDefinition_Yield_Await
   action: process_class_element_static_method
 - rule: >-
@@ -5416,7 +5412,7 @@
     FieldDefinition_Yield_Await SEMICOLON
   action: process_class_element_field
 - rule: >-
-    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
+    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC
     FieldDefinition_Yield_Await SEMICOLON
   action: process_class_element_static_field
 - rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
@@ -5583,8 +5579,8 @@
 - rule: FieldDefinition_Yield -> ClassElementName_Yield
   action: process_field_definition
 - rule: >-
-    FieldDefinition_Yield -> ClassElementName_Yield _INITIALIZER_CONTEXT_
-    Initializer_In_Yield
+    FieldDefinition_Yield -> ClassElementName_Yield _FIELD_INITIALIZER_START_
+    Initializer_In_Yield _FIELD_INITIALIZER_END_
   action: process_field_definition_with_initializer
 - rule: AdditiveExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
   action: nop
@@ -5600,7 +5596,7 @@
   action: process_field_definition
 - rule: >-
     FieldDefinition_Yield_Await -> ClassElementName_Yield_Await
-    _INITIALIZER_CONTEXT_ Initializer_In_Yield_Await
+    _FIELD_INITIALIZER_START_ Initializer_In_Yield_Await _FIELD_INITIALIZER_END_
   action: process_field_definition_with_initializer
 - rule: MultiplicativeExpression -> ExponentiationExpression
   action: nop

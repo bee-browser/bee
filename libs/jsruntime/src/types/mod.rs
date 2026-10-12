@@ -4,6 +4,7 @@
 
 mod call_context;
 mod capture;
+mod class;
 mod closure;
 mod coroutine;
 mod lambda;
@@ -16,6 +17,10 @@ mod value;
 pub use call_context::CallContext;
 pub use call_context::CallContextFlags;
 pub use capture::Capture;
+pub use class::ClassElement;
+pub use class::ClassElementKind;
+pub use class::ClassFieldDefinition;
+pub use class::ClassInitializer;
 pub use closure::Closure;
 pub use coroutine::Coroutine;
 pub use lambda::Lambda;
