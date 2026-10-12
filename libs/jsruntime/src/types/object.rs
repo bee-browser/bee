@@ -448,7 +448,6 @@ impl Object {
     pub(crate) fn slots(&self) -> &[Value] {
         &self.slots
     }
-
     pub(crate) fn slots_mut(&mut self) -> &mut Vec<Value> {
         &mut self.slots
     }

@@ -107,6 +107,14 @@ impl<X> CodeRegistry<X> {
             .declare_function(&name, Linkage::Local, &self.lambda_sig)
             .unwrap();
         self.id_map.insert(func.id, func_id);
+        #[cfg(debug_assertions)]
+        {
+            let flags = codegen::settings::Flags::new(codegen::settings::builder());
+            if let Err(err) = codegen::verify_function(&ctx.func, &flags) {
+                let err = codegen::print_errors::pretty_verifier_error(&ctx.func, None, err);
+                panic!("{err}");
+            }
+        }
         module.define_function(func_id, ctx).unwrap();
         module.clear_context(ctx);
         module.finalize_definitions().unwrap();
