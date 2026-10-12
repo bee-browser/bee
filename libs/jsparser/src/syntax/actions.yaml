@@ -3519,7 +3519,7 @@
 - rule: Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await
   action: process_declaration
 - rule: ClassStaticBlockStatementList -> (empty)
-  action: nop
+  action: process_class_static_block_statement_list_empty
 - rule: ClassStaticBlockStatementList -> StatementList_Await
   action: nop
 - rule: EqualityExpression_In_Await -> RelationalExpression_In_Await
