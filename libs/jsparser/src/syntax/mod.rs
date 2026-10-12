@@ -911,6 +911,18 @@ where
         Ok(())
     }
 
+    fn push_empty_statement_list(&mut self) {
+        let node_index = self.nodes.len();
+        let token_index = self.tokens.len();
+        let offset = self.location.offset;
+        self.push(Syntax {
+            detail: Detail::StatementList,
+            nodes_range: node_index..node_index,
+            tokens_range: token_index..token_index,
+            source_range: offset..offset,
+        });
+    }
+
     // 13.1 Identifiers
 
     // IdentifierReference : Identifier
@@ -3742,15 +3754,8 @@ where
     // FunctionStatementList[Yield, Await] :
     //   [empty]
     fn process_function_statement_list_empty(&mut self) -> Result<(), Error> {
-        let node_index = self.nodes.len();
-        let token_index = self.tokens.len();
         // 15.2.1 Static Semantics: Early Errors
-        self.push(Syntax {
-            detail: Detail::StatementList,
-            nodes_range: node_index..node_index,
-            tokens_range: token_index..token_index,
-            source_range: self.location.offset..self.location.offset,
-        });
+        self.push_empty_statement_list();
         Ok(())
     }
 
@@ -4238,7 +4243,11 @@ where
     nop! {}
 
     // ClassStaticBlockStatementList :
-    nop! {}
+    //   [empty]
+    fn process_class_static_block_statement_list_empty(&mut self) -> Result<(), Error> {
+        self.push_empty_statement_list();
+        Ok(())
+    }
 
     // ClassStaticBlockStatementList :
     //   StatementList[~Yield, +Await, ~Return]
