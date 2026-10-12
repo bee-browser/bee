@@ -622,8 +622,9 @@ function addActions(rules) {
     '_FUNCTION_SIGNATURE_',
     '_CLASS_CONTEXT_',
     '_CLASS_ELEMENT_CONTEXT_',
-    '_STATIC_CONTEXT_',
-    '_INITIALIZER_CONTEXT_',
+    '_STATIC_BLOCK_CONTEXT_',
+    '_FIELD_INITIALIZER_START_',
+    '_FIELD_INITIALIZER_END_',
     '_ELSE_',
     '_THEN_',
     '_ELSE_EXPR_',
@@ -904,7 +905,6 @@ function modifyClassElement(rules) {
     if (value === '`;`') {
       return value;
     }
-    value = value.replace('`static`', '`static` _STATIC_CONTEXT_');
     return `_CLASS_ELEMENT_CONTEXT_ ${value}`;
   });
   return rules;
@@ -914,13 +914,8 @@ function modifyClassStaticBlock(rules) {
   const TARGETS = [
     {
       term: '`static`',
-      action: '_STATIC_CONTEXT_',
+      action: '_STATIC_BLOCK_CONTEXT_',
       insertBefore: false,
-    },
-    {
-      term: '`{`',
-      action: '_INITIALIZER_CONTEXT_',
-      insertBefore: true,
     },
   ];
   log.debug('Modifying ClassStaticBlock...');
@@ -1470,8 +1465,13 @@ function modifyFieldDefinition(rules) {
   const TARGETS = [
     {
       term: 'Initializer[+In, ?Yield, ?Await]',
-      action: '_INITIALIZER_CONTEXT_',
+      action: '_FIELD_INITIALIZER_START_',
       insertBefore: true,
+    },
+    {
+      term: 'Initializer[+In, ?Yield, ?Await]',
+      action: '_FIELD_INITIALIZER_END_',
+      insertBefore: false,
     },
   ];
   log.debug('Modifying FieldDefinition...');

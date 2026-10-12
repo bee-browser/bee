@@ -9,6 +9,7 @@ use crate::semantics::Function;
 use crate::semantics::ThisBinding;
 use crate::types::CallContext;
 use crate::types::Capture;
+use crate::types::ClassElement;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
@@ -266,8 +267,6 @@ extern "C" fn construct_stub_this_binding_capture<X>(
     // list.
     cc.set_this(unsafe { cc.closure().captures().get_unchecked(0).value().clone() });
 
-    // TODO: initializers
-
     let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
     // DO NOT USE local variables that implement `Drop`.
@@ -285,8 +284,6 @@ extern "C" fn construct_stub_this_binding_global_object<X>(
     logger::debug!(event = "construct_stub_this_binding_global_object");
 
     cc.set_this(Value::Object(runtime.builtins.global_object));
-
-    // TODO: initializers
 
     let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
@@ -309,8 +306,6 @@ extern "C" fn construct_stub_this_binding_quirk<X>(
         Value::Undefined | Value::None => runtime.builtins.global_object,
         this => runtime.value_to_object(this).unwrap(),
     }));
-
-    // TODO: initializers
 
     let lambda = Lambda::from(cc.closure().lambda);
     // We expect TCO to optimize the following call into a jump instruction.
@@ -799,6 +794,13 @@ pub(crate) extern "C" fn runtime_create_data_property_by_symbol<X>(
     value: &Value,
     retv: &mut Value,
 ) -> Status {
+    logger::debug!(
+        event = "runtime_create_data_property_by_symbol",
+        ?object,
+        key,
+        ?value
+    );
+
     // TODO(refactor): generate ffi-conversion code by script
     let object = into_object!(object);
 
@@ -922,30 +924,19 @@ pub(crate) extern "C" fn runtime_push_value<X>(
 pub(crate) extern "C" fn runtime_build_class<X>(
     runtime: &mut Runtime<X>,
     name: u32,
-    constructor: HandleMut<Object>,
-    prototype: HandleMut<Object>,
-) -> HandleMut<Object> {
-    let name = Symbol::from(name);
-    runtime.build_class(name, constructor, prototype)
-}
-
-pub(crate) extern "C" fn runtime_build_prototype_chain<X>(
-    runtime: &mut Runtime<X>,
-    parent: &Value,
-    constructor: HandleMut<Object>,
-    prototype: HandleMut<Object>,
+    parent: *const Value,
+    elements: *const ClassElement,
+    num_elements: u16,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
-    match runtime.build_prototype_chain(parent, constructor, prototype) {
-        Ok(()) => {
-            *retv = Value::None;
-            Status::Normal
-        }
-        Err(err) => {
-            *retv = runtime.create_exception(err);
-            Status::Exception
-        }
-    }
+    logger::debug!(event = "runtime_build_class");
+    let name = Symbol::from(name);
+    // SAFETY: XXX
+    let parent = unsafe { parent.as_ref() };
+    // SAFETY: XXX
+    let elements = unsafe { std::slice::from_raw_parts(elements, num_elements as usize) };
+    runtime.build_class(name, parent, elements, cc, retv)
 }
 
 pub(crate) extern "C" fn runtime_construct<X>(
@@ -955,6 +946,7 @@ pub(crate) extern "C" fn runtime_construct<X>(
     cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
+    logger::debug!(event = "runtime_construct");
     runtime.construct(constructor, new_target, cc, retv)
 }
 

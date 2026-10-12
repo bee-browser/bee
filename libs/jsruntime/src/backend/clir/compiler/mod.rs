@@ -33,6 +33,7 @@ use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
 use crate::semantics::VariableRef;
 use crate::types::CallContextFlags;
+use crate::types::ClassElementKind;
 use crate::types::Object;
 use crate::types::String;
 use crate::types::Value;
@@ -285,6 +286,8 @@ struct Compiler<'a, R> {
     /// A stack for operands.
     operand_stack: OperandStack,
 
+    class_context_stack: Vec<ClassContext>,
+
     // The following values must be reset in the end of compilation for each function.
     this_capture: Option<CaptureAddr>,
     params: Vec<AnyIr>,
@@ -341,6 +344,7 @@ where
             pending_labels: Default::default(),
             editor: Editor::new(runtime_assert_enabled, builder, target_config),
             operand_stack: Default::default(),
+            class_context_stack: Default::default(),
             this_capture: None,
             params: Default::default(),
             locals: Default::default(),
@@ -521,8 +525,23 @@ where
             }
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Exception => self.process_exception(),
-            CompileCommand::Class(name) => self.process_class(*name),
-            CompileCommand::Prototype => self.process_prototype(),
+            CompileCommand::ClassStart(name, num_elements) => {
+                self.process_class_start(*name, *num_elements)
+            }
+            CompileCommand::ClassEnd(name, num_elements, derived) => {
+                self.process_class_end(*name, *num_elements, *derived)
+            }
+            CompileCommand::ParentClass => self.process_parent_class(),
+            CompileCommand::Constructor(index) => self.process_constructor(*index),
+            CompileCommand::StaticMethod(index) => self.process_static_method(*index),
+            CompileCommand::Method(index) => self.process_method(*index),
+            CompileCommand::StaticField(index, has_initializer) => {
+                self.process_static_field(*index, *has_initializer)
+            }
+            CompileCommand::Field(index, has_initializer) => {
+                self.process_field(*index, *has_initializer)
+            }
+            CompileCommand::StaticBlock(index) => self.process_static_block(*index),
             CompileCommand::This => self.process_this(),
             CompileCommand::Super => self.process_super(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
@@ -642,6 +661,15 @@ where
         if dump_enabled!() {
             eprintln!("### operand-stack");
             self.operand_stack.dump();
+            eprintln!();
+
+            eprintln!("### class-context-stack");
+            for class_context in self.class_context_stack.iter().rev() {
+                eprintln!(
+                    "name={:?} num_elements={}",
+                    class_context.name, class_context.num_elements
+                );
+            }
             eprintln!();
 
             self.control_flow_stack.dump();
@@ -792,30 +820,246 @@ where
         self.operand_stack.push(Operand::Any(exception, None));
     }
 
-    fn process_class(&mut self, name: Symbol) {
-        let prototype = self.pop_object();
-        let constructor = self.pop_object();
-        let class = self
-            .editor
-            .put_runtime_build_class(self.support, name, constructor, prototype);
-        self.operand_stack.push(Operand::Object(class));
+    fn process_class_start(&mut self, name: Symbol, num_elements: u16) {
+        let elements = self.editor.put_alloc_class_element_array(num_elements);
+        self.class_context_stack
+            .push(ClassContext::new(name, elements, num_elements));
     }
 
-    fn process_prototype(&mut self) {
+    fn process_class_end(&mut self, _name: Symbol, _num_elements: u16, _derived: bool) {
+        let class = self.class_context_stack.pop().unwrap();
+
+        let retv = self.emit_create_any();
+        let status = self
+            .editor
+            .put_runtime_build_class(self.support, &class, retv);
+        self.emit_check_status_for_exception(status, retv);
+
+        if self.support.is_runtime_assert_enabled() {
+            let is_object = self.editor.put_is_object(retv);
+            self.editor.put_assert(
+                self.support,
+                is_object,
+                c"runtime_build_class() should return an Object",
+            );
+        }
+
+        let constructor = self.editor.put_load_object(retv);
+
+        if self.support.is_runtime_assert_enabled() {
+            let is_callable = self.editor.put_is_callable(constructor);
+            self.editor
+                .put_assert(self.support, is_callable, c"constructor must be callable");
+        }
+
+        self.operand_stack.push(Operand::Object(constructor));
+    }
+
+    fn process_parent_class(&mut self) {
         let (operand, _) = self.dereference();
         let parent = self.editor.put_alloc_any();
         self.emit_store_operand_to_any(&operand, parent);
-        let prototype = self.peek_object(0);
-        let constructor = self.peek_object(1);
-        let retv = self.emit_create_any();
-        let status = self.editor.put_runtime_build_prototype_chain(
-            self.support,
-            parent,
-            constructor,
-            prototype,
-            retv,
+        self.class_context_stack
+            .last_mut()
+            .unwrap()
+            .set_parent(parent);
+    }
+
+    fn process_constructor(&mut self, index: u16) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let constructor = match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"constructor must be callable",
+                    );
+                }
+                object
+            }
+            _ => unreachable!(),
+        };
+
+        match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, key) => {
+                debug_assert!(matches!(key, PropertyKey::Symbol(Symbol::CONSTRUCTOR)));
+            }
+            _ => unreachable!(),
+        }
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::Constructor,
+            Symbol::CONSTRUCTOR,
+            Some(constructor),
+            elements,
         );
-        self.emit_check_status_for_exception(status, retv);
+    }
+
+    fn process_static_method(&mut self, index: u16) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let method = match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"static method must be callable",
+                    );
+                }
+                object
+            }
+            _ => unreachable!(),
+        };
+
+        let key = match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, PropertyKey::Symbol(key)) => key,
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::StaticMethod,
+            key,
+            Some(method),
+            elements,
+        );
+    }
+
+    fn process_method(&mut self, index: u16) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let method = match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor
+                        .put_assert(self.support, is_callable, c"method must be callable");
+                }
+                object
+            }
+            _ => unreachable!(),
+        };
+
+        let key = match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, PropertyKey::Symbol(key)) => key,
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::Method,
+            key,
+            Some(method),
+            elements,
+        );
+    }
+
+    fn process_static_field(&mut self, index: u16, has_initializer: bool) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let initializer = has_initializer.then(|| match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"static field initializer must be callable",
+                    );
+                }
+                object
+            }
+            (operand, ..) => unreachable!("{operand:?}"),
+        });
+
+        let key = match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, PropertyKey::Symbol(key)) => key,
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::StaticField,
+            key,
+            initializer,
+            elements,
+        );
+    }
+
+    fn process_field(&mut self, index: u16, has_initializer: bool) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let initializer = has_initializer.then(|| match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"field initializer must be callable",
+                    );
+                }
+                object
+            }
+            (operand, ..) => unreachable!("{operand:?}"),
+        });
+
+        let key = match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, PropertyKey::Symbol(key)) => key,
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::Field,
+            key,
+            initializer,
+            elements,
+        );
+    }
+
+    fn process_static_block(&mut self, index: u16) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let block = match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"static block must be callable",
+                    );
+                }
+                object
+            }
+            _ => unreachable!(),
+        };
+
+        match self.operand_stack.pop().unwrap() {
+            Operand::Undefined => (),
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::StaticBlock,
+            Symbol::NONE,
+            Some(block),
+            elements,
+        );
     }
 
     fn process_this(&mut self) {
@@ -4016,6 +4260,29 @@ impl From<AnyIr> for PropertyKey {
     }
 }
 
+struct ClassContext {
+    name: Symbol,
+    parent: Option<AnyIr>,
+    elements: ClassElementArrayIr,
+    num_elements: u16,
+}
+
+impl ClassContext {
+    fn new(name: Symbol, elements: ClassElementArrayIr, num_elements: u16) -> Self {
+        Self {
+            name,
+            parent: None,
+            elements,
+            num_elements,
+        }
+    }
+
+    fn set_parent(&mut self, parent: AnyIr) {
+        debug_assert!(self.parent.is_none());
+        self.parent = Some(parent);
+    }
+}
+
 /// A runtime boolean value in `ir::types::I8`.
 #[derive(Clone, Copy, Debug)]
 struct BooleanIr(ir::Value);
@@ -4052,6 +4319,9 @@ struct ArgvIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
 struct StatusIr(ir::Value);
+
+#[derive(Clone, Copy, Debug)]
+struct ClassElementArrayIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
 struct Status(u32);

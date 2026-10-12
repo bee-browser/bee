@@ -26,6 +26,10 @@ use semantics::Function;
 use semantics::Program;
 use types::CallContext;
 use types::Capture;
+use types::ClassElement;
+use types::ClassElementKind;
+use types::ClassFieldDefinition;
+use types::ClassInitializer;
 use types::Closure;
 use types::Coroutine;
 use types::Lambda;
@@ -278,6 +282,7 @@ impl<X> Runtime<X> {
         args: &[Value],
         retv: &mut Value,
     ) -> Status {
+        logger::debug!(event = "call", ?callable, ?this, ?args);
         let closure = callable.closure();
         let mut callee = caller.new_child(callable, closure, this, args);
         let lambda = Lambda::from(closure.call_stub);
@@ -396,6 +401,7 @@ impl<X> Runtime<X> {
                     lambda: lambda.into(),
                     call_stub: lambda.into(),
                     construct_stub: lambda.into(),
+                    class_initializer: None,
                     lambda_id,
                     num_captures,
                     captures: [],
@@ -520,84 +526,139 @@ impl<X> Runtime<X> {
     fn build_class(
         &mut self,
         name: Symbol,
-        mut constructor: HandleMut<Object>,
-        mut prototype: HandleMut<Object>,
-    ) -> HandleMut<Object> {
+        parent: Option<&Value>,
+        elements: &[ClassElement],
+        cc: &mut CallContext,
+        retv: &mut Value,
+    ) -> Status {
         let name = self.create_string_from_symbol(name);
-        logger::debug!(event = "build_class", ?name, ?constructor, ?prototype);
-        let mut constructor = if let Some(prop) =
-            prototype.get_own_property(&Symbol::CONSTRUCTOR.into())
+        logger::debug!(
+            event = "build_class",
+            ?name,
+            ?parent,
+            elements.len = elements.len()
+        );
+
+        let mut constructor = elements
+            .iter()
+            .find_map(|element| match element.kind {
+                ClassElementKind::Constructor => element.value,
+                _ => None,
+            })
+            .unwrap();
+
+        let mut prototype = match constructor
+            .get_own_property(&Symbol::PROTOTYPE.into())
+            .unwrap()
+            .value()
         {
-            let mut constructor = match prop.value() {
-                Value::Object(v) => *v,
-                _ => unreachable!(),
-            };
-            debug_assert!(constructor.get_own_property(&Symbol::NAME.into()).is_some());
-            constructor.set_value(&Symbol::NAME.into(), &Value::String(name));
-
-            // TODO(feat): static class elements
-
-            constructor
-        } else {
-            let result = constructor
-                .define_own_property(Symbol::NAME.into(), Property::data_xxc(Value::String(name)));
-            debug_assert!(matches!(result, Ok(true)));
-
-            let result = prototype.define_own_property(
-                Symbol::CONSTRUCTOR.into(),
-                Property::data_xxx(Value::Object(constructor)),
-            );
-            debug_assert!(matches!(result, Ok(true)));
-
-            constructor
+            Value::Object(object) => *object,
+            _ => unreachable!(),
         };
 
-        let result = constructor.define_own_property(
-            Symbol::PROTOTYPE.into(),
-            Property::data_xxx(Value::Object(prototype)),
-        );
-        debug_assert!(matches!(result, Ok(true)));
-
-        debug_assert!(constructor.is_callable());
-        constructor.set_class_constructor();
-        constructor.set_constructor();
-        constructor
-    }
-
-    fn build_prototype_chain(
-        &mut self,
-        parent: &Value,
-        mut constructor: HandleMut<Object>,
-        mut prototype: HandleMut<Object>,
-    ) -> Result<(), Error> {
-        logger::debug!(
-            event = "build_prototype_chain",
-            ?parent,
-            ?constructor,
-            ?prototype
-        );
-        match parent {
-            Value::None => unreachable!(),
-            Value::Null => {
-                prototype.set_no_prototype();
-                Ok(())
+        let (proto_parent, constructor_parent) = match parent {
+            None => (
+                Some(self.builtins.object_prototype),
+                self.builtins.function_prototype,
+            ),
+            Some(Value::Null) => (None, self.builtins.function_prototype),
+            Some(Value::Object(parent)) if parent.is_constructor() => {
+                let proto_parent = match parent.get_value(&Symbol::PROTOTYPE.into()) {
+                    Some(Value::Null) => None,
+                    Some(Value::Object(object)) => Some(*object),
+                    _ => return type_error!(self, retv),
+                };
+                (proto_parent, *parent)
             }
-            Value::Object(parent) if parent.is_constructor() => {
-                constructor.set_prototype(*parent);
-                match parent.get_value(&Symbol::PROTOTYPE.into()) {
-                    Some(Value::Null) => {
-                        prototype.set_no_prototype();
-                        Ok(())
-                    }
-                    Some(Value::Object(parent_prototype)) => {
-                        prototype.set_prototype(*parent_prototype);
-                        Ok(())
-                    }
-                    _ => type_error!(),
-                }
-            }
-            _ => type_error!(),
+            _ => return type_error!(self, retv),
+        };
+
+        match proto_parent {
+            Some(parent) => prototype.set_prototype(parent),
+            None => prototype.set_no_prototype(),
         }
+
+        constructor.set_prototype(constructor_parent);
+
+        let fields: Vec<ClassFieldDefinition> = elements
+            .iter()
+            .filter_map(|element| match element.kind {
+                ClassElementKind::Field => Some(ClassFieldDefinition {
+                    name: element.key,
+                    initializer: element.value,
+                }),
+                _ => None,
+            })
+            .collect();
+        let fields = self.heap.alloc_seq(&fields);
+
+        let class_initializer = self.heap.alloc(ClassInitializer::new(fields));
+        constructor.closure().class_initializer = Some(class_initializer);
+        constructor.set_class_constructor();
+
+        for element in elements {
+            match element.kind {
+                ClassElementKind::Constructor => {
+                    let result = prototype.define_own_property(
+                        Symbol::CONSTRUCTOR.into(),
+                        Property::data_xxx(Value::Object(constructor)),
+                    );
+                    debug_assert!(matches!(result, Ok(true)));
+                }
+                ClassElementKind::StaticMethod => {
+                    let method = element.value.unwrap();
+                    debug_assert!(method.is_callable());
+                    let result = constructor.define_own_property(
+                        element.key.into(),
+                        Property::data_xxx(Value::Object(method)),
+                    );
+                    debug_assert!(matches!(result, Ok(true)));
+                }
+                ClassElementKind::Method => {
+                    let method = element.value.unwrap();
+                    debug_assert!(method.is_callable());
+                    let result = prototype.define_own_property(
+                        element.key.into(),
+                        Property::data_xxx(Value::Object(method)),
+                    );
+                    debug_assert!(matches!(result, Ok(true)));
+                }
+                _ => (),
+            }
+        }
+
+        for element in elements {
+            match element.kind {
+                ClassElementKind::StaticField => {
+                    let value = if let Some(initializer) = element.value {
+                        debug_assert!(initializer.is_callable());
+                        let status =
+                            self.call(cc, initializer, &Value::Object(constructor), &[], retv);
+                        if matches!(status, Status::Exception) {
+                            return status;
+                        }
+                        retv.clone()
+                    } else {
+                        Value::Undefined
+                    };
+                    let result = constructor
+                        .define_own_property(element.key.into(), Property::data_xxx(value));
+                    debug_assert!(matches!(result, Ok(true)));
+                }
+                ClassElementKind::StaticBlock => {
+                    let block = element.value.unwrap();
+                    debug_assert!(block.is_callable());
+                    let status = self.call(cc, block, &Value::Object(constructor), &[], retv);
+                    if matches!(status, Status::Exception) {
+                        return status;
+                    }
+                }
+                _ => (),
+            }
+        }
+
+        *retv = Value::Object(constructor);
+        Status::Normal
     }
 
     fn construct(
@@ -624,6 +685,15 @@ impl<X> Runtime<X> {
                 })
                 .unwrap_or(self.builtins.object_prototype);
             object.set_prototype(prototype);
+
+            if constructor.is_class_constructor() {
+                let status = self.initialize_instance_elements(cc, object, constructor, retv);
+                if !matches!(status, Status::Normal) {
+                    debug_assert!(matches!(status, Status::Exception));
+                    return status;
+                }
+            }
+
             cc.set_this(Value::Object(object));
             Some(object)
         } else {
@@ -640,7 +710,8 @@ impl<X> Runtime<X> {
 
         let stub = Lambda::from(closure.construct_stub);
         let status = stub(self, cc, retv);
-        if matches!(status, Status::Exception) {
+        if !matches!(status, Status::Normal) {
+            debug_assert!(matches!(status, Status::Exception));
             return status;
         }
 
@@ -668,6 +739,37 @@ impl<X> Runtime<X> {
             Some(prototype) => prototype == self.builtins.function_prototype,
             None => true,
         }
+    }
+
+    fn initialize_instance_elements(
+        &mut self,
+        cc: &CallContext,
+        mut this: HandleMut<Object>,
+        constructor: HandleMut<Object>,
+        retv: &mut Value,
+    ) -> Status {
+        logger::debug!(event = "initialize_instance_elements", ?this, ?constructor);
+        debug_assert!(constructor.is_class_constructor());
+        let initializer = constructor.closure().class_initializer.unwrap();
+        for field in initializer.fields() {
+            let value = match field.initializer {
+                Some(initializer) => {
+                    let status = self.call(cc, initializer, &Value::Object(this), &[], retv);
+                    if !matches!(status, Status::Normal) {
+                        debug_assert!(matches!(status, Status::Exception));
+                        return status;
+                    }
+                    retv.clone()
+                }
+                None => Value::Undefined,
+            };
+            if let Err(err) = this.define_own_property(field.name.into(), Property::data_wec(value))
+            {
+                *retv = self.create_exception(err);
+                return Status::Exception;
+            }
+        }
+        Status::Normal
     }
 
     //#sec-instanceofoperator

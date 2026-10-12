@@ -162,6 +162,7 @@ enum Detail {
     ClassElementList(ClassElementListInfo),
     ClassElement(ClassElementInfo),
     FieldDefinition(Symbol, bool, bool),
+    ClassStaticBlock,
     ClassElementName(Symbol, bool),
     AsyncConciseBody,
     StatementList,
@@ -339,8 +340,9 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ClassContext(Symbol),
     ClassElementContext,
-    StaticContext,
-    InitializerContext,
+    FieldInitializerStart,
+    FieldInitializerEnd,
+    StaticBlockContext,
     ClassDeclaration(Symbol),
     ClassHeritage,
     ClassElement(ClassElementKind),
@@ -562,10 +564,14 @@ impl std::fmt::Debug for AssignmentOperator {
 
 #[derive(Clone, Debug)]
 pub enum ClassElementKind {
-    StaticField,
-    StaticFieldWithInitializer,
+    Constructor,
     Method,
     StaticMethod,
+    Field,
+    FieldWithInitializer,
+    StaticField,
+    StaticFieldWithInitializer,
+    StaticBlock,
 }
 
 base::auto_bitflags! {
@@ -851,15 +857,21 @@ where
         Ok(())
     }
 
-    // _STATIC_CONTEXT_
-    fn process_static_context(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::StaticContext);
+    // _FIELD_INITIALIZER_START_
+    fn process_field_initializer_start(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FieldInitializerStart);
         Ok(())
     }
 
-    // _INITIALIZER_CONTEXT_
-    fn process_initializer_context(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::InitializerContext);
+    // _FIELD_INITIALIZER_END_
+    fn process_field_initializer_end(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FieldInitializerEnd);
+        Ok(())
+    }
+
+    // _STATIC_BLOCK_CONTEXT_
+    fn process_static_block_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::StaticBlockContext);
         Ok(())
     }
 
@@ -3908,8 +3920,8 @@ where
     // ClassTail[Yield, Await] :
     //   { ClassBody[?Yield, ?Await] }
     fn process_class_tail_with_body(&mut self) -> Result<(), Error> {
-        match self.nth(1).detail {
-            Detail::ClassElementList(ref info) => {
+        match &self.nth(1).detail {
+            Detail::ClassElementList(info) => {
                 if info.need_heritage() {
                     Err(Error::SyntaxError)
                 } else {
@@ -3917,7 +3929,7 @@ where
                     Ok(())
                 }
             }
-            _ => unreachable!(),
+            detail => unreachable!("{detail:?}"),
         }
     }
 
@@ -4008,7 +4020,7 @@ where
             }
             Detail::MethodDefinition(Symbol::CONSTRUCTOR, flags) => {
                 self.enqueue(Node::Method(true));
-                self.enqueue(Node::ClassElement(ClassElementKind::Method));
+                self.enqueue(Node::ClassElement(ClassElementKind::Constructor));
                 let has_direct_super = flags.contains(MethodFlags::HAS_DIRECT_SUPER);
                 self.replace(
                     1,
@@ -4084,7 +4096,31 @@ where
     // ClassElement[Yield, Await] :
     //   FieldDefinition[?Yield, ?Await] ;
     fn process_class_element_field(&mut self) -> Result<(), Error> {
-        todo!()
+        match self.nth(1).detail {
+            // #sec-class-definitions-static-semantics-early-errors
+            // 'constructor' is not allowed.
+            Detail::FieldDefinition(Symbol::CONSTRUCTOR, ..) => Err(Error::SyntaxError),
+            Detail::FieldDefinition(name, private, with_initializer) => {
+                self.enqueue(Node::ClassElement(if with_initializer {
+                    ClassElementKind::FieldWithInitializer
+                } else {
+                    ClassElementKind::Field
+                }));
+                self.replace(
+                    2,
+                    if private {
+                        Detail::ClassElement(ClassElementInfo::PrivateId(
+                            name,
+                            ClassElementPrivateIdFlags::OTHER,
+                        ))
+                    } else {
+                        Detail::ClassElement(ClassElementInfo::None)
+                    },
+                );
+                Ok(())
+            }
+            ref detail => unreachable!("{detail:?}"),
+        }
     }
 
     // ClassElement[Yield, Await] :
@@ -4121,7 +4157,9 @@ where
     // ClassElement[Yield, Await] :
     //   ClassStaticBlock
     fn process_class_element_static_block(&mut self) -> Result<(), Error> {
-        todo!()
+        self.enqueue(Node::ClassElement(ClassElementKind::StaticBlock));
+        self.replace(1, Detail::ClassElement(ClassElementInfo::None));
+        Ok(())
     }
 
     // ClassElement[Yield, Await] :
@@ -4153,6 +4191,13 @@ where
             }
             ref detail => unreachable!("{detail:?}"),
         }
+    }
+
+    // ClassStaticBlock :
+    //   static { ClassStaticBlockBody }
+    fn process_class_static_block(&mut self) -> Result<(), Error> {
+        self.replace(4, Detail::ClassStaticBlock);
+        Ok(())
     }
 
     // ClassElementName[Yield, Await] :
@@ -4187,6 +4232,17 @@ where
         self.replace(1, Detail::ClassElementName(name, true));
         Ok(())
     }
+
+    // ClassStaticBlockBody :
+    //   ClassStaticBlockStatementList
+    nop! {}
+
+    // ClassStaticBlockStatementList :
+    nop! {}
+
+    // ClassStaticBlockStatementList :
+    //   StatementList[~Yield, +Await, ~Return]
+    nop! {}
 
     // 15.8 Async Function Definitions
 

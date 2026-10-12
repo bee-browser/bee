@@ -1904,11 +1904,11 @@
   action: nop
 - rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition
   action: create_nullable
-- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_ MethodDefinition
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition
   action: class_element_static_method_definition
 - rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_ FieldDefinition SEMICOLON
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition SEMICOLON
   action: class_element_static_property_definition
 - rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
@@ -1916,13 +1916,11 @@
   action: class_element_semicolon
 - rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Await
   action: create_nullable
-- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_ MethodDefinition_Await
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Await
   action: class_element_static_method_definition
 - rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Await SEMICOLON
   action: class_element_property_definition
-- rule: >-
-    ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_ FieldDefinition_Await
-    SEMICOLON
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Await SEMICOLON
   action: class_element_static_property_definition
 - rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
@@ -2270,15 +2268,13 @@
     MethodDefinition -> SET ClassElementName _FUNCTION_CONTEXT_ LPAREN PropertySetParameterList
     RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: method_definition_set
-- rule: _STATIC_CONTEXT_ -> (empty)
-  action: nop
 - rule: FieldDefinition -> ClassElementName
   action: property_definition
-- rule: FieldDefinition -> ClassElementName _INITIALIZER_CONTEXT_ Initializer_In
-  action: property_definition_value
 - rule: >-
-    ClassStaticBlock -> STATIC _STATIC_CONTEXT_ _INITIALIZER_CONTEXT_ LBRACE ClassStaticBlockBody
-    RBRACE
+    FieldDefinition -> ClassElementName _FIELD_INITIALIZER_START_ Initializer_In
+    _FIELD_INITIALIZER_END_
+  action: property_definition_value
+- rule: ClassStaticBlock -> STATIC _STATIC_BLOCK_CONTEXT_ LBRACE ClassStaticBlockBody RBRACE
   action: static_block
 - rule: >-
     MethodDefinition_Await -> ClassElementName_Await _FUNCTION_CONTEXT_ LPAREN
@@ -2300,7 +2296,9 @@
   action: method_definition_set
 - rule: FieldDefinition_Await -> ClassElementName_Await
   action: property_definition
-- rule: FieldDefinition_Await -> ClassElementName_Await _INITIALIZER_CONTEXT_ Initializer_In_Await
+- rule: >-
+    FieldDefinition_Await -> ClassElementName_Await _FIELD_INITIALIZER_START_ Initializer_In_Await
+    _FIELD_INITIALIZER_END_
   action: property_definition_value
 - rule: _FALSY_SHORT_CIRCUIT_ -> (empty)
   action: nop
@@ -2786,7 +2784,11 @@
   action: method_definition_async_generator
 - rule: PropertySetParameterList -> FormalParameter
   action: create_list
-- rule: _INITIALIZER_CONTEXT_ -> (empty)
+- rule: _FIELD_INITIALIZER_START_ -> (empty)
+  action: nop
+- rule: _FIELD_INITIALIZER_END_ -> (empty)
+  action: nop
+- rule: _STATIC_BLOCK_CONTEXT_ -> (empty)
   action: nop
 - rule: ClassStaticBlockBody -> ClassStaticBlockStatementList
   action: nop
@@ -4766,13 +4768,11 @@
   action: method_definition_async_generator
 - rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Yield
   action: create_nullable
-- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_ MethodDefinition_Yield
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Yield
   action: class_element_static_method_definition
 - rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Yield SEMICOLON
   action: class_element_property_definition
-- rule: >-
-    ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_ FieldDefinition_Yield
-    SEMICOLON
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Yield SEMICOLON
   action: class_element_static_property_definition
 - rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
@@ -4806,15 +4806,13 @@
   action: method_definition_async_generator
 - rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Yield_Await
   action: create_nullable
-- rule: >-
-    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
-    MethodDefinition_Yield_Await
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Yield_Await
   action: class_element_static_method_definition
 - rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Yield_Await SEMICOLON
   action: class_element_property_definition
 - rule: >-
-    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC _STATIC_CONTEXT_
-    FieldDefinition_Yield_Await SEMICOLON
+    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Yield_Await
+    SEMICOLON
   action: class_element_static_property_definition
 - rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
@@ -4952,7 +4950,9 @@
   action: binary_expression
 - rule: FieldDefinition_Yield -> ClassElementName_Yield
   action: property_definition
-- rule: FieldDefinition_Yield -> ClassElementName_Yield _INITIALIZER_CONTEXT_ Initializer_In_Yield
+- rule: >-
+    FieldDefinition_Yield -> ClassElementName_Yield _FIELD_INITIALIZER_START_ Initializer_In_Yield
+    _FIELD_INITIALIZER_END_
   action: property_definition_value
 - rule: AdditiveExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
   action: nop
@@ -4967,8 +4967,8 @@
 - rule: FieldDefinition_Yield_Await -> ClassElementName_Yield_Await
   action: property_definition
 - rule: >-
-    FieldDefinition_Yield_Await -> ClassElementName_Yield_Await _INITIALIZER_CONTEXT_
-    Initializer_In_Yield_Await
+    FieldDefinition_Yield_Await -> ClassElementName_Yield_Await _FIELD_INITIALIZER_START_
+    Initializer_In_Yield_Await _FIELD_INITIALIZER_END_
   action: property_definition_value
 - rule: MultiplicativeExpression -> ExponentiationExpression
   action: nop
