@@ -28,24 +28,23 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<
         // context.args().first().unwrap().is_symbol()
         runtime.value_to_string(cc.args().first().unwrap())?
     };
-    match cc.new_target() {
-        Some(new_target) => {
-            let proto = runtime
-                .get_prototype_from_constructor(new_target, runtime.builtins.string_prototype)?;
-            // TODO(feat): 10.4.3.4 StringCreate
-            let mut object = runtime.create_object();
-            object.set_prototype(proto);
-            let length = string.len();
-            object.set_string(string);
-            // TODO: check the result
-            let result = object.define_own_property(
-                Symbol::LENGTH.into(),
-                Property::data_xxc(Value::Number(length as f64)),
-            );
-            debug_assert!(matches!(result, Ok(true)));
-            Ok(Value::Object(object))
-        }
-        None => Ok(Value::String(string)),
+    if let Value::Object(new_target) = cc.new_target() {
+        let proto = runtime
+            .get_prototype_from_constructor(*new_target, runtime.builtins.string_prototype)?;
+        // TODO(feat): 10.4.3.4 StringCreate
+        let mut object = runtime.create_object();
+        object.set_prototype(proto);
+        let length = string.len();
+        object.set_string(string);
+        // TODO: check the result
+        let result = object.define_own_property(
+            Symbol::LENGTH.into(),
+            Property::data_xxc(Value::Number(length as f64)),
+        );
+        debug_assert!(matches!(result, Ok(true)));
+        Ok(Value::Object(object))
+    } else {
+        Ok(Value::String(string))
     }
 }
 

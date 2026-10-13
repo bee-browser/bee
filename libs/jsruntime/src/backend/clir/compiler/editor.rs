@@ -189,9 +189,11 @@ impl<'a> Editor<'a> {
         self.lambda_params(1)
     }
 
-    pub fn put_load_new_target(&mut self) -> ObjectIr {
+    /// Returns the `[[NewTarget]]` of the lambda function.
+    pub fn new_target(&mut self) -> AnyIr {
+        const OFFSET: i64 = CallContext::NEW_TARGET_OFFSET as i64;
         let cc = self.call_context();
-        ObjectIr(self.put_load_addr(cc, CallContext::NEW_TARGET_OFFSET))
+        AnyIr(self.builder.ins().iadd_imm_u(cc, OFFSET))
     }
 
     /// Returns the `this` argument of the lambda function.
@@ -874,10 +876,13 @@ impl<'a> Editor<'a> {
 
     pub fn put_clear_new_target_of_callee_cc(&mut self) {
         const OFFSET: i32 = CallContext::NEW_TARGET_OFFSET as i32;
-        let none = self.builder.ins().iconst(self.addr_type, 0);
+        let kind = self
+            .builder
+            .ins()
+            .iconst(ir::types::I8, Value::KIND_UNDEFINED as i64);
         self.builder
             .ins()
-            .stack_store(self.addr_type, none, self.callee_cc, OFFSET);
+            .stack_store(self.addr_type, kind, self.callee_cc, OFFSET);
     }
 
     pub fn put_store_caller_to_callee_cc(&mut self) {

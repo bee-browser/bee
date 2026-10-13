@@ -20,9 +20,10 @@ use super::logger;
 pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "error_constructor");
 
-    let new_target = match cc.new_target() {
-        Some(new_target) => new_target,
-        None => cc.func().unwrap(),
+    let new_target = if let Value::Object(new_target) = cc.new_target() {
+        *new_target
+    } else {
+        cc.func().unwrap()
     };
 
     let mut object =

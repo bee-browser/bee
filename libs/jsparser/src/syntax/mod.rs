@@ -280,6 +280,7 @@ pub enum Node<'s> {
     MemberExpression(MemberExpressionKind),
     This,
     Super,
+    NewTarget,
     IdentifierReference(Symbol),
     BindingIdentifier(Symbol),
     ArgumentListHead(bool, bool),
@@ -2152,6 +2153,29 @@ where
             MemberExpressionKind::PropertyAccessWithIdentifierKey(key),
         ));
         self.replace(3, Detail::OptionalChain);
+        Ok(())
+    }
+
+    // 13.3.12 Meta Properties
+
+    // MemberExpression[Yield, Await] :
+    //   MetaProperty
+    nop! {}
+
+    // MetaProperty :
+    //   NewTarget
+    nop! {}
+
+    // NewTarget :
+    //   new . target
+    fn process_new_target(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::NewTarget);
+        self.replace(
+            3,
+            Detail::Expression {
+                assignment_target_type: AssignmentTargetType::Invalid,
+            },
+        );
         Ok(())
     }
 

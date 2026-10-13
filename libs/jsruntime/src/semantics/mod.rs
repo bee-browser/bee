@@ -428,6 +428,10 @@ where
         analysis_mut!(self).process_super();
     }
 
+    fn handle_new_target(&mut self) {
+        analysis_mut!(self).process_new_target();
+    }
+
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
         analysis_mut!(self).process_identifier_reference(symbol);
     }
@@ -1302,6 +1306,7 @@ where
             Node::MemberExpression(kind) => self.handle_member_expression(kind),
             Node::This => self.handle_this(),
             Node::Super => self.handle_super(),
+            Node::NewTarget => self.handle_new_target(),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
@@ -1831,6 +1836,10 @@ impl FunctionAnalysis {
 
     fn process_super(&mut self) {
         self.commands.push(CompileCommand::Super);
+    }
+
+    fn process_new_target(&mut self) {
+        self.commands.push(CompileCommand::NewTarget);
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {
@@ -2632,6 +2641,7 @@ pub enum CompileCommand {
     // references
     This,
     Super,
+    NewTarget,
     VariableReference(Symbol),
     PropertyReference(Symbol),
     ToPropertyKey,
