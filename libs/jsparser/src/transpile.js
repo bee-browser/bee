@@ -171,6 +171,7 @@ class Transpiler {
           modifyOptionalChain,
           modifyFunctionDeclaration,
           modifyClassDeclaration,
+          modifyClassExpression,
           modifyClassElement,
           modifyClassStaticBlock,
           modifyMethodDefinition,
@@ -892,6 +893,21 @@ function modifyClassDeclaration(rules) {
   ];
   log.debug('Modifying ClassDeclaration...');
   const rule = rules.find((rule) => rule.name === 'ClassDeclaration[Yield, Await, Default]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyClassExpression(rules) {
+  const TARGETS = [
+    {
+      term: 'ClassTail[?Yield, ?Await]',
+      action: '_CLASS_CONTEXT_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying ClassExpression...');
+  const rule = rules.find((rule) => rule.name === 'ClassExpression[Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;
