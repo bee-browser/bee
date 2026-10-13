@@ -756,6 +756,21 @@ where
         analysis_mut!(self).process_class_declaration(name, &mut self.global_analysis);
     }
 
+    fn handle_class_expression(&mut self, name: Symbol) {
+        if !self.analysis().has_class_constructor() {
+            self.define_default_constructor();
+        }
+
+        let analysis = analysis_mut!(self).process_class_definition(&mut self.global_analysis);
+        debug_assert_eq!(analysis.name, name);
+
+        // Pop the block scope created in handle_class_context().
+        analysis_mut!(self).end_scope();
+        self.global_analysis.scope_tree_builder.pop();
+
+        analysis_mut!(self).process_class_expression(name);
+    }
+
     fn define_default_constructor(&mut self) {
         let name = self.analysis().class_stack.last().unwrap().name;
         let index = self.analysis().class_stack.last().unwrap().num_elements;
@@ -1380,6 +1395,7 @@ where
             Node::FieldInitializerEnd => self.handle_field_initializer_end(),
             Node::StaticBlockContext => self.handle_static_block_context(),
             Node::ClassDeclaration(name) => self.handle_class_declaration(name),
+            Node::ClassExpression(name) => self.handle_class_expression(name),
             Node::ClassHeritage => self.handle_class_heritage(),
             Node::ClassElement(ClassElementKind::Constructor) => {
                 self.handle_class_element_constructor()
@@ -2131,6 +2147,16 @@ impl FunctionAnalysis {
                 .scope_tree_builder
                 .add_local(name, self.num_locals, true);
             self.num_locals += 1;
+        } else {
+            // TODO(feat): default class
+        }
+    }
+
+    fn process_class_expression(&mut self, name: Symbol) {
+        if name != Symbol::NONE {
+            debug_assert!(!self.symbol_stack.is_empty());
+            let symbol = self.symbol_stack.pop().unwrap().0;
+            debug_assert_eq!(name, symbol);
         } else {
             // TODO(feat): default class
         }

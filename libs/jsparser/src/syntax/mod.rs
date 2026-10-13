@@ -157,6 +157,7 @@ enum Detail {
     ConciseBody,
     MethodDefinition(Symbol, MethodFlags),
     ClassDeclaration,
+    ClassExpression,
     ClassTail,
     ClassHeritage,
     ClassElementList(ClassElementListInfo),
@@ -345,6 +346,7 @@ pub enum Node<'s> {
     FieldInitializerEnd,
     StaticBlockContext,
     ClassDeclaration(Symbol),
+    ClassExpression(Symbol),
     ClassHeritage,
     ClassElement(ClassElementKind),
     AsyncFunctionDeclaration,
@@ -3923,7 +3925,13 @@ where
     // ClassExpression[Yield, Await] :
     //   class BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
     fn process_class_expression(&mut self) -> Result<(), Error> {
-        todo!()
+        let name = match self.nth(1).detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            ref detail => unreachable!("{detail:?}"),
+        };
+        self.enqueue(Node::ClassExpression(name));
+        self.replace(3, Detail::ClassExpression);
+        Ok(())
     }
 
     // ClassExpression[Yield, Await] :
