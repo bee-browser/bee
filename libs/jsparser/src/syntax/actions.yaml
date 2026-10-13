@@ -2585,9 +2585,11 @@
     FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN
     FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: process_function_expression
-- rule: ClassExpression_Await -> CLASS ClassTail_Await
+- rule: ClassExpression_Await -> CLASS _CLASS_CONTEXT_ ClassTail_Await
   action: process_class_expression_anonymous
-- rule: ClassExpression_Await -> CLASS BindingIdentifier_Await ClassTail_Await
+- rule: >-
+    ClassExpression_Await -> CLASS BindingIdentifier_Await _CLASS_CONTEXT_
+    ClassTail_Await
   action: process_class_expression
 - rule: >-
     GeneratorExpression -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN
@@ -3358,9 +3360,9 @@
   action: process_object_literal_list
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList COMMA RBRACE
   action: process_object_literal_comma
-- rule: ClassExpression -> CLASS ClassTail
+- rule: ClassExpression -> CLASS _CLASS_CONTEXT_ ClassTail
   action: process_class_expression_anonymous
-- rule: ClassExpression -> CLASS BindingIdentifier ClassTail
+- rule: ClassExpression -> CLASS BindingIdentifier _CLASS_CONTEXT_ ClassTail
   action: process_class_expression
 - rule: TemplateLiteral -> NO_SUBSTITUTION_TEMPLATE
   action: process_template_literal_no_substitution
@@ -3598,9 +3600,11 @@
     ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield
     COMMA RBRACE
   action: undefined
-- rule: ClassExpression_Yield -> CLASS ClassTail_Yield
+- rule: ClassExpression_Yield -> CLASS _CLASS_CONTEXT_ ClassTail_Yield
   action: process_class_expression_anonymous
-- rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
+- rule: >-
+    ClassExpression_Yield -> CLASS BindingIdentifier_Yield _CLASS_CONTEXT_
+    ClassTail_Yield
   action: process_class_expression
 - rule: TemplateLiteral_Yield -> NO_SUBSTITUTION_TEMPLATE
   action: process_template_literal_no_substitution
@@ -3648,11 +3652,11 @@
     ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_
     PropertyDefinitionList_Yield_Await COMMA RBRACE
   action: undefined
-- rule: ClassExpression_Yield_Await -> CLASS ClassTail_Yield_Await
+- rule: ClassExpression_Yield_Await -> CLASS _CLASS_CONTEXT_ ClassTail_Yield_Await
   action: process_class_expression_anonymous
 - rule: >-
     ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await
-    ClassTail_Yield_Await
+    _CLASS_CONTEXT_ ClassTail_Yield_Await
   action: process_class_expression
 - rule: TemplateLiteral_Yield_Await -> NO_SUBSTITUTION_TEMPLATE
   action: process_template_literal_no_substitution
