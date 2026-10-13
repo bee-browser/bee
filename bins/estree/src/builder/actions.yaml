@@ -2344,9 +2344,9 @@
     FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters
     RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: function_expression
-- rule: ClassExpression_Await -> CLASS ClassTail_Await
+- rule: ClassExpression_Await -> CLASS _CLASS_CONTEXT_ ClassTail_Await
   action: anonymous_class_expression
-- rule: ClassExpression_Await -> CLASS BindingIdentifier_Await ClassTail_Await
+- rule: ClassExpression_Await -> CLASS BindingIdentifier_Await _CLASS_CONTEXT_ ClassTail_Await
   action: class_expression
 - rule: >-
     GeneratorExpression -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody
@@ -3034,9 +3034,9 @@
   action: object_expression
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList COMMA RBRACE
   action: object_expression_comma
-- rule: ClassExpression -> CLASS ClassTail
+- rule: ClassExpression -> CLASS _CLASS_CONTEXT_ ClassTail
   action: anonymous_class_expression
-- rule: ClassExpression -> CLASS BindingIdentifier ClassTail
+- rule: ClassExpression -> CLASS BindingIdentifier _CLASS_CONTEXT_ ClassTail
   action: class_expression
 - rule: TemplateLiteral -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
@@ -3254,9 +3254,9 @@
   action: object_expression
 - rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield COMMA RBRACE
   action: object_expression_comma
-- rule: ClassExpression_Yield -> CLASS ClassTail_Yield
+- rule: ClassExpression_Yield -> CLASS _CLASS_CONTEXT_ ClassTail_Yield
   action: anonymous_class_expression
-- rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
+- rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield _CLASS_CONTEXT_ ClassTail_Yield
   action: class_expression
 - rule: TemplateLiteral_Yield -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
@@ -3294,9 +3294,11 @@
     ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield_Await COMMA
     RBRACE
   action: object_expression_comma
-- rule: ClassExpression_Yield_Await -> CLASS ClassTail_Yield_Await
+- rule: ClassExpression_Yield_Await -> CLASS _CLASS_CONTEXT_ ClassTail_Yield_Await
   action: anonymous_class_expression
-- rule: ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
+- rule: >-
+    ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await _CLASS_CONTEXT_
+    ClassTail_Yield_Await
   action: class_expression
 - rule: TemplateLiteral_Yield_Await -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
