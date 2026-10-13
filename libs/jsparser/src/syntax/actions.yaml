@@ -1668,7 +1668,7 @@
 - rule: MemberExpression_Await -> SuperProperty_Await
   action: undefined
 - rule: MemberExpression_Await -> MetaProperty
-  action: undefined
+  action: nop
 - rule: >-
     MemberExpression_Await -> NEW MemberExpression_Await _DEREFERENCE_
     Arguments_Await
@@ -2156,7 +2156,7 @@
 - rule: SuperProperty_Await -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: undefined
 - rule: MetaProperty -> NewTarget
-  action: undefined
+  action: nop
 - rule: MetaProperty -> ImportMeta
   action: undefined
 - rule: _SUPER_ -> (empty)
@@ -2376,7 +2376,7 @@
 - rule: MemberExpression -> SuperProperty
   action: undefined
 - rule: MemberExpression -> MetaProperty
-  action: undefined
+  action: nop
 - rule: MemberExpression -> NEW MemberExpression _DEREFERENCE_ Arguments
   action: process_member_expression_new
 - rule: MemberExpression -> MemberExpression _DEREFERENCE_ DOT PRIVATE_IDENTIFIER
@@ -2622,7 +2622,7 @@
 - rule: TemplateLiteral_Await -> SubstitutionTemplate_Await
   action: process_template_literal
 - rule: NewTarget -> NEW DOT TARGET
-  action: undefined
+  action: process_new_target
 - rule: ImportMeta -> IMPORT DOT META
   action: undefined
 - rule: _TEMPLATE_HEAD_ -> TEMPLATE_HEAD
@@ -2742,7 +2742,7 @@
 - rule: MemberExpression_Yield -> SuperProperty_Yield
   action: undefined
 - rule: MemberExpression_Yield -> MetaProperty
-  action: undefined
+  action: nop
 - rule: >-
     MemberExpression_Yield -> NEW MemberExpression_Yield _DEREFERENCE_
     Arguments_Yield
@@ -2874,7 +2874,7 @@
 - rule: MemberExpression_Yield_Await -> SuperProperty_Yield_Await
   action: undefined
 - rule: MemberExpression_Yield_Await -> MetaProperty
-  action: undefined
+  action: nop
 - rule: >-
     MemberExpression_Yield_Await -> NEW MemberExpression_Yield_Await
     _DEREFERENCE_ Arguments_Yield_Await

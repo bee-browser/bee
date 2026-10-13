@@ -11,7 +11,7 @@ class B extends A {
 }
 
 const o = new B;
-// TODO(feat): print(o instanceof A); ///=true
-// TODO(feat): print(o instanceof B); ///=true
+print(o instanceof A); ///=true
+print(o instanceof B); ///=true
 print(o.a()); ///=1
 print(o.b()); ///=2

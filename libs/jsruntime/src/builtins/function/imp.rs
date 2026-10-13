@@ -144,8 +144,8 @@ impl<X> Runtime<X> {
             let closure = cc.closure();
             let (func, this, mut args) = closure.get_bound_function_params();
             args.extend_from_slice(cc.args());
-            if let Some(new_target) = cc.new_target() {
-                runtime.construct(func, new_target, cc, retv)
+            if let Value::Object(new_target) = cc.new_target() {
+                runtime.construct(func, *new_target, cc, retv)
             } else {
                 runtime.call(cc, func, this, &args, retv)
             }

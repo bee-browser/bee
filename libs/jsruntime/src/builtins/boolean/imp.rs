@@ -17,16 +17,15 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<
     logger::debug!(event = "boolean_constructor");
 
     let value = cc.arg(0).to_boolean();
-    match cc.new_target() {
-        Some(new_target) => {
-            let proto = runtime
-                .get_prototype_from_constructor(new_target, runtime.builtins.boolean_prototype)?;
-            let mut obj = runtime.create_object();
-            obj.set_prototype(proto);
-            obj.set_boolean(value);
-            Ok(Value::Object(obj))
-        }
-        None => Ok(Value::Boolean(value)),
+    if let Value::Object(new_target) = cc.new_target() {
+        let proto = runtime
+            .get_prototype_from_constructor(*new_target, runtime.builtins.boolean_prototype)?;
+        let mut obj = runtime.create_object();
+        obj.set_prototype(proto);
+        obj.set_boolean(value);
+        Ok(Value::Object(obj))
+    } else {
+        Ok(Value::Boolean(value))
     }
 }
 

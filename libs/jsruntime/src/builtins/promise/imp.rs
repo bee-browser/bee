@@ -19,9 +19,10 @@ use super::logger;
 pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "promise_constructor");
 
-    let new_target = match cc.new_target() {
-        Some(new_target) => new_target,
-        None => return runtime_todo!(),
+    let new_target = if let Value::Object(new_target) = cc.new_target() {
+        *new_target
+    } else {
+        return runtime_todo!();
     };
 
     let executor = match cc.arg(0) {

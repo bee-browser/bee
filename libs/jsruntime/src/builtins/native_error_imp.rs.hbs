@@ -26,9 +26,10 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<
     logger::debug!(event = "{{id}}_constructor");
     let args = cc.args();
 
-    let new_target = match cc.new_target() {
-        Some(new_target) => new_target,
-        None => cc.func().unwrap(),
+    let new_target = if let Value::Object(new_target) = cc.new_target() {
+        *new_target
+    } else {
+        cc.func().unwrap()
     };
 
     let mut object =

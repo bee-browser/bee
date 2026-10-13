@@ -22,7 +22,9 @@ pub struct CallContext {
     envp: *mut c_void,
 
     /// The `new` target.
-    new_target: Option<HandleMut<Object>>,
+    ///
+    /// `Value::Undefined` or `Value::Object`.
+    new_target: Value,
 
     /// The `this` argument.
     this: Value,
@@ -68,7 +70,7 @@ impl CallContext {
     pub(crate) fn new_for_entry(args: &[Value], this: Value) -> Self {
         Self {
             envp: std::ptr::null_mut(),
-            new_target: None,
+            new_target: Value::Undefined,
             this,
             func: None,
             caller: std::ptr::null(),
@@ -87,7 +89,7 @@ impl CallContext {
     ) -> Self {
         Self {
             envp: coroutine.as_ptr() as *mut std::ffi::c_void,
-            new_target: None,
+            new_target: Value::Undefined,
             this,
             func: None,
             caller: std::ptr::null(),
@@ -108,7 +110,7 @@ impl CallContext {
     ) -> Self {
         Self {
             envp: closure.as_ptr() as *mut std::ffi::c_void,
-            new_target: None,
+            new_target: Value::Undefined,
             this: this.clone(),
             func: Some(func),
             caller: self,
@@ -120,12 +122,16 @@ impl CallContext {
         }
     }
 
-    pub(crate) fn new_target(&self) -> Option<HandleMut<Object>> {
-        self.new_target
+    pub(crate) fn new_target(&self) -> &Value {
+        debug_assert!(matches!(
+            self.new_target,
+            Value::Undefined | Value::Object(_)
+        ));
+        &self.new_target
     }
 
     pub(crate) fn set_new_target(&mut self, new_target: HandleMut<Object>) {
-        self.new_target = Some(new_target);
+        self.new_target = Value::Object(new_target);
     }
 
     pub(crate) fn this(&self) -> &Value {
