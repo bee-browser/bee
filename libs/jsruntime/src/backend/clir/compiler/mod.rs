@@ -544,6 +544,7 @@ where
             CompileCommand::StaticBlock(index) => self.process_static_block(*index),
             CompileCommand::This => self.process_this(),
             CompileCommand::Super => self.process_super(),
+            CompileCommand::NewTarget => self.process_new_target(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
             CompileCommand::ToPropertyKey => self.process_to_property_key(),
@@ -1075,6 +1076,11 @@ where
         self.operand_stack.push(Operand::Object(super_constructor));
     }
 
+    fn process_new_target(&mut self) {
+        let new_target = self.editor.new_target();
+        self.operand_stack.push(Operand::Any(new_target, None));
+    }
+
     fn process_variable_reference(&mut self, symbol: Symbol) {
         let scope_ref = self.control_flow_stack.scope_flow().scope_ref;
         // TODO(perf): improve if `find_variable()` is the primary case of performance bottleneck.
@@ -1452,7 +1458,13 @@ where
         };
 
         let new_target = if super_call {
-            self.editor.put_load_new_target()
+            let new_target = self.editor.new_target();
+            if self.support.is_runtime_assert_enabled() {
+                let is_object = self.editor.put_is_object(new_target);
+                self.editor
+                    .put_assert(self.support, is_object, c"[[NewTarget]] must be an object");
+            }
+            self.editor.put_load_object(new_target)
         } else {
             constructor
         };
