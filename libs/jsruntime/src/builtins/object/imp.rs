@@ -20,9 +20,9 @@ pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<
     logger::debug!(event = "object_constructor");
 
     match cc.new_target() {
-        Some(new_target) if new_target != cc.func().unwrap() => Ok(Value::Object(
+        Value::Object(new_target) if *new_target != cc.func().unwrap() => Ok(Value::Object(
             runtime
-                .ordinary_create_from_constructor(new_target, runtime.builtins.object_prototype)?,
+                .ordinary_create_from_constructor(*new_target, runtime.builtins.object_prototype)?,
         )),
         _ => match cc.args().first() {
             None | Some(Value::Undefined) | Some(Value::Null) => Ok(Value::Object(

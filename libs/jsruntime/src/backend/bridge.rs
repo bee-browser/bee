@@ -76,7 +76,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     cc.closure().call_stub = call_stub.into();
     cc.closure().construct_stub = construct_stub.into();
 
-    if cc.new_target().is_none() {
+    if matches!(cc.new_target(), Value::Undefined) {
         call_stub(runtime, cc, retv)
     } else {
         construct_stub(runtime, cc, retv)
@@ -124,7 +124,7 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     cc.closure().call_stub = call_stub.into();
     cc.closure().construct_stub = construct_stub.into();
 
-    if cc.new_target().is_none() {
+    if matches!(cc.new_target(), Value::Undefined) {
         call_stub(runtime, cc, retv)
     } else {
         construct_stub(runtime, cc, retv)
