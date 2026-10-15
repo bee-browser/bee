@@ -382,6 +382,10 @@ where
             self.editor.put_set_closure_mode();
         }
 
+        // TODO(perf): use `cranelift::Variable` for optimization
+        let class_tmp = self.editor.put_alloc_any();
+        self.editor.set_class_tmp(class_tmp);
+
         // Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from a
         // debugging and readability perspective...
         let body_block = self.editor.create_block();
@@ -853,7 +857,10 @@ where
                 .put_assert(self.support, is_callable, c"constructor must be callable");
         }
 
-        self.operand_stack.push(Operand::Object(constructor));
+        // TODO(perf): use a `cranelift::Variable` for optimization.
+        let tmp = self.editor.class_tmp();
+        self.editor.put_store_object_to_any(constructor, tmp);
+        self.operand_stack.push(Operand::Any(tmp, None));
     }
 
     fn process_parent_class(&mut self) {
