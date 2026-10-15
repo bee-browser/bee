@@ -59,6 +59,10 @@ pub struct Editor<'a> {
     callee_cc: ir::StackSlot,
     fcs: ir::StackSlot,
 
+    // TODO(perf): remove...
+    // We use this variable on the stack to pass class constructors across blocks.
+    class_tmp: ir::Value,
+
     // FunctionBuilder::is_filled() is a private method.
     block_terminated: bool,
 
@@ -108,6 +112,7 @@ impl<'a> Editor<'a> {
             callee_cc,
             closure: ir::Value::from_u32(0), // dummy
             fcs,
+            class_tmp: ir::Value::from_u32(0), // dummy
             block_terminated: false,
             coroutine_mode: false,
             runtime_assert_enabled,
@@ -476,6 +481,17 @@ impl<'a> Editor<'a> {
             .stack_load(self.addr_type, ir::types::I32, self.fcs, 4);
         let fs_depth = self.builder.ins().band_imm_u(fs, 0x0000FF00);
         BooleanIr(self.builder.ins().icmp_imm_u(Equal, fs_depth, depth as i64))
+    }
+
+    // class_tmp
+    // TODO(perf): remove...
+
+    pub fn class_tmp(&self) -> AnyIr {
+        AnyIr(self.class_tmp)
+    }
+
+    pub fn set_class_tmp(&mut self, class_tmp: AnyIr) {
+        self.class_tmp = class_tmp.0;
     }
 
     // control flow
@@ -2673,7 +2689,6 @@ impl<'a> Editor<'a> {
             ?class.elements,
             class.num_elements,
         );
-        debug_assert!(class.name != Symbol::NONE);
         if self.runtime_assert_enabled {
             self.put_assert_non_null(
                 support,
