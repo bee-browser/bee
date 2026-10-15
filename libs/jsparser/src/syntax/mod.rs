@@ -36,6 +36,7 @@ macro_rules! ensure {
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! todo {
     () => {{
         logger::warn!(event = "todo", action = base::func_name!());
@@ -3937,7 +3938,9 @@ where
     // ClassExpression[Yield, Await] :
     //   class ClassTail[?Yield, ?Await]
     fn process_class_expression_anonymous(&mut self) -> Result<(), Error> {
-        todo!()
+        self.enqueue(Node::ClassExpression(Symbol::NONE));
+        self.replace(2, Detail::ClassExpression);
+        Ok(())
     }
 
     // ClassTail[Yield, Await] :

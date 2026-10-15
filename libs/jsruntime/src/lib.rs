@@ -316,13 +316,6 @@ impl<X> Runtime<X> {
         self.heap.alloc(String::new_heap(seq))
     }
 
-    fn create_string_from_symbol(&mut self, symbol: Symbol) -> Handle<String> {
-        let utf16 = self.symbol_registry.resolve(symbol).unwrap();
-        // TODO(perf): inefficient
-        let seq = self.heap.alloc_seq(utf16);
-        self.heap.alloc(String::new_heap(seq))
-    }
-
     fn create_string_from_utf8(&mut self, utf8: &str) -> Handle<String> {
         // TODO(perf): inefficient
         let utf16 = utf8.encode_utf16().collect::<Vec<u16>>();
@@ -531,7 +524,6 @@ impl<X> Runtime<X> {
         cc: &mut CallContext,
         retv: &mut Value,
     ) -> Status {
-        let name = self.create_string_from_symbol(name);
         logger::debug!(
             event = "build_class",
             ?name,
