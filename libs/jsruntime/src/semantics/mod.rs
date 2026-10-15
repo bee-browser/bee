@@ -2168,26 +2168,23 @@ impl FunctionAnalysis {
         self.commands[analysis.class_index] =
             CompileCommand::ClassStart(analysis.name, analysis.num_elements);
 
+        // TODO: default class
+
+        self.commands.push(CompileCommand::ClassEnd(
+            analysis.name,
+            analysis.num_elements,
+            analysis.flags.contains(ClassFlags::DERIVED),
+        ));
+
         if analysis.name != Symbol::NONE {
-            debug_assert!(!self.symbol_stack.is_empty());
-            let symbol = self.symbol_stack.last().unwrap().0;
-            self.commands.push(CompileCommand::ClassEnd(
-                symbol,
-                analysis.num_elements,
-                analysis.flags.contains(ClassFlags::DERIVED),
-            ));
+            self.commands.push(CompileCommand::Duplicate(0));
             self.commands
-                .push(CompileCommand::VariableReference(symbol));
+                .push(CompileCommand::VariableReference(analysis.name));
             self.commands.push(CompileCommand::ImmutableVariable);
-            self.commands
-                .push(CompileCommand::VariableReference(symbol));
-            self.commands.push(CompileCommand::Dereference);
             global_analysis
                 .scope_tree_builder
-                .add_local(symbol, self.num_locals, true);
+                .add_local(analysis.name, self.num_locals, true);
             self.num_locals += 1;
-        } else {
-            // TODO(feat): default class
         }
 
         analysis
