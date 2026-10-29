@@ -696,7 +696,9 @@ where
         let func_index = self.functions.len() - 1;
         let analysis = self.analysis_mut();
         if outer_this_captured {
-            analysis.flags.insert(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
+            analysis
+                .flags
+                .insert(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
         }
         analysis.process_unresolved_references(&unresolved_references, func_index);
     }
@@ -1124,13 +1126,6 @@ where
     }
 
     fn resolve_references(&mut self, analysis: &mut FunctionAnalysis) -> Vec<Reference> {
-        if analysis
-            .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED)
-        {
-            self.functions.last_mut().unwrap().num_captures += 1;
-        }
-
         let mut unresolved_reference = vec![];
         for reference in analysis.references.iter() {
             let variable_ref = self
@@ -1182,6 +1177,12 @@ where
             }
         };
 
+        let num_captures = if matches!(this_binding, ThisBinding::Capture) {
+            1
+        } else {
+            0
+        };
+
         let mut flags = FunctionFlags::empty();
         if self.analysis_stack.is_empty() {
             flags.insert(FunctionFlags::ENTRY_FUNCTION);
@@ -1196,7 +1197,7 @@ where
             id: analysis.id,
             commands: analysis.commands,
             scope_ref,
-            num_captures: 0,
+            num_captures,
             num_params: analysis.num_params,
             num_locals: analysis.num_locals,
             this_binding,
