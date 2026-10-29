@@ -72,6 +72,24 @@ macro_rules! range_error {
     };
 }
 
+macro_rules! reference_error {
+    () => {
+        error!($crate::ErrorKind::ReferenceError)
+    };
+    ($message:literal) => {
+        error!($crate::ErrorKind::ReferenceError, $message)
+    };
+    ($runtime:expr, $retv:expr) => {{
+        *$retv = $crate::Value::Object($runtime.create_reference_error(None));
+        $crate::Status::Exception
+    }};
+    ($runtime:expr, $retv:expr, $message:literal) => {{
+        *$retv =
+            $crate::Value::Object($runtime.create_reference_error(Some(const_string!($message))));
+        $crate::Status::Exception
+    }};
+}
+
 macro_rules! runtime_todo {
     () => {
         error!($crate::ErrorKind::InternalError)

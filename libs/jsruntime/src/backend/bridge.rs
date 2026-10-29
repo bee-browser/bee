@@ -230,6 +230,7 @@ extern "C" fn call_stub_this_binding_quirk<X>(
     logger::debug!(event = "call_stub_this_binding_quirk");
 
     cc.set_this(Value::Object(match cc.this() {
+        Value::None => unreachable!(),
         Value::Undefined | Value::Null => runtime.builtins.global_object,
         this => runtime.value_to_object(this).unwrap(),
     }));
@@ -303,7 +304,8 @@ extern "C" fn construct_stub_this_binding_quirk<X>(
     logger::debug!(event = "construct_stub_this_binding_quirk");
 
     cc.set_this(Value::Object(match cc.this() {
-        Value::Undefined | Value::None => runtime.builtins.global_object,
+        Value::None => unreachable!(),
+        Value::Undefined | Value::Null => runtime.builtins.global_object,
         this => runtime.value_to_object(this).unwrap(),
     }));
 

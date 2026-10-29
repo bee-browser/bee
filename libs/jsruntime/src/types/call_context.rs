@@ -135,7 +135,6 @@ impl CallContext {
     }
 
     pub(crate) fn this(&self) -> &Value {
-        debug_assert!(self.this.is_valid());
         &self.this
     }
 
