@@ -695,10 +695,9 @@ where
 
         let func_index = self.functions.len() - 1;
         let analysis = self.analysis_mut();
-        analysis.flags.set(
-            FunctionAnalysisFlags::THIS_BINDING_CAPTURED,
-            outer_this_captured,
-        );
+        if outer_this_captured {
+            analysis.flags.insert(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
+        }
         analysis.process_unresolved_references(&unresolved_references, func_index);
     }
 
@@ -2101,8 +2100,15 @@ impl FunctionAnalysis {
             analysis.flags |= ClassFlags::HAS_CONSTRUCTOR;
             // Function.name = <class-name>
             symbol = analysis.name;
-            // process_closure_expression() checks `symbol` and pop it from the symbol stack.
-            self.symbol_stack.last_mut().unwrap().0 = symbol;
+            if symbol == Symbol::NONE {
+                // FIXME: dirty...
+                // process_closure_expression() removes a symbol only if symbol is not NONE.
+                // probably, we should remove the symbol stack itself.
+                self.symbol_stack.pop();
+            } else {
+                // process_closure_expression() checks `symbol` and pop it from the symbol stack.
+                self.symbol_stack.last_mut().unwrap().0 = symbol;
+            }
         }
         self.process_closure_expression(scope_ref, lambda_id, symbol, false);
     }
