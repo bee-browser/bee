@@ -86,6 +86,7 @@ pub fn error_prototype_to_string<X>(
 ) -> Result<Value, Error> {
     logger::debug!(event = "error_prototype_to_string");
     let object = match cc.this() {
+        Value::None => unreachable!(),
         Value::Object(object) => object,
         _ => return type_error!(),
     };

@@ -59,6 +59,7 @@ pub fn number_prototype_to_string<X>(
 // #sec-thisnumbervalue
 fn this_number_value(value: &Value) -> Result<f64, Error> {
     match value {
+        Value::None => unreachable!(),
         Value::Number(value) => Ok(*value),
         Value::Object(value) if value.is_number() => Ok(value.number()),
         _ => type_error!(),

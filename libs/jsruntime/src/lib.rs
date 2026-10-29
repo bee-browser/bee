@@ -665,8 +665,10 @@ impl<X> Runtime<X> {
             return type_error!(self, retv);
         }
 
+        let is_base_class = self.is_base_class(constructor);
+
         // TODO(feat): OrdinaryCallBindThis
-        let this = if self.is_base_class(constructor) {
+        let this = if is_base_class {
             let mut object = self.create_object();
             let prototype = new_target
                 .get_own_property(&Symbol::PROTOTYPE.into())
@@ -687,10 +689,9 @@ impl<X> Runtime<X> {
             }
 
             cc.set_this(Value::Object(object));
-            Some(object)
+            Value::Object(object)
         } else {
-            cc.set_this(Value::Undefined);
-            None
+            Value::Undefined
         };
 
         debug_assert!(constructor.is_callable());
@@ -712,13 +713,18 @@ impl<X> Runtime<X> {
             return Status::Normal;
         }
 
-        if let Some(this) = this {
-            *retv = Value::Object(this);
+        if is_base_class {
+            debug_assert!(matches!(this, Value::Object(_)));
+            *retv = this;
             return Status::Normal;
         }
 
         if !matches!(retv, Value::Undefined) {
             return type_error!(self, retv);
+        }
+
+        if !cc.this().is_valid() {
+            return reference_error!(self, retv);
         }
 
         *retv = cc.this().clone();

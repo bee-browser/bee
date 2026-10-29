@@ -45,6 +45,7 @@ pub fn boolean_prototype_to_string<X>(
 
 fn this_boolean_value(value: &Value) -> Result<bool, Error> {
     match value {
+        Value::None => unreachable!(),
         Value::Boolean(value) => Ok(*value),
         Value::Object(value) if value.is_boolean() => Ok(value.boolean()),
         _ => type_error!(),
