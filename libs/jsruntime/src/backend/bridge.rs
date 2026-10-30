@@ -1099,4 +1099,5 @@ pub(crate) extern "C" fn runtime_print_message<X>(
 pub(crate) extern "C" fn runtime_launch_debugger<X>(_runtime: &mut Runtime<X>) {
     logger::debug!("runtime_launch_debugger");
     // TODO(feat): Support debuggers such as Chrome DevTools.
+    base::debug::breakpoint!();
 }
