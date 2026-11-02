@@ -11,6 +11,7 @@ version.workspace = true
 
 [dependencies]
 anyhow = "1.0.104"
+base = { path = "../../libs/base" }
 clap = { version = "4.6.6", features = ["env", "derive", "wrap_help"] }
 cranelift-codegen = "0.137.0"
 cranelift-reader = "0.137.0"

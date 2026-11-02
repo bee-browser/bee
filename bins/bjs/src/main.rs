@@ -193,6 +193,8 @@ fn main() -> Result<()> {
             }
         }
         Command::Run(ref args) => {
+            let debugger = Box::new(Debugger);
+            runtime.set_monitor(debugger);
             for path in args.preload_scripts.iter() {
                 println!("## {} (preload script)", path.display());
                 let source = std::fs::read_to_string(path)?;
@@ -249,6 +251,8 @@ fn print_prototype_chain(_runtime: &mut Runtime<Context>, args: &[Value]) {
 struct IrPrinter;
 
 impl jsruntime::Monitor for IrPrinter {
+    fn launch_debugger(&mut self) {}
+
     fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
         println!("### {id:?}");
         println!("{ir}");
@@ -258,6 +262,8 @@ impl jsruntime::Monitor for IrPrinter {
 struct CfgPrinter;
 
 impl jsruntime::Monitor for CfgPrinter {
+    fn launch_debugger(&mut self) {}
+
     fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
         println!("### {id:?}");
         let clir = format!("{ir}");
@@ -265,6 +271,16 @@ impl jsruntime::Monitor for CfgPrinter {
             print!("{}", cranelift_codegen::cfg_printer::CFGPrinter::new(&func));
         }
     }
+}
+
+struct Debugger;
+
+impl jsruntime::Monitor for Debugger {
+    fn launch_debugger(&mut self) {
+        base::debug::breakpoint!();
+    }
+
+    fn print_function_ir(&mut self, _id: jsruntime::LambdaId, _ir: &dyn std::fmt::Display) {}
 }
 
 struct Sources<'a> {

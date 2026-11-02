@@ -840,6 +840,7 @@ impl<X> Trace for Runtime<X> {
 }
 
 pub trait Monitor {
+    fn launch_debugger(&mut self);
     fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
 }
 
