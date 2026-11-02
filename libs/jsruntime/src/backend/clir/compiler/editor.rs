@@ -695,14 +695,31 @@ impl<'a> Editor<'a> {
         AnyIr(self.put_load_addr(capture, Capture::TARGET_OFFSET))
     }
 
-    pub fn put_escape_value(&mut self, capture: CaptureIr, value: AnyIr) {
-        logger::debug!(event = "put_escape_value", ?capture, ?value);
+    pub fn put_load_value_from_capture(&mut self, capture: CaptureIr) -> AnyIr {
+        logger::debug!(event = "put_load_value_from_capture", ?capture);
+        AnyIr(self.put_load_addr(capture.0, Capture::TARGET_OFFSET))
+    }
+
+    pub fn put_escape_value(&mut self, capture: CaptureIr) {
+        logger::debug!(event = "put_escape_value", ?capture);
+        let target = self.put_load_addr(capture.0, Capture::TARGET_OFFSET);
         let escaped = self
             .builder
             .ins()
             .iadd_imm_u(capture.0, Capture::ESCAPED_OFFSET as i64);
+        self.put_safe_copy_i128(target, escaped, 0);
         self.put_store(escaped, capture.0, Capture::TARGET_OFFSET);
-        self.put_safe_copy_i128(value.0, escaped, 0);
+    }
+
+    pub fn put_is_not_capture_escaped(&mut self, capture: CaptureIr) -> BooleanIr {
+        logger::debug!(event = "put_is_capture_escaped", ?capture);
+        use ir::condcodes::IntCC::NotEqual;
+        let target = self.put_load_addr(capture.0, Capture::TARGET_OFFSET);
+        let escaped = self
+            .builder
+            .ins()
+            .iadd_imm_u(capture.0, Capture::ESCAPED_OFFSET as i64);
+        BooleanIr(self.builder.ins().icmp(NotEqual, target, escaped))
     }
 
     // closure
