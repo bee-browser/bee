@@ -1568,8 +1568,18 @@ where
         if scope.is_function() {
             if let Some(this_capture) = self.this_capture.take() {
                 let capture = self.perform_load_capture(this_capture);
-                let this = self.editor.this_argument();
-                self.editor.put_escape_value(capture, this);
+                if self.support.is_runtime_assert_enabled() {
+                    let value = self.editor.put_load_value_from_capture(capture);
+                    self.editor
+                        .put_assert_non_null(self.support, value.0, c"Capture broken");
+                    let is_not_escaped = self.editor.put_is_not_capture_escaped(capture);
+                    self.editor.put_assert(
+                        self.support,
+                        is_not_escaped,
+                        c"Capture already escaped",
+                    );
+                }
+                self.editor.put_escape_value(capture);
             }
             // tidy this value if it exists
             // TODO: GC
@@ -3770,13 +3780,15 @@ where
         logger::debug!(event = "perform_escape_value", ?locator);
         let capture_addr = self.captures.remove(&locator).unwrap();
         let capture = self.perform_load_capture(capture_addr);
-        let value = match locator {
-            Locator::Param(index) => self.get_param(index),
-            Locator::Local(index) => self.get_local(index),
-            Locator::Capture(index) => self.editor.put_load_captured_value(index),
-            Locator::Global => unreachable!(),
-        };
-        self.editor.put_escape_value(capture, value);
+        if self.support.is_runtime_assert_enabled() {
+            let value = self.editor.put_load_value_from_capture(capture);
+            self.editor
+                .put_assert_non_null(self.support, value.0, c"Capture broken");
+            let is_not_escaped = self.editor.put_is_not_capture_escaped(capture);
+            self.editor
+                .put_assert(self.support, is_not_escaped, c"Capture already escaped");
+        }
+        self.editor.put_escape_value(capture);
     }
 
     fn swap(&mut self) {
