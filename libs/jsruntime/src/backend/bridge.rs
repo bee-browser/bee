@@ -1099,6 +1099,6 @@ pub(crate) extern "C" fn runtime_print_message<X>(
 pub(crate) extern "C" fn runtime_launch_debugger<X>(runtime: &mut Runtime<X>) {
     logger::debug!("runtime_launch_debugger");
     if let Some(monitor) = runtime.monitor.as_mut() {
-        monitor.launch_debugger();
+        monitor.on_launch_debugger();
     }
 }

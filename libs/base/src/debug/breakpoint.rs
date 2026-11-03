@@ -7,7 +7,7 @@
 #[macro_export]
 macro_rules! breakpoint {
     () => {
-        core::cfg_select! {
+        std::cfg_select! {
             not(debug_assertions) => {}
             target_arch = "x86_64" => {
                 unsafe { core::arch::asm!("int3"); }
