@@ -839,9 +839,18 @@ impl<X> Trace for Runtime<X> {
     }
 }
 
+/// A monitor trait for handling runtime events and debugging hooks.
 pub trait Monitor {
-    fn launch_debugger(&mut self);
-    fn print_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
+    /// Triggered when the debugger should be launched.
+    fn on_launch_debugger(&mut self);
+
+    /// Triggered when a function's intermediate representation (IR) is available for printing or
+    /// inspection.
+    fn on_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display);
+
+    /// Triggered when a function has been successfully JIT compiled, providing its entry address
+    /// and machine code size.
+    fn on_jit_compiled(&mut self, id: LambdaId, addr: usize, size: usize);
 }
 
 #[derive(Clone, Debug)]

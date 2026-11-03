@@ -185,7 +185,7 @@ pub fn compile<X>(
         };
         context.compile_function(func, &mut session, &program.scope_tree);
         if let Some(ref mut monitor) = runtime.monitor {
-            monitor.print_function_ir(func.id, &context.context.func);
+            monitor.on_function_ir(func.id, &context.context.func);
         }
 
         runtime.code_registry.codegen(func, &mut context.context);
@@ -231,10 +231,14 @@ pub fn compile_function<X>(
 
     context.compile_function(func, &mut session, &program.scope_tree);
     if let Some(ref mut monitor) = runtime.monitor {
-        monitor.print_function_ir(func.id, &context.context.func);
+        monitor.on_function_ir(func.id, &context.context.func);
     }
 
     runtime.code_registry.codegen(func, &mut context.context);
+    if let Some(ref mut monitor) = runtime.monitor {
+        let (addr, size) = runtime.code_registry.get_code_info(func.id).unwrap();
+        monitor.on_jit_compiled(func.id, addr.value(), size as usize);
+    }
 
     Ok(())
 }

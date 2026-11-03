@@ -64,6 +64,12 @@ base::static_assert_eq!(size_of::<Status>(), 4);
 #[repr(C)]
 pub struct LambdaAddr(usize);
 
+impl LambdaAddr {
+    pub fn value(&self) -> usize {
+        self.0
+    }
+}
+
 impl From<usize> for LambdaAddr {
     fn from(value: usize) -> Self {
         debug_assert_ne!(value, 0);

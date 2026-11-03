@@ -1,4 +1,8 @@
-use std::io::Read;
+mod dwarf;
+mod elf;
+mod gdb_jit;
+
+use std::io::Read as _;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -6,6 +10,7 @@ use anyhow::Result;
 use clap::Parser as _;
 use itertools::Itertools;
 
+use jsruntime::LambdaId;
 use jsruntime::Runtime;
 use jsruntime::Value;
 
@@ -251,36 +256,45 @@ fn print_prototype_chain(_runtime: &mut Runtime<Context>, args: &[Value]) {
 struct IrPrinter;
 
 impl jsruntime::Monitor for IrPrinter {
-    fn launch_debugger(&mut self) {}
+    fn on_launch_debugger(&mut self) {}
 
-    fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
+    fn on_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display) {
         println!("### {id:?}");
         println!("{ir}");
     }
+
+    fn on_jit_compiled(&mut self, _id: LambdaId, _addr: usize, _size: usize) {}
 }
 
 struct CfgPrinter;
 
 impl jsruntime::Monitor for CfgPrinter {
-    fn launch_debugger(&mut self) {}
+    fn on_launch_debugger(&mut self) {}
 
-    fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
+    fn on_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display) {
         println!("### {id:?}");
         let clir = format!("{ir}");
         for func in cranelift_reader::parse_functions(&clir).unwrap() {
             print!("{}", cranelift_codegen::cfg_printer::CFGPrinter::new(&func));
         }
     }
+
+    fn on_jit_compiled(&mut self, _id: LambdaId, _addr: usize, _size: usize) {}
 }
 
 struct Debugger;
 
 impl jsruntime::Monitor for Debugger {
-    fn launch_debugger(&mut self) {
+    fn on_launch_debugger(&mut self) {
         base::debug::breakpoint!();
     }
 
-    fn print_function_ir(&mut self, _id: jsruntime::LambdaId, _ir: &dyn std::fmt::Display) {}
+    fn on_function_ir(&mut self, _id: LambdaId, _ir: &dyn std::fmt::Display) {}
+
+    fn on_jit_compiled(&mut self, id: LambdaId, addr: usize, size: usize) {
+        // Register the JIT-compiled artifact with the GDB JIT interface.
+        gdb_jit::register_function(id, addr, size);
+    }
 }
 
 struct Sources<'a> {
