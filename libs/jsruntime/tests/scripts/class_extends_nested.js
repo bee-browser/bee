@@ -14,4 +14,4 @@ try {
   print(e instanceof ReferenceError); ///=true
 }
 print(o.a); ///=1
-// TODO(fix): print(o.b); ///=2
+print(o.b); ///=2
