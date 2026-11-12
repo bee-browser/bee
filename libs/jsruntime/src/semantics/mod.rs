@@ -916,6 +916,10 @@ where
     }
 
     fn do_handle_arrow_function(&mut self, coroutine: bool) {
+        // TODO(perf): Always capture the outer `this` binding regardless of whether it is used in
+        // the arrow function body.
+        analysis_mut!(self).flags.insert(FunctionAnalysisFlags::THIS_BINDING_USED);
+
         // TODO: An ArrowFunction does not define local variables for arguments, super, this, or
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a variable in a lexically enclosing environment.

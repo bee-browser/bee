@@ -31,6 +31,7 @@ use crate::semantics::Locator;
 use crate::semantics::Program;
 use crate::semantics::ScopeRef;
 use crate::semantics::ScopeTree;
+use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::CallContextFlags;
 use crate::types::ClassElementKind;
@@ -757,15 +758,27 @@ where
         debug_assert!(scope.is_function());
 
         let (lambda, lambda_id) = self.pop_lambda();
-        let num_captures = self.support.get_function(lambda_id).num_captures;
+        let closure_func = self.support.get_function(lambda_id);
+        let num_captures = closure_func.num_captures;
+        let does_closure_capture_this = matches!(closure_func.this_binding, ThisBinding::Capture);
 
-        // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
         let closure =
             self.editor
                 .put_runtime_create_closure(self.support, lambda, lambda_id, num_captures);
 
-        if func.is_this_binding_captured() {
-            let capture = self.perform_load_capture(self.this_capture.unwrap());
+        if does_closure_capture_this {
+            // The capture of the outer `this` binding is always stored in the first element.
+            // See *_stub_this_binding_capture functions in the crate::backend::bridge module.
+            debug_assert!(num_captures > 0);
+            let capture = if let Some(capture_addr) = self.this_capture {
+                debug_assert!(func.is_this_binding_captured());
+                self.perform_load_capture(capture_addr)
+            } else {
+                debug_assert!(!func.is_this_binding_captured());
+                debug_assert!(func.num_captures > 0);
+                debug_assert!(matches!(func.this_binding, ThisBinding::Capture));
+                self.editor.put_load_capture(0)
+            };
             self.editor
                 .put_store_capture_to_closure(capture, closure, 0);
         }
