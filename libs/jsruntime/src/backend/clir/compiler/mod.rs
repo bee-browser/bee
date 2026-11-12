@@ -1499,13 +1499,41 @@ where
             .put_runtime_construct(self.support, constructor, new_target, retv);
         self.emit_check_status_for_exception(status, retv);
 
+        if self.support.is_runtime_assert_enabled() {
+            let is_object = self.editor.put_is_object(retv);
+            self.editor.put_assert(
+                self.support,
+                is_object,
+                c"[[Construct]] must return an object",
+            );
+        }
+        let object = self.editor.put_load_object(retv);
+
         if super_call {
+            // #sec-super-keyword-runtime-semantics-evaluation
+
             // TODO: BindThisValue
             self.editor.put_store_this_argument(retv);
+
+            let constructor = self.editor.put_load_func();
+            if self.support.is_runtime_assert_enabled() {
+                let is_callable = self.editor.put_is_callable(constructor);
+                self.editor.put_assert(
+                    self.support,
+                    is_callable,
+                    c"[[FunctionObject]] must be callable",
+                );
+            }
+            let retv = self.emit_create_any();
+            let status = self.editor.put_runtime_initialize_instance_elements(
+                self.support,
+                object,
+                constructor,
+                retv,
+            );
+            self.emit_check_status_for_exception(status, retv);
         }
 
-        // TODO: assert retv.is_object()
-        let object = self.editor.put_load_object(retv);
         self.operand_stack.push(Operand::Object(object));
     }
 

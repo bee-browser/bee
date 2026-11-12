@@ -2783,6 +2783,30 @@ impl<'a> Editor<'a> {
         StatusIr(self.builder.inst_results(call)[0])
     }
 
+    pub fn put_runtime_initialize_instance_elements(
+        &mut self,
+        support: &mut impl EditorSupport,
+        object: ObjectIr,
+        constructor: ObjectIr,
+        retv: AnyIr,
+    ) -> StatusIr {
+        logger::debug!(
+            event = "put_runtime_initialize_instance_elements",
+            ?object,
+            ?constructor
+        );
+        let func = self
+            .runtime_func_cache
+            .import_runtime_initialize_instance_elements(support, self.builder.func);
+        let callee_cc = self
+            .builder
+            .ins()
+            .stack_addr(self.addr_type, self.callee_cc, 0);
+        let args = [self.runtime(), callee_cc, object.0, constructor.0, retv.0];
+        let call = self.builder.ins().call(func, &args);
+        StatusIr(self.builder.inst_results(call)[0])
+    }
+
     pub fn put_runtime_panic(&mut self, support: &mut impl EditorSupport, msg: &'static CStr) {
         logger::debug!(event = "put_runtime_panic", ?msg);
         let func = self

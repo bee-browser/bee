@@ -952,6 +952,17 @@ pub(crate) extern "C" fn runtime_construct<X>(
     runtime.construct(constructor, new_target, cc, retv)
 }
 
+pub(crate) extern "C" fn runtime_initialize_instance_elements<X>(
+    runtime: &mut Runtime<X>,
+    cc: &mut CallContext,
+    this: HandleMut<Object>,
+    constructor: HandleMut<Object>,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "runtime_initialize_instance_elements");
+    runtime.initialize_instance_elements(cc, this, constructor, retv)
+}
+
 pub(crate) extern "C" fn runtime_panic<X>(
     _runtime: &mut Runtime<X>,
     msg: *const std::os::raw::c_char,
