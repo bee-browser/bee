@@ -665,6 +665,15 @@ impl<X> Runtime<X> {
             return type_error!(self, retv);
         }
 
+        debug_assert!(constructor.is_callable());
+        let closure = constructor.closure();
+
+        // Reset the CallContext before calling field initializer functions.
+        cc.set_func(constructor);
+        cc.set_closure(closure);
+        cc.set_new_target(new_target);
+        cc.set_this(Value::None);
+
         let is_base_class = self.is_base_class(constructor);
 
         // TODO(feat): OrdinaryCallBindThis
@@ -693,13 +702,6 @@ impl<X> Runtime<X> {
         } else {
             Value::Undefined
         };
-
-        debug_assert!(constructor.is_callable());
-        let closure = constructor.closure();
-
-        cc.set_func(constructor);
-        cc.set_closure(closure);
-        cc.set_new_target(new_target);
 
         let stub = Lambda::from(closure.construct_stub);
         let status = stub(self, cc, retv);
