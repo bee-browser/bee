@@ -1100,6 +1100,29 @@ where
 
     fn process_this(&mut self) {
         let this = self.editor.this_argument();
+
+        // TODO(perf): slow... but we have to implement a flow analysis in order to skip the
+        // check.  for example we have to take care of the following case:
+        //
+        //   constructor() {
+        //     if (cond) {
+        //       super();
+        //     }
+        //     this.x;
+        //   }
+        //
+        let then_block = self.editor.create_block();
+        let end_block = self.editor.create_block();
+        // if this.is_none()
+        let is_none = self.editor.put_is_none(this);
+        self.editor
+            .put_branch(is_none, then_block, &[], end_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_reference_error();
+        // }
+        self.editor.switch_to_block(end_block);
+
         self.operand_stack.push(Operand::Any(this, None));
     }
 
