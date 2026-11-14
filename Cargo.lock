@@ -683,7 +683,6 @@ dependencies = [
  "ctor",
  "indexmap",
  "logging",
- "maplit",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -739,7 +738,6 @@ name = "estree"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "assert-json-diff",
  "clap",
  "jsparser",
  "logging",
@@ -835,17 +833,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "getrandom"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
-dependencies = [
- "cfg-if",
- "libc",
- "r-efi",
-]
-
-[[package]]
 name = "gimli"
 version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -930,7 +917,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "assert_matches",
- "bytes",
  "logging",
  "serde",
  "serde_json",
@@ -1185,7 +1171,6 @@ dependencies = [
 name = "jsgc-derive"
 version = "0.0.0"
 dependencies = [
- "base",
  "jsgc",
  "proc-macro2",
  "quote",
@@ -1240,7 +1225,6 @@ dependencies = [
  "jsgc-derive",
  "jsparser",
  "logging",
- "paste",
  "rustc-hash",
  "thiserror",
 ]
@@ -1260,7 +1244,6 @@ dependencies = [
  "indexmap",
  "itertools 0.15.0",
  "logging",
- "maplit",
  "pretty_assertions",
  "rayon",
  "serde",
@@ -1381,9 +1364,7 @@ dependencies = [
  "serde",
  "serde_yaml",
  "shell-words",
- "tempfile",
  "tokio",
- "tokio-stream",
  "tower-http",
 ]
 
@@ -1401,12 +1382,6 @@ name = "mach2"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dae608c151f68243f2b000364e1f7b186d9c29845f7d2d85bd31b9ad77ad552b"
-
-[[package]]
-name = "maplit"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
 name = "matchers"
@@ -1545,12 +1520,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "paste"
-version = "1.0.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
-
-[[package]]
 name = "pathdiff"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1681,12 +1650,6 @@ checksum = "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"
 dependencies = [
  "proc-macro2",
 ]
-
-[[package]]
-name = "r-efi"
-version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 
 [[package]]
 name = "rand_core"
@@ -2067,19 +2030,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "876fef147edbcbddc8ac5cbbba92c7b86519e314e86638596c09673b2ed01e7f"
 
 [[package]]
-name = "tempfile"
-version = "3.27.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
-dependencies = [
- "fastrand",
- "getrandom",
- "once_cell",
- "rustix",
- "windows-sys 0.61.2",
-]
-
-[[package]]
 name = "termcolor"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2183,17 +2133,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.10",
-]
-
-[[package]]
-name = "tokio-stream"
-version = "0.1.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3d06f0b082ba57c26b79407372e57cf2a1e28124f78e9479fe80322cf53420b"
-dependencies = [
- "futures-core",
- "pin-project-lite",
- "tokio",
 ]
 
 [[package]]

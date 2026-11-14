@@ -10,7 +10,6 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-base = { path = "../base" }
 proc-macro2 = "1.0.107"
 quote = "1.0.47"
 syn = { version = "3.0.4", features = ["extra-traits"] }

@@ -10,7 +10,6 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-bytes = "1.12.1"
 logging = { path = "../logging" }
 thiserror = "2.0.20"
 
