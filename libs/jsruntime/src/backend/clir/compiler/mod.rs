@@ -3,6 +3,7 @@ mod editor;
 
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::ops::Range;
 
 use base::const_utf16;
 use cranelift::codegen;
@@ -361,7 +362,7 @@ where
 
     fn compile(mut self, func: &Function) {
         self.start_compile(func);
-        self.process_commands(func, &func.commands[..]);
+        self.process_commands(func, &func.commands, 0..func.commands.len());
         self.end_compile(func);
     }
 
@@ -458,26 +459,36 @@ where
         self.editor.switch_to_block(merge_block);
     }
 
-    fn process_commands(&mut self, func: &Function, commands: &[CompileCommand]) {
-        let mut i = 0;
+    fn process_commands(
+        &mut self,
+        func: &Function,
+        commands: &[CompileCommand],
+        range: Range<usize>,
+    ) {
+        let mut i = range.start;
         loop {
-            match commands.get(i) {
-                Some(CompileCommand::Nop) => {
+            match &commands[i] {
+                CompileCommand::Nop => {
+                    debug_assert!(i < usize::MAX);
                     i += 1;
                 }
-                Some(CompileCommand::Skip(n)) => {
-                    debug_assert!((i + *n as usize) < commands.len());
-                    i += *n as usize + 1;
+                CompileCommand::Skip(n) => {
+                    let n = *n as usize;
+                    debug_assert!((i + n) < usize::MAX);
+                    i += n + 1;
                 }
-                Some(CompileCommand::Jump(n)) => {
-                    debug_assert!(*n < commands.len());
+                CompileCommand::Jump(n) => {
                     i = *n;
                 }
-                Some(command) => {
+                command => {
                     self.process_command(func, command);
+                    debug_assert!(i < usize::MAX);
                     i += 1;
                 }
-                None => return,
+            }
+            if i >= range.end {
+                assert!(i == range.end);
+                return;
             }
         }
     }
@@ -2938,7 +2949,7 @@ where
                         CompileCommand::Skip(n) => n as usize,
                         _ => unreachable!(),
                     };
-                self.process_commands(func, &func.commands[start..end]);
+                self.process_commands(func, &func.commands, start..end);
             }
             self.editor
                 .put_jump_if_not_terminated(fall_through_block, &[]);
