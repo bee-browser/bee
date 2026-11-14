@@ -13,10 +13,12 @@ version.workspace = true
 location = []
 
 [dependencies]
+base = { path = "../base" }
 bitflags = "2.13.1"
 indexmap = "2.14.0"
-logging = { path = "../../libs/logging" }
+logging = { path = "../logging" }
 phf = { version = "0.14.0", features = ["macros"] }
+rustc-hash = "2.1.3"
 smallvec = "1.15.2"
 thiserror = "2.0.20"
 unicode-id-start = "1.4.0"

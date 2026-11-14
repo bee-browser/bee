@@ -248,7 +248,7 @@
   action: nop
 - rule: HoistableDeclaration -> AsyncGeneratorDeclaration
   action: nop
-- rule: ClassDeclaration -> CLASS BindingIdentifier ClassTail
+- rule: ClassDeclaration -> CLASS BindingIdentifier _CLASS_CONTEXT_ ClassTail
   action: class_declaration
 - rule: LexicalDeclaration_In -> LET BindingList_In SEMICOLON
   action: variable_declaration
@@ -300,9 +300,9 @@
   action: nop
 - rule: HoistableDeclaration_Await_Default -> AsyncGeneratorDeclaration_Await_Default
   action: nop
-- rule: ClassDeclaration_Await_Default -> CLASS BindingIdentifier_Await ClassTail_Await
+- rule: ClassDeclaration_Await_Default -> CLASS BindingIdentifier_Await _CLASS_CONTEXT_ ClassTail_Await
   action: class_declaration
-- rule: ClassDeclaration_Await_Default -> CLASS ClassTail_Await
+- rule: ClassDeclaration_Await_Default -> CLASS _CLASS_CONTEXT_ ClassTail_Await
   action: anonymous_class_declaration
 - rule: AssignmentExpression_In_Await -> ConditionalExpression_In_Await
   action: nop
@@ -487,6 +487,8 @@
     AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier
     LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: async_generator_declaration
+- rule: _CLASS_CONTEXT_ -> (empty)
+  action: nop
 - rule: ClassTail -> LBRACE RBRACE
   action: empty_class_tail
 - rule: ClassTail -> ClassHeritage LBRACE RBRACE
@@ -537,7 +539,7 @@
   action: nop
 - rule: HoistableDeclaration_Await -> AsyncGeneratorDeclaration_Await
   action: nop
-- rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
+- rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await _CLASS_CONTEXT_ ClassTail_Await
   action: class_declaration
 - rule: LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
   action: variable_declaration
@@ -1533,7 +1535,7 @@
   action: new_expression_arguments
 - rule: MemberExpression_Await -> MemberExpression_Await _DEREFERENCE_ DOT PRIVATE_IDENTIFIER
   action: member_expression_private
-- rule: SuperCall_Await -> SUPER Arguments_Await
+- rule: SuperCall_Await -> SUPER _SUPER_ Arguments_Await
   action: call_expression_super
 - rule: ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await RPAREN
   action: import_expression
@@ -1900,27 +1902,27 @@
   action: empty_list
 - rule: FunctionStatementList_Yield_Await -> StatementList_Yield_Await_Return
   action: nop
-- rule: ClassElement -> MethodDefinition
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition
   action: create_nullable
-- rule: ClassElement -> STATIC MethodDefinition
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition
   action: class_element_static_method_definition
-- rule: ClassElement -> FieldDefinition SEMICOLON
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement -> STATIC FieldDefinition SEMICOLON
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition SEMICOLON
   action: class_element_static_property_definition
-- rule: ClassElement -> ClassStaticBlock
+- rule: ClassElement -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
 - rule: ClassElement -> SEMICOLON
   action: class_element_semicolon
-- rule: ClassElement_Await -> MethodDefinition_Await
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Await
   action: create_nullable
-- rule: ClassElement_Await -> STATIC MethodDefinition_Await
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Await
   action: class_element_static_method_definition
-- rule: ClassElement_Await -> FieldDefinition_Await SEMICOLON
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Await SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Await -> STATIC FieldDefinition_Await SEMICOLON
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Await SEMICOLON
   action: class_element_static_property_definition
-- rule: ClassElement_Await -> ClassStaticBlock
+- rule: ClassElement_Await -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
 - rule: ClassElement_Await -> SEMICOLON
   action: class_element_semicolon
@@ -1970,13 +1972,15 @@
   action: nop
 - rule: PrimaryExpression_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
   action: primary_expression_cpeaapl
-- rule: SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
+- rule: SuperProperty_Await -> SUPER _SUPER_ LBRACK Expression_In_Await RBRACK
   action: super_property_computed
-- rule: SuperProperty_Await -> SUPER DOT KeywordOrIdentifierName
+- rule: SuperProperty_Await -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: super_property
 - rule: MetaProperty -> NewTarget
   action: nop
 - rule: MetaProperty -> ImportMeta
+  action: nop
+- rule: _SUPER_ -> (empty)
   action: nop
 - rule: ArgumentList_Await -> AssignmentExpression_In_Await
   action: argument_list
@@ -2158,7 +2162,7 @@
   action: new_expression_arguments
 - rule: MemberExpression -> MemberExpression _DEREFERENCE_ DOT PRIVATE_IDENTIFIER
   action: member_expression_private
-- rule: SuperCall -> SUPER Arguments
+- rule: SuperCall -> SUPER _SUPER_ Arguments
   action: call_expression_super
 - rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
   action: import_expression
@@ -2244,6 +2248,8 @@
     StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return
     StatementListItem_Yield_Await_Return
   action: append_to_list
+- rule: _CLASS_ELEMENT_CONTEXT_ -> (empty)
+  action: nop
 - rule: >-
     MethodDefinition -> ClassElementName _FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters RPAREN
     _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
@@ -2264,9 +2270,11 @@
   action: method_definition_set
 - rule: FieldDefinition -> ClassElementName
   action: property_definition
-- rule: FieldDefinition -> ClassElementName Initializer_In
+- rule: >-
+    FieldDefinition -> ClassElementName _FIELD_INITIALIZER_START_ Initializer_In
+    _FIELD_INITIALIZER_END_
   action: property_definition_value
-- rule: ClassStaticBlock -> STATIC LBRACE ClassStaticBlockBody RBRACE
+- rule: ClassStaticBlock -> STATIC _STATIC_BLOCK_CONTEXT_ LBRACE ClassStaticBlockBody RBRACE
   action: static_block
 - rule: >-
     MethodDefinition_Await -> ClassElementName_Await _FUNCTION_CONTEXT_ LPAREN
@@ -2288,7 +2296,9 @@
   action: method_definition_set
 - rule: FieldDefinition_Await -> ClassElementName_Await
   action: property_definition
-- rule: FieldDefinition_Await -> ClassElementName_Await Initializer_In_Await
+- rule: >-
+    FieldDefinition_Await -> ClassElementName_Await _FIELD_INITIALIZER_START_ Initializer_In_Await
+    _FIELD_INITIALIZER_END_
   action: property_definition_value
 - rule: _FALSY_SHORT_CIRCUIT_ -> (empty)
   action: nop
@@ -2334,9 +2344,9 @@
     FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters
     RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: function_expression
-- rule: ClassExpression_Await -> CLASS ClassTail_Await
+- rule: ClassExpression_Await -> CLASS _CLASS_CONTEXT_ ClassTail_Await
   action: anonymous_class_expression
-- rule: ClassExpression_Await -> CLASS BindingIdentifier_Await ClassTail_Await
+- rule: ClassExpression_Await -> CLASS BindingIdentifier_Await _CLASS_CONTEXT_ ClassTail_Await
   action: class_expression
 - rule: >-
     GeneratorExpression -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody
@@ -2480,7 +2490,7 @@
   action: new_expression_arguments
 - rule: MemberExpression_Yield -> MemberExpression_Yield _DEREFERENCE_ DOT PRIVATE_IDENTIFIER
   action: member_expression_private
-- rule: SuperCall_Yield -> SUPER Arguments_Yield
+- rule: SuperCall_Yield -> SUPER _SUPER_ Arguments_Yield
   action: call_expression_super
 - rule: ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN
   action: import_expression
@@ -2598,7 +2608,7 @@
     MemberExpression_Yield_Await -> MemberExpression_Yield_Await _DEREFERENCE_ DOT
     PRIVATE_IDENTIFIER
   action: member_expression_private
-- rule: SuperCall_Yield_Await -> SUPER Arguments_Yield_Await
+- rule: SuperCall_Yield_Await -> SUPER _SUPER_ Arguments_Yield_Await
   action: call_expression_super
 - rule: ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await RPAREN
   action: import_expression
@@ -2690,9 +2700,9 @@
   action: nop
 - rule: PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
   action: primary_expression_cpeaapl
-- rule: SuperProperty -> SUPER LBRACK Expression_In RBRACK
+- rule: SuperProperty -> SUPER _SUPER_ LBRACK Expression_In RBRACK
   action: super_property_computed
-- rule: SuperProperty -> SUPER DOT KeywordOrIdentifierName
+- rule: SuperProperty -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: super_property
 - rule: ArgumentList -> AssignmentExpression_In
   action: argument_list
@@ -2765,8 +2775,8 @@
     GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN
-    UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName _ASYNC_FUNCTION_CONTEXT_
+    LPAREN UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
     AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName LPAREN
@@ -2774,6 +2784,12 @@
   action: method_definition_async_generator
 - rule: PropertySetParameterList -> FormalParameter
   action: create_list
+- rule: _FIELD_INITIALIZER_START_ -> (empty)
+  action: nop
+- rule: _FIELD_INITIALIZER_END_ -> (empty)
+  action: nop
+- rule: _STATIC_BLOCK_CONTEXT_ -> (empty)
+  action: nop
 - rule: ClassStaticBlockBody -> ClassStaticBlockStatementList
   action: nop
 - rule: ClassElementName_Await -> PropertyName_Await
@@ -2785,8 +2801,9 @@
     LBRACE GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await LPAREN
-    UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
     AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await
@@ -2915,9 +2932,9 @@
   action: nop
 - rule: PrimaryExpression_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
   action: primary_expression_cpeaapl
-- rule: SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
+- rule: SuperProperty_Yield -> SUPER _SUPER_ LBRACK Expression_In_Yield RBRACK
   action: super_property_computed
-- rule: SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
+- rule: SuperProperty_Yield -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: super_property
 - rule: ArgumentList_Yield -> AssignmentExpression_In_Yield
   action: argument_list
@@ -2973,9 +2990,9 @@
   action: nop
 - rule: PrimaryExpression_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
   action: primary_expression_cpeaapl
-- rule: SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
+- rule: SuperProperty_Yield_Await -> SUPER _SUPER_ LBRACK Expression_In_Yield_Await RBRACK
   action: super_property_computed
-- rule: SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName
+- rule: SuperProperty_Yield_Await -> SUPER _SUPER_ DOT KeywordOrIdentifierName
   action: super_property
 - rule: ArgumentList_Yield_Await -> AssignmentExpression_In_Yield_Await
   action: argument_list
@@ -3017,9 +3034,9 @@
   action: object_expression
 - rule: ObjectLiteral -> LBRACE _NEW_OBJECT_ PropertyDefinitionList COMMA RBRACE
   action: object_expression_comma
-- rule: ClassExpression -> CLASS ClassTail
+- rule: ClassExpression -> CLASS _CLASS_CONTEXT_ ClassTail
   action: anonymous_class_expression
-- rule: ClassExpression -> CLASS BindingIdentifier ClassTail
+- rule: ClassExpression -> CLASS BindingIdentifier _CLASS_CONTEXT_ ClassTail
   action: class_expression
 - rule: TemplateLiteral -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
@@ -3237,9 +3254,9 @@
   action: object_expression
 - rule: ObjectLiteral_Yield -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield COMMA RBRACE
   action: object_expression_comma
-- rule: ClassExpression_Yield -> CLASS ClassTail_Yield
+- rule: ClassExpression_Yield -> CLASS _CLASS_CONTEXT_ ClassTail_Yield
   action: anonymous_class_expression
-- rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
+- rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield _CLASS_CONTEXT_ ClassTail_Yield
   action: class_expression
 - rule: TemplateLiteral_Yield -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
@@ -3277,9 +3294,11 @@
     ObjectLiteral_Yield_Await -> LBRACE _NEW_OBJECT_ PropertyDefinitionList_Yield_Await COMMA
     RBRACE
   action: object_expression_comma
-- rule: ClassExpression_Yield_Await -> CLASS ClassTail_Yield_Await
+- rule: ClassExpression_Yield_Await -> CLASS _CLASS_CONTEXT_ ClassTail_Yield_Await
   action: anonymous_class_expression
-- rule: ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
+- rule: >-
+    ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await _CLASS_CONTEXT_
+    ClassTail_Yield_Await
   action: class_expression
 - rule: TemplateLiteral_Yield_Await -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
@@ -3415,7 +3434,7 @@
   action: nop
 - rule: HoistableDeclaration_Yield -> AsyncGeneratorDeclaration_Yield
   action: nop
-- rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
+- rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield _CLASS_CONTEXT_ ClassTail_Yield
   action: class_declaration
 - rule: LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
   action: variable_declaration
@@ -3525,7 +3544,9 @@
   action: nop
 - rule: HoistableDeclaration_Yield_Await -> AsyncGeneratorDeclaration_Yield_Await
   action: nop
-- rule: ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
+- rule: >-
+    ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await _CLASS_CONTEXT_
+    ClassTail_Yield_Await
   action: class_declaration
 - rule: LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON
   action: variable_declaration
@@ -4739,22 +4760,23 @@
     LBRACE GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN
-    UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
     AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield
     LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: method_definition_async_generator
-- rule: ClassElement_Yield -> MethodDefinition_Yield
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Yield
   action: create_nullable
-- rule: ClassElement_Yield -> STATIC MethodDefinition_Yield
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Yield
   action: class_element_static_method_definition
-- rule: ClassElement_Yield -> FieldDefinition_Yield SEMICOLON
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Yield SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Yield -> STATIC FieldDefinition_Yield SEMICOLON
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Yield SEMICOLON
   action: class_element_static_property_definition
-- rule: ClassElement_Yield -> ClassStaticBlock
+- rule: ClassElement_Yield -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
 - rule: ClassElement_Yield -> SEMICOLON
   action: class_element_semicolon
@@ -4776,22 +4798,25 @@
   action: method_definition_generator
 - rule: >-
     AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await
-    LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    _ASYNC_FUNCTION_CONTEXT_ LPAREN UniqueFormalParameters_Await RPAREN _FUNCTION_SIGNATURE_ LBRACE
+    AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
     AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL
     ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE
     AsyncGeneratorBody RBRACE
   action: method_definition_async_generator
-- rule: ClassElement_Yield_Await -> MethodDefinition_Yield_Await
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ MethodDefinition_Yield_Await
   action: create_nullable
-- rule: ClassElement_Yield_Await -> STATIC MethodDefinition_Yield_Await
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC MethodDefinition_Yield_Await
   action: class_element_static_method_definition
-- rule: ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMICOLON
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ FieldDefinition_Yield_Await SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMICOLON
+- rule: >-
+    ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ STATIC FieldDefinition_Yield_Await
+    SEMICOLON
   action: class_element_static_property_definition
-- rule: ClassElement_Yield_Await -> ClassStaticBlock
+- rule: ClassElement_Yield_Await -> _CLASS_ELEMENT_CONTEXT_ ClassStaticBlock
   action: create_nullable
 - rule: ClassElement_Yield_Await -> SEMICOLON
   action: class_element_semicolon
@@ -4927,7 +4952,9 @@
   action: binary_expression
 - rule: FieldDefinition_Yield -> ClassElementName_Yield
   action: property_definition
-- rule: FieldDefinition_Yield -> ClassElementName_Yield Initializer_In_Yield
+- rule: >-
+    FieldDefinition_Yield -> ClassElementName_Yield _FIELD_INITIALIZER_START_ Initializer_In_Yield
+    _FIELD_INITIALIZER_END_
   action: property_definition_value
 - rule: AdditiveExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
   action: nop
@@ -4941,7 +4968,9 @@
   action: binary_expression
 - rule: FieldDefinition_Yield_Await -> ClassElementName_Yield_Await
   action: property_definition
-- rule: FieldDefinition_Yield_Await -> ClassElementName_Yield_Await Initializer_In_Yield_Await
+- rule: >-
+    FieldDefinition_Yield_Await -> ClassElementName_Yield_Await _FIELD_INITIALIZER_START_
+    Initializer_In_Yield_Await _FIELD_INITIALIZER_END_
   action: property_definition_value
 - rule: MultiplicativeExpression -> ExponentiationExpression
   action: nop

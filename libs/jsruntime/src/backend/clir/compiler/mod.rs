@@ -3,6 +3,7 @@ mod editor;
 
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::ops::Range;
 
 use base::const_utf16;
 use cranelift::codegen;
@@ -34,6 +35,7 @@ use crate::semantics::ScopeTree;
 use crate::semantics::ThisBinding;
 use crate::semantics::VariableRef;
 use crate::types::CallContextFlags;
+use crate::types::ClassElementKind;
 use crate::types::Object;
 use crate::types::String;
 use crate::types::Value;
@@ -61,7 +63,7 @@ pub struct Session<'r, X> {
 
 trait CompilerSupport {
     // RuntimePref
-    fn max_call_stack_depth(&self) -> u16;
+    fn max_stack_depth(&self) -> u16;
     fn is_scope_cleanup_checker_enabled(&self) -> bool;
     fn is_runtime_assert_enabled(&self) -> bool;
 
@@ -89,8 +91,8 @@ trait CompilerSupport {
 }
 
 impl<X> CompilerSupport for Session<'_, X> {
-    fn max_call_stack_depth(&self) -> u16 {
-        self.pref.max_call_stack_depth
+    fn max_stack_depth(&self) -> u16 {
+        self.pref.max_stack_depth
     }
 
     fn is_scope_cleanup_checker_enabled(&self) -> bool {
@@ -185,7 +187,7 @@ pub fn compile<X>(
         };
         context.compile_function(func, &mut session, &program.scope_tree);
         if let Some(ref mut monitor) = runtime.monitor {
-            monitor.print_function_ir(func.id, &context.context.func);
+            monitor.on_function_ir(func.id, &context.context.func);
         }
 
         runtime.code_registry.codegen(func, &mut context.context);
@@ -231,10 +233,14 @@ pub fn compile_function<X>(
 
     context.compile_function(func, &mut session, &program.scope_tree);
     if let Some(ref mut monitor) = runtime.monitor {
-        monitor.print_function_ir(func.id, &context.context.func);
+        monitor.on_function_ir(func.id, &context.context.func);
     }
 
     runtime.code_registry.codegen(func, &mut context.context);
+    if let Some(ref mut monitor) = runtime.monitor {
+        let (addr, size) = runtime.code_registry.get_code_info(func.id).unwrap();
+        monitor.on_jit_compiled(func.id, addr.value(), size as usize);
+    }
 
     Ok(())
 }
@@ -286,8 +292,9 @@ struct Compiler<'a, R> {
     /// A stack for operands.
     operand_stack: OperandStack,
 
+    class_context_stack: Vec<ClassContext>,
+
     // The following values must be reset in the end of compilation for each function.
-    this: Option<AnyIr>,
     this_capture: Option<CaptureAddr>,
     params: Vec<AnyIr>,
     locals: Vec<AnyIr>,
@@ -295,8 +302,6 @@ struct Compiler<'a, R> {
 
     max_scratch_buffer_len: u16,
     max_capture_buffer_len: u16,
-
-    skip_count: u16,
 }
 
 impl<'a, R> Compiler<'a, R>
@@ -325,7 +330,7 @@ where
         let params = &mut func_ir.signature.params;
         // runtime: &mut Runtime<X>
         params.push(ir::AbiParam::new(addr_type));
-        // context: &mut CallContext
+        // cc: &mut CallContext
         params.push(ir::AbiParam::new(addr_type));
         // retv: &mut Value
         params.push(ir::AbiParam::new(addr_type));
@@ -345,20 +350,19 @@ where
             pending_labels: Default::default(),
             editor: Editor::new(runtime_assert_enabled, builder, target_config),
             operand_stack: Default::default(),
-            this: None,
+            class_context_stack: Default::default(),
             this_capture: None,
             params: Default::default(),
             locals: Default::default(),
             captures: Default::default(),
             max_scratch_buffer_len: 0,
             max_capture_buffer_len: 0,
-            skip_count: 0,
         }
     }
 
     fn compile(mut self, func: &Function) {
         self.start_compile(func);
-        self.process_commands(func, &func.commands[..]);
+        self.process_commands(func, &func.commands, 0..func.commands.len());
         self.end_compile(func);
     }
 
@@ -371,18 +375,22 @@ where
         self.editor
             .put_assert_lambda_params(self.support, func.is_entry_function());
 
-        self.editor.put_store_caller_to_call_context();
-        self.editor.put_store_depth_to_call_context();
+        self.editor.put_store_caller_to_callee_cc();
+        self.editor.put_store_depth_to_callee_cc();
 
         let argv = self.editor.put_alloc_argv(8);
-        self.editor.put_store_argc_max_to_call_context(8);
-        self.editor.put_store_argv_to_call_context(argv);
+        self.editor.put_store_argc_max_to_callee_cc(8);
+        self.editor.put_store_argv_to_callee_cc(argv);
 
         if self.is_coroutine(func) {
             self.editor.put_set_coroutine_mode();
         } else {
             self.editor.put_set_closure_mode();
         }
+
+        // TODO(perf): use `cranelift::Variable` for optimization
+        let class_tmp = self.editor.put_alloc_any();
+        self.editor.set_class_tmp(class_tmp);
 
         // Unlike LLVM IR, we cannot specify a label for each basic block.  This is bad from a
         // debugging and readability perspective...
@@ -425,100 +433,63 @@ where
         // NOTE: Methods emitting code that may throw an exception must be called after
         // `self.control_flow_stack.push_function_flow()`.
 
-        self.check_call_depth();
-
-        self.resolve_this_binding(func);
-    }
-
-    fn check_call_depth(&mut self) {
-        logger::debug!(event = "check_call_depth");
-        let then_block = self.editor.create_block();
-        let merge_block = self.editor.create_block();
-        let too_deep = self
-            .editor
-            .put_call_stack_too_deep(self.support.max_call_stack_depth());
-        self.editor
-            .put_branch(too_deep, then_block, &[], merge_block, &[]);
-        self.editor.switch_to_block(then_block);
-        self.emit_throw_internal_error(const_string_handle!("Call stack too deep"));
-        self.editor.put_jump(merge_block, &[]);
-        self.editor.switch_to_block(merge_block);
-    }
-
-    // Step#1..8 in "10.2.1.2 OrdinaryCallBindThis()"
-    //
-    // See Also:
-    // 9.1.2.4 NewFunctionEnvironment()
-    // 10.2 ECMAScript Function Objects
-    // 10.2.3 OrdinaryFunctionCreate()
-    // 10.2.11 FunctionDeclarationInstantiation()
-    fn resolve_this_binding(&mut self, func: &Function) {
-        logger::debug!(event = "resolve_this_binding", ?func.this_binding);
-        debug_assert!(self.this.is_none());
-        debug_assert!(self.this_capture.is_none());
-
-        match func.this_binding {
-            ThisBinding::None => {
-                // No code is generated for the `this` binding resolution, which improves the
-                // execution time in some situations.
-            }
-            ThisBinding::ThisArgument => {
-                // const this = thisArgument;
-                let this = self.editor.this_argument();
-                self.this = Some(this);
-            }
-            ThisBinding::Capture => {
-                // The capture of the outer `this` binding is always the first element in the
-                // capture list.
-                let this = self.editor.put_load_captured_value(0);
-                self.this = Some(this);
-            }
-            ThisBinding::GlobalObject => {
-                // const this = globalObject;
-                // DO NOT USE `globalThis` HERE.
-                let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object.as_addr());
-                let this = self.perform_to_any(&Operand::Object(value));
-                self.this = Some(this);
-            }
-            ThisBinding::Quirk => {
-                // const this =
-                //   thisArgument !== null && thisArgument !== undefined ?
-                //   ToObject(thisArgument) : globalObject;
-                self.operand_stack
-                    .push(Operand::Any(self.editor.this_argument(), None));
-                self.process_non_nullish();
-                self.process_if_then(true);
-                self.operand_stack
-                    .push(Operand::Any(self.editor.this_argument(), None));
-                self.perform_to_object();
-                self.process_else(true);
-                // DO NOT USE `globalThis` HERE.
-                let global_object = self.support.global_object();
-                let value = self.editor.put_object(global_object.as_addr());
-                self.operand_stack.push(Operand::Object(value));
-                self.process_ternary();
-                let this = self.pop_any();
-                self.this = Some(this);
-            }
-        }
+        self.check_stack_depth();
 
         debug_assert_eq!(self.max_capture_buffer_len, 0);
         if func.is_this_binding_captured() {
-            let this = self.this.unwrap();
+            let this = self.editor.this_argument();
             let capture_addr = self.perform_create_capture(func, this);
             self.this_capture = Some(capture_addr);
             self.max_capture_buffer_len = size_of::<usize>() as u16;
         }
     }
 
-    fn process_commands(&mut self, func: &Function, commands: &[CompileCommand]) {
-        for command in commands {
-            if self.skip_count > 0 {
-                self.skip_count -= 1;
-                continue;
+    fn check_stack_depth(&mut self) {
+        logger::debug!(event = "check_stack_depth");
+        let then_block = self.editor.create_block();
+        let merge_block = self.editor.create_block();
+        let too_deep = self
+            .editor
+            .put_stack_too_deep(self.support.max_stack_depth());
+        self.editor
+            .put_branch(too_deep, then_block, &[], merge_block, &[]);
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_internal_error(const_string_handle!("Stack too deep"));
+        self.editor.put_jump(merge_block, &[]);
+        self.editor.switch_to_block(merge_block);
+    }
+
+    fn process_commands(
+        &mut self,
+        func: &Function,
+        commands: &[CompileCommand],
+        range: Range<usize>,
+    ) {
+        let mut i = range.start;
+        loop {
+            match &commands[i] {
+                CompileCommand::Nop => {
+                    debug_assert!(i < usize::MAX);
+                    i += 1;
+                }
+                CompileCommand::Skip(n) => {
+                    let n = *n as usize;
+                    debug_assert!((i + n) < usize::MAX);
+                    i += n + 1;
+                }
+                CompileCommand::Jump(n) => {
+                    i = *n;
+                }
+                command => {
+                    self.process_command(func, command);
+                    debug_assert!(i < usize::MAX);
+                    i += 1;
+                }
             }
-            self.process_command(func, command);
+            if i >= range.end {
+                assert!(i == range.end);
+                return;
+            }
         }
     }
 
@@ -555,8 +526,9 @@ where
     fn process_command(&mut self, func: &Function, command: &CompileCommand) {
         logger::debug!(event = "process_command", ?command);
         match command {
-            CompileCommand::Nop => (),
-            CompileCommand::Batch(n) => self.process_batch(*n),
+            CompileCommand::Nop | CompileCommand::Skip(_) | CompileCommand::Jump(_) => {
+                unreachable!()
+            }
             CompileCommand::Undefined => self.process_undefined(),
             CompileCommand::Null => self.process_null(),
             CompileCommand::Boolean(value) => self.process_boolean(*value),
@@ -573,7 +545,26 @@ where
             }
             CompileCommand::Promise => self.process_promise(),
             CompileCommand::Exception => self.process_exception(),
+            CompileCommand::ClassStart(name, num_elements) => {
+                self.process_class_start(*name, *num_elements)
+            }
+            CompileCommand::ClassEnd(name, num_elements, derived) => {
+                self.process_class_end(*name, *num_elements, *derived)
+            }
+            CompileCommand::ParentClass => self.process_parent_class(),
+            CompileCommand::Constructor(index) => self.process_constructor(*index),
+            CompileCommand::StaticMethod(index) => self.process_static_method(*index),
+            CompileCommand::Method(index) => self.process_method(*index),
+            CompileCommand::StaticField(index, has_initializer) => {
+                self.process_static_field(*index, *has_initializer)
+            }
+            CompileCommand::Field(index, has_initializer) => {
+                self.process_field(*index, *has_initializer)
+            }
+            CompileCommand::StaticBlock(index) => self.process_static_block(*index),
             CompileCommand::This => self.process_this(),
+            CompileCommand::Super => self.process_super(),
+            CompileCommand::NewTarget => self.process_new_target(),
             CompileCommand::VariableReference(symbol) => self.process_variable_reference(*symbol),
             CompileCommand::PropertyReference(symbol) => self.process_property_reference(*symbol),
             CompileCommand::ToPropertyKey => self.process_to_property_key(),
@@ -584,12 +575,11 @@ where
             CompileCommand::DeclareVariables(scope_ref) => {
                 self.process_declare_variables(*scope_ref)
             }
-            CompileCommand::DeclareFunctions(scope_ref) => {
-                self.process_declare_functions(func, *scope_ref)
-            }
             CompileCommand::DeclareFunction => self.process_declare_function(),
             CompileCommand::Call(nargs) => self.process_call(*nargs),
-            CompileCommand::New(nargs) => self.process_new(*nargs),
+            CompileCommand::Construct(nargs, super_call) => {
+                self.process_construct(*nargs, *super_call)
+            }
             CompileCommand::PushScope(scope_ref) => self.process_push_scope(func, *scope_ref),
             CompileCommand::PopScope(scope_ref) => self.process_pop_scope(*scope_ref),
             CompileCommand::ToNumeric => self.process_to_numeric(),
@@ -673,10 +663,11 @@ where
             CompileCommand::Resume => self.process_resume(),
             CompileCommand::Discard => self.process_discard(),
             CompileCommand::Swap => self.process_swap(),
-            CompileCommand::Duplicate(offset) => self.process_duplicate(*offset),
+            CompileCommand::Duplicate(index) => self.process_duplicate(*index),
             CompileCommand::Dereference => self.process_dereference(),
+            CompileCommand::ToObject => self.process_to_object(),
             CompileCommand::Debugger => self.process_debugger(),
-            CompileCommand::PlaceHolder => unreachable!(),
+            CompileCommand::Placeholder => unreachable!(),
         }
 
         macro_rules! dump_enabled {
@@ -693,17 +684,20 @@ where
             self.operand_stack.dump();
             eprintln!();
 
+            eprintln!("### class-context-stack");
+            for class_context in self.class_context_stack.iter().rev() {
+                eprintln!(
+                    "name={:?} num_elements={}",
+                    class_context.name, class_context.num_elements
+                );
+            }
+            eprintln!();
+
             self.control_flow_stack.dump();
         }
     }
 
     // commands
-
-    fn process_batch(&mut self, n: u16) {
-        debug_assert_eq!(self.skip_count, 0);
-        debug_assert_ne!(n, 0);
-        self.skip_count = n;
-    }
 
     fn process_undefined(&mut self) {
         self.operand_stack.push(Operand::Undefined);
@@ -775,15 +769,27 @@ where
         debug_assert!(scope.is_function());
 
         let (lambda, lambda_id) = self.pop_lambda();
-        let num_captures = self.support.get_function(lambda_id).num_captures;
+        let closure_func = self.support.get_function(lambda_id);
+        let num_captures = closure_func.num_captures;
+        let does_closure_capture_this = matches!(closure_func.this_binding, ThisBinding::Capture);
 
-        // TODO(perf): use `Function::num_captures` instead of `Scope::count_captures()`.
         let closure =
             self.editor
                 .put_runtime_create_closure(self.support, lambda, lambda_id, num_captures);
 
-        if func.is_this_binding_captured() {
-            let capture = self.perform_load_capture(self.this_capture.unwrap());
+        if does_closure_capture_this {
+            // The capture of the outer `this` binding is always stored in the first element.
+            // See *_stub_this_binding_capture functions in the crate::backend::bridge module.
+            debug_assert!(num_captures > 0);
+            let capture = if let Some(capture_addr) = self.this_capture {
+                debug_assert!(func.is_this_binding_captured());
+                self.perform_load_capture(capture_addr)
+            } else {
+                debug_assert!(!func.is_this_binding_captured());
+                debug_assert!(func.num_captures > 0);
+                debug_assert!(matches!(func.this_binding, ThisBinding::Capture));
+                self.editor.put_load_capture(0)
+            };
             self.editor
                 .put_store_capture_to_closure(capture, closure, 0);
         }
@@ -847,9 +853,290 @@ where
         self.operand_stack.push(Operand::Any(exception, None));
     }
 
+    fn process_class_start(&mut self, name: Symbol, num_elements: u16) {
+        let elements = self.editor.put_alloc_class_element_array(num_elements);
+        self.class_context_stack
+            .push(ClassContext::new(name, elements, num_elements));
+    }
+
+    fn process_class_end(&mut self, _name: Symbol, _num_elements: u16, _derived: bool) {
+        let class = self.class_context_stack.pop().unwrap();
+
+        let retv = self.emit_create_any();
+        let status = self
+            .editor
+            .put_runtime_build_class(self.support, &class, retv);
+        self.emit_check_status_for_exception(status, retv);
+
+        if self.support.is_runtime_assert_enabled() {
+            let is_object = self.editor.put_is_object(retv);
+            self.editor.put_assert(
+                self.support,
+                is_object,
+                c"runtime_build_class() should return an Object",
+            );
+        }
+
+        let constructor = self.editor.put_load_object(retv);
+
+        if self.support.is_runtime_assert_enabled() {
+            let is_callable = self.editor.put_is_callable(constructor);
+            self.editor
+                .put_assert(self.support, is_callable, c"constructor must be callable");
+        }
+
+        // TODO(perf): use a `cranelift::Variable` for optimization.
+        let tmp = self.editor.class_tmp();
+        self.editor.put_store_object_to_any(constructor, tmp);
+        self.operand_stack.push(Operand::Any(tmp, None));
+    }
+
+    fn process_parent_class(&mut self) {
+        let (operand, _) = self.dereference();
+        let parent = self.editor.put_alloc_any();
+        self.emit_store_operand_to_any(&operand, parent);
+        self.class_context_stack
+            .last_mut()
+            .unwrap()
+            .set_parent(parent);
+    }
+
+    fn process_constructor(&mut self, index: u16) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let constructor = match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"constructor must be callable",
+                    );
+                }
+                object
+            }
+            _ => unreachable!(),
+        };
+
+        match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, key) => {
+                debug_assert!(matches!(key, PropertyKey::Symbol(Symbol::CONSTRUCTOR)));
+            }
+            _ => unreachable!(),
+        }
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::Constructor,
+            Symbol::CONSTRUCTOR,
+            Some(constructor),
+            elements,
+        );
+    }
+
+    fn process_static_method(&mut self, index: u16) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let method = match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"static method must be callable",
+                    );
+                }
+                object
+            }
+            _ => unreachable!(),
+        };
+
+        let key = match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, PropertyKey::Symbol(key)) => key,
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::StaticMethod,
+            key,
+            Some(method),
+            elements,
+        );
+    }
+
+    fn process_method(&mut self, index: u16) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let method = match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor
+                        .put_assert(self.support, is_callable, c"method must be callable");
+                }
+                object
+            }
+            _ => unreachable!(),
+        };
+
+        let key = match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, PropertyKey::Symbol(key)) => key,
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::Method,
+            key,
+            Some(method),
+            elements,
+        );
+    }
+
+    fn process_static_field(&mut self, index: u16, has_initializer: bool) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let initializer = has_initializer.then(|| match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"static field initializer must be callable",
+                    );
+                }
+                object
+            }
+            (operand, ..) => unreachable!("{operand:?}"),
+        });
+
+        let key = match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, PropertyKey::Symbol(key)) => key,
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::StaticField,
+            key,
+            initializer,
+            elements,
+        );
+    }
+
+    fn process_field(&mut self, index: u16, has_initializer: bool) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let initializer = has_initializer.then(|| match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"field initializer must be callable",
+                    );
+                }
+                object
+            }
+            (operand, ..) => unreachable!("{operand:?}"),
+        });
+
+        let key = match self.operand_stack.pop().unwrap() {
+            Operand::PropertyReference(_, PropertyKey::Symbol(key)) => key,
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::Field,
+            key,
+            initializer,
+            elements,
+        );
+    }
+
+    fn process_static_block(&mut self, index: u16) {
+        debug_assert!(index < self.class_context_stack.last().unwrap().num_elements);
+
+        let block = match self.dereference() {
+            (Operand::Object(object), ..) => {
+                if self.support.is_runtime_assert_enabled() {
+                    let is_callable = self.editor.put_is_callable(object);
+                    self.editor.put_assert(
+                        self.support,
+                        is_callable,
+                        c"static block must be callable",
+                    );
+                }
+                object
+            }
+            _ => unreachable!(),
+        };
+
+        match self.operand_stack.pop().unwrap() {
+            Operand::Undefined => (),
+            _ => unreachable!(),
+        };
+
+        let elements = self.class_context_stack.last().unwrap().elements;
+        self.editor.put_store_class_element(
+            index,
+            ClassElementKind::StaticBlock,
+            Symbol::NONE,
+            Some(block),
+            elements,
+        );
+    }
+
     fn process_this(&mut self) {
-        let this = self.this.unwrap();
+        let this = self.editor.this_argument();
+
+        // TODO(perf): slow... but we have to implement a flow analysis in order to skip the
+        // check.  for example we have to take care of the following case:
+        //
+        //   constructor() {
+        //     if (cond) {
+        //       super();
+        //     }
+        //     this.x;
+        //   }
+        //
+        let then_block = self.editor.create_block();
+        let end_block = self.editor.create_block();
+        // if this.is_none()
+        let is_none = self.editor.put_is_none(this);
+        self.editor
+            .put_branch(is_none, then_block, &[], end_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_reference_error();
+        // }
+        self.editor.switch_to_block(end_block);
+
         self.operand_stack.push(Operand::Any(this, None));
+    }
+
+    fn process_super(&mut self) {
+        let func = self.editor.put_load_func();
+        // TODO(feat): func may be null.
+        let super_constructor = self.editor.put_load_prototype_from_object(func);
+        // TODO(feat): super_constructor may be null.
+        self.operand_stack.push(Operand::Object(super_constructor));
+    }
+
+    fn process_new_target(&mut self) {
+        let new_target = self.editor.new_target();
+        self.operand_stack.push(Operand::Any(new_target, None));
     }
 
     fn process_variable_reference(&mut self, symbol: Symbol) {
@@ -1040,27 +1327,6 @@ where
         }
     }
 
-    // NOTE: This function may call `process_command()`.
-    fn process_declare_functions(&mut self, func: &Function, scope_ref: ScopeRef) {
-        for batch_index in self
-            .scope_tree
-            .scope(scope_ref)
-            .function_declarations
-            .iter()
-            .cloned()
-        {
-            let start = batch_index + 1;
-            let end = start
-                + match func.commands[batch_index] {
-                    CompileCommand::Batch(n) => n as usize,
-                    _ => unreachable!(),
-                };
-            for command in func.commands[start..end].iter() {
-                self.process_command(func, command);
-            }
-        }
-    }
-
     fn process_declare_function(&mut self) {
         let (symbol, locator) = self.pop_reference();
         let (operand, ..) = self.dereference();
@@ -1190,14 +1456,16 @@ where
             }
         };
 
+        self.emit_throw_type_error_if_class_constructor(object);
+
         let closure = self.emit_load_closure_or_throw_type_error(object);
 
         if let Some(owner) = owner {
-            let dst = self.editor.put_get_this_from_call_context();
+            let dst = self.editor.put_get_this_from_callee_cc();
             self.emit_store_property_owner_to_any(owner, dst);
         } else {
             let this = self.editor.this_argument();
-            let dst = self.editor.put_get_this_from_call_context();
+            let dst = self.editor.put_get_this_from_callee_cc();
             self.editor.put_store_any_to_any(this, dst);
         }
 
@@ -1223,7 +1491,7 @@ where
         }
     }
 
-    fn process_new(&mut self, argc: u16) {
+    fn process_construct(&mut self, argc: u16, super_call: bool) {
         // TODO: dynamic allocation
         if argc > 8 {
             self.emit_throw_internal_error(const_string_handle!("TODO: too many arguments"));
@@ -1247,39 +1515,60 @@ where
             }
         };
 
-        let is_constructor = self.editor.put_is_constructor(constructor);
-        let then_block = self.editor.create_block();
-        let else_block = self.editor.create_block();
-        let merge_block = self.editor.create_block();
-        self.editor
-            .put_branch(is_constructor, then_block, &[], else_block, &[]);
-        self.editor.switch_to_block(then_block);
-        self.editor.put_jump(merge_block, &[]);
-        self.editor.switch_to_block(else_block);
-        self.emit_throw_type_error();
-        self.editor.put_jump(merge_block, &[]);
-        self.editor.switch_to_block(merge_block);
-
-        let closure = self.emit_load_closure_or_throw_type_error(constructor);
-        let prototype = self.emit_get_prototype_from_constructor(constructor);
-
-        let this = {
-            let object = self
-                .editor
-                .put_runtime_create_object(self.support, prototype);
-            let dst = self.editor.put_get_this_from_call_context();
-            self.editor.put_store_object_to_any(object, dst);
-            object
+        let new_target = if super_call {
+            let new_target = self.editor.new_target();
+            if self.support.is_runtime_assert_enabled() {
+                let is_object = self.editor.put_is_object(new_target);
+                self.editor
+                    .put_assert(self.support, is_object, c"[[NewTarget]] must be an object");
+            }
+            self.editor.put_load_object(new_target)
+        } else {
+            constructor
         };
 
         let retv = self.emit_create_any();
         let status = self
             .editor
-            .put_call(constructor, closure, CallContextFlags::NEW, retv);
+            .put_runtime_construct(self.support, constructor, new_target, retv);
         self.emit_check_status_for_exception(status, retv);
 
-        // TODO(pref): compile-time evaluation
-        self.operand_stack.push(Operand::Object(this));
+        if self.support.is_runtime_assert_enabled() {
+            let is_object = self.editor.put_is_object(retv);
+            self.editor.put_assert(
+                self.support,
+                is_object,
+                c"[[Construct]] must return an object",
+            );
+        }
+        let object = self.editor.put_load_object(retv);
+
+        if super_call {
+            // #sec-super-keyword-runtime-semantics-evaluation
+
+            // TODO: BindThisValue
+            self.editor.put_store_this_argument(retv);
+
+            let constructor = self.editor.put_load_func();
+            if self.support.is_runtime_assert_enabled() {
+                let is_callable = self.editor.put_is_callable(constructor);
+                self.editor.put_assert(
+                    self.support,
+                    is_callable,
+                    c"[[FunctionObject]] must be callable",
+                );
+            }
+            let retv = self.emit_create_any();
+            let status = self.editor.put_runtime_initialize_instance_elements(
+                self.support,
+                object,
+                constructor,
+                retv,
+            );
+            self.emit_check_status_for_exception(status, retv);
+        }
+
+        self.operand_stack.push(Operand::Object(object));
     }
 
     fn process_push_scope(&mut self, func: &Function, scope_ref: ScopeRef) {
@@ -1358,8 +1647,18 @@ where
         if scope.is_function() {
             if let Some(this_capture) = self.this_capture.take() {
                 let capture = self.perform_load_capture(this_capture);
-                let this = self.this.unwrap();
-                self.editor.put_escape_value(capture, this);
+                if self.support.is_runtime_assert_enabled() {
+                    let value = self.editor.put_load_value_from_capture(capture);
+                    self.editor
+                        .put_assert_non_null(self.support, value.0, c"Capture broken");
+                    let is_not_escaped = self.editor.put_is_not_capture_escaped(capture);
+                    self.editor.put_assert(
+                        self.support,
+                        is_not_escaped,
+                        c"Capture already escaped",
+                    );
+                }
+                self.editor.put_escape_value(capture);
             }
             // tidy this value if it exists
             // TODO: GC
@@ -1562,8 +1861,8 @@ where
         }
     }
 
-    fn peek_object(&mut self) -> ObjectIr {
-        match self.operand_stack.last().unwrap() {
+    fn peek_object(&mut self, nth: usize) -> ObjectIr {
+        match self.operand_stack.peek(nth) {
             Operand::Object(value) => *value,
             _ => unreachable!(),
         }
@@ -1583,7 +1882,7 @@ where
 
         // 4. Perform ? CopyDataProperties(object, fromValue, excludedNames).
 
-        let object = self.peek_object();
+        let object = self.peek_object(0);
         let retv = self.emit_create_any();
 
         let status =
@@ -1600,7 +1899,7 @@ where
         let from_value = self.editor.put_alloc_any();
         self.emit_store_operand_to_any(&operand, from_value);
 
-        let object = self.peek_object();
+        let object = self.peek_object(0);
         let retv = self.emit_create_any();
 
         let status =
@@ -2055,10 +2354,30 @@ where
 
     // 13.10.1 Runtime Semantics: Evaluation
     fn process_instanceof(&mut self) {
-        let (_lhs, ..) = self.dereference();
-        let (_rhs, ..) = self.dereference();
-        self.emit_throw_internal_error(const_string_handle!("TODO: instanceof operator"));
-        self.process_boolean(false);
+        let (lhs, ..) = self.dereference();
+        let value = self.editor.put_alloc_any();
+        self.emit_store_operand_to_any(&lhs, value);
+
+        let (rhs, ..) = self.dereference();
+        let target = self.editor.put_alloc_any();
+        self.emit_store_operand_to_any(&rhs, target);
+
+        let retv = self.editor.put_alloc_any();
+        let status = self
+            .editor
+            .put_runtime_instanceof(self.support, value, target, retv);
+        self.emit_check_status_for_exception(status, retv);
+
+        if self.support.is_runtime_assert_enabled() {
+            let is_boolean = self.editor.put_is_boolean(retv);
+            self.editor.put_assert(
+                self.support,
+                is_boolean,
+                c"instanceof is an boolean operator",
+            );
+        }
+        let result = self.editor.put_load_boolean(retv);
+        self.operand_stack.push(Operand::Boolean(result, None));
     }
 
     // 13.10.1 Runtime Semantics: Evaluation
@@ -2263,10 +2582,8 @@ where
             Operand::Object(_) => self.operand_stack.push(operand),
             // Variables and properties.
             Operand::Any(value, ..) => {
-                let retv = self.emit_create_any();
-                let status = self.editor.put_runtime_to_object(self.support, value, retv);
-                self.emit_check_status_for_exception(status, retv);
-                self.operand_stack.push(Operand::Any(retv, None));
+                let object = self.perform_any_to_object(value);
+                self.operand_stack.push(Operand::Object(object));
             }
             Operand::Lambda(..)
             | Operand::Closure(_)
@@ -2298,24 +2615,23 @@ where
                 None
             }
             PropertyOwner::Object(value) => Some(*value),
-            PropertyOwner::Any(value) => {
-                let retv = self.emit_create_any();
-                let status = self
-                    .editor
-                    .put_runtime_to_object(self.support, *value, retv);
-                self.emit_check_status_for_exception(status, retv);
-                if self.support.is_runtime_assert_enabled() {
-                    let is_object = self.editor.put_is_object(retv);
-                    self.editor.put_assert(
-                        self.support,
-                        is_object,
-                        c"ToObject() should return an Object",
-                    );
-                }
-                let object = self.editor.put_load_object(retv);
-                Some(object)
-            }
+            PropertyOwner::Any(value) => Some(self.perform_any_to_object(*value)),
         }
+    }
+
+    fn perform_any_to_object(&mut self, value: AnyIr) -> ObjectIr {
+        let retv = self.emit_create_any();
+        let status = self.editor.put_runtime_to_object(self.support, value, retv);
+        self.emit_check_status_for_exception(status, retv);
+        if self.support.is_runtime_assert_enabled() {
+            let is_object = self.editor.put_is_object(retv);
+            self.editor.put_assert(
+                self.support,
+                is_object,
+                c"ToObject() should return an Object",
+            );
+        }
+        self.editor.put_load_object(retv)
     }
 
     fn process_falsy_short_circuit(&mut self) {
@@ -2653,10 +2969,10 @@ where
                 let start = batch_index + 1;
                 let end = start
                     + match func.commands[batch_index] {
-                        CompileCommand::Batch(n) => n as usize,
+                        CompileCommand::Skip(n) => n as usize,
                         _ => unreachable!(),
                     };
-                self.process_commands(func, &func.commands[start..end]);
+                self.process_commands(func, &func.commands, start..end);
             }
             self.editor
                 .put_jump_if_not_terminated(fall_through_block, &[]);
@@ -3120,13 +3436,17 @@ where
         self.swap();
     }
 
-    fn process_duplicate(&mut self, offset: u8) {
-        self.duplicate(offset);
+    fn process_duplicate(&mut self, index: u8) {
+        self.duplicate(index);
     }
 
     fn process_dereference(&mut self) {
         let (operand, ..) = self.dereference();
         self.operand_stack.push(operand);
+    }
+
+    fn process_to_object(&mut self) {
+        self.perform_to_object();
     }
 
     fn process_debugger(&mut self) {
@@ -3162,13 +3482,6 @@ where
         match self.operand_stack.pop().unwrap() {
             Operand::Closure(value) => value,
             _ => unreachable!(),
-        }
-    }
-
-    fn pop_any(&mut self) -> AnyIr {
-        match self.operand_stack.pop().unwrap() {
-            Operand::Any(value, _) => value,
-            operand => unreachable!("{operand:?}"),
         }
     }
 
@@ -3546,13 +3859,15 @@ where
         logger::debug!(event = "perform_escape_value", ?locator);
         let capture_addr = self.captures.remove(&locator).unwrap();
         let capture = self.perform_load_capture(capture_addr);
-        let value = match locator {
-            Locator::Param(index) => self.get_param(index),
-            Locator::Local(index) => self.get_local(index),
-            Locator::Capture(index) => self.editor.put_load_captured_value(index),
-            Locator::Global => unreachable!(),
-        };
-        self.editor.put_escape_value(capture, value);
+        if self.support.is_runtime_assert_enabled() {
+            let value = self.editor.put_load_value_from_capture(capture);
+            self.editor
+                .put_assert_non_null(self.support, value.0, c"Capture broken");
+            let is_not_escaped = self.editor.put_is_not_capture_escaped(capture);
+            self.editor
+                .put_assert(self.support, is_not_escaped, c"Capture already escaped");
+        }
+        self.editor.put_escape_value(capture);
     }
 
     fn swap(&mut self) {
@@ -3563,11 +3878,9 @@ where
         self.operand_stack.swap(last_index - 1, last_index);
     }
 
-    fn duplicate(&mut self, offset: u8) {
-        logger::debug!(event = "duplicate", offset);
-        debug_assert!(self.operand_stack.len() > offset as usize);
-        let index = self.operand_stack.len() - 1 - offset as usize;
-        self.operand_stack.duplicate(index);
+    fn duplicate(&mut self, index: u8) {
+        logger::debug!(event = "duplicate", index);
+        self.operand_stack.duplicate(index as usize);
     }
 
     // retv
@@ -3598,7 +3911,7 @@ where
 
     fn emit_fill_args(&mut self, argc: u16) {
         logger::debug!(event = "emit_fill_args", argc);
-        let argv = self.editor.put_get_argv_from_call_context();
+        let argv = self.editor.put_get_argv_from_callee_cc();
         // TODO: evaluation order
         for i in (0..argc).rev() {
             let (operand, ..) = self.dereference();
@@ -3606,7 +3919,7 @@ where
             let arg = self.editor.put_get_arg(argv, i);
             self.emit_store_operand_to_any(&operand, arg);
         }
-        self.editor.put_store_argc_to_call_context(argc);
+        self.editor.put_store_argc_to_callee_cc(argc);
     }
 
     fn emit_store_operand_to_any(&mut self, operand: &Operand, any: AnyIr) {
@@ -3693,6 +4006,27 @@ where
         value
     }
 
+    fn emit_throw_type_error_if_class_constructor(&mut self, object: ObjectIr) {
+        logger::debug!(
+            event = "emit_throw_type_error_if_class_constructor",
+            ?object
+        );
+        let then_block = self.editor.create_block();
+        let end_block = self.editor.create_block();
+
+        // if object.is_class_constructor()
+        let is_class_constructor = self.editor.put_is_class_constructor(object);
+        self.editor
+            .put_branch(is_class_constructor, then_block, &[], end_block, &[]);
+        // {
+        self.editor.switch_to_block(then_block);
+        self.emit_throw_type_error();
+        self.editor.put_jump(end_block, &[]);
+        // }
+
+        self.editor.switch_to_block(end_block);
+    }
+
     fn emit_load_object_or_throw_type_error(&mut self, value: AnyIr) -> ObjectIr {
         logger::debug!(event = "emit_load_object_or_throw_type_error", ?value);
         let then_block = self.editor.create_block();
@@ -3744,6 +4078,7 @@ where
     }
 
     // 10.1.14 GetPrototypeFromConstructor
+    #[allow(unused)]
     fn emit_get_prototype_from_constructor(&mut self, constructor: ObjectIr) -> ObjectIr {
         let prototype = self.emit_create_any();
         let status = self.editor.put_runtime_get_value_by_symbol(
@@ -3887,9 +4222,13 @@ impl OperandStack {
         Self(vec![])
     }
 
-    fn duplicate(&mut self, index: usize) {
+    fn peek(&self, index: usize) -> &Operand {
         debug_assert!(index < self.0.len());
-        let dup = self.0[index].clone();
+        self.0.iter().rev().nth(index).unwrap()
+    }
+
+    fn duplicate(&mut self, index: usize) {
+        let dup = self.peek(index).clone();
         self.push(dup);
     }
 
@@ -4031,6 +4370,29 @@ impl From<AnyIr> for PropertyKey {
     }
 }
 
+struct ClassContext {
+    name: Symbol,
+    parent: Option<AnyIr>,
+    elements: ClassElementArrayIr,
+    num_elements: u16,
+}
+
+impl ClassContext {
+    fn new(name: Symbol, elements: ClassElementArrayIr, num_elements: u16) -> Self {
+        Self {
+            name,
+            parent: None,
+            elements,
+            num_elements,
+        }
+    }
+
+    fn set_parent(&mut self, parent: AnyIr) {
+        debug_assert!(self.parent.is_none());
+        self.parent = Some(parent);
+    }
+}
+
 /// A runtime boolean value in `ir::types::I8`.
 #[derive(Clone, Copy, Debug)]
 struct BooleanIr(ir::Value);
@@ -4067,6 +4429,9 @@ struct ArgvIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
 struct StatusIr(ir::Value);
+
+#[derive(Clone, Copy, Debug)]
+struct ClassElementArrayIr(ir::Value);
 
 #[derive(Clone, Copy, Debug)]
 struct Status(u32);

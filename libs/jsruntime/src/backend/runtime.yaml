@@ -1,8 +1,8 @@
 functions:
   - name: lazy_compile_normal
     args:
-      - name: context
-        type: '&mut c_void'
+      - name: cc
+        type: '&mut CallContext'
       - name: this
         type: '&mut Value'
       - name: argc
@@ -14,8 +14,8 @@ functions:
     ret: Status
   - name: lazy_compile_ramp
     args:
-      - name: context
-        type: '&mut c_void'
+      - name: cc
+        type: '&mut CallContext'
       - name: this
         type: '&mut Value'
       - name: argc
@@ -27,8 +27,8 @@ functions:
     ret: Status
   - name: lazy_compile_coroutine
     args:
-      - name: context
-        type: '&mut c_void'
+      - name: cc
+        type: '&mut CallContext'
       - name: this
         type: '&mut Value'
       - name: argc
@@ -102,6 +102,15 @@ functions:
       - name: value
         type: '&Value'
     ret: Handle<String>
+  - name: instanceof
+    args:
+      - name: value
+        type: '&Value'
+      - name: target
+        type: '&Value'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
   - name: create_string
     args:
       - name: ptr
@@ -297,6 +306,43 @@ functions:
       - name: retv
         type: '&mut Value'
     ret: Status
+  - name: build_class
+    args:
+      - name: name
+        type: u32
+      - name: parent
+        type: '*const Value'
+      - name: elements
+        type: '*const ClassElement'
+      - name: num_elements
+        type: u16
+      - name: cc
+        type: '&mut CallContext'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
+  - name: construct
+    args:
+      - name: constructor
+        type: HandleMut<Object>
+      - name: new_target
+        type: HandleMut<Object>
+      - name: cc
+        type: '&mut CallContext'
+      - name: retv
+        type: '&mut Value'
+    ret: Status
+  - name: initialize_instance_elements
+    args:
+      - name: cc
+        type: '&mut CallContext'
+      - name: object
+        type: HandleMut<Object>
+      - name: constructor
+        type: HandleMut<Object>
+      - name: retv
+        type: '&mut Value'
+    ret: Status
   # panic
   - name: panic
     args:
@@ -325,6 +371,12 @@ functions:
     args:
       - name: value
         type: Handle<String>
+      - name: msg
+        type: '&std::ffi::CStr'
+  - name: print_object
+    args:
+      - name: value
+        type: HandleMut<Object>
       - name: msg
         type: '&std::ffi::CStr'
   - name: print_value

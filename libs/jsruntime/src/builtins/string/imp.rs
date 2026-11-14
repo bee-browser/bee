@@ -18,22 +18,44 @@ use crate::types::string::SPACE;
 use super::logger;
 
 //#sec-string-constructor-string-value constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
-    logger::debug!(event = "string");
-    let this = context.this();
-    let args = context.args();
-    let new = context.is_new();
-    runtime.create_string_object(Some(this), args, new)
+pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
+    logger::debug!(event = "string_constructor");
+
+    let string = if cc.args().is_empty() {
+        const_string_handle!()
+    } else {
+        // TODO(feat): context.new_target().is_some() &&
+        // context.args().first().unwrap().is_symbol()
+        runtime.value_to_string(cc.args().first().unwrap())?
+    };
+    if let Value::Object(new_target) = cc.new_target() {
+        let proto = runtime
+            .get_prototype_from_constructor(*new_target, runtime.builtins.string_prototype)?;
+        // TODO(feat): 10.4.3.4 StringCreate
+        let mut object = runtime.create_object();
+        object.set_prototype(proto);
+        let length = string.len();
+        object.set_string(string);
+        // TODO: check the result
+        let result = object.define_own_property(
+            Symbol::LENGTH.into(),
+            Property::data_xxc(Value::Number(length as f64)),
+        );
+        debug_assert!(matches!(result, Ok(true)));
+        Ok(Value::Object(object))
+    } else {
+        Ok(Value::String(string))
+    }
 }
 
 //#sec-string.fromcharcode constructor.function
 pub fn string_from_char_code<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_from_char_code");
     let mut utf16 = vec![];
-    for arg in context.args().iter() {
+    for arg in cc.args().iter() {
         let code_unit = crate::types::number::to_uint16(arg)?;
         utf16.push(code_unit);
     }
@@ -44,12 +66,12 @@ pub fn string_from_char_code<X>(
 //#sec-string.fromcodepoint constructor.function
 pub fn string_from_code_point<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_from_code_point");
     let mut buf = [0; 2];
     let mut utf16 = vec![];
-    for arg in context.args().iter() {
+    for arg in cc.args().iter() {
         let num = crate::types::number::to_number(arg)?;
         if num.is_infinite() || num.is_nan() || num.fract() != 0.0 {
             return range_error!();
@@ -81,14 +103,14 @@ fn encode_code_point(cp: i64, buf: &mut [u16; 2]) -> &[u16] {
 //#sec-string.prototype.at prototype.function
 pub fn string_prototype_at<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_at");
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
     let len = s.len() as f64;
-    let index = context.args().first().unwrap_or(&Value::Undefined);
+    let index = cc.args().first().unwrap_or(&Value::Undefined);
     let relative_index = runtime.value_to_integer_or_infinity(index)?;
     let k = if relative_index >= 0.0 {
         relative_index
@@ -107,13 +129,13 @@ pub fn string_prototype_at<X>(
 //#sec-string.prototype.charat prototype.function
 pub fn string_prototype_char_at<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_char_at");
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
-    let pos = context.args().first().unwrap_or(&Value::Undefined);
+    let pos = cc.args().first().unwrap_or(&Value::Undefined);
     let position = runtime.value_to_integer_or_infinity(pos)?;
     let size = s.len() as f64;
     if position < 0.0 || position >= size {
@@ -128,13 +150,13 @@ pub fn string_prototype_char_at<X>(
 //#sec-string.prototype.charcodeat prototype.function
 pub fn string_prototype_char_code_at<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_char_code_at");
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
-    let pos = context.args().first().unwrap_or(&Value::Undefined);
+    let pos = cc.args().first().unwrap_or(&Value::Undefined);
     let position = runtime.value_to_integer_or_infinity(pos)?;
     let size = s.len() as f64;
     if position < 0.0 || position >= size {
@@ -147,13 +169,13 @@ pub fn string_prototype_char_code_at<X>(
 //#sec-string.prototype.codepointat prototype.function
 pub fn string_prototype_code_point_at<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_code_point_at");
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
-    let pos = context.args().first().unwrap_or(&Value::Undefined);
+    let pos = cc.args().first().unwrap_or(&Value::Undefined);
     let position = runtime.value_to_integer_or_infinity(pos)?;
     let size = s.len() as f64;
     if position < 0.0 || position >= size {
@@ -166,12 +188,12 @@ pub fn string_prototype_code_point_at<X>(
 //#sec-string.prototype.concat prototype.function
 pub fn string_prototype_concat<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_concat");
     let mut s = None;
     // TODO(refactor): process in the reverse order
-    for arg in context.args().iter().rev() {
+    for arg in cc.args().iter().rev() {
         let r = runtime.value_to_string(arg)?;
         s = if let Some(s) = s {
             Some(runtime.concat_strings(r, s))
@@ -179,7 +201,7 @@ pub fn string_prototype_concat<X>(
             Some(r)
         };
     }
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let r = runtime.value_to_string(o)?;
     let s = if let Some(s) = s {
@@ -193,15 +215,15 @@ pub fn string_prototype_concat<X>(
 //#sec-string.prototype.endswith prototype.function
 pub fn string_prototype_ends_with<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_ends_with");
 
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
-    let args = context.args();
+    let args = cc.args();
 
     let search_str = args.first().unwrap_or(&Value::Undefined);
     // TODO(feat): RegExp
@@ -238,15 +260,15 @@ pub fn string_prototype_ends_with<X>(
 //#sec-string.prototype.includes prototype.function
 pub fn string_prototype_includes<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_includes");
 
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
-    let args = context.args();
+    let args = cc.args();
 
     let search_str = args.first().unwrap_or(&Value::Undefined);
     // TODO(feat): RegExp
@@ -265,15 +287,15 @@ pub fn string_prototype_includes<X>(
 //#sec-string.prototype.indexof prototype.function
 pub fn string_prototype_index_of<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_index_of");
 
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
-    let args = context.args();
+    let args = cc.args();
 
     let search_str = args.first().unwrap_or(&Value::Undefined);
     let search_str = runtime.value_to_string(search_str)?;
@@ -291,11 +313,11 @@ pub fn string_prototype_index_of<X>(
 //#sec-string.prototype.iswellformed prototype.function
 pub fn string_prototype_is_well_formed<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_is_well_formed");
 
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
@@ -305,15 +327,15 @@ pub fn string_prototype_is_well_formed<X>(
 //#sec-string.prototype.lastindexof prototype.function
 pub fn string_prototype_last_index_of<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_last_index_of");
 
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
-    let args = context.args();
+    let args = cc.args();
 
     let search_str = args.first().unwrap_or(&Value::Undefined);
     let search_str = runtime.value_to_string(search_str)?;
@@ -343,32 +365,32 @@ pub fn string_prototype_last_index_of<X>(
 //#sec-string.prototype.padend prototype.function
 pub fn string_prototype_pad_end<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_pad_end");
-    string_padding_builtins_impl(runtime, context, PaddingPlacement::End)
+    string_padding_builtins_impl(runtime, cc, PaddingPlacement::End)
 }
 
 //#sec-string.prototype.padstart prototype.function
 pub fn string_prototype_pad_start<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_pad_start");
-    string_padding_builtins_impl(runtime, context, PaddingPlacement::Start)
+    string_padding_builtins_impl(runtime, cc, PaddingPlacement::Start)
 }
 
 // 22.1.3.17.1 StringPaddingBuiltinsImpl ( O, maxLength, fillString, placement )
 fn string_padding_builtins_impl<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
     placement: PaddingPlacement,
 ) -> Result<Value, Error> {
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
-    let args = context.args();
+    let args = cc.args();
 
     let max_length = args.first().unwrap_or(&Value::Undefined);
     let int_max_length = runtime.value_to_length(max_length)?;
@@ -423,15 +445,15 @@ enum PaddingPlacement {
 //#sec-string.prototype.repeat prototype.function
 pub fn string_prototype_repeat<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_repeat");
 
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
-    let args = context.args();
+    let args = cc.args();
 
     let count = args.first().unwrap_or(&Value::Undefined);
     let n = runtime.value_to_integer_or_infinity(count)?;
@@ -455,15 +477,15 @@ pub fn string_prototype_repeat<X>(
 //#sec-string.prototype.startswith prototype.function
 pub fn string_prototype_starts_with<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_starts_with");
 
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
-    let args = context.args();
+    let args = cc.args();
 
     let search_str = args.first().unwrap_or(&Value::Undefined);
     // TODO(feat): RegExp
@@ -500,15 +522,15 @@ pub fn string_prototype_starts_with<X>(
 //#sec-string.prototype.substring prototype.function
 pub fn string_prototype_substring<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_substring");
 
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
 
-    let args = context.args();
+    let args = cc.args();
 
     let len = s.len() as f64;
 
@@ -538,38 +560,38 @@ pub fn string_prototype_substring<X>(
 //#sec-string.prototype.trim prototype.function
 pub fn string_prototype_trim<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_trim");
-    trim_string(runtime, context, true, true)
+    trim_string(runtime, cc, true, true)
 }
 
 //#sec-string.prototype.trimend prototype.function
 pub fn string_prototype_trim_end<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_trim_end");
-    trim_string(runtime, context, false, true)
+    trim_string(runtime, cc, false, true)
 }
 
 //#sec-string.prototype.trimstart prototype.function
 pub fn string_prototype_trim_start<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "string_prototype_trim_start");
-    trim_string(runtime, context, true, false)
+    trim_string(runtime, cc, true, false)
 }
 
 // 22.1.3.32.1 TrimString ( string, where )
 fn trim_string<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
     start: bool,
     end: bool,
 ) -> Result<Value, Error> {
-    let o = context.this();
+    let o = cc.this();
     require_object_coercible(o)?;
     let s = runtime.value_to_string(o)?;
     Ok(Value::String(runtime.trim_string(s, start, end)?))

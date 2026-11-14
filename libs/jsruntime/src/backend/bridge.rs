@@ -1,12 +1,15 @@
 use jsgc::Handle;
 use jsgc::HandleMut;
+use jsparser::Symbol;
 
 use crate::Error;
 use crate::Runtime;
 use crate::lambda::LambdaKind;
-use crate::logger;
+use crate::semantics::Function;
+use crate::semantics::ThisBinding;
 use crate::types::CallContext;
 use crate::types::Capture;
+use crate::types::ClassElement;
 use crate::types::Closure;
 use crate::types::Coroutine;
 use crate::types::Lambda;
@@ -16,6 +19,8 @@ use crate::types::PropertyKey;
 use crate::types::Status;
 use crate::types::String;
 use crate::types::Value;
+
+logging::define_logger! {}
 
 macro_rules! into_object {
     ($value:expr) => {
@@ -42,12 +47,12 @@ macro_rules! into_capture {
 
 pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_normal");
 
-    let lambda_id = context.closure().lambda_id;
+    let lambda_id = cc.closure().lambda_id;
     let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
         lambda
     } else {
@@ -59,23 +64,33 @@ pub(crate) extern "C" fn runtime_lazy_compile_normal<X>(
         runtime.code_registry.get_lambda(lambda_id).unwrap()
     };
 
+    let func = runtime.get_function_by_lambda_id(lambda_id);
+    let call_stub = get_call_stub(func).unwrap_or(lambda);
+    let construct_stub = get_construct_stub(func).unwrap_or(lambda);
+
     debug_assert_eq!(
-        context.closure().lambda,
+        cc.closure().lambda,
         (runtime_lazy_compile_normal::<X> as *const () as usize).into()
     );
-    context.closure().lambda = lambda.into();
+    cc.closure().lambda = lambda.into();
+    cc.closure().call_stub = call_stub.into();
+    cc.closure().construct_stub = construct_stub.into();
 
-    lambda(runtime, context, retv)
+    if matches!(cc.new_target(), Value::Undefined) {
+        call_stub(runtime, cc, retv)
+    } else {
+        construct_stub(runtime, cc, retv)
+    }
 }
 
 pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_ramp");
 
-    let lambda_id = context.closure().lambda_id;
+    let lambda_id = cc.closure().lambda_id;
     let lambda = if let Some(lambda) = runtime.code_registry.get_lambda(lambda_id) {
         lambda
     } else {
@@ -97,23 +112,33 @@ pub(crate) extern "C" fn runtime_lazy_compile_ramp<X>(
         runtime.code_registry.get_lambda(lambda_id).unwrap()
     };
 
+    let func = runtime.get_function_by_lambda_id(lambda_id);
+    let call_stub = get_call_stub(func).unwrap_or(lambda);
+    let construct_stub = get_construct_stub(func).unwrap_or(lambda);
+
     debug_assert_eq!(
-        context.closure().lambda,
+        cc.closure().lambda,
         (runtime_lazy_compile_ramp::<X> as *const () as usize).into()
     );
-    context.closure().lambda = lambda.into();
+    cc.closure().lambda = lambda.into();
+    cc.closure().call_stub = call_stub.into();
+    cc.closure().construct_stub = construct_stub.into();
 
-    lambda(runtime, context, retv)
+    if matches!(cc.new_target(), Value::Undefined) {
+        call_stub(runtime, cc, retv)
+    } else {
+        construct_stub(runtime, cc, retv)
+    }
 }
 
 pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "runtime_lazy_compile_coroutine");
 
-    let coroutine = context.coroutine_mut();
+    let coroutine = cc.coroutine_mut();
 
     let lambda_id = coroutine.closure.lambda_id;
     // The coroutine lambda has already been compiled in `runtime_lazy_compile_ramp()`.
@@ -124,31 +149,176 @@ pub(crate) extern "C" fn runtime_lazy_compile_coroutine<X>(
         (runtime_lazy_compile_coroutine::<X> as *const () as usize).into()
     );
     coroutine.closure.lambda = lambda.into();
+    coroutine.closure.call_stub = lambda.into();
+    coroutine.closure.construct_stub = lambda.into();
 
-    lambda(runtime, context, retv)
+    lambda(runtime, cc, retv)
+}
+
+// Stub functions for [[Call]]
+
+fn get_call_stub<X>(func: &Function) -> Option<Lambda<X>> {
+    if func.is_class_constructor() {
+        Some(call_stub_for_class_constructor)
+    } else {
+        match func.this_binding {
+            ThisBinding::Capture => Some(call_stub_this_binding_capture),
+            ThisBinding::GlobalObject => Some(call_stub_this_binding_global_object),
+            ThisBinding::Quirk => Some(call_stub_this_binding_quirk),
+            _ => None,
+        }
+    }
+}
+
+// For [[IsClassConstructor]]
+extern "C" fn call_stub_for_class_constructor<X>(
+    runtime: &mut Runtime<X>,
+    _cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "call_stub_for_class_constructor");
+
+    // Always throw a TypeError.
+    type_error!(runtime, retv)
+}
+
+// #sec-ordinarycallbindthis
+extern "C" fn call_stub_this_binding_capture<X>(
+    runtime: &mut Runtime<X>,
+    cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "call_stub_this_binding_capture");
+
+    // SAFETY: The capture of the outer `this` binding is always the first element in the capture
+    // list.
+    cc.set_this(unsafe { cc.closure().captures().get_unchecked(0).value().clone() });
+
+    let lambda = Lambda::from(cc.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, cc, retv)
+}
+
+// #sec-ordinarycallbindthis
+// const this = globalObject;
+// DO NOT USE `globalThis` HERE.
+extern "C" fn call_stub_this_binding_global_object<X>(
+    runtime: &mut Runtime<X>,
+    cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "call_stub_this_binding_global_object");
+
+    cc.set_this(Value::Object(runtime.builtins.global_object));
+
+    let lambda = Lambda::from(cc.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, cc, retv)
+}
+
+// #sec-ordinarycallbindthis
+// const this =
+//   thisArgument !== null && thisArgument !== undefined ?
+//   ToObject(thisArgument) : globalObject;
+extern "C" fn call_stub_this_binding_quirk<X>(
+    runtime: &mut Runtime<X>,
+    cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "call_stub_this_binding_quirk");
+
+    cc.set_this(Value::Object(match cc.this() {
+        Value::None => unreachable!(),
+        Value::Undefined | Value::Null => runtime.builtins.global_object,
+        this => runtime.value_to_object(this).unwrap(),
+    }));
+
+    let lambda = Lambda::from(cc.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, cc, retv)
+}
+
+// Stub functions for [[Construct]]
+
+fn get_construct_stub<X>(func: &Function) -> Option<Lambda<X>> {
+    if func.is_derived_constructor() {
+        None
+    } else {
+        match func.this_binding {
+            ThisBinding::Capture => Some(construct_stub_this_binding_capture),
+            ThisBinding::GlobalObject => Some(construct_stub_this_binding_global_object),
+            ThisBinding::Quirk => Some(construct_stub_this_binding_quirk),
+            _ => None,
+        }
+    }
+}
+
+// #sec-ecmascript-function-objects-construct-argumentslist-newtarget
+extern "C" fn construct_stub_this_binding_capture<X>(
+    runtime: &mut Runtime<X>,
+    cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "construct_stub_this_binding_capture");
+
+    // SAFETY: The capture of the outer `this` binding is always the first element in the capture
+    // list.
+    cc.set_this(unsafe { cc.closure().captures().get_unchecked(0).value().clone() });
+
+    let lambda = Lambda::from(cc.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, cc, retv)
+}
+
+// #sec-ecmascript-function-objects-construct-argumentslist-newtarget
+// const this = globalObject;
+// DO NOT USE `globalThis` HERE.
+extern "C" fn construct_stub_this_binding_global_object<X>(
+    runtime: &mut Runtime<X>,
+    cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "construct_stub_this_binding_global_object");
+
+    cc.set_this(Value::Object(runtime.builtins.global_object));
+
+    let lambda = Lambda::from(cc.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, cc, retv)
+}
+
+// #sec-ecmascript-function-objects-construct-argumentslist-newtarget
+// const this =
+//   thisArgument !== null && thisArgument !== undefined ?
+//   ToObject(thisArgument) : globalObject;
+extern "C" fn construct_stub_this_binding_quirk<X>(
+    runtime: &mut Runtime<X>,
+    cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "construct_stub_this_binding_quirk");
+
+    cc.set_this(Value::Object(match cc.this() {
+        Value::None => unreachable!(),
+        Value::Undefined | Value::Null => runtime.builtins.global_object,
+        this => runtime.value_to_object(this).unwrap(),
+    }));
+
+    let lambda = Lambda::from(cc.closure().lambda);
+    // We expect TCO to optimize the following call into a jump instruction.
+    // DO NOT USE local variables that implement `Drop`.
+    lambda(runtime, cc, retv)
 }
 
 // 7.1.2 ToBoolean ( argument )
-pub(crate) extern "C" fn runtime_to_boolean<X>(runtime: &mut Runtime<X>, value: &Value) -> bool {
+pub(crate) extern "C" fn runtime_to_boolean<X>(_runtime: &mut Runtime<X>, value: &Value) -> bool {
     logger::debug!(event = "runtime_to_boolean", ?value);
-    runtime.value_to_boolean(value)
-}
-
-impl<X> Runtime<X> {
-    pub(crate) fn value_to_boolean(&mut self, value: &Value) -> bool {
-        match value {
-            Value::None => unreachable!("Value::None"),
-            Value::Undefined => false,
-            Value::Null => false,
-            Value::Boolean(value) => *value,
-            Value::Number(0.0) => false,
-            Value::Number(value) if value.is_nan() => false,
-            Value::Number(_) => true,
-            Value::String(value) if value.is_empty() => false,
-            Value::String(_) => true,
-            Value::Object(_) => true,
-        }
-    }
+    value.to_boolean()
 }
 
 // 7.1.3 ToNumeric ( value )
@@ -214,16 +384,12 @@ pub(crate) extern "C" fn runtime_to_object<X>(
 impl<X> Runtime<X> {
     // 7.1.18 ToObject ( argument )
     pub(crate) fn value_to_object(&mut self, value: &Value) -> Result<HandleMut<Object>, Error> {
-        logger::debug!(event = "to_object", ?value);
+        logger::debug!(event = "value_to_object", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined | Value::Null => type_error!(),
-            Value::Boolean(_value) => {
-                runtime_todo!("ToObject: not yet implemented for Boolean values")
-            }
-            Value::Number(_value) => {
-                runtime_todo!("ToObject: not yet implemented for Number values")
-            }
+            Value::Boolean(value) => Ok(self.create_boolean_object(*value)),
+            Value::Number(value) => Ok(self.create_number_object(*value)),
             Value::String(value) => {
                 // TODO(refactor): rewrite using `new String(value)`
                 match self.create_string_object(None, &[Value::String(*value)], true)? {
@@ -353,6 +519,26 @@ pub(crate) extern "C" fn runtime_get_typeof<X>(
 ) -> Handle<String> {
     debug_assert!(!matches!(value, Value::None));
     value.get_typeof()
+}
+
+pub(crate) extern "C" fn runtime_instanceof<X>(
+    runtime: &mut Runtime<X>,
+    value: &Value,
+    target: &Value,
+    retv: &mut Value,
+) -> Status {
+    debug_assert!(!matches!(value, Value::None));
+    debug_assert!(!matches!(target, Value::None));
+    match runtime.instanceof(value, target) {
+        Ok(result) => {
+            *retv = Value::Boolean(result);
+            Status::Normal
+        }
+        Err(err) => {
+            *retv = runtime.create_exception(err);
+            Status::Exception
+        }
+    }
 }
 
 pub(crate) extern "C" fn runtime_create_string<X>(
@@ -610,6 +796,13 @@ pub(crate) extern "C" fn runtime_create_data_property_by_symbol<X>(
     value: &Value,
     retv: &mut Value,
 ) -> Status {
+    logger::debug!(
+        event = "runtime_create_data_property_by_symbol",
+        ?object,
+        key,
+        ?value
+    );
+
     // TODO(refactor): generate ffi-conversion code by script
     let object = into_object!(object);
 
@@ -730,6 +923,46 @@ pub(crate) extern "C" fn runtime_push_value<X>(
     }
 }
 
+pub(crate) extern "C" fn runtime_build_class<X>(
+    runtime: &mut Runtime<X>,
+    name: u32,
+    parent: *const Value,
+    elements: *const ClassElement,
+    num_elements: u16,
+    cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "runtime_build_class");
+    let name = Symbol::from(name);
+    // SAFETY: XXX
+    let parent = unsafe { parent.as_ref() };
+    // SAFETY: XXX
+    let elements = unsafe { std::slice::from_raw_parts(elements, num_elements as usize) };
+    runtime.build_class(name, parent, elements, cc, retv)
+}
+
+pub(crate) extern "C" fn runtime_construct<X>(
+    runtime: &mut Runtime<X>,
+    constructor: HandleMut<Object>,
+    new_target: HandleMut<Object>,
+    cc: &mut CallContext,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "runtime_construct");
+    runtime.construct(constructor, new_target, cc, retv)
+}
+
+pub(crate) extern "C" fn runtime_initialize_instance_elements<X>(
+    runtime: &mut Runtime<X>,
+    cc: &mut CallContext,
+    this: HandleMut<Object>,
+    constructor: HandleMut<Object>,
+    retv: &mut Value,
+) -> Status {
+    logger::debug!(event = "runtime_initialize_instance_elements");
+    runtime.initialize_instance_elements(cc, this, constructor, retv)
+}
+
 pub(crate) extern "C" fn runtime_panic<X>(
     _runtime: &mut Runtime<X>,
     msg: *const std::os::raw::c_char,
@@ -804,9 +1037,26 @@ pub(crate) extern "C" fn runtime_print_string<X>(
         std::ffi::CStr::from_ptr(msg)
     };
     if msg.is_empty() {
-        logger::debug!("runtime_print_f64: {value:?}");
+        logger::debug!("runtime_print_string: {value:?}");
     } else {
-        logger::debug!("runtime_print_f64: {value:?}: {msg:?}");
+        logger::debug!("runtime_print_string: {value:?}: {msg:?}");
+    }
+}
+
+pub(crate) extern "C" fn runtime_print_object<X>(
+    _runtime: &mut Runtime<X>,
+    value: HandleMut<Object>,
+    msg: *const std::os::raw::c_char,
+) {
+    // SAFETY: `msg` is always non-null.
+    let msg = unsafe {
+        debug_assert!(!msg.is_null());
+        std::ffi::CStr::from_ptr(msg)
+    };
+    if msg.is_empty() {
+        logger::debug!("runtime_print_object: {value:?}");
+    } else {
+        logger::debug!("runtime_print_object: {value:?}: {msg:?}");
     }
 }
 
@@ -857,7 +1107,9 @@ pub(crate) extern "C" fn runtime_print_message<X>(
     logger::debug!("runtime_print_value: {msg:?}");
 }
 
-pub(crate) extern "C" fn runtime_launch_debugger<X>(_runtime: &mut Runtime<X>) {
+pub(crate) extern "C" fn runtime_launch_debugger<X>(runtime: &mut Runtime<X>) {
     logger::debug!("runtime_launch_debugger");
-    // TODO(feat): Support debuggers such as Chrome DevTools.
+    if let Some(monitor) = runtime.monitor.as_mut() {
+        monitor.on_launch_debugger();
+    }
 }

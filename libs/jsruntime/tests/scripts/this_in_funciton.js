@@ -3,6 +3,10 @@ function a() {
 }
 
 print(a() === globalThis); ///=true
+print(a.call(null) === globalThis); ///=true
+
+const o = {};
+print(a.call(o) === o); ///=true
 
 // TODO(feat): strict mode
 // function b() {

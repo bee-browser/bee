@@ -30,6 +30,12 @@ impl From<LambdaId> for u32 {
     }
 }
 
+impl std::fmt::Display for LambdaId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "fn{}", self.0)
+    }
+}
+
 #[derive(Default)]
 pub struct LambdaRegistry {
     entries: Vec<LambdaInfo>,

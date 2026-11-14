@@ -1,4 +1,8 @@
-use std::io::Read;
+mod dwarf;
+mod elf;
+mod gdb_jit;
+
+use std::io::Read as _;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -6,6 +10,7 @@ use anyhow::Result;
 use clap::Parser as _;
 use itertools::Itertools;
 
+use jsruntime::LambdaId;
 use jsruntime::Runtime;
 use jsruntime::Value;
 
@@ -124,6 +129,7 @@ fn main() -> Result<()> {
         runtime.enable_runtime_assert();
     }
     runtime.register_host_function("print", print);
+    runtime.register_host_function("printPrototypeChain", print_prototype_chain);
 
     // This is not a good practice, but we define a macro instead of a function in order to avoid
     // code clones.  By using the macro, we can avoid additional `use` directives needed for the
@@ -192,6 +198,8 @@ fn main() -> Result<()> {
             }
         }
         Command::Run(ref args) => {
+            let debugger = Box::new(Debugger);
+            runtime.set_monitor(debugger);
             for path in args.preload_scripts.iter() {
                 println!("## {} (preload script)", path.display());
                 let source = std::fs::read_to_string(path)?;
@@ -226,24 +234,66 @@ fn print(_runtime: &mut Runtime<Context>, args: &[Value]) {
     println!("{}", args.iter().format(" "));
 }
 
+fn print_prototype_chain(_runtime: &mut Runtime<Context>, args: &[Value]) {
+    debug_assert_eq!(args.len(), 2);
+    let label = match args[0] {
+        Value::String(s) => s,
+        _ => panic!(),
+    };
+    let object = match args[1] {
+        Value::Object(o) => o,
+        _ => panic!(),
+    };
+    print!("{label}: {object}");
+    let mut prototype = object.prototype();
+    while let Some(object) = prototype {
+        print!(" -> {object}");
+        prototype = object.prototype();
+    }
+    println!();
+}
+
 struct IrPrinter;
 
 impl jsruntime::Monitor for IrPrinter {
-    fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
+    fn on_launch_debugger(&mut self) {}
+
+    fn on_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display) {
         println!("### {id:?}");
         println!("{ir}");
     }
+
+    fn on_jit_compiled(&mut self, _id: LambdaId, _addr: usize, _size: usize) {}
 }
 
 struct CfgPrinter;
 
 impl jsruntime::Monitor for CfgPrinter {
-    fn print_function_ir(&mut self, id: jsruntime::LambdaId, ir: &dyn std::fmt::Display) {
+    fn on_launch_debugger(&mut self) {}
+
+    fn on_function_ir(&mut self, id: LambdaId, ir: &dyn std::fmt::Display) {
         println!("### {id:?}");
         let clir = format!("{ir}");
         for func in cranelift_reader::parse_functions(&clir).unwrap() {
             print!("{}", cranelift_codegen::cfg_printer::CFGPrinter::new(&func));
         }
+    }
+
+    fn on_jit_compiled(&mut self, _id: LambdaId, _addr: usize, _size: usize) {}
+}
+
+struct Debugger;
+
+impl jsruntime::Monitor for Debugger {
+    fn on_launch_debugger(&mut self) {
+        base::debug::breakpoint!();
+    }
+
+    fn on_function_ir(&mut self, _id: LambdaId, _ir: &dyn std::fmt::Display) {}
+
+    fn on_jit_compiled(&mut self, id: LambdaId, addr: usize, size: usize) {
+        // Register the JIT-compiled artifact with the GDB JIT interface.
+        gdb_jit::register_function(id, addr, size);
     }
 }
 

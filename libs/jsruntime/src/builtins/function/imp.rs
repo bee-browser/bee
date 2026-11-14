@@ -29,10 +29,7 @@ macro_rules! catch {
 }
 
 //#sec-function-p1-p2-pn-body constructor
-pub fn constructor<X>(
-    _runtime: &mut Runtime<X>,
-    _context: &mut CallContext,
-) -> Result<Value, Error> {
+pub fn constructor<X>(_runtime: &mut Runtime<X>, _cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "function");
     runtime_todo!("TODO: Function constructor")
 }
@@ -40,22 +37,22 @@ pub fn constructor<X>(
 //#sec-function.prototype.apply prototype.function { "no_adapter": true }
 pub fn function_prototype_apply<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "function_prototype_apply");
-    let func = catch!(runtime.this_func(context.this()); runtime, retv);
-    let this = context.arg(0);
-    match context.arg(1) {
+    let func = catch!(runtime.this_func(cc.this()); runtime, retv);
+    let this = cc.arg(0);
+    match cc.arg(1) {
         Value::None => unreachable!(),
         Value::Undefined | Value::Null => {
             // TODO: PrepareForTailCall()
-            runtime.call(context, func, this, &[], retv)
+            runtime.call(cc, func, this, &[], retv)
         }
         args => {
             let args = catch!(runtime.create_vec_from_array_like(args); runtime, retv);
             // TODO: PrepareForTailCall()
-            runtime.call(context, func, this, &args, retv)
+            runtime.call(cc, func, this, &args, retv)
         }
     }
 }
@@ -63,13 +60,13 @@ pub fn function_prototype_apply<X>(
 //#sec-function.prototype.bind prototype.function
 pub fn function_prototype_bind<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "function_prototype_bind");
-    let target = runtime.this_func(context.this())?;
-    let this = context.arg(0);
-    let args = if context.args().len() > 1 {
-        &context.args()[1..]
+    let target = runtime.this_func(cc.this())?;
+    let this = cc.arg(0);
+    let args = if cc.args().len() > 1 {
+        &cc.args()[1..]
     } else {
         &[]
     };
@@ -99,25 +96,25 @@ pub fn function_prototype_bind<X>(
 //#sec-function.prototype.call prototype.function { "no_adapter": true }
 pub fn function_prototype_call<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status {
     logger::debug!(event = "function_prototype_call");
-    let func = catch!(runtime.this_func(context.this()); runtime, retv);
-    let this = context.arg(0);
-    let args = if context.args().len() > 1 {
-        &context.args()[1..]
+    let func = catch!(runtime.this_func(cc.this()); runtime, retv);
+    let this = cc.arg(0);
+    let args = if cc.args().len() > 1 {
+        &cc.args()[1..]
     } else {
         &[]
     };
     // TODO: PrepareForTailCall()
-    runtime.call(context, func, this, args, retv)
+    runtime.call(cc, func, this, args, retv)
 }
 
 //#sec-function.prototype.tostring prototype.function
 pub fn function_prototype_to_string<X>(
     _runtime: &mut Runtime<X>,
-    _context: &mut CallContext,
+    _cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "function_prototype_to_string");
     runtime_todo!("TODO: Function.prototype.toString()")
@@ -141,14 +138,17 @@ impl<X> Runtime<X> {
     ) -> Result<HandleMut<Object>, Error> {
         extern "C" fn bound_function<X>(
             runtime: &mut Runtime<X>,
-            context: &mut CallContext,
+            cc: &mut CallContext,
             retv: &mut Value,
         ) -> Status {
-            let closure = context.closure();
+            let closure = cc.closure();
             let (func, this, mut args) = closure.get_bound_function_params();
-            args.extend_from_slice(context.args());
-            // TODO(feat): [[Construct]], newTarget
-            runtime.call(context, func, this, &args, retv)
+            args.extend_from_slice(cc.args());
+            if let Value::Object(new_target) = cc.new_target() {
+                runtime.construct(func, *new_target, cc, retv)
+            } else {
+                runtime.call(cc, func, this, &args, retv)
+            }
         }
 
         let prototype = func.prototype();
@@ -160,8 +160,7 @@ impl<X> Runtime<X> {
         let num_captures = 2 + args.len() as u16;
         let mut closure = self.create_closure(bound_function::<X>, LambdaId::HOST, num_captures);
 
-        let mut func = Value::Object(func);
-        let mut capture = self.create_capture(&mut func as *mut Value);
+        let mut capture = self.create_capture(&mut Value::Object(func) as *mut Value);
         capture.escape();
         closure.put_capture(0, capture);
 
@@ -178,6 +177,13 @@ impl<X> Runtime<X> {
         }
 
         obj.set_closure(closure);
+
+        if func.is_constructor() {
+            obj.set_constructor();
+        }
+        if func.is_class_constructor() {
+            obj.set_class_constructor();
+        }
 
         Ok(obj)
     }
