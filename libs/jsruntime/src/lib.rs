@@ -593,7 +593,7 @@ impl<X> Runtime<X> {
                 ClassElementKind::Constructor => {
                     let result = prototype.define_own_property(
                         Symbol::CONSTRUCTOR.into(),
-                        Property::data_xxx(Value::Object(constructor)),
+                        Property::data_wxc(Value::Object(constructor)),
                     );
                     debug_assert!(matches!(result, Ok(true)));
                 }
@@ -602,7 +602,7 @@ impl<X> Runtime<X> {
                     debug_assert!(method.is_callable());
                     let result = constructor.define_own_property(
                         element.key.into(),
-                        Property::data_xxx(Value::Object(method)),
+                        Property::data_wxc(Value::Object(method)),
                     );
                     debug_assert!(matches!(result, Ok(true)));
                 }
@@ -611,7 +611,7 @@ impl<X> Runtime<X> {
                     debug_assert!(method.is_callable());
                     let result = prototype.define_own_property(
                         element.key.into(),
-                        Property::data_xxx(Value::Object(method)),
+                        Property::data_wxc(Value::Object(method)),
                     );
                     debug_assert!(matches!(result, Ok(true)));
                 }
@@ -634,7 +634,7 @@ impl<X> Runtime<X> {
                         Value::Undefined
                     };
                     let result = constructor
-                        .define_own_property(element.key.into(), Property::data_xxx(value));
+                        .define_own_property(element.key.into(), Property::data_wec(value));
                     debug_assert!(matches!(result, Ok(true)));
                 }
                 ClassElementKind::StaticBlock => {
