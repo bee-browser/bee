@@ -3,7 +3,6 @@ use std::fmt::Display;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use bitflags::bitflags;
 use rustc_hash::FxHashMap;
 
 use jsgc::Handle;
@@ -18,7 +17,7 @@ use crate::types::Promise;
 use crate::types::String;
 use crate::types::Value;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum PropertyKey {
     Symbol(Symbol),
     Number(f64),
@@ -81,6 +80,15 @@ impl PartialEq for PropertyKey {
     }
 }
 
+impl std::fmt::Debug for PropertyKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Symbol(symbol) => write!(f, "Symbol({symbol})"),
+            Self::Number(number) => write!(f, "Number({number})"),
+        }
+    }
+}
+
 // 6.1.7.1 Property Attributes
 
 // TODO(feat): accessor property
@@ -108,6 +116,12 @@ impl Property {
     /// `[[Configurable]]=false`.
     pub const fn data_xxx(value: Value) -> Self {
         Self::data(value, PropertyFlags::XXX)
+    }
+
+    /// Creates a data property with `[[Writable]]=true`, `[[Enumerable]]=false` and
+    /// `[[Configurable]]=false`.
+    pub const fn data_wxx(value: Value) -> Self {
+        Self::data(value, PropertyFlags::WXX)
     }
 
     /// Creates a data property with `[[Writable]]=false`, `[[Enumerable]]=false` and
@@ -154,28 +168,31 @@ impl Property {
     }
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Clone, Copy)]
     pub struct PropertyFlags: u8 {
         /// The data property (true) or the accessor property (false).
-        const DATA         = 1 << 0;
+        DATA,
 
         /// The `[[Writable]]` attribute.
         ///
         /// Available only for the data property.
-        const WRITABLE     = 1 << 1;
+        WRITABLE,
 
         /// The `[[Enumerable]]` attribute.
-        const ENUMERABLE   = 1 << 2;
+        ENUMERABLE,
 
         /// The `[[Configurable]]` attribute.
-        const CONFIGURABLE = 1 << 3;
+        CONFIGURABLE,
     }
 }
 
 impl PropertyFlags {
     /// `[[Writable]]: false`, `[[Enumerable]]: false`, `[[Configurable]]: false`
     const XXX: Self = Self::empty();
+
+    /// `[[Writable]]: true`, `[[Enumerable]]: false`, `[[Configurable]]: true`
+    const WXX: Self = Self::WRITABLE;
 
     /// `[[Writable]]: false`, `[[Enumerable]]: false`, `[[Configurable]]: true`
     const XXC: Self = Self::CONFIGURABLE;
@@ -244,6 +261,7 @@ impl Object {
     pub(crate) const KERNEL_TRACING_OFFSET: usize =
         std::mem::offset_of!(Self, kernel) + Kernel::TRACING_OFFSET;
     pub(crate) const FLAGS_OFFSET: usize = std::mem::offset_of!(Self, flags);
+    pub(crate) const PROTOTYPE_OFFSET: usize = std::mem::offset_of!(Self, prototype);
 
     pub fn new() -> Self {
         Self {
@@ -261,6 +279,10 @@ impl Object {
 
     pub fn set_prototype(&mut self, prototype: HandleMut<Object>) {
         self.prototype = Some(prototype);
+    }
+
+    pub fn set_no_prototype(&mut self) {
+        self.prototype = None;
     }
 
     // TODO(perf): Which one is better?  `Option::None` or `&Value::None`.
@@ -318,12 +340,43 @@ impl Object {
 
     pub(crate) fn closure(&self) -> HandleMut<Closure> {
         debug_assert!(self.is_callable());
-        HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Closure")
+        HandleMut::from_addr(self.kernel.data as usize)
+            .expect("must be a non-null pointer to a Closure")
+    }
+
+    pub(crate) fn set_boolean(&mut self, value: bool) {
+        self.kernel.data = value as u64;
+        self.kernel.tracing = false;
+        self.flags.insert(ObjectFlags::BOOLEAN);
+    }
+
+    pub(crate) fn boolean(&self) -> bool {
+        debug_assert!(self.flags.contains(ObjectFlags::BOOLEAN));
+        self.kernel.data != 0
+    }
+
+    pub(crate) fn is_boolean(&self) -> bool {
+        self.flags.contains(ObjectFlags::BOOLEAN)
+    }
+
+    pub(crate) fn set_number(&mut self, value: f64) {
+        self.kernel.data = value.to_bits();
+        self.kernel.tracing = false;
+        self.flags.insert(ObjectFlags::NUMBER);
+    }
+
+    pub(crate) fn number(&self) -> f64 {
+        debug_assert!(self.flags.contains(ObjectFlags::NUMBER));
+        f64::from_bits(self.kernel.data)
+    }
+
+    pub(crate) fn is_number(&self) -> bool {
+        self.flags.contains(ObjectFlags::NUMBER)
     }
 
     pub(crate) fn string(&self) -> Handle<String> {
         // SAFETY: `self.userdata` is non-null and convertible to a reference.
-        Handle::from_addr(self.kernel.data).unwrap()
+        Handle::from_addr(self.kernel.data as usize).unwrap()
     }
 
     pub(crate) fn set_string(&mut self, string: Handle<String>) {
@@ -332,7 +385,8 @@ impl Object {
 
     pub(crate) fn promise(&self) -> HandleMut<Promise> {
         // TODO: check prototype
-        HandleMut::from_addr(self.kernel.data).expect("must be a non-null pointer to a Promise")
+        HandleMut::from_addr(self.kernel.data as usize)
+            .expect("must be a non-null pointer to a Promise")
     }
 
     pub(crate) fn set_promise(&mut self, promise: HandleMut<Promise>) {
@@ -340,12 +394,12 @@ impl Object {
     }
 
     fn set_handle<T>(&mut self, handle: Handle<T>) {
-        self.kernel.data = handle.as_addr();
+        self.kernel.data = handle.as_addr() as u64;
         self.kernel.tracing = true;
     }
 
     fn set_handle_mut<T>(&mut self, handle: HandleMut<T>) {
-        self.kernel.data = handle.as_addr();
+        self.kernel.data = handle.as_addr() as u64;
         self.kernel.tracing = true;
     }
 
@@ -359,8 +413,20 @@ impl Object {
         matches!(self.prototype, Some(p) if p == prototype)
     }
 
+    pub(crate) fn is_constructor(&self) -> bool {
+        self.flags.contains(ObjectFlags::CONSTRUCTOR)
+    }
+
     pub(crate) fn set_constructor(&mut self) {
         self.flags.insert(ObjectFlags::CONSTRUCTOR)
+    }
+
+    pub(crate) fn is_class_constructor(&self) -> bool {
+        self.flags.contains(ObjectFlags::CLASS_CONSTRUCTOR)
+    }
+
+    pub(crate) fn set_class_constructor(&mut self) {
+        self.flags.insert(ObjectFlags::CLASS_CONSTRUCTOR)
     }
 
     pub fn is_callable(&self) -> bool {
@@ -382,7 +448,6 @@ impl Object {
     pub(crate) fn slots(&self) -> &[Value] {
         &self.slots
     }
-
     pub(crate) fn slots_mut(&mut self) -> &mut Vec<Value> {
         &mut self.slots
     }
@@ -390,13 +455,13 @@ impl Object {
 
 impl Debug for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", self as *const Object)
+        write!(f, "{self:p}")
     }
 }
 
 impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", self as *const Object)
+        write!(f, "{self:p}")
     }
 }
 
@@ -415,7 +480,7 @@ impl Trace for Object {
 
 #[derive(Default)]
 struct Kernel {
-    data: usize,
+    data: u64,
     tracing: bool,
 }
 
@@ -428,16 +493,19 @@ impl Trace for Kernel {
     #[inline]
     fn trace(&self, visits: &mut VisitList) {
         if self.tracing {
-            visits.push(self.data);
+            visits.push(self.data as usize);
         }
     }
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Clone, Copy)]
     pub struct ObjectFlags: u8 {
-        const CONSTRUCTOR = 1 << 0;
-        const CALLABLE    = 1 << 1;
-        const ERROR       = 1 << 2;
+        CONSTRUCTOR,
+        CLASS_CONSTRUCTOR,
+        CALLABLE,
+        BOOLEAN,
+        NUMBER,
+        ERROR,
     }
 }

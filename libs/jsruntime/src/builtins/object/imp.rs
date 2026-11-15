@@ -16,24 +16,30 @@ use crate::types::Value;
 use super::logger;
 
 //#sec-object-value constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
-    logger::debug!(event = "object");
-    let this = context.this();
-    let args = context.args();
-    let new = context.is_new();
-    runtime.create_object_object(Some(this), args, new)
+pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
+    logger::debug!(event = "object_constructor");
+
+    match cc.new_target() {
+        Value::Object(new_target) if *new_target != cc.func().unwrap() => Ok(Value::Object(
+            runtime
+                .ordinary_create_from_constructor(*new_target, runtime.builtins.object_prototype)?,
+        )),
+        _ => match cc.args().first() {
+            None | Some(Value::Undefined) | Some(Value::Null) => Ok(Value::Object(
+                runtime.ordinary_object_create(runtime.builtins.object_prototype),
+            )),
+            Some(value) => Ok(Value::Object(runtime.value_to_object(value)?)),
+        },
+    }
 }
 
 //#sec-object.assign constructor.function
-pub fn object_assign<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-) -> Result<Value, Error> {
+pub fn object_assign<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "object_assign");
-    let target = context.arg(0);
+    let target = cc.arg(0);
     let mut to = runtime.value_to_object(target)?;
     // TODO(feat): `sources` is a rest parameter.
-    for arg in context.args().iter().skip(1) {
+    for arg in cc.args().iter().skip(1) {
         match arg {
             Value::None => unreachable!(),
             Value::Null | Value::Undefined => continue,
@@ -51,12 +57,9 @@ pub fn object_assign<X>(
 }
 
 //#sec-object.create constructor.function
-pub fn object_create<X>(
-    runtime: &mut Runtime<X>,
-    context: &mut CallContext,
-) -> Result<Value, Error> {
+pub fn object_create<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "object_create");
-    let proto = context.arg(0);
+    let proto = cc.arg(0);
     match proto {
         Value::None => unreachable!(),
         Value::Null | Value::Object(_) => (),
@@ -66,7 +69,7 @@ pub fn object_create<X>(
     if let Value::Object(proto) = proto {
         obj.set_prototype(*proto);
     }
-    let properties = context.arg(1);
+    let properties = cc.arg(1);
     match properties {
         Value::None => unreachable!(),
         Value::Undefined => Ok(Value::Object(obj)),
@@ -79,32 +82,32 @@ pub fn object_create<X>(
 //#sec-object.defineproperties constructor.function
 pub fn object_define_properties<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_define_properties");
-    let obj = match context.arg(0) {
+    let obj = match cc.arg(0) {
         Value::None => unreachable!(),
         Value::Object(object) => *object,
         _ => return type_error!("Object.defineProperties called on non-object"),
     };
     Ok(Value::Object(
-        runtime.object_define_properties(obj, context.arg(1))?,
+        runtime.object_define_properties(obj, cc.arg(1))?,
     ))
 }
 
 //#sec-object.defineproperty constructor.function
 pub fn object_define_property<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_define_property");
-    let mut obj = match context.arg(0) {
+    let mut obj = match cc.arg(0) {
         Value::None => unreachable!(),
         Value::Object(object) => *object,
         _ => return type_error!("Object.defineProperty called on non-object"),
     };
-    let key = runtime.value_to_property_key(context.arg(1))?;
-    let prop = runtime.value_to_property(context.arg(2))?;
+    let key = runtime.value_to_property_key(cc.arg(1))?;
+    let prop = runtime.value_to_property(cc.arg(2))?;
     obj.define_own_property(key, prop)?;
     Ok(Value::Object(obj))
 }
@@ -112,11 +115,11 @@ pub fn object_define_property<X>(
 //#sec-object.prototype.hasownproperty prototype.function
 pub fn object_prototype_has_own_property<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_has_own_property");
-    let key = runtime.value_to_property_key(context.arg(0))?;
-    let obj = runtime.value_to_object(context.this())?;
+    let key = runtime.value_to_property_key(cc.arg(0))?;
+    let obj = runtime.value_to_object(cc.this())?;
     match obj.get_own_property(&key) {
         Some(_) => Ok(Value::TRUE),
         None => Ok(Value::FALSE),
@@ -126,14 +129,14 @@ pub fn object_prototype_has_own_property<X>(
 //#sec-object.prototype.isprototypeof prototype.function
 pub fn object_prototype_is_prototype_of<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_is_prototype_of");
-    let mut value = match context.arg(0) {
+    let mut value = match cc.arg(0) {
         Value::Object(v) => *v,
         _ => return Ok(Value::FALSE),
     };
-    let obj = runtime.value_to_object(context.this())?;
+    let obj = runtime.value_to_object(cc.this())?;
     loop {
         value = match value.prototype() {
             Some(v) => v,
@@ -148,11 +151,11 @@ pub fn object_prototype_is_prototype_of<X>(
 //#sec-object.prototype.propertyisenumerable prototype.function
 pub fn object_prototype_property_is_enumerable<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_property_is_enumerable");
-    let key = runtime.value_to_property_key(context.arg(0))?;
-    let obj = runtime.value_to_object(context.this())?;
+    let key = runtime.value_to_property_key(cc.arg(0))?;
+    let obj = runtime.value_to_object(cc.this())?;
     match obj.get_own_property(&key) {
         Some(prop) => Ok(Value::Boolean(prop.is_enumerable())),
         None => Ok(Value::FALSE),
@@ -162,10 +165,10 @@ pub fn object_prototype_property_is_enumerable<X>(
 //#sec-object.prototype.tostring prototype.function
 pub fn object_prototype_to_string<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_to_string");
-    match context.this() {
+    match cc.this() {
         Value::None => unreachable!(),
         Value::Undefined => Ok(Value::String(const_string_handle!("[object Undefined]"))),
         Value::Null => Ok(Value::String(const_string_handle!("[object Null]"))),
@@ -193,10 +196,10 @@ pub fn object_prototype_to_string<X>(
 //#sec-object.prototype.valueof prototype.function
 pub fn object_prototype_value_of<X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
 ) -> Result<Value, Error> {
     logger::debug!(event = "object_prototype_value_of");
-    Ok(Value::Object(runtime.value_to_object(context.this())?))
+    Ok(Value::Object(runtime.value_to_object(cc.this())?))
 }
 
 // helpers
@@ -240,13 +243,13 @@ impl<X> Runtime<X> {
         let mut value = Value::None;
 
         if let Some(v) = obj.get_value(&Symbol::ENUMERABLE.into()) {
-            if self.value_to_boolean(v) {
+            if v.to_boolean() {
                 flags |= PropertyFlags::ENUMERABLE;
             }
         }
 
         if let Some(v) = obj.get_value(&Symbol::CONFIGURABLE.into()) {
-            if self.value_to_boolean(v) {
+            if v.to_boolean() {
                 flags |= PropertyFlags::CONFIGURABLE;
             }
         }
@@ -256,7 +259,7 @@ impl<X> Runtime<X> {
         }
 
         if let Some(v) = obj.get_value(&Symbol::WRITABLE.into()) {
-            if self.value_to_boolean(v) {
+            if v.to_boolean() {
                 flags |= PropertyFlags::WRITABLE;
             }
         }
@@ -295,35 +298,5 @@ impl<X> Runtime<X> {
         }
 
         Ok(Property::data(value, flags))
-    }
-
-    pub(crate) fn create_object_object(
-        &mut self,
-        this: Option<&Value>,
-        args: &[Value],
-        new: bool,
-    ) -> Result<Value, Error> {
-        // TODO(feat): NewTarget
-        if new {
-            let object = if let Some(&Value::Object(this)) = this {
-                this
-            } else {
-                // 10.4.3.4 StringCreate ( value, prototype )
-                let mut object = self.create_object();
-                object.set_prototype(self.builtins.string_prototype);
-                object
-            };
-            Ok(Value::Object(object))
-        } else {
-            match args.first() {
-                None | Some(Value::Undefined) | Some(Value::Null) => {
-                    let mut object = self.create_object();
-                    object.set_prototype(self.builtins.object_prototype);
-                    // TODO(feat): NewTarget
-                    Ok(Value::Object(object))
-                }
-                Some(value) => Ok(Value::Object(self.value_to_object(value)?)),
-            }
-        }
     }
 }

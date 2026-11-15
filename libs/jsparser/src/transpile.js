@@ -162,6 +162,7 @@ class Transpiler {
           // conflicts in the LALR(1) parsing table generation when you actually try this.
           //rewriteCPEAAPL,
           addActions,
+          modifySuper,
           modifyElision,
           modifyArrayLiteral,
           modifyObjectLiteral,
@@ -169,13 +170,18 @@ class Transpiler {
           modifyMemberExpression,
           modifyOptionalChain,
           modifyFunctionDeclaration,
-          modifyAsyncFunctionDeclaration,
+          modifyClassDeclaration,
+          modifyClassExpression,
+          modifyClassElement,
+          modifyClassStaticBlock,
           modifyMethodDefinition,
           modifyIfStatement,
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
           modifyFunctionExpression,
+          modifyAsyncFunctionDeclaration,
           modifyAsyncFunctionExpression,
+          modifyAsyncMethod,
           modifyArrowFunction,
           modifyAsyncArrowFunction,
           modifyDoWhileStatement,
@@ -190,6 +196,7 @@ class Transpiler {
           rewriteWithClause,
           rewriteWithEntries,
           expandOptionals,
+          modifyFieldDefinition,
           modifyForStatement,
           modifyForInOfStatement,
           expandParameterizedRules,
@@ -606,6 +613,7 @@ function addActions(rules) {
   log.debug('Adding production rules for semantic actions...');
 
   const ACTIONS = [
+    '_SUPER_',
     '_TO_STRING_',
     '_NEW_ARRAY_',
     '_NEW_OBJECT_',
@@ -613,6 +621,11 @@ function addActions(rules) {
     '_FUNCTION_CONTEXT_',
     '_ASYNC_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
+    '_CLASS_CONTEXT_',
+    '_CLASS_ELEMENT_CONTEXT_',
+    '_STATIC_BLOCK_CONTEXT_',
+    '_FIELD_INITIALIZER_START_',
+    '_FIELD_INITIALIZER_END_',
     '_ELSE_',
     '_THEN_',
     '_ELSE_EXPR_',
@@ -648,6 +661,27 @@ function addActions(rules) {
     });
   }
 
+  return rules;
+}
+
+function modifySuper(rules) {
+  const TARGETS = [
+    {
+      term: '`super`',
+      action: '_SUPER_',
+      insertBefore: false,
+    },
+  ];
+  for (const rule of rules) {
+    if (!rule.values.some((value) => value.includes('`super`'))) {
+      continue;
+    }
+    if (rule.name === 'KeywordOrIdentifierName') {
+      continue;
+    }
+    log.debug(`Inserting _SUPER_ into ${rule.name}...`);
+    modifyTargetsInRule(rule, TARGETS);
+  }
   return rules;
 }
 
@@ -849,23 +883,59 @@ function modifyFunctionDeclaration(rules) {
   return rules;
 }
 
-function modifyAsyncFunctionDeclaration(rules) {
+function modifyClassDeclaration(rules) {
   const TARGETS = [
     {
-      term: '`(`',
-      action: '_ASYNC_FUNCTION_CONTEXT_',
-      insertBefore: true,
-    },
-    {
-      term: '`{`',
-      action: '_FUNCTION_SIGNATURE_',
+      term: 'ClassTail[?Yield, ?Await]',
+      action: '_CLASS_CONTEXT_',
       insertBefore: true,
     },
   ];
-  log.debug('Modifying AsyncFunctionDeclaration...');
-  const rule = rules.find((rule) =>
-    rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]'
-  );
+  log.debug('Modifying ClassDeclaration...');
+  const rule = rules.find((rule) => rule.name === 'ClassDeclaration[Yield, Await, Default]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyClassExpression(rules) {
+  const TARGETS = [
+    {
+      term: 'ClassTail[?Yield, ?Await]',
+      action: '_CLASS_CONTEXT_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying ClassExpression...');
+  const rule = rules.find((rule) => rule.name === 'ClassExpression[Yield, Await]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyClassElement(rules) {
+  log.debug('Modifying ClassElement...');
+  const rule = rules.find((rule) => rule.name === 'ClassElement[Yield, Await]');
+  assert(rule !== undefined);
+  rule.values = rule.values.map((value) => {
+    if (value === '`;`') {
+      return value;
+    }
+    return `_CLASS_ELEMENT_CONTEXT_ ${value}`;
+  });
+  return rules;
+}
+
+function modifyClassStaticBlock(rules) {
+  const TARGETS = [
+    {
+      term: '`static`',
+      action: '_STATIC_BLOCK_CONTEXT_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying ClassStaticBlock...');
+  const rule = rules.find((rule) => rule.name === 'ClassStaticBlock');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;
@@ -1071,6 +1141,28 @@ function modifyFunctionExpression(rules) {
   return rules;
 }
 
+function modifyAsyncFunctionDeclaration(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_ASYNC_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying AsyncFunctionDeclaration...');
+  const rule = rules.find((rule) =>
+    rule.name === 'AsyncFunctionDeclaration[Yield, Await, Default]'
+  );
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
 function modifyAsyncFunctionExpression(rules) {
   const TARGETS = [
     {
@@ -1086,6 +1178,26 @@ function modifyAsyncFunctionExpression(rules) {
   ];
   log.debug('Modifying AsyncFunctionExpression...');
   const rule = rules.find((rule) => rule.name === 'AsyncFunctionExpression');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
+}
+
+function modifyAsyncMethod(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_ASYNC_FUNCTION_CONTEXT_',
+      insertBefore: true,
+    },
+    {
+      term: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+      insertBefore: true,
+    },
+  ];
+  log.debug('Modifying AsyncMethod...');
+  const rule = rules.find((rule) => rule.name === 'AsyncMethod[Yield, Await]');
   assert(rule !== undefined);
   modifyTargetsInRule(rule, TARGETS);
   return rules;
@@ -1363,6 +1475,26 @@ function expandOptionals(rules) {
     });
   }
   return expanded;
+}
+
+function modifyFieldDefinition(rules) {
+  const TARGETS = [
+    {
+      term: 'Initializer[+In, ?Yield, ?Await]',
+      action: '_FIELD_INITIALIZER_START_',
+      insertBefore: true,
+    },
+    {
+      term: 'Initializer[+In, ?Yield, ?Await]',
+      action: '_FIELD_INITIALIZER_END_',
+      insertBefore: false,
+    },
+  ];
+  log.debug('Modifying FieldDefinition...');
+  const rule = rules.find((rule) => rule.name === 'FieldDefinition[Yield, Await]');
+  assert(rule !== undefined);
+  modifyTargetsInRule(rule, TARGETS);
+  return rules;
 }
 
 function modifyForStatement(rules) {

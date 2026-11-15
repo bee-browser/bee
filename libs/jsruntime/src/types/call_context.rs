@@ -11,7 +11,7 @@ use crate::types::Value;
 #[derive(Debug)]
 #[repr(C)]
 pub struct CallContext {
-    /// A pointer to the call environment.
+    /// A pointer to the environment.
     ///
     /// The actual type of the value varies depending on the type of the lambda function:
     ///
@@ -21,6 +21,11 @@ pub struct CallContext {
     ///
     envp: *mut c_void,
 
+    /// The `new` target.
+    ///
+    /// `Value::Undefined` or `Value::Object`.
+    new_target: Value,
+
     /// The `this` argument.
     this: Value,
 
@@ -28,14 +33,13 @@ pub struct CallContext {
     #[allow(unused)]
     func: Option<HandleMut<Object>>,
 
-    /// A pointer to the call context of the caller.
-    #[allow(unused)]
+    /// A pointer to the caller CC.
     caller: *const CallContext,
 
     /// Flags.
     flags: CallContextFlags,
 
-    /// The depth of the call.
+    /// The depth of the CC stack.
     depth: u16,
 
     /// The number of the arguments.
@@ -53,6 +57,7 @@ impl CallContext {
     pub const SIZE: usize = std::mem::size_of::<Self>();
     pub const ALIGNMENT: usize = std::mem::align_of::<Self>();
     pub const ENVP_OFFSET: usize = std::mem::offset_of!(Self, envp);
+    pub const NEW_TARGET_OFFSET: usize = std::mem::offset_of!(Self, new_target);
     pub const THIS_OFFSET: usize = std::mem::offset_of!(Self, this);
     pub const FUNC_OFFSET: usize = std::mem::offset_of!(Self, func);
     pub const CALLER_OFFSET: usize = std::mem::offset_of!(Self, caller);
@@ -62,10 +67,11 @@ impl CallContext {
     pub const ARGC_MAX_OFFSET: usize = std::mem::offset_of!(Self, argc_max);
     pub const ARGV_OFFSET: usize = std::mem::offset_of!(Self, argv);
 
-    pub(crate) fn new_for_entry(args: &[Value]) -> Self {
+    pub(crate) fn new_for_entry(args: &[Value], this: Value) -> Self {
         Self {
             envp: std::ptr::null_mut(),
-            this: Value::Undefined,
+            new_target: Value::Undefined,
+            this,
             func: None,
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
@@ -76,10 +82,15 @@ impl CallContext {
         }
     }
 
-    pub(crate) fn new_for_promise(coroutine: HandleMut<Coroutine>, args: &[Value]) -> Self {
+    pub(crate) fn new_for_promise(
+        coroutine: HandleMut<Coroutine>,
+        this: Value,
+        args: &[Value],
+    ) -> Self {
         Self {
             envp: coroutine.as_ptr() as *mut std::ffi::c_void,
-            this: Value::Undefined,
+            new_target: Value::Undefined,
+            this,
             func: None,
             caller: std::ptr::null(),
             flags: CallContextFlags::empty(),
@@ -99,6 +110,7 @@ impl CallContext {
     ) -> Self {
         Self {
             envp: closure.as_ptr() as *mut std::ffi::c_void,
+            new_target: Value::Undefined,
             this: this.clone(),
             func: Some(func),
             caller: self,
@@ -110,22 +122,41 @@ impl CallContext {
         }
     }
 
-    pub(crate) fn is_new(&self) -> bool {
-        self.flags.contains(CallContextFlags::NEW)
+    pub(crate) fn new_target(&self) -> &Value {
+        debug_assert!(matches!(
+            self.new_target,
+            Value::Undefined | Value::Object(_)
+        ));
+        &self.new_target
+    }
+
+    pub(crate) fn set_new_target(&mut self, new_target: HandleMut<Object>) {
+        self.new_target = Value::Object(new_target);
     }
 
     pub(crate) fn this(&self) -> &Value {
-        debug_assert!(self.this.is_valid());
         &self.this
+    }
+
+    pub(crate) fn set_this(&mut self, this: Value) {
+        self.this = this;
     }
 
     pub(crate) fn func(&self) -> Option<HandleMut<Object>> {
         self.func
     }
 
+    pub(crate) fn set_func(&mut self, func: HandleMut<Object>) {
+        self.func = Some(func);
+    }
+
     pub(crate) fn closure(&self) -> HandleMut<Closure> {
         HandleMut::from_ptr(self.envp as *mut Closure)
             .expect("must be a non-null pointer to a Closure")
+    }
+
+    pub(crate) fn set_closure(&mut self, closure: HandleMut<Closure>) {
+        self.envp = closure.as_ptr() as *mut c_void
     }
 
     #[allow(unused)]
@@ -161,10 +192,9 @@ impl CallContext {
     }
 }
 
-bitflags::bitflags! {
+base::auto_bitflags! {
     #[derive(Clone, Copy, Debug)]
     #[repr(C)]
     pub struct CallContextFlags: u16  {
-        const NEW = 1 << 1;
     }
 }

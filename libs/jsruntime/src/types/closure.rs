@@ -1,3 +1,4 @@
+use jsgc::Handle;
 use jsgc::HandleMut;
 use jsgc::Trace;
 use jsgc::VisitList;
@@ -5,6 +6,8 @@ use jsgc::VisitList;
 use crate::lambda::LambdaId;
 use crate::types::Capture;
 use crate::types::LambdaAddr;
+
+use super::ClassInitializer;
 
 /// A data type to represent a closure.
 #[repr(C)]
@@ -19,6 +22,12 @@ pub struct Closure {
     // types such as Closure<X> even though the size of Lambda<X> is always equal to the size of
     // usize regardless of the actual type of X.
     pub lambda: LambdaAddr,
+
+    pub call_stub: LambdaAddr,
+    pub construct_stub: LambdaAddr,
+
+    // TODO: move to an appropriate type...
+    pub class_initializer: Option<Handle<ClassInitializer>>,
 
     /// The ID of `lambda`.
     pub lambda_id: LambdaId,
@@ -37,7 +46,7 @@ pub struct Closure {
 base::static_assert_eq!(align_of::<Closure>(), 8);
 
 impl Closure {
-    pub(crate) const LAMBDA_OFFSET: usize = std::mem::offset_of!(Self, lambda);
+    pub(crate) const CALL_STUB_OFFSET: usize = std::mem::offset_of!(Self, call_stub);
     pub(crate) const CAPTURES_OFFSET: usize = std::mem::offset_of!(Self, captures);
 
     pub(crate) fn put_capture(&mut self, index: usize, capture: HandleMut<Capture>) {
@@ -76,6 +85,9 @@ impl std::fmt::Debug for Closure {
 
 impl Trace for Closure {
     fn trace(&self, visits: &mut VisitList) {
+        if let Some(class_initializer) = self.class_initializer {
+            class_initializer.trace(visits);
+        }
         for capture in self.captures() {
             capture.trace(visits);
         }

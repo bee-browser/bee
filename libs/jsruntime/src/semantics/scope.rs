@@ -2,7 +2,6 @@
 //   10.2.11 FunctionDeclarationInstantiation ( func, argumentsList )
 //   16.1.7 GlobalDeclarationInstantiation ( script, env )
 
-use bitflags::bitflags;
 use itertools::Itertools;
 use jsparser::SymbolRegistry;
 
@@ -24,6 +23,10 @@ impl ScopeRef {
 
     pub const fn id(&self) -> u16 {
         self.0
+    }
+
+    pub const fn is_root(&self) -> bool {
+        self.0 == 1
     }
 
     fn checked_new(index: usize) -> Option<Self> {
@@ -162,14 +165,16 @@ impl ScopeTreeBuilder {
         self.push(ScopeKind::Block)
     }
 
+    pub fn push_class(&mut self) -> ScopeRef {
+        self.push(ScopeKind::Class)
+    }
+
     fn push(&mut self, kind: ScopeKind) -> ScopeRef {
         let index = self.scopes.len();
         self.scopes.push(Scope {
             variables: vec![],
-            function_declarations: vec![],
             outer: self.current,
             depth: self.depth,
-            max_child_block_depth: self.depth,
             kind,
         });
         // TODO: should return an error
@@ -180,17 +185,7 @@ impl ScopeTreeBuilder {
 
     pub fn pop(&mut self) {
         let scope = &mut self.scopes[self.current.index()];
-        scope
-            .variables
-            .sort_unstable_by_key(|variable| variable.symbol);
         self.current = scope.outer;
-        if !scope.is_function() {
-            let max_child_scope_depth = scope.max_child_block_depth;
-            let scope = &mut self.scopes[self.current.index()];
-            if scope.max_child_block_depth < max_child_scope_depth {
-                scope.max_child_block_depth = max_child_scope_depth;
-            }
-        }
         self.depth -= 1;
     }
 
@@ -242,9 +237,6 @@ impl ScopeTreeBuilder {
             kind: VariableKind::Capture,
             flags: VariableFlags::empty(),
         });
-        scope
-            .variables
-            .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
     }
 
     pub fn add_global(&mut self, scope_ref: ScopeRef, symbol: Symbol) {
@@ -256,14 +248,6 @@ impl ScopeTreeBuilder {
             kind: VariableKind::Global,
             flags: VariableFlags::empty(),
         });
-        scope
-            .variables
-            .sort_unstable_by_key(|variable| variable.symbol); // TODO(perf)
-    }
-
-    pub fn add_function_declaration(&mut self, scope_ref: ScopeRef, batch_index: usize) {
-        let scope = &mut self.scopes[scope_ref.index()];
-        scope.function_declarations.push(batch_index);
     }
 
     pub fn set_captured(&mut self, variable_ref: VariableRef) {
@@ -271,27 +255,22 @@ impl ScopeTreeBuilder {
         scope.variables[variable_ref.variable_index()].set_captured();
     }
 
-    #[allow(unused)]
-    pub fn max_scope_depth(&self, scope_ref: ScopeRef) -> u16 {
-        let scope = &self.scopes[scope_ref.index()];
-        debug_assert!(scope.max_child_block_depth >= scope.depth);
-        scope.max_child_block_depth - scope.depth + 1
-    }
-
     pub fn resolve_reference(&self, reference: &Reference) -> VariableRef {
         let symbol = reference.symbol;
         let mut scope_ref = reference.scope_ref;
         loop {
             let scope = &self.scopes[scope_ref.index()];
+            //TODO(perf): slow
             match scope
                 .variables
-                .binary_search_by_key(&symbol, |variable| variable.symbol)
+                .iter()
+                .position(|variable| variable.symbol == symbol)
             {
-                Ok(index) => {
+                Some(index) => {
                     // TODO: should return an error
                     return VariableRef::checked_new(scope_ref, index).unwrap();
                 }
-                Err(_) => {
+                None => {
                     if scope.is_function() {
                         // Reference to a free variable.
                         return VariableRef::NONE;
@@ -307,9 +286,13 @@ impl ScopeTreeBuilder {
     }
 
     pub fn build(&mut self) -> ScopeTree {
-        ScopeTree {
-            scopes: std::mem::take(&mut self.scopes),
+        let mut scopes = std::mem::take(&mut self.scopes);
+        for scope in scopes.iter_mut() {
+            scope
+                .variables
+                .sort_unstable_by_key(|variable| variable.symbol);
         }
+        ScopeTree { scopes }
     }
 }
 
@@ -339,20 +322,16 @@ impl Default for ScopeTreeBuilder {
 // Block scopes hold only lexically-scoped variables.
 pub struct Scope {
     pub variables: Vec<Variable>,
-    pub function_declarations: Vec<usize>,
     outer: ScopeRef,
     depth: u16,
-    max_child_block_depth: u16,
     kind: ScopeKind,
 }
 
 impl Scope {
     const NONE: Self = Self {
         variables: vec![],
-        function_declarations: vec![],
         outer: ScopeRef::NONE,
         depth: 0,
-        max_child_block_depth: 0,
         kind: ScopeKind::Block,
     };
 
@@ -397,14 +376,12 @@ impl std::fmt::Display for ScopeDisplay<'_> {
         write!(f, "{:indent$}", "", indent = self.scope.depth as usize)?;
         match self.scope.kind {
             ScopeKind::Block => write!(f, "B")?,
+            ScopeKind::Class => write!(f, "C")?,
             ScopeKind::Function => write!(f, "F")?,
         }
         write!(f, "@{}:", self.index)?;
         for variable in self.scope.variables.iter() {
             write!(f, " {}", variable.display(self.symbol_registry))?;
-        }
-        for index in self.scope.function_declarations.iter() {
-            write!(f, " FD@{index}")?;
         }
         Ok(())
     }
@@ -412,6 +389,7 @@ impl std::fmt::Display for ScopeDisplay<'_> {
 
 enum ScopeKind {
     Block,
+    Class,
     Function,
 }
 
@@ -519,11 +497,11 @@ pub enum VariableKind {
     Global,
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Debug)]
     struct VariableFlags: u8 {
-        const MUTABLE         = 1 << 0;
-        const CAPTURED        = 1 << 1;
-        const FUNCTION_SCOPED = 1 << 2;
+        MUTABLE,
+        CAPTURED,
+        FUNCTION_SCOPED,
     }
 }

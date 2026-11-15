@@ -1,9 +1,11 @@
 mod aggregate_error;
+mod boolean;
 mod error;
 mod eval_error;
 mod function;
 mod global;
 mod internal_error;
+mod number;
 mod object;
 mod promise;
 mod range_error;
@@ -48,6 +50,10 @@ pub(crate) struct Builtins {
     pub(crate) function_constructor: HandleMut<Object>,
     // %Function.prototype%
     pub(crate) function_prototype: HandleMut<Object>,
+    // %Boolean%
+    pub(crate) boolean_constructor: HandleMut<Object>,
+    // %Boolean.prototype%
+    pub(crate) boolean_prototype: HandleMut<Object>,
     // %String%
     pub(crate) string_constructor: HandleMut<Object>,
     // %String.prototype%
@@ -92,6 +98,10 @@ pub(crate) struct Builtins {
     pub(crate) uri_error_constructor: HandleMut<Object>,
     // %URIError.prototype%
     pub(crate) uri_error_prototype: HandleMut<Object>,
+    // %Number%
+    pub(crate) number_constructor: HandleMut<Object>,
+    // %Number.prototype%
+    pub(crate) number_prototype: HandleMut<Object>,
 }
 
 impl Builtins {
@@ -103,6 +113,8 @@ impl Builtins {
             object_prototype: heap.alloc_mut(Object::new()),
             function_constructor: heap.alloc_mut(Object::new()),
             function_prototype: heap.alloc_mut(Object::new()),
+            boolean_constructor: heap.alloc_mut(Object::new()),
+            boolean_prototype: heap.alloc_mut(Object::new()),
             string_constructor: heap.alloc_mut(Object::new()),
             string_prototype: heap.alloc_mut(Object::new()),
             promise_constructor: heap.alloc_mut(Object::new()),
@@ -125,6 +137,8 @@ impl Builtins {
             type_error_prototype: heap.alloc_mut(Object::new()),
             uri_error_constructor: heap.alloc_mut(Object::new()),
             uri_error_prototype: heap.alloc_mut(Object::new()),
+            number_constructor: heap.alloc_mut(Object::new()),
+            number_prototype: heap.alloc_mut(Object::new()),
         }
     }
 }
@@ -141,6 +155,8 @@ impl<X> Runtime<X> {
         self.init_object_prototype();
         self.init_function_constructor();
         self.init_function_prototype();
+        self.init_boolean_constructor();
+        self.init_boolean_prototype();
         self.init_string_constructor();
         self.init_string_prototype();
         self.init_promise_constructor();
@@ -163,6 +179,8 @@ impl<X> Runtime<X> {
         self.init_type_error_prototype();
         self.init_uri_error_constructor();
         self.init_uri_error_prototype();
+        self.init_number_constructor();
+        self.init_number_prototype();
     }
 
     fn create_builtin_function(&mut self, params: &BuiltinFunctionParams<X>) -> HandleMut<Object> {
@@ -192,6 +210,45 @@ impl<X> Runtime<X> {
         self.set_function_name(func, params.name);
     }
 
+    //#sec-ordinaryobjectcreate
+    fn ordinary_object_create(
+        &mut self,
+        proto: HandleMut<Object>,
+        // additionalInternalSlotList
+    ) -> HandleMut<Object> {
+        let mut object = self.create_object();
+        object.set_prototype(proto);
+        object
+    }
+
+    //#sec-ordinarycreatefromconstructor
+    fn ordinary_create_from_constructor(
+        &mut self,
+        constructor: HandleMut<Object>,
+        intrinsic_default_proto: HandleMut<Object>,
+        // internal_slot_list
+    ) -> Result<HandleMut<Object>, Error> {
+        let proto = self.get_prototype_from_constructor(constructor, intrinsic_default_proto)?;
+        Ok(self.ordinary_object_create(proto))
+    }
+
+    //#sec-getprototypefromconstructor
+    fn get_prototype_from_constructor(
+        &self,
+        constructor: HandleMut<Object>,
+        intrinsic_default_proto: HandleMut<Object>,
+    ) -> Result<HandleMut<Object>, Error> {
+        match constructor.get_value(&Symbol::PROTOTYPE.into()) {
+            Some(Value::Object(proto)) => Ok(*proto),
+            _ => {
+                // TODO(feat)
+                // a. Let realm be ? GetFunctionRealm(constructor).
+                // b. Set proto to realm's intrinsic object named intrinsicDefaultProto.
+                Ok(intrinsic_default_proto)
+            }
+        }
+    }
+
     // 10.2.9 SetFunctionName ( F, name [ , prefix ] )
     fn set_function_name(&mut self, mut func: HandleMut<Object>, name: Handle<String>) {
         let result =
@@ -208,10 +265,18 @@ impl<X> Runtime<X> {
         debug_assert!(matches!(result, Ok(true)));
     }
 
-    // 7.1.4 ToNumber ( argument )
+    // #sec-tonumeric
+    fn value_to_numeric(&mut self, value: &Value) -> Result<f64, Error> {
+        logger::debug!(event = "runtime.value_to_numeric", ?value);
+        // TODO(feat): ToPrimitive(value, NUMBER)
+        // TODO(feat): BigInt
+        self.value_to_number(value)
+    }
+
+    // #sec-tonumber
     // TODO: code clone, see backend::bridge::runtime_to_numeric
     fn value_to_number(&mut self, value: &Value) -> Result<f64, Error> {
-        logger::debug!(event = "runtime.value_to_numeric", ?value);
+        logger::debug!(event = "runtime.value_to_number", ?value);
         match value {
             Value::None => unreachable!("Value::None"),
             Value::Undefined => Ok(f64::NAN),

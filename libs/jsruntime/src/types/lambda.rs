@@ -4,7 +4,7 @@ use crate::types::Value;
 
 /// Lambda function.
 pub type Lambda<X> =
-    extern "C" fn(runtime: &mut Runtime<X>, context: &mut CallContext, retv: &mut Value) -> Status;
+    extern "C" fn(runtime: &mut Runtime<X>, cc: &mut CallContext, retv: &mut Value) -> Status;
 
 impl<X> From<LambdaAddr> for Lambda<X> {
     fn from(value: LambdaAddr) -> Self {
@@ -30,7 +30,7 @@ where
 
 extern "C" fn host_fn_wrapper<F, R, X>(
     runtime: &mut Runtime<X>,
-    context: &mut CallContext,
+    cc: &mut CallContext,
     retv: &mut Value,
 ) -> Status
 where
@@ -41,7 +41,7 @@ where
     // it isn't dropped (even if the callback panics).
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = unsafe { std::mem::MaybeUninit::<F>::uninit().assume_init() };
-    let args = context.args();
+    let args = cc.args();
     // TODO: The return value is copied twice.  That's inefficient.
     let result = host_fn(runtime, args);
     *retv = result.value();
@@ -63,6 +63,12 @@ base::static_assert_eq!(size_of::<Status>(), 4);
 #[derive(Clone, Copy, Eq, PartialEq)]
 #[repr(C)]
 pub struct LambdaAddr(usize);
+
+impl LambdaAddr {
+    pub fn value(&self) -> usize {
+        self.0
+    }
+}
 
 impl From<usize> for LambdaAddr {
     fn from(value: usize) -> Self {
