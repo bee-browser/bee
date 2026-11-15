@@ -57,9 +57,10 @@ pub fn register_function(id: LambdaId, addr: usize, size: usize) {
             symfile_size,
         }));
 
-        (*entry).next_entry = __jit_debug_descriptor.first_entry;
-        if !__jit_debug_descriptor.first_entry.is_null() {
-            (*__jit_debug_descriptor.first_entry).prev_entry = entry;
+        let old_first = __jit_debug_descriptor.first_entry;
+        (*entry).next_entry = old_first;
+        if !old_first.is_null() {
+            (*old_first).prev_entry = entry;
         }
         __jit_debug_descriptor.first_entry = entry;
         __jit_debug_descriptor.relevant_entry = entry;
