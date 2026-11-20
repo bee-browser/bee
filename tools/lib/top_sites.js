@@ -12,6 +12,7 @@ zip.configure({
 const DOWNLOADERS = {
   alexa: downloadAlexaTop1M,
   majestic: downloadMajesticMillion,
+  netapi: downloadNetapiTop1M,
 };
 
 export const RANKINGS = Object.keys(DOWNLOADERS).sort();
@@ -33,6 +34,15 @@ async function downloadMajesticMillion() {
   const url = 'https://downloads.majestic.com/majestic_million.csv';
   const res = await fetch(url);
   // TODO: very slow
+  return await csv.parse(await res.text(), {
+    skipFirstRow: true,
+    parse: (data) => data.Domain,
+  });
+}
+
+async function downloadNetapiTop1M() {
+  const url = 'https://netapi.com/netapi_top1mln.csv';
+  const res = await fetch(url);
   return await csv.parse(await res.text(), {
     skipFirstRow: true,
     parse: (data) => data.Domain,
