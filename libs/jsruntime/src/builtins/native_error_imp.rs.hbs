@@ -22,22 +22,19 @@ use crate::types::Value;
 use crate::logger;
 
 //#sec-nativeerror constructor
-pub fn constructor<X>(runtime: &mut Runtime<X>, context: &mut CallContext) -> Result<Value, Error> {
+pub fn constructor<X>(runtime: &mut Runtime<X>, cc: &mut CallContext) -> Result<Value, Error> {
     logger::debug!(event = "{{id}}_constructor");
-    let args = context.args();
+    let args = cc.args();
 
-    // TODO(feat): NewTarget
-    if !context.is_new() {
-        return runtime_todo!();
-    }
-
-    let mut object = if let Value::Object(this) = context.this() {
-        *this
+    let new_target = if let Value::Object(new_target) = cc.new_target() {
+        *new_target
     } else {
-        let mut object = runtime.create_object();
-        object.set_prototype(runtime.builtins.{{id}}_prototype);
-        object
+        cc.func().unwrap()
     };
+
+    let mut object =
+        runtime.ordinary_create_from_constructor(new_target, runtime.builtins.{{id}}_prototype)?;
+
     object.set_error();
 
     match args.first().unwrap_or(&Value::Undefined) {

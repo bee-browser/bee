@@ -1,12 +1,6 @@
 mod scope;
 
-use bitflags::bitflags;
 use itertools::Itertools;
-use jsparser::SymbolRegistry;
-use jsparser::syntax::LiteralPropertyName;
-use jsparser::syntax::MemberExpressionKind;
-use jsparser::syntax::PropertyAccessKind;
-use jsparser::syntax::PropertyDefinitionKind;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -14,11 +8,17 @@ use jsparser::Error as ParserError;
 use jsparser::Parser;
 use jsparser::Processor;
 use jsparser::Symbol;
+use jsparser::SymbolRegistry;
 use jsparser::syntax::AssignmentOperator;
 use jsparser::syntax::BinaryOperator;
+use jsparser::syntax::ClassElementKind;
+use jsparser::syntax::LiteralPropertyName;
 use jsparser::syntax::LoopFlags;
+use jsparser::syntax::MemberExpressionKind;
 use jsparser::syntax::Node;
 use jsparser::syntax::NodeHandler;
+use jsparser::syntax::PropertyAccessKind;
+use jsparser::syntax::PropertyDefinitionKind;
 use jsparser::syntax::UnaryOperator;
 use jsparser::syntax::UpdateOperator;
 
@@ -201,14 +201,23 @@ pub enum ThisBinding {
     Quirk,
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Debug)]
     struct FunctionFlags: u8 {
         /// The entry function of the JavaScript program.
-        const ENTRY_FUNCTION = 1 << 0;
+        ENTRY_FUNCTION,
+
+        /// Indicates that this function can be called as the constructor.
+        CONSTRUCTOR,
+
+        /// Indicates that `[[ConstructorKind]]` is `DERIVED`.
+        DERIVED,
+
+        /// Indicates that `[[IsClassConstructor]]` is `true`.
+        CLASS_CONSTRUCTOR,
 
         /// The `this` binding is captured by descendant closures.
-        const THIS_BINDING_CAPTURED = 1 << 1;
+        THIS_BINDING_CAPTURED,
     }
 }
 
@@ -216,6 +225,14 @@ impl Function {
     /// Returns `true` if this is the entry function.
     pub fn is_entry_function(&self) -> bool {
         self.flags.contains(FunctionFlags::ENTRY_FUNCTION)
+    }
+
+    pub fn is_derived_constructor(&self) -> bool {
+        self.flags.contains(FunctionFlags::DERIVED)
+    }
+
+    pub fn is_class_constructor(&self) -> bool {
+        self.flags.contains(FunctionFlags::CLASS_CONSTRUCTOR)
     }
 
     /// Returns `true` if the `this` binding is captured.
@@ -352,122 +369,6 @@ where
         self.analysis_stack.last_mut().unwrap()
     }
 
-    /// Handles an AST node coming from the parser.
-    fn handle_node(&mut self, node: Node<'_>) {
-        logger::debug!(event = "handle_node", ?node);
-        match node {
-            Node::Null => self.handle_null(),
-            Node::Boolean(value) => self.handle_boolean(value),
-            Node::Number(value, ..) => self.handle_number(value),
-            Node::String(value, ..) => self.handle_string(value),
-            Node::TemplateLiteral(n) => self.handle_template_literal(n),
-            Node::Array => self.handle_array(),
-            Node::Object => self.handle_object(),
-            Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
-            Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
-            Node::MemberExpression(kind) => self.handle_member_expression(kind),
-            Node::This => self.handle_this(),
-            Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
-            Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
-            Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
-            Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
-            Node::Arguments => self.handle_arguments(),
-            Node::CallExpression => self.handle_call_expression(),
-            Node::NewExpression(has_args) => self.handle_new_expression(has_args),
-            Node::NonNullish => self.handle_non_nullish(),
-            Node::OptionalChain(kind) => self.handle_optional_chain(kind),
-            Node::UpdateExpression(op) => self.handle_update_expression(op),
-            Node::UnaryExpression(op) => self.handle_operator(op.into()),
-            Node::BinaryExpression(op) => self.handle_binary_expression(op),
-            Node::LogicalExpression(_op) => self.handle_conditional_expression(),
-            Node::ConditionalExpression => self.handle_conditional_expression(),
-            Node::AssignmentExpression(AssignmentOperator::Assignment) => {
-                self.handle_operator(CompileCommand::Assignment)
-            }
-            Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => {
-                self.handle_conditional_assignment()
-            }
-            Node::AssignmentExpression(AssignmentOperator::LogicalOrAssignment) => {
-                self.handle_conditional_assignment()
-            }
-            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => {
-                self.handle_conditional_assignment()
-            }
-            Node::AssignmentExpression(op) => self.handle_shorthand_assignment_expression(op),
-            Node::SequenceExpression => self.handle_sequence_expression(),
-            Node::BlockStatement => self.handle_block_statement(),
-            Node::LexicalBinding(init) => self.handle_lexical_binding(init),
-            Node::LetDeclaration(n) => self.handle_let_declaration(n),
-            Node::ConstDeclaration(n) => self.handle_const_declaration(n),
-            Node::VariableDeclaration(init) => self.handle_variable_declaration(init),
-            Node::VariableStatement(n) => self.handle_variable_statement(n),
-            Node::BindingElement(init) => self.handle_binding_element(init),
-            Node::EmptyStatement => self.handle_empty_statement(),
-            Node::ExpressionStatement => self.handle_expression_statement(),
-            Node::IfElseStatement => self.handle_if_else_statement(),
-            Node::IfStatement => self.handle_if_statement(),
-            Node::DoWhileStatement => self.handle_do_while_statement(),
-            Node::WhileStatement => self.handle_while_statement(),
-            Node::ForStatement(flags) => self.handle_for_statement(flags),
-            Node::ContinueStatement(symbol) => self.handle_continue_statement(symbol),
-            Node::BreakStatement(symbol) => self.handle_break_statement(symbol),
-            Node::ReturnStatement(n) => self.handle_return_statement(n),
-            Node::SwitchStatement => self.handle_switch_statement(),
-            Node::CaseBlock => self.handle_case_block(),
-            Node::CaseSelector => self.handle_case_selector(),
-            Node::CaseClause(has_statement) => self.handle_case_clause(has_statement),
-            Node::DefaultSelector => self.handle_default_selector(),
-            Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
-            Node::LabelledStatement(symbol, is_iteration_statement) => {
-                self.handle_labelled_statement(symbol, is_iteration_statement)
-            }
-            Node::Label(symbol) => self.handle_label(symbol),
-            Node::ThrowStatement => self.handle_throw_statement(),
-            Node::TryStatement => self.handle_try_statement(),
-            Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
-            Node::FinallyClause => self.handle_finally_clause(),
-            Node::CatchParameter => self.handle_catch_parameter(),
-            Node::TryBlock => self.handle_try_block(),
-            Node::CatchBlock => self.handle_catch_block(),
-            Node::FinallyBlock => self.handle_finally_block(),
-            Node::DebuggerStatement => self.handle_debugger_statement(),
-            Node::FormalParameter => self.handle_formal_parameter(),
-            Node::FormalParameters(n) => self.handle_formal_parameters(n),
-            Node::FunctionDeclaration => self.handle_function_declaration(),
-            Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
-            Node::FunctionExpression(named) => self.handle_function_expression(named),
-            Node::AsyncFunctionExpression(named) => self.handle_async_function_expression(named),
-            Node::ArrowFunction => self.handle_arrow_function(),
-            Node::AsyncArrowFunction => self.handle_async_arrow_function(),
-            Node::Method => self.handle_method(),
-            Node::AwaitExpression => self.handle_await_expression(),
-            Node::Then(expr) => self.handle_then(expr),
-            Node::Else(expr) => self.handle_else(expr),
-            Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
-            Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
-            Node::NullishShortCircuit => self.handle_nullish_short_circuit(),
-            Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
-            Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
-            Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
-            Node::LoopStart => self.handle_loop_start(),
-            Node::LoopInitExpression => self.handle_loop_init_expression(),
-            Node::LoopInitVarDeclaration => self.handle_loop_init_var_declaration(),
-            Node::LoopInitLexicalDeclaration => self.handle_loop_init_lexical_declaration(),
-            Node::LoopTest => self.handle_loop_test(),
-            Node::LoopNext => self.handle_loop_next(),
-            Node::LoopBody => self.handle_loop_body(),
-            Node::StartBlockScope => self.handle_start_block_scope(),
-            Node::EndBlockScope => self.handle_end_block_scope(),
-            Node::FunctionContext(name) => self.handle_function_context(name),
-            Node::AsyncFunctionContext(name) => self.handle_async_function_context(name),
-            Node::ArrowFunctionContext => self.handle_arrow_function_context(),
-            Node::AsyncArrowFunctionContext => self.handle_async_arrow_function_context(),
-            Node::FunctionSignature => self.handle_function_signature(),
-            Node::Dereference => self.handle_dereference(),
-            Node::ToString => self.handle_to_string(),
-        }
-    }
-
     fn handle_null(&mut self) {
         analysis_mut!(self).put_null();
     }
@@ -523,6 +424,14 @@ where
         analysis_mut!(self).process_this();
     }
 
+    fn handle_super(&mut self) {
+        analysis_mut!(self).process_super();
+    }
+
+    fn handle_new_target(&mut self) {
+        analysis_mut!(self).process_new_target();
+    }
+
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
         analysis_mut!(self).process_identifier_reference(symbol);
     }
@@ -543,8 +452,8 @@ where
         // nop
     }
 
-    fn handle_call_expression(&mut self) {
-        analysis_mut!(self).process_call_expression();
+    fn handle_call_expression(&mut self, super_call: bool) {
+        analysis_mut!(self).process_call_expression(super_call);
     }
 
     fn handle_new_expression(&mut self, has_args: bool) {
@@ -755,8 +664,6 @@ where
         // Add Function-scoped variables defined by "VariableStatement"s to the function scope.
         analysis.process_function_scoped_variables(&mut self.global_analysis);
 
-        // TODO: this binding resolution
-
         self.global_analysis.scope_tree_builder.pop();
 
         // The reference resolution must be performed after the function-scoped variables are added
@@ -775,9 +682,6 @@ where
             analysis.set_command(1, CompileCommand::AllocateLocals(analysis.num_locals));
         }
 
-        let this_local = analysis
-            .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
         let this_used = analysis
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_USED);
@@ -785,28 +689,173 @@ where
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
         let this_mode_lexical = matches!(analysis.this_mode, ThisMode::Lexical);
-        let outer_this_captured = this_local && (this_used || this_captured) && this_mode_lexical;
+        let outer_this_captured = (this_used || this_captured) && this_mode_lexical;
 
         self.apply_analysis(analysis, func_scope_ref);
 
         let func_index = self.functions.len() - 1;
         let analysis = self.analysis_mut();
-        analysis.flags.set(
-            FunctionAnalysisFlags::THIS_BINDING_CAPTURED,
-            outer_this_captured,
-        );
+        if outer_this_captured {
+            analysis
+                .flags
+                .insert(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
+        }
         analysis.process_unresolved_references(&unresolved_references, func_index);
     }
 
     fn handle_function_declaration(&mut self) {
         self.end_function_scope();
 
+        let func = self.functions.last_mut().unwrap();
+        func.flags.insert(FunctionFlags::CONSTRUCTOR);
+        analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
+    }
+
+    fn handle_class_context(&mut self, name: Symbol) {
+        // Create a block scope for the class definition.
+        let scope_ref = self.global_analysis.scope_tree_builder.push_class();
+
+        analysis_mut!(self).process_class_context(name, scope_ref);
+    }
+
+    fn handle_class_element_context(&mut self) {
+        analysis_mut!(self).process_class_element_context();
+    }
+
+    fn handle_field_initializer_start(&mut self) {
+        self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Strict);
+    }
+
+    fn handle_field_initializer_end(&mut self) {
+        analysis_mut!(self).push_command(CompileCommand::Return(1));
+        self.end_function_scope();
         let func = self.functions.last().unwrap();
-        let batch_index = analysis_mut!(self).process_closure_declaration(func.scope_ref, func.id);
-        let scope_ref = self.analysis().scope_ref();
-        self.global_analysis
-            .scope_tree_builder
-            .add_function_declaration(scope_ref, batch_index);
+        analysis_mut!(self).process_closure_expression(
+            func.scope_ref,
+            func.id,
+            Symbol::NONE,
+            false,
+        );
+    }
+
+    fn handle_static_block_context(&mut self) {
+        self.start_function_scope(Symbol::NONE, LambdaKind::Normal, ThisMode::Strict);
+    }
+
+    fn handle_class_declaration(&mut self, name: Symbol) {
+        if !self.analysis().has_class_constructor() {
+            self.define_default_constructor();
+        }
+
+        let analysis = analysis_mut!(self).process_class_definition(&mut self.global_analysis);
+        debug_assert_eq!(analysis.name, name);
+
+        // Pop the block scope created in handle_class_context().
+        analysis_mut!(self).end_scope();
+        self.global_analysis.scope_tree_builder.pop();
+
+        analysis_mut!(self).process_class_declaration(name, &mut self.global_analysis);
+    }
+
+    fn handle_class_expression(&mut self, name: Symbol) {
+        if !self.analysis().has_class_constructor() {
+            self.define_default_constructor();
+        }
+
+        let analysis = analysis_mut!(self).process_class_definition(&mut self.global_analysis);
+        debug_assert_eq!(analysis.name, name);
+
+        // Pop the block scope created in handle_class_context().
+        analysis_mut!(self).end_scope();
+        self.global_analysis.scope_tree_builder.pop();
+
+        analysis_mut!(self).process_class_expression(name);
+    }
+
+    fn define_default_constructor(&mut self) {
+        let name = self.analysis().class_stack.last().unwrap().name;
+        let index = self.analysis().class_stack.last().unwrap().num_elements;
+
+        let derived = self
+            .analysis()
+            .class_stack
+            .last()
+            .unwrap()
+            .flags
+            .contains(ClassFlags::DERIVED);
+
+        self.start_function_scope(name, LambdaKind::Normal, ThisMode::Global);
+
+        if derived {
+            // constructor(...args) { super(...args); }
+            push_commands! {
+                self;
+                CompileCommand::Super,
+                // TODO(feat): ...args
+                CompileCommand::Construct(0, true),
+                CompileCommand::Discard,
+            }
+        }
+        self.end_function_scope();
+
+        let func = self.functions.last_mut().unwrap();
+        func.flags
+            .insert(FunctionFlags::CONSTRUCTOR | FunctionFlags::CLASS_CONSTRUCTOR);
+        if derived {
+            func.flags.insert(FunctionFlags::DERIVED);
+        }
+
+        push_commands! {
+            self;
+            CompileCommand::Undefined,
+            CompileCommand::PropertyReference(Symbol::CONSTRUCTOR),
+            CompileCommand::Lambda(func.id),
+            CompileCommand::Closure(false, func.scope_ref),
+            CompileCommand::Function(name),
+            CompileCommand::Constructor(index),
+        }
+
+        self.analysis_mut()
+            .class_stack
+            .last_mut()
+            .unwrap()
+            .num_elements += 1;
+    }
+
+    fn handle_class_heritage(&mut self) {
+        analysis_mut!(self).process_class_heritage();
+    }
+
+    fn handle_class_element_constructor(&mut self) {
+        analysis_mut!(self).process_class_element_constructor();
+    }
+
+    fn handle_class_element_method(&mut self) {
+        analysis_mut!(self).process_class_element_method();
+    }
+
+    fn handle_class_element_static_method(&mut self) {
+        analysis_mut!(self).process_class_element_static_method();
+    }
+
+    fn handle_class_element_field(&mut self, has_initializer: bool) {
+        analysis_mut!(self).process_class_element_field(has_initializer);
+    }
+
+    fn handle_class_element_static_field(&mut self, has_initializer: bool) {
+        analysis_mut!(self).process_class_element_static_field(has_initializer);
+    }
+
+    fn handle_class_element_static_block(&mut self) {
+        self.end_function_scope();
+        let func = self.functions.last().unwrap();
+        analysis_mut!(self).process_closure_expression(
+            func.scope_ref,
+            func.id,
+            Symbol::NONE,
+            false,
+        );
+        analysis_mut!(self).process_class_element_static_block();
     }
 
     fn handle_async_function_declaration(&mut self) {
@@ -816,22 +865,27 @@ where
         self.handle_function_declaration();
     }
 
-    fn handle_function_expression(&mut self, named: bool) {
-        self.do_handle_function_expression(named, false);
+    fn handle_function_expression(&mut self, name: Symbol) {
+        self.do_handle_function_expression(name, false);
+        self.functions
+            .last_mut()
+            .unwrap()
+            .flags
+            .insert(FunctionFlags::CONSTRUCTOR);
     }
 
-    fn handle_async_function_expression(&mut self, named: bool) {
+    fn handle_async_function_expression(&mut self, name: Symbol) {
         self.end_coroutine_body();
 
         // Node::FunctionExpression for the outer ramp function.
-        self.do_handle_function_expression(named, false);
+        self.do_handle_function_expression(name, false);
     }
 
-    fn do_handle_function_expression(&mut self, named: bool, coroutine: bool) {
+    fn do_handle_function_expression(&mut self, name: Symbol, coroutine: bool) {
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, named, coroutine);
+        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, name, coroutine);
     }
 
     fn handle_arrow_function(&mut self) {
@@ -845,14 +899,29 @@ where
         self.do_handle_arrow_function(false);
     }
 
-    fn handle_method(&mut self) {
+    fn handle_method(&mut self, in_class: bool) {
         self.end_function_scope();
 
-        let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, true, false);
+        let func = self.functions.last_mut().unwrap();
+        if in_class {
+            analysis_mut!(self).process_method_in_class(func);
+        } else {
+            analysis_mut!(self).process_method_in_object(func);
+        }
+    }
+
+    fn handle_async_method(&mut self, in_class: bool) {
+        self.end_coroutine_body();
+        self.handle_method(in_class);
     }
 
     fn do_handle_arrow_function(&mut self, coroutine: bool) {
+        // TODO(perf): Always capture the outer `this` binding regardless of whether it is used in
+        // the arrow function body.
+        analysis_mut!(self)
+            .flags
+            .insert(FunctionAnalysisFlags::THIS_BINDING_USED);
+
         // TODO: An ArrowFunction does not define local variables for arguments, super, this, or
         // new.target.  Any reference to arguments, super, this, or new.target within an
         // ArrowFunction must resolve to a variable in a lexically enclosing environment.
@@ -860,7 +929,12 @@ where
         self.end_function_scope();
 
         let func = self.functions.last().unwrap();
-        analysis_mut!(self).process_closure_expression(func.scope_ref, func.id, false, coroutine);
+        analysis_mut!(self).process_closure_expression(
+            func.scope_ref,
+            func.id,
+            Symbol::NONE,
+            coroutine,
+        );
     }
 
     fn handle_await_expression(&mut self) {
@@ -949,7 +1023,6 @@ where
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
 
-        let is_entry_function = self.analysis_stack.is_empty();
         let lambda_id = self.support.register_lambda(kind);
 
         let mut analysis = FunctionAnalysis::new(name, lambda_id, this_mode);
@@ -963,26 +1036,8 @@ where
         let scope_ref = self.global_analysis.scope_tree_builder.push_function();
         analysis.start_scope(scope_ref, true);
 
-        // The `this` binding will be always resolved to the global object in the entry function.
-        if !is_entry_function && matches!(this_mode, ThisMode::Strict | ThisMode::Global) {
-            analysis
-                .flags
-                .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
-        }
-
         if matches!(kind, LambdaKind::Ramp) {
             analysis.set_ramp();
-        }
-
-        if let Some(parent) = self.analysis_stack.last_mut() {
-            if parent
-                .flags
-                .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL)
-            {
-                analysis
-                    .flags
-                    .insert(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
-            }
         }
 
         self.analysis_stack.push(analysis);
@@ -1032,8 +1087,13 @@ where
     // Such an async function don't need to be rewritten into a state machine.
     fn start_coroutine_body(&mut self) {
         debug_assert!(self.analysis().is_ramp());
-        let this_mode = self.analysis().this_mode;
-        self.start_function_scope(Symbol::HIDDEN_COROUTINE, LambdaKind::Coroutine, this_mode);
+        // `this` in the ramp function is captured if it is used in the async function body.
+        // See also: Runtime::resume().
+        self.start_function_scope(
+            Symbol::HIDDEN_COROUTINE,
+            LambdaKind::Coroutine,
+            ThisMode::Lexical,
+        );
         self.handle_binding_identifier(Symbol::HIDDEN_PROMISE);
         self.handle_formal_parameter();
         self.handle_binding_identifier(Symbol::HIDDEN_RESULT);
@@ -1050,7 +1110,7 @@ where
     // See //libs/jsruntime/docs/internals.md.
     fn end_coroutine_body(&mut self) {
         // TODO(perf): Some of the local variables can be placed on the stack.
-        self.do_handle_function_expression(false, true);
+        self.do_handle_function_expression(Symbol::NONE, true);
 
         let func = self.functions.last().unwrap();
         push_commands!(
@@ -1072,18 +1132,6 @@ where
     }
 
     fn resolve_references(&mut self, analysis: &mut FunctionAnalysis) -> Vec<Reference> {
-        if analysis
-            .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED)
-        {
-            debug_assert!(
-                analysis
-                    .flags
-                    .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL)
-            );
-            self.functions.last_mut().unwrap().num_captures += 1;
-        }
-
         let mut unresolved_reference = vec![];
         for reference in analysis.references.iter() {
             let variable_ref = self
@@ -1113,37 +1161,49 @@ where
     }
 
     fn apply_analysis(&mut self, analysis: FunctionAnalysis, scope_ref: ScopeRef) {
-        let this_used = analysis
-            .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_USED);
         let this_captured = analysis
             .flags
             .contains(FunctionAnalysisFlags::THIS_BINDING_CAPTURED);
-        let this_local = analysis
-            .flags
-            .contains(FunctionAnalysisFlags::THIS_BINDING_LOCAL);
-        let this_binding = match (this_used || this_captured, this_local, analysis.this_mode) {
-            (false, _, _) => ThisBinding::None,
-            (_, _, ThisMode::Strict) => ThisBinding::ThisArgument,
-            (_, true, ThisMode::Lexical) => ThisBinding::Capture,
-            (_, false, ThisMode::Lexical) => ThisBinding::GlobalObject,
-            (_, true, ThisMode::Global) => ThisBinding::Quirk,
-            (_, false, ThisMode::Global) => ThisBinding::GlobalObject,
+
+        let this_binding = if scope_ref.is_root() {
+            if self.module {
+                ThisBinding::ThisArgument
+            } else {
+                ThisBinding::GlobalObject
+            }
+        } else {
+            let this_used = analysis
+                .flags
+                .contains(FunctionAnalysisFlags::THIS_BINDING_USED);
+            match (this_used || this_captured, analysis.this_mode) {
+                (false, _) => ThisBinding::None,
+                (_, ThisMode::Strict) => ThisBinding::ThisArgument,
+                (_, ThisMode::Lexical) => ThisBinding::Capture,
+                (_, ThisMode::Global) => ThisBinding::Quirk,
+            }
         };
+
+        let num_captures = if matches!(this_binding, ThisBinding::Capture) {
+            1
+        } else {
+            0
+        };
+
         let mut flags = FunctionFlags::empty();
         if self.analysis_stack.is_empty() {
             flags.insert(FunctionFlags::ENTRY_FUNCTION);
         }
         // The global object is never captured.  It can be directly accessible in any scope.
-        if this_captured && this_local {
+        if this_captured {
             flags.insert(FunctionFlags::THIS_BINDING_CAPTURED);
         }
+
         self.functions.push(Function {
             name: analysis.name,
             id: analysis.id,
             commands: analysis.commands,
             scope_ref,
-            num_captures: 0,
+            num_captures,
             num_params: analysis.num_params,
             num_locals: analysis.num_locals,
             this_binding,
@@ -1252,9 +1312,149 @@ where
         })
     }
 
-    fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), ParserError> {
-        for node in nodes {
-            self.handle_node(node);
+    fn handle_node(&mut self, node: Node<'s>) -> Result<(), ParserError> {
+        logger::debug!(event = "handle_node", ?node);
+        match node {
+            Node::Null => self.handle_null(),
+            Node::Boolean(value) => self.handle_boolean(value),
+            Node::Number(value, ..) => self.handle_number(value),
+            Node::String(value, ..) => self.handle_string(value),
+            Node::TemplateLiteral(n) => self.handle_template_literal(n),
+            Node::Array => self.handle_array(),
+            Node::Object => self.handle_object(),
+            Node::LiteralPropertyName(name) => self.handle_literal_property_name(name),
+            Node::PropertyDefinition(kind) => self.handle_property_definition(kind),
+            Node::MemberExpression(kind) => self.handle_member_expression(kind),
+            Node::This => self.handle_this(),
+            Node::Super => self.handle_super(),
+            Node::NewTarget => self.handle_new_target(),
+            Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
+            Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
+            Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
+            Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
+            Node::Arguments => self.handle_arguments(),
+            Node::CallExpression(super_call) => self.handle_call_expression(super_call),
+            Node::NewExpression(has_args) => self.handle_new_expression(has_args),
+            Node::NonNullish => self.handle_non_nullish(),
+            Node::OptionalChain(kind) => self.handle_optional_chain(kind),
+            Node::UpdateExpression(op) => self.handle_update_expression(op),
+            Node::UnaryExpression(op) => self.handle_operator(op.into()),
+            Node::BinaryExpression(op) => self.handle_binary_expression(op),
+            Node::LogicalExpression(_op) => self.handle_conditional_expression(),
+            Node::ConditionalExpression => self.handle_conditional_expression(),
+            Node::AssignmentExpression(AssignmentOperator::Assignment) => {
+                self.handle_operator(CompileCommand::Assignment)
+            }
+            Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => {
+                self.handle_conditional_assignment()
+            }
+            Node::AssignmentExpression(AssignmentOperator::LogicalOrAssignment) => {
+                self.handle_conditional_assignment()
+            }
+            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => {
+                self.handle_conditional_assignment()
+            }
+            Node::AssignmentExpression(op) => self.handle_shorthand_assignment_expression(op),
+            Node::SequenceExpression => self.handle_sequence_expression(),
+            Node::BlockStatement => self.handle_block_statement(),
+            Node::LexicalBinding(init) => self.handle_lexical_binding(init),
+            Node::LetDeclaration(n) => self.handle_let_declaration(n),
+            Node::ConstDeclaration(n) => self.handle_const_declaration(n),
+            Node::VariableDeclaration(init) => self.handle_variable_declaration(init),
+            Node::VariableStatement(n) => self.handle_variable_statement(n),
+            Node::BindingElement(init) => self.handle_binding_element(init),
+            Node::EmptyStatement => self.handle_empty_statement(),
+            Node::ExpressionStatement => self.handle_expression_statement(),
+            Node::IfElseStatement => self.handle_if_else_statement(),
+            Node::IfStatement => self.handle_if_statement(),
+            Node::DoWhileStatement => self.handle_do_while_statement(),
+            Node::WhileStatement => self.handle_while_statement(),
+            Node::ForStatement(flags) => self.handle_for_statement(flags),
+            Node::ContinueStatement(symbol) => self.handle_continue_statement(symbol),
+            Node::BreakStatement(symbol) => self.handle_break_statement(symbol),
+            Node::ReturnStatement(n) => self.handle_return_statement(n),
+            Node::SwitchStatement => self.handle_switch_statement(),
+            Node::CaseBlock => self.handle_case_block(),
+            Node::CaseSelector => self.handle_case_selector(),
+            Node::CaseClause(has_statement) => self.handle_case_clause(has_statement),
+            Node::DefaultSelector => self.handle_default_selector(),
+            Node::DefaultClause(has_statement) => self.handle_default_clause(has_statement),
+            Node::LabelledStatement(symbol, is_iteration_statement) => {
+                self.handle_labelled_statement(symbol, is_iteration_statement)
+            }
+            Node::Label(symbol) => self.handle_label(symbol),
+            Node::ThrowStatement => self.handle_throw_statement(),
+            Node::TryStatement => self.handle_try_statement(),
+            Node::CatchClause(has_parameter) => self.handle_catch_clause(has_parameter),
+            Node::FinallyClause => self.handle_finally_clause(),
+            Node::CatchParameter => self.handle_catch_parameter(),
+            Node::TryBlock => self.handle_try_block(),
+            Node::CatchBlock => self.handle_catch_block(),
+            Node::FinallyBlock => self.handle_finally_block(),
+            Node::DebuggerStatement => self.handle_debugger_statement(),
+            Node::FormalParameter => self.handle_formal_parameter(),
+            Node::FormalParameters(n) => self.handle_formal_parameters(n),
+            Node::FunctionDeclaration => self.handle_function_declaration(),
+            Node::ClassContext(name) => self.handle_class_context(name),
+            Node::ClassElementContext => self.handle_class_element_context(),
+            Node::FieldInitializerStart => self.handle_field_initializer_start(),
+            Node::FieldInitializerEnd => self.handle_field_initializer_end(),
+            Node::StaticBlockContext => self.handle_static_block_context(),
+            Node::ClassDeclaration(name) => self.handle_class_declaration(name),
+            Node::ClassExpression(name) => self.handle_class_expression(name),
+            Node::ClassHeritage => self.handle_class_heritage(),
+            Node::ClassElement(ClassElementKind::Constructor) => {
+                self.handle_class_element_constructor()
+            }
+            Node::ClassElement(ClassElementKind::Method) => self.handle_class_element_method(),
+            Node::ClassElement(ClassElementKind::StaticMethod) => {
+                self.handle_class_element_static_method()
+            }
+            Node::ClassElement(ClassElementKind::Field) => self.handle_class_element_field(false),
+            Node::ClassElement(ClassElementKind::FieldWithInitializer) => {
+                self.handle_class_element_field(true)
+            }
+            Node::ClassElement(ClassElementKind::StaticField) => {
+                self.handle_class_element_static_field(false)
+            }
+            Node::ClassElement(ClassElementKind::StaticFieldWithInitializer) => {
+                self.handle_class_element_static_field(true)
+            }
+            Node::ClassElement(ClassElementKind::StaticBlock) => {
+                self.handle_class_element_static_block()
+            }
+            Node::AsyncFunctionDeclaration => self.handle_async_function_declaration(),
+            Node::FunctionExpression(name) => self.handle_function_expression(name),
+            Node::AsyncFunctionExpression(name) => self.handle_async_function_expression(name),
+            Node::ArrowFunction => self.handle_arrow_function(),
+            Node::AsyncArrowFunction => self.handle_async_arrow_function(),
+            Node::Method(in_class) => self.handle_method(in_class),
+            Node::AsyncMethod(in_class) => self.handle_async_method(in_class),
+            Node::AwaitExpression => self.handle_await_expression(),
+            Node::Then(expr) => self.handle_then(expr),
+            Node::Else(expr) => self.handle_else(expr),
+            Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
+            Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
+            Node::NullishShortCircuit => self.handle_nullish_short_circuit(),
+            Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
+            Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
+            Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
+            Node::LoopStart => self.handle_loop_start(),
+            Node::LoopInitExpression => self.handle_loop_init_expression(),
+            Node::LoopInitVarDeclaration => self.handle_loop_init_var_declaration(),
+            Node::LoopInitLexicalDeclaration => self.handle_loop_init_lexical_declaration(),
+            Node::LoopTest => self.handle_loop_test(),
+            Node::LoopNext => self.handle_loop_next(),
+            Node::LoopBody => self.handle_loop_body(),
+            Node::StartBlockScope => self.handle_start_block_scope(),
+            Node::EndBlockScope => self.handle_end_block_scope(),
+            Node::FunctionContext(name) => self.handle_function_context(name),
+            Node::AsyncFunctionContext(name) => self.handle_async_function_context(name),
+            Node::ArrowFunctionContext => self.handle_arrow_function_context(),
+            Node::AsyncArrowFunctionContext => self.handle_async_arrow_function_context(),
+            Node::FunctionSignature => self.handle_function_signature(),
+            Node::Dereference => self.handle_dereference(),
+            Node::ToString => self.handle_to_string(),
         }
         Ok(())
     }
@@ -1320,6 +1520,8 @@ struct FunctionAnalysis {
     /// A stack to hold the number of arguments of a function call.
     nargs_stack: Vec<u16>,
 
+    class_stack: Vec<ClassAnalysis>,
+
     /// The name of the function.
     ///
     /// Its value is set to `Symbol::NONE` if the function has no name.
@@ -1367,7 +1569,39 @@ impl FunctionScopedVariableEntry {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+/// Manages a backpatching chain for hoisted function declaration batches.
+///
+/// Tracks the most recent jump instruction awaiting target resolution, as well as the fixed exit
+/// index where execution resumes after all batched function declarations have completed.
+struct FunctionDeclarationChain {
+    /// The target instruction index where execution resumes after all function declaration batches
+    /// have finished executing.
+    ///
+    /// This value is immutable and is always set to the initial `pending_jump_index + 1`.
+    exit_index: usize,
+
+    /// The index of the jump instruction currently awaiting backpatching.
+    ///
+    /// When a new batch is appended, the jump instruction at this index is updated to point to the
+    /// start of that new batch.
+    pending_jump_index: usize,
+}
+
+impl FunctionDeclarationChain {
+    fn new(pending_jump_index: usize) -> Self {
+        debug_assert!(pending_jump_index < usize::MAX);
+        Self {
+            exit_index: pending_jump_index + 1,
+            pending_jump_index,
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.exit_index == self.pending_jump_index + 1
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
 enum ThisMode {
     #[default]
     Strict,
@@ -1375,27 +1609,27 @@ enum ThisMode {
     Global,
 }
 
-bitflags! {
+base::auto_bitflags! {
     #[derive(Debug, Default)]
     struct FunctionAnalysisFlags: u8 {
-        /// Enabled if the context is the ramp function for an async function.
-        const RAMP = 1 << 0;
+        /// Indicates that the analysis context is the ramp function for an async function.
+        RAMP,
 
-        /// Enabled if the context is the coroutine function for an async function.
-        const COROUTINE = 1 << 1;
+        /// Indicates that the analysis context is the coroutine function for an async function.
+        COROUTINE,
 
-        /// The `this` binding is used in the function body.
+        /// Indicates that `[[ConstructorKind]]` is `DERIVED`.
+        DERIVED,
+
+        /// Indicates whether the `this` binding is used within the function body
+        /// (excluding those of nested functions).
         ///
         /// The `this` binding must be resolved to an actual value in
         /// [`CompileCommand::DeclareVariables`] according to the [`ThisBinding`].
-        const THIS_BINDING_USED = 1 << 2;
+        THIS_BINDING_USED,
 
-        /// The `this` binding is captured by descendant closures.
-        const THIS_BINDING_CAPTURED = 1 << 3;
-
-        /// The `this` binding will be always resolved to the global object if this flag is not
-        /// set.
-        const THIS_BINDING_LOCAL = 1 << 4;
+        /// Indicates whether any descendant closure captures the `this` binding.
+        THIS_BINDING_CAPTURED,
     }
 }
 
@@ -1431,8 +1665,9 @@ impl FunctionAnalysis {
 
     fn reserve_commands(&mut self, n: usize) -> usize {
         let index = self.commands.len();
+        debug_assert!(index <= usize::MAX - n);
         for _ in 0..n {
-            self.commands.push(CompileCommand::PlaceHolder);
+            self.commands.push(CompileCommand::Placeholder);
         }
         index
     }
@@ -1486,13 +1721,18 @@ impl FunctionAnalysis {
         self.process_identifier_reference(Symbol::INTERNAL_ERROR);
         let utf16 = message.encode_utf16().collect_vec();
         self.commands.push(CompileCommand::String(utf16));
-        self.commands.push(CompileCommand::New(1));
+        self.commands.push(CompileCommand::Construct(1, false));
         self.commands.push(CompileCommand::Throw);
     }
 
-    fn process_call_expression(&mut self) {
+    fn process_call_expression(&mut self, super_call: bool) {
         let nargs = self.nargs_stack.pop().unwrap();
-        self.commands.push(CompileCommand::Call(nargs));
+        if super_call {
+            self.commands
+                .push(CompileCommand::Construct(nargs, super_call))
+        } else {
+            self.commands.push(CompileCommand::Call(nargs));
+        }
     }
 
     fn process_new_expression(&mut self, has_args: bool) {
@@ -1501,7 +1741,7 @@ impl FunctionAnalysis {
         } else {
             0
         };
-        self.commands.push(CompileCommand::New(nargs));
+        self.commands.push(CompileCommand::Construct(nargs, false));
     }
 
     fn process_lexical_binding(&mut self, init: bool) {
@@ -1614,6 +1854,14 @@ impl FunctionAnalysis {
         // in the function scope.  See the implementation of [`accept()`] for details.
         self.commands.push(CompileCommand::This);
         self.flags.insert(FunctionAnalysisFlags::THIS_BINDING_USED);
+    }
+
+    fn process_super(&mut self) {
+        self.commands.push(CompileCommand::Super);
+    }
+
+    fn process_new_target(&mut self) {
+        self.commands.push(CompileCommand::NewTarget);
     }
 
     fn process_identifier_reference(&mut self, symbol: Symbol) {
@@ -1751,11 +1999,11 @@ impl FunctionAnalysis {
                 // 8.4.5 Runtime Semantics: NamedEvaluation
                 self.commands[index - 1] = CompileCommand::Function(symbol);
             }
-            debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+            debug_assert!(matches!(self.commands[index], CompileCommand::Placeholder));
             self.commands[index] = CompileCommand::VariableReference(symbol);
             debug_assert!(matches!(
                 self.commands[index + 1],
-                CompileCommand::PlaceHolder
+                CompileCommand::Placeholder
             ));
             self.commands[index + 1] = CompileCommand::MutableVariable;
             global_analysis
@@ -1775,11 +2023,11 @@ impl FunctionAnalysis {
                 // 8.4.5 Runtime Semantics: NamedEvaluation
                 self.commands[index - 1] = CompileCommand::Function(symbol);
             }
-            debug_assert!(matches!(self.commands[index], CompileCommand::PlaceHolder));
+            debug_assert!(matches!(self.commands[index], CompileCommand::Placeholder));
             self.commands[index] = CompileCommand::VariableReference(symbol);
             debug_assert!(matches!(
                 self.commands[index + 1],
-                CompileCommand::PlaceHolder
+                CompileCommand::Placeholder
             ));
             self.commands[index + 1] = CompileCommand::ImmutableVariable;
             global_analysis
@@ -1790,14 +2038,24 @@ impl FunctionAnalysis {
         self.symbol_stack.truncate(i);
     }
 
-    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) -> usize {
+    fn process_closure_declaration(&mut self, scope_ref: ScopeRef, lambda_id: LambdaId) {
         debug_assert!(!self.symbol_stack.is_empty());
         let (symbol, _) = self.symbol_stack.pop().unwrap();
 
-        // This is a hoistable declaration.  Commands following the `Batch` command will perform
-        // by a command handler for the `DeclareVariables` command generated for the current scope.
-        let index = self.commands.len();
-        self.commands.push(CompileCommand::Batch(5));
+        debug_assert!(!self.scope_stack.is_empty());
+        let scope = self.scope_stack.last_mut().unwrap();
+
+        // This is a hoistable declaration.  Commands following the `Skip` command will perform by a
+        // command handler for the `DeclareVariables` command generated for the current scope.
+        self.commands.push(CompileCommand::Skip(6));
+
+        debug_assert!(matches!(
+            self.commands[scope.function_declaration_chain.pending_jump_index],
+            CompileCommand::Placeholder
+        ));
+        self.commands[scope.function_declaration_chain.pending_jump_index] =
+            CompileCommand::Jump(self.commands.len());
+
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands.push(CompileCommand::Closure(true, scope_ref));
         self.commands.push(CompileCommand::Function(symbol));
@@ -1805,34 +2063,198 @@ impl FunctionAnalysis {
             .push(CompileCommand::VariableReference(symbol));
         self.commands.push(CompileCommand::DeclareFunction);
 
+        scope.function_declaration_chain.pending_jump_index = self.commands.len();
+        self.commands.push(CompileCommand::Placeholder);
+
         // "VariableStatement"s have already declared variables with the same symbol.
         // Such "VariableStatement"s can overwrite the variable.
         self.function_scoped_variables
             .entry(symbol)
             .or_insert(FunctionScopedVariableEntry::function());
-
-        index
     }
 
     fn process_closure_expression(
         &mut self,
         scope_ref: ScopeRef,
         lambda_id: LambdaId,
-        named: bool,
+        name: Symbol,
         coroutine: bool,
     ) {
-        let name = if named {
+        if name != Symbol::NONE {
             debug_assert!(!self.symbol_stack.is_empty());
-            self.symbol_stack.pop().unwrap().0
-        } else {
-            Symbol::NONE
-        };
+            let symbol = self.symbol_stack.pop().unwrap().0;
+            debug_assert_eq!(name, symbol);
+        }
         self.commands.push(CompileCommand::Lambda(lambda_id));
         self.commands
             .push(CompileCommand::Closure(false, scope_ref));
         if !coroutine {
             self.commands.push(CompileCommand::Function(name));
         }
+    }
+
+    fn process_method_in_class(&mut self, func: &mut Function) {
+        let scope_ref = func.scope_ref;
+        let lambda_id = func.id;
+        let mut symbol = self.symbol_stack.last().unwrap().0;
+        if symbol == Symbol::CONSTRUCTOR {
+            func.flags
+                .insert(FunctionFlags::CONSTRUCTOR | FunctionFlags::CLASS_CONSTRUCTOR);
+            if self.flags.contains(FunctionAnalysisFlags::DERIVED) {
+                func.flags.insert(FunctionFlags::DERIVED);
+            }
+            let analysis = self.class_stack.last_mut().unwrap();
+            analysis.flags |= ClassFlags::HAS_CONSTRUCTOR;
+            // Function.name = <class-name>
+            symbol = analysis.name;
+            if symbol == Symbol::NONE {
+                // FIXME: dirty...
+                // process_closure_expression() removes a symbol only if symbol is not NONE.
+                // probably, we should remove the symbol stack itself.
+                self.symbol_stack.pop();
+            } else {
+                // process_closure_expression() checks `symbol` and pop it from the symbol stack.
+                self.symbol_stack.last_mut().unwrap().0 = symbol;
+            }
+        }
+        self.process_closure_expression(scope_ref, lambda_id, symbol, false);
+    }
+
+    fn process_method_in_object(&mut self, func: &mut Function) {
+        let scope_ref = func.scope_ref;
+        let lambda_id = func.id;
+        self.process_closure_expression(scope_ref, lambda_id, func.name, false);
+    }
+
+    fn process_class_context(&mut self, name: Symbol, scope_ref: ScopeRef) {
+        self.start_scope(scope_ref, false);
+        let class_index = self.commands.len();
+        self.commands.push(CompileCommand::ClassStart(name, 0));
+        self.class_stack.push(ClassAnalysis {
+            name,
+            class_index,
+            ..Default::default()
+        });
+    }
+
+    fn process_class_element_context(&mut self) {
+        self.commands.push(CompileCommand::Undefined); // dummy receiver
+    }
+
+    fn has_class_constructor(&self) -> bool {
+        self.class_stack
+            .last()
+            .unwrap()
+            .flags
+            .contains(ClassFlags::HAS_CONSTRUCTOR)
+    }
+
+    fn process_class_declaration(&mut self, name: Symbol, global_analysis: &mut GlobalAnalysis) {
+        if name != Symbol::NONE {
+            debug_assert!(!self.symbol_stack.is_empty());
+            let symbol = self.symbol_stack.pop().unwrap().0;
+            debug_assert_eq!(name, symbol);
+            self.commands.push(CompileCommand::VariableReference(name));
+            self.commands.push(CompileCommand::MutableVariable);
+            global_analysis
+                .scope_tree_builder
+                .add_local(name, self.num_locals, true);
+            self.num_locals += 1;
+        } else {
+            // TODO(feat): default class
+        }
+    }
+
+    fn process_class_expression(&mut self, name: Symbol) {
+        if name != Symbol::NONE {
+            debug_assert!(!self.symbol_stack.is_empty());
+            let symbol = self.symbol_stack.pop().unwrap().0;
+            debug_assert_eq!(name, symbol);
+        } else {
+            // TODO(feat): default class
+        }
+    }
+
+    fn process_class_definition(&mut self, global_analysis: &mut GlobalAnalysis) -> ClassAnalysis {
+        let analysis = self.class_stack.pop().unwrap();
+
+        self.commands[analysis.class_index] =
+            CompileCommand::ClassStart(analysis.name, analysis.num_elements);
+
+        // TODO: default class
+
+        self.commands.push(CompileCommand::ClassEnd(
+            analysis.name,
+            analysis.num_elements,
+            analysis.flags.contains(ClassFlags::DERIVED),
+        ));
+
+        if analysis.name != Symbol::NONE {
+            self.commands.push(CompileCommand::Duplicate(0));
+            self.commands
+                .push(CompileCommand::VariableReference(analysis.name));
+            self.commands.push(CompileCommand::ImmutableVariable);
+            global_analysis
+                .scope_tree_builder
+                .add_local(analysis.name, self.num_locals, true);
+            self.num_locals += 1;
+        }
+
+        analysis
+    }
+
+    fn process_class_heritage(&mut self) {
+        self.commands.push(CompileCommand::ParentClass);
+        self.class_stack.last_mut().unwrap().flags |= ClassFlags::DERIVED;
+        self.flags.insert(FunctionAnalysisFlags::DERIVED);
+    }
+
+    fn process_class_element_constructor(&mut self) {
+        let class = self.class_stack.last_mut().unwrap();
+        self.commands
+            .push(CompileCommand::Constructor(class.num_elements));
+        class.num_elements += 1;
+    }
+
+    fn process_class_element_method(&mut self) {
+        let class = self.class_stack.last_mut().unwrap();
+        self.commands
+            .push(CompileCommand::Method(class.num_elements));
+        class.num_elements += 1;
+    }
+
+    fn process_class_element_static_method(&mut self) {
+        let class = self.class_stack.last_mut().unwrap();
+        self.commands
+            .push(CompileCommand::StaticMethod(class.num_elements));
+        class.num_elements += 1;
+    }
+
+    fn process_class_element_field(&mut self, has_initializer: bool) {
+        let (_symbol, _) = self.symbol_stack.pop().unwrap();
+
+        let class = self.class_stack.last_mut().unwrap();
+        self.commands
+            .push(CompileCommand::Field(class.num_elements, has_initializer));
+        class.num_elements += 1;
+    }
+
+    fn process_class_element_static_field(&mut self, has_initializer: bool) {
+        let (_symbol, _) = self.symbol_stack.pop().unwrap();
+
+        let class = self.class_stack.last_mut().unwrap();
+        self.commands.push(CompileCommand::StaticField(
+            class.num_elements,
+            has_initializer,
+        ));
+        class.num_elements += 1;
+    }
+
+    fn process_class_element_static_block(&mut self) {
+        let class = self.class_stack.last_mut().unwrap();
+        self.commands
+            .push(CompileCommand::StaticBlock(class.num_elements));
+        class.num_elements += 1;
     }
 
     fn process_loop_start(&mut self, scope_ref: ScopeRef) {
@@ -1871,7 +2293,7 @@ impl FunctionAnalysis {
         let LoopAnalysis { start_index } = self.loop_stack.pop().unwrap();
         debug_assert!(matches!(
             self.commands[start_index],
-            CompileCommand::PlaceHolder
+            CompileCommand::Placeholder
         ));
         self.commands[start_index] = command;
 
@@ -1929,13 +2351,13 @@ impl FunctionAnalysis {
 
     fn update_command_for_case_statements(&mut self, has_statement: bool) -> Option<usize> {
         let index = self.switch_stack.last().unwrap().case_statements_index;
-        debug_assert_eq!(self.commands[index], CompileCommand::PlaceHolder);
+        debug_assert_eq!(self.commands[index], CompileCommand::Placeholder);
         if has_statement {
             let end_index = self.commands.len();
             debug_assert!(end_index - index - 1 < u16::MAX as usize);
             let n = end_index - index - 1;
             if n > 0 {
-                self.commands[index] = CompileCommand::Batch((end_index - index - 1) as u16);
+                self.commands[index] = CompileCommand::Skip((end_index - index - 1) as u16);
                 return Some(index);
             }
         }
@@ -1968,7 +2390,7 @@ impl FunctionAnalysis {
 
         debug_assert!(matches!(
             self.commands[case_block_index],
-            CompileCommand::PlaceHolder
+            CompileCommand::Placeholder
         ));
         if num_cases == 0 {
             // An empty case block.  Just discard the `switchValue`.
@@ -2001,7 +2423,7 @@ impl FunctionAnalysis {
         debug_assert_eq!(label.symbol, symbol);
         debug_assert!(matches!(
             self.commands[label.start_index],
-            CompileCommand::PlaceHolder
+            CompileCommand::Placeholder
         ));
         self.commands[label.start_index] =
             CompileCommand::LabelStart(symbol, is_iteration_statement);
@@ -2073,14 +2495,26 @@ impl FunctionAnalysis {
             self.commands
                 .push(CompileCommand::DeclareVariables(scope_ref));
         }
-        // TODO(perf): can skip if there are no function declarations in the scope.
-        self.commands
-            .push(CompileCommand::DeclareFunctions(scope_ref));
-        self.scope_stack.push(Scope { scope_ref });
+        // The reserved command will be replaced with `CompileCommand::Nop` in `end_scope()`
+        // if there is no function declaration in the scope.
+        let index = self.reserve_commands(1);
+        self.scope_stack.push(Scope::new(scope_ref, index));
     }
 
     fn end_scope(&mut self) -> ScopeRef {
         let scope = self.scope_stack.pop().unwrap();
+
+        debug_assert!(matches!(
+            self.commands[scope.function_declaration_chain.pending_jump_index],
+            CompileCommand::Placeholder
+        ));
+        if scope.function_declaration_chain.is_empty() {
+            self.commands[scope.function_declaration_chain.pending_jump_index] =
+                CompileCommand::Nop;
+        } else {
+            self.commands[scope.function_declaration_chain.pending_jump_index] =
+                CompileCommand::Jump(scope.function_declaration_chain.exit_index);
+        }
 
         // NOTE(perf): The scope may has no variable.  In this case, we can remove the
         // PopScope command safely and reduce the number of the commands.  We can add a
@@ -2136,6 +2570,16 @@ impl FunctionAnalysis {
 
 struct Scope {
     scope_ref: ScopeRef,
+    function_declaration_chain: FunctionDeclarationChain,
+}
+
+impl Scope {
+    fn new(scope_ref: ScopeRef, pending_jump_index: usize) -> Self {
+        Self {
+            scope_ref,
+            function_declaration_chain: FunctionDeclarationChain::new(pending_jump_index),
+        }
+    }
 }
 
 struct LoopAnalysis {
@@ -2167,6 +2611,22 @@ struct CoroutineAnalysis {
     state: u32,
 }
 
+#[derive(Default)]
+struct ClassAnalysis {
+    name: Symbol,
+    class_index: usize,
+    num_elements: u16,
+    flags: ClassFlags,
+}
+
+base::auto_bitflags! {
+    #[derive(Debug, Default)]
+    struct ClassFlags: u8 {
+        DERIVED,
+        HAS_CONSTRUCTOR,
+    }
+}
+
 /// A compile command.
 #[derive(Debug, PartialEq)]
 pub enum CompileCommand {
@@ -2177,13 +2637,18 @@ pub enum CompileCommand {
     // determined that command substitution is not needed.
     Nop,
 
-    // A `Batch(n)` is inserted before `n` commands that are compile commands of a *batch*.
-    // Compile commands in a batch will be skipped in an evaluation starting at the first compile
-    // command.  A batch is performed at some point in the evaluation.  For example, compile
-    // commands generated for a *hoistable* declaration are inserted as a batch and the compile
-    // commands of the batch are performed at the `DeclareVariables` in the scope on which the
-    // declaration is performed.
-    Batch(u16),
+    /// Skips the execution of the next `n` compile commands in the standard evaluation flow.
+    ///
+    /// Used to bypass batched commands (such as hoisted declarations) during normal sequence
+    /// evaluation.  The skipped commands are typically executed out-of-order via explicit `Jump`
+    /// commands.
+    Skip(u16),
+
+    /// An unconditional jump to a specific instruction index.
+    ///
+    /// Typically used to enter a skipped batch or to return to the main execution path
+    /// (e.g., via a `FunctionDeclarationChain`).
+    Jump(usize),
 
     Undefined,
     Null,
@@ -2198,8 +2663,21 @@ pub enum CompileCommand {
     Promise,
     Exception,
 
+    // class definition
+    ClassStart(Symbol, u16),
+    ClassEnd(Symbol, u16, bool),
+    ParentClass,
+    Constructor(u16),
+    StaticMethod(u16),
+    Method(u16),
+    StaticField(u16, bool),
+    Field(u16, bool),
+    StaticBlock(u16),
+
     // references
     This,
+    Super,
+    NewTarget,
     VariableReference(Symbol),
     PropertyReference(Symbol),
     ToPropertyKey,
@@ -2209,10 +2687,9 @@ pub enum CompileCommand {
     MutableVariable,
     ImmutableVariable,
     DeclareVariables(ScopeRef),
-    DeclareFunctions(ScopeRef),
     DeclareFunction,
     Call(u16),
-    New(u16),
+    Construct(u16, bool),
     PushScope(ScopeRef),
     PopScope(ScopeRef),
 
@@ -2345,13 +2822,15 @@ pub enum CompileCommand {
     Swap,
     Duplicate(u8), // 0 or 1
     Dereference,
+    #[allow(unused)]
+    ToObject,
 
     // debugger
     Debugger,
 
-    // A special command used as a placeholder in a command list, which will be replaced actual
-    // command later.  The final command list must not contain placeholder commands.
-    PlaceHolder,
+    /// A special command used as a placeholder in a command list, which will be replaced with an
+    /// actual command later.  The final command list must not contain placeholder commands.
+    Placeholder,
 }
 
 impl From<UnaryOperator> for CompileCommand {
@@ -2511,7 +2990,7 @@ mod tests {
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVariables(scope_ref!(1)),
-                        CompileCommand::DeclareFunctions(scope_ref!(1)),
+                        CompileCommand::Nop,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2543,18 +3022,18 @@ mod tests {
                         CompileCommand::AllocateLocals(4),
                         CompileCommand::PushScope(scope_ref!(1)),
                         CompileCommand::DeclareVariables(scope_ref!(1)),
-                        CompileCommand::DeclareFunctions(scope_ref!(1)),
+                        CompileCommand::Nop,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PushScope(scope_ref!(2)),
-                        CompileCommand::DeclareFunctions(scope_ref!(2)),
+                        CompileCommand::Nop,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
                         CompileCommand::PopScope(scope_ref!(2)),
                         CompileCommand::PushScope(scope_ref!(3)),
-                        CompileCommand::DeclareFunctions(scope_ref!(3)),
+                        CompileCommand::Nop,
                         CompileCommand::Undefined,
                         CompileCommand::VariableReference(symbol!(stub, "a")),
                         CompileCommand::MutableVariable,
@@ -2579,7 +3058,7 @@ mod tests {
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
-                    CompileCommand::DeclareFunctions(scope_ref!(1)),
+                    CompileCommand::Nop,
                     CompileCommand::Number(1.0),
                     CompileCommand::Number(2.0),
                     CompileCommand::Swap,
@@ -2601,7 +3080,7 @@ mod tests {
                     CompileCommand::AllocateLocals(1),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
-                    CompileCommand::DeclareFunctions(scope_ref!(1)),
+                    CompileCommand::Nop,
                     CompileCommand::Number(1.0),
                     CompileCommand::VariableReference(symbol!(stub, "a")),
                     CompileCommand::MutableVariable,
@@ -2628,7 +3107,7 @@ mod tests {
                     CompileCommand::JumpTable(3),
                     CompileCommand::PushScope(scope_ref!(2)),
                     CompileCommand::DeclareVariables(scope_ref!(2)),
-                    CompileCommand::DeclareFunctions(scope_ref!(2)),
+                    CompileCommand::Nop,
                     CompileCommand::Number(0.0),
                     CompileCommand::Await(1),
                     CompileCommand::Discard,
@@ -2642,7 +3121,7 @@ mod tests {
                     CompileCommand::AllocateLocals(0),
                     CompileCommand::PushScope(scope_ref!(1)),
                     CompileCommand::DeclareVariables(scope_ref!(1)),
-                    CompileCommand::DeclareFunctions(scope_ref!(1)),
+                    CompileCommand::Nop,
                     CompileCommand::Lambda(program.functions[0].id),
                     CompileCommand::Closure(false, scope_ref!(2)),
                     CompileCommand::Coroutine(program.functions[0].id, 0),

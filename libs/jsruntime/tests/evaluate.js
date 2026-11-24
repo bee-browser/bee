@@ -60,7 +60,7 @@ async function main(args, options) {
     log.debug(`Reading ${test}...`);
     const script = await Deno.readTextFile(test);
     const lines = script.split('\n').map((line) => line.trim());
-    const strings = lines
+    let strings = lines
       .filter((line) => !line.startsWith('// '))
       .filter((line) => line.includes('///='))
       .map((line) => line.split('///=')[1].trim())
@@ -71,6 +71,17 @@ async function main(args, options) {
         }
         return strings;
       }, []);
+    strings = lines
+      .filter((line) => !line.startsWith('// '))
+      .filter((line) => line.includes('///#'))
+      .map((line) => line.split('///#')[1].trim().split('=')[1])
+      .filter((line) => line.startsWith('"') || line.startsWith("'"))
+      .reduce((strings, literal) => {
+        if (!strings.includes(literal)) {
+          strings.push(literal);
+        }
+        return strings;
+      }, strings);
     const sequencedValues = lines
       .filter((line) => !line.startsWith('// '))
       .filter((line) => line.includes('///='))
